@@ -23,30 +23,6 @@ typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
 
 typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
 
-struct WorkInstance {
-  TileSource tileSource;
-
-  RequestData requestData;
-
-  ProcessingData processingData;
-
-  TileLoadPriorityGroup group;
-  double priority;
-
-  bool operator<(const WorkInstance& rhs) const noexcept {
-    if (this->group == rhs.group)
-      return this->priority < rhs.priority;
-    else
-      return this->group > rhs.group;
-  }
-
-  WorkInstance* parent;
-
-  std::set<WorkInstance*> children;
-
-  ResponseDataMap responsesByUrl;
-};
-
 class TileWorkManager {
 
 public:
@@ -77,19 +53,43 @@ public:
     }
   };
 
+  struct Work {
+    TileSource tileSource;
+
+    RequestData requestData;
+
+    ProcessingData processingData;
+
+    TileLoadPriorityGroup group;
+    double priority;
+
+    bool operator<(const Work& rhs) const noexcept {
+      if (this->group == rhs.group)
+        return this->priority < rhs.priority;
+      else
+        return this->group > rhs.group;
+    }
+
+    Work* parent;
+
+    std::set<Work*> children;
+
+    ResponseDataMap responsesByUrl;
+  };
+
   void TryAddWork(
       std::vector<Order>& orders,
       size_t maxSimultaneousRequests,
-      std::vector<const WorkInstance*>& instancesCreated);
+      std::vector<const Work*>& workCreated);
 
-  void RequeueWorkForRequest(WorkInstance* requestWork);
+  void RequeueWorkForRequest(Work* requestWork);
 
   void TakeProcessingWork(
       size_t maxCount,
-      std::vector<WorkInstance*>& outCompleted,
-      std::vector<WorkInstance>& outFailed);
+      std::vector<Work*>& outCompleted,
+      std::vector<Work>& outFailed);
 
-  void SignalWorkComplete(WorkInstance* work);
+  void SignalWorkComplete(Work* work);
 
   size_t GetPendingRequestsCount();
   size_t GetTotalPendingCount();
@@ -98,30 +98,30 @@ public:
 
 private:
   void transitionQueuedWork();
-  void dispatchRequest(WorkInstance* request);
-  void stageQueuedWork(std::vector<WorkInstance*>& workNeedingDispatch);
+  void dispatchRequest(Work* requestWork);
+  void stageQueuedWork(std::vector<Work*>& workNeedingDispatch);
 
   void onRequestFinished(
       uint16_t responseStatusCode,
       gsl::span<const std::byte> responseBytes,
-      const WorkInstance* request);
+      const Work* finishedWork);
 
-  WorkInstance* createWorkInstance(Order* order);
+  Work* createWorkFromOrder(Order* order);
 
-  void requestsToInstances(
+  void ordersToWork(
       const std::vector<Order*>& orders,
-      std::vector<const WorkInstance*>& instancesCreated);
+      std::vector<const Work*>& instancesCreated);
 
   // Thread safe members
   std::mutex _requestsLock;
   bool _exitSignaled = false;
 
-  std::map<TileSource, WorkInstance> _ownedWork;
+  std::map<TileSource, Work> _ownedWork;
 
-  std::vector<WorkInstance*> _requestQueue;
-  std::map<std::string, std::vector<WorkInstance*>> _inFlightRequests;
-  std::vector<WorkInstance*> _processingQueue;
-  std::vector<WorkInstance*> _failedWork;
+  std::vector<Work*> _requestQueue;
+  std::map<std::string, std::vector<Work*>> _inFlightRequests;
+  std::vector<Work*> _processingQueue;
+  std::vector<Work*> _failedWork;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 

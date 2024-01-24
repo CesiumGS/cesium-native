@@ -15,7 +15,7 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-WorkInstance* TileWorkManager::createWorkInstance(Order* order) {
+TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* order) {
   bool workHasTileProcessing =
       std::holds_alternative<TileProcessingData>(order->processingData);
 
@@ -33,7 +33,7 @@ WorkInstance* TileWorkManager::createWorkInstance(Order* order) {
   // Assert any work isn't already owned by this manager
   assert(_ownedWork.find(tileSource) == _ownedWork.end());
 
-  WorkInstance internalWork = {
+  Work internalWork = {
       tileSource,
       std::move(order->requestData),
       std::move(order->processingData),
@@ -43,7 +43,7 @@ WorkInstance* TileWorkManager::createWorkInstance(Order* order) {
   auto returnPair = _ownedWork.emplace(tileSource, std::move(internalWork));
   assert(returnPair.second);
 
-  WorkInstance* workPointer = &returnPair.first->second;
+  Work* workPointer = &returnPair.first->second;
 
   // Put this in the appropriate starting queue
   if (workPointer->requestData.url.empty())
@@ -54,19 +54,19 @@ WorkInstance* TileWorkManager::createWorkInstance(Order* order) {
   return workPointer;
 }
 
-void TileWorkManager::requestsToInstances(
+void TileWorkManager::ordersToWork(
     const std::vector<Order*>& orders,
-    std::vector<const WorkInstance*>& instancesCreated) {
+    std::vector<const Work*>& instancesCreated) {
 
   for (Order* order : orders) {
-    WorkInstance* newInstance = createWorkInstance(order);
+    Work* newInstance = createWorkFromOrder(order);
 
     instancesCreated.push_back(newInstance);
 
     // Create child work, if exists. Link parent->child with raw pointers
     // Only support one level deep, for now
     for (Order& childWork : order->childOrders) {
-      WorkInstance* newChildInstance = createWorkInstance(&childWork);
+      Work* newChildInstance = createWorkFromOrder(&childWork);
       newInstance->children.insert(newChildInstance);
       newChildInstance->parent = newInstance;
 
@@ -78,7 +78,7 @@ void TileWorkManager::requestsToInstances(
 void TileWorkManager::TryAddWork(
     std::vector<Order>& orders,
     size_t maxSimultaneousRequests,
-    std::vector<const WorkInstance*>& instancesCreated) {
+    std::vector<const Work*>& workCreated) {
   if (orders.empty())
     return;
 
@@ -130,8 +130,8 @@ void TileWorkManager::TryAddWork(
     this->_maxSimultaneousRequests = maxSimultaneousRequests;
 
     // Copy load requests into internal work we will own
-    requestsToInstances(requestOrdersToSubmit, instancesCreated);
-    requestsToInstances(processingOrders, instancesCreated);
+    ordersToWork(requestOrdersToSubmit, workCreated);
+    ordersToWork(processingOrders, workCreated);
   }
 
   if (requestOrdersToSubmit.size()) {
@@ -144,7 +144,7 @@ void TileWorkManager::TryAddWork(
   }
 }
 
-void TileWorkManager::RequeueWorkForRequest(WorkInstance* requestWork) {
+void TileWorkManager::RequeueWorkForRequest(Work* requestWork) {
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
@@ -158,7 +158,7 @@ void TileWorkManager::RequeueWorkForRequest(WorkInstance* requestWork) {
   transitionQueuedWork();
 }
 
-void TileWorkManager::SignalWorkComplete(WorkInstance* work) {
+void TileWorkManager::SignalWorkComplete(Work* work) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // Assert this work is already owned by this manager
@@ -196,19 +196,19 @@ void TileWorkManager::SignalWorkComplete(WorkInstance* work) {
 void TileWorkManager::onRequestFinished(
     uint16_t responseStatusCode,
     gsl::span<const std::byte> responseBytes,
-    const WorkInstance* request) {
+    const Work* finishedWork) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   if (_exitSignaled)
     return;
 
   // Find this request
-  auto foundIt = _inFlightRequests.find(request->requestData.url);
+  auto foundIt = _inFlightRequests.find(finishedWork->requestData.url);
   assert(foundIt != _inFlightRequests.end());
 
   // Handle results
-  std::vector<WorkInstance*>& requestWorkVec = foundIt->second;
-  for (WorkInstance* requestWork : requestWorkVec) {
+  std::vector<Work*>& requestWorkVec = foundIt->second;
+  for (Work* requestWork : requestWorkVec) {
 
     if (responseStatusCode == 0) {
       // A response code of 0 is not a valid HTTP code
@@ -244,13 +244,13 @@ void TileWorkManager::onRequestFinished(
   _inFlightRequests.erase(foundIt);
 }
 
-void TileWorkManager::dispatchRequest(WorkInstance* request) {
+void TileWorkManager::dispatchRequest(Work* requestWork) {
   this->_pAssetAccessor
       ->get(
           this->_asyncSystem,
-          request->requestData.url,
-          request->requestData.headers)
-      .thenImmediately([_this = this, _request = request](
+          requestWork->requestData.url,
+          requestWork->requestData.headers)
+      .thenImmediately([_this = this, _requestWork = requestWork](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
         // Add payload to this work
         const IAssetResponse* pResponse = pCompletedRequest->response();
@@ -258,9 +258,12 @@ void TileWorkManager::dispatchRequest(WorkInstance* request) {
           _this->onRequestFinished(
               pResponse->statusCode(),
               pResponse->data(),
-              _request);
+              _requestWork);
         else
-          _this->onRequestFinished(0, gsl::span<const std::byte>(), _request);
+          _this->onRequestFinished(
+              0,
+              gsl::span<const std::byte>(),
+              _requestWork);
 
         _this->transitionQueuedWork();
 
@@ -268,26 +271,25 @@ void TileWorkManager::dispatchRequest(WorkInstance* request) {
       });
 }
 
-void TileWorkManager::stageQueuedWork(
-    std::vector<WorkInstance*>& workNeedingDispatch) {
+void TileWorkManager::stageQueuedWork(std::vector<Work*>& workNeedingDispatch) {
   // Take from back of queue (highest priority).
   assert(_requestQueue.size() > 0);
-  WorkInstance* request = _requestQueue.back();
+  Work* requestWork = _requestQueue.back();
   _requestQueue.pop_back();
 
   // Move to in flight registry
-  auto foundIt = _inFlightRequests.find(request->requestData.url);
+  auto foundIt = _inFlightRequests.find(requestWork->requestData.url);
   if (foundIt == _inFlightRequests.end()) {
     // Request doesn't exist, set up a new one
-    std::vector<WorkInstance*> newWorkVec;
-    newWorkVec.push_back(request);
-    _inFlightRequests[request->requestData.url] = newWorkVec;
+    std::vector<Work*> newWorkVec;
+    newWorkVec.push_back(requestWork);
+    _inFlightRequests[requestWork->requestData.url] = newWorkVec;
 
     // Copy to our output vector
-    workNeedingDispatch.push_back(request);
+    workNeedingDispatch.push_back(requestWork);
   } else {
     // Tag on to an existing request. Don't bother staging it. Already is.
-    foundIt->second.push_back(request);
+    foundIt->second.push_back(requestWork);
   }
 }
 
@@ -314,8 +316,8 @@ void TileWorkManager::GetRequestsStats(
 
 void TileWorkManager::TakeProcessingWork(
     size_t maxCount,
-    std::vector<WorkInstance*>& outCompleted,
-    std::vector<WorkInstance>& outFailed) {
+    std::vector<Work*>& outCompleted,
+    std::vector<Work>& outFailed) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // All failed requests go out
@@ -342,22 +344,23 @@ void TileWorkManager::TakeProcessingWork(
 
   // TODO - This list should be a map so it is always sorted
   // Reverse sort so highest priority is at back
+  // XXX - this is sorting by pointer, not value
   std::sort(_processingQueue.rbegin(), _processingQueue.rend());
 
   size_t numberToTake = std::min(processingCount, maxCount);
 
   // Start from the back
-  std::vector<WorkInstance*>::iterator it = _processingQueue.end();
+  auto it = _processingQueue.end();
   while (1) {
     --it;
 
-    WorkInstance* work = *it;
+    Work* work = *it;
     if (!work->children.empty()) {
       // Can't take this work yet
       // Child work has to register completion first
     } else {
       // Move this work to output. Erase from queue
-      std::vector<WorkInstance*>::iterator eraseIt = it;
+      auto eraseIt = it;
       outCompleted.push_back(*eraseIt);
       _processingQueue.erase(eraseIt);
     }
@@ -371,7 +374,7 @@ void TileWorkManager::TakeProcessingWork(
 }
 
 void TileWorkManager::transitionQueuedWork() {
-  std::vector<WorkInstance*> workNeedingDispatch;
+  std::vector<Work*> workNeedingDispatch;
   {
     std::lock_guard<std::mutex> lock(_requestsLock);
 
@@ -399,7 +402,7 @@ void TileWorkManager::transitionQueuedWork() {
     }
   }
 
-  for (WorkInstance* requestWork : workNeedingDispatch)
+  for (Work* requestWork : workNeedingDispatch)
     dispatchRequest(requestWork);
 }
 

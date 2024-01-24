@@ -931,9 +931,9 @@ void TilesetContentManager::discoverLoadWork(
 }
 
 void TilesetContentManager::markWorkTilesAsLoading(
-    std::vector<const WorkInstance*>& workVector) {
+    std::vector<const TileWorkManager::Work*>& workVector) {
 
-  for (const WorkInstance* work : workVector) {
+  for (const TileWorkManager::Work* work : workVector) {
     if (std::holds_alternative<TileProcessingData>(work->processingData)) {
       TileProcessingData tileProcessing =
           std::get<TileProcessingData>(work->processingData);
@@ -957,8 +957,8 @@ void TilesetContentManager::markWorkTilesAsLoading(
 }
 
 void TilesetContentManager::handleFailedRequestWork(
-    std::vector<WorkInstance>& workVector) {
-  for (WorkInstance& work : workVector) {
+    std::vector<TileWorkManager::Work>& workVector) {
+  for (TileWorkManager::Work& work : workVector) {
 
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
@@ -985,9 +985,9 @@ void TilesetContentManager::handleFailedRequestWork(
 }
 
 void TilesetContentManager::dispatchProcessingWork(
-    std::vector<WorkInstance*>& workVector,
+    std::vector<TileWorkManager::Work*>& workVector,
     TilesetOptions& options) {
-  for (WorkInstance* work : workVector) {
+  for (TileWorkManager::Work* work : workVector) {
     if (std::holds_alternative<TileProcessingData>(work->processingData)) {
       TileProcessingData tileProcessing =
           std::get<TileProcessingData>(work->processingData);
@@ -1088,7 +1088,7 @@ void TilesetContentManager::processLoadRequests(
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
-  std::vector<const WorkInstance*> workCreated;
+  std::vector<const TileWorkManager::Work*> workCreated;
   this->_tileWorkManager.TryAddWork(orders, maxTileLoads, workCreated);
 
   markWorkTilesAsLoading(workCreated);
@@ -1105,8 +1105,8 @@ void TilesetContentManager::processLoadRequests(
   if (totalLoads < maxTileLoads)
     availableSlots = maxTileLoads - totalLoads;
 
-  std::vector<WorkInstance*> completedWork;
-  std::vector<WorkInstance> failedWork;
+  std::vector<TileWorkManager::Work*> completedWork;
+  std::vector<TileWorkManager::Work> failedWork;
   _tileWorkManager.TakeProcessingWork(
       availableSlots,
       completedWork,
