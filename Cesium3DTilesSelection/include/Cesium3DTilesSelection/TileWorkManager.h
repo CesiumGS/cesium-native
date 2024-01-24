@@ -23,24 +23,6 @@ typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
 
 typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
 
-struct WorkRequest {
-  RequestData requestData;
-
-  ProcessingData processingData;
-
-  TileLoadPriorityGroup group;
-  double priority;
-
-  std::vector<WorkRequest> childWork;
-
-  bool operator<(const WorkRequest& rhs) const noexcept {
-    if (this->group == rhs.group)
-      return this->priority < rhs.priority;
-    else
-      return this->group > rhs.group;
-  }
-};
-
 struct WorkInstance {
   TileSource tileSource;
 
@@ -77,8 +59,26 @@ public:
         _pLogger(pLogger) {}
   ~TileWorkManager() noexcept;
 
+  struct Order {
+    RequestData requestData;
+
+    ProcessingData processingData;
+
+    TileLoadPriorityGroup group;
+    double priority;
+
+    std::vector<Order> childOrders;
+
+    bool operator<(const Order& rhs) const noexcept {
+      if (this->group == rhs.group)
+        return this->priority < rhs.priority;
+      else
+        return this->group > rhs.group;
+    }
+  };
+
   void TryAddWork(
-      std::vector<WorkRequest>& loadWork,
+      std::vector<Order>& orders,
       size_t maxSimultaneousRequests,
       std::vector<const WorkInstance*>& instancesCreated);
 
@@ -106,10 +106,10 @@ private:
       gsl::span<const std::byte> responseBytes,
       const WorkInstance* request);
 
-  WorkInstance* createWorkInstance(WorkRequest* loadWork);
+  WorkInstance* createWorkInstance(Order* order);
 
   void requestsToInstances(
-      const std::vector<WorkRequest*>& requests,
+      const std::vector<Order*>& orders,
       std::vector<const WorkInstance*>& instancesCreated);
 
   // Thread safe members

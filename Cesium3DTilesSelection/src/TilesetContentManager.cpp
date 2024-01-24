@@ -875,7 +875,7 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::discoverLoadWork(
     std::vector<TileLoadRequest>& requests,
     double maximumScreenSpaceError,
-    std::vector<WorkRequest>& outLoadWork) {
+    std::vector<TileWorkManager::Order>& outOrders) {
   for (TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->parseTileWork(
@@ -903,7 +903,7 @@ void TilesetContentManager::discoverLoadWork(
       double priorityBias = double(maxDepth - work.depthIndex);
       double resultPriority = loadRequest.priority + priorityBias;
 
-      WorkRequest newWorkUnit = {
+      TileWorkManager::Order newOrder = {
           work.tileWorkChain.requestData,
           TileProcessingData{
               work.tileWorkChain.pTile,
@@ -913,7 +913,7 @@ void TilesetContentManager::discoverLoadWork(
           resultPriority};
 
       for (auto rasterWorkChain : work.rasterWorkChains) {
-        WorkRequest rasterWorkUnit = {
+        TileWorkManager::Order newChildOrder = {
             rasterWorkChain.requestData,
             RasterProcessingData{
                 rasterWorkChain.pRasterTile,
@@ -922,10 +922,10 @@ void TilesetContentManager::discoverLoadWork(
             resultPriority};
 
         // Embed child work in parent
-        newWorkUnit.childWork.push_back(rasterWorkUnit);
+        newOrder.childOrders.emplace_back(std::move(newChildOrder));
       }
 
-      outLoadWork.push_back(newWorkUnit);
+      outOrders.emplace_back(std::move(newOrder));
     }
   }
 }
@@ -1081,15 +1081,15 @@ void TilesetContentManager::dispatchProcessingWork(
 void TilesetContentManager::processLoadRequests(
     std::vector<TileLoadRequest>& requests,
     TilesetOptions& options) {
-  std::vector<WorkRequest> newLoadWork;
-  discoverLoadWork(requests, options.maximumScreenSpaceError, newLoadWork);
+  std::vector<TileWorkManager::Order> orders;
+  discoverLoadWork(requests, options.maximumScreenSpaceError, orders);
 
   assert(options.maximumSimultaneousTileLoads > 0);
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
   std::vector<const WorkInstance*> workCreated;
-  this->_tileWorkManager.TryAddWork(newLoadWork, maxTileLoads, workCreated);
+  this->_tileWorkManager.TryAddWork(orders, maxTileLoads, workCreated);
 
   markWorkTilesAsLoading(workCreated);
 

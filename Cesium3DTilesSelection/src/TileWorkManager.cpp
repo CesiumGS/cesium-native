@@ -15,18 +15,18 @@ TileWorkManager::~TileWorkManager() noexcept {
   }
 }
 
-WorkInstance* TileWorkManager::createWorkInstance(WorkRequest* work) {
+WorkInstance* TileWorkManager::createWorkInstance(Order* order) {
   bool workHasTileProcessing =
-      std::holds_alternative<TileProcessingData>(work->processingData);
+      std::holds_alternative<TileProcessingData>(order->processingData);
 
   TileSource tileSource;
   if (workHasTileProcessing) {
     TileProcessingData workTileProcessing =
-        std::get<TileProcessingData>(work->processingData);
+        std::get<TileProcessingData>(order->processingData);
     tileSource = workTileProcessing.pTile;
   } else {
     RasterProcessingData workRasterProcessing =
-        std::get<RasterProcessingData>(work->processingData);
+        std::get<RasterProcessingData>(order->processingData);
     tileSource = workRasterProcessing.pRasterTile;
   }
 
@@ -35,10 +35,10 @@ WorkInstance* TileWorkManager::createWorkInstance(WorkRequest* work) {
 
   WorkInstance internalWork = {
       tileSource,
-      std::move(work->requestData),
-      std::move(work->processingData),
-      work->group,
-      work->priority};
+      std::move(order->requestData),
+      std::move(order->processingData),
+      std::move(order->group),
+      std::move(order->priority)};
 
   auto returnPair = _ownedWork.emplace(tileSource, std::move(internalWork));
   assert(returnPair.second);
@@ -55,17 +55,17 @@ WorkInstance* TileWorkManager::createWorkInstance(WorkRequest* work) {
 }
 
 void TileWorkManager::requestsToInstances(
-    const std::vector<WorkRequest*>& requests,
+    const std::vector<Order*>& orders,
     std::vector<const WorkInstance*>& instancesCreated) {
 
-  for (WorkRequest* workRequest : requests) {
-    WorkInstance* newInstance = createWorkInstance(workRequest);
+  for (Order* order : orders) {
+    WorkInstance* newInstance = createWorkInstance(order);
 
     instancesCreated.push_back(newInstance);
 
     // Create child work, if exists. Link parent->child with raw pointers
     // Only support one level deep, for now
-    for (WorkRequest& childWork : workRequest->childWork) {
+    for (Order& childWork : order->childOrders) {
       WorkInstance* newChildInstance = createWorkInstance(&childWork);
       newInstance->children.insert(newChildInstance);
       newChildInstance->parent = newInstance;
@@ -76,21 +76,21 @@ void TileWorkManager::requestsToInstances(
 }
 
 void TileWorkManager::TryAddWork(
-    std::vector<WorkRequest>& loadWork,
+    std::vector<Order>& orders,
     size_t maxSimultaneousRequests,
     std::vector<const WorkInstance*>& instancesCreated) {
-  if (loadWork.empty())
+  if (orders.empty())
     return;
 
   // Request work will always go to that queue first
   // Work with only processing can bypass it
-  std::vector<WorkRequest*> requestWork;
-  std::vector<WorkRequest*> processingWork;
-  for (WorkRequest& work : loadWork) {
-    if (work.requestData.url.empty())
-      processingWork.push_back(&work);
+  std::vector<Order*> requestOrders;
+  std::vector<Order*> processingOrders;
+  for (Order& order : orders) {
+    if (order.requestData.url.empty())
+      processingOrders.push_back(&order);
     else
-      requestWork.push_back(&work);
+      requestOrders.push_back(&order);
   }
 
   // Figure out how much url work we will accept.
@@ -100,29 +100,29 @@ void TileWorkManager::TryAddWork(
   size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
   size_t pendingRequestCount = this->GetPendingRequestsCount();
 
-  std::vector<WorkRequest*> requestWorkToSubmit;
+  std::vector<Order*> requestOrdersToSubmit;
   if (pendingRequestCount >= maxCountToQueue) {
     // No request slots open, we can at least insert our processing work
   } else {
     size_t slotsOpen = maxCountToQueue - pendingRequestCount;
-    if (slotsOpen >= requestWork.size()) {
+    if (slotsOpen >= requestOrders.size()) {
       // We can take all incoming work
-      requestWorkToSubmit = requestWork;
+      requestOrdersToSubmit = requestOrders;
     } else {
       // We can only take part of the incoming work
       // Just submit the highest priority
-      requestWorkToSubmit = requestWork;
+      requestOrdersToSubmit = requestOrders;
 
       std::sort(
-          begin(requestWorkToSubmit),
-          end(requestWorkToSubmit),
-          [](WorkRequest* a, WorkRequest* b) { return (*a) < (*b); });
+          begin(requestOrdersToSubmit),
+          end(requestOrdersToSubmit),
+          [](Order* a, Order* b) { return (*a) < (*b); });
 
-      requestWorkToSubmit.resize(slotsOpen);
+      requestOrdersToSubmit.resize(slotsOpen);
     }
   }
 
-  if (requestWorkToSubmit.empty() && processingWork.empty())
+  if (requestOrdersToSubmit.empty() && processingOrders.empty())
     return;
 
   {
@@ -130,15 +130,15 @@ void TileWorkManager::TryAddWork(
     this->_maxSimultaneousRequests = maxSimultaneousRequests;
 
     // Copy load requests into internal work we will own
-    requestsToInstances(requestWorkToSubmit, instancesCreated);
-    requestsToInstances(processingWork, instancesCreated);
+    requestsToInstances(requestOrdersToSubmit, instancesCreated);
+    requestsToInstances(processingOrders, instancesCreated);
   }
 
-  if (requestWorkToSubmit.size()) {
+  if (requestOrdersToSubmit.size()) {
     SPDLOG_LOGGER_INFO(
         this->_pLogger,
         "Sending request work to dispatcher: {} entries",
-        requestWorkToSubmit.size());
+        requestOrdersToSubmit.size());
 
     transitionQueuedWork();
   }
