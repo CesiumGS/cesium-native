@@ -19,8 +19,6 @@ struct RasterProcessingData {
   RasterProcessingCallback rasterCallback;
 };
 
-typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
-
 class TileWorkManager {
 
 public:
@@ -32,6 +30,8 @@ public:
         _pAssetAccessor(pAssetAccessor),
         _pLogger(pLogger) {}
   ~TileWorkManager() noexcept;
+
+  typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
 
   struct Order {
     RequestData requestData;
@@ -56,19 +56,7 @@ public:
   struct Work {
     TileSource uniqueId;
 
-    RequestData requestData;
-
-    ProcessingData processingData;
-
-    TileLoadPriorityGroup group;
-    double priority;
-
-    bool operator<(const Work& rhs) const noexcept {
-      if (this->group == rhs.group)
-        return this->priority < rhs.priority;
-      else
-        return this->group > rhs.group;
-    }
+    Order order;
 
     Work* parent;
 

@@ -33,20 +33,14 @@ TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* order) {
   // Assert any work isn't already owned by this manager
   assert(_ownedWork.find(uniqueId) == _ownedWork.end());
 
-  Work internalWork = {
-      uniqueId,
-      std::move(order->requestData),
-      std::move(order->processingData),
-      std::move(order->group),
-      std::move(order->priority)};
-
-  auto returnPair = _ownedWork.emplace(uniqueId, std::move(internalWork));
+  auto returnPair =
+      _ownedWork.emplace(uniqueId, Work{uniqueId, std::move(*order)});
   assert(returnPair.second);
 
   Work* workPointer = &returnPair.first->second;
 
   // Put this in the appropriate starting queue
-  if (workPointer->requestData.url.empty())
+  if (workPointer->order.requestData.url.empty())
     _processingQueue.push_back(workPointer);
   else
     _requestQueue.push_back(workPointer);
@@ -65,7 +59,7 @@ void TileWorkManager::ordersToWork(
 
     // Create child work, if exists. Link parent->child with raw pointers
     // Only support one level deep, for now
-    for (Order& childWork : order->childOrders) {
+    for (Order& childWork : newInstance->order.childOrders) {
       Work* newChildInstance = createWorkFromOrder(&childWork);
       newInstance->children.insert(newChildInstance);
       newChildInstance->parent = newInstance;
@@ -204,7 +198,7 @@ void TileWorkManager::onRequestFinished(
     return;
 
   // Find this request
-  auto foundIt = _inFlightRequests.find(finishedWork->requestData.url);
+  auto foundIt = _inFlightRequests.find(finishedWork->order.requestData.url);
   assert(foundIt != _inFlightRequests.end());
 
   // Handle results
@@ -221,10 +215,10 @@ void TileWorkManager::onRequestFinished(
 
     // Add new entry
     assert(
-        requestWork->responsesByUrl.find(requestWork->requestData.url) ==
+        requestWork->responsesByUrl.find(requestWork->order.requestData.url) ==
         requestWork->responsesByUrl.end());
     ResponseData& responseData =
-        requestWork->responsesByUrl[requestWork->requestData.url];
+        requestWork->responsesByUrl[requestWork->order.requestData.url];
 
     // Copy our results
     size_t byteCount = responseBytes.size();
@@ -249,8 +243,8 @@ void TileWorkManager::dispatchRequest(Work* requestWork) {
   this->_pAssetAccessor
       ->get(
           this->_asyncSystem,
-          requestWork->requestData.url,
-          requestWork->requestData.headers)
+          requestWork->order.requestData.url,
+          requestWork->order.requestData.headers)
       .thenImmediately([_this = this, _requestWork = requestWork](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
         // Add payload to this work
@@ -279,12 +273,12 @@ void TileWorkManager::stageQueuedWork(std::vector<Work*>& workNeedingDispatch) {
   _requestQueue.pop_back();
 
   // Move to in flight registry
-  auto foundIt = _inFlightRequests.find(requestWork->requestData.url);
+  auto foundIt = _inFlightRequests.find(requestWork->order.requestData.url);
   if (foundIt == _inFlightRequests.end()) {
     // Request doesn't exist, set up a new one
     std::vector<Work*> newWorkVec;
     newWorkVec.push_back(requestWork);
-    _inFlightRequests[requestWork->requestData.url] = newWorkVec;
+    _inFlightRequests[requestWork->order.requestData.url] = newWorkVec;
 
     // Copy to our output vector
     workNeedingDispatch.push_back(requestWork);
@@ -348,7 +342,7 @@ void TileWorkManager::TakeProcessingWork(
   std::sort(
       begin(_processingQueue),
       end(_processingQueue),
-      [](Work* a, Work* b) { return (*b) < (*a); });
+      [](Work* a, Work* b) { return b->order < a->order; });
 
   size_t numberToTake = std::min(processingCount, maxCount);
 
@@ -397,7 +391,7 @@ void TileWorkManager::transitionQueuedWork() {
           std::sort(
               begin(_requestQueue),
               end(_requestQueue),
-              [](Work* a, Work* b) { return (*b) < (*a); });
+              [](Work* a, Work* b) { return b->order < a->order; });
         }
 
         // Stage amount of work specified by caller, or whatever is left

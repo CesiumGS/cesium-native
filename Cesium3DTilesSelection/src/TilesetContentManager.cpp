@@ -934,16 +934,17 @@ void TilesetContentManager::markWorkTilesAsLoading(
     std::vector<const TileWorkManager::Work*>& workVector) {
 
   for (const TileWorkManager::Work* work : workVector) {
-    if (std::holds_alternative<TileProcessingData>(work->processingData)) {
+    if (std::holds_alternative<TileProcessingData>(
+            work->order.processingData)) {
       TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work->processingData);
+          std::get<TileProcessingData>(work->order.processingData);
       assert(tileProcessing.pTile);
       assert(tileProcessing.pTile->getState() == TileLoadState::Unloaded);
 
       tileProcessing.pTile->setState(TileLoadState::ContentLoading);
     } else {
       RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work->processingData);
+          std::get<RasterProcessingData>(work->order.processingData);
       assert(rasterProcessing.pRasterTile);
 
       RasterOverlayTile* pLoading =
@@ -963,16 +964,16 @@ void TilesetContentManager::handleFailedRequestWork(
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
         "Request unexpectedly failed to complete for url: {}",
-        work.requestData.url);
+        work.order.requestData.url);
 
-    if (std::holds_alternative<TileProcessingData>(work.processingData)) {
+    if (std::holds_alternative<TileProcessingData>(work.order.processingData)) {
       TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work.processingData);
+          std::get<TileProcessingData>(work.order.processingData);
       assert(tileProcessing.pTile);
       tileProcessing.pTile->setState(TileLoadState::Failed);
     } else {
       RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work.processingData);
+          std::get<RasterProcessingData>(work.order.processingData);
       assert(rasterProcessing.pRasterTile);
 
       RasterOverlayTile* pLoading =
@@ -988,9 +989,10 @@ void TilesetContentManager::dispatchProcessingWork(
     std::vector<TileWorkManager::Work*>& workVector,
     TilesetOptions& options) {
   for (TileWorkManager::Work* work : workVector) {
-    if (std::holds_alternative<TileProcessingData>(work->processingData)) {
+    if (std::holds_alternative<TileProcessingData>(
+            work->order.processingData)) {
       TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work->processingData);
+          std::get<TileProcessingData>(work->order.processingData);
       assert(tileProcessing.pTile);
       Tile* pTile = tileProcessing.pTile;
 
@@ -1010,9 +1012,9 @@ void TilesetContentManager::dispatchProcessingWork(
                   // This work goes back into the work manager queue
                   // Override its request data with was specified
                   RequestData& newRequestData = pair.result.requestData;
-                  _work->requestData.url = newRequestData.url;
+                  _work->order.requestData.url = newRequestData.url;
                   if (!newRequestData.headers.empty())
-                    _work->requestData.headers = newRequestData.headers;
+                    _work->order.requestData.headers = newRequestData.headers;
 
                   _this->_tileWorkManager.RequeueWorkForRequest(_work);
                 } else {
@@ -1040,7 +1042,7 @@ void TilesetContentManager::dispatchProcessingWork(
               });
     } else {
       RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work->processingData);
+          std::get<RasterProcessingData>(work->order.processingData);
       assert(rasterProcessing.pRasterTile);
 
       this->notifyRasterStartLoading();
@@ -1063,9 +1065,9 @@ void TilesetContentManager::dispatchProcessingWork(
 
                   // Override its request data with was specified
                   RequestData& newRequestData = result.requestData;
-                  _work->requestData.url = newRequestData.url;
+                  _work->order.requestData.url = newRequestData.url;
                   if (!newRequestData.headers.empty())
-                    _work->requestData.headers = newRequestData.headers;
+                    _work->order.requestData.headers = newRequestData.headers;
 
                   _this->_tileWorkManager.RequeueWorkForRequest(_work);
                 } else {
