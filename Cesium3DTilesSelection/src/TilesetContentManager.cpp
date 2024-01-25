@@ -884,48 +884,40 @@ void TilesetContentManager::discoverLoadWork(
         maximumScreenSpaceError,
         parsedTileWork);
 
+    // A load request should always result in work
+    assert(!parsedTileWork.empty());
+
     // Sort by depth, which should bubble parent tasks up to the top
-    // We want these to get processed first
     std::sort(parsedTileWork.begin(), parsedTileWork.end());
 
-    // Find max depth
-    size_t maxDepth = 0;
-    size_t workIndex, endIndex = parsedTileWork.size();
-    for (workIndex = 0; workIndex < endIndex; ++workIndex) {
-      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
-      maxDepth = std::max(maxDepth, work.depthIndex);
-    }
+    // Work with max depth is at top of list
+    size_t maxDepth = parsedTileWork.begin()->depthIndex;
 
     // Add all the work, biasing priority by depth
-    for (workIndex = 0; workIndex < endIndex; ++workIndex) {
-      TilesetContentManager::ParsedTileWork& work = parsedTileWork[workIndex];
-
+    // Give parents a higher priority (lower value)
+    for (ParsedTileWork& work : parsedTileWork) {
       double priorityBias = double(maxDepth - work.depthIndex);
       double resultPriority = loadRequest.priority + priorityBias;
 
-      TileWorkManager::Order newOrder = {
-          work.tileWorkChain.requestData,
+      auto& newOrder = outOrders.emplace_back(TileWorkManager::Order{
+          std::move(work.tileWorkChain.requestData),
           TileProcessingData{
               work.tileWorkChain.pTile,
               work.tileWorkChain.tileCallback,
               work.projections},
           loadRequest.group,
-          resultPriority};
+          resultPriority});
 
+      // Embed child work in parent
       for (auto rasterWorkChain : work.rasterWorkChains) {
-        TileWorkManager::Order newChildOrder = {
-            rasterWorkChain.requestData,
+        newOrder.childOrders.emplace_back(TileWorkManager::Order{
+            std::move(rasterWorkChain.requestData),
             RasterProcessingData{
                 rasterWorkChain.pRasterTile,
                 rasterWorkChain.rasterCallback},
             loadRequest.group,
-            resultPriority};
-
-        // Embed child work in parent
-        newOrder.childOrders.emplace_back(std::move(newChildOrder));
+            resultPriority});
       }
-
-      outOrders.emplace_back(std::move(newOrder));
     }
   }
 }
