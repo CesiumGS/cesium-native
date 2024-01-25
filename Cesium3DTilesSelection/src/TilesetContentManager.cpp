@@ -873,10 +873,10 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 }
 
 void TilesetContentManager::discoverLoadWork(
-    std::vector<TileLoadRequest>& requests,
+    const std::vector<TileLoadRequest>& requests,
     double maximumScreenSpaceError,
     std::vector<TileWorkManager::Order>& outOrders) {
-  for (TileLoadRequest& loadRequest : requests) {
+  for (const TileLoadRequest& loadRequest : requests) {
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->parseTileWork(
         loadRequest.pTile,
@@ -923,7 +923,7 @@ void TilesetContentManager::discoverLoadWork(
 }
 
 void TilesetContentManager::markWorkTilesAsLoading(
-    std::vector<const TileWorkManager::Work*>& workVector) {
+    const std::vector<const TileWorkManager::Work*>& workVector) {
 
   for (const TileWorkManager::Work* work : workVector) {
     if (std::holds_alternative<TileProcessingData>(
@@ -950,8 +950,8 @@ void TilesetContentManager::markWorkTilesAsLoading(
 }
 
 void TilesetContentManager::handleFailedRequestWork(
-    std::vector<TileWorkManager::Work>& workVector) {
-  for (TileWorkManager::Work& work : workVector) {
+    const std::vector<TileWorkManager::Work>& workVector) {
+  for (const TileWorkManager::Work& work : workVector) {
 
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
@@ -978,8 +978,8 @@ void TilesetContentManager::handleFailedRequestWork(
 }
 
 void TilesetContentManager::dispatchProcessingWork(
-    std::vector<TileWorkManager::Work*>& workVector,
-    TilesetOptions& options) {
+    const std::vector<TileWorkManager::Work*>& workVector,
+    const TilesetOptions& options) {
   for (TileWorkManager::Work* work : workVector) {
     if (std::holds_alternative<TileProcessingData>(
             work->order.processingData)) {

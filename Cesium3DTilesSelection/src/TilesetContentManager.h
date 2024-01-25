@@ -187,18 +187,19 @@ private:
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
   void discoverLoadWork(
-      std::vector<TileLoadRequest>& requests,
+      const std::vector<TileLoadRequest>& requests,
       double maximumScreenSpaceError,
       std::vector<TileWorkManager::Order>& outOrders);
 
-  void
-  markWorkTilesAsLoading(std::vector<const TileWorkManager::Work*>& workVector);
+  void markWorkTilesAsLoading(
+      const std::vector<const TileWorkManager::Work*>& workVector);
 
-  void handleFailedRequestWork(std::vector<TileWorkManager::Work>& workVector);
+  void
+  handleFailedRequestWork(const std::vector<TileWorkManager::Work>& workVector);
 
   void dispatchProcessingWork(
-      std::vector<TileWorkManager::Work*>& workVector,
-      TilesetOptions& options);
+      const std::vector<TileWorkManager::Work*>& workVector,
+      const TilesetOptions& options);
 
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
