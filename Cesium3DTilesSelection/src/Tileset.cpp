@@ -278,6 +278,7 @@ void Tileset::assertViewResults() {
   uint32_t inProgressSum =
       static_cast<uint32_t>(_updateResult.requestsPending) +
       _updateResult.tilesLoading + _updateResult.rastersLoading +
+      static_cast<uint32_t>(_updateResult.tilesFadingOut.size()) +
       static_cast<uint32_t>(_updateResult.mainThreadTileLoadQueueLength) +
       static_cast<uint32_t>(_updateResult.workerThreadTileLoadQueueLength);
 
@@ -468,10 +469,11 @@ float Tileset::computeLoadProgress() noexcept {
   // Amount of work actively being done
   size_t queueLengthsSum = _updateResult.mainThreadTileLoadQueueLength +
                            _updateResult.workerThreadTileLoadQueueLength;
-  int32_t inProgressSum = static_cast<uint32_t>(queueLengthsSum) +
-                          static_cast<uint32_t>(_updateResult.requestsPending) +
-                          _updateResult.tilesLoading +
-                          _updateResult.rastersLoading;
+  int32_t inProgressSum =
+      static_cast<uint32_t>(queueLengthsSum) +
+      static_cast<uint32_t>(_updateResult.requestsPending) +
+      _updateResult.tilesLoading + _updateResult.rastersLoading +
+      static_cast<uint32_t>(_updateResult.tilesFadingOut.size());
 
   int32_t completedSum =
       _updateResult.tilesLoaded + _updateResult.rastersLoaded;
