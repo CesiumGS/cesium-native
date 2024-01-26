@@ -197,8 +197,7 @@ void TileWorkManager::onRequestFinished(
     return;
 
   const IAssetResponse* response = pCompletedRequest->response();
-  assert(response);
-  uint16_t responseStatusCode = response->statusCode();
+  uint16_t responseStatusCode = response ? response->statusCode() : 0;
 
   // Find this request
   auto foundIt = _inFlightRequests.find(finishedWork->order.requestData.url);
