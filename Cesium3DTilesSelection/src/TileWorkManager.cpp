@@ -244,8 +244,8 @@ void TileWorkManager::dispatchRequest(Work* requestWork) {
           requestWork->order.requestData.headers)
       .thenImmediately([_this = this, _requestWork = requestWork](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
-
-        bool requestProcessed = _this->onRequestFinished(pCompletedRequest, _requestWork);
+        bool requestProcessed =
+            _this->onRequestFinished(pCompletedRequest, _requestWork);
 
         if (requestProcessed)
           _this->transitionQueuedWork();

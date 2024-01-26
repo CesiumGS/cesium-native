@@ -214,31 +214,30 @@ namespace {
  *
  * This function is intended to be called on the worker thread.
  *
- * If the given `loadedImage` contains no valid image data, then a
+ * If the given `RasterLoadResult::image` contains no valid image data, then a
  * `RasterLoadResult` with the state `RasterLoadState::Failed` will
  * be returned.
  *
  * Otherwise, the image data will be passed to
  * `IPrepareRendererResources::prepareRasterInLoadThread`, and the function
- * will return a `RasterLoadResult` with the image, the prepared renderer
+ * will modify a `RasterLoadResult` with the image, the prepared renderer
  * resources, and the state `RasterLoadState::Loaded`.
  *
  * @param tileId The {@link TileID} - only used for logging
  * @param pPrepareRendererResources The `IPrepareRendererResources`
  * @param pLogger The logger
- * @param loadedImage The `LoadedRasterOverlayImage`
+ * @param loadResult The `RasterLoadResult`
  * @param rendererOptions Renderer options
- * @return The `RasterLoadResult`
  */
-static RasterLoadResult prepareLoadResultImage(
+static void prepareLoadResultImage(
     const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    RasterLoadResult&& loadResult,
+    RasterLoadResult& loadResult,
     const std::any& rendererOptions) {
 
   if (!loadResult.requestData.url.empty()) {
     // A url was requested, don't need to do anything
-    return std::move(loadResult);
+    return;
   }
 
   if (!loadResult.image.has_value()) {
@@ -249,7 +248,7 @@ static RasterLoadResult prepareLoadResultImage(
         // Cesium3DTilesSelection::TileIdUtilities::createTileIdString(tileId),
         CesiumUtility::joinToString(loadResult.errors, "\n- "));
     loadResult.state = RasterLoadState::Failed;
-    return std::move(loadResult);
+    return;
   }
 
   if (!loadResult.warnings.empty()) {
@@ -283,14 +282,12 @@ static RasterLoadResult prepareLoadResultImage(
     loadResult.state = RasterLoadState::Loaded;
     loadResult.pRendererResources = pRendererResources;
 
-    return std::move(loadResult);
+    return;
   }
 
   loadResult.pRendererResources = nullptr;
   loadResult.state = RasterLoadState::Failed;
   loadResult.moreDetailAvailable = false;
-
-  return std::move(loadResult);
 }
 
 } // namespace
@@ -317,11 +314,12 @@ CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::doLoad(
            pLogger = this->getLogger(),
            rendererOptions = this->_pOwner->getOptions().rendererOptions](
               RasterLoadResult&& loadResult) {
-            return prepareLoadResultImage(
+            prepareLoadResultImage(
                 pPrepareRendererResources,
                 pLogger,
-                std::move(loadResult),
+                loadResult,
                 rendererOptions);
+            return loadResult;
           })
       .thenInMainThread(
           [thiz, pTile, isThrottledLoad](RasterLoadResult&& result) noexcept {

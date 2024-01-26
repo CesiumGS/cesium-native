@@ -10,7 +10,7 @@ While the returned `RasterOverlayTile` is loading, the 3D Tiles engine will use 
 
 `RasterOverlayTileProvider` also, in general, does not need to do any caching. The 3D Tiles engine will only call `getTile` once per geometry tile.
 
-`getTile` internally calls the polymorphic `loadTileImage`. Derived `RasterOverlayTileProvider` classes implement this method to kick off a request, if necessary, then decode the result and provide the decoded pixels as a `LoadedRasterOverlayImage`. All the lifecycle management is handled automatically by `RasterOverlayTileProvider`, so that derived classes only need to implement this one async method.
+`getTile` internally calls the polymorphic `loadTileImage`. Derived `RasterOverlayTileProvider` classes implement this method to kick off a request, if necessary, then decode the result and provide the decoded pixels as an image in `RasterLoadResult`. All the lifecycle management is handled automatically by `RasterOverlayTileProvider`, so that derived classes only need to implement this one async method.
 
 # QuadtreeRasterOverlayTileProvider
 
