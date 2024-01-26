@@ -994,6 +994,9 @@ void TilesetContentManager::dispatchProcessingWork(
       UrlResponseDataMap responseDataMap;
       work->fillResponseDataMap(responseDataMap);
 
+      // Keep the manager alive while the load is in progress.
+      CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
       this->doTileContentWork(
               *pTile,
               tileProcessing.tileCallback,
@@ -1001,7 +1004,7 @@ void TilesetContentManager::dispatchProcessingWork(
               tileProcessing.projections,
               options)
           .thenInMainThread(
-              [_pTile = pTile, _this = this, _work = work](
+              [_pTile = pTile, _thiz = thiz, _work = work](
                   TileLoadResultAndRenderResources&& pair) mutable {
                 if (pair.result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
@@ -1011,25 +1014,25 @@ void TilesetContentManager::dispatchProcessingWork(
                   if (!newRequestData.headers.empty())
                     _work->order.requestData.headers = newRequestData.headers;
 
-                  _this->_tileWorkManager.RequeueWorkForRequest(_work);
+                  _thiz->_tileWorkManager.RequeueWorkForRequest(_work);
                 } else {
-                  _this->setTileContent(
+                  _thiz->setTileContent(
                       *_pTile,
                       std::move(pair.result),
                       pair.pRenderResources);
 
-                  _this->_tileWorkManager.SignalWorkComplete(_work);
+                  _thiz->_tileWorkManager.SignalWorkComplete(_work);
 
-                  _this->notifyTileDoneLoading(_pTile);
+                  _thiz->notifyTileDoneLoading(_pTile);
                 }
               })
           .catchInMainThread(
               [_pTile = pTile,
-               _this = this,
+               _thiz = this,
                pLogger = this->_externals.pLogger](std::exception&& e) {
                 _pTile->setState(TileLoadState::Failed);
 
-                _this->notifyTileDoneLoading(_pTile);
+                _thiz->notifyTileDoneLoading(_pTile);
                 SPDLOG_LOGGER_ERROR(
                     pLogger,
                     "An unexpected error occurs when loading tile: {}",
@@ -1045,13 +1048,16 @@ void TilesetContentManager::dispatchProcessingWork(
       UrlResponseDataMap responseDataMap;
       work->fillResponseDataMap(responseDataMap);
 
+      // Keep the manager alive while the load is in progress.
+      CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
       rasterProcessing.pRasterTile
           ->loadThrottled(
               _externals.asyncSystem,
               responseDataMap,
               rasterProcessing.rasterCallback)
           .thenInMainThread(
-              [_this = this, _work = work](RasterLoadResult& result) mutable {
+              [_thiz = thiz, _work = work](RasterLoadResult& result) mutable {
                 if (result.state == RasterLoadState::RequestRequired) {
                   // This work goes back into the work manager queue
 
@@ -1067,12 +1073,12 @@ void TilesetContentManager::dispatchProcessingWork(
                   if (!newRequestData.headers.empty())
                     _work->order.requestData.headers = newRequestData.headers;
 
-                  _this->_tileWorkManager.RequeueWorkForRequest(_work);
+                  _thiz->_tileWorkManager.RequeueWorkForRequest(_work);
                 } else {
-                  _this->_tileWorkManager.SignalWorkComplete(_work);
+                  _thiz->_tileWorkManager.SignalWorkComplete(_work);
                 }
 
-                _this->notifyRasterDoneLoading();
+                _thiz->notifyRasterDoneLoading();
               });
     }
   }
@@ -1250,9 +1256,6 @@ TilesetContentManager::doTileContentWork(
       this->_externals.asyncSystem,
       this->_externals.pLogger,
       responseDataMap};
-
-  // Keep the manager alive while the load is in progress.
-  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
   assert(processingCallback);
 
