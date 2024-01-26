@@ -6,7 +6,7 @@ TileLoadInput::TileLoadInput(
     const TilesetContentOptions& contentOptions_,
     const CesiumAsync::AsyncSystem& asyncSystem_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const ResponseDataMap& responsesByUrl_)
+    const UrlResponseDataMap& responsesByUrl_)
     : tile{tile_},
       contentOptions{contentOptions_},
       asyncSystem{asyncSystem_},

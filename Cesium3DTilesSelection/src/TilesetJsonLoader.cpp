@@ -668,7 +668,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     TileRefine tileRefine,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tileUrl,
-    const std::vector<std::byte>& responseBytes,
+    const gsl::span<const std::byte>& responseBytes,
     ExternalContentInitializer&& externalContentInitializer) {
   // create external tileset
   rapidjson::Document tilesetJson;
@@ -863,8 +863,9 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            std::move(externalContentInitializer)]() mutable {
         assert(responsesByUrl.size() == 1);
         const std::string& tileUrl = responsesByUrl.begin()->first;
-        const ResponseData& responseData = responsesByUrl.begin()->second;
-        const std::vector<std::byte>& responseBytes = responseData.bytes;
+        const CesiumAsync::IAssetResponse* response =
+            responsesByUrl.begin()->second.pResponse;
+        const gsl::span<const std::byte> responseBytes = response->data();
 
         // find gltf converter
         auto converter = GltfConverters::getConverterByMagic(responseBytes);

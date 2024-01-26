@@ -42,7 +42,7 @@ public:
       uint32_t powerOf2,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<std::byte>& responseData);
+      const gsl::span<const std::byte>& responseData);
 
 private:
   bool isAvailable(

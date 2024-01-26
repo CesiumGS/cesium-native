@@ -2,6 +2,7 @@
 
 #include "Cesium3DTilesSelection/RasterOverlay.h"
 
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGltfReader/ImageManipulation.h>
 #include <CesiumUtility/Math.h>
@@ -98,7 +99,7 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
 void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     const glm::dvec2 targetScreenPixels,
-    const ResponseDataMap& responsesByUrl,
+    const UrlResponseDataMap& responsesByUrl,
     std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>& outTiles) {
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
@@ -278,7 +279,7 @@ CesiumAsync::SharedFuture<
     QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
-    const ResponseDataMap& responsesByUrl) {
+    const UrlResponseDataMap& responsesByUrl) {
 
   // Return any cached requests
   auto lookupIt = this->_tileLookup.find(tileID);
@@ -296,7 +297,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
   // Not cached, discover request here
   RequestData requestData;
-  ResponseDataMap::const_iterator foundIt;
+  UrlResponseDataMap::const_iterator foundIt;
   std::string errorString;
   if (this->getQuadtreeTileImageRequest(tileID, requestData, errorString)) {
     // Successfully discovered a request. Find it in our responses
@@ -328,8 +329,6 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     return result;
   }
 
-  const ResponseData& responseData = foundIt->second;
-
   // We create this lambda here instead of where it's used below so that we
   // don't need to pass `this` through a thenImmediately lambda, which would
   // create the possibility of accidentally using this pointer to a
@@ -347,8 +346,14 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
         });
   };
 
+  const CesiumAsync::IAssetResponse* assetResponse = foundIt->second.pResponse;
+
   Future<LoadedQuadtreeImage> future =
-      this->loadQuadtreeTileImage(tileID, requestData, responseData)
+      this->loadQuadtreeTileImage(
+              tileID,
+              requestData.url,
+              assetResponse->statusCode(),
+              assetResponse->data())
           .catchImmediately([](std::exception&& e) {
             // Turn an exception into an error.
             RasterLoadResult result;
@@ -488,7 +493,7 @@ void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
   outCallback = [this](
                     RasterOverlayTile& overlayTile,
                     RasterOverlayTileProvider* provider,
-                    const ResponseDataMap& responsesByUrl) {
+                    const UrlResponseDataMap& responsesByUrl) {
     QuadtreeRasterOverlayTileProvider* thisProvider =
         static_cast<QuadtreeRasterOverlayTileProvider*>(provider);
     return thisProvider->loadTileImage(overlayTile, responsesByUrl);
@@ -498,7 +503,7 @@ void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
 CesiumAsync::Future<RasterLoadResult>
 QuadtreeRasterOverlayTileProvider::loadTileImage(
     RasterOverlayTile& overlayTile,
-    const ResponseDataMap& responsesByUrl) {
+    const UrlResponseDataMap& responsesByUrl) {
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
   std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles;

@@ -32,7 +32,7 @@ struct RasterLoadResult {
 typedef std::function<CesiumAsync::Future<RasterLoadResult>(
     RasterOverlayTile&,
     RasterOverlayTileProvider*,
-    const ResponseDataMap&)>
+    const UrlResponseDataMap&)>
     RasterProcessingCallback;
 
 /**
@@ -206,7 +206,7 @@ public:
    */
   CesiumAsync::Future<RasterLoadResult> loadThrottled(
       CesiumAsync::AsyncSystem& callerAsync,
-      const ResponseDataMap& responsesByUrl,
+      const UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback) noexcept;
 
   void getLoadThrottledWork(

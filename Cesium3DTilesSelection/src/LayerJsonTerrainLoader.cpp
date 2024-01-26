@@ -637,7 +637,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const AsyncSystem& asyncSystem,
     const std::string& requestUrl,
     const uint16_t responseStatusCode,
-    const std::vector<std::byte>& responseData,
+    const gsl::span<const std::byte>& responseData,
     const QuadtreeTileID& tileID,
     const BoundingVolume& boundingVolume,
     bool enableWaterMask) {
@@ -685,7 +685,7 @@ Future<int> loadTileAvailability(
     LayerJsonTerrainLoader::Layer& layer,
     const std::string& requestUrl,
     const uint16_t responseStatusCode,
-    const std::vector<std::byte>& responseData) {
+    const gsl::span<const std::byte>& responseData) {
   return asyncSystem
       .runInWorkerThread(
           [pLogger, tileID, requestUrl, responseStatusCode, responseData]() {
@@ -770,7 +770,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       if (!isSubtreeLoadedInLayer(*pQuadtreeTileID, *it)) {
 
         std::string url = resolveTileUrl(*pQuadtreeTileID, *it);
-        ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
+        auto foundIt = responsesByUrl.find(url);
         assert(foundIt != responsesByUrl.end());
 
         // TODO, put availability request logic in the discover work phases
@@ -782,8 +782,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
             *pQuadtreeTileID,
             *it,
             url,
-            foundIt->second.statusCode,
-            foundIt->second.bytes));
+            foundIt->second.pResponse->statusCode(),
+            foundIt->second.pResponse->data()));
       }
     }
 
@@ -795,15 +795,15 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   std::string url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 
-  ResponseDataMap::const_iterator foundIt = responsesByUrl.find(url);
+  auto foundIt = responsesByUrl.find(url);
   assert(foundIt != responsesByUrl.end());
 
   Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
       pLogger,
       asyncSystem,
       url,
-      foundIt->second.statusCode,
-      foundIt->second.bytes,
+      foundIt->second.pResponse->statusCode(),
+      foundIt->second.pResponse->data(),
       *pQuadtreeTileID,
       tile.getBoundingVolume(),
       contentOptions.enableWaterMask);

@@ -111,14 +111,14 @@ void RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
   tile.setState(RasterLoadState::Loading);
 
   // TODO, this needs a real callback and data passed in
-  ResponseDataMap responsesByUrl;
+  UrlResponseDataMap responsesByUrl;
   this->doLoad(tile, false, responsesByUrl, nullptr);
 }
 
 CesiumAsync::Future<RasterLoadResult>
 RasterOverlayTileProvider::loadTileThrottled(
     RasterOverlayTile& tile,
-    const ResponseDataMap& responsesByUrl,
+    const UrlResponseDataMap& responsesByUrl,
     RasterProcessingCallback rasterCallback) {
   return this->doLoad(tile, true, responsesByUrl, rasterCallback);
 }
@@ -136,23 +136,23 @@ void RasterOverlayTileProvider::getLoadTileThrottledWork(
 CesiumAsync::Future<RasterLoadResult>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
-    const ResponseData& responseData,
+    uint16_t statusCode,
+    const gsl::span<const std::byte>& data,
     LoadTileImageFromUrlOptions&& options) const {
 
   return this->getAsyncSystem().runInWorkerThread(
       [options = std::move(options),
        url = url,
-       responseData = responseData,
+       statusCode = statusCode,
+       data = data,
        asyncSystem = this->getAsyncSystem(),
        Ktx2TranscodeTargets =
            this->getOwner().getOptions().ktx2TranscodeTargets]() mutable {
         CESIUM_TRACE("load image");
 
-        if (responseData.statusCode != 0 && responseData.statusCode < 200 ||
-            responseData.statusCode >= 300) {
+        if (statusCode != 0 && statusCode < 200 || statusCode >= 300) {
           std::string message = "Image response code " +
-                                std::to_string(responseData.statusCode) +
-                                " for " + url;
+                                std::to_string(statusCode) + " for " + url;
           return asyncSystem.createResolvedFuture<RasterLoadResult>(
               RasterLoadResult{
                   std::nullopt,
@@ -163,7 +163,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   options.moreDetailAvailable});
         }
 
-        if (responseData.bytes.empty()) {
+        if (data.empty()) {
           if (options.allowEmptyImages) {
             return asyncSystem.createResolvedFuture<RasterLoadResult>(
                 RasterLoadResult{
@@ -183,10 +183,6 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   {},
                   options.moreDetailAvailable});
         }
-
-        const gsl::span<const std::byte> data(
-            responseData.bytes.data(),
-            responseData.bytes.size());
 
         CesiumGltfReader::ImageReaderResult loadedImage =
             RasterOverlayTileProvider::_gltfReader.readImage(
@@ -302,7 +298,7 @@ static RasterLoadResult prepareLoadResultImage(
 CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
     bool isThrottledLoad,
-    const ResponseDataMap& responsesByUrl,
+    const UrlResponseDataMap& responsesByUrl,
     RasterProcessingCallback rasterCallback) {
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 

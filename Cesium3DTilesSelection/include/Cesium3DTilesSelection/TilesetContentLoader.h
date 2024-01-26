@@ -20,6 +20,10 @@
 #include <optional>
 #include <vector>
 
+namespace CesiumAsync {
+class IAssetRequest;
+}
+
 namespace Cesium3DTilesSelection {
 class Tile;
 class TilesetContentLoader;
@@ -45,13 +49,15 @@ enum class TileLoadPriorityGroup {
   Urgent = 2
 };
 
-typedef std::vector<RequestData> RequestDataVec;
-
 struct ResponseData {
-  uint16_t statusCode;
-  std::vector<std::byte> bytes;
+  const CesiumAsync::IAssetRequest* pRequest;
+  const CesiumAsync::IAssetResponse* pResponse;
 };
-typedef std::map<std::string, ResponseData> ResponseDataMap;
+
+using UrlResponseDataMap = std::map<std::string, ResponseData>;
+
+using UrlAssetRequestMap =
+    std::map<std::string, std::shared_ptr<CesiumAsync::IAssetRequest>>;
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -73,7 +79,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const ResponseDataMap& responsesByUrl);
+      const UrlResponseDataMap& responsesByUrl);
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -95,7 +101,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    */
   const std::shared_ptr<spdlog::logger>& pLogger;
 
-  const ResponseDataMap& responsesByUrl;
+  const UrlResponseDataMap& responsesByUrl;
 };
 
 /**
@@ -121,10 +127,8 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   TileLoadResultState state;
 };
 
-typedef std::function<CesiumAsync::Future<TileLoadResult>(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader*)>
-    TileProcessingCallback;
+using TileProcessingCallback = std::function<CesiumAsync::Future<
+    TileLoadResult>(const TileLoadInput& loadInput, TilesetContentLoader*)>;
 
 /**
  * @brief The loader interface to load the tile content

@@ -991,10 +991,13 @@ void TilesetContentManager::dispatchProcessingWork(
       // begin loading tile
       this->notifyTileStartLoading(pTile);
 
+      UrlResponseDataMap responseDataMap;
+      work->fillResponseDataMap(responseDataMap);
+
       this->doTileContentWork(
               *pTile,
               tileProcessing.tileCallback,
-              work->responsesByUrl,
+              responseDataMap,
               tileProcessing.projections,
               options)
           .thenInMainThread(
@@ -1039,10 +1042,13 @@ void TilesetContentManager::dispatchProcessingWork(
 
       this->notifyRasterStartLoading();
 
+      UrlResponseDataMap responseDataMap;
+      work->fillResponseDataMap(responseDataMap);
+
       rasterProcessing.pRasterTile
           ->loadThrottled(
               _externals.asyncSystem,
-              work->responsesByUrl,
+              responseDataMap,
               rasterProcessing.rasterCallback)
           .thenInMainThread(
               [_this = this, _work = work](RasterLoadResult& result) mutable {
@@ -1052,8 +1058,8 @@ void TilesetContentManager::dispatchProcessingWork(
                   // Make sure we're not requesting something we have
                   assert(!result.requestData.url.empty());
                   assert(
-                      _work->responsesByUrl.find(result.requestData.url) ==
-                      _work->responsesByUrl.end());
+                      _work->completedRequests.find(result.requestData.url) ==
+                      _work->completedRequests.end());
 
                   // Override its request data with was specified
                   RequestData& newRequestData = result.requestData;
@@ -1218,7 +1224,7 @@ CesiumAsync::Future<TileLoadResultAndRenderResources>
 TilesetContentManager::doTileContentWork(
     Tile& tile,
     TileProcessingCallback processingCallback,
-    const ResponseDataMap& responsesByUrl,
+    const UrlResponseDataMap& responseDataMap,
     const std::vector<CesiumGeospatial::Projection>& projections,
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::doTileContentWork");
@@ -1243,7 +1249,7 @@ TilesetContentManager::doTileContentWork(
       tilesetOptions.contentOptions,
       this->_externals.asyncSystem,
       this->_externals.pLogger,
-      responsesByUrl};
+      responseDataMap};
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;

@@ -207,7 +207,7 @@ void RasterMappedTo3DTile::detachFromTile(
 
 CesiumAsync::Future<RasterLoadResult> RasterMappedTo3DTile::loadThrottled(
     CesiumAsync::AsyncSystem& callerAsync,
-    const ResponseDataMap& responsesByUrl,
+    const UrlResponseDataMap& responsesByUrl,
     RasterProcessingCallback rasterCallback) noexcept {
   CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
   RasterOverlayTile* pLoading = this->getLoadingTile();

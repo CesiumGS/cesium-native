@@ -38,7 +38,7 @@ public:
 
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       RasterOverlayTile& overlayTile,
-      const ResponseDataMap&) override {
+      const UrlResponseDataMap&) override {
     RasterLoadResult result;
 
     // Indicate that there is no more detail available so that tiles won't get

@@ -34,11 +34,10 @@ struct SubtreeBufferView {
 CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
     const CesiumAsync::AsyncSystem& asyncSystem,
     size_t bufferIdx,
-    const std::vector<std::byte>& responseData,
+    const gsl::span<const std::byte>& responseData,
     size_t bufferLength) {
   return asyncSystem.runInWorkerThread(
-      [bufferIdx, bufferLength, responseData = responseData]() {
-        auto data = responseData;
+      [bufferIdx, bufferLength, data = responseData]() {
         if (data.size() < bufferLength) {
           return RequestedSubtreeBuffer{bufferIdx, {}};
         }
@@ -196,7 +195,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const std::vector<std::byte>&& responseData,
+    const gsl::span<const std::byte>& responseData,
     rapidjson::Document&& subtreeJson,
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
@@ -273,11 +272,11 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const std::vector<std::byte>&& responseData) {
-  const std::vector<std::byte>& data = responseData;
-
+    const gsl::span<const std::byte>& responseData) {
   rapidjson::Document subtreeJson;
-  subtreeJson.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+  subtreeJson.Parse(
+      reinterpret_cast<const char*>(responseData.data()),
+      responseData.size());
   if (subtreeJson.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -293,7 +292,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
       powerOf2,
       std::move(asyncSystem),
       std::move(pLogger),
-      std::move(responseData),
+      responseData,
       std::move(subtreeJson),
       {});
 }
@@ -303,8 +302,7 @@ parseBinarySubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const std::vector<std::byte>&& responseData) {
-  const std::vector<std::byte>& data = responseData;
+    const gsl::span<const std::byte>& data) {
 
   size_t headerLength = sizeof(SubtreeHeader);
   if (data.size() < headerLength) {
@@ -366,7 +364,7 @@ parseBinarySubtreeRequest(
       powerOf2,
       std::move(asyncSystem),
       std::move(pLogger),
-      std::move(responseData),
+      data,
       std::move(subtreeJson),
       std::move(internalBuffer));
 }
@@ -375,8 +373,7 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const std::vector<std::byte>&& responseData) {
-  const std::vector<std::byte>& data = responseData;
+    const gsl::span<const std::byte>& data) {
 
   // check if this is binary subtree
   bool isBinarySubtree = true;
@@ -394,13 +391,13 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
         powerOf2,
         std::move(asyncSystem),
         std::move(pLogger),
-        std::move(responseData));
+        data);
   } else {
     return parseJsonSubtreeRequest(
         powerOf2,
         std::move(asyncSystem),
         std::move(pLogger),
-        std::move(responseData));
+        data);
   }
 }
 } // namespace
@@ -460,7 +457,7 @@ SubtreeAvailability::loadSubtree(
     uint32_t powerOf2,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::vector<std::byte>& responseData) {
+    const gsl::span<const std::byte>& responseData) {
   return asyncSystem.runInWorkerThread([powerOf2,
                                         asyncSystem = asyncSystem,
                                         pLogger = pLogger,
@@ -470,7 +467,7 @@ SubtreeAvailability::loadSubtree(
         powerOf2,
         std::move(asyncSystem),
         std::move(pLogger),
-        std::move(responseData));
+        responseData);
   });
 }
 

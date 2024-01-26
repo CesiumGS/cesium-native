@@ -163,7 +163,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::string& tileUrl,
-    const std::vector<std::byte>& responseData,
+    const gsl::span<const std::byte>& responseData,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
   return asyncSystem.runInWorkerThread([pLogger,
                                         ktx2TranscodeTargets,
@@ -271,7 +271,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         resolveUrl(this->_baseUrl, this->_subtreeUrlTemplate, subtreeID);
 
     // If subtree url is not loaded, request it and come back later
-    ResponseDataMap::const_iterator foundIt = responsesByUrl.find(subtreeUrl);
+    auto foundIt = responsesByUrl.find(subtreeUrl);
     if (foundIt == responsesByUrl.end()) {
       return asyncSystem.createResolvedFuture<TileLoadResult>(
           TileLoadResult::createRequestResult(RequestData{subtreeUrl}));
@@ -281,7 +281,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                2,
                asyncSystem,
                pLogger,
-               foundIt->second.bytes)
+               foundIt->second.pResponse->data())
         .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
                                                 subtreeAvailability) mutable {
           if (subtreeAvailability) {
@@ -315,7 +315,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       resolveUrl(this->_baseUrl, this->_contentUrlTemplate, *pQuadtreeID);
 
   // If tile url is not loaded, request it and come back later
-  ResponseDataMap::const_iterator foundIt = responsesByUrl.find(tileUrl);
+  auto foundIt = responsesByUrl.find(tileUrl);
   if (foundIt == responsesByUrl.end()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createRequestResult(RequestData{tileUrl}));
@@ -325,7 +325,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       pLogger,
       asyncSystem,
       tileUrl,
-      foundIt->second.bytes,
+      foundIt->second.pResponse->data(),
       contentOptions.ktx2TranscodeTargets);
 }
 

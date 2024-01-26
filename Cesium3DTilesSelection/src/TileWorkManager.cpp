@@ -189,13 +189,16 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
 }
 
 void TileWorkManager::onRequestFinished(
-    uint16_t responseStatusCode,
-    gsl::span<const std::byte> responseBytes,
+    std::shared_ptr<IAssetRequest>& pCompletedRequest,
     const Work* finishedWork) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   if (_exitSignaled)
     return;
+
+  const IAssetResponse* response = pCompletedRequest->response();
+  assert(response);
+  uint16_t responseStatusCode = response->statusCode();
 
   // Find this request
   auto foundIt = _inFlightRequests.find(finishedWork->order.requestData.url);
@@ -215,21 +218,12 @@ void TileWorkManager::onRequestFinished(
 
     // Add new entry
     assert(
-        requestWork->responsesByUrl.find(requestWork->order.requestData.url) ==
-        requestWork->responsesByUrl.end());
-    ResponseData& responseData =
-        requestWork->responsesByUrl[requestWork->order.requestData.url];
+        requestWork->completedRequests.find(
+            requestWork->order.requestData.url) ==
+        requestWork->completedRequests.end());
 
-    // Copy our results
-    size_t byteCount = responseBytes.size();
-    if (byteCount > 0) {
-      responseData.bytes.resize(byteCount);
-      std::copy(
-          responseBytes.begin(),
-          responseBytes.end(),
-          responseData.bytes.begin());
-    }
-    responseData.statusCode = responseStatusCode;
+    std::string& key = requestWork->order.requestData.url;
+    requestWork->completedRequests[key] = pCompletedRequest;
 
     // Put in processing queue
     _processingQueue.push_back(requestWork);
@@ -247,22 +241,15 @@ void TileWorkManager::dispatchRequest(Work* requestWork) {
           requestWork->order.requestData.headers)
       .thenImmediately([_this = this, _requestWork = requestWork](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
+        assert(pCompletedRequest->url() == _requestWork->order.requestData.url);
+        bool containsResponse = pCompletedRequest->response() != nullptr;
+
         // Add payload to this work
-        const IAssetResponse* pResponse = pCompletedRequest->response();
-        if (pResponse)
-          _this->onRequestFinished(
-              pResponse->statusCode(),
-              pResponse->data(),
-              _requestWork);
-        else
-          _this->onRequestFinished(
-              0,
-              gsl::span<const std::byte>(),
-              _requestWork);
+        _this->onRequestFinished(pCompletedRequest, _requestWork);
 
         _this->transitionQueuedWork();
 
-        return pResponse != NULL;
+        return containsResponse;
       });
 }
 

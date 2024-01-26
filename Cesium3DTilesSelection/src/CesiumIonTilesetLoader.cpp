@@ -48,7 +48,7 @@ std::string createEndpointResource(
  * @return The access token if successful
  */
 std::optional<std::string> getNewAccessToken(
-    const std::vector<std::byte>& data,
+    const gsl::span<const std::byte>& data,
     const std::shared_ptr<spdlog::logger>& pLogger) {
   rapidjson::Document ionResponse;
   ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
@@ -356,7 +356,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   // 401 - Unauthorized response
   bool staleTokenDetected = false;
   for (auto responseData : loadInput.responsesByUrl) {
-    if (responseData.second.statusCode == 401) {
+    if (responseData.second.pResponse->statusCode() == 401) {
       staleTokenDetected = true;
       break;
     }
@@ -386,13 +386,14 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (this->_refreshTokenState == TokenRefreshState::Queued) {
     assert(loadInput.responsesByUrl.size() == 1);
     const std::string& requestUrl = loadInput.responsesByUrl.begin()->first;
-    const ResponseData& responseData = loadInput.responsesByUrl.begin()->second;
+    const CesiumAsync::IAssetResponse* response =
+        loadInput.responsesByUrl.begin()->second.pResponse;
 
     this->refreshTokenInMainThread(
         loadInput.pLogger,
         requestUrl,
-        responseData.statusCode,
-        responseData.bytes);
+        response->statusCode(),
+        response->data());
 
     return loadInput.asyncSystem.createResolvedFuture(
         TileLoadResult::createRetryLaterResult());
@@ -447,7 +448,7 @@ void CesiumIonTilesetLoader::refreshTokenInMainThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& requestUrl,
     const uint16_t responseStatusCode,
-    const std::vector<std::byte>& responseData) {
+    const gsl::span<const std::byte>& responseData) {
 
   assert(this->_refreshTokenState == TokenRefreshState::Queued);
 

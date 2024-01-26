@@ -31,7 +31,7 @@ public:
         _pLogger(pLogger) {}
   ~TileWorkManager() noexcept;
 
-  typedef std::variant<TileProcessingData, RasterProcessingData> ProcessingData;
+  using ProcessingData = std::variant<TileProcessingData, RasterProcessingData>;
 
   struct Order {
     RequestData requestData;
@@ -51,7 +51,7 @@ public:
     }
   };
 
-  typedef std::variant<Tile*, RasterMappedTo3DTile*> TileSource;
+  using TileSource = std::variant<Tile*, RasterMappedTo3DTile*>;
 
   struct Work {
     TileSource uniqueId;
@@ -62,7 +62,15 @@ public:
 
     std::set<Work*> children;
 
-    ResponseDataMap responsesByUrl;
+    UrlAssetRequestMap completedRequests;
+
+    void fillResponseDataMap(UrlResponseDataMap& responseDataMap) {
+      for (auto& pair : completedRequests) {
+        responseDataMap.emplace(
+            pair.first,
+            ResponseData{pair.second.get(), pair.second->response()});
+      }
+    }
   };
 
   void TryAddWork(
@@ -90,8 +98,7 @@ private:
   void stageQueuedWork(std::vector<Work*>& workNeedingDispatch);
 
   void onRequestFinished(
-      uint16_t responseStatusCode,
-      gsl::span<const std::byte> responseBytes,
+      std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
       const Work* finishedWork);
 
   Work* createWorkFromOrder(Order* order);

@@ -112,13 +112,14 @@ protected:
 
   virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const RequestData& requestData,
-      const ResponseData& responseData) const = 0;
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const = 0;
 
 private:
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       RasterOverlayTile& overlayTile,
-      const ResponseDataMap& responsesByUrl) override final;
+      const UrlResponseDataMap& responsesByUrl) override final;
 
   virtual void getLoadTileImageWork(
       RasterOverlayTile& overlayTile,
@@ -132,7 +133,7 @@ private:
 
   CesiumAsync::SharedFuture<LoadedQuadtreeImage> getQuadtreeTile(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const ResponseDataMap& responsesByUrl);
+      const UrlResponseDataMap& responsesByUrl);
 
   /**
    * @brief Map raster tiles to geometry tile.
@@ -147,7 +148,7 @@ private:
   void mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       const glm::dvec2 targetScreenPixels,
-      const ResponseDataMap& responsesByUrl,
+      const UrlResponseDataMap& responsesByUrl,
       std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>& outTiles);
 
   void unloadCachedTiles();

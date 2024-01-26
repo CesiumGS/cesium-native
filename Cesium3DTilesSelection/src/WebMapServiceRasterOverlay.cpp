@@ -123,16 +123,18 @@ protected:
 
   virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const RequestData& requestData,
-      const ResponseData& responseData) const override {
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const override {
 
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
 
     return this->loadTileImageFromUrl(
-        requestData.url,
-        responseData,
+        requestUrl,
+        statusCode,
+        data,
         std::move(options));
   }
 

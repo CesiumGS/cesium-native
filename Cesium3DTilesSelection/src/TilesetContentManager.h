@@ -101,7 +101,7 @@ public:
   CesiumAsync::Future<TileLoadResultAndRenderResources> doTileContentWork(
       Tile& tile,
       TileProcessingCallback processingCallback,
-      const ResponseDataMap& responsesByUrl,
+      const UrlResponseDataMap& responseDataMap,
       const std::vector<CesiumGeospatial::Projection>& projections,
       const TilesetOptions& tilesetOptions);
 
