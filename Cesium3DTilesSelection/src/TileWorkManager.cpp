@@ -188,13 +188,15 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
   _ownedWork.erase(work->uniqueId);
 }
 
-void TileWorkManager::onRequestFinished(
+bool TileWorkManager::onRequestFinished(
     std::shared_ptr<IAssetRequest>& pCompletedRequest,
     const Work* finishedWork) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   if (_exitSignaled)
-    return;
+    return false;
+
+  assert(pCompletedRequest->url() == finishedWork->order.requestData.url);
 
   const IAssetResponse* response = pCompletedRequest->response();
   uint16_t responseStatusCode = response ? response->statusCode() : 0;
@@ -230,6 +232,8 @@ void TileWorkManager::onRequestFinished(
 
   // Remove it
   _inFlightRequests.erase(foundIt);
+
+  return true;
 }
 
 void TileWorkManager::dispatchRequest(Work* requestWork) {
@@ -240,15 +244,11 @@ void TileWorkManager::dispatchRequest(Work* requestWork) {
           requestWork->order.requestData.headers)
       .thenImmediately([_this = this, _requestWork = requestWork](
                            std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
-        assert(pCompletedRequest->url() == _requestWork->order.requestData.url);
-        bool containsResponse = pCompletedRequest->response() != nullptr;
 
-        // Add payload to this work
-        _this->onRequestFinished(pCompletedRequest, _requestWork);
+        bool requestProcessed = _this->onRequestFinished(pCompletedRequest, _requestWork);
 
-        _this->transitionQueuedWork();
-
-        return containsResponse;
+        if (requestProcessed)
+          _this->transitionQueuedWork();
       });
 }
 

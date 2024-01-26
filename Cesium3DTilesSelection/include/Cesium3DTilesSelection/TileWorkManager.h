@@ -97,7 +97,7 @@ private:
   void dispatchRequest(Work* requestWork);
   void stageQueuedWork(std::vector<Work*>& workNeedingDispatch);
 
-  void onRequestFinished(
+  bool onRequestFinished(
       std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
       const Work* finishedWork);
 
