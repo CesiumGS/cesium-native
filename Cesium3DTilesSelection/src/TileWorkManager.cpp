@@ -334,15 +334,22 @@ void TileWorkManager::TakeProcessingWork(
 
 void TileWorkManager::transitionQueuedWork(
     std::shared_ptr<TileWorkManager>& thiz) {
-  std::lock_guard<std::mutex> lock(thiz->_requestsLock);
-
-  if (thiz->_shutdownSignaled)
-    return;
-
   std::vector<Work*> workNeedingDispatch;
-  size_t queueCount = thiz->_requestQueue.size();
-  if (queueCount > 0) {
+  std::shared_ptr<TileWorkManager> managerPointer;
+  {
+    std::lock_guard<std::mutex> lock(thiz->_requestsLock);
+
+    if (thiz->_shutdownSignaled)
+      return;
+
+    size_t queueCount = thiz->_requestQueue.size();
+    if (queueCount == 0)
+      return;
+
     // We have work to do
+
+    // Keep another shared pointer to the manager
+    managerPointer = thiz;
 
     size_t slotsTotal = thiz->_maxSimultaneousRequests;
     size_t slotsUsed = thiz->_inFlightRequests.size();
@@ -398,7 +405,7 @@ void TileWorkManager::transitionQueuedWork(
             requestWork->order.requestData.url,
             requestWork->order.requestData.headers)
         .thenImmediately(
-            [thiz, _requestWork = requestWork](
+            [thiz = managerPointer, _requestWork = requestWork](
                 std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               assert(thiz.get());
 
