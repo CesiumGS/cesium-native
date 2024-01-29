@@ -91,7 +91,7 @@ RasterOverlayTileProvider::getTile(
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   assert(pTile->getReferenceCount() == 0);
 
-  this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
+  this->_tileDataBytes -= pTile->getImage().sizeBytes;
 }
 
 CesiumAsync::Future<TileProviderAndTile>
@@ -343,7 +343,17 @@ CesiumAsync::Future<TileProviderAndTile> RasterOverlayTileProvider::doLoad(
                     : RasterOverlayTile::MoreDetailAvailable::No;
             pTile->setState(result.state);
 
-            thiz->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
+            ImageCesium& imageCesium = pTile->getImage();
+
+            // If the image size hasn't been overridden, store the pixelData
+            // size now. We'll add this number to our total memory usage now,
+            // and remove it when the tile is later unloaded, and we must use
+            // the same size in each case.
+            if (imageCesium.sizeBytes < 0) {
+              imageCesium.sizeBytes = int64_t(imageCesium.pixelData.size());
+            }
+
+            thiz->_tileDataBytes += imageCesium.sizeBytes;
 
             thiz->finalizeTileLoad(isThrottledLoad);
 
