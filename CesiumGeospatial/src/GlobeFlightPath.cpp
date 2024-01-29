@@ -30,11 +30,11 @@ GlobeFlightPath::fromEarthCenteredEarthFixedCoordinates(
 }
 
 std::optional<GlobeFlightPath> GlobeFlightPath::fromLongitudeLatitudeHeight(
-    const Cartographic sourceLlm,
-    const Cartographic destinationLlm) {
+    const Cartographic sourceLlh,
+    const Cartographic destinationLlh) {
   return GlobeFlightPath::fromEarthCenteredEarthFixedCoordinates(
-      Ellipsoid::WGS84.cartographicToCartesian(sourceLlm),
-      Ellipsoid::WGS84.cartographicToCartesian(destinationLlm)
+      Ellipsoid::WGS84.cartographicToCartesian(sourceLlh),
+      Ellipsoid::WGS84.cartographicToCartesian(destinationLlh)
   );
 }
 

@@ -40,9 +40,9 @@ public:
    * destination specified in cartographic coordinates (Longitude, Latitude, and
    * Height).
    *
-   * @param sourceLlm The position that the path will begin at in Longitude,
+   * @param sourceLlh The position that the path will begin at in Longitude,
    * Latitude, and Height.
-   * @param destinationLlm The position that the path will end at in Longitude,
+   * @param destinationLlh The position that the path will end at in Longitude,
    * Latitude, and Height.
    *
    * @returns An optional type containing a \ref GlobeFlightPath object
@@ -51,8 +51,8 @@ public:
    * ellipsoid, this will return \ref std::nullopt instead.
    */
   static std::optional<GlobeFlightPath> fromLongitudeLatitudeHeight(
-      const Cartographic sourceLlm,
-      const Cartographic destinationLlm);
+      const Cartographic sourceLlh,
+      const Cartographic destinationLlh);
 
   /**
    * @brief Samples the flight path at the given percentage of its length.

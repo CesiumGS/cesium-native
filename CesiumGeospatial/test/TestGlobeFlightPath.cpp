@@ -45,10 +45,9 @@ TEST_CASE("GlobeFlightPath") {
         5923430.4378960524);
 
     CHECK(flightPath.has_value());
-    CHECK(Math::equalsEpsilon(
-        flightPath.value().getPosition(0.5),
-        expectedResult,
-        Math::Epsilon6));
+    glm::dvec3 actualResult = flightPath.value().getPosition(0.5);
+
+    CHECK(Math::equalsEpsilon(actualResult, expectedResult, Math::Epsilon6));
   }
 
   SECTION("should correctly interpolate height") {
