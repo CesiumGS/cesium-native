@@ -210,7 +210,8 @@ private:
   RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection _overlayCollection;
 
-  TileWorkManager _tileWorkManager;
+  // Thread safe shared pointer
+  std::shared_ptr<TileWorkManager> _pTileWorkManager;
 
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;

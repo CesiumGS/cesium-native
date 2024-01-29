@@ -603,10 +603,10 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
       _pRootTile{std::move(pRootTile)},
-      _tileWorkManager(
+      _pTileWorkManager{std::make_shared<TileWorkManager>(
           externals.asyncSystem,
           externals.pAssetAccessor,
-          externals.pLogger),
+          externals.pLogger)},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -638,10 +638,10 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
-      _tileWorkManager(
+      _pTileWorkManager{std::make_shared<TileWorkManager>(
           externals.asyncSystem,
           externals.pAssetAccessor,
-          externals.pLogger),
+          externals.pLogger)},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -781,10 +781,10 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
-      _tileWorkManager(
+      _pTileWorkManager{std::make_shared<TileWorkManager>(
           externals.asyncSystem,
           externals.pAssetAccessor,
-          externals.pLogger),
+          externals.pLogger)},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -865,6 +865,8 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
+  this->_pTileWorkManager->Shutdown();
+
   assert(this->_tileLoadsInProgress == 0);
   assert(this->_rasterLoadsInProgress == 0);
   this->unloadAll();
@@ -1014,14 +1016,16 @@ void TilesetContentManager::dispatchProcessingWork(
                   if (!newRequestData.headers.empty())
                     _work->order.requestData.headers = newRequestData.headers;
 
-                  _thiz->_tileWorkManager.RequeueWorkForRequest(_work);
+                  TileWorkManager::RequeueWorkForRequest(
+                      _thiz->_pTileWorkManager,
+                      _work);
                 } else {
                   _thiz->setTileContent(
                       *_pTile,
                       std::move(pair.result),
                       pair.pRenderResources);
 
-                  _thiz->_tileWorkManager.SignalWorkComplete(_work);
+                  _thiz->_pTileWorkManager->SignalWorkComplete(_work);
 
                   _thiz->notifyTileDoneLoading(_pTile);
                 }
@@ -1073,9 +1077,11 @@ void TilesetContentManager::dispatchProcessingWork(
                   if (!newRequestData.headers.empty())
                     _work->order.requestData.headers = newRequestData.headers;
 
-                  _thiz->_tileWorkManager.RequeueWorkForRequest(_work);
+                  TileWorkManager::RequeueWorkForRequest(
+                      _thiz->_pTileWorkManager,
+                      _work);
                 } else {
-                  _thiz->_tileWorkManager.SignalWorkComplete(_work);
+                  _thiz->_pTileWorkManager->SignalWorkComplete(_work);
                 }
 
                 _thiz->notifyRasterDoneLoading();
@@ -1095,7 +1101,11 @@ void TilesetContentManager::processLoadRequests(
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
   std::vector<const TileWorkManager::Work*> workCreated;
-  this->_tileWorkManager.TryAddWork(orders, maxTileLoads, workCreated);
+  TileWorkManager::TryAddWork(
+      this->_pTileWorkManager,
+      orders,
+      maxTileLoads,
+      workCreated);
 
   markWorkTilesAsLoading(workCreated);
 
@@ -1113,7 +1123,7 @@ void TilesetContentManager::processLoadRequests(
 
   std::vector<TileWorkManager::Work*> completedWork;
   std::vector<TileWorkManager::Work> failedWork;
-  _tileWorkManager.TakeProcessingWork(
+  _pTileWorkManager->TakeProcessingWork(
       availableSlots,
       completedWork,
       failedWork);
@@ -1485,14 +1495,14 @@ int32_t TilesetContentManager::getNumberOfRastersLoaded() const noexcept {
 }
 
 size_t TilesetContentManager::getTotalPendingCount() {
-  return this->_tileWorkManager.GetTotalPendingCount();
+  return this->_pTileWorkManager->GetTotalPendingCount();
 }
 
 void TilesetContentManager::getRequestsStats(
     size_t& queued,
     size_t& inFlight,
     size_t& done) {
-  return this->_tileWorkManager.GetRequestsStats(queued, inFlight, done);
+  return this->_pTileWorkManager->GetRequestsStats(queued, inFlight, done);
 }
 
 bool TilesetContentManager::tileNeedsWorkerThreadLoading(

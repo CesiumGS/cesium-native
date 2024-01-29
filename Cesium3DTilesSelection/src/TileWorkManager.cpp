@@ -7,12 +7,24 @@ using namespace CesiumAsync;
 namespace Cesium3DTilesSelection {
 
 TileWorkManager::~TileWorkManager() noexcept {
-  {
-    std::lock_guard<std::mutex> lock(_requestsLock);
-    _exitSignaled = true;
+  assert(_requestQueue.empty());
+  assert(_processingQueue.empty());
+  assert(_failedWork.empty());
 
-    // TODO, we can crash here if there are still requests in flight
-  }
+  // _inFlightRequests could still contain pointers that never had their
+  // continuation executed
+}
+
+void TileWorkManager::Shutdown() {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+
+  // We could have requests in flight
+  // Let them complete, but signal no more work should be done
+  _shutdownSignaled = true;
+
+  _requestQueue.clear();
+  _processingQueue.clear();
+  _failedWork.clear();
 }
 
 TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* order) {
@@ -70,6 +82,7 @@ void TileWorkManager::ordersToWork(
 }
 
 void TileWorkManager::TryAddWork(
+    std::shared_ptr<TileWorkManager>& thiz,
     std::vector<Order>& orders,
     size_t maxSimultaneousRequests,
     std::vector<const Work*>& workCreated) {
@@ -92,7 +105,7 @@ void TileWorkManager::TryAddWork(
   // so the dispatcher doesn't starve while we wait for a tick
   size_t betweenFrameBuffer = 10;
   size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
-  size_t pendingRequestCount = this->GetPendingRequestsCount();
+  size_t pendingRequestCount = thiz->GetPendingRequestsCount();
 
   std::vector<Order*> requestOrdersToSubmit;
   if (pendingRequestCount >= maxCountToQueue) {
@@ -121,36 +134,39 @@ void TileWorkManager::TryAddWork(
     return;
 
   {
-    std::lock_guard<std::mutex> lock(_requestsLock);
-    this->_maxSimultaneousRequests = maxSimultaneousRequests;
+    std::lock_guard<std::mutex> lock(thiz->_requestsLock);
+    thiz->_maxSimultaneousRequests = maxSimultaneousRequests;
 
     // Copy load requests into internal work we will own
-    ordersToWork(requestOrdersToSubmit, workCreated);
-    ordersToWork(processingOrders, workCreated);
+    thiz->ordersToWork(requestOrdersToSubmit, workCreated);
+    thiz->ordersToWork(processingOrders, workCreated);
   }
 
   if (requestOrdersToSubmit.size()) {
     SPDLOG_LOGGER_INFO(
-        this->_pLogger,
+        thiz->_pLogger,
         "Sending request work to dispatcher: {} entries",
         requestOrdersToSubmit.size());
 
-    transitionQueuedWork();
+    transitionQueuedWork(thiz);
   }
 }
 
-void TileWorkManager::RequeueWorkForRequest(Work* requestWork) {
+void TileWorkManager::RequeueWorkForRequest(
+    std::shared_ptr<TileWorkManager>& thiz,
+    Work* requestWork) {
   {
-    std::lock_guard<std::mutex> lock(_requestsLock);
+    std::lock_guard<std::mutex> lock(thiz->_requestsLock);
 
     // Assert this work is already owned by this manager
-    assert(_ownedWork.find(requestWork->uniqueId) != _ownedWork.end());
+    assert(
+        thiz->_ownedWork.find(requestWork->uniqueId) != thiz->_ownedWork.end());
 
     // It goes in the request queue
-    _requestQueue.push_back(requestWork);
+    thiz->_requestQueue.push_back(requestWork);
   }
 
-  transitionQueuedWork();
+  transitionQueuedWork(thiz);
 }
 
 void TileWorkManager::SignalWorkComplete(Work* work) {
@@ -188,13 +204,11 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
   _ownedWork.erase(work->uniqueId);
 }
 
-bool TileWorkManager::onRequestFinished(
+void TileWorkManager::onRequestFinished(
     std::shared_ptr<IAssetRequest>& pCompletedRequest,
     const Work* finishedWork) {
-  std::lock_guard<std::mutex> lock(_requestsLock);
 
-  if (_exitSignaled)
-    return false;
+  std::lock_guard<std::mutex> lock(_requestsLock);
 
   assert(pCompletedRequest->url() == finishedWork->order.requestData.url);
 
@@ -206,72 +220,34 @@ bool TileWorkManager::onRequestFinished(
   assert(foundIt != _inFlightRequests.end());
 
   // Handle results
-  std::vector<Work*>& requestWorkVec = foundIt->second;
-  for (Work* requestWork : requestWorkVec) {
+  if (!_shutdownSignaled) {
+    std::vector<Work*>& requestWorkVec = foundIt->second;
+    for (Work* requestWork : requestWorkVec) {
 
-    if (responseStatusCode == 0) {
-      // A response code of 0 is not a valid HTTP code
-      // and probably indicates a non-network error.
-      // Put this work in a failed queue to be handled later
-      _failedWork.push_back(requestWork);
-      continue;
+      if (responseStatusCode == 0) {
+        // A response code of 0 is not a valid HTTP code
+        // and probably indicates a non-network error.
+        // Put this work in a failed queue to be handled later
+        _failedWork.push_back(requestWork);
+        continue;
+      }
+
+      // Add new entry
+      assert(
+          requestWork->completedRequests.find(
+              requestWork->order.requestData.url) ==
+          requestWork->completedRequests.end());
+
+      std::string& key = requestWork->order.requestData.url;
+      requestWork->completedRequests[key] = pCompletedRequest;
+
+      // Put in processing queue
+      _processingQueue.push_back(requestWork);
     }
-
-    // Add new entry
-    assert(
-        requestWork->completedRequests.find(
-            requestWork->order.requestData.url) ==
-        requestWork->completedRequests.end());
-
-    std::string& key = requestWork->order.requestData.url;
-    requestWork->completedRequests[key] = pCompletedRequest;
-
-    // Put in processing queue
-    _processingQueue.push_back(requestWork);
   }
 
   // Remove it
   _inFlightRequests.erase(foundIt);
-
-  return true;
-}
-
-void TileWorkManager::dispatchRequest(Work* requestWork) {
-  this->_pAssetAccessor
-      ->get(
-          this->_asyncSystem,
-          requestWork->order.requestData.url,
-          requestWork->order.requestData.headers)
-      .thenImmediately([_this = this, _requestWork = requestWork](
-                           std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
-        bool requestProcessed =
-            _this->onRequestFinished(pCompletedRequest, _requestWork);
-
-        if (requestProcessed)
-          _this->transitionQueuedWork();
-      });
-}
-
-void TileWorkManager::stageQueuedWork(std::vector<Work*>& workNeedingDispatch) {
-  // Take from back of queue (highest priority).
-  assert(_requestQueue.size() > 0);
-  Work* requestWork = _requestQueue.back();
-  _requestQueue.pop_back();
-
-  // Move to in flight registry
-  auto foundIt = _inFlightRequests.find(requestWork->order.requestData.url);
-  if (foundIt == _inFlightRequests.end()) {
-    // Request doesn't exist, set up a new one
-    std::vector<Work*> newWorkVec;
-    newWorkVec.push_back(requestWork);
-    _inFlightRequests[requestWork->order.requestData.url] = newWorkVec;
-
-    // Copy to our output vector
-    workNeedingDispatch.push_back(requestWork);
-  } else {
-    // Tag on to an existing request. Don't bother staging it. Already is.
-    foundIt->second.push_back(requestWork);
-  }
 }
 
 size_t TileWorkManager::GetPendingRequestsCount() {
@@ -356,41 +332,81 @@ void TileWorkManager::TakeProcessingWork(
   }
 }
 
-void TileWorkManager::transitionQueuedWork() {
+void TileWorkManager::transitionQueuedWork(
+    std::shared_ptr<TileWorkManager>& thiz) {
+  std::lock_guard<std::mutex> lock(thiz->_requestsLock);
+
+  if (thiz->_shutdownSignaled)
+    return;
+
   std::vector<Work*> workNeedingDispatch;
-  {
-    std::lock_guard<std::mutex> lock(_requestsLock);
+  size_t queueCount = thiz->_requestQueue.size();
+  if (queueCount > 0) {
+    // We have work to do
 
-    size_t queueCount = _requestQueue.size();
-    if (queueCount > 0) {
-      // We have work to do
+    size_t slotsTotal = thiz->_maxSimultaneousRequests;
+    size_t slotsUsed = thiz->_inFlightRequests.size();
+    if (slotsUsed < slotsTotal) {
+      // There are free slots
+      size_t slotsAvailable = slotsTotal - slotsUsed;
 
-      size_t slotsTotal = _maxSimultaneousRequests;
-      size_t slotsUsed = _inFlightRequests.size();
-      if (slotsUsed < slotsTotal) {
-        // There are free slots
-        size_t slotsAvailable = slotsTotal - slotsUsed;
+      // Sort our incoming request queue by priority
+      // Want highest priority at back of vector
+      if (queueCount > 1) {
+        std::sort(
+            begin(thiz->_requestQueue),
+            end(thiz->_requestQueue),
+            [](Work* a, Work* b) { return b->order < a->order; });
+      }
 
-        // Sort our incoming request queue by priority
-        // Want highest priority at back of vector
-        if (queueCount > 1) {
-          std::sort(
-              begin(_requestQueue),
-              end(_requestQueue),
-              [](Work* a, Work* b) { return b->order < a->order; });
+      // Stage amount of work specified by caller, or whatever is left
+      size_t dispatchCount = std::min(queueCount, slotsAvailable);
+
+      for (size_t index = 0; index < dispatchCount; ++index) {
+        // Take from back of queue (highest priority).
+        assert(thiz->_requestQueue.size() > 0);
+        Work* requestWork = thiz->_requestQueue.back();
+        thiz->_requestQueue.pop_back();
+
+        // Move to in flight registry
+        auto foundIt =
+            thiz->_inFlightRequests.find(requestWork->order.requestData.url);
+        if (foundIt == thiz->_inFlightRequests.end()) {
+          // Request doesn't exist, set up a new one
+          std::vector<Work*> newWorkVec;
+          newWorkVec.push_back(requestWork);
+          thiz->_inFlightRequests[requestWork->order.requestData.url] =
+              newWorkVec;
+
+          // Copy to our output vector
+          workNeedingDispatch.push_back(requestWork);
+        } else {
+          // Tag on to an existing request. Don't bother staging it. Already
+          // is.
+          foundIt->second.push_back(requestWork);
         }
-
-        // Stage amount of work specified by caller, or whatever is left
-        size_t dispatchCount = std::min(queueCount, slotsAvailable);
-
-        for (size_t index = 0; index < dispatchCount; ++index)
-          stageQueuedWork(workNeedingDispatch);
       }
     }
   }
 
-  for (Work* requestWork : workNeedingDispatch)
-    dispatchRequest(requestWork);
+  for (Work* requestWork : workNeedingDispatch) {
+    // Keep the manager alive while the load is in progress
+    // Capture the shared pointer by value
+    thiz->_pAssetAccessor
+        ->get(
+            thiz->_asyncSystem,
+            requestWork->order.requestData.url,
+            requestWork->order.requestData.headers)
+        .thenImmediately(
+            [thiz, _requestWork = requestWork](
+                std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
+              assert(thiz.get());
+
+              thiz->onRequestFinished(pCompletedRequest, _requestWork);
+
+              transitionQueuedWork(thiz);
+            });
+  }
 }
 
 } // namespace Cesium3DTilesSelection

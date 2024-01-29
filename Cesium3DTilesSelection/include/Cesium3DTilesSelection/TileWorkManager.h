@@ -73,12 +73,15 @@ public:
     }
   };
 
-  void TryAddWork(
+  static void TryAddWork(
+      std::shared_ptr<TileWorkManager>& thiz,
       std::vector<Order>& orders,
       size_t maxSimultaneousRequests,
       std::vector<const Work*>& workCreated);
 
-  void RequeueWorkForRequest(Work* requestWork);
+  static void RequeueWorkForRequest(
+      std::shared_ptr<TileWorkManager>& thiz,
+      Work* requestWork);
 
   void TakeProcessingWork(
       size_t maxCount,
@@ -92,12 +95,12 @@ public:
 
   void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
 
-private:
-  void transitionQueuedWork();
-  void dispatchRequest(Work* requestWork);
-  void stageQueuedWork(std::vector<Work*>& workNeedingDispatch);
+  void Shutdown();
 
-  bool onRequestFinished(
+private:
+  static void transitionQueuedWork(std::shared_ptr<TileWorkManager>& thiz);
+
+  void onRequestFinished(
       std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
       const Work* finishedWork);
 
@@ -109,7 +112,7 @@ private:
 
   // Thread safe members
   std::mutex _requestsLock;
-  bool _exitSignaled = false;
+  bool _shutdownSignaled = false;
 
   std::map<TileSource, Work> _ownedWork;
 
