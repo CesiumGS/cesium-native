@@ -1,4 +1,3 @@
-#include <CesiumGeospatial/GlobeFlightPath.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeFlightPath.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
@@ -34,8 +33,7 @@ std::optional<GlobeFlightPath> GlobeFlightPath::fromLongitudeLatitudeHeight(
     const Cartographic destinationLlh) {
   return GlobeFlightPath::fromEarthCenteredEarthFixedCoordinates(
       Ellipsoid::WGS84.cartographicToCartesian(sourceLlh),
-      Ellipsoid::WGS84.cartographicToCartesian(destinationLlh)
-  );
+      Ellipsoid::WGS84.cartographicToCartesian(destinationLlh));
 }
 
 glm::dvec3
