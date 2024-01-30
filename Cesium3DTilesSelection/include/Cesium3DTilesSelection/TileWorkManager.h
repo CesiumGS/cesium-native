@@ -104,7 +104,9 @@ private:
       std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
       const Work* finishedWork);
 
-  Work* createWorkFromOrder(Order* order);
+  void workToStartingQueue(Work* pWork);
+
+  Work* createWorkFromOrder(Order* pOrder);
 
   void ordersToWork(
       const std::vector<Order*>& orders,

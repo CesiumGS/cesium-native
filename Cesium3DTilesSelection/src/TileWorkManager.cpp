@@ -11,7 +11,7 @@ TileWorkManager::~TileWorkManager() noexcept {
   assert(_processingQueue.empty());
   assert(_failedWork.empty());
 
-  // _inFlightRequests could still contain pointers that never had their
+  // _inFlightRequests could still contain work that never had their
   // continuation executed
 }
 
@@ -27,18 +27,36 @@ void TileWorkManager::Shutdown() {
   _failedWork.clear();
 }
 
-TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* order) {
+void TileWorkManager::workToStartingQueue(Work* pWork) {
+  // Assert this work is already owned by this manager
+  assert(_ownedWork.find(pWork->uniqueId) != _ownedWork.end());
+
+  if (pWork->order.requestData.url.empty()) {
+    _processingQueue.push_back(pWork);
+  } else {
+    auto foundIt = _inFlightRequests.find(pWork->order.requestData.url);
+    if (foundIt == _inFlightRequests.end()) {
+      // The request isn't in flight, add it to the queue
+      _requestQueue.push_back(pWork);
+    } else {
+      // Already in flight, tag along
+      foundIt->second.push_back(pWork);
+    }
+  }
+}
+
+TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* pOrder) {
   bool workHasTileProcessing =
-      std::holds_alternative<TileProcessingData>(order->processingData);
+      std::holds_alternative<TileProcessingData>(pOrder->processingData);
 
   TileSource uniqueId;
   if (workHasTileProcessing) {
     TileProcessingData workTileProcessing =
-        std::get<TileProcessingData>(order->processingData);
+        std::get<TileProcessingData>(pOrder->processingData);
     uniqueId = workTileProcessing.pTile;
   } else {
     RasterProcessingData workRasterProcessing =
-        std::get<RasterProcessingData>(order->processingData);
+        std::get<RasterProcessingData>(pOrder->processingData);
     uniqueId = workRasterProcessing.pRasterTile;
   }
 
@@ -46,18 +64,13 @@ TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* order) {
   assert(_ownedWork.find(uniqueId) == _ownedWork.end());
 
   auto returnPair =
-      _ownedWork.emplace(uniqueId, Work{uniqueId, std::move(*order)});
+      _ownedWork.emplace(uniqueId, Work{uniqueId, std::move(*pOrder)});
   assert(returnPair.second);
 
-  Work* workPointer = &returnPair.first->second;
+  Work* pWork = &returnPair.first->second;
+  workToStartingQueue(pWork);
 
-  // Put this in the appropriate starting queue
-  if (workPointer->order.requestData.url.empty())
-    _processingQueue.push_back(workPointer);
-  else
-    _requestQueue.push_back(workPointer);
-
-  return workPointer;
+  return pWork;
 }
 
 void TileWorkManager::ordersToWork(
@@ -157,13 +170,7 @@ void TileWorkManager::RequeueWorkForRequest(
     Work* requestWork) {
   {
     std::lock_guard<std::mutex> lock(thiz->_requestsLock);
-
-    // Assert this work is already owned by this manager
-    assert(
-        thiz->_ownedWork.find(requestWork->uniqueId) != thiz->_ownedWork.end());
-
-    // It goes in the request queue
-    thiz->_requestQueue.push_back(requestWork);
+    thiz->workToStartingQueue(requestWork);
   }
 
   transitionQueuedWork(thiz);
@@ -335,7 +342,6 @@ void TileWorkManager::TakeProcessingWork(
 void TileWorkManager::transitionQueuedWork(
     std::shared_ptr<TileWorkManager>& thiz) {
   std::vector<Work*> workNeedingDispatch;
-  std::shared_ptr<TileWorkManager> managerPointer;
   {
     std::lock_guard<std::mutex> lock(thiz->_requestsLock);
 
@@ -346,53 +352,57 @@ void TileWorkManager::transitionQueuedWork(
     if (queueCount == 0)
       return;
 
-    // We have work to do
-
-    // Keep another shared pointer to the manager
-    managerPointer = thiz;
-
+    // We have work to do, check if there's a slot for it
     size_t slotsTotal = thiz->_maxSimultaneousRequests;
     size_t slotsUsed = thiz->_inFlightRequests.size();
-    if (slotsUsed < slotsTotal) {
-      // There are free slots
-      size_t slotsAvailable = slotsTotal - slotsUsed;
+    assert(slotsUsed <= slotsTotal);
+    if (slotsUsed == slotsTotal)
+      return;
 
-      // Sort our incoming request queue by priority
-      // Want highest priority at back of vector
-      if (queueCount > 1) {
-        std::sort(
-            begin(thiz->_requestQueue),
-            end(thiz->_requestQueue),
-            [](Work* a, Work* b) { return b->order < a->order; });
+    // At least one slot is open
+    // Sort our incoming request queue by priority
+    // Want highest priority at back of vector
+    std::sort(
+        begin(thiz->_requestQueue),
+        end(thiz->_requestQueue),
+        [](Work* a, Work* b) { return b->order < a->order; });
+
+    // Loop through all pending until no more slots (or pending)
+    while (!thiz->_requestQueue.empty() && slotsUsed < slotsTotal) {
+
+      // Start from back of queue (highest priority).
+      Work* requestWork = thiz->_requestQueue.back();
+      const std::string& workUrl = requestWork->order.requestData.url;
+
+      // The first work with this url needs dispatch
+      workNeedingDispatch.push_back(requestWork);
+
+      // Gather all work with urls that match this
+      using WorkVecIterator = std::vector<Work*>::iterator;
+      std::vector<WorkVecIterator> matchingUrlWork;
+      auto matchIt = thiz->_requestQueue.end() - 1;
+      matchingUrlWork.push_back(matchIt);
+
+      while (matchIt != thiz->_requestQueue.begin()) {
+        --matchIt;
+        Work* otherWork = *matchIt;
+        if (otherWork->order.requestData.url == workUrl)
+          matchingUrlWork.push_back(matchIt);
       }
 
-      // Stage amount of work specified by caller, or whatever is left
-      size_t dispatchCount = std::min(queueCount, slotsAvailable);
-
-      for (size_t index = 0; index < dispatchCount; ++index) {
-        // Take from back of queue (highest priority).
-        assert(thiz->_requestQueue.size() > 0);
-        Work* requestWork = thiz->_requestQueue.back();
-        thiz->_requestQueue.pop_back();
-
-        // Move to in flight registry
-        auto foundIt =
-            thiz->_inFlightRequests.find(requestWork->order.requestData.url);
-        if (foundIt == thiz->_inFlightRequests.end()) {
-          // Request doesn't exist, set up a new one
-          std::vector<Work*> newWorkVec;
-          newWorkVec.push_back(requestWork);
-          thiz->_inFlightRequests[requestWork->order.requestData.url] =
-              newWorkVec;
-
-          // Copy to our output vector
-          workNeedingDispatch.push_back(requestWork);
-        } else {
-          // Tag on to an existing request. Don't bother staging it. Already
-          // is.
-          foundIt->second.push_back(requestWork);
-        }
+      // Set up a new inflight request
+      // Erase related entries from pending queue
+      std::vector<Work*> newWorkVec;
+      assert(
+          thiz->_inFlightRequests.find(workUrl) ==
+          thiz->_inFlightRequests.end());
+      for (WorkVecIterator& it : matchingUrlWork) {
+        newWorkVec.push_back(*it);
+        thiz->_requestQueue.erase(it);
       }
+
+      thiz->_inFlightRequests.emplace(workUrl, std::move(newWorkVec));
+      ++slotsUsed;
     }
   }
 
@@ -405,7 +415,7 @@ void TileWorkManager::transitionQueuedWork(
             requestWork->order.requestData.url,
             requestWork->order.requestData.headers)
         .thenImmediately(
-            [thiz = managerPointer, _requestWork = requestWork](
+            [thiz, _requestWork = requestWork](
                 std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               assert(thiz.get());
 
