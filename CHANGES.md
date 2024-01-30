@@ -20,6 +20,10 @@
 
 - Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
 
+##### Fixes :wrench:
+
+- Fixed a bug where upgraded batch table properties were not always assigned sentinel values, even when such values were available and required.
+
 ### v0.31.0 - 2023-12-14
 
 ##### Additions :tada:
