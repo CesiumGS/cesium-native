@@ -8,7 +8,17 @@
 
 ##### Additions :tada:
 
+- Added support for Web Map Tile Service (WMTS) with `WebMapTileServiceRasterOverlay`.
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
+- Added `applyTextureTransform` property to `TilesetOptions`.
+
+##### Fixes :wrench:
+
+- Fixed `FeatureIdTextureView` ignoring the wrap values specified on the texture's sampler.
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
 
 ##### Fixes :wrench:
 

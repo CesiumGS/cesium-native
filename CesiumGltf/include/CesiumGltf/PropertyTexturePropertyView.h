@@ -6,6 +6,7 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 #include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/SamplerUtility.h"
 
 #include <array>
 #include <cassert>
@@ -189,9 +190,6 @@ ElementType assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
         bytes);
   }
 }
-
-double applySamplerWrapS(const double u, const int32_t wrapS);
-double applySamplerWrapT(const double v, const int32_t wrapT);
 
 std::array<uint8_t, 4> sampleNearestPixel(
     const ImageCesium& image,

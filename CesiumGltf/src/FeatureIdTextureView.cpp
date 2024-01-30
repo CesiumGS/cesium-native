@@ -1,11 +1,14 @@
 #include "CesiumGltf/FeatureIdTextureView.h"
 
+#include "CesiumGltf/SamplerUtility.h"
+
 namespace CesiumGltf {
 FeatureIdTextureView::FeatureIdTextureView() noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
       _texCoordSetIndex(0),
       _channels(),
-      _pImage(nullptr) {}
+      _pImage(nullptr),
+      _pSampler(nullptr) {}
 
 FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
@@ -13,7 +16,8 @@ FeatureIdTextureView::FeatureIdTextureView(
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
       _texCoordSetIndex(featureIdTexture.texCoord),
       _channels(),
-      _pImage(nullptr) {
+      _pImage(nullptr),
+      _pSampler(nullptr) {
   int32_t textureIndex = featureIdTexture.index;
   if (textureIndex < 0 ||
       static_cast<size_t>(textureIndex) >= model.textures.size()) {
@@ -28,12 +32,19 @@ FeatureIdTextureView::FeatureIdTextureView(
     return;
   }
 
-  // Ignore the texture's sampler, we will always use nearest pixel sampling.
   this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_status = FeatureIdTextureViewStatus::ErrorEmptyImage;
     return;
   }
+
+  if (texture.sampler < 0 ||
+      static_cast<size_t>(texture.sampler) >= model.samplers.size()) {
+    this->_status = FeatureIdTextureViewStatus::ErrorInvalidSampler;
+    return;
+  }
+
+  this->_pSampler = &model.samplers[static_cast<size_t>(texture.sampler)];
 
   // TODO: once compressed texture support is merged, check that the image is
   // decompressed here.
@@ -67,6 +78,9 @@ int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
   }
+
+  u = applySamplerWrapS(u, this->_pSampler->wrapS);
+  v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
   // Always use nearest filtering, and use std::floor instead of std::round.
   // This is because filtering is supposed to consider the pixel centers. But
