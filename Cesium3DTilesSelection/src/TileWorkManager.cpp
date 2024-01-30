@@ -8,11 +8,9 @@ namespace Cesium3DTilesSelection {
 
 TileWorkManager::~TileWorkManager() noexcept {
   assert(_requestQueue.empty());
+  assert(_inFlightRequests.empty());
   assert(_processingQueue.empty());
   assert(_failedWork.empty());
-
-  // _inFlightRequests could still contain work that never had their
-  // continuation executed
 }
 
 void TileWorkManager::Shutdown() {
@@ -23,6 +21,7 @@ void TileWorkManager::Shutdown() {
   _shutdownSignaled = true;
 
   _requestQueue.clear();
+  _inFlightRequests.clear();
   _processingQueue.clear();
   _failedWork.clear();
 }
@@ -217,6 +216,9 @@ void TileWorkManager::onRequestFinished(
 
   std::lock_guard<std::mutex> lock(_requestsLock);
 
+  if (_shutdownSignaled)
+    return;
+
   assert(pCompletedRequest->url() == finishedWork->order.requestData.url);
 
   const IAssetResponse* response = pCompletedRequest->response();
@@ -227,30 +229,28 @@ void TileWorkManager::onRequestFinished(
   assert(foundIt != _inFlightRequests.end());
 
   // Handle results
-  if (!_shutdownSignaled) {
-    std::vector<Work*>& requestWorkVec = foundIt->second;
-    for (Work* requestWork : requestWorkVec) {
+  std::vector<Work*>& requestWorkVec = foundIt->second;
+  for (Work* requestWork : requestWorkVec) {
 
-      if (responseStatusCode == 0) {
-        // A response code of 0 is not a valid HTTP code
-        // and probably indicates a non-network error.
-        // Put this work in a failed queue to be handled later
-        _failedWork.push_back(requestWork);
-        continue;
-      }
-
-      // Add new entry
-      assert(
-          requestWork->completedRequests.find(
-              requestWork->order.requestData.url) ==
-          requestWork->completedRequests.end());
-
-      std::string& key = requestWork->order.requestData.url;
-      requestWork->completedRequests[key] = pCompletedRequest;
-
-      // Put in processing queue
-      _processingQueue.push_back(requestWork);
+    if (responseStatusCode == 0) {
+      // A response code of 0 is not a valid HTTP code
+      // and probably indicates a non-network error.
+      // Put this work in a failed queue to be handled later
+      _failedWork.push_back(requestWork);
+      continue;
     }
+
+    // Add new entry
+    assert(
+        requestWork->completedRequests.find(
+            requestWork->order.requestData.url) ==
+        requestWork->completedRequests.end());
+
+    std::string& key = requestWork->order.requestData.url;
+    requestWork->completedRequests[key] = pCompletedRequest;
+
+    // Put in processing queue
+    _processingQueue.push_back(requestWork);
   }
 
   // Remove it
