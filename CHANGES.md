@@ -23,6 +23,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug where upgraded batch table properties were not always assigned sentinel values, even when such values were available and required.
+- Fixed incorrect behavior in `PropertyTablePropertyView` where `arrayOffsets` were treated as byte offsets, instead of as array indices.
 
 ### v0.31.0 - 2023-12-14
 

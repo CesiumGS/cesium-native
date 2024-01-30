@@ -852,8 +852,7 @@ void copyVariableLengthScalarArraysToBuffers(
       ++value;
     }
 
-    prevOffset = static_cast<OffsetType>(
-        prevOffset + jsonArrayMember.Size() * sizeof(ValueType));
+    prevOffset = static_cast<OffsetType>(prevOffset + jsonArrayMember.Size());
 
     ++it;
   }
