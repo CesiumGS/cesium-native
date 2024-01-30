@@ -1,10 +1,7 @@
 #include "CesiumUtility/Gunzip.h"
 
-#include <GSL/span>
 #include <catch2/catch.hpp>
-
 #include <algorithm>
-#include <cstddef>
 
 using namespace CesiumUtility;
 
