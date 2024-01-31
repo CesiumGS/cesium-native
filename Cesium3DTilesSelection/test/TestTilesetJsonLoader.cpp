@@ -602,8 +602,12 @@ TEST_CASE("Test loading individual tile of tileset json") {
     {
       // loader will tell to retry later since it needs subtree
 
-      // XXX - need to fill this
       UrlResponseDataMap responseDataMap;
+      for (auto& pair : pMockAssetAccessor->mockCompletedRequests) {
+        responseDataMap.emplace(
+            pair.first,
+            ResponseData{pair.second.get(), pair.second->response()});
+      }
 
       TileLoadInput loadInput{
           implicitTile,
@@ -622,8 +626,12 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will be able to load the tile the second time around
-      // XXX - need to fill this
       UrlResponseDataMap responseDataMap;
+      for (auto& pair : pMockAssetAccessor->mockCompletedRequests) {
+        responseDataMap.emplace(
+            pair.first,
+            ResponseData{pair.second.get(), pair.second->response()});
+      }
 
       TileLoadInput loadInput{
           implicitTile,
