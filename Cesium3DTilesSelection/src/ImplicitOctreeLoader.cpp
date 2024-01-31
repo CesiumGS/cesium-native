@@ -252,7 +252,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     auto foundIt = responsesByUrl.find(subtreeUrl);
     if (foundIt == responsesByUrl.end()) {
       return asyncSystem.createResolvedFuture<TileLoadResult>(
-          TileLoadResult::createRequestResult(RequestData{subtreeUrl}));
+          TileLoadResult::createRequestResult(RequestData{subtreeUrl, {}}));
     }
 
     return SubtreeAvailability::loadSubtree(
@@ -296,7 +296,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   auto foundIt = responsesByUrl.find(tileUrl);
   if (foundIt == responsesByUrl.end()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createRequestResult(RequestData{tileUrl}));
+        TileLoadResult::createRequestResult(RequestData{tileUrl, {}}));
   }
 
   return requestTileContent(
