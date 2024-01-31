@@ -457,18 +457,25 @@ SubtreeAvailability::loadSubtree(
     uint32_t powerOf2,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const gsl::span<const std::byte>& responseData) {
-  return asyncSystem.runInWorkerThread([powerOf2,
-                                        asyncSystem = asyncSystem,
-                                        pLogger = pLogger,
-                                        responseData = responseData]() mutable {
-    // TODO, put response status code check back in
-    return parseSubtreeRequest(
-        powerOf2,
-        std::move(asyncSystem),
-        std::move(pLogger),
-        responseData);
-  });
+    const CesiumAsync::IAssetResponse* baseResponse) {
+
+  uint16_t statusCode = baseResponse->statusCode();
+  if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
+        std::nullopt);
+  }
+
+  return asyncSystem.runInWorkerThread(
+      [powerOf2,
+       asyncSystem = asyncSystem,
+       pLogger = pLogger,
+       responseData = baseResponse->data()]() mutable {
+        return parseSubtreeRequest(
+            powerOf2,
+            std::move(asyncSystem),
+            std::move(pLogger),
+            responseData);
+      });
 }
 
 bool SubtreeAvailability::isAvailable(

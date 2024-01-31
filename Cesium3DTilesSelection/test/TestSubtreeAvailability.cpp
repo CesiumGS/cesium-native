@@ -290,7 +290,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       2,
       asyncSystem,
       spdlog::default_logger(),
-      testResponse->data());
+      testResponse);
 
   asyncSystem.dispatchMainThreadTasks();
   return subtreeFuture.wait();
@@ -538,13 +538,13 @@ TEST_CASE("Test parsing subtree format") {
     auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
     CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
-    gsl::span<const std::byte> responseData(buffer);
+    auto foundIt = pMockAssetAccessor->mockCompletedRequests.find("test");
 
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
         2,
         asyncSystem,
         spdlog::default_logger(),
-        responseData);
+        foundIt->second->response());
 
     asyncSystem.dispatchMainThreadTasks();
     auto parsedSubtree = subtreeFuture.wait();

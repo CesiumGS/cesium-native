@@ -259,7 +259,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                3,
                asyncSystem,
                pLogger,
-               foundIt->second.pResponse->data())
+               foundIt->second.pResponse)
         .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
                                                 subtreeAvailability) mutable {
           if (subtreeAvailability) {

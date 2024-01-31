@@ -11,12 +11,12 @@ class TilesetMetadata;
 struct TileProcessingData {
   Tile* pTile = nullptr;
   TileProcessingCallback tileCallback = {};
-  std::vector<CesiumGeospatial::Projection> projections {};
+  std::vector<CesiumGeospatial::Projection> projections{};
 };
 
 struct RasterProcessingData {
   RasterMappedTo3DTile* pRasterTile = nullptr;
-  RasterProcessingCallback rasterCallback= {};
+  RasterProcessingCallback rasterCallback = {};
 };
 
 class TileWorkManager {
