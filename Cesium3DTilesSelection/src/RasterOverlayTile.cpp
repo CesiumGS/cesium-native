@@ -19,7 +19,7 @@ RasterOverlayTile::RasterOverlayTile(
       _targetScreenPixels(0.0),
       _rectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
       _tileCredits(),
-      _state(RasterLoadState::Placeholder),
+      _state(LoadState::Placeholder),
       _image(),
       _pRendererResources(nullptr),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
@@ -32,7 +32,7 @@ RasterOverlayTile::RasterOverlayTile(
       _targetScreenPixels(targetScreenPixels),
       _rectangle(rectangle),
       _tileCredits(),
-      _state(RasterLoadState::Unloaded),
+      _state(LoadState::Unloaded),
       _image(),
       _pRendererResources(nullptr),
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
@@ -46,10 +46,10 @@ RasterOverlayTile::~RasterOverlayTile() {
       tileProvider.getPrepareRendererResources();
 
   if (pPrepareRendererResources) {
-    void* pLoadThreadResult = this->getState() == RasterLoadState::Done
+    void* pLoadThreadResult = this->getState() == LoadState::Done
                                   ? nullptr
                                   : this->_pRendererResources;
-    void* pMainThreadResult = this->getState() == RasterLoadState::Done
+    void* pMainThreadResult = this->getState() == LoadState::Done
                                   ? this->_pRendererResources
                                   : nullptr;
 
@@ -72,7 +72,7 @@ const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
 }
 
 void RasterOverlayTile::loadInMainThread() {
-  if (this->getState() != RasterLoadState::Loaded) {
+  if (this->getState() != LoadState::Loaded) {
     return;
   }
 
@@ -83,10 +83,10 @@ void RasterOverlayTile::loadInMainThread() {
           *this,
           this->_pRendererResources);
 
-  this->setState(RasterLoadState::Done);
+  this->setState(LoadState::Done);
 }
 
-void RasterOverlayTile::setState(RasterLoadState newState) noexcept {
+void RasterOverlayTile::setState(LoadState newState) noexcept {
   this->_state = newState;
 }
 

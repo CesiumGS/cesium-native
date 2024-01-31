@@ -258,11 +258,13 @@ public:
   /**
    * @brief Loads a tile immediately, without throttling requests.
    *
-   * If the tile is not in the `Tile::RasterLoadState::Unloading` state, this
-   * method returns without doing anything. Otherwise, it puts the tile into the
-   * `Tile::RasterLoadState::Loading` state and begins the asynchronous process
-   * to load the tile. When the process completes, the tile will be in the
-   * `Tile::RasterLoadState::Loaded` or `Tile::RasterLoadState::Failed` state.
+   * If the tile is not in the `RasterOverlayTile::LoadState::Unloading`
+   * state, this method returns without doing anything. Otherwise, it puts the
+   * tile into the `RasterOverlayTile::LoadState::Loading` state and
+   * begins the asynchronous process to load the tile. When the process
+   * completes, the tile will be in the
+   * `RasterOverlayTile::LoadState::Loaded` or
+   * `RasterOverlayTile::LoadState::Failed` state.
    *
    * Calling this method on many tiles at once can result in very slow
    * performance. Consider using {@link loadTileThrottled} instead.
@@ -278,13 +280,14 @@ public:
    * @brief Loads a tile, unless there are too many tile loads already in
    * progress.
    *
-   * If the tile is not in the `Tile::RasterLoadState::Unloading` state, this
-   * method returns true without doing anything. If too many tile loads are
-   * already in flight, it returns false without doing anything. Otherwise, it
-   * puts the tile into the `Tile::LoadState::Loading` state, begins the
-   * asynchronous process to load the tile, and returns true. When the process
-   * completes, the tile will be in the `Tile::RasterLoadState::Loaded` or
-   * `Tile::RasterLoadState::Failed` state.
+   * If the tile is not in the `RasterOverlayTile::LoadState::Unloading`
+   * state, this method returns true without doing anything. If too many tile
+   * loads are already in flight, it returns false without doing anything.
+   * Otherwise, it puts the tile into the
+   * `RasterOverlayTile::LoadState::Loading` state, begins the asynchronous
+   * process to load the tile, and returns true. When the process completes, the
+   * tile will be in the `RasterOverlayTile::LoadState::Loaded` or
+   * `RasterOverlayTile::LoadState::Failed` state.
    *
    * @param tile The tile to load.
    * @returns True if the tile load process is started or is already complete,

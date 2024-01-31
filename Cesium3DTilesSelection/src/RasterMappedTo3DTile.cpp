@@ -76,7 +76,9 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
   // If the loading tile has failed, try its parent's loading tile.
   Tile* pTile = &tile;
   while (this->_pLoadingTile &&
-         this->_pLoadingTile->getState() == RasterLoadState::Failed && pTile) {
+         this->_pLoadingTile->getState() ==
+             RasterOverlayTile::LoadState::Failed &&
+         pTile) {
     // Note when our original tile fails to load so that we don't report more
     // data available. This means - by design - we won't refine past a failed
     // tile.
@@ -95,7 +97,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
   // If the loading tile is now ready, make it the ready tile.
   if (this->_pLoadingTile &&
-      this->_pLoadingTile->getState() >= RasterLoadState::Loaded) {
+      this->_pLoadingTile->getState() >= RasterOverlayTile::LoadState::Loaded) {
     // Unattach the old tile
     if (this->_pReadyTile && this->getState() != AttachmentState::Unattached) {
       prepareRendererResources.detachRasterInMainThread(
@@ -123,13 +125,15 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
       pCandidate = findTileOverlay(
           *pTile,
           this->_pLoadingTile->getTileProvider().getOwner());
-      if (pCandidate && pCandidate->getState() >= RasterLoadState::Loaded) {
+      if (pCandidate &&
+          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
         break;
       }
       pTile = pTile->getParent();
     }
 
-    if (pCandidate && pCandidate->getState() >= RasterLoadState::Loaded &&
+    if (pCandidate &&
+        pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
         this->_pReadyTile != pCandidate) {
       if (this->getState() != AttachmentState::Unattached) {
         prepareRendererResources.detachRasterInMainThread(
@@ -213,7 +217,7 @@ CesiumAsync::Future<RasterLoadResult> RasterMappedTo3DTile::loadThrottled(
   RasterOverlayTile* pLoading = this->getLoadingTile();
   if (!pLoading) {
     RasterLoadResult result;
-    result.state = RasterLoadState::Failed;
+    result.state = RasterOverlayTile::LoadState::Failed;
     return callerAsync.createResolvedFuture<RasterLoadResult>(
         std::move(result));
   }

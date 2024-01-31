@@ -306,7 +306,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
       // If not there, request it and come back later
       RasterLoadResult loadResult;
       loadResult.requestData = requestData;
-      loadResult.state = RasterLoadState::RequestRequired;
+      loadResult.state = RasterOverlayTile::LoadState::RequestRequired;
 
       Future<LoadedQuadtreeImage> future =
           this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
@@ -319,7 +319,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     // Error occurred while discovering request
     RasterLoadResult loadResult;
     loadResult.errors.push_back(errorString);
-    loadResult.state = RasterLoadState::Failed;
+    loadResult.state = RasterOverlayTile::LoadState::Failed;
 
     Future<LoadedQuadtreeImage> future =
         this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
@@ -366,7 +366,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                             asyncSystem = this->getAsyncSystem(),
                             loadParentTile = std::move(loadParentTile)](
                                RasterLoadResult&& result) {
-            if (result.state == RasterLoadState::RequestRequired) {
+            if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
               // Pass through request
               return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
                   std::make_shared<RasterLoadResult>(std::move(result)),
@@ -521,7 +521,8 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
         // Do this one at a time, but ideally, we'd do all at once
         for (auto image : images) {
           assert(image.pResult);
-          if (image.pResult->state == RasterLoadState::RequestRequired) {
+          if (image.pResult->state ==
+              RasterOverlayTile::LoadState::RequestRequired) {
             assert(!image.pResult->requestData.url.empty());
             return *image.pResult;
           }

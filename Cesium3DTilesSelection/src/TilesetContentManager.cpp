@@ -69,7 +69,8 @@ void unloadTileRecursively(
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
-    if (pLoading && pLoading->getState() == RasterLoadState::Unloaded) {
+    if (pLoading &&
+        pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
       return true;
     }
   }
@@ -954,9 +955,9 @@ void TilesetContentManager::markWorkTilesAsLoading(
       RasterOverlayTile* pLoading =
           rasterProcessing.pRasterTile->getLoadingTile();
       assert(pLoading);
-      assert(pLoading->getState() == RasterLoadState::Unloaded);
+      assert(pLoading->getState() == RasterOverlayTile::LoadState::Unloaded);
 
-      pLoading->setState(RasterLoadState::Loading);
+      pLoading->setState(RasterOverlayTile::LoadState::Loading);
     }
   }
 }
@@ -984,7 +985,7 @@ void TilesetContentManager::handleFailedRequestWork(
           rasterProcessing.pRasterTile->getLoadingTile();
       assert(pLoading);
 
-      pLoading->setState(RasterLoadState::Failed);
+      pLoading->setState(RasterOverlayTile::LoadState::Failed);
     }
   }
 }
@@ -1070,32 +1071,32 @@ void TilesetContentManager::dispatchProcessingWork(
               _externals.asyncSystem,
               responseDataMap,
               rasterProcessing.rasterCallback)
-          .thenInMainThread(
-              [_thiz = thiz, _work = work](RasterLoadResult&& result) mutable {
-                if (result.state == RasterLoadState::RequestRequired) {
-                  // This work goes back into the work manager queue
+          .thenInMainThread([_thiz = thiz,
+                             _work = work](RasterLoadResult&& result) mutable {
+            if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
+              // This work goes back into the work manager queue
 
-                  // Make sure we're not requesting something we have
-                  assert(!result.requestData.url.empty());
-                  assert(
-                      _work->completedRequests.find(result.requestData.url) ==
-                      _work->completedRequests.end());
+              // Make sure we're not requesting something we have
+              assert(!result.requestData.url.empty());
+              assert(
+                  _work->completedRequests.find(result.requestData.url) ==
+                  _work->completedRequests.end());
 
-                  // Override its request data with was specified
-                  RequestData& newRequestData = result.requestData;
-                  _work->order.requestData.url = newRequestData.url;
-                  if (!newRequestData.headers.empty())
-                    _work->order.requestData.headers = newRequestData.headers;
+              // Override its request data with was specified
+              RequestData& newRequestData = result.requestData;
+              _work->order.requestData.url = newRequestData.url;
+              if (!newRequestData.headers.empty())
+                _work->order.requestData.headers = newRequestData.headers;
 
-                  TileWorkManager::RequeueWorkForRequest(
-                      _thiz->_pTileWorkManager,
-                      _work);
-                } else {
-                  _thiz->_pTileWorkManager->SignalWorkComplete(_work);
-                }
+              TileWorkManager::RequeueWorkForRequest(
+                  _thiz->_pTileWorkManager,
+                  _work);
+            } else {
+              _thiz->_pTileWorkManager->SignalWorkComplete(_work);
+            }
 
-                _thiz->notifyRasterDoneLoading();
-              });
+            _thiz->notifyRasterDoneLoading();
+          });
     }
   }
 }
@@ -1678,8 +1679,8 @@ void TilesetContentManager::updateDoneState(
       RasterMappedTo3DTile& mappedRasterTile = rasterTiles[i];
 
       RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-      if (pLoadingTile &&
-          pLoadingTile->getState() == RasterLoadState::Placeholder) {
+      if (pLoadingTile && pLoadingTile->getState() ==
+                              RasterOverlayTile::LoadState::Placeholder) {
         RasterOverlayTileProvider* pProvider =
             this->_overlayCollection.findTileProviderForOverlay(
                 pLoadingTile->getOverlay());

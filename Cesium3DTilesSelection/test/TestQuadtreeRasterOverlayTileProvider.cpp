@@ -191,11 +191,11 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     pProvider->loadTile(*pTile, responseDataMap, rasterCallback);
 
-    while (pTile->getState() != RasterLoadState::Loaded) {
+    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
     }
 
-    CHECK(pTile->getState() == RasterLoadState::Loaded);
+    CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
 
     const ImageCesium& image = pTile->getImage();
     CHECK(image.width > 0);
@@ -266,11 +266,11 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     pProvider->loadTile(*pTile, responseDataMap, rasterCallback);
 
-    while (pTile->getState() != RasterLoadState::Loaded) {
+    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
     }
 
-    CHECK(pTile->getState() == RasterLoadState::Loaded);
+    CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
 
     const ImageCesium& image = pTile->getImage();
     CHECK(image.width > 0);

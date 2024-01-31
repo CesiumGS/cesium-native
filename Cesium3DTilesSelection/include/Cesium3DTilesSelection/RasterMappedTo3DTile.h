@@ -24,16 +24,16 @@ struct RasterLoadResult {
 
   RequestData requestData = {};
 
-  RasterLoadState state = RasterLoadState::Unloaded;
+  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
 
   void* pRendererResources = nullptr;
 };
 
-typedef std::function<CesiumAsync::Future<RasterLoadResult>(
-    RasterOverlayTile&,
-    RasterOverlayTileProvider*,
-    const UrlResponseDataMap&)>
-    RasterProcessingCallback;
+using RasterProcessingCallback =
+    std::function<CesiumAsync::Future<RasterLoadResult>(
+        RasterOverlayTile&,
+        RasterOverlayTileProvider*,
+        const UrlResponseDataMap&)>;
 
 /**
  * @brief The result of applying a {@link RasterOverlayTile} to geometry.
