@@ -232,9 +232,10 @@ void TileWorkManager::onRequestFinished(
   std::vector<Work*>& requestWorkVec = foundIt->second;
   for (Work* requestWork : requestWorkVec) {
 
-    if (responseStatusCode == 0) {
+    if (responseStatusCode == 0 || responseStatusCode == 404) {
       // A response code of 0 is not a valid HTTP code
       // and probably indicates a non-network error.
+      // 404 is not found, which is failure
       // Put this work in a failed queue to be handled later
       _failedWork.push_back(requestWork);
       continue;
