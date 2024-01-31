@@ -276,7 +276,9 @@
       "extensionName": "KHR_texture_transform",
       "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
       "attachTo": [
-        "textureInfo"
+        "textureInfo",
+        "material.occlusionTextureInfo",
+        "material.normalTextureInfo"
       ]
     },
     {
