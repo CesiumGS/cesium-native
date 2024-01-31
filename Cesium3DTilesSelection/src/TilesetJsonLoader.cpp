@@ -928,10 +928,10 @@ void TilesetJsonLoader::getLoadWork(
 
   outRequest.url = CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
 
-  outCallback =
-      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
-        return loader->loadTileContent(loadInput);
-      };
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
 }
 
 TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {

@@ -42,10 +42,10 @@ public:
 
   void getLoadWork(Tile*, RequestData&, TileProcessingCallback& outCallback)
       override {
-    outCallback =
-        [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
-          return loader->loadTileContent(loadInput);
-        };
+    outCallback = [](const TileLoadInput& loadInput,
+                     TilesetContentLoader* loader) {
+      return loader->loadTileContent(loadInput);
+    };
   };
 
   TileChildrenResult

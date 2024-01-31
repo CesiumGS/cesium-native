@@ -490,10 +490,9 @@ void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
     RequestData&,
     RasterProcessingCallback& outCallback) {
   // loadTileImage will control request / processing flow
-  outCallback = [this](
-                    RasterOverlayTile& overlayTile,
-                    RasterOverlayTileProvider* provider,
-                    const UrlResponseDataMap& responsesByUrl) {
+  outCallback = [](RasterOverlayTile& overlayTile,
+                   RasterOverlayTileProvider* provider,
+                   const UrlResponseDataMap& responsesByUrl) {
     QuadtreeRasterOverlayTileProvider* thisProvider =
         static_cast<QuadtreeRasterOverlayTileProvider*>(provider);
     return thisProvider->loadTileImage(overlayTile, responsesByUrl);

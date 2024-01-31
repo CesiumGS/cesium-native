@@ -1513,10 +1513,10 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
 
     virtual void
     getLoadWork(Tile*, RequestData&, TileProcessingCallback& outCallback) {
-      outCallback =
-          [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
-            return loader->loadTileContent(loadInput);
-          };
+      outCallback = [](const TileLoadInput& loadInput,
+                       TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
     };
 
     virtual CesiumAsync::Future<TileLoadResult>

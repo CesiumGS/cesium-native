@@ -92,10 +92,10 @@ void RasterOverlayUpsampler::getLoadWork(
     Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
-  outCallback =
-      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
-        return loader->loadTileContent(loadInput);
-      };
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
 }
 
 TileChildrenResult
