@@ -151,7 +151,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
            this->getOwner().getOptions().ktx2TranscodeTargets]() mutable {
         CESIUM_TRACE("load image");
 
-        if (statusCode != 0 && statusCode < 200 || statusCode >= 300) {
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
           std::string message = "Image response code " +
                                 std::to_string(statusCode) + " for " + url;
           return asyncSystem.createResolvedFuture<RasterLoadResult>(
