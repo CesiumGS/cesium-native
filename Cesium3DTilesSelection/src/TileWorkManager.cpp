@@ -285,7 +285,7 @@ void TileWorkManager::TakeProcessingWork(
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // All failed requests go out
-  if (_failedWork.empty()) {
+  if (!_failedWork.empty()) {
     // Failed work immediately releases ownership to caller
     for (auto work : _failedWork) {
       auto foundIt = _ownedWork.find(work->uniqueId);
@@ -295,6 +295,7 @@ void TileWorkManager::TakeProcessingWork(
 
       _ownedWork.erase(foundIt);
     }
+    _failedWork.clear();
   }
 
   // If no room for completed work, stop here
