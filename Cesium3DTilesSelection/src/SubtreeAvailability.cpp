@@ -191,11 +191,12 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
       std::move(buffers)};
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
+CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& responseData,
+    const std::string& baseUrl,
+    const UrlResponseDataMap& additionalResponses,
     rapidjson::Document&& subtreeJson,
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
@@ -215,8 +216,8 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
             pLogger,
             "Subtree Buffer requires byteLength property.");
         return asyncSystem
-            .createResolvedFuture<std::optional<SubtreeAvailability>>(
-                std::nullopt);
+            .createResolvedFuture<SubtreeAvailability::LoadResult>(
+                {std::nullopt, {}});
       }
 
       size_t byteLength = byteLengthIt->value.GetUint();
@@ -228,12 +229,27 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
               pLogger,
               "Subtree Buffer has uri field but it's not string.");
           return asyncSystem
-              .createResolvedFuture<std::optional<SubtreeAvailability>>(
-                  std::nullopt);
+              .createResolvedFuture<SubtreeAvailability::LoadResult>(
+                  {std::nullopt, {}});
         }
 
-        requestBuffers.emplace_back(
-            requestBuffer(asyncSystem, i, responseData, byteLength));
+        std::string bufferUrl =
+            CesiumUtility::Uri::resolve(baseUrl, uriIt->value.GetString());
+
+        // Find this buffer in our responses
+        auto bufferUrlIt = additionalResponses.find(bufferUrl);
+        if (bufferUrlIt == additionalResponses.end()) {
+          // We need to request this buffer
+          return asyncSystem
+              .createResolvedFuture<SubtreeAvailability::LoadResult>(
+                  {std::nullopt, {bufferUrl}});
+        }
+
+        requestBuffers.emplace_back(requestBuffer(
+            asyncSystem,
+            i,
+            bufferUrlIt->second.pResponse->data(),
+            byteLength));
       } else if (
           !internalBuffer.empty() && internalBuffer.size() >= byteLength) {
         resolvedBuffers[i] = std::move(internalBuffer);
@@ -254,29 +270,37 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtree(
                   std::move(requestedBuffer.data);
             }
 
-            return createSubtreeAvailability(
-                powerOf2,
-                subtreeJson,
-                std::move(resolvedBuffers));
+            std::optional<SubtreeAvailability> availability =
+                createSubtreeAvailability(
+                    powerOf2,
+                    subtreeJson,
+                    std::move(resolvedBuffers));
+
+            return SubtreeAvailability::LoadResult{availability, {}};
           });
     }
   }
 
-  return asyncSystem.createResolvedFuture(createSubtreeAvailability(
+  std::optional<SubtreeAvailability> availability = createSubtreeAvailability(
       powerOf2,
       subtreeJson,
-      std::move(resolvedBuffers)));
+      std::move(resolvedBuffers));
+
+  return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
+      {availability, {}});
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
+CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& responseData) {
+    const std::string& baseUrl,
+    const gsl::span<const std::byte>& baseResponseData,
+    const UrlResponseDataMap& additionalResponses) {
   rapidjson::Document subtreeJson;
   subtreeJson.Parse(
-      reinterpret_cast<const char*>(responseData.data()),
-      responseData.size());
+      reinterpret_cast<const char*>(baseResponseData.data()),
+      baseResponseData.size());
   if (subtreeJson.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -284,60 +308,62 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseJsonSubtreeRequest(
         "{}",
         subtreeJson.GetParseError(),
         subtreeJson.GetErrorOffset());
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
-        std::nullopt);
+    return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
+        {std::nullopt, {}});
   }
 
   return parseJsonSubtree(
       powerOf2,
       std::move(asyncSystem),
       std::move(pLogger),
-      responseData,
+      baseUrl,
+      additionalResponses,
       std::move(subtreeJson),
       {});
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailability>>
-parseBinarySubtreeRequest(
+CesiumAsync::Future<SubtreeAvailability::LoadResult> parseBinarySubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& data) {
+    const std::string& baseUrl,
+    const gsl::span<const std::byte>& baseReponseData,
+    const UrlResponseDataMap& additionalResponses) {
 
   size_t headerLength = sizeof(SubtreeHeader);
-  if (data.size() < headerLength) {
+  if (baseReponseData.size() < headerLength) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "The Subtree file is invalid because it is too "
         "small to include a Subtree header.");
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
-        std::nullopt);
+    return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
+        {std::nullopt, {}});
   }
 
   const SubtreeHeader* header =
-      reinterpret_cast<const SubtreeHeader*>(data.data());
-  if (header->jsonByteLength > data.size() - headerLength) {
+      reinterpret_cast<const SubtreeHeader*>(baseReponseData.data());
+  if (header->jsonByteLength > baseReponseData.size() - headerLength) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "The Subtree file is invalid because it is too "
         "small to include the jsonByteLength specified in its header.");
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
-        std::nullopt);
+    return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
+        {std::nullopt, {}});
   }
 
   if (header->binaryByteLength >
-      data.size() - headerLength - header->jsonByteLength) {
+      baseReponseData.size() - headerLength - header->jsonByteLength) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "The Subtree file is invalid because it is too "
         "small to include the binaryByteLength specified in its header.");
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
-        std::nullopt);
+    return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
+        {std::nullopt, {}});
   }
 
   rapidjson::Document subtreeJson;
   subtreeJson.Parse(
-      reinterpret_cast<const char*>(data.data() + headerLength),
+      reinterpret_cast<const char*>(baseReponseData.data() + headerLength),
       header->jsonByteLength);
   if (subtreeJson.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
@@ -346,15 +372,16 @@ parseBinarySubtreeRequest(
         "{}",
         subtreeJson.GetParseError(),
         subtreeJson.GetErrorOffset());
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
-        std::nullopt);
+    return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
+        {std::nullopt, {}});
   }
 
   // get the internal buffer if there is any
   std::vector<std::byte> internalBuffer;
   if (header->binaryByteLength > 0) {
     using vector_diff_type = typename std::vector<std::byte>::difference_type;
-    auto begin = data.begin() + static_cast<vector_diff_type>(headerLength) +
+    auto begin = baseReponseData.begin() +
+                 static_cast<vector_diff_type>(headerLength) +
                  static_cast<vector_diff_type>(header->jsonByteLength);
     auto end = begin + static_cast<vector_diff_type>(header->binaryByteLength);
     internalBuffer.insert(internalBuffer.end(), begin, end);
@@ -364,22 +391,25 @@ parseBinarySubtreeRequest(
       powerOf2,
       std::move(asyncSystem),
       std::move(pLogger),
-      data,
+      baseUrl,
+      additionalResponses,
       std::move(subtreeJson),
       std::move(internalBuffer));
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
+CesiumAsync::Future<SubtreeAvailability::LoadResult> parseSubtreeRequest(
     uint32_t powerOf2,
     CesiumAsync::AsyncSystem&& asyncSystem,
     std::shared_ptr<spdlog::logger>&& pLogger,
-    const gsl::span<const std::byte>& data) {
+    const std::string& baseUrl,
+    const gsl::span<const std::byte>& baseResponseData,
+    const UrlResponseDataMap& additionalResponses) {
 
   // check if this is binary subtree
   bool isBinarySubtree = true;
-  if (data.size() >= 4) {
+  if (baseResponseData.size() >= 4) {
     for (std::size_t i = 0; i < 4; ++i) {
-      if (data[i] != static_cast<std::byte>(SUBTREE_MAGIC[i])) {
+      if (baseResponseData[i] != static_cast<std::byte>(SUBTREE_MAGIC[i])) {
         isBinarySubtree = false;
         break;
       }
@@ -391,13 +421,17 @@ CesiumAsync::Future<std::optional<SubtreeAvailability>> parseSubtreeRequest(
         powerOf2,
         std::move(asyncSystem),
         std::move(pLogger),
-        data);
+        baseUrl,
+        baseResponseData,
+        additionalResponses);
   } else {
     return parseJsonSubtreeRequest(
         powerOf2,
         std::move(asyncSystem),
         std::move(pLogger),
-        data);
+        baseUrl,
+        baseResponseData,
+        additionalResponses);
   }
 }
 } // namespace
@@ -452,29 +486,34 @@ bool SubtreeAvailability::isSubtreeAvailable(
       this->_subtreeAvailability);
 }
 
-CesiumAsync::Future<std::optional<SubtreeAvailability>>
+CesiumAsync::Future<SubtreeAvailability::LoadResult>
 SubtreeAvailability::loadSubtree(
     uint32_t powerOf2,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const CesiumAsync::IAssetResponse* baseResponse) {
+    const std::string& baseUrl,
+    const CesiumAsync::IAssetResponse* baseResponse,
+    const UrlResponseDataMap& additionalResponses) {
 
   uint16_t statusCode = baseResponse->statusCode();
   if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-    return asyncSystem.createResolvedFuture<std::optional<SubtreeAvailability>>(
-        std::nullopt);
+    return asyncSystem.createResolvedFuture<LoadResult>({std::nullopt, {}});
   }
 
   return asyncSystem.runInWorkerThread(
       [powerOf2,
        asyncSystem = asyncSystem,
        pLogger = pLogger,
-       responseData = baseResponse->data()]() mutable {
+       baseUrl = baseUrl,
+       baseResponseData = baseResponse->data(),
+       additionalResponses = additionalResponses]() mutable {
         return parseSubtreeRequest(
             powerOf2,
             std::move(asyncSystem),
             std::move(pLogger),
-            responseData);
+            baseUrl,
+            baseResponseData,
+            additionalResponses);
       });
 }
 

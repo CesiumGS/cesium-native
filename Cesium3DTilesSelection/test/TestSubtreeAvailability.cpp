@@ -286,14 +286,23 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       testEntry->second->response();
   assert(testResponse);
 
+  UrlResponseDataMap additionalResponses;
+  auto bufferEntry = pMockAssetAccessor->mockCompletedRequests.find("buffer");
+  additionalResponses.emplace(
+      bufferEntry->first,
+      ResponseData{bufferEntry->second.get(), bufferEntry->second->response()});
+
   auto subtreeFuture = SubtreeAvailability::loadSubtree(
       2,
       asyncSystem,
       spdlog::default_logger(),
-      testResponse);
+      "test",
+      testResponse,
+      additionalResponses);
 
   asyncSystem.dispatchMainThreadTasks();
-  return subtreeFuture.wait();
+  auto loadResult = subtreeFuture.wait();
+  return loadResult.first;
 }
 } // namespace
 
@@ -540,14 +549,19 @@ TEST_CASE("Test parsing subtree format") {
 
     auto foundIt = pMockAssetAccessor->mockCompletedRequests.find("test");
 
+    UrlResponseDataMap additionalResponses;
+
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
         2,
         asyncSystem,
         spdlog::default_logger(),
-        foundIt->second->response());
+        "test",
+        foundIt->second->response(),
+        additionalResponses);
 
     asyncSystem.dispatchMainThreadTasks();
-    auto parsedSubtree = subtreeFuture.wait();
+    auto loadResult = subtreeFuture.wait();
+    auto parsedSubtree = loadResult.first;
     CHECK(parsedSubtree != std::nullopt);
 
     for (const auto& tileID : availableTileIDs) {

@@ -38,11 +38,15 @@ public:
 
   bool isSubtreeAvailable(uint64_t relativeSubtreeMortonId) const noexcept;
 
-  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
+  using LoadResult = std::pair<std::optional<SubtreeAvailability>, RequestData>;
+
+  static CesiumAsync::Future<LoadResult> loadSubtree(
       uint32_t powerOf2,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumAsync::IAssetResponse* baseResponse);
+      const std::string& baseUrl,
+      const CesiumAsync::IAssetResponse* baseResponse,
+      const UrlResponseDataMap& additionalResponses);
 
 private:
   bool isAvailable(

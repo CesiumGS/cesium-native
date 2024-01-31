@@ -259,18 +259,26 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                3,
                asyncSystem,
                pLogger,
-               foundIt->second.pResponse)
-        .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
-                                                subtreeAvailability) mutable {
-          if (subtreeAvailability) {
-            this->addSubtreeAvailability(
-                subtreeID,
-                std::move(*subtreeAvailability));
-          }
+               subtreeUrl,
+               foundIt->second.pResponse,
+               responsesByUrl)
+        .thenInMainThread(
+            [this,
+             subtreeID](SubtreeAvailability::LoadResult&& loadResult) mutable {
+              if (loadResult.first) {
+                // Availability success
+                this->addSubtreeAvailability(
+                    subtreeID,
+                    std::move(*loadResult.first));
+              } else if (!loadResult.second.url.empty()) {
+                // No availability, but a url was requested
+                // Let this work go back into the request queue
+                return TileLoadResult::createRequestResult(loadResult.second);
+              }
 
-          // tell client to retry later
-          return TileLoadResult::createRetryLaterResult();
-        });
+              // tell client to retry later
+              return TileLoadResult::createRetryLaterResult();
+            });
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
