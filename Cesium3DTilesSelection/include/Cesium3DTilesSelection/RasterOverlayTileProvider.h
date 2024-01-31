@@ -313,7 +313,7 @@ protected:
       const UrlResponseDataMap& responsesByUrl) = 0;
 
   virtual void getLoadTileImageWork(
-      RasterOverlayTile& overlayTile,
+      const RasterOverlayTile& overlayTile,
       RequestData& outRequest,
       RasterProcessingCallback& outCallback) = 0;
 

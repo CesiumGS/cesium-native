@@ -194,7 +194,7 @@ public:
         _invertSelection(invertSelection) {}
 
   virtual void getLoadTileImageWork(
-      RasterOverlayTile&,
+      const RasterOverlayTile&,
       RequestData&,
       RasterProcessingCallback&) override {}
 

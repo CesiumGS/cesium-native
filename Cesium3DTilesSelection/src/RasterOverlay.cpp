@@ -24,7 +24,7 @@ public:
   }
 
   virtual void getLoadTileImageWork(
-      RasterOverlayTile&,
+      const RasterOverlayTile&,
       RequestData&,
       RasterProcessingCallback&) override {}
 };

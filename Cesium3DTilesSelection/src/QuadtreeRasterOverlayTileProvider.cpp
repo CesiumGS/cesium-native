@@ -486,7 +486,7 @@ void blitImage(
 } // namespace
 
 void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
-    RasterOverlayTile&,
+    const RasterOverlayTile&,
     RequestData&,
     RasterProcessingCallback& outCallback) {
   // loadTileImage will control request / processing flow

@@ -122,7 +122,7 @@ private:
       const UrlResponseDataMap& responsesByUrl) override final;
 
   virtual void getLoadTileImageWork(
-      RasterOverlayTile& overlayTile,
+      const RasterOverlayTile& overlayTile,
       RequestData& outRequest,
       RasterProcessingCallback& outCallback) override;
 

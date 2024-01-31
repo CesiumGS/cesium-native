@@ -32,7 +32,7 @@ public:
             GeographicProjection::computeMaximumProjectedRectangle()) {}
 
   virtual void getLoadTileImageWork(
-      RasterOverlayTile&,
+      const RasterOverlayTile&,
       RequestData&,
       RasterProcessingCallback&) override {}
 
