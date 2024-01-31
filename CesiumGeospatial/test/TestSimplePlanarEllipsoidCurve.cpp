@@ -1,14 +1,11 @@
-#include <CesiumGeospatial/GlobeFlightPath.h>
+#include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
 
 #include <catch2/catch.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-#include <iostream>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
-TEST_CASE("GlobeFlightPath") {
+TEST_CASE("SimplePlanarEllipsoidCurve") {
   glm::dvec3 philadelphiaEcef =
       glm::dvec3(1253264.69280105, -4732469.91065521, 4075112.40412297);
   glm::dvec3 tokyoEcef =
@@ -16,8 +13,8 @@ TEST_CASE("GlobeFlightPath") {
 
   SECTION("positions at start and end of flight path are identical to input "
           "coordinates") {
-    std::optional<GlobeFlightPath> flightPath =
-        GlobeFlightPath::fromEarthCenteredEarthFixedCoordinates(
+    std::optional<SimplePlanarEllipsoidCurve> flightPath =
+        SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             philadelphiaEcef,
             tokyoEcef);
 
@@ -33,8 +30,8 @@ TEST_CASE("GlobeFlightPath") {
   }
 
   SECTION("should correctly calculate position at 50% through flight path") {
-    std::optional<GlobeFlightPath> flightPath =
-        GlobeFlightPath::fromEarthCenteredEarthFixedCoordinates(
+    std::optional<SimplePlanarEllipsoidCurve> flightPath =
+        SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             philadelphiaEcef,
             tokyoEcef);
 
@@ -54,8 +51,8 @@ TEST_CASE("GlobeFlightPath") {
     double startHeight = 100.0;
     double endHeight = 25.0;
 
-    std::optional<GlobeFlightPath> flightPath =
-        GlobeFlightPath::fromLongitudeLatitudeHeight(
+    std::optional<SimplePlanarEllipsoidCurve> flightPath =
+        SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight(
             Cartographic(25.0, 100.0, startHeight),
             Cartographic(25.0, 100.0, endHeight));
 
