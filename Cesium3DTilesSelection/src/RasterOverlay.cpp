@@ -19,7 +19,7 @@ public:
       : RasterOverlayTileProvider(pOwner, asyncSystem, pAssetAccessor) {}
 
   virtual CesiumAsync::Future<RasterLoadResult>
-  loadTileImage(RasterOverlayTile&, const UrlResponseDataMap&) override {
+  loadTileImage(const RasterOverlayTile&, const UrlResponseDataMap&) override {
     return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>({});
   }
 

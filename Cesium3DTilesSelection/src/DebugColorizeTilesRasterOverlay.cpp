@@ -37,7 +37,7 @@ public:
       RasterProcessingCallback&) override {}
 
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
-      RasterOverlayTile& overlayTile,
+      const RasterOverlayTile& overlayTile,
       const UrlResponseDataMap&) override {
     RasterLoadResult result;
 

@@ -309,7 +309,7 @@ protected:
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
-      RasterOverlayTile& overlayTile,
+      const RasterOverlayTile& overlayTile,
       const UrlResponseDataMap& responsesByUrl) = 0;
 
   virtual void getLoadTileImageWork(

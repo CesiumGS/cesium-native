@@ -118,7 +118,7 @@ protected:
 
 private:
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
-      RasterOverlayTile& overlayTile,
+      const RasterOverlayTile& overlayTile,
       const UrlResponseDataMap& responsesByUrl) override final;
 
   virtual void getLoadTileImageWork(

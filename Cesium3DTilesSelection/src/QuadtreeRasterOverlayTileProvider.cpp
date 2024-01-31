@@ -501,7 +501,7 @@ void QuadtreeRasterOverlayTileProvider::getLoadTileImageWork(
 
 CesiumAsync::Future<RasterLoadResult>
 QuadtreeRasterOverlayTileProvider::loadTileImage(
-    RasterOverlayTile& overlayTile,
+    const RasterOverlayTile& overlayTile,
     const UrlResponseDataMap& responsesByUrl) {
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
