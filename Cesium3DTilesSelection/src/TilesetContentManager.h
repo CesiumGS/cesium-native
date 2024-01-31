@@ -195,7 +195,7 @@ private:
       const std::vector<const TileWorkManager::Work*>& workVector);
 
   void
-  handleFailedRequestWork(const std::vector<TileWorkManager::Work>& workVector);
+  handleFailedRequestWork(const TileWorkManager::FailedWorkVec& failedWork);
 
   void dispatchProcessingWork(
       const std::vector<TileWorkManager::Work*>& workVector,

@@ -83,10 +83,13 @@ public:
       std::shared_ptr<TileWorkManager>& thiz,
       Work* requestWork);
 
+  using FailedWorkPair = std::pair<std::string, Work>;
+  using FailedWorkVec = std::vector<FailedWorkPair>;
+
   void TakeProcessingWork(
       size_t maxCount,
       std::vector<Work*>& outCompleted,
-      std::vector<Work>& outFailed);
+      FailedWorkVec& outFailed);
 
   void SignalWorkComplete(Work* work);
 
@@ -121,7 +124,8 @@ private:
   std::vector<Work*> _requestQueue;
   std::map<std::string, std::vector<Work*>> _inFlightRequests;
   std::vector<Work*> _processingQueue;
-  std::vector<Work*> _failedWork;
+
+  FailedWorkVec _failedWork;
 
   CesiumAsync::AsyncSystem _asyncSystem;
 

@@ -226,12 +226,25 @@ void TileWorkManager::onRequestFinished(
   std::vector<Work*>& requestWorkVec = foundIt->second;
   for (Work* requestWork : requestWorkVec) {
 
+    // A response code of 0 is not a valid HTTP code
+    // and probably indicates a non-network error.
+    // 404 is not found, which is failure
+    // Put this work in a failed queue to be handled later
     if (responseStatusCode == 0 || responseStatusCode == 404) {
-      // A response code of 0 is not a valid HTTP code
-      // and probably indicates a non-network error.
-      // 404 is not found, which is failure
-      // Put this work in a failed queue to be handled later
-      _failedWork.push_back(requestWork);
+      std::string errorReason;
+      if (responseStatusCode == 0)
+        errorReason = "Invalid response for tile content";
+      else
+        errorReason = "Received status code 404 for tile content";
+
+      // Move this into failed and out of owned work
+      auto ownedIt = _ownedWork.find(requestWork->uniqueId);
+      assert(ownedIt != _ownedWork.end());
+
+      _failedWork.emplace_back(FailedWorkPair(
+          std::move(errorReason),
+          std::move(ownedIt->second)));
+      _ownedWork.erase(ownedIt);
       continue;
     }
 
@@ -276,20 +289,12 @@ void TileWorkManager::GetRequestsStats(
 void TileWorkManager::TakeProcessingWork(
     size_t maxCount,
     std::vector<Work*>& outCompleted,
-    std::vector<Work>& outFailed) {
+    FailedWorkVec& outFailed) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // All failed requests go out
   if (!_failedWork.empty()) {
-    // Failed work immediately releases ownership to caller
-    for (auto work : _failedWork) {
-      auto foundIt = _ownedWork.find(work->uniqueId);
-      assert(foundIt != _ownedWork.end());
-
-      outFailed.push_back(std::move(foundIt->second));
-
-      _ownedWork.erase(foundIt);
-    }
+    outFailed = _failedWork;
     _failedWork.clear();
   }
 

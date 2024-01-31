@@ -963,12 +963,15 @@ void TilesetContentManager::markWorkTilesAsLoading(
 }
 
 void TilesetContentManager::handleFailedRequestWork(
-    const std::vector<TileWorkManager::Work>& workVector) {
-  for (const TileWorkManager::Work& work : workVector) {
+    const TileWorkManager::FailedWorkVec& failedWork) {
+  for (auto failedPair : failedWork) {
+    const std::string& reason = failedPair.first;
+    const TileWorkManager::Work& work = failedPair.second;
 
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
-        "Request unexpectedly failed to complete for url: {}",
+        "{}: {}",
+        reason,
         work.order.requestData.url);
 
     if (std::holds_alternative<TileProcessingData>(work.order.processingData)) {
@@ -1133,7 +1136,7 @@ void TilesetContentManager::processLoadRequests(
     availableSlots = maxTileLoads - totalLoads;
 
   std::vector<TileWorkManager::Work*> completedWork;
-  std::vector<TileWorkManager::Work> failedWork;
+  TileWorkManager::FailedWorkVec failedWork;
   _pTileWorkManager->TakeProcessingWork(
       availableSlots,
       completedWork,
