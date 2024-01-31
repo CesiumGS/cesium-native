@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.32.0 - 20234-02-01
 
 ##### Breaking Changes :mega:
 
@@ -14,7 +14,7 @@
 
 ##### Fixes :wrench:
 
-- Fixed `FeatureIdTextureView` ignoring the wrap values specified on the texture's sampler.
+- Fixed a bug in `FeatureIdTextureView` where it ignored the wrap values specified on the texture's sampler.
 - Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
 - Fixed a bug where upgraded batch table properties were not always assigned sentinel values, even when such values were available and required.
 - Fixed incorrect behavior in `PropertyTablePropertyView` where `arrayOffsets` were treated as byte offsets, instead of as array indices.
