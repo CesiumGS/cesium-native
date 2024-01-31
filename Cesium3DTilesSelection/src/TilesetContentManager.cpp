@@ -653,6 +653,8 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _rasterLoadsInProgress{0},
+      _loadedRastersCount{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -879,6 +881,10 @@ void TilesetContentManager::discoverLoadWork(
     double maximumScreenSpaceError,
     std::vector<TileWorkManager::Order>& outOrders) {
   for (const TileLoadRequest& loadRequest : requests) {
+    // Failed tiles don't get another chance
+    if (loadRequest.pTile->getState() == TileLoadState::Failed)
+      continue;
+
     std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
     this->parseTileWork(
         loadRequest.pTile,
@@ -886,8 +892,10 @@ void TilesetContentManager::discoverLoadWork(
         maximumScreenSpaceError,
         parsedTileWork);
 
-    // A load request should always result in work
-    assert(!parsedTileWork.empty());
+    // It's valid for a tile to not have any work
+    // It may be waiting for a parent tile to complete
+    if (parsedTileWork.empty())
+      continue;
 
     // Sort by depth, which should bubble parent tasks up to the top
     std::sort(parsedTileWork.begin(), parsedTileWork.end());
@@ -933,7 +941,9 @@ void TilesetContentManager::markWorkTilesAsLoading(
       TileProcessingData tileProcessing =
           std::get<TileProcessingData>(work->order.processingData);
       assert(tileProcessing.pTile);
-      assert(tileProcessing.pTile->getState() == TileLoadState::Unloaded);
+      assert(
+          tileProcessing.pTile->getState() == TileLoadState::Unloaded ||
+          tileProcessing.pTile->getState() == TileLoadState::FailedTemporarily);
 
       tileProcessing.pTile->setState(TileLoadState::ContentLoading);
     } else {
