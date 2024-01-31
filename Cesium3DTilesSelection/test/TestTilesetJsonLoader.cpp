@@ -70,6 +70,7 @@ createLoader(const std::filesystem::path& tilesetPath) {
 
 TileLoadResult loadTileContent(
     const std::filesystem::path& tilePath,
+    const std::string& tileUrl,
     TilesetContentLoader& loader,
     Tile& tile) {
   auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -79,7 +80,7 @@ TileLoadResult loadTileContent(
       readFile(tilePath));
   auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
       "GET",
-      "doesn't matter",
+      tileUrl,
       CesiumAsync::HttpHeaders{},
       std::move(pMockCompletedResponse));
 
@@ -97,12 +98,6 @@ TileLoadResult loadTileContent(
   TileProcessingCallback processingCallback;
   loader.getLoadWork(&tile, requestData, processingCallback);
 
-  TileWorkManager::Order newOrder = {
-      requestData,
-      TileProcessingData{&tile, processingCallback}, // Projections?
-      TileLoadPriorityGroup::Normal,
-      0};
-
   std::shared_ptr<TileWorkManager> workManager =
       std::make_shared<TileWorkManager>(
           asyncSystem,
@@ -116,13 +111,15 @@ TileLoadResult loadTileContent(
       TileLoadPriorityGroup::Normal,
       0});
 
+  size_t maxRequests = 20;
+
   std::vector<const TileWorkManager::Work*> workCreated;
-  TileWorkManager::TryAddWork(workManager, orders, 20, workCreated);
+  TileWorkManager::TryAddWork(workManager, orders, maxRequests, workCreated);
   assert(workCreated.size() == 1);
 
   std::vector<TileWorkManager::Work*> completedWork;
   std::vector<TileWorkManager::Work> failedWork;
-  workManager->TakeProcessingWork(20, completedWork, failedWork);
+  workManager->TakeProcessingWork(maxRequests, completedWork, failedWork);
 
   assert(completedWork.size() == 1);
   assert(failedWork.size() == 0);
@@ -481,6 +478,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     // check tile content
     auto tileLoadResult = loadTileContent(
         testDataPath / "ReplaceTileset" / tileID,
+        "parent.b3dm",
         *loaderResult.pLoader,
         *pRootTile);
     CHECK(
@@ -506,6 +504,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     // check tile content
     auto tileLoadResult = loadTileContent(
         testDataPath / "AddTileset" / tileID,
+        "tileset2.json",
         *loaderResult.pLoader,
         *pRootTile);
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);

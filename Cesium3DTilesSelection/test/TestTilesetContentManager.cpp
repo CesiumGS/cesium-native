@@ -40,7 +40,13 @@ public:
         std::move(mockLoadTileContent));
   }
 
-  void getLoadWork(Tile*, RequestData&, TileProcessingCallback&) override{};
+  void getLoadWork(Tile*, RequestData&, TileProcessingCallback& outCallback)
+      override {
+    outCallback =
+        [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
+          return loader->loadTileContent(loadInput);
+        };
+  };
 
   TileChildrenResult
   createTileChildren([[maybe_unused]] const Tile& tile) override {
