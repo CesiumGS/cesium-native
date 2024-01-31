@@ -154,14 +154,8 @@ void TileWorkManager::TryAddWork(
     thiz->ordersToWork(processingOrders, workCreated);
   }
 
-  if (requestOrdersToSubmit.size()) {
-    SPDLOG_LOGGER_INFO(
-        thiz->_pLogger,
-        "Sending request work to dispatcher: {} entries",
-        requestOrdersToSubmit.size());
-
+  if (requestOrdersToSubmit.size())
     transitionQueuedWork(thiz);
-  }
 }
 
 void TileWorkManager::RequeueWorkForRequest(

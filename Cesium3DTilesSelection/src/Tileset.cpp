@@ -3,7 +3,7 @@
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <CesiumUtility/Tracing.h>
 
-#define LOG_REQUEST_STATS 1
+#define LOG_REQUEST_STATS 0
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -293,7 +293,7 @@ void Tileset::assertViewResults() {
 #endif
 }
 
-void Tileset::logRequestStats(const std::string& tag) {
+void Tileset::logRequestStats() {
 #if LOG_REQUEST_STATS
   float progress = computeLoadProgress();
   if (progress > 0 && progress < 100) {
@@ -302,9 +302,8 @@ void Tileset::logRequestStats(const std::string& tag) {
 
     SPDLOG_LOGGER_INFO(
         this->_externals.pLogger,
-        "{}: {} queued -> {} in flight -> {} done. Processing: {} tiles, {} "
+        "{} queued -> {} in flight -> {} done. Processing: {} tiles, {} "
         "rasters",
-        tag,
         queued,
         inFlight,
         done,
@@ -327,8 +326,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
   const int32_t currentFrameNumber = previousFrameNumber + 1;
-
-  logRequestStats("BegTraverse");
 
   ViewUpdateResult& result = this->_updateResult;
   result.frameNumber = currentFrameNumber;
@@ -404,7 +401,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   assertViewResults();
 
-  logRequestStats("EndTraverse");
+  logRequestStats();
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =

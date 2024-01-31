@@ -468,7 +468,7 @@ private:
       double priority);
 
   void assertViewResults();
-  void logRequestStats(const std::string& tag);
+  void logRequestStats();
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
