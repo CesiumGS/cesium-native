@@ -52,7 +52,7 @@ TEST_CASE("Test implicit octree loader") {
 
     TileWorkManager::Order newOrder = {
         requestData,
-        TileProcessingData{&tile, processingCallback}, // Projections?
+        TileProcessingData{&tile, processingCallback},
         TileLoadPriorityGroup::Normal,
         0};
 
@@ -65,7 +65,7 @@ TEST_CASE("Test implicit octree loader") {
     std::vector<TileWorkManager::Order> orders;
     orders.push_back(TileWorkManager::Order{
         requestData,
-        TileProcessingData{&tile, processingCallback}, // Projections?
+        TileProcessingData{&tile, processingCallback},
         TileLoadPriorityGroup::Normal,
         0});
 

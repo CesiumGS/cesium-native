@@ -107,7 +107,7 @@ TileLoadResult loadTileContent(
   std::vector<TileWorkManager::Order> orders;
   orders.push_back(TileWorkManager::Order{
       requestData,
-      TileProcessingData{&tile, processingCallback}, // Projections?
+      TileProcessingData{&tile, processingCallback},
       TileLoadPriorityGroup::Normal,
       0});
 

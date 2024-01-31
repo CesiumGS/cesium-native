@@ -9,14 +9,14 @@ namespace Cesium3DTilesSelection {
 class TilesetMetadata;
 
 struct TileProcessingData {
-  Tile* pTile;
-  TileProcessingCallback tileCallback;
-  std::vector<CesiumGeospatial::Projection> projections;
+  Tile* pTile = nullptr;
+  TileProcessingCallback tileCallback = {};
+  std::vector<CesiumGeospatial::Projection> projections {};
 };
 
 struct RasterProcessingData {
-  RasterMappedTo3DTile* pRasterTile;
-  RasterProcessingCallback rasterCallback;
+  RasterMappedTo3DTile* pRasterTile = nullptr;
+  RasterProcessingCallback rasterCallback= {};
 };
 
 class TileWorkManager {
@@ -34,12 +34,12 @@ public:
   using ProcessingData = std::variant<TileProcessingData, RasterProcessingData>;
 
   struct Order {
-    RequestData requestData;
+    RequestData requestData = {};
 
-    ProcessingData processingData;
+    ProcessingData processingData = {};
 
-    TileLoadPriorityGroup group;
-    double priority;
+    TileLoadPriorityGroup group = TileLoadPriorityGroup::Normal;
+    double priority = 0;
 
     std::vector<Order> childOrders = {};
 
@@ -54,9 +54,9 @@ public:
   using TileSource = std::variant<Tile*, RasterMappedTo3DTile*>;
 
   struct Work {
-    TileSource uniqueId;
+    TileSource uniqueId = {};
 
-    Order order;
+    Order order = {};
 
     Work* parent = nullptr;
 
