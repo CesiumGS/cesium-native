@@ -11,6 +11,7 @@
 - Added support for Web Map Tile Service (WMTS) with `WebMapTileServiceRasterOverlay`.
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
 - Added `applyTextureTransform` property to `TilesetOptions`, which indicates whether to preemptively apply transforms to texture coordinates for textures with the `KHR_texture_transform` extension.
+- Added `loadGltf` method to `GltfReader`, making it easier to do a full, asynchronous load of a glTF.
 
 ##### Fixes :wrench:
 
