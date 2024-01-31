@@ -320,7 +320,7 @@ CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::doLoad(
                 pLogger,
                 loadResult,
                 rendererOptions);
-            return loadResult;
+            return std::move(loadResult);
           })
       .thenInMainThread(
           [thiz, pTile, isThrottledLoad](RasterLoadResult&& result) noexcept {
