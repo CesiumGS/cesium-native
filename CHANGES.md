@@ -4,24 +4,18 @@
 
 ##### Breaking Changes :mega:
 
-- `IndicesForFaceFromAccessor` now propertly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
+- `IndicesForFaceFromAccessor` now properly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
 
 ##### Additions :tada:
 
 - Added support for Web Map Tile Service (WMTS) with `WebMapTileServiceRasterOverlay`.
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
-- Added `applyTextureTransform` property to `TilesetOptions`.
+- Added `applyTextureTransform` property to `TilesetOptions`, which indicates whether to preemptively apply transforms to texture coordinates for textures with the `KHR_texture_transform` extension.
 
 ##### Fixes :wrench:
 
 - Fixed `FeatureIdTextureView` ignoring the wrap values specified on the texture's sampler.
-
-##### Fixes :wrench:
-
 - Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
-
-##### Fixes :wrench:
-
 - Fixed a bug where upgraded batch table properties were not always assigned sentinel values, even when such values were available and required.
 - Fixed incorrect behavior in `PropertyTablePropertyView` where `arrayOffsets` were treated as byte offsets, instead of as array indices.
 
