@@ -269,7 +269,10 @@ public:
    *
    * @param tile The tile to load.
    */
-  void loadTile(RasterOverlayTile& tile);
+  void loadTile(
+      RasterOverlayTile& tile,
+      const UrlResponseDataMap& responsesByUrl,
+      RasterProcessingCallback rasterCallback);
 
   /**
    * @brief Loads a tile, unless there are too many tile loads already in

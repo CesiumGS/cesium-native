@@ -1511,6 +1511,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       return pRootTile;
     }
 
+    virtual void getLoadWork(Tile*, RequestData&, TileProcessingCallback&){};
+
     virtual CesiumAsync::Future<TileLoadResult>
     loadTileContent(const TileLoadInput& input) override {
       if (&input.tile == this->_pRootTile) {
@@ -1530,7 +1532,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       }
 
       return input.asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult());
     }
 
     virtual TileChildrenResult createTileChildren(const Tile&) override {

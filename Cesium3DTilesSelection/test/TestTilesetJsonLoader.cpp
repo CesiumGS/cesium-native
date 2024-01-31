@@ -7,6 +7,7 @@
 #include "TilesetJsonLoader.h"
 #include "readFile.h"
 
+#include <Cesium3DTilesSelection/TileWorkManager.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 
 #include <catch2/catch.hpp>
@@ -92,17 +93,61 @@ TileLoadResult loadTileContent(
 
   AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
+  RequestData requestData;
+  TileProcessingCallback processingCallback;
+  loader.getLoadWork(&tile, requestData, processingCallback);
+
+  TileWorkManager::Order newOrder = {
+      requestData,
+      TileProcessingData{&tile, processingCallback}, // Projections?
+      TileLoadPriorityGroup::Normal,
+      0};
+
+  std::shared_ptr<TileWorkManager> workManager =
+      std::make_shared<TileWorkManager>(
+          asyncSystem,
+          pMockAssetAccessor,
+          spdlog::default_logger());
+
+  std::vector<TileWorkManager::Order> orders;
+  orders.push_back(TileWorkManager::Order{
+      requestData,
+      TileProcessingData{&tile, processingCallback}, // Projections?
+      TileLoadPriorityGroup::Normal,
+      0});
+
+  std::vector<const TileWorkManager::Work*> workCreated;
+  TileWorkManager::TryAddWork(workManager, orders, 20, workCreated);
+  assert(workCreated.size() == 1);
+
+  std::vector<TileWorkManager::Work*> completedWork;
+  std::vector<TileWorkManager::Work> failedWork;
+  workManager->TakeProcessingWork(20, completedWork, failedWork);
+
+  assert(completedWork.size() == 1);
+  assert(failedWork.size() == 0);
+
+  TileWorkManager::Work* work = *completedWork.begin();
+  assert(
+      std::holds_alternative<TileProcessingData>(work->order.processingData));
+
+  TileProcessingData tileProcessing =
+      std::get<TileProcessingData>(work->order.processingData);
+  assert(tileProcessing.pTile);
+  assert(tileProcessing.tileCallback);
+  Tile* pTile = tileProcessing.pTile;
+
+  UrlResponseDataMap responseDataMap;
+  work->fillResponseDataMap(responseDataMap);
+
   TileLoadInput loadInput{
-      tile,
+      *pTile,
       {},
       asyncSystem,
-      pMockAssetAccessor,
       spdlog::default_logger(),
-      {}};
+      responseDataMap};
 
-  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
-
-  asyncSystem.dispatchMainThreadTasks();
+  auto tileLoadResultFuture = tileProcessing.tileCallback(loadInput, &loader);
 
   return tileLoadResultFuture.wait();
 }
@@ -557,13 +602,16 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will tell to retry later since it needs subtree
+
+      // XXX - need to fill this
+      UrlResponseDataMap responseDataMap;
+
       TileLoadInput loadInput{
           implicitTile,
           {},
           asyncSystem,
-          pMockAssetAccessor,
           spdlog::default_logger(),
-          {}};
+          responseDataMap};
       auto implicitContentResultFuture =
           loaderResult.pLoader->loadTileContent(loadInput);
 
@@ -575,13 +623,15 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will be able to load the tile the second time around
+      // XXX - need to fill this
+      UrlResponseDataMap responseDataMap;
+
       TileLoadInput loadInput{
           implicitTile,
           {},
           asyncSystem,
-          pMockAssetAccessor,
           spdlog::default_logger(),
-          {}};
+          responseDataMap};
       auto implicitContentResultFuture =
           loaderResult.pLoader->loadTileContent(loadInput);
 

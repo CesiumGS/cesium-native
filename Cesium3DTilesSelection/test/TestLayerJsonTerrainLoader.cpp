@@ -7,6 +7,7 @@
 #include "SimpleTaskProcessor.h"
 #include "readFile.h"
 
+#include <Cesium3DTilesSelection/TileWorkManager.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -45,7 +46,7 @@ Future<TileLoadResult> loadTile(
     const QuadtreeTileID& tileID,
     LayerJsonTerrainLoader& loader,
     AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
+    const std::shared_ptr<SimpleAssetAccessor>& pAssetAccessor) {
   Tile tile(&loader);
   tile.setTileID(tileID);
   tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
@@ -53,15 +54,25 @@ Future<TileLoadResult> loadTile(
        -1000.0,
        9000.0}});
 
+  RequestData requestData;
+  TileProcessingCallback processingCallback;
+  loader.getLoadWork(&tile, requestData, processingCallback);
+
+  UrlResponseDataMap responseDataMap;
+  for (auto& pair : pAssetAccessor->mockCompletedRequests) {
+    responseDataMap.emplace(
+        pair.first,
+        ResponseData{pair.second.get(), pair.second->response()});
+  }
+
   TileLoadInput loadInput{
       tile,
       {},
       asyncSystem,
-      pAssetAccessor,
       spdlog::default_logger(),
-      {}};
+      responseDataMap};
 
-  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
+  auto tileLoadResultFuture = processingCallback(loadInput, &loader);
 
   asyncSystem.dispatchMainThreadTasks();
 

@@ -6,6 +6,7 @@
 #include "readFile.h"
 
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileWorkManager.h>
 #include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -45,15 +46,61 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID("This is a test tile");
 
+    RequestData requestData;
+    TileProcessingCallback processingCallback;
+    loader.getLoadWork(&tile, requestData, processingCallback);
+
+    TileWorkManager::Order newOrder = {
+        requestData,
+        TileProcessingData{&tile, processingCallback}, // Projections?
+        TileLoadPriorityGroup::Normal,
+        0};
+
+    std::shared_ptr<TileWorkManager> workManager =
+        std::make_shared<TileWorkManager>(
+            asyncSystem,
+            pMockedAssetAccessor,
+            spdlog::default_logger());
+
+    std::vector<TileWorkManager::Order> orders;
+    orders.push_back(TileWorkManager::Order{
+        requestData,
+        TileProcessingData{&tile, processingCallback}, // Projections?
+        TileLoadPriorityGroup::Normal,
+        0});
+
+    std::vector<const TileWorkManager::Work*> workCreated;
+    TileWorkManager::TryAddWork(workManager, orders, 20, workCreated);
+    assert(workCreated.size() == 1);
+
+    std::vector<TileWorkManager::Work*> completedWork;
+    std::vector<TileWorkManager::Work> failedWork;
+    workManager->TakeProcessingWork(20, completedWork, failedWork);
+
+    assert(completedWork.size() == 1);
+    assert(failedWork.size() == 0);
+
+    TileWorkManager::Work* work = *completedWork.begin();
+    assert(
+        std::holds_alternative<TileProcessingData>(work->order.processingData));
+
+    TileProcessingData tileProcessing =
+        std::get<TileProcessingData>(work->order.processingData);
+    assert(tileProcessing.pTile);
+    assert(tileProcessing.tileCallback);
+    Tile* pTile = tileProcessing.pTile;
+
+    UrlResponseDataMap responseDataMap;
+    work->fillResponseDataMap(responseDataMap);
+
     TileLoadInput loadInput{
-        tile,
+        *pTile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        responseDataMap};
 
-    auto tileLoadResultFuture = loader.loadTileContent(loadInput);
+    auto tileLoadResultFuture = tileProcessing.tileCallback(loadInput, &loader);
 
     asyncSystem.dispatchMainThreadTasks();
 
@@ -76,13 +123,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 1});
 
+    // XXX - need to fill this
+    UrlResponseDataMap responseDataMap;
+
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        responseDataMap};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -127,13 +176,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{3, 1, 0, 1});
 
+    // XXX - need to fill this
+    UrlResponseDataMap responseDataMap;
+
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        responseDataMap};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -179,13 +230,15 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 0});
 
+    // XXX - need to fill this
+    UrlResponseDataMap responseDataMap;
+
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        responseDataMap};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
