@@ -123,7 +123,6 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 1});
 
-    // XXX - need to fill this
     UrlResponseDataMap responseDataMap;
 
     TileLoadInput loadInput{
@@ -176,8 +175,12 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{3, 1, 0, 1});
 
-    // XXX - need to fill this
     UrlResponseDataMap responseDataMap;
+    for (auto& pair : pMockedAssetAccessor->mockCompletedRequests) {
+      responseDataMap.emplace(
+          pair.first,
+          ResponseData{pair.second.get(), pair.second->response()});
+    }
 
     TileLoadInput loadInput{
         tile,
@@ -230,8 +233,12 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 0});
 
-    // XXX - need to fill this
     UrlResponseDataMap responseDataMap;
+    for (auto& pair : pMockedAssetAccessor->mockCompletedRequests) {
+      responseDataMap.emplace(
+          pair.first,
+          ResponseData{pair.second.get(), pair.second->response()});
+    }
 
     TileLoadInput loadInput{
         tile,
