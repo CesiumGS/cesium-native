@@ -18,8 +18,9 @@ SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
       ellipsoid.scaleToGeocentricSurface(destinationEcef);
 
   if (!scaledSourceEcef.has_value() || !scaledDestinationEcef.has_value()) {
-    // Unable to scale to geodetic surface coordinates - no path we can generate
-    return std::nullopt;
+    // Unable to scale to geocentric surface coordinates - no curve we can
+    // generate
+    return std::optional<SimplePlanarEllipsoidCurve>();
   }
 
   return SimplePlanarEllipsoidCurve(
@@ -57,8 +58,11 @@ glm::dvec3 SimplePlanarEllipsoidCurve::getPosition(
       glm::angleAxis(percentage * this->_totalAngle, this->_rotationAxis) *
       this->_sourceDirection;
 
+  // It's safe for us to assume here that scaleToGeocentricSurface will return a
+  // value, since rotatedDirection should never be (0, 0, 0)
   glm::dvec3 geocentricPosition =
-      this->_ellipsoid.scaleToGeocentricSurface(rotatedDirection);
+      this->_ellipsoid.scaleToGeocentricSurface(rotatedDirection)
+          .value_or(glm::dvec3(0, 0, 0));
 
   glm::dvec3 geocentricUp = glm::normalize(geocentricPosition);
 
