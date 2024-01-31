@@ -14,7 +14,7 @@ struct TileLoadRequest {
   /**
    * @brief The tile to be loaded.
    */
-  Tile* pTile;
+  Tile* pTile = nullptr;
 
   /**
    * @brief The priority group (low / medium / high) in which to load this
@@ -23,14 +23,14 @@ struct TileLoadRequest {
    * All tiles in a higher priority group are given a chance to load before
    * any tiles in a lower priority group.
    */
-  TileLoadPriorityGroup group;
+  TileLoadPriorityGroup group = TileLoadPriorityGroup::Normal;
 
   /**
    * @brief The priority of this tile within its priority group.
    *
    * Tiles with a _lower_ value for this property load sooner!
    */
-  double priority;
+  double priority = 0;
 
   bool operator<(const TileLoadRequest& rhs) const noexcept {
     if (this->group == rhs.group)

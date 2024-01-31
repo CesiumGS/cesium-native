@@ -1511,8 +1511,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       return pRootTile;
     }
 
-    virtual void
-    getLoadWork(Tile*, RequestData&, TileProcessingCallback& outCallback) {
+    void getLoadWork(Tile*, RequestData&, TileProcessingCallback& outCallback)
+        override {
       outCallback = [](const TileLoadInput& loadInput,
                        TilesetContentLoader* loader) {
         return loader->loadTileContent(loadInput);
