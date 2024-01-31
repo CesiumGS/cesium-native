@@ -1071,7 +1071,7 @@ void TilesetContentManager::dispatchProcessingWork(
               responseDataMap,
               rasterProcessing.rasterCallback)
           .thenInMainThread(
-              [_thiz = thiz, _work = work](RasterLoadResult& result) mutable {
+              [_thiz = thiz, _work = work](RasterLoadResult&& result) mutable {
                 if (result.state == RasterLoadState::RequestRequired) {
                   // This work goes back into the work manager queue
 
