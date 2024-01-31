@@ -255,9 +255,8 @@ TEST_CASE("Test replace refinement for render") {
 
     ViewState viewState = zoomToTileset(tileset);
 
-    // 1st frame. Root doesn't meet sse, so it goes to children. But because
-    // children haven't started loading, but fail instantly, root should be
-    // rendered.
+    // 1st frame. Root doesn't meet sse, so it goes to children.But because
+    // children haven't started loading, root should be rendered.
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
@@ -266,8 +265,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        // XXX - Need to reconsider this assertion
-        // REQUIRE(child.getState() == TileLoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::Failed);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -292,8 +290,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        // XXX - Need to reconsider this assertion
-        // REQUIRE(child.getState() == TileLoadState::Failed);
+        REQUIRE(child.getState() == TileLoadState::Failed);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -331,14 +328,17 @@ TEST_CASE("Test replace refinement for render") {
     {
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
-      // check tiles status. All the children should have loading status
+      // check tiles status
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(zoomInViewState, *root, tileset));
 
-      // XXX - Need to reconsider this assertion
-      // for (const auto& child : root->getChildren()) {
-      //  REQUIRE(child.getState() == TileLoadState::ContentLoading);
-      //}
+      // All the children should be loading or failed
+      for (const auto& child : root->getChildren()) {
+        bool childStateIsExpected =
+            child.getState() == TileLoadState::ContentLoading ||
+            child.getState() == TileLoadState::Failed;
+        REQUIRE(childStateIsExpected);
+      }
 
       const Tile& ll = root->getChildren().front();
       REQUIRE(!doesTileMeetSSE(zoomInViewState, ll, tileset));
