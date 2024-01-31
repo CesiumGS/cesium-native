@@ -334,10 +334,10 @@ void ImplicitQuadtreeLoader::getLoadWork(
     RequestData&,
     TileProcessingCallback& outCallback) {
   // loadTileContent will control request / processing flow
-  outCallback =
-      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
-        return loader->loadTileContent(loadInput);
-      };
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
 }
 
 TileChildrenResult

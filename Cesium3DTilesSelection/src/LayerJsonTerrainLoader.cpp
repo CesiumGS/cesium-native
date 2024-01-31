@@ -926,10 +926,10 @@ void LayerJsonTerrainLoader::getLoadWork(
   auto& currentLayer = *firstAvailableIt;
   outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 
-  outCallback =
-      [this](const TileLoadInput& loadInput, TilesetContentLoader* loader) {
-        return loader->loadTileContent(loadInput);
-      };
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
 }
 
 TileChildrenResult
