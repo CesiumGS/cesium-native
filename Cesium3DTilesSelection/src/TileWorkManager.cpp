@@ -241,9 +241,8 @@ void TileWorkManager::onRequestFinished(
       auto ownedIt = _ownedWork.find(requestWork->uniqueId);
       assert(ownedIt != _ownedWork.end());
 
-      _failedWork.emplace_back(FailedWorkPair(
-          std::move(errorReason),
-          std::move(ownedIt->second)));
+      _failedWork.emplace_back(
+          FailedWorkPair(std::move(errorReason), std::move(ownedIt->second)));
       _ownedWork.erase(ownedIt);
       continue;
     }
