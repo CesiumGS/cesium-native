@@ -9,12 +9,13 @@ namespace CesiumGeospatial {
 
 std::optional<SimplePlanarEllipsoidCurve>
 SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
+    const Ellipsoid& ellipsoid,
     const glm::dvec3& sourceEcef,
     const glm::dvec3& destinationEcef) {
   std::optional<glm::dvec3> scaledSourceEcef =
-      Ellipsoid::WGS84.scaleToGeocentricSurface(sourceEcef);
+      ellipsoid.scaleToGeocentricSurface(sourceEcef);
   std::optional<glm::dvec3> scaledDestinationEcef =
-      Ellipsoid::WGS84.scaleToGeocentricSurface(destinationEcef);
+      ellipsoid.scaleToGeocentricSurface(destinationEcef);
 
   if (!scaledSourceEcef.has_value() || !scaledDestinationEcef.has_value()) {
     // Unable to scale to geodetic surface coordinates - no path we can generate
@@ -22,6 +23,7 @@ SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
   }
 
   return SimplePlanarEllipsoidCurve(
+      ellipsoid,
       scaledSourceEcef.value(),
       scaledDestinationEcef.value(),
       sourceEcef,
@@ -30,11 +32,13 @@ SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
 
 std::optional<SimplePlanarEllipsoidCurve>
 SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight(
-    const Cartographic& sourceLlh,
-    const Cartographic& destinationLlh) {
+    const Ellipsoid& ellipsoid,
+    const Cartographic& source,
+    const Cartographic& destination) {
   return SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
-      Ellipsoid::WGS84.cartographicToCartesian(sourceLlh),
-      Ellipsoid::WGS84.cartographicToCartesian(destinationLlh));
+      ellipsoid,
+      ellipsoid.cartographicToCartesian(source),
+      ellipsoid.cartographicToCartesian(destination));
 }
 
 glm::dvec3 SimplePlanarEllipsoidCurve::getPosition(
@@ -54,7 +58,7 @@ glm::dvec3 SimplePlanarEllipsoidCurve::getPosition(
       this->_sourceDirection;
 
   glm::dvec3 geocentricPosition =
-      Ellipsoid::WGS84.scaleToGeocentricSurface(rotatedDirection);
+      this->_ellipsoid.scaleToGeocentricSurface(rotatedDirection);
 
   glm::dvec3 geocentricUp = glm::normalize(geocentricPosition);
 
@@ -66,12 +70,12 @@ glm::dvec3 SimplePlanarEllipsoidCurve::getPosition(
 }
 
 SimplePlanarEllipsoidCurve::SimplePlanarEllipsoidCurve(
+    const Ellipsoid& ellipsoid,
     const glm::dvec3& scaledSourceEcef,
     const glm::dvec3& scaledDestinationEcef,
     const glm::dvec3& originalSourceEcef,
-    const glm::dvec3& originalDestinationEcef) {
-  this->_destinationEcef = originalDestinationEcef;
-
+    const glm::dvec3& originalDestinationEcef)
+    : _ellipsoid(ellipsoid), _destinationEcef(originalDestinationEcef) {
   // Here we find the center of a circle that passes through both the source and
   // destination points, and then calculate the angle that we need to move along
   // that circle to get from point A to B.

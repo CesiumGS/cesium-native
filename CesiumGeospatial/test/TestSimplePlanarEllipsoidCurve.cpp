@@ -15,6 +15,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve") {
           "coordinates") {
     std::optional<SimplePlanarEllipsoidCurve> flightPath =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
+            Ellipsoid::WGS84,
             philadelphiaEcef,
             tokyoEcef);
 
@@ -32,6 +33,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve") {
   SECTION("should correctly calculate position at 50% through flight path") {
     std::optional<SimplePlanarEllipsoidCurve> flightPath =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
+            Ellipsoid::WGS84,
             philadelphiaEcef,
             tokyoEcef);
 
@@ -53,6 +55,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve") {
 
     std::optional<SimplePlanarEllipsoidCurve> flightPath =
         SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight(
+            Ellipsoid::WGS84,
             Cartographic(25.0, 100.0, startHeight),
             Cartographic(25.0, 100.0, endHeight));
 

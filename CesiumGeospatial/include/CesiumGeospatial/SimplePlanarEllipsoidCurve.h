@@ -23,6 +23,8 @@ public:
    * source and destination specified in Earth-Centered, Earth-Fixed
    * coordinates.
    *
+   * @param ellipsoid The ellipsoid that the source and destination positions
+   * are relative to.
    * @param sourceEcef The position that the path will begin at in ECEF
    * coordinates.
    * @param destinationEcef The position that the path will end at in ECEF
@@ -35,6 +37,7 @@ public:
    */
   static std::optional<SimplePlanarEllipsoidCurve>
   fromEarthCenteredEarthFixedCoordinates(
+      const Ellipsoid& ellipsoid,
       const glm::dvec3& sourceEcef,
       const glm::dvec3& destinationEcef);
 
@@ -43,6 +46,8 @@ public:
    * source and destination specified in cartographic coordinates (Longitude,
    * Latitude, and Height).
    *
+   * @param ellipsoid The ellipsoid that these cartographic coordinates are
+   * from.
    * @param sourceLlh The position that the path will begin at in Longitude,
    * Latitude, and Height.
    * @param destinationLlh The position that the path will end at in Longitude,
@@ -54,8 +59,9 @@ public:
    * ellipsoid, this will return {@link std::nullopt} instead.
    */
   static std::optional<SimplePlanarEllipsoidCurve> fromLongitudeLatitudeHeight(
-      const Cartographic& sourceLlh,
-      const Cartographic& destinationLlh);
+      const Ellipsoid& ellipsoid,
+      const Cartographic& source,
+      const Cartographic& destination);
 
   /**
    * @brief Samples the curve at the given percentage of its length.
@@ -76,6 +82,7 @@ public:
 
 private:
   SimplePlanarEllipsoidCurve(
+      const Ellipsoid& ellipsoid,
       const glm::dvec3& scaledSourceEcef,
       const glm::dvec3& scaledDestinationEcef,
       const glm::dvec3& originalSourceEcef,
@@ -85,6 +92,7 @@ private:
   double _sourceHeight;
   double _destinationHeight;
 
+  Ellipsoid _ellipsoid;
   glm::dvec3 _sourceDirection;
   glm::dvec3 _rotationAxis;
   glm::dvec3 _destinationEcef;
