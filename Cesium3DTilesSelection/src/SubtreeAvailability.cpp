@@ -242,7 +242,7 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
           // We need to request this buffer
           return asyncSystem
               .createResolvedFuture<SubtreeAvailability::LoadResult>(
-                  {std::nullopt, {bufferUrl}});
+                  {std::nullopt, {bufferUrl, {}}});
         }
 
         requestBuffers.emplace_back(requestBuffer(
