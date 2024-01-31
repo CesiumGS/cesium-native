@@ -22,7 +22,7 @@ struct RasterLoadResult {
   std::vector<std::string> warnings{};
   bool moreDetailAvailable = false;
 
-  RequestData requestData;
+  RequestData requestData = {};
 
   RasterLoadState state = RasterLoadState::Unloaded;
 
