@@ -75,13 +75,13 @@ public:
   };
 
   struct ParsedTileWork {
-    size_t depthIndex;
+    size_t depthIndex = 0;
 
-    TileWorkChain tileWorkChain;
+    TileWorkChain tileWorkChain = {};
 
-    std::vector<RasterWorkChain> rasterWorkChains;
+    std::vector<RasterWorkChain> rasterWorkChains = {};
 
-    std::vector<CesiumGeospatial::Projection> projections;
+    std::vector<CesiumGeospatial::Projection> projections = {};
 
     bool operator<(const ParsedTileWork& rhs) const noexcept {
       return this->depthIndex > rhs.depthIndex;

@@ -603,10 +603,6 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{std::move(requestHeaders)},
       _pLoader{std::move(pLoader)},
       _pRootTile{std::move(pRootTile)},
-      _pTileWorkManager{std::make_shared<TileWorkManager>(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger)},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -615,6 +611,10 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
+      _pTileWorkManager{std::make_shared<TileWorkManager>(
+          externals.asyncSystem,
+          externals.pAssetAccessor,
+          externals.pLogger)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -638,10 +638,6 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
-      _pTileWorkManager{std::make_shared<TileWorkManager>(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger)},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -650,6 +646,10 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
+      _pTileWorkManager{std::make_shared<TileWorkManager>(
+          externals.asyncSystem,
+          externals.pAssetAccessor,
+          externals.pLogger)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -783,10 +783,6 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{},
       _pLoader{},
       _pRootTile{},
-      _pTileWorkManager{std::make_shared<TileWorkManager>(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger)},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -795,6 +791,10 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
+      _pTileWorkManager{std::make_shared<TileWorkManager>(
+          externals.asyncSystem,
+          externals.pAssetAccessor,
+          externals.pLogger)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},

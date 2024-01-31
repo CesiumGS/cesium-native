@@ -391,13 +391,14 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
 
-  result.tilesLoading =
-      this->_pTilesetContentManager->getNumberOfTilesLoading();
-  result.tilesLoaded = this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  result.rastersLoading =
-      this->_pTilesetContentManager->getNumberOfRastersLoading();
-  result.rastersLoaded =
-      this->_pTilesetContentManager->getNumberOfRastersLoaded();
+  result.tilesLoading = static_cast<uint32_t>(
+      this->_pTilesetContentManager->getNumberOfTilesLoading());
+  result.tilesLoaded = static_cast<uint32_t>(
+      this->_pTilesetContentManager->getNumberOfTilesLoaded());
+  result.rastersLoading = static_cast<uint32_t>(
+      this->_pTilesetContentManager->getNumberOfRastersLoading());
+  result.rastersLoaded = static_cast<uint32_t>(
+      this->_pTilesetContentManager->getNumberOfRastersLoaded());
   result.requestsPending =
       this->_pTilesetContentManager->getTotalPendingCount();
 
@@ -469,16 +470,16 @@ float Tileset::computeLoadProgress() noexcept {
   // Amount of work actively being done
   size_t queueLengthsSum = _updateResult.mainThreadTileLoadQueueLength +
                            _updateResult.workerThreadTileLoadQueueLength;
-  int32_t inProgressSum =
+  uint32_t inProgressSum =
       static_cast<uint32_t>(queueLengthsSum) +
       static_cast<uint32_t>(_updateResult.requestsPending) +
       _updateResult.tilesLoading + _updateResult.rastersLoading +
       static_cast<uint32_t>(_updateResult.tilesFadingOut.size());
 
-  int32_t completedSum =
+  uint32_t completedSum =
       _updateResult.tilesLoaded + _updateResult.rastersLoaded;
 
-  int32_t totalNum = inProgressSum + completedSum;
+  uint32_t totalNum = inProgressSum + completedSum;
   float percentage =
       static_cast<float>(completedSum) / static_cast<float>(totalNum);
 

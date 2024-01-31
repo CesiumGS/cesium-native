@@ -41,7 +41,7 @@ public:
     TileLoadPriorityGroup group;
     double priority;
 
-    std::vector<Order> childOrders;
+    std::vector<Order> childOrders = {};
 
     bool operator<(const Order& rhs) const noexcept {
       if (this->group == rhs.group)
@@ -58,11 +58,11 @@ public:
 
     Order order;
 
-    Work* parent;
+    Work* parent = nullptr;
 
-    std::set<Work*> children;
+    std::set<Work*> children = {};
 
-    UrlAssetRequestMap completedRequests;
+    UrlAssetRequestMap completedRequests = {};
 
     void fillResponseDataMap(UrlResponseDataMap& responseDataMap) {
       for (auto& pair : completedRequests) {
