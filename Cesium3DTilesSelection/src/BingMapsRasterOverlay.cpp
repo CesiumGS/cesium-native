@@ -149,29 +149,6 @@ public:
   virtual ~BingMapsTileProvider() {}
 
 protected:
-  virtual bool getQuadtreeTileImageRequest(
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      RequestData& requestData,
-      std::string&) const override {
-    requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
-        this->_urlTemplate,
-        [this, &tileID](const std::string& key) {
-          if (key == "quadkey") {
-            return BingMapsTileProvider::tileXYToQuadKey(
-                tileID.level,
-                tileID.x,
-                tileID.computeInvertedY(this->getTilingScheme()));
-          }
-          if (key == "subdomain") {
-            const size_t subdomainIndex =
-                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
-            return this->_subdomains[subdomainIndex];
-          }
-          return key;
-        });
-    return true;
-  }
-
   virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID,
       const std::string& requestUrl,
@@ -212,6 +189,29 @@ protected:
         statusCode,
         data,
         std::move(options));
+  }
+
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      RequestData& requestData,
+      std::string&) const override {
+    requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
+        this->_urlTemplate,
+        [this, &tileID](const std::string& key) {
+          if (key == "quadkey") {
+            return BingMapsTileProvider::tileXYToQuadKey(
+                tileID.level,
+                tileID.x,
+                tileID.computeInvertedY(this->getTilingScheme()));
+          }
+          if (key == "subdomain") {
+            const size_t subdomainIndex =
+                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
+            return this->_subdomains[subdomainIndex];
+          }
+          return key;
+        });
+    return true;
   }
 
 private:

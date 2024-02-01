@@ -72,6 +72,23 @@ public:
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const override {
+
+    LoadTileImageFromUrlOptions options;
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+
+    return this->loadTileImageFromUrl(
+        requestUrl,
+        statusCode,
+        data,
+        std::move(options));
+  }
+
   virtual bool getQuadtreeTileImageRequest(
       const CesiumGeometry::QuadtreeTileID& tileID,
       RequestData& requestData,
@@ -90,23 +107,6 @@ protected:
       errorString = "Failed to load image from TMS.";
       return false;
     }
-  }
-
-  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      const std::string& requestUrl,
-      uint16_t statusCode,
-      const gsl::span<const std::byte>& data) const override {
-
-    LoadTileImageFromUrlOptions options;
-    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-
-    return this->loadTileImageFromUrl(
-        requestUrl,
-        statusCode,
-        data,
-        std::move(options));
   }
 
 private:

@@ -1,7 +1,29 @@
+#include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/CreditSystem.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
+#include <Cesium3DTilesSelection/RasterOverlayTile.h>
+#include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
+#include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
+#include <Cesium3DTilesSelection/spdlog-cesium.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/Math.h>
+#include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/joinToString.h>
+
+#include <glm/common.hpp>
+#include <rapidjson/document.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <limits>
+#include <unordered_set>
 
 #define LOG_REQUEST_STATS 0
 

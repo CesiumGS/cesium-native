@@ -31,11 +31,6 @@ public:
             GeographicProjection(),
             GeographicProjection::computeMaximumProjectedRectangle()) {}
 
-  virtual void getLoadTileImageWork(
-      const RasterOverlayTile&,
-      RequestData&,
-      RasterProcessingCallback&) override {}
-
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       const RasterOverlayTile& overlayTile,
       const UrlResponseDataMap&) override {
@@ -66,6 +61,11 @@ public:
 
     return this->getAsyncSystem().createResolvedFuture(std::move(result));
   }
+
+  virtual void getLoadTileImageWork(
+      const RasterOverlayTile&,
+      RequestData&,
+      RasterProcessingCallback&) override {}
 };
 
 } // namespace
