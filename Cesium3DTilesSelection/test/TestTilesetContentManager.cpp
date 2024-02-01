@@ -188,6 +188,17 @@ CesiumGltf::Model createGlobeGrid(
 
   return model;
 }
+
+void loadTileWithManager(
+    Tile* pTile,
+    TilesetContentManager* pManager,
+    TilesetOptions& options) {
+  std::vector<TileLoadRequest> loadRequests;
+  loadRequests.emplace_back(
+      TileLoadRequest{pTile, TileLoadPriorityGroup::Normal});
+  pManager->processLoadRequests(loadRequests, options);
+}
+
 } // namespace
 
 TEST_CASE("Test the manager can be initialized with correct loaders") {
@@ -360,11 +371,7 @@ TEST_CASE("Test tile state machine") {
     // test manager loading
     Tile& tile = *pManager->getRootTile();
 
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     SECTION("Load tile from ContentLoading -> Done") {
       // Unloaded -> ContentLoading
@@ -471,10 +478,7 @@ TEST_CASE("Test tile state machine") {
     // test manager loading
     Tile& tile = *pManager->getRootTile();
 
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     // Unloaded -> ContentLoading
     CHECK(pManager->getNumberOfTilesLoading() == 1);
@@ -507,10 +511,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!initializerCall);
 
     // FailedTemporarily -> ContentLoading
-    loadRequests.clear();
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     CHECK(pManager->getNumberOfTilesLoading() == 1);
     CHECK(tile.getState() == TileLoadState::ContentLoading);
@@ -556,10 +557,7 @@ TEST_CASE("Test tile state machine") {
     // test manager loading
     Tile& tile = *pManager->getRootTile();
 
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     // Unloaded -> ContentLoading
     CHECK(pManager->getNumberOfTilesLoading() == 1);
@@ -592,10 +590,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!initializerCall);
 
     // cannot transition from Failed -> ContentLoading
-    loadRequests.clear();
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -667,10 +662,7 @@ TEST_CASE("Test tile state machine") {
     Tile& upsampledTile = tile.getChildren().back();
 
     // test manager loading upsample tile
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&upsampledTile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&upsampledTile, pManager.get(), options);
 
     // since parent is not yet loaded, it will load the parent first.
     // The upsampled tile will not be loaded at the moment
@@ -685,10 +677,7 @@ TEST_CASE("Test tile state machine") {
 
     // try again with upsample tile, but still not able to load it
     // because parent is not done yet
-    loadRequests.clear();
-    loadRequests.emplace_back(
-        TileLoadRequest{&upsampledTile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&upsampledTile, pManager.get(), options);
 
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
 
@@ -717,10 +706,7 @@ TEST_CASE("Test tile state machine") {
         {},
         TileLoadResultState::Failed};
 
-    loadRequests.clear();
-    loadRequests.emplace_back(
-        TileLoadRequest{&upsampledTile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&upsampledTile, pManager.get(), options);
 
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoading);
 
@@ -736,10 +722,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.isRenderContent());
 
     // Attempting to load won't do anything - unloading must finish first.
-    loadRequests.clear();
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     CHECK(tile.getState() == TileLoadState::Unloading);
 
@@ -837,11 +820,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
 
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
     TilesetOptions options;
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     pManager->waitUntilIdle();
 
@@ -912,10 +892,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
 
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     pManager->waitUntilIdle();
 
@@ -982,10 +959,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     Tile& tile = *pManager->getRootTile();
 
     TilesetOptions options;
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-    pManager->processLoadRequests(loadRequests, options);
+    loadTileWithManager(&tile, pManager.get(), options);
 
     pManager->waitUntilIdle();
 
@@ -1041,10 +1015,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       Tile& tile = *pManager->getRootTile();
 
       TilesetOptions options;
-      std::vector<TileLoadRequest> loadRequests;
-      loadRequests.emplace_back(
-          TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-      pManager->processLoadRequests(loadRequests, options);
+      loadTileWithManager(&tile, pManager.get(), options);
 
       pManager->waitUntilIdle();
 
@@ -1109,10 +1080,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       TilesetOptions options;
-      std::vector<TileLoadRequest> loadRequests;
-      loadRequests.emplace_back(
-          TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-      pManager->processLoadRequests(loadRequests, options);
+      loadTileWithManager(&tile, pManager.get(), options);
 
       pManager->waitUntilIdle();
 
@@ -1208,10 +1176,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       TilesetOptions options;
-      std::vector<TileLoadRequest> loadRequests;
-      loadRequests.emplace_back(
-          TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
-      pManager->processLoadRequests(loadRequests, options);
+      loadTileWithManager(&tile, pManager.get(), options);
 
       pManager->waitUntilIdle();
 
@@ -1289,11 +1254,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     Tile& tile = *pManager->getRootTile();
 
     TilesetOptions options;
-    std::vector<TileLoadRequest> loadRequests;
-    loadRequests.emplace_back(
-        TileLoadRequest{&tile, TileLoadPriorityGroup::Normal});
+    loadTileWithManager(&tile, pManager.get(), options);
 
-    pManager->processLoadRequests(loadRequests, options);
     pManager->waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();
