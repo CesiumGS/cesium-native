@@ -278,7 +278,9 @@
       "attachTo": [
         "textureInfo",
         "material.occlusionTextureInfo",
-        "material.normalTextureInfo"
+        "material.normalTextureInfo",
+        "propertyTexture.property",
+        "featureIdTexture"
       ]
     },
     {
