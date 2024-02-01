@@ -125,7 +125,7 @@ RasterOverlayTileProvider::loadTileThrottled(
 }
 
 void RasterOverlayTileProvider::getLoadTileThrottledWork(
-    RasterOverlayTile& tile,
+    const RasterOverlayTile& tile,
     RequestData& outRequest,
     RasterProcessingCallback& outCallback) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)

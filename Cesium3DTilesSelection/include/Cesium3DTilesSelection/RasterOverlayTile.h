@@ -29,6 +29,9 @@ class RasterOverlayTileProvider;
 class RasterOverlayTile final
     : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlayTile> {
 public:
+  /**
+   * @brief Lifecycle states of a raster overlay tile.
+   */
   enum class LoadState {
     /**
      * @brief Indicator for a placeholder tile.
@@ -65,6 +68,7 @@ public:
      */
     Done = 3
   };
+
   /**
    * @brief Tile availability states.
    *
@@ -241,7 +245,6 @@ public:
 
 private:
   friend class RasterOverlayTileProvider;
-  friend class Tileset;
   friend class TilesetContentManager;
 
   void setState(LoadState newState) noexcept;

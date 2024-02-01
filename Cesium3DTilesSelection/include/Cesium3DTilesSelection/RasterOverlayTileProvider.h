@@ -234,6 +234,9 @@ public:
     return this->_totalTilesCurrentlyLoading;
   }
 
+  /**
+   * @brief Returns the number of throttle tiles that are loading
+   */
   int32_t getNumberOfThrottledTilesLoading() const noexcept {
     return this->_throttledTilesCurrentlyLoading;
   }
@@ -269,7 +272,9 @@ public:
    * Calling this method on many tiles at once can result in very slow
    * performance. Consider using {@link loadTileThrottled} instead.
    *
-   * @param tile The tile to load.
+   * @param tile The tile to load
+   * @param responsesByUrl Content responses already fetched by caller
+   * @param rasterCallback Loader callback to execute
    */
   void loadTile(
       RasterOverlayTile& tile,
@@ -277,30 +282,31 @@ public:
       RasterProcessingCallback rasterCallback);
 
   /**
-   * @brief Loads a tile, unless there are too many tile loads already in
-   * progress.
+   * @brief Loads a tile
    *
-   * If the tile is not in the `RasterOverlayTile::LoadState::Unloading`
-   * state, this method returns true without doing anything. If too many tile
-   * loads are already in flight, it returns false without doing anything.
-   * Otherwise, it puts the tile into the
-   * `RasterOverlayTile::LoadState::Loading` state, begins the asynchronous
-   * process to load the tile, and returns true. When the process completes, the
+   * It begins the asynchronous process to load the tile, and returns true. When the process completes, the
    * tile will be in the `RasterOverlayTile::LoadState::Loaded` or
    * `RasterOverlayTile::LoadState::Failed` state.
    *
-   * @param tile The tile to load.
-   * @returns True if the tile load process is started or is already complete,
-   * false if the load could not be started because too many loads are already
-   * in progress.
+   * @param tile The tile to load
+   * @param responsesByUrl Content responses already fetched by caller
+   * @param rasterCallback Loader callback to execute
+   * @returns RasterLoadResult indicating what happened
    */
   CesiumAsync::Future<RasterLoadResult> loadTileThrottled(
       RasterOverlayTile& tile,
       const UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback);
 
+  /**
+   * @brief Gets the work needed to load a tile
+   *
+   * @param tile The tile to load
+   * @param outRequest Content request needed
+   * @param outCallback Loader callback to execute later
+   */
   void getLoadTileThrottledWork(
-      RasterOverlayTile& tile,
+      const RasterOverlayTile& tile,
       RequestData& outRequest,
       RasterProcessingCallback& outCallback);
 
@@ -308,13 +314,21 @@ protected:
   /**
    * @brief Loads the image for a tile.
    *
-   * @param overlayTile The overlay tile for which to load the image.
-   * @return A future that resolves to the image or error information.
+   * @param overlayTile The overlay tile to load the image.
+   * @param responsesByUrl Content responses already fetched by caller
+   * @return A future containing a RasterLoadResult
    */
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       const RasterOverlayTile& overlayTile,
       const UrlResponseDataMap& responsesByUrl) = 0;
 
+  /**
+   * @brief Get the work needed to loads the image for a tile.
+   *
+   * @param overlayTile The overlay tile to load the image.
+   * @param outRequest Content request needed
+   * @param outCallback Loader callback to execute later
+   */
   virtual void getLoadTileImageWork(
       const RasterOverlayTile& overlayTile,
       RequestData& outRequest,
@@ -325,10 +339,11 @@ protected:
    *
    * This is a useful helper function for implementing {@link loadTileImage}.
    *
-   * @param url The URL.
-   * @param headers The request headers.
-   * @param options Additional options for the load process.
-   * @return A future that resolves to the image or error information.
+   * @param url The URL used to fetch image data
+   * @param statusCode HTTP code returned from content fetch
+   * @param data Bytes of url content response
+   * @param options Additional options for the load process
+   * @return A future containing a RasterLoadResult
    */
   CesiumAsync::Future<RasterLoadResult> loadTileImageFromUrl(
       const std::string& url,
