@@ -911,7 +911,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 void TilesetJsonLoader::getLoadWork(
-    Tile* pTile,
+    const Tile* pTile,
     RequestData& outRequest,
     TileProcessingCallback& outCallback) {
   // check if this tile belongs to a child loader

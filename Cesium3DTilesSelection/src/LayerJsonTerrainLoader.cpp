@@ -899,7 +899,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 void LayerJsonTerrainLoader::getLoadWork(
-    Tile* pTile,
+    const Tile* pTile,
     RequestData& outRequest,
     TileProcessingCallback& outCallback) {
 

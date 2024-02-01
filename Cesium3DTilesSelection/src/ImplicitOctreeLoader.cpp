@@ -316,7 +316,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 void ImplicitOctreeLoader::getLoadWork(
-    Tile*,
+    const Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
   // loadTileContent will control request / processing flow

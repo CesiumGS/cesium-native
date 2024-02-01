@@ -40,8 +40,10 @@ public:
         std::move(mockLoadTileContent));
   }
 
-  void getLoadWork(Tile*, RequestData&, TileProcessingCallback& outCallback)
-      override {
+  void getLoadWork(
+      const Tile*,
+      RequestData&,
+      TileProcessingCallback& outCallback) override {
     outCallback = [](const TileLoadInput& loadInput,
                      TilesetContentLoader* loader) {
       return loader->loadTileContent(loadInput);

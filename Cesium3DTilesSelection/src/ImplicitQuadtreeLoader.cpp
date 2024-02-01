@@ -338,7 +338,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 void ImplicitQuadtreeLoader::getLoadWork(
-    Tile*,
+    const Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
   // loadTileContent will control request / processing flow

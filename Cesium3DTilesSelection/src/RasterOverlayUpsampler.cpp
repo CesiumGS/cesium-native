@@ -89,7 +89,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 void RasterOverlayUpsampler::getLoadWork(
-    Tile*,
+    const Tile*,
     RequestData&,
     TileProcessingCallback& outCallback) {
   outCallback = [](const TileLoadInput& loadInput,

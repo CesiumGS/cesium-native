@@ -27,7 +27,7 @@ public:
   loadTileContent(const TileLoadInput& loadInput) override;
 
   void getLoadWork(
-      Tile* pTile,
+      const Tile* pTile,
       RequestData& outRequest,
       TileProcessingCallback& outCallback) override;
 

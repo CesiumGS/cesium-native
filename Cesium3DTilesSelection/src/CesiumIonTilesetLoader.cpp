@@ -414,7 +414,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
 }
 
 void CesiumIonTilesetLoader::getLoadWork(
-    Tile* pTile,
+    const Tile* pTile,
     RequestData& outRequest,
     TileProcessingCallback& outCallback) {
 

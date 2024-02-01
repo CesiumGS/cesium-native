@@ -99,9 +99,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @param tile The {@link Tile} that the content belongs to.
    * @param contentOptions The content options the {@link TilesetContentLoader} will use to process the content of the tile.
    * @param asyncSystem The async system to use for tile content loading.
-   * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pLogger The logger that will be used
-   * @param requestHeaders The request headers that will be attached to the
+   * @param UrlResponseDataMap Content responses fetched by the caller
    * request.
    */
   TileLoadInput(
@@ -131,6 +130,9 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    */
   const std::shared_ptr<spdlog::logger>& pLogger;
 
+  /**
+   * @brief Response data provided by the caller, stored by url
+   */
   const UrlResponseDataMap& responsesByUrl;
 };
 
@@ -180,7 +182,7 @@ public:
   loadTileContent(const TileLoadInput& input) = 0;
 
   virtual void getLoadWork(
-      Tile* pTile,
+      const Tile* pTile,
       RequestData& outRequest,
       TileProcessingCallback& outCallback) = 0;
 
