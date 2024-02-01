@@ -346,25 +346,36 @@ void TileWorkManager::TakeProcessingWork(
   SPDLOG_LOGGER_ERROR(this->_pLogger, "... before processing queue");
 
   // Start from the back
-  auto it = _processingQueue.end();
+  auto it = _processingQueue.end() - 1;
   while (1) {
-    --it;
-
     Work* work = *it;
+
+    auto eraseIt = _processingQueue.end();
     if (!work->children.empty()) {
       // Can't take this work yet
       // Child work has to register completion first
     } else {
-      // Move this work to output. Erase from queue
-      auto eraseIt = it;
-      outCompleted.push_back(*eraseIt);
-      _processingQueue.erase(eraseIt);
+      // Move this work to output and erase from queue
+      outCompleted.push_back(work);
+      eraseIt = it;
+    }
+
+    bool atFront = it == _processingQueue.begin();
+    if (eraseIt != _processingQueue.end()) {
+      if (atFront) {
+        _processingQueue.erase(eraseIt);
+        break;
+      } else {
+        --it;
+        _processingQueue.erase(eraseIt);
+      }
+    } else {
+      if (atFront)
+        break;
+      --it;
     }
 
     if (outCompleted.size() >= numberToTake)
-      break;
-
-    if (it == _processingQueue.begin())
       break;
   }
 
