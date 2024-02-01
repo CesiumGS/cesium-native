@@ -49,6 +49,36 @@ enum class TileLoadPriorityGroup {
   Urgent = 2
 };
 
+struct TileLoadRequest {
+  /**
+   * @brief The tile to be loaded.
+   */
+  Tile* pTile = nullptr;
+
+  /**
+   * @brief The priority group (low / medium / high) in which to load this
+   * tile.
+   *
+   * All tiles in a higher priority group are given a chance to load before
+   * any tiles in a lower priority group.
+   */
+  TileLoadPriorityGroup group = TileLoadPriorityGroup::Normal;
+
+  /**
+   * @brief The priority of this tile within its priority group.
+   *
+   * Tiles with a _lower_ value for this property load sooner!
+   */
+  double priority = 0;
+
+  bool operator<(const TileLoadRequest& rhs) const noexcept {
+    if (this->group == rhs.group)
+      return this->priority < rhs.priority;
+    else
+      return this->group > rhs.group;
+  }
+};
+
 struct ResponseData {
   const CesiumAsync::IAssetRequest* pRequest;
   const CesiumAsync::IAssetResponse* pResponse;

@@ -534,7 +534,6 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  friend class Tileset;
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
 

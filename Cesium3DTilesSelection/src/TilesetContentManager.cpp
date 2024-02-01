@@ -1025,7 +1025,8 @@ void TilesetContentManager::dispatchProcessingWork(
                 if (pair.result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
                   // Override its request data with was specified
-                  RequestData& newRequestData = pair.result.additionalRequestData;
+                  RequestData& newRequestData =
+                      pair.result.additionalRequestData;
                   _work->order.requestData.url = newRequestData.url;
                   if (!newRequestData.headers.empty())
                     _work->order.requestData.headers = newRequestData.headers;

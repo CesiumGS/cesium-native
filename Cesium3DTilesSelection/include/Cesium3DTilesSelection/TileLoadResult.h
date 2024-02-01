@@ -148,6 +148,10 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    */
   static TileLoadResult createRetryLaterResult();
 
+  /**
+   * @brief Create a result with RequestRequired state
+   *
+   */
   static TileLoadResult createRequestResult(const RequestData& request);
 };
 

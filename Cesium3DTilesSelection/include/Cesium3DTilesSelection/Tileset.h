@@ -2,43 +2,27 @@
 
 #include "Library.h"
 #include "RasterOverlayCollection.h"
+#include "Tile.h"
+#include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
+#include "TilesetLoadFailureDetails.h"
+#include "TilesetOptions.h"
 #include "ViewState.h"
 #include "ViewUpdateResult.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
+#include <rapidjson/fwd.h>
+
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
-
-struct TileLoadRequest {
-  /**
-   * @brief The tile to be loaded.
-   */
-  Tile* pTile = nullptr;
-
-  /**
-   * @brief The priority group (low / medium / high) in which to load this
-   * tile.
-   *
-   * All tiles in a higher priority group are given a chance to load before
-   * any tiles in a lower priority group.
-   */
-  TileLoadPriorityGroup group = TileLoadPriorityGroup::Normal;
-
-  /**
-   * @brief The priority of this tile within its priority group.
-   *
-   * Tiles with a _lower_ value for this property load sooner!
-   */
-  double priority = 0;
-
-  bool operator<(const TileLoadRequest& rhs) const noexcept {
-    if (this->group == rhs.group)
-      return this->priority < rhs.priority;
-    else
-      return this->group > rhs.group;
-  }
-};
 
 /**
  * @brief A <a
