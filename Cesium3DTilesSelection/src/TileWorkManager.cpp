@@ -226,6 +226,8 @@ void TileWorkManager::onRequestFinished(
   std::vector<Work*>& requestWorkVec = foundIt->second;
   for (Work* requestWork : requestWorkVec) {
 
+    assert(_ownedWork.find(requestWork->uniqueId) != _ownedWork.end());
+
     // A response code of 0 is not a valid HTTP code
     // and probably indicates a non-network error.
     // 404 is not found, which is failure
@@ -236,14 +238,8 @@ void TileWorkManager::onRequestFinished(
         errorReason = "Invalid response for tile content";
       else
         errorReason = "Received status code 404 for tile content";
-
-      // Move this into failed and out of owned work
-      auto ownedIt = _ownedWork.find(requestWork->uniqueId);
-      assert(ownedIt != _ownedWork.end());
-
       _failedWork.emplace_back(
-          FailedWorkPair(std::move(errorReason), std::move(ownedIt->second)));
-      _ownedWork.erase(ownedIt);
+          FailedWorkPair(std::move(errorReason), requestWork));
       continue;
     }
 
@@ -288,12 +284,37 @@ void TileWorkManager::GetRequestsStats(
 void TileWorkManager::TakeProcessingWork(
     size_t maxCount,
     std::vector<Work*>& outCompleted,
-    FailedWorkVec& outFailed) {
+    std::vector<FailedOrder>& outFailed) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // All failed requests go out
   if (!_failedWork.empty()) {
-    outFailed = _failedWork;
+    // Failed work immediately releases ownership to caller
+    for (auto workPair : _failedWork) {
+      Work* work = workPair.second;
+
+      auto foundIt = _ownedWork.find(work->uniqueId);
+
+      // We should own this and it should not be in any other queues
+#ifndef NDEBUG
+      assert(foundIt != _ownedWork.end());
+      for (auto element : _requestQueue)
+        assert(element->uniqueId != work->uniqueId);
+
+      for (auto urlWorkVecPair : _inFlightRequests)
+        for (auto element : urlWorkVecPair.second)
+          assert(element->uniqueId != work->uniqueId);
+
+      for (auto element : _processingQueue)
+        assert(element->uniqueId != work->uniqueId);
+#endif
+
+      // Return to caller
+      outFailed.emplace_back(
+          FailedOrder{workPair.first, std::move(work->order)});
+
+      _ownedWork.erase(foundIt);
+    }
     _failedWork.clear();
   }
 
@@ -407,6 +428,7 @@ void TileWorkManager::transitionQueuedWork(
   }
 
   for (Work* requestWork : workNeedingDispatch) {
+    // XXX order gets killed here
     // Keep the manager alive while the load is in progress
     // Capture the shared pointer by value
     thiz->_pAssetAccessor

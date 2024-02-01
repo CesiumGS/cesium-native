@@ -962,26 +962,26 @@ void TilesetContentManager::markWorkTilesAsLoading(
   }
 }
 
-void TilesetContentManager::handleFailedRequestWork(
-    const TileWorkManager::FailedWorkVec& failedWork) {
-  for (auto failedPair : failedWork) {
-    const std::string& reason = failedPair.first;
-    const TileWorkManager::Work& work = failedPair.second;
+void TilesetContentManager::handleFailedOrders(
+    const std::vector<TileWorkManager::FailedOrder>& failedOrders) {
+
+  for (auto failedOrder : failedOrders) {
+    const TileWorkManager::Order& order = failedOrder.order;
 
     SPDLOG_LOGGER_ERROR(
         this->_externals.pLogger,
         "{}: {}",
-        reason,
-        work.order.requestData.url);
+        failedOrder.failureReason,
+        order.requestData.url);
 
-    if (std::holds_alternative<TileProcessingData>(work.order.processingData)) {
+    if (std::holds_alternative<TileProcessingData>(order.processingData)) {
       TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work.order.processingData);
+          std::get<TileProcessingData>(order.processingData);
       assert(tileProcessing.pTile);
       tileProcessing.pTile->setState(TileLoadState::Failed);
     } else {
       RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work.order.processingData);
+          std::get<RasterProcessingData>(order.processingData);
       assert(rasterProcessing.pRasterTile);
 
       RasterOverlayTile* pLoading =
@@ -1136,14 +1136,14 @@ void TilesetContentManager::processLoadRequests(
     availableSlots = maxTileLoads - totalLoads;
 
   std::vector<TileWorkManager::Work*> completedWork;
-  TileWorkManager::FailedWorkVec failedWork;
+  std::vector<TileWorkManager::FailedOrder> failedOrders;
   _pTileWorkManager->TakeProcessingWork(
       availableSlots,
       completedWork,
-      failedWork);
+      failedOrders);
   assert(completedWork.size() <= availableSlots);
 
-  handleFailedRequestWork(failedWork);
+  handleFailedOrders(failedOrders);
 
   dispatchProcessingWork(completedWork, options);
 }

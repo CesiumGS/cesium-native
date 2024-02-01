@@ -118,11 +118,11 @@ TileLoadResult loadTileContent(
   assert(workCreated.size() == 1);
 
   std::vector<TileWorkManager::Work*> completedWork;
-  TileWorkManager::FailedWorkVec failedWork;
-  workManager->TakeProcessingWork(maxRequests, completedWork, failedWork);
+  std::vector<TileWorkManager::FailedOrder> failedOrders;
+  workManager->TakeProcessingWork(maxRequests, completedWork, failedOrders);
 
   assert(completedWork.size() == 1);
-  assert(failedWork.size() == 0);
+  assert(failedOrders.size() == 0);
 
   TileWorkManager::Work* work = *completedWork.begin();
   assert(

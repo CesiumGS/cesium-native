@@ -83,13 +83,15 @@ public:
       std::shared_ptr<TileWorkManager>& thiz,
       Work* requestWork);
 
-  using FailedWorkPair = std::pair<std::string, Work>;
-  using FailedWorkVec = std::vector<FailedWorkPair>;
+  struct FailedOrder {
+    std::string failureReason = "";
+    Order order = {};
+  };
 
   void TakeProcessingWork(
       size_t maxCount,
       std::vector<Work*>& outCompleted,
-      FailedWorkVec& outFailed);
+      std::vector<FailedOrder>& outFailed);
 
   void SignalWorkComplete(Work* work);
 
@@ -124,6 +126,9 @@ private:
   std::vector<Work*> _requestQueue;
   std::map<std::string, std::vector<Work*>> _inFlightRequests;
   std::vector<Work*> _processingQueue;
+
+  using FailedWorkPair = std::pair<std::string, Work*>;
+  using FailedWorkVec = std::vector<FailedWorkPair>;
 
   FailedWorkVec _failedWork;
 
