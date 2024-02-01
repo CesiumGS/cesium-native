@@ -284,8 +284,9 @@ public:
   /**
    * @brief Loads a tile
    *
-   * It begins the asynchronous process to load the tile, and returns true. When the process completes, the
-   * tile will be in the `RasterOverlayTile::LoadState::Loaded` or
+   * It begins the asynchronous process to load the tile, and returns true. When
+   * the process completes, the tile will be in the
+   * `RasterOverlayTile::LoadState::Loaded` or
    * `RasterOverlayTile::LoadState::Failed` state.
    *
    * @param tile The tile to load
