@@ -273,46 +273,6 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
-void Tileset::assertViewResults() {
-#ifndef NDEBUG
-  uint32_t inProgressSum =
-      static_cast<uint32_t>(_updateResult.requestsPending) +
-      _updateResult.tilesLoading + _updateResult.rastersLoading +
-      static_cast<uint32_t>(_updateResult.tilesFadingOut.size()) +
-      static_cast<uint32_t>(_updateResult.mainThreadTileLoadQueueLength) +
-      static_cast<uint32_t>(_updateResult.workerThreadTileLoadQueueLength);
-
-  uint32_t completedSum =
-      _updateResult.tilesLoaded + _updateResult.rastersLoaded;
-
-  if (inProgressSum == 0 && completedSum > 0) {
-    // We should be done right?
-    // If we have tiles kicked, we're not done, but there's nothing in progress?
-    assert(this->_updateResult.tilesKicked == 0);
-  }
-#endif
-}
-
-void Tileset::logRequestStats() {
-#if LOG_REQUEST_STATS
-  float progress = computeLoadProgress();
-  if (progress > 0 && progress < 100) {
-    size_t queued, inFlight, done;
-    this->_pTilesetContentManager->getRequestsStats(queued, inFlight, done);
-
-    SPDLOG_LOGGER_INFO(
-        this->_externals.pLogger,
-        "{} queued -> {} in flight -> {} done. Processing: {} tiles, {} "
-        "rasters",
-        queued,
-        inFlight,
-        done,
-        _updateResult.tilesLoading,
-        _updateResult.rastersLoading);
-  }
-#endif
-}
-
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -399,9 +359,41 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.requestsPending =
       this->_pTilesetContentManager->getTotalPendingCount();
 
-  assertViewResults();
+#ifndef NDEBUG
+  uint32_t inProgressSum =
+      static_cast<uint32_t>(_updateResult.requestsPending) +
+      _updateResult.tilesLoading + _updateResult.rastersLoading +
+      static_cast<uint32_t>(_updateResult.tilesFadingOut.size()) +
+      static_cast<uint32_t>(_updateResult.mainThreadTileLoadQueueLength) +
+      static_cast<uint32_t>(_updateResult.workerThreadTileLoadQueueLength);
 
-  logRequestStats();
+  uint32_t completedSum =
+      _updateResult.tilesLoaded + _updateResult.rastersLoaded;
+
+  if (inProgressSum == 0 && completedSum > 0) {
+    // We should be done right?
+    // If we have tiles kicked, we're not done, but there's nothing in progress?
+    assert(this->_updateResult.tilesKicked == 0);
+  }
+#endif
+
+#if LOG_REQUEST_STATS
+  float progress = computeLoadProgress();
+  if (progress > 0 && progress < 100) {
+    size_t queued, inFlight, done;
+    this->_pTilesetContentManager->getRequestsStats(queued, inFlight, done);
+
+    SPDLOG_LOGGER_INFO(
+        this->_externals.pLogger,
+        "{} queued -> {} in flight -> {} done. Processing: {} tiles, {} "
+        "rasters",
+        queued,
+        inFlight,
+        done,
+        _updateResult.tilesLoading,
+        _updateResult.rastersLoading);
+  }
+#endif
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =

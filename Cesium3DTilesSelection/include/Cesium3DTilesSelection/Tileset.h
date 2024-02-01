@@ -451,9 +451,6 @@ private:
       TileLoadPriorityGroup priorityGroup,
       double priority);
 
-  void assertViewResults();
-  void logRequestStats();
-
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
       const Tile& tile,
