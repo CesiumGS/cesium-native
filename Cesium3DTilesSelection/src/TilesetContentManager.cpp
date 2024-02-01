@@ -471,8 +471,8 @@ void postProcessGltfInWorkerThread(
     const TileContentLoadInfo& tileLoadInfo) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
-  if (!result.requestUrl.empty()) {
-    model.extras["Cesium3DTiles_TileUrl"] = result.requestUrl;
+  if (!result.originalRequestUrl.empty()) {
+    model.extras["Cesium3DTiles_TileUrl"] = result.originalRequestUrl;
   }
 
   // have to pass the up axis to extra for backward compatibility
@@ -1025,7 +1025,7 @@ void TilesetContentManager::dispatchProcessingWork(
                 if (pair.result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
                   // Override its request data with was specified
-                  RequestData& newRequestData = pair.result.requestData;
+                  RequestData& newRequestData = pair.result.additionalRequestData;
                   _work->order.requestData.url = newRequestData.url;
                   if (!newRequestData.headers.empty())
                     _work->order.requestData.headers = newRequestData.headers;
@@ -1309,7 +1309,7 @@ TilesetContentManager::doTileContentWork(
                       std::move(result),
                       std::move(projections),
                       std::move(tileLoadInfo),
-                      result.requestUrl,
+                      result.originalRequestUrl,
                       requestHeaders,
                       rendererOptions);
                 });

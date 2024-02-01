@@ -19,8 +19,8 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 struct RequestData {
-  std::string url;
-  std::vector<CesiumAsync::IAssetAccessor::THeader> headers;
+  std::string url = "";
+  std::vector<CesiumAsync::IAssetAccessor::THeader> headers = {};
 };
 
 /**
@@ -70,6 +70,9 @@ enum class TileLoadResultState {
    */
   RetryLater,
 
+  /**
+   * @brief The operation requires the client to make another content request
+   */
   RequestRequired
 };
 
@@ -111,7 +114,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief The request that is created to download the tile content.
    */
-  std::string requestUrl;
+  std::string originalRequestUrl;
 
   /**
    * @brief A callback that is invoked in the main thread immediately when the
@@ -121,7 +124,10 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    */
   std::function<void(Tile&)> tileInitializer;
 
-  RequestData requestData;
+  /**
+   * @brief Optional additional request needed
+   */
+  RequestData additionalRequestData;
 
   /**
    * @brief The result of loading a tile. Note that if the state is Failed or
