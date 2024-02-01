@@ -119,6 +119,8 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 TEST_CASE("Test replace refinement for render") {
   Cesium3DTilesSelection::registerAllTileContentTypes();
 
+  printf("Test replace refinement for render\n");
+
   // initialize REPLACE tileset
   //
   //				   parent.b3dm
@@ -242,6 +244,10 @@ TEST_CASE("Test replace refinement for render") {
 
     SECTION("Children cannot be rendered because response has an failed status "
             "code") {
+
+      printf("Children cannot be rendered because response has an failed "
+             "status\n");
+
       // remove one of children completed response to mock network error
       mockAssetAccessor->mockCompletedRequests["ll.b3dm"]
           ->pResponse->mockStatusCode = 404;
@@ -258,6 +264,8 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, so it goes to children.But because
     // children haven't started loading, root should be rendered.
     {
+      printf("tileset.updateView\n");
+
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
@@ -284,6 +292,8 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. Because children receive failed response, so they will be
     // rendered as empty tiles.
     {
+      printf("tileset.updateView 2\n");
+
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
@@ -307,6 +317,9 @@ TEST_CASE("Test replace refinement for render") {
   }
 
   SECTION("Parent meets sse but not renderable") {
+
+    printf("Parent meets sse but not renderable\n");
+
     // Zoom to tileset. Expect the root will not meet sse in this configure
     ViewState viewState = zoomToTileset(tileset);
     glm::dvec3 zoomInPosition =
@@ -326,7 +339,11 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, but none of the children finish
     // loading. So we will render root
     {
+      printf("... before update view\n");
+
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
+
+      printf("... after update view\n");
 
       // check tiles status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -362,7 +379,11 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. All the children finish loading, so they are ready to be
     // rendered (except ll.b3dm tile since it doesn't meet sse)
     {
+      printf("... before update view 2\n");
+
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
+
+      printf("... after update view 2\n");
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -415,7 +436,11 @@ TEST_CASE("Test replace refinement for render") {
           viewState.getHorizontalFieldOfView(),
           viewState.getVerticalFieldOfView());
 
+      printf("... before update view 3\n");
+
       ViewUpdateResult result = tileset.updateView({zoomOutViewState});
+
+      printf("... after update view 3\n");
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
