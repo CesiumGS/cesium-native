@@ -285,6 +285,9 @@ void TileWorkManager::TakeProcessingWork(
     size_t maxCount,
     std::vector<Work*>& outCompleted,
     std::vector<FailedOrder>& outFailed) {
+
+  SPDLOG_LOGGER_ERROR(this->_pLogger, "... enter");
+
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   // All failed requests go out
@@ -318,6 +321,8 @@ void TileWorkManager::TakeProcessingWork(
     _failedWork.clear();
   }
 
+  SPDLOG_LOGGER_ERROR(this->_pLogger, "... done failed work");
+
   // If no room for completed work, stop here
   if (maxCount == 0)
     return;
@@ -327,6 +332,8 @@ void TileWorkManager::TakeProcessingWork(
   if (processingCount == 0)
     return;
 
+  SPDLOG_LOGGER_ERROR(this->_pLogger, "... before sort");
+
   // TODO - This list should be a map so it is always sorted
   // Want highest priority at back
   std::sort(
@@ -335,6 +342,8 @@ void TileWorkManager::TakeProcessingWork(
       [](Work* a, Work* b) { return b->order < a->order; });
 
   size_t numberToTake = std::min(processingCount, maxCount);
+
+  SPDLOG_LOGGER_ERROR(this->_pLogger, "... before processing queue");
 
   // Start from the back
   auto it = _processingQueue.end();
@@ -358,6 +367,8 @@ void TileWorkManager::TakeProcessingWork(
     if (it == _processingQueue.begin())
       break;
   }
+
+  SPDLOG_LOGGER_ERROR(this->_pLogger, "... done");
 }
 
 void TileWorkManager::transitionQueuedWork(

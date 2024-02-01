@@ -165,10 +165,6 @@ TEST_CASE("Test replace refinement for render") {
       AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
       nullptr};
 
-  SPDLOG_LOGGER_ERROR(
-      tilesetExternals.pLogger,
-      "Test replace refinement for render");
-
   // create tileset and call updateView() to give it a chance to load
   Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
@@ -247,10 +243,6 @@ TEST_CASE("Test replace refinement for render") {
     SECTION("Children cannot be rendered because response has an failed status "
             "code") {
 
-      SPDLOG_LOGGER_ERROR(
-          tilesetExternals.pLogger,
-          "Children cannot be rendered because response has an failed status");
-
       // remove one of children completed response to mock network error
       mockAssetAccessor->mockCompletedRequests["ll.b3dm"]
           ->pResponse->mockStatusCode = 404;
@@ -267,8 +259,6 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, so it goes to children.But because
     // children haven't started loading, root should be rendered.
     {
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "tileset.updateView");
-
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
@@ -295,8 +285,6 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. Because children receive failed response, so they will be
     // rendered as empty tiles.
     {
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "tileset.updateView2");
-
       ViewUpdateResult result = tileset.updateView({viewState});
 
       // Check tile state. Ensure root doesn't meet sse, but children does
