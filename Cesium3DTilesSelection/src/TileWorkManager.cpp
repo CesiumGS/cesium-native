@@ -345,39 +345,31 @@ void TileWorkManager::TakeProcessingWork(
 
   SPDLOG_LOGGER_ERROR(this->_pLogger, "... before processing queue");
 
-  // Start from the back
-  auto it = _processingQueue.end() - 1;
-  while (1) {
-    Work* work = *it;
+  using WorkVecIter = std::vector<Work*>::iterator;
 
-    auto eraseIt = _processingQueue.end();
-    if (!work->children.empty()) {
+  // Gather iterators we want to erase, from back to front
+  // Add the related work to our output
+  std::vector<WorkVecIter> processingToErase;
+  std::vector<Work*>::iterator it = _processingQueue.end();
+  while (it != _processingQueue.begin()) {
+    --it;
+    Work* work = *it;
+    if (work->children.empty()) {
+      // Move this work to output and erase from queue
+      processingToErase.push_back(it);
+      outCompleted.push_back(work);
+    } else {
       // Can't take this work yet
       // Child work has to register completion first
-    } else {
-      // Move this work to output and erase from queue
-      outCompleted.push_back(work);
-      eraseIt = it;
-    }
-
-    bool atFront = it == _processingQueue.begin();
-    if (eraseIt != _processingQueue.end()) {
-      if (atFront) {
-        _processingQueue.erase(eraseIt);
-        break;
-      } else {
-        --it;
-        _processingQueue.erase(eraseIt);
-      }
-    } else {
-      if (atFront)
-        break;
-      --it;
     }
 
     if (outCompleted.size() >= numberToTake)
       break;
   }
+
+  // Delete any entries gathered
+  for (WorkVecIter eraseIt : processingToErase)
+    _processingQueue.erase(eraseIt);
 
   SPDLOG_LOGGER_ERROR(this->_pLogger, "... done");
 }
