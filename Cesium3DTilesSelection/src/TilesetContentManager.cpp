@@ -1108,6 +1108,8 @@ void TilesetContentManager::dispatchProcessingWork(
 void TilesetContentManager::processLoadRequests(
     std::vector<TileLoadRequest>& requests,
     TilesetOptions& options) {
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... discoverLoadWork");
+
   std::vector<TileWorkManager::Order> orders;
   discoverLoadWork(requests, options.maximumScreenSpaceError, orders);
 
@@ -1115,12 +1117,16 @@ void TilesetContentManager::processLoadRequests(
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... TryAddWork");
+
   std::vector<const TileWorkManager::Work*> workCreated;
   TileWorkManager::TryAddWork(
       this->_pTileWorkManager,
       orders,
       maxTileLoads,
       workCreated);
+
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... markWorkTilesAsLoading");
 
   markWorkTilesAsLoading(workCreated);
 
@@ -1136,6 +1142,8 @@ void TilesetContentManager::processLoadRequests(
   if (totalLoads < maxTileLoads)
     availableSlots = maxTileLoads - totalLoads;
 
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... TakeProcessingWork");
+
   std::vector<TileWorkManager::Work*> completedWork;
   std::vector<TileWorkManager::FailedOrder> failedOrders;
   _pTileWorkManager->TakeProcessingWork(
@@ -1144,9 +1152,15 @@ void TilesetContentManager::processLoadRequests(
       failedOrders);
   assert(completedWork.size() <= availableSlots);
 
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... handleFailedOrders");
+
   handleFailedOrders(failedOrders);
 
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... dispatchProcessingWork");
+
   dispatchProcessingWork(completedWork, options);
+
+  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... done");
 }
 
 void TilesetContentManager::parseTileWork(
