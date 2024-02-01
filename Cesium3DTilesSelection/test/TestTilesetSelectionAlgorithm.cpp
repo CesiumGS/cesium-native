@@ -309,10 +309,6 @@ TEST_CASE("Test replace refinement for render") {
 
   SECTION("Parent meets sse but not renderable") {
 
-    SPDLOG_LOGGER_ERROR(
-        tilesetExternals.pLogger,
-        "Parent meets sse but not renderable");
-
     // Zoom to tileset. Expect the root will not meet sse in this configure
     ViewState viewState = zoomToTileset(tileset);
     glm::dvec3 zoomInPosition =
@@ -332,11 +328,7 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, but none of the children finish
     // loading. So we will render root
     {
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "... before update view");
-
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
-
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "... after update view");
 
       // check tiles status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -372,11 +364,7 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. All the children finish loading, so they are ready to be
     // rendered (except ll.b3dm tile since it doesn't meet sse)
     {
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "... before update view");
-
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
-
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "... after update view");
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -429,11 +417,7 @@ TEST_CASE("Test replace refinement for render") {
           viewState.getHorizontalFieldOfView(),
           viewState.getVerticalFieldOfView());
 
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "... before update view");
-
       ViewUpdateResult result = tileset.updateView({zoomOutViewState});
-
-      SPDLOG_LOGGER_ERROR(tilesetExternals.pLogger, "... after update view");
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);

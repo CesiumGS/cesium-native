@@ -1136,8 +1136,6 @@ void TilesetContentManager::processLoadRequests(
   if (totalLoads < maxTileLoads)
     availableSlots = maxTileLoads - totalLoads;
 
-  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... TakeProcessingWork");
-
   std::vector<TileWorkManager::Work*> completedWork;
   std::vector<TileWorkManager::FailedOrder> failedOrders;
   _pTileWorkManager->TakeProcessingWork(
@@ -1145,8 +1143,6 @@ void TilesetContentManager::processLoadRequests(
       completedWork,
       failedOrders);
   assert(completedWork.size() <= availableSlots);
-
-  SPDLOG_LOGGER_ERROR(this->_externals.pLogger, "... handleFailedOrders");
 
   handleFailedOrders(failedOrders);
 
