@@ -288,13 +288,12 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
     }
   }
 
-  std::optional<SubtreeAvailability> availability = createSubtreeAvailability(
-      powerOf2,
-      subtreeJson,
-      std::move(resolvedBuffers));
-
   return asyncSystem.createResolvedFuture<SubtreeAvailability::LoadResult>(
-      {availability, {}});
+      {createSubtreeAvailability(
+           powerOf2,
+           subtreeJson,
+           std::move(resolvedBuffers)),
+       {}});
 }
 
 CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtreeRequest(
