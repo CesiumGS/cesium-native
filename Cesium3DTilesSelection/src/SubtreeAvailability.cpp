@@ -193,8 +193,8 @@ std::optional<SubtreeAvailability> createSubtreeAvailability(
 
 CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
     uint32_t powerOf2,
-    CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<spdlog::logger>&& pLogger,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const UrlResponseDataMap& additionalResponses,
     rapidjson::Document&& subtreeJson,
@@ -210,6 +210,9 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
     for (rapidjson::SizeType i = 0; i < arrayBufferJsons.Size(); ++i) {
       const auto& bufferJson = arrayBufferJsons[i];
       auto byteLengthIt = bufferJson.FindMember("byteLength");
+
+      SPDLOG_LOGGER_ERROR(pLogger, "Found byteLength property...");
+
       if (byteLengthIt == bufferJson.MemberEnd() ||
           !byteLengthIt->value.IsUint()) {
         SPDLOG_LOGGER_ERROR(
@@ -219,6 +222,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
             .createResolvedFuture<SubtreeAvailability::LoadResult>(
                 {std::nullopt, {}});
       }
+
+      SPDLOG_LOGGER_ERROR(pLogger, "...is correct.");
 
       size_t byteLength = byteLengthIt->value.GetUint();
 
@@ -292,8 +297,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
 
 CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtreeRequest(
     uint32_t powerOf2,
-    CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<spdlog::logger>&& pLogger,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& baseResponseData,
     const UrlResponseDataMap& additionalResponses) {
@@ -314,8 +319,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtreeRequest(
 
   return parseJsonSubtree(
       powerOf2,
-      std::move(asyncSystem),
-      std::move(pLogger),
+      asyncSystem,
+      pLogger,
       baseUrl,
       additionalResponses,
       std::move(subtreeJson),
@@ -324,8 +329,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtreeRequest(
 
 CesiumAsync::Future<SubtreeAvailability::LoadResult> parseBinarySubtreeRequest(
     uint32_t powerOf2,
-    CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<spdlog::logger>&& pLogger,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& baseReponseData,
     const UrlResponseDataMap& additionalResponses) {
@@ -389,8 +394,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseBinarySubtreeRequest(
 
   return parseJsonSubtree(
       powerOf2,
-      std::move(asyncSystem),
-      std::move(pLogger),
+      asyncSystem,
+      pLogger,
       baseUrl,
       additionalResponses,
       std::move(subtreeJson),
@@ -399,8 +404,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseBinarySubtreeRequest(
 
 CesiumAsync::Future<SubtreeAvailability::LoadResult> parseSubtreeRequest(
     uint32_t powerOf2,
-    CesiumAsync::AsyncSystem&& asyncSystem,
-    std::shared_ptr<spdlog::logger>&& pLogger,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const gsl::span<const std::byte>& baseResponseData,
     const UrlResponseDataMap& additionalResponses) {
@@ -419,16 +424,16 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseSubtreeRequest(
   if (isBinarySubtree) {
     return parseBinarySubtreeRequest(
         powerOf2,
-        std::move(asyncSystem),
-        std::move(pLogger),
+        asyncSystem,
+        pLogger,
         baseUrl,
         baseResponseData,
         additionalResponses);
   } else {
     return parseJsonSubtreeRequest(
         powerOf2,
-        std::move(asyncSystem),
-        std::move(pLogger),
+        asyncSystem,
+        pLogger,
         baseUrl,
         baseResponseData,
         additionalResponses);
@@ -503,14 +508,14 @@ SubtreeAvailability::loadSubtree(
   return asyncSystem.runInWorkerThread(
       [powerOf2,
        asyncSystem = asyncSystem,
-       pLogger = pLogger,
+       pLogger = std::shared_ptr<spdlog::logger>(pLogger),
        baseUrl = baseUrl,
        baseResponseData = baseResponse->data(),
        additionalResponses = additionalResponses]() mutable {
         return parseSubtreeRequest(
             powerOf2,
-            std::move(asyncSystem),
-            std::move(pLogger),
+            asyncSystem,
+            pLogger,
             baseUrl,
             baseResponseData,
             additionalResponses);
