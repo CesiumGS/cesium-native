@@ -201,6 +201,8 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
   std::vector<std::vector<std::byte>> resolvedBuffers;
+  bool internalBufferUsed = false;
+
   auto bufferIt = subtreeJson.FindMember("buffers");
   if (bufferIt != subtreeJson.MemberEnd() && bufferIt->value.IsArray()) {
     const auto& arrayBufferJsons = bufferIt->value.GetArray();
@@ -255,9 +257,9 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
             i,
             bufferUrlIt->second.pResponse->data(),
             byteLength));
-      } else if (
-          !internalBuffer.empty() && internalBuffer.size() >= byteLength) {
+      } else if (!internalBufferUsed) {
         resolvedBuffers[i] = std::move(internalBuffer);
+        internalBufferUsed = true;
       }
     }
 
