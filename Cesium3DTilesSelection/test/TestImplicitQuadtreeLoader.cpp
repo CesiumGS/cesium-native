@@ -45,14 +45,12 @@ TEST_CASE("Test implicit quadtree loader") {
     Tile tile(&loader);
     tile.setTileID("This is a test tile");
 
-    UrlResponseDataMap responseDataMap;
-
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         spdlog::default_logger(),
-        responseDataMap};
+        UrlResponseDataMap{}};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -77,14 +75,12 @@ TEST_CASE("Test implicit quadtree loader") {
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID{1, 0, 1});
 
-    UrlResponseDataMap responseDataMap;
-
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         spdlog::default_logger(),
-        responseDataMap};
+        UrlResponseDataMap{}};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -130,11 +126,7 @@ TEST_CASE("Test implicit quadtree loader") {
     tile.setTileID(QuadtreeTileID{2, 1, 1});
 
     UrlResponseDataMap responseDataMap;
-    for (auto& pair : pMockedAssetAccessor->mockCompletedRequests) {
-      responseDataMap.emplace(
-          pair.first,
-          ResponseData{pair.second.get(), pair.second->response()});
-    }
+    pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{
         tile,
@@ -188,11 +180,7 @@ TEST_CASE("Test implicit quadtree loader") {
     tile.setTileID(QuadtreeTileID{2, 1, 1});
 
     UrlResponseDataMap responseDataMap;
-    for (auto& pair : pMockedAssetAccessor->mockCompletedRequests) {
-      responseDataMap.emplace(
-          pair.first,
-          ResponseData{pair.second.get(), pair.second->response()});
-    }
+    pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{
         tile,

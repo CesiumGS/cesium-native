@@ -123,14 +123,12 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 1});
 
-    UrlResponseDataMap responseDataMap;
-
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
         spdlog::default_logger(),
-        responseDataMap};
+        UrlResponseDataMap{}};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -176,11 +174,7 @@ TEST_CASE("Test implicit octree loader") {
     tile.setTileID(OctreeTileID{3, 1, 0, 1});
 
     UrlResponseDataMap responseDataMap;
-    for (auto& pair : pMockedAssetAccessor->mockCompletedRequests) {
-      responseDataMap.emplace(
-          pair.first,
-          ResponseData{pair.second.get(), pair.second->response()});
-    }
+    pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{
         tile,
@@ -234,11 +228,7 @@ TEST_CASE("Test implicit octree loader") {
     tile.setTileID(OctreeTileID{1, 0, 1, 0});
 
     UrlResponseDataMap responseDataMap;
-    for (auto& pair : pMockedAssetAccessor->mockCompletedRequests) {
-      responseDataMap.emplace(
-          pair.first,
-          ResponseData{pair.second.get(), pair.second->response()});
-    }
+    pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{
         tile,

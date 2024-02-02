@@ -543,15 +543,13 @@ TEST_CASE("Test parsing subtree format") {
     auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
     CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
-    UrlResponseDataMap additionalResponses;
-
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
         2,
         asyncSystem,
         spdlog::default_logger(),
         "test",
         pMockRequest->response(),
-        additionalResponses);
+        UrlResponseDataMap{});
 
     asyncSystem.dispatchMainThreadTasks();
     auto loadResult = subtreeFuture.wait();

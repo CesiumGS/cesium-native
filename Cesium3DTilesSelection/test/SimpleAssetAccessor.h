@@ -3,6 +3,7 @@
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 
@@ -47,6 +48,14 @@ public:
   }
 
   virtual void tick() noexcept override {}
+
+  void fillResponseDataMap(UrlResponseDataMap& responseDataMap) {
+    for (auto& pair : mockCompletedRequests) {
+      responseDataMap.emplace(
+          pair.first,
+          ResponseData{pair.second.get(), pair.second->response()});
+    }
+  }
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;

@@ -59,11 +59,7 @@ Future<TileLoadResult> loadTile(
   loader.getLoadWork(&tile, requestData, processingCallback);
 
   UrlResponseDataMap responseDataMap;
-  for (auto& pair : pAssetAccessor->mockCompletedRequests) {
-    responseDataMap.emplace(
-        pair.first,
-        ResponseData{pair.second.get(), pair.second->response()});
-  }
+  pAssetAccessor->fillResponseDataMap(responseDataMap);
 
   TileLoadInput loadInput{
       tile,
