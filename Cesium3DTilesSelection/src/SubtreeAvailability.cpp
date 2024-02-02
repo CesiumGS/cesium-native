@@ -201,7 +201,6 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
     std::vector<std::byte>&& internalBuffer) {
   // resolve all the buffers
   std::vector<std::vector<std::byte>> resolvedBuffers;
-  bool internalBufferUsed = false;
 
   auto bufferIt = subtreeJson.FindMember("buffers");
   if (bufferIt != subtreeJson.MemberEnd() && bufferIt->value.IsArray()) {
@@ -213,8 +212,6 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
       const auto& bufferJson = arrayBufferJsons[i];
       auto byteLengthIt = bufferJson.FindMember("byteLength");
 
-      SPDLOG_LOGGER_ERROR(pLogger, "Found byteLength property...");
-
       if (byteLengthIt == bufferJson.MemberEnd() ||
           !byteLengthIt->value.IsUint()) {
         SPDLOG_LOGGER_ERROR(
@@ -224,8 +221,6 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
             .createResolvedFuture<SubtreeAvailability::LoadResult>(
                 {std::nullopt, {}});
       }
-
-      SPDLOG_LOGGER_ERROR(pLogger, "...is correct.");
 
       size_t byteLength = byteLengthIt->value.GetUint();
 
@@ -257,9 +252,9 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
             i,
             bufferUrlIt->second.pResponse->data(),
             byteLength));
-      } else if (!internalBufferUsed) {
+      } else if (
+          !internalBuffer.empty() && internalBuffer.size() >= byteLength) {
         resolvedBuffers[i] = std::move(internalBuffer);
-        internalBufferUsed = true;
       }
     }
 
@@ -277,13 +272,12 @@ CesiumAsync::Future<SubtreeAvailability::LoadResult> parseJsonSubtree(
                   std::move(requestedBuffer.data);
             }
 
-            std::optional<SubtreeAvailability> availability =
+            return SubtreeAvailability::LoadResult{
                 createSubtreeAvailability(
                     powerOf2,
                     subtreeJson,
-                    std::move(resolvedBuffers));
-
-            return SubtreeAvailability::LoadResult{availability, {}};
+                    std::move(resolvedBuffers)),
+                {}};
           });
     }
   }
