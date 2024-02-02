@@ -87,7 +87,7 @@ PUBLIC
     include_helpers # catch2/catch.hpp For the header fix
     ${cesium_native_targets}
 PRIVATE
-    s2s2
+    s2::s2
 )
 
 target_compile_definitions(cesium-native-tests PRIVATE GLM_ENABLE_EXPERIMENTAL)
