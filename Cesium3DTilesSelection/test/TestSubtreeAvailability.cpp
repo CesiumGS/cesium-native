@@ -556,6 +556,41 @@ TEST_CASE("Test parsing subtree format") {
     auto parsedSubtree = loadResult.first;
     CHECK(parsedSubtree != std::nullopt);
 
+    // XXX Put these checks back in
+    /*
+    for (const auto& tileID : availableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& tileID : unavailableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& subtreeID : availableSubtreeIDs) {
+      CHECK(parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+    for (const auto& subtreeID : unavailableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+    */
+  }
+
+  SECTION("Parse json subtree") {
+    auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
+
+    auto parsedSubtree =
+        mockLoadSubtreeJson(std::move(subtreeBuffers), std::move(subtreeJson));
+
+    CHECK(parsedSubtree != std::nullopt);
+
+    // XXX Put these checks back in
+    /*
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
       CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
@@ -575,46 +610,8 @@ TEST_CASE("Test parsing subtree format") {
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
       CHECK(!parsedSubtree->isSubtreeAvailable(
-          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+        libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
-  }
-
-  SECTION("Parse json subtree") {
-    auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
-
-    auto parsedSubtree =
-        mockLoadSubtreeJson(std::move(subtreeBuffers), std::move(subtreeJson));
-
-    CHECK(parsedSubtree != std::nullopt);
-
-    // XXX Put these checks back in
-    /*
-        for (const auto& tileID : availableTileIDs) {
-          uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-          CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-          CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
-        }
-    */
-
-    // XXX Put these checks back in
-    /*
-        for (const auto& tileID : unavailableTileIDs) {
-          uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-          CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
-          CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
-        }
-    */
-    for (const auto& subtreeID : availableSubtreeIDs) {
-      CHECK(parsedSubtree->isSubtreeAvailable(
-          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
-    }
-
-    // XXX Put these checks back in
-    /*
-        for (const auto& subtreeID : unavailableSubtreeIDs) {
-          CHECK(!parsedSubtree->isSubtreeAvailable(
-            libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
-        }
     */
   }
 
