@@ -538,16 +538,10 @@ TEST_CASE("Test parsing subtree format") {
         "test",
         CesiumAsync::HttpHeaders{},
         std::move(pMockResponse));
-    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
-        {"test", std::move(pMockRequest)}};
-    auto pMockAssetAccessor =
-        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
     // mock async system
     auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
     CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
-
-    auto foundIt = pMockAssetAccessor->mockCompletedRequests.find("test");
 
     UrlResponseDataMap additionalResponses;
 
@@ -556,7 +550,7 @@ TEST_CASE("Test parsing subtree format") {
         asyncSystem,
         spdlog::default_logger(),
         "test",
-        foundIt->second->response(),
+        pMockRequest->response(),
         additionalResponses);
 
     asyncSystem.dispatchMainThreadTasks();
