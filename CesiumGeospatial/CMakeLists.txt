@@ -40,7 +40,7 @@ PUBLIC
     CesiumUtility
     earcut
 PRIVATE
-    s2s2
+    s2::s2
 )
 
 target_compile_definitions(CesiumGeospatial PRIVATE GLM_ENABLE_EXPERIMENTAL)
