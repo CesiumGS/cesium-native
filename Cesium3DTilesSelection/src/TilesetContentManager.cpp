@@ -877,250 +877,22 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   this->_destructionCompletePromise.resolve();
 }
 
-void TilesetContentManager::discoverLoadWork(
-    const std::vector<TileLoadRequest>& requests,
-    double maximumScreenSpaceError,
-    std::vector<TileWorkManager::Order>& outOrders) {
-  for (const TileLoadRequest& loadRequest : requests) {
-    // Failed tiles don't get another chance
-    if (loadRequest.pTile->getState() == TileLoadState::Failed)
-      continue;
-
-    std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
-    this->parseTileWork(
-        loadRequest.pTile,
-        0,
-        maximumScreenSpaceError,
-        parsedTileWork);
-
-    // It's valid for a tile to not have any work
-    // It may be waiting for a parent tile to complete
-    if (parsedTileWork.empty())
-      continue;
-
-    // Sort by depth, which should bubble parent tasks up to the top
-    std::sort(parsedTileWork.begin(), parsedTileWork.end());
-
-    // Work with max depth is at top of list
-    size_t maxDepth = parsedTileWork.begin()->depthIndex;
-
-    // Add all the work, biasing priority by depth
-    // Give parents a higher priority (lower value)
-    for (ParsedTileWork& work : parsedTileWork) {
-      double priorityBias = double(maxDepth - work.depthIndex);
-      double resultPriority = loadRequest.priority + priorityBias;
-
-      auto& newOrder = outOrders.emplace_back(TileWorkManager::Order{
-          std::move(work.tileWorkChain.requestData),
-          TileProcessingData{
-              work.tileWorkChain.pTile,
-              work.tileWorkChain.tileCallback,
-              work.projections},
-          loadRequest.group,
-          resultPriority});
-
-      // Embed child work in parent
-      for (auto rasterWorkChain : work.rasterWorkChains) {
-        newOrder.childOrders.emplace_back(TileWorkManager::Order{
-            std::move(rasterWorkChain.requestData),
-            RasterProcessingData{
-                rasterWorkChain.pRasterTile,
-                rasterWorkChain.rasterCallback},
-            loadRequest.group,
-            resultPriority});
-      }
-    }
-  }
-}
-
-void TilesetContentManager::markWorkTilesAsLoading(
-    const std::vector<const TileWorkManager::Work*>& workVector) {
-
-  for (const TileWorkManager::Work* work : workVector) {
-    if (std::holds_alternative<TileProcessingData>(
-            work->order.processingData)) {
-      TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work->order.processingData);
-      assert(tileProcessing.pTile);
-      assert(
-          tileProcessing.pTile->getState() == TileLoadState::Unloaded ||
-          tileProcessing.pTile->getState() == TileLoadState::FailedTemporarily);
-
-      tileProcessing.pTile->setState(TileLoadState::ContentLoading);
-    } else {
-      RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work->order.processingData);
-      assert(rasterProcessing.pRasterTile);
-
-      RasterOverlayTile* pLoading =
-          rasterProcessing.pRasterTile->getLoadingTile();
-      assert(pLoading);
-      assert(pLoading->getState() == RasterOverlayTile::LoadState::Unloaded);
-
-      pLoading->setState(RasterOverlayTile::LoadState::Loading);
-    }
-  }
-}
-
-void TilesetContentManager::handleFailedOrders(
-    const std::vector<TileWorkManager::FailedOrder>& failedOrders) {
-
-  for (auto failedOrder : failedOrders) {
-    const TileWorkManager::Order& order = failedOrder.order;
-
-    SPDLOG_LOGGER_ERROR(
-        this->_externals.pLogger,
-        "{}: {}",
-        failedOrder.failureReason,
-        order.requestData.url);
-
-    if (std::holds_alternative<TileProcessingData>(order.processingData)) {
-      TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(order.processingData);
-      assert(tileProcessing.pTile);
-      tileProcessing.pTile->setState(TileLoadState::Failed);
-    } else {
-      RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(order.processingData);
-      assert(rasterProcessing.pRasterTile);
-
-      RasterOverlayTile* pLoading =
-          rasterProcessing.pRasterTile->getLoadingTile();
-      assert(pLoading);
-
-      pLoading->setState(RasterOverlayTile::LoadState::Failed);
-    }
-  }
-}
-
-void TilesetContentManager::dispatchProcessingWork(
-    const std::vector<TileWorkManager::Work*>& workVector,
-    const TilesetOptions& options) {
-  for (TileWorkManager::Work* work : workVector) {
-    if (std::holds_alternative<TileProcessingData>(
-            work->order.processingData)) {
-      TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work->order.processingData);
-      assert(tileProcessing.pTile);
-      Tile* pTile = tileProcessing.pTile;
-
-      // begin loading tile
-      this->notifyTileStartLoading(pTile);
-
-      UrlResponseDataMap responseDataMap;
-      work->fillResponseDataMap(responseDataMap);
-
-      // Keep the manager alive while the load is in progress.
-      CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
-
-      this->doTileContentWork(
-              *pTile,
-              tileProcessing.tileCallback,
-              responseDataMap,
-              tileProcessing.projections,
-              options)
-          .thenInMainThread(
-              [_pTile = pTile, _thiz = thiz, _work = work](
-                  TileLoadResultAndRenderResources&& pair) mutable {
-                if (pair.result.state == TileLoadResultState::RequestRequired) {
-                  // This work goes back into the work manager queue
-                  // Override its request data with was specified
-                  RequestData& newRequestData =
-                      pair.result.additionalRequestData;
-                  _work->order.requestData.url = newRequestData.url;
-                  if (!newRequestData.headers.empty())
-                    _work->order.requestData.headers = newRequestData.headers;
-
-                  TileWorkManager::RequeueWorkForRequest(
-                      _thiz->_pTileWorkManager,
-                      _work);
-                } else {
-                  _thiz->setTileContent(
-                      *_pTile,
-                      std::move(pair.result),
-                      pair.pRenderResources);
-
-                  _thiz->_pTileWorkManager->SignalWorkComplete(_work);
-
-                  _thiz->notifyTileDoneLoading(_pTile);
-                }
-              })
-          .catchInMainThread(
-              [_pTile = pTile,
-               _thiz = this,
-               pLogger = this->_externals.pLogger](std::exception&& e) {
-                _pTile->setState(TileLoadState::Failed);
-
-                _thiz->notifyTileDoneLoading(_pTile);
-                SPDLOG_LOGGER_ERROR(
-                    pLogger,
-                    "An unexpected error occurs when loading tile: {}",
-                    e.what());
-              });
-    } else {
-      RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work->order.processingData);
-      assert(rasterProcessing.pRasterTile);
-
-      this->notifyRasterStartLoading();
-
-      UrlResponseDataMap responseDataMap;
-      work->fillResponseDataMap(responseDataMap);
-
-      // Keep the manager alive while the load is in progress.
-      CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
-
-      rasterProcessing.pRasterTile
-          ->loadThrottled(
-              _externals.asyncSystem,
-              responseDataMap,
-              rasterProcessing.rasterCallback)
-          .thenInMainThread([_thiz = thiz,
-                             _work = work](RasterLoadResult&& result) mutable {
-            if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
-              // This work goes back into the work manager queue
-
-              // Make sure we're not requesting something we have
-              assert(!result.requestData.url.empty());
-              assert(
-                  _work->completedRequests.find(result.requestData.url) ==
-                  _work->completedRequests.end());
-
-              // Override its request data with was specified
-              RequestData& newRequestData = result.requestData;
-              _work->order.requestData.url = newRequestData.url;
-              if (!newRequestData.headers.empty())
-                _work->order.requestData.headers = newRequestData.headers;
-
-              TileWorkManager::RequeueWorkForRequest(
-                  _thiz->_pTileWorkManager,
-                  _work);
-            } else {
-              _thiz->_pTileWorkManager->SignalWorkComplete(_work);
-            }
-
-            _thiz->notifyRasterDoneLoading();
-          });
-    }
-  }
-}
-
 void TilesetContentManager::processLoadRequests(
-    std::vector<TileLoadRequest>& requests,
-    TilesetOptions& options) {
+  std::vector<TileLoadRequest>& requests,
+  TilesetOptions& options) {
   std::vector<TileWorkManager::Order> orders;
   discoverLoadWork(requests, options.maximumScreenSpaceError, orders);
 
   assert(options.maximumSimultaneousTileLoads > 0);
   size_t maxTileLoads =
-      static_cast<size_t>(options.maximumSimultaneousTileLoads);
+    static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
   std::vector<const TileWorkManager::Work*> workCreated;
   TileWorkManager::TryAddWork(
-      this->_pTileWorkManager,
-      orders,
-      maxTileLoads,
-      workCreated);
+    this->_pTileWorkManager,
+    orders,
+    maxTileLoads,
+    workCreated);
 
   markWorkTilesAsLoading(workCreated);
 
@@ -1130,7 +902,7 @@ void TilesetContentManager::processLoadRequests(
   assert(numberOfTilesLoading >= 0);
   assert(numberOfRastersLoading >= 0);
   size_t totalLoads = static_cast<size_t>(numberOfTilesLoading) +
-                      static_cast<size_t>(numberOfRastersLoading);
+    static_cast<size_t>(numberOfRastersLoading);
 
   size_t availableSlots = 0;
   if (totalLoads < maxTileLoads)
@@ -1139,188 +911,14 @@ void TilesetContentManager::processLoadRequests(
   std::vector<TileWorkManager::Work*> completedWork;
   std::vector<TileWorkManager::FailedOrder> failedOrders;
   _pTileWorkManager->TakeProcessingWork(
-      availableSlots,
-      completedWork,
-      failedOrders);
+    availableSlots,
+    completedWork,
+    failedOrders);
   assert(completedWork.size() <= availableSlots);
 
   handleFailedOrders(failedOrders);
 
   dispatchProcessingWork(completedWork, options);
-}
-
-void TilesetContentManager::parseTileWork(
-    Tile* pTile,
-    size_t depthIndex,
-    double maximumScreenSpaceError,
-    std::vector<ParsedTileWork>& outWork) {
-  CESIUM_TRACE("TilesetContentManager::parseTileWork");
-
-  // We can't load a tile that is unloading; it has to finish unloading first.
-  if (pTile->getState() == TileLoadState::Unloading)
-    return;
-
-  if (pTile->getState() != TileLoadState::Unloaded &&
-      pTile->getState() != TileLoadState::FailedTemporarily) {
-    // No need to load geometry, but give previously-throttled
-    // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
-      // Default headers come from the this. Loader can override if needed
-      RequestData requestData;
-      requestData.headers = this->_requestHeaders;
-      RasterProcessingCallback rasterCallback;
-
-      rasterTile.getLoadThrottledWork(requestData, rasterCallback);
-
-      if (!requestData.url.empty() || rasterCallback != nullptr) {
-        // TODO - This needs a different solution for continuation
-        // We can't pick up with an empty tile work chain
-        ParsedTileWork newWork = {depthIndex};
-        newWork.rasterWorkChains.push_back(
-            RasterWorkChain{&rasterTile, requestData, rasterCallback});
-        outWork.push_back(newWork);
-      }
-    }
-    return;
-  }
-
-  // Below are the guarantees the loader can assume about upsampled tile. If any
-  // of those guarantees are wrong, it's a bug:
-  // - Any tile that is marked as upsampled tile, we will guarantee that the
-  // parent is always loaded. It lets the loader takes care of upsampling only
-  // without requesting the parent tile. If a loader tries to upsample tile, but
-  // the parent is not loaded, it is a bug.
-  // - This manager will also guarantee that the parent tile will be alive until
-  // the upsampled tile content returns to the main thread. So the loader can
-  // capture the parent geometry by reference in the worker thread to upsample
-  // the current tile. Warning: it's not thread-safe to modify the parent
-  // geometry in the worker thread at the same time though
-  const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
-      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&pTile->getTileID());
-  if (pUpsampleID) {
-    // We can't upsample this tile if no parent
-    Tile* pParentTile = pTile->getParent();
-    if (!pParentTile)
-      return;
-
-    TileLoadState parentState = pParentTile->getState();
-
-    // If not currently loading, queue some work
-    if (parentState < TileLoadState::ContentLoading) {
-      parseTileWork(
-          pParentTile,
-          depthIndex + 1,
-          maximumScreenSpaceError,
-          outWork);
-      return;
-    }
-
-    // We can't proceed until our parent is done. Wait another tick
-    if (parentState != TileLoadState::Done)
-      return;
-
-    // Parent is done, continue adding work for this tile
-  }
-
-  // Parse any content fetch work
-  TilesetContentLoader* pLoader;
-  if (pTile->getLoader() == &this->_upsampler) {
-    pLoader = &this->_upsampler;
-  } else {
-    pLoader = this->_pLoader.get();
-  }
-
-  // Default headers come from the this. Loader can override if needed
-  RequestData requestData;
-  requestData.headers = this->_requestHeaders;
-  TileProcessingCallback tileCallback;
-
-  pLoader->getLoadWork(pTile, requestData, tileCallback);
-
-  ParsedTileWork newWork = {
-      depthIndex,
-      TileWorkChain{pTile, requestData, tileCallback}};
-
-  newWork.projections = mapOverlaysToTile(
-      *pTile,
-      this->_overlayCollection,
-      maximumScreenSpaceError,
-      this->_requestHeaders,
-      newWork.rasterWorkChains);
-
-  outWork.push_back(newWork);
-}
-
-CesiumAsync::Future<TileLoadResultAndRenderResources>
-TilesetContentManager::doTileContentWork(
-    Tile& tile,
-    TileProcessingCallback processingCallback,
-    const UrlResponseDataMap& responseDataMap,
-    const std::vector<CesiumGeospatial::Projection>& projections,
-    const TilesetOptions& tilesetOptions) {
-  CESIUM_TRACE("TilesetContentManager::doTileContentWork");
-
-  TileContentLoadInfo tileLoadInfo{
-      this->_externals.asyncSystem,
-      this->_externals.pAssetAccessor,
-      this->_externals.pPrepareRendererResources,
-      this->_externals.pLogger,
-      tilesetOptions.contentOptions,
-      tile};
-
-  TilesetContentLoader* pLoader;
-  if (tile.getLoader() == &this->_upsampler) {
-    pLoader = &this->_upsampler;
-  } else {
-    pLoader = this->_pLoader.get();
-  }
-
-  TileLoadInput loadInput{
-      tile,
-      tilesetOptions.contentOptions,
-      this->_externals.asyncSystem,
-      this->_externals.pLogger,
-      responseDataMap};
-
-  assert(processingCallback);
-
-  return processingCallback(loadInput, pLoader)
-      .thenImmediately([requestHeaders = this->_requestHeaders,
-                        tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections),
-                        rendererOptions = tilesetOptions.rendererOptions](
-                           TileLoadResult&& result) mutable {
-        // the reason we run immediate continuation, instead of in the
-        // worker thread, is that the loader may run the task in the main
-        // thread. And most often than not, those main thread task is very
-        // light weight. So when those tasks return, there is no need to
-        // spawn another worker thread if the result of the task isn't
-        // related to render content. We only ever spawn a new task in the
-        // worker thread if the content is a render content
-        if (result.state == TileLoadResultState::Success) {
-          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            auto asyncSystem = tileLoadInfo.asyncSystem;
-            return asyncSystem.runInWorkerThread(
-                [result = std::move(result),
-                 projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo),
-                 requestHeaders = std::move(requestHeaders),
-                 rendererOptions]() mutable {
-                  return postProcessContentInWorkerThread(
-                      std::move(result),
-                      std::move(projections),
-                      std::move(tileLoadInfo),
-                      result.originalRequestUrl,
-                      requestHeaders,
-                      rendererOptions);
-                });
-          }
-        }
-
-        return tileLoadInfo.asyncSystem
-            .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), nullptr});
-      });
 }
 
 void TilesetContentManager::updateTileContent(
@@ -1856,4 +1454,414 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     this->_pRootTile = std::move(result.pRootTile);
   }
 }
+
+void TilesetContentManager::discoverLoadWork(
+  const std::vector<TileLoadRequest>& requests,
+  double maximumScreenSpaceError,
+  std::vector<TileWorkManager::Order>& outOrders) {
+  for (const TileLoadRequest& loadRequest : requests) {
+    // Failed tiles don't get another chance
+    if (loadRequest.pTile->getState() == TileLoadState::Failed)
+      continue;
+
+    std::vector<TilesetContentManager::ParsedTileWork> parsedTileWork;
+    this->parseTileWork(
+      loadRequest.pTile,
+      0,
+      maximumScreenSpaceError,
+      parsedTileWork);
+
+    // It's valid for a tile to not have any work
+    // It may be waiting for a parent tile to complete
+    if (parsedTileWork.empty())
+      continue;
+
+    // Sort by depth, which should bubble parent tasks up to the top
+    std::sort(parsedTileWork.begin(), parsedTileWork.end());
+
+    // Work with max depth is at top of list
+    size_t maxDepth = parsedTileWork.begin()->depthIndex;
+
+    // Add all the work, biasing priority by depth
+    // Give parents a higher priority (lower value)
+    for (ParsedTileWork& work : parsedTileWork) {
+      double priorityBias = double(maxDepth - work.depthIndex);
+      double resultPriority = loadRequest.priority + priorityBias;
+
+      auto& newOrder = outOrders.emplace_back(TileWorkManager::Order{
+          std::move(work.tileWorkChain.requestData),
+          TileProcessingData{
+              work.tileWorkChain.pTile,
+              work.tileWorkChain.tileCallback,
+              work.projections},
+          loadRequest.group,
+          resultPriority });
+
+      // Embed child work in parent
+      for (auto rasterWorkChain : work.rasterWorkChains) {
+        newOrder.childOrders.emplace_back(TileWorkManager::Order{
+            std::move(rasterWorkChain.requestData),
+            RasterProcessingData{
+                rasterWorkChain.pRasterTile,
+                rasterWorkChain.rasterCallback},
+            loadRequest.group,
+            resultPriority });
+      }
+    }
+  }
+}
+
+void TilesetContentManager::markWorkTilesAsLoading(
+  const std::vector<const TileWorkManager::Work*>& workVector) {
+
+  for (const TileWorkManager::Work* work : workVector) {
+    if (std::holds_alternative<TileProcessingData>(
+      work->order.processingData)) {
+      TileProcessingData tileProcessing =
+        std::get<TileProcessingData>(work->order.processingData);
+      assert(tileProcessing.pTile);
+      assert(
+        tileProcessing.pTile->getState() == TileLoadState::Unloaded ||
+        tileProcessing.pTile->getState() == TileLoadState::FailedTemporarily);
+
+      tileProcessing.pTile->setState(TileLoadState::ContentLoading);
+    }
+    else {
+      RasterProcessingData rasterProcessing =
+        std::get<RasterProcessingData>(work->order.processingData);
+      assert(rasterProcessing.pRasterTile);
+
+      RasterOverlayTile* pLoading =
+        rasterProcessing.pRasterTile->getLoadingTile();
+      assert(pLoading);
+      assert(pLoading->getState() == RasterOverlayTile::LoadState::Unloaded);
+
+      pLoading->setState(RasterOverlayTile::LoadState::Loading);
+    }
+  }
+}
+
+void TilesetContentManager::handleFailedOrders(
+  const std::vector<TileWorkManager::FailedOrder>& failedOrders) {
+
+  for (auto failedOrder : failedOrders) {
+    const TileWorkManager::Order& order = failedOrder.order;
+
+    SPDLOG_LOGGER_ERROR(
+      this->_externals.pLogger,
+      "{}: {}",
+      failedOrder.failureReason,
+      order.requestData.url);
+
+    if (std::holds_alternative<TileProcessingData>(order.processingData)) {
+      TileProcessingData tileProcessing =
+        std::get<TileProcessingData>(order.processingData);
+      assert(tileProcessing.pTile);
+      tileProcessing.pTile->setState(TileLoadState::Failed);
+    }
+    else {
+      RasterProcessingData rasterProcessing =
+        std::get<RasterProcessingData>(order.processingData);
+      assert(rasterProcessing.pRasterTile);
+
+      RasterOverlayTile* pLoading =
+        rasterProcessing.pRasterTile->getLoadingTile();
+      assert(pLoading);
+
+      pLoading->setState(RasterOverlayTile::LoadState::Failed);
+    }
+  }
+}
+
+void TilesetContentManager::dispatchProcessingWork(
+  const std::vector<TileWorkManager::Work*>& workVector,
+  const TilesetOptions& options) {
+  for (TileWorkManager::Work* work : workVector) {
+    if (std::holds_alternative<TileProcessingData>(
+      work->order.processingData)) {
+      TileProcessingData tileProcessing =
+        std::get<TileProcessingData>(work->order.processingData);
+      assert(tileProcessing.pTile);
+      Tile* pTile = tileProcessing.pTile;
+
+      // begin loading tile
+      this->notifyTileStartLoading(pTile);
+
+      UrlResponseDataMap responseDataMap;
+      work->fillResponseDataMap(responseDataMap);
+
+      // Keep the manager alive while the load is in progress.
+      CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
+      this->doTileContentWork(
+        *pTile,
+        tileProcessing.tileCallback,
+        responseDataMap,
+        tileProcessing.projections,
+        options)
+        .thenInMainThread(
+          [_pTile = pTile, _thiz = thiz, _work = work](
+            TileLoadResultAndRenderResources&& pair) mutable {
+              if (pair.result.state == TileLoadResultState::RequestRequired) {
+                // This work goes back into the work manager queue
+                // Override its request data with was specified
+                RequestData& newRequestData =
+                  pair.result.additionalRequestData;
+                _work->order.requestData.url = newRequestData.url;
+                if (!newRequestData.headers.empty())
+                  _work->order.requestData.headers = newRequestData.headers;
+
+                TileWorkManager::RequeueWorkForRequest(
+                  _thiz->_pTileWorkManager,
+                  _work);
+              }
+              else {
+                _thiz->setTileContent(
+                  *_pTile,
+                  std::move(pair.result),
+                  pair.pRenderResources);
+
+                _thiz->_pTileWorkManager->SignalWorkComplete(_work);
+
+                _thiz->notifyTileDoneLoading(_pTile);
+              }
+          })
+        .catchInMainThread(
+          [_pTile = pTile,
+          _thiz = this,
+          pLogger = this->_externals.pLogger](std::exception&& e) {
+            _pTile->setState(TileLoadState::Failed);
+
+            _thiz->notifyTileDoneLoading(_pTile);
+            SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "An unexpected error occurs when loading tile: {}",
+              e.what());
+          });
+    }
+    else {
+      RasterProcessingData rasterProcessing =
+        std::get<RasterProcessingData>(work->order.processingData);
+      assert(rasterProcessing.pRasterTile);
+
+      this->notifyRasterStartLoading();
+
+      UrlResponseDataMap responseDataMap;
+      work->fillResponseDataMap(responseDataMap);
+
+      // Keep the manager alive while the load is in progress.
+      CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
+      rasterProcessing.pRasterTile
+        ->loadThrottled(
+          _externals.asyncSystem,
+          responseDataMap,
+          rasterProcessing.rasterCallback)
+        .thenInMainThread([_thiz = thiz,
+          _work = work](RasterLoadResult&& result) mutable {
+            if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
+              // This work goes back into the work manager queue
+
+              // Make sure we're not requesting something we have
+              assert(!result.requestData.url.empty());
+              assert(
+                _work->completedRequests.find(result.requestData.url) ==
+                _work->completedRequests.end());
+
+              // Override its request data with was specified
+              RequestData& newRequestData = result.requestData;
+              _work->order.requestData.url = newRequestData.url;
+              if (!newRequestData.headers.empty())
+                _work->order.requestData.headers = newRequestData.headers;
+
+              TileWorkManager::RequeueWorkForRequest(
+                _thiz->_pTileWorkManager,
+                _work);
+            }
+            else {
+              _thiz->_pTileWorkManager->SignalWorkComplete(_work);
+            }
+
+            _thiz->notifyRasterDoneLoading();
+          });
+    }
+  }
+}
+
+void TilesetContentManager::parseTileWork(
+  Tile* pTile,
+  size_t depthIndex,
+  double maximumScreenSpaceError,
+  std::vector<ParsedTileWork>& outWork) {
+  CESIUM_TRACE("TilesetContentManager::parseTileWork");
+
+  // We can't load a tile that is unloading; it has to finish unloading first.
+  if (pTile->getState() == TileLoadState::Unloading)
+    return;
+
+  if (pTile->getState() != TileLoadState::Unloaded &&
+    pTile->getState() != TileLoadState::FailedTemporarily) {
+    // No need to load geometry, but give previously-throttled
+    // raster overlay tiles a chance to load.
+    for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
+      // Default headers come from the this. Loader can override if needed
+      RequestData requestData;
+      requestData.headers = this->_requestHeaders;
+      RasterProcessingCallback rasterCallback;
+
+      rasterTile.getLoadThrottledWork(requestData, rasterCallback);
+
+      if (!requestData.url.empty() || rasterCallback != nullptr) {
+        // TODO - This needs a different solution for continuation
+        // We can't pick up with an empty tile work chain
+        ParsedTileWork newWork = { depthIndex };
+        newWork.rasterWorkChains.push_back(
+          RasterWorkChain{ &rasterTile, requestData, rasterCallback });
+        outWork.push_back(newWork);
+      }
+    }
+    return;
+  }
+
+  // Below are the guarantees the loader can assume about upsampled tile. If any
+  // of those guarantees are wrong, it's a bug:
+  // - Any tile that is marked as upsampled tile, we will guarantee that the
+  // parent is always loaded. It lets the loader takes care of upsampling only
+  // without requesting the parent tile. If a loader tries to upsample tile, but
+  // the parent is not loaded, it is a bug.
+  // - This manager will also guarantee that the parent tile will be alive until
+  // the upsampled tile content returns to the main thread. So the loader can
+  // capture the parent geometry by reference in the worker thread to upsample
+  // the current tile. Warning: it's not thread-safe to modify the parent
+  // geometry in the worker thread at the same time though
+  const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
+    std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&pTile->getTileID());
+  if (pUpsampleID) {
+    // We can't upsample this tile if no parent
+    Tile* pParentTile = pTile->getParent();
+    if (!pParentTile)
+      return;
+
+    TileLoadState parentState = pParentTile->getState();
+
+    // If not currently loading, queue some work
+    if (parentState < TileLoadState::ContentLoading) {
+      parseTileWork(
+        pParentTile,
+        depthIndex + 1,
+        maximumScreenSpaceError,
+        outWork);
+      return;
+    }
+
+    // We can't proceed until our parent is done. Wait another tick
+    if (parentState != TileLoadState::Done)
+      return;
+
+    // Parent is done, continue adding work for this tile
+  }
+
+  // Parse any content fetch work
+  TilesetContentLoader* pLoader;
+  if (pTile->getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
+  }
+  else {
+    pLoader = this->_pLoader.get();
+  }
+
+  // Default headers come from the this. Loader can override if needed
+  RequestData requestData;
+  requestData.headers = this->_requestHeaders;
+  TileProcessingCallback tileCallback;
+
+  pLoader->getLoadWork(pTile, requestData, tileCallback);
+
+  ParsedTileWork newWork = {
+      depthIndex,
+      TileWorkChain{pTile, requestData, tileCallback} };
+
+  newWork.projections = mapOverlaysToTile(
+    *pTile,
+    this->_overlayCollection,
+    maximumScreenSpaceError,
+    this->_requestHeaders,
+    newWork.rasterWorkChains);
+
+  outWork.push_back(newWork);
+}
+
+CesiumAsync::Future<TileLoadResultAndRenderResources>
+TilesetContentManager::doTileContentWork(
+  Tile& tile,
+  TileProcessingCallback processingCallback,
+  const UrlResponseDataMap& responseDataMap,
+  const std::vector<CesiumGeospatial::Projection>& projections,
+  const TilesetOptions& tilesetOptions) {
+  CESIUM_TRACE("TilesetContentManager::doTileContentWork");
+
+  TileContentLoadInfo tileLoadInfo{
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger,
+      tilesetOptions.contentOptions,
+      tile };
+
+  TilesetContentLoader* pLoader;
+  if (tile.getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
+  }
+  else {
+    pLoader = this->_pLoader.get();
+  }
+
+  TileLoadInput loadInput{
+      tile,
+      tilesetOptions.contentOptions,
+      this->_externals.asyncSystem,
+      this->_externals.pLogger,
+      responseDataMap };
+
+  assert(processingCallback);
+
+  return processingCallback(loadInput, pLoader)
+    .thenImmediately([requestHeaders = this->_requestHeaders,
+      tileLoadInfo = std::move(tileLoadInfo),
+      projections = std::move(projections),
+      rendererOptions = tilesetOptions.rendererOptions](
+        TileLoadResult&& result) mutable {
+          // the reason we run immediate continuation, instead of in the
+          // worker thread, is that the loader may run the task in the main
+          // thread. And most often than not, those main thread task is very
+          // light weight. So when those tasks return, there is no need to
+          // spawn another worker thread if the result of the task isn't
+          // related to render content. We only ever spawn a new task in the
+          // worker thread if the content is a render content
+          if (result.state == TileLoadResultState::Success) {
+            if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
+              auto asyncSystem = tileLoadInfo.asyncSystem;
+              return asyncSystem.runInWorkerThread(
+                [result = std::move(result),
+                projections = std::move(projections),
+                tileLoadInfo = std::move(tileLoadInfo),
+                requestHeaders = std::move(requestHeaders),
+                rendererOptions]() mutable {
+                  return postProcessContentInWorkerThread(
+                    std::move(result),
+                    std::move(projections),
+                    std::move(tileLoadInfo),
+                    result.originalRequestUrl,
+                    requestHeaders,
+                    rendererOptions);
+                });
+            }
+          }
+
+          return tileLoadInfo.asyncSystem
+            .createResolvedFuture<TileLoadResultAndRenderResources>(
+              { std::move(result), nullptr });
+      });
+}
+
 } // namespace Cesium3DTilesSelection
