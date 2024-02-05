@@ -2498,11 +2498,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         1, 3, 2,
         1, 3, 4, 1
     };
-    std::vector<uint32_t> offsets{
-        0, 2, 7, 10, 14
-    };
     // clang-format on
-
+    std::vector<uint32_t> offsets{0, 2, 7, 10, 14};
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
@@ -2514,12 +2511,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         1, 3, 2,
         1, 3, 4, 1
     };
-    std::vector<uint32_t> offsets{
-        0, 2 * sizeof(int32_t), 7 * sizeof(int32_t), 10 * sizeof(int32_t), 14
-        * sizeof(int32_t)
-    };
     // clang-format on
-
+    std::vector<uint32_t> offsets{0, 2, 7, 10, 14};
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
@@ -2531,12 +2524,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         1.4, 3.3, 2.2,
         1.11, 3.2, 4.111, 1.44
     };
-    std::vector<uint32_t> offsets{
-        0, 2 * sizeof(double), 7 * sizeof(double), 10 * sizeof(double), 14 *
-        sizeof(double)
-    };
     // clang-format on
-
+    std::vector<uint32_t> offsets{0, 2, 7, 10, 14};
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
@@ -2547,10 +2536,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         0, 255, 128,
         64,
     };
-    std::vector<uint32_t> offsets{
-        0, 2, 5, 6
-    };
     // clang-format on
+    std::vector<uint32_t> offsets{0, 2, 5, 6};
 
     std::vector<std::optional<std::vector<double>>> expected{
         std::vector<double>{1.0, 0.0},
@@ -2575,13 +2562,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         1, 3, 4, 1
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(int32_t),
-        7 * sizeof(int32_t),
-        10 * sizeof(int32_t),
-        11 * sizeof(int32_t),
-        15 * sizeof(int32_t)};
+    std::vector<uint32_t> offsets{0, 2, 7, 10, 11, 15};
 
     JsonValue::Array noData{0};
 
@@ -2610,13 +2591,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         1, 3, 4, 1
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(int32_t),
-        7 * sizeof(int32_t),
-        10 * sizeof(int32_t),
-        11 * sizeof(int32_t),
-        15 * sizeof(int32_t)};
+    std::vector<uint32_t> offsets{0, 2, 7, 10, 11, 15};
 
     JsonValue::Array noData{0};
     JsonValue::Array defaultValue{1};
@@ -2645,10 +2620,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         64,
         255, 255
     };
-    std::vector<uint32_t> offsets{
-        0, 2, 5, 6, 8
-    };
     // clang-format on
+    std::vector<uint32_t> offsets{0, 2, 5, 6, 8};
 
     JsonValue::Array noData{255, 255};
     JsonValue::Array defaultValue{-1.0};
@@ -2680,10 +2653,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView "
         0, 255, 128,
         64,
     };
-    std::vector<uint32_t> offsets{
-        0, 2, 5, 6
-    };
     // clang-format on
+    std::vector<uint32_t> offsets{0, 2, 5, 6};
 
     std::vector<std::optional<std::vector<double>>> expected{
         std::vector<double>{1.0, 0.0},
@@ -2706,10 +2677,8 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView "
         64,
         255, 255
     };
-    std::vector<uint32_t> offsets{
-        0, 2, 5, 6, 8
-    };
     // clang-format on
+    std::vector<uint32_t> offsets{0, 2, 5, 6, 8};
 
     JsonValue::Array noData{255, 255};
     JsonValue::Array defaultValue{-1.0};
@@ -2742,13 +2711,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         glm::ivec2(-9, 10), glm::ivec2(8, -2)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::ivec2),
-        6 * sizeof(glm::ivec2),
-        9 * sizeof(glm::ivec2),
-        11 * sizeof(glm::ivec2)};
-
+    std::vector<uint32_t> offsets{0, 2, 6, 9, 11};
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
@@ -2762,14 +2725,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         glm::dvec3(-2.0, 0.85, 0.22), glm::dvec3(-8.8, 5.1, 0.0), glm::dvec3(12.0, 8.0, -2.2),
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::dvec3),
-        5 * sizeof(glm::dvec3),
-        6 * sizeof(glm::dvec3),
-        8 * sizeof(glm::dvec3),
-        11 * sizeof(glm::dvec3)};
-
+    std::vector<uint32_t> offsets{0, 2, 5, 6, 8, 11};
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
 
@@ -2783,15 +2739,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
          glm::u8vec4(99, 8, 1, 2)
      };
     // clang-format on
-
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::u8vec4),
-        3 * sizeof(glm::u8vec4),
-        6 * sizeof(glm::u8vec4),
-        8 * sizeof(glm::u8vec4),
-        9 * sizeof(glm::u8vec4)};
-
+    std::vector<uint32_t> offsets{0, 2, 3, 6, 8, 9};
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
 
@@ -2805,13 +2753,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::ivec3),
-        3 * sizeof(glm::ivec3),
-        6 * sizeof(glm::ivec3),
-        7 * sizeof(glm::ivec3),
-        9 * sizeof(glm::ivec3)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6, 7, 9};
 
     JsonValue::Array noData{};
     noData.push_back(JsonValue::Array{-1, -1, -1});
@@ -2844,13 +2786,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         glm::ivec3(1, 3, 4), glm::ivec3(1, 0, 1)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::ivec3),
-        3 * sizeof(glm::ivec3),
-        6 * sizeof(glm::ivec3),
-        7 * sizeof(glm::ivec3),
-        9 * sizeof(glm::ivec3)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6, 7, 9};
 
     JsonValue::Array noData{};
     noData.push_back(JsonValue::Array{-1, -1, -1});
@@ -2887,11 +2823,7 @@ TEST_CASE(
         glm::u8vec2(128, 255), glm::u8vec2(255, 255), glm::u8vec2(32, 64)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0 * sizeof(glm::u8vec2),
-        2 * sizeof(glm::u8vec2),
-        3 * sizeof(glm::u8vec2),
-        6 * sizeof(glm::u8vec2)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6};
 
     std::vector<std::optional<std::vector<glm::dvec2>>> expected{
         std::vector<glm::dvec2>{
@@ -2919,11 +2851,7 @@ TEST_CASE(
         glm::u8vec2(128, 255), glm::u8vec2(255, 255), glm::u8vec2(32, 64)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0 * sizeof(glm::u8vec2),
-        2 * sizeof(glm::u8vec2),
-        3 * sizeof(glm::u8vec2),
-        6 * sizeof(glm::u8vec2)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6};
 
     JsonValue::Array noData{};
     noData.push_back(JsonValue::Array{0, 0});
@@ -2986,12 +2914,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     data.insert(data.end(), data1.begin(), data1.end());
     data.insert(data.end(), data2.begin(), data2.end());
 
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::dmat2),
-        3 * sizeof(glm::dmat2),
-        6 * sizeof(glm::dmat2),
-    };
+    std::vector<uint32_t> offsets{0, 2, 3, 6};
 
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
@@ -3036,11 +2959,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     data.insert(data.end(), data1.begin(), data1.end());
     data.insert(data.end(), data2.begin(), data2.end());
 
-    std::vector<uint32_t> offsets{
-        0,
-        1 * sizeof(glm::i16mat3x3),
-        4 * sizeof(glm::i16mat3x3),
-        6 * sizeof(glm::i16mat3x3)};
+    std::vector<uint32_t> offsets{0, 1, 4, 6};
 
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
@@ -3091,11 +3010,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     data.insert(data.end(), data1.begin(), data1.end());
     data.insert(data.end(), data2.begin(), data2.end());
 
-    std::vector<uint32_t> offsets{
-        0,
-        3 * sizeof(glm::u8mat4x4),
-        4 * sizeof(glm::u8mat4x4),
-        6 * sizeof(glm::u8mat4x4)};
+    std::vector<uint32_t> offsets{0, 3, 4, 6};
 
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
@@ -3110,13 +3025,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         glm::imat3x3(1), glm::imat3x3(24)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::imat3x3),
-        3 * sizeof(glm::imat3x3),
-        6 * sizeof(glm::imat3x3),
-        7 * sizeof(glm::imat3x3),
-        9 * sizeof(glm::imat3x3)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6, 7, 9};
 
     // clang-format off
     JsonValue::Array noData{};
@@ -3154,13 +3063,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         glm::imat3x3(1), glm::imat3x3(24)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0,
-        2 * sizeof(glm::imat3x3),
-        3 * sizeof(glm::imat3x3),
-        6 * sizeof(glm::imat3x3),
-        7 * sizeof(glm::imat3x3),
-        9 * sizeof(glm::imat3x3)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6, 7, 9};
 
     // clang-format off
     JsonValue::Array noData{};
@@ -3205,11 +3108,7 @@ TEST_CASE(
         glm::u8mat2x2(128), glm::u8mat2x2(255), glm::u8mat2x2(32)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0 * sizeof(glm::u8mat2x2),
-        2 * sizeof(glm::u8mat2x2),
-        3 * sizeof(glm::u8mat2x2),
-        6 * sizeof(glm::u8mat2x2)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6};
 
     std::vector<std::optional<std::vector<glm::dmat2>>> expected{
         std::vector<glm::dmat2>{glm::dmat2(1.0), glm::dmat2(64.0 / 255.0)},
@@ -3235,11 +3134,7 @@ TEST_CASE(
         glm::u8mat2x2(128), glm::u8mat2x2(255), glm::u8mat2x2(32)
     };
     // clang-format on
-    std::vector<uint32_t> offsets{
-        0 * sizeof(glm::u8mat2x2),
-        2 * sizeof(glm::u8mat2x2),
-        3 * sizeof(glm::u8mat2x2),
-        6 * sizeof(glm::u8mat2x2)};
+    std::vector<uint32_t> offsets{0, 2, 3, 6};
 
     // clang-format off
     JsonValue::Array noData{};

@@ -1854,13 +1854,18 @@ TEST_CASE("Uses sentinel values for JSON null values") {
 }
 
 TEST_CASE("Defaults to string if no sentinel values are available") {
-  SECTION("Uint32") {
+  SECTION("Uint64") {
     Model model;
-    // Even though the values are typed uint32, they are small enough to be
-    // stored as uint8s. Signed types are preferred over unsigned, but this
-    // exceeds the range for int8.
-    std::vector<std::optional<uint32_t>>
-        expected{32, 45, 0, 255, std::nullopt, 0, 65, 78};
+    std::vector<std::optional<uint64_t>> expected{
+        32,
+        45,
+        0,
+        255,
+        std::nullopt,
+        0,
+        65,
+        78,
+        std::numeric_limits<uint64_t>::max()};
 
     rapidjson::Document featureTableJson;
     featureTableJson.SetObject();
@@ -1945,9 +1950,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
 
   SECTION("Int32") {
     Model model;
-    // Even though the values are typed int32, they are small enough to be
-    // stored as int8s.
-    std::vector<std::optional<uint32_t>>
+    std::vector<std::optional<int32_t>>
         expected{32, 45, 0, -1, std::nullopt, 0, 65, 78};
 
     rapidjson::Document featureTableJson;

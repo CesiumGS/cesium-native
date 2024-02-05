@@ -355,12 +355,6 @@ public:
    */
   const std::optional<CesiumUtility::JsonValue>
   getSentinelValue() const noexcept {
-    if (isCompatibleWithUnsignedInteger()) {
-      return _canUseZeroSentinel
-                 ? std::make_optional<CesiumUtility::JsonValue>(0)
-                 : std::nullopt;
-    }
-
     if (isCompatibleWithSignedInteger()) {
       if (_canUseZeroSentinel) {
         return 0;
@@ -371,10 +365,14 @@ public:
       }
     }
 
-    if (isIncompatible()) {
-      if (_canUseNullStringSentinel) {
-        return "null";
-      }
+    if (isCompatibleWithUnsignedInteger()) {
+      return _canUseZeroSentinel
+                 ? std::make_optional<CesiumUtility::JsonValue>(0)
+                 : std::nullopt;
+    }
+
+    if (isIncompatible() && _canUseNullStringSentinel) {
+      return "null";
     }
 
     return std::nullopt;
@@ -389,21 +387,19 @@ public:
    */
   void removeSentinelValues(CesiumUtility::JsonValue value) noexcept {
     if (value.isNumber()) {
-      _canUseNullStringSentinel = false;
-
       // Don't try to use string as sentinels for numbers.
-      if (value.isUint64()) {
-        _canUseZeroSentinel &= (value.getUint64() != 0);
-      }
+      _canUseNullStringSentinel = false;
 
       if (value.isInt64()) {
         auto intValue = value.getInt64();
         _canUseZeroSentinel &= (intValue != 0);
         _canUseNegativeOneSentinel &= (intValue != -1);
+      } else if (value.isUint64()) {
+        _canUseZeroSentinel &= (value.getUint64() != 0);
+        // Since the value is truly a uint64, -1 cannot be used.
+        _canUseNegativeOneSentinel = false;
       }
-    }
-
-    if (value.isString()) {
+    } else if (value.isString()) {
       // Don't try to use numbers as sentinels for strings.
       _canUseZeroSentinel = false;
       _canUseNegativeOneSentinel = false;
@@ -653,6 +649,13 @@ CompatibleTypes findCompatibleTypes(const TValueGetter& propertyValue) {
     }
   }
 
+  // If no sentinel value is available, then it's not possible to accurately
+  // represent the null value of this property. Make it a string property
+  // instead.
+  if (compatibleTypes.hasNullValue() && !compatibleTypes.getSentinelValue()) {
+    compatibleTypes.makeIncompatible();
+  }
+
   return compatibleTypes;
 }
 
@@ -849,8 +852,7 @@ void copyVariableLengthScalarArraysToBuffers(
       ++value;
     }
 
-    prevOffset = static_cast<OffsetType>(
-        prevOffset + jsonArrayMember.Size() * sizeof(ValueType));
+    prevOffset = static_cast<OffsetType>(prevOffset + jsonArrayMember.Size());
 
     ++it;
   }
@@ -1412,12 +1414,25 @@ void updateExtensionWithJsonProperty(
     return;
   }
 
-  // Set the "noData" value before copying the property (to avoid copying nulls)
-  if (compatibleTypes.hasNullValue()) {
-    classProperty.noData = compatibleTypes.getSentinelValue();
+  MaskedType type = compatibleTypes.toMaskedType();
+  auto maybeSentinel = compatibleTypes.getSentinelValue();
+
+  // Try to set the "noData" value before copying the property (to avoid copying
+  // nulls).
+  if (compatibleTypes.hasNullValue() && maybeSentinel) {
+    JsonValue sentinelValue = *maybeSentinel;
+    // If -1 is the only available sentinel, modify the masked type to only use
+    // signed integer types (if possible).
+    if (sentinelValue.getInt64OrDefault(0) == -1) {
+      type.isUint8 = false;
+      type.isUint16 = false;
+      type.isUint32 = false;
+      type.isUint64 = false;
+    }
+
+    classProperty.noData = sentinelValue;
   }
 
-  MaskedType type = compatibleTypes.toMaskedType();
   if (type.isBool) {
     updateExtensionWithJsonBooleanProperty(
         gltf,
