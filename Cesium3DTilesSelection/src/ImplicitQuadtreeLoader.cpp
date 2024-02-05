@@ -329,6 +329,20 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResult::createRequestResult(RequestData{tileUrl, {}}));
   }
 
+  const ResponseData& responseData = foundIt->second;
+  assert(responseData.pResponse);
+  uint16_t statusCode = responseData.pResponse->statusCode();
+  assert(statusCode != 0);
+  if (statusCode < 200 || statusCode >= 300) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Received status code {} for tile content {}",
+        statusCode,
+        tileUrl);
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult());
+  }
+
   return requestTileContent(
       pLogger,
       asyncSystem,

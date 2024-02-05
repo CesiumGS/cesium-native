@@ -863,9 +863,19 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            std::move(externalContentInitializer)]() mutable {
         assert(responsesByUrl.size() == 1);
         const std::string& tileUrl = responsesByUrl.begin()->first;
-        const CesiumAsync::IAssetResponse* response =
+        const CesiumAsync::IAssetResponse* pResponse =
             responsesByUrl.begin()->second.pResponse;
-        const gsl::span<const std::byte> responseBytes = response->data();
+        const gsl::span<const std::byte> responseBytes = pResponse->data();
+
+        uint16_t statusCode = pResponse->statusCode();
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Received status code {} for tile content {}",
+              statusCode,
+              tileUrl);
+          return TileLoadResult::createFailedResult();
+        }
 
         // find gltf converter
         auto converter = GltfConverters::getConverterByMagic(responseBytes);
