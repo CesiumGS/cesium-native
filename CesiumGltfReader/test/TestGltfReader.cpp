@@ -1,8 +1,12 @@
 #include "CesiumGltfReader/GltfReader.h"
 
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -15,9 +19,11 @@
 #include <limits>
 #include <string>
 
+using namespace CesiumAsync;
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
@@ -661,4 +667,81 @@ TEST_CASE("Ignores unknown properties if requested") {
   REQUIRE(result.model.has_value());
   CHECK(result.model->unknownProperties.empty());
   CHECK(result.model->asset.unknownProperties.empty());
+}
+
+TEST_CASE("Decodes images with data uris") {
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(readFile(
+      CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf")));
+
+  REQUIRE(result.warnings.empty());
+  REQUIRE(result.errors.empty());
+
+  const Model& model = result.model.value();
+
+  REQUIRE(model.images.size() == 1);
+
+  const ImageCesium& image = model.images.front().cesium;
+
+  CHECK(image.width == 256);
+  CHECK(image.height == 256);
+  CHECK(!image.pixelData.empty());
+}
+
+TEST_CASE("GltfReader::loadGltf") {
+  auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
+  CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
+
+  std::filesystem::path dataDir(CesiumGltfReader_TEST_DATA_DIR);
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest;
+
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(
+           dataDir / "DracoCompressed")) {
+    if (!entry.is_regular_file())
+      continue;
+    auto pResponse = std::make_unique<SimpleAssetResponse>(
+        uint16_t(200),
+        "application/binary",
+        CesiumAsync::HttpHeaders{},
+        readFile(entry.path()));
+    std::string url = "file:///" + entry.path().generic_u8string();
+    auto pRequest = std::make_unique<SimpleAssetRequest>(
+        "GET",
+        url,
+        CesiumAsync::HttpHeaders{},
+        std::move(pResponse));
+    mapUrlToRequest[url] = std::move(pRequest);
+  }
+
+  auto pMockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
+
+  GltfReader reader{};
+  Future<GltfReaderResult> future = reader.loadGltf(
+      asyncSystem,
+      "file:///" + std::filesystem::directory_entry(
+                       dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
+                       .path()
+                       .generic_u8string(),
+      {},
+      pMockAssetAccessor);
+  GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
+  REQUIRE(result.model);
+  CHECK(result.errors.empty());
+  // There will be warnings, because this model has accessors that don't match
+  // the Draco-decoded size. It seems to be ambiguous whether this is
+  // technically allowed or not. See:
+  // https://github.com/KhronosGroup/glTF/issues/1342
+
+  REQUIRE(result.model->images.size() == 1);
+  const CesiumGltf::Image& image = result.model->images[0];
+  CHECK(image.cesium.width == 2048);
+  CHECK(image.cesium.height == 2048);
+  CHECK(image.cesium.pixelData.size() == 2048 * 2048 * 4);
+
+  CHECK(!result.model->buffers.empty());
+  for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
+    CHECK(!buffer.cesium.data.empty());
+  }
 }

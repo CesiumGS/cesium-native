@@ -4,10 +4,10 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
-#include <Cesium3DTilesSelection/GltfConverters.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -23,6 +23,9 @@
 #include <spdlog/logger.h>
 
 #include <cctype>
+
+using namespace CesiumUtility;
+using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -882,6 +885,16 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
         if (!converter) {
           converter = GltfConverters::getConverterByFileExtension(tileUrl);
         }
+/*
+            if (converter) {
+              // Convert to gltf
+              CesiumGltfReader::GltfReaderOptions gltfOptions;
+              gltfOptions.ktx2TranscodeTargets =
+                  contentOptions.ktx2TranscodeTargets;
+              gltfOptions.applyTextureTransform =
+                  contentOptions.applyTextureTransform;
+              GltfConverterResult result = converter(responseData, gltfOptions);
+*/
 
         if (converter) {
           // Convert to gltf

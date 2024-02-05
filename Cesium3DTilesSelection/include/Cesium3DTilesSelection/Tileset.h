@@ -104,7 +104,7 @@ public:
   /**
    * @brief Get tileset credits.
    */
-  const std::vector<Credit>& getTilesetCredits() const noexcept;
+  const std::vector<CesiumUtility::Credit>& getTilesetCredits() const noexcept;
 
   /**
    * @brief Sets whether or not the tileset's credits should be shown on screen.

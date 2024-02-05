@@ -5,6 +5,7 @@ configure_cesium_library(cesium-native-tests)
 # properties.
 set(cesium_native_targets
     Cesium3DTiles
+    Cesium3DTilesContent
     Cesium3DTilesReader
     Cesium3DTilesWriter
     Cesium3DTilesSelection
@@ -15,13 +16,18 @@ set(cesium_native_targets
     CesiumGltfReader
     CesiumGltfWriter
     CesiumIonClient
+    CesiumRasterOverlays
     CesiumUtility
 )
 
-set(test_sources "")
-set(test_headers "")
-set(test_include_directories "")
-
+cesium_glob_files(test_sources
+    ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
+)
+cesium_glob_files(test_headers
+    ${CMAKE_CURRENT_LIST_DIR}/include/CesiumNativeTests/*.h
+    ${CMAKE_CURRENT_LIST_DIR}/generated/include/CesiumNativeTests/*.h
+)
+set(test_include_directories ${CMAKE_CURRENT_LIST_DIR}/include)
 
 # Iterate through all targets, extracting their private sources and test sources / test headers
 foreach(target ${cesium_native_targets})

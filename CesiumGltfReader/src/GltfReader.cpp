@@ -252,6 +252,11 @@ void postprocess(
         continue;
       }
 
+      // Image has already been decoded
+      if (!image.cesium.pixelData.empty()) {
+        continue;
+      }
+
       const BufferView& bufferView =
           Model::getSafe(model.bufferViews, image.bufferView);
       const Buffer& buffer = Model::getSafe(model.buffers, bufferView.buffer);
@@ -366,6 +371,61 @@ GltfReaderResult GltfReader::readGltf(
   }
 
   return result;
+}
+
+CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::string& uri,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const GltfReaderOptions& options) const {
+  return pAssetAccessor->get(asyncSystem, uri, headers)
+      .thenInWorkerThread(
+          [this, options, asyncSystem, pAssetAccessor, uri](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+
+            if (!pResponse) {
+              return asyncSystem.createResolvedFuture(GltfReaderResult{
+                  std::nullopt,
+                  {fmt::format("Request for {} failed.", uri)},
+                  {}});
+            }
+
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              return asyncSystem.createResolvedFuture(GltfReaderResult{
+                  std::nullopt,
+                  {fmt::format(
+                      "Request for {} failed with code {}",
+                      uri,
+                      pResponse->statusCode())},
+                  {}});
+            }
+
+            const CesiumJsonReader::JsonReaderOptions& context =
+                this->getExtensions();
+            GltfReaderResult result =
+                isBinaryGltf(pResponse->data())
+                    ? readBinaryGltf(context, pResponse->data())
+                    : readJsonGltf(context, pResponse->data());
+
+            if (!result.model) {
+              return asyncSystem.createResolvedFuture(std::move(result));
+            }
+
+            return resolveExternalData(
+                asyncSystem,
+                uri,
+                pRequest->headers(),
+                pAssetAccessor,
+                options,
+                std::move(result));
+          })
+      .thenInWorkerThread([options, this](GltfReaderResult&& result) {
+        postprocess(*this, result, options);
+        return std::move(result);
+      });
 }
 
 /*static*/

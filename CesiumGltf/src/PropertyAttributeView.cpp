@@ -38,8 +38,6 @@ getAccessorComponentTypeAsPropertyComponentType(const Accessor& accessor) {
     return PropertyComponentType::Int16;
   case Accessor::ComponentType::UNSIGNED_SHORT:
     return PropertyComponentType::Uint16;
-  case Accessor::ComponentType::UNSIGNED_INT:
-    return PropertyComponentType::Uint32;
   case Accessor::ComponentType::FLOAT:
     return PropertyComponentType::Float32;
   default:
@@ -78,12 +76,12 @@ PropertyAttributeView::PropertyAttributeView(
 }
 
 const ClassProperty*
-PropertyAttributeView::getClassProperty(const std::string& propertyName) const {
+PropertyAttributeView::getClassProperty(const std::string& propertyId) const {
   if (_status != PropertyAttributeViewStatus::Valid) {
     return nullptr;
   }
 
-  auto propertyIter = _pClass->properties.find(propertyName);
+  auto propertyIter = _pClass->properties.find(propertyId);
   if (propertyIter == _pClass->properties.end()) {
     return nullptr;
   }

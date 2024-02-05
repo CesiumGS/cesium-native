@@ -27,6 +27,8 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialNormalTextureInfo.h>
+#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
@@ -95,6 +97,12 @@ void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       ExtensionTextureWebpJsonHandler>();
   options.registerExtension<
       CesiumGltf::TextureInfo,
+      ExtensionKhrTextureTransformJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::MaterialOcclusionTextureInfo,
+      ExtensionKhrTextureTransformJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::MaterialNormalTextureInfo,
       ExtensionKhrTextureTransformJsonHandler>();
 }
 } // namespace CesiumGltfReader

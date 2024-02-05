@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Assets.h"
+#include "Defaults.h"
 #include "Profile.h"
 #include "Response.h"
 #include "Token.h"
@@ -105,6 +106,11 @@ public:
       const std::string& ionApiUrl = "https://api.cesium.com/",
       const std::string& ionAuthorizeUrl = "https://ion.cesium.com/oauth");
 
+  static CesiumAsync::Future<std::optional<std::string>> getApiUrl(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& ionUrl);
+
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
    *
@@ -158,6 +164,17 @@ public:
    * @return A future that resolves to the profile information.
    */
   CesiumAsync::Future<Response<Profile>> me() const;
+
+  /**
+   * @brief Retrieves default imagery, terrain and building assets along with
+   * quick add assets that can be useful to use within other applications.
+   *
+   * This route will always return data, but will return user specific
+   * information with any valid token.
+   *
+   * @return A future that resolves to the default information.
+   */
+  CesiumAsync::Future<Response<Defaults>> defaults() const;
 
   /**
    * @brief Gets the list of available assets.

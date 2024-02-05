@@ -1,13 +1,13 @@
 #pragma once
 
 #include "BoundingVolume.h"
-#include "RasterOverlayDetails.h"
 #include "TileContent.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
 #include <functional>
 #include <memory>
@@ -109,7 +109,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * @brief Holds details of the {@link TileRenderContent} that are useful
    * for raster overlays.
    */
-  std::optional<RasterOverlayDetails> rasterOverlayDetails;
+  std::optional<CesiumRasterOverlays::RasterOverlayDetails>
+      rasterOverlayDetails;
 
   /**
    * @brief The request that is created to download the tile content.

@@ -64,6 +64,34 @@ public:
     return this->_boundingRectangle;
   }
 
+  /**
+   * @brief Determines whether a globe rectangle is completely inside any of the
+   * polygons in a list.
+   *
+   * @param rectangle The {@link CesiumGeospatial::GlobeRectangle} of the tile.
+   * @param cartographicPolygons The list of polygons to check.
+   * @return True if the rectangle is completely inside a polygon; otherwise,
+   * false.
+   */
+  static bool rectangleIsWithinPolygons(
+      const CesiumGeospatial::GlobeRectangle& rectangle,
+      const std::vector<CesiumGeospatial::CartographicPolygon>&
+          cartographicPolygons) noexcept;
+
+  /**
+   * @brief Determines whether a globe rectangle is completely outside all the
+   * polygons in a list.
+   *
+   * @param rectangle The {@link CesiumGeospatial::GlobeRectangle} of the tile.
+   * @param cartographicPolygons The list of polygons to check.
+   * @return True if the rectangle is completely outside all the polygons;
+   * otherwise, false.
+   */
+  static bool rectangleIsOutsidePolygons(
+      const CesiumGeospatial::GlobeRectangle& rectangle,
+      const std::vector<CesiumGeospatial::CartographicPolygon>&
+          cartographicPolygons) noexcept;
+
 private:
   std::vector<glm::dvec2> _vertices;
   std::vector<uint32_t> _indices;
