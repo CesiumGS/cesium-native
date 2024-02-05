@@ -198,17 +198,22 @@ public:
   /**
    * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
    *
-   * @return If the mapped tile is already in the process of loading or it has
-   * already finished loading, this method does nothing and returns true. If too
-   * many loads are already in progress, this method does nothing and returns
-   * false. Otherwise, it begins the asynchronous process to load the tile and
-   * returns true.
+   * @param callerAsync Async system provided by caller
+   * @param responsesByUrl Content responses available
+   * @param rasterCallback Loader provided callback to execute
+   * @return Future with the RasterLoadResult
    */
   CesiumAsync::Future<RasterLoadResult> loadThrottled(
       CesiumAsync::AsyncSystem& callerAsync,
       const UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback) noexcept;
 
+  /**
+   * @brief Get the work needed to execute loadThrottled
+   *
+   * @param outRequest Output data for content request
+   * @param outCallback Output callback for processing work
+   */
   void getLoadThrottledWork(
       RequestData& outRequest,
       RasterProcessingCallback& outCallback);

@@ -102,19 +102,30 @@ protected:
    * @brief Asynchronously loads a tile in the quadtree.
    *
    * @param tileID The ID of the quadtree tile to load.
+   * @param requestUrl Original url of content request
+   * @param statusCode Response code of content request
+   * @param data Bytes of content response
    * @return A Future that resolves to the loaded image data or error
    * information.
    */
-  virtual bool getQuadtreeTileImageRequest(
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      RequestData& requestData,
-      std::string& errorString) const = 0;
-
   virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID,
       const std::string& requestUrl,
       uint16_t statusCode,
       const gsl::span<const std::byte>& data) const = 0;
+
+  /**
+   * @brief Gets the request data for a load
+   *
+   * @param tileID The ID of the quadtree tile to load.
+   * @param requestData Output data for content request
+   * @param errorString Output string for any errors encountered
+   * @return bool indicating success of failure
+   */
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      RequestData& requestData,
+      std::string& errorString) const = 0;
 
 private:
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
@@ -141,8 +152,9 @@ private:
    * @param geometryRectangle The rectangle for which to load tiles.
    * @param targetGeometricError The geometric error controlling which quadtree
    * level to use to cover the rectangle.
-   * @return A vector of shared futures, each of which will resolve to image
-   * data that is required to cover the rectangle with the given geometric
+   * @param responsesByUrl Content responses available
+   * @param outTiles A vector of shared futures, each of which will resolve to
+   * image data that is required to cover the rectangle with the given geometric
    * error.
    */
   void mapRasterTilesToGeometryTile(

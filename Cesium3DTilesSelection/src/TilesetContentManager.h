@@ -157,17 +157,12 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
+private:
   static void setTileContent(
       Tile& tile,
       TileLoadResult&& result,
       void* pWorkerRenderResources);
-  void notifyTileStartLoading(const Tile* pTile) noexcept;
-  void notifyTileDoneLoading(const Tile* pTile) noexcept;
 
-  void notifyRasterStartLoading() noexcept;
-  void notifyRasterDoneLoading() noexcept;
-
-private:
   void
   updateContentLoadedState(Tile& tile, const TilesetOptions& tilesetOptions);
 
@@ -177,7 +172,15 @@ private:
 
   void unloadDoneState(Tile& tile);
 
+  void notifyTileStartLoading(const Tile* pTile) noexcept;
+
+  void notifyTileDoneLoading(const Tile* pTile) noexcept;
+
   void notifyTileUnloading(const Tile* pTile) noexcept;
+
+  void notifyRasterStartLoading() noexcept;
+
+  void notifyRasterDoneLoading() noexcept;
 
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
