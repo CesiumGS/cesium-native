@@ -45,7 +45,9 @@ SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight(
 glm::dvec3 SimplePlanarEllipsoidCurve::getPosition(
     double percentage,
     double additionalHeight) const {
-  if (percentage >= 1.0) {
+  if (percentage <= 0.0) {
+    return this->_sourceEcef;
+  } else if (percentage >= 1.0) {
     // We can shortcut our math here and just return the destination.
     return this->_destinationEcef;
   }
@@ -79,7 +81,9 @@ SimplePlanarEllipsoidCurve::SimplePlanarEllipsoidCurve(
     const glm::dvec3& scaledDestinationEcef,
     const glm::dvec3& originalSourceEcef,
     const glm::dvec3& originalDestinationEcef)
-    : _ellipsoid(ellipsoid), _destinationEcef(originalDestinationEcef) {
+    : _ellipsoid(ellipsoid),
+      _sourceEcef(originalSourceEcef),
+      _destinationEcef(originalDestinationEcef) {
   // Here we find the center of a circle that passes through both the source and
   // destination points, and then calculate the angle that we need to move along
   // that circle to get from point A to B.
