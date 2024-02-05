@@ -1025,7 +1025,6 @@ void TilesetContentManager::waitUntilIdle() {
     this->_externals.asyncSystem.dispatchMainThreadTasks();
   }
 
-  // TODO
   // Wait for all overlays to wrap up their loading, too.
   uint32_t rasterOverlayTilesLoading = 1;
   while (rasterOverlayTilesLoading > 0) {

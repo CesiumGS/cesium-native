@@ -265,7 +265,6 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   std::vector<Tile*> tilesSelectedPrevFrame =
       this->_updateResult.tilesToRenderThisFrame;
 
-  // TODO, refactor "is busy" logic
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
   this->updateView(frustums, 0.0f);
