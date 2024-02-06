@@ -13,6 +13,10 @@ namespace CesiumUtility {
 struct Credit;
 }
 
+namespace Cesium3DTilesSelection {
+class TilesetContentManager;
+}
+
 namespace CesiumRasterOverlays {
 
 class RasterOverlay;
@@ -248,7 +252,7 @@ public:
 
 private:
   friend class RasterOverlayTileProvider;
-  friend class TilesetContentManager;
+  friend class Cesium3DTilesSelection::TilesetContentManager;
 
   void setState(LoadState newState) noexcept;
 

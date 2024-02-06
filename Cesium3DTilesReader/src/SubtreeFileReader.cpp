@@ -26,22 +26,19 @@ constexpr const char SUBTREE_MAGIC[] = "subt";
 Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     const AsyncSystem& asyncSystem,
     const std::string& baseUrl,
-      const CesiumAsync::IAssetResponse* baseResponse,
-      const UrlResponseDataMap& additionalResponses) const noexcept {
-  const IAssetResponse* pResponse = pRequest->response();
-  if (pResponse == nullptr) {
-    ReadJsonResult<Cesium3DTiles::Subtree> result;
-    result.errors.emplace_back("Request failed.");
-    return asyncSystem.createResolvedFuture(std::move(result));
-  }
+    const CesiumAsync::IAssetResponse* baseResponse,
+    const UrlResponseDataMap& additionalResponses) const noexcept {
+  assert(baseResponse);
 
-  uint16_t statusCode = pResponse->statusCode();
+  uint16_t statusCode = baseResponse->statusCode();
   if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
     CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree> result;
     result.errors.emplace_back(
-      fmt::format("Request failed with status code {}", statusCode));
+        fmt::format("Request failed with status code {}", statusCode));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
+
+  gsl::span<const std::byte> data = baseResponse->data();
 
   if (data.size() < 4) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
@@ -61,11 +58,9 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
   }
 
   if (isBinarySubtree) {
-    return this
-        ->loadBinary(asyncSystem, pAssetAccessor, url, requestHeaders, data);
+    return this->loadBinary(asyncSystem, baseUrl, data, additionalResponses);
   } else {
-    return this
-        ->loadJson(asyncSystem, pAssetAccessor, url, requestHeaders, data);
+    return this->loadJson(asyncSystem, baseUrl, data, additionalResponses);
   }
 }
 
@@ -82,10 +77,9 @@ struct SubtreeHeader {
 
 Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::string& url,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const gsl::span<const std::byte>& data) const noexcept {
+    const std::string& baseUrl,
+    const gsl::span<const std::byte>& data,
+    const CesiumAsync::UrlResponseDataMap& additionalResponses) const noexcept {
   if (data.size() < sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
     result.errors.emplace_back(fmt::format(
@@ -161,24 +155,21 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
 
   return postprocess(
       asyncSystem,
-      pAssetAccessor,
-      url,
-      requestHeaders,
+      baseUrl,
+      additionalResponses,
       std::move(result));
 }
 
 CesiumAsync::Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadJson(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::string& url,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const gsl::span<const std::byte>& data) const noexcept {
+    const std::string& baseUrl,
+    const gsl::span<const std::byte>& data,
+    const CesiumAsync::UrlResponseDataMap& additionalResponses) const noexcept {
   ReadJsonResult<Subtree> result = this->_reader.readFromJson(data);
   return postprocess(
       asyncSystem,
-      pAssetAccessor,
-      url,
-      requestHeaders,
+      baseUrl,
+      additionalResponses,
       std::move(result));
 }
 
@@ -190,33 +181,28 @@ struct RequestedSubtreeBuffer {
 };
 
 CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const CesiumAsync::AsyncSystem& asyncSystem,
     size_t bufferIdx,
-    const gsl::span<const std::byte>& responseData,
-    size_t bufferLength) {
+    uint16_t responseStatusCode,
+    const gsl::span<const std::byte>& responseData) {
   return asyncSystem.runInWorkerThread(
-    [bufferIdx, bufferLength, data = responseData]() {
-      if (data.size() < bufferLength) {
-        return RequestedSubtreeBuffer{ bufferIdx, {} };
-      }
+      [bufferIdx, statusCode = responseStatusCode, data = responseData]() {
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          return RequestedSubtreeBuffer{bufferIdx, {}};
+        }
 
-      using vector_diff_type =
-        typename std::vector<std::byte>::difference_type;
-      std::vector<std::byte> buffer(
-        data.begin(),
-        data.begin() + static_cast<vector_diff_type>(bufferLength));
-      return RequestedSubtreeBuffer{ bufferIdx, std::move(buffer) };
-    });
+        return RequestedSubtreeBuffer{
+            bufferIdx,
+            std::vector<std::byte>(data.begin(), data.end())};
+      });
 }
 
 } // namespace
 
 Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
     const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::string& url,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const std::string& baseUrl,
+    const CesiumAsync::UrlResponseDataMap& additionalResponses,
     ReadJsonResult<Subtree>&& loaded) const noexcept {
   if (!loaded.value) {
     return asyncSystem.createResolvedFuture(std::move(loaded));
@@ -228,13 +214,21 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
   for (size_t i = 0; i < buffers.size(); ++i) {
     const Buffer& buffer = buffers[i];
     if (buffer.uri && !buffer.uri->empty()) {
-      std::string bufferUrl = CesiumUtility::Uri::resolve(url, *buffer.uri);
+      std::string bufferUrl = CesiumUtility::Uri::resolve(baseUrl, *buffer.uri);
+
+      // Find this buffer in our responses
+      auto bufferUrlIt = additionalResponses.find(bufferUrl);
+      if (bufferUrlIt == additionalResponses.end()) {
+        // We need to request this buffer
+        loaded.urlNeeded = bufferUrl;
+        return asyncSystem.createResolvedFuture(std::move(loaded));
+      }
+
       bufferRequests.emplace_back(requestBuffer(
-          pAssetAccessor,
           asyncSystem,
           i,
-          std::move(bufferUrl),
-          requestHeaders));
+          bufferUrlIt->second.pResponse->statusCode(),
+          bufferUrlIt->second.pResponse->data()));
     }
   }
 

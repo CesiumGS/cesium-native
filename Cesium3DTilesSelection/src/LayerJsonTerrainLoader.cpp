@@ -644,6 +644,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const gsl::span<const std::byte>& responseData,
     const QuadtreeTileID& tileID,
     const BoundingVolume& boundingVolume,
+    const BoundingRegion& boundingRegion,
     bool enableWaterMask) {
   return asyncSystem.runInWorkerThread([asyncSystem,
                                         pLogger,
@@ -652,6 +653,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
                                         responseData,
                                         tileID,
                                         boundingVolume,
+                                        boundingRegion,
                                         enableWaterMask]() {
     if (responseData.empty()) {
       QuantizedMeshLoadResult result;
@@ -661,26 +663,25 @@ Future<QuantizedMeshLoadResult> requestTileContent(
       result.pRequest = NULL;
       return result;
     }
-/*
-    const BoundingRegion& boundingRegion,
-    const LayerJsonTerrainLoader::Layer& layer,
-    const std::vector<IAssetAccessor::THeader>& requestHeaders,
-    bool enableWaterMask) {
-  std::string url = resolveTileUrl(tileID, layer);
-  return pAssetAccessor->get(asyncSystem, url, requestHeaders)
-      .thenInWorkerThread(
-          [asyncSystem, pLogger, tileID, boundingRegion, enableWaterMask](
-              std::shared_ptr<IAssetRequest>&& pRequest) {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              QuantizedMeshLoadResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Did not receive a valid response for tile content {}",
-                  pRequest->url()));
-              result.pRequest = std::move(pRequest);
-              return result;
-            }
-*/
+    /*
+        const LayerJsonTerrainLoader::Layer& layer,
+        const std::vector<IAssetAccessor::THeader>& requestHeaders,
+        bool enableWaterMask) {
+      std::string url = resolveTileUrl(tileID, layer);
+      return pAssetAccessor->get(asyncSystem, url, requestHeaders)
+          .thenInWorkerThread(
+              [asyncSystem, pLogger, tileID, boundingRegion, enableWaterMask](
+                  std::shared_ptr<IAssetRequest>&& pRequest) {
+                const IAssetResponse* pResponse = pRequest->response();
+                if (!pResponse) {
+                  QuantizedMeshLoadResult result;
+                  result.errors.emplaceError(fmt::format(
+                      "Did not receive a valid response for tile content {}",
+                      pRequest->url()));
+                  result.pRequest = std::move(pRequest);
+                  return result;
+                }
+    */
 
     if (responseStatusCode != 0 &&
         (responseStatusCode < 200 || responseStatusCode >= 300)) {
@@ -695,20 +696,20 @@ Future<QuantizedMeshLoadResult> requestTileContent(
 
     return QuantizedMeshLoader::load(
         tileID,
-        boundingVolume,
+        boundingRegion,
         requestUrl,
         responseData,
         enableWaterMask);
   });
-/*
-            return QuantizedMeshLoader::load(
-                tileID,
-                boundingRegion,
-                pRequest->url(),
-                pResponse->data(),
-                enableWaterMask);
-          });
-*/
+  /*
+              return QuantizedMeshLoader::load(
+                  tileID,
+                  boundingRegion,
+                  pRequest->url(),
+                  pResponse->data(),
+                  enableWaterMask);
+            });
+  */
 }
 
 Future<int> loadTileAvailability(
@@ -828,7 +829,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (!pRegion) {
     // This tile does not have the required bounding volume type.
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // Start the actual content request.
@@ -847,11 +848,11 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       foundIt->second.pResponse->data(),
       *pQuadtreeTileID,
       tile.getBoundingVolume(),
-/*
       *pRegion,
-      currentLayer,
-      requestHeaders,
-*/
+      /*
+        currentLayer,
+        requestHeaders,
+  */
       contentOptions.enableWaterMask);
 
   // determine if this tile is at the availability level of the current layer

@@ -5,6 +5,7 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
@@ -12,27 +13,6 @@
 namespace Cesium3DTilesSelection {
 
 class Tile;
-
-struct RasterLoadResult {
-  std::optional<CesiumGltf::ImageCesium> image{};
-  CesiumGeometry::Rectangle rectangle = {};
-  std::vector<Credit> credits = {};
-  std::vector<std::string> errors{};
-  std::vector<std::string> warnings{};
-  bool moreDetailAvailable = false;
-
-  RequestData requestData = {};
-
-  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
-
-  void* pRendererResources = nullptr;
-};
-
-using RasterProcessingCallback =
-    std::function<CesiumAsync::Future<RasterLoadResult>(
-        RasterOverlayTile&,
-        RasterOverlayTileProvider*,
-        const UrlResponseDataMap&)>;
 
 /**
  * @brief The result of applying a {@link RasterOverlayTile} to geometry.
@@ -206,10 +186,10 @@ public:
    * @param rasterCallback Loader provided callback to execute
    * @return Future with the RasterLoadResult
    */
-  CesiumAsync::Future<RasterLoadResult> loadThrottled(
+  CesiumAsync::Future<CesiumRasterOverlays::RasterLoadResult> loadThrottled(
       CesiumAsync::AsyncSystem& callerAsync,
-      const UrlResponseDataMap& responsesByUrl,
-      RasterProcessingCallback rasterCallback) noexcept;
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
+      CesiumRasterOverlays::RasterProcessingCallback rasterCallback) noexcept;
 
   /**
    * @brief Get the work needed to execute loadThrottled
@@ -218,8 +198,8 @@ public:
    * @param outCallback Output callback for processing work
    */
   void getLoadThrottledWork(
-      RequestData& outRequest,
-      RasterProcessingCallback& outCallback);
+      CesiumAsync::RequestData& outRequest,
+      CesiumRasterOverlays::RasterProcessingCallback& outCallback);
 
   /**
    * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.

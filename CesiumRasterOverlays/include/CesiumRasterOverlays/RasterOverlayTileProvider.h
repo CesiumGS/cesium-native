@@ -5,6 +5,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
@@ -15,11 +16,36 @@
 #include <cassert>
 #include <optional>
 
+namespace CesiumUtility {
+struct Credit;
+} // namespace CesiumUtility
+
 namespace CesiumRasterOverlays {
 
 class RasterOverlay;
 class RasterOverlayTile;
 class IPrepareRasterOverlayRendererResources;
+
+struct RasterLoadResult {
+  std::optional<CesiumGltf::ImageCesium> image{};
+  CesiumGeometry::Rectangle rectangle = {};
+  std::vector<CesiumUtility::Credit> credits = {};
+  std::vector<std::string> errors{};
+  std::vector<std::string> warnings{};
+  bool moreDetailAvailable = false;
+
+  CesiumAsync::RequestData requestData = {};
+
+  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+
+  void* pRendererResources = nullptr;
+};
+
+using RasterProcessingCallback =
+    std::function<CesiumAsync::Future<RasterLoadResult>(
+        RasterOverlayTile&,
+        RasterOverlayTileProvider*,
+        const CesiumAsync::UrlResponseDataMap&)>;
 
 /**
  * @brief Options for {@link RasterOverlayTileProvider::loadTileImageFromUrl}.
@@ -292,7 +318,7 @@ public:
    */
   void loadTile(
       RasterOverlayTile& tile,
-      const UrlResponseDataMap& responsesByUrl,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback);
 
   /**
@@ -310,7 +336,7 @@ public:
    */
   CesiumAsync::Future<RasterLoadResult> loadTileThrottled(
       RasterOverlayTile& tile,
-      const UrlResponseDataMap& responsesByUrl,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback);
 
   /**
@@ -322,7 +348,7 @@ public:
    */
   void getLoadTileThrottledWork(
       const RasterOverlayTile& tile,
-      RequestData& outRequest,
+      CesiumAsync::RequestData& outRequest,
       RasterProcessingCallback& outCallback);
 
 protected:
@@ -335,7 +361,7 @@ protected:
    */
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       const RasterOverlayTile& overlayTile,
-      const UrlResponseDataMap& responsesByUrl) = 0;
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl) = 0;
 
   /**
    * @brief Get the work needed to loads the image for a tile.
@@ -346,7 +372,7 @@ protected:
    */
   virtual void getLoadTileImageWork(
       const RasterOverlayTile& overlayTile,
-      RequestData& outRequest,
+      CesiumAsync::RequestData& outRequest,
       RasterProcessingCallback& outCallback) = 0;
 
   /**
@@ -370,7 +396,7 @@ private:
   CesiumAsync::Future<RasterLoadResult> doLoad(
       RasterOverlayTile& tile,
       bool isThrottledLoad,
-      const UrlResponseDataMap& responsesByUrl,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback);
 
   /**

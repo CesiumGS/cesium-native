@@ -193,12 +193,12 @@ public:
 
   virtual void getLoadTileImageWork(
       const RasterOverlayTile&,
-      RequestData&,
+      CesiumAsync::RequestData&,
       RasterProcessingCallback&) override {}
 
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       const RasterOverlayTile& overlayTile,
-      const UrlResponseDataMap&) override {
+      const CesiumAsync::UrlResponseDataMap&) override {
     // Choose the texture size according to the geometry screen size and raster
     // SSE, but no larger than the maximum texture size.
     const RasterOverlayOptions& options = this->getOwner().getOptions();

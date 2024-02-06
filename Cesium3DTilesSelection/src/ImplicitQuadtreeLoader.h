@@ -44,7 +44,7 @@ public:
 
   void getLoadWork(
       const Tile* pTile,
-      RequestData& outRequest,
+      CesiumAsync::RequestData& outRequest,
       TileProcessingCallback& outCallback) override;
 
   TileChildrenResult createTileChildren(const Tile& tile) override;

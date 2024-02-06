@@ -3,6 +3,7 @@
 #include <Cesium3DTiles/Subtree.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumJsonReader/JsonReader.h>
 
 #include <optional>
 
@@ -85,14 +86,18 @@ public:
    * @return A future that resolves to a `SubtreeAvailability` instance for the
    * subtree file, or std::nullopt if something goes wrong.
    */
-  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
+
+  using LoadResult =
+      std::pair<std::optional<SubtreeAvailability>, CesiumAsync::RequestData>;
+
+  static CesiumAsync::Future<LoadResult> loadSubtree(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& baseUrl,
       const CesiumAsync::IAssetResponse* baseResponse,
-      const UrlResponseDataMap& additionalResponse);
+      const CesiumAsync::UrlResponseDataMap& additionalResponse);
 
   /**
    * @brief An AvailibilityView that indicates that either all tiles are

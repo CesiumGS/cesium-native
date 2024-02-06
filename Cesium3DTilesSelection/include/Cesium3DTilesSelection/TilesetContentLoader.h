@@ -79,16 +79,6 @@ struct TileLoadRequest {
   }
 };
 
-struct ResponseData {
-  const CesiumAsync::IAssetRequest* pRequest;
-  const CesiumAsync::IAssetResponse* pResponse;
-};
-
-using UrlResponseDataMap = std::map<std::string, ResponseData>;
-
-using UrlAssetRequestMap =
-    std::map<std::string, std::shared_ptr<CesiumAsync::IAssetRequest>>;
-
 /**
  * @brief Store the parameters that are needed to load a tile
  */
@@ -108,7 +98,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const UrlResponseDataMap& responsesByUrl);
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl);
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -133,7 +123,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   /**
    * @brief Response data provided by the caller, stored by url
    */
-  const UrlResponseDataMap& responsesByUrl;
+  const CesiumAsync::UrlResponseDataMap& responsesByUrl;
 };
 
 /**
@@ -183,7 +173,7 @@ public:
 
   virtual void getLoadWork(
       const Tile* pTile,
-      RequestData& outRequest,
+      CesiumAsync::RequestData& outRequest,
       TileProcessingCallback& outCallback) = 0;
 
   /**

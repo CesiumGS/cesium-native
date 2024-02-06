@@ -415,7 +415,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
 
 void CesiumIonTilesetLoader::getLoadWork(
     const Tile* pTile,
-    RequestData& outRequest,
+    CesiumAsync::RequestData& outRequest,
     TileProcessingCallback& outCallback) {
 
   // If token in failure state, queue a refresh

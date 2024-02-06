@@ -726,7 +726,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::nullopt,
       tileUrl,
       std::move(externalContentInitializer),
-      RequestData{},
+      CesiumAsync::RequestData{},
       TileLoadResultState::Success};
 }
 
@@ -885,16 +885,17 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
         if (!converter) {
           converter = GltfConverters::getConverterByFileExtension(tileUrl);
         }
-/*
-            if (converter) {
-              // Convert to gltf
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets =
-                  contentOptions.ktx2TranscodeTargets;
-              gltfOptions.applyTextureTransform =
-                  contentOptions.applyTextureTransform;
-              GltfConverterResult result = converter(responseData, gltfOptions);
-*/
+        /*
+                    if (converter) {
+                      // Convert to gltf
+                      CesiumGltfReader::GltfReaderOptions gltfOptions;
+                      gltfOptions.ktx2TranscodeTargets =
+                          contentOptions.ktx2TranscodeTargets;
+                      gltfOptions.applyTextureTransform =
+                          contentOptions.applyTextureTransform;
+                      GltfConverterResult result = converter(responseData,
+           gltfOptions);
+        */
 
         if (converter) {
           // Convert to gltf
@@ -917,7 +918,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               std::nullopt,
               tileUrl,
               {},
-              RequestData{},
+              CesiumAsync::RequestData{},
               TileLoadResultState::Success};
         } else {
           // not a renderable content, then it must be external tileset
@@ -935,7 +936,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
 
 void TilesetJsonLoader::getLoadWork(
     const Tile* pTile,
-    RequestData& outRequest,
+    CesiumAsync::RequestData& outRequest,
     TileProcessingCallback& outCallback) {
   // check if this tile belongs to a child loader
   auto currentLoader = pTile->getLoader();

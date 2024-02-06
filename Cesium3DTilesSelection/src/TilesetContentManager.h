@@ -64,14 +64,14 @@ public:
 
   struct TileWorkChain {
     Tile* pTile;
-    RequestData requestData;
+    CesiumAsync::RequestData requestData;
     TileProcessingCallback tileCallback;
   };
 
   struct RasterWorkChain {
     RasterMappedTo3DTile* pRasterTile;
-    RequestData requestData;
-    RasterProcessingCallback rasterCallback;
+    CesiumAsync::RequestData requestData;
+    CesiumRasterOverlays::RasterProcessingCallback rasterCallback;
   };
 
   struct ParsedTileWork {
@@ -101,7 +101,7 @@ public:
   CesiumAsync::Future<TileLoadResultAndRenderResources> doTileContentWork(
       Tile& tile,
       TileProcessingCallback processingCallback,
-      const UrlResponseDataMap& responseDataMap,
+      const CesiumAsync::UrlResponseDataMap& responseDataMap,
       const std::vector<CesiumGeospatial::Projection>& projections,
       const TilesetOptions& tilesetOptions);
 

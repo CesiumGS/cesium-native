@@ -137,45 +137,56 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
       std::move(subtree));
 }
 
-/*static*/ CesiumAsync::Future<std::optional<SubtreeAvailability>>
+/*static*/ CesiumAsync::Future<SubtreeAvailability::LoadResult>
 SubtreeAvailability::loadSubtree(
     ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     const CesiumAsync::IAssetResponse* baseResponse,
-    const UrlResponseDataMap& additionalResponse) {
+    const CesiumAsync::UrlResponseDataMap& additionalResponse) {
   auto pReader = std::make_shared<SubtreeFileReader>();
-  return pReader->load(asyncSystem, pAssetAccessor, subtreeUrl, requestHeaders)
+  return pReader->load(asyncSystem, baseUrl, baseResponse, additionalResponse)
       .thenInMainThread(
-          [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree, pReader](
+          [pLogger, baseUrl, subdivisionScheme, levelsInSubtree, pReader](
               ReadJsonResult<Subtree>&& subtree)
-              -> std::optional<SubtreeAvailability> {
+              -> SubtreeAvailability::LoadResult {
             if (!subtree.errors.empty()) {
               SPDLOG_LOGGER_ERROR(
                   pLogger,
                   "Errors while loading subtree from {}:\n- {}",
-                  subtreeUrl,
+                  baseUrl,
                   CesiumUtility::joinToString(subtree.errors, "\n- "));
             }
             if (!subtree.warnings.empty()) {
               SPDLOG_LOGGER_WARN(
                   pLogger,
                   "Warnings while loading subtree from {}:\n- {}",
-                  subtreeUrl,
+                  baseUrl,
                   CesiumUtility::joinToString(subtree.warnings, "\n- "));
+            }
+            if (!subtree.urlNeeded.empty()) {
+              return SubtreeAvailability::LoadResult{
+                  std::nullopt,
+                  CesiumAsync::RequestData{subtree.urlNeeded, {}}};
             }
 
             if (!subtree.value) {
-              return std::nullopt;
+              return SubtreeAvailability::LoadResult{
+                  std::nullopt,
+                  CesiumAsync::RequestData{}};
             }
 
-            return SubtreeAvailability::fromSubtree(
-                subdivisionScheme,
-                levelsInSubtree,
-                std::move(*subtree.value));
+            std::optional<SubtreeAvailability> returnedSubtree =
+                SubtreeAvailability::fromSubtree(
+                    subdivisionScheme,
+                    levelsInSubtree,
+                    std::move(*subtree.value));
+
+            return SubtreeAvailability::LoadResult{
+                returnedSubtree,
+                CesiumAsync::RequestData{}};
           });
 }
 

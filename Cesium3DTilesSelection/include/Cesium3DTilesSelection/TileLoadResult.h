@@ -18,11 +18,6 @@ namespace Cesium3DTilesSelection {
 
 class Tile;
 
-struct RequestData {
-  std::string url = "";
-  std::vector<CesiumAsync::IAssetAccessor::THeader> headers = {};
-};
-
 /**
  * @brief Store the content of the tile after finishing
  * loading tile using {@link TilesetContentLoader::loadTileContent}:
@@ -128,7 +123,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief Optional additional request needed
    */
-  RequestData additionalRequestData;
+  CesiumAsync::RequestData additionalRequestData;
 
   /**
    * @brief The result of loading a tile. Note that if the state is Failed or
@@ -153,7 +148,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * @brief Create a result with RequestRequired state
    *
    */
-  static TileLoadResult createRequestResult(const RequestData& request);
+  static TileLoadResult
+  createRequestResult(const CesiumAsync::RequestData& request);
 };
 
 } // namespace Cesium3DTilesSelection

@@ -16,7 +16,7 @@ struct TileProcessingData {
 
 struct RasterProcessingData {
   RasterMappedTo3DTile* pRasterTile = nullptr;
-  RasterProcessingCallback rasterCallback = {};
+  CesiumRasterOverlays::RasterProcessingCallback rasterCallback = {};
 };
 
 class TileWorkManager {
@@ -34,7 +34,7 @@ public:
   using ProcessingData = std::variant<TileProcessingData, RasterProcessingData>;
 
   struct Order {
-    RequestData requestData = {};
+    CesiumAsync::RequestData requestData = {};
 
     ProcessingData processingData = {};
 
@@ -62,13 +62,15 @@ public:
 
     std::set<Work*> children = {};
 
-    UrlAssetRequestMap completedRequests = {};
+    CesiumAsync::UrlAssetRequestMap completedRequests = {};
 
-    void fillResponseDataMap(UrlResponseDataMap& responseDataMap) {
+    void fillResponseDataMap(CesiumAsync::UrlResponseDataMap& responseDataMap) {
       for (auto& pair : completedRequests) {
         responseDataMap.emplace(
             pair.first,
-            ResponseData{pair.second.get(), pair.second->response()});
+            CesiumAsync::ResponseData{
+                pair.second.get(),
+                pair.second->response()});
       }
     }
   };

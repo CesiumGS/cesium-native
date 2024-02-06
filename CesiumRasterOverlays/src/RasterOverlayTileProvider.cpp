@@ -100,8 +100,7 @@ void RasterOverlayTileProvider::loadTile(
     RasterProcessingCallback rasterCallback) {
   if (this->_pPlaceholder) {
     // Refuse to load placeholders.
-    return this->getAsyncSystem().createResolvedFuture(
-        TileProviderAndTile{this, nullptr});
+    return;
   }
 
   // Already loading or loaded, do nothing.
@@ -229,7 +228,8 @@ namespace {
  * @param rendererOptions Renderer options
  */
 static void prepareLoadResultImage(
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     RasterLoadResult& loadResult,
     const std::any& rendererOptions) {

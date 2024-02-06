@@ -6,7 +6,7 @@ TileLoadInput::TileLoadInput(
     const TilesetContentOptions& contentOptions_,
     const CesiumAsync::AsyncSystem& asyncSystem_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const UrlResponseDataMap& responsesByUrl_)
+    const CesiumAsync::UrlResponseDataMap& responsesByUrl_)
     : tile{tile_},
       contentOptions{contentOptions_},
       asyncSystem{asyncSystem_},
@@ -22,7 +22,7 @@ TileLoadResult TileLoadResult::createFailedResult() {
       std::nullopt,
       std::string(),
       {},
-      RequestData{},
+      CesiumAsync::RequestData{},
       TileLoadResultState::Failed};
 }
 
@@ -35,11 +35,12 @@ TileLoadResult TileLoadResult::createRetryLaterResult() {
       std::nullopt,
       std::string(),
       {},
-      RequestData{},
+      CesiumAsync::RequestData{},
       TileLoadResultState::RetryLater};
 }
 
-TileLoadResult TileLoadResult::createRequestResult(const RequestData& request) {
+TileLoadResult
+TileLoadResult::createRequestResult(const CesiumAsync::RequestData& request) {
   return TileLoadResult{
       TileUnknownContent{},
       CesiumGeometry::Axis::Y,

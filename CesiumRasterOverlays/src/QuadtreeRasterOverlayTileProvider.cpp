@@ -1,3 +1,5 @@
+#include "CesiumAsync/IAssetResponse.h"
+
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>

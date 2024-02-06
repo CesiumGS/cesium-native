@@ -293,7 +293,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     if (pMapped) {
       // Try to load now, but if tile is a placeholder this won't do anything
       // Default headers come from the this. Loader can override if needed
-      RequestData requestData;
+      CesiumAsync::RequestData requestData;
       requestData.headers = defaultHeaders;
       RasterProcessingCallback rasterCallback;
 
@@ -1606,7 +1606,7 @@ void TilesetContentManager::dispatchProcessingWork(
       // begin loading tile
       this->notifyTileStartLoading(pTile);
 
-      UrlResponseDataMap responseDataMap;
+      CesiumAsync::UrlResponseDataMap responseDataMap;
       work->fillResponseDataMap(responseDataMap);
 
       // Keep the manager alive while the load is in progress.
@@ -1624,7 +1624,7 @@ void TilesetContentManager::dispatchProcessingWork(
                 if (pair.result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
                   // Override its request data with was specified
-                  RequestData& newRequestData =
+                  CesiumAsync::RequestData& newRequestData =
                       pair.result.additionalRequestData;
                   _work->order.requestData.url = newRequestData.url;
                   if (!newRequestData.headers.empty())
@@ -1663,7 +1663,7 @@ void TilesetContentManager::dispatchProcessingWork(
 
       this->notifyRasterStartLoading();
 
-      UrlResponseDataMap responseDataMap;
+      CesiumAsync::UrlResponseDataMap responseDataMap;
       work->fillResponseDataMap(responseDataMap);
 
       // Keep the manager alive while the load is in progress.
@@ -1686,7 +1686,7 @@ void TilesetContentManager::dispatchProcessingWork(
                   _work->completedRequests.end());
 
               // Override its request data with was specified
-              RequestData& newRequestData = result.requestData;
+              CesiumAsync::RequestData& newRequestData = result.requestData;
               _work->order.requestData.url = newRequestData.url;
               if (!newRequestData.headers.empty())
                 _work->order.requestData.headers = newRequestData.headers;
@@ -1721,7 +1721,7 @@ void TilesetContentManager::parseTileWork(
     // raster overlay tiles a chance to load.
     for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
       // Default headers come from the this. Loader can override if needed
-      RequestData requestData;
+      CesiumAsync::RequestData requestData;
       requestData.headers = this->_requestHeaders;
       RasterProcessingCallback rasterCallback;
 
@@ -1786,7 +1786,7 @@ void TilesetContentManager::parseTileWork(
   }
 
   // Default headers come from the this. Loader can override if needed
-  RequestData requestData;
+  CesiumAsync::RequestData requestData;
   requestData.headers = this->_requestHeaders;
   TileProcessingCallback tileCallback;
 
@@ -1810,7 +1810,7 @@ CesiumAsync::Future<TileLoadResultAndRenderResources>
 TilesetContentManager::doTileContentWork(
     Tile& tile,
     TileProcessingCallback processingCallback,
-    const UrlResponseDataMap& responseDataMap,
+    const CesiumAsync::UrlResponseDataMap& responseDataMap,
     const std::vector<CesiumGeospatial::Projection>& projections,
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::doTileContentWork");
