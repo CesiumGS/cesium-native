@@ -44,7 +44,7 @@ public:
 
   void getLoadWork(
       const Tile*,
-      RequestData&,
+      CesiumAsync::RequestData&,
       TileProcessingCallback& outCallback) override {
     outCallback = [](const TileLoadInput& loadInput,
                      TilesetContentLoader* loader) {
@@ -346,7 +346,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         "test",
         [&](Tile&) { initializerCall = true; },
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -453,7 +453,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         "test",
         [&](Tile&) { initializerCall = true; },
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::RetryLater};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -532,7 +532,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         "test",
         [&](Tile&) { initializerCall = true; },
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Failed};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -627,7 +627,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         "test",
         [&](Tile&) { initializerCall = true; },
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -702,7 +702,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         "test",
         [&](Tile&) { initializerCall = true; },
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoaderRaw->mockCreateTileChildren = {
         {},
@@ -796,7 +796,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         "test",
         {},
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -870,7 +870,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         "test",
         {},
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -940,7 +940,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         "test",
         {},
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -994,7 +994,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         "test",
         {},
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -1236,7 +1236,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::move(rasterOverlayDetails),
         "test",
         {},
-        RequestData(),
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 

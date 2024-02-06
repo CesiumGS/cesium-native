@@ -316,7 +316,7 @@ public:
    * @param responsesByUrl Content responses already fetched by caller
    * @param rasterCallback Loader callback to execute
    */
-  void loadTile(
+  CesiumAsync::Future<RasterLoadResult> loadTile(
       RasterOverlayTile& tile,
       const CesiumAsync::UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback);

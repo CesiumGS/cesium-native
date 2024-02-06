@@ -49,11 +49,13 @@ public:
 
   virtual void tick() noexcept override {}
 
-  void fillResponseDataMap(UrlResponseDataMap& responseDataMap) {
+  void fillResponseDataMap(CesiumAsync::UrlResponseDataMap& responseDataMap) {
     for (auto& pair : mockCompletedRequests) {
       responseDataMap.emplace(
           pair.first,
-          ResponseData{pair.second.get(), pair.second->response()});
+          CesiumAsync::ResponseData{
+              pair.second.get(),
+              pair.second->response()});
     }
   }
 

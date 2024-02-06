@@ -2,8 +2,8 @@
 #include "SimplePrepareRendererResource.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/TileWorkManager.h>
-#include <Cesium3DTilesSelection/registerAllTileContentTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>

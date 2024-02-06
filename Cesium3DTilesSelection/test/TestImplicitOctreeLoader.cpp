@@ -2,6 +2,7 @@
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileWorkManager.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
@@ -47,7 +48,7 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID("This is a test tile");
 
-    RequestData requestData;
+    CesiumAsync::RequestData requestData;
     TileProcessingCallback processingCallback;
     loader.getLoadWork(&tile, requestData, processingCallback);
 
@@ -91,7 +92,7 @@ TEST_CASE("Test implicit octree loader") {
     assert(tileProcessing.tileCallback);
     Tile* pTile = tileProcessing.pTile;
 
-    UrlResponseDataMap responseDataMap;
+    CesiumAsync::UrlResponseDataMap responseDataMap;
     work->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{
@@ -130,7 +131,7 @@ TEST_CASE("Test implicit octree loader") {
         {},
         asyncSystem,
         spdlog::default_logger(),
-        UrlResponseDataMap{}};
+        CesiumAsync::UrlResponseDataMap{}};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -176,7 +177,7 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{3, 1, 0, 1});
 
-    UrlResponseDataMap responseDataMap;
+    CesiumAsync::UrlResponseDataMap responseDataMap;
     pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{
@@ -231,7 +232,7 @@ TEST_CASE("Test implicit octree loader") {
     Tile tile(&loader);
     tile.setTileID(OctreeTileID{1, 0, 1, 0});
 
-    UrlResponseDataMap responseDataMap;
+    CesiumAsync::UrlResponseDataMap responseDataMap;
     pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
 
     TileLoadInput loadInput{

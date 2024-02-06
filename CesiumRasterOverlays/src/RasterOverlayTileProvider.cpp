@@ -94,23 +94,23 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
 }
 
-void RasterOverlayTileProvider::loadTile(
+CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::loadTile(
     RasterOverlayTile& tile,
     const UrlResponseDataMap& responsesByUrl,
     RasterProcessingCallback rasterCallback) {
   if (this->_pPlaceholder) {
     // Refuse to load placeholders.
-    return;
+    return this->getAsyncSystem().createResolvedFuture(RasterLoadResult{});
   }
 
   // Already loading or loaded, do nothing.
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
-    return;
+    return this->getAsyncSystem().createResolvedFuture(RasterLoadResult{});
 
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
-  this->doLoad(tile, false, responsesByUrl, rasterCallback);
+  return this->doLoad(tile, false, responsesByUrl, rasterCallback);
 }
 
 CesiumAsync::Future<RasterLoadResult>

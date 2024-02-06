@@ -109,7 +109,10 @@ TEST_CASE("Add raster overlay to glTF") {
               nullptr,
               spdlog::default_logger(),
               nullptr)
-          .thenInMainThread([&gltf, &modelToEcef, textureCoordinateIndex](
+          .thenInMainThread([&gltf,
+                             &modelToEcef,
+                             textureCoordinateIndex,
+                             pMockAssetAccessor](
                                 RasterOverlay::CreateTileProviderResult&&
                                     tileProviderResult) {
             REQUIRE(tileProviderResult);
@@ -155,11 +158,23 @@ TEST_CASE("Add raster overlay to glTF") {
                     pRasterTile->getRectangle());
 
             // Go load the texture.
-            return pTileProvider->loadTile(*pRasterTile)
+
+            RequestData requestData;
+            RasterProcessingCallback rasterCallback;
+            pTileProvider->getLoadTileThrottledWork(
+                *pRasterTile,
+                requestData,
+                rasterCallback);
+
+            UrlResponseDataMap responseDataMap;
+            pMockAssetAccessor->fillResponseDataMap(responseDataMap);
+
+            return pTileProvider
+                ->loadTile(*pRasterTile, responseDataMap, rasterCallback)
                 .thenPassThrough(std::move(textureTranslationAndScale));
           })
           .thenInMainThread([&gltf, textureCoordinateIndex](
-                                std::tuple<glm::dvec4, TileProviderAndTile>&&
+                                std::tuple<glm::dvec4, RasterLoadResult>&&
                                     tuple) {
             auto& [textureTranslationAndScale, loadResult] = tuple;
 
@@ -185,7 +200,7 @@ TEST_CASE("Add raster overlay to glTF") {
             // PNG-encode the raster overlay image and store it in the main
             // buffer.
             ImageManipulation::savePng(
-                loadResult.pTile->getImage(),
+                loadResult.image.value(),
                 buffer.cesium.data);
 
             BufferView& bufferView = gltf.bufferViews.emplace_back();

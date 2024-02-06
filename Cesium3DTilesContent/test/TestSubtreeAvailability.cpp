@@ -295,11 +295,13 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       testEntry->second->response();
   assert(testResponse);
 
-  UrlResponseDataMap additionalResponses;
+  CesiumAsync::UrlResponseDataMap additionalResponses;
   auto bufferEntry = pMockAssetAccessor->mockCompletedRequests.find("buffer");
   additionalResponses.emplace(
       bufferEntry->first,
-      ResponseData{bufferEntry->second.get(), bufferEntry->second->response()});
+      CesiumAsync::ResponseData{
+          bufferEntry->second.get(),
+          bufferEntry->second->response()});
 
   auto subtreeFuture = SubtreeAvailability::loadSubtree(
       ImplicitTileSubdivisionScheme::Quadtree,
@@ -586,7 +588,7 @@ TEST_CASE("Test parsing subtree format") {
         spdlog::default_logger(),
         "test",
         pMockRequest->response(),
-        UrlResponseDataMap{});
+        CesiumAsync::UrlResponseDataMap{});
 
     asyncSystem.dispatchMainThreadTasks();
     auto loadResult = subtreeFuture.wait();
