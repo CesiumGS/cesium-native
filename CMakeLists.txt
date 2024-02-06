@@ -3,9 +3,8 @@ cmake_minimum_required(VERSION 3.15)
 set(VCPKG_LIBRARY_LINKAGE static)
 include(${CMAKE_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 ezvcpkg_fetch(
-    REPO jherico/vcpkg
     # Current release has a bug in the cmake config for ktx, see https://github.com/microsoft/vcpkg/issues/30787
-    COMMIT a9f012790cf5f9be7993b99998cab106a94df9bd
+    COMMIT 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
     PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp meshoptimizer ms-gsl rapidjson s2geometry spdlog sqlite3 stb tinyxml2 uriparser modp-base64 cpp-httplib[core] zlib
     # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
     CLEAN_BUILDTREES
