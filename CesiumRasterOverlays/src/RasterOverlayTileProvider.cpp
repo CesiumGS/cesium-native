@@ -1,17 +1,13 @@
-#include "Cesium3DTilesSelection/RasterOverlayTileProvider.h"
-
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "Cesium3DTilesSelection/RasterOverlay.h"
-#include "Cesium3DTilesSelection/RasterOverlayTile.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/spdlog-cesium.h"
-
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/joinToString.h>
+
+#include <spdlog/fwd.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -20,7 +16,7 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 /*static*/ CesiumGltfReader::GltfReader
     RasterOverlayTileProvider::_gltfReader{};
@@ -50,7 +46,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     std::optional<Credit> credit,
-    const std::shared_ptr<IPrepareRendererResources>& pPrepareRendererResources,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const Rectangle& coverageRectangle) noexcept
@@ -103,7 +100,8 @@ void RasterOverlayTileProvider::loadTile(
     RasterProcessingCallback rasterCallback) {
   if (this->_pPlaceholder) {
     // Refuse to load placeholders.
-    return;
+    return this->getAsyncSystem().createResolvedFuture(
+        TileProviderAndTile{this, nullptr});
   }
 
   // Already loading or loaded, do nothing.
@@ -225,7 +223,7 @@ namespace {
  * resources, and the state `RasterOverlayTile::LoadState::Loaded`.
  *
  * @param tileId The {@link TileID} - only used for logging
- * @param pPrepareRendererResources The `IPrepareRendererResources`
+ * @param pPrepareRendererResources The `IPrepareRasterOverlayRendererResources`
  * @param pLogger The logger
  * @param loadResult The `RasterLoadResult`
  * @param rendererOptions Renderer options
@@ -378,4 +376,11 @@ void RasterOverlayTileProvider::finalizeTileLoad(
     --this->_throttledTilesCurrentlyLoading;
   }
 }
-} // namespace Cesium3DTilesSelection
+
+TileProviderAndTile::~TileProviderAndTile() noexcept {
+  // Ensure the tile is released before the tile provider.
+  pTile = nullptr;
+  pTileProvider = nullptr;
+}
+
+} // namespace CesiumRasterOverlays
