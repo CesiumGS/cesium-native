@@ -590,8 +590,6 @@ TEST_CASE("Test parsing subtree format") {
     auto parsedSubtree = loadResult.first;
     REQUIRE(parsedSubtree != std::nullopt);
 
-    // XXX Put these checks back in
-    /*
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
       CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
@@ -612,7 +610,6 @@ TEST_CASE("Test parsing subtree format") {
       CHECK(!parsedSubtree->isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
-    */
   }
 
   SECTION("Parse json subtree") {
@@ -625,8 +622,6 @@ TEST_CASE("Test parsing subtree format") {
 
     REQUIRE(parsedSubtree != std::nullopt);
 
-    // XXX Put these checks back in
-    /*
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
       CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
@@ -646,9 +641,8 @@ TEST_CASE("Test parsing subtree format") {
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
       CHECK(!parsedSubtree->isSubtreeAvailable(
-        libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
-    */
   }
 
   SECTION("Subtree json has ill form format") {
