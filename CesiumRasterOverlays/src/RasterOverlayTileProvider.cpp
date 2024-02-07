@@ -134,14 +134,12 @@ void RasterOverlayTileProvider::getLoadTileThrottledWork(
 CesiumAsync::Future<RasterLoadResult>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
-    uint16_t statusCode,
     const gsl::span<const std::byte>& data,
     LoadTileImageFromUrlOptions&& options) const {
 
   return this->getAsyncSystem().runInWorkerThread(
       [options = std::move(options),
        url = url,
-       statusCode = statusCode,
        data = data,
        asyncSystem = this->getAsyncSystem(),
        Ktx2TranscodeTargets =

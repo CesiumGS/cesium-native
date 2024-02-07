@@ -152,11 +152,7 @@ protected:
               options.moreDetailAvailable});
     }
 
-    return this->loadTileImageFromUrl(
-        requestUrl,
-        statusCode,
-        data,
-        std::move(options));
+    return this->loadTileImageFromUrl(requestUrl, data, std::move(options));
   }
 
 private:

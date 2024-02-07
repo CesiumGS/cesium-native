@@ -358,7 +358,6 @@ protected:
    */
   CesiumAsync::Future<RasterLoadResult> loadTileImageFromUrl(
       const std::string& url,
-      uint16_t statusCode,
       const gsl::span<const std::byte>& data,
       LoadTileImageFromUrlOptions&& options = {}) const;
 
