@@ -639,61 +639,18 @@ std::string resolveTileUrl(
 Future<QuantizedMeshLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const AsyncSystem& asyncSystem,
-    const std::string& requestUrl,
-    const uint16_t responseStatusCode,
-    const gsl::span<const std::byte>& responseData,
     const QuadtreeTileID& tileID,
-    const BoundingVolume& boundingVolume,
     const BoundingRegion& boundingRegion,
-    bool enableWaterMask) {
+    bool enableWaterMask,
+    const std::string& requestUrl,
+    const gsl::span<const std::byte>& responseData) {
   return asyncSystem.runInWorkerThread([asyncSystem,
                                         pLogger,
-                                        requestUrl,
-                                        responseStatusCode,
-                                        responseData,
                                         tileID,
-                                        boundingVolume,
                                         boundingRegion,
-                                        enableWaterMask]() {
-    if (responseData.empty()) {
-      QuantizedMeshLoadResult result;
-      result.errors.emplaceError(fmt::format(
-          "Did not receive a valid response for tile content {}",
-          requestUrl));
-      result.pRequest = NULL;
-      return result;
-    }
-    /*
-        const LayerJsonTerrainLoader::Layer& layer,
-        const std::vector<IAssetAccessor::THeader>& requestHeaders,
-        bool enableWaterMask) {
-      std::string url = resolveTileUrl(tileID, layer);
-      return pAssetAccessor->get(asyncSystem, url, requestHeaders)
-          .thenInWorkerThread(
-              [asyncSystem, pLogger, tileID, boundingRegion, enableWaterMask](
-                  std::shared_ptr<IAssetRequest>&& pRequest) {
-                const IAssetResponse* pResponse = pRequest->response();
-                if (!pResponse) {
-                  QuantizedMeshLoadResult result;
-                  result.errors.emplaceError(fmt::format(
-                      "Did not receive a valid response for tile content {}",
-                      pRequest->url()));
-                  result.pRequest = std::move(pRequest);
-                  return result;
-                }
-    */
-
-    if (responseStatusCode != 0 &&
-        (responseStatusCode < 200 || responseStatusCode >= 300)) {
-      QuantizedMeshLoadResult result;
-      result.errors.emplaceError(fmt::format(
-          "Receive status code {} for tile content {}",
-          responseStatusCode,
-          requestUrl));
-      result.pRequest = NULL;
-      return result;
-    }
-
+                                        enableWaterMask,
+                                        requestUrl,
+                                        responseData]() {
     return QuantizedMeshLoader::load(
         tileID,
         boundingRegion,
@@ -701,15 +658,6 @@ Future<QuantizedMeshLoadResult> requestTileContent(
         responseData,
         enableWaterMask);
   });
-  /*
-              return QuantizedMeshLoader::load(
-                  tileID,
-                  boundingRegion,
-                  pRequest->url(),
-                  pResponse->data(),
-                  enableWaterMask);
-            });
-  */
 }
 
 Future<int> loadTileAvailability(
@@ -840,20 +788,38 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   auto foundIt = responsesByUrl.find(url);
   assert(foundIt != responsesByUrl.end());
 
+  auto response = foundIt->second.pResponse;
+  assert(response);
+
+  uint16_t statusCode = response->statusCode();
+  if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Received status code {} for tile content {}",
+        statusCode,
+        url);
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult());
+  }
+
+  const gsl::span<const std::byte>& responseData = response->data();
+  if (responseData.empty()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Did not receive a valid response for tile content {}",
+        url);
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult());
+  }
+
   Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
       pLogger,
       asyncSystem,
-      url,
-      foundIt->second.pResponse->statusCode(),
-      foundIt->second.pResponse->data(),
       *pQuadtreeTileID,
-      tile.getBoundingVolume(),
       *pRegion,
-      /*
-        currentLayer,
-        requestHeaders,
-  */
-      contentOptions.enableWaterMask);
+      contentOptions.enableWaterMask,
+      url,
+      responseData);
 
   // determine if this tile is at the availability level of the current layer
   // and if we need to add the availability rectangles to the current layer. We
