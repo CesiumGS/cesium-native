@@ -243,7 +243,7 @@ rapidjson::Document createSubtreeJson(
   return subtreeJson;
 }
 
-std::optional<SubtreeAvailability::LoadResult> mockLoadSubtreeJson(
+std::optional<SubtreeAvailability> mockLoadSubtreeJson(
     uint32_t levelsInSubtree,
     SubtreeBuffers&& subtreeBuffers,
     rapidjson::Document&& subtreeJson) {
@@ -312,7 +312,7 @@ std::optional<SubtreeAvailability::LoadResult> mockLoadSubtreeJson(
       testResponse,
       additionalResponses);
 
-  return waitForFuture(asyncSystem, std::move(subtreeFuture));
+  return waitForFuture(asyncSystem, std::move(subtreeFuture)).first;
 }
 } // namespace
 
