@@ -36,6 +36,9 @@ template <typename T> struct ReadJsonResult {
    */
   std::vector<std::string> warnings;
 
+  /**
+   * @brief Additional url needed for the read
+   */
   std::string urlNeeded;
 };
 
