@@ -152,7 +152,6 @@ protected:
       const gsl::span<const std::byte>& data) const override {
 
     LoadTileImageFromUrlOptions options;
-    options.allowEmptyImages = true;
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     std::vector<Credit>& tileCredits = options.credits =
@@ -194,22 +193,13 @@ protected:
     }
 
     if (data.empty()) {
-      if (options.allowEmptyImages) {
-        return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
-            RasterLoadResult{
-                CesiumGltf::ImageCesium(),
-                options.rectangle,
-                std::move(options.credits),
-                {},
-                {},
-                options.moreDetailAvailable});
-      }
+      // This tile is - as expected - not available
       return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
           RasterLoadResult{
-              std::nullopt,
+              CesiumGltf::ImageCesium(),
               options.rectangle,
               std::move(options.credits),
-              {"Image response for " + requestUrl + " is empty."},
+              {},
               {},
               options.moreDetailAvailable});
     }

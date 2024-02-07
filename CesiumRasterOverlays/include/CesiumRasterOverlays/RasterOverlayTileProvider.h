@@ -40,7 +40,7 @@ struct RasterLoadResult {
 
   void* pRendererResources = nullptr;
 
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = {};
 };
 
 using RasterProcessingCallback =
@@ -72,38 +72,6 @@ struct LoadTileImageFromUrlOptions {
    * the bounds of this image.
    */
   bool moreDetailAvailable = true;
-
-  /**
-   * @brief Whether empty (zero length) images are accepted as a valid
-   * response.
-   *
-   * If true, an otherwise valid response with zero length will be accepted as
-   * a valid 0x0 image. If false, such a response will be reported as an
-   * error.
-   *
-   * {@link RasterOverlayTileProvider::loadTile} and
-   * {@link RasterOverlayTileProvider::loadTileThrottled} will treat such an
-   * image as "failed" and use the quadtree parent (or ancestor) image
-   * instead, but will not report any error.
-   *
-   * This flag should only be set to `true` when the tile source uses a
-   * zero-length response as an indication that this tile is - as expected -
-   * not available.
-   */
-  bool allowEmptyImages = false;
-};
-
-class RasterOverlayTileProvider;
-
-/**
- * @brief Holds a tile and its corresponding tile provider. Used as the return
- * value of {@link RasterOverlayTileProvider::loadTile}.
- */
-struct TileProviderAndTile {
-  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
-
-  ~TileProviderAndTile() noexcept;
 };
 
 /**
