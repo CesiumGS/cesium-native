@@ -420,11 +420,14 @@ private:
       return PropertyArrayView<T>{values};
     }
 
-    // Handle variable-length arrays
+    // Handle variable-length arrays. The offsets are interpreted as array
+    // indices, not byte offsets, so they must be multiplied by sizeof(T)
     const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
+        sizeof(T);
     const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
+        sizeof(T);
     const gsl::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
@@ -774,11 +777,14 @@ private:
       return PropertyArrayView<T>{values};
     }
 
-    // Handle variable-length arrays
+    // Handle variable-length arrays. The offsets are interpreted as array
+    // indices, not byte offsets, so they must be multiplied by sizeof(T)
     const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
+        sizeof(T);
     const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
+        sizeof(T);
     const gsl::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);

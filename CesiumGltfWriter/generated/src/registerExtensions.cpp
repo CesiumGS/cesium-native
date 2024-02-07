@@ -28,6 +28,8 @@
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialNormalTextureInfo.h>
+#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
@@ -95,6 +97,12 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
       .registerExtension<CesiumGltf::Texture, ExtensionTextureWebpJsonWriter>();
   context.registerExtension<
       CesiumGltf::TextureInfo,
+      ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MaterialOcclusionTextureInfo,
+      ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MaterialNormalTextureInfo,
       ExtensionKhrTextureTransformJsonWriter>();
 }
 } // namespace CesiumGltfWriter
