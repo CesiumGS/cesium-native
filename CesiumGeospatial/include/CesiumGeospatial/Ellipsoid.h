@@ -120,6 +120,17 @@ public:
   scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept;
 
   /**
+   * @brief Scales the provided cartesian position along the geocentric
+   * surface normal so that it is on the surface of this ellipsoid.
+   *
+   * @param cartesian The cartesian position to scale.
+   * @retun The scaled position, or the empty optional if the cartesian is at
+   * the center of this ellipsoid.
+   */
+  std::optional<glm::dvec3>
+  scaleToGeocentricSurface(const glm::dvec3& cartesian) const noexcept;
+
+  /**
    * @brief The maximum radius in any dimension.
    *
    * @return The maximum radius.
