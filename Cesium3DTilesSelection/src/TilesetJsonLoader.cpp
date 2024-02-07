@@ -839,8 +839,29 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   // this loader only handles Url ID
-  const std::string* url = std::get_if<std::string>(&tile.getTileID());
-  if (!url) {
+  const std::string* urlFromTileId =
+      std::get_if<std::string>(&tile.getTileID());
+  if (!urlFromTileId) {
+    return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult());
+  }
+
+  const auto& pLogger = loadInput.pLogger;
+  const auto& responsesByUrl = loadInput.responsesByUrl;
+
+  assert(responsesByUrl.size() == 1);
+  const std::string& responseUrl = responsesByUrl.begin()->first;
+  const CesiumAsync::IAssetResponse* pResponse =
+      responsesByUrl.begin()->second.pResponse;
+  assert(pResponse);
+
+  uint16_t statusCode = pResponse->statusCode();
+  if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Received status code {} for tile content {}",
+        statusCode,
+        responseUrl);
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createFailedResult());
   }
@@ -851,57 +872,31 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
 
   const auto& asyncSystem = loadInput.asyncSystem;
-  const auto& pLogger = loadInput.pLogger;
   const auto& contentOptions = loadInput.contentOptions;
-  const auto& responsesByUrl = loadInput.responsesByUrl;
 
   return asyncSystem.runInWorkerThread(
       [pLogger,
        contentOptions,
-       responsesByUrl,
+       responseBytes = pResponse->data(),
+       tileUrl = responseUrl,
        tileTransform,
        tileRefine,
        upAxis = _upAxis,
        externalContentInitializer =
            std::move(externalContentInitializer)]() mutable {
-        assert(responsesByUrl.size() == 1);
-        const std::string& tileUrl = responsesByUrl.begin()->first;
-        const CesiumAsync::IAssetResponse* pResponse =
-            responsesByUrl.begin()->second.pResponse;
-        const gsl::span<const std::byte> responseBytes = pResponse->data();
-
-        uint16_t statusCode = pResponse->statusCode();
-        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Received status code {} for tile content {}",
-              statusCode,
-              tileUrl);
-          return TileLoadResult::createFailedResult();
-        }
-
         // find gltf converter
         auto converter = GltfConverters::getConverterByMagic(responseBytes);
         if (!converter) {
           converter = GltfConverters::getConverterByFileExtension(tileUrl);
         }
-        /*
-                    if (converter) {
-                      // Convert to gltf
-                      CesiumGltfReader::GltfReaderOptions gltfOptions;
-                      gltfOptions.ktx2TranscodeTargets =
-                          contentOptions.ktx2TranscodeTargets;
-                      gltfOptions.applyTextureTransform =
-                          contentOptions.applyTextureTransform;
-                      GltfConverterResult result = converter(responseData,
-           gltfOptions);
-        */
 
         if (converter) {
           // Convert to gltf
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets =
               contentOptions.ktx2TranscodeTargets;
+          gltfOptions.applyTextureTransform =
+              contentOptions.applyTextureTransform;
           GltfConverterResult result = converter(responseBytes, gltfOptions);
 
           // Report any errors if there are any
