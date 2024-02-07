@@ -303,6 +303,8 @@ CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::doLoad(
                     : RasterOverlayTile::MoreDetailAvailable::No;
             pTile->setState(result.state);
 
+            result.pTile = pTile;
+
             thiz->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
 
             thiz->finalizeTileLoad(isThrottledLoad);

@@ -39,6 +39,8 @@ struct RasterLoadResult {
   RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
 
   void* pRendererResources = nullptr;
+
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 };
 
 using RasterProcessingCallback =
