@@ -19,6 +19,16 @@ SubtreeFileReader::getOptions() const {
   return this->_reader.getOptions();
 }
 
+Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
+    const AsyncSystem& asyncSystem,
+    const std::string& baseUrl,
+    const CesiumAsync::IAssetResponse* baseResponse,
+    const UrlResponseDataMap& additionalResponses) const noexcept {
+  assert(baseResponse);
+  return this
+      ->load(asyncSystem, baseUrl, additionalResponses, baseResponse->data());
+}
+
 namespace {
 constexpr const char SUBTREE_MAGIC[] = "subt";
 }
@@ -26,19 +36,8 @@ constexpr const char SUBTREE_MAGIC[] = "subt";
 Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     const AsyncSystem& asyncSystem,
     const std::string& baseUrl,
-    const CesiumAsync::IAssetResponse* baseResponse,
-    const UrlResponseDataMap& additionalResponses) const noexcept {
-  assert(baseResponse);
-
-  uint16_t statusCode = baseResponse->statusCode();
-  if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-    CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree> result;
-    result.errors.emplace_back(
-        fmt::format("Request failed with status code {}", statusCode));
-    return asyncSystem.createResolvedFuture(std::move(result));
-  }
-
-  gsl::span<const std::byte> data = baseResponse->data();
+    const UrlResponseDataMap& additionalResponses,
+    const gsl::span<const std::byte>& data) const noexcept {
 
   if (data.size() < 4) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
@@ -180,21 +179,17 @@ struct RequestedSubtreeBuffer {
   std::vector<std::byte> data;
 };
 
-CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
-    const CesiumAsync::AsyncSystem& asyncSystem,
+RequestedSubtreeBuffer requestBuffer(
     size_t bufferIdx,
-    uint16_t responseStatusCode,
-    const gsl::span<const std::byte>& responseData) {
-  return asyncSystem.runInWorkerThread(
-      [bufferIdx, statusCode = responseStatusCode, data = responseData]() {
-        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          return RequestedSubtreeBuffer{bufferIdx, {}};
-        }
+    uint16_t statusCode,
+    const gsl::span<const std::byte>& data) {
+  if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+    return RequestedSubtreeBuffer{bufferIdx, {}};
+  }
 
-        return RequestedSubtreeBuffer{
-            bufferIdx,
-            std::vector<std::byte>(data.begin(), data.end())};
-      });
+  return RequestedSubtreeBuffer{
+      bufferIdx,
+      std::vector<std::byte>(data.begin(), data.end())};
 }
 
 } // namespace
@@ -209,7 +204,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
   }
 
   // Load any external buffers
-  std::vector<Future<RequestedSubtreeBuffer>> bufferRequests;
+  std::vector<RequestedSubtreeBuffer> bufferRequests;
   const std::vector<Buffer>& buffers = loaded.value->buffers;
   for (size_t i = 0; i < buffers.size(); ++i) {
     const Buffer& buffer = buffers[i];
@@ -224,8 +219,9 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
         return asyncSystem.createResolvedFuture(std::move(loaded));
       }
 
+      assert(bufferUrlIt->second.pResponse);
+
       bufferRequests.emplace_back(requestBuffer(
-          asyncSystem,
           i,
           bufferUrlIt->second.pResponse->statusCode(),
           bufferUrlIt->second.pResponse->data()));
@@ -233,28 +229,27 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
   }
 
   if (!bufferRequests.empty()) {
-    return asyncSystem.all(std::move(bufferRequests))
-        .thenInMainThread(
-            [loaded = std::move(loaded)](std::vector<RequestedSubtreeBuffer>&&
-                                             completedBuffers) mutable {
-              for (RequestedSubtreeBuffer& completedBuffer : completedBuffers) {
-                Buffer& buffer = loaded.value->buffers[completedBuffer.index];
-                if (buffer.byteLength >
-                    static_cast<int64_t>(completedBuffer.data.size())) {
-                  loaded.warnings.emplace_back(fmt::format(
-                      "Buffer byteLength ({}) is greater than the size of the "
-                      "downloaded resource ({} bytes). The byteLength will be "
-                      "updated to match.",
-                      buffer.byteLength,
-                      completedBuffer.data.size()));
-                  buffer.byteLength =
-                      static_cast<int64_t>(completedBuffer.data.size());
-                }
-                buffer.cesium.data = std::move(completedBuffer.data);
-              }
+    return asyncSystem.runInMainThread(
+        [loaded = std::move(loaded),
+         completedBuffers = std::move(bufferRequests)]() mutable {
+          for (RequestedSubtreeBuffer& completedBuffer : completedBuffers) {
+            Buffer& buffer = loaded.value->buffers[completedBuffer.index];
+            if (buffer.byteLength >
+                static_cast<int64_t>(completedBuffer.data.size())) {
+              loaded.warnings.emplace_back(fmt::format(
+                  "Buffer byteLength ({}) is greater than the size of the "
+                  "downloaded resource ({} bytes). The byteLength will be "
+                  "updated to match.",
+                  buffer.byteLength,
+                  completedBuffer.data.size()));
+              buffer.byteLength =
+                  static_cast<int64_t>(completedBuffer.data.size());
+            }
+            buffer.cesium.data = std::move(completedBuffer.data);
+          }
 
-              return std::move(loaded);
-            });
+          return std::move(loaded);
+        });
   }
 
   return asyncSystem.createResolvedFuture(std::move(loaded));

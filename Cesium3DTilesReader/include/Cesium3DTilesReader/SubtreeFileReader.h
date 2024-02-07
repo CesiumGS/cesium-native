@@ -62,6 +62,13 @@ public:
       const CesiumAsync::UrlResponseDataMap& additionalResponses)
       const noexcept;
 
+  CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
+  load(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::string& baseUrl,
+      const CesiumAsync::UrlResponseDataMap& additionalResponses,
+      const gsl::span<const std::byte>& data) const noexcept;
+
 private:
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   loadBinary(

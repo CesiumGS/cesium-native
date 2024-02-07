@@ -256,13 +256,26 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
               CesiumAsync::RequestData{subtreeUrl, {}}));
     }
 
+    auto baseResponse = foundIt->second.pResponse;
+
+    uint16_t statusCode = baseResponse->statusCode();
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Received status code {} for tile content {}",
+          statusCode,
+          subtreeUrl);
+      return asyncSystem.createResolvedFuture<TileLoadResult>(
+          TileLoadResult::createFailedResult());
+    }
+
     return SubtreeAvailability::loadSubtree(
                ImplicitTileSubdivisionScheme::Quadtree,
                this->_subtreeLevels,
                asyncSystem,
                pLogger,
                subtreeUrl,
-               foundIt->second.pResponse,
+               baseResponse,
                responsesByUrl)
         .thenInMainThread(
             [this,
