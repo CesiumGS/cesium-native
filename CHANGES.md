@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `ReferenceCountedThreadSafe` class.
+
 ### v0.32.0 - 20234-02-01
 
 ##### Breaking Changes :mega:
