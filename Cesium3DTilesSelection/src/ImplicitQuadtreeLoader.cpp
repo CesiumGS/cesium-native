@@ -112,9 +112,11 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::string& tileUrl,
     const gsl::span<const std::byte>& responseData,
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
+    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
+    bool applyTextureTransform) {
   return asyncSystem.runInWorkerThread([pLogger,
                                         ktx2TranscodeTargets,
+                                        applyTextureTransform,
                                         tileUrl = tileUrl,
                                         responseData = responseData]() mutable {
     // find gltf converter
@@ -122,33 +124,12 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     if (!converter) {
       converter = GltfConverters::getConverterByFileExtension(tileUrl);
     }
-    /*
-        const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-        CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
-        bool applyTextureTransform) {
-      return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-          .thenInWorkerThread([pLogger,
-                               ktx2TranscodeTargets,
-                               applyTextureTransform](
-                                  std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                      pCompletedRequest) mutable {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            const std::string& tileUrl = pCompletedRequest->url();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  tileUrl);
-              return TileLoadResult::createFailedResult(
-                  std::move(pCompletedRequest));
-            }
-    */
 
     if (converter) {
       // Convert to gltf
       CesiumGltfReader::GltfReaderOptions gltfOptions;
       gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
+      gltfOptions.applyTextureTransform = applyTextureTransform;
       GltfConverterResult result = converter(responseData, gltfOptions);
 
       // Report any errors if there are any
@@ -168,13 +149,6 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           CesiumAsync::RequestData{},
           TileLoadResultState::Success};
     }
-    /*        if (converter) {
-              // Convert to gltf
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
-              gltfOptions.applyTextureTransform = applyTextureTransform;
-              GltfConverterResult result = converter(responseData, gltfOptions);
-    */
 
     // content type is not supported
     return TileLoadResult::createFailedResult();
@@ -285,31 +259,18 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                 this->addSubtreeAvailability(
                     subtreeID,
                     std::move(*loadResult.first));
+
+                // tell client to retry later
+                return TileLoadResult::createRetryLaterResult();
               } else if (!loadResult.second.url.empty()) {
                 // No availability, but a url was requested
                 // Let this work go back into the request queue
                 return TileLoadResult::createRequestResult(loadResult.second);
-              }
-
-              // tell client to retry later
-              return TileLoadResult::createRetryLaterResult();
-            });
-    /*
-                   requestHeaders)
-            .thenInMainThread([this,
-       subtreeID](std::optional<SubtreeAvailability>&& subtreeAvailability)
-       mutable { if (subtreeAvailability) { this->addSubtreeAvailability(
-                    subtreeID,
-                    std::move(*subtreeAvailability));
-
-                // tell client to retry later
-                return TileLoadResult::createRetryLaterResult(nullptr);
               } else {
                 // Subtree load failed, so this tile fails, too.
-                return TileLoadResult::createFailedResult(nullptr);
+                return TileLoadResult::createFailedResult();
               }
             });
-    */
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
@@ -360,12 +321,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       asyncSystem,
       tileUrl,
       foundIt->second.pResponse->data(),
-      contentOptions.ktx2TranscodeTargets);
-  /*
-        requestHeaders,
-        contentOptions.ktx2TranscodeTargets,
-        contentOptions.applyTextureTransform);
-  */
+      contentOptions.ktx2TranscodeTargets,
+      contentOptions.applyTextureTransform);
 }
 
 void ImplicitQuadtreeLoader::getLoadWork(
