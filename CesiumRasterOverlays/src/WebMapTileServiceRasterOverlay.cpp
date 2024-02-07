@@ -78,44 +78,76 @@ protected:
       RequestData& requestData,
       std::string&) const override {
 
-    const CesiumGeospatial::GlobeRectangle tileRectangle =
-        CesiumGeospatial::unprojectRectangleSimple(
-            this->getProjection(),
-            this->getTilingScheme().tileToRectangle(tileID));
+    uint32_t level = tileID.level;
+    uint32_t col = tileID.x;
+    uint32_t row = (1u << level) - tileID.y - 1u;
+
+    std::map<std::string, std::string> urlTemplateMap;
+    std::string tileMatrix;
+    if (_labels && level < _labels.value().size()) {
+      tileMatrix = _labels.value()[level];
+    } else {
+      tileMatrix = std::to_string(level);
+    }
 
     std::string queryString = "?";
-
-    if (this->_url.find(queryString) != std::string::npos)
+    if (this->_url.find(queryString) != std::string::npos) {
       queryString = "&";
+    }
+    std::string urlTemplate = _url;
 
-    const std::string urlTemplate =
-        this->_url + queryString +
-        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
-        "WMS&"
-        "format={format}&styles="
-        "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
-        "&layers={layers}&crs=EPSG:4326";
+    if (!_useKVP) {
+      urlTemplateMap.insert(
+          {{"Layer", _layer},
+           {"Style", _style},
+           {"TileMatrix", tileMatrix},
+           {"TileRow", std::to_string(row)},
+           {"TileCol", std::to_string(col)},
+           {"TileMatrixSet", _tileMatrixSetID}});
+      if (_subdomains.size() > 0) {
+        urlTemplateMap.emplace(
+            "s",
+            _subdomains[(col + row + level) % _subdomains.size()]);
+      }
+      if (_staticDimensions) {
+        urlTemplateMap.insert(
+            _staticDimensions->begin(),
+            _staticDimensions->end());
+      }
+    } else {
+      urlTemplateMap.insert(
+          {{"layer", _layer},
+           {"style", _style},
+           {"tilematrix", tileMatrix},
+           {"tilerow", std::to_string(row)},
+           {"tilecol", std::to_string(col)},
+           {"tilematrixset", _tileMatrixSetID},
+           {"format", _format}}); // !! These are query parameters
+      if (_staticDimensions) {
+        urlTemplateMap.insert(
+            _staticDimensions->begin(),
+            _staticDimensions->end());
+      }
+      if (_subdomains.size() > 0) {
+        urlTemplateMap.emplace(
+            "s",
+            _subdomains[(col + row + level) % _subdomains.size()]);
+      }
 
-    const auto radiansToDegrees = [](double rad) {
-      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
-    };
-
-    const std::map<std::string, std::string> urlTemplateMap = {
-        {"baseUrl", this->_url},
-        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
-        {"maxy", radiansToDegrees(tileRectangle.getEast())},
-        {"minx", radiansToDegrees(tileRectangle.getSouth())},
-        {"miny", radiansToDegrees(tileRectangle.getWest())},
-        {"format", this->_format},
-        {"width", std::to_string(this->getWidth())},
-        {"height", std::to_string(this->getHeight())}};
+      urlTemplate +=
+          queryString +
+          "request=GetTile&version=1.0.0&service=WMTS&"
+          "format={format}&layer={layer}&style={style}&"
+          "tilematrixset={tilematrixset}&"
+          "tilematrix={tilematrix}&tilerow={tilerow}&tilecol={tilecol}";
+    }
 
     requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
         urlTemplate,
         [&map = urlTemplateMap](const std::string& placeholder) {
           auto it = map.find(placeholder);
           return it == map.end() ? "{" + placeholder + "}"
-                                 : Uri::escape(it->second);
+                                 : CesiumUtility::Uri::escape(it->second);
         });
 
     return true;
@@ -130,6 +162,30 @@ protected:
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      std::string message = "Image response code " +
+                            std::to_string(statusCode) + " for " + requestUrl;
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {message},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    if (data.empty()) {
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {"Image response for " + requestUrl + " is empty."},
+              {},
+              options.moreDetailAvailable});
+    }
 
     return this->loadTileImageFromUrl(
         requestUrl,

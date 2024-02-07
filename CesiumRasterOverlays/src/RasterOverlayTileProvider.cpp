@@ -148,40 +148,6 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
            this->getOwner().getOptions().ktx2TranscodeTargets]() mutable {
         CESIUM_TRACE("load image");
 
-        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          std::string message = "Image response code " +
-                                std::to_string(statusCode) + " for " + url;
-          return asyncSystem.createResolvedFuture<RasterLoadResult>(
-              RasterLoadResult{
-                  std::nullopt,
-                  options.rectangle,
-                  std::move(options.credits),
-                  {message},
-                  {},
-                  options.moreDetailAvailable});
-        }
-
-        if (data.empty()) {
-          if (options.allowEmptyImages) {
-            return asyncSystem.createResolvedFuture<RasterLoadResult>(
-                RasterLoadResult{
-                    CesiumGltf::ImageCesium(),
-                    options.rectangle,
-                    std::move(options.credits),
-                    {},
-                    {},
-                    options.moreDetailAvailable});
-          }
-          return asyncSystem.createResolvedFuture<RasterLoadResult>(
-              RasterLoadResult{
-                  std::nullopt,
-                  options.rectangle,
-                  std::move(options.credits),
-                  {"Image response for " + url + " is empty."},
-                  {},
-                  options.moreDetailAvailable});
-        }
-
         CesiumGltfReader::ImageReaderResult loadedImage =
             RasterOverlayTileProvider::_gltfReader.readImage(
                 data,

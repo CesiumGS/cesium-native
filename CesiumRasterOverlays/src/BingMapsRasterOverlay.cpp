@@ -180,6 +180,40 @@ protected:
       }
     }
 
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      std::string message = "Image response code " +
+                            std::to_string(statusCode) + " for " + requestUrl;
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {message},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    if (data.empty()) {
+      if (options.allowEmptyImages) {
+        return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+            RasterLoadResult{
+                CesiumGltf::ImageCesium(),
+                options.rectangle,
+                std::move(options.credits),
+                {},
+                {},
+                options.moreDetailAvailable});
+      }
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {"Image response for " + requestUrl + " is empty."},
+              {},
+              options.moreDetailAvailable});
+    }
+
     return this->loadTileImageFromUrl(
         requestUrl,
         statusCode,
