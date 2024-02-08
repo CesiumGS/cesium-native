@@ -10,7 +10,7 @@
 
 namespace Cesium3DTilesSelection {
 class CesiumIonTilesetLoader : public TilesetContentLoader {
-  enum class TokenRefreshState { None, Queued, Loading, Done, Failed };
+  enum class TokenRefreshState { None, Loading, Done, Failed };
 
 public:
   using AuthorizationHeaderChangeListener = std::function<
@@ -55,7 +55,7 @@ public:
       TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result);
 
 private:
-  void refreshTokenInMainThread(
+  void refreshToken(
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& requestUrl,
       const uint16_t responseStatusCode,

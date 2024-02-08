@@ -372,24 +372,33 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
     // key _again_ in that instance.
     //
     bool refreshInProgress =
-        this->_refreshTokenState == TokenRefreshState::Queued ||
         this->_refreshTokenState == TokenRefreshState::Loading;
-    if (!refreshInProgress)
-      this->_refreshTokenState = TokenRefreshState::Failed;
+    if (!refreshInProgress) {
+      this->_refreshTokenState = TokenRefreshState::Loading;
 
-    // Let this tile retry
+      std::string url = createEndpointResource(
+          this->_ionAssetID,
+          this->_ionAccessToken,
+          this->_ionAssetEndpointUrl);
+
+      return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
+          TileLoadResult::createRequestResult(
+              CesiumAsync::RequestData{std::move(url), {}}));
+    }
+
+    // Let this tile retry later
     return loadInput.asyncSystem.createResolvedFuture(
         TileLoadResult::createRetryLaterResult());
   }
 
-  // If queued token refresh has arrived, refresh it
-  if (this->_refreshTokenState == TokenRefreshState::Queued) {
+  // No stale tokens. If we are refreshing, our new token has arrived
+  if (this->_refreshTokenState == TokenRefreshState::Loading) {
     assert(loadInput.responsesByUrl.size() == 1);
     const std::string& requestUrl = loadInput.responsesByUrl.begin()->first;
     const CesiumAsync::IAssetResponse* response =
         loadInput.responsesByUrl.begin()->second.pResponse;
 
-    this->refreshTokenInMainThread(
+    this->refreshToken(
         loadInput.pLogger,
         requestUrl,
         response->statusCode(),
@@ -399,10 +408,8 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResult::createRetryLaterResult());
   }
 
-  // If token is being refresh from another tile, try again later
-  // Same is true if our token has failed to refresh
-  if (this->_refreshTokenState == TokenRefreshState::Loading ||
-      this->_refreshTokenState == TokenRefreshState::Failed)
+  // If our token has failed to refresh
+  if (this->_refreshTokenState == TokenRefreshState::Failed)
     return loadInput.asyncSystem.createResolvedFuture(
         TileLoadResult::createRetryLaterResult());
 
@@ -418,21 +425,8 @@ void CesiumIonTilesetLoader::getLoadWork(
     CesiumAsync::RequestData& outRequest,
     TileProcessingCallback& outCallback) {
 
-  // If token in failure state, queue a refresh
-  if (this->_refreshTokenState == TokenRefreshState::Failed) {
-    this->_refreshTokenState = TokenRefreshState::Queued;
-
-    outRequest.url = createEndpointResource(
-        this->_ionAssetID,
-        this->_ionAccessToken,
-        this->_ionAssetEndpointUrl);
-    return;
-  }
-
-  // If token refresh is already in progress. Cannot queue work for this tile
-  // yet
-  if (this->_refreshTokenState == TokenRefreshState::Queued ||
-      this->_refreshTokenState == TokenRefreshState::Loading)
+  // If token refresh is in progress, cannot queue work yet
+  if (this->_refreshTokenState == TokenRefreshState::Loading)
     return;
 
   this->_pAggregatedLoader->getLoadWork(pTile, outRequest, outCallback);
@@ -444,15 +438,13 @@ CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
   return pLoader->createTileChildren(tile);
 }
 
-void CesiumIonTilesetLoader::refreshTokenInMainThread(
+void CesiumIonTilesetLoader::refreshToken(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& requestUrl,
     const uint16_t responseStatusCode,
     const gsl::span<const std::byte>& responseData) {
 
-  assert(this->_refreshTokenState == TokenRefreshState::Queued);
-
-  this->_refreshTokenState = TokenRefreshState::Loading;
+  assert(this->_refreshTokenState == TokenRefreshState::Loading);
 
   if (responseData.empty()) {
     this->_refreshTokenState = TokenRefreshState::Failed;
