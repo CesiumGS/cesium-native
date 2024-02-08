@@ -740,7 +740,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     assert(pResponse);
     uint16_t statusCode = pResponse->statusCode();
     assert(statusCode != 0);
-    bool statusValid = statusCode >= 200 || statusCode < 300;
+    bool statusValid = statusCode >= 200 && statusCode < 300;
 
     if (!statusValid) {
       SPDLOG_LOGGER_ERROR(
