@@ -1,0 +1,38 @@
+#--------------------------------------------------------------------------------------
+#     $Source: cesium_native.mke $
+#  $Copyright: (c) 2019 Bentley Systems, Incorporated. All rights reserved. $
+#--------------------------------------------------------------------------------------
+
+%include mdl.mki
+
+CesiumVendorApi = $(BuildContext)VendorAPI/
+
+%if defined (BMAKE_DELETE_ALL_TARGETS)
+    always:
+        $(rmdirRecursiveCmd) $(ContextDeliveryDir)
+        $(rmdirRecursiveCmd) $(CesiumVendorApi)
+    
+    %return
+%endif
+
+include = $(_MakeFilePath)include
+lib = $(_MakeFilePath)lib
+
+always:
+    ~linkmultifiles "$(CesiumVendorApi)CesiumGltf=$(include)/CesiumGltf/*.h"
+    ~linkmultifiles "$(CesiumVendorApi)CesiumUtility=$(include)/CesiumUtility/*.h"	
+    ~linkmultifiles "$(CesiumVendorApi)CesiumJsonWriter=$(include)/CesiumJsonWriter/*.h"
+    ~linkmultifiles "$(CesiumVendorApi)CesiumGltfWriter=$(include)/CesiumGltfWriter/*.h"	
+    ~linkmultifiles "$(CesiumVendorApi)glm=$(include)/glm/*.hpp"	
+    ~linkmultifiles "$(CesiumVendorApi)glm/detail=$(include)/glm/detail/*.hpp"
+    ~linkmultifiles "$(CesiumVendorApi)glm/detail=$(include)/glm/detail/*.inl"
+    ~linkmultifiles "$(CesiumVendorApi)glm/ext=$(include)/glm/ext/*.hpp"
+    ~linkmultifiles "$(CesiumVendorApi)glm/ext=$(include)/glm/ext/*.inl"
+    ~linkmultifiles "$(CesiumVendorApi)glm/gtc=$(include)/glm/gtc/*.hpp"
+    ~linkmultifiles "$(CesiumVendorApi)glm/gtc=$(include)/glm/gtc/*.inl"
+    ~linkmultifiles "$(CesiumVendorApi)glm/gtx=$(include)/glm/gtx/*.hpp"
+    ~linkmultifiles "$(CesiumVendorApi)glm/gtx=$(include)/glm/gtx/*.inl"
+    ~linkmultifiles "$(CesiumVendorApi)glm/simd=$(include)/glm/simd/*.h"
+    ~linkmultifiles "$(CesiumVendorApi)gsl=$(include)/gsl/*"
+    ~linkfile "$(ContextDeliveryDir)libCesiumGltfWriter.a=$(lib)/libCesiumGltfWriter.a"
+    ~linkfile "$(ContextDeliveryDir)libCesiumJsonWriter.a=$(lib)/libCesiumJsonWriter.a"

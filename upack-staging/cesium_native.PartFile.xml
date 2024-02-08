@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<BuildContext xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../build/PartFile.xsd" >
+    <Part Name="cesium_native" BentleyBuildMakeFile="cesium_native.mke" OnlyPlatforms="LinuxX64">
+        <Bindings>
+            <VendorAPI Domain="CesiumGltf"/>
+            <VendorAPI Domain="CesiumUtility"/>
+            <VendorAPI Domain="CesiumJsonWriter"/>
+            <VendorAPI Domain="CesiumGltfWriter"/>
+            <VendorAPI Domain="glm"/>
+            <VendorAPI Domain="gsl"/>
+            <Libs>Delivery/$(libprefix)CesiumGltfWriter$(libext)</Libs>
+            <Libs>Delivery/$(libprefix)CesiumJsonWriter$(libext)</Libs>
+        </Bindings>
+    </Part>
+
+</BuildContext>

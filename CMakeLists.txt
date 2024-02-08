@@ -12,6 +12,10 @@ option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
 option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 option(CESIUM_GLM_STRICT_ENABLED "Whether to force strict GLM compile definitions." ON)
 
+# Hack to rename the rapidjson that is conflicting with the one used in imodel-native
+add_compile_definitions(RAPIDJSON_NAMESPACE=cesium_rapidjson)
+add_compile_definitions(rapidjson=cesium_rapidjson)
+
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
 endif()
