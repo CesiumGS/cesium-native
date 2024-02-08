@@ -660,38 +660,6 @@ Future<QuantizedMeshLoadResult> requestTileContent(
   });
 }
 
-Future<int> loadTileAvailability(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const AsyncSystem& asyncSystem,
-    const QuadtreeTileID& tileID,
-    LayerJsonTerrainLoader::Layer& layer,
-    const std::string& requestUrl,
-    const uint16_t responseStatusCode,
-    const gsl::span<const std::byte>& responseData) {
-  return asyncSystem
-      .runInWorkerThread(
-          [pLogger, tileID, requestUrl, responseStatusCode, responseData]() {
-            if (!responseData.empty()) {
-              uint16_t statusCode = responseStatusCode;
-
-              if (!(statusCode != 0 &&
-                    (statusCode < 200 || statusCode >= 300))) {
-                return QuantizedMeshLoader::loadMetadata(responseData, tileID);
-              }
-            }
-
-            SPDLOG_LOGGER_ERROR(
-                pLogger,
-                "Failed to load availability data from {}",
-                requestUrl);
-            return QuantizedMeshMetadataResult();
-          })
-      .thenInMainThread([&layer,
-                         tileID](QuantizedMeshMetadataResult&& metadata) {
-        addRectangleAvailabilityToLayer(layer, tileID, metadata.availability);
-        return 0;
-      });
-}
 } // namespace
 
 Future<TileLoadResult>
@@ -746,30 +714,62 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   auto it = firstAvailableIt;
   ++it;
 
-  while (it != this->_layers.end()) {
-    if (it->availabilityLevels >= 1 &&
-        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0) {
-      if (!isSubtreeLoadedInLayer(*pQuadtreeTileID, *it)) {
+  for (; it != this->_layers.end(); ++it) {
+    LayerJsonTerrainLoader::Layer& layer = *it;
 
-        std::string url = resolveTileUrl(*pQuadtreeTileID, *it);
-        auto foundIt = responsesByUrl.find(url);
-        assert(foundIt != responsesByUrl.end());
+    bool hasAvailability =
+        layer.availabilityLevels >= 1 &&
+        (int32_t(pQuadtreeTileID->level) % layer.availabilityLevels) == 0;
+    if (!hasAvailability)
+      continue;
 
-        // TODO, put availability request logic in the discover work phases
-        // Also, don't do the loadTileContent part until all requests done
+    if (isSubtreeLoadedInLayer(*pQuadtreeTileID, layer))
+      continue;
 
-        availabilityRequests.emplace_back(loadTileAvailability(
-            pLogger,
-            asyncSystem,
-            *pQuadtreeTileID,
-            *it,
-            url,
-            foundIt->second.pResponse->statusCode(),
-            foundIt->second.pResponse->data()));
-      }
+    std::string url = resolveTileUrl(*pQuadtreeTileID, layer);
+
+    // If url is not loaded, request it and come back later
+    auto foundIt = responsesByUrl.find(url);
+    if (foundIt == responsesByUrl.end()) {
+      return asyncSystem.createResolvedFuture<TileLoadResult>(
+          TileLoadResult::createRequestResult(
+              CesiumAsync::RequestData{url, {}}));
     }
 
-    ++it;
+    const IAssetResponse* pResponse = foundIt->second.pResponse;
+    assert(pResponse);
+    uint16_t statusCode = pResponse->statusCode();
+    assert(statusCode != 0);
+    bool statusValid = statusCode >= 200 || statusCode < 300;
+
+    if (!statusValid) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Failed to load availability data from {}",
+          url);
+
+      addRectangleAvailabilityToLayer(
+          layer,
+          *pQuadtreeTileID,
+          std::vector<CesiumGeometry::QuadtreeTileRectangularRange>{});
+    } else {
+      Future<int> requestFuture =
+          asyncSystem
+              .runInWorkerThread(
+                  [tileID = *pQuadtreeTileID, data = pResponse->data()]() {
+                    return QuantizedMeshLoader::loadMetadata(data, tileID);
+                  })
+              .thenInMainThread([&layer, tileID = *pQuadtreeTileID](
+                                    QuantizedMeshMetadataResult&& metadata) {
+                addRectangleAvailabilityToLayer(
+                    layer,
+                    tileID,
+                    metadata.availability);
+                return 0;
+              });
+
+      availabilityRequests.emplace_back(std::move(requestFuture));
+    }
   }
 
   const BoundingRegion* pRegion =
