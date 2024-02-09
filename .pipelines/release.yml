@@ -74,7 +74,7 @@ jobs:
           versionOption: "custom"
           versionPublish: $(PackageVersion)
         env:
-        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
   - job:
     displayName: Publish cesium-native on Windows
@@ -129,4 +129,4 @@ jobs:
           versionOption: "custom"
           versionPublish: $(PackageVersion)
         env:
-        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
