@@ -181,14 +181,14 @@ jobs:
       - task: CopyFiles@2
         displayName: 'Copy CesiumGltfWriter lib to upack staging directory'
         inputs:
-          SourceFolder: "out/CesiumGltfWriter"
+          SourceFolder: "out/CesiumGltfWriter/Release"
           Contents: "*.lib"
           TargetFolder: upack-staging/lib
 
       - task: CopyFiles@2
         displayName: 'Copy CesiumGltfWriter lib to upack staging directory'
         inputs:
-          SourceFolder: "out/CesiumJsonWriter"
+          SourceFolder: "out/CesiumJsonWriter/Release"
           Contents: "*.lib"
           TargetFolder: upack-staging/lib
 
