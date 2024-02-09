@@ -58,22 +58,23 @@ jobs:
           Contents: "*.a"
           TargetFolder: upack-staging/lib
 
-      - task: PublishPipelineArtifact@1
-        inputs:
-          targetPath: 'upack-staging'
-          artifactName: 'cesium-native_x64_linux'
-
-      # - task: UniversalPackages@0
+      # Uncomment this task for testing without having to publish to upack feed
+      # - task: PublishPipelineArtifact@1
       #   inputs:
-      #   command: "publish"
-      #   publishDirectory: "upack-staging"
-      #   feedsToUsePublish: "internal"
-      #   vstsFeedPublish: "upack"
-      #   vstsFeedPackagePublish: "cesium_native_x64_linux"
-      #   versionOption: "custom"
-      #   versionPublish: $(PackageVersion)
-      #   env:
-      #   AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+      #     targetPath: 'upack-staging'
+      #     artifactName: 'cesium-native_x64_linux'
+
+      - task: UniversalPackages@0
+        inputs:
+        command: "publish"
+        publishDirectory: "upack-staging"
+        feedsToUsePublish: "internal"
+        vstsFeedPublish: "upack"
+        vstsFeedPackagePublish: "cesium_native_x64_linux"
+        versionOption: "custom"
+        versionPublish: $(PackageVersion)
+        env:
+        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
   - job:
     displayName: Publish cesium-native on Windows
@@ -112,19 +113,20 @@ jobs:
           Contents: "*.lib"
           TargetFolder: upack-staging/lib
 
-      - task: PublishPipelineArtifact@1
-        inputs:
-          targetPath: 'upack-staging'
-          artifactName: 'cesium-native_x64_win'
+      # Uncomment this task for testing without having to publish to upack feed     
+      # - task: PublishPipelineArtifact@1
+      #   inputs:
+      #     targetPath: 'upack-staging'
+      #     artifactName: 'cesium-native_x64_win'
 
-  # - task: UniversalPackages@0
-  #   inputs:
-  #   command: "publish"
-  #   publishDirectory: "upack-staging"
-  #   feedsToUsePublish: "internal"
-  #   vstsFeedPublish: "upack"
-  #   vstsFeedPackagePublish: "cesium_native_x64_win"
-  #   versionOption: "custom"
-  #   versionPublish: $(PackageVersion)
-  #   env:
-  #   AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+      - task: UniversalPackages@0
+        inputs:
+        command: "publish"
+        publishDirectory: "upack-staging"
+        feedsToUsePublish: "internal"
+        vstsFeedPublish: "upack"
+        vstsFeedPackagePublish: "cesium_native_x64_win"
+        versionOption: "custom"
+        versionPublish: $(PackageVersion)
+        env:
+        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
