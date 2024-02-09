@@ -1,0 +1,50 @@
+steps:  
+  - task: CopyFiles@2
+    displayName: 'Copy CesiumUtility include files to upack staging directory'
+    inputs:
+      SourceFolder: "CesiumUtility/include/CesiumUtility"
+      Contents: "**"
+      TargetFolder: upack-staging/include/CesiumUtility
+
+  - task: CopyFiles@2      
+    displayName: 'Copy CesiumGltf include files to upack staging directory'
+    inputs:
+      SourceFolder: "CesiumGltf/include/CesiumGltf"
+      Contents: "**"
+      TargetFolder: upack-staging/include/CesiumGltf
+
+  - task: CopyFiles@2      
+    displayName: 'Copy CesiumGltf generated include files to upack staging directory'
+    inputs:
+      SourceFolder: "CesiumGltf/generated/include/CesiumGltf"
+      Contents: "**"
+      TargetFolder: upack-staging/include/CesiumGltf
+
+  - task: CopyFiles@2
+    displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
+    inputs:
+      SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
+      Contents: "**"
+      TargetFolder: upack-staging/include/CesiumJsonWriter   
+
+  - task: CopyFiles@2
+    displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
+    inputs:
+      SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
+      Contents: "**"
+      TargetFolder: upack-staging/include/CesiumGltfWriter   
+
+  - task: CopyFiles@2
+    displayName: 'Copy extern/glm include files to upack staging directory'
+    inputs:
+      SourceFolder: "extern/glm/glm"
+      Contents: "**"
+      TargetFolder: upack-staging/include/glm
+
+  - task: CopyFiles@2
+    displayName: 'Copy extern/GSL include files to upack staging directory'
+    inputs:
+      SourceFolder: "extern/GSL/include/gsl"
+      Contents: "**"
+      TargetFolder: upack-staging/include/gsl
+
