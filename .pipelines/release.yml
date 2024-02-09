@@ -42,33 +42,33 @@ jobs:
       - script: tools/cmake-linux/bin/cmake --build $(Build.SourcesDirectory)/out --target CesiumGltfWriter --config Release
         displayName: 'Build CesiumGltfWriter target'
 
-      - task: CopyFiles@2      
-        displayName: 'Copy Cesium3DTiles include files to upack staging directory'
-        inputs:
-          SourceFolder: "Cesium3DTiles/include/Cesium3DTiles"
-          Contents: "**"
-          TargetFolder: upack-staging/include/Cesium3DTiles
-
-      - task: CopyFiles@2
-        displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
-        inputs:
-          SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
-          Contents: "**"
-          TargetFolder: upack-staging/include/CesiumGltfWriter
-
-      - task: CopyFiles@2
-        displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
-        inputs:
-          SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
-          Contents: "**"
-          TargetFolder: upack-staging/include/CesiumJsonWriter
-
       - task: CopyFiles@2
         displayName: 'Copy CesiumUtility include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumUtility/include/CesiumUtility"
           Contents: "**"
           TargetFolder: upack-staging/include/CesiumUtility
+
+      - task: CopyFiles@2      
+        displayName: 'Copy Cesium3DTiles include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumGltf/include/CesiumGltf"
+          Contents: "**"
+          TargetFolder: upack-staging/include/Cesium3DTiles
+
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
+          Contents: "**"
+          TargetFolder: upack-staging/include/CesiumJsonWriter   
+
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
+          Contents: "**"
+          TargetFolder: upack-staging/include/CesiumGltfWriter   
 
       - task: CopyFiles@2
         displayName: 'Copy extern/glm include files to upack staging directory'
@@ -137,32 +137,32 @@ jobs:
           cmakeArgs: --build $(Build.SourcesDirectory)/out --target CesiumGltfWriter --config Release
 
       - task: CopyFiles@2
+        displayName: 'Copy CesiumUtility include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumUtility/include/CesiumUtility"
+          Contents: "**"
+          TargetFolder: upack-staging/include/CesiumUtility
+
+      - task: CopyFiles@2      
         displayName: 'Copy Cesium3DTiles include files to upack staging directory'
         inputs:
-          SourceFolder: "Cesium3DTiles/include/Cesium3DTiles"
+          SourceFolder: "CesiumGltf/include/CesiumGltf"
           Contents: "**"
           TargetFolder: upack-staging/include/Cesium3DTiles
-
-      - task: CopyFiles@2
-        displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
-        inputs:
-          SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
-          Contents: "**"
-          TargetFolder: upack-staging/include/CesiumGltfWriter
 
       - task: CopyFiles@2
         displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
           Contents: "**"
-          TargetFolder: upack-staging/include/CesiumJsonWriter
+          TargetFolder: upack-staging/include/CesiumJsonWriter   
 
       - task: CopyFiles@2
-        displayName: 'Copy CesiumUtility include files to upack staging directory'
+        displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
         inputs:
-          SourceFolder: "CesiumUtility/include/CesiumUtility"
+          SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
           Contents: "**"
-          TargetFolder: upack-staging/include/CesiumUtility
+          TargetFolder: upack-staging/include/CesiumGltfWriter   
 
       - task: CopyFiles@2
         displayName: 'Copy extern/glm include files to upack staging directory'
