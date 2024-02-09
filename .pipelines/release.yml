@@ -15,7 +15,7 @@ parameters:
 
 jobs:
   - job:
-    displayName: Build cesium-native on Linux
+    displayName: Publish cesium-native on Linux
     condition: eq('${{parameters.LinuxBuild}}', true)
     pool:
       name: iModelTechLnxDeb11
@@ -116,7 +116,7 @@ jobs:
       #   AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
   - job:
-    displayName: Build cesium-native on Windows
+    displayName: Publish cesium-native on Windows
     condition: eq('${{parameters.WindowsBuild}}', true)
     pool:
       vmImage: "windows-latest"
@@ -129,7 +129,7 @@ jobs:
       - task: CMake@1
         displayName: 'Generate cmake project'
         inputs:
-          cmakeArgs: -S $(Build.SourcesDirectory) -B $(Build.SourcesDirectory)/out -G "Visual Studio 16 2019 Win64"
+          cmakeArgs: -S $(Build.SourcesDirectory) -B $(Build.SourcesDirectory)/out -G "Visual Studio 16 2019"
 
       - task: CMake@1
         displayName: 'Build CesiumGltfWriter target'
