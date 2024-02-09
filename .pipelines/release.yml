@@ -72,7 +72,7 @@ jobs:
           vstsFeedPublish: "upack"
           vstsFeedPackagePublish: "cesium_native_x64_linux"
           versionOption: "custom"
-          versionPublish: $(PackageVersion)
+          versionPublish: ${{parameters.PackageVersion}}
         env:
           AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
@@ -127,6 +127,6 @@ jobs:
           vstsFeedPublish: "upack"
           vstsFeedPackagePublish: "cesium_native_x64_win"
           versionOption: "custom"
-          versionPublish: $(PackageVersion)
+          versionPublish: ${{parameters.PackageVersion}}
         env:
           AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
