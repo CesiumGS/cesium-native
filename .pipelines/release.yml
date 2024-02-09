@@ -9,6 +9,7 @@ parameters:
     type: boolean
     default: true
   - name: WindowsBuild
+    displayName: Windows build
     type: boolean
     default: false
 
@@ -120,7 +121,7 @@ jobs:
     pool:
       vmImage: "windows-latest"
     steps:
-      - checkout: cesium-native
+      - checkout: self
         lfs: true
         submodules: recursive
         persistCredentials: true
