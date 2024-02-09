@@ -32,49 +32,57 @@ jobs:
       - script: chmod +x tools/cmake-linux/bin/cmake
       - script: tools/cmake-linux/bin/cmake -S $(Build.SourcesDirectory) -B $(Build.SourcesDirectory)/out -D CMAKE_C_COMPILER=/usr/lib/llvm-13/bin/clang -D CMAKE_CXX_COMPILER=/usr/lib/llvm-13/bin/clang++
       - script: tools/cmake-linux/bin/cmake --build $(Build.SourcesDirectory)/out --target CesiumGltfWriter --config Release
-      - task: CopyFiles@2
+      - task: CopyFiles@2      
+        displayName: 'Copy Cesium3DTiles include files to upack staging directory'
         inputs:
           SourceFolder: "Cesium3DTiles/include/Cesium3DTiles"
           Contents: "**"
           TargetFolder: upack-staging/include/Cesium3DTiles
 
       - task: CopyFiles@2
+        displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
           Contents: "**"
           TargetFolder: upack-staging/include/CesiumGltfWriter
 
       - task: CopyFiles@2
+        displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
           Contents: "**"
           TargetFolder: upack-staging/include/CesiumJsonWriter
 
       - task: CopyFiles@2
+        displayName: 'Copy CesiumUtility include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumUtility/include/CesiumUtility"
           Contents: "**"
           TargetFolder: upack-staging/include/CesiumUtility
 
       - task: CopyFiles@2
+        displayName: 'Copy extern/glm include files to upack staging directory'
         inputs:
           SourceFolder: "extern/glm/glm"
           Contents: "**"
           TargetFolder: upack-staging/include/glm
 
       - task: CopyFiles@2
+        displayName: 'Copy extern/gsl include files to upack staging directory'
         inputs:
           SourceFolder: "extern/GSL/include/gsl"
           Contents: "**"
           TargetFolder: upack-staging/include/gsl
 
       - task: CopyFiles@2
+        displayName: 'Copy CesiumGltfWriter lib to upack staging directory'
         inputs:
           SourceFolder: "out/CesiumGltfWriter"
           Contents: "*.a"
           TargetFolder: upack-staging/lib
 
       - task: CopyFiles@2
+        displayName: 'Copy CesiumJsonWriter lib to upack staging directory'
         inputs:
           SourceFolder: "out/CesiumJsonWriter"
           Contents: "*.a"
@@ -166,10 +174,10 @@ jobs:
   #         Contents: "*.dll"
   #         TargetFolder: upack-staging/lib
 
-      # - task: PublishPipelineArtifact@1
-      #   inputs:
-      #     targetPath: upack-staging/lib
-      #     artifactName: cesium-native_win_x64
+  # - task: PublishPipelineArtifact@1
+  #   inputs:
+  #     targetPath: upack-staging/lib
+  #     artifactName: cesium-native_win_x64
 
   # - task: UniversalPackages@0
   #   inputs:
