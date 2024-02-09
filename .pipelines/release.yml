@@ -30,8 +30,8 @@ jobs:
           destinationFolder: "tools"
           cleanDestinationFolder: false
       - script: chmod +x tools/cmake-linux/bin/cmake
-      - script: tools/cmake-linux/bin/cmake -S $(Build.SourcesDirectory)/cesium-native -B $(Build.SourcesDirectory)/cesium-native/out -D CMAKE_C_COMPILER=/usr/lib/llvm-13/bin/clang -D CMAKE_CXX_COMPILER=/usr/lib/llvm-13/bin/clang++
-      - script: tools/cmake-linux/bin/cmake --build $(Build.SourcesDirectory)/cesium-native/out --target CesiumGltfWriter --config Release
+      - script: tools/cmake-linux/bin/cmake -S $(Build.SourcesDirectory) -B $(Build.SourcesDirectory)out -D CMAKE_C_COMPILER=/usr/lib/llvm-13/bin/clang -D CMAKE_CXX_COMPILER=/usr/lib/llvm-13/bin/clang++
+      - script: tools/cmake-linux/bin/cmake --build $(Build.SourcesDirectory) --target CesiumGltfWriter --config Release
       - task: CopyFiles@2
         inputs:
           SourceFolder: "Cesium3DTiles/include/Cesium3DTiles"
