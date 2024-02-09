@@ -2,20 +2,20 @@ trigger: none
 pr: none
 
 parameters:
-  - name: package-version
+  - name: PackageVersion
     type: string
-  - name: linuxbuild
+  - name: LinuxBuild
     displayName: Linux build
     type: boolean
     default: true
-  # - name: windowsbuild
-  #   type: boolean
-  #   default: false
+  - name: WindowsBuild
+    type: boolean
+    default: false
 
 jobs:
   - job:
     displayName: Build cesium-native on Linux
-    condition: eq('${{parameters.linuxbuild}}', true)
+    condition: eq('${{parameters.LinuxBuild}}', true)
     pool:
       name: iModelTechLnxDeb11
       demands: "Agent.OS -equals Linux"
@@ -77,7 +77,7 @@ jobs:
           TargetFolder: upack-staging/include/glm
 
       - task: CopyFiles@2
-        displayName: 'Copy extern/gsl include files to upack staging directory'
+        displayName: 'Copy extern/GSL include files to upack staging directory'
         inputs:
           SourceFolder: "extern/GSL/include/gsl"
           Contents: "**"
@@ -97,12 +97,10 @@ jobs:
           Contents: "*.a"
           TargetFolder: upack-staging/lib
 
-      # - bash: ls -R upack-staging
-
       - task: PublishPipelineArtifact@1
         inputs:
-          targetPath: upack-staging/lib
-          artifactName: cesium-native_linux_x64
+          targetPath: 'upack-staging'
+          artifactName: 'cesium-native_x64_linux'
 
       # - task: UniversalPackages@0
       #   inputs:
@@ -112,81 +110,91 @@ jobs:
       #   vstsFeedPublish: "upack"
       #   vstsFeedPackagePublish: "cesium_native_x64_linux"
       #   versionOption: "custom"
-      #   versionPublish: $(package-version)
+      #   versionPublish: $(PackageVersion)
       #   env:
       #   AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
-  # - job:
-  #   displayName: Build cesium-native on Windows
-  #   condition: eq('${{parameters.build-windows}}', true)
-  #   pool:
-  #     vmImage: "windows-latest"
-  #   steps:
-  #     - checkout: cesium-native
-  #       lfs: true
-  #       submodules: recursive
-  #       persistCredentials: true
+  - job:
+    displayName: Build cesium-native on Windows
+    condition: eq('${{parameters.WindowsBuild}}', true)
+    pool:
+      vmImage: "windows-latest"
+    steps:
+      - checkout: cesium-native
+        lfs: true
+        submodules: recursive
+        persistCredentials: true
 
-  #     - task: CMake@1
-  #       inputs:
-  #         cmakeArgs: -S $(Build.SourcesDirectory) -B $(Build.SourcesDirectory)/out -G "Visual Studio 16 2017 Win64"
+      - task: CMake@1
+        displayName: 'Generate cmake project'
+        inputs:
+          cmakeArgs: -S $(Build.SourcesDirectory) -B $(Build.SourcesDirectory)/out -G "Visual Studio 16 2019 Win64"
 
-  #     - task: CMake@1
-  #       inputs:
-  #         cmakeArgs: --build $(Build.SourcesDirectory)/out --target CesiumGltfWriter --config Release
+      - task: CMake@1
+        displayName: 'Build CesiumGltfWriter target'
+        inputs:
+          cmakeArgs: --build $(Build.SourcesDirectory)/out --target CesiumGltfWriter --config Release
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "Cesium3DTiles/include/Cesium3DTiles"
-  #         Contents: "**"
-  #         TargetFolder: upack-staging/include/Cesium3DTiles
+      - task: CopyFiles@2
+        displayName: 'Copy Cesium3DTiles include files to upack staging directory'
+        inputs:
+          SourceFolder: "Cesium3DTiles/include/Cesium3DTiles"
+          Contents: "**"
+          TargetFolder: upack-staging/include/Cesium3DTiles
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
-  #         Contents: "**"
-  #         TargetFolder: upack-staging/include/CesiumGltfWriter
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumGltfWriter include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumGltfWriter/include/CesiumGltfWriter"
+          Contents: "**"
+          TargetFolder: upack-staging/include/CesiumGltfWriter
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
-  #         Contents: "**"
-  #         TargetFolder: upack-staging/include/CesiumJsonWriter
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumJsonWriter/include/CesiumJsonWriter"
+          Contents: "**"
+          TargetFolder: upack-staging/include/CesiumJsonWriter
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "CesiumUtility/include/CesiumUtility"
-  #         Contents: "**"
-  #         TargetFolder: upack-staging/include/CesiumUtility
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumUtility include files to upack staging directory'
+        inputs:
+          SourceFolder: "CesiumUtility/include/CesiumUtility"
+          Contents: "**"
+          TargetFolder: upack-staging/include/CesiumUtility
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "extern/glm/glm"
-  #         Contents: "**"
-  #         TargetFolder: upack-staging/include/glm
+      - task: CopyFiles@2
+        displayName: 'Copy extern/glm include files to upack staging directory'
+        inputs:
+          SourceFolder: "extern/glm/glm"
+          Contents: "**"
+          TargetFolder: upack-staging/include/glm
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "extern/GSL/include/gsl"
-  #         Contents: "**"
-  #         TargetFolder: upack-staging/include/gsl
+      - task: CopyFiles@2
+        displayName: 'Copy extern/GSL include files to upack staging directory'
+        inputs:
+          SourceFolder: "extern/GSL/include/gsl"
+          Contents: "**"
+          TargetFolder: upack-staging/include/gsl
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "out/CesiumGltfWriter"
-  #         Contents: "*.dll"
-  #         TargetFolder: upack-staging/lib
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumGltfWriter lib to upack staging directory'
+        inputs:
+          SourceFolder: "out/CesiumGltfWriter"
+          Contents: "*.lib"
+          TargetFolder: upack-staging/lib
 
-  #     - task: CopyFiles@2
-  #       inputs:
-  #         SourceFolder: "out/CesiumJsonWriter"
-  #         Contents: "*.dll"
-  #         TargetFolder: upack-staging/lib
+      - task: CopyFiles@2
+        displayName: 'Copy CesiumGltfWriter lib to upack staging directory'
+        inputs:
+          SourceFolder: "out/CesiumJsonWriter"
+          Contents: "*.lib"
+          TargetFolder: upack-staging/lib
 
-  # - task: PublishPipelineArtifact@1
-  #   inputs:
-  #     targetPath: upack-staging/lib
-  #     artifactName: cesium-native_win_x64
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: 'upack-staging'
+          artifactName: 'cesium-native_x64_win'
 
   # - task: UniversalPackages@0
   #   inputs:
@@ -196,6 +204,6 @@ jobs:
   #   vstsFeedPublish: "upack"
   #   vstsFeedPackagePublish: "cesium_native_x64_win"
   #   versionOption: "custom"
-  #   versionPublish: $(package-version)
+  #   versionPublish: $(PackageVersion)
   #   env:
   #   AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)

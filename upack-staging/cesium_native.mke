@@ -34,5 +34,5 @@ always:
     ~linkmultifiles "$(CesiumVendorApi)glm/gtx=$(include)/glm/gtx/*.inl"
     ~linkmultifiles "$(CesiumVendorApi)glm/simd=$(include)/glm/simd/*.h"
     ~linkmultifiles "$(CesiumVendorApi)gsl=$(include)/gsl/*"
-    ~linkfile "$(ContextDeliveryDir)libCesiumGltfWriter.a=$(lib)/libCesiumGltfWriter.a"
-    ~linkfile "$(ContextDeliveryDir)libCesiumJsonWriter.a=$(lib)/libCesiumJsonWriter.a"
+    ~linkfile "$(ContextDeliveryDir)$(libprefix)CesiumGltfWriter$(libext)=$(lib)/$(libprefix)CesiumGltfWriter$(libext)"
+    ~linkfile "$(ContextDeliveryDir)$(libprefix)CesiumJsonWriter$(libext)=$(lib)/$(libprefix)CesiumJsonWriter$(libext)"
