@@ -66,13 +66,13 @@ jobs:
 
       - task: UniversalPackages@0
         inputs:
-        command: "publish"
-        publishDirectory: "upack-staging"
-        feedsToUsePublish: "internal"
-        vstsFeedPublish: "upack"
-        vstsFeedPackagePublish: "cesium_native_x64_linux"
-        versionOption: "custom"
-        versionPublish: $(PackageVersion)
+          command: "publish"
+          publishDirectory: "upack-staging"
+          feedsToUsePublish: "internal"
+          vstsFeedPublish: "upack"
+          vstsFeedPackagePublish: "cesium_native_x64_linux"
+          versionOption: "custom"
+          versionPublish: $(PackageVersion)
         env:
         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
 
@@ -121,12 +121,12 @@ jobs:
 
       - task: UniversalPackages@0
         inputs:
-        command: "publish"
-        publishDirectory: "upack-staging"
-        feedsToUsePublish: "internal"
-        vstsFeedPublish: "upack"
-        vstsFeedPackagePublish: "cesium_native_x64_win"
-        versionOption: "custom"
-        versionPublish: $(PackageVersion)
+          command: "publish"
+          publishDirectory: "upack-staging"
+          feedsToUsePublish: "internal"
+          vstsFeedPublish: "upack"
+          vstsFeedPackagePublish: "cesium_native_x64_win"
+          versionOption: "custom"
+          versionPublish: $(PackageVersion)
         env:
         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
