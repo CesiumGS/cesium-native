@@ -50,11 +50,11 @@ jobs:
           TargetFolder: upack-staging/include/CesiumUtility
 
       - task: CopyFiles@2      
-        displayName: 'Copy Cesium3DTiles include files to upack staging directory'
+        displayName: 'Copy CesiumGltf include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumGltf/include/CesiumGltf"
           Contents: "**"
-          TargetFolder: upack-staging/include/Cesium3DTiles
+          TargetFolder: upack-staging/include/CesiumGltf
 
       - task: CopyFiles@2
         displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
@@ -144,11 +144,11 @@ jobs:
           TargetFolder: upack-staging/include/CesiumUtility
 
       - task: CopyFiles@2      
-        displayName: 'Copy Cesium3DTiles include files to upack staging directory'
+        displayName: 'Copy CesiumGltf include files to upack staging directory'
         inputs:
           SourceFolder: "CesiumGltf/include/CesiumGltf"
           Contents: "**"
-          TargetFolder: upack-staging/include/Cesium3DTiles
+          TargetFolder: upack-staging/include/CesiumGltf
 
       - task: CopyFiles@2
         displayName: 'Copy CesiumJsonWriter include files to upack staging directory'
