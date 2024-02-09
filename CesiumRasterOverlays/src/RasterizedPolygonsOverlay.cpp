@@ -183,11 +183,7 @@ public:
             // computeCoverageRectangle(projection, polygons)),
             projectRectangleSimple(
                 projection,
-                CesiumGeospatial::GlobeRectangle(
-                    -CesiumUtility::Math::OnePi,
-                    -CesiumUtility::Math::PiOverTwo,
-                    CesiumUtility::Math::OnePi,
-                    CesiumUtility::Math::PiOverTwo))),
+                CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _polygons(polygons),
         _invertSelection(invertSelection) {}
 
