@@ -1,5 +1,5 @@
 name: cesium-native
-on: [push, pull_request]
+on: [push]
 jobs:
   QuickChecks:
     name: "Quick Checks"
