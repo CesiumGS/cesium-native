@@ -185,7 +185,7 @@ SubtreeAvailability::loadSubtree(
                     std::move(*subtree.value));
 
             return SubtreeAvailability::LoadResult{
-                returnedSubtree,
+                std::move(returnedSubtree),
                 CesiumAsync::RequestData{}};
           });
 }
