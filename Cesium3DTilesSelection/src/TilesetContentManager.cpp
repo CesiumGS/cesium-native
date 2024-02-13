@@ -1715,29 +1715,9 @@ void TilesetContentManager::parseTileWork(
   if (pTile->getState() == TileLoadState::Unloading)
     return;
 
-  if (pTile->getState() != TileLoadState::Unloaded &&
-      pTile->getState() != TileLoadState::FailedTemporarily) {
-    // No need to load geometry, but give previously-throttled
-    // raster overlay tiles a chance to load.
-    for (RasterMappedTo3DTile& rasterTile : pTile->getMappedRasterTiles()) {
-      // Default headers come from the this. Loader can override if needed
-      CesiumAsync::RequestData requestData;
-      requestData.headers = this->_requestHeaders;
-      RasterProcessingCallback rasterCallback;
-
-      rasterTile.getLoadThrottledWork(requestData, rasterCallback);
-
-      if (!requestData.url.empty() || rasterCallback != nullptr) {
-        // TODO - This needs a different solution for continuation
-        // We can't pick up with an empty tile work chain
-        ParsedTileWork newWork = {depthIndex};
-        newWork.rasterWorkChains.push_back(
-            RasterWorkChain{&rasterTile, requestData, rasterCallback});
-        outWork.push_back(newWork);
-      }
-    }
-    return;
-  }
+  assert(
+      pTile->getState() == TileLoadState::Unloaded ||
+      pTile->getState() == TileLoadState::FailedTemporarily);
 
   // Below are the guarantees the loader can assume about upsampled tile. If any
   // of those guarantees are wrong, it's a bug:
