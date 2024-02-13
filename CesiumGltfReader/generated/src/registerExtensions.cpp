@@ -24,7 +24,7 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/ExtensionExtFeatureMetadataFeatureIDTexture.h>
+#include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
@@ -102,7 +102,7 @@ void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::PropertyTextureProperty,
       ExtensionKhrTextureTransformJsonHandler>();
   options.registerExtension<
-      CesiumGltf::ExtensionExtFeatureMetadataFeatureIDTexture,
+      CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonHandler>();
 }
 } // namespace CesiumGltfReader
