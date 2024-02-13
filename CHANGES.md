@@ -1,6 +1,12 @@
 # Change Log
 
-### v0.32.0 - 20234-02-01
+### v0.33.0 - 2024-03-01
+
+##### Breaking Changes :mega:
+
+- Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
+
+### v0.32.0 - 2024-02-01
 
 ##### Breaking Changes :mega:
 
