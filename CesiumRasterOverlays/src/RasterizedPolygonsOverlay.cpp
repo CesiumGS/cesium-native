@@ -194,7 +194,16 @@ public:
   virtual void getLoadTileImageWork(
       const RasterOverlayTile&,
       CesiumAsync::RequestData&,
-      RasterProcessingCallback&) override {}
+      RasterProcessingCallback& outCallback) override {
+    // There is no content request, just processing
+    outCallback = [](RasterOverlayTile& overlayTile,
+                     RasterOverlayTileProvider* provider,
+                     const CesiumAsync::UrlResponseDataMap& responsesByUrl) {
+      RasterizedPolygonsTileProvider* thisProvider =
+          static_cast<RasterizedPolygonsTileProvider*>(provider);
+      return thisProvider->loadTileImage(overlayTile, responsesByUrl);
+    };
+  }
 
   virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
       const RasterOverlayTile& overlayTile,
