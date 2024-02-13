@@ -1,6 +1,12 @@
 # Change Log
 
-### v0.32.0 - 20234-02-01
+### ? - ?
+
+##### Additions :tada:
+
+- `FeatureIdTextureView` and `PropertyTexturePropertyView` now account for the `KHR_texture_transform` texture info extension, if present.
+
+### v0.32.0 - 2024-02-01
 
 ##### Breaking Changes :mega:
 
