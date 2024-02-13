@@ -3,7 +3,6 @@
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 

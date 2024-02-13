@@ -523,7 +523,7 @@ postProcessContentInWorkerThread(
   CesiumAsync::HttpHeaders httpHeaders;
   if (!requestBaseUrl.empty()) {
     for (auto pair : requestHeaders)
-      httpHeaders.emplace(pair.first, pair.second);
+      httpHeaders[pair.first] = pair.second;
   }
 
   CesiumGltfReader::GltfReaderOptions gltfOptions;

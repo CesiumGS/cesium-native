@@ -119,27 +119,21 @@ private:
       const std::vector<Order*>& orders,
       std::vector<const Work*>& instancesCreated);
 
-  // Thread safe members
   std::mutex _requestsLock;
+
   bool _shutdownSignaled = false;
-
   std::map<TileSource, Work> _ownedWork;
-
   std::vector<Work*> _requestQueue;
   std::map<std::string, std::vector<Work*>> _inFlightRequests;
   std::vector<Work*> _processingQueue;
 
   using FailedWorkPair = std::pair<std::string, Work*>;
   using FailedWorkVec = std::vector<FailedWorkPair>;
-
   FailedWorkVec _failedWork;
 
   CesiumAsync::AsyncSystem _asyncSystem;
-
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-
   std::shared_ptr<spdlog::logger> _pLogger;
-
   size_t _maxSimultaneousRequests;
 };
 

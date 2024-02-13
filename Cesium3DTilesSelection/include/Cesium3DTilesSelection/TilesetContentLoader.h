@@ -20,12 +20,7 @@
 #include <optional>
 #include <vector>
 
-namespace CesiumAsync {
-class IAssetRequest;
-}
-
 namespace Cesium3DTilesSelection {
-class Tile;
 class TilesetContentLoader;
 
 enum class TileLoadPriorityGroup {

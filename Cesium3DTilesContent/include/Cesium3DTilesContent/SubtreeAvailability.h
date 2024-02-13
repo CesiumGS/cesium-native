@@ -3,7 +3,6 @@
 #include <Cesium3DTiles/Subtree.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumJsonReader/JsonReader.h>
 
 #include <optional>
 

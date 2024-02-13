@@ -432,7 +432,6 @@ void TileWorkManager::transitionQueuedWork(
   }
 
   for (Work* requestWork : workNeedingDispatch) {
-    // XXX order gets killed here
     // Keep the manager alive while the load is in progress
     // Capture the shared pointer by value
     thiz->_pAssetAccessor
