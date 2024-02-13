@@ -19,10 +19,8 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
@@ -46,9 +44,6 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
   context.registerExtension<
       CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::Model,
       ExtensionModelExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Model,
@@ -59,9 +54,6 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionExtMeshFeaturesJsonWriter>();

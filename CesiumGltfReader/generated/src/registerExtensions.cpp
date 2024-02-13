@@ -14,10 +14,8 @@
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionKhrTextureTransformJsonHandler.h"
-#include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
-#include "ExtensionModelExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
@@ -45,9 +43,6 @@ void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonHandler>();
-  options.registerExtension<
-      CesiumGltf::Model,
       ExtensionModelExtStructuralMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
@@ -58,9 +53,6 @@ void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonHandler>();
-  options.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionExtMeshFeaturesJsonHandler>();
