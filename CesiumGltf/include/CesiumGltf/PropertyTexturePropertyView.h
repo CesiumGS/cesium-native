@@ -340,7 +340,7 @@ public:
     }
 
     const ExtensionKhrTextureTransform* pTextureTransform =
-        texture.getExtension<ExtensionKhrTextureTransform>();
+        property.getExtension<ExtensionKhrTextureTransform>();
 
     if (pTextureTransform) {
       this->_textureTransform = KhrTextureTransform(*pTextureTransform);
@@ -411,8 +411,8 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    if (this->_textureTransform && this->_textureTransform->status() ==
-                                       KhrTextureTransformStatus::Valid) {
+    if (this->_textureTransform &&
+        this->_textureTransform->status() == KhrTextureTransformStatus::Valid) {
       glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
       u = transformedUv.x;
       v = transformedUv.y;
@@ -422,7 +422,7 @@ public:
     v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
     std::array<uint8_t, 4> sample =
-        sampleNearestPixel(*this->_pImage, this->_channels, wrappedU, wrappedV);
+        sampleNearestPixel(*this->_pImage, this->_channels, u, v);
     return assembleValueFromChannels<ElementType>(
         gsl::span(sample.data(), this->_channels.size()));
   }
@@ -608,7 +608,7 @@ public:
     }
 
     const ExtensionKhrTextureTransform* pTextureTransform =
-        texture.getExtension<ExtensionKhrTextureTransform>();
+        property.getExtension<ExtensionKhrTextureTransform>();
 
     if (pTextureTransform) {
       this->_textureTransform = KhrTextureTransform(*pTextureTransform);
@@ -706,8 +706,8 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    if (this->_textureTransform && this->_textureTransform->status() ==
-                                       KhrTextureTransformStatus::Valid) {
+    if (this->_textureTransform &&
+        this->_textureTransform->status() == KhrTextureTransformStatus::Valid) {
       glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
       u = transformedUv.x;
       v = transformedUv.y;
@@ -717,7 +717,7 @@ public:
     v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
     std::array<uint8_t, 4> sample =
-        sampleNearestPixel(*this->_pImage, this->_channels, wrappedU, wrappedV);
+        sampleNearestPixel(*this->_pImage, this->_channels, u, v);
 
     return assembleValueFromChannels<ElementType>(
         gsl::span(sample.data(), this->_channels.size()));

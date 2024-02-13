@@ -27,12 +27,12 @@ public:
   /**
    * @brief Constructs a texture transformation with identity values.
    */
-  KhrTextureTransform();
+  KhrTextureTransform() noexcept;
 
   /**
    * @brief Constructs a texture transformation from the given extension.
    */
-  KhrTextureTransform(const ExtensionKhrTextureTransform& extension);
+  KhrTextureTransform(const ExtensionKhrTextureTransform& extension) noexcept;
 
   KhrTextureTransformStatus status() const noexcept { return this->_status; }
 

@@ -114,7 +114,7 @@ void processTextureInfo(
     accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
     accessor.count = accessorView.size();
     accessor.type = Accessor::Type::VEC2;
-    accsesor.componentType = Accessor::ComponentType::FLOAT;
+    accessor.componentType = Accessor::ComponentType::FLOAT;
 
     find->second = static_cast<int32_t>(model.accessors.size() - 1);
 

@@ -3,7 +3,7 @@
 
 using namespace CesiumGltf;
 
-KhrTextureTransform::KhrTextureTransform()
+KhrTextureTransform::KhrTextureTransform() noexcept
     : _status(KhrTextureTransformStatus::Valid),
       _offset({0, 0}),
       _rotation(0),
@@ -11,7 +11,7 @@ KhrTextureTransform::KhrTextureTransform()
       _scale() {}
 
 KhrTextureTransform::KhrTextureTransform(
-    const ExtensionKhrTextureTransform& extension)
+    const ExtensionKhrTextureTransform& extension) noexcept
     : _status(KhrTextureTransformStatus::Valid),
       _offset({0, 0}),
       _rotation(0),
@@ -37,7 +37,8 @@ KhrTextureTransform::KhrTextureTransform(
   this->_scale = {extension.scale[0], extension.scale[1]};
 }
 
-glm::dvec2 KhrTextureTransform::applyTransform(double u, double v) const {
+glm::dvec2
+KhrTextureTransform::applyTransform(double u, double v) const noexcept {
   glm::dvec2 scaled{u * this->_scale.x, v * this->_scale.y};
 
   const double sin = this->_rotationSineCosine.x;
