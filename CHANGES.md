@@ -1,6 +1,10 @@
 # Change Log
 
-### ? - ?
+### v0.33.0 - 2024-03-01
+
+##### Breaking Changes :mega:
+
+- Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
 
 ##### Additions :tada:
 
@@ -18,6 +22,7 @@
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
 - Added `applyTextureTransform` property to `TilesetOptions`, which indicates whether to preemptively apply transforms to texture coordinates for textures with the `KHR_texture_transform` extension.
 - Added `loadGltf` method to `GltfReader`, making it easier to do a full, asynchronous load of a glTF.
+- Added `GlobeFlightPath` class to help with calculating fly-to paths.
 
 ##### Fixes :wrench:
 
