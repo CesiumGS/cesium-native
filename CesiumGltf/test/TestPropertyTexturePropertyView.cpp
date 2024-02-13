@@ -1,4 +1,6 @@
+#include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
+#include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -1766,5 +1768,66 @@ TEST_CASE("Check sampling with different sampler values") {
       REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
       REQUIRE(view.get(uv[0], uv[1]) == data[i]);
     }
+  }
+}
+
+TEST_CASE("Test PropertyTextureProperty samples with KHR_texture_transform") {
+  std::vector<uint8_t> data{1, 2, 3, 4};
+
+  PropertyTextureProperty property;
+  property.texCoord = 0;
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      property.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.texCoord = 10;
+
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::SCALAR;
+  classProperty.componentType = ClassProperty::ComponentType::UINT8;
+
+  Sampler sampler;
+  sampler.wrapS = Sampler::WrapS::REPEAT;
+  sampler.wrapT = Sampler::WrapT::REPEAT;
+
+  ImageCesium image;
+  image.width = 2;
+  image.height = 2;
+  image.channels = 1;
+  image.bytesPerChannel = 1;
+
+  std::vector<std::byte>& imageData = image.pixelData;
+  imageData.resize(data.size());
+  std::memcpy(imageData.data(), data.data(), data.size());
+
+  property.channels = {0};
+
+  PropertyTexturePropertyView<uint8_t> view(
+      property,
+      classProperty,
+      sampler,
+      image);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+  REQUIRE(view.getTexCoordSetIndex() == 10);
+
+  // This transforms to the following UV values:
+  // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+  // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+  // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+  // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(1.0, 0),
+      glm::dvec2(0, 1.0),
+      glm::dvec2(1.0, 1.0)};
+
+  std::vector<uint8_t> expectedValues{4, 2, 3, 1};
+
+  for (size_t i = 0; i < texCoords.size(); i++) {
+    glm::dvec2 uv = texCoords[i];
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedValues[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == expectedValues[i]);
   }
 }

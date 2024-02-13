@@ -425,12 +425,12 @@ TEST_CASE("Test getFeatureID on view with KHR_texture_transform") {
   FeatureIdTextureView view(model, featureIdTexture);
   REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
   // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
-  REQUIRE(view.getFeatureID(0, 0) == 7);
   // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
-  REQUIRE(view.getFeatureID(1, 0) == 2);
   // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
-  REQUIRE(view.getFeatureID(0, 1) == 0);
   // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+  REQUIRE(view.getFeatureID(0, 0) == 7);
+  REQUIRE(view.getFeatureID(1, 0) == 2);
+  REQUIRE(view.getFeatureID(0, 1) == 0);
   REQUIRE(view.getFeatureID(1, 1) == 1);
 }
 
