@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTransformations.h"
 #include "CesiumGltf/PropertyTypeTraits.h"
@@ -12,6 +13,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <optional>
 
 namespace CesiumGltf {
 /**
@@ -197,6 +199,8 @@ std::array<uint8_t, 4> sampleNearestPixel(
     const double u,
     const double v);
 
+#pragma region Non - normalized property
+
 /**
  * @brief A view of the data specified by a {@link PropertyTextureProperty}.
  *
@@ -248,7 +252,8 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle() {
+        _swizzle(),
+        _textureTransform(std::nullopt) {
     assert(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -268,7 +273,8 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle() {
+        _swizzle(),
+        _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
       // property's definition.
@@ -306,7 +312,8 @@ public:
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
         _channels(property.channels),
-        _swizzle() {
+        _swizzle(),
+        _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
     }
@@ -329,6 +336,18 @@ public:
         break;
       default:
         assert(false && "A valid channels vector must be passed to the view.");
+      }
+    }
+
+    const ExtensionKhrTextureTransform* pTextureTransform =
+        texture.getExtension<ExtensionKhrTextureTransform>();
+
+    if (pTextureTransform) {
+      this->_textureTransform = KhrTextureTransform(*pTextureTransform);
+
+      if (pTextureTransform->texCoord) {
+        // Override with the extension's texcoord.
+        this->_texCoordSetIndex = *pTextureTransform->texCoord;
       }
     }
   }
@@ -392,8 +411,15 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);
-    double wrappedV = applySamplerWrapT(v, this->_pSampler->wrapT);
+    if (this->_textureTransform && this->_textureTransform->status() ==
+                                       KhrTextureTransformStatus::Valid) {
+      glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
+      u = transformedUv.x;
+      v = transformedUv.y;
+    }
+
+    u = applySamplerWrapS(u, this->_pSampler->wrapS);
+    v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
     std::array<uint8_t, 4> sample =
         sampleNearestPixel(*this->_pImage, this->_channels, wrappedU, wrappedV);
@@ -437,13 +463,26 @@ public:
    */
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
+  /**
+   * @brief Get the KHR_texture_transform for this property texture property, if
+   * it exists.
+   */
+  std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
+    return this->_textureTransform;
+  }
+
 private:
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
+  std::optional<KhrTextureTransform> _textureTransform;
 };
+
+#pragma endregion
+
+#pragma region Normalized property
 
 /**
  * @brief A view of the normalized data specified by a
@@ -468,7 +507,8 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle() {}
+        _swizzle(),
+        _textureTransform(std::nullopt) {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -481,7 +521,8 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle() {
+        _swizzle(),
+        _textureTransform(std::nullopt) {
     assert(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -501,7 +542,8 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle() {
+        _swizzle(),
+        _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
       // property's definition.
@@ -539,7 +581,8 @@ public:
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
         _channels(property.channels),
-        _swizzle() {
+        _swizzle(),
+        _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
     }
@@ -561,6 +604,18 @@ public:
         break;
       default:
         assert(false && "A valid channels vector must be passed to the view.");
+      }
+    }
+
+    const ExtensionKhrTextureTransform* pTextureTransform =
+        texture.getExtension<ExtensionKhrTextureTransform>();
+
+    if (pTextureTransform) {
+      this->_textureTransform = KhrTextureTransform(*pTextureTransform);
+
+      if (pTextureTransform->texCoord) {
+        // Override with the extension's texcoord.
+        this->_texCoordSetIndex = *pTextureTransform->texCoord;
       }
     }
   }
@@ -651,8 +706,15 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    double wrappedU = applySamplerWrapS(u, this->_pSampler->wrapS);
-    double wrappedV = applySamplerWrapT(v, this->_pSampler->wrapT);
+    if (this->_textureTransform && this->_textureTransform->status() ==
+                                       KhrTextureTransformStatus::Valid) {
+      glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
+      u = transformedUv.x;
+      v = transformedUv.y;
+    }
+
+    u = applySamplerWrapS(u, this->_pSampler->wrapS);
+    v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
     std::array<uint8_t, 4> sample =
         sampleNearestPixel(*this->_pImage, this->_channels, wrappedU, wrappedV);
@@ -697,12 +759,22 @@ public:
    */
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
+  /**
+   * @brief Get the KHR_texture_transform for this property texture property, if
+   * it exists.
+   */
+  std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
+    return this->_textureTransform;
+  }
+
 private:
   const Sampler* _pSampler;
   const ImageCesium* _pImage;
   int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
+  std::optional<KhrTextureTransform> _textureTransform;
 };
+#pragma endregion
 
 } // namespace CesiumGltf

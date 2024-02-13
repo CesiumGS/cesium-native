@@ -1,15 +1,17 @@
 #pragma once
 
 #include "CesiumGltf/FeatureIdTexture.h"
+#include "CesiumGltf/Image.h"
+#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/KhrTextureTransform.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumGltf/Texture.h"
-#include "Image.h"
-#include "ImageCesium.h"
-#include "Model.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace CesiumGltf {
 /**
@@ -109,7 +111,7 @@ public:
    *
    * If invalid, it will not be safe to sample feature IDs from this view.
    */
-  FeatureIdTextureViewStatus status() const { return _status; }
+  FeatureIdTextureViewStatus status() const noexcept { return _status; }
 
   /**
    * @brief Get the actual feature ID texture.
@@ -117,7 +119,7 @@ public:
    * This will be nullptr if the feature ID texture view runs into problems
    * during construction.
    */
-  const ImageCesium* getImage() const { return _pImage; }
+  const ImageCesium* getImage() const noexcept { return _pImage; }
 
   /**
    * @brief Get the sampler describing how to sample the data from the
@@ -132,13 +134,23 @@ public:
    * @brief Get the channels of this feature ID texture. The channels represent
    * the bytes of the actual feature ID, in little-endian order.
    */
-  std::vector<int64_t> getChannels() const { return _channels; }
+  std::vector<int64_t> getChannels() const noexcept { return _channels; }
 
   /**
    * @brief Get the texture coordinate set index for this feature ID
    * texture.
    */
-  int64_t getTexCoordSetIndex() const { return this->_texCoordSetIndex; }
+  int64_t getTexCoordSetIndex() const noexcept {
+    return this->_texCoordSetIndex;
+  }
+
+  /**
+   * @brief Get the KHR_texture_transform for this feature ID texture, if it
+   * exists.
+   */
+  std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
+    return this->_textureTransform;
+  }
 
 private:
   FeatureIdTextureViewStatus _status;
@@ -147,5 +159,7 @@ private:
 
   const ImageCesium* _pImage;
   const Sampler* _pSampler;
+
+  std::optional<KhrTextureTransform> _textureTransform;
 };
 } // namespace CesiumGltf

@@ -15,5 +15,5 @@ namespace CesiumGltfReader {
  * coordinates that reflect the applied transformations and store it in a new
  * buffer view and accessor.
  */
-void applyKHRTextureTransform(CesiumGltf::Model& model);
+void applyKhrTextureTransform(CesiumGltf::Model& model);
 } // namespace CesiumGltfReader

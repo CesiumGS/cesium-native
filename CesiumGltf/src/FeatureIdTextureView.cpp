@@ -1,5 +1,6 @@
 #include "CesiumGltf/FeatureIdTextureView.h"
 
+#include "CesiumGltf/ExtensionKhrTextureTransform.h"
 #include "CesiumGltf/SamplerUtility.h"
 
 namespace CesiumGltf {
@@ -8,7 +9,8 @@ FeatureIdTextureView::FeatureIdTextureView() noexcept
       _texCoordSetIndex(0),
       _channels(),
       _pImage(nullptr),
-      _pSampler(nullptr) {}
+      _pSampler(nullptr),
+      _textureTransform(std::nullopt) {}
 
 FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
@@ -17,7 +19,8 @@ FeatureIdTextureView::FeatureIdTextureView(
       _texCoordSetIndex(featureIdTexture.texCoord),
       _channels(),
       _pImage(nullptr),
-      _pSampler(nullptr) {
+      _pSampler(nullptr),
+      _textureTransform(std::nullopt) {
   int32_t textureIndex = featureIdTexture.index;
   if (textureIndex < 0 ||
       static_cast<size_t>(textureIndex) >= model.textures.size()) {
@@ -72,11 +75,30 @@ FeatureIdTextureView::FeatureIdTextureView(
   this->_channels = channels;
 
   this->_status = FeatureIdTextureViewStatus::Valid;
-}
+
+  const ExtensionKhrTextureTransform* pTextureTransform =
+      texture.getExtension<ExtensionKhrTextureTransform>();
+
+  if (pTextureTransform) {
+    this->_textureTransform = KhrTextureTransform(*pTextureTransform);
+
+    if (pTextureTransform->texCoord) {
+      // Override with the extension's texcoord.
+      this->_texCoordSetIndex = *pTextureTransform->texCoord;
+    }
+  }
+} // namespace CesiumGltf
 
 int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
+  }
+
+  if (this->_textureTransform && this->_textureTransform->status() ==
+                                     KhrTextureTransformStatus::Valid) {
+    glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
+    u = transformedUv.x;
+    v = transformedUv.y;
   }
 
   u = applySamplerWrapS(u, this->_pSampler->wrapS);

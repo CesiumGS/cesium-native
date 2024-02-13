@@ -1,4 +1,4 @@
-#include "applyKHRTextureTransform.h"
+#include "applyKhrTextureTransform.h"
 
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
@@ -17,37 +17,38 @@ void transformBufferView(
     return;
   }
 
-  float Rotation = static_cast<float>(textureTransform.rotation);
+  float rotation = static_cast<float>(textureTransform.rotation);
 
-  if (Rotation == 0.0f) {
-    float OffsetX = static_cast<float>(textureTransform.offset[0]);
-    float OffsetY = static_cast<float>(textureTransform.offset[1]);
-    float ScaleX = static_cast<float>(textureTransform.scale[0]);
-    float ScaleY = static_cast<float>(textureTransform.scale[1]);
+  if (rotation == 0.0f) {
+    float offsetX = static_cast<float>(textureTransform.offset[0]);
+    float offsetY = static_cast<float>(textureTransform.offset[1]);
+    float scaleX = static_cast<float>(textureTransform.scale[0]);
+    float scaleY = static_cast<float>(textureTransform.scale[1]);
 
     glm::vec2* uvs = reinterpret_cast<glm::vec2*>(data.data());
     for (int i = 0; i < accessorView.size(); i++) {
       glm::vec2 uv = accessorView[i];
-      uv.x = uv.x * ScaleX + OffsetX;
-      uv.y = uv.y * ScaleY + OffsetY;
+      uv.x = uv.x * scaleX + offsetX;
+      uv.y = uv.y * scaleY + offsetY;
       *uvs++ = uv;
     }
   } else {
-    glm::vec2 Offset(textureTransform.offset[0], textureTransform.offset[1]);
-    glm::vec2 Scale(textureTransform.scale[0], textureTransform.scale[1]);
-    glm::mat3 translation = glm::mat3(1, 0, 0, 0, 1, 0, Offset.x, Offset.y, 1);
-    glm::mat3 rotation = glm::mat3(
-        cos(Rotation),
-        sin(Rotation),
+    glm::vec2 offset(textureTransform.offset[0], textureTransform.offset[1]);
+    glm::vec2 scale(textureTransform.scale[0], textureTransform.scale[1]);
+    glm::mat3 translationMatrix =
+        glm::mat3(1, 0, 0, 0, 1, 0, offset.x, offset.y, 1);
+    glm::mat3 rotationMatrix = glm::mat3(
+        cos(rotation),
+        sin(rotation),
         0,
-        -sin(Rotation),
-        cos(Rotation),
+        -sin(rotation),
+        cos(rotation),
         0,
         0,
         0,
         1);
-    glm::mat3 scale = glm::mat3(Scale.x, 0, 0, 0, Scale.y, 0, 0, 0, 1);
-    glm::mat3 matrix = translation * rotation * scale;
+    glm::mat3 scaleMatrix = glm::mat3(scale.x, 0, 0, 0, scale.y, 0, 0, 0, 1);
+    glm::mat3 matrix = translationMatrix * rotationMatrix * scaleMatrix;
 
     glm::vec2* uvs = reinterpret_cast<glm::vec2*>(data.data());
 
@@ -67,47 +68,62 @@ void processTextureInfo(
   if (!textureInfo) {
     return;
   }
-  const TextureInfo& textureInfoValue = *textureInfo;
+
+  TextureInfo& textureInfoValue = *textureInfo;
   const ExtensionKhrTextureTransform* pTextureTransform =
       textureInfoValue.getExtension<ExtensionKhrTextureTransform>();
   if (!pTextureTransform) {
     return;
   }
+
   int64_t texCoord = textureInfoValue.texCoord;
   if (pTextureTransform->texCoord) {
     texCoord = *pTextureTransform->texCoord;
   }
+
   auto find = primitive.attributes.find("TEXCOORD_" + std::to_string(texCoord));
   if (find == primitive.attributes.end()) {
     return;
   }
+
   const Accessor* pAccessor = Model::getSafe(&model.accessors, find->second);
   if (!pAccessor) {
     return;
   }
+
   const BufferView* pBufferView =
       Model::getSafe(&model.bufferViews, pAccessor->bufferView);
   if (!pBufferView) {
     return;
   }
+
   const AccessorView<glm::vec2> accessorView(model, *pAccessor);
   if (accessorView.status() == AccessorViewStatus::Valid) {
-    std::vector<std::byte> data;
-    data.resize(static_cast<size_t>(pBufferView->byteLength));
+    std::vector<std::byte> data(static_cast<size_t>(pBufferView->byteLength));
     transformBufferView(accessorView, data, *pTextureTransform);
-    textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
-    find->second = static_cast<int32_t>(model.accessors.size());
-    Accessor& accessor = model.accessors.emplace_back(*pAccessor);
-    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
-    BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
-    bufferView.buffer = static_cast<int32_t>(model.buffers.size());
+
     Buffer& buffer = model.buffers.emplace_back();
-    buffer.byteLength = bufferView.byteLength;
+    buffer.byteLength = static_cast<int64_t>(data.size());
     buffer.cesium.data = std::move(data);
+
+    BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back(*pAccessor);
+    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+    accessor.count = accessorView.size();
+    accessor.type = Accessor::Type::VEC2;
+    accsesor.componentType = Accessor::ComponentType::FLOAT;
+
+    find->second = static_cast<int32_t>(model.accessors.size() - 1);
+
+    // Erase the extension so it is not re-applied by client implementations.
+    textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
   }
 }
 
-void applyKHRTextureTransform(Model& model) {
+void applyKhrTextureTransform(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       Material* material = Model::getSafe(&model.materials, primitive.material);
