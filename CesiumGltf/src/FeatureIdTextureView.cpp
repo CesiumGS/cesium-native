@@ -77,7 +77,7 @@ FeatureIdTextureView::FeatureIdTextureView(
   this->_status = FeatureIdTextureViewStatus::Valid;
 
   const ExtensionKhrTextureTransform* pTextureTransform =
-      texture.getExtension<ExtensionKhrTextureTransform>();
+      featureIdTexture.getExtension<ExtensionKhrTextureTransform>();
 
   if (pTextureTransform) {
     this->_textureTransform = KhrTextureTransform(*pTextureTransform);
@@ -94,8 +94,8 @@ int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
     return -1;
   }
 
-  if (this->_textureTransform && this->_textureTransform->status() ==
-                                     KhrTextureTransformStatus::Valid) {
+  if (this->_textureTransform &&
+      this->_textureTransform->status() == KhrTextureTransformStatus::Valid) {
     glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
     u = transformedUv.x;
     v = transformedUv.y;

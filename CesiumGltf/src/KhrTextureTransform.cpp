@@ -8,7 +8,7 @@ KhrTextureTransform::KhrTextureTransform() noexcept
       _offset({0, 0}),
       _rotation(0),
       _rotationSineCosine({0, 1}),
-      _scale() {}
+      _scale({1.0, 1.0}) {}
 
 KhrTextureTransform::KhrTextureTransform(
     const ExtensionKhrTextureTransform& extension) noexcept
@@ -16,7 +16,7 @@ KhrTextureTransform::KhrTextureTransform(
       _offset({0, 0}),
       _rotation(0),
       _rotationSineCosine({0, 1}),
-      _scale() {
+      _scale({1.0, 1.0}) {
 
   if (extension.offset.size() != 2) {
     this->_status = KhrTextureTransformStatus::ErrorInvalidOffset;

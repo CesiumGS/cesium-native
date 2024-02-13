@@ -2,6 +2,7 @@
 
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 using namespace CesiumGltf;
@@ -11,50 +12,20 @@ namespace {
 void transformBufferView(
     const AccessorView<glm::vec2>& accessorView,
     std::vector<std::byte>& data,
-    const ExtensionKhrTextureTransform& textureTransform) {
-
-  if (textureTransform.offset.size() < 2 || textureTransform.scale.size() < 2) {
+    const ExtensionKhrTextureTransform& textureTransformExtension) {
+  KhrTextureTransform textureTransform(textureTransformExtension);
+  if (textureTransform.status() != KhrTextureTransformStatus::Valid) {
+    // TODO: should this report an error somehow?
     return;
   }
 
-  float rotation = static_cast<float>(textureTransform.rotation);
+  glm::vec2* transformedUvs = reinterpret_cast<glm::vec2*>(data.data());
 
-  if (rotation == 0.0f) {
-    float offsetX = static_cast<float>(textureTransform.offset[0]);
-    float offsetY = static_cast<float>(textureTransform.offset[1]);
-    float scaleX = static_cast<float>(textureTransform.scale[0]);
-    float scaleY = static_cast<float>(textureTransform.scale[1]);
-
-    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(data.data());
-    for (int i = 0; i < accessorView.size(); i++) {
-      glm::vec2 uv = accessorView[i];
-      uv.x = uv.x * scaleX + offsetX;
-      uv.y = uv.y * scaleY + offsetY;
-      *uvs++ = uv;
-    }
-  } else {
-    glm::vec2 offset(textureTransform.offset[0], textureTransform.offset[1]);
-    glm::vec2 scale(textureTransform.scale[0], textureTransform.scale[1]);
-    glm::mat3 translationMatrix =
-        glm::mat3(1, 0, 0, 0, 1, 0, offset.x, offset.y, 1);
-    glm::mat3 rotationMatrix = glm::mat3(
-        cos(rotation),
-        sin(rotation),
-        0,
-        -sin(rotation),
-        cos(rotation),
-        0,
-        0,
-        0,
-        1);
-    glm::mat3 scaleMatrix = glm::mat3(scale.x, 0, 0, 0, scale.y, 0, 0, 0, 1);
-    glm::mat3 matrix = translationMatrix * rotationMatrix * scaleMatrix;
-
-    glm::vec2* uvs = reinterpret_cast<glm::vec2*>(data.data());
-
-    for (int i = 0; i < accessorView.size(); i++) {
-      *uvs++ = glm::vec2((matrix * glm::vec3(accessorView[i], 1)));
-    }
+  for (int i = 0; i < accessorView.size(); i++) {
+    const glm::vec2& uv = accessorView[i];
+    glm::dvec2 transformedUv = textureTransform.applyTransform(uv.x, uv.y);
+    *transformedUvs = glm::vec2(transformedUv.x, transformedUv.y);
+    transformedUvs++;
   }
 }
 } // namespace

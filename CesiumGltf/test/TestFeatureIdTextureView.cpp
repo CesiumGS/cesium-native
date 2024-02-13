@@ -1,10 +1,11 @@
 #include "CesiumGltf/ExtensionExtMeshFeatures.h"
 #include "CesiumGltf/FeatureIdTextureView.h"
+#include "CesiumGltf/KhrTextureTransform.h"
+#include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
 
-#include <bitset>
 #include <climits>
 #include <cstddef>
 #include <cstring>
@@ -257,6 +258,52 @@ TEST_CASE("Test FeatureIdTextureView on valid feature ID texture") {
   REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
 }
 
+TEST_CASE("Test FeatureIdTextureView constructs with KHR_texture_transform") {
+  Model model;
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+  Sampler& sampler = model.samplers.emplace_back();
+  sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
+  sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
+
+  Image& image = model.images.emplace_back();
+  image.cesium.width = 1;
+  image.cesium.height = 1;
+
+  Texture& texture = model.textures.emplace_back();
+  texture.sampler = 0;
+  texture.source = 0;
+
+  ExtensionExtMeshFeatures& meshFeatures =
+      primitive.addExtension<ExtensionExtMeshFeatures>();
+
+  FeatureIdTexture featureIdTexture;
+  featureIdTexture.index = 0;
+  featureIdTexture.texCoord = 0;
+  featureIdTexture.channels = {0};
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      featureIdTexture.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {1.0, 2.0};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {2.0, 0.5};
+  textureTransformExtension.texCoord = 10;
+
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
+  featureId.texture = featureIdTexture;
+
+  FeatureIdTextureView view(model, featureIdTexture);
+  REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
+
+  auto textureTransform = view.getTextureTransform();
+  // Texcoord gets overridden by value in KHR_texture_transform
+  REQUIRE(textureTransform != std::nullopt);
+  REQUIRE(textureTransform->offset() == glm::dvec2(1.0, 2.0));
+  REQUIRE(textureTransform->rotation() == CesiumUtility::Math::PiOverTwo);
+  REQUIRE(textureTransform->scale() == glm::dvec2(2.0, 0.5));
+  REQUIRE(view.getTexCoordSetIndex() == 10);
+}
+
 TEST_CASE("Test getFeatureID on invalid feature ID texture view") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
@@ -331,6 +378,60 @@ TEST_CASE("Test getFeatureID on valid feature ID texture view") {
   REQUIRE(view.getFeatureID(1, 0) == 2);
   REQUIRE(view.getFeatureID(0, 1) == 0);
   REQUIRE(view.getFeatureID(1, 1) == 7);
+}
+
+TEST_CASE("Test getFeatureID on view with KHR_texture_transform") {
+  Model model;
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+  Sampler& sampler = model.samplers.emplace_back();
+  sampler.wrapS = Sampler::WrapS::REPEAT;
+  sampler.wrapT = Sampler::WrapT::REPEAT;
+
+  std::vector<uint8_t> featureIDs{1, 2, 0, 7};
+
+  Image& image = model.images.emplace_back();
+  image.cesium.width = 2;
+  image.cesium.height = 2;
+  image.cesium.channels = 1;
+  image.cesium.bytesPerChannel = 1;
+  image.cesium.pixelData.resize(featureIDs.size());
+  std::memcpy(
+      image.cesium.pixelData.data(),
+      featureIDs.data(),
+      featureIDs.size());
+
+  Texture& texture = model.textures.emplace_back();
+  texture.sampler = 0;
+  texture.source = 0;
+
+  ExtensionExtMeshFeatures& meshFeatures =
+      primitive.addExtension<ExtensionExtMeshFeatures>();
+
+  FeatureIdTexture featureIdTexture;
+  featureIdTexture.index = 0;
+  featureIdTexture.texCoord = 0;
+  featureIdTexture.channels = {0};
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      featureIdTexture.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {0.5, 0.5};
+
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
+  featureId.texture = featureIdTexture;
+
+  FeatureIdTextureView view(model, featureIdTexture);
+  REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
+  // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+  REQUIRE(view.getFeatureID(0, 0) == 7);
+  // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+  REQUIRE(view.getFeatureID(1, 0) == 2);
+  // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+  REQUIRE(view.getFeatureID(0, 1) == 0);
+  // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+  REQUIRE(view.getFeatureID(1, 1) == 1);
 }
 
 TEST_CASE("Test getFeatureID rounds to nearest pixel") {
