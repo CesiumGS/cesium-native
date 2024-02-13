@@ -40,7 +40,7 @@ void processTextureInfo(
     return;
   }
 
-  TextureInfo& textureInfoValue = *textureInfo;
+  const TextureInfo& textureInfoValue = *textureInfo;
   const ExtensionKhrTextureTransform* pTextureTransform =
       textureInfoValue.getExtension<ExtensionKhrTextureTransform>();
   if (!pTextureTransform) {

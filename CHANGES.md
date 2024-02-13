@@ -4,7 +4,7 @@
 
 ##### Additions :tada:
 
-- `FeatureIdTextureView` and `PropertyTexturePropertyView` now account for the `KHR_texture_transform` texture info extension, if present.
+- `FeatureIdTextureView` and `PropertyTexturePropertyView` now account for the `KHR_texture_transform` glTF extension, if present.
 
 ### v0.32.0 - 2024-02-01
 

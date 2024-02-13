@@ -345,7 +345,9 @@ public:
     if (pTextureTransform) {
       this->_textureTransform = KhrTextureTransform(*pTextureTransform);
 
-      if (pTextureTransform->texCoord) {
+      if (this->_textureTransform->status() ==
+              KhrTextureTransformStatus::Valid &&
+          pTextureTransform->texCoord) {
         // Override with the extension's texcoord.
         this->_texCoordSetIndex = *pTextureTransform->texCoord;
       }
@@ -613,7 +615,9 @@ public:
     if (pTextureTransform) {
       this->_textureTransform = KhrTextureTransform(*pTextureTransform);
 
-      if (pTextureTransform->texCoord) {
+      if (this->_textureTransform->status() ==
+              KhrTextureTransformStatus::Valid &&
+          pTextureTransform->texCoord) {
         // Override with the extension's texcoord.
         this->_texCoordSetIndex = *pTextureTransform->texCoord;
       }
