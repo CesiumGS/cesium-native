@@ -320,27 +320,20 @@ void TileWorkManager::TakeProcessingWork(
   }
 
   // If no room for completed work, stop here
-  if (maxCount == 0)
+  // Same if there's no work to return
+  size_t processingCount = _processingQueue.size();
+  if (maxCount == 0 || processingCount == 0)
     return;
 
   // Return completed work, up to the count specified
-  size_t processingCount = _processingQueue.size();
-  if (processingCount == 0)
-    return;
-
-  // TODO - This list should be a map so it is always sorted
-  // Want highest priority at back
-  std::sort(
-      begin(_processingQueue),
-      end(_processingQueue),
-      [](Work* a, Work* b) { return b->order < a->order; });
-
   size_t numberToTake = std::min(processingCount, maxCount);
 
+  // Gather iterators we want to erase
+  // Go from back to front to avoid reallocations if possible
+  // These work items have completed based on priority from any
+  // number of previous frames, so we really don't know which ones
+  // should go out first. They should all go ASAP.
   using WorkVecIter = std::vector<Work*>::iterator;
-
-  // Gather iterators we want to erase, from back to front
-  // Add the related work to our output
   std::vector<WorkVecIter> processingToErase;
   std::vector<Work*>::iterator it = _processingQueue.end();
   while (it != _processingQueue.begin()) {
