@@ -198,7 +198,7 @@ static void prepareLoadResultImage(
     RasterLoadResult& loadResult,
     const std::any& rendererOptions) {
 
-  if (!loadResult.requestData.url.empty()) {
+  if (!loadResult.missingRequests.empty()) {
     // A url was requested, don't need to do anything
     return;
   }

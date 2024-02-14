@@ -307,7 +307,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     if (foundIt == responsesByUrl.end()) {
       // If not there, request it and come back later
       RasterLoadResult loadResult;
-      loadResult.requestData = requestData;
+      loadResult.missingRequests.push_back(requestData);
       loadResult.state = RasterOverlayTile::LoadState::RequestRequired;
 
       Future<LoadedQuadtreeImage> future =
@@ -519,16 +519,28 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
       .thenInWorkerThread([projection = this->getProjection(),
                            rectangle = overlayTile.getRectangle()](
                               std::vector<LoadedQuadtreeImage>&& images) {
-        // If any of these images need a request, pass it through.
-        // Do this one at a time, but ideally, we'd do all at once
-        for (auto image : images) {
+        // Gather any missing requests
+        std::vector<CesiumAsync::RequestData> allMissingRequests;
+        for (auto& image : images) {
           assert(image.pResult);
           if (image.pResult->state ==
               RasterOverlayTile::LoadState::RequestRequired) {
-            assert(!image.pResult->requestData.url.empty());
-            return *image.pResult;
+            assert(!image.pResult->missingRequests.empty());
+            std::copy(
+                image.pResult->missingRequests.begin(),
+                image.pResult->missingRequests.end(),
+                std::back_inserter(allMissingRequests));
           }
         }
+
+        // Send all requests together
+        if (!allMissingRequests.empty()) {
+          RasterLoadResult loadResult;
+          loadResult.missingRequests = std::move(allMissingRequests);
+          loadResult.state = RasterOverlayTile::LoadState::RequestRequired;
+          return std::move(loadResult);
+        }
+
         // This set of images is only "useful" if at least one actually has
         // image data, and that image data is _not_ from an ancestor. We can
         // identify ancestor images because they have a `subset`.

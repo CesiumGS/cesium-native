@@ -1677,15 +1677,19 @@ void TilesetContentManager::dispatchProcessingWork(
                              _work = work](RasterLoadResult&& result) mutable {
             if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
               // This work goes back into the work manager queue
+              assert(!result.missingRequests.empty());
 
-              // Make sure we're not requesting something we have
-              assert(!result.requestData.url.empty());
-              assert(
-                  _work->completedRequests.find(result.requestData.url) ==
-                  _work->completedRequests.end());
+              for (auto& request : result.missingRequests) {
+                // Make sure we're not requesting something we have
+                assert(
+                    _work->completedRequests.find(request.url) ==
+                    _work->completedRequests.end());
+                for (auto& pending : _work->pendingRequests)
+                  assert(pending.url != request.url);
 
-              // Add new requests here
-              _work->pendingRequests.push_back(std::move(result.requestData));
+                // Add new requests here
+                _work->pendingRequests.push_back(std::move(request));
+              }
 
               TileWorkManager::RequeueWorkForRequest(
                   _thiz->_pTileWorkManager,

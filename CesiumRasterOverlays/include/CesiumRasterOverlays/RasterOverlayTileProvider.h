@@ -34,7 +34,7 @@ struct RasterLoadResult {
   std::vector<std::string> warnings{};
   bool moreDetailAvailable = false;
 
-  CesiumAsync::RequestData requestData = {};
+  std::vector<CesiumAsync::RequestData> missingRequests = {};
 
   RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
 
