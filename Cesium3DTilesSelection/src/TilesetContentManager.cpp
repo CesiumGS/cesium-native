@@ -280,32 +280,33 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       placeholders = overlays.getPlaceholderTileProviders();
   assert(tileProviders.size() == placeholders.size());
 
+  // Try to load now, but if tile is a placeholder this won't do anything
   for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
     RasterOverlayTileProvider& tileProvider = *tileProviders[i];
     RasterOverlayTileProvider& placeholder = *placeholders[i];
-
-    RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
+    RasterMappedTo3DTile::mapOverlayToTile(
         maximumScreenSpaceError,
         tileProvider,
         placeholder,
         tile,
         projections);
-    if (pMapped) {
-      // Try to load now, but if tile is a placeholder this won't do anything
-      // Default headers come from the this. Loader can override if needed
-      CesiumAsync::RequestData requestData;
-      requestData.headers = defaultHeaders;
-      RasterProcessingCallback rasterCallback;
+  }
 
-      pMapped->getLoadThrottledWork(requestData, rasterCallback);
+  // Get the work from the mapped tiles
+  for (RasterMappedTo3DTile& pMapped : tile.getMappedRasterTiles()) {
+    // Default headers come from the this. Loader can override if needed
+    CesiumAsync::RequestData requestData;
+    requestData.headers = defaultHeaders;
+    RasterProcessingCallback rasterCallback;
 
-      if (!requestData.url.empty() || rasterCallback != nullptr) {
-        TilesetContentManager::RasterWorkChain newWorkChain = {
-            pMapped,
-            requestData,
-            rasterCallback};
-        outWork.push_back(newWorkChain);
-      }
+    pMapped.getLoadThrottledWork(requestData, rasterCallback);
+
+    if (!requestData.url.empty() || rasterCallback != nullptr) {
+      TilesetContentManager::RasterWorkChain newWorkChain = {
+          &pMapped,
+          requestData,
+          rasterCallback};
+      outWork.push_back(newWorkChain);
     }
   }
 
@@ -1519,7 +1520,7 @@ void TilesetContentManager::discoverLoadWork(
           resultPriority});
 
       // Embed child work in parent
-      for (auto rasterWorkChain : work.rasterWorkChains) {
+      for (auto& rasterWorkChain : work.rasterWorkChains) {
         newOrder.childOrders.emplace_back(TileWorkManager::Order{
             std::move(rasterWorkChain.requestData),
             RasterProcessingData{
