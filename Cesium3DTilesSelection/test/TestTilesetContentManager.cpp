@@ -196,8 +196,10 @@ void loadTileWithManager(
     TilesetContentManager* pManager,
     TilesetOptions& options) {
   std::vector<TileLoadRequest> loadRequests;
-  loadRequests.emplace_back(
-      TileLoadRequest{pTile, TileLoadPriorityGroup::Normal});
+  if (pTile) {
+    loadRequests.emplace_back(
+        TileLoadRequest{pTile, TileLoadPriorityGroup::Normal});
+  }
   pManager->processLoadRequests(loadRequests, options);
 }
 
@@ -1081,9 +1083,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
               9000.0}};
       tile.setBoundingVolume(originalLooseRegion);
 
+      // Tick the manager twice
+      // Child overlay work has to complete before parent work
       TilesetOptions options;
       loadTileWithManager(&tile, pManager.get(), options);
-
+      pManager->waitUntilIdle();
+      loadTileWithManager(nullptr, pManager.get(), options);
       pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
