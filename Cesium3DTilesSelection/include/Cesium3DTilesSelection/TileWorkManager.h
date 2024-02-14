@@ -62,6 +62,7 @@ public:
 
     std::set<Work*> children = {};
 
+    std::vector<CesiumAsync::RequestData> pendingRequests = {};
     CesiumAsync::UrlAssetRequestMap completedRequests = {};
 
     void fillResponseDataMap(CesiumAsync::UrlResponseDataMap& responseDataMap) {
@@ -71,6 +72,17 @@ public:
             CesiumAsync::ResponseData{
                 pair.second.get(),
                 pair.second->response()});
+      }
+    }
+
+    CesiumAsync::RequestData* getNextRequest() {
+      // Next request always comes from the back
+      // Order isn't important here
+      if (pendingRequests.empty()) {
+        return nullptr;
+      } else {
+        assert(!pendingRequests.back().url.empty());
+        return &pendingRequests.back();
       }
     }
   };
@@ -108,8 +120,7 @@ private:
   static void transitionQueuedWork(std::shared_ptr<TileWorkManager>& thiz);
 
   void onRequestFinished(
-      std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest,
-      const Work* finishedWork);
+      std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest);
 
   void workToStartingQueue(Work* pWork);
 

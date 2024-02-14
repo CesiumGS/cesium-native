@@ -1624,12 +1624,10 @@ void TilesetContentManager::dispatchProcessingWork(
                   TileLoadResultAndRenderResources&& pair) mutable {
                 if (pair.result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
-                  // Override its request data with was specified
-                  CesiumAsync::RequestData& newRequestData =
-                      pair.result.additionalRequestData;
-                  _work->order.requestData.url = newRequestData.url;
-                  if (!newRequestData.headers.empty())
-                    _work->order.requestData.headers = newRequestData.headers;
+
+                  // Add new requests here
+                  _work->pendingRequests.push_back(
+                      std::move(pair.result.additionalRequestData));
 
                   TileWorkManager::RequeueWorkForRequest(
                       _thiz->_pTileWorkManager,
@@ -1686,11 +1684,8 @@ void TilesetContentManager::dispatchProcessingWork(
                   _work->completedRequests.find(result.requestData.url) ==
                   _work->completedRequests.end());
 
-              // Override its request data with was specified
-              CesiumAsync::RequestData& newRequestData = result.requestData;
-              _work->order.requestData.url = newRequestData.url;
-              if (!newRequestData.headers.empty())
-                _work->order.requestData.headers = newRequestData.headers;
+              // Add new requests here
+              _work->pendingRequests.push_back(std::move(result.requestData));
 
               TileWorkManager::RequeueWorkForRequest(
                   _thiz->_pTileWorkManager,

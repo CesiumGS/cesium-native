@@ -30,13 +30,15 @@ void TileWorkManager::workToStartingQueue(Work* pWork) {
   // Assert this work is already owned by this manager
   assert(_ownedWork.find(pWork->uniqueId) != _ownedWork.end());
 
-  if (pWork->order.requestData.url.empty()) {
-    // Empty url, go straight to processing queue
+  CesiumAsync::RequestData* pendingRequest = pWork->getNextRequest();
+
+  if (!pendingRequest) {
+    // No pending request, go straight to processing queue
     for (auto& element : _processingQueue)
       assert(element->uniqueId != pWork->uniqueId);
     _processingQueue.push_back(pWork);
   } else {
-    auto foundIt = _inFlightRequests.find(pWork->order.requestData.url);
+    auto foundIt = _inFlightRequests.find(pendingRequest->url);
     if (foundIt == _inFlightRequests.end()) {
       // The request isn't in flight, queue it
       for (auto& element : _requestQueue)
@@ -69,11 +71,16 @@ TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* pOrder) {
   // Assert any work isn't already owned by this manager
   assert(_ownedWork.find(uniqueId) == _ownedWork.end());
 
-  auto returnPair =
-      _ownedWork.emplace(uniqueId, Work{uniqueId, std::move(*pOrder)});
+  Work newWork{uniqueId, std::move(*pOrder)};
+
+  if (!newWork.order.requestData.url.empty())
+    newWork.pendingRequests.push_back(newWork.order.requestData);
+
+  auto returnPair = _ownedWork.emplace(uniqueId, std::move(newWork));
   assert(returnPair.second);
 
   Work* pWork = &returnPair.first->second;
+
   workToStartingQueue(pWork);
 
   return pWork;
@@ -210,26 +217,26 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
 }
 
 void TileWorkManager::onRequestFinished(
-    std::shared_ptr<IAssetRequest>& pCompletedRequest,
-    const Work* finishedWork) {
+    std::shared_ptr<IAssetRequest>& pCompletedRequest) {
 
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   if (_shutdownSignaled)
     return;
 
-  assert(pCompletedRequest->url() == finishedWork->order.requestData.url);
-
   const IAssetResponse* response = pCompletedRequest->response();
   uint16_t responseStatusCode = response ? response->statusCode() : 0;
 
   // Find this request
-  auto foundIt = _inFlightRequests.find(finishedWork->order.requestData.url);
+  auto foundIt = _inFlightRequests.find(pCompletedRequest->url());
   assert(foundIt != _inFlightRequests.end());
 
   // Handle results
   std::vector<Work*>& requestWorkVec = foundIt->second;
   for (Work* requestWork : requestWorkVec) {
+    CesiumAsync::RequestData* workNextRequest = requestWork->getNextRequest();
+    assert(workNextRequest);
+    assert(pCompletedRequest->url() == workNextRequest->url);
 
     assert(_ownedWork.find(requestWork->uniqueId) != _ownedWork.end());
 
@@ -248,17 +255,17 @@ void TileWorkManager::onRequestFinished(
       continue;
     }
 
-    // Add new entry
+    // Handle requested in the finished work
+    const std::string& key = workNextRequest->url;
     assert(
-        requestWork->completedRequests.find(
-            requestWork->order.requestData.url) ==
+        requestWork->completedRequests.find(key) ==
         requestWork->completedRequests.end());
 
-    std::string& key = requestWork->order.requestData.url;
     requestWork->completedRequests[key] = pCompletedRequest;
+    requestWork->pendingRequests.pop_back();
 
-    // Put in processing queue
-    _processingQueue.push_back(requestWork);
+    // Put it back into the appropriate queue
+    workToStartingQueue(requestWork);
   }
 
   // Remove it
@@ -393,7 +400,11 @@ void TileWorkManager::transitionQueuedWork(
 
       // Start from back of queue (highest priority).
       Work* requestWork = thiz->_requestQueue.back();
-      const std::string& workUrl = requestWork->order.requestData.url;
+
+      CesiumAsync::RequestData* nextRequest = requestWork->getNextRequest();
+      assert(nextRequest);
+
+      const std::string& workUrl = nextRequest->url;
 
       // The first work with this url needs dispatch
       workNeedingDispatch.push_back(requestWork);
@@ -407,7 +418,9 @@ void TileWorkManager::transitionQueuedWork(
       while (matchIt != thiz->_requestQueue.begin()) {
         --matchIt;
         Work* otherWork = *matchIt;
-        if (otherWork->order.requestData.url == workUrl)
+        CesiumAsync::RequestData* otherRequest = otherWork->getNextRequest();
+        assert(otherRequest);
+        if (otherRequest->url == workUrl)
           matchingUrlWork.push_back(matchIt);
       }
 
@@ -430,17 +443,18 @@ void TileWorkManager::transitionQueuedWork(
   for (Work* requestWork : workNeedingDispatch) {
     // Keep the manager alive while the load is in progress
     // Capture the shared pointer by value
+
+    CesiumAsync::RequestData* nextRequest = requestWork->getNextRequest();
+    assert(nextRequest);
+
     thiz->_pAssetAccessor
-        ->get(
-            thiz->_asyncSystem,
-            requestWork->order.requestData.url,
-            requestWork->order.requestData.headers)
+        ->get(thiz->_asyncSystem, nextRequest->url, nextRequest->headers)
         .thenImmediately(
             [thiz, _requestWork = requestWork](
                 std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               assert(thiz.get());
 
-              thiz->onRequestFinished(pCompletedRequest, _requestWork);
+              thiz->onRequestFinished(pCompletedRequest);
 
               transitionQueuedWork(thiz);
             });
