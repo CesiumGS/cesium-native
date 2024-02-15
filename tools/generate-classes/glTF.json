@@ -36,57 +36,6 @@
     "CESIUM_tile_edges glTF Mesh Primitive extension": {
       "overrideName": "ExtensionCesiumTileEdges"
     },
-    "EXT_feature_metadata glTF extension": {
-      "overrideName": "ExtensionModelExtFeatureMetadata"
-    },
-    "EXT_feature_metadata glTF Mesh Primitive extension": {
-      "overrideName": "ExtensionMeshPrimitiveExtFeatureMetadata"
-    },
-    "Class Property in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClassProperty"
-    },
-    "Class in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClass"
-    },
-    "Enum in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataEnum"
-    },
-    "Enum Value in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataEnumValue"
-    },
-    "Feature IDs in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIDs"
-    },
-    "Feature ID Attribute in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIDAttribute"
-    },
-    "Feature ID Texture in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureIDTexture"
-    },
-    "Feature Table Property in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureTableProperty"
-    },
-    "Feature Table in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureTable"
-    },
-    "Feature Texture in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataFeatureTexture"
-    },
-    "Schema in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataSchema"
-    },
-    "Class Property Statistics in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataPropertyStatistics"
-    },
-    "Class Statistics in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataClassStatistics"
-    },
-    "Statistics in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataStatistics"
-    },
-    "Texture Accessor in EXT_feature_metadata": {
-      "overrideName": "ExtensionExtFeatureMetadataTextureAccessor"
-    },
     "EXT_instance_features glTF Node extension": {
       "overrideName": "ExtensionExtInstanceFeatures"
     },
@@ -194,14 +143,6 @@
       "schema": "Vendor/CESIUM_tile_edges/schema/mesh.primitive.CESIUM_tile_edges.schema.json"
     },
     {
-      "extensionName": "EXT_feature_metadata",
-      "schema": "Vendor/EXT_feature_metadata/schema/glTF.EXT_feature_metadata.schema.json"
-    },
-    {
-      "extensionName": "EXT_feature_metadata",
-      "schema": "Vendor/EXT_feature_metadata/schema/mesh.primitive.EXT_feature_metadata.schema.json"
-    },
-    {
       "extensionName": "EXT_instance_features",
       "schema": "Vendor/EXT_instance_features/schema/node.EXT_instance_features.schema.json"
     },
@@ -276,7 +217,11 @@
       "extensionName": "KHR_texture_transform",
       "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
       "attachTo": [
-        "textureInfo"
+        "textureInfo",
+        "material.occlusionTextureInfo",
+        "material.normalTextureInfo",
+        "propertyTexture.property",
+        "featureIdTexture"
       ]
     },
     {

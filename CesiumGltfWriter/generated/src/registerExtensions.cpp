@@ -18,19 +18,21 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
+#include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialNormalTextureInfo.h>
+#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
@@ -40,9 +42,6 @@ namespace CesiumGltfWriter {
 void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
   context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtStructuralMetadataJsonWriter>();
@@ -55,9 +54,6 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionExtMeshFeaturesJsonWriter>();
@@ -95,6 +91,18 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
       .registerExtension<CesiumGltf::Texture, ExtensionTextureWebpJsonWriter>();
   context.registerExtension<
       CesiumGltf::TextureInfo,
+      ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MaterialOcclusionTextureInfo,
+      ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MaterialNormalTextureInfo,
+      ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::PropertyTextureProperty,
+      ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonWriter>();
 }
 } // namespace CesiumGltfWriter

@@ -77,6 +77,10 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
   struct Operation {
     std::optional<GlobeRectangle>
     operator()(const BoundingSphere& boundingSphere) {
+      if (boundingSphere.contains(glm::dvec3(0.0))) {
+        return CesiumGeospatial::GlobeRectangle::MAXIMUM;
+      }
+
       const glm::dvec3& centerEcef = boundingSphere.getCenter();
       double radius = boundingSphere.getRadius();
 
@@ -122,6 +126,10 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
 
     std::optional<GlobeRectangle>
     operator()(const OrientedBoundingBox& orientedBoundingBox) {
+      if (orientedBoundingBox.contains(glm::dvec3(0.0))) {
+        return CesiumGeospatial::GlobeRectangle::MAXIMUM;
+      }
+
       const glm::dvec3& centerEcef = orientedBoundingBox.getCenter();
       const glm::dmat3& halfAxes = orientedBoundingBox.getHalfAxes();
 

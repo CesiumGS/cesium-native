@@ -57,6 +57,17 @@ TEST_CASE(
   CHECK(bs.computeDistanceSquaredToPosition(position) == 0);
 }
 
+TEST_CASE("BoundingSphere::contains") {
+  glm::dvec3 center(1.0, 2.0, 3.0);
+  double radius = 45.0;
+  BoundingSphere sphere(center, radius);
+  double epsilon = CesiumUtility::Math::Epsilon14;
+
+  CHECK(sphere.contains(center));
+  CHECK(sphere.contains(center + glm::dvec3(radius, 0.0, 0.0)));
+  CHECK(!sphere.contains(center + glm::dvec3(radius + epsilon, 0.0, 0.0)));
+}
+
 TEST_CASE("BoundingSphere::transform") {
   BoundingSphere sphere(glm::dvec3(1.0, 2.0, 3.0), 45.0);
 

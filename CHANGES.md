@@ -1,27 +1,38 @@
 # Change Log
 
-### ? - ?
+### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:
 
-- `IndicesForFaceFromAccessor` now propertly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
+- Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
+
+##### Additions :tada:
+
+- Added `contains` method to `BoundingSphere`.
+- Added `GlobeRectangle::MAXIMUM` static field.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
+
+### v0.32.0 - 2024-02-01
+
+##### Breaking Changes :mega:
+
+- `IndicesForFaceFromAccessor` now properly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
 
 ##### Additions :tada:
 
 - Added support for Web Map Tile Service (WMTS) with `WebMapTileServiceRasterOverlay`.
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
-- Added `applyTextureTransform` property to `TilesetOptions`.
+- Added `applyTextureTransform` property to `TilesetOptions`, which indicates whether to preemptively apply transforms to texture coordinates for textures with the `KHR_texture_transform` extension.
+- Added `loadGltf` method to `GltfReader`, making it easier to do a full, asynchronous load of a glTF.
+- Added `GlobeFlightPath` class to help with calculating fly-to paths.
 
 ##### Fixes :wrench:
 
-- Fixed `FeatureIdTextureView` ignoring the wrap values specified on the texture's sampler.
-
-##### Fixes :wrench:
-
+- Fixed a bug in `FeatureIdTextureView` where it ignored the wrap values specified on the texture's sampler.
 - Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
-
-##### Fixes :wrench:
-
 - Fixed a bug where upgraded batch table properties were not always assigned sentinel values, even when such values were available and required.
 - Fixed incorrect behavior in `PropertyTablePropertyView` where `arrayOffsets` were treated as byte offsets, instead of as array indices.
 

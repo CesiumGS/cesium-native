@@ -145,4 +145,29 @@ Ellipsoid::scaleToGeodeticSurface(const glm::dvec3& cartesian) const noexcept {
       positionZ * zMultiplier);
 }
 
+std::optional<glm::dvec3> Ellipsoid::scaleToGeocentricSurface(
+    const glm::dvec3& cartesian) const noexcept {
+
+  // If the input cartesian is (0, 0, 0), beta will compute to 1.0 / sqrt(0) =
+  // +Infinity. Let's consider this a failure.
+  if (Math::equalsEpsilon(glm::length(cartesian), 0, Math::Epsilon12)) {
+    return std::optional<glm::dvec3>();
+  }
+
+  const double positionX = cartesian.x;
+  const double positionY = cartesian.y;
+  const double positionZ = cartesian.z;
+
+  const double oneOverRadiiSquaredX = this->_oneOverRadiiSquared.x;
+  const double oneOverRadiiSquaredY = this->_oneOverRadiiSquared.y;
+  const double oneOverRadiiSquaredZ = this->_oneOverRadiiSquared.z;
+
+  const double beta = 1.0 / sqrt(
+                                positionX * positionX * oneOverRadiiSquaredX +
+                                positionY * positionY * oneOverRadiiSquaredY +
+                                positionZ * positionZ * oneOverRadiiSquaredZ);
+
+  return glm::dvec3(positionX * beta, positionY * beta, positionZ * beta);
+}
+
 } // namespace CesiumGeospatial
