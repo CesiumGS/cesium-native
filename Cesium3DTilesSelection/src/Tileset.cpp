@@ -381,7 +381,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.requestsPending =
       this->_pTilesetContentManager->getTotalPendingCount();
 
-#ifndef NDEBUG
+#if LOG_REQUEST_STATS
   uint32_t inProgressSum =
       static_cast<uint32_t>(_updateResult.requestsPending) +
       _updateResult.tilesLoading + _updateResult.rastersLoading +
@@ -397,9 +397,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     // If we have tiles kicked, we're not done, but there's nothing in progress?
     assert(this->_updateResult.tilesKicked == 0);
   }
-#endif
 
-#if LOG_REQUEST_STATS
   float progress = computeLoadProgress();
   if (progress > 0 && progress < 100) {
     size_t queued, inFlight, done;
