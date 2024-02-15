@@ -6,6 +6,15 @@
 
 - Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
 
+##### Additions :tada:
+
+- Added `contains` method to `BoundingSphere`.
+- Added `GlobeRectangle::MAXIMUM` static field.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
+
 ### v0.32.0 - 2024-02-01
 
 ##### Breaking Changes :mega:

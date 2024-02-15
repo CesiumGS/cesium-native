@@ -63,6 +63,15 @@ public:
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
 
   /**
+   * @brief Computes whether the given position is contained within the bounding
+   * sphere.
+   *
+   * @param position The position.
+   * @return Whether the position is contained within the bounding sphere.
+   */
+  bool contains(const glm::dvec3& position) const noexcept;
+
+  /**
    * @brief Transforms this bounding sphere to another coordinate system using a
    * 4x4 matrix.
    *
