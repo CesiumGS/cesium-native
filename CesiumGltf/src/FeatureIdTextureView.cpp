@@ -81,25 +81,12 @@ FeatureIdTextureView::FeatureIdTextureView(
 
   if (pTextureTransform) {
     this->_textureTransform = KhrTextureTransform(*pTextureTransform);
-
-    if (this->_textureTransform->status() == KhrTextureTransformStatus::Valid &&
-        pTextureTransform->texCoord) {
-      // Override with the extension's texcoord.
-      this->_texCoordSetIndex = *pTextureTransform->texCoord;
-    }
   }
 } // namespace CesiumGltf
 
 int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
-  }
-
-  if (this->_textureTransform &&
-      this->_textureTransform->status() == KhrTextureTransformStatus::Valid) {
-    glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
-    u = transformedUv.x;
-    v = transformedUv.y;
   }
 
   u = applySamplerWrapS(u, this->_pSampler->wrapS);

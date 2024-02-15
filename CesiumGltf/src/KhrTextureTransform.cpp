@@ -7,22 +7,23 @@ KhrTextureTransform::KhrTextureTransform() noexcept
     : _status(KhrTextureTransformStatus::Valid),
       _offset({0, 0}),
       _rotation(0),
-      _rotationSineCosine({0, 1}),
-      _scale({1.0, 1.0}) {}
+      _scale({1.0, 1.0}),
+      _texCoordSetIndex(std::nullopt),
+      _rotationSineCosine({0, 1}) {}
 
 KhrTextureTransform::KhrTextureTransform(
     const ExtensionKhrTextureTransform& extension) noexcept
     : _status(KhrTextureTransformStatus::Valid),
       _offset({0, 0}),
       _rotation(0),
-      _rotationSineCosine({0, 1}),
-      _scale({1.0, 1.0}) {
+      _scale({1.0, 1.0}),
+      _texCoordSetIndex(std::nullopt),
+      _rotationSineCosine({0, 1}) {
 
   if (extension.offset.size() != 2) {
     this->_status = KhrTextureTransformStatus::ErrorInvalidOffset;
     return;
   }
-
   this->_offset = {extension.offset[0], extension.offset[1]};
 
   this->_rotation = extension.rotation;
@@ -33,8 +34,9 @@ KhrTextureTransform::KhrTextureTransform(
     this->_status = KhrTextureTransformStatus::ErrorInvalidScale;
     return;
   }
-
   this->_scale = {extension.scale[0], extension.scale[1]};
+
+  this->_texCoordSetIndex = extension.texCoord;
 }
 
 glm::dvec2

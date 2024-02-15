@@ -64,13 +64,24 @@ public:
    */
   glm::dvec2 applyTransform(double u, double v) const noexcept;
 
+  /**
+   * @brief Gets the texture coordinate set index used by this texture
+   * transform. If defined, this should override the set index of the texture's
+   * original textureInfo.
+   */
+  std::optional<int64_t> getTexCoordSetIndex() {
+    return this->_texCoordSetIndex;
+  }
+
 private:
   KhrTextureTransformStatus _status;
   glm::dvec2 _offset;
   double _rotation;
+  glm::dvec2 _scale;
+  std::optional<int64_t> _texCoordSetIndex;
+
   // Cached values of sin(rotation) and cos(rotation).
   glm::dvec2 _rotationSineCosine;
-  glm::dvec2 _scale;
 };
 
 } // namespace CesiumGltf

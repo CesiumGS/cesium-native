@@ -145,8 +145,9 @@ public:
   }
 
   /**
-   * @brief Get the KHR_texture_transform for this feature ID texture, if it
-   * exists.
+   * @brief Get the KHR_texture_transform for this feature ID texture. If
+   * defined, clients should transform texture coordinates *before* they are
+   * used in `getFeatureID`.
    */
   std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
     return this->_textureTransform;

@@ -344,13 +344,6 @@ public:
 
     if (pTextureTransform) {
       this->_textureTransform = KhrTextureTransform(*pTextureTransform);
-
-      if (this->_textureTransform->status() ==
-              KhrTextureTransformStatus::Valid &&
-          pTextureTransform->texCoord) {
-        // Override with the extension's texcoord.
-        this->_texCoordSetIndex = *pTextureTransform->texCoord;
-      }
     }
   }
 
@@ -413,13 +406,6 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    if (this->_textureTransform &&
-        this->_textureTransform->status() == KhrTextureTransformStatus::Valid) {
-      glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
-      u = transformedUv.x;
-      v = transformedUv.y;
-    }
-
     u = applySamplerWrapS(u, this->_pSampler->wrapS);
     v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
@@ -466,8 +452,9 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
   /**
-   * @brief Get the KHR_texture_transform for this property texture property, if
-   * it exists.
+   * @brief Get the KHR_texture_transform for this property texture property. If
+   * defined, clients should transform texture coordinates *before* they are
+   * used in `get` or `getRaw`.
    */
   std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
     return this->_textureTransform;
@@ -614,13 +601,6 @@ public:
 
     if (pTextureTransform) {
       this->_textureTransform = KhrTextureTransform(*pTextureTransform);
-
-      if (this->_textureTransform->status() ==
-              KhrTextureTransformStatus::Valid &&
-          pTextureTransform->texCoord) {
-        // Override with the extension's texcoord.
-        this->_texCoordSetIndex = *pTextureTransform->texCoord;
-      }
     }
   }
 
@@ -710,13 +690,6 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    if (this->_textureTransform &&
-        this->_textureTransform->status() == KhrTextureTransformStatus::Valid) {
-      glm::dvec2 transformedUv = this->_textureTransform->applyTransform(u, v);
-      u = transformedUv.x;
-      v = transformedUv.y;
-    }
-
     u = applySamplerWrapS(u, this->_pSampler->wrapS);
     v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
@@ -764,8 +737,9 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
   /**
-   * @brief Get the KHR_texture_transform for this property texture property, if
-   * it exists.
+   * @brief Get the KHR_texture_transform for this property texture property. If
+   * defined, clients should transform texture coordinates *before* they are
+   * used in `get` or `getRaw`.
    */
   std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
     return this->_textureTransform;

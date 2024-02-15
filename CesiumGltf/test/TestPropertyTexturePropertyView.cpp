@@ -1771,7 +1771,8 @@ TEST_CASE("Check sampling with different sampler values") {
   }
 }
 
-TEST_CASE("Test PropertyTextureProperty samples with KHR_texture_transform") {
+TEST_CASE(
+    "Test PropertyTextureProperty constructs with KHR_texture_transform") {
   std::vector<uint8_t> data{1, 2, 3, 4};
 
   PropertyTextureProperty property;
@@ -1779,9 +1780,9 @@ TEST_CASE("Test PropertyTextureProperty samples with KHR_texture_transform") {
 
   ExtensionKhrTextureTransform& textureTransformExtension =
       property.addExtension<ExtensionKhrTextureTransform>();
-  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.offset = {1.0, 2.0};
   textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
-  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.scale = {2.0, 0.5};
   textureTransformExtension.texCoord = 10;
 
   ClassProperty classProperty;
@@ -1810,29 +1811,20 @@ TEST_CASE("Test PropertyTextureProperty samples with KHR_texture_transform") {
       sampler,
       image);
   REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
-  REQUIRE(view.getTexCoordSetIndex() == 10);
 
-  // This transforms to the following UV values:
-  // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
-  // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
-  // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
-  // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
-  std::vector<glm::dvec2> texCoords{
-      glm::dvec2(0, 0),
-      glm::dvec2(1.0, 0),
-      glm::dvec2(0, 1.0),
-      glm::dvec2(1.0, 1.0)};
+  auto textureTransform = view.getTextureTransform();
+  REQUIRE(textureTransform != std::nullopt);
+  REQUIRE(textureTransform->offset() == glm::dvec2(1.0, 2.0));
+  REQUIRE(textureTransform->rotation() == CesiumUtility::Math::PiOverTwo);
+  REQUIRE(textureTransform->scale() == glm::dvec2(2.0, 0.5));
 
-  std::vector<uint8_t> expectedValues{4, 2, 3, 1};
-
-  for (size_t i = 0; i < texCoords.size(); i++) {
-    glm::dvec2 uv = texCoords[i];
-    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedValues[i]);
-    REQUIRE(view.get(uv[0], uv[1]) == expectedValues[i]);
-  }
+  // Texcoord is not overridden by value in KHR_texture_transform, in case that
+  // clients don't support the extension.
+  REQUIRE(view.getTexCoordSetIndex() == 0);
+  REQUIRE(textureTransform->getTexCoordSetIndex() == 10);
 }
 
-TEST_CASE("Test normalized PropertyTextureProperty samples with "
+TEST_CASE("Test normalized PropertyTextureProperty constructs with "
           "KHR_texture_transform") {
   std::vector<uint8_t> data{0, 64, 127, 255};
 
@@ -1841,9 +1833,9 @@ TEST_CASE("Test normalized PropertyTextureProperty samples with "
 
   ExtensionKhrTextureTransform& textureTransformExtension =
       property.addExtension<ExtensionKhrTextureTransform>();
-  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.offset = {1.0, 2.0};
   textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
-  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.scale = {2.0, 0.5};
   textureTransformExtension.texCoord = 10;
 
   ClassProperty classProperty;
@@ -1873,26 +1865,15 @@ TEST_CASE("Test normalized PropertyTextureProperty samples with "
       sampler,
       image);
   REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
-  REQUIRE(view.getTexCoordSetIndex() == 10);
 
-  // This transforms to the following UV values:
-  // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
-  // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
-  // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
-  // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
-  std::vector<glm::dvec2> texCoords{
-      glm::dvec2(0, 0),
-      glm::dvec2(1.0, 0),
-      glm::dvec2(0, 1.0),
-      glm::dvec2(1.0, 1.0)};
+  auto textureTransform = view.getTextureTransform();
+  REQUIRE(textureTransform != std::nullopt);
+  REQUIRE(textureTransform->offset() == glm::dvec2(1.0, 2.0));
+  REQUIRE(textureTransform->rotation() == CesiumUtility::Math::PiOverTwo);
+  REQUIRE(textureTransform->scale() == glm::dvec2(2.0, 0.5));
 
-  std::vector<uint8_t> expectedValues{255, 64, 127, 0};
-
-  for (size_t i = 0; i < texCoords.size(); i++) {
-    glm::dvec2 uv = texCoords[i];
-    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedValues[i]);
-    REQUIRE(
-        view.get(uv[0], uv[1]) ==
-        static_cast<double>(expectedValues[i]) / 255.0);
-  }
+  // Texcoord is not overridden by value in KHR_texture_transform, in case that
+  // clients don't support the extension.
+  REQUIRE(view.getTexCoordSetIndex() == 0);
+  REQUIRE(textureTransform->getTexCoordSetIndex() == 10);
 }
