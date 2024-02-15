@@ -34,20 +34,26 @@ void TileWorkManager::workToStartingQueue(Work* pWork) {
 
   if (!pendingRequest) {
     // No pending request, go straight to processing queue
-    for (auto& element : _processingQueue)
+#ifndef NDEBUG
+    for (auto element : _processingQueue)
       assert(element->uniqueId != pWork->uniqueId);
+#endif
     _processingQueue.push_back(pWork);
   } else {
     auto foundIt = _inFlightRequests.find(pendingRequest->url);
     if (foundIt == _inFlightRequests.end()) {
       // The request isn't in flight, queue it
-      for (auto& element : _requestQueue)
+#ifndef NDEBUG
+      for (auto element : _requestQueue)
         assert(element->uniqueId != pWork->uniqueId);
+#endif
       _requestQueue.push_back(pWork);
     } else {
       // Already in flight, tag along
-      for (auto& element : foundIt->second)
+#ifndef NDEBUG
+      for (auto element : foundIt->second)
         assert(element->uniqueId != pWork->uniqueId);
+#endif
       foundIt->second.push_back(pWork);
     }
   }
@@ -190,15 +196,15 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
   assert(_ownedWork.find(work->uniqueId) != _ownedWork.end());
 
   // Assert this is not in any other queues
-  for (auto& element : _requestQueue)
+#ifndef NDEBUG
+  for (auto element : _requestQueue)
     assert(element->uniqueId != work->uniqueId);
-
   for (auto& urlWorkVecPair : _inFlightRequests)
-    for (auto& element : urlWorkVecPair.second)
+    for (auto element : urlWorkVecPair.second)
       assert(element->uniqueId != work->uniqueId);
-
-  for (auto& element : _processingQueue)
+  for (auto element : _processingQueue)
     assert(element->uniqueId != work->uniqueId);
+#endif
 
   // If this work has parent work, remove this reference
   // Work with child work waits until the children are done
@@ -309,16 +315,16 @@ void TileWorkManager::TakeProcessingWork(
       auto foundIt = _ownedWork.find(work->uniqueId);
 
       // We should own this and it should not be in any other queues
+#ifndef NDEBUG
       assert(foundIt != _ownedWork.end());
-      for (auto& element : _requestQueue)
+      for (auto element : _requestQueue)
         assert(element->uniqueId != work->uniqueId);
-
       for (auto& urlWorkVecPair : _inFlightRequests)
-        for (auto& element : urlWorkVecPair.second)
+        for (auto element : urlWorkVecPair.second)
           assert(element->uniqueId != work->uniqueId);
-
-      for (auto& element : _processingQueue)
+      for (auto element : _processingQueue)
         assert(element->uniqueId != work->uniqueId);
+#endif
 
       // Return to caller
       outFailed.emplace_back(

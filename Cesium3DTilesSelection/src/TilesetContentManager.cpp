@@ -1687,13 +1687,14 @@ void TilesetContentManager::dispatchProcessingWork(
               assert(!result.missingRequests.empty());
 
               for (auto& request : result.missingRequests) {
-                // Make sure we're not requesting something we have
+            // Make sure we're not requesting something we have
+#ifndef NDEBUG
                 assert(
                     _work->completedRequests.find(request.url) ==
                     _work->completedRequests.end());
-                for (auto& pending : _work->pendingRequests)
+                for (auto pending : _work->pendingRequests)
                   assert(pending.url != request.url);
-
+#endif
                 // Add new requests here
                 _work->pendingRequests.push_back(std::move(request));
               }
