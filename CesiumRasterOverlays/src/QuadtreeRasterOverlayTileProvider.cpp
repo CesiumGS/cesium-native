@@ -436,7 +436,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
   this->unloadCachedTiles();
 
-  return std::move(future);
+  return future;
 }
 
 namespace {
@@ -562,7 +562,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           RasterLoadResult loadResult;
           loadResult.missingRequests = std::move(allMissingRequests);
           loadResult.state = RasterOverlayTile::LoadState::RequestRequired;
-          return std::move(loadResult);
+          return loadResult;
         }
 
         // This set of images is only "useful" if at least one actually has
