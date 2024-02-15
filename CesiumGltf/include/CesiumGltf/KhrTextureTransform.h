@@ -69,7 +69,7 @@ public:
    * transform. If defined, this should override the set index of the texture's
    * original textureInfo.
    */
-  std::optional<int64_t> getTexCoordSetIndex() {
+  std::optional<int64_t> getTexCoordSetIndex() const noexcept {
     return this->_texCoordSetIndex;
   }
 
