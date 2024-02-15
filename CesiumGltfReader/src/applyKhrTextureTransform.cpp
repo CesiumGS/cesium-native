@@ -35,20 +35,20 @@ template <typename T>
 void processTextureInfo(
     Model& model,
     MeshPrimitive& primitive,
-    std::optional<T>& textureInfo) {
+    std::optional<T>& maybeTextureInfo) {
   static_assert(std::is_base_of<TextureInfo, T>::value);
-  if (!textureInfo) {
+  if (!maybeTextureInfo) {
     return;
   }
 
+  const TextureInfo& textureInfo = *maybeTextureInfo;
   const ExtensionKhrTextureTransform* pTextureTransform =
-      textureInfo->getExtension<ExtensionKhrTextureTransform>();
+      textureInfo.getExtension<ExtensionKhrTextureTransform>();
   if (!pTextureTransform) {
     return;
   }
 
-  int64_t texCoord =
-      pTextureTransform->texCoord.value_or(textureInfo->texCoord);
+  int64_t texCoord = pTextureTransform->texCoord.value_or(textureInfo.texCoord);
   auto find = primitive.attributes.find("TEXCOORD_" + std::to_string(texCoord));
   if (find == primitive.attributes.end()) {
     return;
@@ -93,7 +93,8 @@ void processTextureInfo(
   find->second = static_cast<int32_t>(model.accessors.size() - 1);
 
   // Erase the extension so it is not re-applied by client implementations.
-  textureInfo->extensions.erase(ExtensionKhrTextureTransform::ExtensionName);
+  maybeTextureInfo->extensions.erase(
+      ExtensionKhrTextureTransform::ExtensionName);
 }
 
 void applyKhrTextureTransform(Model& model) {
