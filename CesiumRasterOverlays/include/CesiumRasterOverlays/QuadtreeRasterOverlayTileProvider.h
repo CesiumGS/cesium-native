@@ -141,7 +141,7 @@ private:
     std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
   };
 
-  CesiumAsync::SharedFuture<LoadedQuadtreeImage> getQuadtreeTile(
+  CesiumAsync::Future<LoadedQuadtreeImage> getQuadtreeTile(
       const CesiumGeometry::QuadtreeTileID& tileID,
       const CesiumAsync::UrlResponseDataMap& responsesByUrl);
 
@@ -160,7 +160,7 @@ private:
       const CesiumGeometry::Rectangle& geometryRectangle,
       const glm::dvec2 targetScreenPixels,
       const CesiumAsync::UrlResponseDataMap& responsesByUrl,
-      std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>& outTiles);
+      std::vector<CesiumAsync::Future<LoadedQuadtreeImage>>& outTiles);
 
   void unloadCachedTiles();
 

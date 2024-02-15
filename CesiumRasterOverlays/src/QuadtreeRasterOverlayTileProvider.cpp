@@ -102,7 +102,7 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     const glm::dvec2 targetScreenPixels,
     const UrlResponseDataMap& responsesByUrl,
-    std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>& outTiles) {
+    std::vector<CesiumAsync::Future<LoadedQuadtreeImage>>& outTiles) {
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
   // Use Web Mercator for our texture coordinate computations if this imagery
@@ -270,15 +270,14 @@ void QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
         continue;
       }
 
-      CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
+      CesiumAsync::Future<LoadedQuadtreeImage> pTile =
           this->getQuadtreeTile(QuadtreeTileID(level, i, j), responsesByUrl);
       outTiles.emplace_back(std::move(pTile));
     }
   }
 }
 
-CesiumAsync::SharedFuture<
-    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>
+CesiumAsync::Future<QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const UrlResponseDataMap& responsesByUrl) {
@@ -295,13 +294,9 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
         cacheIt);
 
     LoadedQuadtreeImage cacheCopy = cacheIt->loadedImage;
-    Future<LoadedQuadtreeImage> future =
-        this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
-            {std::move(cacheCopy)});
 
-    SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
-
-    return result;
+    return this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
+        {std::move(cacheCopy)});
   }
 
   // Not cached, discover request here
@@ -317,12 +312,9 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
       loadResult.missingRequests.push_back(requestData);
       loadResult.state = RasterOverlayTile::LoadState::RequestRequired;
 
-      Future<LoadedQuadtreeImage> future =
-          this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
-              {std::make_shared<RasterLoadResult>(std::move(loadResult))});
-
-      SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
-      return result;
+      return this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
+          {std::make_shared<RasterLoadResult>(std::move(loadResult))});
+      ;
     }
   } else {
     // Error occurred while discovering request
@@ -330,12 +322,9 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     loadResult.errors.push_back(errorString);
     loadResult.state = RasterOverlayTile::LoadState::Failed;
 
-    Future<LoadedQuadtreeImage> future =
-        this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
-            {std::make_shared<RasterLoadResult>(std::move(loadResult))});
-
-    SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
-    return result;
+    return this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
+        {std::make_shared<RasterLoadResult>(std::move(loadResult))});
+    ;
   }
 
   // We create this lambda here instead of where it's used below so that we
@@ -445,11 +434,9 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
             return loadedImage;
           });
 
-  SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
-
   this->unloadCachedTiles();
 
-  return result;
+  return std::move(future);
 }
 
 namespace {
@@ -534,7 +521,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
     const UrlResponseDataMap& responsesByUrl) {
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles;
+  std::vector<CesiumAsync::Future<LoadedQuadtreeImage>> tiles;
   this->mapRasterTilesToGeometryTile(
       overlayTile.getRectangle(),
       overlayTile.getTargetScreenPixels(),
