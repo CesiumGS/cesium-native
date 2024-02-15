@@ -456,8 +456,7 @@ void TileWorkManager::transitionQueuedWork(
     thiz->_pAssetAccessor
         ->get(thiz->_asyncSystem, nextRequest->url, nextRequest->headers)
         .thenImmediately(
-            [thiz, _requestWork = requestWork](
-                std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
+            [thiz](std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               assert(thiz.get());
 
               thiz->onRequestFinished(pCompletedRequest);

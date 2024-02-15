@@ -416,7 +416,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
             // If more requests needed, pass through
             if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
-              return loadedImage;
+              return std::move(loadedImage);
             }
 
             // If a valid image, cache it
@@ -431,7 +431,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
               this->_tileLookup[tileID] = newIt;
             }
 
-            return loadedImage;
+            return std::move(loadedImage);
           });
 
   this->unloadCachedTiles();
