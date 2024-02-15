@@ -1,6 +1,7 @@
 #include "CesiumUtility/Gunzip.h"
 
 #include <catch2/catch.hpp>
+
 #include <algorithm>
 
 using namespace CesiumUtility;
