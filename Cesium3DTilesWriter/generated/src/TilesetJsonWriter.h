@@ -11,6 +11,13 @@ class ExtensionWriterContext;
 // forward declarations
 namespace Cesium3DTiles {
 struct Extension3dTilesBoundingVolumeS2;
+struct ExtensionContent3dTilesContentVoxels;
+struct Padding;
+struct VoxelContent;
+struct PropertyTable;
+struct PropertyTableProperty;
+struct VoxelBufferView;
+struct VoxelBuffer;
 struct Statistics;
 struct ClassStatistics;
 struct PropertyStatistics;
@@ -22,8 +29,6 @@ struct ClassProperty;
 struct Subtree;
 struct MetadataEntity;
 struct Availability;
-struct PropertyTable;
-struct PropertyTableProperty;
 struct BufferView;
 struct Buffer;
 struct Tileset;
@@ -47,6 +52,71 @@ struct Extension3dTilesBoundingVolumeS2JsonWriter {
 
   static void write(
       const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionContent3dTilesContentVoxelsJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionContent3dTilesContentVoxels;
+
+  static inline constexpr const char* ExtensionName = "3DTILES_content_voxels";
+
+  static void write(
+      const Cesium3DTiles::ExtensionContent3dTilesContentVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PaddingJsonWriter {
+  using ValueType = Cesium3DTiles::Padding;
+
+  static void write(
+      const Cesium3DTiles::Padding& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct VoxelContentJsonWriter {
+  using ValueType = Cesium3DTiles::VoxelContent;
+
+  static void write(
+      const Cesium3DTiles::VoxelContent& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PropertyTableJsonWriter {
+  using ValueType = Cesium3DTiles::PropertyTable;
+
+  static void write(
+      const Cesium3DTiles::PropertyTable& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PropertyTablePropertyJsonWriter {
+  using ValueType = Cesium3DTiles::PropertyTableProperty;
+
+  static void write(
+      const Cesium3DTiles::PropertyTableProperty& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct VoxelBufferViewJsonWriter {
+  using ValueType = Cesium3DTiles::VoxelBufferView;
+
+  static void write(
+      const Cesium3DTiles::VoxelBufferView& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct VoxelBufferJsonWriter {
+  using ValueType = Cesium3DTiles::VoxelBuffer;
+
+  static void write(
+      const Cesium3DTiles::VoxelBuffer& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -146,24 +216,6 @@ struct AvailabilityJsonWriter {
 
   static void write(
       const Cesium3DTiles::Availability& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct PropertyTableJsonWriter {
-  using ValueType = Cesium3DTiles::PropertyTable;
-
-  static void write(
-      const Cesium3DTiles::PropertyTable& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct PropertyTablePropertyJsonWriter {
-  using ValueType = Cesium3DTiles::PropertyTableProperty;
-
-  static void write(
-      const Cesium3DTiles::PropertyTableProperty& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
