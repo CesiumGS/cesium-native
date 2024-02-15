@@ -1622,12 +1622,19 @@ void TilesetContentManager::dispatchProcessingWork(
           .thenInMainThread(
               [_pTile = pTile, _thiz = thiz, _work = work](
                   TileLoadResultAndRenderResources&& pair) mutable {
-                if (pair.result.state == TileLoadResultState::RequestRequired) {
+                TileLoadResult& result = pair.result;
+                if (result.state == TileLoadResultState::RequestRequired) {
                   // This work goes back into the work manager queue
 
+                  // Make sure we're not requesting something we have
+                  CesiumAsync::RequestData& request =
+                      result.additionalRequestData;
+                  assert(
+                      _work->completedRequests.find(request.url) ==
+                      _work->completedRequests.end());
+
                   // Add new requests here
-                  _work->pendingRequests.push_back(
-                      std::move(pair.result.additionalRequestData));
+                  _work->pendingRequests.push_back(std::move(request));
 
                   TileWorkManager::RequeueWorkForRequest(
                       _thiz->_pTileWorkManager,
@@ -1635,7 +1642,7 @@ void TilesetContentManager::dispatchProcessingWork(
                 } else {
                   _thiz->setTileContent(
                       *_pTile,
-                      std::move(pair.result),
+                      std::move(result),
                       pair.pRenderResources);
 
                   _thiz->_pTileWorkManager->SignalWorkComplete(_work);
