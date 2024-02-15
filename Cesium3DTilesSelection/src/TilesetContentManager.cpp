@@ -1481,6 +1481,7 @@ void TilesetContentManager::discoverLoadWork(
     const std::vector<TileLoadRequest>& requests,
     double maximumScreenSpaceError,
     std::vector<TileWorkManager::Order>& outOrders) {
+  std::set<Tile*> tileWorkAdded;
   for (const TileLoadRequest& loadRequest : requests) {
     // Failed tiles don't get another chance
     if (loadRequest.pTile->getState() == TileLoadState::Failed)
@@ -1509,6 +1510,17 @@ void TilesetContentManager::discoverLoadWork(
     for (ParsedTileWork& work : parsedTileWork) {
       double priorityBias = double(maxDepth - work.depthIndex);
       double resultPriority = loadRequest.priority + priorityBias;
+
+      // We always need a source (non raster) tile
+      assert(work.tileWorkChain.pTile);
+      Tile* pTile = work.tileWorkChain.pTile;
+
+      // If order for source tile already exists, skip adding more work for it
+      // Ex. Tile work needs to load its parent, and multiple children point
+      // to that same parent. Don't add the parent more than once
+      if (tileWorkAdded.find(pTile) != tileWorkAdded.end())
+        continue;
+      tileWorkAdded.insert(pTile);
 
       auto& newOrder = outOrders.emplace_back(TileWorkManager::Order{
           std::move(work.tileWorkChain.requestData),
