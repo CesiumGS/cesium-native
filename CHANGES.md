@@ -8,7 +8,15 @@
 
 ##### Additions :tada:
 
-- `FeatureIdTextureView` and `PropertyTexturePropertyView` now account for the `KHR_texture_transform` glTF extension, if present.
+- Added `KhrTextureTransform`, a utility class that parses the `KHR_texture_transform` glTF extension and reports whether it is valid. UVs may be transformed on the CPU using `applyTransform`.
+- Added `getTextureTransform` methods to `FeatureIdTextureView` and `PropertyTexturePropertyView`. Clients should apply the `KhrTextureTransform` to UV coordinates _before_ they are used to sample the texture.
+- Added `contains` method to `BoundingSphere`.
+- Added `GlobeRectangle::MAXIMUM` static field.
+- Switched from `zlib` to `zlib-ng` in order to improve the performance of decompressing gzipped data.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
 
 ### v0.32.0 - 2024-02-01
 
