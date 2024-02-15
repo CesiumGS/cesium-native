@@ -189,7 +189,7 @@ private:
 
   struct CacheEntry {
     CesiumGeometry::QuadtreeTileID tileID;
-    CesiumAsync::SharedFuture<LoadedQuadtreeImage> future;
+    LoadedQuadtreeImage loadedImage;
   };
 
   // Tiles at the beginning of this list are the least recently used (oldest),

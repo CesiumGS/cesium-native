@@ -294,7 +294,14 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
         this->_tilesOldToRecent,
         cacheIt);
 
-    return cacheIt->future;
+    LoadedQuadtreeImage cacheCopy = cacheIt->loadedImage;
+    Future<LoadedQuadtreeImage> future =
+        this->getAsyncSystem().createResolvedFuture<LoadedQuadtreeImage>(
+            {std::move(cacheCopy)});
+
+    SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
+
+    return result;
   }
 
   // Not cached, discover request here
@@ -375,8 +382,11 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                   std::nullopt});
             }
 
-            if (result.image && result.errors.empty() &&
-                result.image->width > 0 && result.image->height > 0) {
+            bool imageValid = result.image && result.errors.empty() &&
+                              result.image->width > 0 &&
+                              result.image->height > 0;
+
+            if (imageValid) {
               // Successfully loaded, continue.
               cachedBytes += int64_t(result.image->pixelData.size());
 
@@ -411,14 +421,31 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                   std::make_shared<RasterLoadResult>(std::move(result)),
                   std::nullopt});
             }
+          })
+          .thenInMainThread([this, tileID](LoadedQuadtreeImage&& loadedImage) {
+            RasterLoadResult& result = *loadedImage.pResult.get();
+
+            // If more requests needed, pass through
+            if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
+              return loadedImage;
+            }
+
+            // If a valid image, cache it
+            bool imageValid = result.image && result.errors.empty() &&
+                              result.image->width > 0 &&
+                              result.image->height > 0;
+
+            if (imageValid) {
+              auto newIt = this->_tilesOldToRecent.emplace(
+                  this->_tilesOldToRecent.end(),
+                  CacheEntry{tileID, LoadedQuadtreeImage{loadedImage}});
+              this->_tileLookup[tileID] = newIt;
+            }
+
+            return loadedImage;
           });
 
-  auto newIt = this->_tilesOldToRecent.emplace(
-      this->_tilesOldToRecent.end(),
-      CacheEntry{tileID, std::move(future).share()});
-  this->_tileLookup[tileID] = newIt;
-
-  SharedFuture<LoadedQuadtreeImage> result = newIt->future;
+  SharedFuture<LoadedQuadtreeImage> result(std::move(future).share());
 
   this->unloadCachedTiles();
 
@@ -526,10 +553,20 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           if (image.pResult->state ==
               RasterOverlayTile::LoadState::RequestRequired) {
             assert(!image.pResult->missingRequests.empty());
-            std::copy(
-                image.pResult->missingRequests.begin(),
-                image.pResult->missingRequests.end(),
-                std::back_inserter(allMissingRequests));
+
+            // Merge any duplicate urls
+            for (auto& request : image.pResult->missingRequests) {
+              auto foundIt = std::find_if(
+                  allMissingRequests.begin(),
+                  allMissingRequests.end(),
+                  [url = request.url](const auto& val) {
+                    return val.url == url;
+                  });
+              if (foundIt != allMissingRequests.end())
+                continue;
+
+              allMissingRequests.push_back(request);
+            }
           }
         }
 
@@ -585,15 +622,7 @@ void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
 
   while (it != this->_tilesOldToRecent.end() &&
          this->_cachedBytes > maxCacheBytes) {
-    const SharedFuture<LoadedQuadtreeImage>& future = it->future;
-    if (!future.isReady()) {
-      // Don't unload tiles that are still loading.
-      ++it;
-      continue;
-    }
-
-    // Guaranteed not to block because isReady returned true.
-    const LoadedQuadtreeImage& image = future.wait();
+    const LoadedQuadtreeImage& image = it->loadedImage;
 
     std::shared_ptr<RasterLoadResult> pImage = image.pResult;
 
