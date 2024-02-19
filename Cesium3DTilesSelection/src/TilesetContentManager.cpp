@@ -899,7 +899,7 @@ void TilesetContentManager::processLoadRequests(
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
   std::vector<const TileWorkManager::Work*> workCreated;
-  TileWorkManager::TryAddWork(
+  TileWorkManager::TryAddOrders(
       this->_pTileWorkManager,
       orders,
       maxTileLoads,

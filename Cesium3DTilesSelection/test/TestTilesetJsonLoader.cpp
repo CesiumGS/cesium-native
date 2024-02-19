@@ -116,7 +116,7 @@ TileLoadResult loadTileContent(
   size_t maxRequests = 20;
 
   std::vector<const TileWorkManager::Work*> workCreated;
-  TileWorkManager::TryAddWork(workManager, orders, maxRequests, workCreated);
+  TileWorkManager::TryAddOrders(workManager, orders, maxRequests, workCreated);
   assert(workCreated.size() == 1);
 
   std::vector<TileWorkManager::Work*> completedWork;

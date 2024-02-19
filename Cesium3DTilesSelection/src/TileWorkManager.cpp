@@ -26,7 +26,16 @@ void TileWorkManager::Shutdown() {
   _failedWork.clear();
 }
 
-void TileWorkManager::workToStartingQueue(Work* pWork) {
+void TileWorkManager::workToProcessingQueue(Work* pWork) {
+#ifndef NDEBUG
+  for (auto element : _processingQueue)
+    assert(element->uniqueId != pWork->uniqueId);
+#endif
+
+  _processingQueue.push_back(pWork);
+}
+
+void TileWorkManager::stageWork(Work* pWork) {
   // Assert this work is already owned by this manager
   assert(_ownedWork.find(pWork->uniqueId) != _ownedWork.end());
 
@@ -34,11 +43,7 @@ void TileWorkManager::workToStartingQueue(Work* pWork) {
 
   if (!pendingRequest) {
     // No pending request, go straight to processing queue
-#ifndef NDEBUG
-    for (auto element : _processingQueue)
-      assert(element->uniqueId != pWork->uniqueId);
-#endif
-    _processingQueue.push_back(pWork);
+    workToProcessingQueue(pWork);
   } else {
     auto foundIt = _inFlightRequests.find(pendingRequest->url);
     if (foundIt == _inFlightRequests.end()) {
@@ -87,7 +92,7 @@ TileWorkManager::Work* TileWorkManager::createWorkFromOrder(Order* pOrder) {
 
   Work* pWork = &returnPair.first->second;
 
-  workToStartingQueue(pWork);
+  stageWork(pWork);
 
   return pWork;
 }
@@ -113,7 +118,33 @@ void TileWorkManager::ordersToWork(
   }
 }
 
-void TileWorkManager::TryAddWork(
+void TileWorkManager::throttleOrders(
+    size_t existingCount,
+    size_t maxCount,
+    std::vector<Order*>& inOutOrders) {
+  if (existingCount >= maxCount) {
+    // No request slots open, don't submit anything
+    inOutOrders.clear();
+  } else {
+    size_t slotsOpen = maxCount - existingCount;
+    if (slotsOpen >= inOutOrders.size()) {
+      // We can take all incoming work
+      return;
+    } else {
+      // We can only take part of the incoming work
+      // Just submit the highest priority
+      // Put highest priority at front of vector
+      // then chop off the rest
+      std::sort(begin(inOutOrders), end(inOutOrders), [](Order* a, Order* b) {
+        return (*a) < (*b);
+      });
+
+      inOutOrders.resize(slotsOpen);
+    }
+  }
+}
+
+void TileWorkManager::TryAddOrders(
     std::shared_ptr<TileWorkManager>& thiz,
     std::vector<Order>& orders,
     size_t maxSimultaneousRequests,
@@ -132,37 +163,29 @@ void TileWorkManager::TryAddWork(
       requestOrders.push_back(&order);
   }
 
-  // Figure out how much url work we will accept.
-  // We want some work to be ready to go in between frames
+  // Figure out how much url work we will accept
+  //  
+  // For requests, we want some work to be ready to go in between frames
   // so the dispatcher doesn't starve while we wait for a tick
-  size_t betweenFrameBuffer = 10;
-  size_t maxCountToQueue = maxSimultaneousRequests + betweenFrameBuffer;
-  size_t pendingRequestCount = thiz->GetPendingRequestsCount();
+  // 
+  // For processing we don't want excessive amounts of work queued
+  // Ex. Spinning around, content is cached, content requests are beating processing work
+  // and queueing up faster than they are consumed
+  size_t requestsMax = maxSimultaneousRequests + 10;
+  size_t processingMax = maxSimultaneousRequests * 10;
 
-  std::vector<Order*> requestOrdersToSubmit;
-  if (pendingRequestCount >= maxCountToQueue) {
-    // No request slots open, we can at least insert our processing work
-  } else {
-    size_t slotsOpen = maxCountToQueue - pendingRequestCount;
-    if (slotsOpen >= requestOrders.size()) {
-      // We can take all incoming work
-      requestOrdersToSubmit = requestOrders;
-    } else {
-      // We can only take part of the incoming work
-      // Just submit the highest priority
-      // Put highest priority at front of vector
-      requestOrdersToSubmit = requestOrders;
+  size_t requestsCount, processingCount;
+  thiz->GetPendingCount(requestsCount, processingCount);
+  TileWorkManager::throttleOrders(
+      requestsCount,
+      requestsMax,
+      requestOrders);
+  TileWorkManager::throttleOrders(
+      processingCount,
+      processingMax,
+      processingOrders);
 
-      std::sort(
-          begin(requestOrdersToSubmit),
-          end(requestOrdersToSubmit),
-          [](Order* a, Order* b) { return (*a) < (*b); });
-
-      requestOrdersToSubmit.resize(slotsOpen);
-    }
-  }
-
-  if (requestOrdersToSubmit.empty() && processingOrders.empty())
+  if (requestOrders.empty() && processingOrders.empty())
     return;
 
   {
@@ -170,11 +193,11 @@ void TileWorkManager::TryAddWork(
     thiz->_maxSimultaneousRequests = maxSimultaneousRequests;
 
     // Copy load requests into internal work we will own
-    thiz->ordersToWork(requestOrdersToSubmit, workCreated);
+    thiz->ordersToWork(requestOrders, workCreated);
     thiz->ordersToWork(processingOrders, workCreated);
   }
 
-  if (requestOrdersToSubmit.size())
+  if (requestOrders.size())
     transitionQueuedWork(thiz);
 }
 
@@ -183,7 +206,7 @@ void TileWorkManager::RequeueWorkForRequest(
     Work* requestWork) {
   {
     std::lock_guard<std::mutex> lock(thiz->_requestsLock);
-    thiz->workToStartingQueue(requestWork);
+    thiz->stageWork(requestWork);
   }
 
   transitionQueuedWork(thiz);
@@ -271,16 +294,19 @@ void TileWorkManager::onRequestFinished(
     requestWork->pendingRequests.pop_back();
 
     // Put it back into the appropriate queue
-    workToStartingQueue(requestWork);
+    stageWork(requestWork);
   }
 
   // Remove it
   _inFlightRequests.erase(foundIt);
 }
 
-size_t TileWorkManager::GetPendingRequestsCount() {
+void TileWorkManager::GetPendingCount(
+    size_t& pendingRequests,
+    size_t& pendingProcessing) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  return _requestQueue.size() + _inFlightRequests.size();
+  pendingRequests = _requestQueue.size() + _inFlightRequests.size();
+  pendingProcessing = _processingQueue.size();
 }
 
 size_t TileWorkManager::GetTotalPendingCount() {

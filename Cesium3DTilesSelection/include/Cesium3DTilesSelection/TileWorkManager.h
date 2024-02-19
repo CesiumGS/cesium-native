@@ -87,7 +87,7 @@ public:
     }
   };
 
-  static void TryAddWork(
+  static void TryAddOrders(
       std::shared_ptr<TileWorkManager>& thiz,
       std::vector<Order>& orders,
       size_t maxSimultaneousRequests,
@@ -109,7 +109,7 @@ public:
 
   void SignalWorkComplete(Work* work);
 
-  size_t GetPendingRequestsCount();
+  void GetPendingCount(size_t& pendingRequests, size_t& pendingProcessing);
   size_t GetTotalPendingCount();
 
   void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
@@ -117,12 +117,19 @@ public:
   void Shutdown();
 
 private:
+  static void throttleOrders(
+      size_t existingCount,
+      size_t maxCount,
+      std::vector<Order*>& inOutOrders);
+
   static void transitionQueuedWork(std::shared_ptr<TileWorkManager>& thiz);
 
   void onRequestFinished(
       std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest);
 
-  void workToStartingQueue(Work* pWork);
+  void stageWork(Work* pWork);
+
+  void workToProcessingQueue(Work* pWork);
 
   Work* createWorkFromOrder(Order* pOrder);
 
