@@ -164,22 +164,19 @@ void TileWorkManager::TryAddOrders(
   }
 
   // Figure out how much url work we will accept
-  //  
+  //
   // For requests, we want some work to be ready to go in between frames
   // so the dispatcher doesn't starve while we wait for a tick
-  // 
+  //
   // For processing we don't want excessive amounts of work queued
-  // Ex. Spinning around, content is cached, content requests are beating processing work
-  // and queueing up faster than they are consumed
+  // Ex. Spinning around, content is cached, content requests are beating
+  // processing work and queueing up faster than they are consumed
   size_t requestsMax = maxSimultaneousRequests + 10;
   size_t processingMax = maxSimultaneousRequests * 10;
 
   size_t requestsCount, processingCount;
   thiz->GetPendingCount(requestsCount, processingCount);
-  TileWorkManager::throttleOrders(
-      requestsCount,
-      requestsMax,
-      requestOrders);
+  TileWorkManager::throttleOrders(requestsCount, requestsMax, requestOrders);
   TileWorkManager::throttleOrders(
       processingCount,
       processingMax,
