@@ -84,15 +84,31 @@ public:
   FeatureIdTextureView() noexcept;
 
   /**
-   * @brief Construct a view of the data specified by a
-   * {@link FeatureIdTexture}.
+   * @brief Construct a view of the data specified by a {@link FeatureIdTexture}.
+   *
+   * A feature ID texture may contain the `KHR_texture_transform` extension,
+   * which transforms the texture coordinates used to sample the texture. The
+   * extension may also override the TEXCOORD set index that was originally
+   * specified by the feature ID texture.
+   *
+   * If a view is constructed with applyKhrTextureTransformExtension set to
+   * true, the view will automatically apply the texture transform to any UV
+   * coordinates used to sample the texture. If the extension defines its own
+   * TEXCOORD set index, it will override the original value.
+   *
+   * Otherwise, if the flag is set to false, UVs will not be transformed and
+   * the original TEXCOORD set index will be preserved. The extension's values
+   * may still be retrieved using getTextureTransform, if desired.
    *
    * @param model The glTF in which to look for the feature ID texture's data.
-   * @param featureIDTexture The feature ID texture to create a view for.
+   * @param featureIdTexture The feature ID texture to create a view for.
+   * @param applyKhrTextureTransformExtension Whether to automatically apply the
+   * `KHR_texture_transform` extension to the feature ID texture, if it exists.
    */
   FeatureIdTextureView(
       const Model& model,
-      const FeatureIdTexture& featureIdTexture) noexcept;
+      const FeatureIdTexture& featureIdTexture,
+      bool applyKhrTextureTransformExtension = false) noexcept;
 
   /**
    * @brief Get the feature ID from the texture at the given texture
@@ -111,7 +127,7 @@ public:
    *
    * If invalid, it will not be safe to sample feature IDs from this view.
    */
-  FeatureIdTextureViewStatus status() const noexcept { return _status; }
+  FeatureIdTextureViewStatus status() const noexcept { return this->_status; }
 
   /**
    * @brief Get the actual feature ID texture.
@@ -119,7 +135,7 @@ public:
    * This will be nullptr if the feature ID texture view runs into problems
    * during construction.
    */
-  const ImageCesium* getImage() const noexcept { return _pImage; }
+  const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
   /**
    * @brief Get the sampler describing how to sample the data from the
@@ -134,20 +150,38 @@ public:
    * @brief Get the channels of this feature ID texture. The channels represent
    * the bytes of the actual feature ID, in little-endian order.
    */
-  std::vector<int64_t> getChannels() const noexcept { return _channels; }
+  std::vector<int64_t> getChannels() const noexcept { return this->_channels; }
 
   /**
    * @brief Get the texture coordinate set index for this feature ID
    * texture.
+   *
+   * If applyKhrTextureTransformExtension is true, and if the feature ID texture
+   * contains the `KHR_texture_transform` extension, this will return the value
+   * from the extension, as it is meant to override the original index. However,
+   * if the extension does not specify a TEXCOORD set index, then the original
+   * index of the feature ID texture is returned.
    */
   int64_t getTexCoordSetIndex() const noexcept {
+    if (this->_applyTextureTransform && this->_textureTransform) {
+      return this->_textureTransform->getTexCoordSetIndex().value_or(
+          this->_texCoordSetIndex);
+    }
     return this->_texCoordSetIndex;
   }
 
   /**
-   * @brief Get the KHR_texture_transform for this feature ID texture. If
-   * defined, clients should transform texture coordinates *before* they are
-   * used in `getFeatureID`.
+   * @brief Get the KHR_texture_transform for this feature ID texture, if it
+   * exists.
+   *
+   * Even if this view was constructed with applyKhrTextureTransformExtension
+   * set to false, it will save the extension's values, and they may be
+   * retrieved through this function.
+   *
+   * If this view was constructed with applyKhrTextureTransformExtension set to
+   * true, any texture coordinates passed into `getFeatureID` will be
+   * automatically transformed, so there's no need to re-apply the transform
+   * here.
    */
   std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
     return this->_textureTransform;
@@ -161,6 +195,7 @@ private:
   const ImageCesium* _pImage;
   const Sampler* _pSampler;
 
+  bool _applyTextureTransform;
   std::optional<KhrTextureTransform> _textureTransform;
 };
 } // namespace CesiumGltf

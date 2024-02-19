@@ -10,16 +10,19 @@ FeatureIdTextureView::FeatureIdTextureView() noexcept
       _channels(),
       _pImage(nullptr),
       _pSampler(nullptr),
+      _applyTextureTransform(false),
       _textureTransform(std::nullopt) {}
 
 FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
-    const FeatureIdTexture& featureIdTexture) noexcept
+    const FeatureIdTexture& featureIdTexture,
+    bool applyKhrTextureTransform) noexcept
     : _status(FeatureIdTextureViewStatus::ErrorUninitialized),
       _texCoordSetIndex(featureIdTexture.texCoord),
       _channels(),
       _pImage(nullptr),
       _pSampler(nullptr),
+      _applyTextureTransform(applyKhrTextureTransform),
       _textureTransform(std::nullopt) {
   int32_t textureIndex = featureIdTexture.index;
   if (textureIndex < 0 ||
@@ -78,7 +81,6 @@ FeatureIdTextureView::FeatureIdTextureView(
 
   const ExtensionKhrTextureTransform* pTextureTransform =
       featureIdTexture.getExtension<ExtensionKhrTextureTransform>();
-
   if (pTextureTransform) {
     this->_textureTransform = KhrTextureTransform(*pTextureTransform);
   }
@@ -87,6 +89,12 @@ FeatureIdTextureView::FeatureIdTextureView(
 int64_t FeatureIdTextureView::getFeatureID(double u, double v) const noexcept {
   if (this->_status != FeatureIdTextureViewStatus::Valid) {
     return -1;
+  }
+
+  if (this->_applyTextureTransform && this->_textureTransform) {
+    glm::dvec2 transformedUvs = this->_textureTransform->applyTransform(u, v);
+    u = transformedUvs.x;
+    v = transformedUvs.y;
   }
 
   u = applySamplerWrapS(u, this->_pSampler->wrapS);
