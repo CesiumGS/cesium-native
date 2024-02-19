@@ -100,7 +100,7 @@ public:
   computeDistanceSquaredToPosition(const glm::dvec3& position) const noexcept;
 
   /**
-   * @brief Computes whether the given position is contained within bounding
+   * @brief Computes whether the given position is contained within the bounding
    * box.
    *
    * @param position The position.

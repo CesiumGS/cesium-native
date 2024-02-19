@@ -46,7 +46,7 @@ struct CESIUMGLTFWRITER_API GltfWriterOptions {
 
   /**
    * @brief Byte alignment of the GLB binary chunk. When using 64-bit types in
-   * EXT_mesh_features or EXT_feature_metadata this value should be set to 8.
+   * EXT_mesh_features this value should be set to 8.
    */
   size_t binaryChunkByteAlignment = 4;
 };

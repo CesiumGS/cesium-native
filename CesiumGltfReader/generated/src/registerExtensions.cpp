@@ -14,10 +14,8 @@
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionKhrTextureTransformJsonHandler.h"
-#include "ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
-#include "ExtensionModelExtFeatureMetadataJsonHandler.h"
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
@@ -26,12 +24,14 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
@@ -41,9 +41,6 @@ namespace CesiumGltfReader {
 void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   (void)options;
   options.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
-  options.registerExtension<
-      CesiumGltf::Model,
-      ExtensionModelExtFeatureMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
       ExtensionModelExtStructuralMetadataJsonHandler>();
@@ -56,9 +53,6 @@ void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonHandler>();
-  options.registerExtension<
-      CesiumGltf::MeshPrimitive,
-      ExtensionMeshPrimitiveExtFeatureMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionExtMeshFeaturesJsonHandler>();
@@ -103,6 +97,12 @@ void registerExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       ExtensionKhrTextureTransformJsonHandler>();
   options.registerExtension<
       CesiumGltf::MaterialNormalTextureInfo,
+      ExtensionKhrTextureTransformJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::PropertyTextureProperty,
+      ExtensionKhrTextureTransformJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonHandler>();
 }
 } // namespace CesiumGltfReader
