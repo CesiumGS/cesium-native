@@ -239,7 +239,9 @@ public:
         _pImage(nullptr),
         _texCoordSetIndex(0),
         _channels(),
-        _swizzle() {}
+        _swizzle(),
+        _applyTextureTransform(false),
+        _textureTransform(std::nullopt) {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -253,6 +255,7 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle(),
+        _applyTextureTransform(false),
         _textureTransform(std::nullopt) {
     assert(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
@@ -274,6 +277,7 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle(),
+        _applyTextureTransform(false),
         _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
@@ -296,23 +300,42 @@ public:
   /**
    * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
+   * A property texture property may contain the `KHR_texture_transform`
+   * extension, which transforms the texture coordinates used to sample the
+   * texture. The extension may also override the TEXCOORD set index that was
+   * originally specified by the property texture property.
+   *
+   * If a view is constructed with applyKhrTextureTransformExtension set to
+   * true, the view will automatically apply the texture transform to any UV
+   * coordinates used to sample the texture. If the extension defines its own
+   * TEXCOORD set index, it will override the original value.
+   *
+   * Otherwise, if the flag is set to false, UVs will not be transformed and
+   * the original TEXCOORD set index will be preserved. The extension's values
+   * may still be retrieved using getTextureTransform, if desired.
+   *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageCesium} used by the property.
-   * @param channels The code from {@link PropertyTextureProperty::channels}.
+   * @param channels The value of {@link PropertyTextureProperty::channels}.
+   * @param applyKhrTextureTransformExtension Whether to automatically apply the
+   * `KHR_texture_transform` extension to the property texture property, if it
+   * exists.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image) noexcept
+      const ImageCesium& image,
+      bool applyKhrTextureTransformExtension = false) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         _pSampler(&sampler),
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
         _channels(property.channels),
         _swizzle(),
+        _applyTextureTransform(applyKhrTextureTransformExtension),
         _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
@@ -406,6 +429,12 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
+    if (this->_applyTextureTransform && this->_textureTransform) {
+      glm::dvec2 transformedUvs = this->_textureTransform->applyTransform(u, v);
+      u = transformedUvs.x;
+      v = transformedUvs.y;
+    }
+
     u = applySamplerWrapS(u, this->_pSampler->wrapS);
     v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
@@ -417,8 +446,18 @@ public:
 
   /**
    * @brief Get the texture coordinate set index for this property.
+   *
+   * If applyKhrTextureTransformExtension is true, and if the property texture
+   * property contains the `KHR_texture_transform` extension, this will return
+   * the value from the extension, as it is meant to override the original
+   * index. However, if the extension does not specify a TEXCOORD set index,
+   * then the original index of the property texture property is returned.
    */
   int64_t getTexCoordSetIndex() const noexcept {
+    if (this->_applyTextureTransform && this->_textureTransform) {
+      return this->_textureTransform->getTexCoordSetIndex().value_or(
+          this->_texCoordSetIndex);
+    }
     return this->_texCoordSetIndex;
   }
 
@@ -452,9 +491,17 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
   /**
-   * @brief Get the KHR_texture_transform for this property texture property. If
-   * defined, clients should transform texture coordinates *before* they are
-   * used in `get` or `getRaw`.
+   * @brief Get the KHR_texture_transform for this property texture property, if
+   * it exists.
+   *
+   * Even if this view was constructed with applyKhrTextureTransformExtension
+   * set to false, it will save the extension's values, and they may be
+   * retrieved through this function.
+   *
+   * If this view was constructed with applyKhrTextureTransformExtension set to
+   * true, any texture coordinates passed into `get` or `getRaw` will be
+   * automatically transformed, so there's no need to re-apply the transform
+   * here.
    */
   std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
     return this->_textureTransform;
@@ -466,6 +513,7 @@ private:
   int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
+  bool _applyTextureTransform;
   std::optional<KhrTextureTransform> _textureTransform;
 };
 
@@ -497,6 +545,7 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle(),
+        _applyTextureTransform(false),
         _textureTransform(std::nullopt) {}
 
   /**
@@ -511,6 +560,7 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle(),
+        _applyTextureTransform(false),
         _textureTransform(std::nullopt) {
     assert(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
@@ -532,6 +582,7 @@ public:
         _texCoordSetIndex(0),
         _channels(),
         _swizzle(),
+        _applyTextureTransform(false),
         _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
@@ -554,23 +605,42 @@ public:
   /**
    * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
+   * A property texture property may contain the `KHR_texture_transform`
+   * extension, which transforms the texture coordinates used to sample the
+   * texture. The extension may also override the TEXCOORD set index that was
+   * originally specified by the property texture property.
+   *
+   * If a view is constructed with applyKhrTextureTransformExtension set to
+   * true, the view will automatically apply the texture transform to any UV
+   * coordinates used to sample the texture. If the extension defines its own
+   * TEXCOORD set index, it will override the original value.
+   *
+   * Otherwise, if the flag is set to false, UVs will not be transformed and
+   * the original TEXCOORD set index will be preserved. The extension's values
+   * may still be retrieved using getTextureTransform, if desired.
+   *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageCesium} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
+   * @param applyKhrTextureTransformExtension Whether to automatically apply the
+   * `KHR_texture_transform` extension to the property texture property, if it
+   * exists.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image) noexcept
+      const ImageCesium& image,
+      bool applyKhrTextureTransformExtension = false) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         _pSampler(&sampler),
         _pImage(&image),
         _texCoordSetIndex(property.texCoord),
         _channels(property.channels),
         _swizzle(),
+        _applyTextureTransform(applyKhrTextureTransformExtension),
         _textureTransform(std::nullopt) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
@@ -690,6 +760,12 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
+    if (this->_applyTextureTransform && this->_textureTransform) {
+      glm::dvec2 transformedUvs = this->_textureTransform->applyTransform(u, v);
+      u = transformedUvs.x;
+      v = transformedUvs.y;
+    }
+
     u = applySamplerWrapS(u, this->_pSampler->wrapS);
     v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
@@ -702,8 +778,18 @@ public:
 
   /**
    * @brief Get the texture coordinate set index for this property.
+   *
+   * If applyKhrTextureTransformExtension is true, and if the property texture
+   * property contains the `KHR_texture_transform` extension, this will return
+   * the value from the extension, as it is meant to override the original
+   * index. However, if the extension does not specify a TEXCOORD set index,
+   * then the original index of the property texture property is returned.
    */
   int64_t getTexCoordSetIndex() const noexcept {
+    if (this->_applyTextureTransform && this->_textureTransform) {
+      return this->_textureTransform->getTexCoordSetIndex().value_or(
+          this->_texCoordSetIndex);
+    }
     return this->_texCoordSetIndex;
   }
 
@@ -737,9 +823,17 @@ public:
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
   /**
-   * @brief Get the KHR_texture_transform for this property texture property. If
-   * defined, clients should transform texture coordinates *before* they are
-   * used in `get` or `getRaw`.
+   * @brief Get the KHR_texture_transform for this property texture property, if
+   * it exists.
+   *
+   * Even if this view was constructed with applyKhrTextureTransformExtension
+   * set to false, it will save the extension's values, and they may be
+   * retrieved through this function.
+   *
+   * If this view was constructed with applyKhrTextureTransformExtension set to
+   * true, any texture coordinates passed into `get` or `getRaw` will be
+   * automatically transformed, so there's no need to re-apply the transform
+   * here.
    */
   std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
     return this->_textureTransform;
@@ -751,6 +845,7 @@ private:
   int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
+  bool _applyTextureTransform;
   std::optional<KhrTextureTransform> _textureTransform;
 };
 #pragma endregion
