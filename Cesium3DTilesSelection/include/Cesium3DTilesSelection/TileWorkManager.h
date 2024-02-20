@@ -126,7 +126,7 @@ private:
       size_t maxCount,
       std::vector<Order*>& inOutOrders);
 
-  static void transitionQueuedWork(std::shared_ptr<TileWorkManager>& thiz);
+  static void transitionRequests(std::shared_ptr<TileWorkManager>& thiz);
 
   void onRequestFinished(
       std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest);
@@ -144,9 +144,12 @@ private:
   std::mutex _requestsLock;
 
   bool _shutdownSignaled = false;
+
   std::map<TileSource, Work> _ownedWork;
-  std::vector<Work*> _requestQueue;
-  std::map<std::string, std::vector<Work*>> _inFlightRequests;
+
+  std::vector<Work*> _requestsQueue;
+  std::map<std::string, std::vector<Work*>> _requestsInFlight;
+
   std::vector<Work*> _processingQueue;
 
   using FailedWorkPair = std::pair<std::string, Work*>;

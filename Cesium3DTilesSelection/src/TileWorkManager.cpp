@@ -7,8 +7,8 @@ using namespace CesiumAsync;
 namespace Cesium3DTilesSelection {
 
 TileWorkManager::~TileWorkManager() noexcept {
-  assert(_requestQueue.empty());
-  assert(_inFlightRequests.empty());
+  assert(_requestsQueue.empty());
+  assert(_requestsInFlight.empty());
   assert(_processingQueue.empty());
   assert(_failedWork.empty());
 }
@@ -20,8 +20,8 @@ void TileWorkManager::Shutdown() {
   // Let them complete, but signal no more work should be done
   _shutdownSignaled = true;
 
-  _requestQueue.clear();
-  _inFlightRequests.clear();
+  _requestsQueue.clear();
+  _requestsInFlight.clear();
   _processingQueue.clear();
   _failedWork.clear();
 }
@@ -45,14 +45,14 @@ void TileWorkManager::stageWork(Work* pWork) {
     // No pending request, go straight to processing queue
     workToProcessingQueue(pWork);
   } else {
-    auto foundIt = _inFlightRequests.find(pendingRequest->url);
-    if (foundIt == _inFlightRequests.end()) {
+    auto foundIt = _requestsInFlight.find(pendingRequest->url);
+    if (foundIt == _requestsInFlight.end()) {
       // The request isn't in flight, queue it
 #ifndef NDEBUG
-      for (auto element : _requestQueue)
+      for (auto element : _requestsQueue)
         assert(element->uniqueId != pWork->uniqueId);
 #endif
-      _requestQueue.push_back(pWork);
+      _requestsQueue.push_back(pWork);
     } else {
       // Already in flight, tag along
 #ifndef NDEBUG
@@ -195,7 +195,7 @@ void TileWorkManager::TryAddOrders(
   }
 
   if (requestOrders.size())
-    transitionQueuedWork(thiz);
+    transitionRequests(thiz);
 }
 
 void TileWorkManager::RequeueWorkForRequest(
@@ -206,7 +206,7 @@ void TileWorkManager::RequeueWorkForRequest(
     thiz->stageWork(requestWork);
   }
 
-  transitionQueuedWork(thiz);
+  transitionRequests(thiz);
 }
 
 void TileWorkManager::SignalWorkComplete(Work* work) {
@@ -217,9 +217,9 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
 
   // Assert this is not in any other queues
 #ifndef NDEBUG
-  for (auto element : _requestQueue)
+  for (auto element : _requestsQueue)
     assert(element->uniqueId != work->uniqueId);
-  for (auto& urlWorkVecPair : _inFlightRequests)
+  for (auto& urlWorkVecPair : _requestsInFlight)
     for (auto element : urlWorkVecPair.second)
       assert(element->uniqueId != work->uniqueId);
   for (auto element : _processingQueue)
@@ -254,8 +254,8 @@ void TileWorkManager::onRequestFinished(
   uint16_t responseStatusCode = response ? response->statusCode() : 0;
 
   // Find this request
-  auto foundIt = _inFlightRequests.find(pCompletedRequest->url());
-  assert(foundIt != _inFlightRequests.end());
+  auto foundIt = _requestsInFlight.find(pCompletedRequest->url());
+  assert(foundIt != _requestsInFlight.end());
 
   // Handle results
   std::vector<Work*>& requestWorkVec = foundIt->second;
@@ -295,20 +295,20 @@ void TileWorkManager::onRequestFinished(
   }
 
   // Remove it
-  _inFlightRequests.erase(foundIt);
+  _requestsInFlight.erase(foundIt);
 }
 
 void TileWorkManager::GetPendingCount(
     size_t& pendingRequests,
     size_t& pendingProcessing) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  pendingRequests = _requestQueue.size() + _inFlightRequests.size();
+  pendingRequests = _requestsQueue.size() + _requestsInFlight.size();
   pendingProcessing = _processingQueue.size();
 }
 
 size_t TileWorkManager::GetActiveWorkCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  return _requestQueue.size() + _inFlightRequests.size() +
+  return _requestsQueue.size() + _requestsInFlight.size() +
          _processingQueue.size() + _failedWork.size();
 }
 
@@ -318,8 +318,8 @@ void TileWorkManager::GetLoadingWorkStats(
     size_t& processingCount,
     size_t& failedCount) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  requestCount = _requestQueue.size();
-  inFlightCount = _inFlightRequests.size();
+  requestCount = _requestsQueue.size();
+  inFlightCount = _requestsInFlight.size();
   processingCount = _processingQueue.size();
   failedCount = _failedWork.size();
 }
@@ -342,9 +342,9 @@ void TileWorkManager::TakeProcessingWork(
       // We should own this and it should not be in any other queues
 #ifndef NDEBUG
       assert(foundIt != _ownedWork.end());
-      for (auto element : _requestQueue)
+      for (auto element : _requestsQueue)
         assert(element->uniqueId != work->uniqueId);
-      for (auto& urlWorkVecPair : _inFlightRequests)
+      for (auto& urlWorkVecPair : _requestsInFlight)
         for (auto element : urlWorkVecPair.second)
           assert(element->uniqueId != work->uniqueId);
       for (auto element : _processingQueue)
@@ -398,7 +398,7 @@ void TileWorkManager::TakeProcessingWork(
     _processingQueue.erase(eraseIt);
 }
 
-void TileWorkManager::transitionQueuedWork(
+void TileWorkManager::transitionRequests(
     std::shared_ptr<TileWorkManager>& thiz) {
   std::vector<Work*> workNeedingDispatch;
   {
@@ -407,13 +407,13 @@ void TileWorkManager::transitionQueuedWork(
     if (thiz->_shutdownSignaled)
       return;
 
-    size_t queueCount = thiz->_requestQueue.size();
+    size_t queueCount = thiz->_requestsQueue.size();
     if (queueCount == 0)
       return;
 
     // We have work to do, check if there's a slot for it
     size_t slotsTotal = thiz->_maxSimultaneousRequests;
-    size_t slotsUsed = thiz->_inFlightRequests.size();
+    size_t slotsUsed = thiz->_requestsInFlight.size();
     assert(slotsUsed <= slotsTotal);
     if (slotsUsed == slotsTotal)
       return;
@@ -422,15 +422,15 @@ void TileWorkManager::transitionQueuedWork(
     // Sort our incoming request queue by priority
     // Want highest priority at back of vector
     std::sort(
-        begin(thiz->_requestQueue),
-        end(thiz->_requestQueue),
+        begin(thiz->_requestsQueue),
+        end(thiz->_requestsQueue),
         [](Work* a, Work* b) { return b->order < a->order; });
 
     // Loop through all pending until no more slots (or pending)
-    while (!thiz->_requestQueue.empty() && slotsUsed < slotsTotal) {
+    while (!thiz->_requestsQueue.empty() && slotsUsed < slotsTotal) {
 
       // Start from back of queue (highest priority).
-      Work* requestWork = thiz->_requestQueue.back();
+      Work* requestWork = thiz->_requestsQueue.back();
 
       CesiumAsync::RequestData* nextRequest = requestWork->getNextRequest();
       assert(nextRequest);
@@ -443,10 +443,10 @@ void TileWorkManager::transitionQueuedWork(
       // Gather all work with urls that match this
       using WorkVecIterator = std::vector<Work*>::iterator;
       std::vector<WorkVecIterator> matchingUrlWork;
-      auto matchIt = thiz->_requestQueue.end() - 1;
+      auto matchIt = thiz->_requestsQueue.end() - 1;
       matchingUrlWork.push_back(matchIt);
 
-      while (matchIt != thiz->_requestQueue.begin()) {
+      while (matchIt != thiz->_requestsQueue.begin()) {
         --matchIt;
         Work* otherWork = *matchIt;
         CesiumAsync::RequestData* otherRequest = otherWork->getNextRequest();
@@ -459,14 +459,14 @@ void TileWorkManager::transitionQueuedWork(
       // Erase related entries from pending queue
       std::vector<Work*> newWorkVec;
       assert(
-          thiz->_inFlightRequests.find(workUrl) ==
-          thiz->_inFlightRequests.end());
+          thiz->_requestsInFlight.find(workUrl) ==
+          thiz->_requestsInFlight.end());
       for (WorkVecIterator& it : matchingUrlWork) {
         newWorkVec.push_back(*it);
-        thiz->_requestQueue.erase(it);
+        thiz->_requestsQueue.erase(it);
       }
 
-      thiz->_inFlightRequests.emplace(workUrl, std::move(newWorkVec));
+      thiz->_requestsInFlight.emplace(workUrl, std::move(newWorkVec));
       ++slotsUsed;
     }
   }
@@ -486,7 +486,7 @@ void TileWorkManager::transitionQueuedWork(
 
               thiz->onRequestFinished(pCompletedRequest);
 
-              transitionQueuedWork(thiz);
+              transitionRequests(thiz);
             });
   }
 }
