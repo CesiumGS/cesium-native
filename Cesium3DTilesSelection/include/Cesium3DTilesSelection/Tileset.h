@@ -422,6 +422,8 @@ private:
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
 
+  void _logLoadingWorkStats(const std::string& prefix);
+
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 

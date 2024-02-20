@@ -110,7 +110,7 @@ public:
   void SignalWorkComplete(Work* work);
 
   void GetPendingCount(size_t& pendingRequests, size_t& pendingProcessing);
-  size_t GetTotalPendingCount();
+  size_t GetActiveWorkCount();
 
   void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
 

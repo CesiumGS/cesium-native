@@ -147,7 +147,7 @@ public:
 
   int32_t getNumberOfRastersLoaded() const noexcept;
 
-  size_t getTotalPendingCount();
+  size_t getActiveWorkCount();
 
   void getRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
 

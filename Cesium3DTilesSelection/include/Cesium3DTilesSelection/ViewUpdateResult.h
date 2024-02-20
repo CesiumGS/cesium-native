@@ -55,7 +55,7 @@ public:
   uint32_t tilesLoaded = 0;
   uint32_t rastersLoading = 0;
   uint32_t rastersLoaded = 0;
-  size_t requestsPending = 0;
+  size_t activeWorkCount = 0;
 
   void resetStats() {
     workerThreadTileLoadQueueLength = 0;
@@ -73,7 +73,7 @@ public:
     tilesLoaded = 0;
     rastersLoading = 0;
     rastersLoaded = 0;
-    requestsPending = 0;
+    activeWorkCount = 0;
   }
   //! @endcond
 

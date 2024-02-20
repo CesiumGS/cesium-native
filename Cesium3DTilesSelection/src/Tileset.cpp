@@ -25,7 +25,7 @@
 #include <limits>
 #include <unordered_set>
 
-#define LOG_REQUEST_STATS 0
+#define LOG_LOADING_WORK_STATS 1
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -295,6 +295,22 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
+void Tileset::_logLoadingWorkStats(const std::string& prefix) {
+  size_t queued, inFlight, done;
+  this->_pTilesetContentManager->getRequestsStats(queued, inFlight, done);
+
+  SPDLOG_LOGGER_INFO(
+      this->_externals.pLogger,
+      "{} requestQueue {} | inFlightRequest {} | processing {} || "
+      "TilesLoading {} | RastersLoading {}",
+      prefix,
+      queued,
+      inFlight,
+      done,
+      _updateResult.tilesLoading,
+      _updateResult.rastersLoading);
+}
+
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -303,6 +319,12 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
+
+#if LOG_LOADING_WORK_STATS
+  size_t activeWorkCount = this->_pTilesetContentManager->getActiveWorkCount();
+  if (activeWorkCount > 0)
+    _logLoadingWorkStats("Pre :");
+#endif
 
   this->_asyncSystem.dispatchMainThreadTasks();
 
@@ -378,41 +400,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       this->_pTilesetContentManager->getNumberOfRastersLoading());
   result.rastersLoaded = static_cast<uint32_t>(
       this->_pTilesetContentManager->getNumberOfRastersLoaded());
-  result.requestsPending =
-      this->_pTilesetContentManager->getTotalPendingCount();
+  result.activeWorkCount = this->_pTilesetContentManager->getActiveWorkCount();
 
-#if LOG_REQUEST_STATS
-  uint32_t inProgressSum =
-      static_cast<uint32_t>(_updateResult.requestsPending) +
-      _updateResult.tilesLoading + _updateResult.rastersLoading +
-      static_cast<uint32_t>(_updateResult.tilesFadingOut.size()) +
-      static_cast<uint32_t>(_updateResult.mainThreadTileLoadQueueLength) +
-      static_cast<uint32_t>(_updateResult.workerThreadTileLoadQueueLength);
-
-  uint32_t completedSum =
-      _updateResult.tilesLoaded + _updateResult.rastersLoaded;
-
-  if (inProgressSum == 0 && completedSum > 0) {
-    // We should be done right?
-    // If we have tiles kicked, we're not done, but there's nothing in progress?
-    assert(this->_updateResult.tilesKicked == 0);
-  }
-
-  float progress = computeLoadProgress();
-  if (progress > 0 && progress < 100) {
-    size_t queued, inFlight, done;
-    this->_pTilesetContentManager->getRequestsStats(queued, inFlight, done);
-
-    SPDLOG_LOGGER_INFO(
-        this->_externals.pLogger,
-        "{} queued -> {} in flight -> {} done. Processing: {} tiles, {} "
-        "rasters",
-        queued,
-        inFlight,
-        done,
-        _updateResult.tilesLoading,
-        _updateResult.rastersLoading);
-  }
+#if LOG_LOADING_WORK_STATS
+  if (activeWorkCount > 0)
+    _logLoadingWorkStats("Post:");
 #endif
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -481,7 +473,7 @@ float Tileset::computeLoadProgress() noexcept {
                            _updateResult.workerThreadTileLoadQueueLength;
   uint32_t inProgressSum =
       static_cast<uint32_t>(queueLengthsSum) +
-      static_cast<uint32_t>(_updateResult.requestsPending) +
+      static_cast<uint32_t>(_updateResult.activeWorkCount) +
       _updateResult.tilesLoading + _updateResult.rastersLoading +
       static_cast<uint32_t>(_updateResult.tilesFadingOut.size());
 

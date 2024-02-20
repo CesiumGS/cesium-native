@@ -1117,8 +1117,8 @@ int32_t TilesetContentManager::getNumberOfRastersLoaded() const noexcept {
   return this->_loadedRastersCount;
 }
 
-size_t TilesetContentManager::getTotalPendingCount() {
-  return this->_pTileWorkManager->GetTotalPendingCount();
+size_t TilesetContentManager::getActiveWorkCount() {
+  return this->_pTileWorkManager->GetActiveWorkCount();
 }
 
 void TilesetContentManager::getRequestsStats(
