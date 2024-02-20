@@ -130,7 +130,8 @@ std::optional<Model> upsampleGltfForRasterOverlays(
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
 
-  // Copy EXT_feature_metadata feature table buffer views and unique buffers.
+  // Copy EXT_structural_metadata property table buffer views and unique
+  // buffers.
   copyMetadataTables(parentModel, result);
 
   // If the glTF has a name, update it with upsample info.

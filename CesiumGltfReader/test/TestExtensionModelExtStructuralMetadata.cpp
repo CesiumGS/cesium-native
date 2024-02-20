@@ -1,31 +1,34 @@
 #include "CesiumGltfReader/GltfReader.h"
 
-#include <CesiumGltf/ExtensionModelExtFeatureMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 
 #include <catch2/catch.hpp>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
-TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
+TEST_CASE(
+    "Can deserialize EXT_structural_metadata example with propertyTables") {
   const std::string s = R"(
     {
       "asset": {
         "version": "2.0"
       },
       "extensions": {
-        "EXT_feature_metadata": {
+        "EXT_structural_metadata": {
           "schema": {
             "classes": {
               "tree": {
                 "properties": {
                   "height": {
                     "description": "Height of tree measured from ground level",
-                    "type": "FLOAT32"
+                    "type": "SCALAR",
+                    "componentType": "FLOAT32"
                   },
                   "birdCount": {
                     "description": "Number of birds perching on the tree",
-                    "type": "UINT8",
+                    "type": "SCALAR",
+                    "componentType": "UINT8",
                     "min": 1
                   },
                   "species": {
@@ -36,24 +39,24 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
               }
             }
           },
-          "featureTables": {
-            "trees": {
+          "propertyTables": [
+            {
               "class": "tree",
               "count": 10,
               "properties": {
                 "height": {
-                  "bufferView": 0
+                  "values": 0
                 },
                 "birdCount": {
-                  "bufferView": 1
+                  "values": 1
                 },
                 "species": {
-                  "bufferView": 2,
-                  "stringOffsetBufferView": 3
+                  "values": 2,
+                  "stringOffsets": 3
                 }
               }
             }
-          }
+          ]
         }
       }
     }
@@ -68,8 +71,8 @@ TEST_CASE("Can deserialize EXT_feature_metadata example with featureTables") {
   REQUIRE(readerResult.errors.empty());
   REQUIRE(readerResult.model.has_value());
 
-  ExtensionModelExtFeatureMetadata* pMetadata =
-      readerResult.model->getExtension<ExtensionModelExtFeatureMetadata>();
+  ExtensionModelExtStructuralMetadata* pMetadata =
+      readerResult.model->getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
   REQUIRE(pMetadata->schema.has_value());
