@@ -439,11 +439,13 @@ float Tileset::computeLoadProgress() noexcept {
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
+  int32_t numFadingTiles =
+      static_cast<int32_t>(_updateResult.tilesFadingOut.size());
   int32_t numOfTilesKicked =
       static_cast<int32_t>(this->_updateResult.tilesKicked);
 
   // Amount of work actively being done
-  int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
+  int32_t inProgressSum = numOfTilesLoading + queueSizeSum + numFadingTiles;
 
   // Total work so far. Add already loaded tiles and kicked tiles.
   // Kicked tiles are transient, and never in progress, but are an indicator
