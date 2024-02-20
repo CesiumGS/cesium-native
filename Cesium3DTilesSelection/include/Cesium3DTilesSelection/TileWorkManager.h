@@ -147,10 +147,10 @@ private:
 
   std::map<TileSource, Work> _ownedWork;
 
-  std::vector<Work*> _requestsQueue;
+  std::vector<Work*> _requestsPending;
   std::map<std::string, std::vector<Work*>> _requestsInFlight;
 
-  std::vector<Work*> _processingQueue;
+  std::vector<Work*> _processingPending;
 
   using FailedWorkPair = std::pair<std::string, Work*>;
   using FailedWorkVec = std::vector<FailedWorkPair>;
