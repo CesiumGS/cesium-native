@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(VCPKG_LIBRARY_LINKAGE static)
-include(${CMAKE_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 ezvcpkg_fetch(
     # Current release has a bug in the cmake config for ktx, see https://github.com/microsoft/vcpkg/issues/30787
     COMMIT 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
