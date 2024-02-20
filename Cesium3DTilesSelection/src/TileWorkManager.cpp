@@ -11,6 +11,7 @@ TileWorkManager::~TileWorkManager() noexcept {
   assert(_requestsInFlight.empty());
   assert(_processingPending.empty());
   assert(_failedWork.empty());
+  assert(_doneWork.empty());
 }
 
 void TileWorkManager::Shutdown() {
@@ -23,7 +24,9 @@ void TileWorkManager::Shutdown() {
   _requestsPending.clear();
   _requestsInFlight.clear();
   _processingPending.clear();
+  _processingInFlight.clear();
   _failedWork.clear();
+  _doneWork.clear();
 }
 
 void TileWorkManager::workToProcessingQueue(Work* pWork) {
@@ -196,24 +199,43 @@ void TileWorkManager::TryAddOrders(
 
   if (requestOrders.size())
     transitionRequests(thiz);
+  if (processingOrders.size())
+    transitionProcessing(thiz);
 }
 
 void TileWorkManager::RequeueWorkForRequest(
     std::shared_ptr<TileWorkManager>& thiz,
-    Work* requestWork) {
+    Work* work) {
   {
     std::lock_guard<std::mutex> lock(thiz->_requestsLock);
-    thiz->stageWork(requestWork);
+
+    if (thiz->_shutdownSignaled)
+      return;
+
+    // This processing work should be in flight, remove it
+    auto foundIt = thiz->_processingInFlight.find(work->uniqueId);
+    assert(foundIt != thiz->_processingInFlight.end());
+    thiz->_processingInFlight.erase(foundIt);
+
+    thiz->stageWork(work);
   }
 
   transitionRequests(thiz);
 }
 
-void TileWorkManager::SignalWorkComplete(Work* work) {
+void TileWorkManager::onWorkComplete(Work* work) {
   std::lock_guard<std::mutex> lock(_requestsLock);
+
+  if (_shutdownSignaled)
+    return;
 
   // Assert this work is already owned by this manager
   assert(_ownedWork.find(work->uniqueId) != _ownedWork.end());
+
+  // This processing work should be in flight, remove it
+  auto foundIt = _processingInFlight.find(work->uniqueId);
+  assert(foundIt != _processingInFlight.end());
+  _processingInFlight.erase(foundIt);
 
   // Assert this is not in any other queues
 #ifndef NDEBUG
@@ -238,8 +260,15 @@ void TileWorkManager::SignalWorkComplete(Work* work) {
   // Done work should have no registered child work
   assert(work->children.empty());
 
-  // Remove it
-  _ownedWork.erase(work->uniqueId);
+  // Put in the done list
+  _doneWork.push_back(work);
+}
+
+void TileWorkManager::SignalWorkComplete(
+    std::shared_ptr<TileWorkManager>& thiz,
+    Work* work) {
+  thiz->onWorkComplete(work);
+  transitionProcessing(thiz);
 }
 
 void TileWorkManager::onRequestFinished(
@@ -309,7 +338,7 @@ void TileWorkManager::GetPendingCount(
 size_t TileWorkManager::GetActiveWorkCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
   return _requestsPending.size() + _requestsInFlight.size() +
-         _processingPending.size() + _failedWork.size();
+         _processingPending.size() + _failedWork.size() + _doneWork.size();
 }
 
 void TileWorkManager::GetLoadingWorkStats(
@@ -324,78 +353,57 @@ void TileWorkManager::GetLoadingWorkStats(
   failedCount = _failedWork.size();
 }
 
-void TileWorkManager::TakeProcessingWork(
-    size_t maxCount,
-    std::vector<Work*>& outCompleted,
+void TileWorkManager::TakeCompletedWork(
+    std::vector<DoneOrder>& outCompleted,
     std::vector<FailedOrder>& outFailed) {
-
   std::lock_guard<std::mutex> lock(_requestsLock);
 
-  // All failed requests go out
-  if (!_failedWork.empty()) {
-    // Failed work immediately releases ownership to caller
-    for (auto workPair : _failedWork) {
-      Work* work = workPair.second;
+  for (auto work : _doneWork) {
+    // We should own this and it should not be in any other queues
+    auto foundIt = _ownedWork.find(work->uniqueId);
 
-      auto foundIt = _ownedWork.find(work->uniqueId);
-
-      // We should own this and it should not be in any other queues
 #ifndef NDEBUG
-      assert(foundIt != _ownedWork.end());
-      for (auto element : _requestsPending)
+    assert(foundIt != _ownedWork.end());
+    for (auto element : _requestsPending)
+      assert(element->uniqueId != work->uniqueId);
+    for (auto& urlWorkVecPair : _requestsInFlight)
+      for (auto element : urlWorkVecPair.second)
         assert(element->uniqueId != work->uniqueId);
-      for (auto& urlWorkVecPair : _requestsInFlight)
-        for (auto element : urlWorkVecPair.second)
-          assert(element->uniqueId != work->uniqueId);
-      for (auto element : _processingPending)
-        assert(element->uniqueId != work->uniqueId);
+    for (auto element : _processingPending)
+      assert(element->uniqueId != work->uniqueId);
+    assert(
+        _processingInFlight.find(work->uniqueId) == _processingInFlight.end());
 #endif
 
-      // Return to caller
-      outFailed.emplace_back(
-          FailedOrder{workPair.first, std::move(work->order)});
-
-      _ownedWork.erase(foundIt);
-    }
-    _failedWork.clear();
+    outCompleted.emplace_back(
+        DoneOrder{std::move(work->tileLoadResult), std::move(work->order)});
+    _ownedWork.erase(foundIt);
   }
+  _doneWork.clear();
 
-  // If no room for completed work, stop here
-  // Same if there's no work to return
-  size_t processingCount = _processingPending.size();
-  if (maxCount == 0 || processingCount == 0)
-    return;
+  for (auto workPair : _failedWork) {
+    Work* work = workPair.second;
 
-  // Return completed work, up to the count specified
-  size_t numberToTake = std::min(processingCount, maxCount);
+    // We should own this and it should not be in any other queues
+    auto foundIt = _ownedWork.find(work->uniqueId);
 
-  // Gather iterators we want to erase
-  // Go from back to front to avoid reallocations if possible
-  // These work items have completed based on priority from any
-  // number of previous frames, so we really don't know which ones
-  // should go out first. They should all go ASAP.
-  using WorkVecIter = std::vector<Work*>::iterator;
-  std::vector<WorkVecIter> processingToErase;
-  std::vector<Work*>::iterator it = _processingPending.end();
-  while (it != _processingPending.begin()) {
-    --it;
-    Work* work = *it;
-    if (work->children.empty()) {
-      // Move this work to output and erase from queue
-      processingToErase.push_back(it);
-      outCompleted.push_back(work);
-    } else {
-      // Can't take this work yet
-      // Child work has to register completion first
-    }
+#ifndef NDEBUG
+    assert(foundIt != _ownedWork.end());
+    for (auto element : _requestsPending)
+      assert(element->uniqueId != work->uniqueId);
+    for (auto& urlWorkVecPair : _requestsInFlight)
+      for (auto element : urlWorkVecPair.second)
+        assert(element->uniqueId != work->uniqueId);
+    for (auto element : _processingPending)
+      assert(element->uniqueId != work->uniqueId);
+    assert(
+        _processingInFlight.find(work->uniqueId) == _processingInFlight.end());
+#endif
 
-    if (outCompleted.size() >= numberToTake)
-      break;
+    outFailed.emplace_back(FailedOrder{workPair.first, std::move(work->order)});
+    _ownedWork.erase(foundIt);
   }
-
-  // Delete any entries gathered
-  for (WorkVecIter eraseIt : processingToErase)
-    _processingPending.erase(eraseIt);
+  _failedWork.clear();
 }
 
 void TileWorkManager::transitionRequests(
@@ -483,12 +491,96 @@ void TileWorkManager::transitionRequests(
         .thenImmediately(
             [thiz](std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               assert(thiz.get());
-
               thiz->onRequestFinished(pCompletedRequest);
-
               transitionRequests(thiz);
-            });
+            })
+        .thenInMainThread([thiz]() mutable { transitionProcessing(thiz); });
   }
+}
+
+void TileWorkManager::transitionProcessing(
+    std::shared_ptr<TileWorkManager>& thiz) {
+  std::vector<Work*> workNeedingDispatch;
+  {
+    std::lock_guard<std::mutex> lock(thiz->_requestsLock);
+
+    if (thiz->_shutdownSignaled)
+      return;
+
+    size_t pendingCount = thiz->_processingPending.size();
+    if (pendingCount == 0)
+      return;
+
+    // We have work to do, check if there's a slot for it
+    size_t slotsTotal = thiz->_maxSimultaneousRequests;
+    size_t slotsUsed = thiz->_processingInFlight.size();
+    assert(slotsUsed <= slotsTotal);
+    if (slotsUsed == slotsTotal)
+      return;
+
+    // At least one slot is open
+    size_t slotsAvailable = slotsTotal - slotsUsed;
+
+    // Gather iterators we want to erase
+    // Go from back to front to avoid reallocations if possible
+    // These work items have completed based on priority from any
+    // number of previous frames, so we really don't know which ones
+    // should go out first. They should all go ASAP.
+    using WorkVecIter = std::vector<Work*>::iterator;
+    std::vector<WorkVecIter> processingToErase;
+    std::vector<Work*>::iterator it = thiz->_processingPending.end();
+    while (it != thiz->_processingPending.begin()) {
+      --it;
+      Work* work = *it;
+      if (work->children.empty()) {
+        // Move this work to in flight
+        assert(
+            thiz->_processingInFlight.find(work->uniqueId) ==
+            thiz->_processingInFlight.end());
+        thiz->_processingInFlight[work->uniqueId] = work;
+
+        // Move this work to output and erase from pending
+        workNeedingDispatch.push_back(work);
+        processingToErase.push_back(it);
+      } else {
+        // Can't take this work yet
+        // Child work has to register completion first
+      }
+
+      if (workNeedingDispatch.size() >= slotsAvailable)
+        break;
+    }
+
+    // Delete any entries gathered
+    for (WorkVecIter eraseIt : processingToErase)
+      thiz->_processingPending.erase(eraseIt);
+  }
+
+  for (Work* work : workNeedingDispatch) {
+    CesiumAsync::UrlResponseDataMap responseDataMap;
+    work->fillResponseDataMap(responseDataMap);
+
+    if (std::holds_alternative<TileProcessingData>(
+            work->order.processingData)) {
+      TileProcessingData tileProcessing =
+          std::get<TileProcessingData>(work->order.processingData);
+
+      thiz->_tileDispatchFunc(tileProcessing, responseDataMap, work);
+    } else {
+      RasterProcessingData rasterProcessing =
+          std::get<RasterProcessingData>(work->order.processingData);
+
+      thiz->_rasterDispatchFunc(rasterProcessing, responseDataMap, work);
+    }
+  }
+}
+
+void TileWorkManager::SetDispatchFunctions(
+    TileDispatchFunc& tileDispatch,
+    RasterDispatchFunc& rasterDispatch) {
+  std::lock_guard<std::mutex> lock(_requestsLock);
+  _tileDispatchFunc = tileDispatch;
+  _rasterDispatchFunc = rasterDispatch;
 }
 
 } // namespace Cesium3DTilesSelection

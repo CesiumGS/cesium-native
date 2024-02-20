@@ -71,42 +71,51 @@ TEST_CASE("Test implicit octree loader") {
         TileLoadPriorityGroup::Normal,
         0});
 
+    TileWorkManager::TileDispatchFunc tileDispatch =
+        [pLoader = &loader, asyncSystem, workManager](
+            TileProcessingData& processingData,
+            CesiumAsync::UrlResponseDataMap& responseDataMap,
+            TileWorkManager::Work* work) mutable {
+          assert(processingData.pTile);
+          assert(processingData.tileCallback);
+          Tile* pTile = processingData.pTile;
+
+          TileLoadInput loadInput{
+              *pTile,
+              {},
+              asyncSystem,
+              spdlog::default_logger(),
+              responseDataMap};
+
+          processingData.tileCallback(loadInput, pLoader)
+              .thenInMainThread([_pTile = pTile, _work = work, workManager](
+                                    TileLoadResult&& result) mutable {
+                _work->tileLoadResult = std::move(result);
+                TileWorkManager::SignalWorkComplete(workManager, _work);
+              });
+        };
+
+    TileWorkManager::RasterDispatchFunc rasterDispatch =
+        [](RasterProcessingData&,
+           CesiumAsync::UrlResponseDataMap&,
+           TileWorkManager::Work*) {};
+
+    workManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
+
     std::vector<const TileWorkManager::Work*> workCreated;
     TileWorkManager::TryAddOrders(workManager, orders, 20, workCreated);
     assert(workCreated.size() == 1);
 
-    std::vector<TileWorkManager::Work*> completedWork;
-    std::vector<TileWorkManager::FailedOrder> failedOrders;
-    workManager->TakeProcessingWork(20, completedWork, failedOrders);
-
-    assert(completedWork.size() == 1);
-    assert(failedOrders.size() == 0);
-
-    TileWorkManager::Work* work = *completedWork.begin();
-    assert(
-        std::holds_alternative<TileProcessingData>(work->order.processingData));
-
-    TileProcessingData tileProcessing =
-        std::get<TileProcessingData>(work->order.processingData);
-    assert(tileProcessing.pTile);
-    assert(tileProcessing.tileCallback);
-    Tile* pTile = tileProcessing.pTile;
-
-    CesiumAsync::UrlResponseDataMap responseDataMap;
-    work->fillResponseDataMap(responseDataMap);
-
-    TileLoadInput loadInput{
-        *pTile,
-        {},
-        asyncSystem,
-        spdlog::default_logger(),
-        responseDataMap};
-
-    auto tileLoadResultFuture = tileProcessing.tileCallback(loadInput, &loader);
-
     asyncSystem.dispatchMainThreadTasks();
 
-    auto tileLoadResult = tileLoadResultFuture.wait();
+    std::vector<TileWorkManager::DoneOrder> doneOrders;
+    std::vector<TileWorkManager::FailedOrder> failedOrders;
+    workManager->TakeCompletedWork(doneOrders, failedOrders);
+
+    assert(doneOrders.size() == 1);
+    assert(failedOrders.size() == 0);
+
+    auto tileLoadResult = doneOrders.begin()->loadResult;
     CHECK(tileLoadResult.state == TileLoadResultState::Failed);
   }
 

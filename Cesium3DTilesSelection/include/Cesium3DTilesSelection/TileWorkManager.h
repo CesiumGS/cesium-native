@@ -12,6 +12,8 @@ struct TileProcessingData {
   Tile* pTile = nullptr;
   TileProcessingCallback tileCallback = {};
   std::vector<CesiumGeospatial::Projection> projections{};
+  TilesetContentOptions contentOptions;
+  std::any rendererOptions;
 };
 
 struct RasterProcessingData {
@@ -65,6 +67,8 @@ public:
     std::vector<CesiumAsync::RequestData> pendingRequests = {};
     CesiumAsync::UrlAssetRequestMap completedRequests = {};
 
+    TileLoadResult tileLoadResult = {};
+
     void fillResponseDataMap(CesiumAsync::UrlResponseDataMap& responseDataMap) {
       for (auto& pair : completedRequests) {
         responseDataMap.emplace(
@@ -93,21 +97,25 @@ public:
       size_t maxSimultaneousRequests,
       std::vector<const Work*>& workCreated);
 
-  static void RequeueWorkForRequest(
-      std::shared_ptr<TileWorkManager>& thiz,
-      Work* requestWork);
+  static void
+  RequeueWorkForRequest(std::shared_ptr<TileWorkManager>& thiz, Work* work);
+
+  struct DoneOrder {
+    TileLoadResult loadResult = {};
+    Order order = {};
+  };
 
   struct FailedOrder {
     std::string failureReason = "";
     Order order = {};
   };
 
-  void TakeProcessingWork(
-      size_t maxCount,
-      std::vector<Work*>& outCompleted,
+  void TakeCompletedWork(
+      std::vector<DoneOrder>& outCompleted,
       std::vector<FailedOrder>& outFailed);
 
-  void SignalWorkComplete(Work* work);
+  static void
+  SignalWorkComplete(std::shared_ptr<TileWorkManager>& thiz, Work* work);
 
   void GetPendingCount(size_t& pendingRequests, size_t& pendingProcessing);
   size_t GetActiveWorkCount();
@@ -120,6 +128,20 @@ public:
 
   void Shutdown();
 
+  using TileDispatchFunc = std::function<void(
+      TileProcessingData&,
+      CesiumAsync::UrlResponseDataMap&,
+      TileWorkManager::Work*)>;
+
+  using RasterDispatchFunc = std::function<void(
+      RasterProcessingData&,
+      CesiumAsync::UrlResponseDataMap&,
+      TileWorkManager::Work*)>;
+
+  void SetDispatchFunctions(
+      TileDispatchFunc& tileDispatch,
+      RasterDispatchFunc& rasterDispatch);
+
 private:
   static void throttleOrders(
       size_t existingCount,
@@ -127,6 +149,8 @@ private:
       std::vector<Order*>& inOutOrders);
 
   static void transitionRequests(std::shared_ptr<TileWorkManager>& thiz);
+
+  static void transitionProcessing(std::shared_ptr<TileWorkManager>& thiz);
 
   void onRequestFinished(
       std::shared_ptr<CesiumAsync::IAssetRequest>& pCompletedRequest);
@@ -141,6 +165,8 @@ private:
       const std::vector<Order*>& orders,
       std::vector<const Work*>& instancesCreated);
 
+  void onWorkComplete(Work* work);
+
   std::mutex _requestsLock;
 
   bool _shutdownSignaled = false;
@@ -151,10 +177,14 @@ private:
   std::map<std::string, std::vector<Work*>> _requestsInFlight;
 
   std::vector<Work*> _processingPending;
+  std::map<TileSource, Work*> _processingInFlight;
 
   using FailedWorkPair = std::pair<std::string, Work*>;
-  using FailedWorkVec = std::vector<FailedWorkPair>;
-  FailedWorkVec _failedWork;
+  std::vector<FailedWorkPair> _failedWork;
+  std::vector<Work*> _doneWork;
+
+  TileDispatchFunc _tileDispatchFunc;
+  RasterDispatchFunc _rasterDispatchFunc;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;

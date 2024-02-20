@@ -113,42 +113,54 @@ TileLoadResult loadTileContent(
       TileLoadPriorityGroup::Normal,
       0});
 
-  size_t maxRequests = 20;
+  TileWorkManager::TileDispatchFunc tileDispatch =
+      [pLoader = &loader, asyncSystem, workManager](
+          TileProcessingData& processingData,
+          CesiumAsync::UrlResponseDataMap& responseDataMap,
+          TileWorkManager::Work* work) mutable {
+        assert(processingData.pTile);
+        assert(processingData.tileCallback);
+        Tile* pTile = processingData.pTile;
 
+        TileLoadInput loadInput{
+            *pTile,
+            {},
+            asyncSystem,
+            spdlog::default_logger(),
+            responseDataMap};
+
+        processingData.tileCallback(loadInput, pLoader)
+            .thenInMainThread([_pTile = pTile, _work = work, workManager](
+                                  TileLoadResult&& result) mutable {
+              _work->tileLoadResult = std::move(result);
+              TileWorkManager::SignalWorkComplete(workManager, _work);
+            });
+      };
+
+  TileWorkManager::RasterDispatchFunc rasterDispatch =
+      [](RasterProcessingData&,
+         CesiumAsync::UrlResponseDataMap&,
+         TileWorkManager::Work*) {};
+
+  workManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
+
+  size_t maxRequests = 20;
   std::vector<const TileWorkManager::Work*> workCreated;
   TileWorkManager::TryAddOrders(workManager, orders, maxRequests, workCreated);
   assert(workCreated.size() == 1);
 
-  std::vector<TileWorkManager::Work*> completedWork;
-  std::vector<TileWorkManager::FailedOrder> failedOrders;
-  workManager->TakeProcessingWork(maxRequests, completedWork, failedOrders);
+  asyncSystem.dispatchMainThreadTasks();
 
-  assert(completedWork.size() == 1);
+  std::vector<TileWorkManager::DoneOrder> doneOrders;
+  std::vector<TileWorkManager::FailedOrder> failedOrders;
+  workManager->TakeCompletedWork(doneOrders, failedOrders);
+
+  assert(doneOrders.size() == 1);
   assert(failedOrders.size() == 0);
 
-  TileWorkManager::Work* work = *completedWork.begin();
-  assert(
-      std::holds_alternative<TileProcessingData>(work->order.processingData));
+  auto tileLoadResult = doneOrders.begin()->loadResult;
 
-  TileProcessingData tileProcessing =
-      std::get<TileProcessingData>(work->order.processingData);
-  assert(tileProcessing.pTile);
-  assert(tileProcessing.tileCallback);
-  Tile* pTile = tileProcessing.pTile;
-
-  UrlResponseDataMap responseDataMap;
-  work->fillResponseDataMap(responseDataMap);
-
-  TileLoadInput loadInput{
-      *pTile,
-      {},
-      asyncSystem,
-      spdlog::default_logger(),
-      responseDataMap};
-
-  auto tileLoadResultFuture = tileProcessing.tileCallback(loadInput, &loader);
-
-  return tileLoadResultFuture.wait();
+  return tileLoadResult;
 }
 } // namespace
 

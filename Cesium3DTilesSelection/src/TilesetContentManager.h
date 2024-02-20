@@ -103,7 +103,8 @@ public:
       TileProcessingCallback processingCallback,
       const CesiumAsync::UrlResponseDataMap& responseDataMap,
       const std::vector<CesiumGeospatial::Projection>& projections,
-      const TilesetOptions& tilesetOptions);
+      const TilesetContentOptions& contentOptions,
+      const std::any& rendererOptions);
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
@@ -196,6 +197,7 @@ private:
   void discoverLoadWork(
       const std::vector<TileLoadRequest>& requests,
       double maximumScreenSpaceError,
+      const TilesetOptions& tilesetOptions,
       std::vector<TileWorkManager::Order>& outOrders);
 
   void markWorkTilesAsLoading(
@@ -204,9 +206,15 @@ private:
   void handleFailedOrders(
       const std::vector<TileWorkManager::FailedOrder>& failedOrders);
 
-  void dispatchProcessingWork(
-      const std::vector<TileWorkManager::Work*>& workVector,
-      const TilesetOptions& options);
+  void dispatchTileWork(
+      TileProcessingData& processingData,
+      CesiumAsync::UrlResponseDataMap& responseDataMap,
+      TileWorkManager::Work* work);
+
+  void dispatchRasterWork(
+      RasterProcessingData& processingData,
+      CesiumAsync::UrlResponseDataMap& responseDataMap,
+      TileWorkManager::Work* work);
 
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;

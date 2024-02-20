@@ -492,8 +492,11 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().isRenderContent());
     CHECK(!tile.getContent().getRenderContent());
 
-    // ContentLoading -> FailedTemporarily
+    // Wait till its done, do another tick to clear the manager's done work
     pManager->waitUntilIdle();
+    loadTileWithManager(nullptr, pManager.get(), options);
+
+    // ContentLoading -> FailedTemporarily
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
