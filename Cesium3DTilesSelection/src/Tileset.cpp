@@ -25,7 +25,7 @@
 #include <limits>
 #include <unordered_set>
 
-#define LOG_LOADING_WORK_STATS 1
+#define LOG_LOADING_WORK_STATS 0
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
