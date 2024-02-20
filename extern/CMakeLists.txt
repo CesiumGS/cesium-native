@@ -33,9 +33,15 @@ set_target_properties(picosha2::picosha2 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${EZVCPKG_DIR}/include"
 )
 
+if (WIN32)
+  set(ZLIB_NG_LIB "zlibstatic-ng")
+else()
+  set(ZLIB_NG_LIB "libzstatic-ng")
+endif()
+
 add_library(zlib-ng::zlib-ng STATIC IMPORTED GLOBAL)
 set_target_properties(zlib-ng::zlib-ng PROPERTIES
   INCLUDE_DIRECTORIES "${EZVCPKG_DIR}/include"
-  IMPORTED_LOCATION "${EZVCPKG_DIR}/lib/zlibstatic-ng.${EXTERN_LIB_SUFFIX}"
-  IMPORTED_LOCATION "${EZVCPKG_DIR}/debug/lib/zlibstatic-ngd.${EXTERN_LIB_SUFFIX}"
+  IMPORTED_LOCATION "${EZVCPKG_DIR}/lib/${ZLIB_NG_LIB}.${EXTERN_LIB_SUFFIX}"
+  IMPORTED_LOCATION "${EZVCPKG_DIR}/debug/lib/${ZLIB_NG_LIB}d.${EXTERN_LIB_SUFFIX}"
 )
