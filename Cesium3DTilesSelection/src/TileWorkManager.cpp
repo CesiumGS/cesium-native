@@ -312,14 +312,16 @@ size_t TileWorkManager::GetActiveWorkCount() {
          _processingQueue.size() + _failedWork.size();
 }
 
-void TileWorkManager::GetRequestsStats(
-    size_t& queued,
-    size_t& inFlight,
-    size_t& done) {
+void TileWorkManager::GetLoadingWorkStats(
+    size_t& requestCount,
+    size_t& inFlightCount,
+    size_t& processingCount,
+    size_t& failedCount) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  queued = _requestQueue.size();
-  inFlight = _inFlightRequests.size();
-  done = _processingQueue.size() + _failedWork.size();
+  requestCount = _requestQueue.size();
+  inFlightCount = _inFlightRequests.size();
+  processingCount = _processingQueue.size();
+  failedCount = _failedWork.size();
 }
 
 void TileWorkManager::TakeProcessingWork(

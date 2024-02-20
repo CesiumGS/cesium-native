@@ -296,17 +296,21 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 }
 
 void Tileset::_logLoadingWorkStats(const std::string& prefix) {
-  size_t queued, inFlight, done;
-  this->_pTilesetContentManager->getRequestsStats(queued, inFlight, done);
+  size_t requestCount, inFlightCount, processingCount, failedCount;
+  this->_pTilesetContentManager->getLoadingWorkStats(
+      requestCount,
+      inFlightCount,
+      processingCount,
+      failedCount);
 
   SPDLOG_LOGGER_INFO(
       this->_externals.pLogger,
-      "{} requestQueue {} | inFlightRequest {} | processing {} || "
+      "{} requests {} | inFlight {} | processing {} || "
       "TilesLoading {} | RastersLoading {}",
       prefix,
-      queued,
-      inFlight,
-      done,
+      requestCount,
+      inFlightCount,
+      processingCount,
       _updateResult.tilesLoading,
       _updateResult.rastersLoading);
 }

@@ -112,7 +112,11 @@ public:
   void GetPendingCount(size_t& pendingRequests, size_t& pendingProcessing);
   size_t GetActiveWorkCount();
 
-  void GetRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
+  void GetLoadingWorkStats(
+      size_t& requestCount,
+      size_t& inFlightCount,
+      size_t& processingCount,
+      size_t& failedCount);
 
   void Shutdown();
 

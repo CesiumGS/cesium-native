@@ -1121,11 +1121,16 @@ size_t TilesetContentManager::getActiveWorkCount() {
   return this->_pTileWorkManager->GetActiveWorkCount();
 }
 
-void TilesetContentManager::getRequestsStats(
-    size_t& queued,
-    size_t& inFlight,
-    size_t& done) {
-  return this->_pTileWorkManager->GetRequestsStats(queued, inFlight, done);
+void TilesetContentManager::getLoadingWorkStats(
+    size_t& requestCount,
+    size_t& inFlightCount,
+    size_t& processingCount,
+    size_t& failedCount) {
+  return this->_pTileWorkManager->GetLoadingWorkStats(
+      requestCount,
+      inFlightCount,
+      processingCount,
+      failedCount);
 }
 
 bool TilesetContentManager::tileNeedsWorkerThreadLoading(

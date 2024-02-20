@@ -149,7 +149,11 @@ public:
 
   size_t getActiveWorkCount();
 
-  void getRequestsStats(size_t& queued, size_t& inFlight, size_t& done);
+  void getLoadingWorkStats(
+      size_t& requestCount,
+      size_t& inFlightCount,
+      size_t& processingCount,
+      size_t& failedCount);
 
   bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
   bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
