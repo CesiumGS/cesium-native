@@ -5,7 +5,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 ezvcpkg_fetch(
     # Current release has a bug in the cmake config for ktx, see https://github.com/microsoft/vcpkg/issues/30787
     COMMIT 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
-    PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp meshoptimizer ms-gsl rapidjson s2geometry spdlog sqlite3 stb tinyxml2 uriparser modp-base64 cpp-httplib[core] zlib
+    PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp meshoptimizer ms-gsl rapidjson s2geometry spdlog sqlite3 stb tinyxml2 uriparser modp-base64 cpp-httplib[core] zlib-ng
     # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
     CLEAN_BUILDTREES
     # Update the cmake toolchain so it can find the above packages
@@ -91,7 +91,6 @@ find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(uriparser CONFIG REQUIRED char wchar_t)
 find_package(WebP CONFIG REQUIRED)
-find_package(ZLIB REQUIRED)
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)

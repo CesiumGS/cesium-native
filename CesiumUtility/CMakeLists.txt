@@ -35,14 +35,12 @@ target_include_directories(
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
-        ${CMAKE_CURRENT_BINARY_DIR}/../extern/zlib
-        ${CMAKE_CURRENT_BINARY_DIR}/../extern/zlib-src
 )
 
 target_link_libraries(
     CesiumUtility
     PUBLIC
-        ZLIB::ZLIB
+        zlib-ng::zlib-ng
         spdlog::spdlog
         glm::glm
         uriparser::uriparser
