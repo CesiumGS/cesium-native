@@ -88,11 +88,11 @@ TEST_CASE("Test implicit octree loader") {
               responseDataMap};
 
           processingData.tileCallback(loadInput, pLoader)
-              .thenInMainThread([_pTile = pTile, _work = work, workManager](
-                                    TileLoadResult&& result) mutable {
-                _work->tileLoadResult = std::move(result);
-                TileWorkManager::SignalWorkComplete(workManager, _work);
-              });
+              .thenInMainThread(
+                  [_work = work, workManager](TileLoadResult&& result) mutable {
+                    _work->tileLoadResult = std::move(result);
+                    TileWorkManager::SignalWorkComplete(workManager, _work);
+                  });
         };
 
     TileWorkManager::RasterDispatchFunc rasterDispatch =

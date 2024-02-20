@@ -12,8 +12,8 @@ struct TileProcessingData {
   Tile* pTile = nullptr;
   TileProcessingCallback tileCallback = {};
   std::vector<CesiumGeospatial::Projection> projections{};
-  TilesetContentOptions contentOptions;
-  std::any rendererOptions;
+  TilesetContentOptions contentOptions = {};
+  std::any rendererOptions = {};
 };
 
 struct RasterProcessingData {
