@@ -1633,8 +1633,8 @@ void TilesetContentManager::dispatchTileWork(
           processingData.projections,
           processingData.contentOptions,
           processingData.rendererOptions)
-      .thenInMainThread([_pTile = pTile, _thiz = thiz, _work = work](
-                            TileLoadResultAndRenderResources&& pair) mutable {
+      .thenImmediately([pWorkManager = thiz->_pTileWorkManager, _work = work](
+                           TileLoadResultAndRenderResources&& pair) mutable {
         TileLoadResult& result = pair.result;
         if (result.state == TileLoadResultState::RequestRequired) {
           // This work goes back into the work manager queue
@@ -1648,20 +1648,26 @@ void TilesetContentManager::dispatchTileWork(
           // Add new requests here
           _work->pendingRequests.push_back(std::move(request));
 
-          TileWorkManager::RequeueWorkForRequest(
-              _thiz->_pTileWorkManager,
-              _work);
+          TileWorkManager::RequeueWorkForRequest(pWorkManager, _work);
+        }
+
+        return std::move(pair);
+      })
+      .thenInMainThread([_pTile = pTile, _thiz = thiz, _work = work](
+                            TileLoadResultAndRenderResources&& pair) mutable {
+        TileLoadResult& result = pair.result;
+        if (result.state == TileLoadResultState::RequestRequired) {
+          // Nothing to do
         } else {
+          _work->tileLoadResult = result;
+          TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
+
           _thiz->setTileContent(
               *_pTile,
               std::move(result),
               pair.pRenderResources);
-
-          _work->tileLoadResult = std::move(result);
-          TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
-
-          _thiz->notifyTileDoneLoading(_pTile);
         }
+        _thiz->notifyTileDoneLoading(_pTile);
       })
       .catchInMainThread(
           [_pTile = pTile, _thiz = this, pLogger = this->_externals.pLogger](
@@ -1692,8 +1698,8 @@ void TilesetContentManager::dispatchRasterWork(
           _externals.asyncSystem,
           responseDataMap,
           processingData.rasterCallback)
-      .thenInMainThread([_thiz = thiz,
-                         _work = work](RasterLoadResult&& result) mutable {
+      .thenImmediately([pWorkManager = thiz->_pTileWorkManager,
+                        _work = work](RasterLoadResult&& result) mutable {
         if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
           // This work goes back into the work manager queue
           assert(!result.missingRequests.empty());
@@ -1711,9 +1717,15 @@ void TilesetContentManager::dispatchRasterWork(
             _work->pendingRequests.push_back(std::move(request));
           }
 
-          TileWorkManager::RequeueWorkForRequest(
-              _thiz->_pTileWorkManager,
-              _work);
+          TileWorkManager::RequeueWorkForRequest(pWorkManager, _work);
+        }
+
+        return std::move(result);
+      })
+      .thenInMainThread([_thiz = thiz,
+                         _work = work](RasterLoadResult&& result) mutable {
+        if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
+          // Nothing to do
         } else {
           TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
         }
