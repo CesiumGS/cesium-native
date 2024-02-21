@@ -62,12 +62,8 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
-)
-
-target_link_libraries_system(
-    Cesium3DTilesContent
     PRIVATE
-        libmorton
+        libmorton::libmorton
 )
 
 install(TARGETS Cesium3DTilesContent

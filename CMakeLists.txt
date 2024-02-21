@@ -1,12 +1,34 @@
 cmake_minimum_required(VERSION 3.15)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(VCPKG_LIBRARY_LINKAGE static)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+ezvcpkg_fetch(
+    # Current release has a bug in the cmake config for ktx, see https://github.com/microsoft/vcpkg/issues/30787
+    COMMIT 42bb0d9e8d4cf33485afb9ee2229150f79f61a1f
+    PACKAGES catch2 gsl ktx picosha2 asyncplusplus draco earcut-hpp expected-lite glm libjpeg-turbo libmorton libwebp meshoptimizer ms-gsl rapidjson s2geometry spdlog sqlite3 stb tinyxml2 uriparser modp-base64 cpp-httplib[core] zlib-ng
+    # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
+    CLEAN_BUILDTREES
+    # Update the cmake toolchain so it can find the above packages
+    UPDATE_TOOLCHAIN
+    # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
+    SERIALIZE
+)
+
+
+if (NOT CMAKE_TOOLCHAIN_FILE)
+    message(FATAL_ERROR "Specify the VCPKG toolchain on the command line as '-DCMAKE_TOOLCHAIN_FILE=<VCPKG_ROOT>/scripts/buildsystems/vcpkg.cmake'")
+else()
+    message(STATUS "CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+# Set defaults that should be set BEFORE compiler / IDE detection
+include("cmake/defaults.cmake")
 
 project(cesium-native
     VERSION 0.1.0
     LANGUAGES CXX C
 )
 
-option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
 option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
@@ -16,9 +38,11 @@ if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
 endif()
 
-# Add Modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
+# Set defaults that need to be set AFTER compiler / IDE detection
+include("cmake/compiler.cmake")
 
+# Add Modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
     append_coverage_compiler_flags()
@@ -36,104 +60,40 @@ if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     )
 endif()
 
-set(CESIUM_DEBUG_POSTFIX "d")
-set(CESIUM_RELEASE_POSTFIX "")
+# On the CI builds, I have to do this explicitly for some reason or it fails to find the vcpkg packages.
+# The toolchain is supposed to manage this, but I haven't figured out why it isn't yet.
+list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}/share/s2")
+list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}/share")
+list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}")
+# Find the VCPKG dependnecies
+# Note that while we could push these into the extern/CMakeLists.txt as an organization tidy-up, that would require
+# us to update the minimum version of CMake to 3.24 and to add the GLOBAL option to the find_package calls, otherwise
+# they won't be visible in this scope nor any of the subdirectories for the actual libraries.
+#
+# However, for some of the vcpkg built libraries where they don't provide a prope cmake config file, we have to declare
+# and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
+# these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
+find_package(Async++ CONFIG REQUIRED)
+find_package(Catch2 CONFIG REQUIRED)
+find_package(draco CONFIG REQUIRED)
+find_package(expected-lite CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(meshoptimizer CONFIG REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
+find_package(httplib CONFIG REQUIRED)
+find_package(JPEG REQUIRED)
+find_package(Ktx CONFIG REQUIRED)
+find_package(libmorton CONFIG REQUIRED)
+find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(s2 CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(tinyxml2 CONFIG REQUIRED)
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
+find_package(uriparser CONFIG REQUIRED char wchar_t)
+find_package(WebP CONFIG REQUIRED)
 
-set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-set(CMAKE_MINSIZEREL_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-set(CMAKE_RELWITHDEBINFO_POSTFIX ${CESIUM_RELEASE_POSTFIX})
-
-# Use configure_depends to automatically reconfigure on filesystem
-# changes at the expense of computational overhead for CMake to
-# determine if new files have been added (-DGLOB_USE_CONFIGURE_DEPENDS).
-
-function(cesium_glob_files out_var_name regexes)
-    set(files "")
-    foreach(arg ${ARGV})
-        list(APPEND regexes_only "${arg}")
-    endforeach()
-    list(POP_FRONT regexes_only)
-    if (GLOB_USE_CONFIGURE_DEPENDS)
-        file(GLOB_RECURSE files CONFIGURE_DEPENDS ${regexes_only})
-    else()
-        file(GLOB files ${regexes_only})
-    endif()
-    set(${ARGV0} "${files}" PARENT_SCOPE)
-endfunction()
-
-# Workaround for targets that erroneously forget to
-# declare their include directories as `SYSTEM`
-function(target_link_libraries_system target scope)
-  set(libs ${ARGN})
-  foreach(lib ${libs})
-    get_target_property(lib_include_dirs ${lib} INTERFACE_INCLUDE_DIRECTORIES)
-
-    if ("${lib_include_dirs}" MATCHES ".*NOTFOUND$")
-        message(FATAL_ERROR "${target}: Cannot use INTERFACE_INCLUDE_DIRECTORIES from target ${lib} as it does not define it")
-    endif()
-
-    target_include_directories(${target} SYSTEM ${scope} ${lib_include_dirs})
-    target_link_libraries(${target} ${scope} ${lib})
-  endforeach()
-endfunction()
-
-# Shared object support is currently NOT working on Windows
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-
-function(configure_cesium_library targetName)
-    if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj)
-    else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
-    endif()
-
-    set_target_properties(${targetName} PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
-    )
-
-    if (CESIUM_GLM_STRICT_ENABLED)
-        target_compile_definitions(
-            ${targetName}
-            PUBLIC
-                GLM_FORCE_XYZW_ONLY # Disable .rgba and .stpq to make it easier to view values from debugger
-                GLM_FORCE_EXPLICIT_CTOR # Disallow implicit conversions between dvec3 <-> dvec4, dvec3 <-> fvec3, etc
-                GLM_FORCE_SIZE_T_LENGTH # Make vec.length() and vec[idx] use size_t instead of int
-        )
-    endif()
-
-    if (BUILD_SHARED_LIBS)
-        target_compile_definitions(
-            ${targetName}
-            PUBLIC
-                CESIUM_SHARED=${BUILD_SHARED_LIBS}
-        )
-    endif()
-
-    if (NOT ${targetName} MATCHES "cesium-native-tests")
-        string(TOUPPER ${targetName} capitalizedTargetName)
-        target_compile_definitions(
-            ${targetName}
-            PRIVATE
-                ${capitalizedTargetName}_BUILDING
-        )
-    endif()
-
-    if (CESIUM_EXTRA_INCLUDES)
-      target_include_directories(${targetName} PRIVATE ${CESIUM_EXTRA_INCLUDES})
-    endif()
-
-endfunction()
-
-
-# Private Libraries
+# Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
-
-# These libraries override the debug postfix, so re-override it.
-set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 
 # Public Targets
 add_subdirectory(CesiumUtility)
@@ -163,57 +123,3 @@ if (CESIUM_TESTS_ENABLED)
 endif()
 
 add_subdirectory(doc)
-
-# Installation of third-party libraries required to use cesium-native
-install(TARGETS uriparser OPTIONAL PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/uriparser")
-
-install(DIRECTORY extern/glm/glm
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    COMPONENT GLM
-)
-
-install(TARGETS tinyxml2)
-
-install(TARGETS Async++)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++.h TYPE INCLUDE)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/asyncplusplus/include/async++ TYPE INCLUDE)
-
-install(TARGETS spdlog)
-install(DIRECTORY ${CESIUM_NATIVE_SPDLOG_INCLUDE_DIR}/spdlog DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-
-install(TARGETS ${CESIUM_NATIVE_DRACO_LIBRARY})
-
-install(TARGETS sqlite3)
-
-install(TARGETS modp_b64)
-
-install(TARGETS httplib)
-
-# Don't install CSPRNG when building for Universal Windows Platform
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "WindowsStore")
-  install(TARGETS csprng)
-endif()
-
-install(TARGETS GSL)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
-
-# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail.
-# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered
-# private to cesium-native), so just set the PUBLIC_HEADER to an empty string.
-set_target_properties(ktx_read PROPERTIES PUBLIC_HEADER "")
-install(TARGETS ktx_read)
-
-install(TARGETS webpdecoder)
-
-install(DIRECTORY $<TARGET_LINKER_FILE:turbojpeg> TYPE LIB)
-
-install(DIRECTORY $<TARGET_LINKER_FILE:zlibstatic> TYPE LIB)
-
-install(DIRECTORY ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}/rapidjson TYPE INCLUDE)
-
-install(TARGETS s2geometry)
-
-install(TARGETS expected-lite)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/expected-lite/include/nonstd TYPE INCLUDE)
-
-install(TARGETS meshoptimizer)

@@ -5,6 +5,7 @@
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumUtility/AttributeCompression.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Math.h>
 
 #ifdef _MSC_VER
@@ -22,7 +23,6 @@
 #endif
 
 #include <rapidjson/document.h>
-#include <spdlog/fmt/fmt.h>
 
 #include <limits>
 
@@ -815,7 +815,7 @@ bool validateDracoMetadataAttribute(
   }
 
   auto type = MetadataProperty::getTypeFromNumberOfComponents(
-      pAttribute->num_components());
+      static_cast<int8_t>(pAttribute->num_components()));
   return type && type.value() == semantic.type;
 }
 

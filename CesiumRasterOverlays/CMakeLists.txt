@@ -46,18 +46,9 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
-)
-
-target_link_libraries_system(
-    CesiumRasterOverlays
-    PUBLIC
-        expected-lite
-)
-
-target_link_libraries_system(
-    CesiumRasterOverlays
+        nonstd::expected-lite
     PRIVATE
-        tinyxml2
+        tinyxml2::tinyxml2
 )
 
 install(TARGETS CesiumRasterOverlays
