@@ -480,11 +480,15 @@ float Tileset::computeLoadProgress() noexcept {
       static_cast<uint32_t>(_updateResult.activeWorkCount) +
       _updateResult.tilesLoading + _updateResult.rastersLoading +
       static_cast<uint32_t>(_updateResult.tilesFadingOut.size());
+  uint32_t numOfTilesKicked = this->_updateResult.tilesKicked;
 
   uint32_t completedSum =
       _updateResult.tilesLoaded + _updateResult.rastersLoaded;
 
-  uint32_t totalNum = inProgressSum + completedSum;
+  // Total work so far. Add already loaded tiles and kicked tiles.
+  // Kicked tiles are transient, and never in progress, but are an indicator
+  // that there is more work to do next frame.
+  uint32_t totalNum = inProgressSum + completedSum + numOfTilesKicked;
   float percentage =
       static_cast<float>(completedSum) / static_cast<float>(totalNum);
 
