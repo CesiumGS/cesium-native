@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check source formatting
         run: |
           npm install
@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo apt install -y doxygen
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Generate Documentation
@@ -27,7 +27,7 @@ jobs:
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ReferenceDocumentation
           path: build/doc/html
@@ -39,7 +39,7 @@ jobs:
         run: |
           choco install -y nasm
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Compile Debug Configuration
@@ -65,7 +65,7 @@ jobs:
         run: |
           choco install -y nasm
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Compile Debug Configuration
@@ -91,7 +91,7 @@ jobs:
         run: |
           sudo apt-get install nasm
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Compile Debug Configuration
@@ -121,7 +121,7 @@ jobs:
         run: |
           sudo apt-get install nasm
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Compile Debug Configuration
@@ -141,25 +141,41 @@ jobs:
           cd build-release
           ctest -V
   macOS:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Compile Debug Configuration
+      - name: Compile Debug Configuration - Intel
         run: |
-          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
-          cmake --build build-debug --parallel 4
-      - name: Test Debug Configuration
+          cmake -B build-debug-intel -S . -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake --build build-debug-intel --parallel 4
+      - name: Test Debug Configuration - Intel
         run: |
-          cd build-debug
+          cd build-debug-intel
           ctest -V
-      - name: Compile RelWithDebInfo Configuration
+      - name: Compile Debug Configuration - Apple
         run: |
-          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
-          cmake --build build-release --config RelWithDebInfo --parallel 4
-      - name: Test RelWithDebInfo Configuration
+          cmake -B build-debug-apple -S . -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build build-debug-apple --parallel 4
+      - name: Test Debug Configuration - Apple
         run: |
-          cd build-release
+          cd build-debug-apple
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration - Intel
+        run: |
+          cmake -B build-release-intel -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake --build build-release-intel --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration - Intel
+        run: |
+          cd build-release-intel
+          ctest -V
+      - name: Compile RelWithDebInfo Configuration - Apple
+        run: |
+          cmake -B build-release-apple -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build build-release-apple --config RelWithDebInfo --parallel 4
+      - name: Test RelWithDebInfo Configuration - Apple
+        run: |
+          cd build-release-apple
           ctest -V
