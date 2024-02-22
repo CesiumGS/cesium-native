@@ -153,7 +153,7 @@ rapidjson::Document parseFeatureTableJsonData(
     result.errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
-        (int)document.GetParseError(),
+        static_cast<int32_t>(document.GetParseError()),
         document.GetErrorOffset()));
     return document;
   }
@@ -213,7 +213,7 @@ void convertB3dmMetadataToGltfStructuralMetadata(
             "Error when parsing batch table JSON, error code {} at byte "
             "offset "
             "{}. Skip parsing metadata",
-            batchTableJson.GetParseError(),
+            static_cast<int32_t>(batchTableJson.GetParseError()),
             batchTableJson.GetErrorOffset()));
         return;
       }

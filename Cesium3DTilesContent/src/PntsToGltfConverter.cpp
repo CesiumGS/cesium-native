@@ -617,7 +617,7 @@ rapidjson::Document parseFeatureTableJson(
     parsedContent.errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
-        document.GetParseError(),
+        static_cast<int32_t>(document.GetParseError()),
         document.GetErrorOffset()));
     return document;
   }
@@ -783,7 +783,7 @@ rapidjson::Document parseBatchTableJson(
         "Error when parsing batch table JSON, error code {} at byte "
         "offset "
         "{}. Skip parsing metadata",
-        document.GetParseError(),
+        static_cast<int32_t>(document.GetParseError()),
         document.GetErrorOffset()));
     return document;
   }
