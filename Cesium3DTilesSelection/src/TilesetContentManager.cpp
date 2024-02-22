@@ -299,7 +299,16 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
     requestData.headers = defaultHeaders;
     RasterProcessingCallback rasterCallback;
 
-    pMapped.getLoadThrottledWork(requestData, rasterCallback);
+    // Can't do work without a loading tile
+    RasterOverlayTile* pLoadingTile = pMapped.getLoadingTile();
+    if (!pLoadingTile)
+      continue;
+
+    RasterOverlayTileProvider& provider = pLoadingTile->getTileProvider();
+    provider.getLoadTileThrottledWork(
+        *pLoadingTile,
+        requestData,
+        rasterCallback);
 
     if (!requestData.url.empty() || rasterCallback != nullptr) {
       TilesetContentManager::RasterWorkChain newWorkChain = {
@@ -1032,24 +1041,11 @@ void TilesetContentManager::unloadAll() {
 
 void TilesetContentManager::waitUntilIdle() {
   // Wait for all asynchronous loading to terminate.
-  // If you're hanging here, it's most likely caused by _tileLoadsInProgress not
-  // being decremented correctly when an async load ends.
-  while (this->_tileLoadsInProgress > 0) {
+  size_t activeWorkCount = this->_pTileWorkManager->GetActiveWorkCount();
+  while (activeWorkCount > 0) {
     this->_externals.pAssetAccessor->tick();
     this->_externals.asyncSystem.dispatchMainThreadTasks();
-  }
-
-  // Wait for all overlays to wrap up their loading, too.
-  uint32_t rasterOverlayTilesLoading = 1;
-  while (rasterOverlayTilesLoading > 0) {
-    this->_externals.pAssetAccessor->tick();
-    this->_externals.asyncSystem.dispatchMainThreadTasks();
-
-    rasterOverlayTilesLoading = 0;
-    for (const auto& pTileProvider :
-         this->_overlayCollection.getTileProviders()) {
-      rasterOverlayTilesLoading += pTileProvider->getNumberOfTilesLoading();
-    }
+    activeWorkCount = this->_pTileWorkManager->GetActiveWorkCount();
   }
 }
 
@@ -1688,6 +1684,15 @@ void TilesetContentManager::dispatchRasterWork(
     RasterProcessingData& processingData,
     CesiumAsync::UrlResponseDataMap& responseDataMap,
     TileWorkManager::Work* work) {
+  RasterMappedTo3DTile* pRasterTile = processingData.pRasterTile;
+  assert(pRasterTile);
+
+  RasterOverlayTile* pLoadingTile = pRasterTile->getLoadingTile();
+  if (!pLoadingTile) {
+    // Can't do any work
+    TileWorkManager::SignalWorkComplete(this->_pTileWorkManager, work);
+    return;
+  }
 
   // Optionally could move this to work manager
   this->notifyRasterStartLoading();
@@ -1695,9 +1700,11 @@ void TilesetContentManager::dispatchRasterWork(
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
-  processingData.pRasterTile
-      ->loadThrottled(
-          _externals.asyncSystem,
+  RasterOverlayTileProvider& provider = pLoadingTile->getTileProvider();
+
+  provider
+      .loadTileThrottled(
+          *pLoadingTile,
           responseDataMap,
           processingData.rasterCallback)
       .thenImmediately([pWorkManager = thiz->_pTileWorkManager,
@@ -1724,16 +1731,44 @@ void TilesetContentManager::dispatchRasterWork(
 
         return std::move(result);
       })
-      .thenInMainThread([_thiz = thiz,
-                         _work = work](RasterLoadResult&& result) mutable {
+      .thenInMainThread([_thiz = thiz, pTile = pLoadingTile, _work = work](
+                            RasterLoadResult&& result) mutable {
         if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
           // Nothing to do
         } else {
+          pTile->_rectangle = result.rectangle;
+          pTile->_pRendererResources = result.pRendererResources;
+          assert(result.image.has_value());
+          pTile->_image = std::move(result.image.value());
+          pTile->_tileCredits = std::move(result.credits);
+          pTile->_moreDetailAvailable =
+              result.moreDetailAvailable
+                  ? RasterOverlayTile::MoreDetailAvailable::Yes
+                  : RasterOverlayTile::MoreDetailAvailable::No;
+          pTile->setState(result.state);
+
+          result.pTile = pTile;
+
+          RasterOverlayTileProvider& provider = pTile->getTileProvider();
+          provider.incrementTileDataBytes(
+              int64_t(pTile->getImage().pixelData.size()));
+
           TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
         }
 
         _thiz->notifyRasterDoneLoading();
-      });
+      })
+      .catchInMainThread(
+          [_thiz = thiz, pTile = pLoadingTile](const std::exception& /*e*/) {
+            pTile->_pRendererResources = nullptr;
+            pTile->_image = {};
+            pTile->_tileCredits = {};
+            pTile->_moreDetailAvailable =
+                RasterOverlayTile::MoreDetailAvailable::No;
+            pTile->setState(RasterOverlayTile::LoadState::Failed);
+
+            _thiz->notifyRasterDoneLoading();
+          });
 }
 
 void TilesetContentManager::parseTileWork(

@@ -235,18 +235,12 @@ public:
   int64_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
 
   /**
-   * @brief Returns the number of tiles that are currently loading.
+   * @brief Incremement number of bytes loaded from outside caller
+   *
+   * @param bytes Number of bytes to add to our count
    */
-  uint32_t getNumberOfTilesLoading() const noexcept {
-    assert(this->_totalTilesCurrentlyLoading > -1);
-    return this->_totalTilesCurrentlyLoading;
-  }
-
-  /**
-   * @brief Returns the number of throttle tiles that are loading
-   */
-  int32_t getNumberOfThrottledTilesLoading() const noexcept {
-    return this->_throttledTilesCurrentlyLoading;
+  void incrementTileDataBytes(int64_t bytes) noexcept {
+    _tileDataBytes += bytes;
   }
 
   /**
@@ -364,28 +358,8 @@ protected:
 private:
   CesiumAsync::Future<RasterLoadResult> doLoad(
       RasterOverlayTile& tile,
-      bool isThrottledLoad,
       const CesiumAsync::UrlResponseDataMap& responsesByUrl,
       RasterProcessingCallback rasterCallback);
-
-  /**
-   * @brief Begins the process of loading of a tile.
-   *
-   * This method should be called at the beginning of the tile load process.
-   *
-   * @param isThrottledLoad True if the load was originally throttled.
-   */
-  void beginTileLoad(bool isThrottledLoad) noexcept;
-
-  /**
-   * @brief Finalizes loading of a tile.
-   *
-   * This method should be called at the end of the tile load process,
-   * no matter whether the load succeeded or failed.
-   *
-   * @param isThrottledLoad True if the load was originally throttled.
-   */
-  void finalizeTileLoad(bool isThrottledLoad) noexcept;
 
 private:
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
@@ -399,8 +373,6 @@ private:
   CesiumGeometry::Rectangle _coverageRectangle;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
-  int32_t _totalTilesCurrentlyLoading;
-  int32_t _throttledTilesCurrentlyLoading;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");

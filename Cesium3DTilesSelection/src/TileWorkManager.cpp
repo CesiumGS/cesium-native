@@ -338,7 +338,7 @@ void TileWorkManager::GetPendingCount(
 size_t TileWorkManager::GetActiveWorkCount() {
   std::lock_guard<std::mutex> lock(_requestsLock);
   return _requestsPending.size() + _requestsInFlight.size() +
-         _processingPending.size() + _failedWork.size() + _doneWork.size();
+         _processingPending.size() + _processingInFlight.size();
 }
 
 void TileWorkManager::GetLoadingWorkStats(

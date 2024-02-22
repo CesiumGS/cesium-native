@@ -179,29 +179,6 @@ public:
       Tile& tile) noexcept;
 
   /**
-   * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
-   *
-   * @param callerAsync Async system provided by caller
-   * @param responsesByUrl Content responses available
-   * @param rasterCallback Loader provided callback to execute
-   * @return Future with the RasterLoadResult
-   */
-  CesiumAsync::Future<CesiumRasterOverlays::RasterLoadResult> loadThrottled(
-      CesiumAsync::AsyncSystem& callerAsync,
-      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
-      CesiumRasterOverlays::RasterProcessingCallback rasterCallback) noexcept;
-
-  /**
-   * @brief Get the work needed to execute loadThrottled
-   *
-   * @param outRequest Output data for content request
-   * @param outCallback Output callback for processing work
-   */
-  void getLoadThrottledWork(
-      CesiumAsync::RequestData& outRequest,
-      CesiumRasterOverlays::RasterProcessingCallback& outCallback);
-
-  /**
    * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.
    *
    * The returned mapping will be to a placeholder {@link RasterOverlayTile} if

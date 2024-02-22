@@ -211,34 +211,6 @@ void RasterMappedTo3DTile::detachFromTile(
   this->_state = AttachmentState::Unattached;
 }
 
-CesiumAsync::Future<RasterLoadResult> RasterMappedTo3DTile::loadThrottled(
-    CesiumAsync::AsyncSystem& callerAsync,
-    const CesiumAsync::UrlResponseDataMap& responsesByUrl,
-    RasterProcessingCallback rasterCallback) noexcept {
-  CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
-  RasterOverlayTile* pLoading = this->getLoadingTile();
-  if (!pLoading) {
-    RasterLoadResult result;
-    result.state = RasterOverlayTile::LoadState::Failed;
-    return callerAsync.createResolvedFuture<RasterLoadResult>(
-        std::move(result));
-  }
-
-  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  return provider.loadTileThrottled(*pLoading, responsesByUrl, rasterCallback);
-}
-
-void RasterMappedTo3DTile::getLoadThrottledWork(
-    CesiumAsync::RequestData& outRequest,
-    RasterProcessingCallback& outCallback) {
-  RasterOverlayTile* pLoading = this->getLoadingTile();
-  if (!pLoading)
-    return;
-
-  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  provider.getLoadTileThrottledWork(*pLoading, outRequest, outCallback);
-}
-
 namespace {
 
 IntrusivePointer<RasterOverlayTile>
