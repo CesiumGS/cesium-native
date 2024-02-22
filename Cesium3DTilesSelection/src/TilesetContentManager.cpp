@@ -881,7 +881,7 @@ void TilesetContentManager::createWorkManager(
   TileWorkManager::TileDispatchFunc tileDispatch =
       [this](
           TileProcessingData& processingData,
-          CesiumAsync::UrlResponseDataMap& responseDataMap,
+          const CesiumAsync::UrlResponseDataMap& responseDataMap,
           TileWorkManager::Work* work) {
         return this->dispatchTileWork(processingData, responseDataMap, work);
       };
@@ -889,7 +889,7 @@ void TilesetContentManager::createWorkManager(
   TileWorkManager::RasterDispatchFunc rasterDispatch =
       [this](
           RasterProcessingData& processingData,
-          CesiumAsync::UrlResponseDataMap& responseDataMap,
+          const CesiumAsync::UrlResponseDataMap& responseDataMap,
           TileWorkManager::Work* work) {
         return this->dispatchRasterWork(processingData, responseDataMap, work);
       };
@@ -1617,7 +1617,7 @@ void TilesetContentManager::handleFailedOrders(
 
 void TilesetContentManager::dispatchTileWork(
     TileProcessingData& processingData,
-    CesiumAsync::UrlResponseDataMap& responseDataMap,
+    const CesiumAsync::UrlResponseDataMap& responseDataMap,
     TileWorkManager::Work* work) {
   Tile* pTile = processingData.pTile;
 
@@ -1627,19 +1627,46 @@ void TilesetContentManager::dispatchTileWork(
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
-  this->doTileContentWork(
-          *pTile,
-          processingData.tileCallback,
-          responseDataMap,
-          processingData.projections,
-          processingData.contentOptions,
-          processingData.rendererOptions)
-      .thenImmediately([pWorkManager = thiz->_pTileWorkManager, _work = work](
-                           TileLoadResultAndRenderResources&& pair) mutable {
-        TileLoadResult& result = pair.result;
+  TileContentLoadInfo tileLoadInfo{
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger,
+      processingData.contentOptions,
+      *pTile};
+
+  TilesetContentLoader* pLoader;
+  if (pTile->getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
+  } else {
+    pLoader = this->_pLoader.get();
+  }
+
+  TileLoadInput loadInput{
+      *pTile,
+      processingData.contentOptions,
+      this->_externals.asyncSystem,
+      this->_externals.pLogger,
+      responseDataMap};
+
+  assert(processingData.tileCallback);
+
+  processingData.tileCallback(loadInput, pLoader)
+      .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
+                        &requestHeaders = this->_requestHeaders,
+                        &projections = processingData.projections,
+                        &rendererOptions = processingData.rendererOptions,
+                        pWorkManager = thiz->_pTileWorkManager,
+                        _work = work](TileLoadResult&& result) mutable {
+        // the reason we run immediate continuation, instead of in the
+        // worker thread, is that the loader may run the task in the main
+        // thread. And most often than not, those main thread task is very
+        // light weight. So when those tasks return, there is no need to
+        // spawn another worker thread if the result of the task isn't
+        // related to render content. We only ever spawn a new task in the
+        // worker thread if the content is a render content
         if (result.state == TileLoadResultState::RequestRequired) {
           // This work goes back into the work manager queue
-
           // Make sure we're not requesting something we have
           CesiumAsync::RequestData& request = result.additionalRequestData;
           assert(
@@ -1650,9 +1677,29 @@ void TilesetContentManager::dispatchTileWork(
           _work->pendingRequests.push_back(std::move(request));
 
           TileWorkManager::RequeueWorkForRequest(pWorkManager, _work);
+        } else if (result.state == TileLoadResultState::Success) {
+          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
+            auto asyncSystem = tileLoadInfo.asyncSystem;
+            return asyncSystem.runInWorkerThread(
+                [tileLoadInfo = std::move(tileLoadInfo),
+                 result = std::move(result),
+                 &projections,
+                 &requestHeaders,
+                 &rendererOptions]() mutable {
+                  return postProcessContentInWorkerThread(
+                      std::move(result),
+                      std::move(projections),
+                      std::move(tileLoadInfo),
+                      result.originalRequestUrl,
+                      requestHeaders,
+                      rendererOptions);
+                });
+          }
         }
 
-        return std::move(pair);
+        return tileLoadInfo.asyncSystem
+            .createResolvedFuture<TileLoadResultAndRenderResources>(
+                {std::move(result), nullptr});
       })
       .thenInMainThread([_pTile = pTile, _thiz = thiz, _work = work](
                             TileLoadResultAndRenderResources&& pair) mutable {
@@ -1685,7 +1732,7 @@ void TilesetContentManager::dispatchTileWork(
 
 void TilesetContentManager::dispatchRasterWork(
     RasterProcessingData& processingData,
-    CesiumAsync::UrlResponseDataMap& responseDataMap,
+    const CesiumAsync::UrlResponseDataMap& responseDataMap,
     TileWorkManager::Work* work) {
   RasterMappedTo3DTile* pRasterTile = processingData.pRasterTile;
   assert(pRasterTile);
@@ -1854,79 +1901,6 @@ void TilesetContentManager::parseTileWork(
       newWork.rasterWorkChains);
 
   outWork.push_back(newWork);
-}
-
-CesiumAsync::Future<TileLoadResultAndRenderResources>
-TilesetContentManager::doTileContentWork(
-    Tile& tile,
-    TileProcessingCallback processingCallback,
-    const CesiumAsync::UrlResponseDataMap& responseDataMap,
-    const std::vector<CesiumGeospatial::Projection>& projections,
-    const TilesetContentOptions& contentOptions,
-    const std::any& rendererOptions) {
-  CESIUM_TRACE("TilesetContentManager::doTileContentWork");
-
-  TileContentLoadInfo tileLoadInfo{
-      this->_externals.asyncSystem,
-      this->_externals.pAssetAccessor,
-      this->_externals.pPrepareRendererResources,
-      this->_externals.pLogger,
-      contentOptions,
-      tile};
-
-  TilesetContentLoader* pLoader;
-  if (tile.getLoader() == &this->_upsampler) {
-    pLoader = &this->_upsampler;
-  } else {
-    pLoader = this->_pLoader.get();
-  }
-
-  TileLoadInput loadInput{
-      tile,
-      contentOptions,
-      this->_externals.asyncSystem,
-      this->_externals.pLogger,
-      responseDataMap};
-
-  assert(processingCallback);
-
-  return processingCallback(loadInput, pLoader)
-      .thenImmediately([requestHeaders = this->_requestHeaders,
-                        tileLoadInfo = std::move(tileLoadInfo),
-                        projections = std::move(projections),
-                        rendererOptions =
-                            rendererOptions](TileLoadResult&& result) mutable {
-        // the reason we run immediate continuation, instead of in the
-        // worker thread, is that the loader may run the task in the main
-        // thread. And most often than not, those main thread task is very
-        // light weight. So when those tasks return, there is no need to
-        // spawn another worker thread if the result of the task isn't
-        // related to render content. We only ever spawn a new task in the
-        // worker thread if the content is a render content
-        if (result.state == TileLoadResultState::Success) {
-          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            auto asyncSystem = tileLoadInfo.asyncSystem;
-            return asyncSystem.runInWorkerThread(
-                [result = std::move(result),
-                 projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo),
-                 requestHeaders = std::move(requestHeaders),
-                 rendererOptions]() mutable {
-                  return postProcessContentInWorkerThread(
-                      std::move(result),
-                      std::move(projections),
-                      std::move(tileLoadInfo),
-                      result.originalRequestUrl,
-                      requestHeaders,
-                      rendererOptions);
-                });
-          }
-        }
-
-        return tileLoadInfo.asyncSystem
-            .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), nullptr});
-      });
 }
 
 } // namespace Cesium3DTilesSelection

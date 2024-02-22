@@ -98,14 +98,6 @@ public:
       double maximumScreenSpaceError,
       std::vector<ParsedTileWork>& outWork);
 
-  CesiumAsync::Future<TileLoadResultAndRenderResources> doTileContentWork(
-      Tile& tile,
-      TileProcessingCallback processingCallback,
-      const CesiumAsync::UrlResponseDataMap& responseDataMap,
-      const std::vector<CesiumGeospatial::Projection>& projections,
-      const TilesetContentOptions& contentOptions,
-      const std::any& rendererOptions);
-
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
@@ -210,12 +202,12 @@ private:
 
   void dispatchTileWork(
       TileProcessingData& processingData,
-      CesiumAsync::UrlResponseDataMap& responseDataMap,
+      const CesiumAsync::UrlResponseDataMap& responseDataMap,
       TileWorkManager::Work* work);
 
   void dispatchRasterWork(
       RasterProcessingData& processingData,
-      CesiumAsync::UrlResponseDataMap& responseDataMap,
+      const CesiumAsync::UrlResponseDataMap& responseDataMap,
       TileWorkManager::Work* work);
 
   TilesetExternals _externals;

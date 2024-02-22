@@ -130,12 +130,12 @@ public:
 
   using TileDispatchFunc = std::function<void(
       TileProcessingData&,
-      CesiumAsync::UrlResponseDataMap&,
+      const CesiumAsync::UrlResponseDataMap&,
       TileWorkManager::Work*)>;
 
   using RasterDispatchFunc = std::function<void(
       RasterProcessingData&,
-      CesiumAsync::UrlResponseDataMap&,
+      const CesiumAsync::UrlResponseDataMap&,
       TileWorkManager::Work*)>;
 
   void SetDispatchFunctions(

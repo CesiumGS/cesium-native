@@ -562,12 +562,12 @@ void TileWorkManager::transitionProcessing(
 
     if (std::holds_alternative<TileProcessingData>(
             work->order.processingData)) {
-      TileProcessingData tileProcessing =
+      TileProcessingData& tileProcessing =
           std::get<TileProcessingData>(work->order.processingData);
 
       thiz->_tileDispatchFunc(tileProcessing, responseDataMap, work);
     } else {
-      RasterProcessingData rasterProcessing =
+      RasterProcessingData& rasterProcessing =
           std::get<RasterProcessingData>(work->order.processingData);
 
       thiz->_rasterDispatchFunc(rasterProcessing, responseDataMap, work);
