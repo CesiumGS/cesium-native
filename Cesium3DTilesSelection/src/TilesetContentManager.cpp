@@ -1649,9 +1649,9 @@ void TilesetContentManager::dispatchTileWork(
       this->_externals.pLogger,
       responseDataMap};
 
-  assert(processingData.tileCallback);
+  assert(processingData.loaderCallback);
 
-  processingData.tileCallback(loadInput, pLoader)
+  processingData.loaderCallback(loadInput, pLoader)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         &requestHeaders = this->_requestHeaders,
                         &projections = processingData.projections,

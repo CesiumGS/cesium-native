@@ -119,7 +119,7 @@ TileLoadResult loadTileContent(
           const CesiumAsync::UrlResponseDataMap& responseDataMap,
           TileWorkManager::Work* work) mutable {
         assert(processingData.pTile);
-        assert(processingData.tileCallback);
+        assert(processingData.loaderCallback);
         Tile* pTile = processingData.pTile;
 
         TileLoadInput loadInput{
@@ -129,7 +129,7 @@ TileLoadResult loadTileContent(
             spdlog::default_logger(),
             responseDataMap};
 
-        processingData.tileCallback(loadInput, pLoader)
+        processingData.loaderCallback(loadInput, pLoader)
             .thenInMainThread(
                 [_work = work, workManager](TileLoadResult&& result) mutable {
                   _work->tileLoadResult = std::move(result);

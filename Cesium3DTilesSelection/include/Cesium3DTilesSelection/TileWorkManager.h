@@ -10,7 +10,7 @@ class TilesetMetadata;
 
 struct TileProcessingData {
   Tile* pTile = nullptr;
-  TileLoaderCallback tileCallback = {};
+  TileLoaderCallback loaderCallback = {};
   std::vector<CesiumGeospatial::Projection> projections{};
   TilesetContentOptions contentOptions = {};
   std::any rendererOptions = {};
