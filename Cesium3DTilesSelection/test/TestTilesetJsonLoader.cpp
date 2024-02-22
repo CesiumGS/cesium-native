@@ -116,7 +116,7 @@ TileLoadResult loadTileContent(
   TileWorkManager::TileDispatchFunc tileDispatch =
       [pLoader = &loader, asyncSystem, workManager](
           TileProcessingData& processingData,
-          CesiumAsync::UrlResponseDataMap& responseDataMap,
+          const CesiumAsync::UrlResponseDataMap& responseDataMap,
           TileWorkManager::Work* work) mutable {
         assert(processingData.pTile);
         assert(processingData.tileCallback);
@@ -139,7 +139,7 @@ TileLoadResult loadTileContent(
 
   TileWorkManager::RasterDispatchFunc rasterDispatch =
       [](RasterProcessingData&,
-         CesiumAsync::UrlResponseDataMap&,
+         const CesiumAsync::UrlResponseDataMap&,
          TileWorkManager::Work*) {};
 
   workManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
