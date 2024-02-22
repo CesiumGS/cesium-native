@@ -1040,12 +1040,15 @@ void TilesetContentManager::unloadAll() {
 }
 
 void TilesetContentManager::waitUntilIdle() {
-  // Wait for all asynchronous loading to terminate.
-  size_t activeWorkCount = this->_pTileWorkManager->GetActiveWorkCount();
-  while (activeWorkCount > 0) {
+  // Tiles are loaded either on construction (root tile) or through the work
+  // manager. Wait for all asynchronous loading to terminate.
+  bool workInProgress = this->_tileLoadsInProgress > 0 ||
+                        this->_pTileWorkManager->GetActiveWorkCount() > 0;
+  while (workInProgress) {
     this->_externals.pAssetAccessor->tick();
     this->_externals.asyncSystem.dispatchMainThreadTasks();
-    activeWorkCount = this->_pTileWorkManager->GetActiveWorkCount();
+    workInProgress = this->_tileLoadsInProgress > 0 ||
+                     this->_pTileWorkManager->GetActiveWorkCount() > 0;
   }
 }
 
