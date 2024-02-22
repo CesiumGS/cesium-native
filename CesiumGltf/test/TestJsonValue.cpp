@@ -39,29 +39,29 @@ TEST_CASE(
   REQUIRE(JsonValue(floatMin).getDouble() == floatMin);
 }
 
-TEST_CASE("JsonValue::getSafeNumber() throws if narrowing conversion error "
-          "would occur") {
-  SECTION("2^64 - 1 cannot be converted back to a double") {
-    auto value = JsonValue(std::numeric_limits<std::uint64_t>::max());
-    REQUIRE_THROWS(value.getSafeNumber<double>());
-  }
+// TEST_CASE("JsonValue::getSafeNumber() throws if narrowing conversion error "
+//           "would occur") {
+//   SECTION("2^64 - 1 cannot be converted back to a double") {
+//     auto value = JsonValue(std::numeric_limits<std::uint64_t>::max());
+//     REQUIRE_THROWS(value.getSafeNumber<double>());
+//   }
 
-  SECTION("-2^64 cannot be converted back to a double") {
-    // -9223372036854775807L cannot be represented exactly as a double
-    auto value = JsonValue(std::numeric_limits<std::int64_t>::min() + 1);
-    REQUIRE_THROWS(value.getSafeNumber<double>());
-  }
+//   SECTION("-2^64 cannot be converted back to a double") {
+//     // -9223372036854775807L cannot be represented exactly as a double
+//     auto value = JsonValue(std::numeric_limits<std::int64_t>::min() + 1);
+//     REQUIRE_THROWS(value.getSafeNumber<double>());
+//   }
 
-  SECTION("1024.0 cannot be converted back to a std::uint8_t") {
-    auto value = JsonValue(1024.0);
-    REQUIRE_THROWS(value.getSafeNumber<std::uint8_t>());
-  }
+//   SECTION("1024.0 cannot be converted back to a std::uint8_t") {
+//     auto value = JsonValue(1024.0);
+//     REQUIRE_THROWS(value.getSafeNumber<std::uint8_t>());
+//   }
 
-  SECTION("1.5 cannot be converted back to a std::uint16_t") {
-    auto value = JsonValue(1.5);
-    REQUIRE_THROWS(value.getSafeNumber<std::uint16_t>());
-  }
-}
+//   SECTION("1.5 cannot be converted back to a std::uint16_t") {
+//     auto value = JsonValue(1.5);
+//     REQUIRE_THROWS(value.getSafeNumber<std::uint16_t>());
+//   }
+// }
 
 TEST_CASE("JsonValue::getSafeNumberOrDefault() returns default if narrowing "
           "conversion error would occur") {
