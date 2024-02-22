@@ -10,6 +10,7 @@
 
 - Added `contains` method to `BoundingSphere`.
 - Added `GlobeRectangle::MAXIMUM` static field.
+- Switched from `zlib` to `zlib-ng` in order to improve the performance of decompressing gzipped data.
 
 ##### Fixes :wrench:
 
