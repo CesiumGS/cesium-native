@@ -149,7 +149,7 @@ jobs:
           submodules: recursive
       - name: Compile Debug Configuration - Intel
         run: |
-          cmake -B build-debug-intel -S . -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake -B build-debug-intel -S . -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
           cmake --build build-debug-intel --parallel 4
       - name: Test Debug Configuration - Intel
         run: |
@@ -157,7 +157,7 @@ jobs:
           ctest -V
       - name: Compile Debug Configuration - Apple
         run: |
-          cmake -B build-debug-apple -S . -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake -B build-debug-apple -S . -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
           cmake --build build-debug-apple --parallel 4
       - name: Test Debug Configuration - Apple
         run: |
@@ -165,7 +165,7 @@ jobs:
           ctest -V
       - name: Compile RelWithDebInfo Configuration - Intel
         run: |
-          cmake -B build-release-intel -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake -B build-release-intel -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
           cmake --build build-release-intel --config RelWithDebInfo --parallel 4
       - name: Test RelWithDebInfo Configuration - Intel
         run: |
@@ -173,7 +173,7 @@ jobs:
           ctest -V
       - name: Compile RelWithDebInfo Configuration - Apple
         run: |
-          cmake -B build-release-apple -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake -B build-release-apple -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
           cmake --build build-release-apple --config RelWithDebInfo --parallel 4
       - name: Test RelWithDebInfo Configuration - Apple
         run: |
