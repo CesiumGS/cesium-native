@@ -1,5 +1,0 @@
-# if (MSVC)
-#     add_compile_options(/W4 /WX /wd4201 /bigobj)
-# else()
-#     add_compile_options(-Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
-# endif()

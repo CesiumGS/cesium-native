@@ -34,16 +34,13 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-target_link_libraries(CesiumGeospatial
-PUBLIC
+target_link_libraries(CesiumGeospatial PUBLIC
     CesiumGeometry
     CesiumUtility
     earcut
-PRIVATE
-    s2::s2
+    PRIVATE
+      s2geometry
 )
-
-target_compile_definitions(CesiumGeospatial PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 install(TARGETS CesiumGeospatial
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

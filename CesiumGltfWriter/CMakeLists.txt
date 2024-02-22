@@ -61,8 +61,7 @@ target_link_libraries(CesiumGltfWriter
     PUBLIC
         CesiumGltf
         CesiumJsonWriter
-    PRIVATE
-        modp_b64::modp_b64
+        modp_b64
 )
 
 install(TARGETS CesiumGltfWriter
