@@ -623,10 +623,6 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
-      _pTileWorkManager{std::make_shared<TileWorkManager>(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -638,6 +634,8 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()} {
+  createWorkManager(externals);
+
   this->_rootTileAvailablePromise.resolve();
 }
 
@@ -658,10 +656,6 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
-      _pTileWorkManager{std::make_shared<TileWorkManager>(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -673,6 +667,8 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()} {
+  createWorkManager(externals);
+
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -803,10 +799,6 @@ TilesetContentManager::TilesetContentManager(
               : std::nullopt),
       _tilesetCredits{},
       _overlayCollection{std::move(overlayCollection)},
-      _pTileWorkManager{std::make_shared<TileWorkManager>(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pLogger)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -818,6 +810,8 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()} {
+  createWorkManager(externals);
+
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -868,6 +862,32 @@ TilesetContentManager::TilesetContentManager(
   }
 }
 
+void TilesetContentManager::createWorkManager(
+    const TilesetExternals& externals) {
+  _pTileWorkManager = std::make_shared<TileWorkManager>(
+      externals.asyncSystem,
+      externals.pAssetAccessor,
+      externals.pLogger);
+
+  TileWorkManager::TileDispatchFunc tileDispatch =
+      [this](
+          TileProcessingData& processingData,
+          CesiumAsync::UrlResponseDataMap& responseDataMap,
+          TileWorkManager::Work* work) {
+        return this->dispatchTileWork(processingData, responseDataMap, work);
+      };
+
+  TileWorkManager::RasterDispatchFunc rasterDispatch =
+      [this](
+          RasterProcessingData& processingData,
+          CesiumAsync::UrlResponseDataMap& responseDataMap,
+          TileWorkManager::Work* work) {
+        return this->dispatchRasterWork(processingData, responseDataMap, work);
+      };
+
+  _pTileWorkManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
+}
+
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteFuture;
@@ -891,24 +911,6 @@ TilesetContentManager::~TilesetContentManager() noexcept {
 void TilesetContentManager::processLoadRequests(
     std::vector<TileLoadRequest>& requests,
     TilesetOptions& options) {
-
-  TileWorkManager::TileDispatchFunc tileDispatch =
-      [this](
-          TileProcessingData& processingData,
-          CesiumAsync::UrlResponseDataMap& responseDataMap,
-          TileWorkManager::Work* work) {
-        return this->dispatchTileWork(processingData, responseDataMap, work);
-      };
-
-  TileWorkManager::RasterDispatchFunc rasterDispatch =
-      [this](
-          RasterProcessingData& processingData,
-          CesiumAsync::UrlResponseDataMap& responseDataMap,
-          TileWorkManager::Work* work) {
-        return this->dispatchRasterWork(processingData, responseDataMap, work);
-      };
-
-  _pTileWorkManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
 
   std::vector<TileWorkManager::Order> orders;
   discoverLoadWork(requests, options.maximumScreenSpaceError, options, orders);

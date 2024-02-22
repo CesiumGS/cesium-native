@@ -194,6 +194,8 @@ private:
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
+  void createWorkManager(const TilesetExternals& externals);
+
   void discoverLoadWork(
       const std::vector<TileLoadRequest>& requests,
       double maximumScreenSpaceError,
