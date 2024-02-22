@@ -49,7 +49,7 @@ TEST_CASE("Test implicit octree loader") {
     tile.setTileID("This is a test tile");
 
     CesiumAsync::RequestData requestData;
-    TileProcessingCallback processingCallback;
+    TileLoaderCallback processingCallback;
     loader.getLoadWork(&tile, requestData, processingCallback);
 
     TileWorkManager::Order newOrder = {

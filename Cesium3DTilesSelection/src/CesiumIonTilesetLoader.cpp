@@ -423,7 +423,7 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
 void CesiumIonTilesetLoader::getLoadWork(
     const Tile* pTile,
     CesiumAsync::RequestData& outRequest,
-    TileProcessingCallback& outCallback) {
+    TileLoaderCallback& outCallback) {
 
   // If token refresh is in progress, cannot queue work yet
   if (this->_refreshTokenState == TokenRefreshState::Loading)

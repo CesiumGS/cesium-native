@@ -97,7 +97,7 @@ TileLoadResult loadTileContent(
   AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
   RequestData requestData;
-  TileProcessingCallback processingCallback;
+  TileLoaderCallback processingCallback;
   loader.getLoadWork(&tile, requestData, processingCallback);
 
   std::shared_ptr<TileWorkManager> workManager =

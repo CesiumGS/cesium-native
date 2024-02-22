@@ -914,7 +914,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 void LayerJsonTerrainLoader::getLoadWork(
     const Tile* pTile,
     RequestData& outRequest,
-    TileProcessingCallback& outCallback) {
+    TileLoaderCallback& outCallback) {
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&pTile->getTileID());

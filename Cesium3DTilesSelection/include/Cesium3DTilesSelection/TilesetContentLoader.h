@@ -144,8 +144,9 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   TileLoadResultState state;
 };
 
-using TileProcessingCallback = std::function<CesiumAsync::Future<
-    TileLoadResult>(const TileLoadInput& loadInput, TilesetContentLoader*)>;
+using TileLoaderCallback = std::function<CesiumAsync::Future<TileLoadResult>(
+    const TileLoadInput& loadInput,
+    TilesetContentLoader*)>;
 
 /**
  * @brief The loader interface to load the tile content
@@ -169,7 +170,7 @@ public:
   virtual void getLoadWork(
       const Tile* pTile,
       CesiumAsync::RequestData& outRequest,
-      TileProcessingCallback& outCallback) = 0;
+      TileLoaderCallback& outCallback) = 0;
 
   /**
    * @brief Create the tile's children.

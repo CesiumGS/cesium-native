@@ -328,7 +328,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 void ImplicitQuadtreeLoader::getLoadWork(
     const Tile*,
     CesiumAsync::RequestData&,
-    TileProcessingCallback& outCallback) {
+    TileLoaderCallback& outCallback) {
   // loadTileContent will control request / processing flow
   outCallback = [](const TileLoadInput& loadInput,
                    TilesetContentLoader* loader) {

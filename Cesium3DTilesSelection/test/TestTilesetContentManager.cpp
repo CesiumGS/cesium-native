@@ -45,7 +45,7 @@ public:
   void getLoadWork(
       const Tile*,
       CesiumAsync::RequestData&,
-      TileProcessingCallback& outCallback) override {
+      TileLoaderCallback& outCallback) override {
     outCallback = [](const TileLoadInput& loadInput,
                      TilesetContentLoader* loader) {
       return loader->loadTileContent(loadInput);

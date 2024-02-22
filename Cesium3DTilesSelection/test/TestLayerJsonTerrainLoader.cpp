@@ -55,7 +55,7 @@ Future<TileLoadResult> loadTile(
        9000.0}});
 
   RequestData requestData;
-  TileProcessingCallback processingCallback;
+  TileLoaderCallback processingCallback;
   loader.getLoadWork(&tile, requestData, processingCallback);
 
   UrlResponseDataMap responseDataMap;

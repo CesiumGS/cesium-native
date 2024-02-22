@@ -1519,10 +1519,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       return pRootTile;
     }
 
-    void getLoadWork(
-        const Tile*,
-        RequestData&,
-        TileProcessingCallback& outCallback) override {
+    void getLoadWork(const Tile*, RequestData&, TileLoaderCallback& outCallback)
+        override {
       outCallback = [](const TileLoadInput& loadInput,
                        TilesetContentLoader* loader) {
         return loader->loadTileContent(loadInput);

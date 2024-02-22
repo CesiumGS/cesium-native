@@ -65,7 +65,7 @@ public:
   struct TileWorkChain {
     Tile* pTile;
     CesiumAsync::RequestData requestData;
-    TileProcessingCallback tileCallback;
+    TileLoaderCallback tileCallback;
   };
 
   struct RasterWorkChain {

@@ -932,7 +932,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
 void TilesetJsonLoader::getLoadWork(
     const Tile* pTile,
     CesiumAsync::RequestData& outRequest,
-    TileProcessingCallback& outCallback) {
+    TileLoaderCallback& outCallback) {
   // check if this tile belongs to a child loader
   auto currentLoader = pTile->getLoader();
   if (currentLoader != this) {

@@ -93,7 +93,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 void RasterOverlayUpsampler::getLoadWork(
     const Tile*,
     CesiumAsync::RequestData&,
-    TileProcessingCallback& outCallback) {
+    TileLoaderCallback& outCallback) {
   outCallback = [](const TileLoadInput& loadInput,
                    TilesetContentLoader* loader) {
     return loader->loadTileContent(loadInput);

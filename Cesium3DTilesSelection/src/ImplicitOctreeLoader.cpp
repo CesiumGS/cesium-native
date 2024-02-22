@@ -289,7 +289,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 void ImplicitOctreeLoader::getLoadWork(
     const Tile*,
     CesiumAsync::RequestData&,
-    TileProcessingCallback& outCallback) {
+    TileLoaderCallback& outCallback) {
   // loadTileContent will control request / processing flow
   outCallback = [](const TileLoadInput& loadInput,
                    TilesetContentLoader* loader) {

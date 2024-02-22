@@ -1885,7 +1885,7 @@ void TilesetContentManager::parseTileWork(
   // Default headers come from the this. Loader can override if needed
   CesiumAsync::RequestData requestData;
   requestData.headers = this->_requestHeaders;
-  TileProcessingCallback tileCallback;
+  TileLoaderCallback tileCallback;
 
   pLoader->getLoadWork(pTile, requestData, tileCallback);
 
