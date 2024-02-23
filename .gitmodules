@@ -62,9 +62,9 @@
 [submodule "extern/libjpeg-turbo"]
 	path = extern/libjpeg-turbo
 	url = https://github.com/CesiumGS/libjpeg-turbo.git
+[submodule "extern/zlib"]
+	path = extern/zlib
+	url = https://github.com/madler/zlib.git
 [submodule "extern/meshoptimizer"]
 	path = extern/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer
-[submodule "extern/zlib-ng"]
-	path = extern/zlib-ng
-	url = https://github.com/zlib-ng/zlib-ng.git
