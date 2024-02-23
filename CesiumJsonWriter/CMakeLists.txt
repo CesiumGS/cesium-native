@@ -56,8 +56,3 @@ target_link_libraries(CesiumJsonWriter
     PUBLIC
         CesiumUtility
 )
-
-install(TARGETS CesiumJsonWriter
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumJsonWriter
-)

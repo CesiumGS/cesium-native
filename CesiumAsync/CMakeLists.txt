@@ -35,28 +35,16 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/
+        # For the cesium-sqlite3.h header
+        ${PROJECT_SOURCE_DIR}/extern/include
 )
 
 target_link_libraries(CesiumAsync
     PUBLIC
         CesiumUtility
-        GSL
+        Microsoft.GSL::GSL
+        spdlog::spdlog spdlog::spdlog_header_only
+        Async++
     PRIVATE
-        sqlite3
-)
-
-# These libraries erroneously do NOT list their headers as `SYSTEM` headers
-target_link_libraries_system(CesiumAsync PUBLIC
-    spdlog
-    Async++
-)
-
-install(TARGETS CesiumAsync
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumAsync
-)
-
-install(
-    DIRECTORY include/CesiumAsync/Impl
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumAsync
+        unofficial::sqlite3::sqlite3
 )
