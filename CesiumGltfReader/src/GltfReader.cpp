@@ -1,7 +1,7 @@
 #include "CesiumGltfReader/GltfReader.h"
 
 #include "ModelJsonHandler.h"
-#include "applyKHRTextureTransform.h"
+#include "applyKhrTextureTransform.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
@@ -342,7 +342,7 @@ void postprocess(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "KHR_texture_transform") != model.extensionsUsed.end()) {
-    applyKHRTextureTransform(model);
+    applyKhrTextureTransform(model);
   }
 }
 

@@ -8,6 +8,9 @@
 
 ##### Additions :tada:
 
+- Added `KhrTextureTransform`, a utility class that parses the `KHR_texture_transform` glTF extension and reports whether it is valid. UVs may be transformed on the CPU using `applyTransform`.
+- Added `applyKhrTextureTransformExtension` to the constructors of `FeatureIdTextureView` and `PropertyTexturePropertyView`. When true, the views will automatically transform texture coordinates before retrieving features and metadata. This is false by default to avoid breaking existing implementations.
+- Added `getTextureTransform` methods to `FeatureIdTextureView` and `PropertyTexturePropertyView`.
 - Added `contains` method to `BoundingSphere`.
 - Added `GlobeRectangle::MAXIMUM` static field.
 
