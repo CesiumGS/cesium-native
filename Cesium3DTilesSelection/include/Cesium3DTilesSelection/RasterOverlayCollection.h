@@ -6,7 +6,7 @@
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
+#include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <gsl/span>
