@@ -8,6 +8,20 @@
 
 namespace CesiumUtility {
 
+#ifndef NDEBUG
+template <bool isThreadSafe> class ThreadIdHolder;
+
+template <> class ThreadIdHolder<false> {
+  ThreadIdHolder() : _threadID(std::this_thread::get_id()) {}
+
+  std::thread::id _threadID;
+
+  template <typename T, bool isThreadSafe> friend class ReferenceCounted;
+};
+
+template <> class ThreadIdHolder<true> {};
+#endif
+
 /**
  * @brief A reference-counted base class, meant to be used with
  * {@link IntrusivePointer}.
@@ -27,15 +41,14 @@ namespace CesiumUtility {
  * one thread at a time. However, this mode has a bit less overhead for objects
  * that are only ever accessed from a single thread.
  */
-template <typename T, bool isThreadSafe = true> class ReferenceCounted {
-public:
-  ReferenceCounted() noexcept
+template <typename T, bool isThreadSafe = true>
+class ReferenceCounted
 #ifndef NDEBUG
-      : _threadID(std::this_thread::get_id())
+    : public ThreadIdHolder<isThreadSafe>
 #endif
-  {
-  }
-
+{
+public:
+  ReferenceCounted() noexcept {}
   ~ReferenceCounted() noexcept { assert(this->_referenceCount == 0); }
 
   /**
@@ -65,6 +78,7 @@ public:
       assert(std::this_thread::get_id() == this->_threadID);
     }
 #endif
+
     assert(this->_referenceCount > 0);
     const int32_t references = --this->_referenceCount;
     if (references == 0) {
@@ -86,10 +100,6 @@ private:
       std::conditional_t<isThreadSafe, ThreadSafeCounter, NonThreadSafeCounter>;
 
   mutable CounterType _referenceCount{0};
-
-#ifndef NDEBUG
-  std::thread::id _threadID;
-#endif
 };
 
 /**
@@ -103,7 +113,7 @@ private:
  * `class MyClass : public ReferenceCountedThreadSafe<MyClass> { ... };`
  */
 template <typename T>
-using ReferenceCountedThreadSafe = typename ReferenceCounted<T, true>;
+using ReferenceCountedThreadSafe = ReferenceCounted<T, true>;
 
 /**
  * @brief A reference-counted base class, meant to be used with
@@ -116,6 +126,6 @@ using ReferenceCountedThreadSafe = typename ReferenceCounted<T, true>;
  * `class MyClass : public ReferenceCountedNonThreadSafe<MyClass> { ... };`
  */
 template <typename T>
-using ReferenceCountedNonThreadSafe = typename ReferenceCounted<T, false>;
+using ReferenceCountedNonThreadSafe = ReferenceCounted<T, false>;
 
 } // namespace CesiumUtility
