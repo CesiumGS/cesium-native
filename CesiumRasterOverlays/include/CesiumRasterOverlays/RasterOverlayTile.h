@@ -5,7 +5,7 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
+#include <CesiumUtility/ReferenceCounted.h>
 
 #include <vector>
 

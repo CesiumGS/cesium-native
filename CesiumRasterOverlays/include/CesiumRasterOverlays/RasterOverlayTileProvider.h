@@ -8,7 +8,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
+#include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <spdlog/fwd.h>
@@ -239,8 +239,16 @@ public:
    *
    * @param bytes Number of bytes to add to our count
    */
-  void incrementTileDataBytes(int64_t bytes) noexcept {
-    _tileDataBytes += bytes;
+  void incrementTileDataBytes(CesiumGltf::ImageCesium& imageCesium) noexcept {
+    // If the image size hasn't been overridden, store the pixelData
+    // size now. We'll add this number to our total memory usage now,
+    // and remove it when the tile is later unloaded, and we must use
+    // the same size in each case.
+    if (imageCesium.sizeBytes < 0) {
+      imageCesium.sizeBytes = int64_t(imageCesium.pixelData.size());
+    }
+
+    _tileDataBytes += imageCesium.sizeBytes;
   }
 
   /**

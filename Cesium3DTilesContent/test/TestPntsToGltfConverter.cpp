@@ -732,7 +732,7 @@ TEST_CASE("Converts point cloud with batch IDs to glTF with "
 }
 
 TEST_CASE("Converts point cloud with per-point properties to glTF with "
-          "EXT_feature_metadata") {
+          "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "PointCloud" / "pointCloudWithPerPointProperties.pnts";

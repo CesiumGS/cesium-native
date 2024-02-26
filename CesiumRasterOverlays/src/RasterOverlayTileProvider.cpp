@@ -87,7 +87,7 @@ RasterOverlayTileProvider::getTile(
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   assert(pTile->getReferenceCount() == 0);
 
-  this->_tileDataBytes -= int64_t(pTile->getImage().pixelData.size());
+  this->_tileDataBytes -= pTile->getImage().sizeBytes;
 }
 
 CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::loadTile(
