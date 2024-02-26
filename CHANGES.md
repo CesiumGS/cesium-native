@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
+- Moved `ReferenceCountedNonThreadSafe<T>` to `ReferenceCounted.h`. It also now a type alias for `ReferenceCounted<T, false>` rather than an actual class.
 
 ##### Additions :tada:
 
@@ -13,6 +14,7 @@
 - Added `getTextureTransform` methods to `FeatureIdTextureView` and `PropertyTexturePropertyView`.
 - Added `contains` method to `BoundingSphere`.
 - Added `GlobeRectangle::MAXIMUM` static field.
+- Added `ReferenceCountedThreadSafe` type alias.
 
 ##### Fixes :wrench:
 
