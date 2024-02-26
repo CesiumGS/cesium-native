@@ -173,7 +173,10 @@ int64_t Tile::computeByteSize() const noexcept {
         bytes -= bufferViews[size_t(bufferView)].byteLength;
       }
 
-      bytes += int64_t(image.cesium.pixelData.size());
+      // lastKnownSizeInBytes is set in
+      // TilesetContentManager::ContentKindSetter, if not sooner (e.g., by the
+      // renderer implementation).
+      bytes += image.cesium.lastKnownSizeInBytes;
     }
   }
 
