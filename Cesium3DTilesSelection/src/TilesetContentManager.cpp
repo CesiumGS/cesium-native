@@ -53,9 +53,8 @@ struct ContentKindSetter {
       // size now. We'll be adding this number to our total memory usage soon,
       // and remove it when the tile is later unloaded, and we must use
       // the same size in each case.
-      if (image.cesium.lastKnownSizeInBytes < 0) {
-        image.cesium.lastKnownSizeInBytes =
-            int64_t(image.cesium.pixelData.size());
+      if (image.cesium.sizeBytes < 0) {
+        image.cesium.sizeBytes = int64_t(image.cesium.pixelData.size());
       }
     }
 
