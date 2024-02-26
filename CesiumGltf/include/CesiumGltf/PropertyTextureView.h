@@ -55,10 +55,14 @@ public:
    * @param model The glTF that contains the property texture's data.
    * @param propertyTexture The {@link PropertyTexture}
    * from which the view will retrieve data.
+   * @param applyKhrTextureTransformExtension Whether to automatically apply the
+   * `KHR_texture_transform` extension to the properties in this property
+   * texture, if present.
    */
   PropertyTextureView(
       const Model& model,
-      const PropertyTexture& propertyTexture) noexcept;
+      const PropertyTexture& propertyTexture,
+      bool applyKhrTextureTransformExtension = false) noexcept;
 
   /**
    * @brief Gets the status of this property texture view.
@@ -699,7 +703,8 @@ private:
         propertyTextureProperty,
         classProperty,
         _pModel->samplers[samplerIndex],
-        image);
+        image,
+        this->_applyTextureTransform);
   }
 
   PropertyViewStatusType getTextureSafe(
@@ -719,6 +724,8 @@ private:
   const Model* _pModel;
   const PropertyTexture* _pPropertyTexture;
   const Class* _pClass;
+
+  bool _applyTextureTransform;
 
   PropertyTextureViewStatus _status;
 };
