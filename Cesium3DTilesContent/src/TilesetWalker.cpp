@@ -65,7 +65,7 @@ Future<void> TilesetWalker::walkDepthFirst(
       .thenInMainThread([this, pVisitor, url, headers](
                             nonstd::expected<Tileset, ErrorList>&& loadResult) {
         if (loadResult) {
-          this->walkDepthFirst(pVisitor, url, headers);
+          this->walkDepthFirst(pVisitor, *loadResult, url, headers);
         }
       });
 }
