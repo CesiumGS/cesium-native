@@ -8,20 +8,6 @@
 
 namespace CesiumUtility {
 
-#ifndef NDEBUG
-template <bool isThreadSafe> class ThreadIdHolder;
-
-template <> class ThreadIdHolder<false> {
-  ThreadIdHolder() : _threadID(std::this_thread::get_id()) {}
-
-  std::thread::id _threadID;
-
-  template <typename T, bool isThreadSafe> friend class ReferenceCounted;
-};
-
-template <> class ThreadIdHolder<true> {};
-#endif
-
 /**
  * @brief A reference-counted base class, meant to be used with
  * {@link IntrusivePointer}.
@@ -41,14 +27,14 @@ template <> class ThreadIdHolder<true> {};
  * one thread at a time. However, this mode has a bit less overhead for objects
  * that are only ever accessed from a single thread.
  */
-template <typename T, bool isThreadSafe = true>
-class ReferenceCounted
-#ifndef NDEBUG
-    : public ThreadIdHolder<isThreadSafe>
-#endif
-{
+template <typename T, bool isThreadSafe = true> class ReferenceCounted {
 public:
-  ReferenceCounted() noexcept {}
+  ReferenceCounted() noexcept
+#ifndef NDEBUG
+      : _threadID(std::this_thread::get_id())
+#endif
+  {
+  }
   ~ReferenceCounted() noexcept { assert(this->_referenceCount == 0); }
 
   /**
@@ -100,6 +86,10 @@ private:
       std::conditional_t<isThreadSafe, ThreadSafeCounter, NonThreadSafeCounter>;
 
   mutable CounterType _referenceCount{0};
+
+#ifndef NDEBUG
+  std::thread::id _threadID;
+#endif
 };
 
 /**
