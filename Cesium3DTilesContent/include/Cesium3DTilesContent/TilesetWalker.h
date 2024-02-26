@@ -1,10 +1,11 @@
 #pragma once
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+
 #include <gsl/span>
 
-namespace CesiumAsync {
-class IAssetRequest;
-}
+#include <memory>
 
 namespace CesiumGltf {
 struct Model;
@@ -17,6 +18,8 @@ struct ImplicitTiling;
 } // namespace Cesium3DTiles
 
 namespace Cesium3DTilesContent {
+
+class TilesetWalker;
 
 /**
  * @brief Controls the traversal of a tileset with {@link TilesetWalker}.
@@ -41,7 +44,9 @@ public:
    *
    * @param visit True to visit children, false to skip visiting children.
    */
-  TilesetWalkerControl& visitChildren(bool visit = true);
+  TilesetWalkerControl& visitChildren(bool visit = true) {
+    this->_shouldVisitChildren = visit;
+  }
 
   /**
    * @brief Requests that the current tile's content be loaded and visited.
@@ -57,7 +62,9 @@ public:
    *
    * @param visit True to visit content, false to skip visiting content.
    */
-  TilesetWalkerControl& visitContent(bool visit = true);
+  TilesetWalkerControl& visitContent(bool visit = true) {
+    this->_shouldVisitContent = visit;
+  }
 
   /**
    * @brief Requests that the current tile's implicit subdivision, if any, is
@@ -72,7 +79,30 @@ public:
    *
    * @param visit True to visit an implicit subdivision, false to skip it.
    */
-  TilesetWalkerControl& visitImplicitSubdivision(bool visit = true);
+  TilesetWalkerControl& visitImplicitSubdivision(bool visit = true) {
+    this->_shouldVisitImplicitSubdivision = visit;
+  }
+
+  /**
+   * Resets the state of this control so that nothing will be visited unless
+   * indicated otherwise by calling one of the visit functions.
+   */
+  void reset() {
+    this->_shouldVisitChildren = false;
+    this->_shouldVisitContent = false;
+    this->_shouldVisitImplicitSubdivision = false;
+  }
+
+  bool shouldVisitChildren() const { return this->_shouldVisitChildren; }
+  bool shouldVisitContent() const { return this->_shouldVisitContent; }
+  bool shouldVisitImplicitSubdivision() const {
+    return this->_shouldVisitImplicitSubdivision;
+  }
+
+private:
+  bool _shouldVisitChildren = false;
+  bool _shouldVisitContent = false;
+  bool _shouldVisitImplicitSubdivision = false;
 };
 
 class TilesetVisitor {
@@ -83,41 +113,80 @@ public:
    * @param control An object allowing control of further traversal.
    * @param tile The tile to visit.
    */
-  virtual void visitTile(TilesetWalkerControl& control, Tile& tile) = 0;
-
   virtual void
-  visitChildrenBegin(TilesetWalkerControl& control, Tile& tile) = 0;
-  virtual void visitChildrenEnd(TilesetWalkerControl& control, Tile& tile) = 0;
+  visitTile(TilesetWalkerControl& control, Cesium3DTiles::Tile& tile) = 0;
+
+  virtual void visitChildrenBegin(
+      TilesetWalkerControl& control,
+      Cesium3DTiles::Tile& tile) = 0;
+  virtual void visitChildrenEnd(
+      TilesetWalkerControl& control,
+      Cesium3DTiles::Tile& tile) = 0;
 
   virtual void visitImplicitSubdivisionBegin(
       TilesetWalkerControl& control,
-      Tile& tile,
+      Cesium3DTiles::Tile& tile,
       Cesium3DTiles::ImplicitTiling& implicit) = 0;
   virtual void visitImplicitSubdivisionEnd(
       TilesetWalkerControl& control,
-      Tile& tile,
+      Cesium3DTiles::Tile& tile,
       Cesium3DTiles::ImplicitTiling& implicit) = 0;
 
-  virtual void visitNoContent(TilesetWalkerControl& control, Tile& tile) = 0;
+  virtual void
+  visitNoContent(TilesetWalkerControl& control, Cesium3DTiles::Tile& tile) = 0;
   virtual void visitModelContent(
       TilesetWalkerControl& control,
-      Tile& tile,
+      Cesium3DTiles::Tile& tile,
       CesiumAsync::IAssetRequest& request,
       CesiumGltf::Model& model) = 0;
   virtual void visitExternalContent(
       TilesetWalkerControl& control,
-      Tile& tile,
+      Cesium3DTiles::Tile& tile,
       CesiumAsync::IAssetRequest& request,
-      Tileset& externalTileset) = 0;
+      Cesium3DTiles::Tileset& externalTileset) = 0;
   virtual void visitUnknownContent(
       TilesetWalkerControl& control,
-      Tile& tile,
+      Cesium3DTiles::Tile& tile,
       CesiumAsync::IAssetRequest& request) = 0;
+
+  virtual void onError(
+      Cesium3DTiles::Tile* pTile,
+      CesiumAsync::IAssetRequest* pAssetRequest,
+      const std::string& message) = 0;
 };
 
 class TilesetWalker {
 public:
-  void walkDepthFirst(Tileset& tileset, TilesetVisitor& visitor);
+  TilesetWalker(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor);
+
+  CesiumAsync::Future<void> walkDepthFirst(
+      const std::shared_ptr<TilesetVisitor>& pVisitor,
+      const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {});
+  CesiumAsync::Future<void> walkDepthFirst(
+      const std::shared_ptr<TilesetVisitor>& pVisitor,
+      Cesium3DTiles::Tileset& tileset,
+      const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {});
+
+private:
+  void walkRecursively(
+      const std::shared_ptr<TilesetVisitor>& pVisitor,
+      TilesetWalkerControl& control,
+      Cesium3DTiles::Tile& tile,
+      const std::string& baseUrl,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers);
+  void walkContent(
+      const std::shared_ptr<TilesetVisitor>& pVisitor,
+      TilesetWalkerControl& control,
+      Cesium3DTiles::Tile& tile,
+      const std::string& baseUrl,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers);
+
+  CesiumAsync::AsyncSystem _asyncSystem;
+  std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
 };
 
 } // namespace Cesium3DTilesContent

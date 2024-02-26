@@ -62,6 +62,7 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
+        expected-lite
 )
 
 target_link_libraries_system(
