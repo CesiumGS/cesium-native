@@ -1,6 +1,26 @@
 # Change Log
 
-### v0.32.0 - 20234-02-01
+### v0.33.0 - 2024-03-01
+
+##### Breaking Changes :mega:
+
+- Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
+- Moved `ReferenceCountedNonThreadSafe<T>` to `ReferenceCounted.h`. It also now a type alias for `ReferenceCounted<T, false>` rather than an actual class.
+
+##### Additions :tada:
+
+- Added `KhrTextureTransform`, a utility class that parses the `KHR_texture_transform` glTF extension and reports whether it is valid. UVs may be transformed on the CPU using `applyTransform`.
+- Added `applyKhrTextureTransformExtension` to the constructors of `FeatureIdTextureView` and `PropertyTexturePropertyView`. When true, the views will automatically transform texture coordinates before retrieving features and metadata. This is false by default to avoid breaking existing implementations.
+- Added `getTextureTransform` methods to `FeatureIdTextureView` and `PropertyTexturePropertyView`.
+- Added `contains` method to `BoundingSphere`.
+- Added `GlobeRectangle::MAXIMUM` static field.
+- Added `ReferenceCountedThreadSafe` type alias.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
+
+### v0.32.0 - 2024-02-01
 
 ##### Breaking Changes :mega:
 

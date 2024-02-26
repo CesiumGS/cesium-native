@@ -12,6 +12,12 @@ namespace CesiumGeospatial {
     -Math::OnePi,
     -Math::PiOverTwo};
 
+/*static*/ const GlobeRectangle GlobeRectangle::MAXIMUM{
+    -Math::OnePi,
+    -Math::PiOverTwo,
+    Math::OnePi,
+    Math::PiOverTwo};
+
 Cartographic GlobeRectangle::computeCenter() const noexcept {
   double latitudeCenter = (this->_south + this->_north) * 0.5;
 
