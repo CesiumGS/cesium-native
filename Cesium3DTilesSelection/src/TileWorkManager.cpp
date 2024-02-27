@@ -113,9 +113,6 @@ void TileWorkManager::ordersToWork(
     // Only support one level deep, for now
     for (Order& childWork : newInstance->order.childOrders) {
       Work* newChildInstance = createWorkFromOrder(&childWork);
-      newInstance->children.insert(newChildInstance);
-      newChildInstance->parent = newInstance;
-
       instancesCreated.push_back(newChildInstance);
     }
   }
@@ -247,18 +244,6 @@ void TileWorkManager::onWorkComplete(Work* work) {
   for (auto element : _processingPending)
     assert(element->uniqueId != work->uniqueId);
 #endif
-
-  // If this work has parent work, remove this reference
-  // Work with child work waits until the children are done
-  if (work->parent) {
-    // Child should be in parent's list, remove it
-    auto& childSet = work->parent->children;
-    assert(childSet.find(work) != childSet.end());
-    childSet.erase(work);
-  }
-
-  // Done work should have no registered child work
-  assert(work->children.empty());
 
   // Put in the done list
   _doneWork.push_back(work);
@@ -532,20 +517,16 @@ void TileWorkManager::transitionProcessing(
     while (it != thiz->_processingPending.begin()) {
       --it;
       Work* work = *it;
-      if (work->children.empty()) {
-        // Move this work to in flight
-        assert(
-            thiz->_processingInFlight.find(work->uniqueId) ==
-            thiz->_processingInFlight.end());
-        thiz->_processingInFlight[work->uniqueId] = work;
 
-        // Move this work to output and erase from pending
-        workNeedingDispatch.push_back(work);
-        processingToErase.push_back(it);
-      } else {
-        // Can't take this work yet
-        // Child work has to register completion first
-      }
+      // Move this work to in flight
+      assert(
+          thiz->_processingInFlight.find(work->uniqueId) ==
+          thiz->_processingInFlight.end());
+      thiz->_processingInFlight[work->uniqueId] = work;
+
+      // Move this work to output and erase from pending
+      workNeedingDispatch.push_back(work);
+      processingToErase.push_back(it);
 
       if (workNeedingDispatch.size() >= slotsAvailable)
         break;

@@ -60,10 +60,6 @@ public:
 
     Order order = {};
 
-    Work* parent = nullptr;
-
-    std::set<Work*> children = {};
-
     std::vector<CesiumAsync::RequestData> pendingRequests = {};
     CesiumAsync::UrlAssetRequestMap completedRequests = {};
 
