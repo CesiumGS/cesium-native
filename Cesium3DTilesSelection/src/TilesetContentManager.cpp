@@ -918,10 +918,6 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  this->_pTileWorkManager->Shutdown();
-
-  assert(this->_tileLoadsInProgress == 0);
-  assert(this->_rasterLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
@@ -1042,6 +1038,11 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 }
 
 void TilesetContentManager::unloadAll() {
+  this->_pTileWorkManager->Shutdown();
+
+  assert(this->_tileLoadsInProgress == 0);
+  assert(this->_rasterLoadsInProgress == 0);
+
   // TODO: use the linked-list of loaded tiles instead of walking the entire
   // tile tree.
   if (this->_pRootTile) {
@@ -1757,10 +1758,12 @@ void TilesetContentManager::dispatchRasterWork(
   // Optionally could move this to work manager
   this->notifyRasterStartLoading();
 
-  // Keep the manager alive while the load is in progress.
-  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
-
   RasterOverlayTileProvider& provider = pLoadingTile->getTileProvider();
+
+  // Keep the these objects alive while the load is in progress.
+  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+  IntrusivePointer<RasterOverlayTile> pTile = pLoadingTile;
+  IntrusivePointer<RasterOverlayTileProvider> pProvider = &provider;
 
   provider
       .loadTileThrottled(
@@ -1791,8 +1794,10 @@ void TilesetContentManager::dispatchRasterWork(
 
         return std::move(result);
       })
-      .thenInMainThread([_thiz = thiz, pTile = pLoadingTile, _work = work](
-                            RasterLoadResult&& result) mutable {
+      .thenInMainThread([_thiz = thiz,
+                         pTile = pTile,
+                         pProvider = pProvider,
+                         _work = work](RasterLoadResult&& result) mutable {
         if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
           // Nothing to do
         } else {
@@ -1809,9 +1814,7 @@ void TilesetContentManager::dispatchRasterWork(
 
           result.pTile = pTile;
 
-          RasterOverlayTileProvider& provider = pTile->getTileProvider();
-
-          provider.incrementTileDataBytes(pTile->getImage());
+          pProvider->incrementTileDataBytes(pTile->getImage());
 
           TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
         }

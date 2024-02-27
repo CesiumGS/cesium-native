@@ -156,11 +156,6 @@ RasterOverlayTileProvider::loadTileThrottled(
     RasterOverlayTile& tile,
     const UrlResponseDataMap& responsesByUrl,
     RasterProcessingCallback rasterCallback) {
-  // Keep the tile and tile provider alive while the async operation is in
-  // progress.
-  IntrusivePointer<RasterOverlayTile> pTile = &tile;
-  IntrusivePointer<RasterOverlayTileProvider> thiz = this;
-
   return this->doLoad(tile, responsesByUrl, rasterCallback);
 }
 
