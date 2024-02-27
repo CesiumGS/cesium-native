@@ -15,7 +15,7 @@
 
 namespace CesiumGltf {
 
-class Model;
+struct Model;
 
 /**
  * @brief The status of a feature ID texture view.

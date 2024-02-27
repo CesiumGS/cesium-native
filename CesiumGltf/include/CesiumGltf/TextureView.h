@@ -9,7 +9,7 @@
 
 namespace CesiumGltf {
 
-class Model;
+struct Model;
 
 /**
  * @brief Describes options for constructing a view on a glTF texture.
