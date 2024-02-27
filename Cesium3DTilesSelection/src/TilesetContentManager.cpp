@@ -918,6 +918,8 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
+  assert(this->_tileLoadsInProgress == 0);
+  assert(this->_rasterLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
@@ -1039,9 +1041,6 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
 void TilesetContentManager::unloadAll() {
   this->_pTileWorkManager->Shutdown();
-
-  assert(this->_tileLoadsInProgress == 0);
-  assert(this->_rasterLoadsInProgress == 0);
 
   // TODO: use the linked-list of loaded tiles instead of walking the entire
   // tile tree.
