@@ -62,7 +62,8 @@ public:
   PropertyTextureView(
       const Model& model,
       const PropertyTexture& propertyTexture,
-      bool applyKhrTextureTransformExtension = false) noexcept;
+      PropertyTexturePropertyViewOptions propertyOptions =
+          PropertyTexturePropertyViewOptions()) noexcept;
 
   /**
    * @brief Gets the status of this property texture view.
@@ -704,7 +705,7 @@ private:
         classProperty,
         _pModel->samplers[samplerIndex],
         image,
-        this->_applyTextureTransform);
+        this->_propertyOptions);
   }
 
   PropertyViewStatusType getTextureSafe(
@@ -725,8 +726,7 @@ private:
   const PropertyTexture* _pPropertyTexture;
   const Class* _pClass;
 
-  bool _applyTextureTransform;
-
+  PropertyTexturePropertyViewOptions _propertyOptions;
   PropertyTextureViewStatus _status;
 };
 } // namespace CesiumGltf

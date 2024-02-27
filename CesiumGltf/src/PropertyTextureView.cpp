@@ -4,11 +4,11 @@ namespace CesiumGltf {
 PropertyTextureView::PropertyTextureView(
     const Model& model,
     const PropertyTexture& propertyTexture,
-    bool applyKhrTextureTransformExtension) noexcept
+    PropertyTexturePropertyViewOptions options) noexcept
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),
-      _applyTextureTransform(applyKhrTextureTransformExtension),
+      _propertyOptions(options),
       _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
