@@ -4,7 +4,7 @@ namespace CesiumGltf {
 PropertyTextureView::PropertyTextureView(
     const Model& model,
     const PropertyTexture& propertyTexture,
-    PropertyTexturePropertyViewOptions options) noexcept
+    TextureViewOptions options) noexcept
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),

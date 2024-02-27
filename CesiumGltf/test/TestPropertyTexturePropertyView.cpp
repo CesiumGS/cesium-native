@@ -1805,7 +1805,7 @@ TEST_CASE("Test PropertyTextureProperty constructs with "
 
   property.channels = {0};
 
-  PropertyTexturePropertyViewOptions options;
+  TextureViewOptions options;
   options.applyKhrTextureTransformExtension = true;
 
   PropertyTexturePropertyView<uint8_t>
@@ -1878,7 +1878,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
 
   property.channels = {0};
 
-  PropertyTexturePropertyViewOptions options;
+  TextureViewOptions options;
   options.applyKhrTextureTransformExtension = true;
 
   PropertyTexturePropertyView<uint8_t, true>
@@ -1952,7 +1952,7 @@ TEST_CASE("Test PropertyTextureProperty constructs with makeImageCopy = true") {
 
   property.channels = {0};
 
-  PropertyTexturePropertyViewOptions options;
+  TextureViewOptions options;
   options.makeImageCopy = true;
 
   PropertyTexturePropertyView<uint8_t, true>
@@ -2014,7 +2014,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
 
   property.channels = {0};
 
-  PropertyTexturePropertyViewOptions options;
+  TextureViewOptions options;
   options.makeImageCopy = true;
 
   PropertyTexturePropertyView<uint8_t>

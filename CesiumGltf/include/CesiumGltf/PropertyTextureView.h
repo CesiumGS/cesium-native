@@ -5,7 +5,7 @@
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
 #include "CesiumGltf/PropertyTexture.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
-#include "CesiumGltf/Texture.h"
+#include "CesiumGltf/TextureView.h"
 #include "Model.h"
 
 namespace CesiumGltf {
@@ -62,8 +62,7 @@ public:
   PropertyTextureView(
       const Model& model,
       const PropertyTexture& propertyTexture,
-      PropertyTexturePropertyViewOptions propertyOptions =
-          PropertyTexturePropertyViewOptions()) noexcept;
+      TextureViewOptions propertyOptions = TextureViewOptions()) noexcept;
 
   /**
    * @brief Gets the status of this property texture view.
@@ -726,7 +725,7 @@ private:
   const PropertyTexture* _pPropertyTexture;
   const Class* _pClass;
 
-  PropertyTexturePropertyViewOptions _propertyOptions;
+  TextureViewOptions _propertyOptions;
   PropertyTextureViewStatus _status;
 };
 } // namespace CesiumGltf
