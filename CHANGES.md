@@ -13,6 +13,7 @@
   - `applyKhrTextureTransformExtension` . When true, the view will automatically transform texture coordinates before sampling the texture.
   - `makeImageCopy`. When true, the view will make its own CPU copy of the image data.
 - Added `TextureView`, which views an arbitrary glTF texture and can be affected by `TextureViewOptions`. `FeatureIdTextureView` and `PropertyTexturePropertyView` now inherit this class.
+- Added `options` parameter to `PropertyTextureView::getPropertyView` and `PropertyTextureView::forEachProperty`, which allow views to be constructed with property-specific options.
 - Added `KhrTextureTransform`, a utility class that parses the `KHR_texture_transform` glTF extension and reports whether it is valid. UVs may be transformed on the CPU using `applyTransform`.
 - Added `contains` method to `BoundingSphere`.
 - Added `GlobeRectangle::MAXIMUM` static field.

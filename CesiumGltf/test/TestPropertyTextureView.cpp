@@ -1323,9 +1323,8 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         glm::dvec2(0, 0.5),
         glm::dvec2(0.5, 0.5)};
 
-    int64_t size = static_cast<int64_t>(texCoords.size());
-    for (int64_t i = 0; i < size; ++i) {
-      glm::dvec2 uv = texCoords[static_cast<size_t>(i)];
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
       const PropertyArrayView<uint8_t>& value =
