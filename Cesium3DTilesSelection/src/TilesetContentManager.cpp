@@ -281,11 +281,13 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
   // We may still have mapped raster tiles that need to be reset if the tile
   // fails temporarily. It shouldn't be in the loading state, which would mean
   // it's still in the work manager
+#ifndef NDEBUG
   for (RasterMappedTo3DTile& pMapped : tile.getMappedRasterTiles()) {
     RasterOverlayTile* pLoading = pMapped.getLoadingTile();
     assert(pLoading);
     assert(pLoading->getState() != RasterOverlayTile::LoadState::Loading);
   }
+#endif
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
