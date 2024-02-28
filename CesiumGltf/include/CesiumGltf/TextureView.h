@@ -168,7 +168,9 @@ public:
   const Sampler* getSampler() const noexcept { return this->_pSampler; }
 
   /**
-   * @brief Get the image containing this property's data.
+   * @brief Get the image containing this property's data. If this view was
+   * constructed with options.makeImageCopy set to true, this will return a
+   * pointer to the copied image.
    *
    * This will be nullptr if the texture view runs into
    * problems during construction.
