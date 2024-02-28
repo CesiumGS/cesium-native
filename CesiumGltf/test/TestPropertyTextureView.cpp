@@ -2315,7 +2315,7 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
     uint32_t invokedCallbackCount = 0;
     view.getPropertyView(
         "TestClassProperty",
-        [&expected, &texCoords, &invokedCallbackCount, &model](
+        [&expected, &texCoords, &invokedCallbackCount](
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
