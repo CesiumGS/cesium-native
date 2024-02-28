@@ -57,8 +57,7 @@ TextureView::TextureView(
   // decompressed here.
 
   if (this->_pImage->bytesPerChannel > 1) {
-    this->_textureViewStatus =
-        TextureViewStatus::ErrorInvalidBytesPerChannel;
+    this->_textureViewStatus = TextureViewStatus::ErrorInvalidBytesPerChannel;
     return;
   }
 
@@ -93,8 +92,7 @@ TextureView::TextureView(
   // decompressed here.
 
   if (this->_pImage->bytesPerChannel > 1) {
-    this->_textureViewStatus =
-        TextureViewStatus::ErrorInvalidBytesPerChannel;
+    this->_textureViewStatus = TextureViewStatus::ErrorInvalidBytesPerChannel;
     return;
   }
 

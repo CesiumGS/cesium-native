@@ -229,7 +229,8 @@ public:
    */
   PropertyTexturePropertyView() noexcept
       : PropertyView<ElementType, false>(),
-        TextureView() _channels(),
+        TextureView(),
+        _channels(),
         _swizzle() {}
 
   /**
