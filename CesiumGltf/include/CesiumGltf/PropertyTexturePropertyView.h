@@ -229,14 +229,8 @@ public:
    */
   PropertyTexturePropertyView() noexcept
       : PropertyView<ElementType, false>(),
-        TextureView(),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
-        _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {}
+        TextureView() _channels(),
+        _swizzle() {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
