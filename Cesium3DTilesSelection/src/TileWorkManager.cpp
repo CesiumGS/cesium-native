@@ -505,36 +505,20 @@ void TileWorkManager::transitionProcessing(
 
     // At least one slot is open
     size_t slotsAvailable = slotsTotal - slotsUsed;
+    size_t countToTake = std::min(pendingCount, slotsAvailable);
 
-    // Gather iterators we want to erase
-    // Go from back to front to avoid reallocations if possible
-    // These work items have completed based on priority from any
-    // number of previous frames, so we really don't know which ones
-    // should go out first. They should all go ASAP.
-    using WorkVecIter = std::vector<Work*>::iterator;
-    std::vector<WorkVecIter> processingToErase;
-    std::vector<Work*>::iterator it = thiz->_processingPending.end();
-    while (it != thiz->_processingPending.begin()) {
-      --it;
-      Work* work = *it;
+    // Move candidate work to in flight, in order added (oldest at front)
+    for (size_t workIndex = 0; workIndex < countToTake; ++workIndex) {
+      Work* work = thiz->_processingPending.front();
+      thiz->_processingPending.pop_front();
 
-      // Move this work to in flight
       assert(
           thiz->_processingInFlight.find(work->uniqueId) ==
           thiz->_processingInFlight.end());
       thiz->_processingInFlight[work->uniqueId] = work;
 
-      // Move this work to output and erase from pending
       workNeedingDispatch.push_back(work);
-      processingToErase.push_back(it);
-
-      if (workNeedingDispatch.size() >= slotsAvailable)
-        break;
     }
-
-    // Delete any entries gathered
-    for (WorkVecIter eraseIt : processingToErase)
-      thiz->_processingPending.erase(eraseIt);
   }
 
   for (Work* work : workNeedingDispatch) {
