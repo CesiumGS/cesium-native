@@ -530,8 +530,7 @@ void postProcessGltfInWorkerThread(
   }
 }
 
-CesiumAsync::Future<TileLoadResultAndRenderResources>
-postProcessContentInWorkerThread(
+CesiumAsync::Future<TileLoadResultAndRenderResources> postProcessContent(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
@@ -568,7 +567,8 @@ postProcessContentInWorkerThread(
              pAssetAccessor,
              gltfOptions,
              std::move(gltfResult))
-      .thenInWorkerThread(
+      .thenImmediately(
+          // Run this immediately. In non-error cases, we're already in a worker
           [result = std::move(result),
            projections = std::move(projections),
            tileLoadInfo = std::move(tileLoadInfo),
@@ -1696,21 +1696,13 @@ void TilesetContentManager::dispatchTileWork(
           TileWorkManager::RequeueWorkForRequest(pWorkManager, _work);
         } else if (result.state == TileLoadResultState::Success) {
           if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            auto asyncSystem = tileLoadInfo.asyncSystem;
-            return asyncSystem.runInWorkerThread(
-                [tileLoadInfo = std::move(tileLoadInfo),
-                 result = std::move(result),
-                 &projections,
-                 &requestHeaders,
-                 &rendererOptions]() mutable {
-                  return postProcessContentInWorkerThread(
-                      std::move(result),
-                      std::move(projections),
-                      std::move(tileLoadInfo),
-                      result.originalRequestUrl,
-                      requestHeaders,
-                      rendererOptions);
-                });
+            return postProcessContent(
+                std::move(result),
+                std::move(projections),
+                std::move(tileLoadInfo),
+                result.originalRequestUrl,
+                requestHeaders,
+                rendererOptions);
           }
         }
 
