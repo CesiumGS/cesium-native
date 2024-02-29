@@ -33,7 +33,7 @@ struct TextureViewOptions {
    * the original TEXCOORD set index will be preserved. The extension's values
    * may still be retrieved using getTextureTransform, if desired.
    */
-  bool applyKhrTextureTransformExtension;
+  bool applyKhrTextureTransformExtension = false;
 
   /**
    * @brief Whether to copy the input image.
@@ -43,10 +43,7 @@ struct TextureViewOptions {
    * original glTF model. When this flag is true, the view will manage its own
    * copy of the pixel data to avoid such issues.
    */
-  bool makeImageCopy;
-
-  TextureViewOptions()
-      : applyKhrTextureTransformExtension(false), makeImageCopy(false) {}
+  bool makeImageCopy = false;
 };
 
 /**
@@ -111,7 +108,7 @@ public:
   TextureView(
       const Model& model,
       const TextureInfo& textureInfo,
-      TextureViewOptions options = TextureViewOptions()) noexcept;
+      const TextureViewOptions& options = TextureViewOptions()) noexcept;
 
   /**
    * @brief Constructs a view of the texture specified by the given {@link Sampler}
@@ -131,7 +128,7 @@ public:
       int64_t textureCoordinateSetIndex,
       const ExtensionKhrTextureTransform* pKhrTextureTransformExtension =
           nullptr,
-      TextureViewOptions options = TextureViewOptions()) noexcept;
+      const TextureViewOptions& options = TextureViewOptions()) noexcept;
 
   /**
    * @brief Get the status of this texture view.

@@ -13,7 +13,7 @@ FeatureIdTextureView::FeatureIdTextureView() noexcept
 FeatureIdTextureView::FeatureIdTextureView(
     const Model& model,
     const FeatureIdTexture& featureIdTexture,
-    TextureViewOptions options) noexcept
+    const TextureViewOptions& options) noexcept
     : TextureView(model, featureIdTexture, options),
       _status(FeatureIdTextureViewStatus::ErrorUninitialized),
       _channels() {

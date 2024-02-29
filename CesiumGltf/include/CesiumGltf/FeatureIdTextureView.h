@@ -111,7 +111,7 @@ public:
   FeatureIdTextureView(
       const Model& model,
       const FeatureIdTexture& featureIdTexture,
-      TextureViewOptions options = TextureViewOptions()) noexcept;
+      const TextureViewOptions& options = TextureViewOptions()) noexcept;
 
   /**
    * @brief Get the feature ID from the texture at the given texture

@@ -17,7 +17,7 @@ TextureView::TextureView() noexcept
 TextureView::TextureView(
     const Model& model,
     const TextureInfo& textureInfo,
-    TextureViewOptions options) noexcept
+    const TextureViewOptions& options) noexcept
     : _textureViewStatus(TextureViewStatus::ErrorUninitialized),
       _pSampler(nullptr),
       _pImage(nullptr),
@@ -69,7 +69,7 @@ TextureView::TextureView(
   }
 
   if (options.makeImageCopy) {
-    this->_imageCopy = ImageCesium(*this->_pImage);
+    this->_imageCopy = *this->_pImage;
   }
 
   this->_textureViewStatus = TextureViewStatus::Valid;
@@ -80,7 +80,7 @@ TextureView::TextureView(
     const ImageCesium& image,
     int64_t textureCoordinateSetIndex,
     const ExtensionKhrTextureTransform* pKhrTextureTransformExtension,
-    TextureViewOptions options) noexcept
+    const TextureViewOptions& options) noexcept
     : _textureViewStatus(TextureViewStatus::ErrorUninitialized),
       _pSampler(&sampler),
       _pImage(&image),
@@ -102,7 +102,7 @@ TextureView::TextureView(
   }
 
   if (options.makeImageCopy) {
-    this->_imageCopy = ImageCesium(*this->_pImage);
+    this->_imageCopy = *this->_pImage;
   }
 
   this->_textureViewStatus = TextureViewStatus::Valid;

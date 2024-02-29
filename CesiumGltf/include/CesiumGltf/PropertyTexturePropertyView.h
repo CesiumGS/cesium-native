@@ -294,7 +294,7 @@ public:
       const ClassProperty& classProperty,
       const Sampler& sampler,
       const ImageCesium& image,
-      TextureViewOptions options = TextureViewOptions()) noexcept
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         TextureView(
             sampler,
@@ -482,9 +482,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a
    * default value. Although this property has no data, it can return the
-   * default value
-   * when {@link PropertyTexturePropertyView::get} is called. However,
-   * {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   * default value when {@link PropertyTexturePropertyView::get} is called.
+   * However, {@link PropertyTexturePropertyView::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    */
@@ -526,7 +525,7 @@ public:
       const ClassProperty& classProperty,
       const Sampler& sampler,
       const ImageCesium& image,
-      TextureViewOptions options = TextureViewOptions()) noexcept
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         TextureView(
             sampler,

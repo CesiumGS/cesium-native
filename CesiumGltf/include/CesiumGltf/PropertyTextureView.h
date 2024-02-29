@@ -3,10 +3,10 @@
 #include "CesiumGltf/Class.h"
 #include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumGltf/PropertyTexture.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumGltf/TextureView.h"
-#include "Model.h"
 
 namespace CesiumGltf {
 /**
@@ -121,7 +121,7 @@ public:
   template <typename T, bool Normalized = false>
   PropertyTexturePropertyView<T, Normalized> getPropertyView(
       const std::string& propertyId,
-      TextureViewOptions propertyOptions = TextureViewOptions()) const {
+      const TextureViewOptions& propertyOptions = TextureViewOptions()) const {
     if (this->_status != PropertyTextureViewStatus::Valid) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorInvalidPropertyTexture);
@@ -163,7 +163,7 @@ public:
   void getPropertyView(
       const std::string& propertyId,
       Callback&& callback,
-      TextureViewOptions propertyOptions = TextureViewOptions()) const {
+      const TextureViewOptions& propertyOptions = TextureViewOptions()) const {
     if (this->_status != PropertyTextureViewStatus::Valid) {
       callback(
           propertyId,
@@ -290,7 +290,7 @@ public:
   template <typename Callback>
   void forEachProperty(
       Callback&& callback,
-      TextureViewOptions propertyOptions = TextureViewOptions()) const {
+      const TextureViewOptions& propertyOptions = TextureViewOptions()) const {
     for (const auto& property : this->_pClass->properties) {
       getPropertyView(
           property.first,
@@ -586,7 +586,7 @@ private:
   PropertyTexturePropertyView<T, Normalized> createScalarPropertyView(
       const ClassProperty& classProperty,
       [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty,
-      TextureViewOptions propertyOptions) const {
+      const TextureViewOptions& propertyOptions) const {
     if (classProperty.array) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
