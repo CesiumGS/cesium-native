@@ -1718,21 +1718,29 @@ void TilesetContentManager::dispatchTileWork(
             .createResolvedFuture<TileLoadResultAndRenderResources>(
                 {std::move(result), nullptr});
       })
-      .thenInMainThread([_pTile = pTile, _thiz = thiz, _work = work](
+      .thenImmediately([pWorkManager = thiz->_pTileWorkManager, _work = work](
+                           TileLoadResultAndRenderResources&& pair) mutable {
+        TileLoadResult& result = pair.result;
+        if (result.state != TileLoadResultState::RequestRequired) {
+          _work->tileLoadResult = result;
+          pWorkManager->SignalWorkComplete(_work);
+        }
+        return std::move(pair);
+      })
+      .thenInMainThread([_pTile = pTile, _thiz = thiz](
                             TileLoadResultAndRenderResources&& pair) mutable {
         TileLoadResult& result = pair.result;
         if (result.state == TileLoadResultState::RequestRequired) {
           // Nothing to do
         } else {
-          _work->tileLoadResult = result;
-          TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
-
           _thiz->setTileContent(
               *_pTile,
               std::move(result),
               pair.pRenderResources);
         }
         _thiz->notifyTileDoneLoading(_pTile);
+
+        TileWorkManager::TryDispatchProcessing(_thiz->_pTileWorkManager);
       })
       .catchInMainThread(
           [_pTile = pTile, _thiz = this, pLogger = this->_externals.pLogger](
@@ -1757,7 +1765,7 @@ void TilesetContentManager::dispatchRasterWork(
   RasterOverlayTile* pLoadingTile = pRasterTile->getLoadingTile();
   if (!pLoadingTile) {
     // Can't do any work
-    TileWorkManager::SignalWorkComplete(this->_pTileWorkManager, work);
+    this->_pTileWorkManager->SignalWorkComplete(work);
     return;
   }
 
@@ -1796,14 +1804,14 @@ void TilesetContentManager::dispatchRasterWork(
           }
 
           TileWorkManager::RequeueWorkForRequest(pWorkManager, _work);
+        } else {
+          pWorkManager->SignalWorkComplete(_work);
         }
 
         return std::move(result);
       })
-      .thenInMainThread([_thiz = thiz,
-                         pTile = pTile,
-                         pProvider = pProvider,
-                         _work = work](RasterLoadResult&& result) mutable {
+      .thenInMainThread([_thiz = thiz, pTile = pTile, pProvider = pProvider](
+                            RasterLoadResult&& result) mutable {
         if (result.state == RasterOverlayTile::LoadState::RequestRequired) {
           // Nothing to do
         } else {
@@ -1821,11 +1829,11 @@ void TilesetContentManager::dispatchRasterWork(
           result.pTile = pTile;
 
           pProvider->incrementTileDataBytes(pTile->getImage());
-
-          TileWorkManager::SignalWorkComplete(_thiz->_pTileWorkManager, _work);
         }
 
         _thiz->notifyRasterDoneLoading();
+
+        TileWorkManager::TryDispatchProcessing(_thiz->_pTileWorkManager);
       })
       .catchInMainThread(
           [_thiz = thiz, pTile = pLoadingTile](const std::exception& /*e*/) {

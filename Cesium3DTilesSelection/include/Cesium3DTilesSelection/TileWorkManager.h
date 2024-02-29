@@ -111,8 +111,9 @@ public:
       std::vector<DoneOrder>& outCompleted,
       std::vector<FailedOrder>& outFailed);
 
-  static void
-  SignalWorkComplete(std::shared_ptr<TileWorkManager>& thiz, Work* work);
+  void SignalWorkComplete(Work* work);
+
+  static void TryDispatchProcessing(std::shared_ptr<TileWorkManager>& thiz);
 
   void GetPendingCount(size_t& pendingRequests, size_t& pendingProcessing);
   size_t GetActiveWorkCount();
@@ -161,8 +162,6 @@ private:
   void ordersToWork(
       const std::vector<Order*>& orders,
       std::vector<const Work*>& instancesCreated);
-
-  void onWorkComplete(Work* work);
 
   std::mutex _requestsLock;
 

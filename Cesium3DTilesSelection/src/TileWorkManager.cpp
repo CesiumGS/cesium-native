@@ -220,7 +220,7 @@ void TileWorkManager::RequeueWorkForRequest(
   transitionRequests(thiz);
 }
 
-void TileWorkManager::onWorkComplete(Work* work) {
+void TileWorkManager::SignalWorkComplete(Work* work) {
   std::lock_guard<std::mutex> lock(_requestsLock);
 
   if (_shutdownSignaled)
@@ -249,10 +249,8 @@ void TileWorkManager::onWorkComplete(Work* work) {
   _doneWork.push_back(work);
 }
 
-void TileWorkManager::SignalWorkComplete(
-    std::shared_ptr<TileWorkManager>& thiz,
-    Work* work) {
-  thiz->onWorkComplete(work);
+void TileWorkManager::TryDispatchProcessing(
+    std::shared_ptr<TileWorkManager>& thiz) {
   transitionProcessing(thiz);
 }
 

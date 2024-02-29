@@ -91,7 +91,8 @@ TEST_CASE("Test implicit octree loader") {
               .thenInMainThread(
                   [_work = work, workManager](TileLoadResult&& result) mutable {
                     _work->tileLoadResult = std::move(result);
-                    TileWorkManager::SignalWorkComplete(workManager, _work);
+                    workManager->SignalWorkComplete(_work);
+                    TileWorkManager::TryDispatchProcessing(workManager);
                   });
         };
 
