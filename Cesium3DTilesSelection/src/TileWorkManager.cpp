@@ -29,15 +29,6 @@ void TileWorkManager::Shutdown() {
   _doneWork.clear();
 }
 
-void TileWorkManager::workToProcessingQueue(Work* pWork) {
-#ifndef NDEBUG
-  for (auto element : _processingPending)
-    assert(element->uniqueId != pWork->uniqueId);
-#endif
-
-  _processingPending.push_back(pWork);
-}
-
 void TileWorkManager::stageWork(Work* pWork) {
   // Assert this work is already owned by this manager
   assert(_ownedWork.find(pWork->uniqueId) != _ownedWork.end());
@@ -46,7 +37,12 @@ void TileWorkManager::stageWork(Work* pWork) {
 
   if (!pendingRequest) {
     // No pending request, go straight to processing queue
-    workToProcessingQueue(pWork);
+#ifndef NDEBUG
+    for (auto element : _processingPending)
+      assert(element->uniqueId != pWork->uniqueId);
+#endif
+
+    _processingPending.push_back(pWork);
   } else {
     auto foundIt = _requestsInFlight.find(pendingRequest->url);
     if (foundIt == _requestsInFlight.end()) {
@@ -503,19 +499,45 @@ void TileWorkManager::transitionProcessing(
 
     // At least one slot is open
     size_t slotsAvailable = slotsTotal - slotsUsed;
-    size_t countToTake = std::min(pendingCount, slotsAvailable);
 
-    // Move candidate work to in flight, in order added (oldest at front)
-    for (size_t workIndex = 0; workIndex < countToTake; ++workIndex) {
-      Work* work = thiz->_processingPending.front();
-      thiz->_processingPending.pop_front();
+    if (slotsAvailable >= pendingCount) {
+      // We can take all of it
+      for (auto work : thiz->_processingPending) {
+        assert(
+            thiz->_processingInFlight.find(work->uniqueId) ==
+            thiz->_processingInFlight.end());
+        thiz->_processingInFlight[work->uniqueId] = work;
 
-      assert(
-          thiz->_processingInFlight.find(work->uniqueId) ==
-          thiz->_processingInFlight.end());
-      thiz->_processingInFlight[work->uniqueId] = work;
+        workNeedingDispatch.push_back(work);
+      }
+      thiz->_processingPending.clear();
+    } else {
+      // We can only take part of the incoming work
+      // Put highest priority at end of vector
+      std::sort(
+          begin(thiz->_processingPending),
+          end(thiz->_processingPending),
+          [](Work* a, Work* b) { return (b->order) < (a->order); });
 
-      workNeedingDispatch.push_back(work);
+      size_t countToTake = slotsAvailable;
+
+      // Move candidate work to in flight, highest priority subset
+      size_t copyStart = pendingCount - countToTake;
+      for (size_t workIndex = copyStart; workIndex < pendingCount;
+           ++workIndex) {
+        Work* work = thiz->_processingPending[workIndex];
+
+        assert(
+            thiz->_processingInFlight.find(work->uniqueId) ==
+            thiz->_processingInFlight.end());
+        thiz->_processingInFlight[work->uniqueId] = work;
+
+        workNeedingDispatch.push_back(work);
+      }
+      assert(workNeedingDispatch.size() == countToTake);
+
+      size_t newPendingSize = pendingCount - countToTake;
+      thiz->_processingPending.resize(newPendingSize);
     }
   }
 

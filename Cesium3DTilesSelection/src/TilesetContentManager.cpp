@@ -21,6 +21,7 @@
 #include <spdlog/logger.h>
 
 #include <chrono>
+#include <set>
 
 using namespace CesiumGltfContent;
 using namespace CesiumRasterOverlays;

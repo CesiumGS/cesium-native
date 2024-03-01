@@ -3,9 +3,6 @@
 #include "Tile.h"
 #include "TilesetContentLoader.h"
 
-#include <deque>
-#include <set>
-
 namespace Cesium3DTilesSelection {
 class TilesetMetadata;
 
@@ -155,8 +152,6 @@ private:
 
   void stageWork(Work* pWork);
 
-  void workToProcessingQueue(Work* pWork);
-
   Work* createWorkFromOrder(Order* pOrder);
 
   void ordersToWork(
@@ -172,7 +167,7 @@ private:
   std::vector<Work*> _requestsPending;
   std::map<std::string, std::vector<Work*>> _requestsInFlight;
 
-  std::deque<Work*> _processingPending;
+  std::vector<Work*> _processingPending;
   std::map<TileSource, Work*> _processingInFlight;
 
   using FailedWorkPair = std::pair<std::string, Work*>;
