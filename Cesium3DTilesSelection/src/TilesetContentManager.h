@@ -200,10 +200,11 @@ private:
   void handleFailedOrders(
       const std::vector<TileWorkManager::FailedOrder>& failedOrders);
 
+  void onWorkDispatch(std::vector<TileWorkManager::Work*>& workVector);
+
   void dispatchTileWork(
-      TileProcessingData& processingData,
-      const CesiumAsync::UrlResponseDataMap& responseDataMap,
-      TileWorkManager::Work* work);
+      TilesetContentLoader* pLoader,
+      std::vector<TileWorkManager::Work*>& workVector);
 
   void dispatchRasterWork(
       RasterProcessingData& processingData,
