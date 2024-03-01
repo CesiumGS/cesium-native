@@ -896,23 +896,28 @@ void TilesetContentManager::createWorkManager(
       externals.pAssetAccessor,
       externals.pLogger);
 
-  TileWorkManager::TileDispatchFunc tileDispatch =
-      [this](
-          TileProcessingData& processingData,
-          const CesiumAsync::UrlResponseDataMap& responseDataMap,
-          TileWorkManager::Work* work) {
-        return this->dispatchTileWork(processingData, responseDataMap, work);
+  TileWorkManager::WorkDispatchFunc workDispatch =
+      [this](std::vector<TileWorkManager::Work*>& workVector) {
+        for (TileWorkManager::Work* work : workVector) {
+          CesiumAsync::UrlResponseDataMap responseDataMap;
+          work->fillResponseDataMap(responseDataMap);
+
+          if (std::holds_alternative<TileProcessingData>(
+                  work->order.processingData)) {
+            TileProcessingData& tileProcessing =
+                std::get<TileProcessingData>(work->order.processingData);
+
+            this->dispatchTileWork(tileProcessing, responseDataMap, work);
+          } else {
+            RasterProcessingData& rasterProcessing =
+                std::get<RasterProcessingData>(work->order.processingData);
+
+            this->dispatchRasterWork(rasterProcessing, responseDataMap, work);
+          }
+        }
       };
 
-  TileWorkManager::RasterDispatchFunc rasterDispatch =
-      [this](
-          RasterProcessingData& processingData,
-          const CesiumAsync::UrlResponseDataMap& responseDataMap,
-          TileWorkManager::Work* work) {
-        return this->dispatchRasterWork(processingData, responseDataMap, work);
-      };
-
-  _pTileWorkManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
+  _pTileWorkManager->SetDispatchFunction(workDispatch);
 }
 
 CesiumAsync::SharedFuture<void>&

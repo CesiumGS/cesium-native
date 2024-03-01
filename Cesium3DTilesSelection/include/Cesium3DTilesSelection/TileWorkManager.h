@@ -123,19 +123,10 @@ public:
 
   void Shutdown();
 
-  using TileDispatchFunc = std::function<void(
-      TileProcessingData&,
-      const CesiumAsync::UrlResponseDataMap&,
-      TileWorkManager::Work*)>;
+  using WorkDispatchFunc =
+      std::function<void(std::vector<TileWorkManager::Work*>&)>;
 
-  using RasterDispatchFunc = std::function<void(
-      RasterProcessingData&,
-      const CesiumAsync::UrlResponseDataMap&,
-      TileWorkManager::Work*)>;
-
-  void SetDispatchFunctions(
-      TileDispatchFunc& tileDispatch,
-      RasterDispatchFunc& rasterDispatch);
+  void SetDispatchFunction(WorkDispatchFunc& workDispatch);
 
 private:
   static void throttleOrders(
@@ -174,8 +165,7 @@ private:
   std::vector<FailedWorkPair> _failedWork;
   std::vector<Work*> _doneWork;
 
-  TileDispatchFunc _tileDispatchFunc;
-  RasterDispatchFunc _rasterDispatchFunc;
+  WorkDispatchFunc _workDispatchFunc;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;

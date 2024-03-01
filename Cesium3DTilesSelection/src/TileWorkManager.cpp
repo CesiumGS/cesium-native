@@ -541,31 +541,14 @@ void TileWorkManager::transitionProcessing(
     }
   }
 
-  for (Work* work : workNeedingDispatch) {
-    CesiumAsync::UrlResponseDataMap responseDataMap;
-    work->fillResponseDataMap(responseDataMap);
-
-    if (std::holds_alternative<TileProcessingData>(
-            work->order.processingData)) {
-      TileProcessingData& tileProcessing =
-          std::get<TileProcessingData>(work->order.processingData);
-
-      thiz->_tileDispatchFunc(tileProcessing, responseDataMap, work);
-    } else {
-      RasterProcessingData& rasterProcessing =
-          std::get<RasterProcessingData>(work->order.processingData);
-
-      thiz->_rasterDispatchFunc(rasterProcessing, responseDataMap, work);
-    }
+  if (workNeedingDispatch.size() > 0) {
+    thiz->_workDispatchFunc(workNeedingDispatch);
   }
 }
 
-void TileWorkManager::SetDispatchFunctions(
-    TileDispatchFunc& tileDispatch,
-    RasterDispatchFunc& rasterDispatch) {
+void TileWorkManager::SetDispatchFunction(WorkDispatchFunc& workDispatch) {
   std::lock_guard<std::mutex> lock(_requestsLock);
-  _tileDispatchFunc = tileDispatch;
-  _rasterDispatchFunc = rasterDispatch;
+  _workDispatchFunc = workDispatch;
 }
 
 } // namespace Cesium3DTilesSelection
