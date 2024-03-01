@@ -6,6 +6,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/geometric.hpp>
+#include <glm/gtx/norm.hpp>
 
 using namespace CesiumUtility;
 
@@ -36,17 +37,21 @@ bool IntersectionTests::pointInTriangle2D(
     const glm::dvec2& triangleVertA,
     const glm::dvec2& triangleVertB,
     const glm::dvec2& triangleVertC) noexcept {
-
+  // Define the triangle edges.
   const glm::dvec2 ab = triangleVertB - triangleVertA;
-  const glm::dvec2 ab_perp(-ab.y, ab.x);
   const glm::dvec2 bc = triangleVertC - triangleVertB;
-  const glm::dvec2 bc_perp(-bc.y, bc.x);
   const glm::dvec2 ca = triangleVertA - triangleVertC;
+
+  // Get the vector perpendicular to each triangle edge in the same 2D plane).
+  const glm::dvec2 ab_perp(-ab.y, ab.x);
+  const glm::dvec2 bc_perp(-bc.y, bc.x);
   const glm::dvec2 ca_perp(-ca.y, ca.x);
 
+  // Get vectors from triangle corners to point.
   const glm::dvec2 av = point - triangleVertA;
   const glm::dvec2 cv = point - triangleVertC;
 
+  // Compute the area of the sub-triangle.
   const double v_proj_ab_perp = glm::dot(av, ab_perp);
   const double v_proj_bc_perp = glm::dot(cv, bc_perp);
   const double v_proj_ca_perp = glm::dot(cv, ca_perp);
@@ -56,6 +61,63 @@ bool IntersectionTests::pointInTriangle2D(
           v_proj_bc_perp >= 0.0) ||
          (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
           v_proj_bc_perp <= 0.0);
+}
+
+bool IntersectionTests::pointInTriangle(
+    const glm::dvec3& point,
+    const glm::dvec3& triangleVertA,
+    const glm::dvec3& triangleVertB,
+    const glm::dvec3& triangleVertC) noexcept {
+  glm::dvec3 unused;
+  return IntersectionTests::pointInTriangle(
+      point,
+      triangleVertA,
+      triangleVertB,
+      triangleVertC,
+      unused);
+}
+
+bool IntersectionTests::pointInTriangle(
+    const glm::dvec3& point,
+    const glm::dvec3& triangleVertA,
+    const glm::dvec3& triangleVertB,
+    const glm::dvec3& triangleVertC,
+    glm::dvec3& barycentricCoordinates) noexcept {
+  // Define the triangle edges.
+  const glm::dvec3 ab = triangleVertB - triangleVertA;
+  const glm::dvec3 bc = triangleVertC - triangleVertB;
+
+  const glm::dvec3 triangleNormal = glm::cross(ab, bc);
+  const double lengthSquared = glm::length2(triangleNormal);
+  if (lengthSquared < CesiumUtility::Math::Epsilon8) {
+    // Don't handle invalid triangles.
+    return false;
+  }
+
+  // Technically this is the area of the parallelogram between the vectors,
+  // but triangles are 1/2 of the area, and the division will cancel out later.
+  const double triangleAreaInv = 1.0 / glm::sqrt(lengthSquared);
+
+  const glm::dvec3 ap = point - triangleVertA;
+  const double triangleABPRatio =
+      glm::length(glm::cross(ab, ap)) * triangleAreaInv;
+  if (triangleABPRatio < 0 || triangleABPRatio > 1) {
+    return false;
+  }
+
+  const glm::dvec3 bp = point - triangleVertB;
+  const double triangleBCPRatio =
+      glm::length(glm::cross(bc, bp)) * triangleAreaInv;
+  if (triangleBCPRatio < 0 || triangleBCPRatio > 1) {
+    return false;
+  }
+
+  const double triangleCAPRatio = 1.0 - triangleABPRatio - triangleBCPRatio;
+  barycentricCoordinates.x = triangleBCPRatio;
+  barycentricCoordinates.y = triangleCAPRatio;
+  barycentricCoordinates.z = triangleABPRatio;
+
+  return true;
 }
 
 } // namespace CesiumGeometry

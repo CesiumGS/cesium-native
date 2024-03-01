@@ -42,6 +42,38 @@ public:
       const glm::dvec2& triangleVertA,
       const glm::dvec2& triangleVertB,
       const glm::dvec2& triangleVertC) noexcept;
+
+  /**
+   * @brief Determines whether the point is completely inside the triangle.
+   *
+   * @param point The point to check.
+   * @param triangleVertA The first vertex of the triangle.
+   * @param triangleVertB The second vertex of the triangle.
+   * @param triangleVertC The third vertex of the triangle.
+   * @return Whether the point is within the triangle.
+   */
+  static bool pointInTriangle(
+      const glm::dvec3& point,
+      const glm::dvec3& triangleVertA,
+      const glm::dvec3& triangleVertB,
+      const glm::dvec3& triangleVertC) noexcept;
+
+  /**
+   * @brief Determines whether the point is completely inside the triangle and
+   * outputs the barycentric coordinates for the point.
+   *
+   * @param point The point to check.
+   * @param triangleVertA The first vertex of the triangle.
+   * @param triangleVertB The second vertex of the triangle.
+   * @param triangleVertC The third vertex of the triangle.
+   * @return Whether the point is within the triangle.
+   */
+  static bool pointInTriangle(
+      const glm::dvec3& point,
+      const glm::dvec3& triangleVertA,
+      const glm::dvec3& triangleVertB,
+      const glm::dvec3& triangleVertC,
+      glm::dvec3& barycentricCoordinates) noexcept;
 };
 
 } // namespace CesiumGeometry
