@@ -572,4 +572,16 @@ TEST_CASE("AsyncSystem") {
 
     CHECK(checksCompleted);
   }
+
+  SECTION("waitInMainThread") {
+    bool called = false;
+    auto future =
+        asyncSystem.createResolvedFuture().thenInMainThread([&called]() {
+          called = true;
+          return 4;
+        });
+    int value = asyncSystem.waitInMainThread(std::move(future));
+    CHECK(called);
+    CHECK(value == 4);
+  }
 }

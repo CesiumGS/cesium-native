@@ -269,6 +269,30 @@ public:
   bool dispatchOneMainThreadTask();
 
   /**
+   * @brief Waits for the given future to resolve or reject in the main thread
+   * while also processing main-thread tasks.
+   *
+   * The function does not return until {@link Future::isReady} returns true.
+   * In the meantime, main-thread tasks are processed by calling
+   * {@link dispatchMainThreadTasks} repeatedly. Rather than occupying process
+   * time spin waiting, time slices are given up while waiting by sleeping the
+   * thread for 0ms.
+   *
+   * @return The value if the future resolves successfully.
+   * @throws An exception if the future rejected.
+   */
+  template <typename T> T waitInMainThread(Future<T>&& future) {
+    while (!future.isReady()) {
+      this->dispatchMainThreadTasks();
+      if (future.isReady())
+        break;
+      this->giveUpTimeSlice();
+    }
+
+    return future.wait();
+  }
+
+  /**
    * @brief Creates a new thread pool that can be used to run continuations.
    *
    * @param numberOfThreads The number of threads in the pool.
@@ -321,6 +345,8 @@ private:
                 });
     return Future<std::vector<T>>(this->_pSchedulers, std::move(task));
   }
+
+  void giveUpTimeSlice() const noexcept;
 
   std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
 
