@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added `IntersectionTests::pointInTriangle`, which tests if a point is inside the triangle specified with 3D coordinates. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
+- Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
 
 ### v0.33.0 - 2024-03-01
 
