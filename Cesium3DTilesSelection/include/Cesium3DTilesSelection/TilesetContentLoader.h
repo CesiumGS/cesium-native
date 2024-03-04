@@ -144,10 +144,17 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   TileLoadResultState state;
 };
 
-using TileLoaderCallback = std::function<void(
+using TileLoaderSignature = void(
     const std::vector<TileLoadInput>&,
     TilesetContentLoader*,
-    std::vector<CesiumAsync::Future<TileLoadResult>>&)>;
+    std::vector<CesiumAsync::Future<TileLoadResult>>&);
+
+using TileLoaderCallback = std::function<TileLoaderSignature>;
+
+inline bool
+operator==(const TileLoaderCallback& a, const TileLoaderCallback& b) {
+  return a.target<TileLoaderSignature>() == b.target<TileLoaderSignature>();
+}
 
 /**
  * @brief The loader interface to load the tile content

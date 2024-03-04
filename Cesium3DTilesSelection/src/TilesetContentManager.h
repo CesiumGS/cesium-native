@@ -204,6 +204,7 @@ private:
 
   void dispatchTileWork(
       TilesetContentLoader* pLoader,
+      TileLoaderCallback loaderCallback,
       std::vector<TileWorkManager::Work*>& workVector);
 
   void dispatchRasterWork(

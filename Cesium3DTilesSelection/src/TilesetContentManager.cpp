@@ -1635,9 +1635,20 @@ void TilesetContentManager::onWorkDispatch(
       rasterWork.push_back(work);
   }
 
-  // For tiles, group by loader
-  std::map<TilesetContentLoader*, std::vector<TileWorkManager::Work*>>
-      tileWorkByLoader;
+  // For tiles, batch by common loader / loader callback
+  struct LoaderKey {
+    TilesetContentLoader* loader = nullptr;
+    TileLoaderCallback loaderCallback = nullptr;
+
+    bool operator==(const LoaderKey& rhs) const noexcept {
+      return loader == rhs.loader && loaderCallback == rhs.loaderCallback;
+    }
+    bool operator<(const LoaderKey& rhs) const noexcept {
+      return loader < rhs.loader; // order doesn't matter
+    }
+  };
+
+  std::map<LoaderKey, std::vector<TileWorkManager::Work*>> tileWorkByLoader;
 
   for (TileWorkManager::Work* work : tileWork) {
     TileProcessingData& tileProcessing =
@@ -1651,17 +1662,22 @@ void TilesetContentManager::onWorkDispatch(
     else
       pLoader = this->_pLoader.get();
 
+    LoaderKey loaderKey = {pLoader, tileProcessing.loaderCallback};
+
     auto retVal = tileWorkByLoader.emplace(
-        pLoader,
+        loaderKey,
         std::vector<TileWorkManager::Work*>());
     retVal.first->second.push_back(work);
   }
 
   // For each loader group, send the batch
   for (auto pair : tileWorkByLoader) {
-    TilesetContentLoader* pairLoader = pair.first;
+    const LoaderKey& loaderKey = pair.first;
     std::vector<TileWorkManager::Work*>& pairWorkVector = pair.second;
-    this->dispatchTileWork(pairLoader, pairWorkVector);
+    this->dispatchTileWork(
+        loaderKey.loader,
+        loaderKey.loaderCallback,
+        pairWorkVector);
   }
 
   // Now rasters
@@ -1678,14 +1694,8 @@ void TilesetContentManager::onWorkDispatch(
 
 void TilesetContentManager::dispatchTileWork(
     TilesetContentLoader* pLoader,
+    TileLoaderCallback loaderCallback,
     std::vector<TileWorkManager::Work*>& workVector) {
-
-  // Keep the manager alive while the load is in progress.
-  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
-
-  // In theory the loaderCallback is the same for all?
-  // Maybe we should sort by loaderCallback
-  TileLoaderCallback loaderCallback;
 
   for (auto work : workVector) {
     TileProcessingData& processingData =
@@ -1719,6 +1729,9 @@ void TilesetContentManager::dispatchTileWork(
   // Run loader callback with all inputs
   std::vector<CesiumAsync::Future<TileLoadResult>> futures;
   loaderCallback(allLoadInput, pLoader, futures);
+
+  // Keep the manager alive while the load is in progress
+  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
   // Add continuations for our returned futures
   assert(workVector.size() == allLoadInput.size());
