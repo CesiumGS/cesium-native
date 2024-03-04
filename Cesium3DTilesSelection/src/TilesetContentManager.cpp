@@ -1679,6 +1679,25 @@ void TilesetContentManager::onWorkDispatch(
 void TilesetContentManager::dispatchTileWork(
     TilesetContentLoader* pLoader,
     std::vector<TileWorkManager::Work*>& workVector) {
+
+  // Keep the manager alive while the load is in progress.
+  CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+
+  // In theory the loaderCallback is the same for all?
+  // Maybe we should sort by loaderCallback
+  TileLoaderCallback loaderCallback;
+
+  for (auto work : workVector) {
+    TileProcessingData& processingData =
+        std::get<TileProcessingData>(work->order.processingData);
+    Tile* pTile = processingData.pTile;
+    loaderCallback = processingData.loaderCallback;
+
+    this->notifyTileStartLoading(pTile);
+  }
+
+  // Set up all tile load inputs
+  std::vector<TileLoadInput> allLoadInput;
   for (auto work : workVector) {
     TileProcessingData& processingData =
         std::get<TileProcessingData>(work->order.processingData);
@@ -1687,11 +1706,28 @@ void TilesetContentManager::dispatchTileWork(
     CesiumAsync::UrlResponseDataMap responseDataMap;
     work->fillResponseDataMap(responseDataMap);
 
-    // Optionally could move this to work manager
-    this->notifyTileStartLoading(pTile);
+    TileLoadInput loadInput{
+        *pTile,
+        processingData.contentOptions,
+        this->_externals.asyncSystem,
+        this->_externals.pLogger,
+        std::move(responseDataMap)};
 
-    // Keep the manager alive while the load is in progress.
-    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+    allLoadInput.push_back(loadInput);
+  }
+
+  // Run loader callback with all inputs
+  std::vector<CesiumAsync::Future<TileLoadResult>> futures;
+  loaderCallback(allLoadInput, pLoader, futures);
+
+  // Add continuations for our returned futures
+  assert(workVector.size() == allLoadInput.size());
+  assert(workVector.size() == futures.size());
+  for (size_t tileIndex = 0; tileIndex < workVector.size(); ++tileIndex) {
+    TileWorkManager::Work* work = workVector[tileIndex];
+    TileProcessingData& processingData =
+        std::get<TileProcessingData>(work->order.processingData);
+    Tile* pTile = processingData.pTile;
 
     TileContentLoadInfo tileLoadInfo{
         this->_externals.asyncSystem,
@@ -1701,16 +1737,7 @@ void TilesetContentManager::dispatchTileWork(
         processingData.contentOptions,
         *pTile};
 
-    TileLoadInput loadInput{
-        *pTile,
-        processingData.contentOptions,
-        this->_externals.asyncSystem,
-        this->_externals.pLogger,
-        responseDataMap};
-
-    assert(processingData.loaderCallback);
-
-    processingData.loaderCallback(loadInput, pLoader)
+    std::move(futures[tileIndex])
         .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                           &requestHeaders = this->_requestHeaders,
                           &projections = processingData.projections,

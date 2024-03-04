@@ -118,7 +118,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   /**
    * @brief Response data provided by the caller, stored by url
    */
-  const CesiumAsync::UrlResponseDataMap& responsesByUrl;
+  CesiumAsync::UrlResponseDataMap responsesByUrl;
 };
 
 /**
@@ -144,9 +144,10 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   TileLoadResultState state;
 };
 
-using TileLoaderCallback = std::function<CesiumAsync::Future<TileLoadResult>(
-    const TileLoadInput& loadInput,
-    TilesetContentLoader*)>;
+using TileLoaderCallback = std::function<void(
+    const std::vector<TileLoadInput>&,
+    TilesetContentLoader*,
+    std::vector<CesiumAsync::Future<TileLoadResult>>&)>;
 
 /**
  * @brief The loader interface to load the tile content

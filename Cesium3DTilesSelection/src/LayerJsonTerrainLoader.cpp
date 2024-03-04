@@ -939,9 +939,13 @@ void LayerJsonTerrainLoader::getLoadWork(
   auto& currentLayer = *firstAvailableIt;
   outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 
-  outCallback = [](const TileLoadInput& loadInput,
-                   TilesetContentLoader* loader) {
-    return loader->loadTileContent(loadInput);
+  outCallback = [](const std::vector<TileLoadInput>& allLoadInput,
+                   TilesetContentLoader* loader,
+                   std::vector<CesiumAsync::Future<TileLoadResult>>& out) {
+    for (auto& loadInput : allLoadInput) {
+      auto future = loader->loadTileContent(loadInput);
+      out.push_back(std::move(future));
+    }
   };
 }
 
