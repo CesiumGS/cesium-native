@@ -7,7 +7,7 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 #include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/SamplerUtility.h"
+#include "CesiumGltf/TextureView.h"
 
 #include <array>
 #include <cassert>
@@ -193,12 +193,6 @@ ElementType assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
   }
 }
 
-std::array<uint8_t, 4> sampleNearestPixel(
-    const ImageCesium& image,
-    const std::vector<int64_t>& channels,
-    const double u,
-    const double v);
-
 #pragma region Non - normalized property
 
 /**
@@ -228,20 +222,16 @@ class PropertyTexturePropertyView;
  */
 template <typename ElementType>
 class PropertyTexturePropertyView<ElementType, false>
-    : public PropertyView<ElementType, false> {
+    : public PropertyView<ElementType, false>, public TextureView {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
    */
   PropertyTexturePropertyView() noexcept
       : PropertyView<ElementType, false>(),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
+        TextureView(),
         _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {}
+        _swizzle() {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -250,13 +240,9 @@ public:
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
+        TextureView(),
         _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {
+        _swizzle() {
     assert(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -272,13 +258,9 @@ public:
    */
   PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, false>(classProperty),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
+        TextureView(),
         _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {
+        _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
       // property's definition.
@@ -300,44 +282,52 @@ public:
   /**
    * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
-   * A property texture property may contain the `KHR_texture_transform`
-   * extension, which transforms the texture coordinates used to sample the
-   * texture. The extension may also override the TEXCOORD set index that was
-   * originally specified by the property texture property.
-   *
-   * If a view is constructed with applyKhrTextureTransformExtension set to
-   * true, the view will automatically apply the texture transform to any UV
-   * coordinates used to sample the texture. If the extension defines its own
-   * TEXCOORD set index, it will override the original value.
-   *
-   * Otherwise, if the flag is set to false, UVs will not be transformed and
-   * the original TEXCOORD set index will be preserved. The extension's values
-   * may still be retrieved using getTextureTransform, if desired.
-   *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageCesium} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
-   * @param applyKhrTextureTransformExtension Whether to automatically apply the
-   * `KHR_texture_transform` extension to the property texture property, if it
-   * exists.
+   * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
       const ImageCesium& image,
-      bool applyKhrTextureTransformExtension = false) noexcept
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
-        _pSampler(&sampler),
-        _pImage(&image),
-        _texCoordSetIndex(property.texCoord),
+        TextureView(
+            sampler,
+            image,
+            property.texCoord,
+            property.getExtension<ExtensionKhrTextureTransform>(),
+            options),
         _channels(property.channels),
-        _swizzle(),
-        _applyTextureTransform(applyKhrTextureTransformExtension),
-        _textureTransform(std::nullopt) {
+        _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    switch (this->getTextureViewStatus()) {
+    case TextureViewStatus::Valid:
+      break;
+    case TextureViewStatus::ErrorInvalidSampler:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
+      return;
+    case TextureViewStatus::ErrorInvalidImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
+      return;
+    case TextureViewStatus::ErrorEmptyImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+      return;
+    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
+      return;
+    case TextureViewStatus::ErrorUninitialized:
+    case TextureViewStatus::ErrorInvalidTexture:
+    default:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
       return;
     }
 
@@ -360,13 +350,6 @@ public:
       default:
         assert(false && "A valid channels vector must be passed to the view.");
       }
-    }
-
-    const ExtensionKhrTextureTransform* pTextureTransform =
-        property.getExtension<ExtensionKhrTextureTransform>();
-
-    if (pTextureTransform) {
-      this->_textureTransform = KhrTextureTransform(*pTextureTransform);
     }
   }
 
@@ -429,54 +412,12 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    if (this->_applyTextureTransform && this->_textureTransform) {
-      glm::dvec2 transformedUvs = this->_textureTransform->applyTransform(u, v);
-      u = transformedUvs.x;
-      v = transformedUvs.y;
-    }
+    std::vector<uint8_t> sample =
+        this->sampleNearestPixel(u, v, this->_channels);
 
-    u = applySamplerWrapS(u, this->_pSampler->wrapS);
-    v = applySamplerWrapT(v, this->_pSampler->wrapT);
-
-    std::array<uint8_t, 4> sample =
-        sampleNearestPixel(*this->_pImage, this->_channels, u, v);
     return assembleValueFromChannels<ElementType>(
         gsl::span(sample.data(), this->_channels.size()));
   }
-
-  /**
-   * @brief Get the texture coordinate set index for this property.
-   *
-   * If applyKhrTextureTransformExtension is true, and if the property texture
-   * property contains the `KHR_texture_transform` extension, this will return
-   * the value from the extension, as it is meant to override the original
-   * index. However, if the extension does not specify a TEXCOORD set index,
-   * then the original index of the property texture property is returned.
-   */
-  int64_t getTexCoordSetIndex() const noexcept {
-    if (this->_applyTextureTransform && this->_textureTransform) {
-      return this->_textureTransform->getTexCoordSetIndex().value_or(
-          this->_texCoordSetIndex);
-    }
-    return this->_texCoordSetIndex;
-  }
-
-  /**
-   * @brief Get the sampler describing how to sample the data from the
-   * property's texture.
-   *
-   * This will be nullptr if the property texture property view runs into
-   * problems during construction.
-   */
-  const Sampler* getSampler() const noexcept { return this->_pSampler; }
-
-  /**
-   * @brief Get the image containing this property's data.
-   *
-   * This will be nullptr if the property texture property view runs into
-   * problems during construction.
-   */
-  const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
   /**
    * @brief Gets the channels of this property texture property.
@@ -490,31 +431,9 @@ public:
    */
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
-  /**
-   * @brief Get the KHR_texture_transform for this property texture property, if
-   * it exists.
-   *
-   * Even if this view was constructed with applyKhrTextureTransformExtension
-   * set to false, it will save the extension's values, and they may be
-   * retrieved through this function.
-   *
-   * If this view was constructed with applyKhrTextureTransformExtension set to
-   * true, any texture coordinates passed into `get` or `getRaw` will be
-   * automatically transformed, so there's no need to re-apply the transform
-   * here.
-   */
-  std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
-    return this->_textureTransform;
-  }
-
 private:
-  const Sampler* _pSampler;
-  const ImageCesium* _pImage;
-  int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
-  bool _applyTextureTransform;
-  std::optional<KhrTextureTransform> _textureTransform;
 };
 
 #pragma endregion
@@ -530,7 +449,7 @@ private:
  */
 template <typename ElementType>
 class PropertyTexturePropertyView<ElementType, true>
-    : public PropertyView<ElementType, true> {
+    : public PropertyView<ElementType, true>, public TextureView {
 private:
   using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
 
@@ -540,13 +459,9 @@ public:
    */
   PropertyTexturePropertyView() noexcept
       : PropertyView<ElementType, true>(),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
+        TextureView(),
         _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {}
+        _swizzle() {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -555,35 +470,28 @@ public:
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
+        TextureView(),
         _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {
+        _swizzle() {
     assert(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
-        "An empty property view should not be constructed with a valid status");
+        "An empty property view should not be constructed with a valid "
+        "status");
   }
 
   /**
-   * @brief Constructs an instance of an empty property that specifies a default
-   * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTexturePropertyView::get} is called. However,
-   * {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   * @brief Constructs an instance of an empty property that specifies a
+   * default value. Although this property has no data, it can return the
+   * default value when {@link PropertyTexturePropertyView::get} is called.
+   * However, {@link PropertyTexturePropertyView::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    */
   PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, true>(classProperty),
-        _pSampler(nullptr),
-        _pImage(nullptr),
-        _texCoordSetIndex(0),
+        TextureView(),
         _channels(),
-        _swizzle(),
-        _applyTextureTransform(false),
-        _textureTransform(std::nullopt) {
+        _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
       // property's definition.
@@ -605,44 +513,52 @@ public:
   /**
    * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
    *
-   * A property texture property may contain the `KHR_texture_transform`
-   * extension, which transforms the texture coordinates used to sample the
-   * texture. The extension may also override the TEXCOORD set index that was
-   * originally specified by the property texture property.
-   *
-   * If a view is constructed with applyKhrTextureTransformExtension set to
-   * true, the view will automatically apply the texture transform to any UV
-   * coordinates used to sample the texture. If the extension defines its own
-   * TEXCOORD set index, it will override the original value.
-   *
-   * Otherwise, if the flag is set to false, UVs will not be transformed and
-   * the original TEXCOORD set index will be preserved. The extension's values
-   * may still be retrieved using getTextureTransform, if desired.
-   *
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageCesium} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
-   * @param applyKhrTextureTransformExtension Whether to automatically apply the
-   * `KHR_texture_transform` extension to the property texture property, if it
-   * exists.
+   * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
       const ImageCesium& image,
-      bool applyKhrTextureTransformExtension = false) noexcept
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
-        _pSampler(&sampler),
-        _pImage(&image),
-        _texCoordSetIndex(property.texCoord),
+        TextureView(
+            sampler,
+            image,
+            property.texCoord,
+            property.getExtension<ExtensionKhrTextureTransform>(),
+            options),
         _channels(property.channels),
-        _swizzle(),
-        _applyTextureTransform(applyKhrTextureTransformExtension),
-        _textureTransform(std::nullopt) {
+        _swizzle() {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    switch (this->getTextureViewStatus()) {
+    case TextureViewStatus::Valid:
+      break;
+    case TextureViewStatus::ErrorInvalidSampler:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
+      return;
+    case TextureViewStatus::ErrorInvalidImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
+      return;
+    case TextureViewStatus::ErrorEmptyImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+      return;
+    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
+      return;
+    case TextureViewStatus::ErrorUninitialized:
+    case TextureViewStatus::ErrorInvalidTexture:
+    default:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
       return;
     }
 
@@ -665,13 +581,6 @@ public:
         assert(false && "A valid channels vector must be passed to the view.");
       }
     }
-
-    const ExtensionKhrTextureTransform* pTextureTransform =
-        property.getExtension<ExtensionKhrTextureTransform>();
-
-    if (pTextureTransform) {
-      this->_textureTransform = KhrTextureTransform(*pTextureTransform);
-    }
   }
 
   /**
@@ -681,10 +590,10 @@ public:
    * returned. The sampler's wrapping mode will be used when sampling the
    * texture.
    *
-   * If this property has a specified "no data" value, and the retrieved element
-   * is equal to that value, then this will return the property's specified
-   * default value. If the property did not provide a default value, this
-   * returns std::nullopt.
+   * If this property has a specified "no data" value, and the retrieved
+   * element is equal to that value, then this will return the property's
+   * specified default value. If the property did not provide a default value,
+   * this returns std::nullopt.
    *
    * @param u The u-component of the texture coordinates.
    * @param v The v-component of the texture coordinates.
@@ -746,8 +655,8 @@ public:
    * coordinates. The sampler's wrapping mode will be used when sampling the
    * texture.
    *
-   * If this property has a specified "no data" value, the raw value will still
-   * be returned, even if it equals the "no data" value.
+   * If this property has a specified "no data" value, the raw value will
+   * still be returned, even if it equals the "no data" value.
    *
    * @param u The u-component of the texture coordinates.
    * @param v The v-component of the texture coordinates.
@@ -760,55 +669,12 @@ public:
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
-    if (this->_applyTextureTransform && this->_textureTransform) {
-      glm::dvec2 transformedUvs = this->_textureTransform->applyTransform(u, v);
-      u = transformedUvs.x;
-      v = transformedUvs.y;
-    }
-
-    u = applySamplerWrapS(u, this->_pSampler->wrapS);
-    v = applySamplerWrapT(v, this->_pSampler->wrapT);
-
-    std::array<uint8_t, 4> sample =
-        sampleNearestPixel(*this->_pImage, this->_channels, u, v);
+    std::vector<uint8_t> sample =
+        this->sampleNearestPixel(u, v, this->_channels);
 
     return assembleValueFromChannels<ElementType>(
         gsl::span(sample.data(), this->_channels.size()));
   }
-
-  /**
-   * @brief Get the texture coordinate set index for this property.
-   *
-   * If applyKhrTextureTransformExtension is true, and if the property texture
-   * property contains the `KHR_texture_transform` extension, this will return
-   * the value from the extension, as it is meant to override the original
-   * index. However, if the extension does not specify a TEXCOORD set index,
-   * then the original index of the property texture property is returned.
-   */
-  int64_t getTexCoordSetIndex() const noexcept {
-    if (this->_applyTextureTransform && this->_textureTransform) {
-      return this->_textureTransform->getTexCoordSetIndex().value_or(
-          this->_texCoordSetIndex);
-    }
-    return this->_texCoordSetIndex;
-  }
-
-  /**
-   * @brief Get the sampler describing how to sample the data from the
-   * property's texture.
-   *
-   * This will be nullptr if the property texture property view runs into
-   * problems during construction.
-   */
-  const Sampler* getSampler() const noexcept { return this->_pSampler; }
-
-  /**
-   * @brief Get the image containing this property's data.
-   *
-   * This will be nullptr if the property texture property view runs into
-   * problems during construction.
-   */
-  const ImageCesium* getImage() const noexcept { return this->_pImage; }
 
   /**
    * @brief Gets the channels of this property texture property.
@@ -822,31 +688,9 @@ public:
    */
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
-  /**
-   * @brief Get the KHR_texture_transform for this property texture property, if
-   * it exists.
-   *
-   * Even if this view was constructed with applyKhrTextureTransformExtension
-   * set to false, it will save the extension's values, and they may be
-   * retrieved through this function.
-   *
-   * If this view was constructed with applyKhrTextureTransformExtension set to
-   * true, any texture coordinates passed into `get` or `getRaw` will be
-   * automatically transformed, so there's no need to re-apply the transform
-   * here.
-   */
-  std::optional<KhrTextureTransform> getTextureTransform() const noexcept {
-    return this->_textureTransform;
-  }
-
 private:
-  const Sampler* _pSampler;
-  const ImageCesium* _pImage;
-  int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
   std::string _swizzle;
-  bool _applyTextureTransform;
-  std::optional<KhrTextureTransform> _textureTransform;
 };
 #pragma endregion
 

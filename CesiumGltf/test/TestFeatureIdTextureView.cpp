@@ -1,6 +1,7 @@
 #include "CesiumGltf/ExtensionExtMeshFeatures.h"
 #include "CesiumGltf/FeatureIdTextureView.h"
 #include "CesiumGltf/KhrTextureTransform.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
@@ -342,7 +343,9 @@ TEST_CASE("Test FeatureIdTextureView with applyKhrTextureTransformExtension = "
   FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
-  FeatureIdTextureView view(model, featureIdTexture, true);
+  TextureViewOptions options;
+  options.applyKhrTextureTransformExtension = true;
+  FeatureIdTextureView view(model, featureIdTexture, options);
   REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
 
   auto textureTransform = view.getTextureTransform();
@@ -355,6 +358,60 @@ TEST_CASE("Test FeatureIdTextureView with applyKhrTextureTransformExtension = "
   REQUIRE(
       view.getTexCoordSetIndex() == textureTransform->getTexCoordSetIndex());
   REQUIRE(textureTransform->getTexCoordSetIndex() == 10);
+}
+
+TEST_CASE("Test FeatureIdTextureView with makeImageCopy = true") {
+  std::vector<uint8_t> featureIDs{1, 2, 0, 7};
+
+  Model model;
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+  Sampler& sampler = model.samplers.emplace_back();
+  sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
+  sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
+
+  Image& image = model.images.emplace_back();
+  image.cesium.width = 2;
+  image.cesium.height = 2;
+  image.cesium.channels = 1;
+  image.cesium.bytesPerChannel = 1;
+  image.cesium.pixelData.resize(featureIDs.size());
+  std::memcpy(
+      image.cesium.pixelData.data(),
+      featureIDs.data(),
+      featureIDs.size());
+
+  Texture& texture = model.textures.emplace_back();
+  texture.sampler = 0;
+  texture.source = 0;
+
+  ExtensionExtMeshFeatures& meshFeatures =
+      primitive.addExtension<ExtensionExtMeshFeatures>();
+
+  FeatureIdTexture featureIdTexture;
+  featureIdTexture.index = 0;
+  featureIdTexture.texCoord = 0;
+  featureIdTexture.channels = {0};
+
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
+  featureId.texture = featureIdTexture;
+
+  TextureViewOptions options;
+  options.makeImageCopy = true;
+  FeatureIdTextureView view(model, featureIdTexture, options);
+  REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
+
+  // Clear the original image data.
+  std::vector<std::byte> emptyData;
+  image.cesium.pixelData.swap(emptyData);
+
+  const ImageCesium* pImage = view.getImage();
+  REQUIRE(pImage);
+  REQUIRE(pImage->width == image.cesium.width);
+  REQUIRE(pImage->height == image.cesium.height);
+  REQUIRE(pImage->channels == image.cesium.channels);
+  REQUIRE(pImage->bytesPerChannel == image.cesium.bytesPerChannel);
+  REQUIRE(pImage->pixelData.size() == featureIDs.size());
 }
 
 TEST_CASE("Test getFeatureID on invalid feature ID texture view") {
@@ -527,7 +584,9 @@ TEST_CASE(
   FeatureId featureId = meshFeatures.featureIds.emplace_back();
   featureId.texture = featureIdTexture;
 
-  FeatureIdTextureView view(model, featureIdTexture, true);
+  TextureViewOptions options;
+  options.applyKhrTextureTransformExtension = true;
+  FeatureIdTextureView view(model, featureIdTexture, options);
   REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
   // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
   // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
@@ -537,6 +596,57 @@ TEST_CASE(
   REQUIRE(view.getFeatureID(1, 0) == 2);
   REQUIRE(view.getFeatureID(0, 1) == 0);
   REQUIRE(view.getFeatureID(1, 1) == 1);
+}
+
+TEST_CASE("Test getFeatureId on view with makeImageCopy = true") {
+  std::vector<uint8_t> featureIDs{1, 2, 0, 7};
+
+  Model model;
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+  Sampler& sampler = model.samplers.emplace_back();
+  sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
+  sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
+
+  Image& image = model.images.emplace_back();
+  image.cesium.width = 2;
+  image.cesium.height = 2;
+  image.cesium.channels = 1;
+  image.cesium.bytesPerChannel = 1;
+  image.cesium.pixelData.resize(featureIDs.size());
+  std::memcpy(
+      image.cesium.pixelData.data(),
+      featureIDs.data(),
+      featureIDs.size());
+
+  Texture& texture = model.textures.emplace_back();
+  texture.sampler = 0;
+  texture.source = 0;
+
+  ExtensionExtMeshFeatures& meshFeatures =
+      primitive.addExtension<ExtensionExtMeshFeatures>();
+
+  FeatureIdTexture featureIdTexture;
+  featureIdTexture.index = 0;
+  featureIdTexture.texCoord = 0;
+  featureIdTexture.channels = {0};
+
+  FeatureId featureId = meshFeatures.featureIds.emplace_back();
+  featureId.texture = featureIdTexture;
+
+  TextureViewOptions options;
+  options.makeImageCopy = true;
+  FeatureIdTextureView view(model, featureIdTexture, options);
+  REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
+
+  // Clear the original image data.
+  std::vector<std::byte> emptyData;
+  image.cesium.pixelData.swap(emptyData);
+
+  REQUIRE(view.getFeatureID(0, 0) == 1);
+  REQUIRE(view.getFeatureID(1, 0) == 2);
+  REQUIRE(view.getFeatureID(0, 1) == 0);
+  REQUIRE(view.getFeatureID(1, 1) == 7);
 }
 
 TEST_CASE("Test getFeatureID rounds to nearest pixel") {
