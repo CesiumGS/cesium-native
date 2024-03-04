@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `waitInMainThread` method to `AsyncSystem`.
+
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:
