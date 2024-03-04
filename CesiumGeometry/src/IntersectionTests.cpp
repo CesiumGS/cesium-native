@@ -51,12 +51,13 @@ bool IntersectionTests::pointInTriangle2D(
   const glm::dvec2 av = point - triangleVertA;
   const glm::dvec2 cv = point - triangleVertC;
 
-  // Compute the area of the sub-triangle.
+  // Project the point vectors onto the perpendicular vectors.
   const double v_proj_ab_perp = glm::dot(av, ab_perp);
   const double v_proj_bc_perp = glm::dot(cv, bc_perp);
   const double v_proj_ca_perp = glm::dot(cv, ca_perp);
 
-  // This will determine in or out, irrespective of winding.
+  // The projections determine in what direction the point is from the triangle
+  // edge. This will determine in or out, irrespective of winding.
   return (v_proj_ab_perp >= 0.0 && v_proj_ca_perp >= 0.0 &&
           v_proj_bc_perp >= 0.0) ||
          (v_proj_ab_perp <= 0.0 && v_proj_ca_perp <= 0.0 &&
