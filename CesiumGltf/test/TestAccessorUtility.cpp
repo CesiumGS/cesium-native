@@ -81,7 +81,7 @@ TEST_CASE("Test getPositionAccessorView") {
     accessor.bufferView = 0;
     accessor.componentType = Accessor::ComponentType::FLOAT;
     accessor.type = Accessor::Type::VEC3;
-    accessor.count = positions.size();
+    accessor.count = static_cast<int64_t>(positions.size());
   }
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -111,7 +111,6 @@ TEST_CASE("Test getPositionAccessorView") {
   }
 
   SECTION("Creates from valid accessor") {
-    IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     PositionAccessorType positionAccessor =
         getPositionAccessorView(model, primitive);
     REQUIRE(positionAccessor.status() == AccessorViewStatus::Valid);
