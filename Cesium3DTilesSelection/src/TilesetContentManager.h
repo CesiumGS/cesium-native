@@ -12,7 +12,7 @@
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumUtility/CreditSystem.h>
-#include <CesiumUtility/ReferenceCountedNonThreadSafe.h>
+#include <CesiumUtility/ReferenceCounted.h>
 
 #include <vector>
 

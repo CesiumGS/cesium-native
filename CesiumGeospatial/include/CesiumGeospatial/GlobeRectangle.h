@@ -11,7 +11,7 @@
 namespace CesiumGeospatial {
 
 /**
- * @brief A two-dimensional, recangular region on a globe, specified using
+ * @brief A two-dimensional, rectangular region on a globe, specified using
  * longitude and latitude coordinates. The region is rectangular in terms of
  * longitude-latitude coordinates, but may be far from rectangular on the actual
  * globe surface.
@@ -33,6 +33,17 @@ public:
    *   * `north`: -Pi/2
    */
   static const GlobeRectangle EMPTY;
+
+  /**
+   * @brief The maximum rectangle.
+   *
+   * The rectangle has the following values:
+   *   * `west`: -Pi
+   *   * `south`: -Pi/2
+   *   * `east`: Pi
+   *   * `north`: Pi/2
+   */
+  static const GlobeRectangle MAXIMUM;
 
   /**
    * @brief Constructs a new instance.
