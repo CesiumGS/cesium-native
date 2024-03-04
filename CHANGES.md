@@ -1,5 +1,13 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking a `Cesium3DTiles::BoundingVolume`.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
+- Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
+
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:

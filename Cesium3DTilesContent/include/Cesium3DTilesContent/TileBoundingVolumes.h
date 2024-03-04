@@ -31,6 +31,19 @@ public:
   getOrientedBoundingBox(const Cesium3DTiles::BoundingVolume& boundingVolume);
 
   /**
+   * @brief Sets the `box` property in a {@link Cesium3DTiles::BoundingVolume}
+   * based on an {@link CesiumGeometry::OrientedBoundingBox}.
+   *
+   * Other bounding volume types, if any, are not modified.
+   *
+   * @param boundingVolume The bounding volume to set.
+   * @param boundingBox The bounding box with which to set the property.
+   */
+  static void setOrientedBoundingBox(
+      Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeometry::OrientedBoundingBox& boundingBox);
+
+  /**
    * @brief Gets the bounding region defined in a
    * {@link Cesium3DTiles::BoundingVolume}, if any.
    *
@@ -42,6 +55,19 @@ public:
   getBoundingRegion(const Cesium3DTiles::BoundingVolume& boundingVolume);
 
   /**
+   * @brief Sets the `region` property in a {@link Cesium3DTiles::BoundingVolume}
+   * based on a {@link CesiumGeospatial::BoundingRegion}.
+   *
+   * Other bounding volume types, if any, are not modified.
+   *
+   * @param boundingVolume The bounding volume to set.
+   * @param boundingRegion The bounding region with which to set the property.
+   */
+  static void setBoundingRegion(
+      Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeospatial::BoundingRegion& boundingRegion);
+
+  /**
    * @brief Gets the bounding sphere defined in a
    * {@link Cesium3DTiles::BoundingVolume}, if any.
    *
@@ -51,6 +77,19 @@ public:
    */
   static std::optional<CesiumGeometry::BoundingSphere>
   getBoundingSphere(const Cesium3DTiles::BoundingVolume& boundingVolume);
+
+  /**
+   * @brief Sets the `sphere` property in a {@link Cesium3DTiles::BoundingVolume}
+   * based on a {@link CesiumGeometry::BoundingSphere}.
+   *
+   * Other bounding volume types, if any, are not modified.
+   *
+   * @param boundingVolume The bounding volume to set.
+   * @param boundingSphere The bounding sphere with which to set the property.
+   */
+  static void setBoundingSphere(
+      Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeometry::BoundingSphere& boundingSphere);
 
   /**
    * @brief Gets the S2 cell bounding volume defined in the
@@ -65,6 +104,21 @@ public:
    */
   static std::optional<CesiumGeospatial::S2CellBoundingVolume>
   getS2CellBoundingVolume(const Cesium3DTiles::BoundingVolume& boundingVolume);
+
+  /**
+   * @brief Adds the `3DTILES_bounding_volume_S2` extension to a
+   * {@link Cesium3DTiles::BoundingVolume} based on a
+   * {@link CesiumGeospatial::S2CellBoundingVolume}.
+   *
+   * Other bounding volume types, if any, are not modified.
+   *
+   * @param boundingVolume The bounding volume to set.
+   * @param s2BoundingVolume The S2 bounding volume with which to set the
+   * property.
+   */
+  static void setS2CellBoundingVolume(
+      Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeospatial::S2CellBoundingVolume& s2BoundingVolume);
 };
 
 } // namespace Cesium3DTilesContent
