@@ -112,4 +112,4 @@ public:
       uint32_t startingLevel);
 };
 
-} // namespace Cesium3DTilesContent
+} // namespace CesiumLegacyTerrain

@@ -26,6 +26,7 @@ LayerJsonHandler::LayerJsonHandler(
       _minzoom(),
       _metadataAvailability(),
       _name(),
+      _parentUrl(),
       _projection(),
       _scheme(),
       _tiles(),
@@ -79,6 +80,8 @@ CesiumJsonReader::IJsonHandler* LayerJsonHandler::readObjectKeyLayer(
         o.metadataAvailability);
   if ("name"s == str)
     return property("name", this->_name, o.name);
+  if ("parentUrl"s == str)
+    return property("parentUrl", this->_parentUrl, o.parentUrl);
   if ("projection"s == str)
     return property("projection", this->_projection, o.projection);
   if ("scheme"s == str)

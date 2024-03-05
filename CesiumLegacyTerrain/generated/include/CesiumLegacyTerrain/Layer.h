@@ -77,6 +77,11 @@ struct CESIUMLEGACYTERRAIN_API Layer final
   std::string name = "Terrain";
 
   /**
+   * @brief The URL of the parent layer.json that this one is layered on top of.
+   */
+  std::optional<std::string> parentUrl;
+
+  /**
    * @brief The map projection of this tileset. Valid values are `"EPSG:4326"`
    * and `"EPSG:3857"`.
    */
