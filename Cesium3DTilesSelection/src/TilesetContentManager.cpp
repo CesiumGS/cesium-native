@@ -958,6 +958,11 @@ void TilesetContentManager::processLoadRequests(
   _pTileWorkManager->TakeCompletedWork(doneOrders, failedOrders);
 
   handleFailedOrders(failedOrders);
+
+  // Dispatch more processing work. More may have been added, or slots may have
+  // freed up from any work that completed after update_view called
+  // dispatchMainThreadTasks and now
+  TileWorkManager::TryDispatchProcessing(this->_pTileWorkManager);
 }
 
 void TilesetContentManager::updateTileContent(

@@ -192,8 +192,6 @@ void TileWorkManager::TryAddOrders(
 
   if (requestOrders.size())
     transitionRequests(thiz);
-  if (processingOrders.size())
-    transitionProcessing(thiz);
 }
 
 void TileWorkManager::RequeueWorkForRequest(
