@@ -2,6 +2,14 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumLegacyTerrain`.
+
+##### Additions :tada:
+
+- Added `CesiumLegacyTerrain`, containing classes for working with terrain in the `quantized-mesh-1.0` format and its corresponding layer.json file.
+
 ##### Fixes :wrench:
 
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
