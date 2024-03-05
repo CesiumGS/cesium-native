@@ -1,5 +1,15 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumLegacyTerrain`.
+
+##### Additions :tada:
+
+- Added `CesiumLegacyTerrain`, containing classes for working with terrain in the `quantized-mesh-1.0` format and its corresponding layer.json file.
+
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:
