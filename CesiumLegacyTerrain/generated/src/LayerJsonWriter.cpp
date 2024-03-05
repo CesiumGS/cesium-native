@@ -210,6 +210,11 @@ void writeJson(
     writeJson(obj.name, jsonWriter, context);
   }
 
+  if (obj.parentUrl.has_value()) {
+    jsonWriter.Key("parentUrl");
+    writeJson(obj.parentUrl, jsonWriter, context);
+  }
+
   if (obj.projection != "EPSG:4326") {
     jsonWriter.Key("projection");
     writeJson(obj.projection, jsonWriter, context);

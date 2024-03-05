@@ -52,6 +52,7 @@ private:
   CesiumJsonReader::IntegerJsonHandler<int64_t> _minzoom;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _metadataAvailability;
   CesiumJsonReader::StringJsonHandler _name;
+  CesiumJsonReader::StringJsonHandler _parentUrl;
   CesiumJsonReader::StringJsonHandler _projection;
   CesiumJsonReader::StringJsonHandler _scheme;
   CesiumJsonReader::
