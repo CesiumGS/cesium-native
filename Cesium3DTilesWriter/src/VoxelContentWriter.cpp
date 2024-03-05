@@ -1,7 +1,7 @@
 #include "Cesium3DTilesWriter/VoxelContentWriter.h"
 
 #include "TilesetJsonWriter.h"
-#include "registerExtensions.h"
+#include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -9,7 +9,7 @@
 
 namespace Cesium3DTilesWriter {
 
-VoxelContentWriter::VoxelContentWriter() { registerExtensions(this->_context); }
+VoxelContentWriter::VoxelContentWriter() { registerWriterExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& VoxelContentWriter::getExtensions() {
   return this->_context;
