@@ -7,8 +7,8 @@ set(cesium_native_targets
     Cesium3DTiles
     Cesium3DTilesContent
     Cesium3DTilesReader
-    Cesium3DTilesWriter
     Cesium3DTilesSelection
+    Cesium3DTilesWriter
     CesiumAsync
     CesiumGeometry
     CesiumGeospatial
@@ -16,6 +16,7 @@ set(cesium_native_targets
     CesiumGltfReader
     CesiumGltfWriter
     CesiumIonClient
+    CesiumLegacyTerrain
     CesiumRasterOverlays
     CesiumUtility
 )
