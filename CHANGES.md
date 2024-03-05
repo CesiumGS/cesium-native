@@ -8,7 +8,7 @@
 
 ##### Additions :tada:
 
-- Added `CesiumLegacyTerrain`, containing classes for working with terrain in the `quantized-mesh-1.0` format and its corresponding layer.json file.
+- Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 
 ### v0.33.0 - 2024-03-01
 
