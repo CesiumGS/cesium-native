@@ -2,8 +2,13 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumLegacyTerrain`.
+
 ##### Additions :tada:
 
+- Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking a `Cesium3DTiles::BoundingVolume`.
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
 - Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
