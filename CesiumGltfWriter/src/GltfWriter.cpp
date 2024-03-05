@@ -1,7 +1,7 @@
 #include "CesiumGltfWriter/GltfWriter.h"
 
 #include "ModelJsonWriter.h"
-#include "registerExtensions.h"
+#include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -103,7 +103,7 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
 }
 } // namespace
 
-GltfWriter::GltfWriter() { registerExtensions(this->_context); }
+GltfWriter::GltfWriter() { registerWriterExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& GltfWriter::getExtensions() {
   return this->_context;

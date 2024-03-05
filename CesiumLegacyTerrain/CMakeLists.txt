@@ -53,10 +53,13 @@ target_include_directories(
 
 target_link_libraries(CesiumLegacyTerrain
     PUBLIC
-        CesiumUtility
         CesiumAsync
+        CesiumGeospatial
+        CesiumGltf
+        CesiumGltfContent
         CesiumJsonReader
         CesiumJsonWriter
+        CesiumUtility
 )
 
 install(TARGETS CesiumLegacyTerrain
