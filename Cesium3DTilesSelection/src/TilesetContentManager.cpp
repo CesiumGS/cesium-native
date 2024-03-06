@@ -953,11 +953,9 @@ void TilesetContentManager::processLoadRequests(
 
   markWorkTilesAsLoading(workCreated);
 
-  std::vector<TileWorkManager::DoneOrder> doneOrders;
-  std::vector<TileWorkManager::FailedOrder> failedOrders;
-  _pTileWorkManager->TakeCompletedWork(doneOrders, failedOrders);
-
-  handleFailedOrders(failedOrders);
+  // Finish main thread tasks for any work that completed after update_view
+  // called dispatchMainThreadTasks and now
+  handleCompletedWork();
 
   // Dispatch more processing work. More may have been added, or slots may have
   // freed up from any work that completed after update_view called
@@ -1607,10 +1605,27 @@ void TilesetContentManager::markWorkTilesAsLoading(
   }
 }
 
-void TilesetContentManager::handleFailedOrders(
-    const std::vector<TileWorkManager::FailedOrder>& failedOrders) {
+void TilesetContentManager::handleCompletedWork() {
+  std::vector<TileWorkManager::DoneOrder> doneOrders;
+  std::vector<TileWorkManager::FailedOrder> failedOrders;
+  _pTileWorkManager->TakeCompletedWork(doneOrders, failedOrders);
 
-  for (auto failedOrder : failedOrders) {
+  for (auto& doneOrder : doneOrders) {
+    const TileWorkManager::Order& order = doneOrder.order;
+
+    if (std::holds_alternative<TileProcessingData>(order.processingData)) {
+      TileProcessingData tileProcessing =
+          std::get<TileProcessingData>(order.processingData);
+      assert(tileProcessing.pTile);
+
+      this->setTileContent(
+          *tileProcessing.pTile,
+          std::move(doneOrder.loadResult),
+          doneOrder.pRenderResources);
+    };
+  }
+
+  for (auto& failedOrder : failedOrders) {
     const TileWorkManager::Order& order = failedOrder.order;
 
     SPDLOG_LOGGER_ERROR(
@@ -1679,7 +1694,9 @@ void TilesetContentManager::dispatchTileWork(
                         &requestHeaders = this->_requestHeaders,
                         &projections = processingData.projections,
                         &rendererOptions = processingData.rendererOptions,
+                        pThis = this,
                         pWorkManager = thiz->_pTileWorkManager,
+                        _pTile = pTile,
                         _work = work](TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -1690,56 +1707,65 @@ void TilesetContentManager::dispatchTileWork(
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::RequestRequired) {
           // This work goes back into the work manager queue
-          // Make sure we're not requesting something we have
           CesiumAsync::RequestData& request = result.additionalRequestData;
+
+          // Add new requests here
           assert(
               _work->completedRequests.find(request.url) ==
               _work->completedRequests.end());
-
-          // Add new requests here
           _work->pendingRequests.push_back(std::move(request));
 
           TileWorkManager::RequeueWorkForRequest(pWorkManager, _work);
-        } else if (result.state == TileLoadResultState::Success) {
-          if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            return postProcessContent(
-                std::move(result),
-                std::move(projections),
-                std::move(tileLoadInfo),
-                result.originalRequestUrl,
-                requestHeaders,
-                rendererOptions);
-          }
+
+          return tileLoadInfo.asyncSystem
+              .createResolvedFuture<TileLoadResultState>(
+                  TileLoadResultState::RequestRequired);
         }
 
-        return tileLoadInfo.asyncSystem
-            .createResolvedFuture<TileLoadResultAndRenderResources>(
-                {std::move(result), nullptr});
-      })
-      .thenImmediately([pWorkManager = thiz->_pTileWorkManager, _work = work](
-                           TileLoadResultAndRenderResources&& pair) mutable {
-        TileLoadResult& result = pair.result;
-        if (result.state != TileLoadResultState::RequestRequired) {
-          _work->tileLoadResult = result;
-          pWorkManager->SignalWorkComplete(_work);
-        }
-        return std::move(pair);
-      })
-      .thenInMainThread([_pTile = pTile, _thiz = thiz](
-                            TileLoadResultAndRenderResources&& pair) mutable {
-        TileLoadResult& result = pair.result;
-        if (result.state == TileLoadResultState::RequestRequired) {
-          // Nothing to do
-        } else {
-          _thiz->setTileContent(
-              *_pTile,
-              std::move(result),
-              pair.pRenderResources);
-        }
-        _thiz->notifyTileDoneLoading(_pTile);
+        if (result.state == TileLoadResultState::Success &&
+            std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
+          return postProcessContent(
+                     std::move(result),
+                     std::move(projections),
+                     std::move(tileLoadInfo),
+                     result.originalRequestUrl,
+                     requestHeaders,
+                     rendererOptions)
+              .thenInMainThread(
+                  [pThis = pThis,
+                   pWorkManager = pWorkManager,
+                   _work = _work,
+                   _pTile = _pTile](
+                      TileLoadResultAndRenderResources&& pair) mutable {
+                    _work->tileLoadResult = std::move(pair.result);
+                    _work->pRenderResources = pair.pRenderResources;
+                    pWorkManager->SignalWorkComplete(_work);
 
-        TileWorkManager::TryDispatchProcessing(_thiz->_pTileWorkManager);
+                    pThis->handleCompletedWork();
+                    TileWorkManager::TryDispatchProcessing(pWorkManager);
+                    return TileLoadResultState::Success;
+                  });
+        }
+
+        // We're successful with no gltf model, or in a failure state
+        _work->tileLoadResult = std::move(result);
+        pWorkManager->SignalWorkComplete(_work);
+
+        return tileLoadInfo.asyncSystem.runInMainThread(
+            [pThis = pThis,
+             pWorkManager = pWorkManager,
+             state = _work->tileLoadResult.state]() mutable {
+              pThis->handleCompletedWork();
+              TileWorkManager::TryDispatchProcessing(pWorkManager);
+              return state;
+            });
       })
+      .thenInMainThread(
+          [_thiz = thiz, _pTile = pTile](TileLoadResultState state) mutable {
+            // Wrap up this tile and also keep intrusive pointer alive
+            if (state == TileLoadResultState::Success)
+              _thiz->notifyTileDoneLoading(_pTile);
+          })
       .catchInMainThread(
           [_pTile = pTile, _thiz = this, pLogger = this->_externals.pLogger](
               std::exception&& e) {

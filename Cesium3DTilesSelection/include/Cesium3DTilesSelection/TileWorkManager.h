@@ -62,6 +62,7 @@ public:
     CesiumAsync::UrlAssetRequestMap completedRequests = {};
 
     TileLoadResult tileLoadResult = {};
+    void* pRenderResources = nullptr;
 
     void fillResponseDataMap(CesiumAsync::UrlResponseDataMap& responseDataMap) {
       for (auto& pair : completedRequests) {
@@ -96,6 +97,7 @@ public:
 
   struct DoneOrder {
     TileLoadResult loadResult = {};
+    void* pRenderResources = nullptr;
     Order order = {};
   };
 

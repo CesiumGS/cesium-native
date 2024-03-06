@@ -106,6 +106,7 @@ TEST_CASE("Test implicit octree loader") {
     std::vector<const TileWorkManager::Work*> workCreated;
     TileWorkManager::TryAddOrders(workManager, orders, 20, workCreated);
     assert(workCreated.size() == 1);
+    TileWorkManager::TryDispatchProcessing(workManager);
 
     asyncSystem.dispatchMainThreadTasks();
 

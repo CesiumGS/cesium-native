@@ -352,8 +352,10 @@ void TileWorkManager::TakeCompletedWork(
         _processingInFlight.find(work->uniqueId) == _processingInFlight.end());
 #endif
 
-    outCompleted.emplace_back(
-        DoneOrder{std::move(work->tileLoadResult), std::move(work->order)});
+    outCompleted.emplace_back(DoneOrder{
+        std::move(work->tileLoadResult),
+        work->pRenderResources,
+        std::move(work->order)});
     _ownedWork.erase(foundIt);
   }
   _doneWork.clear();

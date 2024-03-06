@@ -197,8 +197,7 @@ private:
   void markWorkTilesAsLoading(
       const std::vector<const TileWorkManager::Work*>& workVector);
 
-  void handleFailedOrders(
-      const std::vector<TileWorkManager::FailedOrder>& failedOrders);
+  void handleCompletedWork();
 
   void dispatchTileWork(
       TileProcessingData& processingData,
