@@ -1,6 +1,12 @@
 # Change Log
 
+### ? - ?
+
 ### v0.33.0 - 2024-03-01
+
+##### Fixes :wrench:
+
+- `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
 
 ##### Breaking Changes :mega:
 
