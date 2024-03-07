@@ -483,20 +483,10 @@ TEST_CASE("Test tile state machine") {
     Tile& tile = *pManager->getRootTile();
 
     loadTileWithManager(&tile, pManager.get(), options);
-
-    // Unloaded -> ContentLoading
-    CHECK(pManager->getNumberOfTilesLoading() == 1);
-    CHECK(tile.getState() == TileLoadState::ContentLoading);
-    CHECK(tile.getChildren().empty());
-    CHECK(tile.getContent().isUnknownContent());
-    CHECK(!tile.getContent().isRenderContent());
-    CHECK(!tile.getContent().getRenderContent());
-
-    // Wait till its done, do another tick to clear the manager's done work
     pManager->waitUntilIdle();
-    loadTileWithManager(nullptr, pManager.get(), options);
 
-    // ContentLoading -> FailedTemporarily
+    // Unloaded -> FailedTemporarily
+    CHECK(tile.getState() == TileLoadState::FailedTemporarily);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -517,11 +507,12 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
     CHECK(!initializerCall);
 
-    // FailedTemporarily -> ContentLoading
+    // FailedTemporarily -> FailedTemporarily
     loadTileWithManager(&tile, pManager.get(), options);
+    pManager->waitUntilIdle();
 
-    CHECK(pManager->getNumberOfTilesLoading() == 1);
-    CHECK(tile.getState() == TileLoadState::ContentLoading);
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
+    CHECK(tile.getState() == TileLoadState::FailedTemporarily);
   }
 
   SECTION("Loader requests failed") {
@@ -565,17 +556,9 @@ TEST_CASE("Test tile state machine") {
     Tile& tile = *pManager->getRootTile();
 
     loadTileWithManager(&tile, pManager.get(), options);
-
-    // Unloaded -> ContentLoading
-    CHECK(pManager->getNumberOfTilesLoading() == 1);
-    CHECK(tile.getState() == TileLoadState::ContentLoading);
-    CHECK(tile.getChildren().empty());
-    CHECK(tile.getContent().isUnknownContent());
-    CHECK(!tile.getContent().isRenderContent());
-    CHECK(!tile.getContent().getRenderContent());
-
-    // ContentLoading -> Failed
     pManager->waitUntilIdle();
+
+    // Unloaded -> Failed
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);

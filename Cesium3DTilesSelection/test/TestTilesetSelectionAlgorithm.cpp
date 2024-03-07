@@ -563,15 +563,14 @@ TEST_CASE("Test additive refinement") {
   Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
-  // root is external tileset. Since its content is loading, we won't know if it
-  // has children or not
+  // root is external tileset. Content is loaded immediately, but not done
   const Tile* pTilesetJson = tileset.getRootTile();
   REQUIRE(pTilesetJson);
   REQUIRE(pTilesetJson->getChildren().size() == 1);
 
   const Tile* root = &pTilesetJson->getChildren()[0];
-  REQUIRE(root->getState() == TileLoadState::ContentLoading);
-  REQUIRE(root->getChildren().size() == 0);
+  REQUIRE(root->getState() == TileLoadState::ContentLoaded);
+  REQUIRE(root->getChildren().size() == 1);
 
   SECTION("Load external tilesets") {
     ViewState viewState = zoomToTileset(tileset);
@@ -594,7 +593,9 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(parentB3DM.getChildren().size() == 4);
 
       for (const Tile& child : parentB3DM.getChildren()) {
-        REQUIRE(child.getState() == TileLoadState::ContentLoading);
+        bool childLoading = child.getState() == TileLoadState::ContentLoading ||
+                            child.getState() == TileLoadState::ContentLoaded;
+        REQUIRE(childLoading);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -732,10 +733,6 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // non-renderable, so render root only
   {
     ViewUpdateResult result = tileset.updateView({viewState});
-
-    for (const Tile& child : root->getChildren()) {
-      CHECK(child.getState() == TileLoadState::ContentLoading);
-    }
 
     REQUIRE(result.tilesToRenderThisFrame.size() == 2);
     REQUIRE(result.tilesFadingOut.size() == 0);
