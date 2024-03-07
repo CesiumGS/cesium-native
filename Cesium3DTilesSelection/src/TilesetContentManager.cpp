@@ -953,14 +953,14 @@ void TilesetContentManager::processLoadRequests(
 
   markWorkTilesAsLoading(workCreated);
 
-  // Finish main thread tasks for any work that completed after update_view
-  // called dispatchMainThreadTasks and now
-  handleCompletedWork();
-
   // Dispatch more processing work. More may have been added, or slots may have
   // freed up from any work that completed after update_view called
   // dispatchMainThreadTasks and now
   TileWorkManager::TryDispatchProcessing(this->_pTileWorkManager);
+
+  // Finish main thread tasks for any work that completed after update_view
+  // called dispatchMainThreadTasks and now
+  handleCompletedWork();
 }
 
 void TilesetContentManager::updateTileContent(
@@ -1762,6 +1762,8 @@ void TilesetContentManager::dispatchTileWork(
             // Wrap up this tile and also keep intrusive pointer alive
             if (state == TileLoadResultState::Success)
               _thiz->notifyTileDoneLoading(_pTile);
+            else
+              _thiz->notifyTileDoneLoading(nullptr);
           })
       .catchInMainThread(
           [_pTile = pTile, _thiz = this, pLogger = this->_externals.pLogger](
