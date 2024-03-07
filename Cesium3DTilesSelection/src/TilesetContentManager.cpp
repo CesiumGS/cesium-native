@@ -1696,7 +1696,6 @@ void TilesetContentManager::dispatchTileWork(
                         &rendererOptions = processingData.rendererOptions,
                         pThis = this,
                         pWorkManager = thiz->_pTileWorkManager,
-                        _pTile = pTile,
                         _work = work](TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
