@@ -1732,10 +1732,7 @@ void TilesetContentManager::dispatchTileWork(
                      requestHeaders,
                      rendererOptions)
               .thenInMainThread(
-                  [pThis = pThis,
-                   pWorkManager = pWorkManager,
-                   _work = _work,
-                   _pTile = _pTile](
+                  [pThis = pThis, pWorkManager = pWorkManager, _work = _work](
                       TileLoadResultAndRenderResources&& pair) mutable {
                     _work->tileLoadResult = std::move(pair.result);
                     _work->pRenderResources = pair.pRenderResources;
