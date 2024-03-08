@@ -48,6 +48,7 @@ public:
    * @brief The number of tiles in the main thread load queue.
    */
   int32_t mainThreadTileLoadQueueLength = 0;
+  size_t mainThreadTotalTileLoads = 0;
 
   //! @cond Doxygen_Suppress
   uint32_t tilesVisited = 0;

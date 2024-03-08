@@ -25,6 +25,8 @@
 #include <limits>
 #include <unordered_set>
 
+#define LOG_LOADING_WORK_STATS 1
+
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -293,6 +295,19 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
+void Tileset::_logLoadingWorkStats(const std::string& prefix) {
+  int32_t numOfTilesLoading =
+      this->_pTilesetContentManager->getNumberOfTilesLoading();
+
+  SPDLOG_LOGGER_INFO(
+      this->_externals.pLogger,
+      "{} TilesLoading {} | MainThreadQueue {} | Total {}",
+      prefix,
+      numOfTilesLoading,
+      _updateResult.mainThreadTileLoadQueueLength,
+      _updateResult.mainThreadTotalTileLoads);
+}
+
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -301,6 +316,13 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
+
+#if LOG_LOADING_WORK_STATS
+  float loadProgress = this->computeLoadProgress();
+  bool showWorkStats = loadProgress > 0 && loadProgress < 100;
+  if (showWorkStats)
+    _logLoadingWorkStats("Pre :");
+#endif
 
   this->_asyncSystem.dispatchMainThreadTasks();
 
@@ -372,6 +394,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_processWorkerThreadLoadQueue();
   this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
+
+#if LOG_LOADING_WORK_STATS
+  if (showWorkStats)
+    _logLoadingWorkStats("Post:");
+#endif
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -1452,6 +1479,7 @@ void Tileset::_processMainThreadLoadQueue() {
     if (task.pTile->getState() == TileLoadState::ContentLoaded &&
         task.pTile->isRenderContent()) {
       this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+      ++this->_updateResult.mainThreadTotalTileLoads;
     }
     auto time = std::chrono::system_clock::now();
     if (timeBudget > 0.0 && time >= end) {
