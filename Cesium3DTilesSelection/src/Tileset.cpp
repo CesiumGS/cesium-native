@@ -306,13 +306,14 @@ void Tileset::_logLoadingWorkStats(const std::string& prefix) {
   SPDLOG_LOGGER_INFO(
       this->_externals.pLogger,
       "{} requests {} | inFlight {} | processing {} || "
-      "TilesLoading {} | RastersLoading {}",
+      "TilesLoading {} | RastersLoading {} | MainThreadQueue {}",
       prefix,
       requestCount,
       inFlightCount,
       processingCount,
       _updateResult.tilesLoading,
-      _updateResult.rastersLoading);
+      _updateResult.rastersLoading,
+      _updateResult.mainThreadTileLoadQueueLength);
 }
 
 const ViewUpdateResult&
@@ -325,8 +326,9 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
 
 #if LOG_LOADING_WORK_STATS
-  size_t activeWorkCount = this->_pTilesetContentManager->getActiveWorkCount();
-  if (activeWorkCount > 0)
+  float loadProgress = this->computeLoadProgress();
+  bool showWorkStats = loadProgress > 0 && loadProgress < 100;
+  if (showWorkStats)
     _logLoadingWorkStats("Pre :");
 #endif
 
@@ -382,9 +384,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  result.workerThreadTileLoadQueueLength = this->_workerThreadLoadQueue.size();
-  result.mainThreadTileLoadQueueLength = this->_mainThreadLoadQueue.size();
-
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->getExternals().pTileOcclusionProxyPool;
   if (pOcclusionPool) {
@@ -394,20 +393,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
   this->_processWorkerThreadLoadQueue();
   this->_processMainThreadLoadQueue();
+
   this->_updateLodTransitions(frameState, deltaTime, result);
 
-  result.tilesLoading = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumberOfTilesLoading());
-  result.tilesLoaded = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumberOfTilesLoaded());
-  result.rastersLoading = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumberOfRastersLoading());
-  result.rastersLoaded = static_cast<uint32_t>(
-      this->_pTilesetContentManager->getNumberOfRastersLoaded());
-  result.activeWorkCount = this->_pTilesetContentManager->getActiveWorkCount();
-
 #if LOG_LOADING_WORK_STATS
-  if (activeWorkCount > 0)
+  if (showWorkStats)
     _logLoadingWorkStats("Post:");
 #endif
 
@@ -1452,9 +1442,23 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
-  this->_pTilesetContentManager->processLoadRequests(
-      this->_workerThreadLoadQueue,
-      _options);
+
+  TilesetContentManager* pManager = this->_pTilesetContentManager.get();
+  ViewUpdateResult& result = this->_updateResult;
+
+  result.workerThreadTileLoadQueueLength = this->_workerThreadLoadQueue.size();
+
+  pManager->processLoadRequests(this->_workerThreadLoadQueue, _options);
+
+  result.tilesLoading =
+      static_cast<uint32_t>(pManager->getNumberOfTilesLoading());
+  result.tilesLoaded =
+      static_cast<uint32_t>(pManager->getNumberOfTilesLoaded());
+  result.rastersLoading =
+      static_cast<uint32_t>(pManager->getNumberOfRastersLoading());
+  result.rastersLoaded =
+      static_cast<uint32_t>(pManager->getNumberOfRastersLoaded());
+  result.activeWorkCount = pManager->getActiveWorkCount();
 }
 
 void Tileset::_processMainThreadLoadQueue() {
@@ -1484,6 +1488,9 @@ void Tileset::_processMainThreadLoadQueue() {
       break;
     }
   }
+
+  this->_updateResult.mainThreadTileLoadQueueLength =
+      this->_mainThreadLoadQueue.size();
 
   this->_mainThreadLoadQueue.clear();
 }
