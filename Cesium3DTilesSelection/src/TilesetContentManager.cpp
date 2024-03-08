@@ -944,14 +944,15 @@ void TilesetContentManager::processLoadRequests(
   size_t maxTileLoads =
       static_cast<size_t>(options.maximumSimultaneousTileLoads);
 
+  // Prune any processing work that is no longer relevant
+  _pTileWorkManager->CullOutOfDateWork(orders);
+
   std::vector<const TileWorkManager::Work*> workCreated;
   TileWorkManager::TryAddOrders(
       this->_pTileWorkManager,
       orders,
       maxTileLoads,
       workCreated);
-
-  markWorkTilesAsLoading(workCreated);
 
   // Dispatch more processing work. More may have been added, or slots may have
   // freed up from any work that completed after update_view called
@@ -1576,35 +1577,6 @@ void TilesetContentManager::discoverLoadWork(
   }
 }
 
-void TilesetContentManager::markWorkTilesAsLoading(
-    const std::vector<const TileWorkManager::Work*>& workVector) {
-
-  for (const TileWorkManager::Work* work : workVector) {
-    if (std::holds_alternative<TileProcessingData>(
-            work->order.processingData)) {
-      TileProcessingData tileProcessing =
-          std::get<TileProcessingData>(work->order.processingData);
-      assert(tileProcessing.pTile);
-      assert(
-          tileProcessing.pTile->getState() == TileLoadState::Unloaded ||
-          tileProcessing.pTile->getState() == TileLoadState::FailedTemporarily);
-
-      tileProcessing.pTile->setState(TileLoadState::ContentLoading);
-    } else {
-      RasterProcessingData rasterProcessing =
-          std::get<RasterProcessingData>(work->order.processingData);
-      assert(rasterProcessing.pRasterTile);
-
-      RasterOverlayTile* pLoading =
-          rasterProcessing.pRasterTile->getLoadingTile();
-      assert(pLoading);
-      assert(pLoading->getState() == RasterOverlayTile::LoadState::Unloaded);
-
-      pLoading->setState(RasterOverlayTile::LoadState::Loading);
-    }
-  }
-}
-
 void TilesetContentManager::handleCompletedWork() {
   std::vector<TileWorkManager::DoneOrder> doneOrders;
   std::vector<TileWorkManager::FailedOrder> failedOrders;
@@ -1658,6 +1630,8 @@ void TilesetContentManager::dispatchTileWork(
     const CesiumAsync::UrlResponseDataMap& responseDataMap,
     TileWorkManager::Work* work) {
   Tile* pTile = processingData.pTile;
+
+  pTile->setState(TileLoadState::ContentLoading);
 
   // Optionally could move this to work manager
   this->notifyTileStartLoading(pTile);
@@ -1790,6 +1764,8 @@ void TilesetContentManager::dispatchRasterWork(
     this->_pTileWorkManager->SignalWorkComplete(work);
     return;
   }
+
+  pLoadingTile->setState(RasterOverlayTile::LoadState::Loading);
 
   // Optionally could move this to work manager
   this->notifyRasterStartLoading();

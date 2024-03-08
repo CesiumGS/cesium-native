@@ -12,6 +12,7 @@ TileWorkManager::~TileWorkManager() noexcept {
   assert(_processingPending.empty());
   assert(_failedWork.empty());
   assert(_doneWork.empty());
+  assert(_cancelledWork.empty());
 }
 
 void TileWorkManager::Shutdown() {
@@ -27,6 +28,7 @@ void TileWorkManager::Shutdown() {
   _processingInFlight.clear();
   _failedWork.clear();
   _doneWork.clear();
+  _cancelledWork.clear();
 }
 
 void TileWorkManager::stageWork(Work* pWork) {
@@ -148,15 +150,40 @@ void TileWorkManager::TryAddOrders(
   if (orders.empty())
     return;
 
+  // Filter out any orders that were already added
+  std::vector<Order*> newOrders;
+  {
+    std::lock_guard<std::mutex> lock(thiz->_requestsLock);
+    for (Order& order : orders) {
+      bool workHasTileProcessing =
+          std::holds_alternative<TileProcessingData>(order.processingData);
+
+      TileSource uniqueId;
+      if (workHasTileProcessing) {
+        TileProcessingData workTileProcessing =
+            std::get<TileProcessingData>(order.processingData);
+        uniqueId = workTileProcessing.pTile;
+      } else {
+        RasterProcessingData workRasterProcessing =
+            std::get<RasterProcessingData>(order.processingData);
+        uniqueId = workRasterProcessing.pRasterTile;
+      }
+
+      // Assert any work isn't already owned by this manager
+      if (thiz->_ownedWork.find(uniqueId) == thiz->_ownedWork.end())
+        newOrders.push_back(&order);
+    }
+  }
+
   // Request work will always go to that queue first
   // Work with only processing can bypass it
   std::vector<Order*> requestOrders;
   std::vector<Order*> processingOrders;
-  for (Order& order : orders) {
-    if (order.requestData.url.empty())
-      processingOrders.push_back(&order);
+  for (Order* pOrder : newOrders) {
+    if (pOrder->requestData.url.empty())
+      processingOrders.push_back(pOrder);
     else
-      requestOrders.push_back(&order);
+      requestOrders.push_back(pOrder);
   }
 
   // Figure out how much url work we will accept
@@ -330,6 +357,49 @@ void TileWorkManager::GetLoadingWorkStats(
   failedCount = _failedWork.size();
 }
 
+void TileWorkManager::CullOutOfDateWork(std::vector<Order>& frameOrders) {
+  if (_processingPending.empty())
+    return;
+
+  std::map<TileSource, Order*> ordersByKey;
+  for (Order& order : frameOrders) {
+    if (std::holds_alternative<TileProcessingData>(order.processingData)) {
+      TileProcessingData tileProcessing =
+          std::get<TileProcessingData>(order.processingData);
+      assert(tileProcessing.pTile);
+      ordersByKey[TileSource(tileProcessing.pTile)] = &order;
+    } else {
+      RasterProcessingData rasterProcessing =
+          std::get<RasterProcessingData>(order.processingData);
+      assert(rasterProcessing.pRasterTile);
+      ordersByKey[TileSource(rasterProcessing.pRasterTile)] = &order;
+    }
+  }
+
+  // Find any pending work that isn't part of this current frame
+  // Iterate in reverse, since we will eventually erase from a vector
+  using PendingIt = std::vector<Work*>::iterator;
+  std::vector<PendingIt> workToCancel;
+  for (auto it = _processingPending.end(); it != _processingPending.begin();) {
+    --it;
+    TileWorkManager::Work* work = (*it);
+
+    bool isKeyCurrent = ordersByKey.find(work->uniqueId) != ordersByKey.end();
+    if (isKeyCurrent)
+      continue;
+
+    // Move it to cancelled
+    _cancelledWork.push_back(work);
+
+    // Save this iterator for erasing later
+    workToCancel.push_back(it);
+  }
+
+  // Erase all work we discovered
+  for (auto it : workToCancel)
+    _processingPending.erase(it);
+}
+
 void TileWorkManager::TakeCompletedWork(
     std::vector<DoneOrder>& outCompleted,
     std::vector<FailedOrder>& outFailed) {
@@ -383,6 +453,26 @@ void TileWorkManager::TakeCompletedWork(
     _ownedWork.erase(foundIt);
   }
   _failedWork.clear();
+
+  for (auto work : _cancelledWork) {
+    // We should own this and it should not be in any other queues
+    auto foundIt = _ownedWork.find(work->uniqueId);
+
+#ifndef NDEBUG
+    assert(foundIt != _ownedWork.end());
+    for (auto element : _requestsPending)
+      assert(element->uniqueId != work->uniqueId);
+    for (auto& urlWorkVecPair : _requestsInFlight)
+      for (auto element : urlWorkVecPair.second)
+        assert(element->uniqueId != work->uniqueId);
+    for (auto element : _processingPending)
+      assert(element->uniqueId != work->uniqueId);
+    assert(
+        _processingInFlight.find(work->uniqueId) == _processingInFlight.end());
+#endif
+    _ownedWork.erase(foundIt);
+  }
+  _cancelledWork.clear();
 }
 
 void TileWorkManager::transitionRequests(

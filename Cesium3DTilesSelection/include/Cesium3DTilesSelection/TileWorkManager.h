@@ -106,6 +106,8 @@ public:
     Order order = {};
   };
 
+  void CullOutOfDateWork(std::vector<Order>& frameOrders);
+
   void TakeCompletedWork(
       std::vector<DoneOrder>& outCompleted,
       std::vector<FailedOrder>& outFailed);
@@ -175,6 +177,7 @@ private:
   using FailedWorkPair = std::pair<std::string, Work*>;
   std::vector<FailedWorkPair> _failedWork;
   std::vector<Work*> _doneWork;
+  std::vector<Work*> _cancelledWork;
 
   TileDispatchFunc _tileDispatchFunc;
   RasterDispatchFunc _rasterDispatchFunc;

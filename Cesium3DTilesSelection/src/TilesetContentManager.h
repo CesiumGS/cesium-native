@@ -194,9 +194,6 @@ private:
       const TilesetOptions& tilesetOptions,
       std::vector<TileWorkManager::Order>& outOrders);
 
-  void markWorkTilesAsLoading(
-      const std::vector<const TileWorkManager::Work*>& workVector);
-
   void handleCompletedWork();
 
   void dispatchTileWork(
