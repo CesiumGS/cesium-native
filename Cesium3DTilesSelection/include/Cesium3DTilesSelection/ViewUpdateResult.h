@@ -42,6 +42,7 @@ public:
   //! @cond Doxygen_Suppress
   size_t workerThreadTileLoadQueueLength = 0;
   size_t mainThreadTileLoadQueueLength = 0;
+  size_t mainThreadTotalTileLoads = 0;
 
   uint32_t tilesVisited = 0;
   uint32_t culledTilesVisited = 0;

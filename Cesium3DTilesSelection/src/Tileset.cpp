@@ -306,14 +306,15 @@ void Tileset::_logLoadingWorkStats(const std::string& prefix) {
   SPDLOG_LOGGER_INFO(
       this->_externals.pLogger,
       "{} requests {} | inFlight {} | processing {} || "
-      "TilesLoading {} | RastersLoading {} | MainThreadQueue {}",
+      "TilesLoading {} | RastersLoading {} | MainThreadQueue {} | Total {}",
       prefix,
       requestCount,
       inFlightCount,
       processingCount,
       _updateResult.tilesLoading,
       _updateResult.rastersLoading,
-      _updateResult.mainThreadTileLoadQueueLength);
+      _updateResult.mainThreadTileLoadQueueLength,
+      _updateResult.mainThreadTotalTileLoads);
 }
 
 const ViewUpdateResult&
@@ -1482,6 +1483,7 @@ void Tileset::_processMainThreadLoadQueue() {
     if (task.pTile->getState() == TileLoadState::ContentLoaded &&
         task.pTile->isRenderContent()) {
       this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+      ++this->_updateResult.mainThreadTotalTileLoads;
     }
     auto time = std::chrono::system_clock::now();
     if (timeBudget > 0.0 && time >= end) {
