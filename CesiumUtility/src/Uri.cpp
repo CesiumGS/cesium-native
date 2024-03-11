@@ -1,7 +1,10 @@
 #include "CesiumUtility/Uri.h"
 
+#include <CesiumUtility/joinToString.h>
+
 #include <uriparser/Uri.h>
 
+#include <cstdlib>
 #include <cstring>
 #include <stdexcept>
 
@@ -175,4 +178,104 @@ std::string Uri::escape(const std::string& s) {
   result.resize(size_t(pTerminator - result.data()));
   return result;
 }
+
+std::string Uri::getPath(const std::string& uri) {
+  UriUriA parsedUri;
+  if (uriParseSingleUriA(&parsedUri, uri.c_str(), nullptr) != URI_SUCCESS) {
+    // Could not parse the URI, so return an empty string.
+    return std::string();
+  }
+
+  // The initial string in this vector can be thought of as the "nothing" before
+  // the first slash in the path.
+  std::vector<std::string> parts{std::string()};
+
+  UriPathSegmentA* pCurrent = parsedUri.pathHead;
+  while (pCurrent != nullptr) {
+    parts.emplace_back(std::string(
+        pCurrent->text.first,
+        size_t(pCurrent->text.afterLast - pCurrent->text.first)));
+    pCurrent = pCurrent->next;
+  }
+
+  uriFreeUriMembersA(&parsedUri);
+
+  return joinToString(parts, "/");
+}
+
+std::string Uri::setPath(const std::string& uri, const std::string& newPath) {
+  UriUriA parsedUri;
+  if (uriParseSingleUriA(&parsedUri, uri.c_str(), nullptr) != URI_SUCCESS) {
+    // Could not parse the URI, so return an empty string.
+    return std::string();
+  }
+
+  // Free the existing path. Strangely, uriparser doesn't provide any simple way
+  // to do this.
+  UriPathSegmentA* pCurrent = parsedUri.pathHead;
+  while (pCurrent != nullptr) {
+    UriPathSegmentA* pNext = pCurrent->next;
+    free(pCurrent);
+    pCurrent = pNext;
+  }
+
+  parsedUri.pathHead = nullptr;
+  parsedUri.pathTail = nullptr;
+
+  // Set the new path.
+  if (!newPath.empty()) {
+    std::string::size_type startPos = 0;
+    do {
+      std::string::size_type nextSlashIndex = newPath.find('/', startPos);
+
+      // Skip the initial slash if there is one.
+      if (nextSlashIndex == 0) {
+        startPos = 1;
+        continue;
+      }
+
+      UriPathSegmentA* pSegment =
+          static_cast<UriPathSegmentA*>(malloc(sizeof(UriPathSegmentA)));
+      memset(pSegment, 0, sizeof(UriPathSegmentA));
+
+      if (parsedUri.pathHead == nullptr) {
+        parsedUri.pathHead = pSegment;
+        parsedUri.pathTail = pSegment;
+      } else {
+        parsedUri.pathTail->next = pSegment;
+        parsedUri.pathTail = parsedUri.pathTail->next;
+      }
+
+      pSegment->text.first = newPath.data() + startPos;
+
+      if (nextSlashIndex != std::string::npos) {
+        pSegment->text.afterLast = newPath.data() + nextSlashIndex;
+        startPos = nextSlashIndex + 1;
+      } else {
+        pSegment->text.afterLast = newPath.data() + newPath.size();
+        startPos = nextSlashIndex;
+      }
+    } while (startPos != std::string::npos);
+  }
+
+  int charsRequired;
+  if (uriToStringCharsRequiredA(&parsedUri, &charsRequired) != URI_SUCCESS) {
+    uriFreeUriMembersA(&parsedUri);
+    return uri;
+  }
+
+  std::string result(static_cast<size_t>(charsRequired), ' ');
+
+  if (uriToStringA(
+          const_cast<char*>(result.c_str()),
+          &parsedUri,
+          charsRequired + 1,
+          nullptr) != URI_SUCCESS) {
+    uriFreeUriMembersA(&parsedUri);
+    return uri;
+  }
+
+  return result;
+}
+
 } // namespace CesiumUtility
