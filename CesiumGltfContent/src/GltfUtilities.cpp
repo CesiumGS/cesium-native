@@ -6,6 +6,7 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 
+#include <cstring>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -189,12 +190,19 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   }
 
   // Copy the data to the destination and keep track of where we put it.
+  // Align each bufferView to a 4-byte boundary.
   size_t start = destination.cesium.data.size();
 
-  destination.cesium.data.insert(
-      destination.cesium.data.end(),
-      source.cesium.data.begin(),
-      source.cesium.data.end());
+  size_t alignmentRemainder = start % 4;
+  if (alignmentRemainder != 0) {
+    start += 4 - alignmentRemainder;
+  }
+
+  destination.cesium.data.resize(start + source.cesium.data.size());
+  std::memcpy(
+      destination.cesium.data.data() + start,
+      source.cesium.data.data(),
+      source.cesium.data.size());
 
   source.byteLength = 0;
   source.cesium.data.clear();
