@@ -16,6 +16,12 @@
 
 #include <filesystem>
 
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109642
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 13)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+
 using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -688,3 +694,7 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     }
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 13)
+#pragma GCC diagnostic pop
+#endif

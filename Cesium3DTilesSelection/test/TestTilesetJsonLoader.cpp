@@ -15,6 +15,12 @@
 #include <memory>
 #include <string>
 
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109642
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 13)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumNativeTests;
@@ -622,3 +628,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(pLoader->getAvailableLevels() == 2);
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 13)
+#pragma GCC diagnostic pop
+#endif

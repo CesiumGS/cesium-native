@@ -815,7 +815,7 @@ bool validateDracoMetadataAttribute(
   }
 
   auto type = MetadataProperty::getTypeFromNumberOfComponents(
-      pAttribute->num_components());
+      static_cast<int8_t>(pAttribute->num_components()));
   return type && type.value() == semantic.type;
 }
 
