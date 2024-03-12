@@ -24,15 +24,13 @@ const Cartographic
     tokyoLlh(2.4390907007049445, 0.6222806863437318, 283.242432000711);
 
 // A point above New York City
-const glm::dvec3 newYorkCityEcef(
-    1329752.6826922249,
-    -4657851.870887691,
-    4140135.1399898543);
+const glm::dvec3
+    newYorkCityEcef(1329752.6826922249, -4657851.870887691, 4140135.1399898543);
 
 // Times Square in NYC
 // This point is -10 meters below the surface of the ellipsoid (negative height)
 const glm::dvec3
-timesSquareEcef(1334771.9227395034, -4650343.070699833, 4142168.965635141);
+    timesSquareEcef(1334771.9227395034, -4650343.070699833, 4142168.965635141);
 
 TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
   SECTION("positions at start and end of curve are identical to input "
@@ -179,8 +177,9 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
         Math::Epsilon6));
   }
 
-  // Testing a bug in SimplePlanarEllipsoidCurve where a path from a point with negative height
-  // to one with positive height would give results on the other side of the earth
+  // Testing a bug in SimplePlanarEllipsoidCurve where a path from a point with
+  // negative height to one with positive height would give results on the other
+  // side of the earth
   SECTION("should correctly handle points with negative height") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
@@ -194,10 +193,12 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
             timesSquareEcef);
 
     CHECK(curve.has_value());
-    const double expectedDistance = glm::distance(timesSquareEcef, newYorkCityEcef);
+    const double expectedDistance =
+        glm::distance(timesSquareEcef, newYorkCityEcef);
     const glm::dvec3 midpoint = curve->getPosition(0.5);
-    const double totalActualDistance = glm::distance(timesSquareEcef, midpoint) +
-                                glm::distance(newYorkCityEcef, midpoint);
+    const double totalActualDistance =
+        glm::distance(timesSquareEcef, midpoint) +
+        glm::distance(newYorkCityEcef, midpoint);
 
     CHECK(Math::equalsEpsilon(
         expectedDistance,

@@ -102,8 +102,7 @@ SimplePlanarEllipsoidCurve::SimplePlanarEllipsoidCurve(
   this->_destinationHeight =
       glm::length(originalDestinationEcef) - glm::length(scaledDestinationEcef);
 
-  this->_sourceDirection =
-      glm::normalize(originalSourceEcef);
+  this->_sourceDirection = glm::normalize(originalSourceEcef);
 }
 
 } // namespace CesiumGeospatial
