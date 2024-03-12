@@ -1697,6 +1697,10 @@ void updateExtensionWithBatchTableHierarchy(
         propertyTable,
         propertyTableProperty,
         batchTableHierarchyValues);
+    if (propertyTableProperty.values < 0) {
+      // Don't include properties without _any_ values.
+      propertyTable.properties.erase(name);
+    }
   }
 }
 
@@ -1770,6 +1774,11 @@ void convertBatchTableToGltfStructuralMetadataExtension(
           propertyValue,
           result);
       gltfBufferOffset += roundUp(binaryProperty.byteLength, 8);
+    }
+
+    if (propertyTableProperty.values < 0) {
+      // Don't include properties without _any_ values.
+      propertyTable.properties.erase(name);
     }
   }
 
