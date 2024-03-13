@@ -186,11 +186,6 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
             Ellipsoid::WGS84,
             timesSquareEcef,
             newYorkCityEcef);
-    std::optional<SimplePlanarEllipsoidCurve> backwardsCurve =
-        SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
-            Ellipsoid::WGS84,
-            newYorkCityEcef,
-            timesSquareEcef);
 
     CHECK(curve.has_value());
     const double expectedDistance =
