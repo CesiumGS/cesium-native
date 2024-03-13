@@ -19,12 +19,6 @@
 #include <filesystem>
 #include <fstream>
 
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109642
-#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 13)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdangling-reference"
-#endif
-
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
@@ -1684,7 +1678,3 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   CHECK(updateResult.tilesFadingOut.size() == 2);
 }
-
-#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 13)
-#pragma GCC diagnostic pop
-#endif
