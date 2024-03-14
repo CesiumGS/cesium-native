@@ -27,6 +27,7 @@
 
 - Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
 - Fixed an incorrect computation of wrapped texture coordinates in `applySamplerWrapS` and `applySamplerWrapT`.
+- Fixed another corner case where `Tileset::ComputeLoadProgress` can incorrectly report done (100%) before all tiles have finished their main thread loading
 
 ### v0.32.0 - 2024-02-01
 
