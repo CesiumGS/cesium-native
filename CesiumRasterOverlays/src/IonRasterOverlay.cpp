@@ -7,10 +7,8 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
-
-#include <rapidjson/document.h>
-#include <spdlog/fwd.h>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;

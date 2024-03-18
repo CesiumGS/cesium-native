@@ -1,6 +1,0 @@
-This is a fork of Chromium's modp_b64 at commit 15996b5d2322b634f4197447b10289bddc2b0b32:
-https://github.com/chromium/chromium/tree/15996b5d2322b634f4197447b10289bddc2b0b32/third_party/modp_b64
-
-It is unmodified from the original at the initial commit to Cesium. We have only added this README and a CMakeLists.txt.
-
-Chromium's implementation is, in turn, a fork of https://github.com/client9/stringencoders.

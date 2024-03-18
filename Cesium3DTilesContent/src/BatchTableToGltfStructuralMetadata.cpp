@@ -7,10 +7,10 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumUtility/Log.h>
 
 #include <glm/glm.hpp>
 #include <rapidjson/writer.h>
-#include <spdlog/fmt/fmt.h>
 
 #include <limits>
 #include <map>
