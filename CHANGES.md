@@ -1,5 +1,10 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+- Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:
