@@ -35,6 +35,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     Mesh& mesh,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    bool hasInvertedVCoordinate,
     const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex);
 
@@ -104,6 +105,7 @@ static void copyMetadataTables(const Model& parentModel, Model& result);
 std::optional<Model> upsampleGltfForRasterOverlays(
     const Model& parentModel,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    bool hasInvertedVCoordinate,
     const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsampleGltfForRasterOverlays");
@@ -162,6 +164,7 @@ std::optional<Model> upsampleGltfForRasterOverlays(
           mesh,
           primitive,
           childID,
+          hasInvertedVCoordinate,
           textureCoordinateAttributeBaseName,
           textureCoordinateIndex);
 
@@ -395,6 +398,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    bool hasInvertedVCoordinate,
     const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
@@ -422,7 +426,7 @@ static bool upsamplePrimitiveForRasterOverlays(
 
   BufferView& indexBufferView = model.bufferViews[indexBufferViewIndex];
   indexBufferView.buffer = static_cast<int>(indexBufferIndex);
-  indexBufferView.target = BufferView::Target::ARRAY_BUFFER;
+  indexBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   int64_t vertexSizeFloats = 0;
   int32_t uvAccessorIndex = -1;
@@ -521,7 +525,11 @@ static bool upsamplePrimitiveForRasterOverlays(
   }
 
   const bool keepAboveU = !isWestChild(childID);
-  const bool keepAboveV = !isSouthChild(childID);
+  bool keepAboveV = !isSouthChild(childID);
+
+  if (hasInvertedVCoordinate) {
+    keepAboveV = !keepAboveV;
+  }
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
   const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
@@ -716,7 +724,8 @@ static bool upsamplePrimitiveForRasterOverlays(
   vertexBuffer.cesium.data.resize(newVertexFloats.size() * sizeof(float));
   float* pAsFloats = reinterpret_cast<float*>(vertexBuffer.cesium.data.data());
   std::copy(newVertexFloats.begin(), newVertexFloats.end(), pAsFloats);
-  vertexBufferView.byteLength = int64_t(vertexBuffer.cesium.data.size());
+  vertexBuffer.byteLength = vertexBufferView.byteLength =
+      int64_t(vertexBuffer.cesium.data.size());
   vertexBufferView.byteStride = vertexSizeFloats * int64_t(sizeof(float));
 
   Buffer& indexBuffer = model.buffers[indexBufferIndex];
@@ -724,7 +733,8 @@ static bool upsamplePrimitiveForRasterOverlays(
   uint32_t* pAsUint32s =
       reinterpret_cast<uint32_t*>(indexBuffer.cesium.data.data());
   std::copy(indices.begin(), indices.end(), pAsUint32s);
-  indexBufferView.byteLength = int64_t(indexBuffer.cesium.data.size());
+  indexBuffer.byteLength = indexBufferView.byteLength =
+      int64_t(indexBuffer.cesium.data.size());
 
   bool onlyWater = false;
   bool onlyLand = true;
@@ -1156,6 +1166,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     Mesh& mesh,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    bool hasInvertedVCoordinate,
     const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex) {
   if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
@@ -1176,6 +1187,7 @@ static bool upsamplePrimitiveForRasterOverlays(
         mesh,
         primitive,
         childID,
+        hasInvertedVCoordinate,
         textureCoordinateAttributeBaseName,
         textureCoordinateIndex);
   } else if (
@@ -1187,6 +1199,7 @@ static bool upsamplePrimitiveForRasterOverlays(
         mesh,
         primitive,
         childID,
+        hasInvertedVCoordinate,
         textureCoordinateAttributeBaseName,
         textureCoordinateIndex);
   } else if (
@@ -1198,6 +1211,7 @@ static bool upsamplePrimitiveForRasterOverlays(
         mesh,
         primitive,
         childID,
+        hasInvertedVCoordinate,
         textureCoordinateAttributeBaseName,
         textureCoordinateIndex);
   }

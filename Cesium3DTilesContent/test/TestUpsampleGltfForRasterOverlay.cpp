@@ -193,8 +193,11 @@ TEST_CASE("Test upsample tile") {
       CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
   SECTION("Upsample bottom left child") {
-    Model upsampledModel =
-        *upsampleGltfForRasterOverlays(model, lowerLeft, "_CESIUMOVERLAY_");
+    Model upsampledModel = *upsampleGltfForRasterOverlays(
+        model,
+        lowerLeft,
+        false,
+        "_CESIUMOVERLAY_");
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -264,8 +267,11 @@ TEST_CASE("Test upsample tile") {
   }
 
   SECTION("Upsample upper left child") {
-    Model upsampledModel =
-        *upsampleGltfForRasterOverlays(model, upperLeft, "_CESIUMOVERLAY_");
+    Model upsampledModel = *upsampleGltfForRasterOverlays(
+        model,
+        upperLeft,
+        false,
+        "_CESIUMOVERLAY_");
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -335,8 +341,11 @@ TEST_CASE("Test upsample tile") {
   }
 
   SECTION("Upsample upper right child") {
-    Model upsampledModel =
-        *upsampleGltfForRasterOverlays(model, upperRight, "_CESIUMOVERLAY_");
+    Model upsampledModel = *upsampleGltfForRasterOverlays(
+        model,
+        upperRight,
+        false,
+        "_CESIUMOVERLAY_");
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -406,8 +415,11 @@ TEST_CASE("Test upsample tile") {
   }
 
   SECTION("Upsample bottom right child") {
-    Model upsampledModel =
-        *upsampleGltfForRasterOverlays(model, lowerRight, "_CESIUMOVERLAY_");
+    Model upsampledModel = *upsampleGltfForRasterOverlays(
+        model,
+        lowerRight,
+        false,
+        "_CESIUMOVERLAY_");
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -492,8 +504,11 @@ TEST_CASE("Test upsample tile") {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
     SECTION("Check bottom left skirt") {
-      Model upsampledModel =
-          *upsampleGltfForRasterOverlays(model, lowerLeft, "_CESIUMOVERLAY_");
+      Model upsampledModel = *upsampleGltfForRasterOverlays(
+          model,
+          lowerLeft,
+          false,
+          "_CESIUMOVERLAY_");
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -594,8 +609,11 @@ TEST_CASE("Test upsample tile") {
     }
 
     SECTION("Check upper left skirt") {
-      Model upsampledModel =
-          *upsampleGltfForRasterOverlays(model, upperLeft, "_CESIUMOVERLAY_");
+      Model upsampledModel = *upsampleGltfForRasterOverlays(
+          model,
+          upperLeft,
+          false,
+          "_CESIUMOVERLAY_");
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -720,8 +738,11 @@ TEST_CASE("Test upsample tile") {
     }
 
     SECTION("Check upper right skirt") {
-      Model upsampledModel =
-          *upsampleGltfForRasterOverlays(model, upperRight, "_CESIUMOVERLAY_");
+      Model upsampledModel = *upsampleGltfForRasterOverlays(
+          model,
+          upperRight,
+          false,
+          "_CESIUMOVERLAY_");
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -822,8 +843,11 @@ TEST_CASE("Test upsample tile") {
     }
 
     SECTION("Check bottom right skirt") {
-      Model upsampledModel =
-          *upsampleGltfForRasterOverlays(model, lowerRight, "_CESIUMOVERLAY_");
+      Model upsampledModel = *upsampleGltfForRasterOverlays(
+          model,
+          lowerRight,
+          false,
+          "_CESIUMOVERLAY_");
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -1097,8 +1121,11 @@ TEST_CASE("Test upsample tile with UNSIGNED_BYTE indices") {
   CesiumGeometry::UpsampledQuadtreeNode lowerLeft{
       CesiumGeometry::QuadtreeTileID(1, 0, 0)};
 
-  Model upsampledModel =
-      *upsampleGltfForRasterOverlays(model, lowerLeft, "_CESIUMOVERLAY_");
+  Model upsampledModel = *upsampleGltfForRasterOverlays(
+      model,
+      lowerLeft,
+      false,
+      "_CESIUMOVERLAY_");
 
   REQUIRE(upsampledModel.meshes.size() == 1);
   const Mesh& upsampledMesh = upsampledModel.meshes.back();
