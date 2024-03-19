@@ -1141,6 +1141,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
         auto model = upsampleGltfForRasterOverlays(
             parentModel,
             tileID,
+            "_CESIUMOVERLAY_",
             textureCoordinateIndex);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);
