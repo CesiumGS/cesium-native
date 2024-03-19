@@ -35,6 +35,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     Mesh& mesh,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex);
 
 struct FloatVertexAttribute {
@@ -103,6 +104,7 @@ static void copyMetadataTables(const Model& parentModel, Model& result);
 std::optional<Model> upsampleGltfForRasterOverlays(
     const Model& parentModel,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsampleGltfForRasterOverlays");
   Model result;
@@ -160,6 +162,7 @@ std::optional<Model> upsampleGltfForRasterOverlays(
           mesh,
           primitive,
           childID,
+          textureCoordinateAttributeBaseName,
           textureCoordinateIndex);
 
       // We're assuming here that nothing references primitives by index, so we
@@ -392,6 +395,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     Mesh& /*mesh*/,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex) {
   CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
 
@@ -426,17 +430,18 @@ static bool upsamplePrimitiveForRasterOverlays(
 
   std::vector<std::string> toRemove;
 
-  std::string textureCoordinateName =
-      "_CESIUMOVERLAY_" + std::to_string(textureCoordinateIndex);
+  std::string textureCoordinateName = textureCoordinateAttributeBaseName +
+                                      std::to_string(textureCoordinateIndex);
 
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
-    if (attribute.first.find("_CESIUMOVERLAY_") == 0) {
+    if (attribute.first.find(textureCoordinateAttributeBaseName) == 0) {
       if (uvAccessorIndex == -1) {
         if (attribute.first == textureCoordinateName) {
           uvAccessorIndex = attribute.second;
         }
       }
-      // Do not include _CESIUMOVERLAY_*, it will be generated later.
+      // Do not include TEXCOORD_* / _CESIUMOVERLAY_*, it will be generated
+      // later.
       toRemove.push_back(attribute.first);
       continue;
     }
@@ -1151,6 +1156,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     Mesh& mesh,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
+    const std::string& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex) {
   if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
       primitive.indices < 0 ||
@@ -1170,6 +1176,7 @@ static bool upsamplePrimitiveForRasterOverlays(
         mesh,
         primitive,
         childID,
+        textureCoordinateAttributeBaseName,
         textureCoordinateIndex);
   } else if (
       indicesAccessorGltf.componentType ==
@@ -1180,6 +1187,7 @@ static bool upsamplePrimitiveForRasterOverlays(
         mesh,
         primitive,
         childID,
+        textureCoordinateAttributeBaseName,
         textureCoordinateIndex);
   } else if (
       indicesAccessorGltf.componentType ==
@@ -1190,6 +1198,7 @@ static bool upsamplePrimitiveForRasterOverlays(
         mesh,
         primitive,
         childID,
+        textureCoordinateAttributeBaseName,
         textureCoordinateIndex);
   }
 
