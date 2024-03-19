@@ -9,7 +9,9 @@
 
 namespace Cesium3DTilesWriter {
 
-VoxelContentWriter::VoxelContentWriter() { registerWriterExtensions(this->_context); }
+VoxelContentWriter::VoxelContentWriter() {
+  registerWriterExtensions(this->_context);
+}
 
 CesiumJsonWriter::ExtensionWriterContext& VoxelContentWriter::getExtensions() {
   return this->_context;
