@@ -95,12 +95,14 @@ SimplePlanarEllipsoidCurve::SimplePlanarEllipsoidCurve(
   this->_rotationAxis = glm::axis(flyQuat);
   this->_totalAngle = glm::angle(flyQuat);
 
-  this->_sourceHeight = glm::length(originalSourceEcef - scaledSourceEcef);
+  // Calculate difference between lengths instead of length between points -
+  // allows for negative source height
+  this->_sourceHeight =
+      glm::length(originalSourceEcef) - glm::length(scaledSourceEcef);
   this->_destinationHeight =
-      glm::length(originalDestinationEcef - scaledDestinationEcef);
+      glm::length(originalDestinationEcef) - glm::length(scaledDestinationEcef);
 
-  this->_sourceDirection =
-      glm::normalize(originalSourceEcef - scaledSourceEcef);
+  this->_sourceDirection = glm::normalize(originalSourceEcef);
 }
 
 } // namespace CesiumGeospatial
