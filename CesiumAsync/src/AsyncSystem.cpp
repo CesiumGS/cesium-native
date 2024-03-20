@@ -3,6 +3,7 @@
 #include "CesiumAsync/ITaskProcessor.h"
 
 #include <future>
+#include <thread>
 
 namespace CesiumAsync {
 AsyncSystem::AsyncSystem(
@@ -29,6 +30,10 @@ bool AsyncSystem::operator==(const AsyncSystem& rhs) const noexcept {
 
 bool AsyncSystem::operator!=(const AsyncSystem& rhs) const noexcept {
   return this->_pSchedulers != rhs._pSchedulers;
+}
+
+void AsyncSystem::giveUpTimeSlice() const noexcept {
+  std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(0.0));
 }
 
 } // namespace CesiumAsync

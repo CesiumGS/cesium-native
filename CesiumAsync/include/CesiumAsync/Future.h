@@ -233,6 +233,9 @@ public:
    * deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
+   * To wait in the main thread, use {@link AsyncSystem::waitInMainThread}
+   * instead.
+   *
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
