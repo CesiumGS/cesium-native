@@ -118,7 +118,7 @@ bool IntersectionTests::pointInTriangle(
   }
 
   const double triangleCAPRatio = 1.0 - triangleABPRatio - triangleBCPRatio;
-  if (triangleCAPRatio < 0 || triangleCAPRatio > 1) {
+  if (triangleCAPRatio < 0) {
     return false;
   }
 
