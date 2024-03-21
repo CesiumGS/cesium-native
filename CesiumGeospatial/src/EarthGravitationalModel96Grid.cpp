@@ -13,11 +13,11 @@ namespace CesiumGeospatial {
 // representing the range (0E, 360E)
 
 // The number of rows in the file
-const unsigned int NUM_ROWS = 721;
+const int NUM_ROWS = 721;
 // The number of columns in the file
-const unsigned int NUM_COLUMNS = 1440;
+const int NUM_COLUMNS = 1440;
 // The total number of entries in the file
-const unsigned int TOTAL_ENTRIES = NUM_ROWS * NUM_COLUMNS;
+const int TOTAL_ENTRIES = NUM_ROWS * NUM_COLUMNS;
 
 std::optional<EarthGravitationalModel96Grid>
 CesiumGeospatial::EarthGravitationalModel96Grid::fromFile(
@@ -46,8 +46,9 @@ CesiumGeospatial::EarthGravitationalModel96Grid::fromBuffer(
   }
 
   std::vector<int16_t> gridValues;
+  const int size = static_cast<int>(buffer.size_bytes());
 
-  for (int i = 0; i < buffer.size_bytes(); i += 2) {
+  for (int i = 0; i < size; i += 2) {
     // WW15MGH.DAC is in big endian, so we swap the bytes
     const std::byte msb = buffer.data()[i];
     const std::byte lsb = buffer.data()[i + 1];
