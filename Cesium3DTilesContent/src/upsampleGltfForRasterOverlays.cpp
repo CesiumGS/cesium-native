@@ -530,7 +530,7 @@ static bool upsamplePrimitiveForRasterOverlays(
   }
 
   const bool keepAboveU = !isWestChild(childID);
-  bool keepAboveV = !isSouthChild(childID);
+  const bool keepAboveV = !isSouthChild(childID);
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
   const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
@@ -952,13 +952,7 @@ static void addEdge(
             uv.y,
             thresholdV,
             CesiumUtility::Math::Epsilon4)) {
-      // | *keepAboveV* | *invertV* | *Edge* |
-      // |--------------|-----------|--------|
-      // | false        | false     | South  |
-      // | true         | false     | North  |
-      // | false        | true      | North  |
-      // | true         | true      | South  |
-      if (keepAboveV == invertV) {
+      if (keepAboveV) {
         edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
       } else {
         edgeIndices.north.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
