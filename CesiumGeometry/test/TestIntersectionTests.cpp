@@ -36,7 +36,7 @@ TEST_CASE("IntersectionTests::rayPlane") {
   CHECK(intersectionPoint == testCase.expectedIntersectionPoint);
 }
 
-TEST_CASE("IntersectionTests::pointInTriangle2D") {
+TEST_CASE("IntersectionTests::pointInTriangle 2D") {
   struct TestCase {
     glm::dvec2 point;
     glm::dvec2 triangleVert1;
@@ -89,7 +89,7 @@ TEST_CASE("IntersectionTests::pointInTriangle2D") {
           glm::dvec2(0.0, 1.0),
           false});
 
-  bool result = IntersectionTests::pointInTriangle2D(
+  bool result = IntersectionTests::pointInTriangle(
       testCase.point,
       testCase.triangleVert1,
       testCase.triangleVert2,
@@ -97,7 +97,7 @@ TEST_CASE("IntersectionTests::pointInTriangle2D") {
   CHECK(result == testCase.expected);
 }
 
-TEST_CASE("IntersectionTests::pointInTriangle") {
+TEST_CASE("IntersectionTests::pointInTriangle 3D") {
   struct TestCase {
     glm::dvec3 point;
     glm::dvec3 triangleVert1;
@@ -165,7 +165,8 @@ TEST_CASE("IntersectionTests::pointInTriangle") {
   CHECK(result == testCase.expected);
 }
 
-TEST_CASE("IntersectionTests::pointInTriangle with barycentric coordinates") {
+TEST_CASE(
+    "IntersectionTests::pointInTriangle 3D with barycentric coordinates") {
   struct TestCase {
     glm::dvec3 point;
     glm::dvec3 triangleVert1;
@@ -233,7 +234,7 @@ TEST_CASE("IntersectionTests::pointInTriangle with barycentric coordinates") {
           false,
           glm::dvec3()});
 
-  glm::dvec3 barycentricCoordinates;
+  glm::dvec3 barycentricCoordinates = glm::dvec3();
   bool result = IntersectionTests::pointInTriangle(
       testCase.point,
       testCase.triangleVert1,
@@ -242,7 +243,8 @@ TEST_CASE("IntersectionTests::pointInTriangle with barycentric coordinates") {
       barycentricCoordinates);
 
   REQUIRE(result == testCase.expected);
-  if (result) {
-    CHECK(barycentricCoordinates == testCase.expectedCoordinates);
-  }
+
+  glm::dvec3 expectedCoordinates =
+      result ? testCase.expectedCoordinates : glm::dvec3();
+  CHECK(barycentricCoordinates == expectedCoordinates);
 }

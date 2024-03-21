@@ -2,9 +2,13 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
+
 ##### Additions :tada:
 
-- Added `IntersectionTests::pointInTriangle`, which tests if a point is inside the triangle specified with 3D coordinates. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
+- Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
 
 ### v0.33.0 - 2024-03-01
 

@@ -32,7 +32,7 @@ IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
   return ray.getOrigin() + ray.getDirection() * t;
 }
 
-bool IntersectionTests::pointInTriangle2D(
+bool IntersectionTests::pointInTriangle(
     const glm::dvec2& point,
     const glm::dvec2& triangleVertA,
     const glm::dvec2& triangleVertB,
@@ -84,6 +84,10 @@ bool IntersectionTests::pointInTriangle(
     const glm::dvec3& triangleVertB,
     const glm::dvec3& triangleVertC,
     glm::dvec3& barycentricCoordinates) noexcept {
+  // PERFORMANCE: If optimization is necessary in the future, there are
+  // algorithms that avoid length computations (which involve square root
+  // operations).
+
   // Define the triangle edges.
   const glm::dvec3 ab = triangleVertB - triangleVertA;
   const glm::dvec3 bc = triangleVertC - triangleVertB;
