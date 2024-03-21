@@ -64,11 +64,10 @@ EarthGravitationalModel96Grid::sampleHeight(Cartographic& position) const {
   const double longitude = this->mapLongitude(position.longitude);
   const double latitude = this->mapLatitude(position.latitude);
 
-  //const double quantizedLongitude =
-      //floor(longitude / LONGITUDE_INTERVAL) * LONGITUDE_INTERVAL;
+  // const double quantizedLongitude =
+  // floor(longitude / LONGITUDE_INTERVAL) * LONGITUDE_INTERVAL;
 
-  const double horizontalIndexDecimal =
-      (NUM_COLUMNS * longitude) / Math::TwoPi;
+  const double horizontalIndexDecimal = (NUM_COLUMNS * longitude) / Math::TwoPi;
   const int horizontalIndex = static_cast<int>(horizontalIndexDecimal);
   const double verticalIndexDecimal =
       ((NUM_ROWS - 1) * (Math::PiOverTwo - latitude)) / Math::OnePi;
@@ -85,7 +84,8 @@ EarthGravitationalModel96Grid::sampleHeight(Cartographic& position) const {
   const double b1 = getHeightForIndices(horizontalIndex, verticalIndex + 1);
   const double b2 = getHeightForIndices(horizontalIndex + 1, verticalIndex + 1);
 
-  // Each component contributes to the total based on its normalized position in the grid square
+  // Each component contributes to the total based on its normalized position in
+  // the grid square
   const double result =
       (a1 * ixn * yn + a2 * xn * yn + b1 * ixn * iyn + b2 * xn * iyn);
 
@@ -119,8 +119,8 @@ double EarthGravitationalModel96Grid::mapLongitude(double longitude) const {
   const double modTwoPi =
       fmod(fmod(longitude, Math::TwoPi) + Math::TwoPi, Math::TwoPi);
 
-  if (Math::equalsEpsilon(modTwoPi, 0, Math::Epsilon14) && !Math::equalsEpsilon(longitude, 0, Math::Epsilon14))
-  {
+  if (Math::equalsEpsilon(modTwoPi, 0, Math::Epsilon14) &&
+      !Math::equalsEpsilon(longitude, 0, Math::Epsilon14)) {
     return Math::TwoPi;
   }
 

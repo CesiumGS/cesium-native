@@ -53,7 +53,9 @@ const Egm96TestCase testCases[] = {
     Egm96TestCase(
         Cartographic::fromDegrees(124.53620966375256, -77.10236922063635, 0),
         -40.84),
-    Egm96TestCase(Cartographic::fromDegrees(340.6949744283327, 71.80416601738926, 0), 56.13),
+    Egm96TestCase(
+        Cartographic::fromDegrees(340.6949744283327, 71.80416601738926, 0),
+        56.13),
     Egm96TestCase(
         Cartographic::fromDegrees(256.58178494197625, 29.05072127852661, 0),
         -22.68),
@@ -66,17 +68,27 @@ const Egm96TestCase testCases[] = {
     Egm96TestCase(
         Cartographic::fromDegrees(86.23997598277842, -70.10334564947195, 0),
         11.84),
-    Egm96TestCase(Cartographic::fromDegrees(102.06313910716983, 83.28134196702541, 0), 7.36),
+    Egm96TestCase(
+        Cartographic::fromDegrees(102.06313910716983, 83.28134196702541, 0),
+        7.36),
     Egm96TestCase(
         Cartographic::fromDegrees(216.25898282371543, -27.527084126001284, 0),
         -4.14),
-    Egm96TestCase(Cartographic::fromDegrees(58.5182249193696, 51.31098115052956, 0), -14.25),
-    Egm96TestCase(Cartographic::fromDegrees(330.8502870388745, 39.2404247446803, 0), 58.02),
+    Egm96TestCase(
+        Cartographic::fromDegrees(58.5182249193696, 51.31098115052956, 0),
+        -14.25),
+    Egm96TestCase(
+        Cartographic::fromDegrees(330.8502870388745, 39.2404247446803, 0),
+        58.02),
     Egm96TestCase(
         Cartographic::fromDegrees(177.4419519702648, 42.39404893293707, 0),
         -10.44),
-    Egm96TestCase(Cartographic::fromDegrees(110.06737673917638, 82.57103666065765, 0), 5.75),
-    Egm96TestCase(Cartographic::fromDegrees(56.90685093006615, 63.5264335297486, 0), -1.68),
+    Egm96TestCase(
+        Cartographic::fromDegrees(110.06737673917638, 82.57103666065765, 0),
+        5.75),
+    Egm96TestCase(
+        Cartographic::fromDegrees(56.90685093006615, 63.5264335297486, 0),
+        -1.68),
     Egm96TestCase(
         Cartographic::fromDegrees(266.9690489435701, -58.27419079145019, 0),
         -10.73),
@@ -89,21 +101,27 @@ const Egm96TestCase testCases[] = {
     Egm96TestCase(
         Cartographic::fromDegrees(305.22679566909795, -70.42597930709479, 0),
         -0.53),
-    Egm96TestCase(Cartographic::fromDegrees(68.6870133646387, 2.33895612727828, 0), -88.2),
+    Egm96TestCase(
+        Cartographic::fromDegrees(68.6870133646387, 2.33895612727828, 0),
+        -88.2),
     Egm96TestCase(
         Cartographic::fromDegrees(6.9461874737732465, 57.95503483268874, 0),
         41.76),
     Egm96TestCase(
         Cartographic::fromDegrees(152.24816431673585, -53.85397414122369, 0),
         -20.85),
-    Egm96TestCase(Cartographic::fromDegrees(213.82755149438987, 68.1242841301565, 0), 8.51),
+    Egm96TestCase(
+        Cartographic::fromDegrees(213.82755149438987, 68.1242841301565, 0),
+        8.51),
     Egm96TestCase(
         Cartographic::fromDegrees(352.01851556423384, -78.67432745187807, 0),
         -6.09),
     Egm96TestCase(
         Cartographic::fromDegrees(18.75098209126253, -4.154279051741511, 0),
         -9.58),
-    Egm96TestCase(Cartographic::fromDegrees(323.049199598043, -72.38843470090285, 0), -2.67),
+    Egm96TestCase(
+        Cartographic::fromDegrees(323.049199598043, -72.38843470090285, 0),
+        -2.67),
     Egm96TestCase(
         Cartographic::fromDegrees(140.1466268002612, 21.545270556717682, 0),
         47.96),
@@ -113,7 +131,9 @@ const Egm96TestCase testCases[] = {
     Egm96TestCase(
         Cartographic::fromDegrees(27.412736310050178, -7.0977340915520415, 0),
         -15.61),
-    Egm96TestCase(Cartographic::fromDegrees(358.3614938015746, 70.5895724418148, 0), 50.75),
+    Egm96TestCase(
+        Cartographic::fromDegrees(358.3614938015746, 70.5895724418148, 0),
+        50.75),
     Egm96TestCase(
         Cartographic::fromDegrees(244.48155819935246, -18.100608843775944, 0),
         -2.88),
@@ -129,7 +149,9 @@ const Egm96TestCase testCases[] = {
     Egm96TestCase(
         Cartographic::fromDegrees(323.39792289901203, -81.7960770950958, 0),
         -20.34),
-    Egm96TestCase(Cartographic::fromDegrees(46.27270449946558, 78.09170018252073, 0), 10.88),
+    Egm96TestCase(
+        Cartographic::fromDegrees(46.27270449946558, 78.09170018252073, 0),
+        10.88),
     Egm96TestCase(
         Cartographic::fromDegrees(6.277616646412767, -52.387812595446405, 0),
         25.97),

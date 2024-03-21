@@ -41,8 +41,8 @@ public:
    * Samples the height at the given position.
    *
    * @param position The position to sample.
-   * @returns The height representing the difference in meters of mean sea-level from the
-   * surface of a WGS84 ellipsoid.
+   * @returns The height representing the difference in meters of mean sea-level
+   * from the surface of a WGS84 ellipsoid.
    */
   double sampleHeight(Cartographic& position) const;
 
