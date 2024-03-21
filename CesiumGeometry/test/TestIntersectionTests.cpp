@@ -60,7 +60,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
   auto testCase = GENERATE_REF(
       // Corner of triangle returns true.
       TestCase{
-          glm::dvec2(1.0, 0.0),
+          rightTriangle[2],
           rightTriangle[0],
           rightTriangle[1],
           rightTriangle[2],
@@ -162,7 +162,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
   auto testCase = GENERATE_REF(
       // Corner of triangle returns true.
       TestCase{
-          glm::dvec3(1.0, 0.0, 0.0),
+          rightTriangle[2],
           rightTriangle[0],
           rightTriangle[1],
           rightTriangle[2],
@@ -280,7 +280,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
   auto testCase = GENERATE_REF(
       // Corner of triangle returns true.
       TestCase{
-          glm::dvec3(1.0, 0.0, 0.0),
+          rightTriangle[2],
           rightTriangle[0],
           rightTriangle[1],
           rightTriangle[2],
