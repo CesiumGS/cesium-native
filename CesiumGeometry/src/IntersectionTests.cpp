@@ -84,7 +84,7 @@ bool IntersectionTests::pointInTriangle(
     const glm::dvec3& triangleVertB,
     const glm::dvec3& triangleVertC,
     glm::dvec3& barycentricCoordinates) noexcept {
-  // PERFORMANCE: If optimization is necessary in the future, there are
+  // PERFORMANCE_IDEA: If optimization is necessary in the future, there are
   // algorithms that avoid length computations (which involve square root
   // operations).
 
