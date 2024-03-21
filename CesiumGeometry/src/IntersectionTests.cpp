@@ -91,7 +91,6 @@ bool IntersectionTests::pointInTriangle(
   // Define the triangle edges.
   const glm::dvec3 ab = triangleVertB - triangleVertA;
   const glm::dvec3 bc = triangleVertC - triangleVertB;
-  const glm::dvec3 ca = triangleVertA - triangleVertC;
 
   const glm::dvec3 triangleNormal = glm::cross(ab, bc);
   const double lengthSquared = glm::length2(triangleNormal);
