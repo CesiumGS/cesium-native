@@ -46,47 +46,47 @@ TEST_CASE("IntersectionTests::pointInTriangle 2D") {
   };
 
   auto testCase = GENERATE(
-      // is in triangle (corner)
+      // is in (corner, right triangle, CW)
       TestCase{
           glm::dvec2(1.0, 0.0),
           glm::dvec2(-1.0, 0.0),
           glm::dvec2(0.0, 1.0),
           glm::dvec2(1.0, 0.0),
           true},
-      // is in triangle (edge)
+      // is in (edge, right triangle, CW)
       TestCase{
           glm::dvec2(0.0, 0.0),
           glm::dvec2(-1.0, 0.0),
           glm::dvec2(0.0, 1.0),
           glm::dvec2(1.0, 0.0),
           true},
-      // is in triangle (middle)
+      // is in (middle, right triangle, CW)
       TestCase{
           glm::dvec2(0.2, 0.5),
           glm::dvec2(-1.0, 0.0),
           glm::dvec2(0.0, 1.0),
           glm::dvec2(1.0, 0.0),
           true},
-      // is in triangle (regardless of winding order)
+      // is in (middle, right triangle, CCW)
       TestCase{
           glm::dvec2(0.2, 0.5),
           glm::dvec2(-1.0, 0.0),
           glm::dvec2(1.0, 0.0),
           glm::dvec2(0.0, 1.0),
           true},
-      // is not in triangle
+      // not in ( right triangle, CCW)
       TestCase{
           glm::dvec2(-2.0, 0.5),
           glm::dvec2(-1.0, 0.0),
           glm::dvec2(1.0, 0.0),
           glm::dvec2(0.0, 1.0),
           false},
-      // is not in triangle (regardless of winding order)
+      // not in (right triangle, CW)
       TestCase{
           glm::dvec2(-2.0, 0.5),
           glm::dvec2(-1.0, 0.0),
-          glm::dvec2(1.0, 0.0),
           glm::dvec2(0.0, 1.0),
+          glm::dvec2(1.0, 0.0),
           false});
 
   bool result = IntersectionTests::pointInTriangle(
@@ -107,54 +107,54 @@ TEST_CASE("IntersectionTests::pointInTriangle 3D") {
   };
 
   auto testCase = GENERATE(
-      // is in triangle (corner)
+      // is in (corner, right triangle, CW)
       TestCase{
           glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
           glm::dvec3(1.0, 0.0, 0.0),
           true},
-      // is in triangle (edge)
+      // is in (edge, right triangle, CW)
       TestCase{
           glm::dvec3(0.0, 0.0, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
           glm::dvec3(1.0, 0.0, 0.0),
           true},
-      // is in triangle (middle)
+      // is in (middle, right triangle, CW)
       TestCase{
           glm::dvec3(0.2, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
           glm::dvec3(1.0, 0.0, 0.0),
           true},
-      // is in triangle (regardless of winding order)
+      // is in (middle, right triangle, CCW)
       TestCase{
           glm::dvec3(0.2, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
           true},
-      // is not in triangle (same plane)
+      // not in (same plane, right triangle, CCW)
       TestCase{
           glm::dvec3(-2.0, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
           false},
-      // is not in triangle (different plane)
+      // not in (different plane, right triangle, CCW)
       TestCase{
           glm::dvec3(0.2, 0.5, 1.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
           false},
-      // is not in triangle (regardless of winding order)
+      // not in (same plane, right triangle, CW)
       TestCase{
           glm::dvec3(-2.0, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
-          glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
+          glm::dvec3(1.0, 0.0, 0.0),
           false});
 
   bool result = IntersectionTests::pointInTriangle(
@@ -177,7 +177,7 @@ TEST_CASE(
   };
 
   auto testCase = GENERATE(
-      // is in triangle (corner)
+      // is in (corner, right triangle, CW)
       TestCase{
           glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
@@ -185,7 +185,7 @@ TEST_CASE(
           glm::dvec3(1.0, 0.0, 0.0),
           true,
           glm::dvec3(0.0, 0.0, 1.0)},
-      // is in triangle (edge)
+      // is in (edge, right triangle, CW)
       TestCase{
           glm::dvec3(0.0, 0.0, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
@@ -193,7 +193,7 @@ TEST_CASE(
           glm::dvec3(1.0, 0.0, 0.0),
           true,
           glm::dvec3(0.5, 0.0, 0.5)},
-      // is in triangle (middle)
+      // is in (middle, right triangle, CW)
       TestCase{
           glm::dvec3(0.0, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
@@ -201,7 +201,7 @@ TEST_CASE(
           glm::dvec3(1.0, 0.0, 0.0),
           true,
           glm::dvec3(0.25, 0.5, 0.25)},
-      // is in triangle (regardless of winding order)
+      // is in (middle, right triangle, CCW)
       TestCase{
           glm::dvec3(0.0, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
@@ -209,7 +209,7 @@ TEST_CASE(
           glm::dvec3(0.0, 1.0, 0.0),
           true,
           glm::dvec3(0.25, 0.25, 0.5)},
-      // is not in triangle (same plane)
+      // not in (same plane, right triangle, CCW)
       TestCase{
           glm::dvec3(-2.0, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
@@ -217,7 +217,7 @@ TEST_CASE(
           glm::dvec3(0.0, 1.0, 0.0),
           false,
           glm::dvec3()},
-      // is not in triangle (different plane)
+      // not in (different plane, right triangle, CCW)
       TestCase{
           glm::dvec3(0.2, 0.5, 1.0),
           glm::dvec3(-1.0, 0.0, 0.0),
@@ -225,12 +225,12 @@ TEST_CASE(
           glm::dvec3(0.0, 1.0, 0.0),
           false,
           glm::dvec3()},
-      // is not in triangle (regardless of winding order)
+      // not in (same plane, right triangle, CW)
       TestCase{
           glm::dvec3(-2.0, 0.5, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
-          glm::dvec3(1.0, 0.0, 0.0),
           glm::dvec3(0.0, 1.0, 0.0),
+          glm::dvec3(1.0, 0.0, 0.0),
           false,
           glm::dvec3()});
 
