@@ -118,6 +118,10 @@ bool IntersectionTests::pointInTriangle(
   }
 
   const double triangleCAPRatio = 1.0 - triangleABPRatio - triangleBCPRatio;
+  if (triangleCAPRatio < 0 || triangleCAPRatio > 1) {
+    return false;
+  }
+
   barycentricCoordinates.x = triangleBCPRatio;
   barycentricCoordinates.y = triangleCAPRatio;
   barycentricCoordinates.z = triangleABPRatio;
