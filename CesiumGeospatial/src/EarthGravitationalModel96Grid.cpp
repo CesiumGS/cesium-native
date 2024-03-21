@@ -53,7 +53,8 @@ CesiumGeospatial::EarthGravitationalModel96Grid::fromBuffer(
     const std::byte msb = buffer.data()[i];
     const std::byte lsb = buffer.data()[i + 1];
     const int16_t gridValue =
-        static_cast<int16_t>(lsb) | static_cast<int16_t>(msb) << 8;
+        static_cast<int16_t>(lsb) |
+        static_cast<int16_t>(static_cast<int16_t>(msb) << 8);
     gridValues.push_back(gridValue);
   }
 
@@ -106,7 +107,9 @@ double EarthGravitationalModel96Grid::getHeightForIndices(
     clampedVertical = NUM_ROWS - 1;
   }
 
-  const std::vector<uint16_t>::size_type index = static_cast<std::vector<uint16_t>::size_type>(clampedVertical * NUM_COLUMNS + horizontal);
+  const std::vector<int16_t>::size_type index =
+      static_cast<std::vector<int16_t>::size_type>(
+          clampedVertical * NUM_COLUMNS + horizontal);
   const double result = static_cast<double>(_gridValues[index]) / 100.0;
 
   return result;
