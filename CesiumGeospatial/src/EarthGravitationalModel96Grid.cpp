@@ -106,7 +106,7 @@ double EarthGravitationalModel96Grid::getHeightForIndices(
     clampedVertical = NUM_ROWS - 1;
   }
 
-  const int index = clampedVertical * NUM_COLUMNS + horizontal;
+  const std::vector<uint16_t>::size_type index = static_cast<std::vector<uint16_t>::size_type>(clampedVertical * NUM_COLUMNS + horizontal);
   const double result = static_cast<double>(_gridValues[index]) / 100.0;
 
   return result;
