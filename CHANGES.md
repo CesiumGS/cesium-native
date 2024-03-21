@@ -8,6 +8,10 @@
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
 - Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
 
+##### Fixes :wrench:
+
+- Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:
