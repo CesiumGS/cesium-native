@@ -16,8 +16,6 @@ namespace CesiumGeospatial {
 const int NUM_ROWS = 721;
 // The number of columns in the file
 const int NUM_COLUMNS = 1440;
-// The total number of entries in the file
-const int TOTAL_ENTRIES = NUM_ROWS * NUM_COLUMNS;
 
 std::optional<EarthGravitationalModel96Grid>
 CesiumGeospatial::EarthGravitationalModel96Grid::fromFile(
