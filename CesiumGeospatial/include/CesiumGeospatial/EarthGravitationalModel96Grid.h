@@ -4,7 +4,7 @@
 
 #include <CesiumGeospatial/Cartographic.h>
 
-#include <GSL/span>
+#include <gsl/span>
 
 #include <cstdint>
 #include <optional>
