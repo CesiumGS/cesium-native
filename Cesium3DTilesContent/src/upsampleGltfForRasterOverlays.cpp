@@ -64,6 +64,7 @@ static void addEdge(
     double thresholdV,
     bool keepAboveU,
     bool keepAboveV,
+    bool invertV,
     const AccessorView<glm::vec2>& uvs,
     const std::vector<uint32_t>& clipVertexToIndices,
     const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
@@ -88,7 +89,8 @@ static void addSkirts(
     const SkirtMeshMetadata& parentSkirt,
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
-    int32_t positionAttributeIndex);
+    int32_t positionAttributeIndex,
+    bool hasInvertedVCoordinate);
 
 static bool
 isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
@@ -100,6 +102,7 @@ isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.y % 2) == 0;
 }
 
+static void copyImages(const Model& parentModel, Model& result);
 static void copyMetadataTables(const Model& parentModel, Model& result);
 
 std::optional<Model> upsampleGltfForRasterOverlays(
@@ -133,6 +136,8 @@ std::optional<Model> upsampleGltfForRasterOverlays(
   result.extensions = parentModel.extensions;
   // result.extras_json_string = parentModel.extras_json_string;
   // result.extensions_json_string = parentModel.extensions_json_string;
+
+  copyImages(parentModel, result);
 
   // Copy EXT_structural_metadata property table buffer views and unique
   // buffers.
@@ -509,7 +514,7 @@ static bool upsamplePrimitiveForRasterOverlays(
             std::numeric_limits<double>::lowest()),
     });
 
-    // get position to be used to create for skirts later
+    // get position to be used to create skirts later
     if (attribute.first == "POSITION") {
       positionAttributeIndex = int32_t(attributes.size() - 1);
     }
@@ -526,10 +531,6 @@ static bool upsamplePrimitiveForRasterOverlays(
 
   const bool keepAboveU = !isWestChild(childID);
   bool keepAboveV = !isSouthChild(childID);
-
-  if (hasInvertedVCoordinate) {
-    keepAboveV = !keepAboveV;
-  }
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
   const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
@@ -600,7 +601,7 @@ static bool upsamplePrimitiveForRasterOverlays(
     clippedB.clear();
     clipTriangleAtAxisAlignedThreshold(
         0.5,
-        keepAboveV,
+        hasInvertedVCoordinate ? !keepAboveV : keepAboveV,
         ~0,
         ~1,
         ~2,
@@ -625,6 +626,7 @@ static bool upsamplePrimitiveForRasterOverlays(
           0.5,
           keepAboveU,
           keepAboveV,
+          hasInvertedVCoordinate,
           uvView,
           clipVertexToIndices,
           clippedA,
@@ -638,7 +640,7 @@ static bool upsamplePrimitiveForRasterOverlays(
       clippedB.clear();
       clipTriangleAtAxisAlignedThreshold(
           0.5,
-          keepAboveV,
+          hasInvertedVCoordinate ? !keepAboveV : keepAboveV,
           ~0,
           ~2,
           ~3,
@@ -663,6 +665,7 @@ static bool upsamplePrimitiveForRasterOverlays(
             0.5,
             keepAboveU,
             keepAboveV,
+            hasInvertedVCoordinate,
             uvView,
             clipVertexToIndices,
             clippedA,
@@ -691,7 +694,8 @@ static bool upsamplePrimitiveForRasterOverlays(
         *parentSkirtMeshMetadata,
         edgeIndices,
         vertexSizeFloats,
-        positionAttributeIndex);
+        positionAttributeIndex,
+        hasInvertedVCoordinate);
   }
 
   if (newVertexFloats.empty() || indices.empty()) {
@@ -897,6 +901,7 @@ static void addEdge(
     double thresholdV,
     bool keepAboveU,
     bool keepAboveV,
+    bool invertV,
     const AccessorView<glm::vec2>& uvs,
     const std::vector<uint32_t>& clipVertexToIndices,
     const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
@@ -931,14 +936,14 @@ static void addEdge(
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
-            0.0,
+            invertV ? 1.0f : 0.0f,
             CesiumUtility::Math::Epsilon4)) {
       edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
 
     if (CesiumUtility::Math::equalsEpsilon(
             uv.y,
-            1.0,
+            invertV ? 0.0f : 1.0f,
             CesiumUtility::Math::Epsilon4)) {
       edgeIndices.north.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
     }
@@ -947,7 +952,13 @@ static void addEdge(
             uv.y,
             thresholdV,
             CesiumUtility::Math::Epsilon4)) {
-      if (keepAboveV) {
+      // | *keepAboveV* | *invertV* | *Edge* |
+      // |--------------|-----------|--------|
+      // | false        | false     | South  |
+      // | true         | false     | North  |
+      // | false        | true      | North  |
+      // | true         | true      | South  |
+      if (keepAboveV == invertV) {
         edgeIndices.south.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
       } else {
         edgeIndices.north.emplace_back(EdgeVertex{clipVertexToIndices[i], uv});
@@ -1032,7 +1043,8 @@ static void addSkirts(
     const SkirtMeshMetadata& parentSkirt,
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
-    int32_t positionAttributeIndex) {
+    int32_t positionAttributeIndex,
+    bool hasInvertedVCoordinate) {
   CESIUM_TRACE("addSkirts");
 
   const glm::dvec3 center = currentSkirt.meshCenter;
@@ -1091,6 +1103,9 @@ static void addSkirts(
       edgeIndices.south.end(),
       sortEdgeIndices.begin(),
       [](const EdgeVertex& v) { return v.index; });
+  if (hasInvertedVCoordinate) {
+    std::reverse(sortEdgeIndices.begin(), sortEdgeIndices.end());
+  }
   addSkirt(
       output,
       indices,
@@ -1149,6 +1164,9 @@ static void addSkirts(
       edgeIndices.north.end(),
       sortEdgeIndices.begin(),
       [](const EdgeVertex& v) { return v.index; });
+  if (hasInvertedVCoordinate) {
+    std::reverse(sortEdgeIndices.begin(), sortEdgeIndices.end());
+  }
   addSkirt(
       output,
       indices,
@@ -1265,6 +1283,12 @@ static int32_t copyBufferView(
   bufferView.byteStride = parentBufferView.byteStride;
 
   return static_cast<int32_t>(bufferViewId);
+}
+
+static void copyImages(const Model& parentModel, Model& result) {
+  for (Image& image : result.images) {
+    image.bufferView = copyBufferView(parentModel, image.bufferView, result);
+  }
 }
 
 // Copy and reconstruct buffer views and buffers from EXT_structural_metadata
