@@ -127,7 +127,7 @@ IonRasterOverlay::createTileProvider(
                   fmt::format(
                       "Error while parsing Cesium ion raster overlay response, "
                       "error code {} at byte offset {}",
-                      static_cast<int32_t>(response.GetParseError()),
+                      response.GetParseError(),
                       response.GetErrorOffset())});
             }
 

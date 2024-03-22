@@ -58,7 +58,7 @@ std::optional<std::string> getNewAccessToken(
         pLogger,
         "Error when parsing Cesium ion response, error code {} at byte offset "
         "{}",
-        static_cast<int32_t>(ionResponse.GetParseError()),
+        ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
     return std::nullopt;
   }
@@ -244,7 +244,7 @@ mainThreadHandleEndpointResponse(
     result.errors.emplaceError(fmt::format(
         "Error when parsing Cesium ion response JSON, error code {} at byte "
         "offset {}",
-        static_cast<int32_t>(ionResponse.GetParseError()),
+        ionResponse.GetParseError(),
         ionResponse.GetErrorOffset()));
     return externals.asyncSystem.createResolvedFuture(std::move(result));
   }

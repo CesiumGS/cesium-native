@@ -699,7 +699,7 @@ TilesetContentManager::TilesetContentManager(
                 result.errors.emplaceError(fmt::format(
                     "Error when parsing tileset JSON, error code {} at byte "
                     "offset {}",
-                    static_cast<int32_t>(tilesetJson.GetParseError()),
+                    tilesetJson.GetParseError(),
                     tilesetJson.GetErrorOffset()));
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
