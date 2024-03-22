@@ -51,7 +51,7 @@ public:
    * defined by three 3D points.
    *
    * Returns false for degenerate triangles.
-   * 
+   *
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.
    * @param triangleVertB The second vertex of the triangle.
