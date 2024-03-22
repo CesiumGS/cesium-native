@@ -2,6 +2,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 
+#include <algorithm>
 #include <fstream>
 #include <vector>
 
@@ -61,14 +62,15 @@ CesiumGeospatial::EarthGravitationalModel96Grid::fromBuffer(
 
 double
 EarthGravitationalModel96Grid::sampleHeight(Cartographic& position) const {
-  const double longitude = this->mapLongitude(position.longitude);
-  const double latitude = this->mapLatitude(position.latitude);
-
-  // const double quantizedLongitude =
-  // floor(longitude / LONGITUDE_INTERVAL) * LONGITUDE_INTERVAL;
+  const double longitude =
+      std::remainder(position.longitude - Math::OnePi, Math::TwoPi) +
+      Math::OnePi;
+  const double latitude =
+      std::clamp(position.latitude, -Math::PiOverTwo, Math::PiOverTwo);
 
   const double horizontalIndexDecimal = (NUM_COLUMNS * longitude) / Math::TwoPi;
   const int horizontalIndex = static_cast<int>(horizontalIndexDecimal);
+
   const double verticalIndexDecimal =
       ((NUM_ROWS - 1) * (Math::PiOverTwo - latitude)) / Math::OnePi;
   const int verticalIndex = static_cast<int>(verticalIndexDecimal);
@@ -79,6 +81,7 @@ EarthGravitationalModel96Grid::sampleHeight(Cartographic& position) const {
   const double ixn = 1.0 - xn;
   const double yn = 1.0 - iyn;
 
+  // Get surrounding grid points
   const double a1 = getHeightForIndices(horizontalIndex, verticalIndex);
   const double a2 = getHeightForIndices(horizontalIndex + 1, verticalIndex);
   const double b1 = getHeightForIndices(horizontalIndex, verticalIndex + 1);
@@ -111,22 +114,6 @@ double EarthGravitationalModel96Grid::getHeightForIndices(
   const double result = static_cast<double>(_gridValues[index]) / 100.0;
 
   return result;
-}
-
-double EarthGravitationalModel96Grid::mapLatitude(double latitude) const {
-  return latitude - Math::TwoPi * floor((latitude + Math::OnePi) / Math::TwoPi);
-}
-
-double EarthGravitationalModel96Grid::mapLongitude(double longitude) const {
-  const double modTwoPi =
-      fmod(fmod(longitude, Math::TwoPi) + Math::TwoPi, Math::TwoPi);
-
-  if (Math::equalsEpsilon(modTwoPi, 0, Math::Epsilon14) &&
-      !Math::equalsEpsilon(longitude, 0, Math::Epsilon14)) {
-    return Math::TwoPi;
-  }
-
-  return modTwoPi;
 }
 
 } // namespace CesiumGeospatial

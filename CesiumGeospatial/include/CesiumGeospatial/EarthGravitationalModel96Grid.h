@@ -54,18 +54,6 @@ private:
    */
   double getHeightForIndices(const int vertical, const int horizontal) const;
 
-  /**
-   * Ensures latitude is in the range(-PI, PI) with an exclusive upper bound -
-   * PI will always map to -PI
-   */
-  double mapLatitude(double latitude) const;
-
-  /**
-   * Ensures longitude is in the range (0, 2PI) with an exclusive lower bound -
-   * 0 will always map to 2PI
-   */
-  double mapLongitude(double longitude) const;
-
   std::vector<int16_t> _gridValues;
 };
 
