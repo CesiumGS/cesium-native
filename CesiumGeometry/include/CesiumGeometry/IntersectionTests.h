@@ -32,6 +32,8 @@ public:
    * @brief Determines whether a given point is completely inside a triangle
    * defined by three 2D points.
    *
+   * Returns false for degenerate triangles.
+   *
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.
    * @param triangleVertB The second vertex of the triangle.
@@ -48,6 +50,8 @@ public:
    * @brief Determines whether a given point is completely inside a triangle
    * defined by three 3D points.
    *
+   * Returns false for degenerate triangles.
+   * 
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.
    * @param triangleVertB The second vertex of the triangle.
@@ -64,6 +68,8 @@ public:
    * @brief Determines whether the point is completely inside a triangle defined
    * by three 3D points. If the point is inside, this also outputs the
    * barycentric coordinates for the point.
+   *
+   * Returns false for degenerate triangles.
    *
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.

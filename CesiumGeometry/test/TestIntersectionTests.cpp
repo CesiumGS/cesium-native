@@ -130,6 +130,13 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
           obtuseTriangle[0],
           obtuseTriangle[2],
           obtuseTriangle[1],
+          false},
+      // Point "inside" degenerate triangle returns false.
+      TestCase{
+          rightTriangle[0],
+          rightTriangle[0],
+          rightTriangle[0],
+          rightTriangle[2],
           false});
 
   bool result = IntersectionTests::pointInTriangle(
@@ -246,6 +253,13 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
           equilateralTriangle[0],
           equilateralTriangle[2],
           equilateralTriangle[1],
+          false},
+      // Point "inside" degenerate triangle returns false.
+      TestCase{
+          rightTriangle[0],
+          rightTriangle[0],
+          rightTriangle[0],
+          rightTriangle[2],
           false});
 
   bool result = IntersectionTests::pointInTriangle(
@@ -375,6 +389,14 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
           equilateralTriangle[0],
           equilateralTriangle[2],
           equilateralTriangle[1],
+          false,
+          glm::dvec3()},
+      // Point "inside" degenerate triangle returns false.
+      TestCase{
+          rightTriangle[0],
+          rightTriangle[0],
+          rightTriangle[0],
+          rightTriangle[2],
           false,
           glm::dvec3()});
 
