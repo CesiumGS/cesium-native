@@ -6,6 +6,30 @@ project(cesium-native
     LANGUAGES CXX C
 )
 
+if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
+    find_program(CCACHE_FOUND ccache)
+    find_program(SCCACHE_FOUND sccache)
+    if (SCCACHE_FOUND)
+        message("setting SCCACHE to ${SCCACHE_FOUND}")
+        set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_FOUND})
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_FOUND})
+    elseif(CCACHE_FOUND)
+        message("setting CCACHE to ${CCACHE_FOUND}")
+        set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_FOUND})
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_FOUND})
+    endif()
+endif()
+
+# ccache/sccache only works with /Z7, not /Zi, so tweak the Debug and RelWithDebInfo build flags in the presence of a compiler cache
+if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER))
+    message(DEBUG "Setting MSVC flags to /Z7 for ccache compatibility.  Current flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+    message(DEBUG "New flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
