@@ -79,27 +79,12 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
           rightTriangle[1],
           rightTriangle[2],
           true},
-      // Point inside triangle returns true with reversed winding order. (right)
-      TestCase{
-          glm::dvec2(0.2, 0.5),
-          rightTriangle[0],
-          rightTriangle[2],
-          rightTriangle[1],
-          true},
       // Point inside triangle returns true. (obtuse)
       TestCase{
           glm::dvec2(4.0, 0.3),
           obtuseTriangle[0],
           obtuseTriangle[1],
           obtuseTriangle[2],
-          true},
-      // Point inside triangle returns true with reversed winding order.
-      // (obtuse)
-      TestCase{
-          glm::dvec2(4.0, 0.3),
-          obtuseTriangle[0],
-          obtuseTriangle[2],
-          obtuseTriangle[1],
           true},
       // Point outside triangle returns false. (right)
       TestCase{
@@ -108,28 +93,12 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
           rightTriangle[1],
           rightTriangle[2],
           false},
-      // Point outside triangle returns false with reversed winding order.
-      // (right)
-      TestCase{
-          glm::dvec2(-2.0, 0.5),
-          rightTriangle[0],
-          rightTriangle[2],
-          rightTriangle[1],
-          false},
       // Point outside triangle returns false. (obtuse)
       TestCase{
           glm::dvec2(3.0, -0.5),
           obtuseTriangle[0],
           obtuseTriangle[1],
           obtuseTriangle[2],
-          false},
-      // Point outside triangle returns false with reversed winding order.
-      // (obtuse)
-      TestCase{
-          glm::dvec2(3.0, -0.5),
-          obtuseTriangle[0],
-          obtuseTriangle[2],
-          obtuseTriangle[1],
           false},
       // Point "inside" degenerate triangle returns false.
       TestCase{
@@ -145,6 +114,14 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
       testCase.triangleVert2,
       testCase.triangleVert3);
   CHECK(result == testCase.expected);
+
+  // Do same test but with reverse winding
+  bool reverseResult = IntersectionTests::pointInTriangle(
+      testCase.point,
+      testCase.triangleVert3,
+      testCase.triangleVert2,
+      testCase.triangleVert1);
+  CHECK(reverseResult == testCase.expected);
 }
 
 TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
@@ -188,27 +165,12 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
           rightTriangle[1],
           rightTriangle[2],
           true},
-      // Point inside triangle returns true with reversed winding order. (right)
-      TestCase{
-          glm::dvec3(0.2, 0.5, 0.0),
-          rightTriangle[0],
-          rightTriangle[2],
-          rightTriangle[1],
-          true},
       // Point inside triangle returns true. (equilateral)
       TestCase{
           glm::dvec3(0.25, 0.25, 0.5),
           equilateralTriangle[0],
           equilateralTriangle[1],
           equilateralTriangle[2],
-          true},
-      // Point inside triangle returns true with reversed winding order.
-      // (equilateral)
-      TestCase{
-          glm::dvec3(0.25, 0.25, 0.5),
-          equilateralTriangle[0],
-          equilateralTriangle[2],
-          equilateralTriangle[1],
           true},
       // Point outside triangle on same plane returns false. (right)
       TestCase{
@@ -224,14 +186,6 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
           rightTriangle[1],
           rightTriangle[2],
           false},
-      // Point outside triangle returns false with reversed winding order.
-      // (right)
-      TestCase{
-          glm::dvec3(-2.0, 0.5, 0.0),
-          rightTriangle[0],
-          rightTriangle[2],
-          rightTriangle[1],
-          false},
       // Point outside triangle on same plane returns false. (equilateral)
       TestCase{
           glm::dvec3(-1.0, 1.5, 0.5),
@@ -245,14 +199,6 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
           equilateralTriangle[0],
           equilateralTriangle[1],
           equilateralTriangle[2],
-          false},
-      // Point outside triangle returns false with reversed winding order.
-      // (equilateral)
-      TestCase{
-          glm::dvec3(-1.0, 1.5, 0.5),
-          equilateralTriangle[0],
-          equilateralTriangle[2],
-          equilateralTriangle[1],
           false},
       // Point "inside" degenerate triangle returns false.
       TestCase{
@@ -268,6 +214,14 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
       testCase.triangleVert2,
       testCase.triangleVert3);
   CHECK(result == testCase.expected);
+
+  // Do same test but with reverse winding
+  bool reverseResult = IntersectionTests::pointInTriangle(
+      testCase.point,
+      testCase.triangleVert3,
+      testCase.triangleVert2,
+      testCase.triangleVert1);
+  CHECK(reverseResult == testCase.expected);
 }
 
 TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
@@ -316,14 +270,6 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
           rightTriangle[2],
           true,
           glm::dvec3(0.25, 0.5, 0.25)},
-      // Point inside triangle returns true with reversed winding order. (right)
-      TestCase{
-          glm::dvec3(0.0, 0.5, 0.0),
-          rightTriangle[0],
-          rightTriangle[2],
-          rightTriangle[1],
-          true,
-          glm::dvec3(0.25, 0.25, 0.5)},
       // Point inside triangle returns true. (equilateral)
       TestCase{
           glm::dvec3(0.25, 0.25, 0.5),
@@ -332,15 +278,6 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
           equilateralTriangle[2],
           true,
           glm::dvec3(0.25, 0.25, 0.5)},
-      // Point inside triangle returns true with reversed winding order.
-      // (equilateral)
-      TestCase{
-          glm::dvec3(0.25, 0.25, 0.5),
-          equilateralTriangle[0],
-          equilateralTriangle[2],
-          equilateralTriangle[1],
-          true,
-          glm::dvec3(0.25, 0.5, 0.25)},
       // Point outside triangle on same plane returns false. (right)
       TestCase{
           glm::dvec3(-2.0, 0.5, 0.0),
@@ -357,15 +294,6 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
           rightTriangle[2],
           false,
           glm::dvec3()},
-      // Point outside triangle returns false with reversed winding order.
-      // (right)
-      TestCase{
-          glm::dvec3(-2.0, 0.5, 0.0),
-          rightTriangle[0],
-          rightTriangle[2],
-          rightTriangle[1],
-          false,
-          glm::dvec3()},
       // Point outside triangle on same plane returns false. (equilateral)
       TestCase{
           glm::dvec3(-1.0, 1.5, 0.5),
@@ -380,15 +308,6 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
           equilateralTriangle[0],
           equilateralTriangle[1],
           equilateralTriangle[2],
-          false,
-          glm::dvec3()},
-      // Point outside triangle returns false with reversed winding order.
-      // (equilateral)
-      TestCase{
-          glm::dvec3(-1.0, 1.5, 0.5),
-          equilateralTriangle[0],
-          equilateralTriangle[2],
-          equilateralTriangle[1],
           false,
           glm::dvec3()},
       // Point "inside" degenerate triangle returns false.
@@ -409,5 +328,22 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
       barycentricCoordinates);
 
   REQUIRE(result == testCase.expected);
-  REQUIRE(barycentricCoordinates == testCase.expectedCoordinates);
+  REQUIRE(
+      (barycentricCoordinates.x == testCase.expectedCoordinates.x &&
+       barycentricCoordinates.y == testCase.expectedCoordinates.y &&
+       barycentricCoordinates.z == testCase.expectedCoordinates.z));
+
+  // Do same test but with reverse winding
+  bool reverseResult = IntersectionTests::pointInTriangle(
+      testCase.point,
+      testCase.triangleVert3,
+      testCase.triangleVert2,
+      testCase.triangleVert1,
+      barycentricCoordinates);
+
+  CHECK(reverseResult == testCase.expected);
+  REQUIRE(
+      (barycentricCoordinates.z == testCase.expectedCoordinates.x &&
+       barycentricCoordinates.y == testCase.expectedCoordinates.y &&
+       barycentricCoordinates.x == testCase.expectedCoordinates.z));
 }
