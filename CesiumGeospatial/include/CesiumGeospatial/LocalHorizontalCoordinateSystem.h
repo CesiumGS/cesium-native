@@ -52,7 +52,7 @@ public:
    * @brief Create a new coordinate system centered at a Earth-Centered,
    * Earth-Fixed position.
    *
-   * @param origin The origin of the coordinate system.
+   * @param originEcef The origin of the coordinate system.
    * @param xAxisDirection The local direction in which the X axis points at the
    * origin.
    * @param yAxisDirection The local direction in which the Y axis points at the
@@ -157,7 +157,7 @@ public:
    * Because the vector is treated as a direction only, the translation portion
    * of the transformation is ignored.
    *
-   * @param localPosition The direction in the local coordinate system.
+   * @param localDirection The direction in the local coordinate system.
    * @return The equivalent direction in the ECEF coordinate system.
    */
   glm::dvec3
@@ -171,7 +171,7 @@ public:
    * Because the vector is treated as a direction only, the translation portion
    * of the transformation is ignored.
    *
-   * @param ecefPosition The direction in the ECEF coordinate system.
+   * @param ecefDirection The direction in the ECEF coordinate system.
    * @return The equivalent direction in the local coordinate system.
    */
   glm::dvec3
