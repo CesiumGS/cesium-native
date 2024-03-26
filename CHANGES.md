@@ -16,6 +16,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+- Switched from `zlib` to `zlib-ng` in order to improve the performance of decompressing gzipped data.
 
 ### v0.33.0 - 2024-03-01
 

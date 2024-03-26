@@ -168,8 +168,9 @@ add_subdirectory(libmorton)
 
 # The zlib cmake build makes its working directory dirty.
 # So we make a copy of it to avoid that annoyance.
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/zlib/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/zlib-src")
-add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/zlib-src ${CMAKE_CURRENT_BINARY_DIR}/zlib)
+set(WITH_GTEST OFF CACHE INTERNAL "Disable zlib-ng testing")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/zlib-ng/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/zlib-ng-src")
+add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/zlib-ng-src ${CMAKE_CURRENT_BINARY_DIR}/zlib-ng)
 
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
     if(NOT IS_ABSOLUTE ${CMAKE_TOOLCHAIN_FILE})
