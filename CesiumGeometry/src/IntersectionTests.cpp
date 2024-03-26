@@ -76,6 +76,8 @@ bool IntersectionTests::pointInTriangle(
     const glm::dvec3& triangleVertA,
     const glm::dvec3& triangleVertB,
     const glm::dvec3& triangleVertC) noexcept {
+  // PERFORMANCE_IDEA: Investigate if there is a faster algorithm that can do
+  // this test, but without needing to compute barycentric coordinates
   glm::dvec3 unused;
   return IntersectionTests::pointInTriangle(
       point,
