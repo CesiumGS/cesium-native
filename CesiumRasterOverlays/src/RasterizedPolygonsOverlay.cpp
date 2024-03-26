@@ -18,7 +18,7 @@ using namespace CesiumUtility;
 namespace CesiumRasterOverlays {
 namespace {
 void rasterizePolygons(
-    LoadedRasterOverlayImage& loaded,
+    RasterLoadResult& loaded,
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const glm::dvec2& textureSize,
     const std::vector<CartographicPolygon>& cartographicPolygons,
@@ -187,8 +187,23 @@ public:
         _polygons(polygons),
         _invertSelection(invertSelection) {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override {
+  virtual void getLoadTileImageWork(
+      const RasterOverlayTile&,
+      CesiumAsync::RequestData&,
+      RasterProcessingCallback& outCallback) override {
+    // There is no content request, just processing
+    outCallback = [](RasterOverlayTile& overlayTile,
+                     RasterOverlayTileProvider* provider,
+                     const CesiumAsync::UrlResponseDataMap& responsesByUrl) {
+      RasterizedPolygonsTileProvider* thisProvider =
+          static_cast<RasterizedPolygonsTileProvider*>(provider);
+      return thisProvider->loadTileImage(overlayTile, responsesByUrl);
+    };
+  }
+
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      const RasterOverlayTile& overlayTile,
+      const CesiumAsync::UrlResponseDataMap&) override {
     // Choose the texture size according to the geometry screen size and raster
     // SSE, but no larger than the maximum texture size.
     const RasterOverlayOptions& options = this->getOwner().getOptions();
@@ -201,11 +216,11 @@ public:
          invertSelection = this->_invertSelection,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
-         textureSize]() -> LoadedRasterOverlayImage {
+         textureSize]() -> RasterLoadResult {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
-          LoadedRasterOverlayImage result;
+          RasterLoadResult result;
           result.rectangle = rectangle;
 
           rasterizePolygons(

@@ -25,6 +25,8 @@
 #include <limits>
 #include <unordered_set>
 
+#define LOG_LOADING_WORK_STATS 0
+
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -293,6 +295,28 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
+void Tileset::_logLoadingWorkStats(const std::string& prefix) {
+  size_t requestCount, inFlightCount, processingCount, failedCount;
+  this->_pTilesetContentManager->getLoadingWorkStats(
+      requestCount,
+      inFlightCount,
+      processingCount,
+      failedCount);
+
+  SPDLOG_LOGGER_INFO(
+      this->_externals.pLogger,
+      "{} requests {} | inFlight {} | processing {} || "
+      "TilesLoading {} | RastersLoading {} | MainThreadQueue {} | Total {}",
+      prefix,
+      requestCount,
+      inFlightCount,
+      processingCount,
+      _updateResult.tilesLoading,
+      _updateResult.rastersLoading,
+      _updateResult.mainThreadTileLoadQueueLength,
+      _updateResult.mainThreadTotalTileLoads);
+}
+
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -302,6 +326,13 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
 
+#if LOG_LOADING_WORK_STATS
+  float loadProgress = this->computeLoadProgress();
+  bool showWorkStats = loadProgress > 0 && loadProgress < 100;
+  if (showWorkStats)
+    _logLoadingWorkStats("Pre :");
+#endif
+
   this->_asyncSystem.dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
@@ -310,13 +341,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   ViewUpdateResult& result = this->_updateResult;
   result.frameNumber = currentFrameNumber;
   result.tilesToRenderThisFrame.clear();
-  result.tilesVisited = 0;
-  result.culledTilesVisited = 0;
-  result.tilesCulled = 0;
-  result.tilesOccluded = 0;
-  result.tilesWaitingForOcclusionResults = 0;
-  result.tilesKicked = 0;
-  result.maxDepthVisited = 0;
+  result.resetStats();
+
+  result.workerThreadTileLoadQueueLength = this->_workerThreadLoadQueue.size();
+  result.mainThreadTileLoadQueueLength = this->_mainThreadLoadQueue.size();
 
   if (!_options.enableLodTransitionPeriod) {
     result.tilesFadingOut.clear();
@@ -357,11 +385,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  result.workerThreadTileLoadQueueLength =
-      static_cast<int32_t>(this->_workerThreadLoadQueue.size());
-  result.mainThreadTileLoadQueueLength =
-      static_cast<int32_t>(this->_mainThreadLoadQueue.size());
-
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->getExternals().pTileOcclusionProxyPool;
   if (pOcclusionPool) {
@@ -371,7 +394,13 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
   this->_processWorkerThreadLoadQueue();
   this->_processMainThreadLoadQueue();
+
   this->_updateLodTransitions(frameState, deltaTime, result);
+
+#if LOG_LOADING_WORK_STATS
+  if (showWorkStats)
+    _logLoadingWorkStats("Post:");
+#endif
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
@@ -428,30 +457,33 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   return result;
 }
+
 int32_t Tileset::getNumberOfTilesLoaded() const {
   return this->_pTilesetContentManager->getNumberOfTilesLoaded();
 }
 
 float Tileset::computeLoadProgress() noexcept {
-  int32_t queueSizeSum = static_cast<int32_t>(
-      this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size());
-  int32_t numOfTilesLoading =
-      this->_pTilesetContentManager->getNumberOfTilesLoading();
-  int32_t numOfTilesLoaded =
-      this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  int32_t numOfTilesKicked =
-      static_cast<int32_t>(this->_updateResult.tilesKicked);
-
   // Amount of work actively being done
-  int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
+  size_t queueLengthsSum = _updateResult.mainThreadTileLoadQueueLength +
+                           _updateResult.workerThreadTileLoadQueueLength;
+  uint32_t inProgressSum =
+      static_cast<uint32_t>(queueLengthsSum) +
+      static_cast<uint32_t>(_updateResult.activeWorkCount) +
+      _updateResult.tilesLoading + _updateResult.rastersLoading +
+      static_cast<uint32_t>(_updateResult.tilesFadingOut.size());
+  uint32_t numOfTilesKicked = this->_updateResult.tilesKicked;
+
+  uint32_t completedSum =
+      _updateResult.tilesLoaded + _updateResult.rastersLoaded;
 
   // Total work so far. Add already loaded tiles and kicked tiles.
   // Kicked tiles are transient, and never in progress, but are an indicator
   // that there is more work to do next frame.
-  int32_t totalNum = inProgressSum + numOfTilesLoaded + numOfTilesKicked;
+  uint32_t totalNum = inProgressSum + completedSum + numOfTilesKicked;
   float percentage =
-      static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
-  return (percentage * 100.f);
+      static_cast<float>(completedSum) / static_cast<float>(totalNum);
+
+  return percentage * 100.0f;
 }
 
 void Tileset::forEachLoadedTile(
@@ -1058,10 +1090,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
       TileSelectionState::Result::Rendered;
   const bool wasReallyRenderedLastFrame =
       wasRenderedLastFrame && tile.isRenderable();
+  const bool descendantsOverLimit = traversalDetails.notYetRenderableCount >
+                                    this->_options.loadingDescendantLimit;
 
-  if (!wasReallyRenderedLastFrame &&
-      traversalDetails.notYetRenderableCount >
-          this->_options.loadingDescendantLimit &&
+  if (!wasReallyRenderedLastFrame && descendantsOverLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     // Remove all descendants from the load queues.
@@ -1069,12 +1101,14 @@ bool Tileset::_kickDescendantsAndRenderTile(
         _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
     this->_workerThreadLoadQueue.erase(
         this->_workerThreadLoadQueue.begin() +
-            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
+            static_cast<
+                std::vector<TileLoadRequest>::iterator::difference_type>(
                 workerThreadLoadQueueIndex),
         this->_workerThreadLoadQueue.end());
     this->_mainThreadLoadQueue.erase(
         this->_mainThreadLoadQueue.begin() +
-            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
+            static_cast<
+                std::vector<TileLoadRequest>::iterator::difference_type>(
                 mainThreadLoadQueueIndex),
         this->_mainThreadLoadQueue.end());
     size_t allQueueEndSize =
@@ -1410,25 +1444,24 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 void Tileset::_processWorkerThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
-  int32_t maximumSimultaneousTileLoads =
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
+  TilesetContentManager* pManager = this->_pTilesetContentManager.get();
+  ViewUpdateResult& result = this->_updateResult;
 
-  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-      maximumSimultaneousTileLoads) {
-    return;
-  }
+  result.workerThreadTileLoadQueueLength = this->_workerThreadLoadQueue.size();
 
-  std::vector<TileLoadTask>& queue = this->_workerThreadLoadQueue;
-  std::sort(queue.begin(), queue.end());
+  pManager->processLoadRequests(this->_workerThreadLoadQueue, _options);
 
-  for (TileLoadTask& task : queue) {
-    this->_pTilesetContentManager->loadTileContent(*task.pTile, _options);
-    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumSimultaneousTileLoads) {
-      break;
-    }
-  }
+  result.tilesLoading =
+      static_cast<uint32_t>(pManager->getNumberOfTilesLoading());
+  result.tilesLoaded =
+      static_cast<uint32_t>(pManager->getNumberOfTilesLoaded());
+  result.rastersLoading =
+      static_cast<uint32_t>(pManager->getNumberOfRastersLoading());
+  result.rastersLoaded =
+      static_cast<uint32_t>(pManager->getNumberOfRastersLoaded());
+  result.activeWorkCount = pManager->getActiveWorkCount();
 }
+
 void Tileset::_processMainThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
   // Process deferred main-thread load tasks with a time budget.
@@ -1442,7 +1475,7 @@ void Tileset::_processMainThreadLoadQueue() {
   auto start = std::chrono::system_clock::now();
   auto end =
       start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
-  for (TileLoadTask& task : this->_mainThreadLoadQueue) {
+  for (TileLoadRequest& task : this->_mainThreadLoadQueue) {
     // We double-check that the tile is still in the ContentLoaded state here,
     // in case something (such as a child that needs to upsample from this
     // parent) already pushed the tile into the Done state. Because in that
@@ -1450,12 +1483,16 @@ void Tileset::_processMainThreadLoadQueue() {
     if (task.pTile->getState() == TileLoadState::ContentLoaded &&
         task.pTile->isRenderContent()) {
       this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
+      ++this->_updateResult.mainThreadTotalTileLoads;
     }
     auto time = std::chrono::system_clock::now();
     if (timeBudget > 0.0 && time >= end) {
       break;
     }
   }
+
+  this->_updateResult.mainThreadTileLoadQueueLength =
+      this->_mainThreadLoadQueue.size();
 
   this->_mainThreadLoadQueue.clear();
 }
@@ -1466,8 +1503,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   Tile* pTile = this->_loadedTiles.head();
 
-  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
-  // the end time to the max time_point in that case.
+  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So
+  // set the end time to the max time_point in that case.
   auto start = std::chrono::system_clock::now();
   auto end = (timeBudget <= 0.0)
                  ? std::chrono::time_point<std::chrono::system_clock>::max()
@@ -1519,13 +1556,13 @@ void Tileset::addTileToLoadQueue(
       std::find_if(
           this->_workerThreadLoadQueue.begin(),
           this->_workerThreadLoadQueue.end(),
-          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
+          [&](const TileLoadRequest& task) { return task.pTile == &tile; }) ==
       this->_workerThreadLoadQueue.end());
   assert(
       std::find_if(
           this->_mainThreadLoadQueue.begin(),
           this->_mainThreadLoadQueue.end(),
-          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
+          [&](const TileLoadRequest& task) { return task.pTile == &tile; }) ==
       this->_mainThreadLoadQueue.end());
 
   if (this->_pTilesetContentManager->tileNeedsWorkerThreadLoading(tile)) {

@@ -98,13 +98,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * @brief The maximum number of tiles that may simultaneously be in the
    * process of loading.
    */
-  uint32_t maximumSimultaneousTileLoads = 20;
-
-  /**
-   * @brief The maximum number of subtrees that may simultaneously be in the
-   * process of loading.
-   */
-  uint32_t maximumSimultaneousSubtreeLoads = 20;
+  uint32_t maximumSimultaneousTileLoads = 24;
 
   /**
    * @brief Indicates whether the ancestors of rendered tiles should be

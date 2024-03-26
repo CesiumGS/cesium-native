@@ -3,6 +3,7 @@
 #include "BoundingVolume.h"
 #include "TileContent.h"
 
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltf/Model.h>
@@ -62,7 +63,12 @@ enum class TileLoadResultState {
    * background work happenning and
    * __none__ of the fields in {@link TileLoadResult} or {@link TileChildrenResult} are applied to the tile
    */
-  RetryLater
+  RetryLater,
+
+  /**
+   * @brief The operation requires the client to make another content request
+   */
+  RequestRequired
 };
 
 /**
@@ -104,7 +110,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief The request that is created to download the tile content.
    */
-  std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
+  std::string originalRequestUrl;
 
   /**
    * @brief A callback that is invoked in the main thread immediately when the
@@ -113,6 +119,11 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * children (in the case of {@link TileExternalContent}), etc, to override the existing fields.
    */
   std::function<void(Tile&)> tileInitializer;
+
+  /**
+   * @brief Optional additional request needed
+   */
+  CesiumAsync::RequestData additionalRequestData;
 
   /**
    * @brief The result of loading a tile. Note that if the state is Failed or
@@ -124,18 +135,21 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief Create a result with Failed state
    *
-   * @param pCompletedRequest The failed request
    */
-  static TileLoadResult createFailedResult(
-      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
+  static TileLoadResult createFailedResult();
 
   /**
    * @brief Create a result with RetryLater state
    *
-   * @param pCompletedRequest The failed request
    */
-  static TileLoadResult createRetryLaterResult(
-      std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
+  static TileLoadResult createRetryLaterResult();
+
+  /**
+   * @brief Create a result with RequestRequired state
+   *
+   */
+  static TileLoadResult
+  createRequestResult(const CesiumAsync::RequestData& request);
 };
 
 } // namespace Cesium3DTilesSelection

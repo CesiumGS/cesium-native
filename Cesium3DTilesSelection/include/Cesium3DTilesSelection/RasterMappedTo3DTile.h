@@ -5,6 +5,7 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
@@ -176,17 +177,6 @@ public:
   void detachFromTile(
       IPrepareRendererResources& prepareRendererResources,
       Tile& tile) noexcept;
-
-  /**
-   * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
-   *
-   * @return If the mapped tile is already in the process of loading or it has
-   * already finished loading, this method does nothing and returns true. If too
-   * many loads are already in progress, this method does nothing and returns
-   * false. Otherwise, it begins the asynchronous process to load the tile and
-   * returns true.
-   */
-  bool loadThrottled() noexcept;
 
   /**
    * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.

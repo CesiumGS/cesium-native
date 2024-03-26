@@ -21,6 +21,11 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
+  void getLoadWork(
+      const Tile* pTile,
+      CesiumAsync::RequestData& outRequest,
+      TileLoaderCallback& outCallback) override;
+
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
   const std::string& getBaseUrl() const noexcept;

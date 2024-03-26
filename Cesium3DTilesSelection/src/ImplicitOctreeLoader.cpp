@@ -100,76 +100,49 @@ std::vector<Tile> populateSubtree(
 CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const gsl::span<const std::byte>& responseData,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
     bool applyTextureTransform) {
-  return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([pLogger,
-                           ktx2TranscodeTargets,
-                           applyTextureTransform](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                  pCompletedRequest) mutable {
-        const CesiumAsync::IAssetResponse* pResponse =
-            pCompletedRequest->response();
-        const std::string& tileUrl = pCompletedRequest->url();
-        if (!pResponse) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Did not receive a valid response for tile content {}",
-              tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
-        }
+  return asyncSystem.runInWorkerThread([pLogger,
+                                        ktx2TranscodeTargets,
+                                        applyTextureTransform,
+                                        tileUrl = tileUrl,
+                                        responseData = responseData]() mutable {
+    // find gltf converter
+    auto converter = GltfConverters::getConverterByMagic(responseData);
+    if (!converter) {
+      converter = GltfConverters::getConverterByFileExtension(tileUrl);
+    }
 
-        uint16_t statusCode = pResponse->statusCode();
-        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          SPDLOG_LOGGER_ERROR(
-              pLogger,
-              "Received status code {} for tile content {}",
-              statusCode,
-              tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
-        }
+    if (converter) {
+      // Convert to gltf
+      CesiumGltfReader::GltfReaderOptions gltfOptions;
+      gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
+      gltfOptions.applyTextureTransform = applyTextureTransform;
+      GltfConverterResult result = converter(responseData, gltfOptions);
 
-        // find gltf converter
-        const auto& responseData = pResponse->data();
-        auto converter = GltfConverters::getConverterByMagic(responseData);
-        if (!converter) {
-          converter = GltfConverters::getConverterByFileExtension(
-              pCompletedRequest->url());
-        }
+      // Report any errors if there are any
+      logTileLoadResult(pLogger, tileUrl, result.errors);
+      if (result.errors || !result.model) {
+        return TileLoadResult::createFailedResult();
+      }
 
-        if (converter) {
-          // Convert to gltf
-          CesiumGltfReader::GltfReaderOptions gltfOptions;
-          gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
-          gltfOptions.applyTextureTransform = applyTextureTransform;
-          GltfConverterResult result = converter(responseData, gltfOptions);
+      return TileLoadResult{
+          std::move(*result.model),
+          CesiumGeometry::Axis::Y,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          tileUrl,
+          {},
+          CesiumAsync::RequestData{},
+          TileLoadResultState::Success};
+    }
 
-          // Report any errors if there are any
-          logTileLoadResult(pLogger, tileUrl, result.errors);
-          if (result.errors || !result.model) {
-            return TileLoadResult::createFailedResult(
-                std::move(pCompletedRequest));
-          }
-
-          return TileLoadResult{
-              std::move(*result.model),
-              CesiumGeometry::Axis::Y,
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              std::move(pCompletedRequest),
-              {},
-              TileLoadResultState::Success};
-        }
-
-        // content type is not supported
-        return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
-      });
+    // content type is not supported
+    return TileLoadResult::createFailedResult();
+  });
 }
 } // namespace
 
@@ -177,17 +150,16 @@ CesiumAsync::Future<TileLoadResult>
 ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& tile = loadInput.tile;
   const auto& asyncSystem = loadInput.asyncSystem;
-  const auto& pAssetAccessor = loadInput.pAssetAccessor;
   const auto& pLogger = loadInput.pLogger;
-  const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+  const auto& responsesByUrl = loadInput.responsesByUrl;
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
       std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
   if (!pOctreeID) {
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // find the subtree ID
@@ -197,8 +169,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
           *pOctreeID);
   uint32_t subtreeLevelIdx = subtreeID.level / this->_subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
-    return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createFailedResult(nullptr));
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult());
   }
 
   uint64_t subtreeMortonIdx =
@@ -206,33 +178,60 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   auto subtreeIt =
       this->_loadedSubtrees[subtreeLevelIdx].find(subtreeMortonIdx);
   if (subtreeIt == this->_loadedSubtrees[subtreeLevelIdx].end()) {
-    // subtree is not loaded, so load it now.
     std::string subtreeUrl = ImplicitTilingUtilities::resolveUrl(
         this->_baseUrl,
         this->_subtreeUrlTemplate,
         subtreeID);
+
+    // If subtree url is not loaded, request it and come back later
+    auto foundIt = responsesByUrl.find(subtreeUrl);
+    if (foundIt == responsesByUrl.end()) {
+      return asyncSystem.createResolvedFuture<TileLoadResult>(
+          TileLoadResult::createRequestResult(
+              CesiumAsync::RequestData{subtreeUrl, {}}));
+    }
+
+    auto baseResponse = foundIt->second.pResponse;
+
+    uint16_t statusCode = baseResponse->statusCode();
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Received status code {} for tile content {}",
+          statusCode,
+          subtreeUrl);
+      return asyncSystem.createResolvedFuture<TileLoadResult>(
+          TileLoadResult::createFailedResult());
+    }
+
     return SubtreeAvailability::loadSubtree(
                ImplicitTileSubdivisionScheme::Octree,
                this->_subtreeLevels,
                asyncSystem,
-               pAssetAccessor,
                pLogger,
                subtreeUrl,
-               requestHeaders)
-        .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
-                                                subtreeAvailability) mutable {
-          if (subtreeAvailability) {
-            this->addSubtreeAvailability(
-                subtreeID,
-                std::move(*subtreeAvailability));
+               baseResponse,
+               responsesByUrl)
+        .thenInMainThread(
+            [this,
+             subtreeID](SubtreeAvailability::LoadResult&& loadResult) mutable {
+              if (loadResult.first) {
+                // Availability success
+                this->addSubtreeAvailability(
+                    subtreeID,
+                    std::move(*loadResult.first));
 
-            // tell client to retry later
-            return TileLoadResult::createRetryLaterResult(nullptr);
-          } else {
-            // Subtree load failed, so this tile fails, too.
-            return TileLoadResult::createFailedResult(nullptr);
-          }
-        });
+                // tell client to retry later
+                return TileLoadResult::createRetryLaterResult();
+              } else if (!loadResult.second.url.empty()) {
+                // No availability, but a url was requested
+                // Let this work go back into the request queue
+                return TileLoadResult::createRequestResult(loadResult.second);
+              } else {
+                // Subtree load failed, so this tile fails, too.
+                return TileLoadResult::createFailedResult();
+              }
+            });
   }
 
   // subtree is available, so check if tile has content or not. If it has, then
@@ -245,8 +244,9 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        std::string(),
         {},
+        CesiumAsync::RequestData{},
         TileLoadResultState::Success});
   }
 
@@ -254,14 +254,47 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       this->_baseUrl,
       this->_contentUrlTemplate,
       *pOctreeID);
+
+  // If tile url is not loaded, request it and come back later
+  auto foundIt = responsesByUrl.find(tileUrl);
+  if (foundIt == responsesByUrl.end()) {
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createRequestResult(
+            CesiumAsync::RequestData{tileUrl, {}}));
+  }
+
+  const CesiumAsync::ResponseData& responseData = foundIt->second;
+  assert(responseData.pResponse);
+  uint16_t statusCode = responseData.pResponse->statusCode();
+  assert(statusCode != 0);
+  if (statusCode < 200 || statusCode >= 300) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Received status code {} for tile content {}",
+        statusCode,
+        tileUrl);
+    return asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult::createFailedResult());
+  }
+
   return requestTileContent(
       pLogger,
       asyncSystem,
-      pAssetAccessor,
       tileUrl,
-      requestHeaders,
+      foundIt->second.pResponse->data(),
       contentOptions.ktx2TranscodeTargets,
       contentOptions.applyTextureTransform);
+}
+
+void ImplicitOctreeLoader::getLoadWork(
+    const Tile*,
+    CesiumAsync::RequestData&,
+    TileLoaderCallback& outCallback) {
+  // loadTileContent will control request / processing flow
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {

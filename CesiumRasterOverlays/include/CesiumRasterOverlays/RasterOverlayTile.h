@@ -13,6 +13,10 @@ namespace CesiumUtility {
 struct Credit;
 }
 
+namespace Cesium3DTilesSelection {
+class TilesetContentManager;
+}
+
 namespace CesiumRasterOverlays {
 
 class RasterOverlay;
@@ -21,7 +25,7 @@ class RasterOverlayTileProvider;
 /**
  * @brief Raster image data for a tile in a quadtree.
  *
- * Instances of this clas represent tiles of a quadtree that have
+ * Instances of this class represent tiles of a quadtree that have
  * an associated image, which us used as an imagery overlay
  * for tile geometry. The connection between the imagery data
  * and the actual tile geometry is established via the
@@ -39,12 +43,17 @@ public:
     /**
      * @brief Indicator for a placeholder tile.
      */
-    Placeholder = -2,
+    Placeholder = -3,
 
     /**
      * @brief The image request or image creation failed.
      */
-    Failed = -1,
+    Failed = -2,
+
+    /**
+     * @brief An additional content request is needed
+     */
+    RequestRequired = -1,
 
     /**
      * @brief The initial state
@@ -243,6 +252,7 @@ public:
 
 private:
   friend class RasterOverlayTileProvider;
+  friend class Cesium3DTilesSelection::TilesetContentManager;
 
   void setState(LoadState newState) noexcept;
 

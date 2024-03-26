@@ -73,12 +73,10 @@ public:
   virtual ~WebMapTileServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
-
-    LoadTileImageFromUrlOptions options;
-    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      RequestData& requestData,
+      std::string&) const override {
 
     uint32_t level = tileID.level;
     uint32_t col = tileID.x;
@@ -144,7 +142,7 @@ protected:
           "tilematrix={tilematrix}&tilerow={tilerow}&tilecol={tilecol}";
     }
 
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
+    requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
         urlTemplate,
         [&map = urlTemplateMap](const std::string& placeholder) {
           auto it = map.find(placeholder);
@@ -152,7 +150,44 @@ protected:
                                  : CesiumUtility::Uri::escape(it->second);
         });
 
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
+    return true;
+  }
+
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const override {
+
+    LoadTileImageFromUrlOptions options;
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      std::string message = "Image response code " +
+                            std::to_string(statusCode) + " for " + requestUrl;
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {message},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    if (data.empty()) {
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {"Image response for " + requestUrl + " is empty."},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    return this->loadTileImageFromUrl(requestUrl, data, std::move(options));
   }
 
 private:

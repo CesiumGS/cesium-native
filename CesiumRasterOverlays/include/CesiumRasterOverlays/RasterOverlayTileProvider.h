@@ -5,6 +5,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -15,59 +16,38 @@
 #include <cassert>
 #include <optional>
 
+namespace CesiumUtility {
+struct Credit;
+} // namespace CesiumUtility
+
 namespace CesiumRasterOverlays {
 
 class RasterOverlay;
 class RasterOverlayTile;
 class IPrepareRasterOverlayRendererResources;
 
-/**
- * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
- */
-struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
-  /**
-   * @brief The loaded image.
-   *
-   * This will be an empty optional if the loading failed. In this case,
-   * the `errors` vector will contain the corresponding error messages.
-   */
+struct RasterLoadResult {
   std::optional<CesiumGltf::ImageCesium> image{};
-
-  /**
-   * @brief The projected rectangle defining the bounds of this image.
-   *
-   * The rectangle extends from the left side of the leftmost pixel to the
-   * right side of the rightmost pixel, and similar for the vertical direction.
-   */
-  CesiumGeometry::Rectangle rectangle{};
-
-  /**
-   * @brief The {@link Credit} objects that decribe the attributions that
-   * are required when using the image.
-   */
-  std::vector<CesiumUtility::Credit> credits{};
-
-  /**
-   * @brief Error messages from loading the image.
-   *
-   * If the image was loaded successfully, this should be empty.
-   */
+  CesiumGeometry::Rectangle rectangle = {};
+  std::vector<CesiumUtility::Credit> credits = {};
   std::vector<std::string> errors{};
-
-  /**
-   * @brief Warnings from loading the image.
-   */
-  // Implementation note: In the current implementation, this will
-  // always be empty, but it might contain warnings in the future,
-  // when other image types or loaders are used.
   std::vector<std::string> warnings{};
-
-  /**
-   * @brief Whether more detailed data, beyond this image, is available within
-   * the bounds of this image.
-   */
   bool moreDetailAvailable = false;
+
+  std::vector<CesiumAsync::RequestData> missingRequests = {};
+
+  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
+
+  void* pRendererResources = nullptr;
+
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile = {};
 };
+
+using RasterProcessingCallback =
+    std::function<CesiumAsync::Future<RasterLoadResult>(
+        RasterOverlayTile&,
+        RasterOverlayTileProvider*,
+        const CesiumAsync::UrlResponseDataMap&)>;
 
 /**
  * @brief Options for {@link RasterOverlayTileProvider::loadTileImageFromUrl}.
@@ -83,7 +63,7 @@ struct LoadTileImageFromUrlOptions {
    * @brief The credits to display with this tile.
    *
    * This property is copied verbatim to the
-   * {@link LoadedRasterOverlayImage::credits} property.
+   * {@link RasterLoadResult::credits} property.
    */
   std::vector<CesiumUtility::Credit> credits{};
 
@@ -92,38 +72,6 @@ struct LoadTileImageFromUrlOptions {
    * the bounds of this image.
    */
   bool moreDetailAvailable = true;
-
-  /**
-   * @brief Whether empty (zero length) images are accepted as a valid
-   * response.
-   *
-   * If true, an otherwise valid response with zero length will be accepted as
-   * a valid 0x0 image. If false, such a response will be reported as an
-   * error.
-   *
-   * {@link RasterOverlayTileProvider::loadTile} and
-   * {@link RasterOverlayTileProvider::loadTileThrottled} will treat such an
-   * image as "failed" and use the quadtree parent (or ancestor) image
-   * instead, but will not report any error.
-   *
-   * This flag should only be set to `true` when the tile source uses a
-   * zero-length response as an indication that this tile is - as expected -
-   * not available.
-   */
-  bool allowEmptyImages = false;
-};
-
-class RasterOverlayTileProvider;
-
-/**
- * @brief Holds a tile and its corresponding tile provider. Used as the return
- * value of {@link RasterOverlayTileProvider::loadTile}.
- */
-struct TileProviderAndTile {
-  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
-
-  ~TileProviderAndTile() noexcept;
 };
 
 /**
@@ -287,11 +235,20 @@ public:
   int64_t getTileDataBytes() const noexcept { return this->_tileDataBytes; }
 
   /**
-   * @brief Returns the number of tiles that are currently loading.
+   * @brief Incremement number of bytes loaded from outside caller
+   *
+   * @param bytes Number of bytes to add to our count
    */
-  uint32_t getNumberOfTilesLoading() const noexcept {
-    assert(this->_totalTilesCurrentlyLoading > -1);
-    return this->_totalTilesCurrentlyLoading;
+  void incrementTileDataBytes(CesiumGltf::ImageCesium& imageCesium) noexcept {
+    // If the image size hasn't been overridden, store the pixelData
+    // size now. We'll add this number to our total memory usage now,
+    // and remove it when the tile is later unloaded, and we must use
+    // the same size in each case.
+    if (imageCesium.sizeBytes < 0) {
+      imageCesium.sizeBytes = int64_t(imageCesium.pixelData.size());
+    }
+
+    _tileDataBytes += imageCesium.sizeBytes;
   }
 
   /**
@@ -316,91 +273,101 @@ public:
   /**
    * @brief Loads a tile immediately, without throttling requests.
    *
-   * If the tile is not in the `Tile::LoadState::Unloaded` state, this method
-   * returns without doing anything. Otherwise, it puts the tile into the
-   * `Tile::LoadState::Loading` state and begins the asynchronous process
-   * to load the tile. When the process completes, the tile will be in the
-   * `Tile::LoadState::Loaded` or `Tile::LoadState::Failed` state.
+   * If the tile is not in the `RasterOverlayTile::LoadState::Unloading`
+   * state, this method returns without doing anything. Otherwise, it puts the
+   * tile into the `RasterOverlayTile::LoadState::Loading` state and
+   * begins the asynchronous process to load the tile. When the process
+   * completes, the tile will be in the
+   * `RasterOverlayTile::LoadState::Loaded` or
+   * `RasterOverlayTile::LoadState::Failed` state.
    *
    * Calling this method on many tiles at once can result in very slow
    * performance. Consider using {@link loadTileThrottled} instead.
    *
-   * @param tile The tile to load.
-   * @return A future that, when the tile is loaded, resolves to the loaded tile
-   * and the tile provider that loaded it.
+   * @param tile The tile to load
+   * @param responsesByUrl Content responses already fetched by caller
+   * @param rasterCallback Loader callback to execute
    */
-  CesiumAsync::Future<TileProviderAndTile> loadTile(RasterOverlayTile& tile);
+  CesiumAsync::Future<RasterLoadResult> loadTile(
+      RasterOverlayTile& tile,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
+      RasterProcessingCallback rasterCallback);
 
   /**
-   * @brief Loads a tile, unless there are too many tile loads already in
-   * progress.
+   * @brief Loads a tile
    *
-   * If the tile is not in the `Tile::LoadState::Unloading` state, this method
-   * returns true without doing anything. If too many tile loads are
-   * already in flight, it returns false without doing anything. Otherwise, it
-   * puts the tile into the `Tile::LoadState::Loading` state, begins the
-   * asynchronous process to load the tile, and returns true. When the process
-   * completes, the tile will be in the `Tile::LoadState::Loaded` or
-   * `Tile::LoadState::Failed` state.
+   * It begins the asynchronous process to load the tile, and returns true. When
+   * the process completes, the tile will be in the
+   * `RasterOverlayTile::LoadState::Loaded` or
+   * `RasterOverlayTile::LoadState::Failed` state.
    *
-   * The number of allowable simultaneous tile requests is provided in the
-   * {@link RasterOverlayOptions::maximumSimultaneousTileLoads} property of
-   * {@link RasterOverlay::getOptions}.
-   *
-   * @param tile The tile to load.
-   * @returns True if the tile load process is started or is already complete,
-   * false if the load could not be started because too many loads are already
-   * in progress.
+   * @param tile The tile to load
+   * @param responsesByUrl Content responses already fetched by caller
+   * @param rasterCallback Loader callback to execute
+   * @returns RasterLoadResult indicating what happened
    */
-  bool loadTileThrottled(RasterOverlayTile& tile);
+  CesiumAsync::Future<RasterLoadResult> loadTileThrottled(
+      RasterOverlayTile& tile,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
+      RasterProcessingCallback rasterCallback);
+
+  /**
+   * @brief Gets the work needed to load a tile
+   *
+   * @param tile The tile to load
+   * @param outRequest Content request needed
+   * @param outCallback Loader callback to execute later
+   */
+  void getLoadTileThrottledWork(
+      const RasterOverlayTile& tile,
+      CesiumAsync::RequestData& outRequest,
+      RasterProcessingCallback& outCallback);
 
 protected:
   /**
    * @brief Loads the image for a tile.
    *
-   * @param overlayTile The overlay tile for which to load the image.
-   * @return A future that resolves to the image or error information.
+   * @param overlayTile The overlay tile to load the image.
+   * @param responsesByUrl Content responses already fetched by caller
+   * @return A future containing a RasterLoadResult
    */
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) = 0;
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      const RasterOverlayTile& overlayTile,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl) = 0;
+
+  /**
+   * @brief Get the work needed to loads the image for a tile.
+   *
+   * @param overlayTile The overlay tile to load the image.
+   * @param outRequest Content request needed
+   * @param outCallback Loader callback to execute later
+   */
+  virtual void getLoadTileImageWork(
+      const RasterOverlayTile& overlayTile,
+      CesiumAsync::RequestData& outRequest,
+      RasterProcessingCallback& outCallback) = 0;
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
    *
    * This is a useful helper function for implementing {@link loadTileImage}.
    *
-   * @param url The URL.
-   * @param headers The request headers.
-   * @param options Additional options for the load process.
-   * @return A future that resolves to the image or error information.
+   * @param url The URL used to fetch image data
+   * @param statusCode HTTP code returned from content fetch
+   * @param data Bytes of url content response
+   * @param options Additional options for the load process
+   * @return A future containing a RasterLoadResult
    */
-  CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
+  CesiumAsync::Future<RasterLoadResult> loadTileImageFromUrl(
       const std::string& url,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
+      const gsl::span<const std::byte>& data,
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  CesiumAsync::Future<TileProviderAndTile>
-  doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
-
-  /**
-   * @brief Begins the process of loading of a tile.
-   *
-   * This method should be called at the beginning of the tile load process.
-   *
-   * @param isThrottledLoad True if the load was originally throttled.
-   */
-  void beginTileLoad(bool isThrottledLoad) noexcept;
-
-  /**
-   * @brief Finalizes loading of a tile.
-   *
-   * This method should be called at the end of the tile load process,
-   * no matter whether the load succeeded or failed.
-   *
-   * @param isThrottledLoad True if the load was originally throttled.
-   */
-  void finalizeTileLoad(bool isThrottledLoad) noexcept;
+  CesiumAsync::Future<RasterLoadResult> doLoad(
+      RasterOverlayTile& tile,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
+      RasterProcessingCallback rasterCallback);
 
 private:
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
@@ -414,8 +381,6 @@ private:
   CesiumGeometry::Rectangle _coverageRectangle;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pPlaceholder;
   int64_t _tileDataBytes;
-  int32_t _totalTilesCurrentlyLoading;
-  int32_t _throttledTilesCurrentlyLoading;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");

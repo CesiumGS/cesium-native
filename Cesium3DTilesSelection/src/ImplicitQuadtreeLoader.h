@@ -42,6 +42,11 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
+  void getLoadWork(
+      const Tile* pTile,
+      CesiumAsync::RequestData& outRequest,
+      TileLoaderCallback& outCallback) override;
+
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
   uint32_t getSubtreeLevels() const noexcept;

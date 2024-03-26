@@ -52,9 +52,20 @@ public:
   // The tiles that will return an error from loadQuadtreeTileImage.
   std::vector<QuadtreeTileID> errorTiles;
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadQuadtreeTileImage(const QuadtreeTileID& tileID) const {
-    LoadedRasterOverlayImage result;
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID&,
+      RequestData& requestData,
+      std::string&) const {
+    requestData.url = "test";
+    return true;
+  };
+
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const QuadtreeTileID& tileID,
+      const std::string&,
+      uint16_t,
+      const gsl::span<const std::byte>&) const {
+    RasterLoadResult result;
     result.rectangle = this->getTilingScheme().tileToRectangle(tileID);
 
     if (std::find(errorTiles.begin(), errorTiles.end(), tileID) !=
@@ -159,7 +170,28 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         GeographicProjection::computeMaximumProjectedRectangle();
     IntrusivePointer<RasterOverlayTile> pTile =
         pProvider->getTile(rectangle, glm::dvec2(256));
-    pProvider->loadTile(*pTile);
+
+    auto pMockResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::vector<std::byte>());
+    auto pMockRequest = std::make_shared<SimpleAssetRequest>(
+        "GET",
+        "test",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockResponse));
+
+    RequestData requestData;
+    RasterProcessingCallback rasterCallback;
+    pProvider->getLoadTileThrottledWork(*pTile, requestData, rasterCallback);
+
+    UrlResponseDataMap responseDataMap;
+    responseDataMap.emplace(
+        "test",
+        ResponseData{pMockRequest.get(), pMockRequest->response()});
+
+    pProvider->loadTile(*pTile, responseDataMap, rasterCallback);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
@@ -213,7 +245,28 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     IntrusivePointer<RasterOverlayTile> pTile =
         pProvider->getTile(tileRectangle, targetScreenPixels);
-    pProvider->loadTile(*pTile);
+
+    RequestData requestData;
+    RasterProcessingCallback rasterCallback;
+    pProvider->getLoadTileThrottledWork(*pTile, requestData, rasterCallback);
+
+    auto pMockResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::vector<std::byte>());
+    auto pMockRequest = std::make_shared<SimpleAssetRequest>(
+        "GET",
+        "test",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockResponse));
+
+    UrlResponseDataMap responseDataMap;
+    responseDataMap.emplace(
+        "test",
+        ResponseData{pMockRequest.get(), pMockRequest->response()});
+
+    pProvider->loadTile(*pTile, responseDataMap, rasterCallback);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();

@@ -21,7 +21,58 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class Tile;
+class TilesetContentLoader;
+
+enum class TileLoadPriorityGroup {
+  /**
+   * @brief Low priority tiles that aren't needed right now, but
+   * are being preloaded for the future.
+   */
+  Preload = 0,
+
+  /**
+   * @brief Medium priority tiles that are needed to render the current view
+   * the appropriate level-of-detail.
+   */
+  Normal = 1,
+
+  /**
+   * @brief High priority tiles that are causing extra detail to be rendered
+   * in the scene, potentially creating a performance problem and aliasing
+   * artifacts.
+   */
+  Urgent = 2
+};
+
+struct TileLoadRequest {
+  /**
+   * @brief The tile to be loaded.
+   */
+  Tile* pTile = nullptr;
+
+  /**
+   * @brief The priority group (low / medium / high) in which to load this
+   * tile.
+   *
+   * All tiles in a higher priority group are given a chance to load before
+   * any tiles in a lower priority group.
+   */
+  TileLoadPriorityGroup group = TileLoadPriorityGroup::Normal;
+
+  /**
+   * @brief The priority of this tile within its priority group.
+   *
+   * Tiles with a _lower_ value for this property load sooner!
+   */
+  double priority = 0;
+
+  bool operator<(const TileLoadRequest& rhs) const noexcept {
+    if (this->group == rhs.group)
+      return this->priority < rhs.priority;
+    else
+      return this->group > rhs.group;
+  }
+};
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -33,18 +84,16 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @param tile The {@link Tile} that the content belongs to.
    * @param contentOptions The content options the {@link TilesetContentLoader} will use to process the content of the tile.
    * @param asyncSystem The async system to use for tile content loading.
-   * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pLogger The logger that will be used
-   * @param requestHeaders The request headers that will be attached to the
+   * @param UrlResponseDataMap Content responses fetched by the caller
    * request.
    */
   TileLoadInput(
       const Tile& tile,
       const TilesetContentOptions& contentOptions,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl);
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -62,20 +111,14 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   const CesiumAsync::AsyncSystem& asyncSystem;
 
   /**
-   * @brief The asset accessor to make requests for the tile content over the
-   * wire.
-   */
-  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor;
-
-  /**
    * @brief The logger that receives details of loading errors and warnings.
    */
   const std::shared_ptr<spdlog::logger>& pLogger;
 
   /**
-   * @brief The request headers that will be attached to the request.
+   * @brief Response data provided by the caller, stored by url
    */
-  const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+  const CesiumAsync::UrlResponseDataMap& responsesByUrl;
 };
 
 /**
@@ -101,6 +144,10 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   TileLoadResultState state;
 };
 
+using TileLoaderCallback = std::function<CesiumAsync::Future<TileLoadResult>(
+    const TileLoadInput& loadInput,
+    TilesetContentLoader*)>;
+
 /**
  * @brief The loader interface to load the tile content
  */
@@ -119,6 +166,11 @@ public:
    */
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
+
+  virtual void getLoadWork(
+      const Tile* pTile,
+      CesiumAsync::RequestData& outRequest,
+      TileLoaderCallback& outCallback) = 0;
 
   /**
    * @brief Create the tile's children.

@@ -26,6 +26,11 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
+  void getLoadWork(
+      const Tile* pTile,
+      CesiumAsync::RequestData& outRequest,
+      TileLoaderCallback& outCallback) override;
+
   TileChildrenResult createTileChildren(const Tile& tile) override;
 
   static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
@@ -50,10 +55,11 @@ public:
       TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result);
 
 private:
-  void refreshTokenInMainThread(
+  void refreshToken(
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const CesiumAsync::AsyncSystem& asyncSystem);
+      const std::string& requestUrl,
+      const uint16_t responseStatusCode,
+      const gsl::span<const std::byte>& responseData);
 
   TokenRefreshState _refreshTokenState;
   int64_t _ionAssetID;

@@ -70,35 +70,60 @@ public:
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const override {
 
     LoadTileImageFromUrlOptions options;
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
 
-    uint32_t level = tileID.level - this->getMinimumLevel();
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      std::string message = "Image response code " +
+                            std::to_string(statusCode) + " for " + requestUrl;
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {message},
+              {},
+              options.moreDetailAvailable});
+    }
 
+    if (data.empty()) {
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {"Image response for " + requestUrl + " is empty."},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    return this->loadTileImageFromUrl(requestUrl, data, std::move(options));
+  }
+
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      RequestData& requestData,
+      std::string& errorString) const override {
+
+    uint32_t level = tileID.level - this->getMinimumLevel();
     if (level < _tileSets.size()) {
       const TileMapServiceTileset& tileset = _tileSets[level];
-      std::string url = CesiumUtility::Uri::resolve(
+      requestData.url = CesiumUtility::Uri::resolve(
           this->_url,
           tileset.url + "/" + std::to_string(tileID.x) + "/" +
               std::to_string(tileID.y) + this->_fileExtension,
           true);
-      return this->loadTileImageFromUrl(
-          url,
-          this->_headers,
-          std::move(options));
+      return true;
     } else {
-      return this->getAsyncSystem()
-          .createResolvedFuture<LoadedRasterOverlayImage>(
-              {std::nullopt,
-               options.rectangle,
-               {},
-               {"Failed to load image from TMS."},
-               {},
-               options.moreDetailAvailable});
+      errorString = "Failed to load image from TMS.";
+      return false;
     }
   }
 
