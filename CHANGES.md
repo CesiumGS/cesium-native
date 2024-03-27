@@ -2,33 +2,49 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
+
 ##### Additions :tada:
 
-- Added `IntersectionTests::pointInTriangle`, which tests if a point is inside the triangle specified with 3D coordinates. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
 - Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
+- Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
+- Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
+
+##### Fixes :wrench:
+
+- Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
 
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:
 
 - Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
-- Moved `ReferenceCountedNonThreadSafe<T>` to `ReferenceCounted.h`. It also now a type alias for `ReferenceCounted<T, false>` rather than an actual class.
+- Moved `ReferenceCountedNonThreadSafe<T>` to `ReferenceCounted.h`. It is also now a type alias for `ReferenceCounted<T, false>` rather than an actual class.
+- Renamed `applyKHRTextureTransform` to `applyKhrTextureTransform`. The corresponding header file was similarly renamed to `CesiumGltf/applyKhrTextureTransform.h`.
 
 ##### Additions :tada:
 
 - Added `TextureViewOptions`, which includes the following flags:
-  - `applyKhrTextureTransformExtension` . When true, the view will automatically transform texture coordinates before sampling the texture.
-  - `makeImageCopy`. When true, the view will make its own CPU copy of the image data.
-- Added `TextureView`, which views an arbitrary glTF texture and can be affected by `TextureViewOptions`. `FeatureIdTextureView` and `PropertyTexturePropertyView` now inherit this class.
-- Added `options` parameter to `PropertyTextureView::getPropertyView` and `PropertyTextureView::forEachProperty`, which allow views to be constructed with property-specific options.
+  - `applyKhrTextureTransformExtension`: When true, the view will automatically transform texture coordinates before sampling the texture.
+  - `makeImageCopy`: When true, the view will make its own CPU copy of the image data.
+- Added `TextureView`. It views an arbitrary glTF texture and can be affected by `TextureViewOptions`. `FeatureIdTextureView` and `PropertyTexturePropertyView` now inherit from this class.
+- Added `options` parameter to `PropertyTextureView::getPropertyView` and `PropertyTextureView::forEachProperty`, allowing views to be constructed with property-specific options.
 - Added `KhrTextureTransform`, a utility class that parses the `KHR_texture_transform` glTF extension and reports whether it is valid. UVs may be transformed on the CPU using `applyTransform`.
 - Added `contains` method to `BoundingSphere`.
 - Added `GlobeRectangle::MAXIMUM` static field.
 - Added `ReferenceCountedThreadSafe` type alias.
+- Added `SimplePlanarEllipsoidCurve` class to help with calculating fly-to paths.
+- Added `sizeBytes` field to `ImageCesium`, allowing its size to be tracked for caching purposes even after its `pixelData` has been cleared.
+- Added `scaleToGeocentricSurface` method to `Ellipsoid`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
+- Fixed an incorrect computation of wrapped texture coordinates in `applySamplerWrapS` and `applySamplerWrapT`.
 
 ### v0.32.0 - 2024-02-01
 
@@ -42,7 +58,6 @@
 - Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
 - Added `applyTextureTransform` property to `TilesetOptions`, which indicates whether to preemptively apply transforms to texture coordinates for textures with the `KHR_texture_transform` extension.
 - Added `loadGltf` method to `GltfReader`, making it easier to do a full, asynchronous load of a glTF.
-- Added `GlobeFlightPath` class to help with calculating fly-to paths.
 
 ##### Fixes :wrench:
 

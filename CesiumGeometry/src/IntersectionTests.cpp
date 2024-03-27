@@ -32,7 +32,7 @@ IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
   return ray.getOrigin() + ray.getDirection() * t;
 }
 
-bool IntersectionTests::pointInTriangle2D(
+bool IntersectionTests::pointInTriangle(
     const glm::dvec2& point,
     const glm::dvec2& triangleVertA,
     const glm::dvec2& triangleVertB,
@@ -41,6 +41,13 @@ bool IntersectionTests::pointInTriangle2D(
   const glm::dvec2 ab = triangleVertB - triangleVertA;
   const glm::dvec2 bc = triangleVertC - triangleVertB;
   const glm::dvec2 ca = triangleVertA - triangleVertC;
+
+  // Return false for degenerate triangles.
+  if (glm::length2(ab) < CesiumUtility::Math::Epsilon8 ||
+      glm::length2(bc) < CesiumUtility::Math::Epsilon8 ||
+      glm::length2(ca) < CesiumUtility::Math::Epsilon8) {
+    return false;
+  }
 
   // Get the vector perpendicular to each triangle edge in the same 2D plane).
   const glm::dvec2 ab_perp(-ab.y, ab.x);
@@ -69,6 +76,8 @@ bool IntersectionTests::pointInTriangle(
     const glm::dvec3& triangleVertA,
     const glm::dvec3& triangleVertB,
     const glm::dvec3& triangleVertC) noexcept {
+  // PERFORMANCE_IDEA: Investigate if there is a faster algorithm that can do
+  // this test, but without needing to compute barycentric coordinates
   glm::dvec3 unused;
   return IntersectionTests::pointInTriangle(
       point,
@@ -84,6 +93,10 @@ bool IntersectionTests::pointInTriangle(
     const glm::dvec3& triangleVertB,
     const glm::dvec3& triangleVertC,
     glm::dvec3& barycentricCoordinates) noexcept {
+  // PERFORMANCE_IDEA: If optimization is necessary in the future, there are
+  // algorithms that avoid length computations (which involve square root
+  // operations).
+
   // Define the triangle edges.
   const glm::dvec3 ab = triangleVertB - triangleVertA;
   const glm::dvec3 bc = triangleVertC - triangleVertB;
@@ -102,18 +115,22 @@ bool IntersectionTests::pointInTriangle(
   const glm::dvec3 ap = point - triangleVertA;
   const double triangleABPRatio =
       glm::length(glm::cross(ab, ap)) * triangleAreaInv;
-  if (triangleABPRatio < 0 || triangleABPRatio > 1) {
+  if (triangleABPRatio > 1) {
     return false;
   }
 
   const glm::dvec3 bp = point - triangleVertB;
   const double triangleBCPRatio =
       glm::length(glm::cross(bc, bp)) * triangleAreaInv;
-  if (triangleBCPRatio < 0 || triangleBCPRatio > 1) {
+  if (triangleBCPRatio > 1) {
     return false;
   }
 
   const double triangleCAPRatio = 1.0 - triangleABPRatio - triangleBCPRatio;
+  if (triangleCAPRatio < 0) {
+    return false;
+  }
+
   barycentricCoordinates.x = triangleBCPRatio;
   barycentricCoordinates.y = triangleCAPRatio;
   barycentricCoordinates.z = triangleABPRatio;
