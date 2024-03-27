@@ -121,5 +121,38 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       CesiumGltf::Model& gltf,
       CesiumGltf::Buffer& destination,
       CesiumGltf::Buffer& source);
+
+  static void removeUnusedTextures(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedTextureIndices = {});
+  static void removeUnusedSamplers(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedSamplerIndices = {});
+  static void removeUnusedImages(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedImageIndices = {});
+  static void removeUnusedAccessors(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedAccessorIndices = {});
+  static void removeUnusedBufferViews(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedBufferViewIndices = {});
+
+  /**
+   * @brief Shrink buffers by removing any sections that are not referenced by
+   * any BufferView.
+   *
+   * @param gltf The glTF to modify.
+   */
+  static void compactBuffers(CesiumGltf::Model& gltf);
+
+  /**
+   * @brief Shrink a buffer by removing any sections that are not referenced by
+   * any BufferView.
+   *
+   * @param gltf The glTF to modify.
+   * @param bufferIndex The index of the buffer to compact.
+   */
+  static void compactBuffer(CesiumGltf::Model& gltf, int32_t bufferIndex);
 };
 } // namespace CesiumGltfContent

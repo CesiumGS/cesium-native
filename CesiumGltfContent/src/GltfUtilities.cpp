@@ -3,10 +3,20 @@
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
+#include <CesiumGltf/FeatureId.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 
 #include <cstring>
+#include <unordered_set>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -218,6 +228,397 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
     bufferView.buffer = int32_t(destinationIndex);
     bufferView.byteOffset += int64_t(start);
+  }
+}
+
+namespace {
+
+struct VisitTextureIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    // Find textures in materials
+    for (Material& material : gltf.materials) {
+      if (material.emissiveTexture)
+        callback(material.emissiveTexture->index);
+      if (material.normalTexture)
+        callback(material.normalTexture->index);
+      if (material.pbrMetallicRoughness) {
+        if (material.pbrMetallicRoughness->baseColorTexture)
+          callback(material.pbrMetallicRoughness->baseColorTexture->index);
+        if (material.pbrMetallicRoughness->metallicRoughnessTexture)
+          callback(
+              material.pbrMetallicRoughness->metallicRoughnessTexture->index);
+      }
+    }
+
+    // Find textures in metadata
+    for (Mesh& mesh : gltf.meshes) {
+      for (MeshPrimitive& primitive : mesh.primitives) {
+        ExtensionExtMeshFeatures* pMeshFeatures =
+            primitive.getExtension<ExtensionExtMeshFeatures>();
+        if (pMeshFeatures) {
+          for (FeatureId& featureId : pMeshFeatures->featureIds) {
+            if (featureId.texture)
+              callback(featureId.texture->index);
+          }
+        }
+      }
+    }
+
+    ExtensionModelExtStructuralMetadata* pMetadata =
+        gltf.getExtension<ExtensionModelExtStructuralMetadata>();
+    if (pMetadata) {
+      for (PropertyTexture& propertyTexture : pMetadata->propertyTextures) {
+        for (auto& pair : propertyTexture.properties) {
+          callback(pair.second.index);
+        }
+      }
+    }
+  }
+};
+
+struct VisitSamplerIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    // Find samplers in textures
+    for (Texture& texture : gltf.textures) {
+      callback(texture.sampler);
+    }
+  }
+};
+
+// Get a map of old IDs to new ones after all the unused IDs have been
+// removed. A removed ID will map to -1.
+std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
+  std::vector<int32_t> indexMap;
+  indexMap.reserve(usedIndices.size());
+
+  int32_t nextIndex = 0;
+  for (size_t i = 0; i < usedIndices.size(); ++i) {
+    if (usedIndices[i]) {
+      indexMap.push_back(nextIndex);
+      ++nextIndex;
+    } else {
+      indexMap.push_back(-1);
+    }
+  }
+
+  return indexMap;
+}
+
+struct VisitImageIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    // Find images in textures
+    for (Texture& texture : gltf.textures) {
+      callback(texture.source);
+
+      ExtensionKhrTextureBasisu* pBasis =
+          texture.getExtension<ExtensionKhrTextureBasisu>();
+      if (pBasis)
+        callback(pBasis->source);
+
+      ExtensionTextureWebp* pWebP =
+          texture.getExtension<ExtensionTextureWebp>();
+      if (pWebP)
+        callback(pWebP->source);
+    }
+  }
+};
+
+struct VisitAccessorIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (Mesh& mesh : gltf.meshes) {
+      for (MeshPrimitive& primitive : mesh.primitives) {
+        callback(primitive.indices);
+
+        for (auto& pair : primitive.attributes) {
+          callback(pair.second);
+        }
+
+        ExtensionCesiumTileEdges* pTileEdges =
+            primitive.getExtension<ExtensionCesiumTileEdges>();
+        if (pTileEdges) {
+          callback(pTileEdges->left);
+          callback(pTileEdges->bottom);
+          callback(pTileEdges->right);
+          callback(pTileEdges->top);
+        }
+      }
+    }
+
+    for (Animation& animation : gltf.animations) {
+      for (AnimationSampler& sampler : animation.samplers) {
+        callback(sampler.input);
+        callback(sampler.output);
+      }
+    }
+
+    for (Skin& skin : gltf.skins) {
+      callback(skin.inverseBindMatrices);
+    }
+
+    for (Node& node : gltf.nodes) {
+      ExtensionExtMeshGpuInstancing* pInstancing =
+          node.getExtension<ExtensionExtMeshGpuInstancing>();
+      if (pInstancing) {
+        for (auto& pair : pInstancing->attributes) {
+          callback(pair.second);
+        }
+      }
+    }
+  }
+};
+
+struct VisitBufferViewIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (Accessor& accessor : gltf.accessors) {
+      callback(accessor.bufferView);
+
+      if (accessor.sparse) {
+        callback(accessor.sparse->indices.bufferView);
+        callback(accessor.sparse->values.bufferView);
+      }
+    }
+
+    for (Image& image : gltf.images) {
+      callback(image.bufferView);
+    }
+
+    for (Mesh& mesh : gltf.meshes) {
+      for (MeshPrimitive& primitive : mesh.primitives) {
+        ExtensionModelExtStructuralMetadata* pMetadata =
+            primitive.getExtension<ExtensionModelExtStructuralMetadata>();
+        if (pMetadata) {
+          for (PropertyTable& propertyTable : pMetadata->propertyTables) {
+            for (auto& pair : propertyTable.properties) {
+              callback(pair.second.values);
+              callback(pair.second.arrayOffsets);
+              callback(pair.second.stringOffsets);
+            }
+          }
+        }
+
+        ExtensionKhrDracoMeshCompression* pDraco =
+            primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+        if (pDraco) {
+          callback(pDraco->bufferView);
+        }
+      }
+    }
+  }
+};
+
+template <typename T, typename TVisitFunction>
+void removeUnusedElements(
+    Model& gltf,
+    const std::vector<int32_t>& extraUsedIndices,
+    std::vector<T>& elements,
+    TVisitFunction&& visitFunction) {
+  std::vector<bool> usedElements(elements.size(), false);
+
+  for (int32_t index : extraUsedIndices) {
+    if (index >= 0 && size_t(index) < usedElements.size())
+      usedElements[size_t(index)] = true;
+  }
+
+  // Determine which elements are used.
+  visitFunction(gltf, [&usedElements](int32_t elementIndex) {
+    if (elementIndex >= 0 && size_t(elementIndex) < usedElements.size())
+      usedElements[size_t(elementIndex)] = true;
+  });
+
+  // Update the element indices based on the unused indices being removed.
+  std::vector<int32_t> indexMap = getIndexMap(usedElements);
+  visitFunction(gltf, [&indexMap](int32_t& elementIndex) {
+    if (elementIndex >= 0 && size_t(elementIndex) < indexMap.size()) {
+      int32_t newIndex = indexMap[size_t(elementIndex)];
+      assert(newIndex >= 0);
+      elementIndex = newIndex;
+    }
+  });
+
+  // Remove the unused elements.
+  elements.erase(
+      std::remove_if(
+          elements.begin(),
+          elements.end(),
+          [&usedElements, &elements](T& element) {
+            int64_t index = &element - &elements[0];
+            assert(index >= 0 && size_t(index) < usedElements.size());
+            return !usedElements[size_t(index)];
+          }),
+      elements.end());
+}
+
+} // namespace
+
+void GltfUtilities::removeUnusedTextures(
+    Model& gltf,
+    const std::vector<int32_t>& extraUsedTextureIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedTextureIndices,
+      gltf.textures,
+      VisitTextureIds());
+}
+
+void GltfUtilities::removeUnusedSamplers(
+    Model& gltf,
+    const std::vector<int32_t>& extraUsedSamplerIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedSamplerIndices,
+      gltf.samplers,
+      VisitSamplerIds());
+}
+
+void GltfUtilities::removeUnusedImages(
+    Model& gltf,
+    const std::vector<int32_t>& extraUsedImageIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedImageIndices,
+      gltf.images,
+      VisitImageIds());
+}
+
+void GltfUtilities::removeUnusedAccessors(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedAccessorIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedAccessorIndices,
+      gltf.accessors,
+      VisitAccessorIds());
+}
+
+void GltfUtilities::removeUnusedBufferViews(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedBufferViewIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedBufferViewIndices,
+      gltf.bufferViews,
+      VisitBufferViewIds());
+}
+
+void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
+  for (size_t i = 0;
+       i < gltf.buffers.size() && i < std::numeric_limits<int32_t>::max();
+       ++i) {
+    GltfUtilities::compactBuffer(gltf, int32_t(i));
+  }
+}
+
+namespace {
+
+void deleteBufferRange(
+    CesiumGltf::Model& gltf,
+    int32_t bufferIndex,
+    int64_t start,
+    int64_t end) {
+  Buffer* pBuffer = gltf.getSafe(&gltf.buffers, bufferIndex);
+  if (pBuffer == nullptr)
+    return;
+
+  assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+
+  int64_t bytesToRemove = end - start;
+
+  // Adjust bufferView offets for the removed bytes.
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer != bufferIndex)
+      continue;
+
+    // Sanity check that we're not removing a part of the buffer used by this
+    // bufferView.
+    assert(
+        bufferView.byteOffset >= end ||
+        (bufferView.byteOffset + bufferView.byteLength) <= start);
+
+    // If this bufferView starts after the bytes we're removing, adjust the
+    // start position accordingly.
+    if (bufferView.byteOffset >= start) {
+      bufferView.byteOffset -= bytesToRemove;
+    }
+  }
+
+  // Actually remove the bytes from the buffer.
+  pBuffer->byteLength -= bytesToRemove;
+  pBuffer->cesium.data.erase(
+      pBuffer->cesium.data.begin() + start,
+      pBuffer->cesium.data.begin() + end);
+}
+
+} // namespace
+
+void GltfUtilities::compactBuffer(
+    CesiumGltf::Model& gltf,
+    int32_t bufferIndex) {
+  Buffer* pBuffer = gltf.getSafe(&gltf.buffers, bufferIndex);
+  if (!pBuffer)
+    return;
+
+  assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+
+  struct BufferRange {
+    int64_t start; // first byte
+    int64_t end;   // one past last byte
+
+    // Order ranges by their start
+    bool operator<(const BufferRange& rhs) { return this->start < rhs.start; }
+  };
+
+  std::vector<BufferRange> usedRanges;
+
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer != bufferIndex)
+      continue;
+
+    int64_t start = bufferView.byteOffset;
+    int64_t end = start + bufferView.byteLength;
+
+    auto it = std::lower_bound(
+        usedRanges.begin(),
+        usedRanges.end(),
+        BufferRange{start, end});
+    it = usedRanges.insert(it, BufferRange{start, end});
+
+    // Check if we can merge with the previous range.
+    if (it != usedRanges.begin()) {
+      auto previousIt = it - 1;
+      if (previousIt->end >= it->start) {
+        // New range overlaps the previous, so combine them.
+        previousIt->end = std::max(previousIt->end, it->end);
+        it = usedRanges.erase(it) - 1;
+      }
+    }
+
+    // Check if we can merge with the next range.
+    auto nextIt = it + 1;
+    if (nextIt != usedRanges.end()) {
+      if (it->end >= nextIt->start) {
+        // New range overlaps the next, so combine them.
+        it->end = std::max(it->end, nextIt->end);
+        it = usedRanges.erase(nextIt) - 1;
+      }
+    }
+  }
+
+  // At this point, any gaps in the usedRanges represent buffer bytes that are
+  // not referenced by any bufferView. Work through it backwards so that we
+  // don't need to update the ranges as we delete unused data from the buffer.
+  BufferRange nextRange{pBuffer->byteLength, pBuffer->byteLength};
+  for (int64_t i = int64_t(usedRanges.size()) - 1; i >= 0; --i) {
+    BufferRange& usedRange = usedRanges[size_t(i)];
+    if (usedRange.end < nextRange.start) {
+      // This is a gap.
+      deleteBufferRange(gltf, bufferIndex, usedRange.end, nextRange.start);
+    }
+    nextRange = usedRange;
+  }
+
+  if (nextRange.start > 0) {
+    // There is a gap at the start of the buffer.
+    deleteBufferRange(gltf, bufferIndex, 0, nextRange.start);
   }
 }
 
