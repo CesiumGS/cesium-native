@@ -32,6 +32,10 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(glm::length(box->getHalfAxes()[0]) == Approx(100.0));
     CHECK(glm::length(box->getHalfAxes()[1]) == Approx(100.0));
     CHECK(glm::length(box->getHalfAxes()[2]) == Approx(10.0));
+
+    BoundingVolume next{};
+    TileBoundingVolumes::setOrientedBoundingBox(next, *box);
+    CHECK(next.box == bv.box);
   }
 
   SECTION("sphere") {
@@ -48,6 +52,10 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(sphere->getCenter().y == Approx(0.0));
     CHECK(sphere->getCenter().z == Approx(10.0));
     CHECK(sphere->getRadius() == Approx(141.4214));
+
+    BoundingVolume next{};
+    TileBoundingVolumes::setBoundingSphere(next, *sphere);
+    CHECK(next.sphere == bv.sphere);
   }
 
   SECTION("region") {
@@ -72,6 +80,10 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(region->getRectangle().getNorth() == Approx(0.6988897891));
     CHECK(region->getMinimumHeight() == Approx(0.0));
     CHECK(region->getMaximumHeight() == Approx(20.0));
+
+    BoundingVolume next{};
+    TileBoundingVolumes::setBoundingRegion(next, *region);
+    CHECK(next.region == bv.region);
   }
 
   SECTION("S2") {
@@ -91,6 +103,14 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(s2->getCellID().getID() == S2CellID::fromToken("89c6c7").getID());
     CHECK(s2->getMinimumHeight() == Approx(0.0));
     CHECK(s2->getMaximumHeight() == Approx(1000.0));
+
+    BoundingVolume next{};
+    TileBoundingVolumes::setS2CellBoundingVolume(next, *s2);
+    Extension3dTilesBoundingVolumeS2* pNextExtension =
+        bv.getExtension<Extension3dTilesBoundingVolumeS2>();
+    CHECK(pNextExtension->token == extension.token);
+    CHECK(pNextExtension->minimumHeight == extension.minimumHeight);
+    CHECK(pNextExtension->maximumHeight == extension.maximumHeight);
   }
 
   SECTION("invalid") {

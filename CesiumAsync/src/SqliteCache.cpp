@@ -8,12 +8,11 @@
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <spdlog/spdlog.h>
+#include <sqlite3.h>
 
 #include <cstddef>
 #include <stdexcept>
 #include <utility>
-
-#define CESIUM_SQLITE(name) name
 
 using namespace CesiumAsync;
 

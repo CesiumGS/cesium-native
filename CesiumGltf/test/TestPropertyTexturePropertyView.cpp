@@ -1,4 +1,6 @@
+#include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
+#include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -1766,5 +1768,285 @@ TEST_CASE("Check sampling with different sampler values") {
       REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
       REQUIRE(view.get(uv[0], uv[1]) == data[i]);
     }
+  }
+}
+
+TEST_CASE("Test PropertyTextureProperty constructs with "
+          "applyKhrTextureTransformExtension = true") {
+  std::vector<uint8_t> data{1, 2, 3, 4};
+
+  PropertyTextureProperty property;
+  property.texCoord = 0;
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      property.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.texCoord = 10;
+
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::SCALAR;
+  classProperty.componentType = ClassProperty::ComponentType::UINT8;
+
+  Sampler sampler;
+  sampler.wrapS = Sampler::WrapS::REPEAT;
+  sampler.wrapT = Sampler::WrapT::REPEAT;
+
+  ImageCesium image;
+  image.width = 2;
+  image.height = 2;
+  image.channels = 1;
+  image.bytesPerChannel = 1;
+
+  std::vector<std::byte>& imageData = image.pixelData;
+  imageData.resize(data.size());
+  std::memcpy(imageData.data(), data.data(), data.size());
+
+  property.channels = {0};
+
+  TextureViewOptions options;
+  options.applyKhrTextureTransformExtension = true;
+
+  PropertyTexturePropertyView<uint8_t>
+      view(property, classProperty, sampler, image, options);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+
+  auto textureTransform = view.getTextureTransform();
+  REQUIRE(textureTransform != std::nullopt);
+  REQUIRE(textureTransform->offset() == glm::dvec2(0.5, -0.5));
+  REQUIRE(textureTransform->rotation() == CesiumUtility::Math::PiOverTwo);
+  REQUIRE(textureTransform->scale() == glm::dvec2(0.5, 0.5));
+
+  // Texcoord is overridden by value in KHR_texture_transform.
+  REQUIRE(
+      view.getTexCoordSetIndex() == textureTransform->getTexCoordSetIndex());
+  REQUIRE(textureTransform->getTexCoordSetIndex() == 10);
+
+  // This transforms to the following UV values:
+  // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+  // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+  // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+  // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(1.0, 0),
+      glm::dvec2(0, 1.0),
+      glm::dvec2(1.0, 1.0)};
+
+  std::vector<uint8_t> expectedValues{4, 2, 3, 1};
+
+  for (size_t i = 0; i < texCoords.size(); i++) {
+    glm::dvec2 uv = texCoords[i];
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedValues[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == expectedValues[i]);
+  }
+}
+
+TEST_CASE("Test normalized PropertyTextureProperty constructs with "
+          "applyKhrTextureTransformExtension = true") {
+  std::vector<uint8_t> data{0, 64, 127, 255};
+
+  PropertyTextureProperty property;
+  property.texCoord = 0;
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      property.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.texCoord = 10;
+
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::SCALAR;
+  classProperty.componentType = ClassProperty::ComponentType::UINT8;
+  classProperty.normalized = true;
+
+  Sampler sampler;
+  sampler.wrapS = Sampler::WrapS::REPEAT;
+  sampler.wrapT = Sampler::WrapT::REPEAT;
+
+  ImageCesium image;
+  image.width = 2;
+  image.height = 2;
+  image.channels = 1;
+  image.bytesPerChannel = 1;
+
+  std::vector<std::byte>& imageData = image.pixelData;
+  imageData.resize(data.size());
+  std::memcpy(imageData.data(), data.data(), data.size());
+
+  property.channels = {0};
+
+  TextureViewOptions options;
+  options.applyKhrTextureTransformExtension = true;
+
+  PropertyTexturePropertyView<uint8_t, true>
+      view(property, classProperty, sampler, image, options);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+
+  auto textureTransform = view.getTextureTransform();
+  REQUIRE(textureTransform != std::nullopt);
+  REQUIRE(textureTransform->offset() == glm::dvec2(0.5, -0.5));
+  REQUIRE(textureTransform->rotation() == CesiumUtility::Math::PiOverTwo);
+  REQUIRE(textureTransform->scale() == glm::dvec2(0.5, 0.5));
+
+  // Texcoord is overridden by value in KHR_texture_transform.
+  REQUIRE(
+      view.getTexCoordSetIndex() == textureTransform->getTexCoordSetIndex());
+  REQUIRE(textureTransform->getTexCoordSetIndex() == 10);
+
+  // This transforms to the following UV values:
+  // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+  // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+  // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+  // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(1.0, 0),
+      glm::dvec2(0, 1.0),
+      glm::dvec2(1.0, 1.0)};
+
+  std::vector<uint8_t> expectedValues{255, 64, 127, 0};
+
+  for (size_t i = 0; i < texCoords.size(); i++) {
+    glm::dvec2 uv = texCoords[i];
+    REQUIRE(view.getRaw(uv[0], uv[1]) == expectedValues[i]);
+    REQUIRE(
+        view.get(uv[0], uv[1]) ==
+        static_cast<double>(expectedValues[i]) / 255.0);
+  }
+}
+
+TEST_CASE("Test PropertyTextureProperty constructs with "
+          "makeImageCopy = true") {
+  std::vector<uint8_t> data{1, 2, 3, 4};
+
+  PropertyTextureProperty property;
+  property.texCoord = 0;
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      property.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.texCoord = 10;
+
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::SCALAR;
+  classProperty.componentType = ClassProperty::ComponentType::UINT8;
+
+  Sampler sampler;
+  sampler.wrapS = Sampler::WrapS::REPEAT;
+  sampler.wrapT = Sampler::WrapT::REPEAT;
+
+  ImageCesium image;
+  image.width = 2;
+  image.height = 2;
+  image.channels = 1;
+  image.bytesPerChannel = 1;
+
+  std::vector<std::byte>& imageData = image.pixelData;
+  imageData.resize(data.size());
+  std::memcpy(imageData.data(), data.data(), data.size());
+
+  property.channels = {0};
+
+  TextureViewOptions options;
+  options.makeImageCopy = true;
+
+  PropertyTexturePropertyView<uint8_t>
+      view(property, classProperty, sampler, image, options);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+
+  // Clear the original image data.
+  std::vector<std::byte> emptyData;
+  image.pixelData.swap(emptyData);
+
+  const ImageCesium* pImage = view.getImage();
+  REQUIRE(pImage);
+  REQUIRE(pImage->width == image.width);
+  REQUIRE(pImage->height == image.height);
+  REQUIRE(pImage->channels == image.channels);
+  REQUIRE(pImage->bytesPerChannel == image.bytesPerChannel);
+  REQUIRE(pImage->pixelData.size() == data.size());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
+
+  for (size_t i = 0; i < texCoords.size(); i++) {
+    glm::dvec2 uv = texCoords[i];
+    REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == data[i]);
+  }
+}
+
+TEST_CASE("Test normalized PropertyTextureProperty constructs with "
+          "makeImageCopy = true") {
+  std::vector<uint8_t> data{0, 64, 127, 255};
+
+  PropertyTextureProperty property;
+  property.texCoord = 0;
+
+  ExtensionKhrTextureTransform& textureTransformExtension =
+      property.addExtension<ExtensionKhrTextureTransform>();
+  textureTransformExtension.offset = {0.5, -0.5};
+  textureTransformExtension.rotation = CesiumUtility::Math::PiOverTwo;
+  textureTransformExtension.scale = {0.5, 0.5};
+  textureTransformExtension.texCoord = 10;
+
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::SCALAR;
+  classProperty.componentType = ClassProperty::ComponentType::UINT8;
+  classProperty.normalized = true;
+
+  Sampler sampler;
+  sampler.wrapS = Sampler::WrapS::REPEAT;
+  sampler.wrapT = Sampler::WrapT::REPEAT;
+
+  ImageCesium image;
+  image.width = 2;
+  image.height = 2;
+  image.channels = 1;
+  image.bytesPerChannel = 1;
+
+  std::vector<std::byte>& imageData = image.pixelData;
+  imageData.resize(data.size());
+  std::memcpy(imageData.data(), data.data(), data.size());
+
+  property.channels = {0};
+
+  TextureViewOptions options;
+  options.makeImageCopy = true;
+
+  PropertyTexturePropertyView<uint8_t, true>
+      view(property, classProperty, sampler, image, options);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+
+  // Clear the original image data.
+  std::vector<std::byte> emptyData;
+  image.pixelData.swap(emptyData);
+
+  const ImageCesium* pImage = view.getImage();
+  REQUIRE(pImage);
+  REQUIRE(pImage->width == image.width);
+  REQUIRE(pImage->height == image.height);
+  REQUIRE(pImage->channels == image.channels);
+  REQUIRE(pImage->bytesPerChannel == image.bytesPerChannel);
+  REQUIRE(pImage->pixelData.size() == data.size());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
+
+  for (size_t i = 0; i < texCoords.size(); i++) {
+    glm::dvec2 uv = texCoords[i];
+    REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
+    REQUIRE(view.get(uv[0], uv[1]) == static_cast<double>(data[i]) / 255.0);
   }
 }

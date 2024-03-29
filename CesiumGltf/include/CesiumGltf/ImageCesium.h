@@ -74,7 +74,7 @@ struct CESIUMGLTF_API ImageCesium final {
    * Otherwise, this buffer will store the compressed pixel data in the
    * specified format.
    *
-   * If mipOffsets is not empty, this buffer will contains multiple mips
+   * If mipPositions is not empty, this buffer will contains multiple mips
    * back-to-back.
    *
    * When this is an uncompressed texture:
@@ -95,5 +95,20 @@ struct CESIUMGLTF_API ImageCesium final {
    * | 4                  | red, green, blue, alpha   |
    */
   std::vector<std::byte> pixelData;
+
+  /**
+   * @brief The effective size of this image, in bytes, for estimating resource
+   * usage for caching purposes.
+   *
+   * When this value is less than zero (the default), the size of this image
+   * should be assumed to equal the size of the {@link pixelData} array. When
+   * it is greater than or equal to zero, the specified size should be used
+   * instead. For example, the overridden size may account for:
+   *   * The `pixelData` being cleared during the load process in order to save
+   * memory.
+   *   * The cost of any renderer resources (e.g., GPU textures) created for
+   * this image.
+   */
+  int64_t sizeBytes = -1;
 };
 } // namespace CesiumGltf

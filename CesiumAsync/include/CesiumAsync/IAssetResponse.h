@@ -6,6 +6,7 @@
 #include <gsl/span>
 
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <string>
 
