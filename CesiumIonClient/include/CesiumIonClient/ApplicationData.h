@@ -31,7 +31,7 @@ struct ApplicationData {
    */
   std::string attribution;
 
-  bool needsOauthAuthentication() {
+  bool needsOauthAuthentication() const {
     return this->applicationMode != ApplicationMode::SingleUser;
   }
 };
