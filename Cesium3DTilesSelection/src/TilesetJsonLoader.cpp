@@ -685,7 +685,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Error when parsing tileset JSON, error code {} at byte offset {}",
-        static_cast<int32_t>(tilesetJson.GetParseError()),
+        tilesetJson.GetParseError(),
         tilesetJson.GetErrorOffset());
     return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
   }
@@ -782,7 +782,7 @@ TilesetJsonLoader::createLoader(
           result.errors.emplaceError(fmt::format(
               "Error when parsing tileset JSON, error code {} at byte offset "
               "{}",
-              static_cast<int32_t>(tilesetJson.GetParseError()),
+              tilesetJson.GetParseError(),
               tilesetJson.GetErrorOffset()));
           return result;
         }
