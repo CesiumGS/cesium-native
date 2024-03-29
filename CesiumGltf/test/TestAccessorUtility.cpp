@@ -57,6 +57,67 @@ TEST_CASE("Test CountFromAccessor") {
   }
 }
 
+TEST_CASE("Test getPositionAccessorView") {
+  Model model;
+  std::vector<glm::vec3> positions{
+      glm::vec3(0, 1, 2),
+      glm::vec3(3, 4, 5),
+      glm::vec3(6, 7, 8)};
+
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(positions.size() * sizeof(glm::vec3));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        positions.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = 0;
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = 0;
+    accessor.componentType = Accessor::ComponentType::FLOAT;
+    accessor.type = Accessor::Type::VEC3;
+    accessor.count = static_cast<int64_t>(positions.size());
+  }
+
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive primitive = mesh.primitives.emplace_back();
+  primitive.attributes.insert({"POSITION", 0});
+
+  SECTION("Handles invalid accessor type") {
+    model.accessors[0].type = Accessor::Type::SCALAR;
+
+    PositionAccessorType positionAccessor =
+        getPositionAccessorView(model, primitive);
+    REQUIRE(positionAccessor.status() != AccessorViewStatus::Valid);
+    REQUIRE(positionAccessor.size() == 0);
+
+    model.accessors[0].type = Accessor::Type::VEC3;
+  }
+
+  SECTION("Handles unsupported accessor component type") {
+    model.accessors[0].componentType = Accessor::ComponentType::BYTE;
+
+    PositionAccessorType positionAccessor =
+        getPositionAccessorView(model, primitive);
+    REQUIRE(positionAccessor.status() != AccessorViewStatus::Valid);
+    REQUIRE(positionAccessor.size() == 0);
+
+    model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
+  }
+
+  SECTION("Creates from valid accessor") {
+    PositionAccessorType positionAccessor =
+        getPositionAccessorView(model, primitive);
+    REQUIRE(positionAccessor.status() == AccessorViewStatus::Valid);
+    REQUIRE(static_cast<size_t>(positionAccessor.size()) == positions.size());
+  }
+}
+
 TEST_CASE("Test getFeatureIdAccessorView") {
   Model model;
   std::vector<uint8_t> featureIds0{1, 2, 3, 4};
