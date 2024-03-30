@@ -3,6 +3,23 @@
 #include "CesiumGltf/Model.h"
 
 namespace CesiumGltf {
+PositionAccessorType
+getPositionAccessorView(const Model& model, const MeshPrimitive& primitive) {
+  auto positionAttribute = primitive.attributes.find("POSITION");
+  if (positionAttribute == primitive.attributes.end()) {
+    return PositionAccessorType();
+  }
+
+  const Accessor* pAccessor =
+      model.getSafe<Accessor>(&model.accessors, positionAttribute->second);
+  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3 ||
+      pAccessor->componentType != Accessor::ComponentType::FLOAT) {
+    return PositionAccessorType();
+  }
+
+  return PositionAccessorType(model, *pAccessor);
+}
+
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
