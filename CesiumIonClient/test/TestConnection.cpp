@@ -40,6 +40,7 @@ TEST_CASE("CesiumIonClient::Connection") {
       asyncSystem,
       pAssetAccessor,
       "my access token",
+      CesiumIonClient::ApplicationData(),
       "https://example.com/");
 
   Future<Response<Defaults>> futureDefaults = connection.defaults();
