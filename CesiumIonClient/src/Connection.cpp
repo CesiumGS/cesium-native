@@ -727,6 +727,12 @@ TokenList tokenListFromJson(const rapidjson::Value& json) {
 
 Future<Response<TokenList>>
 Connection::tokens(const ListTokensOptions& options) const {
+  if (this->_appData.applicationMode == ApplicationMode::SingleUser) {
+    TokenList emptyList = TokenList{};
+    return this->_asyncSystem.createResolvedFuture<Response<TokenList>>(
+        Response{std::move(emptyList), 200, "", ""});
+  }
+
   std::string url = Uri::resolve(this->_apiUrl, "v2/tokens");
 
   if (options.limit) {
