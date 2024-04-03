@@ -1523,15 +1523,8 @@ void createGltfFromParsedContent(
     // Points without normals should be rendered without lighting, which we
     // can indicate with the KHR_materials_unlit extension.
     material.addExtension<CesiumGltf::ExtensionKhrMaterialsUnlit>();
-
-    if (std::find(
-            gltf.extensionsUsed.begin(),
-            gltf.extensionsUsed.end(),
-            CesiumGltf::ExtensionKhrMaterialsUnlit::ExtensionName) ==
-        gltf.extensionsUsed.end()) {
-      gltf.extensionsUsed.emplace_back(
-          CesiumGltf::ExtensionKhrMaterialsUnlit::ExtensionName);
-    }
+    gltf.addExtensionUsed(
+        CesiumGltf::ExtensionKhrMaterialsUnlit::ExtensionName);
   }
 
   if (parsedContent.batchId) {
@@ -1545,26 +1538,11 @@ void createGltfFromParsedContent(
     // the root node, as suggested in the 3D Tiles migration guide.
     auto& cesiumRTC =
         result.model->addExtension<CesiumGltf::ExtensionCesiumRTC>();
+    result.model->addExtensionRequired(
+        CesiumGltf::ExtensionCesiumRTC::ExtensionName);
+
     glm::dvec3 rtcCenter = parsedContent.rtcCenter.value();
     cesiumRTC.center = {rtcCenter.x, rtcCenter.y, rtcCenter.z};
-
-    if (std::find(
-            gltf.extensionsUsed.begin(),
-            gltf.extensionsUsed.end(),
-            CesiumGltf::ExtensionCesiumRTC::ExtensionName) ==
-        gltf.extensionsUsed.end()) {
-      gltf.extensionsUsed.emplace_back(
-          CesiumGltf::ExtensionCesiumRTC::ExtensionName);
-    }
-
-    if (std::find(
-            gltf.extensionsRequired.begin(),
-            gltf.extensionsRequired.end(),
-            CesiumGltf::ExtensionCesiumRTC::ExtensionName) ==
-        gltf.extensionsRequired.end()) {
-      gltf.extensionsRequired.emplace_back(
-          CesiumGltf::ExtensionCesiumRTC::ExtensionName);
-    }
   }
 }
 

@@ -1723,6 +1723,8 @@ void convertBatchTableToGltfStructuralMetadataExtension(
 
   ExtensionModelExtStructuralMetadata& modelExtension =
       gltf.addExtension<ExtensionModelExtStructuralMetadata>();
+  gltf.addExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName);
+
   Schema& schema = modelExtension.schema.emplace();
   schema.id = "default"; // Required by the spec.
 
@@ -1865,6 +1867,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
 
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
+      gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
       FeatureId& featureID = extension.featureIds.emplace_back();
 
       // No fast way to count the unique feature IDs in this primitive, so
@@ -1939,6 +1943,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
+  gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
   FeatureId& featureID = extension.featureIds.emplace_back();
 
   // Setting the feature count is sufficient for implicit feature IDs.

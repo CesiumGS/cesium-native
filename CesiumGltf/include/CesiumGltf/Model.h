@@ -137,5 +137,24 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       return &(*pItems)[static_cast<size_t>(index)];
     }
   }
+
+  /**
+   * @brief Adds an extension to the {@link ModelSpec::extensionsUsed}
+   * property, if it is not already present.
+   *
+   * @param extensionUsed The name of the used extension.
+   */
+  void addExtensionUsed(const std::string& extensionUsed);
+
+  /**
+   * @brief Adds an extension to the {@link ModelSpec::extensionsRequired}
+   * property, if it is not already present.
+   *
+   * Calling this function also adds the extension to `extensionsUsed`, if it's
+   * not already present.
+   *
+   * @param extensionRequired The name of the required extension.
+   */
+  void addExtensionRequired(const std::string& extensionRequired);
 };
 } // namespace CesiumGltf
