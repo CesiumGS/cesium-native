@@ -248,8 +248,8 @@ public:
    * If the rectangle does not cross the anti-meridian, the entire rectangle is
    * returned in the `first` field of the pair and the `second` is std::nullopt.
    * If it does cross the anti-meridian, this function returns two rectangles
-   * that touch but do not cross it. The larger of the two rectangles is returned
-   * in `first` and the smaller one is returned in `second`.
+   * that touch but do not cross it. The larger of the two rectangles is
+   * returned in `first` and the smaller one is returned in `second`.
    */
   std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
   splitAtAntiMeridian() const noexcept;
