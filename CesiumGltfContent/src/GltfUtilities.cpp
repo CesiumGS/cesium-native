@@ -2,6 +2,7 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -341,6 +342,16 @@ struct VisitAccessorIds {
           callback(pTileEdges->right);
           callback(pTileEdges->top);
         }
+
+        ExtensionCesiumPrimitiveOutline* pPrimitiveOutline =
+            primitive.getExtension<ExtensionCesiumPrimitiveOutline>();
+        if (pPrimitiveOutline && pPrimitiveOutline->indices) {
+          // The `indices` property is incorrectly defined as an int64_t in this
+          // extension, so we need to jump through some hoops.
+          int32_t temp = int32_t(*pPrimitiveOutline->indices);
+          callback(temp);
+          *pPrimitiveOutline->indices = temp;
+        }
       }
     }
 
@@ -384,22 +395,22 @@ struct VisitBufferViewIds {
 
     for (Mesh& mesh : gltf.meshes) {
       for (MeshPrimitive& primitive : mesh.primitives) {
-        ExtensionModelExtStructuralMetadata* pMetadata =
-            primitive.getExtension<ExtensionModelExtStructuralMetadata>();
-        if (pMetadata) {
-          for (PropertyTable& propertyTable : pMetadata->propertyTables) {
-            for (auto& pair : propertyTable.properties) {
-              callback(pair.second.values);
-              callback(pair.second.arrayOffsets);
-              callback(pair.second.stringOffsets);
-            }
-          }
-        }
-
         ExtensionKhrDracoMeshCompression* pDraco =
             primitive.getExtension<ExtensionKhrDracoMeshCompression>();
         if (pDraco) {
           callback(pDraco->bufferView);
+        }
+      }
+    }
+
+    ExtensionModelExtStructuralMetadata* pMetadata =
+        gltf.getExtension<ExtensionModelExtStructuralMetadata>();
+    if (pMetadata) {
+      for (PropertyTable& propertyTable : pMetadata->propertyTables) {
+        for (auto& pair : propertyTable.properties) {
+          callback(pair.second.values);
+          callback(pair.second.arrayOffsets);
+          callback(pair.second.stringOffsets);
         }
       }
     }
