@@ -8,17 +8,35 @@ namespace CesiumIonClient {
 /**
  *  @brief An enumeration representing the values of {@link ApplicationData::applicationMode}.
  */
-enum ApplicationMode { CesiumIon, Saml, SingleUser };
+enum AuthenticationMode {
+  /**
+   * Authentication using OAuth with an ion.cesium.com account.
+   */
+  CesiumIon,
+  /**
+   * Authentication using OAuth with Cesium ion Self-Hosted.
+   * On the server, this uses the Security Assertion Markup Language (SAML) to
+   * communicate with another authentication server.
+   * From our perspective, we can treat this the same as {@link AuthenticationMode::CesiumIon}.
+   */
+  Saml,
+  /**
+   * A Cesium ion Self-Hosted server without authentication.
+   * In single-user mode, any application that can reach the server has
+   * permissions to use its endpoints. In this mode, some endpoints (like /me
+   * and /tokens) are unavailable.
+   */
+  SingleUser
+};
 
 /**
  * @brief Data about the Cesium ion server itself.
  */
 struct ApplicationData {
   /**
-   * The mode that the Ion server is running in.
-   * This value can be cesium-ion, saml, or single-user.
+   * The authentication mode that the Ion server is running in.
    */
-  ApplicationMode applicationMode;
+  AuthenticationMode applicationMode;
 
   /**
    * The type of store used by this ion server to hold files.
@@ -32,7 +50,7 @@ struct ApplicationData {
   std::string attribution;
 
   bool needsOauthAuthentication() const {
-    return this->applicationMode != ApplicationMode::SingleUser;
+    return this->applicationMode != AuthenticationMode::SingleUser;
   }
 };
 
