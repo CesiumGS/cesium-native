@@ -616,5 +616,52 @@ TEST_CASE("AsyncSystem") {
       future.waitInMainThread();
       CHECK(called);
     }
+
+    SECTION("Future resolving while main thread is waiting") {
+      bool called1 = false;
+      bool called2 = false;
+      Future<void> future =
+          asyncSystem.createResolvedFuture()
+              .thenInWorkerThread([&called1]() {
+                using namespace std::chrono_literals;
+                // should be long enough for the main thread to start waiting on
+                // the conditional, without slowing the test down too much.
+                std::this_thread::sleep_for(20ms);
+                called1 = true;
+              })
+              .thenInMainThread([&called2]() { called2 = true; });
+      future.waitInMainThread();
+      CHECK(called1);
+      CHECK(called2);
+    }
+
+    SECTION("Future resolving from a worker while main thread is waiting") {
+      bool called1 = false;
+      bool called2 = false;
+      bool called3 = false;
+      Future<void> future =
+          asyncSystem.createResolvedFuture()
+              .thenInWorkerThread([&called1]() {
+                using namespace std::chrono_literals;
+                // should be long enough for the main thread to start waiting on
+                // the conditional, without slowing the test down too much.
+                std::this_thread::sleep_for(20ms);
+                called1 = true;
+              })
+              .thenInMainThread([&called2]() { called2 = true; })
+              .thenInWorkerThread([&called3]() {
+                using namespace std::chrono_literals;
+                // Sufficient time for the main thread to drop back into waiting
+                // on the conditional again after it was awakened by the
+                // scheduling of the main thread continuation above. It should
+                // awaken again when this continuation completes.
+                std::this_thread::sleep_for(20ms);
+                called3 = true;
+              });
+      future.waitInMainThread();
+      CHECK(called1);
+      CHECK(called2);
+      CHECK(called3);
+    }
   }
 }
