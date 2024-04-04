@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
+
 ### v0.34.0 - 2024-04-01
 
 ##### Breaking Changes :mega:
@@ -13,10 +19,6 @@
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
 - Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
-
-##### Additions :tada:
-
-- Added `waitInMainThread` method to `Future` and `SharedFuture`.
 
 ##### Fixes :wrench:
 
