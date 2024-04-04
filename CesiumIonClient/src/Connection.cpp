@@ -405,8 +405,8 @@ CesiumIonClient::Connection::appData(
           asyncSystem,
           CesiumUtility::Uri::resolve(apiUrl, "/appData"),
           {{"Accept", "application/json"}})
-      .thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pRequest) {
+      .thenImmediately([](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                              pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
           return createEmptyResponse<ApplicationData>();
