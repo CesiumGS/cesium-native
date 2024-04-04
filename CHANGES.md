@@ -16,7 +16,7 @@
 
 ##### Additions :tada:
 
-- Added `waitInMainThread` method to `AsyncSystem`.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
 
 ##### Fixes :wrench:
 
