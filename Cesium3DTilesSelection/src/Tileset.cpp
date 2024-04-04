@@ -434,7 +434,8 @@ int32_t Tileset::getNumberOfTilesLoaded() const {
 
 float Tileset::computeLoadProgress() noexcept {
   int32_t queueSizeSum = static_cast<int32_t>(
-      this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size());
+      this->_updateResult.workerThreadTileLoadQueueLength +
+      this->_updateResult.mainThreadTileLoadQueueLength);
   int32_t numOfTilesLoading =
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
