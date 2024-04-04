@@ -308,7 +308,7 @@ bool parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
 
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
   // /v1/me endpoint doesn't exist when ion is running in single user mode
-  if (this->_appData.applicationMode == ApplicationMode::SingleUser) {
+  if (this->_appData.applicationMode == AuthenticationMode::SingleUser) {
     Profile profile;
     profile.id = 0;
     profile.username = "ion-user";
@@ -430,11 +430,11 @@ CesiumIonClient::Connection::appData(
         std::string applicationMode =
             JsonHelpers::getStringOrDefault(d, "applicationMode", "cesium-ion");
         if (applicationMode == "single-user") {
-          result.applicationMode = ApplicationMode::SingleUser;
+          result.applicationMode = AuthenticationMode::SingleUser;
         } else if (applicationMode == "saml") {
-          result.applicationMode = ApplicationMode::Saml;
+          result.applicationMode = AuthenticationMode::Saml;
         } else {
-          result.applicationMode = ApplicationMode::CesiumIon;
+          result.applicationMode = AuthenticationMode::CesiumIon;
         }
         result.dataStoreType =
             JsonHelpers::getStringOrDefault(d, "dataStoreType", "S3");
@@ -727,7 +727,7 @@ TokenList tokenListFromJson(const rapidjson::Value& json) {
 
 Future<Response<TokenList>>
 Connection::tokens(const ListTokensOptions& options) const {
-  if (this->_appData.applicationMode == ApplicationMode::SingleUser) {
+  if (this->_appData.applicationMode == AuthenticationMode::SingleUser) {
     TokenList emptyList = TokenList{};
     return this->_asyncSystem.createResolvedFuture<Response<TokenList>>(
         Response{std::move(emptyList), 200, "", ""});
