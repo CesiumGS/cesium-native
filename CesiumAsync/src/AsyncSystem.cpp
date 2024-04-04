@@ -2,7 +2,6 @@
 
 #include "CesiumAsync/ITaskProcessor.h"
 
-#include <future>
 #include <thread>
 
 namespace CesiumAsync {

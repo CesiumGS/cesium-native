@@ -574,14 +574,47 @@ TEST_CASE("AsyncSystem") {
   }
 
   SECTION("waitInMainThread") {
-    bool called = false;
-    auto future =
-        asyncSystem.createResolvedFuture().thenInMainThread([&called]() {
-          called = true;
-          return 4;
-        });
-    int value = asyncSystem.waitInMainThread(std::move(future));
-    CHECK(called);
-    CHECK(value == 4);
+    SECTION("Future returning a value") {
+      bool called = false;
+      Future<int> future =
+          asyncSystem.createResolvedFuture().thenInMainThread([&called]() {
+            called = true;
+            return 4;
+          });
+      int value = std::move(future).waitInMainThread();
+      CHECK(called);
+      CHECK(value == 4);
+    }
+
+    SECTION("Future returning void") {
+      bool called = false;
+      Future<void> future = asyncSystem.createResolvedFuture().thenInMainThread(
+          [&called]() { called = true; });
+      std::move(future).waitInMainThread();
+      CHECK(called);
+    }
+
+    SECTION("SharedFuture returning a value") {
+      bool called = false;
+      SharedFuture<int> future = asyncSystem.createResolvedFuture()
+                                     .thenInMainThread([&called]() {
+                                       called = true;
+                                       return 4;
+                                     })
+                                     .share();
+      int value = future.waitInMainThread();
+      CHECK(called);
+      CHECK(value == 4);
+    }
+
+    SECTION("SharedFuture returning void") {
+      bool called = false;
+      SharedFuture<void> future =
+          asyncSystem.createResolvedFuture()
+              .thenInMainThread([&called]() { called = true; })
+              .share();
+      future.waitInMainThread();
+      CHECK(called);
+    }
   }
 }

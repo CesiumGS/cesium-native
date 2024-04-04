@@ -29,7 +29,10 @@ public:
   rayPlane(const Ray& ray, const Plane& plane) noexcept;
 
   /**
-   * @brief Determines whether the point is completely inside the triangle.
+   * @brief Determines whether a given point is completely inside a triangle
+   * defined by three 2D points.
+   *
+   * Returns false for degenerate triangles.
    *
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.
@@ -37,11 +40,49 @@ public:
    * @param triangleVertC The third vertex of the triangle.
    * @return Whether the point is within the triangle.
    */
-  static bool pointInTriangle2D(
+  static bool pointInTriangle(
       const glm::dvec2& point,
       const glm::dvec2& triangleVertA,
       const glm::dvec2& triangleVertB,
       const glm::dvec2& triangleVertC) noexcept;
+
+  /**
+   * @brief Determines whether a given point is completely inside a triangle
+   * defined by three 3D points.
+   *
+   * Returns false for degenerate triangles.
+   *
+   * @param point The point to check.
+   * @param triangleVertA The first vertex of the triangle.
+   * @param triangleVertB The second vertex of the triangle.
+   * @param triangleVertC The third vertex of the triangle.
+   * @return Whether the point is within the triangle.
+   */
+  static bool pointInTriangle(
+      const glm::dvec3& point,
+      const glm::dvec3& triangleVertA,
+      const glm::dvec3& triangleVertB,
+      const glm::dvec3& triangleVertC) noexcept;
+
+  /**
+   * @brief Determines whether the point is completely inside a triangle defined
+   * by three 3D points. If the point is inside, this also outputs the
+   * barycentric coordinates for the point.
+   *
+   * Returns false for degenerate triangles.
+   *
+   * @param point The point to check.
+   * @param triangleVertA The first vertex of the triangle.
+   * @param triangleVertB The second vertex of the triangle.
+   * @param triangleVertC The third vertex of the triangle.
+   * @return Whether the point is within the triangle.
+   */
+  static bool pointInTriangle(
+      const glm::dvec3& point,
+      const glm::dvec3& triangleVertA,
+      const glm::dvec3& triangleVertB,
+      const glm::dvec3& triangleVertC,
+      glm::dvec3& barycentricCoordinates) noexcept;
 };
 
 } // namespace CesiumGeometry

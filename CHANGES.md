@@ -9,13 +9,30 @@
 ##### Additions :tada:
 
 - Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
-- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking a `Cesium3DTiles::BoundingVolume`.
-- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` taking an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
-- Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
 
 ##### Fixes :wrench:
 
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+
+### v0.34.0 - 2024-04-01
+
+##### Breaking Changes :mega:
+
+- Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
+
+##### Additions :tada:
+
+- Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
+- Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
+- Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
+
+##### Fixes :wrench:
+
+- Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+- Fixed a bug where `Tileset::ComputeLoadProgress` could incorrectly report 100% before all tiles finished their main thread loading.
 
 ### v0.33.0 - 2024-03-01
 
