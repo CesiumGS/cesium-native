@@ -69,7 +69,10 @@ TEST_CASE("GlobeRectangle") {
     std::pair<GlobeRectangle, std::optional<GlobeRectangle>> split =
         nonCrossing.splitAtAntiMeridian();
     CHECK(!split.second);
-    CHECK(memcmp(&split.first, &nonCrossing, sizeof(GlobeRectangle)) == 0);
+    CHECK(split.first.getWest() == nonCrossing.getWest());
+    CHECK(split.first.getEast() == nonCrossing.getEast());
+    CHECK(split.first.getSouth() == nonCrossing.getSouth());
+    CHECK(split.first.getNorth() == nonCrossing.getNorth());
 
     GlobeRectangle crossing1 =
         GlobeRectangle::fromDegrees(160.0, -20.0, -170.0, 40.0);
