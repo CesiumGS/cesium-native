@@ -9,6 +9,11 @@
 ##### Additions :tada:
 
 - `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+- `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
+
+##### Fixes :wrench:
+
+- Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 
 ### v0.34.0 - 2024-04-01
 
