@@ -8,7 +8,7 @@
 
 ##### Fixes :wrench:
 
-- Fixed a bug in
+- Fixed a bug in `joinToString` when given a collection containing empty strings.
 
 ### v0.34.0 - 2024-04-01
 
