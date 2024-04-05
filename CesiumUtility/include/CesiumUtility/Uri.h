@@ -26,7 +26,8 @@ public:
   static std::string escape(const std::string& s);
 
   /**
-   * @brief Gets the path portion of the URI.
+   * @brief Gets the path portion of the URI. This will not include path
+   * parameters, if present.
    *
    * @param uri The URI from which to get the path.
    * @return The path, or empty string if the URI could not be parsed.
@@ -35,7 +36,7 @@ public:
 
   /**
    * @brief Sets the path portion of a URI to a new value. The other portions of
-   * the URI are left unmodified.
+   * the URI are left unmodified, including any path parameters.
    *
    * @param uri The URI for which to set the path.
    * @param The new path portion of the URI.
