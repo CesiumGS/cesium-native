@@ -9,6 +9,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `joinToString` when given a collection containing empty strings.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to build URLs incorrectly when given a URL with query parameters.
 
 ### v0.34.0 - 2024-04-01
 
