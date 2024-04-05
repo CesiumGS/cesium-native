@@ -62,4 +62,39 @@ TEST_CASE("GlobeRectangle") {
     CHECK(wrapping.contains(Cartographic(-3.14, 0.2)));
     CHECK(!wrapping.contains(Cartographic(0.0, 0.2)));
   }
+
+  SECTION("splitAtAntiMeridian") {
+    GlobeRectangle nonCrossing =
+        GlobeRectangle::fromDegrees(-10.0, -20.0, 30.0, 40.0);
+    std::pair<GlobeRectangle, std::optional<GlobeRectangle>> split =
+        nonCrossing.splitAtAntiMeridian();
+    CHECK(!split.second);
+    CHECK(memcmp(&split.first, &nonCrossing, sizeof(GlobeRectangle)) == 0);
+
+    GlobeRectangle crossing1 =
+        GlobeRectangle::fromDegrees(160.0, -20.0, -170.0, 40.0);
+    split = crossing1.splitAtAntiMeridian();
+    CHECK(split.first.getWest() == crossing1.getWest());
+    CHECK(split.first.getEast() == Math::OnePi);
+    CHECK(split.first.getSouth() == crossing1.getSouth());
+    CHECK(split.first.getNorth() == crossing1.getNorth());
+    REQUIRE(split.second);
+    CHECK(split.second->getWest() == -Math::OnePi);
+    CHECK(split.second->getEast() == crossing1.getEast());
+    CHECK(split.second->getSouth() == crossing1.getSouth());
+    CHECK(split.second->getNorth() == crossing1.getNorth());
+
+    GlobeRectangle crossing2 =
+        GlobeRectangle::fromDegrees(170.0, -20.0, -160.0, 40.0);
+    split = crossing2.splitAtAntiMeridian();
+    CHECK(split.first.getWest() == -Math::OnePi);
+    CHECK(split.first.getEast() == crossing2.getEast());
+    CHECK(split.first.getSouth() == crossing2.getSouth());
+    CHECK(split.first.getNorth() == crossing2.getNorth());
+    REQUIRE(split.second);
+    CHECK(split.second->getWest() == crossing2.getWest());
+    CHECK(split.second->getEast() == Math::OnePi);
+    CHECK(split.second->getSouth() == crossing2.getSouth());
+    CHECK(split.second->getNorth() == crossing2.getNorth());
+  }
 }

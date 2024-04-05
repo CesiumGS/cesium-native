@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `GlobeRectangle::splitAtAntiMeridian`.
+
 ### v0.34.0 - 2024-04-01
 
 ##### Breaking Changes :mega:
