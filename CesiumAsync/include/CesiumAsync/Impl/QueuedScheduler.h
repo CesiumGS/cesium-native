@@ -3,6 +3,8 @@
 #include "ImmediateScheduler.h"
 #include "cesium-async++.h"
 
+#include <atomic>
+
 namespace CesiumAsync {
 namespace CesiumImpl {
 
@@ -18,13 +20,38 @@ public:
   template <typename T> T dispatchUntilTaskCompletes(async::task<T>&& task) {
     // Set up a continuation to unblock the blocking dispatch when this task
     // completes.
+    //
+    // We use the `isDone` flag as the loop termination condition to
+    // avoid a race condition that can lead to a deadlock. If we used
+    // `unblockTask.ready()` as the termination condition instead, then it's
+    // possible for events to happen as follows:
+    //
+    // 1. The original `task` completes in a worker thread and the `unblockTask`
+    // continuation is invoked immediately in the same thread.
+    // 2. The unblockTask continuation calls `unblock`, which terminates the
+    // `wait` on the condition variable in the main thread.
+    // 3. The main thread resumes and the while loop in this function spins back
+    // around and evaluates `unblockTask.ready()`. This returns false because
+    // the unblockTask continuation has not actually finished running in the
+    // worker thread yet. The main thread starts waiting on the condition
+    // variable again.
+    // 4. The `unblockTask` continuation finally finishes, making
+    // `unblockTask.ready()` return true, but it's too late. The main thread is
+    // already waiting on the condition variable.
+    //
+    // By setting the atomic `isDone` flag before calling `unblock`, we ensure
+    // that the loop termination condition is satisfied before the main thread
+    // is awoken, avoiding the potential deadlock.
+
+    std::atomic<bool> isDone = false;
     async::task<T> unblockTask =
-        task.then(async::inline_scheduler(), [this](auto&& value) {
+        task.then(async::inline_scheduler(), [this, &isDone](auto&& value) {
+          isDone = true;
           this->unblock();
           return std::move(value);
         });
 
-    while (!unblockTask.ready()) {
+    while (!isDone) {
       this->dispatchInternal(true);
     }
 
@@ -34,9 +61,10 @@ public:
   template <typename T>
   T dispatchUntilTaskCompletes(const async::shared_task<T>& task) {
     // Set up a continuation to unblock the blocking dispatch when this task
-    // completes. Unlike the non-shared future case above, we don't need to pass
-    // the future value through because shared_task supports multiple
-    // continuations.
+    // completes. This case is simpler than the one above because a SharedFuture
+    // supports multiple continuations. We can use readiness of the _original_
+    // task to terminate the loop while unblocking in a separate continuation
+    // guaranteed to run only after that termination condition is satisfied.
     async::task<void> unblockTask =
         task.then(async::inline_scheduler(), [this](const auto&) {
           this->unblock();
