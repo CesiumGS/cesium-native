@@ -686,6 +686,7 @@ static void checkGltfSanity(const Model& model) {
 
   for (const Buffer& buffer : model.buffers) {
     CHECK(buffer.byteLength > 0);
+    CHECK(buffer.byteLength == static_cast<int64_t>(buffer.cesium.data.size()));
   }
 
   for (const BufferView& bufferView : model.bufferViews) {
