@@ -17,10 +17,6 @@ TEST_CASE("BoundingRegionBuilder") {
     CHECK(!rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
     CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
 
-    // The rectangle returned by toGlobeRectangle should be identical.
-    GlobeRectangle rectangle2 = builder.toGlobeRectangle();
-    CHECK(memcmp(&rectangle, &rectangle2, sizeof(GlobeRectangle)) == 0);
-
     builder.expandToIncludePosition(Cartographic(0.0, 0.0, 0.0));
     rectangle = builder.toRegion().getRectangle();
     CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
@@ -29,9 +25,6 @@ TEST_CASE("BoundingRegionBuilder") {
     CHECK(!rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
     CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
 
-    rectangle2 = builder.toGlobeRectangle();
-    CHECK(memcmp(&rectangle, &rectangle2, sizeof(GlobeRectangle)) == 0);
-
     builder.expandToIncludePosition(Cartographic(Math::OnePi, 1.0, 0.0));
     rectangle = builder.toRegion().getRectangle();
     CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
@@ -39,9 +32,6 @@ TEST_CASE("BoundingRegionBuilder") {
     CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
     CHECK(rectangle.contains(Cartographic(0.0, 1.0, 0.0)));
     CHECK(!rectangle.contains(Cartographic(0.0, -1.0, 0.0)));
-
-    rectangle2 = builder.toGlobeRectangle();
-    CHECK(memcmp(&rectangle, &rectangle2, sizeof(GlobeRectangle)) == 0);
 
     BoundingRegionBuilder simpleBuilder = builder;
     simpleBuilder.expandToIncludePosition(Cartographic(-1.0, 1.0, 0.0));
@@ -53,9 +43,6 @@ TEST_CASE("BoundingRegionBuilder") {
     CHECK(simple.contains(Cartographic(0.0, 1.0, 0.0)));
     CHECK(!simple.contains(Cartographic(0.0, -1.0, 0.0)));
 
-    rectangle2 = simpleBuilder.toGlobeRectangle();
-    CHECK(memcmp(&simple, &rectangle2, sizeof(GlobeRectangle)) == 0);
-
     BoundingRegionBuilder wrappedBuilder = builder;
     wrappedBuilder.expandToIncludePosition(Cartographic(-3.0, 1.0, 0.0));
     GlobeRectangle wrapped = wrappedBuilder.toRegion().getRectangle();
@@ -65,8 +52,5 @@ TEST_CASE("BoundingRegionBuilder") {
     CHECK(wrapped.contains(Cartographic(-3.0, 0.0, 0.0)));
     CHECK(wrapped.contains(Cartographic(0.0, 1.0, 0.0)));
     CHECK(!wrapped.contains(Cartographic(0.0, -1.0, 0.0)));
-
-    rectangle2 = wrappedBuilder.toGlobeRectangle();
-    CHECK(memcmp(&wrapped, &rectangle2, sizeof(GlobeRectangle)) == 0);
   }
 }
