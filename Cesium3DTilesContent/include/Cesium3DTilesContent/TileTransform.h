@@ -30,7 +30,7 @@ public:
   getTransform(const Cesium3DTiles::Tile& tile);
 
   /**
-   * @brief Sets the tile's transform as a `glm::dmat4`.
+   * @brief Sets the tile's transform using the values of a `glm::dmat4`.
    *
    * The existing value of the tile's transform property, if any, is replaced.
    *
