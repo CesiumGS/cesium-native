@@ -6,6 +6,10 @@
 
 - Added `TileTransform::setTransform`.
 
+##### Fixes :wrench:
+
+- `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+
 ### v0.34.0 - 2024-04-01
 
 ##### Breaking Changes :mega:
