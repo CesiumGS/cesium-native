@@ -1,5 +1,15 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Added two new parameters to `upsampleGltfForRasterOverlays`, prior to the existing `textureCoordinateIndex` parameter.
+
+##### Additions :tada:
+
+- `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+
 ### v0.34.0 - 2024-04-01
 
 ##### Breaking Changes :mega:
