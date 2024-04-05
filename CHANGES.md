@@ -12,6 +12,10 @@
 
 - Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
 
+##### Fixes :wrench:
+
+- `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
+
 ##### Additions :tada:
 
 - Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
