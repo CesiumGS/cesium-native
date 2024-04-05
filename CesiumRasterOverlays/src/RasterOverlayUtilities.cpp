@@ -35,7 +35,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
   // it into two rectangles. Ideally we'd map both of them (separately) to the
   // model, but in our current "only Geographic and Web Mercator are supported"
   // world, crossing the anti-meridian is almost certain to simply be numerical
-  // noise. So we just use the large of the two rectangles.
+  // noise. So we just use the larger of the two rectangles.
   std::pair<GlobeRectangle, std::optional<GlobeRectangle>> splits =
       bounds.splitAtAntiMeridian();
   bounds = splits.first;
