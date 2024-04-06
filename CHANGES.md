@@ -2,6 +2,18 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `Uri::getPath` and `Uri::setPath`.
+- Added `TileTransform::setTransform`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `joinToString` when given a collection containing empty strings.
+- `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+
+### v0.34.0 - 2024-04-01
+
 ##### Breaking Changes :mega:
 
 - Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
@@ -18,6 +30,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+- Fixed a bug where `Tileset::ComputeLoadProgress` could incorrectly report 100% before all tiles finished their main thread loading.
 
 ### v0.33.0 - 2024-03-01
 
