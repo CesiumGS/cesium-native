@@ -11,7 +11,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief KHR_draco_mesh_compression extension
+ * @brief KHR_draco_mesh_compression glTF Mesh Primitive Extension
  */
 struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final
     : public CesiumUtility::ExtensibleObject {

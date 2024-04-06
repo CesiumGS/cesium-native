@@ -23,6 +23,7 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
+#include <CesiumGltf/ExtensionNodeExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureIdTexture.h>
@@ -72,6 +73,9 @@ void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtMeshGpuInstancingJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNodeExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonWriter>();
