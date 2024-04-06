@@ -8,11 +8,15 @@
 
 ##### Additions :tada:
 
+- Added `Uri::getPath` and `Uri::setPath`.
+- Added `TileTransform::setTransform`.
 - `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
 - `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
 
 ##### Fixes :wrench:
 
+- Fixed a bug in `joinToString` when given a collection containing empty strings.
+- `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
 - Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 
 ### v0.34.0 - 2024-04-01
