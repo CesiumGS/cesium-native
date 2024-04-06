@@ -12,16 +12,13 @@
 
 - Fixed a bug in `joinToString` when given a collection containing empty strings.
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+- `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
 
 ### v0.34.0 - 2024-04-01
 
 ##### Breaking Changes :mega:
 
 - Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
-
-##### Fixes :wrench:
-
-- `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
 
 ##### Additions :tada:
 
