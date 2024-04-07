@@ -36,5 +36,6 @@ private:
   CesiumJsonReader::
       DictionaryJsonHandler<CesiumGltf::ClassProperty, ClassPropertyJsonHandler>
           _properties;
+  CesiumJsonReader::StringJsonHandler _parent;
 };
 } // namespace CesiumGltfReader
