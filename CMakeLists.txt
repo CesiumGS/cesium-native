@@ -36,8 +36,8 @@ if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     )
 endif()
 
-set(CESIUM_DEBUG_POSTFIX "d")
-set(CESIUM_RELEASE_POSTFIX "")
+set(CESIUM_DEBUG_POSTFIX "d" CACHE STRING "debug postfix for cesium native")
+set(CESIUM_RELEASE_POSTFIX "" CACHE STRING "release postfix for cesium native")
 
 set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
@@ -132,8 +132,8 @@ endfunction()
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
 # These libraries override the debug postfix, so re-override it.
-set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
+set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX "${CESIUM_DEBUG_POSTFIX}")
+set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX "${CESIUM_DEBUG_POSTFIX}")
 
 # Public Targets
 add_subdirectory(CesiumUtility)
