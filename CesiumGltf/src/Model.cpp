@@ -1,6 +1,7 @@
 #include "CesiumGltf/Model.h"
 
 #include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
 #include "CesiumGltf/ExtensionKhrDracoMeshCompression.h"
 
 #include <glm/gtc/quaternion.hpp>
@@ -131,6 +132,14 @@ void Model::merge(Model&& rhs) {
     updateIndex(node.camera, firstCamera);
     updateIndex(node.skin, firstSkin);
     updateIndex(node.mesh, firstMesh);
+    if (node.mesh >= 0) {
+      if (auto* meshGpuInstancing =
+              node.getExtension<ExtensionExtMeshGpuInstancing>()) {
+        for (auto& attrPair : meshGpuInstancing->attributes) {
+          updateIndex(attrPair.second, firstAccessor);
+        }
+      }
+    }
 
     for (auto& nodeIndex : node.children) {
       updateIndex(nodeIndex, firstNode);

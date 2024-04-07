@@ -18,7 +18,8 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * elements that were originally in it _plus_ all of the elements
    * that were in `rhs`. Element indices are updated accordingly.
    * However, element indices in {@link ExtensibleObject::extras}, if any,
-   * are _not_ updated.
+   * are _not_ updated. Most extensions aren't supported either, except for
+   * KHR_draco_mesh_compression and EXT_mesh_gpu_instancing.
    *
    * @param rhs The model to merge into this one.
    */
