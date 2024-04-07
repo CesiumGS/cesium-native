@@ -34,5 +34,10 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
    * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
+
+  /**
+   * @brief The parent class ID.
+   */
+  std::optional<std::string> parent;
 };
 } // namespace CesiumGltf
