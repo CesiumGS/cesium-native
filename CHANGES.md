@@ -11,11 +11,28 @@
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- Added `addExtensionUsed` and `addExtensionRequired` methods to `CesiumGltf::Model`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `joinToString` when given a collection containing empty strings.
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+- glTFs converted from a legacy batch table to a `EXT_structural_metadata` now:
+  - Add the `EXT_structural_metadata` and `EXT_mesh_features` extensions to the glTF's `extensionsUsed` list.
+  - Omit property table properties without any values at all. Previously, such property table properties would have a `values` field referring to an invalid bufferView, which is contrary to the extension's specification.
+  - Rename the `_BATCHID` attribute to `_FEATURE_ID_0` inside the `KHR_draco_mesh_compression` extension (if present), in addition to the primitive's `attributes`. Previously, Draco-compressed meshes with a batch table did not work correctly after the upgrade.
+- glTFs converted from the 3D Tiles B3DM format now have `CESIUM_RTC` added to their `extensionsRequired` and `extensionsUsed` lists when that extension is added because the B3DM uses the `RTC_CENTER` property.
+- glTFs converted from the 3D Tiles PNTS format now:
+  - Have their `asset.version` field correctly set to `"2.0"`. Previously the version was not set, which is invalid.
+  - Add the `KHR_materials_unlit` extension to the glTF's `extensionsUsed` list when this extension is added to the glTF because the point cloud does not have normals.
+  - Have a default `scene`.
+  - Add the `CESIUM_RTC` extension to the glTF's `extensionsRequired` and `extensionsUsed` lists when that extension is added because the PNTS uses the `RTC_CENTER` property.
+- When `KHR_texture_transform` is removed from a glTF at load time, the accessors and bufferViews created to hold the newly-generated texture coordinates now have their `byteOffset` properties correctly set to zero, instead of inheriting the value from the original `KHR_texture_transform`-dependent objects.
+- `bufferViews` created for indices during Draco decoding:
+  - No longer have their `byteStride` property set, as this is unnecessary and disallowed by the specification.
+  - Have their `target` property set to `BufferView::Target::ARRAY_BUFFER`.
+- After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
+- Accessors created for the position attribute in glTFs converted from quantized-mesh tiles now have their minimum and maximum values set correctly to include the positions of the vertices that form the skirt around the edge of the tile.
 
 ### v0.34.0 - 2024-04-01
 
