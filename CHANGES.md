@@ -20,7 +20,7 @@
 - glTFs converted from a legacy batch table to a `EXT_structural_metadata` now:
   - Add the `EXT_structural_metadata` and `EXT_mesh_features` extensions to the glTF's `extensionsUsed` list.
   - Omit property table properties without any values at all. Previously, such property table properties would have a `values` field referring to an invalid bufferView, which is contrary to the extension's specification.
-  - Rename the `_BATCHID` attribute to `_FEATURE_ID_0` inside the `KHR_draco_mesh_compression` extension (if present), in addition to the primitive's `attributes`. Previously, Draco-compressed meshes with a batch table did not work correctly after the upgrade.
+  - Rename the `_BATCHID` attribute to `_FEATURE_ID_0` inside the `KHR_draco_mesh_compression` extension (if present), in addition to the primitive's `attributes`. Previously, meshes still Draco-compressed after the upgrade, by setting `options.decodeDraco=false`, did not have the proper attribute name.
 - glTFs converted from the 3D Tiles B3DM format now have `CESIUM_RTC` added to their `extensionsRequired` and `extensionsUsed` lists when that extension is added because the B3DM uses the `RTC_CENTER` property.
 - glTFs converted from the 3D Tiles PNTS format now:
   - Have their `asset.version` field correctly set to `"2.0"`. Previously the version was not set, which is invalid.

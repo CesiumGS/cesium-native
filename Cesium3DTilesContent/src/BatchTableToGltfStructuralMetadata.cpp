@@ -1969,17 +1969,6 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
 
-    // Also rename the attribute in the Draco extension, if it exists.
-    ExtensionKhrDracoMeshCompression* pDraco =
-        primitive.getExtension<ExtensionKhrDracoMeshCompression>();
-    if (pDraco) {
-      auto dracoIt = pDraco->attributes.find("_BATCHID");
-      if (dracoIt != pDraco->attributes.end()) {
-        pDraco->attributes["_FEATURE_ID_0"] = dracoIt->second;
-        pDraco->attributes.erase("_BATCHID");
-      }
-    }
-
     featureID.attribute = 0;
     featureID.label = "_FEATURE_ID_0";
   }

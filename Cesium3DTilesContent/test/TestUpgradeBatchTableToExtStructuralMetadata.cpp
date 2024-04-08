@@ -4,6 +4,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyTableView.h>
@@ -1052,6 +1053,39 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
         ClassProperty::ComponentType::UINT16,
         expected,
         expected.size());
+  }
+}
+
+TEST_CASE("Draco-compressed b3dm uses _FEATURE_ID_0 attribute name in glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath =
+      testFilePath / "BatchTables" / "batchedWithBatchTable-draco.b3dm";
+
+  CesiumGltfReader::GltfReaderOptions options;
+  options.decodeDraco = false;
+
+  GltfConverterResult result =
+      B3dmToGltfConverter::convert(readFile(testFilePath), options);
+  CHECK(result.errors.errors.empty());
+  CHECK(result.errors.warnings.empty());
+  REQUIRE(result.model);
+
+  const Model& gltf = *result.model;
+
+  CHECK(!gltf.meshes.empty());
+  for (const Mesh& mesh : gltf.meshes) {
+    CHECK(!mesh.primitives.empty());
+    for (const MeshPrimitive& primitive : mesh.primitives) {
+      CHECK(
+          primitive.attributes.find("_FEATURE_ID_0") !=
+          primitive.attributes.end());
+
+      const ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+      REQUIRE(pDraco);
+      CHECK(
+          pDraco->attributes.find("_FEATURE_ID_0") != pDraco->attributes.end());
+    }
   }
 }
 
