@@ -3,6 +3,7 @@
 #include "BatchTableHierarchyPropertyValues.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
@@ -1865,6 +1866,17 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
       primitive.attributes.erase("_BATCHID");
 
+      // Also rename the attribute in the Draco extension, if it exists.
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+      if (pDraco) {
+        auto dracoIt = pDraco->attributes.find("_BATCHID");
+        if (dracoIt != pDraco->attributes.end()) {
+          pDraco->attributes["_FEATURE_ID_0"] = dracoIt->second;
+          pDraco->attributes.erase("_BATCHID");
+        }
+      }
+
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
       gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
@@ -1956,6 +1968,18 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
+
+    // Also rename the attribute in the Draco extension, if it exists.
+    ExtensionKhrDracoMeshCompression* pDraco =
+        primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+    if (pDraco) {
+      auto dracoIt = pDraco->attributes.find("_BATCHID");
+      if (dracoIt != pDraco->attributes.end()) {
+        pDraco->attributes["_FEATURE_ID_0"] = dracoIt->second;
+        pDraco->attributes.erase("_BATCHID");
+      }
+    }
+
     featureID.attribute = 0;
     featureID.label = "_FEATURE_ID_0";
   }
