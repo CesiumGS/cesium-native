@@ -481,3 +481,91 @@ TEST_CASE("Test smooth normal generation") {
         glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 }
+
+TEST_CASE("Model::addExtensionUsed") {
+  SECTION("adds a new extension") {
+    Model m;
+
+    m.addExtensionUsed("Foo");
+    m.addExtensionUsed("Bar");
+
+    CHECK(m.extensionsUsed.size() == 2);
+    CHECK(
+        std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Foo") !=
+        m.extensionsUsed.end());
+    CHECK(
+        std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Bar") !=
+        m.extensionsUsed.end());
+  }
+
+  SECTION("does not add a duplicate extension") {
+    Model m;
+
+    m.addExtensionUsed("Foo");
+    m.addExtensionUsed("Bar");
+    m.addExtensionUsed("Foo");
+
+    CHECK(m.extensionsUsed.size() == 2);
+    CHECK(
+        std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Foo") !=
+        m.extensionsUsed.end());
+    CHECK(
+        std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Bar") !=
+        m.extensionsUsed.end());
+  }
+
+  SECTION("does not also add the extension to extensionsRequired") {
+    Model m;
+    m.addExtensionUsed("Foo");
+    CHECK(m.extensionsRequired.empty());
+  }
+}
+
+TEST_CASE("Model::addExtensionRequired") {
+  SECTION("adds a new extension") {
+    Model m;
+
+    m.addExtensionRequired("Foo");
+    m.addExtensionRequired("Bar");
+
+    CHECK(m.extensionsRequired.size() == 2);
+    CHECK(
+        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Foo") !=
+        m.extensionsRequired.end());
+    CHECK(
+        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Bar") !=
+        m.extensionsRequired.end());
+  }
+
+  SECTION("does not add a duplicate extension") {
+    Model m;
+
+    m.addExtensionRequired("Foo");
+    m.addExtensionRequired("Bar");
+    m.addExtensionRequired("Foo");
+
+    CHECK(m.extensionsRequired.size() == 2);
+    CHECK(
+        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Foo") !=
+        m.extensionsRequired.end());
+    CHECK(
+        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Bar") !=
+        m.extensionsRequired.end());
+  }
+
+  SECTION("also adds the extension to extensionsUsed if not already present") {
+    Model m;
+
+    m.addExtensionUsed("Bar");
+    m.addExtensionRequired("Foo");
+    m.addExtensionRequired("Bar");
+
+    CHECK(m.extensionsUsed.size() == 2);
+    CHECK(
+        std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Foo") !=
+        m.extensionsUsed.end());
+    CHECK(
+        std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Bar") !=
+        m.extensionsUsed.end());
+  }
+}
