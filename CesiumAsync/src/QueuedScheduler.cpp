@@ -22,7 +22,7 @@ QueuedScheduler::QueuedScheduler() : _pImpl(std::make_unique<Impl>()) {}
 QueuedScheduler::~QueuedScheduler() = default;
 
 void QueuedScheduler::schedule(async::task_run_handle t) {
-  std::lock_guard<std::mutex> guard(this->_pImpl->mutex);
+  std::unique_lock<std::mutex> guard(this->_pImpl->mutex);
   this->_pImpl->queue.push(std::move(t));
 
   // Notify listeners that there is new work.
@@ -59,7 +59,7 @@ bool QueuedScheduler::dispatchInternal(bool blockIfNoTasks) {
 }
 
 void QueuedScheduler::unblock() {
-  std::lock_guard<std::mutex> guard(this->_pImpl->mutex);
+  std::unique_lock<std::mutex> guard(this->_pImpl->mutex);
   this->_pImpl->conditionVariable.notify_all();
 }
 
