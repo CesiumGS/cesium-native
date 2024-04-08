@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
+#include <vector>
 
 namespace CesiumUtility {
 std::string Uri::resolve(

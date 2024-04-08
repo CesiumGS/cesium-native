@@ -10,9 +10,12 @@
 
 - Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `waitInMainThread` method to `Future` and `SharedFuture`.
+- Added `Uri::getPath` and `Uri::setPath`.
+- Added `TileTransform::setTransform`.
 
 ##### Fixes :wrench:
 
+- Fixed a bug in `joinToString` when given a collection containing empty strings.
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
 
 ### v0.34.0 - 2024-04-01
