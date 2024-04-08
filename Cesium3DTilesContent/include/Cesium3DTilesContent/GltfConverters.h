@@ -12,6 +12,30 @@
 #include <string_view>
 
 namespace Cesium3DTilesContent {
+
+/**
+ * Data required to make a recursive request to fetch an asset, mostly for the
+ * benefit of I3dm files.
+ */
+struct CESIUM3DTILESCONTENT_API ConverterSubprocessor {
+  ConverterSubprocessor(
+      const CesiumAsync::AsyncSystem& asyncSystem_,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor_,
+      const std::string& baseUrl_,
+      const glm::dmat4 tileTransform_,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders_)
+      : asyncSystem(asyncSystem_),
+        pAssetAccessor(pAssetAccessor_),
+        baseUrl(baseUrl_),
+        tileTransform(tileTransform_),
+        requestHeaders(requestHeaders_) {}
+  const CesiumAsync::AsyncSystem& asyncSystem;
+  const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+  const std::string baseUrl;
+  glm::dmat4 tileTransform;
+  const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+};
+
 /**
  * @brief Creates {@link GltfConverterResult} objects from a
  * a binary content.
@@ -34,7 +58,8 @@ public:
    */
   using ConverterFunction = GltfConverterResult (*)(
       const gsl::span<const std::byte>& content,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      ConverterSubprocessor* subprocessor);
 
   /**
    * @brief Register the given function for the given magic header.
@@ -123,7 +148,8 @@ public:
   static GltfConverterResult convert(
       const std::string& filePath,
       const gsl::span<const std::byte>& content,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      ConverterSubprocessor* subprocessor);
 
   /**
    * @brief Creates the {@link GltfConverterResult} from the given
@@ -147,7 +173,8 @@ public:
    */
   static GltfConverterResult convert(
       const gsl::span<const std::byte>& content,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      ConverterSubprocessor* subprocessor);
 
 private:
   static std::string toLowerCase(const std::string_view& str);

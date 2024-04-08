@@ -10,9 +10,12 @@
 #include <optional>
 
 namespace Cesium3DTilesContent {
+struct ConverterSubprocessor;
+
 struct B3dmToGltfConverter {
   static GltfConverterResult convert(
       const gsl::span<const std::byte>& b3dmBinary,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      ConverterSubprocessor*);
 };
 } // namespace Cesium3DTilesContent

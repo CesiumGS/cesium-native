@@ -136,7 +136,7 @@ void convertB3dmContentToGltf(
       b3dmBinary.subspan(glbStart, glbEnd - glbStart);
 
   GltfConverterResult binToGltfResult =
-      BinaryToGltfConverter::convert(glbData, options);
+      BinaryToGltfConverter::convert(glbData, options, nullptr);
 
   result.model = std::move(binToGltfResult.model);
   result.errors.merge(std::move(binToGltfResult.errors));
@@ -231,7 +231,8 @@ void convertB3dmMetadataToGltfStructuralMetadata(
 
 GltfConverterResult B3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& b3dmBinary,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    ConverterSubprocessor*) {
   GltfConverterResult result;
   B3dmHeader header;
   uint32_t headerLength = 0;

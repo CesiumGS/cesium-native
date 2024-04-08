@@ -1619,7 +1619,8 @@ void convertPntsContentToGltf(
 
 GltfConverterResult PntsToGltfConverter::convert(
     const gsl::span<const std::byte>& pntsBinary,
-    const CesiumGltfReader::GltfReaderOptions& /*options*/) {
+    const CesiumGltfReader::GltfReaderOptions& /*options*/,
+    ConverterSubprocessor*) {
   GltfConverterResult result;
   PntsHeader header;
   uint32_t headerLength = 0;

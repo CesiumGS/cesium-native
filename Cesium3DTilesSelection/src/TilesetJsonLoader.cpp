@@ -866,9 +866,11 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            tileTransform,
            tileRefine,
            upAxis = _upAxis,
-           externalContentInitializer = std::move(externalContentInitializer)](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                  pCompletedRequest) mutable {
+           externalContentInitializer = std::move(externalContentInitializer),
+           pAssetAccessor,
+           asyncSystem,
+           requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                               pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
@@ -900,12 +902,19 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
 
             if (converter) {
               // Convert to gltf
+              ConverterSubprocessor subprocessor{
+                  asyncSystem,
+                  pAssetAccessor,
+                  tileUrl,
+                  tileTransform,
+                  requestHeaders};
               CesiumGltfReader::GltfReaderOptions gltfOptions;
               gltfOptions.ktx2TranscodeTargets =
                   contentOptions.ktx2TranscodeTargets;
               gltfOptions.applyTextureTransform =
                   contentOptions.applyTextureTransform;
-              GltfConverterResult result = converter(responseData, gltfOptions);
+              GltfConverterResult result =
+                  converter(responseData, gltfOptions, &subprocessor);
 
               // Report any errors if there are any
               logTileLoadResult(pLogger, tileUrl, result.errors);

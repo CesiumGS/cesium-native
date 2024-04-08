@@ -40,17 +40,18 @@ GltfConverters::getConverterByMagic(const gsl::span<const std::byte>& content) {
 GltfConverterResult GltfConverters::convert(
     const std::string& filePath,
     const gsl::span<const std::byte>& content,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    ConverterSubprocessor* subprocessor) {
   std::string magic;
   auto converterFun = getConverterByMagic(content, magic);
   if (converterFun) {
-    return converterFun(content, options);
+    return converterFun(content, options, subprocessor);
   }
 
   std::string fileExtension;
   converterFun = getConverterByFileExtension(filePath, fileExtension);
   if (converterFun) {
-    return converterFun(content, options);
+    return converterFun(content, options, subprocessor);
   }
 
   ErrorList errors;
@@ -65,11 +66,12 @@ GltfConverterResult GltfConverters::convert(
 
 GltfConverterResult GltfConverters::convert(
     const gsl::span<const std::byte>& content,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    ConverterSubprocessor* subprocessor) {
   std::string magic;
   auto converter = getConverterByMagic(content, magic);
   if (converter) {
-    return converter(content, options);
+    return converter(content, options, subprocessor);
   }
 
   ErrorList errors;

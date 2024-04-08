@@ -24,7 +24,8 @@ static_assert(sizeof(InnerHeader) == 12);
 
 GltfConverterResult CmptToGltfConverter::convert(
     const gsl::span<const std::byte>& cmptBinary,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    ConverterSubprocessor* subProcessor) {
   GltfConverterResult result;
   if (cmptBinary.size() < sizeof(CmptHeader)) {
     result.errors.emplaceWarning("Composite tile must be at least 16 bytes.");
@@ -78,7 +79,8 @@ GltfConverterResult CmptToGltfConverter::convert(
 
     pos += pInner->byteLength;
 
-    innerTiles.emplace_back(GltfConverters::convert(innerData, options));
+    innerTiles.emplace_back(
+        GltfConverters::convert(innerData, options, subProcessor));
   }
 
   uint32_t tilesLength = pHeader->tilesLength;

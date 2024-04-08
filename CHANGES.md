@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.34.0
+
+##### Additions :tada:
+
+- Added support for I3dm 3D Tile content files.
+
 ### v0.33.0 - 2024-03-01
 
 ##### Breaking Changes :mega:

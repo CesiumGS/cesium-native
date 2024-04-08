@@ -157,7 +157,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
           gltfOptions.applyTextureTransform = applyTextureTransform;
-          GltfConverterResult result = converter(responseData, gltfOptions);
+          GltfConverterResult result =
+              converter(responseData, gltfOptions, nullptr); // XXX
 
           // Report any errors if there are any
           logTileLoadResult(pLogger, tileUrl, result.errors);

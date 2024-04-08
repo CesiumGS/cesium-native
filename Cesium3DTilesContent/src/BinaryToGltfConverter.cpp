@@ -5,7 +5,8 @@ CesiumGltfReader::GltfReader BinaryToGltfConverter::_gltfReader;
 
 GltfConverterResult BinaryToGltfConverter::convert(
     const gsl::span<const std::byte>& gltfBinary,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    ConverterSubprocessor*) {
   CesiumGltfReader::GltfReaderResult loadedGltf =
       _gltfReader.readGltf(gltfBinary, options);
 
