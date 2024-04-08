@@ -435,12 +435,12 @@ TileMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 1);
 
-            std::string baseUrl = url;
-
-            if (!(baseUrl.size() < 4)) {
-              if (baseUrl.substr(baseUrl.size() - 4, 4) != ".xml") {
-                if (baseUrl[baseUrl.size() - 1] != '/') {
-                  baseUrl += "/";
+            std::string urlPath = Uri::getPath(url);
+            if (!(urlPath.size() < 4)) {
+              if (urlPath.substr(urlPath.size() - 4, 4) != ".xml") {
+                if (urlPath[urlPath.size() - 1] != '/') {
+                  urlPath += "/";
+                  Uri::setPath(url, urlPath);
                 }
               }
             }
@@ -455,7 +455,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 projection,
                 tilingScheme,
                 coverageRectangle,
-                baseUrl,
+                url,
                 headers,
                 !fileExtension.empty() ? "." + fileExtension : fileExtension,
                 tileWidth,

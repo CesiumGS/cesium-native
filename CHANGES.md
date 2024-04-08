@@ -24,6 +24,7 @@
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
 - Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 - `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to build URLs incorrectly when given a URL with query parameters.
 
 ### v0.34.0 - 2024-04-01
 
