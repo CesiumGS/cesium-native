@@ -5,18 +5,26 @@
 ##### Breaking Changes :mega:
 
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumLegacyTerrain`.
+- Added two new parameters to `upsampleGltfForRasterOverlays`, prior to the existing `textureCoordinateIndex` parameter.
 
 ##### Additions :tada:
 
-- Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
-- Added `waitInMainThread` method to `Future` and `SharedFuture`.
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
+- Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+- `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
+- Added `BoundingRegionBuilder::toGlobeRectangle`.
+- Added `GlobeRectangle::splitAtAntiMeridian`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `joinToString` when given a collection containing empty strings.
 - `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+- Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
+- `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to build URLs incorrectly when given a URL with query parameters.
 
 ### v0.34.0 - 2024-04-01
 
