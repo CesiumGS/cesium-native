@@ -665,25 +665,33 @@ void Model::generateMissingNormalsSmooth() {
       });
 }
 
-void CesiumGltf::Model::addExtensionUsed(const std::string& extensionUsed) {
-  if (std::find(
-          this->extensionsUsed.begin(),
-          this->extensionsUsed.end(),
-          extensionUsed) == this->extensionsUsed.end()) {
-    this->extensionsUsed.emplace_back(extensionUsed);
+void Model::addExtensionUsed(const std::string& extensionName) {
+  if (!this->isExtensionUsed(extensionName)) {
+    this->extensionsUsed.emplace_back(extensionName);
   }
 }
 
-void CesiumGltf::Model::addExtensionRequired(
-    const std::string& extensionRequired) {
-  this->addExtensionUsed(extensionRequired);
+void Model::addExtensionRequired(const std::string& extensionName) {
+  this->addExtensionUsed(extensionName);
 
-  if (std::find(
-          this->extensionsRequired.begin(),
-          this->extensionsRequired.end(),
-          extensionRequired) == this->extensionsRequired.end()) {
-    this->extensionsRequired.emplace_back(extensionRequired);
+  if (!this->isExtensionRequired(extensionName)) {
+    this->extensionsRequired.emplace_back(extensionName);
   }
+}
+
+bool Model::isExtensionUsed(const std::string& extensionName) const noexcept {
+  return std::find(
+             this->extensionsUsed.begin(),
+             this->extensionsUsed.end(),
+             extensionName) != this->extensionsUsed.end();
+}
+
+bool Model::isExtensionRequired(
+    const std::string& extensionName) const noexcept {
+  return std::find(
+             this->extensionsRequired.begin(),
+             this->extensionsRequired.end(),
+             extensionName) != this->extensionsRequired.end();
 }
 
 } // namespace CesiumGltf
