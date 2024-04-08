@@ -162,7 +162,8 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * {@link ModelSpec::extensionsUsed} property.
    *
    * @param extensionName The extension name to check.
-   * @returns True if the extension is found in `extensionsUsed`; otherwise, false.
+   * @returns True if the extension is found in `extensionsUsed`; otherwise,
+   * false.
    */
   bool isExtensionUsed(const std::string& extensionName) const noexcept;
 
@@ -171,7 +172,8 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * {@link ModelSpec::extensionsRequired} property.
    *
    * @param extensionName The extension name to check.
-   * @returns True if the extension is found in `extensionsRequired`; otherwise, false.
+   * @returns True if the extension is found in `extensionsRequired`; otherwise,
+   * false.
    */
   bool isExtensionRequired(const std::string& extensionName) const noexcept;
 };

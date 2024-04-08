@@ -530,11 +530,15 @@ TEST_CASE("Model::addExtensionRequired") {
 
     CHECK(m.extensionsRequired.size() == 2);
     CHECK(
-        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Foo") !=
-        m.extensionsRequired.end());
+        std::find(
+            m.extensionsRequired.begin(),
+            m.extensionsRequired.end(),
+            "Foo") != m.extensionsRequired.end());
     CHECK(
-        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Bar") !=
-        m.extensionsRequired.end());
+        std::find(
+            m.extensionsRequired.begin(),
+            m.extensionsRequired.end(),
+            "Bar") != m.extensionsRequired.end());
   }
 
   SECTION("does not add a duplicate extension") {
@@ -546,11 +550,15 @@ TEST_CASE("Model::addExtensionRequired") {
 
     CHECK(m.extensionsRequired.size() == 2);
     CHECK(
-        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Foo") !=
-        m.extensionsRequired.end());
+        std::find(
+            m.extensionsRequired.begin(),
+            m.extensionsRequired.end(),
+            "Foo") != m.extensionsRequired.end());
     CHECK(
-        std::find(m.extensionsRequired.begin(), m.extensionsRequired.end(), "Bar") !=
-        m.extensionsRequired.end());
+        std::find(
+            m.extensionsRequired.begin(),
+            m.extensionsRequired.end(),
+            "Bar") != m.extensionsRequired.end());
   }
 
   SECTION("also adds the extension to extensionsUsed if not already present") {
