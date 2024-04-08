@@ -43,6 +43,6 @@ protected:
 
 private:
   CesiumGltf::ExtensionCesiumPrimitiveOutline* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _indices;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
 };
 } // namespace CesiumGltfReader

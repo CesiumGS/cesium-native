@@ -932,7 +932,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.indices.has_value()) {
+  if (obj.indices > -1) {
     jsonWriter.Key("indices");
     writeJson(obj.indices, jsonWriter, context);
   }

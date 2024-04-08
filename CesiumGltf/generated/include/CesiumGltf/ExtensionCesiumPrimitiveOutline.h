@@ -7,7 +7,6 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <cstdint>
-#include <optional>
 
 namespace CesiumGltf {
 /**
@@ -25,6 +24,6 @@ struct CESIUMGLTF_API ExtensionCesiumPrimitiveOutline final
    * @brief The index of the accessor providing the list of highlighted lines at
    * the edge of this primitive's triangles.
    */
-  std::optional<int64_t> indices;
+  int32_t indices = -1;
 };
 } // namespace CesiumGltf
