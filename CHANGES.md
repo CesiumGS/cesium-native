@@ -28,9 +28,8 @@
   - Have a default `scene`.
   - Add the `CESIUM_RTC` extension to the glTF's `extensionsRequired` and `extensionsUsed` lists when that extension is added because the PNTS uses the `RTC_CENTER` property.
 - When `KHR_texture_transform` is removed from a glTF at load time, the accessors and bufferViews created to hold the newly-generated texture coordinates now have their `byteOffset` properties correctly set to zero, instead of inheriting the value from the original `KHR_texture_transform`-dependent objects.
-- `bufferViews` created for indices during Draco decoding:
-  - No longer have their `byteStride` property set, as this is unnecessary and disallowed by the specification.
-  - Have their `target` property set to `BufferView::Target::ARRAY_BUFFER`.
+- `bufferViews` created for indices during Draco decoding no longer have their `byteStride` property set, as this is unnecessary and disallowed by the specification.
+- `bufferViews` created for vertex attributes during Draco decoding now have their `target` property correctly set to `BufferView::Target::ARRAY_BUFFER`.
 - After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
 - Accessors created for the position attribute in glTFs converted from quantized-mesh tiles now have their minimum and maximum values set correctly to include the positions of the vertices that form the skirt around the edge of the tile.
 
