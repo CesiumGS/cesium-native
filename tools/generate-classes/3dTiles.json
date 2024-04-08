@@ -21,12 +21,20 @@
     },
     "Buffer": {
       "toBeInherited": true
+    },
+    "3DTILES_content_voxels content extension": {
+      "overrideName": "ExtensionContent3dTilesContentVoxels"
     }
   },
   "extensions": [
     {
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_content_voxels",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/voxels/extensions/3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json",
+      "attachTo": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/voxels/extensions/3DTILES_content_voxels/schema/padding.schema.json"
     }
   ]
 }
