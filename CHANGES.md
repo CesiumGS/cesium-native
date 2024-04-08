@@ -2,11 +2,16 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumLegacyTerrain`.
+
 ##### Additions :tada:
 
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added `waitInMainThread` method to `Future` and `SharedFuture`.
+- Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 
 ##### Fixes :wrench:
 
