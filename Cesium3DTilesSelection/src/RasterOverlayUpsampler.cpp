@@ -72,6 +72,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
         auto model = upsampleGltfForRasterOverlays(
             parentModel,
             TileID,
+            false,
+            "_CESIUMOVERLAY_",
             textureCoordinateIndex);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);
