@@ -11,7 +11,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief KHR_materials_variants mesh primitive extension
+ * @brief KHR_materials_variants glTF Mesh Primitive Extension
  */
 struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariants final
     : public CesiumUtility::ExtensibleObject {
