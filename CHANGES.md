@@ -15,6 +15,7 @@
 - Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
 - `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
+- Added `BoundingRegionBuilder::toGlobeRectangle`.
 
 ##### Fixes :wrench:
 
