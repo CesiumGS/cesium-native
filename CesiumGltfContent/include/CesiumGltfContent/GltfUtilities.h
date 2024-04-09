@@ -22,6 +22,28 @@ namespace CesiumGltfContent {
  */
 struct CESIUMGLTFCONTENT_API GltfUtilities {
   /**
+   * @brief Gets the transformation matrix for a given node.
+   *
+   * This does not incorporate the node's parent's transform in any way.
+   *
+   * @param node The node from which to get the transformation matrix.
+   * @return The transformation matrix, or std::nullopt if the node's
+   * transformation is invalid, such as because it has a matrix with fewer than
+   * 16 elements in it.
+   */
+  static std::optional<glm::dmat4x4>
+  getNodeTransform(const CesiumGltf::Node& node);
+
+  /**
+   * @brief Sets the transformation matrix for a given node.
+   *
+   * @param node The node on which to set the transformation matrix.
+   * @param newTransform The new transformation matrix.
+   */
+  static void
+  setNodeTransform(CesiumGltf::Node& node, const glm::dmat4x4& newTransform);
+
+  /**
    * @brief Applies the glTF's RTC_CENTER, if any, to the given transform.
    *
    * If the glTF has a `CESIUM_RTC` extension, this function will multiply the

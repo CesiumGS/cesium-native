@@ -382,6 +382,10 @@ void forEachPrimitiveInNodeObject(
       0.0,
       1.0};
 
+  // This should just call GltfUtilities::getNodeTransform, but it can't because
+  // it's in CesiumGltfContent. We should merge these two libraries, but until
+  // then, it's duplicated.
+
   glm::dmat4x4 nodeTransform = transform;
   const std::vector<double>& matrix = node.matrix;
 
