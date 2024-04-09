@@ -41,7 +41,6 @@ struct DecodedInstances {
   bool rotationENU;
 };
 
-
 void parseInstancesHeader(
     const gsl::span<const std::byte>& instancesBinary,
     InstancesHeader& header,
@@ -95,25 +94,29 @@ struct InstanceContent {
   CesiumUtility::ErrorList errors;
 };
 
-glm::vec3 decodeOct32P(const uint16_t rawOct[2])
-{
-	glm::dvec3 result = CesiumUtility::AttributeCompression::octDecodeInRange(
-          rawOct[0], rawOct[1], static_cast<const uint16_t>(65535));
-	return glm::vec3(result);
+glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
+  glm::dvec3 result = CesiumUtility::AttributeCompression::octDecodeInRange(
+      rawOct[0],
+      rawOct[1],
+      static_cast<const uint16_t>(65535));
+  return glm::vec3(result);
 }
 
-/* Calculate the rotation quaternion described by the up, right vectors passed in
+/* Calculate the rotation quaternion described by the up, right vectors passed
+ in
  * NORMAL_UP and NORMAL_RIGHT. This is composed of two rotations:
    + The rotation that takes the up vector to its new position;
-   + The rotation around the new up vector that takes the right vector to its new position.
+   + The rotation around the new up vector that takes the right vector to its
+ new position.
 
-  I like to think of each rotation as describing a coordinate frame. The calculation of the second
-  rotation must take place within the first frame.
+  I like to think of each rotation as describing a coordinate frame. The
+ calculation of the second rotation must take place within the first frame.
 
-  The rotations are calculated by finding the rotation that takes one vector to another. If we take
-  the dot and cross products of the two vectors and store them in a quaternion, that quaternion
-  represents twice the required rotation. We get the correct quaternion by "averaging" with the zero
-  rotation quaternion, in a way analagous to finding the half vector between two 3D vectors.
+  The rotations are calculated by finding the rotation that takes one vector to
+ another. If we take the dot and cross products of the two vectors and store
+ them in a quaternion, that quaternion represents twice the required rotation.
+ We get the correct quaternion by "averaging" with the zero rotation quaternion,
+ in a way analagous to finding the half vector between two 3D vectors.
  */
 
 glm::quat rotation(const glm::vec3& vec1, const glm::vec3& vec2) {
@@ -137,7 +140,7 @@ glm::quat rotation(const glm::vec3& vec1, const glm::vec3& vec2) {
     }
     auto rotAxis = cross(vec1, orthoVec);
     rotAxis = normalize(rotAxis);
-	// rotation by pi radians
+    // rotation by pi radians
     return glm::quat(0.0f, rotAxis.x, rotAxis.y, rotAxis.z);
   }
   auto rotAxis = cross(vec1, vec2);
@@ -150,17 +153,18 @@ glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   auto upRot = rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
   // We can rotate a point vector by a quaternion using q * (0, v) *
   // conj(q). But here we are doing an inverse rotation of the right vector into
-  // the "up frame." 
-  glm::quat temp = conjugate(upRot) * glm::quat(0.0f, right.x, right.y, right.z) * upRot;
+  // the "up frame."
+  glm::quat temp =
+      conjugate(upRot) * glm::quat(0.0f, right.x, right.y, right.z) * upRot;
   glm::vec3 innerRight(temp.x, temp.y, temp.z);
   glm::quat rightRot = rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
   return upRot * rightRot;
 }
 
 /* The approach:
-  + Parse the i3dm header, decoding and creating all the instance transforms. This includes
-    "exotic" things like OCT encoding of rotations and ENU rotations for each
-    instance.
+  + Parse the i3dm header, decoding and creating all the instance transforms.
+  This includes "exotic" things like OCT encoding of rotations and ENU rotations
+  for each instance.
   + For each node with a mesh (a "mesh node"), the instance transforms must be
     transformed into the local coordinates of the mesh and then stored in the
     EXT_mesh_gpu_instancing extension for that node. It would be nice to avoid a
@@ -180,19 +184,22 @@ void convertInstancesContent(
     ConverterSubprocessor* subprocessor,
     GltfConverterResult& result,
     DecodedInstances& decodedInstances) {
-  if (header.featureTableJsonByteLength == 0 || header.featureTableBinaryByteLength == 0) {
+  if (header.featureTableJsonByteLength == 0 ||
+      header.featureTableBinaryByteLength == 0) {
     return;
   }
   const uint32_t glTFStart = headerLength + header.featureTableJsonByteLength +
-                                 header.featureTableBinaryByteLength +
-                                 header.batchTableJsonByteLength +
-                                 header.batchTableBinaryByteLength;
+                             header.featureTableBinaryByteLength +
+                             header.batchTableJsonByteLength +
+                             header.batchTableBinaryByteLength;
   const uint32_t glTFEnd = header.byteLength;
   auto gltfData = instancesBinary.subspan(glTFStart, glTFEnd - glTFStart);
   std::optional<CesiumAsync::Future<ByteResult>> assetFuture;
   if (header.gltfFormat == 0) {
     // Need to recursively read the glTF content.
-    auto gltfUri = std::string(reinterpret_cast<const char*>(gltfData.data()), gltfData.size());
+    auto gltfUri = std::string(
+        reinterpret_cast<const char*>(gltfData.data()),
+        gltfData.size());
     assetFuture = get(*subprocessor, gltfUri);
   }
   auto featureTableJsonData =
@@ -203,43 +210,50 @@ void convertInstancesContent(
       featureTableJsonData.size());
   if (featureTableJson.HasParseError()) {
     result.errors.emplaceError(fmt::format(
-                                   "Error when parsing feature table JSON, error code {} at byte offset "
-                                   "{}",
-                                   featureTableJson.GetParseError(),
-                                   featureTableJson.GetErrorOffset()));
+        "Error when parsing feature table JSON, error code {} at byte offset "
+        "{}",
+        featureTableJson.GetParseError(),
+        featureTableJson.GetErrorOffset()));
     return;
   }
   InstanceContent parsedContent;
   // Global semantics
-  if (auto optinstancesLength = getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
+  if (auto optinstancesLength =
+          getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
     parsedContent.instancesLength = *optinstancesLength;
   } else {
-    result.errors.emplaceError(
-        "Error parsing I3DM feature table, no valid INSTANCES_LENGTH was found.");
+    result.errors.emplaceError("Error parsing I3DM feature table, no valid "
+                               "INSTANCES_LENGTH was found.");
     return;
   }
   if (auto optRtcCenter = parseArrayValueVec3(featureTableJson, "RTC_CENTER")) {
     parsedContent.rtcCenter = *optRtcCenter;
   }
-  parsedContent.position = parseOffset(featureTableJson, "POSITION", result.errors);
+  parsedContent.position =
+      parseOffset(featureTableJson, "POSITION", result.errors);
   if (!parsedContent.position) {
     if (result.errors.hasErrors()) {
       return;
     }
-    parsedContent.positionQuantized = parseOffset( featureTableJson, "POSITION_QUANTIZED", result.errors);
+    parsedContent.positionQuantized =
+        parseOffset(featureTableJson, "POSITION_QUANTIZED", result.errors);
     if (result.errors.hasErrors()) {
       return;
     }
   }
   if (parsedContent.positionQuantized) {
-    parsedContent.quantizedVolumeOffset = parseArrayValueVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
+    parsedContent.quantizedVolumeOffset =
+        parseArrayValueVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
     if (!parsedContent.quantizedVolumeOffset) {
-      result.errors.emplaceError("Error parsing I3DM feature table, No valid QUANTIZED_VOLUME_OFFSET property");
+      result.errors.emplaceError("Error parsing I3DM feature table, No valid "
+                                 "QUANTIZED_VOLUME_OFFSET property");
       return;
     }
-    parsedContent.quantizedVolumeScale = parseArrayValueVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
+    parsedContent.quantizedVolumeScale =
+        parseArrayValueVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
     if (!parsedContent.quantizedVolumeScale) {
-      result.errors.emplaceError("Error parsing I3DM feature table, No valid QUANTIZED_VOLUME_SCALE property");
+      result.errors.emplaceError("Error parsing I3DM feature table, No valid "
+                                 "QUANTIZED_VOLUME_SCALE property");
       return;
     }
   }
@@ -248,62 +262,88 @@ void convertInstancesContent(
     parsedContent.eastNorthUp = *optENU;
     decodedInstances.rotationENU = *optENU;
   }
-  parsedContent.normalUp = parseOffset(featureTableJson, "NORMAL_UP", result.errors);
-  parsedContent.normalRight = parseOffset(featureTableJson, "NORMAL_RIGHT", result.errors);
-  parsedContent.normalUpOct32p = parseOffset(featureTableJson, "NORMAL_UP_OCT32P", result.errors);
-  parsedContent.normalRightOct32p = parseOffset(featureTableJson, "NORMAL_RIGHT_OCT32P", result.errors);
+  parsedContent.normalUp =
+      parseOffset(featureTableJson, "NORMAL_UP", result.errors);
+  parsedContent.normalRight =
+      parseOffset(featureTableJson, "NORMAL_RIGHT", result.errors);
+  parsedContent.normalUpOct32p =
+      parseOffset(featureTableJson, "NORMAL_UP_OCT32P", result.errors);
+  parsedContent.normalRightOct32p =
+      parseOffset(featureTableJson, "NORMAL_RIGHT_OCT32P", result.errors);
   parsedContent.scale = parseOffset(featureTableJson, "SCALE", result.errors);
-  parsedContent.scaleNonUniform = parseOffset(featureTableJson, "SCALE_NON_UNIFORM", result.errors);
-  parsedContent.batchId = parseOffset(featureTableJson, "BATCH_ID", result.errors);
+  parsedContent.scaleNonUniform =
+      parseOffset(featureTableJson, "SCALE_NON_UNIFORM", result.errors);
+  parsedContent.batchId =
+      parseOffset(featureTableJson, "BATCH_ID", result.errors);
   if (result.errors.hasErrors()) {
     return;
   }
-  auto featureTableBinaryData =
-      instancesBinary.subspan(headerLength + header.featureTableJsonByteLength, header.featureTableBinaryByteLength);
-  decodedInstances.positions.resize(parsedContent.instancesLength, parsedContent.rtcCenter);
+  auto featureTableBinaryData = instancesBinary.subspan(
+      headerLength + header.featureTableJsonByteLength,
+      header.featureTableBinaryByteLength);
+  decodedInstances.positions.resize(
+      parsedContent.instancesLength,
+      parsedContent.rtcCenter);
   if (parsedContent.position) {
-    const auto* rawPosition = reinterpret_cast<const glm::vec3 *>(featureTableBinaryData.data() + *parsedContent.position);
+    const auto* rawPosition = reinterpret_cast<const glm::vec3*>(
+        featureTableBinaryData.data() + *parsedContent.position);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
       decodedInstances.positions[i] += rawPosition[i];
     }
   } else {
-    const auto* rawQPosition = reinterpret_cast<const uint16_t(*)[3]>(featureTableBinaryData.data() + *parsedContent.positionQuantized);
+    const auto* rawQPosition = reinterpret_cast<const uint16_t(*)[3]>(
+        featureTableBinaryData.data() + *parsedContent.positionQuantized);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
       const auto* posQuantized = &rawQPosition[i];
       float position[3];
       for (unsigned j = 0; j < 3; ++j) {
-        position[j] = (*posQuantized)[j] / 65535.0f * (*parsedContent.quantizedVolumeScale)[j] + (*parsedContent.quantizedVolumeOffset)[j];
+        position[j] = (*posQuantized)[j] / 65535.0f *
+                          (*parsedContent.quantizedVolumeScale)[j] +
+                      (*parsedContent.quantizedVolumeOffset)[j];
       }
-      decodedInstances.positions[i] += glm::vec3(position[0], position[1], position[2]);
+      decodedInstances.positions[i] +=
+          glm::vec3(position[0], position[1], position[2]);
     }
   }
-  decodedInstances.rotations.resize(parsedContent.instancesLength, glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+  decodedInstances.rotations.resize(
+      parsedContent.instancesLength,
+      glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
   if (parsedContent.normalUp && parsedContent.normalRight) {
-    const auto* rawUp = reinterpret_cast<const glm::vec3 *>(featureTableBinaryData.data() + *parsedContent.normalUp);
-    const auto* rawRight = reinterpret_cast<const glm::vec3 *>(featureTableBinaryData.data() + *parsedContent.normalRight);
+    const auto* rawUp = reinterpret_cast<const glm::vec3*>(
+        featureTableBinaryData.data() + *parsedContent.normalUp);
+    const auto* rawRight = reinterpret_cast<const glm::vec3*>(
+        featureTableBinaryData.data() + *parsedContent.normalRight);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.rotations[i] = rotationFromUpRight(rawUp[i], rawRight[i]);
+      decodedInstances.rotations[i] =
+          rotationFromUpRight(rawUp[i], rawRight[i]);
     }
   } else if (parsedContent.normalUpOct32p && parsedContent.normalRightOct32p) {
-    const auto* rawUpOct = reinterpret_cast<const uint16_t(*)[2]>(featureTableBinaryData.data() + *parsedContent.normalUpOct32p);
-    const auto* rawRightOct = reinterpret_cast<const uint16_t(*)[2]>(featureTableBinaryData.data() + *parsedContent.normalRightOct32p);
+    const auto* rawUpOct = reinterpret_cast<const uint16_t(*)[2]>(
+        featureTableBinaryData.data() + *parsedContent.normalUpOct32p);
+    const auto* rawRightOct = reinterpret_cast<const uint16_t(*)[2]>(
+        featureTableBinaryData.data() + *parsedContent.normalRightOct32p);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      glm::vec3 dUp =  decodeOct32P(rawUpOct[i]);
+      glm::vec3 dUp = decodeOct32P(rawUpOct[i]);
       glm::vec3 dRight = decodeOct32P(rawRightOct[i]);
       decodedInstances.rotations[i] = rotationFromUpRight(dUp, dRight);
     }
   }
-  decodedInstances.scales.resize(parsedContent.instancesLength, glm::vec3(1.0, 1.0, 1.0));
+  decodedInstances.scales.resize(
+      parsedContent.instancesLength,
+      glm::vec3(1.0, 1.0, 1.0));
   if (parsedContent.scale) {
-    const auto* rawScale = reinterpret_cast<const float *>(featureTableBinaryData.data() + *parsedContent.scale);
+    const auto* rawScale = reinterpret_cast<const float*>(
+        featureTableBinaryData.data() + *parsedContent.scale);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.scales[i] = glm::vec3(rawScale[i], rawScale[i], rawScale[i]);
+      decodedInstances.scales[i] =
+          glm::vec3(rawScale[i], rawScale[i], rawScale[i]);
     }
   } else if (parsedContent.scaleNonUniform) {
-    const auto* rawScaleNonUniform = reinterpret_cast<const glm::vec3 *>(featureTableBinaryData.data() + *parsedContent.scaleNonUniform);
+    const auto* rawScaleNonUniform = reinterpret_cast<const glm::vec3*>(
+        featureTableBinaryData.data() + *parsedContent.scaleNonUniform);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
       decodedInstances.scales[i] = rawScaleNonUniform[i];
-	}
+    }
   }
   ByteResult byteResult;
   if (assetFuture) {
@@ -313,16 +353,21 @@ void convertInstancesContent(
       return;
     }
   }
-  GltfConverterResult binToGltfResult =
-      BinaryToGltfConverter::convert(assetFuture ? byteResult.bytes : gltfData, options, nullptr);
+  GltfConverterResult binToGltfResult = BinaryToGltfConverter::convert(
+      assetFuture ? byteResult.bytes : gltfData,
+      options,
+      nullptr);
   result.model = std::move(binToGltfResult.model);
   result.errors.merge(std::move(binToGltfResult.errors));
 }
 
-// XXX If there are no scale or rotation parts to the instance transform, then there shouldn't be
-// any after applying the forward and inverse glTF transforms. Should prove this!
+// XXX If there are no scale or rotation parts to the instance transform, then
+// there shouldn't be any after applying the forward and inverse glTF
+// transforms. Should prove this!
 
-void instantiateInstances(GltfConverterResult& result, const DecodedInstances& decodedInstances) {
+void instantiateInstances(
+    GltfConverterResult& result,
+    const DecodedInstances& decodedInstances) {
   std::set<CesiumGltf::Node*> meshNodes;
   size_t totalStride = sizeof(float) * 3;
   size_t rotOffset = 0;
@@ -338,30 +383,45 @@ void instantiateInstances(GltfConverterResult& result, const DecodedInstances& d
     totalStride += sizeof(float) * 3;
   }
   int32_t instanceBufferId = createBufferInGltf(*result.model);
-  auto& instanceBuffer = result.model->buffers[static_cast<uint32_t>(instanceBufferId)];
-  int32_t instanceBufferViewId = createBufferViewInGltf(*result.model, instanceBufferId, 0, static_cast<int64_t>(totalStride));
-  auto& instanceBufferView = result.model->bufferViews[static_cast<uint32_t>(instanceBufferViewId)];
-  const auto numInstances = static_cast<uint32_t>(decodedInstances.positions.size());
+  auto& instanceBuffer =
+      result.model->buffers[static_cast<uint32_t>(instanceBufferId)];
+  int32_t instanceBufferViewId = createBufferViewInGltf(
+      *result.model,
+      instanceBufferId,
+      0,
+      static_cast<int64_t>(totalStride));
+  auto& instanceBufferView =
+      result.model->bufferViews[static_cast<uint32_t>(instanceBufferViewId)];
+  const auto numInstances =
+      static_cast<uint32_t>(decodedInstances.positions.size());
   const size_t instanceDataSize = totalStride * numInstances;
-  auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(*result.model, glm::dmat4x4(1.0));
+  auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
+      *result.model,
+      glm::dmat4x4(1.0));
   result.model->forEachPrimitiveInScene(
       -1,
-      [&](Model& gltf, Node& node, Mesh&, MeshPrimitive&, const glm::dmat4& transform)
-      {
+      [&](Model& gltf,
+          Node& node,
+          Mesh&,
+          MeshPrimitive&,
+          const glm::dmat4& transform) {
         auto [nodeItr, notSeen] = meshNodes.insert(&node);
         if (!notSeen) {
           return;
         }
-        auto dataBaseOffset = static_cast<uint32_t>(instanceBuffer.cesium.data.size());
+        auto dataBaseOffset =
+            static_cast<uint32_t>(instanceBuffer.cesium.data.size());
         instanceBuffer.cesium.data.resize(dataBaseOffset + instanceDataSize);
         // Transform instance transform into local glTF coordinate system.
         const auto toTile = upToZ * transform;
         const auto toTileInv = inverse(toTile);
         for (unsigned i = 0; i < numInstances; ++i) {
           auto instMat = toTileInv;
-          instMat = translate(instMat, glm::dvec3(decodedInstances.positions[i]));
+          instMat =
+              translate(instMat, glm::dvec3(decodedInstances.positions[i]));
           if (hasRotations) {
-            instMat = instMat * toMat4(glm::dquat(decodedInstances.rotations[i]));
+            instMat =
+                instMat * toMat4(glm::dquat(decodedInstances.rotations[i]));
           }
           if (hasScales) {
             instMat = scale(instMat, glm::dvec3(decodedInstances.scales[i]));
@@ -372,41 +432,70 @@ void instantiateInstances(GltfConverterResult& result, const DecodedInstances& d
           glm::dvec4 perspective;
           decompose(instMat, scale, rotation, position, skew, perspective);
           glm::vec3 fposition(position);
-          std::memcpy(&instanceBuffer.cesium.data[i * totalStride], &fposition, sizeof(fposition));
+          std::memcpy(
+              &instanceBuffer.cesium.data[i * totalStride],
+              &fposition,
+              sizeof(fposition));
           if (hasRotations) {
             glm::quat frotation(rotation);
-            std::memcpy(&instanceBuffer.cesium.data[i * totalStride + rotOffset], &frotation, sizeof(frotation));
+            std::memcpy(
+                &instanceBuffer.cesium.data[i * totalStride + rotOffset],
+                &frotation,
+                sizeof(frotation));
           }
           if (hasScales) {
             glm::vec3 fscale(scale);
-            std::memcpy(&instanceBuffer.cesium.data[i * totalStride + scaleOffset], &fscale, sizeof(fscale));
+            std::memcpy(
+                &instanceBuffer.cesium.data[i * totalStride + scaleOffset],
+                &fscale,
+                sizeof(fscale));
           }
         }
         auto& gpuExt = node.addExtension<ExtensionExtMeshGpuInstancing>();
         if (!gpuExt.attributes.empty()) {
           // wtf
         }
-        auto posAccessorId = createAccessorInGltf(gltf, instanceBufferViewId, Accessor::ComponentType::FLOAT, numInstances, Accessor::Type::VEC3);
+        auto posAccessorId = createAccessorInGltf(
+            gltf,
+            instanceBufferViewId,
+            Accessor::ComponentType::FLOAT,
+            numInstances,
+            Accessor::Type::VEC3);
         auto& posAcessor = gltf.accessors[static_cast<uint32_t>(posAccessorId)];
         posAcessor.byteOffset = dataBaseOffset;
         gpuExt.attributes["TRANSLATION"] = posAccessorId;
         if (hasRotations) {
-          auto rotAccessorId = createAccessorInGltf(gltf, instanceBufferViewId, Accessor::ComponentType::FLOAT, numInstances, Accessor::Type::VEC4);
-          auto& rotAccessor = gltf.accessors[static_cast<uint32_t>(rotAccessorId)];
-          rotAccessor.byteOffset = static_cast<int64_t>(dataBaseOffset + rotOffset);
+          auto rotAccessorId = createAccessorInGltf(
+              gltf,
+              instanceBufferViewId,
+              Accessor::ComponentType::FLOAT,
+              numInstances,
+              Accessor::Type::VEC4);
+          auto& rotAccessor =
+              gltf.accessors[static_cast<uint32_t>(rotAccessorId)];
+          rotAccessor.byteOffset =
+              static_cast<int64_t>(dataBaseOffset + rotOffset);
           gpuExt.attributes["ROTATION"] = rotAccessorId;
         }
         if (hasScales) {
-          auto scaleAccessorId = createAccessorInGltf(gltf, instanceBufferViewId, Accessor::ComponentType::FLOAT, numInstances, Accessor::Type::VEC3);
-          auto& scaleAccessor = gltf.accessors[static_cast<uint32_t>(scaleAccessorId)];
-          scaleAccessor.byteOffset = static_cast<int64_t>(dataBaseOffset + scaleOffset);
+          auto scaleAccessorId = createAccessorInGltf(
+              gltf,
+              instanceBufferViewId,
+              Accessor::ComponentType::FLOAT,
+              numInstances,
+              Accessor::Type::VEC3);
+          auto& scaleAccessor =
+              gltf.accessors[static_cast<uint32_t>(scaleAccessorId)];
+          scaleAccessor.byteOffset =
+              static_cast<int64_t>(dataBaseOffset + scaleOffset);
           gpuExt.attributes["SCALE"] = scaleAccessorId;
         }
       });
-  instanceBuffer.byteLength = static_cast<int64_t>(instanceBuffer.cesium.data.size());
+  instanceBuffer.byteLength =
+      static_cast<int64_t>(instanceBuffer.cesium.data.size());
   instanceBufferView.byteLength = instanceBuffer.byteLength;
 }
-}
+} // namespace
 
 GltfConverterResult I3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& instancesBinary,
@@ -420,9 +509,16 @@ GltfConverterResult I3dmToGltfConverter::convert(
     return result;
   }
   DecodedInstances decodedInstances;
-  convertInstancesContent(instancesBinary, header, headerLength, options, subprocessor, result, decodedInstances);
+  convertInstancesContent(
+      instancesBinary,
+      header,
+      headerLength,
+      options,
+      subprocessor,
+      result,
+      decodedInstances);
   if (result.errors) {
-     return result;
+    return result;
   }
   instantiateInstances(result, decodedInstances);
   return result;

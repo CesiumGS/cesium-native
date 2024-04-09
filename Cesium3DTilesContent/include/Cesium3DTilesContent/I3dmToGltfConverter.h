@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Cesium3DTilesContent/GltfConverterResult.h>
-
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 
@@ -17,6 +16,6 @@ struct I3dmToGltfConverter {
   static GltfConverterResult convert(
       const gsl::span<const std::byte>& instancesBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-	  ConverterSubprocessor* subprocessor);
+      ConverterSubprocessor* subprocessor);
 };
 } // namespace Cesium3DTilesContent
