@@ -7,6 +7,7 @@
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added `BoundingRegionBuilder::toGlobeRectangle`.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
 
 ##### Fixes :wrench:
 
