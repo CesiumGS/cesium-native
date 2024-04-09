@@ -345,12 +345,8 @@ struct VisitAccessorIds {
 
         ExtensionCesiumPrimitiveOutline* pPrimitiveOutline =
             primitive.getExtension<ExtensionCesiumPrimitiveOutline>();
-        if (pPrimitiveOutline && pPrimitiveOutline->indices) {
-          // The `indices` property is incorrectly defined as an int64_t in this
-          // extension, so we need to jump through some hoops.
-          int32_t temp = int32_t(*pPrimitiveOutline->indices);
-          callback(temp);
-          *pPrimitiveOutline->indices = temp;
+        if (pPrimitiveOutline) {
+          callback(pPrimitiveOutline->indices);
         }
       }
     }

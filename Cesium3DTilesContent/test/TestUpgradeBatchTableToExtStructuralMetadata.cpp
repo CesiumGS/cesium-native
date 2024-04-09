@@ -2452,7 +2452,7 @@ TEST_CASE("Omits value-less properties when converting "
   CHECK(propertyTable.classProperty == "default");
 
   // Verify that all property table properties refer to a valid bufferView.
-  for (const std::pair<std::string, PropertyTableProperty>& pair :
+  for (const std::pair<const std::string, PropertyTableProperty>& pair :
        propertyTable.properties) {
     CHECK(pair.second.values >= 0);
     CHECK(size_t(pair.second.values) < gltf.bufferViews.size());
