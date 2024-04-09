@@ -458,7 +458,61 @@ void forEachPrimitiveInSceneObject(
     }
   }
 }
+
+template <typename TCallback>
+void forEachNodeInSceneObject(
+    const Model& model,
+    const Scene& scene,
+    TCallback& callback) {
+  for (int32_t node : scene.nodes) {
+    const Node* pNode = model.getSafe(&model.nodes, node);
+    if (!pNode)
+      continue;
+
+    callback(model, *pNode);
+  }
+}
+
 } // namespace
+
+void Model::forEachRootNodeInScene(
+    int sceneID,
+    std::function<ForEachRootNodeInSceneCallback>&& callback) {
+  return const_cast<const Model*>(this)->forEachRootNodeInScene(
+      sceneID,
+      [&callback](const Model& gltf_, const Node& node) {
+        callback(const_cast<Model&>(gltf_), const_cast<Node&>(node));
+      });
+}
+
+void Model::forEachRootNodeInScene(
+    int sceneID,
+    std::function<ForEachRootNodeInSceneConstCallback>&& callback) const {
+  if (sceneID >= 0) {
+    // Use the user-specified scene if it exists.
+    if (sceneID < static_cast<int>(this->scenes.size())) {
+      forEachNodeInSceneObject(
+          *this,
+          this->scenes[static_cast<size_t>(sceneID)],
+          callback);
+    }
+  } else if (
+      this->scene >= 0 &&
+      this->scene < static_cast<int32_t>(this->scenes.size())) {
+    // Use the default scene
+    forEachNodeInSceneObject(
+        *this,
+        this->scenes[static_cast<size_t>(this->scene)],
+        callback);
+  } else if (!this->scenes.empty()) {
+    // There's no default, so use the first scene
+    const Scene& defaultScene = this->scenes[0];
+    forEachNodeInSceneObject(*this, defaultScene, callback);
+  } else if (!this->nodes.empty()) {
+    // No scenes at all, use the first node as the root node.
+    callback(*this, this->nodes.front());
+  }
+}
 
 void Model::forEachPrimitiveInScene(
     int sceneID,
