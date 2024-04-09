@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
-#include "CesiumGltf/ModelSpec.h"
+#include <CesiumGltf/Library.h>
+#include <CesiumGltf/ModelSpec.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <glm/mat4x4.hpp>
 
@@ -22,7 +23,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    *
    * @param rhs The model to merge into this one.
    */
-  void merge(Model&& rhs);
+  CesiumUtility::ErrorList merge(Model&& rhs);
 
   /**
    * @brief A callback function for {@link forEachPrimitiveInScene}.
