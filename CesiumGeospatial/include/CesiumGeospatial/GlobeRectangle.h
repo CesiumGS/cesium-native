@@ -254,6 +254,7 @@ public:
   std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
   splitAtAntiMeridian() const noexcept;
 
+  /*
    * @brief Checks whether two globe rectangles are exactly equal.
    *
    * @param left The first rectangle.
@@ -283,4 +284,5 @@ private:
   double _east;
   double _north;
 };
+
 } // namespace CesiumGeospatial
