@@ -447,23 +447,6 @@ void forEachPrimitiveInNodeObject(
 }
 
 template <typename TCallback>
-void forEachPrimitiveInSceneObject(
-    const glm::dmat4x4& transform,
-    const Model& model,
-    const Scene& scene,
-    TCallback& callback) {
-  for (const int nodeID : scene.nodes) {
-    if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
-      forEachPrimitiveInNodeObject(
-          transform,
-          model,
-          model.nodes[static_cast<size_t>(nodeID)],
-          callback);
-    }
-  }
-}
-
-template <typename TCallback>
 void forEachNodeInSceneObject(
     const Model& model,
     const Scene& scene,
@@ -541,42 +524,21 @@ void Model::forEachPrimitiveInScene(
 void Model::forEachPrimitiveInScene(
     int sceneID,
     std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const {
-  const glm::dmat4x4 rootTransform(1.0);
+  bool anythingVisited = false;
+  this->forEachRootNodeInScene(
+      sceneID,
+      [sceneID,
+       &anythingVisited,
+       callback = std::move(callback)](const Model& model, const Node& node) {
+        anythingVisited = true;
+        forEachPrimitiveInNodeObject(glm::dmat4x4(1.0), model, node, callback);
+      });
 
-  if (sceneID >= 0) {
-    // Use the user-specified scene if it exists.
-    if (sceneID < static_cast<int>(this->scenes.size())) {
-      forEachPrimitiveInSceneObject(
-          rootTransform,
-          *this,
-          this->scenes[static_cast<size_t>(sceneID)],
-          callback);
-    }
-  } else if (
-      this->scene >= 0 &&
-      this->scene < static_cast<int32_t>(this->scenes.size())) {
-    // Use the default scene
-    forEachPrimitiveInSceneObject(
-        rootTransform,
-        *this,
-        this->scenes[static_cast<size_t>(this->scene)],
-        callback);
-  } else if (!this->scenes.empty()) {
-    // There's no default, so use the first scene
-    const Scene& defaultScene = this->scenes[0];
-    forEachPrimitiveInSceneObject(rootTransform, *this, defaultScene, callback);
-  } else if (!this->nodes.empty()) {
-    // No scenes at all, use the first node as the root node.
-    forEachPrimitiveInNodeObject(
-        rootTransform,
-        *this,
-        this->nodes[0],
-        callback);
-  } else if (!this->meshes.empty()) {
-    // No nodes either, show all the meshes.
+  if (!anythingVisited) {
+    // No root nodes at all in this model, so enumerate all the meshes.
     for (const Mesh& mesh : this->meshes) {
       forEachPrimitiveInMeshObject(
-          rootTransform,
+          glm::dmat4x4(1.0),
           *this,
           Node(),
           mesh,
