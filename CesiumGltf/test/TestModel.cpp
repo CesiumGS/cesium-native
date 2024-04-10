@@ -1221,7 +1221,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
 
   SECTION("with no scenes or nodes") {
     SECTION("it enumerates nothing") {
-      m.forEachRootNodeInScene(-1, [&m](Model& /* model */, Node& /* node */) {
+      m.forEachRootNodeInScene(-1, [](Model& /* model */, Node& /* node */) {
         // This should not be called.
         CHECK(false);
       });
