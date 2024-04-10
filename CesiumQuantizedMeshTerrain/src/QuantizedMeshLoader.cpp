@@ -1,9 +1,9 @@
-#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
@@ -18,11 +18,11 @@
 #include <cstddef>
 #include <stdexcept>
 
-using namespace Cesium3DTilesContent;
-using namespace CesiumUtility;
-using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 using namespace CesiumGltfContent;
+using namespace CesiumQuantizedMeshTerrain;
+using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {
   // The center of the tile in Earth-centered Fixed coordinates.
