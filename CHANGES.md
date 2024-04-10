@@ -10,6 +10,7 @@
 
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
 - `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
 - `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
 

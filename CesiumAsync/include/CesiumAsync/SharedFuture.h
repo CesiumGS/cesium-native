@@ -217,6 +217,8 @@ public:
    * deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
+   * To wait in the main thread, use {@link waitInMainThread} instead.
+   *
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
    */
@@ -234,6 +236,25 @@ public:
       std::enable_if_t<std::is_same_v<U, void>, int> = 0>
   void wait() const {
     this->_task.get();
+  }
+
+  /**
+   * @brief Waits for this future to resolve or reject in the main thread while
+   * also processing main-thread tasks.
+   *
+   * This method must be called from the main thread.
+   *
+   * The function does not return until {@link Future::isReady} returns true.
+   * In the meantime, main-thread tasks are processed as necessary. This method
+   * does not spin wait; it suspends the calling thread by waiting on a
+   * condition variable when there is no work to do.
+   *
+   * @return The value if the future resolves successfully.
+   * @throws An exception if the future rejected.
+   */
+  T waitInMainThread() {
+    return this->_pSchedulers->mainThread.dispatchUntilTaskCompletes(
+        std::move(this->_task));
   }
 
   /**
