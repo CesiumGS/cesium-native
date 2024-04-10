@@ -7,12 +7,14 @@
 
 #include <glm/fwd.hpp>
 
+#include <optional>
 #include <string_view>
 #include <vector>
 
 namespace CesiumGltf {
 struct Buffer;
 struct Model;
+struct Node;
 } // namespace CesiumGltf
 
 namespace CesiumGltfContent {
