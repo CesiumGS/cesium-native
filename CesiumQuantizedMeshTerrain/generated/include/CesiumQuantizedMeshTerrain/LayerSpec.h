@@ -14,7 +14,7 @@
 
 namespace CesiumQuantizedMeshTerrain {
 /**
- * @brief A legacy terrain layer.json.
+ * @brief A quantized-mesh terrain layer.json.
  */
 struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
     : public CesiumUtility::ExtensibleObject {

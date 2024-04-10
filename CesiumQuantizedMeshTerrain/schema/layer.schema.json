@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "layer.schema.json",
   "title": "Layer",
-  "description": "A legacy terrain layer.json.",
+  "description": "A quantized-mesh terrain layer.json.",
   "properties": {
     "attribution": {
       "description": "The attribution (credit) string for the terrain.",

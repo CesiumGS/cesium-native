@@ -11,6 +11,9 @@
 
 namespace CesiumQuantizedMeshTerrain {
 
+/**
+ * @brief A quantized-mesh terrain layer.json.
+ */
 struct Layer : public LayerSpec {
   /**
    * @brief Gets the projection specified by this layer.json.
