@@ -667,7 +667,9 @@ void GltfUtilities::compactBuffer(
     int64_t end;   // one past last byte
 
     // Order ranges by their start
-    bool operator<(const BufferRange& rhs) { return this->start < rhs.start; }
+    bool operator<(const BufferRange& rhs) const {
+      return this->start < rhs.start;
+    }
   };
 
   std::vector<BufferRange> usedRanges;
