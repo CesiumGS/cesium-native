@@ -4,15 +4,15 @@
 
 ##### Breaking Changes :mega:
 
-- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumLegacyTerrain`.
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`.
 - Added two new parameters to `upsampleGltfForRasterOverlays`, prior to the existing `textureCoordinateIndex` parameter.
 
 ##### Additions :tada:
 
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
+- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `waitInMainThread` method to `Future` and `SharedFuture`.
-- Added a new `CesiumLegacyTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
 - `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
 - Added `BoundingRegionBuilder::toGlobeRectangle`.
