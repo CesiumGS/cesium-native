@@ -50,9 +50,9 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
       model.accessors.size(),
       0);
 
-  // When computing the tile's bounds, ignore tiles that are less than 1/1000th
-  // of a tile width from the North or South pole. Longitudes cannot be trusted
-  // at such extreme latitudes.
+  // When computing the tile's bounds, ignore vertices that are less than
+  // 1/1000th of a tile height from the North or South pole. Longitudes cannot be
+  // trusted at such extreme latitudes.
   CesiumGeospatial::BoundingRegionBuilder computedBounds;
   computedBounds.setPoleTolerance(0.001 * bounds.computeHeight());
 
