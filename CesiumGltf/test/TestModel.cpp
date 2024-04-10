@@ -1145,3 +1145,86 @@ TEST_CASE("Model::merge") {
     }
   }
 }
+
+TEST_CASE("Model::forEachRootNodeInScene") {
+  Model m;
+
+  SECTION("with scenes and nodes") {
+    m.scenes.emplace_back();
+    m.scenes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    m.scenes.front().nodes.push_back(0);
+    m.scenes.front().nodes.push_back(2);
+    m.scenes.back().nodes.push_back(1);
+    m.scenes.back().nodes.push_back(2);
+
+    m.scene = 0;
+
+    SECTION("it enumerates a specified scene") {
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[1]);
+      CHECK(visited[1] == &m.nodes[2]);
+    }
+
+    SECTION("it enumerates the default scene") {
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[2]);
+    }
+
+    SECTION("it enumerates the first scene if there is no default") {
+      m.scene = -1;
+
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[2]);
+    }
+  }
+
+  SECTION("with nodes only") {
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    SECTION("it enumerates the first node") {
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 1);
+      CHECK(visited[0] == &m.nodes[0]);
+    }
+  }
+
+  SECTION("with no scenes or nodes") {
+    SECTION("it enumerates nothing") {
+      m.forEachRootNodeInScene(-1, [&m](Model& /* model */, Node& /* node */) {
+        // This should not be called.
+        CHECK(false);
+      });
+    }
+  }
+}
