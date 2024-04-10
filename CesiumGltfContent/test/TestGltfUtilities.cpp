@@ -1,3 +1,4 @@
+#include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/Math.h>
@@ -196,5 +197,231 @@ TEST_CASE("GltfUtilities::setNodeTransform") {
     CHECK(node.scale[0] == 1.0);
     CHECK(node.scale[1] == 1.0);
     CHECK(node.scale[2] == 1.0);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeUnusedTextures") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.textures.emplace_back();
+    GltfUtilities::removeUnusedTextures(m);
+    CHECK(m.textures.empty());
+  }
+
+  SECTION("does not remove used") {
+    m.textures.emplace_back();
+    m.materials.emplace_back()
+        .pbrMetallicRoughness.emplace()
+        .baseColorTexture.emplace()
+        .index = 0;
+    GltfUtilities::removeUnusedTextures(m);
+    CHECK(!m.textures.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.textures.emplace_back();
+    m.textures.emplace_back();
+
+    m.materials.emplace_back()
+        .pbrMetallicRoughness.emplace()
+        .baseColorTexture.emplace()
+        .index = 1;
+
+    GltfUtilities::removeUnusedTextures(m);
+    CHECK(m.textures.size() == 1);
+
+    REQUIRE(m.materials.size() == 1);
+    REQUIRE(m.materials[0].pbrMetallicRoughness);
+    REQUIRE(m.materials[0].pbrMetallicRoughness->baseColorTexture);
+    CHECK(m.materials[0].pbrMetallicRoughness->baseColorTexture->index == 0);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeUnusedSamplers") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.samplers.emplace_back();
+    GltfUtilities::removeUnusedSamplers(m);
+    CHECK(m.samplers.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.samplers.emplace_back();
+    m.textures.emplace_back().sampler = 0;
+    GltfUtilities::removeUnusedSamplers(m);
+    CHECK(!m.samplers.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.samplers.emplace_back();
+    m.samplers.emplace_back();
+
+    m.textures.emplace_back().sampler = 1;
+
+    GltfUtilities::removeUnusedSamplers(m);
+    CHECK(m.samplers.size() == 1);
+
+    REQUIRE(m.textures.size() == 1);
+    CHECK(m.textures[0].sampler == 0);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeUnusedImages") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.images.emplace_back();
+    GltfUtilities::removeUnusedImages(m);
+    CHECK(m.images.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.images.emplace_back();
+    m.textures.emplace_back().source = 0;
+    GltfUtilities::removeUnusedImages(m);
+    CHECK(!m.images.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.images.emplace_back();
+    m.images.emplace_back();
+
+    m.textures.emplace_back().source = 1;
+
+    GltfUtilities::removeUnusedImages(m);
+    CHECK(m.images.size() == 1);
+
+    REQUIRE(m.textures.size() == 1);
+    CHECK(m.textures[0].source == 0);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeUnusedAccessors") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.accessors.emplace_back();
+    GltfUtilities::removeUnusedAccessors(m);
+    CHECK(m.accessors.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.accessors.emplace_back();
+    m.meshes.emplace_back().primitives.emplace_back().attributes["POSITION"] =
+        0;
+    GltfUtilities::removeUnusedAccessors(m);
+    CHECK(!m.accessors.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+
+    m.meshes.emplace_back().primitives.emplace_back().attributes["POSITION"] =
+        1;
+
+    GltfUtilities::removeUnusedAccessors(m);
+    CHECK(m.accessors.size() == 1);
+
+    REQUIRE(m.meshes.size() == 1);
+    REQUIRE(m.meshes[0].primitives.size() == 1);
+
+    auto it = m.meshes[0].primitives[0].attributes.find("POSITION");
+    REQUIRE(it != m.meshes[0].primitives[0].attributes.end());
+    CHECK(it->second == 0);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.bufferViews.emplace_back();
+    GltfUtilities::removeUnusedBufferViews(m);
+    CHECK(m.bufferViews.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.bufferViews.emplace_back();
+    m.accessors.emplace_back().bufferView = 0;
+    GltfUtilities::removeUnusedBufferViews(m);
+    CHECK(!m.bufferViews.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    m.accessors.emplace_back().bufferView = 1;
+
+    GltfUtilities::removeUnusedBufferViews(m);
+    CHECK(m.bufferViews.size() == 1);
+
+    REQUIRE(m.accessors.size() == 1);
+    CHECK(m.accessors[0].bufferView == 0);
+  }
+}
+
+TEST_CASE("GltfUtilities::compactBuffers") {
+  Model m;
+
+  Buffer& buffer = m.buffers.emplace_back();
+  buffer.byteLength = 123;
+  buffer.cesium.data.resize(123);
+
+  for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+    buffer.cesium.data[i] = std::byte(i);
+  }
+
+  SECTION("removes unused bytes at the beginning of the buffer") {
+    BufferView& bv = m.bufferViews.emplace_back();
+    bv.buffer = 0;
+    bv.byteOffset = 10;
+    bv.byteLength = buffer.byteLength - bv.byteOffset;
+
+    GltfUtilities::compactBuffers(m);
+
+    CHECK(buffer.byteLength == 113);
+    REQUIRE(buffer.cesium.data.size() == 113);
+    CHECK(bv.byteOffset == 0);
+
+    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+    }
+  }
+
+  SECTION("removes unused bytes at the end of the buffer") {
+    BufferView& bv = m.bufferViews.emplace_back();
+    bv.buffer = 0;
+    bv.byteOffset = 0;
+    bv.byteLength = 113;
+
+    GltfUtilities::compactBuffers(m);
+
+    CHECK(buffer.byteLength == 113);
+    REQUIRE(buffer.cesium.data.size() == 113);
+
+    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i));
+    }
+  }
+
+  SECTION("removes unused bytes in the middle of the buffer") {
+    BufferView& bv = m.bufferViews.emplace_back();
+    bv.buffer = 0;
+    bv.byteOffset = 10;
+    bv.byteLength = buffer.byteLength - bv.byteOffset - 10;
+
+    GltfUtilities::compactBuffers(m);
+
+    CHECK(buffer.byteLength == 103);
+    REQUIRE(buffer.cesium.data.size() == 103);
+    CHECK(bv.byteOffset == 0);
+
+    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+    }
   }
 }
