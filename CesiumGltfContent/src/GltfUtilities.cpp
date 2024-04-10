@@ -42,8 +42,10 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
   if (!node.matrix.empty() && node.matrix.size() < 16) {
     return std::nullopt;
   } else if (
-      node.matrix.size() >= 16 &&
-      !std::equal(matrix.begin(), matrix.end(), identityMatrix.begin())) {
+      node.matrix.size() >= 16 && !std::equal(
+                                      identityMatrix.begin(),
+                                      identityMatrix.end(),
+                                      matrix.begin())) {
     return glm::dmat4x4(
         glm::dvec4(matrix[0], matrix[1], matrix[2], matrix[3]),
         glm::dvec4(matrix[4], matrix[5], matrix[6], matrix[7]),
