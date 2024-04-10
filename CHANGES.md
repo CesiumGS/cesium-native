@@ -11,6 +11,7 @@
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- Added `BoundingRegionBuilder::toGlobeRectangle`.
 - Added `waitInMainThread` method to `Future` and `SharedFuture`.
 
 ##### Fixes :wrench:
