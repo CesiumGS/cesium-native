@@ -11,11 +11,11 @@ namespace Cesium3DTilesContent {
 class ConvertTileToGltf {
 public:
   static GltfConverterResult fromB3dm(const std::filesystem::path& filePath) {
-    return B3dmToGltfConverter::convert(readFile(filePath), {});
+    return B3dmToGltfConverter::convert(readFile(filePath), {}, nullptr);
   }
 
   static GltfConverterResult fromPnts(const std::filesystem::path& filePath) {
-    return PntsToGltfConverter::convert(readFile(filePath), {});
+    return PntsToGltfConverter::convert(readFile(filePath), {}, nullptr);
   }
 };
 } // namespace Cesium3DTilesContent
