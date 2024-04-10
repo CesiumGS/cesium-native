@@ -7,5 +7,6 @@ class ExtensionWriterContext;
 } // namespace CesiumJsonWriter
 
 namespace CesiumGltfWriter {
-void registerExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
+void registerWriterExtensions(
+    CesiumJsonWriter::ExtensionWriterContext& context);
 }

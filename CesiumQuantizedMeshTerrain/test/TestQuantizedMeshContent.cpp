@@ -1,10 +1,10 @@
-#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -16,6 +16,7 @@ using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {
