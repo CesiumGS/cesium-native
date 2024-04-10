@@ -1,31 +1,31 @@
-#include <CesiumLegacyTerrain/Layer.h>
-#include <CesiumLegacyTerrain/LegacyTerrainUtilities.h>
+#include <CesiumQuantizedMeshTerrain/Layer.h>
+#include <CesiumQuantizedMeshTerrain/LayerJsonUtilities.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumLegacyTerrain;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
-TEST_CASE("LegacyTerrainUtilities") {
+TEST_CASE("LayerJsonUtilities") {
   SECTION("getProjection") {
     Layer layer;
     std::optional<Projection> maybeProjection;
 
     layer.projection = "EPSG:4326";
-    maybeProjection = LegacyTerrainUtilities::getProjection(layer);
+    maybeProjection = LayerJsonUtilities::getProjection(layer);
     REQUIRE(maybeProjection);
     CHECK(std::get_if<GeographicProjection>(&*maybeProjection) != nullptr);
 
     layer.projection = "EPSG:3857";
-    maybeProjection = LegacyTerrainUtilities::getProjection(layer);
+    maybeProjection = LayerJsonUtilities::getProjection(layer);
     REQUIRE(maybeProjection);
     CHECK(std::get_if<WebMercatorProjection>(&*maybeProjection) != nullptr);
 
     layer.projection = "foo";
-    maybeProjection = LegacyTerrainUtilities::getProjection(layer);
+    maybeProjection = LayerJsonUtilities::getProjection(layer);
     CHECK(!maybeProjection);
   }
 
@@ -34,7 +34,7 @@ TEST_CASE("LegacyTerrainUtilities") {
     std::optional<QuadtreeTilingScheme> maybeTilingScheme;
 
     layer.projection = "EPSG:4326";
-    maybeTilingScheme = LegacyTerrainUtilities::getTilingScheme(layer);
+    maybeTilingScheme = LayerJsonUtilities::getTilingScheme(layer);
     REQUIRE(maybeTilingScheme);
     CHECK(maybeTilingScheme->getRootTilesX() == 2);
     CHECK(maybeTilingScheme->getRootTilesY() == 1);
@@ -48,7 +48,7 @@ TEST_CASE("LegacyTerrainUtilities") {
             .getUpperRight());
 
     layer.projection = "EPSG:3857";
-    maybeTilingScheme = LegacyTerrainUtilities::getTilingScheme(layer);
+    maybeTilingScheme = LayerJsonUtilities::getTilingScheme(layer);
     REQUIRE(maybeTilingScheme);
     CHECK(maybeTilingScheme->getRootTilesX() == 1);
     CHECK(maybeTilingScheme->getRootTilesY() == 1);
@@ -64,7 +64,7 @@ TEST_CASE("LegacyTerrainUtilities") {
         1e-14));
 
     layer.projection = "foo";
-    maybeTilingScheme = LegacyTerrainUtilities::getTilingScheme(layer);
+    maybeTilingScheme = LayerJsonUtilities::getTilingScheme(layer);
     CHECK(!maybeTilingScheme);
   }
 
@@ -73,7 +73,7 @@ TEST_CASE("LegacyTerrainUtilities") {
     std::optional<BoundingRegion> maybeBoundingRegion;
 
     layer.projection = "EPSG:4326";
-    maybeBoundingRegion = LegacyTerrainUtilities::getRootBoundingRegion(layer);
+    maybeBoundingRegion = LayerJsonUtilities::getRootBoundingRegion(layer);
     REQUIRE(maybeBoundingRegion);
     CHECK(
         maybeBoundingRegion->getRectangle().getWest() ==
@@ -91,7 +91,7 @@ TEST_CASE("LegacyTerrainUtilities") {
     CHECK(maybeBoundingRegion->getMaximumHeight() == 9000.0);
 
     layer.projection = "EPSG:3857";
-    maybeBoundingRegion = LegacyTerrainUtilities::getRootBoundingRegion(layer);
+    maybeBoundingRegion = LayerJsonUtilities::getRootBoundingRegion(layer);
     REQUIRE(maybeBoundingRegion);
     CHECK(
         maybeBoundingRegion->getRectangle().getWest() ==
@@ -109,7 +109,7 @@ TEST_CASE("LegacyTerrainUtilities") {
     CHECK(maybeBoundingRegion->getMaximumHeight() == 9000.0);
 
     layer.projection = "foo";
-    maybeBoundingRegion = LegacyTerrainUtilities::getRootBoundingRegion(layer);
+    maybeBoundingRegion = LayerJsonUtilities::getRootBoundingRegion(layer);
     CHECK(!maybeBoundingRegion);
   }
 }

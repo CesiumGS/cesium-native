@@ -1,10 +1,10 @@
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumLegacyTerrain/Layer.h>
-#include <CesiumLegacyTerrain/LegacyTerrainUtilities.h>
+#include <CesiumQuantizedMeshTerrain/Layer.h>
+#include <CesiumQuantizedMeshTerrain/LayerJsonUtilities.h>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumLegacyTerrain;
+using namespace CesiumQuantizedMeshTerrain;
 
 namespace {
 const std::string geographicString("EPSG:4326");
@@ -12,7 +12,7 @@ const std::string webMercatorString("EPSG:3857");
 } // namespace
 
 std::optional<Projection>
-LegacyTerrainUtilities::getProjection(const Layer& layer) {
+LayerJsonUtilities::getProjection(const Layer& layer) {
   if (layer.projection == geographicString)
     return GeographicProjection();
   else if (layer.projection == webMercatorString)
@@ -22,7 +22,7 @@ LegacyTerrainUtilities::getProjection(const Layer& layer) {
 }
 
 std::optional<CesiumGeometry::QuadtreeTilingScheme>
-LegacyTerrainUtilities::getTilingScheme(const Layer& layer) {
+LayerJsonUtilities::getTilingScheme(const Layer& layer) {
   std::optional<Projection> maybeProjection = getProjection(layer);
   if (!maybeProjection)
     return std::nullopt;
@@ -47,7 +47,7 @@ LegacyTerrainUtilities::getTilingScheme(const Layer& layer) {
 }
 
 std::optional<CesiumGeospatial::BoundingRegion>
-LegacyTerrainUtilities::getRootBoundingRegion(const Layer& layer) {
+LayerJsonUtilities::getRootBoundingRegion(const Layer& layer) {
   std::optional<Projection> maybeProjection = getProjection(layer);
   if (!maybeProjection)
     return std::nullopt;

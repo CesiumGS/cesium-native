@@ -11,7 +11,7 @@ namespace CesiumGeometry {
 class QuadtreeTilingScheme;
 }
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 struct Layer;
 
@@ -19,7 +19,7 @@ struct Layer;
  * @brief Helper functions for working with legacy terrain layer.json /
  * quantized-mesh.
  */
-class CESIUMLEGACYTERRAIN_API LegacyTerrainUtilities final {
+class CESIUMQUANTIZEDMESHTERRAIN_API LayerJsonUtilities final {
 public:
   /**
    * @brief Gets the projection specified by a layer.json.
@@ -56,4 +56,4 @@ public:
   getRootBoundingRegion(const Layer& layer);
 };
 
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

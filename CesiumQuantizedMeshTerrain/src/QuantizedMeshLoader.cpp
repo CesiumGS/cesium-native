@@ -3,7 +3,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
-#include <CesiumLegacyTerrain/QuantizedMeshLoader.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
@@ -21,7 +21,7 @@
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltfContent;
-using namespace CesiumLegacyTerrain;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {

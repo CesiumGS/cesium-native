@@ -7,21 +7,21 @@
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/writeJsonExtensions.h>
-#include <CesiumLegacyTerrain/AvailabilityRectangle.h>
-#include <CesiumLegacyTerrain/Layer.h>
+#include <CesiumQuantizedMeshTerrain/AvailabilityRectangle.h>
+#include <CesiumQuantizedMeshTerrain/Layer.h>
 #include <CesiumUtility/JsonValue.h>
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 namespace {
 
 void writeJson(
-    const CesiumLegacyTerrain::Layer& obj,
+    const CesiumQuantizedMeshTerrain::Layer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumLegacyTerrain::AvailabilityRectangle& obj,
+    const CesiumQuantizedMeshTerrain::AvailabilityRectangle& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -156,7 +156,7 @@ void writeNamedObject(
 }
 
 void writeJson(
-    const CesiumLegacyTerrain::Layer& obj,
+    const CesiumQuantizedMeshTerrain::Layer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -241,7 +241,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumLegacyTerrain::AvailabilityRectangle& obj,
+    const CesiumQuantizedMeshTerrain::AvailabilityRectangle& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -266,17 +266,17 @@ void writeJson(
 } // namespace
 
 void LayerJsonWriter::write(
-    const CesiumLegacyTerrain::Layer& obj,
+    const CesiumQuantizedMeshTerrain::Layer& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
 void AvailabilityRectangleJsonWriter::write(
-    const CesiumLegacyTerrain::AvailabilityRectangle& obj,
+    const CesiumQuantizedMeshTerrain::AvailabilityRectangle& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

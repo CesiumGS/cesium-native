@@ -6,7 +6,7 @@ namespace CesiumJsonWriter {
 class ExtensionWriterContext;
 } // namespace CesiumJsonWriter
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 void registerWriterExtensions(
     CesiumJsonWriter::ExtensionWriterContext& context);
 }

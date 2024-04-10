@@ -7,10 +7,10 @@
 
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 void registerWriterExtensions(
     CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
 }
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

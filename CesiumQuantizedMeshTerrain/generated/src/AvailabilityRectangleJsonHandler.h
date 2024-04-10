@@ -4,23 +4,23 @@
 
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
-#include <CesiumLegacyTerrain/AvailabilityRectangle.h>
+#include <CesiumQuantizedMeshTerrain/AvailabilityRectangle.h>
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
 }
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 class AvailabilityRectangleJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
 public:
-  using ValueType = CesiumLegacyTerrain::AvailabilityRectangle;
+  using ValueType = CesiumQuantizedMeshTerrain::AvailabilityRectangle;
 
   AvailabilityRectangleJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
-      CesiumLegacyTerrain::AvailabilityRectangle* pObject);
+      CesiumQuantizedMeshTerrain::AvailabilityRectangle* pObject);
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
@@ -28,13 +28,13 @@ protected:
   IJsonHandler* readObjectKeyAvailabilityRectangle(
       const std::string& objectType,
       const std::string_view& str,
-      CesiumLegacyTerrain::AvailabilityRectangle& o);
+      CesiumQuantizedMeshTerrain::AvailabilityRectangle& o);
 
 private:
-  CesiumLegacyTerrain::AvailabilityRectangle* _pObject = nullptr;
+  CesiumQuantizedMeshTerrain::AvailabilityRectangle* _pObject = nullptr;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _startX;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _startY;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _endX;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _endY;
 };
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

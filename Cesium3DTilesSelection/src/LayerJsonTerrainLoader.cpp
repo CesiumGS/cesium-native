@@ -4,7 +4,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumLegacyTerrain/QuantizedMeshLoader.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
@@ -17,7 +17,7 @@ using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumLegacyTerrain;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 

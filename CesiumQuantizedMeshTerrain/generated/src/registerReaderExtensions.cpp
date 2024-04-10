@@ -5,9 +5,9 @@
 
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   (void)options;
 }
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

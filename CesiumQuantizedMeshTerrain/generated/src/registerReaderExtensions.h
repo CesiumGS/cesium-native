@@ -6,6 +6,6 @@ namespace CesiumJsonReader {
 class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options);
 }

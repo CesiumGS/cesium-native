@@ -4,29 +4,29 @@
 
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
-#include <CesiumLegacyTerrain/AvailabilityRectangle.h>
-#include <CesiumLegacyTerrain/Library.h>
+#include <CesiumQuantizedMeshTerrain/Layer.h>
+#include <CesiumQuantizedMeshTerrain/Library.h>
 
 #include <gsl/span>
 #include <rapidjson/fwd.h>
 
 #include <vector>
 
-namespace CesiumLegacyTerrain {
-struct AvailabilityRectangle;
+namespace CesiumQuantizedMeshTerrain {
+struct Layer;
 }
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 /**
- * @brief Reads {@link AvailabilityRectangle} instances from JSON.
+ * @brief Reads {@link Layer} instances from JSON.
  */
-class CESIUMLEGACYTERRAIN_API AvailabilityRectangleReader {
+class CESIUMQUANTIZEDMESHTERRAIN_API LayerReader {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  AvailabilityRectangleReader();
+  LayerReader();
 
   /**
    * @brief Gets the options controlling how the JSON is read.
@@ -39,36 +39,35 @@ public:
   const CesiumJsonReader::JsonReaderOptions& getOptions() const;
 
   /**
-   * @brief Reads an instance of AvailabilityRectangle from a byte buffer.
+   * @brief Reads an instance of Layer from a byte buffer.
    *
    * @param data The buffer from which to read the instance.
    * @return The result of reading the instance.
    */
-  CesiumJsonReader::ReadJsonResult<CesiumLegacyTerrain::AvailabilityRectangle>
+  CesiumJsonReader::ReadJsonResult<CesiumQuantizedMeshTerrain::Layer>
   readFromJson(const gsl::span<const std::byte>& data) const;
 
   /**
-   * @brief Reads an instance of AvailabilityRectangle from a rapidJson::Value.
+   * @brief Reads an instance of Layer from a rapidJson::Value.
    *
    * @param data The buffer from which to read the instance.
    * @return The result of reading the instance.
    */
-  CesiumJsonReader::ReadJsonResult<CesiumLegacyTerrain::AvailabilityRectangle>
+  CesiumJsonReader::ReadJsonResult<CesiumQuantizedMeshTerrain::Layer>
   readFromJson(const rapidjson::Value& value) const;
 
   /**
-   * @brief Reads an array of instances of AvailabilityRectangle from a
-   * rapidJson::Value.
+   * @brief Reads an array of instances of Layer from a rapidJson::Value.
    *
    * @param data The buffer from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<
-      std::vector<CesiumLegacyTerrain::AvailabilityRectangle>>
+      std::vector<CesiumQuantizedMeshTerrain::Layer>>
   readArrayFromJson(const rapidjson::Value& value) const;
 
 private:
   CesiumJsonReader::JsonReaderOptions _options;
 };
 
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

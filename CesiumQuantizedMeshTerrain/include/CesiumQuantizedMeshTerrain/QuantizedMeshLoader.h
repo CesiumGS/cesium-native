@@ -20,7 +20,7 @@ namespace CesiumAsync {
 class IAssetRequest;
 }
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 struct QuantizedMeshLoadResult {
   /**
@@ -65,7 +65,7 @@ struct QuantizedMeshMetadataResult {
 /**
  * @brief Loads `quantized-mesh-1.0` terrain data.
  */
-class CESIUMLEGACYTERRAIN_API QuantizedMeshLoader final {
+class CESIUMQUANTIZEDMESHTERRAIN_API QuantizedMeshLoader final {
 public:
   /**
    * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
@@ -112,4 +112,4 @@ public:
       uint32_t startingLevel);
 };
 
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain

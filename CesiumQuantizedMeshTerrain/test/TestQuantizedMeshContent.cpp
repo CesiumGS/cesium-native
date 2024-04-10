@@ -4,7 +4,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/AccessorView.h>
-#include <CesiumLegacyTerrain/QuantizedMeshLoader.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -16,7 +16,7 @@ using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
-using namespace CesiumLegacyTerrain;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {

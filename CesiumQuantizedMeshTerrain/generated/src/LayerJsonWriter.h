@@ -9,29 +9,29 @@ class ExtensionWriterContext;
 } // namespace CesiumJsonWriter
 
 // forward declarations
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 struct Layer;
 struct AvailabilityRectangle;
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain
 
-namespace CesiumLegacyTerrain {
+namespace CesiumQuantizedMeshTerrain {
 
 struct LayerJsonWriter {
-  using ValueType = CesiumLegacyTerrain::Layer;
+  using ValueType = CesiumQuantizedMeshTerrain::Layer;
 
   static void write(
-      const CesiumLegacyTerrain::Layer& obj,
+      const CesiumQuantizedMeshTerrain::Layer& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
 struct AvailabilityRectangleJsonWriter {
-  using ValueType = CesiumLegacyTerrain::AvailabilityRectangle;
+  using ValueType = CesiumQuantizedMeshTerrain::AvailabilityRectangle;
 
   static void write(
-      const CesiumLegacyTerrain::AvailabilityRectangle& obj,
+      const CesiumQuantizedMeshTerrain::AvailabilityRectangle& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-} // namespace CesiumLegacyTerrain
+} // namespace CesiumQuantizedMeshTerrain
