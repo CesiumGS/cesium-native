@@ -1,6 +1,6 @@
-#include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumQuantizedMeshTerrain/Layer.h>
-#include <CesiumQuantizedMeshTerrain/LayerJsonUtilities.h>
+
+#include <string>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -11,33 +11,32 @@ const std::string geographicString("EPSG:4326");
 const std::string webMercatorString("EPSG:3857");
 } // namespace
 
-std::optional<Projection>
-LayerJsonUtilities::getProjection(const Layer& layer) {
-  if (layer.projection == geographicString)
+std::optional<Projection> Layer::getProjection() const noexcept {
+  if (this->projection == geographicString)
     return GeographicProjection();
-  else if (layer.projection == webMercatorString)
+  else if (this->projection == webMercatorString)
     return WebMercatorProjection();
   else
     return std::nullopt;
 }
 
 std::optional<CesiumGeometry::QuadtreeTilingScheme>
-LayerJsonUtilities::getTilingScheme(const Layer& layer) {
-  std::optional<Projection> maybeProjection = getProjection(layer);
+Layer::getTilingScheme() const noexcept {
+  std::optional<Projection> maybeProjection = this->getProjection();
   if (!maybeProjection)
     return std::nullopt;
 
   struct Operation {
-    QuadtreeTilingScheme operator()(const GeographicProjection& projection) {
+    QuadtreeTilingScheme operator()(const GeographicProjection& geographic) {
       return QuadtreeTilingScheme(
-          projection.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE),
+          geographic.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE),
           2,
           1);
     }
 
-    QuadtreeTilingScheme operator()(const WebMercatorProjection& projection) {
+    QuadtreeTilingScheme operator()(const WebMercatorProjection& webMercator) {
       return QuadtreeTilingScheme(
-          projection.project(WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE),
+          webMercator.project(WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE),
           1,
           1);
     }
@@ -47,8 +46,8 @@ LayerJsonUtilities::getTilingScheme(const Layer& layer) {
 }
 
 std::optional<CesiumGeospatial::BoundingRegion>
-LayerJsonUtilities::getRootBoundingRegion(const Layer& layer) {
-  std::optional<Projection> maybeProjection = getProjection(layer);
+Layer::getRootBoundingRegion() const noexcept {
+  std::optional<Projection> maybeProjection = this->getProjection();
   if (!maybeProjection)
     return std::nullopt;
 

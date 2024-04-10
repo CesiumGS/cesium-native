@@ -16,7 +16,7 @@ namespace CesiumQuantizedMeshTerrain {
 /**
  * @brief A legacy terrain layer.json.
  */
-struct CESIUMQUANTIZEDMESHTERRAIN_API Layer final
+struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "Layer";
 
@@ -101,5 +101,12 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API Layer final
    * @brief The version of this tileset.
    */
   std::string version = "1.0.0";
+
+private:
+  /**
+   * @brief This class is not meant to be instantiated directly. Use {@link Layer} instead.
+   */
+  LayerSpec() = default;
+  friend struct Layer;
 };
 } // namespace CesiumQuantizedMeshTerrain
