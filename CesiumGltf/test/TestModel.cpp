@@ -690,14 +690,14 @@ TEST_CASE("Model::merge") {
     CHECK(errors.warnings.empty());
 
     REQUIRE(m1.scene >= 0);
-    REQUIRE(m1.scene < m1.scenes.size());
+    REQUIRE(size_t(m1.scene) < m1.scenes.size());
 
-    Scene& defaultScene = m1.scenes[m1.scene];
+    Scene& defaultScene = m1.scenes[size_t(m1.scene)];
     REQUIRE(defaultScene.nodes.size() == 4);
-    CHECK(m1.nodes[defaultScene.nodes[0]].name == "node2");
-    CHECK(m1.nodes[defaultScene.nodes[1]].name == "node1");
-    CHECK(m1.nodes[defaultScene.nodes[2]].name == "node4");
-    CHECK(m1.nodes[defaultScene.nodes[3]].name == "node3");
+    CHECK(m1.nodes[size_t(defaultScene.nodes[0])].name == "node2");
+    CHECK(m1.nodes[size_t(defaultScene.nodes[1])].name == "node1");
+    CHECK(m1.nodes[size_t(defaultScene.nodes[2])].name == "node4");
+    CHECK(m1.nodes[size_t(defaultScene.nodes[3])].name == "node3");
   }
 
   SECTION("merges metadata") {
