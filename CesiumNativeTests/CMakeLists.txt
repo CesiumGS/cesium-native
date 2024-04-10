@@ -13,6 +13,7 @@ set(cesium_native_targets
     CesiumGeometry
     CesiumGeospatial
     CesiumGltf
+    CesiumGltfContent
     CesiumGltfReader
     CesiumGltfWriter
     CesiumIonClient

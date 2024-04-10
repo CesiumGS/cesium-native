@@ -1,6 +1,10 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
 
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+
 #include <catch2/catch.hpp>
 #include <glm/common.hpp>
 #include <glm/gtc/epsilon.hpp>
@@ -15,6 +19,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 
 #define DEFAULT_EPSILON 1e-6f
 
@@ -575,5 +580,651 @@ TEST_CASE("Model::addExtensionRequired") {
     CHECK(
         std::find(m.extensionsUsed.begin(), m.extensionsUsed.end(), "Bar") !=
         m.extensionsUsed.end());
+  }
+}
+
+TEST_CASE("Model::merge") {
+  SECTION("performs a simple merge") {
+    Model m1;
+    m1.accessors.emplace_back().name = "m1";
+    m1.animations.emplace_back().name = "m1";
+    m1.buffers.emplace_back().name = "m1";
+    m1.bufferViews.emplace_back().name = "m1";
+    m1.cameras.emplace_back().name = "m1";
+    m1.images.emplace_back().name = "m1";
+    m1.materials.emplace_back().name = "m1";
+    m1.meshes.emplace_back().name = "m1";
+    m1.nodes.emplace_back().name = "m1";
+    m1.samplers.emplace_back().name = "m1";
+    m1.scenes.emplace_back().name = "m1";
+    m1.skins.emplace_back().name = "m1";
+    m1.textures.emplace_back().name = "m1";
+
+    Model m2;
+    m2.accessors.emplace_back().name = "m2";
+    m2.animations.emplace_back().name = "m2";
+    m2.buffers.emplace_back().name = "m2";
+    m2.bufferViews.emplace_back().name = "m2";
+    m2.cameras.emplace_back().name = "m2";
+    m2.images.emplace_back().name = "m2";
+    m2.materials.emplace_back().name = "m2";
+    m2.meshes.emplace_back().name = "m2";
+    m2.nodes.emplace_back().name = "m2";
+    m2.samplers.emplace_back().name = "m2";
+    m2.scenes.emplace_back().name = "m2";
+    m2.skins.emplace_back().name = "m2";
+    m2.textures.emplace_back().name = "m2";
+
+    ErrorList errors = m1.merge(std::move(m2));
+    CHECK(errors.errors.empty());
+    CHECK(errors.warnings.empty());
+
+    REQUIRE(m1.accessors.size() == 2);
+    CHECK(m1.accessors[0].name == "m1");
+    CHECK(m1.accessors[1].name == "m2");
+    REQUIRE(m1.animations.size() == 2);
+    CHECK(m1.animations[0].name == "m1");
+    CHECK(m1.animations[1].name == "m2");
+    REQUIRE(m1.buffers.size() == 2);
+    CHECK(m1.buffers[0].name == "m1");
+    CHECK(m1.buffers[1].name == "m2");
+    REQUIRE(m1.bufferViews.size() == 2);
+    CHECK(m1.bufferViews[0].name == "m1");
+    CHECK(m1.bufferViews[1].name == "m2");
+    REQUIRE(m1.cameras.size() == 2);
+    CHECK(m1.cameras[0].name == "m1");
+    CHECK(m1.cameras[1].name == "m2");
+    REQUIRE(m1.images.size() == 2);
+    CHECK(m1.images[0].name == "m1");
+    CHECK(m1.images[1].name == "m2");
+    REQUIRE(m1.materials.size() == 2);
+    CHECK(m1.materials[0].name == "m1");
+    CHECK(m1.materials[1].name == "m2");
+    REQUIRE(m1.meshes.size() == 2);
+    CHECK(m1.meshes[0].name == "m1");
+    CHECK(m1.meshes[1].name == "m2");
+    REQUIRE(m1.nodes.size() == 2);
+    CHECK(m1.nodes[0].name == "m1");
+    CHECK(m1.nodes[1].name == "m2");
+    REQUIRE(m1.samplers.size() == 2);
+    CHECK(m1.samplers[0].name == "m1");
+    CHECK(m1.samplers[1].name == "m2");
+    REQUIRE(m1.scenes.size() == 2);
+    CHECK(m1.scenes[0].name == "m1");
+    CHECK(m1.scenes[1].name == "m2");
+    REQUIRE(m1.skins.size() == 2);
+    CHECK(m1.skins[0].name == "m1");
+    CHECK(m1.skins[1].name == "m2");
+    REQUIRE(m1.textures.size() == 2);
+    CHECK(m1.textures[0].name == "m1");
+    CHECK(m1.textures[1].name == "m2");
+  }
+
+  SECTION("merges default scenes") {
+    Model m1;
+    m1.nodes.emplace_back().name = "node1";
+    m1.nodes.emplace_back().name = "node2";
+    Scene& scene1 = m1.scenes.emplace_back();
+    scene1.name = "scene1";
+    scene1.nodes.push_back(1);
+    Scene& scene2 = m1.scenes.emplace_back();
+    scene2.name = "scene2";
+    scene2.nodes.push_back(1);
+    scene2.nodes.push_back(0);
+    m1.scene = 1;
+
+    Model m2;
+    m2.nodes.emplace_back().name = "node3";
+    m2.nodes.emplace_back().name = "node4";
+    Scene& scene3 = m2.scenes.emplace_back();
+    scene3.name = "scene3";
+    scene3.nodes.push_back(1);
+    scene3.nodes.push_back(0);
+    Scene& scene4 = m2.scenes.emplace_back();
+    scene4.name = "scene4";
+    scene4.nodes.push_back(1);
+    m2.scene = 0;
+
+    ErrorList errors = m1.merge(std::move(m2));
+    CHECK(errors.errors.empty());
+    CHECK(errors.warnings.empty());
+
+    REQUIRE(m1.scene >= 0);
+    REQUIRE(m1.scene < m1.scenes.size());
+
+    Scene& defaultScene = m1.scenes[m1.scene];
+    REQUIRE(defaultScene.nodes.size() == 4);
+    CHECK(m1.nodes[defaultScene.nodes[0]].name == "node2");
+    CHECK(m1.nodes[defaultScene.nodes[1]].name == "node1");
+    CHECK(m1.nodes[defaultScene.nodes[2]].name == "node4");
+    CHECK(m1.nodes[defaultScene.nodes[3]].name == "node3");
+  }
+
+  SECTION("merges metadata") {
+    Model m1;
+    Model m2;
+
+    SECTION("when only this has the extension") {
+      ExtensionModelExtStructuralMetadata& metadata1 =
+          m1.addExtension<ExtensionModelExtStructuralMetadata>();
+      metadata1.schema.emplace().name = "test";
+
+      ErrorList errors = m1.merge(std::move(m2));
+      CHECK(errors.errors.empty());
+      CHECK(errors.warnings.empty());
+
+      ExtensionModelExtStructuralMetadata* pExtension =
+          m1.getExtension<ExtensionModelExtStructuralMetadata>();
+      REQUIRE(pExtension);
+      REQUIRE(pExtension->schema);
+      CHECK(pExtension->schema->name == "test");
+    }
+
+    SECTION("when only rhs has the extension") {
+      ExtensionModelExtStructuralMetadata& metadata2 =
+          m2.addExtension<ExtensionModelExtStructuralMetadata>();
+      metadata2.schema.emplace().name = "test";
+
+      ErrorList errors = m1.merge(std::move(m2));
+      CHECK(errors.errors.empty());
+      CHECK(errors.warnings.empty());
+
+      ExtensionModelExtStructuralMetadata* pExtension =
+          m1.getExtension<ExtensionModelExtStructuralMetadata>();
+      REQUIRE(pExtension);
+      REQUIRE(pExtension->schema);
+      CHECK(pExtension->schema->name == "test");
+    }
+
+    SECTION("when both have the extension") {
+      ExtensionModelExtStructuralMetadata& metadata1 =
+          m1.addExtension<ExtensionModelExtStructuralMetadata>();
+
+      ExtensionModelExtStructuralMetadata& metadata2 =
+          m2.addExtension<ExtensionModelExtStructuralMetadata>();
+
+      SECTION("and only this has a schema") {
+        metadata1.schema.emplace().name = "test";
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        ExtensionModelExtStructuralMetadata* pExtension =
+            m1.getExtension<ExtensionModelExtStructuralMetadata>();
+        REQUIRE(pExtension);
+        REQUIRE(pExtension->schema);
+        CHECK(pExtension->schema->name == "test");
+      }
+
+      SECTION("and only rhs has a schema") {
+        metadata2.schema.emplace().name = "test";
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        ExtensionModelExtStructuralMetadata* pExtension =
+            m1.getExtension<ExtensionModelExtStructuralMetadata>();
+        REQUIRE(pExtension);
+        REQUIRE(pExtension->schema);
+        CHECK(pExtension->schema->name == "test");
+      }
+
+      SECTION("and both have a schema with different classes") {
+        Schema& schema1 = metadata1.schema.emplace();
+        Class& class1 = schema1.classes["foo"];
+        class1.name = "foo";
+
+        Schema& schema2 = metadata2.schema.emplace();
+        Class& class2 = schema2.classes["bar"];
+        class2.name = "bar";
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        SECTION("it includes both classes") {
+          ExtensionModelExtStructuralMetadata* pExtension =
+              m1.getExtension<ExtensionModelExtStructuralMetadata>();
+          REQUIRE(pExtension);
+          REQUIRE(pExtension->schema);
+          CHECK(pExtension->schema->classes.size() == 2);
+
+          auto it1 = pExtension->schema->classes.find("foo");
+          REQUIRE(it1 != pExtension->schema->classes.end());
+
+          auto it2 = pExtension->schema->classes.find("bar");
+          REQUIRE(it2 != pExtension->schema->classes.end());
+        }
+      }
+
+      SECTION("and both have a schema with a class with the same name") {
+        Schema& schema1 = metadata1.schema.emplace();
+        Class& class1 = schema1.classes["foo"];
+        class1.name = "foo";
+
+        Schema& schema2 = metadata2.schema.emplace();
+        Class& class2 = schema2.classes["foo"];
+        class2.name = "foo";
+
+        SECTION("it renames the class") {
+          ErrorList errors = m1.merge(std::move(m2));
+          CHECK(errors.errors.empty());
+          CHECK(errors.warnings.empty());
+
+          ExtensionModelExtStructuralMetadata* pExtension =
+              m1.getExtension<ExtensionModelExtStructuralMetadata>();
+          REQUIRE(pExtension);
+          REQUIRE(pExtension->schema);
+          CHECK(pExtension->schema->classes.size() == 2);
+
+          auto it1 = pExtension->schema->classes.find("foo");
+          REQUIRE(it1 != pExtension->schema->classes.end());
+          CHECK(it1->second.name == "foo");
+
+          auto it2 = pExtension->schema->classes.find("foo_1");
+          REQUIRE(it2 != pExtension->schema->classes.end());
+          CHECK(it2->second.name == "foo");
+        }
+
+        SECTION("it updates PropertyTables to reference the renamed class") {
+          PropertyTable& propertyTable1 =
+              metadata1.propertyTables.emplace_back();
+          propertyTable1.classProperty = "foo";
+
+          PropertyTable& propertyTable2 =
+              metadata2.propertyTables.emplace_back();
+          propertyTable2.classProperty = "foo";
+
+          ErrorList errors = m1.merge(std::move(m2));
+          CHECK(errors.errors.empty());
+          CHECK(errors.warnings.empty());
+
+          ExtensionModelExtStructuralMetadata* pExtension =
+              m1.getExtension<ExtensionModelExtStructuralMetadata>();
+          REQUIRE(pExtension);
+          REQUIRE(pExtension->schema);
+
+          REQUIRE(pExtension->propertyTables.size() == 2);
+          CHECK(pExtension->propertyTables[0].classProperty == "foo");
+          CHECK(pExtension->propertyTables[1].classProperty == "foo_1");
+        }
+
+        SECTION(
+            "it updates PropertyAttributes to reference the renamed class") {
+          PropertyAttribute& propertyAttribute1 =
+              metadata1.propertyAttributes.emplace_back();
+          propertyAttribute1.classProperty = "foo";
+
+          PropertyAttribute& propertyAttribute2 =
+              metadata2.propertyAttributes.emplace_back();
+          propertyAttribute2.classProperty = "foo";
+
+          ErrorList errors = m1.merge(std::move(m2));
+          CHECK(errors.errors.empty());
+          CHECK(errors.warnings.empty());
+
+          ExtensionModelExtStructuralMetadata* pExtension =
+              m1.getExtension<ExtensionModelExtStructuralMetadata>();
+          REQUIRE(pExtension);
+          REQUIRE(pExtension->schema);
+
+          REQUIRE(pExtension->propertyAttributes.size() == 2);
+          CHECK(pExtension->propertyAttributes[0].classProperty == "foo");
+          CHECK(pExtension->propertyAttributes[1].classProperty == "foo_1");
+        }
+
+        SECTION("it updates PropertyTextures to reference the renamed class") {
+          PropertyTexture& propertyTexture1 =
+              metadata1.propertyTextures.emplace_back();
+          propertyTexture1.classProperty = "foo";
+
+          PropertyTexture& propertyTexture2 =
+              metadata2.propertyTextures.emplace_back();
+          propertyTexture2.classProperty = "foo";
+
+          ErrorList errors = m1.merge(std::move(m2));
+          CHECK(errors.errors.empty());
+          CHECK(errors.warnings.empty());
+
+          ExtensionModelExtStructuralMetadata* pExtension =
+              m1.getExtension<ExtensionModelExtStructuralMetadata>();
+          REQUIRE(pExtension);
+          REQUIRE(pExtension->schema);
+
+          REQUIRE(pExtension->propertyTextures.size() == 2);
+          CHECK(pExtension->propertyTextures[0].classProperty == "foo");
+          CHECK(pExtension->propertyTextures[1].classProperty == "foo_1");
+        }
+      }
+
+      SECTION("it updates BufferView indices in PropertyTableProperties") {
+        m1.bufferViews.emplace_back().name = "bufferView1";
+        m2.bufferViews.emplace_back().name = "bufferView2";
+
+        PropertyTable& propertyTable1 = metadata1.propertyTables.emplace_back();
+        PropertyTableProperty& property1 = propertyTable1.properties["foo"];
+        property1.values = 0;
+        property1.arrayOffsets = 0;
+        property1.stringOffsets = 0;
+
+        PropertyTable& propertyTable2 = metadata2.propertyTables.emplace_back();
+        PropertyTableProperty& property2 = propertyTable2.properties["foo"];
+        property2.values = 0;
+        property2.arrayOffsets = 0;
+        property2.stringOffsets = 0;
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        ExtensionModelExtStructuralMetadata* pExtension =
+            m1.getExtension<ExtensionModelExtStructuralMetadata>();
+        REQUIRE(pExtension);
+        REQUIRE(pExtension->propertyTables.size() == 2);
+        REQUIRE(m1.bufferViews.size() == 2);
+        REQUIRE(m1.bufferViews[0].name == "bufferView1");
+        REQUIRE(m1.bufferViews[1].name == "bufferView2");
+
+        REQUIRE(pExtension->propertyTables[0].properties.size() == 1);
+        auto it1 = pExtension->propertyTables[0].properties.find("foo");
+        REQUIRE(it1 != pExtension->propertyTables[0].properties.end());
+        CHECK(it1->second.values == 0);
+        CHECK(it1->second.arrayOffsets == 0);
+        CHECK(it1->second.stringOffsets == 0);
+
+        REQUIRE(pExtension->propertyTables[1].properties.size() == 1);
+        auto it2 = pExtension->propertyTables[1].properties.find("foo");
+        REQUIRE(it2 != pExtension->propertyTables[1].properties.end());
+        CHECK(it2->second.values == 1);
+        CHECK(it2->second.arrayOffsets == 1);
+        CHECK(it2->second.stringOffsets == 1);
+      }
+
+      SECTION("it updates Texture indices in PropertyTextureProperties") {
+        m1.textures.emplace_back().name = "texture1";
+        m2.textures.emplace_back().name = "texture2";
+
+        PropertyTexture& propertyTexture1 =
+            metadata1.propertyTextures.emplace_back();
+        PropertyTextureProperty& property1 = propertyTexture1.properties["foo"];
+        property1.index = 0;
+
+        PropertyTexture& propertyTexture2 =
+            metadata2.propertyTextures.emplace_back();
+        PropertyTextureProperty& property2 = propertyTexture2.properties["foo"];
+        property2.index = 0;
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        ExtensionModelExtStructuralMetadata* pExtension =
+            m1.getExtension<ExtensionModelExtStructuralMetadata>();
+        REQUIRE(pExtension);
+        REQUIRE(pExtension->propertyTextures.size() == 2);
+        REQUIRE(m1.textures.size() == 2);
+        REQUIRE(m1.textures[0].name == "texture1");
+        REQUIRE(m1.textures[1].name == "texture2");
+
+        REQUIRE(pExtension->propertyTextures[0].properties.size() == 1);
+        auto it1 = pExtension->propertyTextures[0].properties.find("foo");
+        REQUIRE(it1 != pExtension->propertyTextures[0].properties.end());
+        CHECK(it1->second.index == 0);
+
+        REQUIRE(pExtension->propertyTextures[1].properties.size() == 1);
+        auto it2 = pExtension->propertyTextures[1].properties.find("foo");
+        REQUIRE(it2 != pExtension->propertyTextures[1].properties.end());
+        CHECK(it2->second.index == 1);
+      }
+
+      SECTION("it updates PropertyTexture indices in primitives") {
+        metadata1.propertyTextures.emplace_back().name = "propertyTexture1";
+        metadata2.propertyTextures.emplace_back().name = "propertyTexture2";
+
+        Mesh& mesh1 = m1.meshes.emplace_back();
+        MeshPrimitive& primitive1 = mesh1.primitives.emplace_back();
+        ExtensionMeshPrimitiveExtStructuralMetadata& primitiveMetadata1 =
+            primitive1
+                .addExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        primitiveMetadata1.propertyTextures.push_back(0);
+
+        Mesh& mesh2 = m2.meshes.emplace_back();
+        MeshPrimitive& primitive2 = mesh2.primitives.emplace_back();
+        ExtensionMeshPrimitiveExtStructuralMetadata& primitiveMetadata2 =
+            primitive2
+                .addExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        primitiveMetadata2.propertyTextures.push_back(0);
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        REQUIRE(m1.meshes.size() == 2);
+        REQUIRE(m1.meshes[0].primitives.size() == 1);
+        REQUIRE(m1.meshes[1].primitives.size() == 1);
+
+        ExtensionMeshPrimitiveExtStructuralMetadata* pPrimitiveMetadata1 =
+            m1.meshes[0]
+                .primitives[0]
+                .getExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        REQUIRE(pPrimitiveMetadata1);
+        REQUIRE(pPrimitiveMetadata1->propertyTextures.size() == 1);
+        CHECK(pPrimitiveMetadata1->propertyTextures[0] == 0);
+
+        ExtensionMeshPrimitiveExtStructuralMetadata* pPrimitiveMetadata2 =
+            m1.meshes[1]
+                .primitives[0]
+                .getExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        REQUIRE(pPrimitiveMetadata2);
+        REQUIRE(pPrimitiveMetadata2->propertyTextures.size() == 1);
+        CHECK(pPrimitiveMetadata2->propertyTextures[0] == 1);
+      }
+
+      SECTION("it updates PropertyAttribute indices in primitives") {
+        metadata1.propertyAttributes.emplace_back().name = "propertyAttribute1";
+        metadata2.propertyAttributes.emplace_back().name = "propertyAttribute2";
+
+        Mesh& mesh1 = m1.meshes.emplace_back();
+        MeshPrimitive& primitive1 = mesh1.primitives.emplace_back();
+        ExtensionMeshPrimitiveExtStructuralMetadata& primitiveMetadata1 =
+            primitive1
+                .addExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        primitiveMetadata1.propertyAttributes.push_back(0);
+
+        Mesh& mesh2 = m2.meshes.emplace_back();
+        MeshPrimitive& primitive2 = mesh2.primitives.emplace_back();
+        ExtensionMeshPrimitiveExtStructuralMetadata& primitiveMetadata2 =
+            primitive2
+                .addExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        primitiveMetadata2.propertyAttributes.push_back(0);
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        REQUIRE(m1.meshes.size() == 2);
+        REQUIRE(m1.meshes[0].primitives.size() == 1);
+        REQUIRE(m1.meshes[1].primitives.size() == 1);
+
+        ExtensionMeshPrimitiveExtStructuralMetadata* pPrimitiveMetadata1 =
+            m1.meshes[0]
+                .primitives[0]
+                .getExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        REQUIRE(pPrimitiveMetadata1);
+        REQUIRE(pPrimitiveMetadata1->propertyAttributes.size() == 1);
+        CHECK(pPrimitiveMetadata1->propertyAttributes[0] == 0);
+
+        ExtensionMeshPrimitiveExtStructuralMetadata* pPrimitiveMetadata2 =
+            m1.meshes[1]
+                .primitives[0]
+                .getExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+        REQUIRE(pPrimitiveMetadata2);
+        REQUIRE(pPrimitiveMetadata2->propertyAttributes.size() == 1);
+        CHECK(pPrimitiveMetadata2->propertyAttributes[0] == 1);
+      }
+
+      SECTION("it updates PropertyTable indices in EXT_mesh_features attached "
+              "to a primitive") {
+        metadata1.propertyTables.emplace_back().name = "propertyTables1";
+        metadata2.propertyTables.emplace_back().name = "propertyTables2";
+
+        Mesh& mesh1 = m1.meshes.emplace_back();
+        MeshPrimitive& primitive1 = mesh1.primitives.emplace_back();
+        ExtensionExtMeshFeatures& meshFeatures1 =
+            primitive1.addExtension<ExtensionExtMeshFeatures>();
+        meshFeatures1.featureIds.emplace_back().propertyTable = 0;
+
+        Mesh& mesh2 = m2.meshes.emplace_back();
+        MeshPrimitive& primitive2 = mesh2.primitives.emplace_back();
+        ExtensionExtMeshFeatures& meshFeatures2 =
+            primitive2.addExtension<ExtensionExtMeshFeatures>();
+        meshFeatures2.featureIds.emplace_back().propertyTable = 0;
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        REQUIRE(m1.meshes.size() == 2);
+        REQUIRE(m1.meshes[0].primitives.size() == 1);
+        REQUIRE(m1.meshes[1].primitives.size() == 1);
+
+        ExtensionExtMeshFeatures* pMeshFeatures1 =
+            m1.meshes[0].primitives[0].getExtension<ExtensionExtMeshFeatures>();
+        REQUIRE(pMeshFeatures1);
+        REQUIRE(pMeshFeatures1->featureIds.size() == 1);
+        CHECK(pMeshFeatures1->featureIds[0].propertyTable == 0);
+
+        ExtensionExtMeshFeatures* pMeshFeatures2 =
+            m1.meshes[1].primitives[0].getExtension<ExtensionExtMeshFeatures>();
+        REQUIRE(pMeshFeatures2);
+        REQUIRE(pMeshFeatures2->featureIds.size() == 1);
+        CHECK(pMeshFeatures2->featureIds[0].propertyTable == 1);
+      }
+
+      SECTION("it updates Textures indices in EXT_mesh_features attached to a "
+              "primitive") {
+        m1.textures.emplace_back().name = "texture1";
+        m2.textures.emplace_back().name = "texture2";
+
+        Mesh& mesh1 = m1.meshes.emplace_back();
+        MeshPrimitive& primitive1 = mesh1.primitives.emplace_back();
+        ExtensionExtMeshFeatures& meshFeatures1 =
+            primitive1.addExtension<ExtensionExtMeshFeatures>();
+        meshFeatures1.featureIds.emplace_back().texture.emplace().index = 0;
+
+        Mesh& mesh2 = m2.meshes.emplace_back();
+        MeshPrimitive& primitive2 = mesh2.primitives.emplace_back();
+        ExtensionExtMeshFeatures& meshFeatures2 =
+            primitive2.addExtension<ExtensionExtMeshFeatures>();
+        meshFeatures2.featureIds.emplace_back().texture.emplace().index = 0;
+
+        ErrorList errors = m1.merge(std::move(m2));
+        CHECK(errors.errors.empty());
+        CHECK(errors.warnings.empty());
+
+        REQUIRE(m1.meshes.size() == 2);
+        REQUIRE(m1.meshes[0].primitives.size() == 1);
+        REQUIRE(m1.meshes[1].primitives.size() == 1);
+
+        ExtensionExtMeshFeatures* pMeshFeatures1 =
+            m1.meshes[0].primitives[0].getExtension<ExtensionExtMeshFeatures>();
+        REQUIRE(pMeshFeatures1);
+        REQUIRE(pMeshFeatures1->featureIds.size() == 1);
+        REQUIRE(pMeshFeatures1->featureIds[0].texture);
+        CHECK(pMeshFeatures1->featureIds[0].texture->index == 0);
+
+        ExtensionExtMeshFeatures* pMeshFeatures2 =
+            m1.meshes[1].primitives[0].getExtension<ExtensionExtMeshFeatures>();
+        REQUIRE(pMeshFeatures2);
+        REQUIRE(pMeshFeatures2->featureIds.size() == 1);
+        REQUIRE(pMeshFeatures2->featureIds[0].texture);
+        CHECK(pMeshFeatures2->featureIds[0].texture->index == 1);
+      }
+    }
+  }
+}
+
+TEST_CASE("Model::forEachRootNodeInScene") {
+  Model m;
+
+  SECTION("with scenes and nodes") {
+    m.scenes.emplace_back();
+    m.scenes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    m.scenes.front().nodes.push_back(0);
+    m.scenes.front().nodes.push_back(2);
+    m.scenes.back().nodes.push_back(1);
+    m.scenes.back().nodes.push_back(2);
+
+    m.scene = 0;
+
+    SECTION("it enumerates a specified scene") {
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[1]);
+      CHECK(visited[1] == &m.nodes[2]);
+    }
+
+    SECTION("it enumerates the default scene") {
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[2]);
+    }
+
+    SECTION("it enumerates the first scene if there is no default") {
+      m.scene = -1;
+
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[2]);
+    }
+  }
+
+  SECTION("with nodes only") {
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    SECTION("it enumerates the first node") {
+      std::vector<Node*> visited;
+      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+        CHECK(&m == &model);
+        visited.push_back(&node);
+      });
+
+      REQUIRE(visited.size() == 1);
+      CHECK(visited[0] == &m.nodes[0]);
+    }
+  }
+
+  SECTION("with no scenes or nodes") {
+    SECTION("it enumerates nothing") {
+      m.forEachRootNodeInScene(-1, [&m](Model& /* model */, Node& /* node */) {
+        // This should not be called.
+        CHECK(false);
+      });
+    }
   }
 }
