@@ -6,6 +6,6 @@ namespace CesiumJsonReader {
 class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
-namespace Cesium3DTilesReader {
-void registerExtensions(CesiumJsonReader::JsonReaderOptions& options);
+namespace CesiumGltfReader {
+void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options);
 }
