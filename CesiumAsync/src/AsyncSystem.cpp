@@ -2,8 +2,6 @@
 
 #include "CesiumAsync/ITaskProcessor.h"
 
-#include <future>
-
 namespace CesiumAsync {
 AsyncSystem::AsyncSystem(
     const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept
