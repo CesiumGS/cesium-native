@@ -121,5 +121,5 @@ cd ../..
 * From the repo root directory, run these commands
   * `npm run generate-gltf`
   * `npm run generate-3d-tiles`
-  * `npm run generate-legacy-terrain`
+  * `npm run generate-quantized-mesh-terrain`
 * On Windows, the line endings of the generated files will be different than those checked into the repo. Just `git add` them and git will fix the line endings (no need to commit).

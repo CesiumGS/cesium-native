@@ -254,6 +254,30 @@ public:
   std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
   splitAtAntiMeridian() const noexcept;
 
+  /**
+   * @brief Checks whether two globe rectangles are exactly equal.
+   *
+   * @param left The first rectangle.
+   * @param right The second rectangle.
+   * @return Whether the rectangles are equal
+   */
+  static bool
+  equals(const GlobeRectangle& left, const GlobeRectangle& right) noexcept;
+
+  /**
+   * @brief Checks whether two globe rectangles are equal up to a given relative
+   * epsilon.
+   *
+   * @param left The first rectangle.
+   * @param right The second rectangle.
+   * @param relativeEpsilon The relative epsilon.
+   * @return Whether the rectangles are epsilon-equal
+   */
+  static bool equalsEpsilon(
+      const GlobeRectangle& left,
+      const GlobeRectangle& right,
+      double relativeEpsilon) noexcept;
+
 private:
   double _west;
   double _south;

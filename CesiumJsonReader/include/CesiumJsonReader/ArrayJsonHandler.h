@@ -265,7 +265,7 @@ public:
   }
 
   virtual IJsonHandler* readBool(bool b) override {
-    return this->invalid("A null")->readBool(b);
+    return this->invalid("A bool")->readBool(b);
   }
 
   virtual IJsonHandler* readInt32(int32_t i) override {
@@ -480,7 +480,7 @@ public:
   }
 
   virtual IJsonHandler* readBool(bool b) override {
-    return this->invalid("A null")->readBool(b);
+    return this->invalid("A bool")->readBool(b);
   }
 
   virtual IJsonHandler* readInt32(int32_t i) override {
