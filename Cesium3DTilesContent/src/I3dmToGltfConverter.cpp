@@ -98,25 +98,25 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
   glm::dvec3 result = CesiumUtility::AttributeCompression::octDecodeInRange(
       rawOct[0],
       rawOct[1],
-      static_cast<const uint16_t>(65535));
+      static_cast<uint16_t>(65535));
   return glm::vec3(result);
 }
 
-/* Calculate the rotation quaternion described by the up, right vectors passed
- in
- * NORMAL_UP and NORMAL_RIGHT. This is composed of two rotations:
+/*
+  Calculate the rotation quaternion described by the up, right vectors passed
+  in NORMAL_UP and NORMAL_RIGHT. This is composed of two rotations:
    + The rotation that takes the up vector to its new position;
    + The rotation around the new up vector that takes the right vector to its
- new position.
+  new position.
 
   I like to think of each rotation as describing a coordinate frame. The
- calculation of the second rotation must take place within the first frame.
+  calculation of the second rotation must take place within the first frame.
 
   The rotations are calculated by finding the rotation that takes one vector to
- another. If we take the dot and cross products of the two vectors and store
- them in a quaternion, that quaternion represents twice the required rotation.
- We get the correct quaternion by "averaging" with the zero rotation quaternion,
- in a way analagous to finding the half vector between two 3D vectors.
+  another. If we take the dot and cross products of the two vectors and store
+  them in a quaternion, that quaternion represents twice the required rotation.
+  We get the correct quaternion by "averaging" with the zero rotation quaternion,
+  in a way analagous to finding the half vector between two 3D vectors.
  */
 
 glm::quat rotation(const glm::vec3& vec1, const glm::vec3& vec2) {
