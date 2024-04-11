@@ -115,8 +115,9 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
   The rotations are calculated by finding the rotation that takes one vector to
   another. If we take the dot and cross products of the two vectors and store
   them in a quaternion, that quaternion represents twice the required rotation.
-  We get the correct quaternion by "averaging" with the zero rotation quaternion,
-  in a way analagous to finding the half vector between two 3D vectors.
+  We get the correct quaternion by "averaging" with the zero rotation
+  quaternion, in a way analagous to finding the half vector between two 3D
+  vectors.
  */
 
 glm::quat rotation(const glm::vec3& vec1, const glm::vec3& vec2) {
