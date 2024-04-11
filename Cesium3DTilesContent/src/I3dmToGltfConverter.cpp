@@ -75,9 +75,9 @@ void parseInstancesHeader(
 
 struct InstanceContent {
   uint32_t instancesLength = 0;
-  glm::vec3 rtcCenter;
-  std::optional<glm::vec3> quantizedVolumeOffset;
-  std::optional<glm::vec3> quantizedVolumeScale;
+  glm::dvec3 rtcCenter;
+  std::optional<glm::dvec3> quantizedVolumeOffset;
+  std::optional<glm::dvec3> quantizedVolumeScale;
   bool eastNorthUp = false;
 
   // Offsets into the feature table.
@@ -227,7 +227,8 @@ void convertInstancesContent(
                                "INSTANCES_LENGTH was found.");
     return;
   }
-  if (auto optRtcCenter = parseArrayValueVec3(featureTableJson, "RTC_CENTER")) {
+  if (auto optRtcCenter =
+          parseArrayValueDVec3(featureTableJson, "RTC_CENTER")) {
     parsedContent.rtcCenter = *optRtcCenter;
   }
   parsedContent.position =
@@ -244,14 +245,14 @@ void convertInstancesContent(
   }
   if (parsedContent.positionQuantized) {
     parsedContent.quantizedVolumeOffset =
-        parseArrayValueVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
+        parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
     if (!parsedContent.quantizedVolumeOffset) {
       result.errors.emplaceError("Error parsing I3DM feature table, No valid "
                                  "QUANTIZED_VOLUME_OFFSET property");
       return;
     }
     parsedContent.quantizedVolumeScale =
-        parseArrayValueVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
+        parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
     if (!parsedContent.quantizedVolumeScale) {
       result.errors.emplaceError("Error parsing I3DM feature table, No valid "
                                  "QUANTIZED_VOLUME_SCALE property");
@@ -284,7 +285,7 @@ void convertInstancesContent(
       header.featureTableBinaryByteLength);
   decodedInstances.positions.resize(
       parsedContent.instancesLength,
-      parsedContent.rtcCenter);
+      glm::vec3(parsedContent.rtcCenter));
   if (parsedContent.position) {
     const auto* rawPosition = reinterpret_cast<const glm::vec3*>(
         featureTableBinaryData.data() + *parsedContent.position);
@@ -298,9 +299,10 @@ void convertInstancesContent(
       const auto* posQuantized = &rawQPosition[i];
       float position[3];
       for (unsigned j = 0; j < 3; ++j) {
-        position[j] = (*posQuantized)[j] / 65535.0f *
-                          (*parsedContent.quantizedVolumeScale)[j] +
-                      (*parsedContent.quantizedVolumeOffset)[j];
+        position[j] = static_cast<float>(
+            (*posQuantized)[j] / 65535.0 *
+                (*parsedContent.quantizedVolumeScale)[j] +
+            (*parsedContent.quantizedVolumeOffset)[j]);
       }
       decodedInstances.positions[i] +=
           glm::vec3(position[0], position[1], position[2]);

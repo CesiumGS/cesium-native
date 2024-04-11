@@ -57,22 +57,22 @@ bool validateJsonArrayValues(
   return true;
 }
 
-std::optional<glm::vec3>
-parseArrayValueVec3(const rapidjson::Value& arrayValue) {
+std::optional<glm::dvec3>
+parseArrayValueDVec3(const rapidjson::Value& arrayValue) {
   if (validateJsonArrayValues(arrayValue, 3, &rapidjson::Value::IsNumber)) {
-    return std::make_optional(glm::vec3(
-        arrayValue[0].GetFloat(),
-        arrayValue[1].GetFloat(),
-        arrayValue[2].GetFloat()));
+    return std::make_optional(glm::dvec3(
+        arrayValue[0].GetDouble(),
+        arrayValue[1].GetDouble(),
+        arrayValue[2].GetDouble()));
   }
   return {};
 }
 
-std::optional<glm::vec3>
-parseArrayValueVec3(const rapidjson::Document& document, const char* name) {
+std::optional<glm::dvec3>
+parseArrayDValueVec3(const rapidjson::Document& document, const char* name) {
   const auto arrayIt = document.FindMember(name);
   if (arrayIt != document.MemberEnd()) {
-    return parseArrayValueVec3(arrayIt->value);
+    return parseArrayValueDVec3(arrayIt->value);
   }
   return {};
 }
