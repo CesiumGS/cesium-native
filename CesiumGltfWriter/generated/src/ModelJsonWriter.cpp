@@ -23,6 +23,7 @@
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -170,6 +171,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionTextureWebp& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -940,6 +946,22 @@ void writeJson(
   if (obj.source > -1) {
     jsonWriter.Key("source");
     writeJson(obj.source, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.indices > -1) {
+    jsonWriter.Key("indices");
+    writeJson(obj.indices, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2485,6 +2507,13 @@ void ExtensionKhrTextureTransformJsonWriter::write(
 
 void ExtensionTextureWebpJsonWriter::write(
     const CesiumGltf::ExtensionTextureWebp& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionCesiumPrimitiveOutlineJsonWriter::write(
+    const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

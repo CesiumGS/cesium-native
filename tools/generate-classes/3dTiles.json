@@ -33,8 +33,7 @@
     },
     {
       "extensionName": "3DTILES_content_voxels",
-      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/voxels/extensions/3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json",
-      "attachTo": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/voxels/extensions/3DTILES_content_voxels/schema/padding.schema.json"
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/voxels/extensions/3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
     }
   ]
 }

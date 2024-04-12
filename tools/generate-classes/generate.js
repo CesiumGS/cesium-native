@@ -322,7 +322,7 @@ function generate(options, schema, writers) {
         #include <${readerNamespace}/${name}Reader.h>
         #include <CesiumJsonReader/JsonReader.h>
         #include <CesiumJsonReader/ArrayJsonHandler.h>
-        #include "registerExtensions.h"
+        #include "registerReaderExtensions.h"
         #include <cassert>
         #include <string>
 
@@ -365,7 +365,7 @@ function generate(options, schema, writers) {
           return this->readObjectKey${NameFormatters.removeNamespace(base)}(objectType, str, *this->_pObject);
         }
 
-        ${name}Reader::${name}Reader() { registerExtensions(this->_options); }
+        ${name}Reader::${name}Reader() { registerReaderExtensions(this->_options); }
 
         CesiumJsonReader::JsonReaderOptions& ${name}Reader::getOptions() {
           return this->_options;
