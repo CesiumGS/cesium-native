@@ -108,7 +108,43 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     REQUIRE(result);
   }
 
-  SECTION("is not confused by query parameters") {
+  SECTION("does not add another slash when URL has query parameters") {
+    // Add a request handler for `.../tilemapresource.xml?some=parameter` but
+    // _not_ `.../tilemapresource.xml?some=parameter/`or
+    // `.../tilemapresource.xml/?some=parameter`, in order to verify that the
+    // TMS overlay class sees the tilemapresource.xml at the end of the URL and
+    // is not confused by the query parameter.
+    std::string xmlUrlWithParameter = tmr + "?some=parameter";
+    std::shared_ptr<SimpleAssetRequest> pExistingRequest =
+        pMockAssetAccessor->mockCompletedRequests[tmr];
+    REQUIRE(pExistingRequest);
+    pMockAssetAccessor->mockCompletedRequests[xmlUrlWithParameter] =
+        std::make_unique<SimpleAssetRequest>(
+            "GET",
+            xmlUrlWithParameter,
+            CesiumAsync::HttpHeaders{},
+            std::make_unique<SimpleAssetResponse>(
+                *static_cast<const SimpleAssetResponse*>(
+                    pExistingRequest->response())));
+
+    pRasterOverlay =
+        new TileMapServiceRasterOverlay("test", xmlUrlWithParameter);
+
+    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+        asyncSystem,
+        pRasterOverlay->createTileProvider(
+            asyncSystem,
+            pMockAssetAccessor,
+            nullptr,
+            nullptr,
+            spdlog::default_logger(),
+            nullptr));
+
+    REQUIRE(result);
+  }
+
+  SECTION("adds tilemapresource.xml in the correct place even with query "
+          "parameters") {
     // The initial URL does not include tilemapresource.xml and will fail
     std::string url =
         "file:///" +
