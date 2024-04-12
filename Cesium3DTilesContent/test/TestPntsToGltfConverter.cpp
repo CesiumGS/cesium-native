@@ -137,6 +137,8 @@ TEST_CASE("Converts simple point cloud to glTF") {
   REQUIRE(result.model);
   Model& gltf = *result.model;
 
+  CHECK(gltf.asset.version == "2.0");
+
   // Check for single mesh node
   REQUIRE(gltf.nodes.size() == 1);
   Node& node = gltf.nodes[0];
@@ -149,6 +151,12 @@ TEST_CASE("Converts simple point cloud to glTF") {
   // clang-format on
   CHECK(node.matrix == expectedMatrix);
   CHECK(node.mesh == 0);
+
+  // Check for a default scene referencing the node
+  CHECK(gltf.scene == 0);
+  REQUIRE(gltf.scenes.size() == 1);
+  REQUIRE(gltf.scenes[0].nodes.size() == 1);
+  CHECK(gltf.scenes[0].nodes[0] == 0);
 
   // Check for single mesh primitive
   REQUIRE(gltf.meshes.size() == 1);
@@ -163,6 +171,7 @@ TEST_CASE("Converts simple point cloud to glTF") {
   Material& material = gltf.materials[0];
   CHECK(material.pbrMetallicRoughness);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   auto attributes = primitive.attributes;
   REQUIRE(attributes.size() == 1);
@@ -215,6 +224,8 @@ TEST_CASE("Converts simple point cloud to glTF") {
 
   // Check for RTC extension
   REQUIRE(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   const auto& rtcExtension =
       result.model->getExtension<CesiumGltf::ExtensionCesiumRTC>();
   const glm::vec3 expectedRtcCenter(
@@ -238,6 +249,8 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -250,6 +263,7 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
   Material& material = gltf.materials[0];
   CHECK(material.alphaMode == Material::AlphaMode::BLEND);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -298,6 +312,8 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -310,6 +326,7 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
   Material& material = gltf.materials[0];
   CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -358,6 +375,8 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -370,6 +389,7 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
   Material& material = gltf.materials[0];
   CHECK(material.alphaMode == Material::AlphaMode::OPAQUE);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -416,6 +436,8 @@ TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -448,6 +470,7 @@ TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
 
   CHECK(material.alphaMode == Material::AlphaMode::BLEND);
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 }
 
 TEST_CASE("Converts point cloud with quantized positions to glTF") {
@@ -462,6 +485,8 @@ TEST_CASE("Converts point cloud with quantized positions to glTF") {
   Model& gltf = *result.model;
 
   CHECK(!gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(!gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(!gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -473,6 +498,7 @@ TEST_CASE("Converts point cloud with quantized positions to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -533,6 +559,8 @@ TEST_CASE("Converts point cloud with normals to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -544,6 +572,7 @@ TEST_CASE("Converts point cloud with normals to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(!gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -594,6 +623,8 @@ TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.nodes.size() == 1);
 
   REQUIRE(gltf.meshes.size() == 1);
@@ -605,6 +636,7 @@ TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(!gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   REQUIRE(gltf.accessors.size() == expectedAttributeCount);
   REQUIRE(gltf.bufferViews.size() == expectedAttributeCount);
@@ -802,6 +834,8 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   // The correctness of the model extension is thoroughly tested in
   // TestUpgradeBatchTableToExtStructuralMetadata
   CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
@@ -825,6 +859,7 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(!gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   // The file has three binary metadata properties:
   // - "temperature": float scalars
@@ -948,6 +983,8 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   Model& gltf = *result.model;
 
   CHECK(gltf.hasExtension<CesiumGltf::ExtensionCesiumRTC>());
+  CHECK(gltf.isExtensionUsed(ExtensionCesiumRTC::ExtensionName));
+  CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   CHECK(gltf.hasExtension<ExtensionModelExtStructuralMetadata>());
 
   CHECK(gltf.nodes.size() == 1);
@@ -969,6 +1006,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
   REQUIRE(gltf.materials.size() == 1);
   Material& material = gltf.materials[0];
   CHECK(!material.hasExtension<ExtensionKhrMaterialsUnlit>());
+  CHECK(!gltf.isExtensionUsed(ExtensionKhrMaterialsUnlit::ExtensionName));
 
   // The file has three binary metadata properties:
   // - "temperature": float scalars
