@@ -664,4 +664,34 @@ void Model::generateMissingNormalsSmooth() {
         }
       });
 }
+
+void Model::addExtensionUsed(const std::string& extensionName) {
+  if (!this->isExtensionUsed(extensionName)) {
+    this->extensionsUsed.emplace_back(extensionName);
+  }
+}
+
+void Model::addExtensionRequired(const std::string& extensionName) {
+  this->addExtensionUsed(extensionName);
+
+  if (!this->isExtensionRequired(extensionName)) {
+    this->extensionsRequired.emplace_back(extensionName);
+  }
+}
+
+bool Model::isExtensionUsed(const std::string& extensionName) const noexcept {
+  return std::find(
+             this->extensionsUsed.begin(),
+             this->extensionsUsed.end(),
+             extensionName) != this->extensionsUsed.end();
+}
+
+bool Model::isExtensionRequired(
+    const std::string& extensionName) const noexcept {
+  return std::find(
+             this->extensionsRequired.begin(),
+             this->extensionsRequired.end(),
+             extensionName) != this->extensionsRequired.end();
+}
+
 } // namespace CesiumGltf
