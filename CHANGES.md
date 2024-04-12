@@ -4,7 +4,7 @@
 
 ##### Breaking Changes :mega:
 
-- Added two new parameters to `upsampleGltfForRasterOverlays`, prior to the existing `textureCoordinateIndex` parameter.
+- Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
 
 ##### Additions :tada:
@@ -14,7 +14,7 @@
 - Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `BoundingRegionBuilder::toGlobeRectangle`.
 - Added `waitInMainThread` method to `Future` and `SharedFuture`.
-- `upsampleGltfForRasterOverlays` now takes two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+- `upsampleGltfForRasterOverlays` now accepts two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
 - `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
 
 ##### Fixes :wrench:
