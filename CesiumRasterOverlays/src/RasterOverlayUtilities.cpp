@@ -9,6 +9,7 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <algorithm>
+#include <cstring>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;
