@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "layer.schema.json",
+  "title": "Layer",
+  "description": "A quantized-mesh terrain layer.json.",
+  "properties": {
+    "attribution": {
+      "description": "The attribution (credit) string for the terrain.",
+      "type": "string",
+      "default": ""
+    },
+    "available": {
+      "description": "The tile availability information. The outer array is indexed by tile level. The inner array is a list of rectangles of availability at that level. Tiles themselves may also contain further availability information for their subtree.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "$ref": "availabilityRectangle.schema.json"
+        }
+      }
+    },
+    "bounds": {
+      "description": "The bounding box of the terrain, expressed as west, south, east, north in degrees.",
+      "type": "array",
+      "default": [-180,-90,180,90],
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number"
+      }
+    },
+    "description": {
+      "description": "The description of this terrain tileset.",
+      "type": "string",
+      "default": ""
+    },
+    "extensions": {
+      "description": "The extensions available for this tileset.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "format": {
+      "description": "The format of the terrain tiles. Should be `\"quantized-mesh-1.0\"`.",
+      "type": "string",
+      "default": "quantized-mesh-1.0"
+    },
+    "maxzoom": {
+      "description": "The maximum level for which there are any available tiles.",
+      "type": "integer"
+    },
+    "minzoom": {
+      "description": "The minimum level for which there are any available tiles.",
+      "type": "integer",
+      "default": 0
+    },
+    "metadataAvailability": {
+      "description": "The levels at metadata is found in tiles. For example, if this value is 10, then metadata is found at levels 0, 10, 20, etc.",
+      "type": "integer"
+    },
+    "name": {
+      "description": "The name of this terrain tileset.",
+      "type": "string",
+      "default": "Terrain"
+    },
+    "parentUrl": {
+      "description": "The URL of the parent layer.json that this one is layered on top of.",
+      "type": "string"
+    },
+    "projection": {
+      "description": "The map projection of this tileset. Valid values are `\"EPSG:4326\"` and `\"EPSG:3857\"`.",
+      "type": "string",
+      "default": "EPSG:4326"
+    },
+    "scheme": {
+      "description": "The tiling scheme. The only valid value is `\"tms\"`.",
+      "type": "string",
+      "default": "tms"
+    },
+    "tiles": {
+      "description": "The URL templates from which to obtain tiles.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "version": {
+      "description": "The version of this tileset.",
+      "type": "string",
+      "default": "1.0.0"
+    }
+  },
+  "required": ["tiles", "maxzoom"]
+}

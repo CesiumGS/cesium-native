@@ -313,6 +313,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   )";
 
   GltfReaderOptions options;
+  options.decodeDraco = false;
+
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),

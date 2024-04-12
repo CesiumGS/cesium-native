@@ -35,6 +35,14 @@ BoundingRegion BoundingRegionBuilder::toRegion() const {
   }
 }
 
+GlobeRectangle BoundingRegionBuilder::toGlobeRectangle() const {
+  if (this->_longitudeRangeIsEmpty) {
+    return GlobeRectangle::EMPTY;
+  } else {
+    return this->_rectangle;
+  }
+}
+
 void BoundingRegionBuilder::setPoleTolerance(double tolerance) noexcept {
   this->_poleTolerance = tolerance;
 }

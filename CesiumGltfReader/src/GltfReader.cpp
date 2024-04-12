@@ -6,7 +6,7 @@
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
 #include "dequantizeMeshData.h"
-#include "registerExtensions.h"
+#include "registerReaderExtensions.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -348,7 +348,9 @@ void postprocess(
 
 } // namespace
 
-GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
+GltfReader::GltfReader() : _context() {
+  registerReaderExtensions(this->_context);
+}
 
 CesiumJsonReader::JsonReaderOptions& GltfReader::getOptions() {
   return this->_context;
