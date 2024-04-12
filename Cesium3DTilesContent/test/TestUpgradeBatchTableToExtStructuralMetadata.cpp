@@ -2457,6 +2457,10 @@ TEST_CASE("Omits value-less properties when converting "
     CHECK(pair.second.values >= 0);
     CHECK(size_t(pair.second.values) < gltf.bufferViews.size());
   }
+
+  CHECK(
+      propertyTable.properties.find("missingValues") ==
+      propertyTable.properties.end());
 }
 
 TEST_CASE(
