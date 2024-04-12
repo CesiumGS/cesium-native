@@ -110,10 +110,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
   SECTION("is not confused by query parameters") {
     // The initial URL does not include tilemapresource.xml and will fail
-    std::string url = "file:///" + std::filesystem::directory_entry(
-                                       dataDir / "Cesium_Logo_Color")
-                                       .path()
-                                       .generic_u8string() + "?some=parameter";
+    std::string url =
+        "file:///" +
+        std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
+            .path()
+            .generic_u8string() +
+        "?some=parameter";
 
     pMockAssetAccessor->mockCompletedRequests[url] =
         std::make_shared<SimpleAssetRequest>(
