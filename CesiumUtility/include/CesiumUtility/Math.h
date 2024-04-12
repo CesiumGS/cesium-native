@@ -98,7 +98,7 @@ public:
    * @tparam Q The GLM qualifier type.
    *
    * @param a The first value.
-   * @param b The the second value.
+   * @param b The second value.
    * @param relativeEpsilon The relative epsilon.
    * @return The absolute epsilon.
    */
@@ -115,7 +115,7 @@ public:
    * check between two values.
    *
    * @param a The first value.
-   * @param b The the second value.
+   * @param b The second value.
    * @param relativeEpsilon The relative epsilon.
    * @return The absolute epsilon.
    */
@@ -134,7 +134,7 @@ public:
    * @tparam Q The GLM qualifier type.
    *
    * @param left The first value.
-   * @param right The the second value.
+   * @param right The second value.
    * @param relativeEpsilon The relative epsilon.
    * @return Whether the values are epsilon-equal
    */
@@ -150,7 +150,7 @@ public:
    * @brief Checks whether two values are equal up to a given relative epsilon.
    *
    * @param left The first value.
-   * @param right The the second value.
+   * @param right The second value.
    * @param relativeEpsilon The relative epsilon.
    * @return Whether the values are epsilon-equal
    */

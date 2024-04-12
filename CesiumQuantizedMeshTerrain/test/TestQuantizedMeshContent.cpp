@@ -1,10 +1,10 @@
-#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -16,6 +16,7 @@ using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {
@@ -678,6 +679,48 @@ static void checkGeneratedGridNormal(
   }
 }
 
+static void checkGltfSanity(const Model& model) {
+  CHECK(model.asset.version == "2.0");
+  REQUIRE(model.scene >= 0);
+  REQUIRE(size_t(model.scene) < model.scenes.size());
+  CHECK(!model.getSafe(model.scenes, model.scene).nodes.empty());
+
+  for (const Buffer& buffer : model.buffers) {
+    CHECK(buffer.byteLength > 0);
+    CHECK(buffer.byteLength == static_cast<int64_t>(buffer.cesium.data.size()));
+  }
+
+  for (const BufferView& bufferView : model.bufferViews) {
+    CHECK(bufferView.byteLength > 0);
+  }
+
+  for (const Mesh& mesh : model.meshes) {
+    for (const MeshPrimitive& primitive : mesh.primitives) {
+      const Accessor* pIndicesAccessor =
+          model.getSafe(&model.accessors, primitive.indices);
+      REQUIRE(pIndicesAccessor);
+      const BufferView* pIndicesBufferView =
+          model.getSafe(&model.bufferViews, pIndicesAccessor->bufferView);
+      REQUIRE(pIndicesBufferView);
+
+      CHECK(
+          pIndicesBufferView->target ==
+          BufferView::Target::ELEMENT_ARRAY_BUFFER);
+
+      for (const auto& attribute : primitive.attributes) {
+        const Accessor* pAttributeAccessor =
+            model.getSafe(&model.accessors, attribute.second);
+        REQUIRE(pAttributeAccessor);
+        const BufferView* pAttributeBufferView =
+            model.getSafe(&model.bufferViews, pAttributeAccessor->bufferView);
+        REQUIRE(pAttributeBufferView);
+
+        CHECK(pAttributeBufferView->target == BufferView::Target::ARRAY_BUFFER);
+      }
+    }
+  }
+}
+
 TEST_CASE("Test converting quantized mesh to gltf with skirt") {
   registerAllTileContentTypes();
 
@@ -720,6 +763,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
     REQUIRE(!loadResult.errors.hasErrors());
     REQUIRE(loadResult.model != std::nullopt);
+
+    checkGltfSanity(*loadResult.model);
 
     // make sure the gltf is the grid
     const CesiumGltf::Model& model = *loadResult.model;
@@ -792,6 +837,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     REQUIRE(!loadResult.errors.hasErrors());
     REQUIRE(loadResult.model != std::nullopt);
 
+    checkGltfSanity(*loadResult.model);
+
     // make sure the gltf is the grid
     const CesiumGltf::Model& model = *loadResult.model;
     const CesiumGltf::Mesh& mesh = model.meshes.front();
@@ -862,6 +909,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
     REQUIRE(!loadResult.errors.hasErrors());
     REQUIRE(loadResult.model != std::nullopt);
+
+    checkGltfSanity(*loadResult.model);
 
     // make sure the gltf is the grid
     const CesiumGltf::Model& model = *loadResult.model;
@@ -950,6 +999,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         QuantizedMeshLoader::load(tileID, boundingVolume, "url", data, false);
     REQUIRE(!loadResult.errors.hasErrors());
     REQUIRE(loadResult.model != std::nullopt);
+
+    checkGltfSanity(*loadResult.model);
 
     // make sure the gltf has normals
     const CesiumGltf::Model& model = *loadResult.model;

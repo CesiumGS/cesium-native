@@ -158,6 +158,7 @@ add_subdirectory(Cesium3DTilesContent)
 add_subdirectory(CesiumRasterOverlays)
 add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
+add_subdirectory(CesiumQuantizedMeshTerrain)
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)

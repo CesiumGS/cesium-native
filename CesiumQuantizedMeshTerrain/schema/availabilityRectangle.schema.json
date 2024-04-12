@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "availabilityRectangle.schema.json",
+  "title": "AvailabilityRectangle",
+  "description": "A rectangle of tile availability.",
+  "properties": {
+    "startX": {
+      "description": "The index of the start tile in the X direction.",
+      "type": "integer"
+    },
+    "startY": {
+      "description": "The index of the start tile in the Y direction.",
+      "type": "integer"
+    },
+    "endX": {
+      "description": "The index of the end tile in the X direction.",
+      "type": "integer"
+    },
+    "endY": {
+      "description": "The index of the end tile in the Y direction.",
+      "type": "integer"
+    }
+  },
+  "required": ["startX", "startY", "endX", "endY"]
+}

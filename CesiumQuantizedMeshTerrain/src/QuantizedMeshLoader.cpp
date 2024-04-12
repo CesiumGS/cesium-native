@@ -1,9 +1,9 @@
-#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
@@ -18,11 +18,11 @@
 #include <cstddef>
 #include <stdexcept>
 
-using namespace Cesium3DTilesContent;
-using namespace CesiumUtility;
-using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 using namespace CesiumGltfContent;
+using namespace CesiumQuantizedMeshTerrain;
+using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {
   // The center of the tile in Earth-centered Fixed coordinates.
@@ -921,6 +921,8 @@ static std::vector<std::byte> generateNormals(
   // create gltf
   CesiumGltf::Model& model = result.model.emplace();
 
+  model.asset.version = "2.0";
+
   CesiumGltf::Material& material = model.materials.emplace_back();
   CesiumGltf::MaterialPBRMetallicRoughness& pbr =
       material.pbrMetallicRoughness.emplace();
@@ -940,6 +942,7 @@ static std::vector<std::byte> generateNormals(
   const size_t positionBufferId = model.buffers.size();
   model.buffers.emplace_back();
   CesiumGltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+  positionBuffer.byteLength = int64_t(outputPositionsBuffer.size());
   positionBuffer.cesium.data = std::move(outputPositionsBuffer);
 
   const size_t positionBufferViewId = model.bufferViews.size();
@@ -970,6 +973,7 @@ static std::vector<std::byte> generateNormals(
     const size_t normalBufferId = model.buffers.size();
     model.buffers.emplace_back();
     CesiumGltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+    normalBuffer.byteLength = int64_t(outputNormalsBuffer.size());
     normalBuffer.cesium.data = std::move(outputNormalsBuffer);
 
     const size_t normalBufferViewId = model.bufferViews.size();
@@ -998,6 +1002,7 @@ static std::vector<std::byte> generateNormals(
   const size_t indicesBufferId = model.buffers.size();
   model.buffers.emplace_back();
   CesiumGltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
+  indicesBuffer.byteLength = int64_t(outputIndicesBuffer.size());
   indicesBuffer.cesium.data = std::move(outputIndicesBuffer);
 
   const size_t indicesBufferViewId = model.bufferViews.size();
@@ -1007,8 +1012,8 @@ static std::vector<std::byte> generateNormals(
   indicesBufferView.buffer = int32_t(indicesBufferId);
   indicesBufferView.byteOffset = 0;
   indicesBufferView.byteLength = int64_t(indicesBuffer.cesium.data.size());
-  indicesBufferView.byteStride = indexSizeBytes;
-  indicesBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+  indicesBufferView.target =
+      CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   const size_t indicesAccessorId = model.accessors.size();
   model.accessors.emplace_back();
@@ -1107,6 +1112,11 @@ static std::vector<std::byte> generateNormals(
       center.z,
       -center.y,
       1.0};
+
+  CesiumGltf::Scene& scene = model.scenes.emplace_back();
+  scene.nodes.emplace_back(0);
+
+  model.scene = 0;
 
   result.updatedBoundingVolume =
       BoundingRegion(rectangle, minimumHeight, maximumHeight);

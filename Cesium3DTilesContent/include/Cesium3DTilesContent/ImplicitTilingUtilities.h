@@ -16,6 +16,10 @@ namespace CesiumGeometry {
 class OrientedBoundingBox;
 }
 
+namespace Cesium3DTiles {
+struct BoundingVolume;
+}
+
 namespace Cesium3DTilesContent {
 
 /**
@@ -289,6 +293,30 @@ public:
 
   /**
    * @brief Computes the bounding volume for an implicit quadtree tile with the
+   * given ID as a {@link Cesium3DTiles::BoundingVolume}.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for which to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static Cesium3DTiles::BoundingVolume computeBoundingVolume(
+      const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit octree tile with the
+   * given ID as a {@link Cesium3DTiles::BoundingVolume}.
+   *
+   * @param rootBoundingVolume The bounding volume of the root tile.
+   * @param tileID The tile ID for which to compute the bounding volume.
+   * @return The bounding volume for the given implicit tile.
+   */
+  static Cesium3DTiles::BoundingVolume computeBoundingVolume(
+      const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit quadtree tile with the
    * given ID as a bounding region.
    *
    * @param rootBoundingVolume The bounding region of the root tile.
@@ -346,6 +374,18 @@ public:
   static CesiumGeospatial::S2CellBoundingVolume computeBoundingVolume(
       const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
       const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit octree tile
+   * with the given ID as an S2 cell bounding volume.
+   *
+   * @param rootBoundingVolume The S2 cell bounding volume of the root tile.
+   * @param tileID The tile ID for which to compute the S2 cell bounding volume.
+   * @return The S2 cell bounding volume for the given implicit tile.
+   */
+  static CesiumGeospatial::S2CellBoundingVolume computeBoundingVolume(
+      const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
 };
 
 } // namespace Cesium3DTilesContent
