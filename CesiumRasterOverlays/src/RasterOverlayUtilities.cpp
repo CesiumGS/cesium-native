@@ -1424,14 +1424,20 @@ void addSkirts(
       [](const EdgeVertex& lhs, const EdgeVertex& rhs) {
         return lhs.uv.x > rhs.uv.x;
       });
-  std::transform(
-      edgeIndices.south.begin(),
-      edgeIndices.south.end(),
-      sortEdgeIndices.begin(),
-      [](const EdgeVertex& v) { return v.index; });
   if (hasInvertedVCoordinate) {
-    std::reverse(sortEdgeIndices.begin(), sortEdgeIndices.end());
+    std::transform(
+        edgeIndices.south.rbegin(),
+        edgeIndices.south.rend(),
+        sortEdgeIndices.begin(),
+        [](const EdgeVertex& v) { return v.index; });
+  } else {
+    std::transform(
+        edgeIndices.south.begin(),
+        edgeIndices.south.end(),
+        sortEdgeIndices.begin(),
+        [](const EdgeVertex& v) { return v.index; });
   }
+
   addSkirt(
       output,
       indices,
@@ -1485,14 +1491,20 @@ void addSkirts(
       [](const EdgeVertex& lhs, const EdgeVertex& rhs) {
         return lhs.uv.x < rhs.uv.x;
       });
-  std::transform(
-      edgeIndices.north.begin(),
-      edgeIndices.north.end(),
-      sortEdgeIndices.begin(),
-      [](const EdgeVertex& v) { return v.index; });
   if (hasInvertedVCoordinate) {
-    std::reverse(sortEdgeIndices.begin(), sortEdgeIndices.end());
+    std::transform(
+        edgeIndices.north.rbegin(),
+        edgeIndices.north.rend(),
+        sortEdgeIndices.begin(),
+        [](const EdgeVertex& v) { return v.index; });
+  } else {
+    std::transform(
+        edgeIndices.north.begin(),
+        edgeIndices.north.end(),
+        sortEdgeIndices.begin(),
+        [](const EdgeVertex& v) { return v.index; });
   }
+
   addSkirt(
       output,
       indices,
