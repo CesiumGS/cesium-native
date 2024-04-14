@@ -22,6 +22,7 @@
 - Added `getNodeTransform`, `setNodeTransform`, `removeUnusedTextures`, `removeUnusedSamplers`, `removeUnusedImages`, `removeUnusedAccessors`, `removeUnusedBufferViews`, and `compactBuffers` methods to `GltfUtilities`.
 - Added `postprocessGltf` method to `GltfReader`.
 - `Model::merge` now merges the `EXT_structural_metadata` and `EXT_mesh_features` extensions. It also now returns an `ErrorList`, used to report warnings and errors about the merge process.
+- Added `GlobeRectangle::equals` and `GlobeRectangle::equalsEpsilon`.
 
 ##### Fixes :wrench:
 
@@ -34,17 +35,17 @@
   - Add the `EXT_structural_metadata` and `EXT_mesh_features` extensions to the glTF's `extensionsUsed` list.
   - Omit property table properties without any values at all. Previously, such property table properties would have a `values` field referring to an invalid bufferView, which is contrary to the extension's specification.
   - Rename the `_BATCHID` attribute to `_FEATURE_ID_0` inside the `KHR_draco_mesh_compression` extension (if present), in addition to the primitive's `attributes`. Previously, meshes still Draco-compressed after the upgrade, by setting `options.decodeDraco=false`, did not have the proper attribute name.
-- glTFs converted from the 3D Tiles B3DM format now have `CESIUM_RTC` added to their `extensionsRequired` and `extensionsUsed` lists when that extension is added because the B3DM uses the `RTC_CENTER` property.
+- glTFs converted from 3D Tiles B3DMs with the `RTC_CENTER` property will now have `CESIUM_RTC` added to their `extensionsRequired` and `extensionsUsed` lists.
 - glTFs converted from the 3D Tiles PNTS format now:
   - Have their `asset.version` field correctly set to `"2.0"`. Previously the version was not set, which is invalid.
-  - Add the `KHR_materials_unlit` extension to the glTF's `extensionsUsed` list when this extension is added to the glTF because the point cloud does not have normals.
+  - Have the `KHR_materials_unlit` extension added to the glTF's `extensionsUsed` list when the point cloud does not have normals.
   - Have a default `scene`.
-  - Add the `CESIUM_RTC` extension to the glTF's `extensionsRequired` and `extensionsUsed` lists when that extension is added because the PNTS uses the `RTC_CENTER` property.
-- When `KHR_texture_transform` is removed from a glTF at load time, the accessors and bufferViews created to hold the newly-generated texture coordinates now have their `byteOffset` properties correctly set to zero, instead of inheriting the value from the original `KHR_texture_transform`-dependent objects.
+  - Have the `CESIUM_RTC` extension added to the glTF's `extensionsRequired` and `extensionsUsed` lists when the PNTS uses the `RTC_CENTER` property.
+- When glTFs are loaded with `applyTextureTransform` set to true, the accessors and bufferViews created for the newly-generated texture coordinates now have their `byteOffset` set to zero. Previously, they inherited the value from the original `KHR_texture_transform`-dependent objects, which was incorrect.
 - `bufferViews` created for indices during Draco decoding no longer have their `byteStride` property set, as this is unnecessary and disallowed by the specification.
 - `bufferViews` created for vertex attributes during Draco decoding now have their `target` property correctly set to `BufferView::Target::ARRAY_BUFFER`.
 - After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
-- Accessors created for the position attribute in glTFs converted from quantized-mesh tiles now have their minimum and maximum values set correctly to include the positions of the vertices that form the skirt around the edge of the tile.
+- For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
 
 ### v0.34.0 - 2024-04-01
 
