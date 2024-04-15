@@ -118,6 +118,64 @@ TEST_CASE("Test getPositionAccessorView") {
   }
 }
 
+TEST_CASE("Test getNormalAccessorView") {
+  Model model;
+  std::vector<glm::vec3> normals{
+      glm::vec3(0, 1, 0),
+      glm::vec3(1, 0, 0),
+      glm::vec3(0, 0, 1)};
+
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(normals.size() * sizeof(glm::vec3));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        normals.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = 0;
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = 0;
+    accessor.componentType = Accessor::ComponentType::FLOAT;
+    accessor.type = Accessor::Type::VEC3;
+    accessor.count = static_cast<int64_t>(normals.size());
+  }
+
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive primitive = mesh.primitives.emplace_back();
+  primitive.attributes.insert({"NORMAL", 0});
+
+  SECTION("Handles invalid accessor type") {
+    model.accessors[0].type = Accessor::Type::SCALAR;
+
+    NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
+    REQUIRE(normalAccessor.status() != AccessorViewStatus::Valid);
+    REQUIRE(normalAccessor.size() == 0);
+
+    model.accessors[0].type = Accessor::Type::VEC3;
+  }
+
+  SECTION("Handles unsupported accessor component type") {
+    model.accessors[0].componentType = Accessor::ComponentType::BYTE;
+
+    NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
+    REQUIRE(normalAccessor.status() != AccessorViewStatus::Valid);
+    REQUIRE(normalAccessor.size() == 0);
+
+    model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
+  }
+
+  SECTION("Creates from valid accessor") {
+    NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
+    REQUIRE(normalAccessor.status() == AccessorViewStatus::Valid);
+    REQUIRE(static_cast<size_t>(normalAccessor.size()) == normals.size());
+  }
+}
+
 TEST_CASE("Test getFeatureIdAccessorView") {
   Model model;
   std::vector<uint8_t> featureIds0{1, 2, 3, 4};

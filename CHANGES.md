@@ -8,6 +8,7 @@
 
 ##### Additions :tada:
 
+- Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.

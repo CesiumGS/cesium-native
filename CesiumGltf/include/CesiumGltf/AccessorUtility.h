@@ -50,6 +50,19 @@ PositionAccessorType
 getPositionAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
+ * Type definition for normal accessor.
+ */
+typedef AccessorView<AccessorTypes::VEC3<float>> NormalAccessorType;
+
+/**
+ * Retrieves an accessor view for the normal attribute from the given glTF
+ * primitive and model. This verifies that the accessor is of a valid type. If
+ * not, the returned accessor view will be invalid.
+ */
+NormalAccessorType
+getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
+
+/**
  * Type definition for all kinds of feature ID attribute accessors.
  */
 typedef std::variant<
