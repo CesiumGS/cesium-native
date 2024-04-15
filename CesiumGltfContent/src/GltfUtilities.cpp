@@ -28,6 +28,10 @@ namespace CesiumGltfContent {
 
 /*static*/ std::optional<glm::dmat4x4>
 GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
+  if (!node.matrix.empty() && node.matrix.size() < 16) {
+    return std::nullopt;
+  }
+
   // clang-format off
   // This is column-major, just like glm and glTF
   static constexpr std::array<double, 16> identityMatrix = {
@@ -39,10 +43,7 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
 
   const std::vector<double>& matrix = node.matrix;
 
-  if (!node.matrix.empty() && node.matrix.size() < 16) {
-    return std::nullopt;
-  } else if (
-      node.matrix.size() >= 16 && !std::equal(
+  if (node.matrix.size() >= 16 && !std::equal(
                                       identityMatrix.begin(),
                                       identityMatrix.end(),
                                       matrix.begin())) {
@@ -51,8 +52,9 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
         glm::dvec4(matrix[4], matrix[5], matrix[6], matrix[7]),
         glm::dvec4(matrix[8], matrix[9], matrix[10], matrix[11]),
         glm::dvec4(matrix[12], matrix[13], matrix[14], matrix[15]));
-  } else if (
-      !node.translation.empty() || !node.rotation.empty() ||
+  }
+
+  if (!node.translation.empty() || !node.rotation.empty() ||
       !node.scale.empty()) {
     glm::dmat4x4 translation(1.0);
     if (node.translation.size() >= 3) {
@@ -85,9 +87,9 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
     }
 
     return translation * glm::dmat4x4(rotationQuat) * scale;
-  } else {
-    return glm::dmat4x4(1.0);
   }
+
+  return glm::dmat4x4(1.0);
 }
 
 /*static*/ void GltfUtilities::setNodeTransform(

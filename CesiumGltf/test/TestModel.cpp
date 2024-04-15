@@ -784,19 +784,18 @@ TEST_CASE("Model::merge") {
         CHECK(errors.errors.empty());
         CHECK(errors.warnings.empty());
 
-        SECTION("it includes both classes") {
-          ExtensionModelExtStructuralMetadata* pExtension =
-              m1.getExtension<ExtensionModelExtStructuralMetadata>();
-          REQUIRE(pExtension);
-          REQUIRE(pExtension->schema);
-          CHECK(pExtension->schema->classes.size() == 2);
+        // Check that both classes are included in the merged schema.
+        ExtensionModelExtStructuralMetadata* pExtension =
+            m1.getExtension<ExtensionModelExtStructuralMetadata>();
+        REQUIRE(pExtension);
+        REQUIRE(pExtension->schema);
+        CHECK(pExtension->schema->classes.size() == 2);
 
-          auto it1 = pExtension->schema->classes.find("foo");
-          REQUIRE(it1 != pExtension->schema->classes.end());
+        auto it1 = pExtension->schema->classes.find("foo");
+        REQUIRE(it1 != pExtension->schema->classes.end());
 
-          auto it2 = pExtension->schema->classes.find("bar");
-          REQUIRE(it2 != pExtension->schema->classes.end());
-        }
+        auto it2 = pExtension->schema->classes.find("bar");
+        REQUIRE(it2 != pExtension->schema->classes.end());
       }
 
       SECTION("and both have a schema with a class with the same name") {
@@ -808,7 +807,7 @@ TEST_CASE("Model::merge") {
         Class& class2 = schema2.classes["foo"];
         class2.name = "foo";
 
-        SECTION("it renames the class") {
+        SECTION("it renames the duplicate class") {
           ErrorList errors = m1.merge(std::move(m2));
           CHECK(errors.errors.empty());
           CHECK(errors.warnings.empty());
@@ -1207,24 +1206,22 @@ TEST_CASE("Model::forEachRootNodeInScene") {
     m.nodes.emplace_back();
     m.nodes.emplace_back();
 
-    SECTION("it enumerates the first node") {
-      std::vector<Node*> visited;
-      m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
-        CHECK(&m == &model);
-        visited.push_back(&node);
-      });
+    // Check that it enumerates the first node.
+    std::vector<Node*> visited;
+    m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
+      CHECK(&m == &model);
+      visited.push_back(&node);
+    });
 
-      REQUIRE(visited.size() == 1);
-      CHECK(visited[0] == &m.nodes[0]);
-    }
+    REQUIRE(visited.size() == 1);
+    CHECK(visited[0] == &m.nodes[0]);
   }
 
   SECTION("with no scenes or nodes") {
-    SECTION("it enumerates nothing") {
-      m.forEachRootNodeInScene(-1, [](Model& /* model */, Node& /* node */) {
-        // This should not be called.
-        CHECK(false);
-      });
-    }
+    // Check that it enumerates nothing.
+    m.forEachRootNodeInScene(-1, [](Model& /* model */, Node& /* node */) {
+      // This should not be called.
+      CHECK(false);
+    });
   }
 }
