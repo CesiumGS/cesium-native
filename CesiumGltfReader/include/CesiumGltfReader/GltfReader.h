@@ -178,6 +178,16 @@ public:
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
+   * @brief Performs post-load processing on a glTF. The specific operations
+   * performed are controlled by the provided `options`.
+   *
+   * @param readGltf The result of reading the glTF.
+   * @param options The options to use in post-processing.
+   */
+  void
+  postprocessGltf(GltfReaderResult& readGltf, const GltfReaderOptions& options);
+
+  /**
    * @brief Accepts the result of {@link readGltf} and resolves any remaining
    * external buffers and images.
    *

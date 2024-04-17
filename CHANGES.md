@@ -1,10 +1,69 @@
 # Change Log
 
-### v0.34.0
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
 
 ##### Additions :tada:
 
+- Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
+- Added `Uri::getPath` and `Uri::setPath`.
+- Added `TileTransform::setTransform`.
+- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- Added `BoundingRegionBuilder::toGlobeRectangle`.
+- Added `GlobeRectangle::equals` and `GlobeRectangle::equalsEpsilon`.
+- `upsampleGltfForRasterOverlays` now accepts two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+- `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
+- Added `forEachRootNodeInScene`, `addExtensionUsed`, `addExtensionRequired`, `isExtensionUsed`, and `isExtensionRequired` methods to `CesiumGltf::Model`.
+- Added `getNodeTransform`, `setNodeTransform`, `removeUnusedTextures`, `removeUnusedSamplers`, `removeUnusedImages`, `removeUnusedAccessors`, `removeUnusedBufferViews`, and `compactBuffers` methods to `GltfUtilities`.
+- Added `postprocessGltf` method to `GltfReader`.
+- `Model::merge` now merges the `EXT_structural_metadata` and `EXT_mesh_features` extensions. It also now returns an `ErrorList`, used to report warnings and errors about the merge process.
 - Added support for I3dm 3D Tile content files.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `joinToString` when given a collection containing empty strings.
+- `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to build URLs incorrectly when given a URL with query parameters.
+- glTFs converted from a legacy batch table to a `EXT_structural_metadata` now:
+  - Add the `EXT_structural_metadata` and `EXT_mesh_features` extensions to the glTF's `extensionsUsed` list.
+  - Omit property table properties without any values at all. Previously, such property table properties would have a `values` field referring to an invalid bufferView, which is contrary to the extension's specification.
+  - Rename the `_BATCHID` attribute to `_FEATURE_ID_0` inside the `KHR_draco_mesh_compression` extension (if present), in addition to the primitive's `attributes`. Previously, meshes still Draco-compressed after the upgrade, by setting `options.decodeDraco=false`, did not have the proper attribute name.
+- glTFs converted from 3D Tiles B3DMs with the `RTC_CENTER` property will now have `CESIUM_RTC` added to their `extensionsRequired` and `extensionsUsed` lists.
+- glTFs converted from the 3D Tiles PNTS format now:
+  - Have their `asset.version` field correctly set to `"2.0"`. Previously the version was not set, which is invalid.
+  - Have the `KHR_materials_unlit` extension added to the glTF's `extensionsUsed` list when the point cloud does not have normals.
+  - Have a default `scene`.
+  - Have the `CESIUM_RTC` extension added to the glTF's `extensionsRequired` and `extensionsUsed` lists when the PNTS uses the `RTC_CENTER` property.
+- When glTFs are loaded with `applyTextureTransform` set to true, the accessors and bufferViews created for the newly-generated texture coordinates now have their `byteOffset` set to zero. Previously, they inherited the value from the original `KHR_texture_transform`-dependent objects, which was incorrect.
+- `bufferViews` created for indices during Draco decoding no longer have their `byteStride` property set, as this is unnecessary and disallowed by the specification.
+- `bufferViews` created for vertex attributes during Draco decoding now have their `target` property correctly set to `BufferView::Target::ARRAY_BUFFER`.
+- After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
+- For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
+- Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
+
+### v0.34.0 - 2024-04-01
+
+##### Breaking Changes :mega:
+
+- Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
+
+##### Additions :tada:
+
+- Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
+- Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
+- Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
+
+##### Fixes :wrench:
+
+- Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+- Fixed a bug where `Tileset::ComputeLoadProgress` could incorrectly report 100% before all tiles finished their main thread loading.
 
 ### v0.33.0 - 2024-03-01
 

@@ -1,9 +1,9 @@
-#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
@@ -18,11 +18,11 @@
 #include <cstddef>
 #include <stdexcept>
 
-using namespace Cesium3DTilesContent;
-using namespace CesiumUtility;
-using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 using namespace CesiumGltfContent;
+using namespace CesiumQuantizedMeshTerrain;
+using namespace CesiumUtility;
 
 struct QuantizedMeshHeader {
   // The center of the tile in Earth-centered Fixed coordinates.
@@ -379,7 +379,9 @@ static void addSkirt(
     const gsl::span<const E>& edgeIndices,
     const gsl::span<float>& positions,
     const gsl::span<float>& normals,
-    const gsl::span<I>& indices) {
+    const gsl::span<I>& indices,
+    glm::dvec3& positionMinimums,
+    glm::dvec3& positionMaximums) {
   const double west = rectangle.getWest();
   const double south = rectangle.getSouth();
   const double east = rectangle.getEast();
@@ -405,6 +407,9 @@ static void addSkirt(
     positions[positionIdx] = static_cast<float>(position.x);
     positions[positionIdx + 1] = static_cast<float>(position.y);
     positions[positionIdx + 2] = static_cast<float>(position.z);
+
+    positionMinimums = glm::min(positionMinimums, position);
+    positionMaximums = glm::max(positionMaximums, position);
 
     if (!normals.empty()) {
       const size_t componentIndex = static_cast<size_t>(3 * edgeIdx);
@@ -448,7 +453,9 @@ static void addSkirts(
     const gsl::span<const std::byte>& northEdgeIndicesBuffer,
     const gsl::span<float>& outputPositions,
     const gsl::span<float>& outputNormals,
-    const gsl::span<I>& outputIndices) {
+    const gsl::span<I>& outputIndices,
+    glm::dvec3& positionMinimums,
+    glm::dvec3& positionMaximums) {
   const uint32_t westVertexCount =
       static_cast<uint32_t>(westEdgeIndicesBuffer.size() / sizeof(E));
   const uint32_t southVertexCount =
@@ -493,7 +500,9 @@ static void addSkirts(
       westEdgeIndices,
       outputPositions,
       outputNormals,
-      outputIndices);
+      outputIndices,
+      positionMinimums,
+      positionMaximums);
 
   currentVertexCount += westVertexCount;
   currentIndicesCount += (westVertexCount - 1) * 6;
@@ -524,7 +533,9 @@ static void addSkirts(
       southEdgeIndices,
       outputPositions,
       outputNormals,
-      outputIndices);
+      outputIndices,
+      positionMinimums,
+      positionMaximums);
 
   currentVertexCount += southVertexCount;
   currentIndicesCount += (southVertexCount - 1) * 6;
@@ -555,7 +566,9 @@ static void addSkirts(
       eastEdgeIndices,
       outputPositions,
       outputNormals,
-      outputIndices);
+      outputIndices,
+      positionMinimums,
+      positionMaximums);
 
   currentVertexCount += eastVertexCount;
   currentIndicesCount += (eastVertexCount - 1) * 6;
@@ -586,7 +599,9 @@ static void addSkirts(
       northEdgeIndices,
       outputPositions,
       outputNormals,
-      outputIndices);
+      outputIndices,
+      positionMinimums,
+      positionMaximums);
 }
 
 static void decodeNormals(
@@ -705,12 +720,8 @@ static std::vector<std::byte> generateNormals(
   const double minimumHeight = pHeader->MinimumHeight;
   const double maximumHeight = pHeader->MaximumHeight;
 
-  double minX = std::numeric_limits<double>::max();
-  double minY = std::numeric_limits<double>::max();
-  double minZ = std::numeric_limits<double>::max();
-  double maxX = std::numeric_limits<double>::lowest();
-  double maxY = std::numeric_limits<double>::lowest();
-  double maxZ = std::numeric_limits<double>::lowest();
+  glm::dvec3 positionMinimums{std::numeric_limits<double>::max()};
+  glm::dvec3 positionMaximums{std::numeric_limits<double>::lowest()};
 
   const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
   const CesiumGeospatial::GlobeRectangle& rectangle =
@@ -746,13 +757,8 @@ static std::vector<std::byte> generateNormals(
     outputPositions[positionOutputIndex++] = static_cast<float>(position.y);
     outputPositions[positionOutputIndex++] = static_cast<float>(position.z);
 
-    minX = glm::min(minX, position.x);
-    minY = glm::min(minY, position.y);
-    minZ = glm::min(minZ, position.z);
-
-    maxX = glm::max(maxX, position.x);
-    maxY = glm::max(maxY, position.y);
-    maxZ = glm::max(maxZ, position.z);
+    positionMinimums = glm::min(positionMinimums, position);
+    positionMaximums = glm::max(positionMaximums, position);
 
     uvsAndHeights.emplace_back(uRatio, vRatio, heightRatio);
   }
@@ -832,7 +838,9 @@ static std::vector<std::byte> generateNormals(
         meshView->northEdgeIndicesBuffer,
         outputPositions,
         outputNormals,
-        outputIndices);
+        outputIndices,
+        positionMinimums,
+        positionMaximums);
 
     indexSizeBytes = sizeof(uint32_t);
   } else {
@@ -875,7 +883,9 @@ static std::vector<std::byte> generateNormals(
           meshView->northEdgeIndicesBuffer,
           outputPositions,
           outputNormals,
-          outputIndices);
+          outputIndices,
+          positionMinimums,
+          positionMaximums);
 
       indexSizeBytes = sizeof(uint16_t);
     } else {
@@ -912,7 +922,9 @@ static std::vector<std::byte> generateNormals(
           meshView->northEdgeIndicesBuffer,
           outputPositions,
           outputNormals,
-          outputIndices);
+          outputIndices,
+          positionMinimums,
+          positionMaximums);
 
       indexSizeBytes = sizeof(uint32_t);
     }
@@ -920,6 +932,8 @@ static std::vector<std::byte> generateNormals(
 
   // create gltf
   CesiumGltf::Model& model = result.model.emplace();
+
+  model.asset.version = "2.0";
 
   CesiumGltf::Material& material = model.materials.emplace_back();
   CesiumGltf::MaterialPBRMetallicRoughness& pbr =
@@ -940,6 +954,7 @@ static std::vector<std::byte> generateNormals(
   const size_t positionBufferId = model.buffers.size();
   model.buffers.emplace_back();
   CesiumGltf::Buffer& positionBuffer = model.buffers[positionBufferId];
+  positionBuffer.byteLength = int64_t(outputPositionsBuffer.size());
   positionBuffer.cesium.data = std::move(outputPositionsBuffer);
 
   const size_t positionBufferViewId = model.bufferViews.size();
@@ -960,8 +975,14 @@ static std::vector<std::byte> generateNormals(
   positionAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
   positionAccessor.count = vertexCount + skirtVertexCount;
   positionAccessor.type = CesiumGltf::Accessor::Type::VEC3;
-  positionAccessor.min = {minX, minY, minZ};
-  positionAccessor.max = {maxX, maxY, maxZ};
+  positionAccessor.min = {
+      positionMinimums.x,
+      positionMinimums.y,
+      positionMinimums.z};
+  positionAccessor.max = {
+      positionMaximums.x,
+      positionMaximums.y,
+      positionMaximums.z};
 
   primitive.attributes.emplace("POSITION", int32_t(positionAccessorId));
 
@@ -970,6 +991,7 @@ static std::vector<std::byte> generateNormals(
     const size_t normalBufferId = model.buffers.size();
     model.buffers.emplace_back();
     CesiumGltf::Buffer& normalBuffer = model.buffers[normalBufferId];
+    normalBuffer.byteLength = int64_t(outputNormalsBuffer.size());
     normalBuffer.cesium.data = std::move(outputNormalsBuffer);
 
     const size_t normalBufferViewId = model.bufferViews.size();
@@ -998,6 +1020,7 @@ static std::vector<std::byte> generateNormals(
   const size_t indicesBufferId = model.buffers.size();
   model.buffers.emplace_back();
   CesiumGltf::Buffer& indicesBuffer = model.buffers[indicesBufferId];
+  indicesBuffer.byteLength = int64_t(outputIndicesBuffer.size());
   indicesBuffer.cesium.data = std::move(outputIndicesBuffer);
 
   const size_t indicesBufferViewId = model.bufferViews.size();
@@ -1007,8 +1030,8 @@ static std::vector<std::byte> generateNormals(
   indicesBufferView.buffer = int32_t(indicesBufferId);
   indicesBufferView.byteOffset = 0;
   indicesBufferView.byteLength = int64_t(indicesBuffer.cesium.data.size());
-  indicesBufferView.byteStride = indexSizeBytes;
-  indicesBufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
+  indicesBufferView.target =
+      CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   const size_t indicesAccessorId = model.accessors.size();
   model.accessors.emplace_back();
@@ -1107,6 +1130,11 @@ static std::vector<std::byte> generateNormals(
       center.z,
       -center.y,
       1.0};
+
+  CesiumGltf::Scene& scene = model.scenes.emplace_back();
+  scene.nodes.emplace_back(0);
+
+  model.scene = 0;
 
   result.updatedBoundingVolume =
       BoundingRegion(rectangle, minimumHeight, maximumHeight);

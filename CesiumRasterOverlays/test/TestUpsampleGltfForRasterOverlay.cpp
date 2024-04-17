@@ -1,8 +1,9 @@
-#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -11,11 +12,11 @@
 #include <cstring>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;
+using namespace CesiumRasterOverlays;
 
 static void checkSkirt(
     const Ellipsoid& ellipsoid,
@@ -38,7 +39,7 @@ static void checkSkirt(
       Math::equalsEpsilon(expectedPosition.z, skirtPosition.z, Math::Epsilon7));
 }
 
-TEST_CASE("Test upsample tile") {
+TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
   const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
   Cartographic bottomLeftCart{glm::radians(110.0), glm::radians(32.0), 0.0};
   Cartographic topLeftCart{
@@ -193,7 +194,91 @@ TEST_CASE("Test upsample tile") {
       CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
   SECTION("Upsample bottom left child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            false);
+
+    REQUIRE(upsampledModel.meshes.size() == 1);
+    const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+    REQUIRE(upsampledMesh.primitives.size() == 1);
+    const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+    REQUIRE(upsampledPrimitive.indices >= 0);
+    REQUIRE(
+        upsampledPrimitive.attributes.find("POSITION") !=
+        upsampledPrimitive.attributes.end());
+    AccessorView<glm::vec3> upsampledPosition(
+        upsampledModel,
+        upsampledPrimitive.attributes.at("POSITION"));
+    AccessorView<uint32_t> upsampledIndices(
+        upsampledModel,
+        upsampledPrimitive.indices);
+
+    glm::vec3 p0 = upsampledPosition[0];
+    REQUIRE(
+        glm::epsilonEqual(
+            p0,
+            positions[0],
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+    glm::vec3 p1 = upsampledPosition[1];
+    REQUIRE(
+        glm::epsilonEqual(
+            p1,
+            (positions[0] + positions[2]) * 0.5f,
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+    glm::vec3 p2 = upsampledPosition[2];
+    REQUIRE(
+        glm::epsilonEqual(
+            p2,
+            (upsampledPosition[1] + positions[1]) * 0.5f,
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+    glm::vec3 p3 = upsampledPosition[3];
+    REQUIRE(
+        glm::epsilonEqual(
+            p3,
+            (positions[0] + positions[1]) * 0.5f,
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+    glm::vec3 p4 = upsampledPosition[4];
+    REQUIRE(
+        glm::epsilonEqual(
+            p4,
+            (positions[0] + positions[2]) * 0.5f,
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+    glm::vec3 p5 = upsampledPosition[5];
+    REQUIRE(
+        glm::epsilonEqual(
+            p5,
+            (positions[1] + positions[2]) * 0.5f,
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+
+    glm::vec3 p6 = upsampledPosition[6];
+    REQUIRE(
+        glm::epsilonEqual(
+            p6,
+            (upsampledPosition[4] + positions[1]) * 0.5f,
+            glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+  }
+
+  SECTION("Upsample bottom left child with inverted texture coordinates") {
+    // Invert the V coordinate
+    AccessorWriter<glm::vec2> uvWriter(model, 1);
+    for (int64_t i = 0; i < uvWriter.size(); ++i) {
+      uvWriter[i].y = 1.0f - uvWriter[i].y;
+    }
+
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            true);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -263,7 +348,11 @@ TEST_CASE("Test upsample tile") {
   }
 
   SECTION("Upsample upper left child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperLeft);
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            upperLeft,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -333,7 +422,11 @@ TEST_CASE("Test upsample tile") {
   }
 
   SECTION("Upsample upper right child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperRight);
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            upperRight,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -403,7 +496,11 @@ TEST_CASE("Test upsample tile") {
   }
 
   SECTION("Upsample bottom right child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerRight);
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerRight,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -488,7 +585,11 @@ TEST_CASE("Test upsample tile") {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
     SECTION("Check bottom left skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              lowerLeft,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -589,7 +690,11 @@ TEST_CASE("Test upsample tile") {
     }
 
     SECTION("Check upper left skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperLeft);
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              upperLeft,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -714,7 +819,11 @@ TEST_CASE("Test upsample tile") {
     }
 
     SECTION("Check upper right skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(model, upperRight);
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              upperRight,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -815,7 +924,11 @@ TEST_CASE("Test upsample tile") {
     }
 
     SECTION("Check bottom right skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerRight);
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              lowerRight,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -941,7 +1054,7 @@ TEST_CASE("Test upsample tile") {
   }
 }
 
-TEST_CASE("Test upsample tile with UNSIGNED_BYTE indices") {
+TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_BYTE indices") {
   const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
   Cartographic bottomLeftCart{glm::radians(110.0), glm::radians(32.0), 0.0};
   Cartographic topLeftCart{
@@ -1089,7 +1202,10 @@ TEST_CASE("Test upsample tile with UNSIGNED_BYTE indices") {
   CesiumGeometry::UpsampledQuadtreeNode lowerLeft{
       CesiumGeometry::QuadtreeTileID(1, 0, 0)};
 
-  Model upsampledModel = *upsampleGltfForRasterOverlays(model, lowerLeft);
+  Model upsampledModel = *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+      model,
+      lowerLeft,
+      false);
 
   REQUIRE(upsampledModel.meshes.size() == 1);
   const Mesh& upsampledMesh = upsampledModel.meshes.back();
