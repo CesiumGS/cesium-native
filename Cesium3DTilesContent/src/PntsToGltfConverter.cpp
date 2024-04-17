@@ -1621,7 +1621,7 @@ void convertPntsContentToGltf(
 CesiumAsync::Future<GltfConverterResult> PntsToGltfConverter::convert(
     const gsl::span<const std::byte>& pntsBinary,
     const CesiumGltfReader::GltfReaderOptions& /*options*/,
-    ConverterSubprocessor* subprocessor) {
+    const ConverterSubprocessor& subprocessor) {
   GltfConverterResult result;
   PntsHeader header;
   uint32_t headerLength = 0;
@@ -1630,6 +1630,6 @@ CesiumAsync::Future<GltfConverterResult> PntsToGltfConverter::convert(
     convertPntsContentToGltf(pntsBinary, header, headerLength, result);
   }
 
-  return subprocessor->asyncSystem.createResolvedFuture(std::move(result));
+  return subprocessor.asyncSystem.createResolvedFuture(std::move(result));
 }
 } // namespace Cesium3DTilesContent

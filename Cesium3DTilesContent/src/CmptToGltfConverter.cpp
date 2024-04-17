@@ -25,11 +25,11 @@ static_assert(sizeof(InnerHeader) == 12);
 CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
     const gsl::span<const std::byte>& cmptBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
-    ConverterSubprocessor* subProcessor) {
+    const ConverterSubprocessor& subProcessor) {
   GltfConverterResult result;
   if (cmptBinary.size() < sizeof(CmptHeader)) {
     result.errors.emplaceWarning("Composite tile must be at least 16 bytes.");
-    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
+    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   const CmptHeader* pHeader =
@@ -37,14 +37,14 @@ CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
   if (std::string(pHeader->magic, 4) != "cmpt") {
     result.errors.emplaceWarning(
         "Composite tile does not have the expected magic vaue 'cmpt'.");
-    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
+    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   if (pHeader->version != 1) {
     result.errors.emplaceWarning(fmt::format(
         "Unsupported composite tile version {}.",
         pHeader->version));
-    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
+    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   if (pHeader->byteLength > cmptBinary.size()) {
@@ -52,7 +52,7 @@ CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
         "Composite tile byteLength is {} but only {} bytes are available.",
         pHeader->byteLength,
         cmptBinary.size()));
-    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
+    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   std::vector<CesiumAsync::Future<GltfConverterResult>> innerTiles;
@@ -90,10 +90,10 @@ CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
           "Composite tile does not contain any loadable inner "
           "tiles.");
     }
-    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
+    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  return subProcessor->asyncSystem.all(std::move(innerTiles))
+  return subProcessor.asyncSystem.all(std::move(innerTiles))
       .thenImmediately([](std::vector<GltfConverterResult>&& innerResults) {
         if (innerResults.size() == 1) {
           return innerResults[0];

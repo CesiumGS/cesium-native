@@ -187,14 +187,17 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
     const InstancesHeader& header,
     uint32_t headerLength,
     const CesiumGltfReader::GltfReaderOptions& options,
-    ConverterSubprocessor* subprocessor,
+    const ConverterSubprocessor& subprocessor,
     GltfConverterResult& result) {
   ConvertResult subResult;
   DecodedInstances& decodedInstances = subResult.decodedInstances;
   subResult.gltfResult = result;
+  auto finishEarly = [&]() {
+    return subprocessor.asyncSystem.createResolvedFuture(std::move(subResult));
+  };
   if (header.featureTableJsonByteLength == 0 ||
       header.featureTableBinaryByteLength == 0) {
-    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
+    return finishEarly();
   }
   const uint32_t glTFStart = headerLength + header.featureTableJsonByteLength +
                              header.featureTableBinaryByteLength +
@@ -215,7 +218,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
         "{}",
         featureTableJson.GetParseError(),
         featureTableJson.GetErrorOffset()));
-    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
+    return finishEarly();
   }
   InstanceContent parsedContent;
   // Global semantics
@@ -226,7 +229,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
     subResult.gltfResult.errors.emplaceError(
         "Error parsing I3DM feature table, no valid "
         "INSTANCES_LENGTH was found.");
-    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
+    return finishEarly();
   }
   if (auto optRtcCenter =
           parseArrayValueDVec3(featureTableJson, "RTC_CENTER")) {
@@ -236,16 +239,14 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       parseOffset(featureTableJson, "POSITION", subResult.gltfResult.errors);
   if (!parsedContent.position) {
     if (subResult.gltfResult.errors.hasErrors()) {
-      return subprocessor->asyncSystem.createResolvedFuture(
-          std::move(subResult));
+      return finishEarly();
     }
     parsedContent.positionQuantized = parseOffset(
         featureTableJson,
         "POSITION_QUANTIZED",
         subResult.gltfResult.errors);
     if (subResult.gltfResult.errors.hasErrors()) {
-      return subprocessor->asyncSystem.createResolvedFuture(
-          std::move(subResult));
+      return finishEarly();
     }
   }
   if (parsedContent.positionQuantized) {
@@ -255,8 +256,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       subResult.gltfResult.errors.emplaceError(
           "Error parsing I3DM feature table, No valid "
           "QUANTIZED_VOLUME_OFFSET property");
-      return subprocessor->asyncSystem.createResolvedFuture(
-          std::move(subResult));
+      return finishEarly();
     }
     parsedContent.quantizedVolumeScale =
         parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
@@ -264,8 +264,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       subResult.gltfResult.errors.emplaceError(
           "Error parsing I3DM feature table, No valid "
           "QUANTIZED_VOLUME_SCALE property");
-      return subprocessor->asyncSystem.createResolvedFuture(
-          std::move(subResult));
+      return finishEarly();
     }
   }
   decodedInstances.rotationENU = false;
@@ -296,7 +295,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
   parsedContent.batchId =
       parseOffset(featureTableJson, "BATCH_ID", subResult.gltfResult.errors);
   if (subResult.gltfResult.errors.hasErrors()) {
-    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
+    return finishEarly();
   }
   auto featureTableBinaryData = instancesBinary.subspan(
       headerLength + header.featureTableJsonByteLength,
@@ -372,14 +371,14 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
     auto gltfUri = std::string(
         reinterpret_cast<const char*>(gltfData.data()),
         gltfData.size());
-    return get(*subprocessor, gltfUri)
+    return get(subprocessor, gltfUri)
         .thenImmediately(
             [options, subprocessor](ByteResult&& byteResult)
                 -> CesiumAsync::Future<GltfConverterResult> {
               if (byteResult.errorList.hasErrors()) {
                 GltfConverterResult errorResult;
                 errorResult.errors.merge(byteResult.errorList);
-                return subprocessor->asyncSystem.createResolvedFuture(
+                return subprocessor.asyncSystem.createResolvedFuture(
                     std::move(errorResult));
               }
               return BinaryToGltfConverter::convert(
@@ -548,13 +547,13 @@ void instantiateInstances(
 CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& instancesBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
-    ConverterSubprocessor* subProcessor) {
+    const ConverterSubprocessor& subProcessor) {
   GltfConverterResult result;
   InstancesHeader header;
   uint32_t headerLength = 0;
   parseInstancesHeader(instancesBinary, header, headerLength, result);
   if (result.errors) {
-    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
+    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
   }
   DecodedInstances decodedInstances;
   return convertInstancesContent(

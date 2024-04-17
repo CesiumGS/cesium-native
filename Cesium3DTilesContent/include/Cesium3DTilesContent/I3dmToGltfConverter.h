@@ -17,6 +17,6 @@ struct I3dmToGltfConverter {
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& instancesBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subprocessor);
+      const ConverterSubprocessor& subprocessor);
 };
 } // namespace Cesium3DTilesContent

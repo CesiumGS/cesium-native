@@ -15,6 +15,6 @@ struct CmptToGltfConverter {
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& cmptBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor*);
+      const ConverterSubprocessor&);
 };
 } // namespace Cesium3DTilesContent

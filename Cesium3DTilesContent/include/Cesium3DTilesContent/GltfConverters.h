@@ -61,7 +61,7 @@ public:
   using ConverterFunction = CesiumAsync::Future<GltfConverterResult> (*)(
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subprocessor);
+      const ConverterSubprocessor& subprocessor);
 
   /**
    * @brief Register the given function for the given magic header.
@@ -151,7 +151,7 @@ public:
       const std::string& filePath,
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subprocessor);
+      const ConverterSubprocessor& subprocessor);
 
   /**
    * @brief Creates the {@link GltfConverterResult} from the given
@@ -176,7 +176,7 @@ public:
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subprocessor);
+      const ConverterSubprocessor& subprocessor);
 
 private:
   static std::string toLowerCase(const std::string_view& str);

@@ -17,6 +17,6 @@ struct PntsToGltfConverter {
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& pntsBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subprocessor);
+      const ConverterSubprocessor& subprocessor);
 };
 } // namespace Cesium3DTilesContent

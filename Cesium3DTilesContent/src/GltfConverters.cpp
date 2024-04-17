@@ -41,7 +41,7 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const std::string& filePath,
     const gsl::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options,
-    ConverterSubprocessor* subprocessor) {
+    const ConverterSubprocessor& subprocessor) {
   std::string magic;
   auto converterFun = getConverterByMagic(content, magic);
   if (converterFun) {
@@ -61,14 +61,14 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
       fileExtension,
       magic));
 
-  return subprocessor->asyncSystem.createResolvedFuture(
+  return subprocessor.asyncSystem.createResolvedFuture(
       GltfConverterResult{std::nullopt, std::move(errors)});
 }
 
 CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const gsl::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options,
-    ConverterSubprocessor* subprocessor) {
+    const ConverterSubprocessor& subprocessor) {
   std::string magic;
   auto converter = getConverterByMagic(content, magic);
   if (converter) {
@@ -80,7 +80,7 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
       "No loader registered for tile with magic value '{}'",
       magic));
 
-  return subprocessor->asyncSystem.createResolvedFuture(
+  return subprocessor.asyncSystem.createResolvedFuture(
       GltfConverterResult{std::nullopt, std::move(errors)});
 }
 

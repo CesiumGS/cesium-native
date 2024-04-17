@@ -158,7 +158,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               tileUrl,
               tileTransform,
               requestHeaders};
-          return converter(responseData, gltfOptions, &subprocessor)
+          return converter(responseData, gltfOptions, subprocessor)
               .thenImmediately([pLogger, tileUrl, pCompletedRequest](
                                    GltfConverterResult&& result) {
                 // Report any errors if there are any

@@ -16,13 +16,13 @@ public:
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subProcessor);
+      const ConverterSubprocessor& subProcessor);
 
 private:
   static GltfConverterResult convertImmediate(
       const gsl::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      ConverterSubprocessor* subProcessor);
+      const ConverterSubprocessor& subProcessor);
   static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesContent
