@@ -254,7 +254,7 @@ CesiumAsync::Future<GltfConverterResult> B3dmToGltfConverter::convert(
                   headerLength,
                   glbResult);
             }
-            return glbResult;
+            return std::move(glbResult);
           });
 }
 } // namespace Cesium3DTilesContent
