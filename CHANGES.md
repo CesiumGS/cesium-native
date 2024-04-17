@@ -44,6 +44,7 @@
 - After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
 - For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
 - Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
+- Fixed a bug that caused `GltfWriter` to create an invalid GLB if its total size would be greater than or equal to 4 GiB. Because it is not possible to produce a valid GLB of this size, GltfWriter now reports an error instead.
 
 ### v0.34.0 - 2024-04-01
 
