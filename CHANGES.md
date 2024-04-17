@@ -4,6 +4,7 @@
 
 ##### Breaking Changes :mega:
 
+- Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
 
 ##### Additions :tada:
@@ -15,6 +16,8 @@
 - Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `BoundingRegionBuilder::toGlobeRectangle`.
 - Added `GlobeRectangle::equals` and `GlobeRectangle::equalsEpsilon`.
+- `upsampleGltfForRasterOverlays` now accepts two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+- `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
 - Added `waitInMainThread` method to `Future` and `SharedFuture`.
 - Added `forEachRootNodeInScene`, `addExtensionUsed`, `addExtensionRequired`, `isExtensionUsed`, and `isExtensionRequired` methods to `CesiumGltf::Model`.
 - Added `getNodeTransform`, `setNodeTransform`, `removeUnusedTextures`, `removeUnusedSamplers`, `removeUnusedImages`, `removeUnusedAccessors`, `removeUnusedBufferViews`, and `compactBuffers` methods to `GltfUtilities`.
@@ -41,6 +44,7 @@
 - `bufferViews` created for vertex attributes during Draco decoding now have their `target` property correctly set to `BufferView::Target::ARRAY_BUFFER`.
 - After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
 - For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
+- Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 
 ### v0.34.0 - 2024-04-01
 
