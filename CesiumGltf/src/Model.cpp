@@ -527,8 +527,7 @@ void Model::forEachPrimitiveInScene(
   bool anythingVisited = false;
   this->forEachRootNodeInScene(
       sceneID,
-      [sceneID,
-       &anythingVisited,
+      [&anythingVisited,
        callback = std::move(callback)](const Model& model, const Node& node) {
         anythingVisited = true;
         forEachPrimitiveInNodeObject(glm::dmat4x4(1.0), model, node, callback);

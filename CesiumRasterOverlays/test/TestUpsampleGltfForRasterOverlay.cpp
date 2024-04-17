@@ -1,9 +1,9 @@
-#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -12,11 +12,11 @@
 #include <cstring>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;
+using namespace CesiumRasterOverlays;
 
 static void checkSkirt(
     const Ellipsoid& ellipsoid,
@@ -194,11 +194,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
       CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
   SECTION("Upsample bottom left child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(
-        model,
-        lowerLeft,
-        false,
-        "_CESIUMOVERLAY_");
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -274,11 +274,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
       uvWriter[i].y = 1.0f - uvWriter[i].y;
     }
 
-    Model upsampledModel = *upsampleGltfForRasterOverlays(
-        model,
-        lowerLeft,
-        true,
-        "_CESIUMOVERLAY_");
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            true);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -348,11 +348,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
   }
 
   SECTION("Upsample upper left child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(
-        model,
-        upperLeft,
-        false,
-        "_CESIUMOVERLAY_");
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            upperLeft,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -422,11 +422,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
   }
 
   SECTION("Upsample upper right child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(
-        model,
-        upperRight,
-        false,
-        "_CESIUMOVERLAY_");
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            upperRight,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -496,11 +496,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
   }
 
   SECTION("Upsample bottom right child") {
-    Model upsampledModel = *upsampleGltfForRasterOverlays(
-        model,
-        lowerRight,
-        false,
-        "_CESIUMOVERLAY_");
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerRight,
+            false);
 
     REQUIRE(upsampledModel.meshes.size() == 1);
     const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -585,11 +585,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
     primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
     SECTION("Check bottom left skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(
-          model,
-          lowerLeft,
-          false,
-          "_CESIUMOVERLAY_");
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              lowerLeft,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -690,11 +690,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
     }
 
     SECTION("Check upper left skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(
-          model,
-          upperLeft,
-          false,
-          "_CESIUMOVERLAY_");
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              upperLeft,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -819,11 +819,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
     }
 
     SECTION("Check upper right skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(
-          model,
-          upperRight,
-          false,
-          "_CESIUMOVERLAY_");
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              upperRight,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -924,11 +924,11 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
     }
 
     SECTION("Check bottom right skirt") {
-      Model upsampledModel = *upsampleGltfForRasterOverlays(
-          model,
-          lowerRight,
-          false,
-          "_CESIUMOVERLAY_");
+      Model upsampledModel =
+          *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+              model,
+              lowerRight,
+              false);
 
       REQUIRE(upsampledModel.meshes.size() == 1);
       const Mesh& upsampledMesh = upsampledModel.meshes.back();
@@ -1202,11 +1202,10 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_BYTE indices") {
   CesiumGeometry::UpsampledQuadtreeNode lowerLeft{
       CesiumGeometry::QuadtreeTileID(1, 0, 0)};
 
-  Model upsampledModel = *upsampleGltfForRasterOverlays(
+  Model upsampledModel = *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
       model,
       lowerLeft,
-      false,
-      "_CESIUMOVERLAY_");
+      false);
 
   REQUIRE(upsampledModel.meshes.size() == 1);
   const Mesh& upsampledMesh = upsampledModel.meshes.back();

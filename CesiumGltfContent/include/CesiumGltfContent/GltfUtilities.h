@@ -26,11 +26,12 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   /**
    * @brief Gets the transformation matrix for a given node.
    *
-   * This does not incorporate the node's parent's transform in any way.
+   * This returns the node's local transform as-is. It does not incorporate
+   * transforms from any of the node's ancestors.
    *
    * @param node The node from which to get the transformation matrix.
    * @return The transformation matrix, or std::nullopt if the node's
-   * transformation is invalid, such as because it has a matrix with fewer than
+   * transformation is invalid, .e.g, because it has a matrix with fewer than
    * 16 elements in it.
    */
   static std::optional<glm::dmat4x4>
@@ -38,6 +39,9 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
 
   /**
    * @brief Sets the transformation matrix for a given node.
+   *
+   * This sets only the local transform of the node. It does not affect the
+   * transforms of any ancestor or descendant nodes, if present.
    *
    * @param node The node on which to set the transformation matrix.
    * @param newTransform The new transformation matrix.

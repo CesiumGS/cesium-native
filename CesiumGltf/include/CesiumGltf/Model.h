@@ -26,12 +26,12 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   CesiumUtility::ErrorList merge(Model&& rhs);
 
   /**
-   * @brief A callback function for {@link forEachPrimitiveInScene}.
+   * @brief A callback function for {@link forEachRootNodeInScene}.
    */
   typedef void ForEachRootNodeInSceneCallback(Model& gltf, Node& node);
 
   /**
-   * @brief A callback function for {@link forEachPrimitiveInScene}.
+   * @brief A callback function for {@link forEachRootNodeInScene}.
    */
   typedef void
   ForEachRootNodeInSceneConstCallback(const Model& gltf, const Node& node);
