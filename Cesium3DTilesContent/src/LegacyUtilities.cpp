@@ -69,7 +69,7 @@ parseArrayValueDVec3(const rapidjson::Value& arrayValue) {
 }
 
 std::optional<glm::dvec3>
-parseArrayDValueVec3(const rapidjson::Document& document, const char* name) {
+parseArrayValueDVec3(const rapidjson::Document& document, const char* name) {
   const auto arrayIt = document.FindMember(name);
   if (arrayIt != document.MemberEnd()) {
     return parseArrayValueDVec3(arrayIt->value);

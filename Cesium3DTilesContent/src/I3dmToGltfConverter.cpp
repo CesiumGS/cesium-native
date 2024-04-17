@@ -162,6 +162,11 @@ glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   return upRot * rightRot;
 }
 
+struct ConvertResult {
+  GltfConverterResult gltfResult;
+  DecodedInstances decodedInstances;
+};
+
 /* The approach:
   + Parse the i3dm header, decoding and creating all the instance transforms.
   This includes "exotic" things like OCT encoding of rotations and ENU rotations
@@ -177,17 +182,19 @@ glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   + Metadata / feature id?
 */
 
-void convertInstancesContent(
+CesiumAsync::Future<ConvertResult> convertInstancesContent(
     const gsl::span<const std::byte>& instancesBinary,
     const InstancesHeader& header,
     uint32_t headerLength,
     const CesiumGltfReader::GltfReaderOptions& options,
     ConverterSubprocessor* subprocessor,
-    GltfConverterResult& result,
-    DecodedInstances& decodedInstances) {
+    GltfConverterResult& result) {
+  ConvertResult subResult;
+  DecodedInstances& decodedInstances = subResult.decodedInstances;
+  subResult.gltfResult = result;
   if (header.featureTableJsonByteLength == 0 ||
       header.featureTableBinaryByteLength == 0) {
-    return;
+    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
   }
   const uint32_t glTFStart = headerLength + header.featureTableJsonByteLength +
                              header.featureTableBinaryByteLength +
@@ -196,13 +203,6 @@ void convertInstancesContent(
   const uint32_t glTFEnd = header.byteLength;
   auto gltfData = instancesBinary.subspan(glTFStart, glTFEnd - glTFStart);
   std::optional<CesiumAsync::Future<ByteResult>> assetFuture;
-  if (header.gltfFormat == 0) {
-    // Need to recursively read the glTF content.
-    auto gltfUri = std::string(
-        reinterpret_cast<const char*>(gltfData.data()),
-        gltfData.size());
-    assetFuture = get(*subprocessor, gltfUri);
-  }
   auto featureTableJsonData =
       instancesBinary.subspan(headerLength, header.featureTableJsonByteLength);
   rapidjson::Document featureTableJson;
@@ -210,12 +210,12 @@ void convertInstancesContent(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
       featureTableJsonData.size());
   if (featureTableJson.HasParseError()) {
-    result.errors.emplaceError(fmt::format(
+    subResult.gltfResult.errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
         featureTableJson.GetParseError(),
         featureTableJson.GetErrorOffset()));
-    return;
+    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
   }
   InstanceContent parsedContent;
   // Global semantics
@@ -223,40 +223,49 @@ void convertInstancesContent(
           getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
     parsedContent.instancesLength = *optinstancesLength;
   } else {
-    result.errors.emplaceError("Error parsing I3DM feature table, no valid "
-                               "INSTANCES_LENGTH was found.");
-    return;
+    subResult.gltfResult.errors.emplaceError(
+        "Error parsing I3DM feature table, no valid "
+        "INSTANCES_LENGTH was found.");
+    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
   }
   if (auto optRtcCenter =
           parseArrayValueDVec3(featureTableJson, "RTC_CENTER")) {
     parsedContent.rtcCenter = *optRtcCenter;
   }
   parsedContent.position =
-      parseOffset(featureTableJson, "POSITION", result.errors);
+      parseOffset(featureTableJson, "POSITION", subResult.gltfResult.errors);
   if (!parsedContent.position) {
-    if (result.errors.hasErrors()) {
-      return;
+    if (subResult.gltfResult.errors.hasErrors()) {
+      return subprocessor->asyncSystem.createResolvedFuture(
+          std::move(subResult));
     }
-    parsedContent.positionQuantized =
-        parseOffset(featureTableJson, "POSITION_QUANTIZED", result.errors);
-    if (result.errors.hasErrors()) {
-      return;
+    parsedContent.positionQuantized = parseOffset(
+        featureTableJson,
+        "POSITION_QUANTIZED",
+        subResult.gltfResult.errors);
+    if (subResult.gltfResult.errors.hasErrors()) {
+      return subprocessor->asyncSystem.createResolvedFuture(
+          std::move(subResult));
     }
   }
   if (parsedContent.positionQuantized) {
     parsedContent.quantizedVolumeOffset =
         parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
     if (!parsedContent.quantizedVolumeOffset) {
-      result.errors.emplaceError("Error parsing I3DM feature table, No valid "
-                                 "QUANTIZED_VOLUME_OFFSET property");
-      return;
+      subResult.gltfResult.errors.emplaceError(
+          "Error parsing I3DM feature table, No valid "
+          "QUANTIZED_VOLUME_OFFSET property");
+      return subprocessor->asyncSystem.createResolvedFuture(
+          std::move(subResult));
     }
     parsedContent.quantizedVolumeScale =
         parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
     if (!parsedContent.quantizedVolumeScale) {
-      result.errors.emplaceError("Error parsing I3DM feature table, No valid "
-                                 "QUANTIZED_VOLUME_SCALE property");
-      return;
+      subResult.gltfResult.errors.emplaceError(
+          "Error parsing I3DM feature table, No valid "
+          "QUANTIZED_VOLUME_SCALE property");
+      return subprocessor->asyncSystem.createResolvedFuture(
+          std::move(subResult));
     }
   }
   decodedInstances.rotationENU = false;
@@ -265,20 +274,29 @@ void convertInstancesContent(
     decodedInstances.rotationENU = *optENU;
   }
   parsedContent.normalUp =
-      parseOffset(featureTableJson, "NORMAL_UP", result.errors);
-  parsedContent.normalRight =
-      parseOffset(featureTableJson, "NORMAL_RIGHT", result.errors);
-  parsedContent.normalUpOct32p =
-      parseOffset(featureTableJson, "NORMAL_UP_OCT32P", result.errors);
-  parsedContent.normalRightOct32p =
-      parseOffset(featureTableJson, "NORMAL_RIGHT_OCT32P", result.errors);
-  parsedContent.scale = parseOffset(featureTableJson, "SCALE", result.errors);
-  parsedContent.scaleNonUniform =
-      parseOffset(featureTableJson, "SCALE_NON_UNIFORM", result.errors);
+      parseOffset(featureTableJson, "NORMAL_UP", subResult.gltfResult.errors);
+  parsedContent.normalRight = parseOffset(
+      featureTableJson,
+      "NORMAL_RIGHT",
+      subResult.gltfResult.errors);
+  parsedContent.normalUpOct32p = parseOffset(
+      featureTableJson,
+      "NORMAL_UP_OCT32P",
+      subResult.gltfResult.errors);
+  parsedContent.normalRightOct32p = parseOffset(
+      featureTableJson,
+      "NORMAL_RIGHT_OCT32P",
+      subResult.gltfResult.errors);
+  parsedContent.scale =
+      parseOffset(featureTableJson, "SCALE", subResult.gltfResult.errors);
+  parsedContent.scaleNonUniform = parseOffset(
+      featureTableJson,
+      "SCALE_NON_UNIFORM",
+      subResult.gltfResult.errors);
   parsedContent.batchId =
-      parseOffset(featureTableJson, "BATCH_ID", result.errors);
-  if (result.errors.hasErrors()) {
-    return;
+      parseOffset(featureTableJson, "BATCH_ID", subResult.gltfResult.errors);
+  if (subResult.gltfResult.errors.hasErrors()) {
+    return subprocessor->asyncSystem.createResolvedFuture(std::move(subResult));
   }
   auto featureTableBinaryData = instancesBinary.subspan(
       headerLength + header.featureTableJsonByteLength,
@@ -349,19 +367,46 @@ void convertInstancesContent(
     }
   }
   ByteResult byteResult;
-  if (assetFuture) {
-    byteResult = assetFuture->wait();
-    if (byteResult.errorList.hasErrors()) {
-      result.errors.merge(byteResult.errorList);
-      return;
-    }
+  if (header.gltfFormat == 0) {
+    // Need to recursively read the glTF content.
+    auto gltfUri = std::string(
+        reinterpret_cast<const char*>(gltfData.data()),
+        gltfData.size());
+    return get(*subprocessor, gltfUri)
+        .thenImmediately(
+            [options, subprocessor](ByteResult&& byteResult)
+                -> CesiumAsync::Future<GltfConverterResult> {
+              if (byteResult.errorList.hasErrors()) {
+                GltfConverterResult errorResult;
+                errorResult.errors.merge(byteResult.errorList);
+                return subprocessor->asyncSystem.createResolvedFuture(
+                    std::move(errorResult));
+              }
+              return BinaryToGltfConverter::convert(
+                  byteResult.bytes,
+                  options,
+                  subprocessor);
+            })
+        .thenImmediately([subResult = std::move(subResult)](
+                             GltfConverterResult&& converterResult) mutable {
+          if (converterResult.errors.hasErrors()) {
+            subResult.gltfResult.errors.merge(converterResult.errors);
+          } else {
+            subResult.gltfResult = converterResult;
+          }
+          return subResult;
+        });
+  } else {
+    return BinaryToGltfConverter::convert(gltfData, options, subprocessor)
+        .thenImmediately([subResult = std::move(subResult)](
+                             GltfConverterResult&& converterResult) mutable {
+          if (converterResult.errors.hasErrors()) {
+            return subResult;
+          }
+          subResult.gltfResult = converterResult;
+          return subResult;
+        });
   }
-  GltfConverterResult binToGltfResult = BinaryToGltfConverter::convert(
-      assetFuture ? byteResult.bytes : gltfData,
-      options,
-      nullptr);
-  result.model = std::move(binToGltfResult.model);
-  result.errors.merge(std::move(binToGltfResult.errors));
 }
 
 // XXX If there are no scale or rotation parts to the instance transform, then
@@ -500,30 +545,33 @@ void instantiateInstances(
 }
 } // namespace
 
-GltfConverterResult I3dmToGltfConverter::convert(
+CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& instancesBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
-    ConverterSubprocessor* subprocessor) {
+    ConverterSubprocessor* subProcessor) {
   GltfConverterResult result;
   InstancesHeader header;
   uint32_t headerLength = 0;
   parseInstancesHeader(instancesBinary, header, headerLength, result);
   if (result.errors) {
-    return result;
+    return subProcessor->asyncSystem.createResolvedFuture(std::move(result));
   }
   DecodedInstances decodedInstances;
-  convertInstancesContent(
-      instancesBinary,
-      header,
-      headerLength,
-      options,
-      subprocessor,
-      result,
-      decodedInstances);
-  if (result.errors) {
-    return result;
-  }
-  instantiateInstances(result, decodedInstances);
-  return result;
+  return convertInstancesContent(
+             instancesBinary,
+             header,
+             headerLength,
+             options,
+             subProcessor,
+             result)
+      .thenImmediately([](ConvertResult&& convertResult) {
+        if (convertResult.gltfResult.errors.hasErrors()) {
+          return convertResult.gltfResult;
+        }
+        instantiateInstances(
+            convertResult.gltfResult,
+            convertResult.decodedInstances);
+        return convertResult.gltfResult;
+      });
 }
 } // namespace Cesium3DTilesContent

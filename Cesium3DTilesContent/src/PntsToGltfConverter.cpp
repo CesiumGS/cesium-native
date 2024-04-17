@@ -1,5 +1,6 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -1617,19 +1618,18 @@ void convertPntsContentToGltf(
 }
 } // namespace
 
-GltfConverterResult PntsToGltfConverter::convert(
+CesiumAsync::Future<GltfConverterResult> PntsToGltfConverter::convert(
     const gsl::span<const std::byte>& pntsBinary,
     const CesiumGltfReader::GltfReaderOptions& /*options*/,
-    ConverterSubprocessor*) {
+    ConverterSubprocessor* subprocessor) {
   GltfConverterResult result;
   PntsHeader header;
   uint32_t headerLength = 0;
   parsePntsHeader(pntsBinary, header, headerLength, result);
-  if (result.errors) {
-    return result;
+  if (!result.errors) {
+    convertPntsContentToGltf(pntsBinary, header, headerLength, result);
   }
 
-  convertPntsContentToGltf(pntsBinary, header, headerLength, result);
-  return result;
+  return subprocessor->asyncSystem.createResolvedFuture(std::move(result));
 }
 } // namespace Cesium3DTilesContent

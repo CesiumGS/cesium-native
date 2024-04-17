@@ -37,7 +37,7 @@ GltfConverters::getConverterByMagic(const gsl::span<const std::byte>& content) {
   return getConverterByMagic(content, magic);
 }
 
-GltfConverterResult GltfConverters::convert(
+CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const std::string& filePath,
     const gsl::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options,
@@ -61,10 +61,11 @@ GltfConverterResult GltfConverters::convert(
       fileExtension,
       magic));
 
-  return GltfConverterResult{std::nullopt, std::move(errors)};
+  return subprocessor->asyncSystem.createResolvedFuture(
+      GltfConverterResult{std::nullopt, std::move(errors)});
 }
 
-GltfConverterResult GltfConverters::convert(
+CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const gsl::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options,
     ConverterSubprocessor* subprocessor) {
@@ -79,7 +80,8 @@ GltfConverterResult GltfConverters::convert(
       "No loader registered for tile with magic value '{}'",
       magic));
 
-  return GltfConverterResult{std::nullopt, std::move(errors)};
+  return subprocessor->asyncSystem.createResolvedFuture(
+      GltfConverterResult{std::nullopt, std::move(errors)});
 }
 
 std::string GltfConverters::toLowerCase(const std::string_view& str) {

@@ -1,9 +1,10 @@
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 
 namespace Cesium3DTilesContent {
 CesiumGltfReader::GltfReader BinaryToGltfConverter::_gltfReader;
 
-GltfConverterResult BinaryToGltfConverter::convert(
+GltfConverterResult BinaryToGltfConverter::convertImmediate(
     const gsl::span<const std::byte>& gltfBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
     ConverterSubprocessor*) {
@@ -15,5 +16,13 @@ GltfConverterResult BinaryToGltfConverter::convert(
   result.errors.errors = std::move(loadedGltf.errors);
   result.errors.warnings = std::move(loadedGltf.warnings);
   return result;
+}
+
+CesiumAsync::Future<GltfConverterResult> BinaryToGltfConverter::convert(
+    const gsl::span<const std::byte>& gltfBinary,
+    const CesiumGltfReader::GltfReaderOptions& options,
+    ConverterSubprocessor* subprocessor) {
+  return subprocessor->asyncSystem.createResolvedFuture(
+      convertImmediate(gltfBinary, options, subprocessor));
 }
 } // namespace Cesium3DTilesContent

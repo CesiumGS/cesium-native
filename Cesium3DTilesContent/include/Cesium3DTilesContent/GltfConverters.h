@@ -3,6 +3,8 @@
 #include "Library.h"
 
 #include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <gsl/span>
@@ -56,7 +58,7 @@ public:
    * @brief A function pointer that can create a {@link GltfConverterResult} from a
    * tile binary content.
    */
-  using ConverterFunction = GltfConverterResult (*)(
+  using ConverterFunction = CesiumAsync::Future<GltfConverterResult> (*)(
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
       ConverterSubprocessor* subprocessor);
@@ -145,7 +147,7 @@ public:
    * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to read a glTF.
    * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
-  static GltfConverterResult convert(
+  static CesiumAsync::Future<GltfConverterResult> convert(
       const std::string& filePath,
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
@@ -171,7 +173,7 @@ public:
    * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to read a glTF.
    * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
-  static GltfConverterResult convert(
+  static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
       ConverterSubprocessor* subprocessor);

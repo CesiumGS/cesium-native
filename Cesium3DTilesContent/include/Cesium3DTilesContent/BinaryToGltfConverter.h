@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <CesiumAsync/Future.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <gsl/span>
@@ -12,12 +13,16 @@ struct ConverterSubprocessor;
 
 struct BinaryToGltfConverter {
 public:
-  static GltfConverterResult convert(
+  static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
       ConverterSubprocessor* subProcessor);
 
 private:
+  static GltfConverterResult convertImmediate(
+      const gsl::span<const std::byte>& gltfBinary,
+      const CesiumGltfReader::GltfReaderOptions& options,
+      ConverterSubprocessor* subProcessor);
   static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesContent
