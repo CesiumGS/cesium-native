@@ -9,6 +9,7 @@
 
 ##### Additions :tada:
 
+- Added `removeExtension` to `ExtensibleObject`.
 - Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
@@ -46,6 +47,7 @@
 - For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
 - Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 - `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
+- Fixed a bug that caused `GltfWriter` to create an invalid GLB if its total size would be greater than or equal to 4 GiB. Because it is not possible to produce a valid GLB of this size, GltfWriter now reports an error instead.
 
 ### v0.34.0 - 2024-04-01
 
@@ -55,6 +57,7 @@
 
 ##### Additions :tada:
 
+- Added `AccessorWriter` constructor that takes an `AccessorView`.
 - Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
 - Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
