@@ -1,17 +1,16 @@
 #include "RasterOverlayUpsampler.h"
 
-#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 
 #include <cassert>
 #include <variant>
 
-using namespace Cesium3DTilesContent;
 using namespace CesiumRasterOverlays;
 
 namespace Cesium3DTilesSelection {
@@ -69,9 +68,11 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
        transform = loadInput.tile.getTransform(),
        textureCoordinateIndex = index,
        TileID = *pTileID]() mutable {
-        auto model = upsampleGltfForRasterOverlays(
+        auto model = RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             parentModel,
             TileID,
+            false,
+            RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
             textureCoordinateIndex);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);

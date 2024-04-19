@@ -182,31 +182,19 @@
     },
     {
       "extensionName": "KHR_materials_unlit",
-      "schema": "Khronos/KHR_materials_unlit/schema/material.KHR_materials_unlit.schema.json",
-      "attachTo": [
-        "material"
-      ]
+      "schema": "Khronos/KHR_materials_unlit/schema/material.KHR_materials_unlit.schema.json"
     },
     {
       "extensionName": "KHR_materials_variants",
-      "schema": "Khronos/KHR_materials_variants/schema/glTF.KHR_materials_variants.schema.json",
-      "attachTo": [
-        "glTF"
-      ]
+      "schema": "Khronos/KHR_materials_variants/schema/glTF.KHR_materials_variants.schema.json"
     },
     {
       "extensionName": "KHR_materials_variants",
-      "schema": "Khronos/KHR_materials_variants/schema/mesh.primitive.KHR_materials_variants.schema.json",
-      "attachTo": [
-        "mesh.primitive"
-      ]
+      "schema": "Khronos/KHR_materials_variants/schema/mesh.primitive.KHR_materials_variants.schema.json"
     },
     {
       "extensionName": "KHR_texture_basisu",
-      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
-      "attachTo": [
-        "texture"
-      ]
+      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json"
     },
     {
       "extensionName": "MAXAR_mesh_variants",

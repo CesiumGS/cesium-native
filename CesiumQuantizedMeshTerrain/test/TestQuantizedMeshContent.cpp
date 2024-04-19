@@ -716,6 +716,28 @@ static void checkGltfSanity(const Model& model) {
         REQUIRE(pAttributeBufferView);
 
         CHECK(pAttributeBufferView->target == BufferView::Target::ARRAY_BUFFER);
+
+        std::vector<double> min = pAttributeAccessor->min;
+        std::vector<double> max = pAttributeAccessor->max;
+        CHECK(min.size() == max.size());
+
+        if (!min.empty()) {
+          createAccessorView(
+              model,
+              *pAttributeAccessor,
+              [min, max](const auto& accessorView) {
+                using ElementType = decltype(accessorView[0].value[0]);
+                for (int64_t i = 0; i < accessorView.size(); ++i) {
+                  auto v = accessorView[i];
+                  REQUIRE(sizeof(v.value) / sizeof(ElementType) == min.size());
+                  REQUIRE(sizeof(v.value) / sizeof(ElementType) == max.size());
+                  for (size_t j = 0; j < min.size(); ++j) {
+                    CHECK(v.value[j] >= ElementType(min[j]));
+                    CHECK(v.value[j] <= ElementType(max[j]));
+                  }
+                }
+              });
+        }
       }
     }
   }

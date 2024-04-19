@@ -29,6 +29,7 @@
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
 #include <stb_image_resize.h>
@@ -430,8 +431,15 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
       });
 }
 
-/*static*/
-Future<GltfReaderResult> GltfReader::resolveExternalData(
+void CesiumGltfReader::GltfReader::postprocessGltf(
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& options) {
+  if (readGltf.model) {
+    postprocess(*this, readGltf, options);
+  }
+}
+
+/*static*/ Future<GltfReaderResult> GltfReader::resolveExternalData(
     AsyncSystem asyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,

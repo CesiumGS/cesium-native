@@ -3,6 +3,7 @@
 #include "BatchTableHierarchyPropertyValues.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
@@ -1697,6 +1698,10 @@ void updateExtensionWithBatchTableHierarchy(
         propertyTable,
         propertyTableProperty,
         batchTableHierarchyValues);
+    if (propertyTableProperty.values < 0) {
+      // Don't include properties without _any_ values.
+      propertyTable.properties.erase(name);
+    }
   }
 }
 
@@ -1719,6 +1724,8 @@ void convertBatchTableToGltfStructuralMetadataExtension(
 
   ExtensionModelExtStructuralMetadata& modelExtension =
       gltf.addExtension<ExtensionModelExtStructuralMetadata>();
+  gltf.addExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName);
+
   Schema& schema = modelExtension.schema.emplace();
   schema.id = "default"; // Required by the spec.
 
@@ -1770,6 +1777,11 @@ void convertBatchTableToGltfStructuralMetadataExtension(
           propertyValue,
           result);
       gltfBufferOffset += roundUp(binaryProperty.byteLength, 8);
+    }
+
+    if (propertyTableProperty.values < 0) {
+      // Don't include properties without _any_ values.
+      propertyTable.properties.erase(name);
     }
   }
 
@@ -1854,8 +1866,21 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
       primitive.attributes.erase("_BATCHID");
 
+      // Also rename the attribute in the Draco extension, if it exists.
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+      if (pDraco) {
+        auto dracoIt = pDraco->attributes.find("_BATCHID");
+        if (dracoIt != pDraco->attributes.end()) {
+          pDraco->attributes["_FEATURE_ID_0"] = dracoIt->second;
+          pDraco->attributes.erase("_BATCHID");
+        }
+      }
+
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
+      gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
       FeatureId& featureID = extension.featureIds.emplace_back();
 
       // No fast way to count the unique feature IDs in this primitive, so
@@ -1930,6 +1955,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
+  gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
   FeatureId& featureID = extension.featureIds.emplace_back();
 
   // Setting the feature count is sufficient for implicit feature IDs.
@@ -1941,6 +1968,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
+
     featureID.attribute = 0;
     featureID.label = "_FEATURE_ID_0";
   }
