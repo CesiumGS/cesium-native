@@ -313,6 +313,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   )";
 
   GltfReaderOptions options;
+  options.decodeDraco = false;
+
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
@@ -743,5 +745,40 @@ TEST_CASE("GltfReader::loadGltf") {
   CHECK(!result.model->buffers.empty());
   for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
     CHECK(!buffer.cesium.data.empty());
+  }
+}
+
+TEST_CASE("GltfReader::postprocessGltf") {
+  GltfReaderOptions options;
+  GltfReader reader;
+  GltfReaderResult readerResult;
+
+  SECTION("returns immediately if there is no model") {
+    reader.postprocessGltf(readerResult, options);
+    CHECK(!readerResult.model);
+    CHECK(readerResult.errors.empty());
+    CHECK(readerResult.warnings.empty());
+  }
+
+  SECTION("performs requested post processing") {
+    options.decodeDataUrls = true;
+
+    Model& model = readerResult.model.emplace();
+
+    model.buffers.emplace_back().uri = "data:;base64,dGVzdA==";
+
+    reader.postprocessGltf(readerResult, options);
+
+    CHECK(readerResult.errors.empty());
+    CHECK(readerResult.warnings.empty());
+    REQUIRE(readerResult.model);
+
+    REQUIRE(readerResult.model->buffers.size() == 1);
+
+    std::vector<std::byte>& data = readerResult.model->buffers[0].cesium.data;
+    std::string s(
+        reinterpret_cast<char*>(data.data()),
+        reinterpret_cast<char*>(data.data()) + data.size());
+    CHECK(s == "test");
   }
 }

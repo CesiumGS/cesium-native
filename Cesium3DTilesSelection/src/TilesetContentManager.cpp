@@ -395,7 +395,7 @@ void calcRasterOverlayDetailsInWorkerThread(
           pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
           std::move(projections),
           false,
-          "_CESIUMOVERLAY_",
+          RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
           firstRasterOverlayTexCoord);
 
   if (pRegion && overlayDetails) {

@@ -6,7 +6,7 @@
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
 #include "dequantizeMeshData.h"
-#include "registerExtensions.h"
+#include "registerReaderExtensions.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -29,6 +29,7 @@
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
 #include <stb_image_resize.h>
@@ -348,7 +349,9 @@ void postprocess(
 
 } // namespace
 
-GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
+GltfReader::GltfReader() : _context() {
+  registerReaderExtensions(this->_context);
+}
 
 CesiumJsonReader::JsonReaderOptions& GltfReader::getOptions() {
   return this->_context;
@@ -428,8 +431,15 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
       });
 }
 
-/*static*/
-Future<GltfReaderResult> GltfReader::resolveExternalData(
+void CesiumGltfReader::GltfReader::postprocessGltf(
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& options) {
+  if (readGltf.model) {
+    postprocess(*this, readGltf, options);
+  }
+}
+
+/*static*/ Future<GltfReaderResult> GltfReader::resolveExternalData(
     AsyncSystem asyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,
