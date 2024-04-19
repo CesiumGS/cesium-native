@@ -6,20 +6,35 @@
 #include <stdexcept>
 
 namespace CesiumUtility {
+const char* HTTPS_PREFIX = "https";
+const char* HTTPS_PREFIX_COLON = "https:";
+
+std::string cesiumConformUrl(const std::string& url) {
+  if (url.rfind("//", 0) == 0) {
+    return std::string(HTTPS_PREFIX_COLON).append(url);
+  } else if (url.find("://", 0) == 0) {
+    return std::string(HTTPS_PREFIX).append(url);
+  }
+  return url;
+}
+
 std::string Uri::resolve(
     const std::string& base,
     const std::string& relative,
     bool useBaseQuery) {
+  const std::string conformedBase = cesiumConformUrl(base);
+  const std::string conformedRelative = cesiumConformUrl(relative);
   UriUriA baseUri;
 
-  if (uriParseSingleUriA(&baseUri, base.c_str(), nullptr) != URI_SUCCESS) {
+  if (uriParseSingleUriA(&baseUri, conformedBase.c_str(), nullptr) !=
+      URI_SUCCESS) {
     // Could not parse the base, so just use the relative directly and hope for
     // the best.
     return relative;
   }
 
   UriUriA relativeUri;
-  if (uriParseSingleUriA(&relativeUri, relative.c_str(), nullptr) !=
+  if (uriParseSingleUriA(&relativeUri, conformedRelative.c_str(), nullptr) !=
       URI_SUCCESS) {
     // Could not parse one of the URLs, so just use the relative directly and
     // hope for the best.
@@ -102,8 +117,9 @@ std::string Uri::addQuery(
 }
 
 std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
+  const std::string conformedUrl = cesiumConformUrl(url);
   UriUriA uri;
-  if (uriParseSingleUriA(&uri, url.c_str(), nullptr) != URI_SUCCESS) {
+  if (uriParseSingleUriA(&uri, conformedUrl.c_str(), nullptr) != URI_SUCCESS) {
     return "";
   }
   UriQueryListA* queryList;
