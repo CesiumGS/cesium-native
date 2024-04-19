@@ -148,7 +148,6 @@ void copyDecodedIndices(
   indicesBuffer.cesium.data.resize(static_cast<size_t>(indicesBytes));
   indicesBuffer.byteLength = indicesBytes;
   indicesBufferView.byteLength = indicesBytes;
-  indicesBufferView.byteStride = indexBytes;
   indicesBufferView.byteOffset = 0;
   indicesBufferView.target =
       CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER;
@@ -232,6 +231,7 @@ void copyDecodedAttribute(
   bufferView.byteLength = sizeBytes;
   bufferView.byteStride = stride;
   bufferView.byteOffset = 0;
+  bufferView.target = CesiumGltf::BufferView::Target::ARRAY_BUFFER;
   pAccessor->byteOffset = 0;
 
   const auto doCopy = [pMesh, pAttribute, numberOfComponents](auto pOut) {
@@ -343,8 +343,26 @@ void decodeDraco(CesiumGltfReader::GltfReaderResult& readGltf) {
       }
 
       decodePrimitive(readGltf, primitive, *pDraco);
+
+      // Remove the Draco extension as it no longer applies.
+      primitive.extensions.erase(
+          CesiumGltf::ExtensionKhrDracoMeshCompression::ExtensionName);
     }
   }
+
+  model.extensionsRequired.erase(
+      std::remove(
+          model.extensionsRequired.begin(),
+          model.extensionsRequired.end(),
+          CesiumGltf::ExtensionKhrDracoMeshCompression::ExtensionName),
+      model.extensionsRequired.end());
+
+  model.extensionsUsed.erase(
+      std::remove(
+          model.extensionsUsed.begin(),
+          model.extensionsUsed.end(),
+          CesiumGltf::ExtensionKhrDracoMeshCompression::ExtensionName),
+      model.extensionsUsed.end());
 }
 
 } // namespace CesiumGltfReader

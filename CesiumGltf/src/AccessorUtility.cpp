@@ -20,6 +20,23 @@ getPositionAccessorView(const Model& model, const MeshPrimitive& primitive) {
   return PositionAccessorType(model, *pAccessor);
 }
 
+NormalAccessorType
+getNormalAccessorView(const Model& model, const MeshPrimitive& primitive) {
+  auto normalAttribute = primitive.attributes.find("NORMAL");
+  if (normalAttribute == primitive.attributes.end()) {
+    return NormalAccessorType();
+  }
+
+  const Accessor* pAccessor =
+      model.getSafe<Accessor>(&model.accessors, normalAttribute->second);
+  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3 ||
+      pAccessor->componentType != Accessor::ComponentType::FLOAT) {
+    return NormalAccessorType();
+  }
+
+  return NormalAccessorType(model, *pAccessor);
+}
+
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
