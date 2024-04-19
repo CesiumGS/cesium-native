@@ -98,5 +98,7 @@ int32_t createAccessorInGltf(
     const int32_t componentType,
     const int64_t count,
     const std::string type);
+
+void applyRTC(CesiumGltf::Model& gltf, const glm::dvec3& rtc);
 } // namespace LegacyUtilities
 } // namespace Cesium3DTilesContent

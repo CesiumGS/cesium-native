@@ -4,6 +4,7 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/Uri.h>
 
 #include <glm/glm.hpp>
@@ -123,6 +124,21 @@ int32_t createAccessorInGltf(
   accessor.type = type;
 
   return static_cast<int32_t>(accessorId);
+}
+
+void applyRTC(Model& gltf, const glm::dvec3& rtc) {
+  using namespace CesiumGltfContent;
+  auto upToZ = GltfUtilities::applyGltfUpAxisTransform(gltf, glm::dmat4x4(1.0));
+  auto rtcTransform = inverse(upToZ);
+  rtcTransform = translate(rtcTransform, rtc);
+  rtcTransform = rtcTransform * upToZ;
+  gltf.forEachRootNodeInScene(-1, [&](Model&, Node& node) {
+    auto nodeTransform = GltfUtilities::getNodeTransform(node);
+    if (nodeTransform) {
+      nodeTransform = rtcTransform * *nodeTransform;
+      GltfUtilities::setNodeTransform(node, *nodeTransform);
+    }
+  });
 }
 
 } // namespace LegacyUtilities

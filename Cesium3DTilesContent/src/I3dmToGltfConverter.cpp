@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <numeric>
 #include <optional>
 #include <set>
 
@@ -38,8 +39,36 @@ struct DecodedInstances {
   std::vector<glm::fquat> rotations;
   std::vector<glm::vec3> scales;
   std::string gltfUri;
-  bool rotationENU;
+  bool rotationENU = false;
+  std::optional<glm::dvec3> rtcCenter;
 };
+
+// Instance positions may arrive in ECEF coordinates or with other large
+// displacements that will cause problems during rendering. Determine the mean
+// position of the instances and render them relative to that, creating a new
+// RTC center.
+
+void rebaseInstances(DecodedInstances& decodedInstances) {
+  if (decodedInstances.positions.empty()) {
+    return;
+  }
+  glm::dvec3 newCenter(0.0, 0.0, 0.0);
+  for (const auto& pos : decodedInstances.positions) {
+    newCenter += glm::dvec3(pos);
+  }
+  newCenter /= static_cast<double>(decodedInstances.positions.size());
+  std::transform(
+      decodedInstances.positions.begin(),
+      decodedInstances.positions.end(),
+      decodedInstances.positions.begin(),
+      [&](const glm::vec3& pos) {
+        return glm::vec3(glm::dvec3(pos) - newCenter);
+      });
+  if (decodedInstances.rtcCenter) {
+    newCenter += *decodedInstances.rtcCenter;
+  }
+  decodedInstances.rtcCenter = newCenter;
+}
 
 void parseInstancesHeader(
     const gsl::span<const std::byte>& instancesBinary,
@@ -75,7 +104,7 @@ void parseInstancesHeader(
 
 struct InstanceContent {
   uint32_t instancesLength = 0;
-  glm::dvec3 rtcCenter;
+  std::optional<glm::dvec3> rtcCenter;
   std::optional<glm::dvec3> quantizedVolumeOffset;
   std::optional<glm::dvec3> quantizedVolumeScale;
   bool eastNorthUp = false;
@@ -231,10 +260,10 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
         "INSTANCES_LENGTH was found.");
     return finishEarly();
   }
-  if (auto optRtcCenter =
-          parseArrayValueDVec3(featureTableJson, "RTC_CENTER")) {
-    parsedContent.rtcCenter = *optRtcCenter;
-  }
+  parsedContent.rtcCenter =
+      parseArrayValueDVec3(featureTableJson, "RTC_CENTER");
+  decodedInstances.rtcCenter = parsedContent.rtcCenter;
+
   parsedContent.position =
       parseOffset(featureTableJson, "POSITION", subResult.gltfResult.errors);
   if (!parsedContent.position) {
@@ -302,7 +331,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       header.featureTableBinaryByteLength);
   decodedInstances.positions.resize(
       parsedContent.instancesLength,
-      glm::vec3(parsedContent.rtcCenter));
+      glm::vec3(0.0f, 0.0f, 0.0f));
   if (parsedContent.position) {
     const auto* rawPosition = reinterpret_cast<const glm::vec3*>(
         featureTableBinaryData.data() + *parsedContent.position);
@@ -365,6 +394,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       decodedInstances.scales[i] = rawScaleNonUniform[i];
     }
   }
+  rebaseInstances(decodedInstances);
   ByteResult byteResult;
   if (header.gltfFormat == 0) {
     // Need to recursively read the glTF content.
@@ -538,6 +568,9 @@ void instantiateInstances(
           gpuExt.attributes["SCALE"] = scaleAccessorId;
         }
       });
+  if (decodedInstances.rtcCenter) {
+    applyRTC(*result.model, *decodedInstances.rtcCenter);
+  }
   instanceBuffer.byteLength =
       static_cast<int64_t>(instanceBuffer.cesium.data.size());
   instanceBufferView.byteLength = instanceBuffer.byteLength;
