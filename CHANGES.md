@@ -1,5 +1,10 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+- `CesiumUtility::Uri::resolve` can now properly parse URLs with ambiguous protocols (such as `://example.com` or `//example.com`).
+
 ### v0.34.0 - 2024-04-01
 
 ##### Breaking Changes :mega:
