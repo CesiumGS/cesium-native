@@ -1,5 +1,6 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumIonClient/Connection.h>
+#include <CesiumIonClient/Profile.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
@@ -72,4 +73,29 @@ TEST_CASE("CesiumIonClient::Connection") {
   CHECK(bing.name == "Bing Maps Aerial");
   CHECK(bing.assetId == 2);
   CHECK(bing.subscribed == true);
+}
+
+TEST_CASE("CesiumIonClient::Connection on single-user mode") {
+
+  std::shared_ptr<SimpleAssetAccessor> pAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(
+          std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+
+  ApplicationData data;
+  data.applicationMode = AuthenticationMode::SingleUser;
+
+  AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
+  Connection connection(
+      asyncSystem,
+      pAssetAccessor,
+      "my access token",
+      data,
+      "https://example.com/");
+
+  Future<Response<Profile>> futureMe = connection.me();
+  Response<Profile> me = waitForFuture(asyncSystem, std::move(futureMe));
+
+  CHECK(me.value);
+  CHECK(me.value->id == 0);
+  CHECK(me.value->username == "ion-user");
 }
