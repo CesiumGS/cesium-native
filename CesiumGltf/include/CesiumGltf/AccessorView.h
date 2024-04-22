@@ -459,6 +459,11 @@ createAccessorView(
         model,
         accessor,
         std::forward<TCallback>(callback));
+  case Accessor::ComponentType::DOUBLE:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, double>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
   default:
     return callback(AccessorView<AccessorTypes::SCALAR<float>>(
         AccessorViewStatus::InvalidComponentType));
