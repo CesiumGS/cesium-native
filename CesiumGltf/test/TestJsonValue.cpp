@@ -41,6 +41,11 @@ TEST_CASE(
 
 TEST_CASE("JsonValue::getSafeNumber() throws if narrowing conversion error "
           "would occur") {
+  SECTION("2^64 - 1 cannot be converted back to a double") {
+    auto value = JsonValue(std::numeric_limits<std::uint64_t>::max());
+    REQUIRE_THROWS(value.getSafeNumber<double>());
+  }
+
   SECTION("-2^64 cannot be converted back to a double") {
     // -9223372036854775807L cannot be represented exactly as a double
     auto value = JsonValue(std::numeric_limits<std::int64_t>::min() + 1);
