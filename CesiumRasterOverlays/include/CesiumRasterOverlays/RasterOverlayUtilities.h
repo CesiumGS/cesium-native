@@ -3,12 +3,14 @@
 #include "Library.h"
 #include "RasterOverlayDetails.h"
 
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
 
 #include <glm/fwd.hpp>
 
 #include <optional>
+#include <string_view>
 #include <vector>
 
 namespace CesiumGltf {
@@ -18,6 +20,9 @@ struct Model;
 namespace CesiumRasterOverlays {
 
 struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
+  static constexpr std::string_view DEFAULT_TEXTURE_COORDINATE_BASE_NAME =
+      "_CESIUMOVERLAY_";
+
   /**
    * @brief Creates texture coordinates for mapping {@link RasterOverlay} tiles
    * to a glTF model.
@@ -38,9 +43,15 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * greater than 1.0.
    *
    * These texture coordinates are stored in the provided glTF, and a new
-   * primitive attribute named `_CESIUMOVERLAY_n` is added to each primitive,
-   * where `n` starts with the `firstTextureCoordinateID` passed to this
-   * function and increases with each projection.
+   * primitive attribute is added to each primitive for each projection. The new
+   * primitive attributes are named with `textureCoordinateAttributeBaseName`
+   * followed by a number, starting with `firstTextureCoordinateID` and
+   * incrementing for each projection. For example, if
+   * `textureCoordinateAttributeBaseName` is
+   * `_CESIUMOVERLAY_` and `firstTextureCoordinateID` is 0 (the defaults), then
+   * the texture coordinates for the first projection will be stored in an
+   * attribute named `_CESIUMOVERLAY_0`, the second will be in
+   * `_CESIUMOVERLAY_1`, and so on.
    *
    * @param gltf The glTF model.
    * @param modelToEcefTransform The transformation of this glTF to ECEF
@@ -57,7 +68,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * orientation.
    * @param textureCoordinateAttributeBaseName The base name to use for the
    * texture coordinate attributes, without a number on the end. Defaults to
-   * "TEXCOORD_0".
+   * {@link DEFAULT_TEXTURE_COORDINATE_BASE_NAME}.
    * @param firstTextureCoordinateID The texture coordinate ID of the first
    * projection.
    * @return The details of the generated texture coordinates.
@@ -69,8 +80,43 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
       const std::optional<CesiumGeospatial::GlobeRectangle>& globeRectangle,
       std::vector<CesiumGeospatial::Projection>&& projections,
       bool invertVCoordinate = false,
-      const std::string& textureCoordinateAttributeBaseName = "TEXCOORD_",
+      const std::string_view& textureCoordinateAttributeBaseName =
+          DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
       int32_t firstTextureCoordinateID = 0);
+
+  /**
+   * @brief Creates a new glTF model from one of the quadtree children of the
+   * given parent model.
+   *
+   * The parent model subdivision is guided by texture coordinates. These
+   * texture coordinates must follow a map projection, and the parent tile is
+   * divided into quadrants as divided by this map projection. To create the
+   * necessary texture coordinates, use
+   * {@link createRasterOverlayTextureCoordinates}.
+   *
+   * @param parentModel The parent model to upsample.
+   * @param childID The quadtree tile ID of the child model. This is used to
+   * determine which of the four children of the parent tile to generate.
+   * @param hasInvertedVCoordinate True if the V texture coordinate has 0.0 as
+   * the Northern-most coordinate; False if the V texture coordinate has 0.0 as
+   * the Southern-most coordiante.
+   * @param textureCoordinateAttributeBaseName The base name of the attribute
+   * that holds the projected texture coordinates. The `textureCoordinateIndex`
+   * is appended to this name. Defaults to
+   * {@link DEFAULT_TEXTURE_COORDINATE_BASE_NAME}.
+   * @param textureCoordinateIndex The index of the texture coordinate set to
+   * use. For example, if `textureCoordinateAttributeBaseName` is
+   * `_CESIUMOVERLAY_` and this parameter is 0 (the defaults), then the texture
+   * coordinates are read from a vertex attribute named `_CESIUMOVERLAY_0`.
+   * @return The upsampled model.
+   */
+  static std::optional<CesiumGltf::Model> upsampleGltfForRasterOverlays(
+      const CesiumGltf::Model& parentModel,
+      CesiumGeometry::UpsampledQuadtreeNode childID,
+      bool hasInvertedVCoordinate = false,
+      const std::string_view& textureCoordinateAttributeBaseName =
+          DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
+      int32_t textureCoordinateIndex = 0);
 
   /**
    * @brief Computes the desired screen pixels for a raster overlay texture.

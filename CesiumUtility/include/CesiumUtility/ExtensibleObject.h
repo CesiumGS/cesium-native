@@ -78,6 +78,15 @@ struct CESIUMUTILITY_API ExtensibleObject {
   }
 
   /**
+   * @brief Removes a statically-typed extension from this object.
+   *
+   * @tparam T The type of the extension to remove.
+   */
+  template <typename T> void removeExtension() {
+    extensions.erase(T::ExtensionName);
+  }
+
+  /**
    * @brief The extensions attached to this object.
    *
    * Use {@link getExtension} to get the extension with a particular static

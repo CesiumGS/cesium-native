@@ -27,7 +27,7 @@
     "CESIUM_RTC": {
       "overrideName": "ExtensionCesiumRTC"
     },
-    "KHR_texture_basisu glTF extension": {
+    "KHR_texture_basisu glTF Texture Extension": {
       "overrideName": "ExtensionKhrTextureBasisu"
     },
     "EXT_texture_webp glTF extension": {
@@ -108,16 +108,16 @@
     "No Data Value": {
       "overrideName": "CesiumUtility::JsonValue"
     },
-    "KHR_draco_mesh_compression extension": {
+    "KHR_draco_mesh_compression glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrDracoMeshCompression"
     },
-    "KHR_materials_variants glTF extension": {
+    "KHR_materials_variants glTF Document Extension": {
       "overrideName": "ExtensionModelKhrMaterialsVariants"
     },
-    "KHR_materials_variants mesh primitive extension": {
+    "KHR_materials_variants glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionMeshPrimitiveKhrMaterialsVariants"
     },
-    "KHR_materials_unlit glTF extension": {
+    "KHR_materials_unlit glTF Material Extension": {
       "overrideName": "ExtensionKhrMaterialsUnlit"
     },
     "MAXAR_mesh_variants glTF extension": {
@@ -126,8 +126,11 @@
     "MAXAR_mesh_variants node extension": {
       "overrideName": "ExtensionNodeMaxarMeshVariants"
     },
-    "KHR_texture_transform textureInfo extension": {
+    "KHR_texture_transform glTF TextureInfo Extension": {
       "overrideName": "ExtensionKhrTextureTransform"
+    },
+    "CESIUM_primitive_outline glTF primitive extension": {
+      "overrideName": "ExtensionCesiumPrimitiveOutline"
     }
   },
   "extensions": [
@@ -179,31 +182,19 @@
     },
     {
       "extensionName": "KHR_materials_unlit",
-      "schema": "Khronos/KHR_materials_unlit/schema/glTF.KHR_materials_unlit.schema.json",
-      "attachTo": [
-        "material"
-      ]
+      "schema": "Khronos/KHR_materials_unlit/schema/material.KHR_materials_unlit.schema.json"
     },
     {
       "extensionName": "KHR_materials_variants",
-      "schema": "Khronos/KHR_materials_variants/schema/glTF.KHR_materials_variants.schema.json",
-      "attachTo": [
-        "glTF"
-      ]
+      "schema": "Khronos/KHR_materials_variants/schema/glTF.KHR_materials_variants.schema.json"
     },
     {
       "extensionName": "KHR_materials_variants",
-      "schema": "Khronos/KHR_materials_variants/schema/mesh.primitive.KHR_materials_variants.schema.json",
-      "attachTo": [
-        "mesh.primitive"
-      ]
+      "schema": "Khronos/KHR_materials_variants/schema/mesh.primitive.KHR_materials_variants.schema.json"
     },
     {
       "extensionName": "KHR_texture_basisu",
-      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json",
-      "attachTo": [
-        "texture"
-      ]
+      "schema": "Khronos/KHR_texture_basisu/schema/texture.KHR_texture_basisu.schema.json"
     },
     {
       "extensionName": "MAXAR_mesh_variants",
@@ -215,7 +206,7 @@
     },
     {
       "extensionName": "KHR_texture_transform",
-      "schema": "Khronos/KHR_texture_transform/schema/KHR_texture_transform.textureInfo.schema.json",
+      "schema": "Khronos/KHR_texture_transform/schema/textureInfo.KHR_texture_transform.schema.json",
       "attachTo": [
         "textureInfo",
         "material.occlusionTextureInfo",
@@ -229,6 +220,13 @@
       "schema": "Vendor/EXT_texture_webp/schema/glTF.EXT_texture_webp.schema.json",
       "attachTo": [
         "texture"
+      ]
+    },
+    {
+      "extensionName": "CESIUM_primitive_outline",
+      "schema": "Vendor/CESIUM_primitive_outline/schema/primitive.CESIUM_primitive_outline.schema.json",
+      "attachTo": [
+        "mesh.primitive"
       ]
     }
   ]

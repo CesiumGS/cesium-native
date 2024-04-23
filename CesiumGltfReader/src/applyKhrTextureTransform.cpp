@@ -83,9 +83,11 @@ void processTextureInfo(
   BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
   bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
   bufferView.byteLength = buffer.byteLength;
+  bufferView.byteOffset = 0;
 
   Accessor& accessor = model.accessors.emplace_back(*pAccessor);
   accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+  accessor.byteOffset = 0;
   accessor.count = accessorView.size();
   accessor.type = Accessor::Type::VEC2;
   accessor.componentType = Accessor::ComponentType::FLOAT;
