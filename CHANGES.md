@@ -9,6 +9,7 @@
 
 ##### Additions :tada:
 
+- Added `removeExtension` to `ExtensibleObject`.
 - Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
@@ -60,6 +61,7 @@
 
 ##### Additions :tada:
 
+- Added `AccessorWriter` constructor that takes an `AccessorView`.
 - Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
 - Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
 - Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
