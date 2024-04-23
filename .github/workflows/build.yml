@@ -141,7 +141,7 @@ jobs:
           cd build-release
           ctest -V
   macOS:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
