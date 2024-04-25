@@ -137,6 +137,22 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
       glm::max(this->_north, other._north));
 }
 
+std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
+GlobeRectangle::splitAtAntiMeridian() const noexcept {
+  if (this->_west <= this->_east) {
+    return {*this, std::nullopt};
+  }
+
+  GlobeRectangle a(this->_west, this->_south, Math::OnePi, this->_north);
+  GlobeRectangle b(-Math::OnePi, this->_south, this->_east, this->_north);
+
+  if (a.computeWidth() > b.computeWidth()) {
+    return {a, b};
+  } else {
+    return {b, a};
+  }
+}
+
 bool GlobeRectangle::equals(
     const GlobeRectangle& left,
     const GlobeRectangle& right) noexcept {
