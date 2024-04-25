@@ -284,4 +284,5 @@ private:
   double _east;
   double _north;
 };
+
 } // namespace CesiumGeospatial
