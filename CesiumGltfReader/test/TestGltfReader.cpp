@@ -253,6 +253,7 @@ TEST_CASE("Read TriangleWithPaddingInGlbBin") {
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(data);
   REQUIRE(result.model);
+  REQUIRE(result.warnings.size() == 1);
 }
 
 TEST_CASE("Nested extras deserializes properly") {
