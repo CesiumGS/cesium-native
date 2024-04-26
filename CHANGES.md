@@ -6,6 +6,7 @@
 
 - Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
+- `Connection::authorize` now requires an `ApplicationData` parameter, which represents the `appData` retrieved from a Cesium ion server.
 
 ##### Additions :tada:
 

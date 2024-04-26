@@ -113,6 +113,7 @@ std::string createAuthorizationErrorHtml(
     const std::string& redirectPath,
     const std::vector<std::string>& scopes,
     std::function<void(const std::string&)>&& openUrlCallback,
+    const CesiumIonClient::ApplicationData& appData,
     const std::string& ionApiUrl,
     const std::string& ionAuthorizeUrl) {
 
@@ -161,9 +162,8 @@ std::string createAuthorizationErrorHtml(
        ionApiUrl,
        redirectUrl,
        expectedState = state,
-       codeVerifier](
-          const httplib::Request& request,
-          httplib::Response& response) {
+       codeVerifier,
+       appData](const httplib::Request& request, httplib::Response& response) {
         pServer->stop();
 
         std::string error = request.get_param_value("error");
@@ -207,6 +207,7 @@ std::string createAuthorizationErrorHtml(
                                       pAssetAccessor,
                                       clientID,
                                       ionApiUrl,
+                                      appData,
                                       code,
                                       redirectUrl,
                                       codeVerifier)
@@ -246,11 +247,13 @@ Connection::Connection(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& accessToken,
+    const CesiumIonClient::ApplicationData& appData,
     const std::string& apiUrl)
     : _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _accessToken(accessToken),
-      _apiUrl(apiUrl) {}
+      _apiUrl(apiUrl),
+      _appData(appData) {}
 
 namespace {
 
@@ -304,6 +307,34 @@ bool parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
 } // namespace
 
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
+  // /v1/me endpoint doesn't exist when ion is running in single user mode
+  if (this->_appData.authenticationMode == AuthenticationMode::SingleUser) {
+    Profile profile;
+    profile.id = 0;
+    profile.username = "ion-user";
+    profile.storage = ProfileStorage{
+        0,
+        std::numeric_limits<int64_t>::max(),
+        std::numeric_limits<int64_t>::max()};
+    profile.email = "none@example.com";
+    profile.emailVerified = true;
+    profile.scopes = {
+        "assets:read",
+        "assets:list",
+        "assets:write",
+        "profile:read",
+        "tokens:read",
+        "tokens:write"};
+    profile.avatar = "https://www.gravatar.com/avatar/"
+                     "4f14cc6c584f41d89ef1d34c8986ebfb.jpg?d=mp";
+    return this->_asyncSystem.createResolvedFuture<Response<Profile>>(
+        Response<Profile>{
+            std::move(profile),
+            200,
+            std::string(),
+            std::string()});
+  }
+
   return this->_pAssetAccessor
       ->get(
           this->_asyncSystem,
@@ -362,6 +393,60 @@ CesiumAsync::Future<Response<Profile>> Connection::me() const {
                 std::string(),
                 std::string()};
           });
+}
+
+/* static */ CesiumAsync::Future<Response<ApplicationData>>
+CesiumIonClient::Connection::appData(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& apiUrl) {
+  return pAssetAccessor
+      ->get(
+          asyncSystem,
+          CesiumUtility::Uri::resolve(apiUrl, "/appData"),
+          {{"Accept", "application/json"}})
+      .thenImmediately([](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                              pRequest) {
+        const IAssetResponse* pResponse = pRequest->response();
+        if (!pResponse) {
+          return createEmptyResponse<ApplicationData>();
+        }
+
+        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
+          return createErrorResponse<ApplicationData>(pResponse);
+        }
+
+        rapidjson::Document d;
+        if (!parseJsonObject(pResponse, d)) {
+          return createJsonErrorResponse<ApplicationData>(pResponse, d);
+        }
+        if (!d.IsObject()) {
+          return createJsonTypeResponse<ApplicationData>(pResponse, "object");
+        }
+
+        // There's a lot more properties available on the /appData endpoint, but
+        // we don't need them so we're ignoring them for now.
+        ApplicationData result;
+        std::string authenticationMode =
+            JsonHelpers::getStringOrDefault(d, "applicationMode", "cesium-ion");
+        if (authenticationMode == "single-user") {
+          result.authenticationMode = AuthenticationMode::SingleUser;
+        } else if (authenticationMode == "saml") {
+          result.authenticationMode = AuthenticationMode::Saml;
+        } else {
+          result.authenticationMode = AuthenticationMode::CesiumIon;
+        }
+        result.dataStoreType =
+            JsonHelpers::getStringOrDefault(d, "dataStoreType", "S3");
+        result.attribution =
+            JsonHelpers::getStringOrDefault(d, "attribution", "");
+
+        return Response<ApplicationData>{
+            std::move(result),
+            pResponse->statusCode(),
+            std::string(),
+            std::string()};
+      });
 }
 
 namespace {
@@ -642,6 +727,12 @@ TokenList tokenListFromJson(const rapidjson::Value& json) {
 
 Future<Response<TokenList>>
 Connection::tokens(const ListTokensOptions& options) const {
+  if (this->_appData.authenticationMode == AuthenticationMode::SingleUser) {
+    TokenList emptyList = TokenList{};
+    return this->_asyncSystem.createResolvedFuture<Response<TokenList>>(
+        Response{std::move(emptyList), 200, "", ""});
+  }
+
   std::string url = Uri::resolve(this->_apiUrl, "v2/tokens");
 
   if (options.limit) {
@@ -986,6 +1077,7 @@ Connection::getIdFromToken(const std::string& token) {
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t clientID,
     const std::string& ionApiUrl,
+    const CesiumIonClient::ApplicationData& appData,
     const std::string& code,
     const std::string& redirectUrl,
     const std::string& codeVerifier) {
@@ -1017,7 +1109,7 @@ Connection::getIdFromToken(const std::string& token) {
           {{"Content-Type", "application/json"},
            {"Accept", "application/json"}},
           payload)
-      .thenInWorkerThread([asyncSystem, pAssetAccessor, ionApiUrl](
+      .thenInWorkerThread([asyncSystem, pAssetAccessor, ionApiUrl, appData](
                               std::shared_ptr<IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
@@ -1047,7 +1139,12 @@ Connection::getIdFromToken(const std::string& token) {
               "Server response does not include a valid token.");
         }
 
-        return Connection(asyncSystem, pAssetAccessor, accessToken, ionApiUrl);
+        return Connection(
+            asyncSystem,
+            pAssetAccessor,
+            accessToken,
+            appData,
+            ionApiUrl);
       });
 }
 
