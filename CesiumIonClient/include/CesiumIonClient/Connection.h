@@ -91,6 +91,7 @@ public:
    * allow access to.
    * @param openUrlCallback A function that is invoked to launch the user's web
    * browser with a given URL so that they can authorize access.
+   * @param appData The app data retrieved from the Cesium ion server.
    * @param ionApiUrl The base URL of the Cesium ion API.
    * @param ionAuthorizeUrl The URL of the Cesium ion OAuth authorization page.
    * @return A future that resolves to a Cesium ion {@link Connection} once the
@@ -130,6 +131,7 @@ public:
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
    * @param accessToken The access token
+   * @param appData The app data retrieved from the Cesium ion server.
    * @param apiUrl The base URL of the Cesium ion API.
    */
   Connection(

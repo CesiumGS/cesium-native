@@ -30,7 +30,9 @@ enum AuthenticationMode {
 };
 
 /**
- * @brief Data about the Cesium ion server itself.
+ * @brief Data retrieved from the Cesium ion server via an "appData" request
+ * from Cesium ion. This actually represents information about the server
+ * itself.
  */
 struct ApplicationData {
   /**
