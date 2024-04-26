@@ -3,6 +3,7 @@
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/LegacyUtilities.h>
+#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -375,6 +376,24 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       glm::vec3 dUp = decodeOct32P(rawUpOct[i]);
       glm::vec3 dRight = decodeOct32P(rawRightOct[i]);
       decodedInstances.rotations[i] = rotationFromUpRight(dUp, dRight);
+    }
+  } else if (decodedInstances.rotationENU) {
+    glm::dmat4 worldTransform = subprocessor.tileTransform;
+    if (decodedInstances.rtcCenter) {
+      worldTransform = translate(worldTransform, *decodedInstances.rtcCenter);
+    }
+    auto worldTransformInv = inverse(worldTransform);
+    for (size_t i = 0; i < decodedInstances.positions.size(); ++i) {
+      auto worldPos =
+          worldTransform * glm::dvec4(decodedInstances.positions[i], 1.0);
+      CesiumGeospatial::LocalHorizontalCoordinateSystem enu(
+          (glm::dvec3(worldPos)));
+      const auto& ecef = enu.getLocalToEcefTransformation();
+      // back into tile coordinate system
+      auto tileFrame = worldTransformInv * ecef;
+      glm::quat tileFrameRot =
+          rotationFromUpRight(glm::vec3(tileFrame[1]), glm::vec3(tileFrame[0]));
+      decodedInstances.rotations[i] = tileFrameRot;
     }
   }
   decodedInstances.scales.resize(
