@@ -82,7 +82,7 @@ TEST_CASE("CesiumIonClient::Connection on single-user mode") {
           std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
 
   ApplicationData data;
-  data.applicationMode = AuthenticationMode::SingleUser;
+  data.authenticationMode = AuthenticationMode::SingleUser;
 
   AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
   Connection connection(

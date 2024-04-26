@@ -308,7 +308,7 @@ bool parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
 
 CesiumAsync::Future<Response<Profile>> Connection::me() const {
   // /v1/me endpoint doesn't exist when ion is running in single user mode
-  if (this->_appData.applicationMode == AuthenticationMode::SingleUser) {
+  if (this->_appData.authenticationMode == AuthenticationMode::SingleUser) {
     Profile profile;
     profile.id = 0;
     profile.username = "ion-user";
@@ -427,14 +427,14 @@ CesiumIonClient::Connection::appData(
         // There's a lot more properties available on the /appData endpoint, but
         // we don't need them so we're ignoring them for now.
         ApplicationData result;
-        std::string applicationMode =
+        std::string authenticationMode =
             JsonHelpers::getStringOrDefault(d, "applicationMode", "cesium-ion");
-        if (applicationMode == "single-user") {
-          result.applicationMode = AuthenticationMode::SingleUser;
-        } else if (applicationMode == "saml") {
-          result.applicationMode = AuthenticationMode::Saml;
+        if (authenticationMode == "single-user") {
+          result.authenticationMode = AuthenticationMode::SingleUser;
+        } else if (authenticationMode == "saml") {
+          result.authenticationMode = AuthenticationMode::Saml;
         } else {
-          result.applicationMode = AuthenticationMode::CesiumIon;
+          result.authenticationMode = AuthenticationMode::CesiumIon;
         }
         result.dataStoreType =
             JsonHelpers::getStringOrDefault(d, "dataStoreType", "S3");
@@ -727,7 +727,7 @@ TokenList tokenListFromJson(const rapidjson::Value& json) {
 
 Future<Response<TokenList>>
 Connection::tokens(const ListTokensOptions& options) const {
-  if (this->_appData.applicationMode == AuthenticationMode::SingleUser) {
+  if (this->_appData.authenticationMode == AuthenticationMode::SingleUser) {
     TokenList emptyList = TokenList{};
     return this->_asyncSystem.createResolvedFuture<Response<TokenList>>(
         Response{std::move(emptyList), 200, "", ""});

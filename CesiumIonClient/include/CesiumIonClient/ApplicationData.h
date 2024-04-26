@@ -6,7 +6,7 @@
 namespace CesiumIonClient {
 
 /**
- *  @brief An enumeration representing the values of {@link ApplicationData::applicationMode}.
+ *  @brief An enumeration representing the values of {@link ApplicationData::authenticationMode}.
  */
 enum AuthenticationMode {
   /**
@@ -34,9 +34,9 @@ enum AuthenticationMode {
  */
 struct ApplicationData {
   /**
-   * The authentication mode that the Ion server is running in.
+   * The authentication mode that the ion server is running in.
    */
-  AuthenticationMode applicationMode;
+  AuthenticationMode authenticationMode;
 
   /**
    * The type of store used by this ion server to hold files.
@@ -50,7 +50,7 @@ struct ApplicationData {
   std::string attribution;
 
   bool needsOauthAuthentication() const {
-    return this->applicationMode != AuthenticationMode::SingleUser;
+    return this->authenticationMode != AuthenticationMode::SingleUser;
   }
 };
 
