@@ -3,6 +3,8 @@
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/fwd.hpp>
@@ -100,5 +102,32 @@ int32_t createAccessorInGltf(
     const std::string type);
 
 void applyRTC(CesiumGltf::Model& gltf, const glm::dvec3& rtc);
+
+template <typename GLMType, typename GLTFType>
+GLMType toGlm(const GLTFType& gltfVal);
+
+template <typename GLMType, typename COMPONENTType>
+GLMType toGlm(const CesiumGltf::AccessorTypes::VEC3<COMPONENTType>& gltfVal) {
+  return GLMType(gltfVal.value[0], gltfVal.value[1], gltfVal.value[2]);
+}
+
+template <typename GLMType, typename COMPONENTType>
+GLMType
+toGlmQuat(const CesiumGltf::AccessorTypes::VEC4<COMPONENTType>& gltfVal) {
+  if constexpr (std::is_same<COMPONENTType, float>()) {
+    return GLMType(
+        gltfVal.value[3],
+        gltfVal.value[0],
+        gltfVal.value[1],
+        gltfVal.value[2]);
+  } else {
+    return GLMType(
+        CesiumGltf::normalize(gltfVal.value[3]),
+        CesiumGltf::normalize(gltfVal.value[0]),
+        CesiumGltf::normalize(gltfVal.value[1]),
+        CesiumGltf::normalize(gltfVal.value[2]));
+  }
+}
+
 } // namespace LegacyUtilities
 } // namespace Cesium3DTilesContent

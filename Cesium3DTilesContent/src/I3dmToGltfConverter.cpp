@@ -475,26 +475,6 @@ composeInstanceTransform(size_t i, const DecodedInstances& decodedInstances) {
   return result;
 }
 
-// Helpers for different instancing rotation formats
-
-template <typename T> struct is_float_quat : std::false_type {};
-
-template <>
-struct is_float_quat<CesiumGltf::AccessorTypes::VEC4<float>> : std::true_type {
-};
-
-template <typename T> struct is_int_quat : std::false_type {};
-
-template <typename T>
-struct is_int_quat<CesiumGltf::AccessorTypes::VEC4<T>>
-    : std::conjunction<std::is_integral<T>, std::is_signed<T>> {};
-
-template <typename T>
-inline constexpr bool is_float_quat_v = is_float_quat<T>::value;
-
-template <typename T>
-inline constexpr bool is_int_quat_v = is_int_quat<T>::value;
-
 std::vector<glm::dmat4> meshGpuInstances(
     GltfConverterResult& result,
     const ExtensionExtMeshGpuInstancing& gpuExt) {
@@ -552,10 +532,7 @@ std::vector<glm::dmat4> meshGpuInstances(
         *translations);
     if (translationAccessor.status() == AccessorViewStatus::Valid) {
       for (unsigned i = 0; i < count; ++i) {
-        glm::dvec3 transVec(
-            translationAccessor[i].value[0],
-            translationAccessor[i].value[1],
-            translationAccessor[i].value[2]);
+        auto transVec = toGlm<glm::dvec3>(translationAccessor[i]);
         instances[i] = glm::translate(instances[i], transVec);
       }
     } else {
@@ -563,29 +540,15 @@ std::vector<glm::dmat4> meshGpuInstances(
     }
   }
   if (rotations) {
-    createAccessorView(model, *rotations, [&](auto&& quatView) -> void {
-      using QuatType = decltype(quatView[0]);
-      using ValueType = std::decay_t<QuatType>;
-      if constexpr (is_float_quat_v<ValueType>) {
-        for (unsigned i = 0; i < count; ++i) {
-          glm::dquat quat(
-              quatView[i].value[3],
-              quatView[i].value[0],
-              quatView[i].value[1],
-              quatView[i].value[2]);
-          instances[i] = instances[i] * glm::toMat4(quat);
-        }
-      } else if constexpr (is_int_quat_v<ValueType>) {
-        for (unsigned i = 0; i < count; ++i) {
-          float val[4];
-          for (unsigned j = 0; j < 4; ++j) {
-            val[j] = static_cast<float>(normalize(quatView[i].value[j]));
+    auto quatAccessorView = getQuaternionAccessorView(model, rotations);
+    std::visit(
+        [&](auto&& arg) {
+          for (unsigned i = 0; i < count; ++i) {
+            auto quat = toGlmQuat<glm::dquat>(arg[i]);
+            instances[i] = instances[i] * glm::toMat4(quat);
           }
-          glm::dquat quat(val[3], val[0], val[1], val[2]);
-          instances[i] = instances[i] * glm::toMat4(quat);
-        }
-      }
-    });
+        },
+        quatAccessorView);
   }
   if (scales) {
     AccessorView<CesiumGltf::AccessorTypes::VEC3<float>> scaleAccessor(
@@ -593,10 +556,7 @@ std::vector<glm::dmat4> meshGpuInstances(
         *scales);
     if (scaleAccessor.status() == AccessorViewStatus::Valid) {
       for (unsigned i = 0; i < count; ++i) {
-        glm::dvec3 scaleFactors(
-            scaleAccessor[i].value[0],
-            scaleAccessor[i].value[1],
-            scaleAccessor[i].value[2]);
+        auto scaleFactors = toGlm<glm::dvec3>(scaleAccessor[i]);
         instances[i] = glm::scale(instances[i], scaleFactors);
       }
     } else {

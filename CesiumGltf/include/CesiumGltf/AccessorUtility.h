@@ -285,4 +285,21 @@ struct TexCoordFromAccessor {
   int64_t index;
 };
 
+/**
+ * Type definition for quaternion accessors, as defined for ExtMeshGpuInstancing
+ * and animation samplers.
+ */
+typedef std::variant<
+    AccessorView<AccessorTypes::VEC4<uint8_t>>,
+    AccessorView<AccessorTypes::VEC4<int8_t>>,
+    AccessorView<AccessorTypes::VEC4<uint16_t>>,
+    AccessorView<AccessorTypes::VEC4<int16_t>>,
+    AccessorView<AccessorTypes::VEC4<float>>>
+    QuaternionAccessorType;
+
+QuaternionAccessorType
+getQuaternionAccessorView(const Model& model, const Accessor* accessor);
+
+QuaternionAccessorType
+getQuaternionAccessorView(const Model& model, int32_t accessorIndex);
 } // namespace CesiumGltf
