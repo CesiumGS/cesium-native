@@ -579,3 +579,19 @@ TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
 
   REQUIRE(glbBytesExtraPadding.size() == 88);
 }
+
+TEST_CASE("Reports an error if asked to write a GLB larger than 4GB") {
+  CesiumGltf::Model model;
+  model.asset.version = "2.0";
+  CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+  buffer.byteLength = int64_t(std::numeric_limits<uint32_t>::max()) + 1;
+
+  // Hope you have some extra memory!
+  buffer.cesium.data.resize(size_t(buffer.byteLength));
+
+  CesiumGltfWriter::GltfWriter writer;
+  CesiumGltfWriter::GltfWriterResult result =
+      writer.writeGlb(model, buffer.cesium.data);
+  REQUIRE(!result.errors.empty());
+  CHECK(result.gltfBytes.empty());
+}

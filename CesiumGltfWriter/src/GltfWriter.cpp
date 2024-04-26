@@ -19,7 +19,8 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
   return padding;
 }
 
-[[nodiscard]] std::vector<std::byte> writeGlbBuffer(
+void writeGlbBuffer(
+    GltfWriterResult& result,
     const gsl::span<const std::byte>& jsonData,
     const gsl::span<const std::byte>& bufferData,
     size_t binaryChunkByteAlignment) {
@@ -51,7 +52,17 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
     glbSize += chunkHeaderSize + binaryChunkDataSize;
   }
 
-  std::vector<std::byte> glb(glbSize);
+  // GLB stores its own length as a uint32. So if that would be >= 4GB , we
+  // can't output a valid GLB.
+  if (glbSize > size_t(std::numeric_limits<uint32_t>::max())) {
+    result.errors.emplace_back(
+        "glTF is too large to represent as a binary glTF (GLB). The total size "
+        "of the GLB must be less than 4GB.");
+    return;
+  }
+
+  std::vector<std::byte>& glb = result.gltfBytes;
+  glb.resize(glbSize);
   uint8_t* glb8 = reinterpret_cast<uint8_t*>(glb.data());
   uint32_t* glb32 = reinterpret_cast<uint32_t*>(glb.data());
 
@@ -98,8 +109,6 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
     // Binary chunk padding
     memset(glb8 + byteOffset, 0, binaryPaddingSize);
   }
-
-  return glb;
 }
 } // namespace
 
@@ -159,7 +168,8 @@ GltfWriterResult GltfWriter::writeGlb(
   ModelJsonWriter::write(model, *writer, context);
   std::vector<std::byte> jsonData = writer->toBytes();
 
-  result.gltfBytes = writeGlbBuffer(
+  writeGlbBuffer(
+      result,
       gsl::span(jsonData),
       bufferData,
       options.binaryChunkByteAlignment);
