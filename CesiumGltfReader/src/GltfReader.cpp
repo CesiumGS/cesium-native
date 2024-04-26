@@ -208,11 +208,24 @@ GltfReaderResult readBinaryGltf(
     }
 
     const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
-    if (buffer.byteLength > binaryChunkSize ||
-        buffer.byteLength + 3 < binaryChunkSize) {
-      result.errors.emplace_back("GLB binary chunk size does not match the "
-                                 "size of the first buffer in the JSON chunk.");
+    if (buffer.byteLength > binaryChunkSize) {
+      result.errors.emplace_back(
+          "The size of the first buffer in the JSON chunk is " +
+          std::to_string(buffer.byteLength) +
+          ", which is larger than the size of the GLB binary chunk (" +
+          std::to_string(binaryChunkSize) + ")");
       return result;
+    }
+    // The byte length of the BIN chunk MAY be up to 3 bytes
+    // bigger than JSON-defined buffer.byteLength. When it is
+    // more than 3 bytes bigger, generate a warning.
+    if (binaryChunkSize - buffer.byteLength > 3) {
+      result.warnings.emplace_back(
+          "The size of the first buffer in the JSON chunk is " +
+          std::to_string(buffer.byteLength) +
+          ", which is more than 3 bytes smaller than the size of the GLB "
+          "binary chunk (" +
+          std::to_string(binaryChunkSize) + ")");
     }
 
     buffer.cesium.data = std::vector<std::byte>(
