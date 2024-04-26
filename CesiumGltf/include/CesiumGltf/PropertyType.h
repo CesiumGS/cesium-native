@@ -59,6 +59,8 @@ bool isPropertyComponentTypeInteger(PropertyComponentType componentType);
 
 glm::length_t getDimensionsFromPropertyType(PropertyType type);
 
+glm::length_t getComponentCountFromPropertyType(PropertyType type);
+
 size_t getSizeOfComponentType(PropertyComponentType componentType);
 
 } // namespace CesiumGltf
