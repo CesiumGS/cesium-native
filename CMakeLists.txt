@@ -203,7 +203,9 @@ endif()
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
-install(TARGETS ktx)
+install(TARGETS ktx
+		FRAMEWORK
+			DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS webpdecoder)
 
