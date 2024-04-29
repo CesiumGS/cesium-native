@@ -168,7 +168,7 @@ if (CESIUM_TESTS_ENABLED)
     add_subdirectory(CesiumNativeTests)
 endif()
 
-#add_subdirectory(doc)
+add_subdirectory(doc)
 
 # Installation of third-party libraries required to use cesium-native
 install(TARGETS uriparser OPTIONAL PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/uriparser")
