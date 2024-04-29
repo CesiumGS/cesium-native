@@ -10,6 +10,7 @@
 
 ##### Additions :tada:
 
+- Added `getComponentCountFromPropertyType` to `PropertyType`.
 - Added `removeExtension` to `ExtensibleObject`.
 - Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
