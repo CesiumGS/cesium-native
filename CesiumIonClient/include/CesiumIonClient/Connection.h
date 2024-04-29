@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ApplicationData.h"
 #include "Assets.h"
 #include "Defaults.h"
 #include "Profile.h"
@@ -90,6 +91,7 @@ public:
    * allow access to.
    * @param openUrlCallback A function that is invoked to launch the user's web
    * browser with a given URL so that they can authorize access.
+   * @param appData The app data retrieved from the Cesium ion server.
    * @param ionApiUrl The base URL of the Cesium ion API.
    * @param ionAuthorizeUrl The URL of the Cesium ion OAuth authorization page.
    * @return A future that resolves to a Cesium ion {@link Connection} once the
@@ -103,8 +105,19 @@ public:
       const std::string& redirectPath,
       const std::vector<std::string>& scopes,
       std::function<void(const std::string&)>&& openUrlCallback,
+      const CesiumIonClient::ApplicationData& appData,
       const std::string& ionApiUrl = "https://api.cesium.com/",
       const std::string& ionAuthorizeUrl = "https://ion.cesium.com/oauth");
+
+  /**
+   * @brief Retrieves information about the ion API server.
+   *
+   * @return A future that resolves to the application information.
+   */
+  static CesiumAsync::Future<Response<ApplicationData>> appData(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& apiUrl = "https://api.cesium.com");
 
   static CesiumAsync::Future<std::optional<std::string>> getApiUrl(
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -118,12 +131,14 @@ public:
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
    * @param accessToken The access token
+   * @param appData The app data retrieved from the Cesium ion server.
    * @param apiUrl The base URL of the Cesium ion API.
    */
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& accessToken,
+      const CesiumIonClient::ApplicationData& appData,
       const std::string& apiUrl = "https://api.cesium.com");
 
   /**
@@ -291,6 +306,7 @@ private:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       int64_t clientID,
       const std::string& ionApiUrl,
+      const CesiumIonClient::ApplicationData& appData,
       const std::string& code,
       const std::string& redirectUrl,
       const std::string& codeVerifier);
@@ -301,5 +317,6 @@ private:
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
   std::string _accessToken;
   std::string _apiUrl;
+  CesiumIonClient::ApplicationData _appData;
 };
 } // namespace CesiumIonClient

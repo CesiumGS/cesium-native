@@ -38,6 +38,15 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           : GltfUtilities::computeBoundingRegion(model, modelToEcefTransform)
                 .getRectangle();
 
+  // Don't let the bounding rectangle cross the anti-meridian. If it does, split
+  // it into two rectangles. Ideally we'd map both of them (separately) to the
+  // model, but in our current "only Geographic and Web Mercator are supported"
+  // world, crossing the anti-meridian is almost certain to simply be numerical
+  // noise. So we just use the larger of the two rectangles.
+  std::pair<GlobeRectangle, std::optional<GlobeRectangle>> splits =
+      bounds.splitAtAntiMeridian();
+  bounds = splits.first;
+
   // Currently, a Longitude/Latitude Rectangle maps perfectly to all possible
   // projection types, because the only possible projection types are
   // Geographic and Web Mercator. In the future if/when we add projections
