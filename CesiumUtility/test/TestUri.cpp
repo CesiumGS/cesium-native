@@ -81,3 +81,18 @@ TEST_CASE("Uri::setPath") {
     CHECK(Uri::setPath("not a valid uri", "/foo/") == "");
   }
 }
+
+TEST_CASE("Uri::resolve") {
+  CHECK(
+      CesiumUtility::Uri::resolve("https://www.example.com/", "/page/test") ==
+      "https://www.example.com/page/test");
+  CHECK(
+      CesiumUtility::Uri::resolve("//www.example.com", "/page/test") ==
+      "https://www.example.com/page/test");
+  CHECK(
+      CesiumUtility::Uri::resolve(
+          "//www.example.com",
+          "/page/test",
+          false,
+          false) == "http://www.example.com/page/test");
+}
