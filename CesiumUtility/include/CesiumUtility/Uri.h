@@ -9,7 +9,8 @@ public:
   static std::string resolve(
       const std::string& base,
       const std::string& relative,
-      bool useBaseQuery = false);
+      bool useBaseQuery = false,
+      bool assumeHttpsDefault = true);
   static std::string addQuery(
       const std::string& uri,
       const std::string& key,

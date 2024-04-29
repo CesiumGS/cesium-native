@@ -10,14 +10,13 @@
 #include <vector>
 
 namespace CesiumUtility {
-const char* HTTPS_PREFIX = "https";
-const char* HTTPS_PREFIX_COLON = "https:";
+const char* HTTPS_PREFIX = "https:";
+const char* HTTP_PREFIX = "http:";
 
-std::string cesiumConformUrl(const std::string& url) {
-  if (url.rfind("//", 0) == 0) {
-    return std::string(HTTPS_PREFIX_COLON).append(url);
-  } else if (url.find("://", 0) == 0) {
-    return std::string(HTTPS_PREFIX).append(url);
+std::string cesiumConformUrl(const std::string& url, bool useHttps) {
+  // Prepend protocol to protocol-relative URIs.
+  if (url.length() > 2 && url.at(0) == '/' && url.at(1) == '/') {
+    return std::string(useHttps ? HTTPS_PREFIX : HTTP_PREFIX).append(url);
   }
   return url;
 }
@@ -25,9 +24,11 @@ std::string cesiumConformUrl(const std::string& url) {
 std::string Uri::resolve(
     const std::string& base,
     const std::string& relative,
-    bool useBaseQuery) {
-  const std::string conformedBase = cesiumConformUrl(base);
-  const std::string conformedRelative = cesiumConformUrl(relative);
+    bool useBaseQuery,
+    bool assumeHttpsDefault) {
+  const std::string conformedBase = cesiumConformUrl(base, assumeHttpsDefault);
+  const std::string conformedRelative =
+      cesiumConformUrl(relative, assumeHttpsDefault);
   UriUriA baseUri;
 
   if (uriParseSingleUriA(&baseUri, conformedBase.c_str(), nullptr) !=
@@ -121,7 +122,10 @@ std::string Uri::addQuery(
 }
 
 std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
-  const std::string conformedUrl = cesiumConformUrl(url);
+  // We need to conform the URL since it will fail parsing if it's
+  // protocol-relative. However, it doesn't matter what protocol we use since
+  // it's only extracting query parameters.
+  const std::string conformedUrl = cesiumConformUrl(url, true);
   UriUriA uri;
   if (uriParseSingleUriA(&uri, conformedUrl.c_str(), nullptr) != URI_SUCCESS) {
     return "";
