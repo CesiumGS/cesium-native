@@ -358,75 +358,83 @@ void forEachPrimitiveInMeshObject(
   }
 }
 
+std::optional<glm::dmat4x4> getNodeTransform(const CesiumGltf::Node& node) {
+  if (!node.matrix.empty() && node.matrix.size() < 16) {
+    return std::nullopt;
+  }
+
+  // clang-format off
+  // This is column-major, just like glm and glTF
+  static constexpr std::array<double, 16> identityMatrix = {
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0};
+  // clang-format on
+
+  const std::vector<double>& matrix = node.matrix;
+
+  if (node.matrix.size() >= 16 && !std::equal(
+                                      identityMatrix.begin(),
+                                      identityMatrix.end(),
+                                      matrix.begin())) {
+    return glm::dmat4x4(
+        glm::dvec4(matrix[0], matrix[1], matrix[2], matrix[3]),
+        glm::dvec4(matrix[4], matrix[5], matrix[6], matrix[7]),
+        glm::dvec4(matrix[8], matrix[9], matrix[10], matrix[11]),
+        glm::dvec4(matrix[12], matrix[13], matrix[14], matrix[15]));
+  }
+
+  if (!node.translation.empty() || !node.rotation.empty() ||
+      !node.scale.empty()) {
+    glm::dmat4x4 translation(1.0);
+    if (node.translation.size() >= 3) {
+      translation[3] = glm::dvec4(
+          node.translation[0],
+          node.translation[1],
+          node.translation[2],
+          1.0);
+    } else if (!node.translation.empty()) {
+      return std::nullopt;
+    }
+
+    glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
+    if (node.rotation.size() >= 4) {
+      rotationQuat[0] = node.rotation[0];
+      rotationQuat[1] = node.rotation[1];
+      rotationQuat[2] = node.rotation[2];
+      rotationQuat[3] = node.rotation[3];
+    } else if (!node.rotation.empty()) {
+      return std::nullopt;
+    }
+
+    glm::dmat4x4 scale(1.0);
+    if (node.scale.size() >= 3) {
+      scale[0].x = node.scale[0];
+      scale[1].y = node.scale[1];
+      scale[2].z = node.scale[2];
+    } else if (!node.scale.empty()) {
+      return std::nullopt;
+    }
+
+    return translation * glm::dmat4x4(rotationQuat) * scale;
+  }
+
+  return glm::dmat4x4(1.0);
+}
+
 template <typename TCallback>
 void forEachPrimitiveInNodeObject(
     const glm::dmat4x4& transform,
     const Model& model,
     const Node& node,
     TCallback& callback) {
-  static constexpr std::array<double, 16> identityMatrix = {
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0};
 
   // This should just call GltfUtilities::getNodeTransform, but it can't because
   // it's in CesiumGltfContent. We should merge these two libraries, but until
   // then, it's duplicated.
-
-  glm::dmat4x4 nodeTransform = transform;
-  const std::vector<double>& matrix = node.matrix;
-
-  if (node.matrix.size() == 16 &&
-      !std::equal(matrix.begin(), matrix.end(), identityMatrix.begin())) {
-
-    const glm::dmat4& nodeTransformGltf =
-        *reinterpret_cast<const glm::dmat4*>(matrix.data());
-
-    nodeTransform = nodeTransform * nodeTransformGltf;
-  } else if (
-      !node.translation.empty() || !node.rotation.empty() ||
-      !node.scale.empty()) {
-
-    glm::dmat4 translation(1.0);
-    if (node.translation.size() == 3) {
-      translation[3] = glm::dvec4(
-          node.translation[0],
-          node.translation[1],
-          node.translation[2],
-          1.0);
-    }
-
-    glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
-    if (node.rotation.size() == 4) {
-      rotationQuat[0] = node.rotation[0];
-      rotationQuat[1] = node.rotation[1];
-      rotationQuat[2] = node.rotation[2];
-      rotationQuat[3] = node.rotation[3];
-    }
-
-    glm::dmat4 scale(1.0);
-    if (node.scale.size() == 3) {
-      scale[0].x = node.scale[0];
-      scale[1].y = node.scale[1];
-      scale[2].z = node.scale[2];
-    }
-
-    nodeTransform =
-        nodeTransform * translation * glm::dmat4(rotationQuat) * scale;
-  }
+  glm::dmat4x4 nodeTransform =
+      transform * getNodeTransform(node).value_or(glm::dmat4x4(1.0));
 
   const int meshId = node.mesh;
   if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
@@ -438,6 +446,30 @@ void forEachPrimitiveInNodeObject(
     if (childNodeId >= 0 &&
         childNodeId < static_cast<int>(model.nodes.size())) {
       forEachPrimitiveInNodeObject(
+          nodeTransform,
+          model,
+          model.nodes[static_cast<size_t>(childNodeId)],
+          callback);
+    }
+  }
+}
+
+template <typename TCallback>
+void forEachNode(
+    const glm::dmat4x4& transform,
+    const Model& model,
+    const Node& node,
+    TCallback& callback) {
+
+  glm::dmat4x4 nodeTransform =
+      transform * getNodeTransform(node).value_or(glm::dmat4x4(1.0));
+
+  callback(model, node, transform);
+
+  for (const int childNodeId : node.children) {
+    if (childNodeId >= 0 &&
+        childNodeId < static_cast<int>(model.nodes.size())) {
+      forEachNode(
           nodeTransform,
           model,
           model.nodes[static_cast<size_t>(childNodeId)],
@@ -467,8 +499,8 @@ void Model::forEachRootNodeInScene(
     std::function<ForEachRootNodeInSceneCallback>&& callback) {
   return const_cast<const Model*>(this)->forEachRootNodeInScene(
       sceneID,
-      [&callback](const Model& gltf_, const Node& node) {
-        callback(const_cast<Model&>(gltf_), const_cast<Node&>(node));
+      [&callback](const Model& gltf, const Node& node) {
+        callback(const_cast<Model&>(gltf), const_cast<Node&>(node));
       });
 }
 
@@ -501,19 +533,42 @@ void Model::forEachRootNodeInScene(
   }
 }
 
+void Model::forEachNodeInScene(
+    int sceneID,
+    std::function<ForEachNodeInSceneCallback>&& callback) {
+  return const_cast<const Model*>(this)->forEachNodeInScene(
+      sceneID,
+      [&callback](
+          const Model& gltf,
+          const Node& node,
+          const glm::dmat4& transform) {
+        callback(const_cast<Model&>(gltf), const_cast<Node&>(node), transform);
+      });
+}
+
+void Model::forEachNodeInScene(
+    int sceneID,
+    std::function<ForEachNodeInSceneConstCallback>&& callback) const {
+  this->forEachRootNodeInScene(
+      sceneID,
+      [callback = std::move(callback)](const Model& model, const Node& node) {
+        forEachNode(glm::dmat4x4(1.0), model, node, callback);
+      });
+}
+
 void Model::forEachPrimitiveInScene(
     int sceneID,
     std::function<ForEachPrimitiveInSceneCallback>&& callback) {
   return const_cast<const Model*>(this)->forEachPrimitiveInScene(
       sceneID,
       [&callback](
-          const Model& gltf_,
+          const Model& gltf,
           const Node& node,
           const Mesh& mesh,
           const MeshPrimitive& primitive,
           const glm::dmat4& transform) {
         callback(
-            const_cast<Model&>(gltf_),
+            const_cast<Model&>(gltf),
             const_cast<Node&>(node),
             const_cast<Mesh&>(mesh),
             const_cast<MeshPrimitive&>(primitive),
@@ -778,7 +833,7 @@ void generateSmoothNormals(
 void Model::generateMissingNormalsSmooth() {
   forEachPrimitiveInScene(
       -1,
-      [](Model& gltf_,
+      [](Model& gltf,
          Node& /*node*/,
          Mesh& /*mesh*/,
          MeshPrimitive& primitive,
@@ -796,18 +851,18 @@ void Model::generateMissingNormalsSmooth() {
         }
 
         const int positionAccessorId = positionIt->second;
-        const AccessorView<glm::vec3> positionView(gltf_, positionAccessorId);
+        const AccessorView<glm::vec3> positionView(gltf, positionAccessorId);
         if (positionView.status() != AccessorViewStatus::Valid) {
           return;
         }
 
         if (primitive.indices < 0 ||
-            static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
-          generateSmoothNormals(gltf_, primitive, positionView, std::nullopt);
+            static_cast<size_t>(primitive.indices) >= gltf.accessors.size()) {
+          generateSmoothNormals(gltf, primitive, positionView, std::nullopt);
         } else {
           Accessor& indexAccessor =
-              gltf_.accessors[static_cast<size_t>(primitive.indices)];
-          generateSmoothNormals(gltf_, primitive, positionView, indexAccessor);
+              gltf.accessors[static_cast<size_t>(primitive.indices)];
+          generateSmoothNormals(gltf, primitive, positionView, indexAccessor);
         }
       });
 }
