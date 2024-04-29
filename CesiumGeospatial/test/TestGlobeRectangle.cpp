@@ -41,6 +41,71 @@ TEST_CASE("GlobeRectangle::equals") {
     GlobeRectangle unequalNorth(0.1, 0.2, 0.3, 0.5);
     CHECK(!GlobeRectangle::equals(simple, unequalNorth));
   }
+
+  SECTION("splitAtAntiMeridian") {
+    // Cross Prime meridian, do not cross Antimeridian
+    GlobeRectangle nonCrossing =
+        GlobeRectangle::fromDegrees(-10.0, -20.0, 30.0, 40.0);
+    std::pair<GlobeRectangle, std::optional<GlobeRectangle>> split =
+        nonCrossing.splitAtAntiMeridian();
+    CHECK(!split.second);
+    CHECK(split.first.getWest() == nonCrossing.getWest());
+    CHECK(split.first.getEast() == nonCrossing.getEast());
+    CHECK(split.first.getSouth() == nonCrossing.getSouth());
+    CHECK(split.first.getNorth() == nonCrossing.getNorth());
+
+    // Do not cross Prime or Antimeridian
+    GlobeRectangle nonCrossing2 =
+        GlobeRectangle::fromDegrees(10.0, -20.0, 30.0, 40.0);
+    split = nonCrossing2.splitAtAntiMeridian();
+    CHECK(!split.second);
+    CHECK(split.first.getWest() == nonCrossing2.getWest());
+    CHECK(split.first.getEast() == nonCrossing2.getEast());
+    CHECK(split.first.getSouth() == nonCrossing2.getSouth());
+    CHECK(split.first.getNorth() == nonCrossing2.getNorth());
+
+    // Cross Antimeridian
+    GlobeRectangle crossing1 =
+        GlobeRectangle::fromDegrees(160.0, -20.0, -170.0, 40.0);
+    split = crossing1.splitAtAntiMeridian();
+    CHECK(split.first.getWest() == crossing1.getWest());
+    CHECK(split.first.getEast() == Math::OnePi);
+    CHECK(split.first.getSouth() == crossing1.getSouth());
+    CHECK(split.first.getNorth() == crossing1.getNorth());
+    REQUIRE(split.second);
+    CHECK(split.second->getWest() == -Math::OnePi);
+    CHECK(split.second->getEast() == crossing1.getEast());
+    CHECK(split.second->getSouth() == crossing1.getSouth());
+    CHECK(split.second->getNorth() == crossing1.getNorth());
+
+    // Same test, offset, with different returned order
+    GlobeRectangle crossing2 =
+        GlobeRectangle::fromDegrees(170.0, -20.0, -160.0, 40.0);
+    split = crossing2.splitAtAntiMeridian();
+    CHECK(split.first.getWest() == -Math::OnePi);
+    CHECK(split.first.getEast() == crossing2.getEast());
+    CHECK(split.first.getSouth() == crossing2.getSouth());
+    CHECK(split.first.getNorth() == crossing2.getNorth());
+    REQUIRE(split.second);
+    CHECK(split.second->getWest() == crossing2.getWest());
+    CHECK(split.second->getEast() == Math::OnePi);
+    CHECK(split.second->getSouth() == crossing2.getSouth());
+    CHECK(split.second->getNorth() == crossing2.getNorth());
+
+    // Cross Prime and Antimeridian
+    GlobeRectangle crossing3 =
+        GlobeRectangle::fromDegrees(-10.0, -20.0, -160.0, 40.0);
+    split = crossing3.splitAtAntiMeridian();
+    CHECK(split.first.getWest() == crossing3.getWest());
+    CHECK(split.first.getEast() == Math::OnePi);
+    CHECK(split.first.getSouth() == crossing3.getSouth());
+    CHECK(split.first.getNorth() == crossing3.getNorth());
+    REQUIRE(split.second);
+    CHECK(split.second->getWest() == -Math::OnePi);
+    CHECK(split.second->getEast() == crossing3.getEast());
+    CHECK(split.second->getSouth() == crossing3.getSouth());
+    CHECK(split.second->getNorth() == crossing3.getNorth());
+  }
 }
 
 TEST_CASE("GlobeRectangle::equalsEpsilon") {
