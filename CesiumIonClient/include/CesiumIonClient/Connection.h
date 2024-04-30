@@ -91,7 +91,6 @@ public:
    * allow access to.
    * @param openUrlCallback A function that is invoked to launch the user's web
    * browser with a given URL so that they can authorize access.
-   * @param appData The app data retrieved from the Cesium ion server.
    * @param ionApiUrl The base URL of the Cesium ion API.
    * @param ionAuthorizeUrl The URL of the Cesium ion OAuth authorization page.
    * @return A future that resolves to a Cesium ion {@link Connection} once the
@@ -105,7 +104,6 @@ public:
       const std::string& redirectPath,
       const std::vector<std::string>& scopes,
       std::function<void(const std::string&)>&& openUrlCallback,
-      const CesiumIonClient::ApplicationData& appData,
       const std::string& ionApiUrl = "https://api.cesium.com/",
       const std::string& ionAuthorizeUrl = "https://ion.cesium.com/oauth");
 
@@ -168,6 +166,11 @@ public:
    * @brief Gets the Cesium ion API base URL.
    */
   const std::string& getApiUrl() const noexcept { return this->_apiUrl; }
+
+  /**
+   * @brief Gets the application data describing the Cesium ion server.
+   */
+  const ApplicationData& getAppData() const noexcept { return this->_appData; }
 
   /**
    * @brief Retrieves profile information for the access token currently being
@@ -301,16 +304,6 @@ public:
   static std::optional<std::string> getIdFromToken(const std::string& token);
 
 private:
-  static CesiumAsync::Future<Connection> completeTokenExchange(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      int64_t clientID,
-      const std::string& ionApiUrl,
-      const CesiumIonClient::ApplicationData& appData,
-      const std::string& code,
-      const std::string& redirectUrl,
-      const std::string& codeVerifier);
-
   CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
 
   CesiumAsync::AsyncSystem _asyncSystem;

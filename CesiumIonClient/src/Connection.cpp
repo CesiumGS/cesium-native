@@ -103,9 +103,17 @@ std::string createAuthorizationErrorHtml(
          "<html>";
 }
 
-} // namespace
+CesiumAsync::Future<Connection> completeTokenExchange(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    int64_t clientID,
+    const std::string& ionApiUrl,
+    const CesiumIonClient::ApplicationData& appData,
+    const std::string& code,
+    const std::string& redirectUrl,
+    const std::string& codeVerifier);
 
-/*static*/ CesiumAsync::Future<Connection> Connection::authorize(
+CesiumAsync::Future<Connection> doAuthorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& friendlyApplicationName,
@@ -116,7 +124,6 @@ std::string createAuthorizationErrorHtml(
     const CesiumIonClient::ApplicationData& appData,
     const std::string& ionApiUrl,
     const std::string& ionAuthorizeUrl) {
-
   auto promise = asyncSystem.createPromise<Connection>();
 
   std::shared_ptr<httplib::Server> pServer =
@@ -202,7 +209,7 @@ std::string createAuthorizationErrorHtml(
         }
 
         try {
-          Connection connection = Connection::completeTokenExchange(
+          Connection connection = completeTokenExchange(
                                       asyncSystem,
                                       pAssetAccessor,
                                       clientID,
@@ -241,6 +248,59 @@ std::string createAuthorizationErrorHtml(
   openUrlCallback(authorizeUrl);
 
   return promise.getFuture();
+}
+
+} // namespace
+
+/*static*/ CesiumAsync::Future<Connection> Connection::authorize(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& friendlyApplicationName,
+    int64_t clientID,
+    const std::string& redirectPath,
+    const std::vector<std::string>& scopes,
+    std::function<void(const std::string&)>&& openUrlCallback,
+    const std::string& ionApiUrl,
+    const std::string& ionAuthorizeUrl) {
+  return Connection::appData(asyncSystem, pAssetAccessor, ionApiUrl)
+      .thenInMainThread([asyncSystem,
+                         pAssetAccessor,
+                         friendlyApplicationName,
+                         clientID,
+                         redirectPath,
+                         scopes,
+                         openUrlCallback = std::move(openUrlCallback),
+                         ionApiUrl,
+                         ionAuthorizeUrl](Response<ApplicationData>&&
+                                              appDataResponse) mutable {
+        if (!appDataResponse.value) {
+          auto promise = asyncSystem.createPromise<Connection>();
+          promise.reject(std::runtime_error(appDataResponse.errorMessage));
+          return promise.getFuture();
+        }
+
+        if (!appDataResponse.value->needsOauthAuthentication()) {
+          return asyncSystem.createResolvedFuture<CesiumIonClient::Connection>(
+              CesiumIonClient::Connection(
+                  asyncSystem,
+                  pAssetAccessor,
+                  "",
+                  *appDataResponse.value,
+                  ionApiUrl));
+        }
+
+        return doAuthorize(
+            asyncSystem,
+            pAssetAccessor,
+            friendlyApplicationName,
+            clientID,
+            redirectPath,
+            scopes,
+            std::move(openUrlCallback),
+            *appDataResponse.value,
+            ionApiUrl,
+            ionAuthorizeUrl);
+      });
 }
 
 Connection::Connection(
@@ -1072,7 +1132,9 @@ Connection::getIdFromToken(const std::string& token) {
   return jtiIt->value.GetString();
 }
 
-/*static*/ CesiumAsync::Future<Connection> Connection::completeTokenExchange(
+namespace {
+
+CesiumAsync::Future<Connection> completeTokenExchange(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t clientID,
@@ -1147,6 +1209,8 @@ Connection::getIdFromToken(const std::string& token) {
             ionApiUrl);
       });
 }
+
+} // namespace
 
 CesiumAsync::Future<Response<TokenList>>
 Connection::tokens(const std::string& url) const {
