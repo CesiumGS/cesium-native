@@ -246,6 +246,16 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
 }
 
+TEST_CASE("Read TriangleWithPaddingInGlbBin") {
+  std::filesystem::path glbFile = CesiumGltfReader_TEST_DATA_DIR;
+  glbFile /= "TriangleWithPaddingInGlbBin/TriangleWithPaddingInGlbBin.glb";
+  std::vector<std::byte> data = readFile(glbFile);
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(data);
+  REQUIRE(result.model);
+  REQUIRE(result.warnings.size() == 1);
+}
+
 TEST_CASE("Nested extras deserializes properly") {
   const std::string s = R"(
     {
