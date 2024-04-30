@@ -231,7 +231,7 @@ struct IndicesForFaceFromAccessor {
 
 /**
  * Visitor that retrieves the vertex index from the given accessor type as an
- * int64_t. This should be initialized with the index (within the 
+ * int64_t. This should be initialized with the index (within the
  * accessor itself) of the vertex index.
  *
  * -1 is used to indicate errors retrieving the index, e.g., if the given
