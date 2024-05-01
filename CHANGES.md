@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.35.0 - 2024-05-01
 
 ##### Breaking Changes :mega:
 
@@ -10,6 +10,7 @@
 
 ##### Additions :tada:
 
+- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `getComponentCountFromPropertyType` to `PropertyType`.
 - Added `removeExtension` to `ExtensibleObject`.
 - Added `IndexFromAccessor` to retrieve the index supplied by `IndexAccessorType`.
@@ -17,7 +18,6 @@
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added `GlobeRectangle::splitAtAntiMeridian`.
-- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `BoundingRegionBuilder::toGlobeRectangle`.
 - Added `GlobeRectangle::equals` and `GlobeRectangle::equalsEpsilon`.
 - `upsampleGltfForRasterOverlays` now accepts two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
