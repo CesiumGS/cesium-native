@@ -6,9 +6,11 @@
 
 - Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
+- `Connection::authorize` now requires an `ApplicationData` parameter, which represents the `appData` retrieved from a Cesium ion server.
 
 ##### Additions :tada:
 
+- Added `getComponentCountFromPropertyType` to `PropertyType`.
 - Added `removeExtension` to `ExtensibleObject`.
 - Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
@@ -49,6 +51,8 @@
 - Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 - `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
 - Fixed a bug that caused `GltfWriter` to create an invalid GLB if its total size would be greater than or equal to 4 GiB. Because it is not possible to produce a valid GLB of this size, GltfWriter now reports an error instead.
+- `CesiumUtility::Uri::resolve` can now properly parse protocol-relative URIs (such as `//example.com`).
+- Fixed a bug where the `GltfReader` was not able to read a model when the BIN chunk of the GLB data was more than 3 bytes larger than the size of the JSON-defined `buffer`.
 
 ### v0.34.0 - 2024-04-01
 

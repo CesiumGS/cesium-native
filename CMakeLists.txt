@@ -203,11 +203,10 @@ endif()
 install(TARGETS GSL)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 
-# ktx's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail.
-# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered
-# private to cesium-native), so just set the PUBLIC_HEADER to an empty string.
-set_target_properties(ktx PROPERTIES PUBLIC_HEADER "")
-install(TARGETS ktx)
+# Install with framework destination specified (needed for iOS)
+install(TARGETS ktx
+		FRAMEWORK
+			DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS webpdecoder)
 
