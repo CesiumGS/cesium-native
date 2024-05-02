@@ -679,6 +679,66 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
   }
 }
 
+TEST_CASE("Test IndexFromAccessor") {
+  Model model;
+
+  std::vector<uint32_t> indices{0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 6, 7, 8};
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(indices.size() * sizeof(uint32_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        indices.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
+  }
+
+  SECTION("Handles invalid accessor") {
+    REQUIRE(model.accessors.size() > 0);
+    // Wrong component type
+    IndexAccessorType indexAccessor =
+        AccessorView<uint8_t>(model, model.accessors[0]);
+    auto index = std::visit(IndexFromAccessor{0}, indexAccessor);
+    REQUIRE(index == -1);
+  }
+
+  SECTION("Handles invalid index") {
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+    auto index = std::visit(IndexFromAccessor{-1}, indexAccessor);
+    REQUIRE(index == -1);
+
+    index = std::visit(
+        IndexFromAccessor{static_cast<int64_t>(indices.size())},
+        indexAccessor);
+    REQUIRE(index == -1);
+  }
+
+  SECTION("Retrieves from valid accessor and index") {
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+
+    for (size_t i = 0; i < indices.size(); i++) {
+      auto index =
+          std::visit(IndexFromAccessor{static_cast<int64_t>(i)}, indexAccessor);
+      REQUIRE(index == indices[i]);
+    }
+  }
+}
+
 TEST_CASE("Test getTexCoordAccessorView") {
   Model model;
   std::vector<glm::vec2> texCoords0{
