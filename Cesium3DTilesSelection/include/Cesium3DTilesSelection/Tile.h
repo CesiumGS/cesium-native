@@ -476,6 +476,16 @@ public:
   bool isEmptyContent() const noexcept;
 
   /**
+   * @brief Determines if this tile has unknown content.
+   */
+  bool isUnknownContent() const noexcept;
+
+  /**
+   * Determines if this tile and all of its children are ready to unload.
+   */
+  bool isReadyToUnload() const noexcept;
+
+  /**
    * @brief get the loader that is used to load the tile content.
    */
   TilesetContentLoader* getLoader() const noexcept;

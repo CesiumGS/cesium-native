@@ -76,9 +76,6 @@ void unloadTileRecursively(
     Tile& tile,
     TilesetContentManager& tilesetContentManager) {
   tilesetContentManager.unloadTileContent(tile);
-  for (Tile& child : tile.getChildren()) {
-    unloadTileRecursively(child, tilesetContentManager);
-  }
 }
 
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
@@ -1037,9 +1034,11 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   TileContent& content = tile.getContent();
+  const bool isReadyToUnload = tile.isReadyToUnload();
 
-  // don't unload external or empty tile
-  if (content.isExternalContent() || content.isEmptyContent()) {
+  // don't unload external or empty tile while they're still loading
+  if ((content.isExternalContent() || content.isEmptyContent()) &&
+      !isReadyToUnload) {
     return false;
   }
 
@@ -1050,18 +1049,20 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
   tile.getMappedRasterTiles().clear();
 
-  // Unload the renderer resources and clear any raster overlay tiles. We can do
-  // this even if the tile can't be fully unloaded because this tile's geometry
-  // is being using by an async upsample operation (checked below).
-  switch (state) {
-  case TileLoadState::ContentLoaded:
-    unloadContentLoadedState(tile);
-    break;
-  case TileLoadState::Done:
-    unloadDoneState(tile);
-    break;
-  default:
-    break;
+  if (!tile.isEmptyContent() && !tile.isUnknownContent()) {
+    // Unload the renderer resources and clear any raster overlay tiles. We can
+    // do this even if the tile can't be fully unloaded because this tile's
+    // geometry is being using by an async upsample operation (checked below).
+    switch (state) {
+    case TileLoadState::ContentLoaded:
+      unloadContentLoadedState(tile);
+      break;
+    case TileLoadState::Done:
+      unloadDoneState(tile);
+      break;
+    default:
+      break;
+    }
   }
 
   // Are any children currently being upsampled from this tile?
@@ -1078,6 +1079,13 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     }
   }
 
+  // Make sure we unload all children
+  if (isReadyToUnload) {
+    for (Tile& child : tile.getChildren()) {
+      this->unloadTileContent(child);
+    }
+  }
+
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
@@ -1089,7 +1097,7 @@ void TilesetContentManager::unloadAll() {
   // TODO: use the linked-list of loaded tiles instead of walking the entire
   // tile tree.
   if (this->_pRootTile) {
-    unloadTileRecursively(*this->_pRootTile, *this);
+    this->unloadTileContent(*this->_pRootTile);
   }
 }
 
@@ -1424,7 +1432,10 @@ void TilesetContentManager::updateDoneState(
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
-  assert(pRenderContent && "Tile must have render content to be unloaded");
+  if (pRenderContent == nullptr) {
+    // No resources we need to clean up
+    return;
+  }
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(
@@ -1437,7 +1448,10 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
 void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
-  assert(pRenderContent && "Tile must have render content to be unloaded");
+  if (pRenderContent == nullptr) {
+    // No resources to clean up
+    return;
+  }
 
   void* pMainThreadRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(

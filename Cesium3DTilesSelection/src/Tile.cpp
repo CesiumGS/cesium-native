@@ -217,6 +217,25 @@ bool Tile::isEmptyContent() const noexcept {
   return this->_content.isEmptyContent();
 }
 
+bool Tile::isUnknownContent() const noexcept {
+  return this->_content.isUnknownContent();
+}
+
+bool Tile::isReadyToUnload() const noexcept {
+  if (this->getState() == TileLoadState::ContentLoading ||
+      this->getState() == TileLoadState::Unloading) {
+    return false;
+  }
+  
+  for (const Tile& child : this->_children) {
+    if (!child.isReadyToUnload()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 TilesetContentLoader* Tile::getLoader() const noexcept {
   return this->_pLoader;
 }
