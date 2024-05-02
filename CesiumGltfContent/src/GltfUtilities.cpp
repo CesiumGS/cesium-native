@@ -2,6 +2,7 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
@@ -319,14 +320,27 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   destination.byteLength = int64_t(destination.cesium.data.size());
 
+  // This accepts anything that is buffer view-like including regular buffer
+  // views and meshopt
+  const auto updateBufferView = [destinationIndex, start](auto& bufferView) {
+    bufferView.buffer = int32_t(destinationIndex);
+    bufferView.byteOffset += int64_t(start);
+  };
+
   // Update all the bufferViews that previously referred to the source Buffer to
   // refer to the destination Buffer instead.
   for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer != sourceIndex)
-      continue;
+    if (bufferView.buffer == sourceIndex) {
+      updateBufferView(bufferView);
+    }
 
-    bufferView.buffer = int32_t(destinationIndex);
-    bufferView.byteOffset += int64_t(start);
+    ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshopt) {
+      if (pMeshopt->buffer == sourceIndex) {
+        updateBufferView(*pMeshopt);
+      }
+    }
   }
 }
 
@@ -511,6 +525,20 @@ struct VisitBufferViewIds {
   }
 };
 
+struct VisitBufferIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (BufferView& bufferView : gltf.bufferViews) {
+      callback(bufferView.buffer);
+
+      ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+          bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+      if (pMeshopt) {
+        callback(pMeshopt->buffer);
+      }
+    }
+  }
+};
+
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
     Model& gltf,
@@ -605,6 +633,16 @@ void GltfUtilities::removeUnusedBufferViews(
       VisitBufferViewIds());
 }
 
+void GltfUtilities::removeUnusedBuffers(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedBufferIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedBufferIndices,
+      gltf.buffers,
+      VisitBufferIds());
+}
+
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
   for (size_t i = 0;
        i < gltf.buffers.size() && i < std::numeric_limits<int32_t>::max();
@@ -628,21 +666,35 @@ void deleteBufferRange(
 
   int64_t bytesToRemove = end - start;
 
-  // Adjust bufferView offets for the removed bytes.
+  // This accepts anything that is buffer view-like including regular buffer
+  // views and meshopt
+  const auto adjustBufferViewOffset =
+      [start, end, bytesToRemove](auto& bufferView) {
+        // Sanity check that we're not removing a part of the buffer used by
+        // this bufferView.
+        assert(
+            bufferView.byteOffset >= end ||
+            (bufferView.byteOffset + bufferView.byteLength) <= start);
+
+        // If this bufferView starts after the bytes we're removing, adjust the
+        // start position accordingly.
+        if (bufferView.byteOffset >= start) {
+          bufferView.byteOffset -= bytesToRemove;
+        }
+      };
+
+  // Adjust bufferView offsets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer != bufferIndex)
-      continue;
+    if (bufferView.buffer == bufferIndex) {
+      adjustBufferViewOffset(bufferView);
+    }
 
-    // Sanity check that we're not removing a part of the buffer used by this
-    // bufferView.
-    assert(
-        bufferView.byteOffset >= end ||
-        (bufferView.byteOffset + bufferView.byteLength) <= start);
-
-    // If this bufferView starts after the bytes we're removing, adjust the
-    // start position accordingly.
-    if (bufferView.byteOffset >= start) {
-      bufferView.byteOffset -= bytesToRemove;
+    ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshopt) {
+      if (pMeshopt->buffer == bufferIndex) {
+        adjustBufferViewOffset(*pMeshopt);
+      }
     }
   }
 
@@ -676,10 +728,9 @@ void GltfUtilities::compactBuffer(
 
   std::vector<BufferRange> usedRanges;
 
-  for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer != bufferIndex)
-      continue;
-
+  // This accepts anything that is buffer view-like including regular buffer
+  // views and meshopt
+  const auto updateUsedRanges = [&usedRanges](auto& bufferView) {
     int64_t start = bufferView.byteOffset;
     int64_t end = start + bufferView.byteLength;
 
@@ -706,6 +757,20 @@ void GltfUtilities::compactBuffer(
         // New range overlaps the next, so combine them.
         it->end = std::max(it->end, nextIt->end);
         it = usedRanges.erase(nextIt) - 1;
+      }
+    }
+  };
+
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer == bufferIndex) {
+      updateUsedRanges(bufferView);
+    }
+
+    ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshopt) {
+      if (pMeshopt->buffer == bufferIndex) {
+        updateUsedRanges(*pMeshopt);
       }
     }
   }

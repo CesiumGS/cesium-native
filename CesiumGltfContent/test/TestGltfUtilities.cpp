@@ -1,3 +1,4 @@
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -364,6 +365,45 @@ TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
   }
 }
 
+TEST_CASE("GltfUtilities::removeUnusedBuffers") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.buffers.emplace_back();
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(m.buffers.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back().buffer = 0;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(!m.buffers.empty());
+  }
+
+  SECTION("does not remove buffer used by EXT_meshopt_compression") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back()
+        .addExtension<ExtensionBufferViewExtMeshoptCompression>()
+        .buffer = 0;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(!m.buffers.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+
+    m.bufferViews.emplace_back().buffer = 1;
+
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(m.buffers.size() == 1);
+
+    REQUIRE(m.bufferViews.size() == 1);
+    CHECK(m.bufferViews[0].buffer == 0);
+  }
+}
+
 TEST_CASE("GltfUtilities::compactBuffers") {
   Model m;
 
@@ -422,6 +462,24 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
       CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+    }
+  }
+
+  SECTION("does not remove bytes used by EXT_meshopt_compression") {
+    ExtensionBufferViewExtMeshoptCompression& meshopt =
+        m.bufferViews.emplace_back()
+            .addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    meshopt.buffer = 0;
+    meshopt.byteOffset = 0;
+    meshopt.byteLength = 113;
+
+    GltfUtilities::compactBuffers(m);
+
+    CHECK(buffer.byteLength == 113);
+    REQUIRE(buffer.cesium.data.size() == 113);
+
+    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i));
     }
   }
 }
