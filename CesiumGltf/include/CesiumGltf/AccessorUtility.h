@@ -230,6 +230,29 @@ struct IndicesForFaceFromAccessor {
 }; // namespace CesiumGltf
 
 /**
+ * Visitor that retrieves the vertex index from the given accessor type as an
+ * int64_t. This should be initialized with the index (within the
+ * accessor itself) of the vertex index.
+ *
+ * -1 is used to indicate errors retrieving the index, e.g., if the given
+ * index was out-of-bounds.
+ */
+struct IndexFromAccessor {
+  int64_t operator()(std::monostate) { return -1; }
+
+  template <typename T>
+  int64_t operator()(const CesiumGltf::AccessorView<T>& value) {
+    if (index < 0 || index >= value.size()) {
+      return -1;
+    }
+
+    return value[index];
+  }
+
+  int64_t index;
+};
+
+/**
  * Type definition for all kinds of texture coordinate (TEXCOORD_n) accessors.
  */
 typedef std::variant<

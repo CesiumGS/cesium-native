@@ -28,11 +28,18 @@
 #include <sstream>
 #include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
-#include <stb_image.h>
+
+namespace Cesium {
+// Use STB resize in our own namespace to avoid conflicts from other libs
+#define STBIRDEF
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
+#undef STBIRDEF
+}; // namespace Cesium
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include <turbojpeg.h>
 
 using namespace CesiumAsync;
@@ -40,6 +47,7 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
+using namespace Cesium;
 
 namespace {
 #pragma pack(push, 1)
