@@ -628,6 +628,15 @@ void deleteBufferRange(
 
   int64_t bytesToRemove = end - start;
 
+  // In order to ensure that we can't disrupt glTF's alignment requirements,
+  // only remove multiples of 8 bytes. Round down to the nearest multiple of 8
+  // by clearing the lowest three bits.
+  bytesToRemove = bytesToRemove & ~0b111;
+  if (bytesToRemove == 0)
+    return;
+
+  end = start + bytesToRemove;
+
   // Adjust bufferView offets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
     if (bufferView.buffer != bufferIndex)

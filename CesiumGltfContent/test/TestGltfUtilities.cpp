@@ -383,12 +383,12 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     GltfUtilities::compactBuffers(m);
 
-    CHECK(buffer.byteLength == 113);
-    REQUIRE(buffer.cesium.data.size() == 113);
-    CHECK(bv.byteOffset == 0);
+    CHECK(buffer.byteLength == 123 - 8);
+    REQUIRE(buffer.cesium.data.size() == 123 - 8);
+    CHECK(bv.byteOffset == 2);
 
-    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
-      CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+    for (size_t i = bv.byteOffset; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i + 8));
     }
   }
 
@@ -400,10 +400,10 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     GltfUtilities::compactBuffers(m);
 
-    CHECK(buffer.byteLength == 113);
-    REQUIRE(buffer.cesium.data.size() == 113);
+    CHECK(buffer.byteLength == 123 - 8);
+    REQUIRE(buffer.cesium.data.size() == 123 - 8);
 
-    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+    for (size_t i = 0; i < buffer.cesium.data.size() - 2; ++i) {
       CHECK(buffer.cesium.data[i] == std::byte(i));
     }
   }
@@ -416,12 +416,12 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     GltfUtilities::compactBuffers(m);
 
-    CHECK(buffer.byteLength == 103);
-    REQUIRE(buffer.cesium.data.size() == 103);
-    CHECK(bv.byteOffset == 0);
+    CHECK(buffer.byteLength == 123 - 8 - 8);
+    REQUIRE(buffer.cesium.data.size() == 123 - 8 - 8);
+    CHECK(bv.byteOffset == 2);
 
-    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
-      CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+    for (size_t i = 2; i < buffer.cesium.data.size() - 2; ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i + 8));
     }
   }
 }
