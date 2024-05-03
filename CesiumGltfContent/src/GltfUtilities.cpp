@@ -299,12 +299,12 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   }
 
   // Copy the data to the destination and keep track of where we put it.
-  // Align each bufferView to a 4-byte boundary.
+  // Align each bufferView to an 8-byte boundary.
   size_t start = destination.cesium.data.size();
 
-  size_t alignmentRemainder = start % 4;
+  size_t alignmentRemainder = start % 8;
   if (alignmentRemainder != 0) {
-    start += 4 - alignmentRemainder;
+    start += 8 - alignmentRemainder;
   }
 
   destination.cesium.data.resize(start + source.cesium.data.size());
@@ -627,6 +627,18 @@ void deleteBufferRange(
   assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   int64_t bytesToRemove = end - start;
+
+  // In order to ensure that we can't disrupt glTF's alignment requirements,
+  // only remove multiples of 8 bytes from within the buffer (removing any
+  // number of bytes from the end is fine).
+  if (end < pBuffer->byteLength) {
+    // Round down to the nearest multiple of 8 by clearing the low three bits.
+    bytesToRemove = bytesToRemove & ~0b111;
+    if (bytesToRemove == 0)
+      return;
+
+    end = start + bytesToRemove;
+  }
 
   // Adjust bufferView offets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
