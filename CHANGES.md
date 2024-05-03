@@ -2,14 +2,29 @@
 
 ### ? - ?
 
+##### Fixes :wrench:
+
+- Added support for the following glTF extensions to `Model::merge`. Previously these extensions could end up broken after merging.
+  - `KHR_texture_basisu`
+  - `EXT_texture_webp`
+  - `EXT_mesh_gpu_instancing`
+  - `CESIUM_primitive_outline`
+  - `CESIUM_tile_edges`
+
+### v0.35.0 - 2024-05-01
+
 ##### Breaking Changes :mega:
 
 - Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
+- `Connection::authorize` now requires an `ApplicationData` parameter, which represents the `appData` retrieved from a Cesium ion server.
 
 ##### Additions :tada:
 
+- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- Added `getComponentCountFromPropertyType` to `PropertyType`.
 - Added `removeExtension` to `ExtensibleObject`.
+- Added `IndexFromAccessor` to retrieve the index supplied by `IndexAccessorType`.
 - Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
@@ -51,6 +66,8 @@
 - After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
 - For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
 - Fixed a bug that caused `GltfWriter` to create an invalid GLB if its total size would be greater than or equal to 4 GiB. Because it is not possible to produce a valid GLB of this size, GltfWriter now reports an error instead.
+- `CesiumUtility::Uri::resolve` can now properly parse protocol-relative URIs (such as `//example.com`).
+- Fixed a bug where the `GltfReader` was not able to read a model when the BIN chunk of the GLB data was more than 3 bytes larger than the size of the JSON-defined `buffer`.
 
 ### v0.34.0 - 2024-04-01
 

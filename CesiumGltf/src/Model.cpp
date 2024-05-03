@@ -1,10 +1,15 @@
 #include "CesiumGltf/Model.h"
 
 #include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/ExtensionCesiumPrimitiveOutline.h"
+#include "CesiumGltf/ExtensionCesiumTileEdges.h"
 #include "CesiumGltf/ExtensionExtMeshFeatures.h"
+#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
 #include "CesiumGltf/ExtensionKhrDracoMeshCompression.h"
+#include "CesiumGltf/ExtensionKhrTextureBasisu.h"
 #include "CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h"
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/ExtensionTextureWebp.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
@@ -248,6 +253,21 @@ ErrorList Model::merge(Model&& rhs) {
           }
         }
       }
+
+      ExtensionCesiumTileEdges* pTileEdges =
+          primitive.getExtension<ExtensionCesiumTileEdges>();
+      if (pTileEdges) {
+        updateIndex(pTileEdges->left, firstAccessor);
+        updateIndex(pTileEdges->bottom, firstAccessor);
+        updateIndex(pTileEdges->right, firstAccessor);
+        updateIndex(pTileEdges->top, firstAccessor);
+      }
+
+      ExtensionCesiumPrimitiveOutline* pPrimitiveOutline =
+          primitive.getExtension<ExtensionCesiumPrimitiveOutline>();
+      if (pPrimitiveOutline) {
+        updateIndex(pPrimitiveOutline->indices, firstAccessor);
+      }
     }
   }
 
@@ -260,6 +280,14 @@ ErrorList Model::merge(Model&& rhs) {
 
     for (auto& nodeIndex : node.children) {
       updateIndex(nodeIndex, firstNode);
+    }
+
+    ExtensionExtMeshGpuInstancing* pInstancing =
+        node.getExtension<ExtensionExtMeshGpuInstancing>();
+    if (pInstancing) {
+      for (auto& pair : pInstancing->attributes) {
+        updateIndex(pair.second, firstAccessor);
+      }
     }
   }
 
@@ -286,6 +314,15 @@ ErrorList Model::merge(Model&& rhs) {
 
     updateIndex(texture.sampler, firstSampler);
     updateIndex(texture.source, firstImage);
+
+    ExtensionKhrTextureBasisu* pKtx =
+        texture.getExtension<ExtensionKhrTextureBasisu>();
+    if (pKtx)
+      updateIndex(pKtx->source, firstImage);
+
+    ExtensionTextureWebp* pWebP = texture.getExtension<ExtensionTextureWebp>();
+    if (pWebP)
+      updateIndex(pWebP->source, firstImage);
   }
 
   for (size_t i = firstMaterial; i < this->materials.size(); ++i) {
