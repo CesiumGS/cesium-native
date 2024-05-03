@@ -1,9 +1,14 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
 
+#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
+#include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
 
 #include <catch2/catch.hpp>
 #include <glm/common.hpp>
@@ -1142,6 +1147,132 @@ TEST_CASE("Model::merge") {
         CHECK(pMeshFeatures2->featureIds[0].texture->index == 1);
       }
     }
+  }
+
+  SECTION("updates image index in KHR_texture_basisu") {
+    Model m1;
+    m1.images.emplace_back();
+
+    Model m2;
+    m2.images.emplace_back();
+    Texture& texture = m2.textures.emplace_back();
+    ExtensionKhrTextureBasisu& extension =
+        texture.addExtension<ExtensionKhrTextureBasisu>();
+    extension.source = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.images.size() == 2);
+    REQUIRE(m1.textures.size() == 1);
+
+    ExtensionKhrTextureBasisu* pMerged =
+        m1.textures[0].getExtension<ExtensionKhrTextureBasisu>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->source == 1);
+  }
+
+  SECTION("updates image index in EXT_texture_webp") {
+    Model m1;
+    m1.images.emplace_back();
+
+    Model m2;
+    m2.images.emplace_back();
+    Texture& texture = m2.textures.emplace_back();
+    ExtensionTextureWebp& extension =
+        texture.addExtension<ExtensionTextureWebp>();
+    extension.source = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.images.size() == 2);
+    REQUIRE(m1.textures.size() == 1);
+
+    ExtensionTextureWebp* pMerged =
+        m1.textures[0].getExtension<ExtensionTextureWebp>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->source == 1);
+  }
+
+  SECTION("updates accessor index in CESIUM_primitive_outline") {
+    Model m1;
+    m1.accessors.emplace_back();
+
+    Model m2;
+    m2.accessors.emplace_back();
+    MeshPrimitive& primitive =
+        m2.meshes.emplace_back().primitives.emplace_back();
+    ExtensionCesiumPrimitiveOutline& extension =
+        primitive.addExtension<ExtensionCesiumPrimitiveOutline>();
+    extension.indices = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.accessors.size() == 2);
+    REQUIRE(m1.meshes.size() == 1);
+    REQUIRE(m1.meshes[0].primitives.size() == 1);
+
+    ExtensionCesiumPrimitiveOutline* pMerged =
+        m1.meshes[0]
+            .primitives[0]
+            .getExtension<ExtensionCesiumPrimitiveOutline>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->indices == 1);
+  }
+
+  SECTION("updates accessor indices in CESIUM_tile_edges") {
+    Model m1;
+    m1.accessors.emplace_back();
+
+    Model m2;
+    m2.accessors.emplace_back();
+    MeshPrimitive& primitive =
+        m2.meshes.emplace_back().primitives.emplace_back();
+    ExtensionCesiumTileEdges& extension =
+        primitive.addExtension<ExtensionCesiumTileEdges>();
+    extension.left = 0;
+    extension.bottom = 0;
+    extension.right = 0;
+    extension.top = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.accessors.size() == 2);
+    REQUIRE(m1.meshes.size() == 1);
+    REQUIRE(m1.meshes[0].primitives.size() == 1);
+
+    ExtensionCesiumTileEdges* pMerged =
+        m1.meshes[0].primitives[0].getExtension<ExtensionCesiumTileEdges>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->left == 1);
+    CHECK(pMerged->bottom == 1);
+    CHECK(pMerged->right == 1);
+    CHECK(pMerged->top == 1);
+  }
+
+  SECTION("updates accessor indices in EXT_mesh_gpu_instancing") {
+    Model m1;
+    m1.accessors.emplace_back();
+
+    Model m2;
+    m2.accessors.emplace_back();
+    Node& node = m2.nodes.emplace_back();
+
+    ExtensionExtMeshGpuInstancing& extension =
+        node.addExtension<ExtensionExtMeshGpuInstancing>();
+    extension.attributes["foo"] = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.accessors.size() == 2);
+    REQUIRE(m1.nodes.size() == 1);
+
+    ExtensionExtMeshGpuInstancing* pMerged =
+        m1.nodes[0].getExtension<ExtensionExtMeshGpuInstancing>();
+    REQUIRE(pMerged);
+
+    auto it = pMerged->attributes.find("foo");
+    REQUIRE(it != pMerged->attributes.end());
+    CHECK(it->second == 1);
   }
 }
 

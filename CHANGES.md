@@ -2,6 +2,19 @@
 
 ### ? - ?
 
+##### Fixes :wrench:
+
+- Added support for the following glTF extensions to `Model::merge`. Previously these extensions could end up broken after merging.
+  - `KHR_texture_basisu`
+  - `EXT_texture_webp`
+  - `EXT_mesh_gpu_instancing`
+  - `CESIUM_primitive_outline`
+  - `CESIUM_tile_edges`
+- Fixed a bug in `GltfUtilities::compactBuffer` where it would not preserve the alignment of the bufferViews.
+- The `collapseToSingleBuffer` and `moveBufferContent` functions in `GltfUtilities` now align to an 8-byte boundary rather than a 4-byte boundary, because bufferViews associated with some glTF extensions require this larger alignment.
+
+### v0.35.0 - 2024-05-01
+
 ##### Breaking Changes :mega:
 
 - Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
@@ -10,13 +23,14 @@
 
 ##### Additions :tada:
 
+- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- Added `getComponentCountFromPropertyType` to `PropertyType`.
 - Added `removeExtension` to `ExtensibleObject`.
 - Added `IndexFromAccessor` to retrieve the index supplied by `IndexAccessorType`.
 - Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
 - Added `Uri::getPath` and `Uri::setPath`.
 - Added `TileTransform::setTransform`.
 - Added `GlobeRectangle::splitAtAntiMeridian`.
-- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
 - Added `BoundingRegionBuilder::toGlobeRectangle`.
 - Added `GlobeRectangle::equals` and `GlobeRectangle::equalsEpsilon`.
 - `upsampleGltfForRasterOverlays` now accepts two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
@@ -50,6 +64,7 @@
 - Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
 - `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
 - Fixed a bug that caused `GltfWriter` to create an invalid GLB if its total size would be greater than or equal to 4 GiB. Because it is not possible to produce a valid GLB of this size, GltfWriter now reports an error instead.
+- `CesiumUtility::Uri::resolve` can now properly parse protocol-relative URIs (such as `//example.com`).
 - Fixed a bug where the `GltfReader` was not able to read a model when the BIN chunk of the GLB data was more than 3 bytes larger than the size of the JSON-defined `buffer`.
 
 ### v0.34.0 - 2024-04-01
