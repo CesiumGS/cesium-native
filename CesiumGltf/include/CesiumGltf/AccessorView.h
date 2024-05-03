@@ -449,8 +449,23 @@ createAccessorView(
         model,
         accessor,
         std::forward<TCallback>(callback));
+  case Accessor::ComponentType::INT:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, int32_t>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
   case Accessor::ComponentType::UNSIGNED_INT:
     return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint32_t>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
+  case Accessor::ComponentType::INT64:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, int64_t>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
+  case Accessor::ComponentType::UNSIGNED_INT64:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint64_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));

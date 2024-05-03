@@ -30,7 +30,13 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
 
     static constexpr int32_t UNSIGNED_SHORT = 5123;
 
+    static constexpr int32_t INT = 5124;
+
     static constexpr int32_t UNSIGNED_INT = 5125;
+
+    static constexpr int32_t INT64 = 5134;
+
+    static constexpr int32_t UNSIGNED_INT64 = 5135;
 
     static constexpr int32_t FLOAT = 5126;
 
