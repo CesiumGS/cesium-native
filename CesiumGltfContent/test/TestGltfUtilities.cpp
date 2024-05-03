@@ -387,7 +387,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     REQUIRE(buffer.cesium.data.size() == 123 - 8);
     CHECK(bv.byteOffset == 2);
 
-    for (size_t i = bv.byteOffset; i < buffer.cesium.data.size(); ++i) {
+    for (size_t i = size_t(bv.byteOffset); i < buffer.cesium.data.size(); ++i) {
       CHECK(buffer.cesium.data[i] == std::byte(i + 8));
     }
   }
