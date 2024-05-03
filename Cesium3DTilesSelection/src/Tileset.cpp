@@ -302,8 +302,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
 
-  ASSERT(deltaTime == 0.5f && "this should fire");
-
   this->_asyncSystem.dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
