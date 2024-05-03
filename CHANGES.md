@@ -1,5 +1,16 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Added support for the following glTF extensions to `Model::merge`. Previously these extensions could end up broken after merging.
+  - `KHR_texture_basisu`
+  - `EXT_texture_webp`
+  - `EXT_mesh_gpu_instancing`
+  - `CESIUM_primitive_outline`
+  - `CESIUM_tile_edges`
+
 ### v0.35.0 - 2024-05-01
 
 ##### Breaking Changes :mega:
