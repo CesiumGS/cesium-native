@@ -10,6 +10,7 @@
   - `EXT_mesh_gpu_instancing`
   - `CESIUM_primitive_outline`
   - `CESIUM_tile_edges`
+- Fixed a bug in `GltfUtilities::compactBuffer` where it would not preserve the alignment of the bufferViews.
 
 ### v0.35.0 - 2024-05-01
 
