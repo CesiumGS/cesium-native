@@ -1,5 +1,18 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Added support for the following glTF extensions to `Model::merge`. Previously these extensions could end up broken after merging.
+  - `KHR_texture_basisu`
+  - `EXT_texture_webp`
+  - `EXT_mesh_gpu_instancing`
+  - `CESIUM_primitive_outline`
+  - `CESIUM_tile_edges`
+- Fixed a bug in `GltfUtilities::compactBuffer` where it would not preserve the alignment of the bufferViews.
+- The `collapseToSingleBuffer` and `moveBufferContent` functions in `GltfUtilities` now align to an 8-byte boundary rather than a 4-byte boundary, because bufferViews associated with some glTF extensions require this larger alignment.
+
 ### v0.35.0 - 2024-05-01
 
 ##### Breaking Changes :mega:
