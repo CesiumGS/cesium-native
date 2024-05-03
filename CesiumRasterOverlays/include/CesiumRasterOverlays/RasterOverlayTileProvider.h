@@ -12,7 +12,6 @@
 
 #include <spdlog/fwd.h>
 
-#include <cassert>
 #include <optional>
 
 namespace CesiumRasterOverlays {
@@ -290,7 +289,7 @@ public:
    * @brief Returns the number of tiles that are currently loading.
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
-    assert(this->_totalTilesCurrentlyLoading > -1);
+    ASSERT(this->_totalTilesCurrentlyLoading > -1);
     return this->_totalTilesCurrentlyLoading;
   }
 

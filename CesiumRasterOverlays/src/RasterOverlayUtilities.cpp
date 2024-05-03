@@ -6,6 +6,7 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <algorithm>
@@ -179,7 +180,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
 
           [[maybe_unused]] CesiumGltf::AccessorWriter<glm::vec2>& uvWriter =
               uvWriters.emplace_back(gltf, uvAccessorId);
-          assert(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
+          ASSERT(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
           std::string attributeName =
               std::string(textureCoordinateAttributeBaseName) +

@@ -774,7 +774,7 @@ ImageReaderResult GltfReader::readImage(
               image.mipPositions[level] = {imageOffset, imageSize};
             }
           } else {
-            assert(pTexture->numLevels == 1);
+            ASSERT(pTexture->numLevels == 1);
           }
 
           // Copy over the entire buffer, including all mips.

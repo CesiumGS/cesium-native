@@ -8,7 +8,6 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 
-#include <cassert>
 #include <variant>
 
 using namespace CesiumRasterOverlays;
@@ -33,7 +32,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 
   // The tile content manager guarantees that the parent tile is already loaded
   // before upsampled tile is loaded. If that's not the case, it's a bug
-  assert(
+  ASSERT(
       pParent->getState() == TileLoadState::Done &&
       "Parent must be loaded before upsampling");
 

@@ -15,6 +15,7 @@
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumUtility/Assert.h>
 
 #include <glm/gtc/quaternion.hpp>
 
@@ -284,8 +285,8 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
     CesiumGltf::Buffer& source) {
   // Assert that the byteLength and the size of the cesium data vector are in
   // sync.
-  assert(source.byteLength == int64_t(source.cesium.data.size()));
-  assert(destination.byteLength == int64_t(destination.cesium.data.size()));
+  ASSERT(source.byteLength == int64_t(source.cesium.data.size()));
+  ASSERT(destination.byteLength == int64_t(destination.cesium.data.size()));
 
   int64_t sourceIndex = &source - &gltf.buffers[0];
   int64_t destinationIndex = &destination - &gltf.buffers[0];
@@ -294,7 +295,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   if (sourceIndex < 0 || sourceIndex >= int64_t(gltf.buffers.size()) ||
       destinationIndex < 0 ||
       destinationIndex >= int64_t(gltf.buffers.size())) {
-    assert(false);
+    ASSERT(false);
     return;
   }
 
@@ -535,7 +536,7 @@ void removeUnusedElements(
   visitFunction(gltf, [&indexMap](int32_t& elementIndex) {
     if (elementIndex >= 0 && size_t(elementIndex) < indexMap.size()) {
       int32_t newIndex = indexMap[size_t(elementIndex)];
-      assert(newIndex >= 0);
+      ASSERT(newIndex >= 0);
       elementIndex = newIndex;
     }
   });
@@ -547,7 +548,7 @@ void removeUnusedElements(
           elements.end(),
           [&usedElements, &elements](T& element) {
             int64_t index = &element - &elements[0];
-            assert(index >= 0 && size_t(index) < usedElements.size());
+            ASSERT(index >= 0 && size_t(index) < usedElements.size());
             return !usedElements[size_t(index)];
           }),
       elements.end());
@@ -624,7 +625,7 @@ void deleteBufferRange(
   if (pBuffer == nullptr)
     return;
 
-  assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+  ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   int64_t bytesToRemove = end - start;
 
@@ -647,7 +648,7 @@ void deleteBufferRange(
 
     // Sanity check that we're not removing a part of the buffer used by this
     // bufferView.
-    assert(
+    ASSERT(
         bufferView.byteOffset >= end ||
         (bufferView.byteOffset + bufferView.byteLength) <= start);
 
@@ -674,7 +675,7 @@ void GltfUtilities::compactBuffer(
   if (!pBuffer)
     return;
 
-  assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+  ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   struct BufferRange {
     int64_t start; // first byte

@@ -302,6 +302,8 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
 
+  ASSERT(deltaTime == 0.5f && "this should fire");
+
   this->_asyncSystem.dispatchMainThreadTasks();
 
   const int32_t previousFrameNumber = this->_previousFrameNumber;
@@ -492,7 +494,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
        asyncSystem =
            this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
         Tile* pRoot = pManager->getRootTile();
-        assert(pRoot);
+        ASSERT(pRoot);
 
         TileExternalContent* pExternal =
             pRoot->getContent().getExternalContent();
@@ -512,7 +514,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
             .thenInMainThread(
                 [pManager, pAssetAccessor]() -> const TilesetMetadata* {
                   Tile* pRoot = pManager->getRootTile();
-                  assert(pRoot);
+                  ASSERT(pRoot);
 
                   TileExternalContent* pExternal =
                       pRoot->getContent().getExternalContent();
@@ -1516,13 +1518,13 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   // Assert that this tile hasn't been added to a queue already.
-  assert(
+  ASSERT(
       std::find_if(
           this->_workerThreadLoadQueue.begin(),
           this->_workerThreadLoadQueue.end(),
           [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
       this->_workerThreadLoadQueue.end());
-  assert(
+  ASSERT(
       std::find_if(
           this->_mainThreadLoadQueue.begin(),
           this->_mainThreadLoadQueue.end(),

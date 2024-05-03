@@ -1,6 +1,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include <CesiumUtility/Assert.h>
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/mat3x3.hpp>
@@ -68,9 +69,9 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
     double scaleToMeters,
     const Ellipsoid& ellipsoid) {
   // The three axes must be orthogonal
-  assert(directionToAxis(xAxisDirection) != directionToAxis(yAxisDirection));
-  assert(directionToAxis(xAxisDirection) != directionToAxis(zAxisDirection));
-  assert(directionToAxis(yAxisDirection) != directionToAxis(zAxisDirection));
+  ASSERT(directionToAxis(xAxisDirection) != directionToAxis(yAxisDirection));
+  ASSERT(directionToAxis(xAxisDirection) != directionToAxis(zAxisDirection));
+  ASSERT(directionToAxis(yAxisDirection) != directionToAxis(zAxisDirection));
 
   // Construct a local horizontal system with East-North-Up axes (right-handed)
   glm::dmat4 enuToFixed =

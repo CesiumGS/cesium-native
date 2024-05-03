@@ -8,7 +8,6 @@
 #include <CesiumQuantizedMeshTerrain/Layer.h>
 #include <CesiumQuantizedMeshTerrain/LayerReader.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumQuantizedMeshTerrain {
@@ -135,7 +134,6 @@ LayerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangle.h>
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangleReader.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumQuantizedMeshTerrain {

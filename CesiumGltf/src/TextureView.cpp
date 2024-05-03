@@ -3,6 +3,8 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/SamplerUtility.h"
 
+#include <CesiumUtility/Assert.h>
+
 namespace CesiumGltf {
 
 TextureView::TextureView() noexcept
@@ -112,7 +114,7 @@ std::vector<uint8_t> TextureView::sampleNearestPixel(
     double u,
     double v,
     const std::vector<int64_t>& channels) const noexcept {
-  assert(this->_textureViewStatus == TextureViewStatus::Valid);
+  ASSERT(this->_textureViewStatus == TextureViewStatus::Valid);
   std::vector<uint8_t> result(channels.size());
 
   if (channels.size() == 0) {

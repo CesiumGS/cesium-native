@@ -68,7 +68,7 @@ RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
   // be destroyed before the tile provider that created them.
   if (this->_pPlaceholder) {
-    assert(this->_pPlaceholder->getReferenceCount() == 1);
+    ASSERT(this->_pPlaceholder->getReferenceCount() == 1);
     this->_pPlaceholder = nullptr;
   }
 }
@@ -89,7 +89,7 @@ RasterOverlayTileProvider::getTile(
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
-  assert(pTile->getReferenceCount() == 0);
+  ASSERT(pTile->getReferenceCount() == 0);
 
   this->_tileDataBytes -= pTile->getImage().sizeBytes;
 }
