@@ -18,4 +18,4 @@
 
 // Define our own assertion, so that users of this library can forcebly turn
 // them on if needed
-#define ASSERT assert
+#define ASSERT(expression) assert(expression)
