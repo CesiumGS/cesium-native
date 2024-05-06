@@ -48,6 +48,16 @@ struct ContentKindSetter {
   }
 
   void operator()(CesiumGltf::Model&& model) {
+    for (CesiumGltf::Image& image : model.images) {
+      // If the image size hasn't been overridden, store the pixelData
+      // size now. We'll be adding this number to our total memory usage soon,
+      // and remove it when the tile is later unloaded, and we must use
+      // the same size in each case.
+      if (image.cesium.sizeBytes < 0) {
+        image.cesium.sizeBytes = int64_t(image.cesium.pixelData.size());
+      }
+    }
+
     auto pRenderContent = std::make_unique<TileRenderContent>(std::move(model));
     pRenderContent->setRenderResources(pRenderResources);
     if (rasterOverlayDetails) {
@@ -385,7 +395,7 @@ void calcRasterOverlayDetailsInWorkerThread(
           pRegion ? std::make_optional(pRegion->getRectangle()) : std::nullopt,
           std::move(projections),
           false,
-          "_CESIUMOVERLAY_",
+          RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
           firstRasterOverlayTexCoord);
 
   if (pRegion && overlayDetails) {
@@ -512,6 +522,8 @@ postProcessContentInWorkerThread(
   CesiumGltfReader::GltfReaderOptions gltfOptions;
   gltfOptions.ktx2TranscodeTargets =
       tileLoadInfo.contentOptions.ktx2TranscodeTargets;
+  gltfOptions.applyTextureTransform =
+      tileLoadInfo.contentOptions.applyTextureTransform;
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
   auto pAssetAccessor = tileLoadInfo.pAssetAccessor;

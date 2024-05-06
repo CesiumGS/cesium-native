@@ -16,6 +16,7 @@ if(IOS)
   set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0" CACHE STRING "iOS Deployment Target")
 endif()
 
+set(KTX_FEATURE_TOOLS off)
 add_subdirectory(KTX-Software)
 
 option(WEBP_BUILD_ANIM_UTILS "" off)
@@ -66,9 +67,11 @@ target_include_directories(
 
 add_subdirectory(asyncplusplus)
 
-set(SPDLOG_BUILD_TESTING OFF CACHE INTERNAL "Disable SPDLOG Testing")
-add_subdirectory(spdlog)
-target_compile_definitions(spdlog PUBLIC _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+if (NOT TARGET spdlog::spdlog)
+    set(SPDLOG_BUILD_TESTING OFF CACHE INTERNAL "Disable SPDLOG Testing")
+    add_subdirectory(spdlog)
+    target_compile_definitions(spdlog PUBLIC _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+endif()
 
 if (NOT TARGET sqlite3)
   add_subdirectory(sqlite3)

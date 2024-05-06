@@ -69,6 +69,8 @@ function splitSchemaPath(schemaPath) {
   return { schemaName, schemaBasePath };
 }
 
+const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
+
 const schemaBasePaths = [];
 for (const schemaPath of argv.schemas) {
   const { _, schemaBasePath } = splitSchemaPath(schemaPath);
@@ -77,6 +79,16 @@ for (const schemaPath of argv.schemas) {
 
 const schemaCache = new SchemaCache(schemaBasePaths, argv.extensions);
 
+// Add extensions to schema cache so that extensions can extend objects in other extensions
+for (const extension of config.extensions) {
+  const extensionSchema = schemaCache.loadExtension(
+    extension.schema,
+    extension.extensionName
+  );
+  const { _, schemaBasePath } = splitSchemaPath(extensionSchema.sourcePath);
+  schemaCache.schemaPaths.push(schemaBasePath);
+}
+
 let schemas = [];
 for (const schemaPath of argv.schemas) {
   const { schemaName, _ } = splitSchemaPath(schemaPath);
@@ -84,8 +96,6 @@ for (const schemaPath of argv.schemas) {
   schemas.push(schema);
 }
 const rootSchema = schemas[0];
-
-const config = JSON.parse(fs.readFileSync(argv.config, "utf-8"));
 
 if (argv.oneHandlerFile) {
   // Clear the handler implementation file, and then we'll append to it in `generate`.

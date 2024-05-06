@@ -16,6 +16,7 @@ if (DOXYGEN_FOUND)
         ../CesiumGltfReader/include
         ../CesiumGltfWriter/include
         ../CesiumUtility/include
+        ../CesiumRasterOverlays/include
     )
 
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})
@@ -32,6 +33,7 @@ if (DOXYGEN_FOUND)
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
         ../CesiumUtility/test
+        ../CesiumRasterOverlays/test
     )
 
     # These macro definitions confuse doxygen, causing it

@@ -166,6 +166,8 @@ rapidjson::Document parseFeatureTableJsonData(
     rapidjson::Value& rtcValue = rtcIt->value;
     auto& cesiumRTC =
         result.model->addExtension<CesiumGltf::ExtensionCesiumRTC>();
+    result.model->addExtensionRequired(
+        CesiumGltf::ExtensionCesiumRTC::ExtensionName);
     cesiumRTC.center = {
         rtcValue[0].GetDouble(),
         rtcValue[1].GetDouble(),

@@ -1,4 +1,5 @@
 #include "CesiumGltf/PropertyTextureView.h"
+#include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
 #include <gsl/span>
@@ -34,6 +35,29 @@ void addTextureToModel(
   Texture& texture = model.textures.emplace_back();
   texture.sampler = static_cast<int32_t>(model.samplers.size() - 1);
   texture.source = static_cast<int32_t>(model.images.size() - 1);
+}
+
+template <typename T, bool Normalized>
+void verifyTextureTransformConstruction(
+    const PropertyTexturePropertyView<T, Normalized>& propertyView,
+    const ExtensionKhrTextureTransform& extension) {
+  auto textureTransform = propertyView.getTextureTransform();
+  REQUIRE(textureTransform != std::nullopt);
+  REQUIRE(
+      textureTransform->offset() ==
+      glm::dvec2{extension.offset[0], extension.offset[1]});
+  REQUIRE(textureTransform->rotation() == extension.rotation);
+  REQUIRE(
+      textureTransform->scale() ==
+      glm::dvec2{extension.scale[0], extension.scale[1]});
+
+  // Texcoord is overridden by value in KHR_texture_transform.
+  if (extension.texCoord) {
+    REQUIRE(
+        propertyView.getTexCoordSetIndex() ==
+        textureTransform->getTexCoordSetIndex());
+    REQUIRE(textureTransform->getTexCoordSetIndex() == *extension.texCoord);
+  }
 }
 } // namespace
 
@@ -119,8 +143,8 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
 
   addTextureToModel(
       model,
-      Sampler::WrapS::CLAMP_TO_EDGE,
-      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
       2,
       2,
       1,
@@ -162,6 +186,69 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
     PropertyTexturePropertyView<uint8_t> uint8Property =
         view.getPropertyView<uint8_t>("TestClassProperty");
     REQUIRE(uint8Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(uint8Property.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == data[i]);
+    }
+  }
+
+  SECTION("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty", options);
+    REQUIRE(uint8Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(uint8Property, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<uint8_t> expected{data[3], data[1], data[2], data[0]};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(uint8Property.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == expected[i]);
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SECTION("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<uint8_t> uint8Property =
+        view.getPropertyView<uint8_t>("TestClassProperty", options);
+    REQUIRE(uint8Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -300,8 +387,8 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
 
   addTextureToModel(
       model,
-      Sampler::WrapS::CLAMP_TO_EDGE,
-      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
       2,
       2,
       1,
@@ -344,6 +431,69 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
     PropertyTexturePropertyView<uint8_t, true> uint8Property =
         view.getPropertyView<uint8_t, true>("TestClassProperty");
     REQUIRE(uint8Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(uint8Property.getRaw(uv[0], uv[1]) == data[i]);
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == normalize(data[i]));
+    }
+  }
+
+  SECTION("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<uint8_t, true> uint8Property =
+        view.getPropertyView<uint8_t, true>("TestClassProperty", options);
+    REQUIRE(uint8Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(uint8Property, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<uint8_t> expected{data[3], data[1], data[2], data[0]};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(uint8Property.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(uint8Property.get(uv[0], uv[1]) == normalize(expected[i]));
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SECTION("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<uint8_t, true> uint8Property =
+        view.getPropertyView<uint8_t, true>("TestClassProperty", options);
+    REQUIRE(uint8Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -419,11 +569,16 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
 TEST_CASE("Test vecN PropertyTextureProperty") {
   Model model;
   std::vector<uint8_t> data = {12, 34, 10, 3, 40, 0, 30, 11};
+  std::vector<glm::u8vec2> expected{
+      glm::u8vec2(data[0], data[1]),
+      glm::u8vec2(data[2], data[3]),
+      glm::u8vec2(data[4], data[5]),
+      glm::u8vec2(data[6], data[7])};
 
   addTextureToModel(
       model,
-      Sampler::WrapS::CLAMP_TO_EDGE,
-      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
       2,
       2,
       2,
@@ -473,11 +628,75 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
         glm::dvec2(0, 0.5),
         glm::dvec2(0.5, 0.5)};
 
-    std::vector<glm::u8vec2> expected{
-        glm::u8vec2(12, 34),
-        glm::u8vec2(10, 3),
-        glm::u8vec2(40, 0),
-        glm::u8vec2(30, 11)};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(u8vec2Property.get(uv[0], uv[1]) == expected[i]);
+    }
+  }
+
+  SECTION("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty", options);
+    REQUIRE(
+        u8vec2Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(u8vec2Property, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<glm::u8vec2> expectedTransformed{
+        expected[3],
+        expected[1],
+        expected[2],
+        expected[0]};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expectedTransformed[i]);
+      REQUIRE(u8vec2Property.get(uv[0], uv[1]) == expectedTransformed[i]);
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SECTION("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty", options);
+    REQUIRE(
+        u8vec2Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
       REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expected[i]);
@@ -562,11 +781,16 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
 TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
   Model model;
   std::vector<uint8_t> data = {12, 34, 10, 3, 40, 0, 30, 11};
+  std::vector<glm::u8vec2> expected{
+      glm::u8vec2(data[0], data[1]),
+      glm::u8vec2(data[2], data[3]),
+      glm::u8vec2(data[4], data[5]),
+      glm::u8vec2(data[6], data[7])};
 
   addTextureToModel(
       model,
-      Sampler::WrapS::CLAMP_TO_EDGE,
-      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
       2,
       2,
       2,
@@ -616,12 +840,77 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
         glm::dvec2(0.5, 0),
         glm::dvec2(0, 0.5),
         glm::dvec2(0.5, 0.5)};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expected[i]);
+      REQUIRE(u8vec2Property.get(uv[0], uv[1]) == normalize(expected[i]));
+    }
+  }
 
-    std::vector<glm::u8vec2> expected{
-        glm::u8vec2(12, 34),
-        glm::u8vec2(10, 3),
-        glm::u8vec2(40, 0),
-        glm::u8vec2(30, 11)};
+  SECTION("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<glm::u8vec2, true> u8vec2Property =
+        view.getPropertyView<glm::u8vec2, true>("TestClassProperty", options);
+    REQUIRE(
+        u8vec2Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(u8vec2Property, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<glm::u8vec2> expectedTransformed{
+        expected[3],
+        expected[1],
+        expected[2],
+        expected[0]};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expectedTransformed[i]);
+      REQUIRE(
+          u8vec2Property.get(uv[0], uv[1]) ==
+          normalize(expectedTransformed[i]));
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SECTION("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<glm::u8vec2, true> u8vec2Property =
+        view.getPropertyView<glm::u8vec2, true>("TestClassProperty", options);
+    REQUIRE(
+        u8vec2Property.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
       REQUIRE(u8vec2Property.getRaw(uv[0], uv[1]) == expected[i]);
@@ -704,11 +993,17 @@ TEST_CASE("Test array PropertyTextureProperty") {
     6, 3, 4,
   };
   // clang-format on
+  std::vector<std::array<uint8_t, 3>> expected = {
+      {data[0], data[1], data[2]},
+      {data[3], data[4], data[5]},
+      {data[6], data[7], data[8]},
+      {data[9], data[10], data[11]},
+  };
 
   addTextureToModel(
       model,
-      Sampler::WrapS::CLAMP_TO_EDGE,
-      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
       2,
       2,
       3,
@@ -761,18 +1056,118 @@ TEST_CASE("Test array PropertyTextureProperty") {
         glm::dvec2(0, 0.5),
         glm::dvec2(0.5, 0.5)};
 
-    int64_t size = static_cast<int64_t>(texCoords.size());
-    for (int64_t i = 0; i < size; ++i) {
-      glm::dvec2 uv = texCoords[static_cast<size_t>(i)];
-
-      auto dataStart = data.begin() + i * 3;
-      std::vector<uint8_t> expected(dataStart, dataStart + 3);
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      const std::array<uint8_t, 3>& expectedArray = expected[i];
 
       const PropertyArrayView<uint8_t>& value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
-      REQUIRE(static_cast<size_t>(value.size()) == expected.size());
+      REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
+
       for (int64_t j = 0; j < value.size(); j++) {
-        REQUIRE(value[j] == expected[static_cast<size_t>(j)]);
+        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
+      }
+
+      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      REQUIRE(maybeValue);
+      for (int64_t j = 0; j < maybeValue->size(); j++) {
+        REQUIRE((*maybeValue)[j] == value[j]);
+      }
+    }
+  }
+
+  SECTION("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
+        view.getPropertyView<PropertyArrayView<uint8_t>>(
+            "TestClassProperty",
+            options);
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(uint8ArrayProperty, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<std::array<uint8_t, 3>> expectedTransformed{
+        expected[3],
+        expected[1],
+        expected[2],
+        expected[0]};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
+
+      const PropertyArrayView<uint8_t>& value =
+          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+      REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
+
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
+      }
+
+      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      REQUIRE(maybeValue);
+      for (int64_t j = 0; j < maybeValue->size(); j++) {
+        REQUIRE((*maybeValue)[j] == value[j]);
+      }
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SECTION("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
+        view.getPropertyView<PropertyArrayView<uint8_t>>(
+            "TestClassProperty",
+            options);
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      const std::array<uint8_t, 3>& expectedArray = expected[i];
+
+      const PropertyArrayView<uint8_t>& value =
+          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+      REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
+
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
       auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
@@ -862,10 +1257,17 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
   };
   // clang-format on
 
+  std::vector<std::array<uint8_t, 3>> expected = {
+      {data[0], data[1], data[2]},
+      {data[3], data[4], data[5]},
+      {data[6], data[7], data[8]},
+      {data[9], data[10], data[11]},
+  };
+
   addTextureToModel(
       model,
-      Sampler::WrapS::CLAMP_TO_EDGE,
-      Sampler::WrapS::CLAMP_TO_EDGE,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
       2,
       2,
       3,
@@ -921,18 +1323,119 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         glm::dvec2(0, 0.5),
         glm::dvec2(0.5, 0.5)};
 
-    int64_t size = static_cast<int64_t>(texCoords.size());
-    for (int64_t i = 0; i < size; ++i) {
-      glm::dvec2 uv = texCoords[static_cast<size_t>(i)];
-
-      auto dataStart = data.begin() + i * 3;
-      std::vector<uint8_t> expected(dataStart, dataStart + 3);
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      const std::array<uint8_t, 3>& expectedArray = expected[i];
 
       const PropertyArrayView<uint8_t>& value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
-      REQUIRE(static_cast<size_t>(value.size()) == expected.size());
+      REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
       for (int64_t j = 0; j < value.size(); j++) {
-        REQUIRE(value[j] == expected[static_cast<size_t>(j)]);
+        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
+      }
+
+      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      REQUIRE(maybeValue);
+      for (int64_t j = 0; j < maybeValue->size(); j++) {
+        REQUIRE((*maybeValue)[j] == normalize(value[j]));
+      }
+    }
+  }
+
+  SECTION("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>, true>
+        uint8ArrayProperty =
+            view.getPropertyView<PropertyArrayView<uint8_t>, true>(
+                "TestClassProperty",
+                options);
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(uint8ArrayProperty, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<std::array<uint8_t, 3>> expectedTransformed{
+        expected[3],
+        expected[1],
+        expected[2],
+        expected[0]};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
+
+      const PropertyArrayView<uint8_t>& value =
+          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+      REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
+
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
+      }
+
+      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      REQUIRE(maybeValue);
+      for (int64_t j = 0; j < maybeValue->size(); j++) {
+        REQUIRE((*maybeValue)[j] == normalize(value[j]));
+      }
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SECTION("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<PropertyArrayView<uint8_t>, true>
+        uint8ArrayProperty =
+            view.getPropertyView<PropertyArrayView<uint8_t>, true>(
+                "TestClassProperty",
+                options);
+    REQUIRE(
+        uint8ArrayProperty.status() ==
+        PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      const std::array<uint8_t, 3>& expectedArray = expected[i];
+
+      const PropertyArrayView<uint8_t>& value =
+          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+      REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
+
+      for (int64_t j = 0; j < value.size(); j++) {
+        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
       auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
@@ -1686,32 +2189,73 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
       glm::dvec2(0.5, 0.5)};
 
   std::vector<int16_t> expected{-1, 268, 542, -256};
-  uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyId*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        if constexpr (std::is_same_v<
-                          PropertyTexturePropertyView<int16_t>,
-                          decltype(propertyValue)>) {
-          REQUIRE(
-              propertyValue.status() ==
-              PropertyTexturePropertyViewStatus::Valid);
 
-          for (size_t i = 0; i < expected.size(); ++i) {
-            glm::dvec2& uv = texCoords[i];
-            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
-            REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
+  SECTION("Works") {
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<int16_t>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
           }
-        } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
-        }
-      });
+        });
 
-  REQUIRE(invokedCallbackCount == 1);
+    REQUIRE(invokedCallbackCount == 1);
+  }
+
+  SECTION("Works with options") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount, &model](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<int16_t>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            // Clear the original image data.
+            std::vector<std::byte> emptyData;
+            model.images[model.images.size() - 1].cesium.pixelData.swap(
+                emptyData);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        },
+        options);
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
 }
 
 TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
@@ -1766,32 +2310,75 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
       glm::dvec2(0.5, 0.5)};
 
   std::vector<int16_t> expected{-1, 268, 542, -256};
-  uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyId*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        if constexpr (std::is_same_v<
-                          PropertyTexturePropertyView<int16_t, true>,
-                          decltype(propertyValue)>) {
-          REQUIRE(
-              propertyValue.status() ==
-              PropertyTexturePropertyViewStatus::Valid);
 
-          for (size_t i = 0; i < expected.size(); ++i) {
-            glm::dvec2& uv = texCoords[i];
-            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
-            REQUIRE(propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
+  SECTION("Works") {
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<int16_t, true>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(
+                  propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
           }
-        } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
-        }
-      });
+        });
 
-  REQUIRE(invokedCallbackCount == 1);
+    REQUIRE(invokedCallbackCount == 1);
+  }
+
+  SECTION("Works with options") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount, &model](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<int16_t, true>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            // Clear the original image data.
+            std::vector<std::byte> emptyData;
+            model.images[model.images.size() - 1].cesium.pixelData.swap(
+                emptyData);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(
+                  propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        },
+        options);
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
 }
 
 TEST_CASE("Test callback for vecN PropertyTextureProperty") {
@@ -1856,32 +2443,72 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
       glm::dvec2(0, 0.5),
       glm::dvec2(0.5, 0.5)};
 
-  uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyId*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        if constexpr (std::is_same_v<
-                          PropertyTexturePropertyView<glm::i8vec2>,
-                          decltype(propertyValue)>) {
-          REQUIRE(
-              propertyValue.status() ==
-              PropertyTexturePropertyViewStatus::Valid);
+  SECTION("Works") {
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<glm::i8vec2>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
 
-          for (size_t i = 0; i < expected.size(); ++i) {
-            glm::dvec2& uv = texCoords[i];
-            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
-            REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
           }
-        } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
-        }
-      });
+        });
 
-  REQUIRE(invokedCallbackCount == 1);
+    REQUIRE(invokedCallbackCount == 1);
+  }
+
+  SECTION("Works with options") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount, &model](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<glm::i8vec2>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            // Clear the original image data.
+            std::vector<std::byte> emptyData;
+            model.images[model.images.size() - 1].cesium.pixelData.swap(
+                emptyData);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        },
+        options);
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
 }
 
 TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
@@ -1947,32 +2574,74 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
       glm::dvec2(0, 0.5),
       glm::dvec2(0.5, 0.5)};
 
-  uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyId*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        if constexpr (std::is_same_v<
-                          PropertyTexturePropertyView<glm::i8vec2, true>,
-                          decltype(propertyValue)>) {
-          REQUIRE(
-              propertyValue.status() ==
-              PropertyTexturePropertyViewStatus::Valid);
+  SECTION("Works") {
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<glm::i8vec2, true>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
 
-          for (size_t i = 0; i < expected.size(); ++i) {
-            glm::dvec2& uv = texCoords[i];
-            REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
-            REQUIRE(propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(
+                  propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
           }
-        } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
-        }
-      });
+        });
 
-  REQUIRE(invokedCallbackCount == 1);
+    REQUIRE(invokedCallbackCount == 1);
+  }
+
+  SECTION("Works with options") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount, &model](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<glm::i8vec2, true>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            // Clear the original image data.
+            std::vector<std::byte> emptyData;
+            model.images[model.images.size() - 1].cesium.pixelData.swap(
+                emptyData);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              glm::dvec2& uv = texCoords[i];
+              REQUIRE(propertyValue.getRaw(uv[0], uv[1]) == expected[i]);
+              REQUIRE(
+                  propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        },
+        options);
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
 }
 
 TEST_CASE("Test callback for array PropertyTextureProperty") {
@@ -2039,49 +2708,108 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
       glm::dvec2(0, 0.5),
       glm::dvec2(0.5, 0.5)};
 
-  uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyId*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        if constexpr (std::is_same_v<
-                          PropertyTexturePropertyView<
-                              PropertyArrayView<uint16_t>>,
-                          decltype(propertyValue)>) {
-          REQUIRE(
-              propertyValue.status() ==
-              PropertyTexturePropertyViewStatus::Valid);
-
-          for (size_t i = 0; i < expected.size(); ++i) {
-            std::vector<uint16_t>& expectedArray = expected[i];
-            glm::dvec2& uv = texCoords[i];
-            PropertyArrayView<uint16_t> array =
-                propertyValue.getRaw(uv[0], uv[1]);
-
-            REQUIRE(static_cast<size_t>(array.size()) == expectedArray.size());
-            for (int64_t j = 0; j < array.size(); j++) {
-              REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
-            }
-
-            auto maybeArray = propertyValue.get(uv[0], uv[1]);
-            REQUIRE(maybeArray);
+  SECTION("Works") {
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<
+                                PropertyArrayView<uint16_t>>,
+                            decltype(propertyValue)>) {
             REQUIRE(
-                static_cast<size_t>(maybeArray->size()) ==
-                expectedArray.size());
-            for (int64_t j = 0; j < array.size(); j++) {
-              REQUIRE(
-                  (*maybeArray)[j] == expectedArray[static_cast<size_t>(j)]);
-            }
-          }
-        } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
-        }
-      });
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
 
-  REQUIRE(invokedCallbackCount == 1);
+            for (size_t i = 0; i < expected.size(); ++i) {
+              std::vector<uint16_t>& expectedArray = expected[i];
+              glm::dvec2& uv = texCoords[i];
+              PropertyArrayView<uint16_t> array =
+                  propertyValue.getRaw(uv[0], uv[1]);
+
+              REQUIRE(
+                  static_cast<size_t>(array.size()) == expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
+              }
+
+              auto maybeArray = propertyValue.get(uv[0], uv[1]);
+              REQUIRE(maybeArray);
+              REQUIRE(
+                  static_cast<size_t>(maybeArray->size()) ==
+                  expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                REQUIRE(
+                    (*maybeArray)[j] == expectedArray[static_cast<size_t>(j)]);
+              }
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        });
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
+
+  SECTION("Works with options") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount, &model](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<
+                                PropertyArrayView<uint16_t>>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            // Clear the original image data.
+            std::vector<std::byte> emptyData;
+            model.images[model.images.size() - 1].cesium.pixelData.swap(
+                emptyData);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              std::vector<uint16_t>& expectedArray = expected[i];
+              glm::dvec2& uv = texCoords[i];
+              PropertyArrayView<uint16_t> array =
+                  propertyValue.getRaw(uv[0], uv[1]);
+
+              REQUIRE(
+                  static_cast<size_t>(array.size()) == expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
+              }
+
+              auto maybeArray = propertyValue.get(uv[0], uv[1]);
+              REQUIRE(maybeArray);
+              REQUIRE(
+                  static_cast<size_t>(maybeArray->size()) ==
+                  expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                REQUIRE(
+                    (*maybeArray)[j] == expectedArray[static_cast<size_t>(j)]);
+              }
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        },
+        options);
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
 }
 
 TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
@@ -2149,49 +2877,110 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
       glm::dvec2(0, 0.5),
       glm::dvec2(0.5, 0.5)};
 
-  uint32_t invokedCallbackCount = 0;
-  view.getPropertyView(
-      "TestClassProperty",
-      [&expected, &texCoords, &invokedCallbackCount](
-          const std::string& /*propertyId*/,
-          auto propertyValue) mutable {
-        invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyTexturePropertyView<PropertyArrayView<uint16_t>, true>,
-                decltype(propertyValue)>) {
-          REQUIRE(
-              propertyValue.status() ==
-              PropertyTexturePropertyViewStatus::Valid);
-
-          for (size_t i = 0; i < expected.size(); ++i) {
-            std::vector<uint16_t>& expectedArray = expected[i];
-            glm::dvec2& uv = texCoords[i];
-            PropertyArrayView<uint16_t> array =
-                propertyValue.getRaw(uv[0], uv[1]);
-
-            REQUIRE(static_cast<size_t>(array.size()) == expectedArray.size());
-            for (int64_t j = 0; j < array.size(); j++) {
-              REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
-            }
-
-            auto maybeArray = propertyValue.get(uv[0], uv[1]);
-            REQUIRE(maybeArray);
+  SECTION("Works") {
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<
+                                PropertyArrayView<uint16_t>,
+                                true>,
+                            decltype(propertyValue)>) {
             REQUIRE(
-                static_cast<size_t>(maybeArray->size()) ==
-                expectedArray.size());
-            for (int64_t j = 0; j < array.size(); j++) {
-              auto rawValue = expectedArray[static_cast<size_t>(j)];
-              REQUIRE((*maybeArray)[j] == normalize(rawValue));
-            }
-          }
-        } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
-        }
-      });
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
 
-  REQUIRE(invokedCallbackCount == 1);
+            for (size_t i = 0; i < expected.size(); ++i) {
+              std::vector<uint16_t>& expectedArray = expected[i];
+              glm::dvec2& uv = texCoords[i];
+              PropertyArrayView<uint16_t> array =
+                  propertyValue.getRaw(uv[0], uv[1]);
+
+              REQUIRE(
+                  static_cast<size_t>(array.size()) == expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
+              }
+
+              auto maybeArray = propertyValue.get(uv[0], uv[1]);
+              REQUIRE(maybeArray);
+              REQUIRE(
+                  static_cast<size_t>(maybeArray->size()) ==
+                  expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                auto rawValue = expectedArray[static_cast<size_t>(j)];
+                REQUIRE((*maybeArray)[j] == normalize(rawValue));
+              }
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        });
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
+
+  SECTION("Works with options") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    uint32_t invokedCallbackCount = 0;
+    view.getPropertyView(
+        "TestClassProperty",
+        [&expected, &texCoords, &invokedCallbackCount, &model](
+            const std::string& /*propertyId*/,
+            auto propertyValue) mutable {
+          invokedCallbackCount++;
+          if constexpr (std::is_same_v<
+                            PropertyTexturePropertyView<
+                                PropertyArrayView<uint16_t>,
+                                true>,
+                            decltype(propertyValue)>) {
+            REQUIRE(
+                propertyValue.status() ==
+                PropertyTexturePropertyViewStatus::Valid);
+
+            // Clear the original image data.
+            std::vector<std::byte> emptyData;
+            model.images[model.images.size() - 1].cesium.pixelData.swap(
+                emptyData);
+
+            for (size_t i = 0; i < expected.size(); ++i) {
+              std::vector<uint16_t>& expectedArray = expected[i];
+              glm::dvec2& uv = texCoords[i];
+              PropertyArrayView<uint16_t> array =
+                  propertyValue.getRaw(uv[0], uv[1]);
+
+              REQUIRE(
+                  static_cast<size_t>(array.size()) == expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
+              }
+
+              auto maybeArray = propertyValue.get(uv[0], uv[1]);
+              REQUIRE(maybeArray);
+              REQUIRE(
+                  static_cast<size_t>(maybeArray->size()) ==
+                  expectedArray.size());
+              for (int64_t j = 0; j < array.size(); j++) {
+                auto rawValue = expectedArray[static_cast<size_t>(j)];
+                REQUIRE((*maybeArray)[j] == normalize(rawValue));
+              }
+            }
+          } else {
+            FAIL("getPropertyView returned PropertyTexturePropertyView of "
+                 "incorrect type for TestClassProperty.");
+          }
+        },
+        options);
+
+    REQUIRE(invokedCallbackCount == 1);
+  }
 }
 
 TEST_CASE("Test callback on unsupported PropertyTextureProperty") {

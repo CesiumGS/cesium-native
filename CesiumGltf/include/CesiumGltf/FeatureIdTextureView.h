@@ -1,17 +1,22 @@
 #pragma once
 
 #include "CesiumGltf/FeatureIdTexture.h"
+#include "CesiumGltf/Image.h"
+#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/Texture.h"
-#include "Image.h"
-#include "ImageCesium.h"
-#include "Model.h"
+#include "CesiumGltf/TextureView.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace CesiumGltf {
+
+struct Model;
+
 /**
  * @brief The status of a feature ID texture view.
  *
@@ -43,6 +48,12 @@ enum class FeatureIdTextureViewStatus {
   ErrorInvalidImage,
 
   /**
+   * @brief This feature ID texture has a sampler index that doesn't exist in
+   * the glTF.
+   */
+  ErrorInvalidSampler,
+
+  /**
    * @brief This feature ID texture has an empty image.
    */
   ErrorEmptyImage,
@@ -68,7 +79,7 @@ enum class FeatureIdTextureViewStatus {
  * It provides the ability to sample the feature IDs from the
  * {@link FeatureIdTexture} using texture coordinates.
  */
-class FeatureIdTextureView {
+class FeatureIdTextureView : public TextureView {
 public:
   /**
    * @brief Constructs an uninitialized and invalid view.
@@ -76,15 +87,31 @@ public:
   FeatureIdTextureView() noexcept;
 
   /**
-   * @brief Construct a view of the data specified by a
-   * {@link FeatureIdTexture}.
+   * @brief Construct a view of the data specified by a {@link FeatureIdTexture}.
+   *
+   * A feature ID texture may contain the `KHR_texture_transform` extension,
+   * which transforms the texture coordinates used to sample the texture. The
+   * extension may also override the TEXCOORD set index that was originally
+   * specified by the feature ID texture.
+   *
+   * If a view is constructed with applyKhrTextureTransformExtension set to
+   * true, the view will automatically apply the texture transform to any UV
+   * coordinates used to sample the texture. If the extension defines its own
+   * TEXCOORD set index, it will override the original value.
+   *
+   * Otherwise, if the flag is set to false, UVs will not be transformed and
+   * the original TEXCOORD set index will be preserved. The extension's values
+   * may still be retrieved using getTextureTransform, if desired.
    *
    * @param model The glTF in which to look for the feature ID texture's data.
-   * @param featureIDTexture The feature ID texture to create a view for.
+   * @param featureIdTexture The feature ID texture to create a view for.
+   * @param applyKhrTextureTransformExtension Whether to automatically apply the
+   * `KHR_texture_transform` extension to the feature ID texture, if it exists.
    */
   FeatureIdTextureView(
       const Model& model,
-      const FeatureIdTexture& featureIdTexture) noexcept;
+      const FeatureIdTexture& featureIdTexture,
+      const TextureViewOptions& options = TextureViewOptions()) noexcept;
 
   /**
    * @brief Get the feature ID from the texture at the given texture
@@ -103,33 +130,16 @@ public:
    *
    * If invalid, it will not be safe to sample feature IDs from this view.
    */
-  FeatureIdTextureViewStatus status() const { return _status; }
-
-  /**
-   * @brief Get the actual feature ID texture.
-   *
-   * This will be nullptr if the feature ID texture view runs into problems
-   * during construction.
-   */
-  const ImageCesium* getImage() const { return _pImage; }
+  FeatureIdTextureViewStatus status() const noexcept { return this->_status; }
 
   /**
    * @brief Get the channels of this feature ID texture. The channels represent
    * the bytes of the actual feature ID, in little-endian order.
    */
-  std::vector<int64_t> getChannels() const { return _channels; }
-
-  /**
-   * @brief Get the texture coordinate set index for this feature ID
-   * texture.
-   */
-  int64_t getTexCoordSetIndex() const { return this->_texCoordSetIndex; }
+  std::vector<int64_t> getChannels() const noexcept { return this->_channels; }
 
 private:
   FeatureIdTextureViewStatus _status;
-  int64_t _texCoordSetIndex;
   std::vector<int64_t> _channels;
-
-  const ImageCesium* _pImage;
 };
 } // namespace CesiumGltf
