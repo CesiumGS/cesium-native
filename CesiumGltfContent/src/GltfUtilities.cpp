@@ -477,7 +477,7 @@ struct VisitTextureIds {
         }
       }
     }
-  };
+  }
 };
 
 struct VisitSamplerIds {
