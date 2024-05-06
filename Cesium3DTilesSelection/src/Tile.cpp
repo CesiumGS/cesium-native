@@ -226,7 +226,7 @@ bool Tile::isReadyToUnload() const noexcept {
       this->getState() != TileLoadState::Done) {
     return false;
   }
-  
+
   for (const Tile& child : this->_children) {
     if (!child.isReadyToUnload()) {
       return false;
