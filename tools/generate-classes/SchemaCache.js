@@ -110,7 +110,7 @@ class SchemaCache {
     if (base.startsWith("http")) {
       return new URL(name, base).href;
     } else {
-      return path.resolve(base, "..", name);
+      return path.resolve(base, name);
     }
   }
 }

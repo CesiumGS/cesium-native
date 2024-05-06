@@ -113,9 +113,12 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets) {
+    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
+    bool applyTextureTransform) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([pLogger, ktx2TranscodeTargets](
+      .thenInWorkerThread([pLogger,
+                           ktx2TranscodeTargets,
+                           applyTextureTransform](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -153,6 +156,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           // Convert to gltf
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
+          gltfOptions.applyTextureTransform = applyTextureTransform;
           GltfConverterResult result = converter(responseData, gltfOptions);
 
           // Report any errors if there are any
@@ -260,10 +264,13 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
             this->addSubtreeAvailability(
                 subtreeID,
                 std::move(*subtreeAvailability));
-          }
 
-          // tell client to retry later
-          return TileLoadResult::createRetryLaterResult(nullptr);
+            // tell client to retry later
+            return TileLoadResult::createRetryLaterResult(nullptr);
+          } else {
+            // Subtree load failed, so this tile fails, too.
+            return TileLoadResult::createFailedResult(nullptr);
+          }
         });
   }
 
@@ -292,7 +299,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       pAssetAccessor,
       tileUrl,
       requestHeaders,
-      contentOptions.ktx2TranscodeTargets);
+      contentOptions.ktx2TranscodeTargets,
+      contentOptions.applyTextureTransform);
 }
 
 TileChildrenResult

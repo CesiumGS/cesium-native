@@ -744,10 +744,10 @@ TEST_CASE("Test matN PropertyTableProperty") {
         u8mat2x2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
 
-    PropertyTablePropertyView<glm::i32mat2x2> i32mat2x2Invalid =
-        view.getPropertyView<glm::i32mat2x2>("TestClassProperty");
+    PropertyTablePropertyView<glm::imat2x2> imat2x2Invalid =
+        view.getPropertyView<glm::imat2x2>("TestClassProperty");
     REQUIRE(
-        i32mat2x2Invalid.status() ==
+        imat2x2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
 
     PropertyTablePropertyView<glm::mat2> mat2Invalid =
@@ -916,10 +916,10 @@ TEST_CASE("Test matN PropertyTableProperty (normalized)") {
         u8mat2x2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
 
-    PropertyTablePropertyView<glm::i32mat2x2, true> i32mat2x2Invalid =
-        view.getPropertyView<glm::i32mat2x2, true>("TestClassProperty");
+    PropertyTablePropertyView<glm::imat2x2, true> imat2x2Invalid =
+        view.getPropertyView<glm::imat2x2, true>("TestClassProperty");
     REQUIRE(
-        i32mat2x2Invalid.status() ==
+        imat2x2Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
   }
 
@@ -1419,10 +1419,10 @@ TEST_CASE("Test variable-length scalar array") {
   uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
   for (size_t i = 0; i < expected.size(); ++i) {
     std::memcpy(
-        values.data() + offsetValue[i],
+        values.data() + offsetValue[i] * sizeof(uint16_t),
         expected[i].data(),
         expected[i].size() * sizeof(uint16_t));
-    offsetValue[i + 1] = offsetValue[i] + expected[i].size() * sizeof(uint16_t);
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
   addBufferToModel(model, values);
@@ -1592,10 +1592,10 @@ TEST_CASE("Test variable-length scalar array (normalized)") {
   uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
   for (size_t i = 0; i < expected.size(); ++i) {
     std::memcpy(
-        values.data() + offsetValue[i],
+        values.data() + offsetValue[i] * sizeof(uint16_t),
         expected[i].data(),
         expected[i].size() * sizeof(uint16_t));
-    offsetValue[i + 1] = offsetValue[i] + expected[i].size() * sizeof(uint16_t);
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
   addBufferToModel(model, values);
@@ -1948,11 +1948,10 @@ TEST_CASE("Test variable-length vecN array") {
   uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
   for (size_t i = 0; i < expected.size(); ++i) {
     std::memcpy(
-        values.data() + offsetValue[i],
+        values.data() + offsetValue[i] * sizeof(glm::ivec3),
         expected[i].data(),
         expected[i].size() * sizeof(glm::ivec3));
-    offsetValue[i + 1] =
-        offsetValue[i] + expected[i].size() * sizeof(glm::ivec3);
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
   addBufferToModel(model, values);
@@ -2124,11 +2123,10 @@ TEST_CASE("Test variable-length vecN array (normalized)") {
   uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
   for (size_t i = 0; i < expected.size(); ++i) {
     std::memcpy(
-        values.data() + offsetValue[i],
+        values.data() + offsetValue[i] * sizeof(glm::ivec3),
         expected[i].data(),
         expected[i].size() * sizeof(glm::ivec3));
-    offsetValue[i + 1] =
-        offsetValue[i] + expected[i].size() * sizeof(glm::ivec3);
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
   addBufferToModel(model, values);
@@ -2206,23 +2204,23 @@ TEST_CASE("Test variable-length vecN array (normalized)") {
 TEST_CASE("Test fixed-length matN array") {
   Model model;
   // clang-format off
-  std::vector<glm::i32mat2x2> values = {
-      glm::i32mat2x2(
+  std::vector<glm::imat2x2> values = {
+      glm::imat2x2(
         12, 34,
         -30, 20),
-      glm::i32mat2x2(
+      glm::imat2x2(
         -2, -2,
         0, 1),
-      glm::i32mat2x2(
+      glm::imat2x2(
         1, 2,
         8, 5),
-      glm::i32mat2x2(
+      glm::imat2x2(
         -100, 3,
         84, 6),
-      glm::i32mat2x2(
+      glm::imat2x2(
         2, 12,
         -2, -2),
-      glm::i32mat2x2(
+      glm::imat2x2(
         40, 61,
         7, -3),
   };
@@ -2266,13 +2264,13 @@ TEST_CASE("Test fixed-length matN array") {
   REQUIRE(!classProperty->normalized);
 
   SECTION("Access the right type") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      PropertyArrayView<glm::i32mat2x2> member = arrayProperty.getRaw(i);
+      PropertyArrayView<glm::imat2x2> member = arrayProperty.getRaw(i);
       for (int64_t j = 0; j < member.size(); ++j) {
         REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
       }
@@ -2305,17 +2303,17 @@ TEST_CASE("Test fixed-length matN array") {
   }
 
   SECTION("Not an array type") {
-    PropertyTablePropertyView<glm::i32mat2x2> ivec3Invalid =
-        view.getPropertyView<glm::i32mat2x2>("TestClassProperty");
+    PropertyTablePropertyView<glm::imat2x2> ivec3Invalid =
+        view.getPropertyView<glm::imat2x2>("TestClassProperty");
     REQUIRE(
         ivec3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   SECTION("Incorrect normalization") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>, true>
         normalizedInvalid =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
+            view.getPropertyView<PropertyArrayView<glm::imat2x2>, true>(
                 "TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
@@ -2324,8 +2322,8 @@ TEST_CASE("Test fixed-length matN array") {
 
   SECTION("Buffer size is not a multiple of type size") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2335,8 +2333,8 @@ TEST_CASE("Test fixed-length matN array") {
 
   SECTION("Negative count") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() == PropertyTablePropertyViewStatus::
@@ -2345,8 +2343,8 @@ TEST_CASE("Test fixed-length matN array") {
 
   SECTION("Value buffer doesn't fit into property table count") {
     testClassProperty.count = 55;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2358,23 +2356,23 @@ TEST_CASE("Test fixed-length matN array") {
 TEST_CASE("Test fixed-length matN array (normalized)") {
   Model model;
   // clang-format off
-  std::vector<glm::i32mat2x2> values = {
-      glm::i32mat2x2(
+  std::vector<glm::imat2x2> values = {
+      glm::imat2x2(
         12, 34,
         -30, 20),
-      glm::i32mat2x2(
+      glm::imat2x2(
         -2, -2,
         0, 1),
-      glm::i32mat2x2(
+      glm::imat2x2(
         1, 2,
         8, 5),
-      glm::i32mat2x2(
+      glm::imat2x2(
         -100, 3,
         84, 6),
-      glm::i32mat2x2(
+      glm::imat2x2(
         2, 12,
         -2, -2),
-      glm::i32mat2x2(
+      glm::imat2x2(
         40, 61,
         7, -3),
   };
@@ -2418,14 +2416,14 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
   REQUIRE(classProperty->normalized);
 
   SECTION("Access the right type") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>, true>
         arrayProperty =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
+            view.getPropertyView<PropertyArrayView<glm::imat2x2>, true>(
                 "TestClassProperty");
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
-      PropertyArrayView<glm::i32mat2x2> array = arrayProperty.getRaw(i);
+      PropertyArrayView<glm::imat2x2> array = arrayProperty.getRaw(i);
       auto maybeArray = arrayProperty.get(i);
       REQUIRE(maybeArray);
 
@@ -2465,17 +2463,17 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
   }
 
   SECTION("Not an array type") {
-    PropertyTablePropertyView<glm::i32mat2x2, true> ivec3Invalid =
-        view.getPropertyView<glm::i32mat2x2, true>("TestClassProperty");
+    PropertyTablePropertyView<glm::imat2x2, true> ivec3Invalid =
+        view.getPropertyView<glm::imat2x2, true>("TestClassProperty");
     REQUIRE(
         ivec3Invalid.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   SECTION("Incorrect non-normalization") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>>
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>>
         nonNormalizedInvalid =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+            view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
                 "TestClassProperty");
     REQUIRE(
         nonNormalizedInvalid.status() ==
@@ -2486,50 +2484,48 @@ TEST_CASE("Test fixed-length matN array (normalized)") {
 TEST_CASE("Test variable-length matN array") {
   Model model;
   // clang-format off
-    std::vector<glm::i32mat2x2> data0{
-        glm::i32mat2x2(
+    std::vector<glm::imat2x2> data0{
+        glm::imat2x2(
           3, -2,
           1, 0),
-        glm::i32mat2x2(
+        glm::imat2x2(
           40, 3,
           8, -9)
     };
-    std::vector<glm::i32mat2x2> data1{
-        glm::i32mat2x2(
+    std::vector<glm::imat2x2> data1{
+        glm::imat2x2(
           1, 10,
           7, 8),
     };
-    std::vector<glm::i32mat2x2> data2{
-        glm::i32mat2x2(
+    std::vector<glm::imat2x2> data2{
+        glm::imat2x2(
           18, 0,
           1, 17),
-        glm::i32mat2x2(
+        glm::imat2x2(
           -4, -2,
           -9, 1),
-        glm::i32mat2x2(
+        glm::imat2x2(
           1, 8,
           -99, 3),
     };
   // clang-format on
 
-  std::vector<std::vector<glm::i32mat2x2>>
-      expected{data0, {}, data1, data2, {}};
+  std::vector<std::vector<glm::imat2x2>> expected{data0, {}, data1, data2, {}};
 
   size_t numOfElements = 0;
   for (const auto& expectedMember : expected) {
     numOfElements += expectedMember.size();
   }
 
-  std::vector<std::byte> values(numOfElements * sizeof(glm::i32mat2x2));
+  std::vector<std::byte> values(numOfElements * sizeof(glm::imat2x2));
   std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint64_t));
   uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
   for (size_t i = 0; i < expected.size(); ++i) {
     std::memcpy(
-        values.data() + offsetValue[i],
+        values.data() + offsetValue[i] * sizeof(glm::imat2x2),
         expected[i].data(),
-        expected[i].size() * sizeof(glm::i32mat2x2));
-    offsetValue[i + 1] =
-        offsetValue[i] + expected[i].size() * sizeof(glm::i32mat2x2);
+        expected[i].size() * sizeof(glm::imat2x2));
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
   addBufferToModel(model, values);
@@ -2576,12 +2572,12 @@ TEST_CASE("Test variable-length matN array") {
   REQUIRE(!classProperty->normalized);
 
   SECTION("Access the correct type") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> property =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> property =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      PropertyArrayView<glm::i32mat2x2> array =
+      PropertyArrayView<glm::imat2x2> array =
           property.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
@@ -2596,10 +2592,9 @@ TEST_CASE("Test variable-length matN array") {
   }
 
   SECTION("Incorrectly normalized") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        property =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>, true> property =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>, true>(
+            "TestClassProperty");
     REQUIRE(
         property.status() ==
         PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
@@ -2608,8 +2603,8 @@ TEST_CASE("Test variable-length matN array") {
   SECTION("Wrong offset type") {
     propertyTableProperty.arrayOffsetType =
         PropertyTableProperty::ArrayOffsetType::UINT8;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2618,7 +2613,7 @@ TEST_CASE("Test variable-length matN array") {
 
     propertyTableProperty.arrayOffsetType =
         PropertyTableProperty::ArrayOffsetType::UINT16;
-    arrayProperty = view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2626,7 +2621,7 @@ TEST_CASE("Test variable-length matN array") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.arrayOffsetType = "NONSENSE";
-    arrayProperty = view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2635,7 +2630,7 @@ TEST_CASE("Test variable-length matN array") {
     propertyTableProperty.arrayOffsetType = "";
     propertyTableProperty.stringOffsetType =
         PropertyTableProperty::StringOffsetType::UINT64;
-    arrayProperty = view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    arrayProperty = view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2648,8 +2643,8 @@ TEST_CASE("Test variable-length matN array") {
     uint64_t* offset = reinterpret_cast<uint64_t*>(
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] = 0;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2661,8 +2656,8 @@ TEST_CASE("Test variable-length matN array") {
         model.buffers[offsetBufferIndex].cesium.data.data());
     offset[propertyTable.count] =
         static_cast<uint32_t>(model.buffers[valueBufferIndex].byteLength + 4);
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
@@ -2671,8 +2666,8 @@ TEST_CASE("Test variable-length matN array") {
 
   SECTION("Count and offset buffer are both present") {
     testClassProperty.count = 3;
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> property =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> property =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         property.status() ==
@@ -2683,50 +2678,48 @@ TEST_CASE("Test variable-length matN array") {
 TEST_CASE("Test variable-length matN array (normalized)") {
   Model model;
   // clang-format off
-    std::vector<glm::i32mat2x2> data0{
-        glm::i32mat2x2(
+    std::vector<glm::imat2x2> data0{
+        glm::imat2x2(
           3, -2,
           1, 0),
-        glm::i32mat2x2(
+        glm::imat2x2(
           40, 3,
           8, -9)
     };
-    std::vector<glm::i32mat2x2> data1{
-        glm::i32mat2x2(
+    std::vector<glm::imat2x2> data1{
+        glm::imat2x2(
           1, 10,
           7, 8),
     };
-    std::vector<glm::i32mat2x2> data2{
-        glm::i32mat2x2(
+    std::vector<glm::imat2x2> data2{
+        glm::imat2x2(
           18, 0,
           1, 17),
-        glm::i32mat2x2(
+        glm::imat2x2(
           -4, -2,
           -9, 1),
-        glm::i32mat2x2(
+        glm::imat2x2(
           1, 8,
           -99, 3),
     };
   // clang-format on
 
-  std::vector<std::vector<glm::i32mat2x2>>
-      expected{data0, {}, data1, data2, {}};
+  std::vector<std::vector<glm::imat2x2>> expected{data0, {}, data1, data2, {}};
 
   size_t numOfElements = 0;
   for (const auto& expectedMember : expected) {
     numOfElements += expectedMember.size();
   }
 
-  std::vector<std::byte> values(numOfElements * sizeof(glm::i32mat2x2));
+  std::vector<std::byte> values(numOfElements * sizeof(glm::imat2x2));
   std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint64_t));
   uint64_t* offsetValue = reinterpret_cast<uint64_t*>(offsets.data());
   for (size_t i = 0; i < expected.size(); ++i) {
     std::memcpy(
-        values.data() + offsetValue[i],
+        values.data() + offsetValue[i] * sizeof(glm::imat2x2),
         expected[i].data(),
-        expected[i].size() * sizeof(glm::i32mat2x2));
-    offsetValue[i + 1] =
-        offsetValue[i] + expected[i].size() * sizeof(glm::i32mat2x2);
+        expected[i].size() * sizeof(glm::imat2x2));
+    offsetValue[i + 1] = offsetValue[i] + expected[i].size();
   }
 
   addBufferToModel(model, values);
@@ -2772,13 +2765,12 @@ TEST_CASE("Test variable-length matN array (normalized)") {
   REQUIRE(classProperty->normalized);
 
   SECTION("Access the correct type") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>, true>
-        property =
-            view.getPropertyView<PropertyArrayView<glm::i32mat2x2>, true>(
-                "TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>, true> property =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>, true>(
+            "TestClassProperty");
     REQUIRE(property.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
-      PropertyArrayView<glm::i32mat2x2> array =
+      PropertyArrayView<glm::imat2x2> array =
           property.getRaw(static_cast<int64_t>(i));
       REQUIRE(array.size() == static_cast<int64_t>(expected[i].size()));
 
@@ -2793,8 +2785,8 @@ TEST_CASE("Test variable-length matN array (normalized)") {
   }
 
   SECTION("Incorrectly non-normalized") {
-    PropertyTablePropertyView<PropertyArrayView<glm::i32mat2x2>> property =
-        view.getPropertyView<PropertyArrayView<glm::i32mat2x2>>(
+    PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>> property =
+        view.getPropertyView<PropertyArrayView<glm::imat2x2>>(
             "TestClassProperty");
     REQUIRE(
         property.status() ==
@@ -4988,23 +4980,23 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty (normalized)") {
 TEST_CASE("Test callback for matN array PropertyTableProperty") {
   Model model;
   // clang-format off
-  std::vector<glm::i32mat2x2> values = {
-      glm::i32mat2x2(
+  std::vector<glm::imat2x2> values = {
+      glm::imat2x2(
         12, 34,
         -30, 20),
-      glm::i32mat2x2(
+      glm::imat2x2(
         -2, -2,
         0, 1),
-      glm::i32mat2x2(
+      glm::imat2x2(
         1, 2,
         8, 5),
-      glm::i32mat2x2(
+      glm::imat2x2(
         -100, 3,
         84, 6),
-      glm::i32mat2x2(
+      glm::imat2x2(
         2, 12,
         -2, -2),
-      glm::i32mat2x2(
+      glm::imat2x2(
         40, 61,
         7, -3),
   };
@@ -5058,10 +5050,10 @@ TEST_CASE("Test callback for matN array PropertyTableProperty") {
 
         if constexpr (std::is_same_v<
                           PropertyTablePropertyView<
-                              PropertyArrayView<glm::i32mat2x2>>,
+                              PropertyArrayView<glm::imat2x2>>,
                           decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
-            PropertyArrayView<glm::i32mat2x2> member = propertyValue.getRaw(i);
+            PropertyArrayView<glm::imat2x2> member = propertyValue.getRaw(i);
             for (int64_t j = 0; j < member.size(); ++j) {
               REQUIRE(member[j] == values[static_cast<size_t>(i * 2 + j)]);
             }

@@ -1,5 +1,140 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Added support for the following glTF extensions to `Model::merge`. Previously these extensions could end up broken after merging.
+  - `KHR_texture_basisu`
+  - `EXT_texture_webp`
+  - `EXT_mesh_gpu_instancing`
+  - `CESIUM_primitive_outline`
+  - `CESIUM_tile_edges`
+- Fixed a bug in `GltfUtilities::compactBuffer` where it would not preserve the alignment of the bufferViews.
+- The `collapseToSingleBuffer` and `moveBufferContent` functions in `GltfUtilities` now align to an 8-byte boundary rather than a 4-byte boundary, because bufferViews associated with some glTF extensions require this larger alignment.
+
+### v0.35.0 - 2024-05-01
+
+##### Breaking Changes :mega:
+
+- Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
+- Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
+- `Connection::authorize` now requires an `ApplicationData` parameter, which represents the `appData` retrieved from a Cesium ion server.
+
+##### Additions :tada:
+
+- Added a new `CesiumQuantizedMeshTerrain` library and namespace, containing classes for working with terrain in the `quantized-mesh-1.0` format and its `layer.json` file.
+- Added `getComponentCountFromPropertyType` to `PropertyType`.
+- Added `removeExtension` to `ExtensibleObject`.
+- Added `IndexFromAccessor` to retrieve the index supplied by `IndexAccessorType`.
+- Added `NormalAccessorType`, which is a type definition for a normal accessor. It can be constructed using `getNormalAccessorView`.
+- Added `Uri::getPath` and `Uri::setPath`.
+- Added `TileTransform::setTransform`.
+- Added `GlobeRectangle::splitAtAntiMeridian`.
+- Added `BoundingRegionBuilder::toGlobeRectangle`.
+- Added `GlobeRectangle::equals` and `GlobeRectangle::equalsEpsilon`.
+- `upsampleGltfForRasterOverlays` now accepts two new parameters, `hasInvertedVCoordinate` and `textureCoordinateAttributeBaseName`.
+- `upsampleGltfForRasterOverlays` now copies images from the parent glTF into the output model.
+- Added `waitInMainThread` method to `Future` and `SharedFuture`.
+- Added `forEachRootNodeInScene`, `addExtensionUsed`, `addExtensionRequired`, `isExtensionUsed`, and `isExtensionRequired` methods to `CesiumGltf::Model`.
+- Added `getNodeTransform`, `setNodeTransform`, `removeUnusedTextures`, `removeUnusedSamplers`, `removeUnusedImages`, `removeUnusedAccessors`, `removeUnusedBufferViews`, and `compactBuffers` methods to `GltfUtilities`.
+- Added `postprocessGltf` method to `GltfReader`.
+- `Model::merge` now merges the `EXT_structural_metadata` and `EXT_mesh_features` extensions. It also now returns an `ErrorList`, used to report warnings and errors about the merge process.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `joinToString` when given a collection containing empty strings.
+- `QuantizedMeshLoader` now creates spec-compliant glTFs from a quantized-mesh terrain tile. Previously, the generated glTF had small problems that could confuse some clients.
+- Fixed a bug in `TileMapServiceRasterOverlay` that caused it to build URLs incorrectly when given a URL with query parameters.
+- glTFs converted from a legacy batch table to a `EXT_structural_metadata` now:
+  - Add the `EXT_structural_metadata` and `EXT_mesh_features` extensions to the glTF's `extensionsUsed` list.
+  - Omit property table properties without any values at all. Previously, such property table properties would have a `values` field referring to an invalid bufferView, which is contrary to the extension's specification.
+  - Rename the `_BATCHID` attribute to `_FEATURE_ID_0` inside the `KHR_draco_mesh_compression` extension (if present), in addition to the primitive's `attributes`. Previously, meshes still Draco-compressed after the upgrade, by setting `options.decodeDraco=false`, did not have the proper attribute name.
+- glTFs converted from 3D Tiles B3DMs with the `RTC_CENTER` property will now have `CESIUM_RTC` added to their `extensionsRequired` and `extensionsUsed` lists.
+- glTFs converted from the 3D Tiles PNTS format now:
+  - Have their `asset.version` field correctly set to `"2.0"`. Previously the version was not set, which is invalid.
+  - Have the `KHR_materials_unlit` extension added to the glTF's `extensionsUsed` list when the point cloud does not have normals.
+  - Have a default `scene`.
+  - Have the `CESIUM_RTC` extension added to the glTF's `extensionsRequired` and `extensionsUsed` lists when the PNTS uses the `RTC_CENTER` property.
+- When glTFs are loaded with `applyTextureTransform` set to true, the accessors and bufferViews created for the newly-generated texture coordinates now have their `byteOffset` set to zero. Previously, they inherited the value from the original `KHR_texture_transform`-dependent objects, which was incorrect.
+- `bufferViews` created for indices during Draco decoding no longer have their `byteStride` property set, as this is unnecessary and disallowed by the specification.
+- `bufferViews` created for vertex attributes during Draco decoding now have their `target` property correctly set to `BufferView::Target::ARRAY_BUFFER`.
+- After a glTF has been Draco-decoded, the `KHR_draco_mesh_compression` extension is now removed from the primitives, as well as from `extensionsUsed` and `extensionsRequired`.
+- For glTFs converted from quantized-mesh tiles, accessors created for the position attribute now have their minimum and maximum values set correctly to include the vertices that form the skirt around the edge of the tile.
+- Fixed some glTF validation problems with the mode produced by `upsampleGltfForRasterOverlays`.
+- `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` no longer fails when the model spans the anti-meridian. However, only the larger part of the model on one side of the anti-meridian will have useful texture coordinates.
+- Fixed a bug that caused `GltfWriter` to create an invalid GLB if its total size would be greater than or equal to 4 GiB. Because it is not possible to produce a valid GLB of this size, GltfWriter now reports an error instead.
+- `CesiumUtility::Uri::resolve` can now properly parse protocol-relative URIs (such as `//example.com`).
+- Fixed a bug where the `GltfReader` was not able to read a model when the BIN chunk of the GLB data was more than 3 bytes larger than the size of the JSON-defined `buffer`.
+
+### v0.34.0 - 2024-04-01
+
+##### Breaking Changes :mega:
+
+- Renamed `IntersectionTests::pointInTriangle2D` to `IntersectionTests::pointInTriangle`.
+
+##### Additions :tada:
+
+- Added `AccessorWriter` constructor that takes an `AccessorView`.
+- Added `PositionAccessorType`, which is a type definition for a position accessor. It can be constructed using `getPositionAccessorView`.
+- Added overloads of `IntersectionTests::pointInTriangle` that handle 3D points. One overload includes a `barycentricCoordinates` parameter that outputs the barycentric coordinates at that point.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take a `Cesium3DTiles::BoundingVolume`.
+- Added overloads of `ImplicitTilingUtilities::computeBoundingVolume` that take an `S2CellBoundingVolume` and an `OctreeTileID`. Previously only `QuadtreeTileID` was supported.
+- Added `setOrientedBoundingBox`, `setBoundingRegion`, `setBoundingSphere`, and `setS2CellBoundingVolume` functions to `TileBoundingVolumes`.
+
+##### Fixes :wrench:
+
+- Fixed a bug where coordinates returned from `SimplePlanarEllipsoidCurve` were inverted if one of the input points had a negative height.
+- Fixed a bug where `Tileset::ComputeLoadProgress` could incorrectly report 100% before all tiles finished their main thread loading.
+
+### v0.33.0 - 2024-03-01
+
+##### Breaking Changes :mega:
+
+- Removed support for `EXT_feature_metadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`. This extension was replaced by `EXT_mesh_features`, `EXT_instance_features`, and `EXT_structural_metadata`.
+- Moved `ReferenceCountedNonThreadSafe<T>` to `ReferenceCounted.h`. It is also now a type alias for `ReferenceCounted<T, false>` rather than an actual class.
+- Renamed `applyKHRTextureTransform` to `applyKhrTextureTransform`. The corresponding header file was similarly renamed to `CesiumGltf/applyKhrTextureTransform.h`.
+
+##### Additions :tada:
+
+- Added `TextureViewOptions`, which includes the following flags:
+  - `applyKhrTextureTransformExtension`: When true, the view will automatically transform texture coordinates before sampling the texture.
+  - `makeImageCopy`: When true, the view will make its own CPU copy of the image data.
+- Added `TextureView`. It views an arbitrary glTF texture and can be affected by `TextureViewOptions`. `FeatureIdTextureView` and `PropertyTexturePropertyView` now inherit from this class.
+- Added `options` parameter to `PropertyTextureView::getPropertyView` and `PropertyTextureView::forEachProperty`, allowing views to be constructed with property-specific options.
+- Added `KhrTextureTransform`, a utility class that parses the `KHR_texture_transform` glTF extension and reports whether it is valid. UVs may be transformed on the CPU using `applyTransform`.
+- Added `contains` method to `BoundingSphere`.
+- Added `GlobeRectangle::MAXIMUM` static field.
+- Added `ReferenceCountedThreadSafe` type alias.
+- Added `SimplePlanarEllipsoidCurve` class to help with calculating fly-to paths.
+- Added `sizeBytes` field to `ImageCesium`, allowing its size to be tracked for caching purposes even after its `pixelData` has been cleared.
+- Added `scaleToGeocentricSurface` method to `Ellipsoid`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `BoundingVolume::estimateGlobeRectangle` where it returned an incorrect rectangle for boxes and spheres that encompass the entire globe.
+- Fixed an incorrect computation of wrapped texture coordinates in `applySamplerWrapS` and `applySamplerWrapT`.
+
+### v0.32.0 - 2024-02-01
+
+##### Breaking Changes :mega:
+
+- `IndicesForFaceFromAccessor` now properly supports `TRIANGLE_STRIP` and `TRIANGLE_FAN` modes. This requires the struct to be initialized with the correct primitive mode.
+
+##### Additions :tada:
+
+- Added support for Web Map Tile Service (WMTS) with `WebMapTileServiceRasterOverlay`.
+- Added conversions from `std::string` to other metadata types in `MetadataConversions`. This enables the same conversions as `std::string_view`, while allowing runtime engines to use `std::string` for convenience.
+- Added `applyTextureTransform` property to `TilesetOptions`, which indicates whether to preemptively apply transforms to texture coordinates for textures with the `KHR_texture_transform` extension.
+- Added `loadGltf` method to `GltfReader`, making it easier to do a full, asynchronous load of a glTF.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `FeatureIdTextureView` where it ignored the wrap values specified on the texture's sampler.
+- Fixed a bug that could cause binary implicit tiling subtrees with buffers padded to 8-bytes to fail to load.
+- Fixed a bug where upgraded batch table properties were not always assigned sentinel values, even when such values were available and required.
+- Fixed incorrect behavior in `PropertyTablePropertyView` where `arrayOffsets` were treated as byte offsets, instead of as array indices.
+
 ### v0.31.0 - 2023-12-14
 
 ##### Additions :tada:

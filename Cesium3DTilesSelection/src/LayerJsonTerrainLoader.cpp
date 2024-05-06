@@ -1,10 +1,9 @@
 #include "LayerJsonTerrainLoader.h"
 
-#include <Cesium3DTilesContent/QuantizedMeshLoader.h>
-#include <Cesium3DTilesContent/upsampleGltfForRasterOverlays.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
@@ -13,10 +12,10 @@
 #include <rapidjson/document.h>
 
 using namespace CesiumAsync;
-using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
@@ -219,9 +218,7 @@ void generateRasterOverlayUVs(
                                 pParentRegion->getRectangle())
                           : std::nullopt,
             {projection},
-            false,
-            "_CESIUMOVERLAY_",
-            0);
+            false);
   }
 }
 
@@ -1137,9 +1134,11 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
        boundingVolume = tile.getBoundingVolume(),
        textureCoordinateIndex = index,
        tileID = *pUpsampledTileID]() mutable {
-        auto model = upsampleGltfForRasterOverlays(
+        auto model = RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             parentModel,
             tileID,
+            false,
+            RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
             textureCoordinateIndex);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);

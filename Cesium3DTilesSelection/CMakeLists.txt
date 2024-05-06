@@ -51,6 +51,7 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumGeometry
         CesiumGltf
         CesiumGltfReader
+        CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
         CesiumUtility
         spdlog

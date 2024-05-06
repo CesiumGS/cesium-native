@@ -35,6 +35,10 @@ double BoundingSphere::computeDistanceSquaredToPosition(
   return distance * distance;
 }
 
+bool BoundingSphere::contains(const glm::dvec3& position) const noexcept {
+  return glm::distance(this->_center, position) <= this->_radius;
+}
+
 BoundingSphere
 BoundingSphere::transform(const glm::dmat4& transformation) const noexcept {
   const glm::dvec3 center =
