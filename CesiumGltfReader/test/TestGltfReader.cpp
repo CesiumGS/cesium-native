@@ -775,7 +775,9 @@ TEST_CASE("GltfReader::postprocessGltf") {
 
     Model& model = readerResult.model.emplace();
 
-    model.buffers.emplace_back().uri = "data:;base64,dGVzdA==";
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.uri = "data:;base64,dGVzdA==";
+    buffer.byteLength = 4;
 
     reader.postprocessGltf(readerResult, options);
 
