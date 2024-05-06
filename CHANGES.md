@@ -8,10 +8,16 @@
   - `KHR_texture_basisu`
   - `EXT_texture_webp`
   - `EXT_mesh_gpu_instancing`
+  - `EXT_meshopt_compression`
   - `CESIUM_primitive_outline`
   - `CESIUM_tile_edges`
 - Fixed a bug in `GltfUtilities::compactBuffer` where it would not preserve the alignment of the bufferViews.
 - The `collapseToSingleBuffer` and `moveBufferContent` functions in `GltfUtilities` now align to an 8-byte boundary rather than a 4-byte boundary, because bufferViews associated with some glTF extensions require this larger alignment.
+- `GltfUtilities::collapseToSingleBuffer` now works correctly even if some of the buffers in the model have a `uri` property and the data at that URI has not yet been loaded. Such buffers are left unmodified.
+- `GltfUtilities::collapseToSingleBuffer` now works correctly with bufferViews that have the `EXT_meshopt_compression` extension.
+- `GltfUtilities::compactBuffer` now accounts for bufferViews with the `EXT_meshopt_compression` when determining unused buffer ranges.
+- When `GltfReader` decodes buffers with data URLs, and the size of the data in the URL does not match the buffer's `byteLength`, the `byteLength` is now updated and a warning is raised. Previously, the mismatch was ignored and would cause problems later when trying to use these buffers.
+- `EXT_meshopt_compression` and `KHR_mesh_quantization` are now removed from `extensionsUsed` and `extensionsRequired` after they are decoded by `GltfReader`.
 
 ### v0.35.0 - 2024-05-01
 
