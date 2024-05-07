@@ -451,6 +451,22 @@ public:
       return down;
     }
   }
+
+    /**
+   * @brief Construct a vector perpendicular to the argument.
+   * @param v input vector
+   * @return a perpendicular vector
+   */
+  template <typename T, glm::qualifier Q>
+  static glm::vec<3, T, Q> perpVec(const glm::vec<3, T, Q>& v) {
+    // This constructs a vector whose dot product with v will be 0, hence
+    // perpendicular to v. As seen in the "Physically Based Rendering".
+    if (std::abs(v.x) > std::abs(v.y)) {
+      return glm::vec<3, T, Q>(-v.z, 0, v.x) / std::sqrt(v.x * v.x + v.z * v.z);
+    }
+    return  glm::vec<3, T, Q>( 0, v.z, -v.y) / std::sqrt(v.y * v.y + v.z * v.z);
+  }
+
 };
 
 } // namespace CesiumUtility

@@ -1,6 +1,7 @@
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
+#include <glm/glm.hpp>
 
 using namespace CesiumUtility;
 
@@ -143,4 +144,16 @@ TEST_CASE("Math::mod") {
   CHECK(Math::mod(-0.5, -1.0) == -0.5);
   CHECK(Math::mod(-1.0, -1.0) == -0.0);
   CHECK(Math::equalsEpsilon(Math::mod(-1.1, -1.0), -0.1, Math::Epsilon15));
+}
+
+TEST_CASE("Math::perpVec") {
+  glm::vec3 v0(.2f, .3f, .4f);
+  glm::vec3 perp = Math::perpVec(v0);
+  // perp is normalized
+  glm::vec3 mutual = glm::cross(v0, perp);
+  CHECK(Math::equalsEpsilon(length(v0), length(mutual), Math::Epsilon5));
+  glm::vec3 v1(.3f, .2f, -1.0f);
+  glm::vec3 perp1 = Math::perpVec(v1);
+  glm::vec3 mutual1 = glm::cross(v1, perp1);
+  CHECK(Math::equalsEpsilon(length(v1), length(mutual1), Math::Epsilon5));
 }

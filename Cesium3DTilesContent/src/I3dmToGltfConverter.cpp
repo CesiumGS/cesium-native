@@ -11,6 +11,7 @@
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/AttributeCompression.h>
+#include <CesiumUtility/Math.h>
 
 #include <glm/gtx/matrix_decompose.hpp>
 
@@ -162,23 +163,12 @@ glm::quat rotation(const glm::vec3& vec1, const glm::vec3& vec2) {
     return glm::quat(1.0, 0.0f, 0.0f, 0.0f);
   }
   if (cosRot <= -1.0f) {
-    // Choose principal axis that is "most orthogonal" to the first vector.
-    glm::vec3 orthoVec(0.0f, 0.0f, 0.0f);
-    glm::vec3 absVals(std::fabs(vec1.x), std::fabs(vec1.y), std::fabs(vec1.z));
-    if (absVals.z <= absVals.x && absVals.z <= absVals.y) {
-      orthoVec.z = 1.0f;
-    } else if (absVals.x <= absVals.y) {
-      orthoVec.x = 1.0f;
-    } else {
-      orthoVec.y = 1.0f;
-    }
-    auto rotAxis = cross(vec1, orthoVec);
-    rotAxis = normalize(rotAxis);
+    auto rotAxis = CesiumUtility::Math::perpVec(vec1);
     // rotation by pi radians
-    return glm::quat(0.0f, rotAxis.x, rotAxis.y, rotAxis.z);
+    return glm::quat(0.0f, rotAxis);
   }
   auto rotAxis = cross(vec1, vec2);
-  glm::quat sumQuat(cosRot + 1.0f, rotAxis.x, rotAxis.y, rotAxis.z);
+  glm::quat sumQuat(cosRot + 1.0f, rotAxis);
   return normalize(sumQuat);
 }
 
@@ -188,8 +178,7 @@ glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   // We can rotate a point vector by a quaternion using q * (0, v) *
   // conj(q). But here we are doing an inverse rotation of the right vector into
   // the "up frame."
-  glm::quat temp =
-      conjugate(upRot) * glm::quat(0.0f, right.x, right.y, right.z) * upRot;
+  glm::quat temp = conjugate(upRot) * glm::quat(0.0f, right) * upRot;
   glm::vec3 innerRight(temp.x, temp.y, temp.z);
   glm::quat rightRot = rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
   return upRot * rightRot;
