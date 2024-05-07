@@ -10,20 +10,36 @@
 #include <vector>
 
 namespace CesiumUtility {
+const char* HTTPS_PREFIX = "https:";
+const char* HTTP_PREFIX = "http:";
+
+std::string cesiumConformUrl(const std::string& url, bool useHttps) {
+  // Prepend protocol to protocol-relative URIs.
+  if (url.length() > 2 && url.at(0) == '/' && url.at(1) == '/') {
+    return std::string(useHttps ? HTTPS_PREFIX : HTTP_PREFIX).append(url);
+  }
+  return url;
+}
+
 std::string Uri::resolve(
     const std::string& base,
     const std::string& relative,
-    bool useBaseQuery) {
+    bool useBaseQuery,
+    bool assumeHttpsDefault) {
+  const std::string conformedBase = cesiumConformUrl(base, assumeHttpsDefault);
+  const std::string conformedRelative =
+      cesiumConformUrl(relative, assumeHttpsDefault);
   UriUriA baseUri;
 
-  if (uriParseSingleUriA(&baseUri, base.c_str(), nullptr) != URI_SUCCESS) {
+  if (uriParseSingleUriA(&baseUri, conformedBase.c_str(), nullptr) !=
+      URI_SUCCESS) {
     // Could not parse the base, so just use the relative directly and hope for
     // the best.
     return relative;
   }
 
   UriUriA relativeUri;
-  if (uriParseSingleUriA(&relativeUri, relative.c_str(), nullptr) !=
+  if (uriParseSingleUriA(&relativeUri, conformedRelative.c_str(), nullptr) !=
       URI_SUCCESS) {
     // Could not parse one of the URLs, so just use the relative directly and
     // hope for the best.
@@ -106,8 +122,12 @@ std::string Uri::addQuery(
 }
 
 std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
+  // We need to conform the URL since it will fail parsing if it's
+  // protocol-relative. However, it doesn't matter what protocol we use since
+  // it's only extracting query parameters.
+  const std::string conformedUrl = cesiumConformUrl(url, true);
   UriUriA uri;
-  if (uriParseSingleUriA(&uri, url.c_str(), nullptr) != URI_SUCCESS) {
+  if (uriParseSingleUriA(&uri, conformedUrl.c_str(), nullptr) != URI_SUCCESS) {
     return "";
   }
   UriQueryListA* queryList;
