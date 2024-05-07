@@ -33,13 +33,13 @@ using namespace CesiumUtility;
 namespace Cesium3DTilesContent {
 namespace {
 struct PntsHeader {
-  unsigned char magic[4];
-  uint32_t version;
-  uint32_t byteLength;
-  uint32_t featureTableJsonByteLength;
-  uint32_t featureTableBinaryByteLength;
-  uint32_t batchTableJsonByteLength;
-  uint32_t batchTableBinaryByteLength;
+  unsigned char magic[4] = {0, 0, 0, 0};
+  uint32_t version = 0;
+  uint32_t byteLength = 0;
+  uint32_t featureTableJsonByteLength = 0;
+  uint32_t featureTableBinaryByteLength = 0;
+  uint32_t batchTableJsonByteLength = 0;
+  uint32_t batchTableBinaryByteLength = 0;
 };
 
 void parsePntsHeader(

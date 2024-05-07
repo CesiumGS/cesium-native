@@ -12,7 +12,7 @@ std::unique_ptr<SimpleAssetResponse> readFileUri(const std::string& uri) {
   std::vector<std::byte> result;
   CesiumAsync::HttpHeaders headers;
   std::string contentType;
-  auto response = [&](uint64_t errorCode) {
+  auto response = [&](uint16_t errorCode) {
     return std::make_unique<SimpleAssetResponse>(
         errorCode,
         contentType,
