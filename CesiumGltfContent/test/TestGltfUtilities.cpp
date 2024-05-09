@@ -383,12 +383,12 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     GltfUtilities::compactBuffers(m);
 
-    CHECK(buffer.byteLength == 113);
-    REQUIRE(buffer.cesium.data.size() == 113);
-    CHECK(bv.byteOffset == 0);
+    CHECK(buffer.byteLength == 123 - 8);
+    REQUIRE(buffer.cesium.data.size() == 123 - 8);
+    CHECK(bv.byteOffset == 2);
 
-    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
-      CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+    for (size_t i = size_t(bv.byteOffset); i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i + 8));
     }
   }
 
@@ -400,8 +400,9 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     GltfUtilities::compactBuffers(m);
 
-    CHECK(buffer.byteLength == 113);
-    REQUIRE(buffer.cesium.data.size() == 113);
+    // Any number of bytes can be removed from the end (no alignment impact)
+    CHECK(buffer.byteLength == 123 - 10);
+    REQUIRE(buffer.cesium.data.size() == 123 - 10);
 
     for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
       CHECK(buffer.cesium.data[i] == std::byte(i));
@@ -416,12 +417,35 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 
     GltfUtilities::compactBuffers(m);
 
-    CHECK(buffer.byteLength == 103);
-    REQUIRE(buffer.cesium.data.size() == 103);
-    CHECK(bv.byteOffset == 0);
+    CHECK(buffer.byteLength == 123 - 8 - 10);
+    REQUIRE(buffer.cesium.data.size() == 123 - 8 - 10);
+    CHECK(bv.byteOffset == 2);
+
+    for (size_t i = 2; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i + 8));
+    }
+  }
+
+  SECTION("does not remove gaps less than 8 bytes") {
+    BufferView& bv1 = m.bufferViews.emplace_back();
+    bv1.buffer = 0;
+    bv1.byteOffset = 1;
+    bv1.byteLength = 99;
+
+    BufferView& bv2 = m.bufferViews.emplace_back();
+    bv2.buffer = 0;
+    bv2.byteOffset = 105;
+    bv2.byteLength = 10;
+
+    GltfUtilities::compactBuffers(m);
+
+    CHECK(buffer.byteLength == 115);
+    REQUIRE(buffer.cesium.data.size() == 115);
+    CHECK(m.bufferViews[0].byteOffset == 1);
+    CHECK(m.bufferViews[1].byteOffset == 105);
 
     for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
-      CHECK(buffer.cesium.data[i] == std::byte(i + 10));
+      CHECK(buffer.cesium.data[i] == std::byte(i));
     }
   }
 }
