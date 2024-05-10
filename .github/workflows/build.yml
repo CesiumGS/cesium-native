@@ -111,7 +111,7 @@ jobs:
             vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
             vcpkg-${{ env.CACHE_KEY }}
       - name: Set CC and CXX
-        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-latest'}}
+        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-12'}}
         run: |
           echo "CC=clang-12" >> "$GITHUB_ENV"
           echo "CXX=clang++-12" >> "$GITHUB_ENV"
