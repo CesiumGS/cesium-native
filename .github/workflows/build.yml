@@ -27,7 +27,7 @@ jobs:
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ReferenceDocumentation
           path: build/doc/html
@@ -58,7 +58,7 @@ jobs:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
           variant: sccache
       - name: Cache vcpkg artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /.ezvcpkg
           key: vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
@@ -105,7 +105,7 @@ jobs:
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
       - name: Cache vcpkg artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.ezvcpkg
           key:  vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
