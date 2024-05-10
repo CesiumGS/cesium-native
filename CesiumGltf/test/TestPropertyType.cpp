@@ -295,6 +295,23 @@ TEST_CASE("Test getDimensionsFromPropertyType") {
   REQUIRE(getDimensionsFromPropertyType(PropertyType::Invalid) == 0);
 }
 
+TEST_CASE("Test getComponentCountFromPropertyType") {
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Scalar) == 1);
+
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Vec2) == 2);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Vec3) == 3);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Vec4) == 4);
+
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Mat2) == 4);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Mat3) == 9);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Mat4) == 16);
+
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Boolean) == 0);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::String) == 0);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Enum) == 0);
+  REQUIRE(getComponentCountFromPropertyType(PropertyType::Invalid) == 0);
+}
+
 TEST_CASE("Test getSizeOfComponentType") {
   REQUIRE(
       getSizeOfComponentType(PropertyComponentType::Int8) == sizeof(int8_t));

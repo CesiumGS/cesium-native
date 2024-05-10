@@ -815,7 +815,7 @@ bool validateDracoMetadataAttribute(
   }
 
   auto type = MetadataProperty::getTypeFromNumberOfComponents(
-      pAttribute->num_components());
+      static_cast<int8_t>(pAttribute->num_components()));
   return type && type.value() == semantic.type;
 }
 
@@ -1470,8 +1470,10 @@ void addBatchIdsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
 void createGltfFromParsedContent(
     PntsContent& parsedContent,
     GltfConverterResult& result) {
-  result.model = std::make_optional<CesiumGltf::Model>();
-  Model& gltf = result.model.value();
+  result.model.reset();
+  Model& gltf = result.model.emplace();
+
+  gltf.asset.version = "2.0";
 
   // Create a single node with a single mesh, with a single primitive.
   Node& node = gltf.nodes.emplace_back();
@@ -1479,6 +1481,11 @@ void createGltfFromParsedContent(
       node.matrix.data(),
       &CesiumGeometry::Transforms::Z_UP_TO_Y_UP,
       sizeof(glm::dmat4));
+
+  // Create a scene containing the node, and make it the default scene.
+  Scene& scene = gltf.scenes.emplace_back();
+  scene.nodes = {0};
+  gltf.scene = 0;
 
   size_t meshId = gltf.meshes.size();
   Mesh& mesh = gltf.meshes.emplace_back();
@@ -1516,6 +1523,8 @@ void createGltfFromParsedContent(
     // Points without normals should be rendered without lighting, which we
     // can indicate with the KHR_materials_unlit extension.
     material.addExtension<CesiumGltf::ExtensionKhrMaterialsUnlit>();
+    gltf.addExtensionUsed(
+        CesiumGltf::ExtensionKhrMaterialsUnlit::ExtensionName);
   }
 
   if (parsedContent.batchId) {
@@ -1529,6 +1538,9 @@ void createGltfFromParsedContent(
     // the root node, as suggested in the 3D Tiles migration guide.
     auto& cesiumRTC =
         result.model->addExtension<CesiumGltf::ExtensionCesiumRTC>();
+    result.model->addExtensionRequired(
+        CesiumGltf::ExtensionCesiumRTC::ExtensionName);
+
     glm::dvec3 rtcCenter = parsedContent.rtcCenter.value();
     cesiumRTC.center = {rtcCenter.x, rtcCenter.y, rtcCenter.z};
   }
