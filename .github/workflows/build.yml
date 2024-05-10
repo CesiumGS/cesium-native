@@ -76,7 +76,7 @@ jobs:
     strategy:
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-latest, ubuntu-20.04, macos-latest ]
+        platform: [ ubuntu-latest, ubuntu-20.04, macos-12 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
