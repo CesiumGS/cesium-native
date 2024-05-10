@@ -1480,6 +1480,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     // We need to remove children recursively, as children of this tile might
     // also be in the _externalTilesPendingClear list
     this->_unloadPendingChildren(*pPendingExternalTile);
+    pPendingExternalTile->setState(TileLoadState::Unloaded);
+    pPendingExternalTile->clearChildren();
   }
 
   // Clear list of pending external tiles
