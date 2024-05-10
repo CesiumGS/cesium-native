@@ -48,6 +48,7 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
+          _loadedTiles,
           std::vector<CesiumAsync::IAssetAccessor::THeader>{},
           std::move(pCustomLoader),
           std::move(pRootTile))} {}
@@ -66,6 +67,7 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
+          _loadedTiles,
           url)} {}
 
 Tileset::Tileset(
@@ -84,6 +86,7 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
+          _loadedTiles,
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)} {}
@@ -1460,7 +1463,28 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
+void Tileset::_unloadPendingChildren(Tile& tile) noexcept {
+  for (Tile& childTile : tile.getChildren()) {
+    this->_externalTilesPendingClear.remove(childTile);
+    childTile.setState(TileLoadState::Unloaded);
+    this->_unloadPendingChildren(childTile);
+  }
+}
+
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
+  // Clear children of external tilesets unloaded last frame
+  Tile* pPendingExternalTile;
+  while ((pPendingExternalTile = this->_externalTilesPendingClear.head()) !=
+         nullptr) {
+    this->_externalTilesPendingClear.remove(*pPendingExternalTile);
+    // We need to remove children recursively, as children of this tile might
+    // also be in the _externalTilesPendingClear list
+    this->_unloadPendingChildren(*pPendingExternalTile);
+  }
+
+  // Clear list of pending external tiles
+  this->_externalTilesPendingClear = Tile::LoadedLinkedList();
+
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
@@ -1491,10 +1515,18 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
+    // Check for external content before unloading, as an unloaded tile will
+    // always have Unknown content set
+    const bool wasExternalTile = pTile->isExternalContent();
     const bool removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
+      if (wasExternalTile) {
+        // The Unreal implementation, at the least, requires a frame between a
+        // tile being unloaded and its pointers becoming invalidated.
+        this->_externalTilesPendingClear.insertAtTail(*pTile);
+      }
     }
 
     pTile = pNext;

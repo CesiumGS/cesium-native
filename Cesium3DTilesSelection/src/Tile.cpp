@@ -223,7 +223,8 @@ bool Tile::isUnknownContent() const noexcept {
 
 bool Tile::isReadyToUnload() const noexcept {
   if (this->getState() != TileLoadState::ContentLoaded &&
-      this->getState() != TileLoadState::Done) {
+      this->getState() != TileLoadState::Done &&
+      this->getState() != TileLoadState::Unloaded) {
     return false;
   }
 

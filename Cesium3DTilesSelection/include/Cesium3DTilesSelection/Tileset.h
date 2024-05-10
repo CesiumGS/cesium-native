@@ -416,6 +416,7 @@ private:
 
   void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
+  void _unloadPendingChildren(Tile& tile) noexcept;
 
   void _updateLodTransitions(
       const FrameState& frameState,
@@ -485,6 +486,7 @@ private:
   std::vector<TileLoadTask> _workerThreadLoadQueue;
 
   Tile::LoadedLinkedList _loadedTiles;
+  Tile::LoadedLinkedList _externalTilesPendingClear;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.

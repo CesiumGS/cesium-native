@@ -189,6 +189,11 @@ public:
   }
 
   /**
+   * Clears the list of this tile's children.
+   */
+  void clearChildren() { this->_children.clear(); }
+
+  /**
    * @brief Assigns the given child tiles to this tile.
    *
    * This function is not supposed to be called by clients.
@@ -545,6 +550,7 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   friend class TilesetContentManager;
+  friend class Tileset;
   friend class MockTilesetContentManagerTestFixture;
 
 public:

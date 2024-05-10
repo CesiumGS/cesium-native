@@ -72,12 +72,6 @@ struct ContentKindSetter {
   void* pRenderResources;
 };
 
-void unloadTileRecursively(
-    Tile& tile,
-    TilesetContentManager& tilesetContentManager) {
-  tilesetContentManager.unloadTileContent(tile);
-}
-
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
@@ -596,6 +590,7 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
+    Tile::LoadedLinkedList& loadedTiles,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
@@ -613,6 +608,7 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
+      _loadedTiles(loadedTiles),
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -627,6 +623,7 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
+    Tile::LoadedLinkedList& loadedTiles,
     const std::string& url)
     : _externals{externals},
       _requestHeaders{},
@@ -642,6 +639,7 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
+      _loadedTiles(loadedTiles),
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -764,6 +762,7 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
+    Tile::LoadedLinkedList& loadedTiles,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
@@ -781,6 +780,7 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
+      _loadedTiles(loadedTiles),
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -1023,6 +1023,27 @@ void TilesetContentManager::updateTileContent(
   }
 }
 
+bool TilesetContentManager::handleUpsampledTileChildren(Tile& tile) {
+  for (Tile& child : tile.getChildren()) {
+    if (child.getState() == TileLoadState::ContentLoading &&
+        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
+            child.getTileID())) {
+      // Yes, a child is upsampling from this tile, so it may be using the
+      // tile's content from another thread via lambda capture. We can't unload
+      // it right now. So mark the tile as in the process of unloading and stop
+      // here.
+      tile.setState(TileLoadState::Unloading);
+      return false;
+    }
+
+    if (!this->handleUpsampledTileChildren(child)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
@@ -1034,11 +1055,16 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   TileContent& content = tile.getContent();
-  const bool isReadyToUnload = tile.isReadyToUnload();
+  bool isReadyToUnload = tile.isReadyToUnload();
+  bool isExternalContent = tile.isExternalContent();
 
-  // don't unload external or empty tile while they're still loading
-  if ((content.isExternalContent() || content.isEmptyContent()) &&
-      !isReadyToUnload) {
+  // don't unload external or empty tile while children are still loading
+  if ((isExternalContent || content.isEmptyContent()) && !isReadyToUnload) {
+    return false;
+  }
+
+  // Don't unload this tile if children are still upsampling
+  if (!this->handleUpsampledTileChildren(tile)) {
     return false;
   }
 
@@ -1065,23 +1091,10 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     }
   }
 
-  // Are any children currently being upsampled from this tile?
-  for (const Tile& child : tile.getChildren()) {
-    if (child.getState() == TileLoadState::ContentLoading &&
-        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
-            child.getTileID())) {
-      // Yes, a child is upsampling from this tile, so it may be using the
-      // tile's content from another thread via lambda capture. We can't unload
-      // it right now. So mark the tile as in the process of unloading and stop
-      // here.
-      tile.setState(TileLoadState::Unloading);
-      return false;
-    }
-  }
-
-  // Make sure we unload all children
   if (isReadyToUnload) {
-    for (Tile& child : tile.getChildren()) {
+    // Make sure we unload all children
+    gsl::span<Cesium3DTilesSelection::Tile> children = tile.getChildren();
+    for (Tile& child : children) {
       this->unloadTileContent(child);
     }
   }
@@ -1089,7 +1102,15 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
-  tile.setState(TileLoadState::Unloaded);
+  if (isExternalContent) {
+    // We don't want to set external tilesets as Unloaded quite yet, because
+    // then they might get reloaded before we've had a chance to clear their
+    // children and cause an error. They'll get their children cleared and their
+    // state set to Unloaded before next clean up
+    tile.setState(TileLoadState::Done);
+  } else {
+    tile.setState(TileLoadState::Unloaded);
+  }
   return true;
 }
 
