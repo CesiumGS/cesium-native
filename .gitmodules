@@ -68,3 +68,6 @@
 [submodule "extern/meshoptimizer"]
 	path = extern/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer
+[submodule "extern/PhysX"]
+	path = extern/PhysX
+	url = git@github.com:NVIDIA-Omniverse/PhysX.git

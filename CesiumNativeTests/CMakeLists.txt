@@ -18,6 +18,7 @@ set(cesium_native_targets
     CesiumIonClient
     CesiumRasterOverlays
     CesiumUtility
+    CesiumAnalysis
 )
 
 cesium_glob_files(test_sources
