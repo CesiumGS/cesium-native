@@ -33,10 +33,11 @@ jobs:
           path: build/doc/html
   WindowsBuild:
     strategy:
+      fail-fast: false
       matrix:
         platform: [windows-2019, windows-2022]
         build_type: [Debug, RelWithDebInfo]
-    name: "Build ${{matrix.build_type}} for ${{matrix.platform}}"
+    name: "${{matrix.platform}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}"
     runs-on: ${{ matrix.platform }}
@@ -74,6 +75,7 @@ jobs:
           ctest -V
   PosixBuild:
     strategy:
+      fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
         platform: [ ubuntu-latest, ubuntu-20.04, macos-12 ]
@@ -85,7 +87,7 @@ jobs:
             platform: macos-12
           - compiler: gcc
             platform: ubuntu-20.04
-    name: "Build ${{matrix.build_type}} on ${{matrix.platform}} with ${{matrix.compiler}}"
+    name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
     runs-on: ${{ matrix.platform }}
