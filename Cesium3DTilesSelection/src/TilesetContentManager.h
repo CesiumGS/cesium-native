@@ -66,12 +66,22 @@ public:
     Tile* pTile;
     CesiumAsync::RequestData requestData;
     TileLoaderCallback tileCallback;
+
+    // Must have a valid tile and some work
+    bool isValid() {
+      return pTile && (!requestData.url.empty() || tileCallback);
+    }
   };
 
   struct RasterWorkChain {
     RasterMappedTo3DTile* pRasterTile;
     CesiumAsync::RequestData requestData;
     CesiumRasterOverlays::RasterProcessingCallback rasterCallback;
+
+    // Must have a valid tile and some work
+    bool isValid() {
+      return pRasterTile && (!requestData.url.empty() || rasterCallback);
+    }
   };
 
   struct ParsedTileWork {

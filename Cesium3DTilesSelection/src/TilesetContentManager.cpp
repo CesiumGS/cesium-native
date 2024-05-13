@@ -1008,6 +1008,15 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     return false;
   }
 
+  // Are any raster mapped tiles currently loading?
+  // If so, wait until they are done before unloading
+  for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    RasterOverlayTile* pLoadingTile = mapped.getLoadingTile();
+    if (pLoadingTile &&
+        pLoadingTile->getState() == RasterOverlayTile::LoadState::Loading)
+      return false;
+  }
+
   // Detach raster tiles first so that the renderer's tile free
   // process doesn't need to worry about them.
   for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
@@ -1541,7 +1550,7 @@ void TilesetContentManager::discoverLoadWork(
       double resultPriority = loadRequest.priority + priorityBias;
 
       // We always need a source (non raster) tile
-      assert(work.tileWorkChain.pTile);
+      assert(work.tileWorkChain.isValid());
       Tile* pTile = work.tileWorkChain.pTile;
 
       // If order for source tile already exists, skip adding more work for it
@@ -1564,6 +1573,7 @@ void TilesetContentManager::discoverLoadWork(
 
       // Embed child work in parent
       for (auto& rasterWorkChain : work.rasterWorkChains) {
+        assert(rasterWorkChain.isValid());
         newOrder.childOrders.emplace_back(TileWorkManager::Order{
             std::move(rasterWorkChain.requestData),
             RasterProcessingData{
