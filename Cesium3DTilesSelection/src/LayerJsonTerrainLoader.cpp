@@ -908,38 +908,39 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-void LayerJsonTerrainLoader::getLoadWork(
+bool LayerJsonTerrainLoader::getLoadWork(
     const Tile* pTile,
     RequestData& outRequest,
     TileLoaderCallback& outCallback) {
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&pTile->getTileID());
-  if (!pQuadtreeTileID) {
-    // Upsampling tiles do not request work
-    return;
+  if (pQuadtreeTileID) {
+    // Always request the tile from the first layer in which this tile ID is
+    // available.
+    auto firstAvailableIt = this->_layers.begin();
+    while (firstAvailableIt != this->_layers.end() &&
+           !firstAvailableIt->contentAvailability.isTileAvailable(
+               *pQuadtreeTileID)) {
+      ++firstAvailableIt;
+    }
+
+    if (firstAvailableIt == this->_layers.end())
+      return false; // No layer has this tile available.
+
+    // Start the actual content request.
+    auto& currentLayer = *firstAvailableIt;
+    outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
+  } else {
+    // Upsampling tiles do not have a tile id and do not request a url
   }
-
-  // Always request the tile from the first layer in which this tile ID is
-  // available.
-  auto firstAvailableIt = this->_layers.begin();
-  while (firstAvailableIt != this->_layers.end() &&
-         !firstAvailableIt->contentAvailability.isTileAvailable(
-             *pQuadtreeTileID)) {
-    ++firstAvailableIt;
-  }
-
-  if (firstAvailableIt == this->_layers.end())
-    return; // No layer has this tile available.
-
-  // Start the actual content request.
-  auto& currentLayer = *firstAvailableIt;
-  outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
 
   outCallback = [](const TileLoadInput& loadInput,
                    TilesetContentLoader* loader) {
     return loader->loadTileContent(loadInput);
   };
+
+  return true;
 }
 
 TileChildrenResult

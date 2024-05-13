@@ -286,7 +286,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.applyTextureTransform);
 }
 
-void ImplicitOctreeLoader::getLoadWork(
+bool ImplicitOctreeLoader::getLoadWork(
     const Tile*,
     CesiumAsync::RequestData&,
     TileLoaderCallback& outCallback) {
@@ -295,6 +295,7 @@ void ImplicitOctreeLoader::getLoadWork(
                    TilesetContentLoader* loader) {
     return loader->loadTileContent(loadInput);
   };
+  return true;
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {

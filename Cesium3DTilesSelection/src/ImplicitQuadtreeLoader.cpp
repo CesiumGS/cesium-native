@@ -325,7 +325,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.applyTextureTransform);
 }
 
-void ImplicitQuadtreeLoader::getLoadWork(
+bool ImplicitQuadtreeLoader::getLoadWork(
     const Tile*,
     CesiumAsync::RequestData&,
     TileLoaderCallback& outCallback) {
@@ -334,6 +334,7 @@ void ImplicitQuadtreeLoader::getLoadWork(
                    TilesetContentLoader* loader) {
     return loader->loadTileContent(loadInput);
   };
+  return true;
 }
 
 TileChildrenResult

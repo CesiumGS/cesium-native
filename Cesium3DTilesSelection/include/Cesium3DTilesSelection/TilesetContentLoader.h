@@ -167,7 +167,7 @@ public:
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
 
-  virtual void getLoadWork(
+  virtual bool getLoadWork(
       const Tile* pTile,
       CesiumAsync::RequestData& outRequest,
       TileLoaderCallback& outCallback) = 0;

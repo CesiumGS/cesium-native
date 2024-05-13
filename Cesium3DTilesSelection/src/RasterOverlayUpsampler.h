@@ -8,7 +8,7 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  void getLoadWork(
+  bool getLoadWork(
       const Tile* pTile,
       CesiumAsync::RequestData& outRequest,
       TileLoaderCallback& outCallback) override;

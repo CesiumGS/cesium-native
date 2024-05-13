@@ -420,16 +420,16 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   return this->_pAggregatedLoader->loadTileContent(loadInput);
 }
 
-void CesiumIonTilesetLoader::getLoadWork(
+bool CesiumIonTilesetLoader::getLoadWork(
     const Tile* pTile,
     CesiumAsync::RequestData& outRequest,
     TileLoaderCallback& outCallback) {
 
   // If token refresh is in progress, cannot queue work yet
   if (this->_refreshTokenState == TokenRefreshState::Loading)
-    return;
+    return false;
 
-  this->_pAggregatedLoader->getLoadWork(pTile, outRequest, outCallback);
+  return this->_pAggregatedLoader->getLoadWork(pTile, outRequest, outCallback);
 }
 
 TileChildrenResult

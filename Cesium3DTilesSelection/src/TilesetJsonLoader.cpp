@@ -929,21 +929,20 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-void TilesetJsonLoader::getLoadWork(
+bool TilesetJsonLoader::getLoadWork(
     const Tile* pTile,
     CesiumAsync::RequestData& outRequest,
     TileLoaderCallback& outCallback) {
   // check if this tile belongs to a child loader
   auto currentLoader = pTile->getLoader();
   if (currentLoader != this) {
-    currentLoader->getLoadWork(pTile, outRequest, outCallback);
-    return;
+    return currentLoader->getLoadWork(pTile, outRequest, outCallback);
   }
 
   // this loader only handles Url ID
   const std::string* url = std::get_if<std::string>(&pTile->getTileID());
   if (!url)
-    return;
+    return false;
 
   outRequest.url = CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
 
@@ -951,6 +950,7 @@ void TilesetJsonLoader::getLoadWork(
                    TilesetContentLoader* loader) {
     return loader->loadTileContent(loadInput);
   };
+  return true;
 }
 
 TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {

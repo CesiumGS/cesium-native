@@ -42,7 +42,7 @@ public:
         std::move(mockLoadTileContent));
   }
 
-  void getLoadWork(
+  bool getLoadWork(
       const Tile*,
       CesiumAsync::RequestData&,
       TileLoaderCallback& outCallback) override {
@@ -50,6 +50,7 @@ public:
                      TilesetContentLoader* loader) {
       return loader->loadTileContent(loadInput);
     };
+    return true;
   };
 
   TileChildrenResult

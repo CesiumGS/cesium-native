@@ -1946,20 +1946,21 @@ void TilesetContentManager::parseTileWork(
   requestData.headers = this->_requestHeaders;
   TileLoaderCallback tileCallback;
 
-  pLoader->getLoadWork(pTile, requestData, tileCallback);
+  if (pLoader->getLoadWork(pTile, requestData, tileCallback)) {
+    // New work was found, add it and any raster work
+    ParsedTileWork newWork = {
+        depthIndex,
+        TileWorkChain{pTile, requestData, tileCallback}};
 
-  ParsedTileWork newWork = {
-      depthIndex,
-      TileWorkChain{pTile, requestData, tileCallback}};
+    newWork.projections = mapOverlaysToTile(
+        *pTile,
+        this->_overlayCollection,
+        maximumScreenSpaceError,
+        this->_requestHeaders,
+        newWork.rasterWorkChains);
 
-  newWork.projections = mapOverlaysToTile(
-      *pTile,
-      this->_overlayCollection,
-      maximumScreenSpaceError,
-      this->_requestHeaders,
-      newWork.rasterWorkChains);
-
-  outWork.push_back(newWork);
+    outWork.push_back(newWork);
+  }
 }
 
 } // namespace Cesium3DTilesSelection
