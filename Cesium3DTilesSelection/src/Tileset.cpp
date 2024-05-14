@@ -48,7 +48,6 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
-          _loadedTiles,
           std::vector<CesiumAsync::IAssetAccessor::THeader>{},
           std::move(pCustomLoader),
           std::move(pRootTile))} {}
@@ -67,7 +66,6 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
-          _loadedTiles,
           url)} {}
 
 Tileset::Tileset(
@@ -86,7 +84,6 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals},
-          _loadedTiles,
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)} {}
@@ -1465,7 +1462,7 @@ void Tileset::_processMainThreadLoadQueue() {
 
 void Tileset::_unloadPendingChildren(Tile& tile) noexcept {
   for (Tile& childTile : tile.getChildren()) {
-    this->_externalTilesPendingClear.remove(childTile);
+    this->_externalTilesPendingClear.remove(&childTile);
     childTile.setState(TileLoadState::Unloaded);
     this->_unloadPendingChildren(childTile);
   }
@@ -1474,9 +1471,9 @@ void Tileset::_unloadPendingChildren(Tile& tile) noexcept {
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   // Clear children of external tilesets unloaded last frame
   Tile* pPendingExternalTile;
-  while ((pPendingExternalTile = this->_externalTilesPendingClear.head()) !=
-         nullptr) {
-    this->_externalTilesPendingClear.remove(*pPendingExternalTile);
+  while (!this->_externalTilesPendingClear.empty()) {
+    pPendingExternalTile = this->_externalTilesPendingClear.front();
+    this->_externalTilesPendingClear.pop_front();
     // We need to remove children recursively, as children of this tile might
     // also be in the _externalTilesPendingClear list
     this->_unloadPendingChildren(*pPendingExternalTile);
@@ -1485,7 +1482,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   }
 
   // Clear list of pending external tiles
-  this->_externalTilesPendingClear = Tile::LoadedLinkedList();
+  this->_externalTilesPendingClear.clear();
 
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
@@ -1527,7 +1524,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
       if (wasExternalTile) {
         // The Unreal implementation, at the least, requires a frame between a
         // tile being unloaded and its pointers becoming invalidated.
-        this->_externalTilesPendingClear.insertAtTail(*pTile);
+        this->_externalTilesPendingClear.push_back(pTile);
       }
     }
 

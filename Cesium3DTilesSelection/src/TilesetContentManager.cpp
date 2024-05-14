@@ -590,7 +590,6 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
-    Tile::LoadedLinkedList& loadedTiles,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
@@ -608,7 +607,6 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
-      _loadedTiles(loadedTiles),
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -623,7 +621,6 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
-    Tile::LoadedLinkedList& loadedTiles,
     const std::string& url)
     : _externals{externals},
       _requestHeaders{},
@@ -639,7 +636,6 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
-      _loadedTiles(loadedTiles),
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -762,7 +758,6 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
-    Tile::LoadedLinkedList& loadedTiles,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
@@ -780,7 +775,6 @@ TilesetContentManager::TilesetContentManager(
       _overlayCollection{std::move(overlayCollection)},
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
-      _loadedTiles(loadedTiles),
       _tilesDataUsed{0},
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -1107,7 +1101,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     // then they might get reloaded before we've had a chance to clear their
     // children and cause an error. They'll get their children cleared and their
     // state set to Unloaded before next clean up
-    tile.setState(TileLoadState::Done);
+    tile.setState(TileLoadState::Unloading);
   } else {
     tile.setState(TileLoadState::Unloaded);
   }

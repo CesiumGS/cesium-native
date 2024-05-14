@@ -486,7 +486,7 @@ private:
   std::vector<TileLoadTask> _workerThreadLoadQueue;
 
   Tile::LoadedLinkedList _loadedTiles;
-  Tile::LoadedLinkedList _externalTilesPendingClear;
+  std::list<Tile*> _externalTilesPendingClear;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.

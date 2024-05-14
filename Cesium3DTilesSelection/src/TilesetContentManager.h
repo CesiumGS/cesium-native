@@ -26,7 +26,6 @@ public:
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       RasterOverlayCollection&& overlayCollection,
-      Tile::LoadedLinkedList& loadedTiles,
       std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
       std::unique_ptr<TilesetContentLoader>&& pLoader,
       std::unique_ptr<Tile>&& pRootTile);
@@ -35,14 +34,12 @@ public:
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       RasterOverlayCollection&& overlayCollection,
-      Tile::LoadedLinkedList& loadedTiles,
       const std::string& url);
 
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       RasterOverlayCollection&& overlayCollection,
-      Tile::LoadedLinkedList& loadedTiles,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
@@ -149,7 +146,6 @@ private:
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
-  Tile::LoadedLinkedList& _loadedTiles;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
