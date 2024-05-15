@@ -846,21 +846,22 @@ void GltfUtilities::compactBuffer(
   }
 }
 
-bool GltfUtilities::intersectRayGltfModelParametric(
+std::optional<GltfUtilities::HitParametricResult>
+GltfUtilities::intersectRayGltfModelParametric(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& gltf,
-    double& tMin,
     bool cullBackFaces,
     const glm::dmat4x4& modelToWorld) {
   glm::dmat4x4 rootTransform = applyRtcCenter(gltf, modelToWorld);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
-  tMin = -std::numeric_limits<double>::max();
+  HitParametricResult result;
+  result.t = -std::numeric_limits<double>::max();
   bool intersected = false;
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [ray, cullBackFaces, rootTransform, &intersected, &tMin](
+      [ray, cullBackFaces, rootTransform, &intersected, &result](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -906,28 +907,30 @@ bool GltfUtilities::intersectRayGltfModelParametric(
         }
         if (intersectedPrimitive) {
           intersected = true;
-          tMin = signAwareMin(tMin, tCurr);
+          result.t = signAwareMin(result.t, tCurr);
         }
       });
 
-  return intersected;
+  return intersected ? result
+                     : std::optional<GltfUtilities::HitParametricResult>{};
 }
 
-std::optional<glm::dvec3> GltfUtilities::intersectRayGltfModel(
+std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& gltf,
     bool cullBackFaces,
     const glm::dmat4x4& modelToWorld) {
-  double t;
-  return intersectRayGltfModelParametric(
-             ray,
-             gltf,
-             t,
-             cullBackFaces,
-             modelToWorld) &&
-                 t >= 0
-             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
-             : std::nullopt;
+  std::optional<GltfUtilities::HitParametricResult> result;
+  result =
+      intersectRayGltfModelParametric(ray, gltf, cullBackFaces, modelToWorld);
+
+  if (!result.has_value() || result->t < 0)
+    return {};
+
+  return GltfUtilities::HitResult{
+      ray.getPointAlongRay(result->t),
+      result->meshIndex,
+      result->primitiveIndex};
 }
 
 } // namespace CesiumGltfContent

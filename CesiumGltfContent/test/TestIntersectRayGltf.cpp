@@ -54,59 +54,60 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
            .model;
 
   // intersects the top side of the cube
-  std::optional<glm::dvec3> intersectionPoint =
+  std::optional<GltfUtilities::HitResult> hitResult =
       GltfUtilities::intersectRayGltfModel(
           Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
           cube);
-  CHECK(intersectionPoint == glm::dvec3(0.0, 0.0, 1.0));
+  CHECK(hitResult.has_value());
+  CHECK(hitResult->point == glm::dvec3(0.0, 0.0, 1.0));
 
   // intersects a corner of the cube
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  hitResult = GltfUtilities::intersectRayGltfModel(
       Ray(glm::dvec3(2.0, 2.0, 0.0),
           glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
       cube);
+  CHECK(hitResult.has_value());
   CHECK(glm::all(glm::lessThan(
-      glm::abs(*intersectionPoint - glm::dvec3(1.0, 1.0, 0.0)),
+      glm::abs(hitResult->point - glm::dvec3(1.0, 1.0, 0.0)),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // works with a translated/rotated gltf
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  hitResult = GltfUtilities::intersectRayGltfModel(
       Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
       translatedCube,
       false);
+  CHECK(hitResult.has_value());
   CHECK(glm::all(glm::lessThan(
       glm::abs(
-          *intersectionPoint -
-          glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2))),
+          hitResult->point - glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2))),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // avoids backface triangles
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  hitResult = GltfUtilities::intersectRayGltfModel(
       Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
       cube);
-  CHECK(intersectionPoint == std::nullopt);
+  CHECK(!hitResult.has_value());
 
   // hits backface triangles
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  hitResult = GltfUtilities::intersectRayGltfModel(
       Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       false);
-  CHECK(intersectionPoint == glm::dvec3(0.0, 0.0, -1.0));
+  CHECK(hitResult.has_value());
+  CHECK(hitResult->point == glm::dvec3(0.0, 0.0, -1.0));
 
   // intersects with top of sphere
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  hitResult = GltfUtilities::intersectRayGltfModel(
       Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       sphere);
-  CHECK(intersectionPoint.has_value());
-  CHECK(glm::epsilonEqual((*intersectionPoint)[2], 1.0, Math::Epsilon6));
+  CHECK(hitResult.has_value());
+  CHECK(glm::epsilonEqual(hitResult->point[2], 1.0, Math::Epsilon6));
 
   // check that ray intersects approximately with sloped part of sphere
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  hitResult = GltfUtilities::intersectRayGltfModel(
       Ray(glm::dvec3(0.5, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       sphere);
-  CHECK(intersectionPoint.has_value());
-  CHECK(glm::epsilonEqual(
-      (*intersectionPoint)[2],
-      glm::sqrt(0.75),
-      Math::Epsilon2));
+  CHECK(hitResult.has_value());
+  CHECK(
+      glm::epsilonEqual(hitResult->point[2], glm::sqrt(0.75), Math::Epsilon2));
 }
