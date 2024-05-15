@@ -937,7 +937,8 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
   return GltfUtilities::HitResult{
       ray.getPointAlongRay(result->t),
       result->meshId,
-      result->primitiveId};
+      result->primitiveId,
+      std::move(result->primitiveToWorld)};
 }
 
 } // namespace CesiumGltfContent
