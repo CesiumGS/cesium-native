@@ -389,9 +389,10 @@ void forEachPrimitiveInMeshObject(
     const Model& model,
     const Node& node,
     const Mesh& mesh,
+    const int meshId,
     TCallback& callback) {
   for (const MeshPrimitive& primitive : mesh.primitives) {
-    callback(model, node, mesh, primitive, transform);
+    callback(model, node, mesh, meshId, primitive, transform);
   }
 }
 
@@ -468,7 +469,13 @@ void forEachPrimitiveInNodeObject(
   const int meshId = node.mesh;
   if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
     const Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
-    forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
+    forEachPrimitiveInMeshObject(
+        nodeTransform,
+        model,
+        node,
+        mesh,
+        meshId,
+        callback);
   }
 
   for (const int childNodeId : node.children) {
@@ -547,12 +554,14 @@ void Model::forEachPrimitiveInScene(
           const Model& gltf_,
           const Node& node,
           const Mesh& mesh,
+          const int meshId,
           const MeshPrimitive& primitive,
           const glm::dmat4& transform) {
         callback(
             const_cast<Model&>(gltf_),
             const_cast<Node&>(node),
             const_cast<Mesh&>(mesh),
+            meshId,
             const_cast<MeshPrimitive&>(primitive),
             transform);
       });
@@ -572,12 +581,14 @@ void Model::forEachPrimitiveInScene(
 
   if (!anythingVisited) {
     // No root nodes at all in this model, so enumerate all the meshes.
-    for (const Mesh& mesh : this->meshes) {
+    for (size_t meshId = 0; meshId < this->meshes.size(); ++meshId) {
+      const Mesh& mesh = this->meshes[meshId];
       forEachPrimitiveInMeshObject(
           glm::dmat4x4(1.0),
           *this,
           Node(),
           mesh,
+          static_cast<int>(meshId),
           callback);
     }
   }
@@ -818,6 +829,7 @@ void Model::generateMissingNormalsSmooth() {
       [](Model& gltf_,
          Node& /*node*/,
          Mesh& /*mesh*/,
+         const int /*meshId*/,
          MeshPrimitive& primitive,
          const glm::dmat4& /*transform*/) {
         // if normals already exist, there is nothing to do

@@ -205,7 +205,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    */
   struct HitResult {
     glm::dvec3 point;
-    size_t meshIndex = 0;
+    int meshId = -1;
     size_t primitiveIndex = 0;
   };
 
@@ -217,7 +217,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
 
   struct HitParametricResult {
     double t = -1;
-    size_t meshIndex = 0;
+    int meshId = -1;
     size_t primitiveIndex = 0;
   };
 

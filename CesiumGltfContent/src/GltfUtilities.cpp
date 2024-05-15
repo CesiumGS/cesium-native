@@ -188,6 +188,7 @@ GltfUtilities::computeBoundingRegion(
           const CesiumGltf::Model& gltf_,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
+          const int /*meshId*/,
           const CesiumGltf::MeshPrimitive& primitive,
           const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
@@ -865,6 +866,7 @@ GltfUtilities::intersectRayGltfModelParametric(
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
+          const int meshId,
           const CesiumGltf::MeshPrimitive& primitive,
           const glm::dmat4& nodeTransform) {
         if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
@@ -908,6 +910,7 @@ GltfUtilities::intersectRayGltfModelParametric(
         if (intersectedPrimitive) {
           intersected = true;
           result.t = signAwareMin(result.t, tCurr);
+          result.meshId = meshId;
         }
       });
 
@@ -929,7 +932,7 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
 
   return GltfUtilities::HitResult{
       ray.getPointAlongRay(result->t),
-      result->meshIndex,
+      result->meshId,
       result->primitiveIndex};
 }
 
