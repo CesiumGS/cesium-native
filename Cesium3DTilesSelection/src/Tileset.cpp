@@ -1462,6 +1462,7 @@ void Tileset::_processMainThreadLoadQueue() {
 
 void Tileset::_unloadPendingChildren(Tile& tile) noexcept {
   for (Tile& childTile : tile.getChildren()) {
+    this->_loadedTiles.remove(childTile);
     this->_externalTilesPendingClear.remove(&childTile);
     childTile.setState(TileLoadState::Unloaded);
     this->_unloadPendingChildren(childTile);
