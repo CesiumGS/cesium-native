@@ -67,8 +67,8 @@ void checkIntersection(
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP;
   CHECK(modeIsValid);
 
-  // Returned matrix should be invertable
-  glm::dmat4x4 worldToPrimitive = glm::inverse(hitResult->primitiveToWorld);
+  // Returned matrix should be invertible
+  CHECK(glm::determinant(hitResult->primitiveToWorld) != 0);
 
   // There should be positions
   auto positionAccessorIt = primitive.attributes.find("POSITION");
