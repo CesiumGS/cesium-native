@@ -876,8 +876,8 @@ GltfUtilities::intersectRayGltfModelParametric(
           return;
         }
 
-        glm::dmat4x4 worldToPrimitive =
-            glm::inverse(rootTransform * nodeTransform);
+        glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
+        glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
 
         double tCurr = -std::numeric_limits<double>::max();
         bool intersectedPrimitive = false;
@@ -914,6 +914,7 @@ GltfUtilities::intersectRayGltfModelParametric(
           result.t = signAwareMin(result.t, tCurr);
           result.meshId = meshId;
           result.primitiveId = primitiveId;
+          result.primitiveToWorld = primitiveToWorld;
         }
       });
 
