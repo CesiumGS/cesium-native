@@ -1467,6 +1467,8 @@ void Tileset::_unloadPendingChildren(Tile& tile) noexcept {
     childTile.setState(TileLoadState::Unloaded);
     this->_unloadPendingChildren(childTile);
   }
+
+  tile.clearChildren();
 }
 
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
@@ -1479,7 +1481,6 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     // also be in the _externalTilesPendingClear list
     this->_unloadPendingChildren(*pPendingExternalTile);
     pPendingExternalTile->setState(TileLoadState::Unloaded);
-    pPendingExternalTile->clearChildren();
   }
 
   // Clear list of pending external tiles
@@ -1540,6 +1541,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
+  // Don't clear the children of this tile next frame
+  this->_externalTilesPendingClear.remove(&tile);
 }
 
 void Tileset::addTileToLoadQueue(

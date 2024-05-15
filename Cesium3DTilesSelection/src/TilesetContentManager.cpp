@@ -1096,15 +1096,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
-  if (isExternalContent) {
-    // We don't want to set external tilesets as Unloaded quite yet, because
-    // then they might get reloaded before we've had a chance to clear their
-    // children and cause an error. They'll get their children cleared and their
-    // state set to Unloaded before next clean up
-    tile.setState(TileLoadState::Unloading);
-  } else {
-    tile.setState(TileLoadState::Unloaded);
-  }
+  tile.setState(TileLoadState::Done);
   return true;
 }
 
