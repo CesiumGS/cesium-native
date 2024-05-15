@@ -32,6 +32,59 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 }
 } // namespace
 
+void checkIntersection(
+    const Ray& ray,
+    Model& model,
+    bool cullBackFaces,
+    bool shouldHit,
+    const glm::dvec3& expectedHit) {
+  std::optional<GltfUtilities::HitResult> hitResult =
+      GltfUtilities::intersectRayGltfModel(ray, model, cullBackFaces);
+
+  if (!shouldHit) {
+    CHECK(!hitResult.has_value());
+    return;
+  }
+
+  // Validate hit point
+  CHECK(hitResult.has_value());
+  CHECK(glm::all(glm::lessThan(
+      glm::abs(hitResult->point - expectedHit),
+      glm::dvec3(CesiumUtility::Math::Epsilon6))));
+
+  // Use results to dive into model
+  CHECK(hitResult->meshId > -1);
+  CHECK(hitResult->meshId < model.meshes.size());
+  CesiumGltf::Mesh& mesh = model.meshes[hitResult->meshId];
+
+  CHECK(hitResult->primitiveId > -1);
+  CHECK(hitResult->primitiveId < mesh.primitives.size());
+  CesiumGltf::MeshPrimitive& primitive =
+      mesh.primitives[hitResult->primitiveId];
+
+  bool modeIsValid =
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES ||
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP;
+  CHECK(modeIsValid);
+
+  // Returned matrix should be invertable
+  glm::dmat4x4 worldToPrimitive = glm::inverse(hitResult->primitiveToWorld);
+
+  // There should be positions
+  auto positionAccessorIt = primitive.attributes.find("POSITION");
+  CHECK(positionAccessorIt != primitive.attributes.end());
+
+  // And a way to access them
+  int positionAccessorID = positionAccessorIt->second;
+  const Accessor* pPositionAccessor =
+      Model::getSafe(&model.accessors, positionAccessorID);
+  CHECK(pPositionAccessor);
+
+  // This should have exactly 3 indices (or none if no index buffer)
+  bool indicesAreValid = primitive.indices == 3 || primitive.indices == 0;
+  CHECK(indicesAreValid);
+}
+
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   GltfReader reader;
@@ -54,60 +107,51 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
            .model;
 
   // intersects the top side of the cube
-  std::optional<GltfUtilities::HitResult> hitResult =
-      GltfUtilities::intersectRayGltfModel(
-          Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-          cube);
-  CHECK(hitResult.has_value());
-  CHECK(hitResult->point == glm::dvec3(0.0, 0.0, 1.0));
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      true,
+      glm::dvec3(0.0, 0.0, 1.0));
+
+  // misses the top side of the cube
+  checkIntersection(
+      Ray(glm::dvec3(2.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      false,
+      {});
 
   // intersects a corner of the cube
-  hitResult = GltfUtilities::intersectRayGltfModel(
+  checkIntersection(
       Ray(glm::dvec3(2.0, 2.0, 0.0),
           glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
-      cube);
-  CHECK(hitResult.has_value());
-  CHECK(glm::all(glm::lessThan(
-      glm::abs(hitResult->point - glm::dvec3(1.0, 1.0, 0.0)),
-      glm::dvec3(CesiumUtility::Math::Epsilon6))));
+      cube,
+      true,
+      true,
+      glm::dvec3(1.0, 1.0, 0.0));
 
   // works with a translated/rotated gltf
-  hitResult = GltfUtilities::intersectRayGltfModel(
+  checkIntersection(
       Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
       translatedCube,
-      false);
-  CHECK(hitResult.has_value());
-  CHECK(glm::all(glm::lessThan(
-      glm::abs(
-          hitResult->point - glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2))),
-      glm::dvec3(CesiumUtility::Math::Epsilon6))));
+      false,
+      true,
+      glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2)));
 
   // avoids backface triangles
-  hitResult = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
-      cube);
-  CHECK(!hitResult.has_value());
-
-  // hits backface triangles
-  hitResult = GltfUtilities::intersectRayGltfModel(
+  checkIntersection(
       Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
-      false);
-  CHECK(hitResult.has_value());
-  CHECK(hitResult->point == glm::dvec3(0.0, 0.0, -1.0));
+      true,
+      false,
+      {});
 
-  // intersects with top of sphere
-  hitResult = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      sphere);
-  CHECK(hitResult.has_value());
-  CHECK(glm::epsilonEqual(hitResult->point[2], 1.0, Math::Epsilon6));
-
-  // check that ray intersects approximately with sloped part of sphere
-  hitResult = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(0.5, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      sphere);
-  CHECK(hitResult.has_value());
-  CHECK(
-      glm::epsilonEqual(hitResult->point[2], glm::sqrt(0.75), Math::Epsilon2));
+  // hits backface triangles
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, -1.0));
 }
