@@ -25,6 +25,7 @@ public:
       const std::function<SubstitutionCallbackSignature>& substitutionCallback);
 
   static std::string escape(const std::string& s);
+  static std::string unescape(const std::string& s);
 
   /**
    * @brief Gets the path portion of the URI. This will not include path

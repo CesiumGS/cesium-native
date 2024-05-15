@@ -200,6 +200,14 @@ std::string Uri::escape(const std::string& s) {
   return result;
 }
 
+std::string Uri::unescape(const std::string& s) {
+  std::string result = s;
+  const char* pNewNull =
+      uriUnescapeInPlaceExA(result.data(), URI_FALSE, URI_BR_DONT_TOUCH);
+  result.resize(pNewNull - result.data());
+  return result;
+}
+
 std::string Uri::getPath(const std::string& uri) {
   UriUriA parsedUri;
   if (uriParseSingleUriA(&parsedUri, uri.c_str(), nullptr) != URI_SUCCESS) {
