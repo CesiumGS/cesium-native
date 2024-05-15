@@ -54,13 +54,13 @@ void checkIntersection(
 
   // Use results to dive into model
   CHECK(hitResult->meshId > -1);
-  CHECK(hitResult->meshId < model.meshes.size());
-  CesiumGltf::Mesh& mesh = model.meshes[hitResult->meshId];
+  CHECK(static_cast<size_t>(hitResult->meshId) < model.meshes.size());
+  CesiumGltf::Mesh& mesh = model.meshes[static_cast<size_t>(hitResult->meshId)];
 
   CHECK(hitResult->primitiveId > -1);
-  CHECK(hitResult->primitiveId < mesh.primitives.size());
+  CHECK(static_cast<size_t>(hitResult->primitiveId) < mesh.primitives.size());
   CesiumGltf::MeshPrimitive& primitive =
-      mesh.primitives[hitResult->primitiveId];
+      mesh.primitives[static_cast<size_t>(hitResult->primitiveId)];
 
   bool modeIsValid =
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES ||
