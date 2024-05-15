@@ -204,7 +204,7 @@ std::string Uri::unescape(const std::string& s) {
   std::string result = s;
   const char* pNewNull =
       uriUnescapeInPlaceExA(result.data(), URI_FALSE, URI_BR_DONT_TOUCH);
-  result.resize(pNewNull - result.data());
+  result.resize(size_t(pNewNull - result.data()));
   return result;
 }
 
