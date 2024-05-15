@@ -206,7 +206,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   struct HitResult {
     glm::dvec3 point;
     int meshId = -1;
-    size_t primitiveIndex = 0;
+    int primitiveId = -1;
   };
 
   static std::optional<HitResult> intersectRayGltfModel(
@@ -218,7 +218,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   struct HitParametricResult {
     double t = -1;
     int meshId = -1;
-    size_t primitiveIndex = 0;
+    int primitiveId = -1;
   };
 
   static std::optional<HitParametricResult> intersectRayGltfModelParametric(

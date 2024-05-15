@@ -120,6 +120,7 @@ TEST_CASE("Test forEachPrimitive") {
             Mesh& /*mesh*/,
             const int /*meshId*/,
             MeshPrimitive& primitive,
+            const int /*primitiveId*/,
             const glm::dmat4& /*transform*/) {
           iteratedPrimitives.push_back(&primitive);
         });
@@ -151,6 +152,7 @@ TEST_CASE("Test forEachPrimitive") {
             Mesh& /*mesh*/,
             const int /*meshId*/,
             MeshPrimitive& primitive,
+            const int /*primitiveId*/,
             const glm::dmat4& /*transform*/) {
           iteratedPrimitives.push_back(&primitive);
         });
@@ -182,6 +184,7 @@ TEST_CASE("Test forEachPrimitive") {
             Mesh& /*mesh*/,
             const int /*meshId*/,
             MeshPrimitive& primitive,
+            const int /*primitiveId*/,
             const glm::dmat4& /*transform*/) {
           iteratedPrimitives.push_back(&primitive);
         });
@@ -202,6 +205,7 @@ TEST_CASE("Test forEachPrimitive") {
             Mesh& /*mesh*/,
             const int /*meshId*/,
             MeshPrimitive& /*primitive*/,
+            const int /*primitiveId*/,
             const glm::dmat4& transform) {
           nodeTransforms.push_back(transform);
         });

@@ -391,8 +391,17 @@ void forEachPrimitiveInMeshObject(
     const Mesh& mesh,
     const int meshId,
     TCallback& callback) {
-  for (const MeshPrimitive& primitive : mesh.primitives) {
-    callback(model, node, mesh, meshId, primitive, transform);
+  for (size_t primitiveId = 0; primitiveId < mesh.primitives.size();
+       ++primitiveId) {
+    const MeshPrimitive& primitive = mesh.primitives[primitiveId];
+    callback(
+        model,
+        node,
+        mesh,
+        meshId,
+        primitive,
+        static_cast<int>(primitiveId),
+        transform);
   }
 }
 
@@ -556,6 +565,7 @@ void Model::forEachPrimitiveInScene(
           const Mesh& mesh,
           const int meshId,
           const MeshPrimitive& primitive,
+          const int primitiveId,
           const glm::dmat4& transform) {
         callback(
             const_cast<Model&>(gltf_),
@@ -563,6 +573,7 @@ void Model::forEachPrimitiveInScene(
             const_cast<Mesh&>(mesh),
             meshId,
             const_cast<MeshPrimitive&>(primitive),
+            primitiveId,
             transform);
       });
 }
@@ -831,6 +842,7 @@ void Model::generateMissingNormalsSmooth() {
          Mesh& /*mesh*/,
          const int /*meshId*/,
          MeshPrimitive& primitive,
+         const int /*primitiveId*/,
          const glm::dmat4& /*transform*/) {
         // if normals already exist, there is nothing to do
         auto normalIt = primitive.attributes.find("NORMAL");
