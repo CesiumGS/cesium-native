@@ -97,6 +97,18 @@ TEST_CASE("Uri::resolve") {
           false) == "http://www.example.com/page/test");
 }
 
+TEST_CASE("Uri::escape") {
+  CHECK(Uri::escape("foo") == "foo");
+  CHECK(Uri::escape("foo/bar") == "foo%2Fbar");
+  CHECK(Uri::escape("🤞") == "%F0%9F%A4%9E");
+}
+
+TEST_CASE("Uri::unescape") {
+  CHECK(Uri::unescape("foo") == "foo");
+  CHECK(Uri::unescape("foo%2Fbar") == "foo/bar");
+  CHECK(Uri::unescape("%F0%9F%A4%9E") == "🤞");
+}
+
 TEST_CASE("Uri::unixPathToUriPath") {
   CHECK(Uri::unixPathToUriPath("/wat") == "/wat");
   CHECK(Uri::unixPathToUriPath("wat") == "wat");
