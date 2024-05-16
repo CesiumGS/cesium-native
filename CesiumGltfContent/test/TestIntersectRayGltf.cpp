@@ -41,7 +41,11 @@ void checkIntersection(
   std::optional<GltfUtilities::HitResult> hitResult =
       GltfUtilities::intersectRayGltfModel(ray, model, cullBackFaces);
 
-  if (!shouldHit) {
+  if (shouldHit) {
+    CHECK(hitResult.has_value());
+    if (!hitResult.has_value())
+      return;
+  } else {
     CHECK(!hitResult.has_value());
     return;
   }
@@ -114,13 +118,45 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       true,
       glm::dvec3(0.0, 0.0, 1.0));
 
-  // misses the top side of the cube
+  // misses the top side of the cube to the right
   checkIntersection(
       Ray(glm::dvec3(2.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       true,
       false,
       {});
+
+  // misses the top side of the cube because it's behind it
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      false,
+      {});
+
+  // hits backface triangles
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, -1.0));
+
+  // tests against backfaces, and picks first hit (top)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, 1.0));
+
+  // tests against backfaces, and picks first hit (bottom)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, -1.0));
 
   // intersects a corner of the cube
   checkIntersection(
@@ -146,12 +182,4 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       true,
       false,
       {});
-
-  // hits backface triangles
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      false,
-      true,
-      glm::dvec3(0.0, 0.0, -1.0));
 }
