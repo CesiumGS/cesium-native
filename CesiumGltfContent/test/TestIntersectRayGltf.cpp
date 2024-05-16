@@ -36,10 +36,15 @@ void checkIntersection(
     const Ray& ray,
     Model& model,
     bool cullBackFaces,
+    const glm::dmat4x4& modelToWorld,
     bool shouldHit,
     const glm::dvec3& expectedHit) {
   std::optional<GltfUtilities::HitResult> hitResult =
-      GltfUtilities::intersectRayGltfModel(ray, model, cullBackFaces);
+      GltfUtilities::intersectRayGltfModel(
+          ray,
+          model,
+          cullBackFaces,
+          modelToWorld);
 
   if (shouldHit) {
     CHECK(hitResult.has_value());
@@ -115,6 +120,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       true,
+      glm::dmat4x4(1.0),
       true,
       glm::dvec3(0.0, 0.0, 1.0));
 
@@ -123,6 +129,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(2.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       true,
+      glm::dmat4x4(1.0),
       false,
       {});
 
@@ -131,6 +138,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       true,
+      glm::dmat4x4(1.0),
       false,
       {});
 
@@ -139,6 +147,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       false,
+      glm::dmat4x4(1.0),
       true,
       glm::dvec3(0.0, 0.0, -1.0));
 
@@ -147,6 +156,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       false,
+      glm::dmat4x4(1.0),
       true,
       glm::dvec3(0.0, 0.0, 1.0));
 
@@ -155,6 +165,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
       cube,
       false,
+      glm::dmat4x4(1.0),
       true,
       glm::dvec3(0.0, 0.0, -1.0));
 
@@ -164,6 +175,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
           glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
       cube,
       true,
+      glm::dmat4x4(1.0),
       true,
       glm::dvec3(1.0, 1.0, 0.0));
 
@@ -172,6 +184,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
       translatedCube,
       false,
+      glm::dmat4x4(1.0),
       true,
       glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2)));
 
@@ -180,6 +193,27 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
       true,
+      glm::dmat4x4(1.0),
       false,
       {});
+
+  // misses the top side of a cube translated to the right
+  glm::dmat4x4 translationMatrix(1.0);
+  translationMatrix[3] = glm::dvec4(10.0, 0.0, 0.0, 1.0);
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      translationMatrix,
+      false,
+      {});
+
+  // hits the top side of a cube translated to the right
+  checkIntersection(
+      Ray(glm::dvec3(10.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      translationMatrix,
+      true,
+      glm::dvec3(10.0, 0.0, 1.0));
 }
