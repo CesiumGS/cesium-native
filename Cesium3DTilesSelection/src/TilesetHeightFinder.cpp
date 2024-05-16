@@ -89,23 +89,24 @@ bool TilesetHeightFinder::_loadTileIfNeeded(Tile* pTile) {
 }
 
 void TilesetHeightFinder::_intersectVisibleTile(Tile* pTile, RayInfo& rayInfo) {
-  const Ray& ray = rayInfo.ray;
-  double& tMin = rayInfo.tMin;
-
   TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
-  if (pRenderContent) {
-    CesiumGltf::Model& gltf = pRenderContent->getModel();
-    double t;
-    if (CesiumGltfContent::GltfUtilities::intersectRayGltfModelParametric(
-            ray,
-            gltf,
-            t,
-            true,
-            pTile->getTransform()) &&
-        t >= 0) {
-      tMin = tMin < 0 ? t : std::min(tMin, t);
-    }
-  }
+  if (!pRenderContent)
+    return;
+
+  auto hitResult =
+      CesiumGltfContent::GltfUtilities::intersectRayGltfModelParametric(
+          rayInfo.ray,
+          pRenderContent->getModel(),
+          true,
+          pTile->getTransform());
+
+  if (!hitResult.has_value())
+    return;
+
+  // Set ray info to this hit if closer, or the first hit
+  assert(hitResult->t >= 0);
+  if (hitResult->t < rayInfo.tMin || rayInfo.tMin == -1)
+    rayInfo.tMin = hitResult->t;
 }
 
 void TilesetHeightFinder::_findAndIntersectVisibleTiles(
