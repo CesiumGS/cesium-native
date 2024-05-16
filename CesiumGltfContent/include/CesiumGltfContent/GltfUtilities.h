@@ -203,16 +203,29 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * backfaces or not. Defaults to true.
    * @param return The intersection point along the ray, if any.
    */
-  static std::optional<glm::dvec3> intersectRayGltfModel(
+  struct HitResult {
+    glm::dvec3 point = {};
+    int meshId = -1;
+    int primitiveId = -1;
+    glm::dmat4x4 primitiveToWorld = {};
+  };
+
+  static std::optional<HitResult> intersectRayGltfModel(
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
       bool cullBackFaces = true,
       const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
 
-  static bool intersectRayGltfModelParametric(
+  struct HitParametricResult {
+    double t = -1;
+    int meshId = -1;
+    int primitiveId = -1;
+    glm::dmat4x4 primitiveToWorld = {};
+  };
+
+  static std::optional<HitParametricResult> intersectRayGltfModelParametric(
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
-      double& t,
       bool cullBackFaces = true,
       const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
 

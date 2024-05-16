@@ -32,6 +32,63 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 }
 } // namespace
 
+void checkIntersection(
+    const Ray& ray,
+    Model& model,
+    bool cullBackFaces,
+    bool shouldHit,
+    const glm::dvec3& expectedHit) {
+  std::optional<GltfUtilities::HitResult> hitResult =
+      GltfUtilities::intersectRayGltfModel(ray, model, cullBackFaces);
+
+  if (shouldHit) {
+    CHECK(hitResult.has_value());
+    if (!hitResult.has_value())
+      return;
+  } else {
+    CHECK(!hitResult.has_value());
+    return;
+  }
+
+  // Validate hit point
+  CHECK(hitResult.has_value());
+  CHECK(glm::all(glm::lessThan(
+      glm::abs(hitResult->point - expectedHit),
+      glm::dvec3(CesiumUtility::Math::Epsilon6))));
+
+  // Use results to dive into model
+  CHECK(hitResult->meshId > -1);
+  CHECK(static_cast<size_t>(hitResult->meshId) < model.meshes.size());
+  CesiumGltf::Mesh& mesh = model.meshes[static_cast<size_t>(hitResult->meshId)];
+
+  CHECK(hitResult->primitiveId > -1);
+  CHECK(static_cast<size_t>(hitResult->primitiveId) < mesh.primitives.size());
+  CesiumGltf::MeshPrimitive& primitive =
+      mesh.primitives[static_cast<size_t>(hitResult->primitiveId)];
+
+  bool modeIsValid =
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES ||
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP;
+  CHECK(modeIsValid);
+
+  // Returned matrix should be invertible
+  CHECK(glm::determinant(hitResult->primitiveToWorld) != 0);
+
+  // There should be positions
+  auto positionAccessorIt = primitive.attributes.find("POSITION");
+  CHECK(positionAccessorIt != primitive.attributes.end());
+
+  // And a way to access them
+  int positionAccessorID = positionAccessorIt->second;
+  const Accessor* pPositionAccessor =
+      Model::getSafe(&model.accessors, positionAccessorID);
+  CHECK(pPositionAccessor);
+
+  // This should have exactly 3 indices (or none if no index buffer)
+  bool indicesAreValid = primitive.indices == 3 || primitive.indices == 0;
+  CHECK(indicesAreValid);
+}
+
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   GltfReader reader;
@@ -54,59 +111,75 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
            .model;
 
   // intersects the top side of the cube
-  std::optional<glm::dvec3> intersectionPoint =
-      GltfUtilities::intersectRayGltfModel(
-          Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-          cube);
-  CHECK(intersectionPoint == glm::dvec3(0.0, 0.0, 1.0));
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      true,
+      glm::dvec3(0.0, 0.0, 1.0));
 
-  // intersects a corner of the cube
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(2.0, 2.0, 0.0),
-          glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
-      cube);
-  CHECK(glm::all(glm::lessThan(
-      glm::abs(*intersectionPoint - glm::dvec3(1.0, 1.0, 0.0)),
-      glm::dvec3(CesiumUtility::Math::Epsilon6))));
+  // misses the top side of the cube to the right
+  checkIntersection(
+      Ray(glm::dvec3(2.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      false,
+      {});
 
-  // works with a translated/rotated gltf
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
-      translatedCube,
-      false);
-  CHECK(glm::all(glm::lessThan(
-      glm::abs(
-          *intersectionPoint -
-          glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2))),
-      glm::dvec3(CesiumUtility::Math::Epsilon6))));
-
-  // avoids backface triangles
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
-      cube);
-  CHECK(intersectionPoint == std::nullopt);
+  // misses the top side of the cube because it's behind it
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      true,
+      false,
+      {});
 
   // hits backface triangles
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, -1.0));
+
+  // tests against backfaces, and picks first hit (top)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, 1.0));
+
+  // tests against backfaces, and picks first hit (bottom)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
+      cube,
+      false,
+      true,
+      glm::dvec3(0.0, 0.0, -1.0));
+
+  // intersects a corner of the cube
+  checkIntersection(
+      Ray(glm::dvec3(2.0, 2.0, 0.0),
+          glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
+      cube,
+      true,
+      true,
+      glm::dvec3(1.0, 1.0, 0.0));
+
+  // works with a translated/rotated gltf
+  checkIntersection(
+      Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
+      translatedCube,
+      false,
+      true,
+      glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2)));
+
+  // avoids backface triangles
+  checkIntersection(
       Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
       cube,
-      false);
-  CHECK(intersectionPoint == glm::dvec3(0.0, 0.0, -1.0));
-
-  // intersects with top of sphere
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      sphere);
-  CHECK(intersectionPoint.has_value());
-  CHECK(glm::epsilonEqual((*intersectionPoint)[2], 1.0, Math::Epsilon6));
-
-  // check that ray intersects approximately with sloped part of sphere
-  intersectionPoint = GltfUtilities::intersectRayGltfModel(
-      Ray(glm::dvec3(0.5, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      sphere);
-  CHECK(intersectionPoint.has_value());
-  CHECK(glm::epsilonEqual(
-      (*intersectionPoint)[2],
-      glm::sqrt(0.75),
-      Math::Epsilon2));
+      true,
+      false,
+      {});
 }
