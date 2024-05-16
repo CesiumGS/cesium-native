@@ -931,7 +931,7 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
     return {};
 
   return GltfUtilities::HitResult{
-      ray.getPointAlongRay(result->t),
+      ray.pointFromDistance(result->t),
       result->meshId,
       result->primitiveId,
       std::move(result->primitiveToWorld)};
