@@ -1085,18 +1085,10 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     }
   }
 
-  if (isReadyToUnload) {
-    // Make sure we unload all children
-    gsl::span<Cesium3DTilesSelection::Tile> children = tile.getChildren();
-    for (Tile& child : children) {
-      this->unloadTileContent(child);
-    }
-  }
-
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
-  tile.setState(TileLoadState::Done);
+  tile.setState(TileLoadState::Unloaded);
   return true;
 }
 

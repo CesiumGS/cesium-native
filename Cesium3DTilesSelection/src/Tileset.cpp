@@ -1543,6 +1543,13 @@ void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
   // Don't clear the children of this tile next frame
   this->_externalTilesPendingClear.remove(&tile);
+  if (tile.getState() == TileLoadState::Unloaded &&
+      !tile.getChildren().empty()) {
+    // We were going to clear this tile's children, but it's still in use, so we
+    // should restore it to Done instead.
+    tile.setState(TileLoadState::Done);
+    tile.setContentShouldContinueUpdating(false);
+  }
 }
 
 void Tileset::addTileToLoadQueue(
