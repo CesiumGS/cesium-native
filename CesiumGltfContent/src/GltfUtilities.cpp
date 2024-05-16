@@ -336,12 +336,6 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 }
 
 namespace {
-double signAwareMin(double n1, double n2) {
-  if (n2 < n1)
-    std::swap(n1, n2);
-  return n1 < 0 ? n2 : n1;
-}
-
 template <class T>
 void findClosestRayHit(
     const CesiumGeometry::Ray& ray,
