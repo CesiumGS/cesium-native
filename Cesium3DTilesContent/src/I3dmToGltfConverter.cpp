@@ -220,13 +220,13 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
     const InstancesHeader& header,
     uint32_t headerLength,
     const CesiumGltfReader::GltfReaderOptions& options,
-    const ConverterSubprocessor& subprocessor,
+    const AssetFetcher& assetFetcher,
     GltfConverterResult& result) {
   ConvertResult subResult;
   DecodedInstances& decodedInstances = subResult.decodedInstances;
   subResult.gltfResult = result;
   auto finishEarly = [&]() {
-    return subprocessor.asyncSystem.createResolvedFuture(std::move(subResult));
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(subResult));
   };
   if (header.featureTableJsonByteLength == 0 ||
       header.featureTableBinaryByteLength == 0) {
@@ -381,7 +381,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
       decodedInstances.rotations[i] = rotationFromUpRight(dUp, dRight);
     }
   } else if (decodedInstances.rotationENU) {
-    glm::dmat4 worldTransform = subprocessor.tileTransform;
+    glm::dmat4 worldTransform = assetFetcher.tileTransform;
     if (decodedInstances.rtcCenter) {
       worldTransform = translate(worldTransform, *decodedInstances.rtcCenter);
     }
@@ -423,20 +423,20 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
     auto gltfUri = std::string(
         reinterpret_cast<const char*>(gltfData.data()),
         gltfData.size());
-    return get(subprocessor, gltfUri)
+    return assetFetcher.get(gltfUri)
         .thenImmediately(
-            [options, subprocessor](ByteResult&& byteResult)
+            [options, assetFetcher](ByteResult&& byteResult)
                 -> CesiumAsync::Future<GltfConverterResult> {
               if (byteResult.errorList.hasErrors()) {
                 GltfConverterResult errorResult;
                 errorResult.errors.merge(byteResult.errorList);
-                return subprocessor.asyncSystem.createResolvedFuture(
+                return assetFetcher.asyncSystem.createResolvedFuture(
                     std::move(errorResult));
               }
               return BinaryToGltfConverter::convert(
                   byteResult.bytes,
                   options,
-                  subprocessor);
+                  assetFetcher);
             })
         .thenImmediately([subResult = std::move(subResult)](
                              GltfConverterResult&& converterResult) mutable {
@@ -448,7 +448,7 @@ CesiumAsync::Future<ConvertResult> convertInstancesContent(
           return subResult;
         });
   } else {
-    return BinaryToGltfConverter::convert(gltfData, options, subprocessor)
+    return BinaryToGltfConverter::convert(gltfData, options, assetFetcher)
         .thenImmediately([subResult = std::move(subResult)](
                              GltfConverterResult&& converterResult) mutable {
           if (converterResult.errors.hasErrors()) {
@@ -709,13 +709,13 @@ void instantiateInstances(
 CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& instancesBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
-    const ConverterSubprocessor& subProcessor) {
+    const AssetFetcher& assetFetcher) {
   GltfConverterResult result;
   InstancesHeader header;
   uint32_t headerLength = 0;
   parseInstancesHeader(instancesBinary, header, headerLength, result);
   if (result.errors) {
-    return subProcessor.asyncSystem.createResolvedFuture(std::move(result));
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
   DecodedInstances decodedInstances;
   return convertInstancesContent(
@@ -723,7 +723,7 @@ CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
              header,
              headerLength,
              options,
-             subProcessor,
+             assetFetcher,
              result)
       .thenImmediately([](ConvertResult&& convertResult) {
         if (convertResult.gltfResult.errors.hasErrors()) {

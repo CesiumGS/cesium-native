@@ -9,20 +9,20 @@
 #include <cstddef>
 
 namespace Cesium3DTilesContent {
-struct ConverterSubprocessor;
+struct AssetFetcher;
 
 struct BinaryToGltfConverter {
 public:
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      const ConverterSubprocessor& subProcessor);
+      const AssetFetcher& assetFetcher);
 
 private:
   static GltfConverterResult convertImmediate(
       const gsl::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      const ConverterSubprocessor& subProcessor);
+      const AssetFetcher& assetFetcher);
   static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesContent

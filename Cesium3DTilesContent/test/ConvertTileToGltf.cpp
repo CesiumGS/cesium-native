@@ -9,11 +9,11 @@ namespace Cesium3DTilesContent {
 CesiumAsync::AsyncSystem ConvertTileToGltf::asyncSystem(
     std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
-ConverterSubprocessor
-ConvertTileToGltf::makeSubprocessor(const std::string& baseUrl) {
+AssetFetcher
+ConvertTileToGltf::makeAssetFetcher(const std::string& baseUrl) {
   auto fileAccessor = std::make_shared<CesiumNativeTests::FileAccessor>();
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
-  return ConverterSubprocessor(
+  return AssetFetcher(
       asyncSystem,
       fileAccessor,
       baseUrl,
@@ -24,18 +24,18 @@ ConvertTileToGltf::makeSubprocessor(const std::string& baseUrl) {
 GltfConverterResult ConvertTileToGltf::fromB3dm(
     const std::filesystem::path& filePath,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  ConverterSubprocessor subprocessor = makeSubprocessor("");
+  AssetFetcher assetFetcher = makeAssetFetcher("");
   auto bytes = readFile(filePath);
-  auto future = B3dmToGltfConverter::convert(bytes, options, subprocessor);
+  auto future = B3dmToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();
 }
 
 GltfConverterResult ConvertTileToGltf::fromPnts(
     const std::filesystem::path& filePath,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  ConverterSubprocessor subprocessor = makeSubprocessor("");
+  AssetFetcher assetFetcher = makeAssetFetcher("");
   auto bytes = readFile(filePath);
-  auto future = PntsToGltfConverter::convert(bytes, options, subprocessor);
+  auto future = PntsToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();
 }
 } // namespace Cesium3DTilesContent

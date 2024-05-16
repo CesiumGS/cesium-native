@@ -119,7 +119,7 @@ CesiumAsync::Future<GltfConverterResult> convertB3dmContentToGltf(
     const B3dmHeader& header,
     uint32_t headerLength,
     const CesiumGltfReader::GltfReaderOptions& options,
-    const ConverterSubprocessor& subprocessor) {
+    const AssetFetcher& assetFetcher) {
   const uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
                             header.featureTableBinaryByteLength +
                             header.batchTableJsonByteLength +
@@ -131,13 +131,13 @@ CesiumAsync::Future<GltfConverterResult> convertB3dmContentToGltf(
     result.errors.emplaceError(
         "The B3DM is invalid because the start of the "
         "glTF model is after the end of the entire B3DM.");
-    return subprocessor.asyncSystem.createResolvedFuture(std::move(result));
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   const gsl::span<const std::byte> glbData =
       b3dmBinary.subspan(glbStart, glbEnd - glbStart);
 
-  return BinaryToGltfConverter::convert(glbData, options, subprocessor);
+  return BinaryToGltfConverter::convert(glbData, options, assetFetcher);
 }
 
 rapidjson::Document parseFeatureTableJsonData(
@@ -232,13 +232,13 @@ void convertB3dmMetadataToGltfStructuralMetadata(
 CesiumAsync::Future<GltfConverterResult> B3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& b3dmBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
-    const ConverterSubprocessor& subprocessor) {
+    const AssetFetcher& assetFetcher) {
   GltfConverterResult result;
   B3dmHeader header;
   uint32_t headerLength = 0;
   parseB3dmHeader(b3dmBinary, header, headerLength, result);
   if (result.errors) {
-    return subprocessor.asyncSystem.createResolvedFuture(std::move(result));
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   return convertB3dmContentToGltf(
@@ -246,7 +246,7 @@ CesiumAsync::Future<GltfConverterResult> B3dmToGltfConverter::convert(
              header,
              headerLength,
              options,
-             subprocessor)
+             assetFetcher)
       .thenImmediately(
           [b3dmBinary, header, headerLength](GltfConverterResult&& glbResult) {
             if (!glbResult.errors) {

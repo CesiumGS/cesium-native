@@ -21,14 +21,6 @@ class Buffer;
 
 namespace Cesium3DTilesContent {
 
-struct ByteResult {
-  std::vector<std::byte> bytes;
-  CesiumUtility::ErrorList errorList;
-};
-
-CesiumAsync::Future<ByteResult>
-get(const ConverterSubprocessor& subprocessor, const std::string& relativeUrl);
-
 namespace LegacyUtilities {
 std::optional<uint32_t> parseOffset(
     const rapidjson::Document& document,

@@ -9,12 +9,12 @@
 #include <cstddef>
 
 namespace Cesium3DTilesContent {
-struct ConverterSubprocessor;
+struct AssetFetcher;
 
 struct CmptToGltfConverter {
   static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& cmptBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
-      const ConverterSubprocessor&);
+      const AssetFetcher& assetFetcher);
 };
 } // namespace Cesium3DTilesContent

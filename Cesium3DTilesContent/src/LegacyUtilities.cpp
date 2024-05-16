@@ -1,5 +1,4 @@
 #include <Cesium3DTilesContent/LegacyUtilities.h>
-#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -142,40 +141,4 @@ void applyRTC(Model& gltf, const glm::dvec3& rtc) {
 }
 
 } // namespace LegacyUtilities
-
-CesiumAsync::Future<ByteResult>
-get(const ConverterSubprocessor& subprocessor, const std::string& relativeUrl) {
-  auto resolvedUrl =
-      CesiumUtility::Uri::resolve(subprocessor.baseUrl, relativeUrl);
-  return subprocessor.pAssetAccessor
-      ->get(subprocessor.asyncSystem, resolvedUrl, subprocessor.requestHeaders)
-      .thenImmediately(
-          [asyncSystem = subprocessor.asyncSystem](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            ByteResult byteResult;
-            const auto& url = pCompletedRequest->url();
-            if (!pResponse) {
-              byteResult.errorList.emplaceError(fmt::format(
-                  "Did not receive a valid response for asset {}",
-                  url));
-              return asyncSystem.createResolvedFuture(std::move(byteResult));
-            }
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              byteResult.errorList.emplaceError(fmt::format(
-                  "Received status code {} for asset {}",
-                  statusCode,
-                  url));
-              return asyncSystem.createResolvedFuture(std::move(byteResult));
-            }
-            gsl::span<const std::byte> asset = pResponse->data();
-            std::copy(
-                asset.begin(),
-                asset.end(),
-                std::back_inserter(byteResult.bytes));
-            return asyncSystem.createResolvedFuture(std::move(byteResult));
-          });
-}
 } // namespace Cesium3DTilesContent
