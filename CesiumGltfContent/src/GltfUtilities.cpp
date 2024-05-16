@@ -21,7 +21,6 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <cstring>
-#include <limits>
 #include <unordered_set>
 #include <vector>
 

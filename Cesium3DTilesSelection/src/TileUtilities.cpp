@@ -1,6 +1,5 @@
 #include "TileUtilities.h"
 
-#include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -8,7 +7,6 @@
 #include <variant>
 
 using namespace CesiumGeospatial;
-using namespace CesiumGeometry;
 
 namespace Cesium3DTilesSelection {
 namespace CesiumImpl {

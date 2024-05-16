@@ -2,7 +2,6 @@
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 
-#include <CesiumGeometry/Ray.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 
@@ -33,6 +32,5 @@ bool outsidePolygons(
     const BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
         cartographicPolygons) noexcept;
-
 } // namespace CesiumImpl
 } // namespace Cesium3DTilesSelection
