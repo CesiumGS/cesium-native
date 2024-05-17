@@ -217,6 +217,127 @@ struct ConvertedI3dm {
   + Future work: Metadata / feature id?
 */
 
+std::optional<I3dmContent> parseI3dmJson(
+    const gsl::span<const std::byte> featureTableJsonData,
+    CesiumUtility::ErrorList& errors) {
+  rapidjson::Document featureTableJson;
+  featureTableJson.Parse(
+      reinterpret_cast<const char*>(featureTableJsonData.data()),
+      featureTableJsonData.size());
+  if (featureTableJson.HasParseError()) {
+    errors.emplaceError(fmt::format(
+                            "Error when parsing feature table JSON, error code {} at byte offset "
+                            "{}",
+                            featureTableJson.GetParseError(),
+                            featureTableJson.GetErrorOffset()));
+    return {};
+  }
+  I3dmContent parsedContent;
+  // Global semantics
+  if (auto optInstancesLength =
+          getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
+    parsedContent.instancesLength = *optInstancesLength;
+  } else {
+    errors.emplaceError(
+        "Error parsing I3DM feature table, no valid INSTANCES_LENGTH was found.");
+    return {};
+  }
+  parsedContent.rtcCenter =
+      parseArrayValueDVec3(featureTableJson, "RTC_CENTER");
+  parsedContent.position =
+      parseOffsetForSemantic(
+          featureTableJson, "POSITION", errors);
+  parsedContent.positionQuantized = parseOffsetForSemantic(
+      featureTableJson,
+      "POSITION_QUANTIZED",
+      errors);
+  if (errors.hasErrors()) {
+    return {};
+  }
+  // I would have liked to just test !parsedContent.position, but the perfectly
+  // reasonable value of 0 causes the test to be false!
+  if (!(parsedContent.position.has_value() || parsedContent.positionQuantized.has_value())) {
+    errors.emplaceError(
+        "I3dm file contains neither POSITION nor POSITION_QUANTIZED semantics.");
+    return {};
+  }
+  if (parsedContent.positionQuantized.has_value()) {
+    parsedContent.quantizedVolumeOffset =
+        parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
+    if (!parsedContent.quantizedVolumeOffset.has_value()) {
+     errors.emplaceError(
+         "Error parsing I3DM feature table, the I3dm uses quatized positions "
+         "but has no valid QUANTIZED_VOLUME_OFFSET property");
+     return {};
+    }
+    parsedContent.quantizedVolumeScale =
+        parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
+    if (!parsedContent.quantizedVolumeScale.has_value()) {
+      errors.emplaceError(
+          "Error parsing I3DM feature table, the I3dm uses quatized positions "
+          "but has no valid QUANTIZED_VOLUME_SCALE property");
+      return {};
+    }
+  }
+  if (auto optENU = getValue<bool>(featureTableJson, "EAST_NORTH_UP")) {
+    parsedContent.eastNorthUp = *optENU;
+  }
+  parsedContent.normalUp = parseOffsetForSemantic(
+      featureTableJson,
+      "NORMAL_UP",
+      errors);
+  parsedContent.normalRight = parseOffsetForSemantic(
+      featureTableJson,
+      "NORMAL_RIGHT",
+      errors);
+  if (errors.hasErrors()) {
+    return {};
+  }
+  if (parsedContent.normalUp.has_value() && !parsedContent.normalRight.has_value()) {
+    errors.emplaceError("I3dm has NORMAL_UP semantic without NORMAL_RIGHT.");
+    return {};
+  }
+  if (!parsedContent.normalUp.has_value() && parsedContent.normalRight.has_value()) {
+    errors.emplaceError("I3dm has NORMAL_RIGHT semantic without NORMAL_UP.");
+    return {};
+  }
+  parsedContent.normalUpOct32p = parseOffsetForSemantic(
+      featureTableJson,
+      "NORMAL_UP_OCT32P",
+      errors);
+  parsedContent.normalRightOct32p = parseOffsetForSemantic(
+      featureTableJson,
+      "NORMAL_RIGHT_OCT32P",
+      errors);
+  if (errors.hasErrors()) {
+    return {};
+  }
+  if (parsedContent.normalUpOct32p.has_value() && !parsedContent.normalRightOct32p.has_value()) {
+    errors.emplaceError("I3dm has NORMAL_UP_OCT32P semantic without NORMAL_RIGHT_OCT32P.");
+    return {};
+  }
+  if (!parsedContent.normalUpOct32p.has_value() && parsedContent.normalRightOct32p.has_value()) {
+    errors.emplaceError("I3dm has NORMAL_RIGHT_OCT32P semantic without NORMAL_UP_OCT32P.");
+    return {};
+  }
+  parsedContent.scale = parseOffsetForSemantic(
+      featureTableJson,
+      "SCALE",
+      errors);
+  parsedContent.scaleNonUniform = parseOffsetForSemantic(
+      featureTableJson,
+      "SCALE_NON_UNIFORM",
+      errors);
+  parsedContent.batchId = parseOffsetForSemantic(
+      featureTableJson,
+      "BATCH_ID",
+      errors);
+  if (errors.hasErrors()) {
+    return {};
+  }
+  return parsedContent;
+}
+
 CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
     const gsl::span<const std::byte>& instancesBinary,
     const I3dmHeader& header,
@@ -243,106 +364,22 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   std::optional<CesiumAsync::Future<ByteResult>> assetFuture;
   auto featureTableJsonData =
       instancesBinary.subspan(headerLength, header.featureTableJsonByteLength);
-  rapidjson::Document featureTableJson;
-  featureTableJson.Parse(
-      reinterpret_cast<const char*>(featureTableJsonData.data()),
-      featureTableJsonData.size());
-  if (featureTableJson.HasParseError()) {
-    convertedI3dm.gltfResult.errors.emplaceError(fmt::format(
-        "Error when parsing feature table JSON, error code {} at byte offset "
-        "{}",
-        featureTableJson.GetParseError(),
-        featureTableJson.GetErrorOffset()));
-    return finishEarly();
+  std::optional<I3dmContent> parsedJsonResult =
+      parseI3dmJson(featureTableJsonData, convertedI3dm.gltfResult.errors);
+  if (!parsedJsonResult) {
+    finishEarly();
   }
-  I3dmContent parsedContent;
-  // Global semantics
-  if (auto optInstancesLength =
-          getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
-    parsedContent.instancesLength = *optInstancesLength;
-  } else {
-    convertedI3dm.gltfResult.errors.emplaceError(
-        "Error parsing I3DM feature table, no valid "
-        "INSTANCES_LENGTH was found.");
-    return finishEarly();
-  }
-  parsedContent.rtcCenter =
-      parseArrayValueDVec3(featureTableJson, "RTC_CENTER");
+  const I3dmContent& parsedContent = *parsedJsonResult;
   decodedInstances.rtcCenter = parsedContent.rtcCenter;
+  decodedInstances.rotationENU = parsedContent.eastNorthUp;
 
-  parsedContent.position =
-      parseOffsetForSemantic(
-          featureTableJson, "POSITION", convertedI3dm.gltfResult.errors);
-  if (!parsedContent.position) {
-    if (convertedI3dm.gltfResult.errors.hasErrors()) {
-      return finishEarly();
-    }
-    parsedContent.positionQuantized = parseOffsetForSemantic(
-        featureTableJson,
-        "POSITION_QUANTIZED",
-        convertedI3dm.gltfResult.errors);
-    if (convertedI3dm.gltfResult.errors.hasErrors()) {
-      return finishEarly();
-    }
-  }
-  if (parsedContent.positionQuantized) {
-    parsedContent.quantizedVolumeOffset =
-        parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
-    if (!parsedContent.quantizedVolumeOffset) {
-      convertedI3dm.gltfResult.errors.emplaceError(
-          "Error parsing I3DM feature table, the I3dm uses quatized positions "
-          "but has no valid QUANTIZED_VOLUME_OFFSET property");
-      return finishEarly();
-    }
-    parsedContent.quantizedVolumeScale =
-        parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
-    if (!parsedContent.quantizedVolumeScale) {
-      convertedI3dm.gltfResult.errors.emplaceError(
-          "Error parsing I3DM feature table, the I3dm uses quatized positions "
-          "but has no valid QUANTIZED_VOLUME_SCALE property");
-      return finishEarly();
-    }
-  }
-  decodedInstances.rotationENU = false;
-  if (auto optENU = getValue<bool>(featureTableJson, "EAST_NORTH_UP")) {
-    parsedContent.eastNorthUp = *optENU;
-    decodedInstances.rotationENU = *optENU;
-  }
-  parsedContent.normalUp =
-      parseOffsetForSemantic(
-          featureTableJson, "NORMAL_UP", convertedI3dm.gltfResult.errors);
-  parsedContent.normalRight = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_RIGHT",
-      convertedI3dm.gltfResult.errors);
-  parsedContent.normalUpOct32p = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_UP_OCT32P",
-      convertedI3dm.gltfResult.errors);
-  parsedContent.normalRightOct32p = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_RIGHT_OCT32P",
-      convertedI3dm.gltfResult.errors);
-  parsedContent.scale =
-      parseOffsetForSemantic(
-          featureTableJson, "SCALE", convertedI3dm.gltfResult.errors);
-  parsedContent.scaleNonUniform = parseOffsetForSemantic(
-      featureTableJson,
-      "SCALE_NON_UNIFORM",
-      convertedI3dm.gltfResult.errors);
-  parsedContent.batchId =
-      parseOffsetForSemantic(
-          featureTableJson, "BATCH_ID", convertedI3dm.gltfResult.errors);
-  if (convertedI3dm.gltfResult.errors.hasErrors()) {
-    return finishEarly();
-  }
   auto featureTableBinaryData = instancesBinary.subspan(
       headerLength + header.featureTableJsonByteLength,
       header.featureTableBinaryByteLength);
   decodedInstances.positions.resize(
       parsedContent.instancesLength,
       glm::vec3(0.0f, 0.0f, 0.0f));
-  if (parsedContent.position) {
+  if (parsedContent.position.has_value()) {
     const auto* rawPosition = reinterpret_cast<const glm::vec3*>(
         featureTableBinaryData.data() + *parsedContent.position);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
@@ -367,7 +404,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   decodedInstances.rotations.resize(
       parsedContent.instancesLength,
       glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-  if (parsedContent.normalUp && parsedContent.normalRight) {
+  if (parsedContent.normalUp.has_value() && parsedContent.normalRight.has_value()) {
     const auto* rawUp = reinterpret_cast<const glm::vec3*>(
         featureTableBinaryData.data() + *parsedContent.normalUp);
     const auto* rawRight = reinterpret_cast<const glm::vec3*>(
@@ -376,7 +413,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
       decodedInstances.rotations[i] =
           rotationFromUpRight(rawUp[i], rawRight[i]);
     }
-  } else if (parsedContent.normalUpOct32p && parsedContent.normalRightOct32p) {
+  } else if (parsedContent.normalUpOct32p.has_value() && parsedContent.normalRightOct32p.has_value()) {
     const auto* rawUpOct = reinterpret_cast<const uint16_t(*)[2]>(
         featureTableBinaryData.data() + *parsedContent.normalUpOct32p);
     const auto* rawRightOct = reinterpret_cast<const uint16_t(*)[2]>(
@@ -408,18 +445,19 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   decodedInstances.scales.resize(
       parsedContent.instancesLength,
       glm::vec3(1.0, 1.0, 1.0));
-  if (parsedContent.scale) {
+  if (parsedContent.scale.has_value()) {
     const auto* rawScale = reinterpret_cast<const float*>(
         featureTableBinaryData.data() + *parsedContent.scale);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
       decodedInstances.scales[i] =
           glm::vec3(rawScale[i], rawScale[i], rawScale[i]);
     }
-  } else if (parsedContent.scaleNonUniform) {
+  }
+  if (parsedContent.scaleNonUniform.has_value()) {
     const auto* rawScaleNonUniform = reinterpret_cast<const glm::vec3*>(
         featureTableBinaryData.data() + *parsedContent.scaleNonUniform);
     for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.scales[i] = rawScaleNonUniform[i];
+      decodedInstances.scales[i] *= rawScaleNonUniform[i];
     }
   }
   repositionInstances(decodedInstances);
