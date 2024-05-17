@@ -147,30 +147,8 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
   calculation of the second rotation must take place within the first frame.
 
   The rotations are calculated by finding the rotation that takes one vector to
-  another. If we take the dot and cross products of the two vectors and store
-  them in a quaternion, that quaternion represents twice the required rotation.
-  We get the correct quaternion by "averaging" with the zero rotation
-  quaternion, in a way analagous to finding the half vector between two 3D
-  vectors.
+  another.
  */
-
-glm::quat rotation(const glm::vec3& vec1, const glm::vec3& vec2) {
-  float cosRot = dot(vec1, vec2);
-  // Not using epsilon for these tests. If abs(cosRot) < 1.0, we can still
-  // create a sensible rotation.
-  if (cosRot >= 1.0f) {
-    // zero rotation
-    return glm::quat(1.0, 0.0f, 0.0f, 0.0f);
-  }
-  if (cosRot <= -1.0f) {
-    auto rotAxis = CesiumUtility::Math::perpVec(vec1);
-    // rotation by pi radians
-    return glm::quat(0.0f, rotAxis);
-  }
-  auto rotAxis = cross(vec1, vec2);
-  glm::quat sumQuat(cosRot + 1.0f, rotAxis);
-  return normalize(sumQuat);
-}
 
 glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   // First rotation: up
