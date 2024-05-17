@@ -376,53 +376,66 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   auto featureTableBinaryData = instancesBinary.subspan(
       headerLength + header.featureTableJsonByteLength,
       header.featureTableBinaryByteLength);
-  decodedInstances.positions.resize(
-      parsedContent.instancesLength,
-      glm::vec3(0.0f, 0.0f, 0.0f));
+  auto binaryData = featureTableBinaryData.data();
+  const uint32_t numInstances = parsedContent.instancesLength;
+  decodedInstances.positions.resize(numInstances, glm::vec3(0.0f, 0.0f, 0.0f));
   if (parsedContent.position.has_value()) {
-    const auto* rawPosition = reinterpret_cast<const glm::vec3*>(
-        featureTableBinaryData.data() + *parsedContent.position);
-    for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.positions[i] += rawPosition[i];
-    }
+    gsl::span<const glm::vec3> rawPositions(reinterpret_cast<const glm::vec3*>(
+                                                binaryData + *parsedContent.position),
+                                            numInstances);
+    decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
   } else {
-    const auto* rawQPosition = reinterpret_cast<const uint16_t(*)[3]>(
-        featureTableBinaryData.data() + *parsedContent.positionQuantized);
-    for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      const auto* posQuantized = &rawQPosition[i];
-      float position[3];
-      for (unsigned j = 0; j < 3; ++j) {
-        position[j] = static_cast<float>(
-            (*posQuantized)[j] / 65535.0 *
+    gsl::span<const uint16_t[3]> rawQPositions(reinterpret_cast<const uint16_t(*)[3]>(
+                                             binaryData + *parsedContent.positionQuantized),
+                                         numInstances);
+    std::transform(
+        rawQPositions.begin(),
+        rawQPositions.end(),
+        decodedInstances.positions.begin(),
+        [&parsedContent](const auto&& posQuantized) {
+          glm::vec3 position;
+          for (unsigned j = 0; j < 3; ++j) {
+            position[j] = static_cast<float>(
+                posQuantized[j] / 65535.0 *
                 (*parsedContent.quantizedVolumeScale)[j] +
-            (*parsedContent.quantizedVolumeOffset)[j]);
-      }
-      decodedInstances.positions[i] +=
-          glm::vec3(position[0], position[1], position[2]);
-    }
+                (*parsedContent.quantizedVolumeOffset)[j]);
+          }
+          return position;
+        });
   }
   decodedInstances.rotations.resize(
-      parsedContent.instancesLength,
+      numInstances,
       glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
   if (parsedContent.normalUp.has_value() && parsedContent.normalRight.has_value()) {
-    const auto* rawUp = reinterpret_cast<const glm::vec3*>(
-        featureTableBinaryData.data() + *parsedContent.normalUp);
-    const auto* rawRight = reinterpret_cast<const glm::vec3*>(
-        featureTableBinaryData.data() + *parsedContent.normalRight);
-    for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.rotations[i] =
-          rotationFromUpRight(rawUp[i], rawRight[i]);
-    }
+    gsl::span<const glm::vec3> rawUp(reinterpret_cast<const glm::vec3*>(
+                                         binaryData + *parsedContent.normalUp),
+                                     numInstances);
+    gsl::span<const glm::vec3> rawRight(reinterpret_cast<const glm::vec3*>(
+                                            binaryData + *parsedContent.normalRight),
+                                        numInstances);
+    std::transform(rawUp.begin(),
+                   rawUp.end(),
+                   rawRight.begin(),
+                   decodedInstances.rotations.begin(),
+                   rotationFromUpRight);
+
   } else if (parsedContent.normalUpOct32p.has_value() && parsedContent.normalRightOct32p.has_value()) {
-    const auto* rawUpOct = reinterpret_cast<const uint16_t(*)[2]>(
-        featureTableBinaryData.data() + *parsedContent.normalUpOct32p);
-    const auto* rawRightOct = reinterpret_cast<const uint16_t(*)[2]>(
-        featureTableBinaryData.data() + *parsedContent.normalRightOct32p);
-    for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      glm::vec3 dUp = decodeOct32P(rawUpOct[i]);
-      glm::vec3 dRight = decodeOct32P(rawRightOct[i]);
-      decodedInstances.rotations[i] = rotationFromUpRight(dUp, dRight);
-    }
+
+    gsl::span<const uint16_t[2]> rawUpOct(reinterpret_cast<const uint16_t(*)[2]>(
+                                              binaryData + *parsedContent.normalUpOct32p),
+                                          numInstances);
+    gsl::span<const uint16_t[2]> rawRightOct(reinterpret_cast<const uint16_t(*)[2]>(
+                                                 binaryData + *parsedContent.normalRightOct32p),
+                                             numInstances);
+    std::transform(rawUpOct.begin(),
+                   rawUpOct.end(),
+                   rawRightOct.begin(),
+                   decodedInstances.rotations.begin(),
+                   [](const auto&& upOct, const auto&& rightOct) {
+                     return rotationFromUpRight(
+                         decodeOct32P(upOct),
+                         decodeOct32P(rightOct));
+                   });
   } else if (decodedInstances.rotationENU) {
     glm::dmat4 worldTransform = assetFetcher.tileTransform;
     if (decodedInstances.rtcCenter) {
@@ -442,23 +455,31 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
       decodedInstances.rotations[i] = tileFrameRot;
     }
   }
-  decodedInstances.scales.resize(
-      parsedContent.instancesLength,
-      glm::vec3(1.0, 1.0, 1.0));
+  decodedInstances.scales.resize(numInstances, glm::vec3(1.0, 1.0, 1.0));
   if (parsedContent.scale.has_value()) {
-    const auto* rawScale = reinterpret_cast<const float*>(
-        featureTableBinaryData.data() + *parsedContent.scale);
-    for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.scales[i] =
-          glm::vec3(rawScale[i], rawScale[i], rawScale[i]);
-    }
+    gsl::span<const float> rawScales(reinterpret_cast<const float*>(
+                                   binaryData + *parsedContent.scale),
+                               numInstances);
+    std::transform(rawScales.begin(),
+                   rawScales.end(),
+                   decodedInstances.scales.begin(),
+                   [](float scaleVal) {
+                     return glm::vec3(scaleVal);
+                   });
   }
   if (parsedContent.scaleNonUniform.has_value()) {
-    const auto* rawScaleNonUniform = reinterpret_cast<const glm::vec3*>(
-        featureTableBinaryData.data() + *parsedContent.scaleNonUniform);
-    for (unsigned i = 0; i < parsedContent.instancesLength; ++i) {
-      decodedInstances.scales[i] *= rawScaleNonUniform[i];
-    }
+    gsl::span<const glm::vec3> rawScalesNonUniform(
+        reinterpret_cast<const glm::vec3*>(
+            binaryData + *parsedContent.scaleNonUniform),
+        numInstances);
+    std::transform(
+        decodedInstances.scales.begin(),
+        decodedInstances.scales.end(),
+        rawScalesNonUniform.begin(),
+        decodedInstances.scales.begin(),
+        [](auto&& scaleUniform, auto&& scaleNonUniform) {
+          return scaleUniform * scaleNonUniform;
+        });
   }
   repositionInstances(decodedInstances);
   ByteResult byteResult;
