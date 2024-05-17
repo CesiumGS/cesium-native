@@ -903,7 +903,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
 
         if (converter) {
           // Convert to gltf
-          ConverterSubprocessor subprocessor{
+          AssetFetcher assetFetcher{
               asyncSystem,
               pAssetAccessor,
               tileUrl,
@@ -914,7 +914,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               contentOptions.ktx2TranscodeTargets;
           gltfOptions.applyTextureTransform =
               contentOptions.applyTextureTransform;
-          return converter(responseData, gltfOptions, subprocessor)
+          return converter(responseData, gltfOptions, assetFetcher)
               .thenImmediately([pLogger, upAxis, tileUrl, pCompletedRequest](
                                    GltfConverterResult&& result) {
                 logTileLoadResult(pLogger, tileUrl, result.errors);

@@ -1,5 +1,4 @@
 #include <Cesium3DTilesContent/LegacyUtilities.h>
-#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -18,7 +17,7 @@ namespace Cesium3DTilesContent {
 namespace LegacyUtilities {
 using namespace CesiumGltf;
 
-std::optional<uint32_t> parseOffset(
+std::optional<uint32_t> parseOffsetForSemantic(
     const rapidjson::Document& document,
     const char* semantic,
     CesiumUtility::ErrorList& errorList) {
@@ -78,19 +77,12 @@ parseArrayValueDVec3(const rapidjson::Document& document, const char* name) {
   return {};
 }
 
-int32_t createBufferInGltf(Model& gltf) {
+int32_t createBufferInGltf(Model& gltf, std::vector<std::byte> buffer) {
   size_t bufferId = gltf.buffers.size();
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
-  gltfBuffer.byteLength = 0;
-  return static_cast<int32_t>(bufferId);
-}
-
-int32_t createBufferInGltf(Model& gltf, std::vector<std::byte>&& buffer) {
-  int32_t bufferId = createBufferInGltf(gltf);
-  Buffer& gltfBuffer = gltf.buffers[static_cast<uint32_t>(bufferId)];
   gltfBuffer.byteLength = static_cast<int32_t>(buffer.size());
   gltfBuffer.cesium.data = std::move(buffer);
-  return bufferId;
+  return static_cast<int32_t>(bufferId);
 }
 
 int32_t createBufferViewInGltf(
@@ -126,7 +118,7 @@ int32_t createAccessorInGltf(
   return static_cast<int32_t>(accessorId);
 }
 
-void applyRTC(Model& gltf, const glm::dvec3& rtc) {
+void applyRtcToNodes(Model& gltf, const glm::dvec3& rtc) {
   using namespace CesiumGltfContent;
   auto upToZ = GltfUtilities::applyGltfUpAxisTransform(gltf, glm::dmat4x4(1.0));
   auto rtcTransform = inverse(upToZ);
@@ -142,40 +134,4 @@ void applyRTC(Model& gltf, const glm::dvec3& rtc) {
 }
 
 } // namespace LegacyUtilities
-
-CesiumAsync::Future<ByteResult>
-get(const ConverterSubprocessor& subprocessor, const std::string& relativeUrl) {
-  auto resolvedUrl =
-      CesiumUtility::Uri::resolve(subprocessor.baseUrl, relativeUrl);
-  return subprocessor.pAssetAccessor
-      ->get(subprocessor.asyncSystem, resolvedUrl, subprocessor.requestHeaders)
-      .thenImmediately(
-          [asyncSystem = subprocessor.asyncSystem](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            ByteResult byteResult;
-            const auto& url = pCompletedRequest->url();
-            if (!pResponse) {
-              byteResult.errorList.emplaceError(fmt::format(
-                  "Did not receive a valid response for asset {}",
-                  url));
-              return asyncSystem.createResolvedFuture(std::move(byteResult));
-            }
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              byteResult.errorList.emplaceError(fmt::format(
-                  "Received status code {} for asset {}",
-                  statusCode,
-                  url));
-              return asyncSystem.createResolvedFuture(std::move(byteResult));
-            }
-            gsl::span<const std::byte> asset = pResponse->data();
-            std::copy(
-                asset.begin(),
-                asset.end(),
-                std::back_inserter(byteResult.bytes));
-            return asyncSystem.createResolvedFuture(std::move(byteResult));
-          });
-}
 } // namespace Cesium3DTilesContent

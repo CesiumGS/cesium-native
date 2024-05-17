@@ -152,13 +152,13 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
           gltfOptions.applyTextureTransform = applyTextureTransform;
-          ConverterSubprocessor subprocessor{
+          AssetFetcher assetFetcher{
               asyncSystem,
               pAssetAccessor,
               tileUrl,
               tileTransform,
               requestHeaders};
-          return converter(responseData, gltfOptions, subprocessor)
+          return converter(responseData, gltfOptions, assetFetcher)
               .thenImmediately([pLogger, tileUrl, pCompletedRequest](
                                    GltfConverterResult&& result) {
                 // Report any errors if there are any
