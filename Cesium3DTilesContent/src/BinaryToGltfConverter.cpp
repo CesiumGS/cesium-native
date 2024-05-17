@@ -6,8 +6,7 @@ CesiumGltfReader::GltfReader BinaryToGltfConverter::_gltfReader;
 
 GltfConverterResult BinaryToGltfConverter::convertImmediate(
     const gsl::span<const std::byte>& gltfBinary,
-    const CesiumGltfReader::GltfReaderOptions& options,
-    const AssetFetcher&) {
+    const CesiumGltfReader::GltfReaderOptions& options) {
   CesiumGltfReader::GltfReaderResult loadedGltf =
       _gltfReader.readGltf(gltfBinary, options);
 
@@ -23,6 +22,6 @@ CesiumAsync::Future<GltfConverterResult> BinaryToGltfConverter::convert(
     const CesiumGltfReader::GltfReaderOptions& options,
     const AssetFetcher& assetFetcher) {
   return assetFetcher.asyncSystem.createResolvedFuture(
-      convertImmediate(gltfBinary, options, assetFetcher));
+      convertImmediate(gltfBinary, options));
 }
 } // namespace Cesium3DTilesContent

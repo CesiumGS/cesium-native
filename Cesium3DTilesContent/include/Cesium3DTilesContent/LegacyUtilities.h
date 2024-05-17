@@ -22,7 +22,7 @@ class Buffer;
 namespace Cesium3DTilesContent {
 
 namespace LegacyUtilities {
-std::optional<uint32_t> parseOffset(
+std::optional<uint32_t> parseOffsetForSemantic(
     const rapidjson::Document& document,
     const char* semantic,
     CesiumUtility::ErrorList& errorList);
@@ -76,9 +76,7 @@ parseArrayValueDVec3(const rapidjson::Value& arrayValue);
 std::optional<glm::dvec3>
 parseArrayValueDVec3(const rapidjson::Document& document, const char* name);
 
-int32_t createBufferInGltf(CesiumGltf::Model& gltf);
-int32_t
-createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte>&& buffer);
+int32_t createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte> buffer = {});
 
 int32_t createBufferViewInGltf(
     CesiumGltf::Model& gltf,
@@ -95,25 +93,25 @@ int32_t createAccessorInGltf(
 
 void applyRTC(CesiumGltf::Model& gltf, const glm::dvec3& rtc);
 
-template <typename GLMType, typename GLTFType>
-GLMType toGlm(const GLTFType& gltfVal);
+template <typename GlmType, typename GLTFType>
+GlmType toGlm(const GLTFType& gltfVal);
 
-template <typename GLMType, typename COMPONENTType>
-GLMType toGlm(const CesiumGltf::AccessorTypes::VEC3<COMPONENTType>& gltfVal) {
-  return GLMType(gltfVal.value[0], gltfVal.value[1], gltfVal.value[2]);
+template <typename GlmType, typename ComponentType>
+GlmType toGlm(const CesiumGltf::AccessorTypes::VEC3<ComponentType>& gltfVal) {
+  return GlmType(gltfVal.value[0], gltfVal.value[1], gltfVal.value[2]);
 }
 
-template <typename GLMType, typename COMPONENTType>
-GLMType
-toGlmQuat(const CesiumGltf::AccessorTypes::VEC4<COMPONENTType>& gltfVal) {
-  if constexpr (std::is_same<COMPONENTType, float>()) {
-    return GLMType(
+template <typename GlmType, typename ComponentType>
+GlmType
+toGlmQuat(const CesiumGltf::AccessorTypes::VEC4<ComponentType>& gltfVal) {
+  if constexpr (std::is_same<ComponentType, float>()) {
+    return GlmType(
         gltfVal.value[3],
         gltfVal.value[0],
         gltfVal.value[1],
         gltfVal.value[2]);
   } else {
-    return GLMType(
+    return GlmType(
         CesiumGltf::normalize(gltfVal.value[3]),
         CesiumGltf::normalize(gltfVal.value[0]),
         CesiumGltf::normalize(gltfVal.value[1]),

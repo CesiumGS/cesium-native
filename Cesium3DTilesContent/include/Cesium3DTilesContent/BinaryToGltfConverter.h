@@ -21,8 +21,7 @@ public:
 private:
   static GltfConverterResult convertImmediate(
       const gsl::span<const std::byte>& gltfBinary,
-      const CesiumGltfReader::GltfReaderOptions& options,
-      const AssetFetcher& assetFetcher);
+      const CesiumGltfReader::GltfReaderOptions& options);
   static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesContent

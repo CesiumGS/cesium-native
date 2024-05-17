@@ -17,7 +17,7 @@ namespace Cesium3DTilesContent {
 namespace LegacyUtilities {
 using namespace CesiumGltf;
 
-std::optional<uint32_t> parseOffset(
+std::optional<uint32_t> parseOffsetForSemantic(
     const rapidjson::Document& document,
     const char* semantic,
     CesiumUtility::ErrorList& errorList) {
@@ -77,19 +77,12 @@ parseArrayValueDVec3(const rapidjson::Document& document, const char* name) {
   return {};
 }
 
-int32_t createBufferInGltf(Model& gltf) {
+int32_t createBufferInGltf(Model& gltf, std::vector<std::byte> buffer) {
   size_t bufferId = gltf.buffers.size();
   Buffer& gltfBuffer = gltf.buffers.emplace_back();
-  gltfBuffer.byteLength = 0;
-  return static_cast<int32_t>(bufferId);
-}
-
-int32_t createBufferInGltf(Model& gltf, std::vector<std::byte>&& buffer) {
-  int32_t bufferId = createBufferInGltf(gltf);
-  Buffer& gltfBuffer = gltf.buffers[static_cast<uint32_t>(bufferId)];
   gltfBuffer.byteLength = static_cast<int32_t>(buffer.size());
   gltfBuffer.cesium.data = std::move(buffer);
-  return bufferId;
+  return static_cast<int32_t>(bufferId);
 }
 
 int32_t createBufferViewInGltf(
