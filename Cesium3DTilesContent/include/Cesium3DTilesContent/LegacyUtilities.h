@@ -91,7 +91,7 @@ int32_t createAccessorInGltf(
     const int64_t count,
     const std::string type);
 
-void applyRTC(CesiumGltf::Model& gltf, const glm::dvec3& rtc);
+void applyRtcToNodes(CesiumGltf::Model& gltf, const glm::dvec3& rtc);
 
 template <typename GlmType, typename GLTFType>
 GlmType toGlm(const GLTFType& gltfVal);

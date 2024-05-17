@@ -118,7 +118,7 @@ int32_t createAccessorInGltf(
   return static_cast<int32_t>(accessorId);
 }
 
-void applyRTC(Model& gltf, const glm::dvec3& rtc) {
+void applyRtcToNodes(Model& gltf, const glm::dvec3& rtc) {
   using namespace CesiumGltfContent;
   auto upToZ = GltfUtilities::applyGltfUpAxisTransform(gltf, glm::dmat4x4(1.0));
   auto rtcTransform = inverse(upToZ);

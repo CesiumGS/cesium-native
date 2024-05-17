@@ -519,10 +519,10 @@ composeInstanceTransform(size_t i, const DecodedInstances& decodedInstances) {
   return result;
 }
 
-std::vector<glm::dmat4> meshGpuInstances(
-    GltfConverterResult& result,
-    const ExtensionExtMeshGpuInstancing& gpuExt) {
-  const Model& model = *result.model;
+std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
+    const Model& model,
+    const ExtensionExtMeshGpuInstancing& gpuExt,
+    CesiumUtility::ErrorList& errors) {
   std::vector<glm::dmat4> instances;
   if (gpuExt.attributes.empty()) {
     return instances;
@@ -535,7 +535,7 @@ std::vector<glm::dmat4> meshGpuInstances(
     return nullptr;
   };
   auto errorOut = [&](const std::string& errorMsg) {
-    result.errors.emplaceError(errorMsg);
+    errors.emplaceError(errorMsg);
     return instances;
   };
 
@@ -672,7 +672,10 @@ void instantiateGltfInstances(
         if (!gpuExt.attributes.empty()) {
           // The model already has instances! We will need to create the outer
           // product of these instances and those coming from i3dm.
-          existingInstances = meshGpuInstances(result, gpuExt);
+          existingInstances = getMeshGpuInstancingTransforms(
+              *result.model,
+              gpuExt,
+              result.errors);
           if (numInstances * existingInstances.size() >
               std::numeric_limits<uint32_t>::max()) {
             result.errors.emplaceError(fmt::format(
@@ -681,6 +684,9 @@ void instantiateGltfInstances(
                 existingInstances.size()));
             return;
           }
+        }
+        if (result.errors.hasErrors()) {
+          return;
         }
         const uint32_t numNewInstances =
             static_cast<uint32_t>(numInstances * existingInstances.size());
@@ -742,7 +748,7 @@ void instantiateGltfInstances(
         gpuExt.attributes["SCALE"] = scaleAccessorId;
       });
   if (decodedInstances.rtcCenter) {
-    applyRTC(*result.model, *decodedInstances.rtcCenter);
+    applyRtcToNodes(*result.model, *decodedInstances.rtcCenter);
   }
   instanceBuffer.byteLength =
       static_cast<int64_t>(instanceBuffer.cesium.data.size());
