@@ -76,7 +76,8 @@ parseArrayValueDVec3(const rapidjson::Value& arrayValue);
 std::optional<glm::dvec3>
 parseArrayValueDVec3(const rapidjson::Document& document, const char* name);
 
-int32_t createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte> buffer = {});
+int32_t
+createBufferInGltf(CesiumGltf::Model& gltf, std::vector<std::byte> buffer = {});
 
 int32_t createBufferViewInGltf(
     CesiumGltf::Model& gltf,

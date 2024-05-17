@@ -1,5 +1,5 @@
-#include <CesiumAsync/IAssetResponse.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 
 #include <spdlog/spdlog.h>

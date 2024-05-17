@@ -42,7 +42,7 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
   const CesiumAsync::AsyncSystem& asyncSystem;
   const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
   const std::string baseUrl;
-  glm::dmat4 tileTransform;     // For ENU transforms in i3dm
+  glm::dmat4 tileTransform; // For ENU transforms in i3dm
   const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
 };
 

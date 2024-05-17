@@ -464,7 +464,7 @@ public:
     if (std::abs(v.x) > std::abs(v.y)) {
       return glm::vec<3, T, Q>(-v.z, 0, v.x) / std::sqrt(v.x * v.x + v.z * v.z);
     }
-    return  glm::vec<3, T, Q>( 0, v.z, -v.y) / std::sqrt(v.y * v.y + v.z * v.z);
+    return glm::vec<3, T, Q>(0, v.z, -v.y) / std::sqrt(v.y * v.y + v.z * v.z);
   }
 
   /** @brief Compute the rotation between two vectors
@@ -473,28 +473,29 @@ public:
    *  @return quaternion representing the rotation of vec1 to vec2
    */
   template <typename T, glm::qualifier Q>
-  static glm::qua<T, Q> rotation(const glm::vec<3, T, Q>& vec1, const glm::vec<3, T, Q>& vec2) {
-  // If we take the dot and cross products of the two vectors and store
-  // them in a quaternion, that quaternion represents twice the required rotation.
-  // We get the correct quaternion by "averaging" with the zero rotation
-  // quaternion, in a way analagous to finding the half vector between two 3D
-  // vectors.
-  auto cosRot = dot(vec1, vec2);
-  // Not using epsilon for these tests. If abs(cosRot) < 1.0, we can still
-  // create a sensible rotation.
-  if (cosRot >= 1) {
-    // zero rotation
-    return glm::qua<T, Q>(1, 0, 0, 0);
+  static glm::qua<T, Q>
+  rotation(const glm::vec<3, T, Q>& vec1, const glm::vec<3, T, Q>& vec2) {
+    // If we take the dot and cross products of the two vectors and store
+    // them in a quaternion, that quaternion represents twice the required
+    // rotation. We get the correct quaternion by "averaging" with the zero
+    // rotation quaternion, in a way analagous to finding the half vector
+    // between two 3D vectors.
+    auto cosRot = dot(vec1, vec2);
+    // Not using epsilon for these tests. If abs(cosRot) < 1.0, we can still
+    // create a sensible rotation.
+    if (cosRot >= 1) {
+      // zero rotation
+      return glm::qua<T, Q>(1, 0, 0, 0);
+    }
+    if (cosRot <= -1) {
+      auto rotAxis = CesiumUtility::Math::perpVec(vec1);
+      // rotation by pi radians
+      return glm::qua<T, Q>(0, rotAxis);
+    }
+    auto rotAxis = cross(vec1, vec2);
+    glm::qua<T, Q> sumQuat(cosRot + 1, rotAxis);
+    return normalize(sumQuat);
   }
-  if (cosRot <= -1) {
-    auto rotAxis = CesiumUtility::Math::perpVec(vec1);
-    // rotation by pi radians
-    return glm::qua<T, Q>(0, rotAxis);
-  }
-  auto rotAxis = cross(vec1, vec2);
-  glm::qua<T, Q> sumQuat(cosRot + 1, rotAxis);
-  return normalize(sumQuat);
-}
 };
 
 } // namespace CesiumUtility

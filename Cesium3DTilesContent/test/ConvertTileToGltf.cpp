@@ -9,8 +9,7 @@ namespace Cesium3DTilesContent {
 CesiumAsync::AsyncSystem ConvertTileToGltf::asyncSystem(
     std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
-AssetFetcher
-ConvertTileToGltf::makeAssetFetcher(const std::string& baseUrl) {
+AssetFetcher ConvertTileToGltf::makeAssetFetcher(const std::string& baseUrl) {
   auto fileAccessor = std::make_shared<CesiumNativeTests::FileAccessor>();
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
   return AssetFetcher(

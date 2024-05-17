@@ -193,10 +193,10 @@ std::optional<I3dmContent> parseI3dmJson(
       featureTableJsonData.size());
   if (featureTableJson.HasParseError()) {
     errors.emplaceError(fmt::format(
-                            "Error when parsing feature table JSON, error code {} at byte offset "
-                            "{}",
-                            featureTableJson.GetParseError(),
-                            featureTableJson.GetErrorOffset()));
+        "Error when parsing feature table JSON, error code {} at byte offset "
+        "{}",
+        featureTableJson.GetParseError(),
+        featureTableJson.GetErrorOffset()));
     return {};
   }
   I3dmContent parsedContent;
@@ -205,37 +205,35 @@ std::optional<I3dmContent> parseI3dmJson(
           getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
     parsedContent.instancesLength = *optInstancesLength;
   } else {
-    errors.emplaceError(
-        "Error parsing I3DM feature table, no valid INSTANCES_LENGTH was found.");
+    errors.emplaceError("Error parsing I3DM feature table, no valid "
+                        "INSTANCES_LENGTH was found.");
     return {};
   }
   parsedContent.rtcCenter =
       parseArrayValueDVec3(featureTableJson, "RTC_CENTER");
   parsedContent.position =
-      parseOffsetForSemantic(
-          featureTableJson, "POSITION", errors);
-  parsedContent.positionQuantized = parseOffsetForSemantic(
-      featureTableJson,
-      "POSITION_QUANTIZED",
-      errors);
+      parseOffsetForSemantic(featureTableJson, "POSITION", errors);
+  parsedContent.positionQuantized =
+      parseOffsetForSemantic(featureTableJson, "POSITION_QUANTIZED", errors);
   if (errors.hasErrors()) {
     return {};
   }
   // I would have liked to just test !parsedContent.position, but the perfectly
   // reasonable value of 0 causes the test to be false!
-  if (!(parsedContent.position.has_value() || parsedContent.positionQuantized.has_value())) {
-    errors.emplaceError(
-        "I3dm file contains neither POSITION nor POSITION_QUANTIZED semantics.");
+  if (!(parsedContent.position.has_value() ||
+        parsedContent.positionQuantized.has_value())) {
+    errors.emplaceError("I3dm file contains neither POSITION nor "
+                        "POSITION_QUANTIZED semantics.");
     return {};
   }
   if (parsedContent.positionQuantized.has_value()) {
     parsedContent.quantizedVolumeOffset =
         parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_OFFSET");
     if (!parsedContent.quantizedVolumeOffset.has_value()) {
-     errors.emplaceError(
-         "Error parsing I3DM feature table, the I3dm uses quatized positions "
-         "but has no valid QUANTIZED_VOLUME_OFFSET property");
-     return {};
+      errors.emplaceError(
+          "Error parsing I3DM feature table, the I3dm uses quatized positions "
+          "but has no valid QUANTIZED_VOLUME_OFFSET property");
+      return {};
     }
     parsedContent.quantizedVolumeScale =
         parseArrayValueDVec3(featureTableJson, "QUANTIZED_VOLUME_SCALE");
@@ -249,56 +247,48 @@ std::optional<I3dmContent> parseI3dmJson(
   if (auto optENU = getValue<bool>(featureTableJson, "EAST_NORTH_UP")) {
     parsedContent.eastNorthUp = *optENU;
   }
-  parsedContent.normalUp = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_UP",
-      errors);
-  parsedContent.normalRight = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_RIGHT",
-      errors);
+  parsedContent.normalUp =
+      parseOffsetForSemantic(featureTableJson, "NORMAL_UP", errors);
+  parsedContent.normalRight =
+      parseOffsetForSemantic(featureTableJson, "NORMAL_RIGHT", errors);
   if (errors.hasErrors()) {
     return {};
   }
-  if (parsedContent.normalUp.has_value() && !parsedContent.normalRight.has_value()) {
+  if (parsedContent.normalUp.has_value() &&
+      !parsedContent.normalRight.has_value()) {
     errors.emplaceError("I3dm has NORMAL_UP semantic without NORMAL_RIGHT.");
     return {};
   }
-  if (!parsedContent.normalUp.has_value() && parsedContent.normalRight.has_value()) {
+  if (!parsedContent.normalUp.has_value() &&
+      parsedContent.normalRight.has_value()) {
     errors.emplaceError("I3dm has NORMAL_RIGHT semantic without NORMAL_UP.");
     return {};
   }
-  parsedContent.normalUpOct32p = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_UP_OCT32P",
-      errors);
-  parsedContent.normalRightOct32p = parseOffsetForSemantic(
-      featureTableJson,
-      "NORMAL_RIGHT_OCT32P",
-      errors);
+  parsedContent.normalUpOct32p =
+      parseOffsetForSemantic(featureTableJson, "NORMAL_UP_OCT32P", errors);
+  parsedContent.normalRightOct32p =
+      parseOffsetForSemantic(featureTableJson, "NORMAL_RIGHT_OCT32P", errors);
   if (errors.hasErrors()) {
     return {};
   }
-  if (parsedContent.normalUpOct32p.has_value() && !parsedContent.normalRightOct32p.has_value()) {
-    errors.emplaceError("I3dm has NORMAL_UP_OCT32P semantic without NORMAL_RIGHT_OCT32P.");
+  if (parsedContent.normalUpOct32p.has_value() &&
+      !parsedContent.normalRightOct32p.has_value()) {
+    errors.emplaceError(
+        "I3dm has NORMAL_UP_OCT32P semantic without NORMAL_RIGHT_OCT32P.");
     return {};
   }
-  if (!parsedContent.normalUpOct32p.has_value() && parsedContent.normalRightOct32p.has_value()) {
-    errors.emplaceError("I3dm has NORMAL_RIGHT_OCT32P semantic without NORMAL_UP_OCT32P.");
+  if (!parsedContent.normalUpOct32p.has_value() &&
+      parsedContent.normalRightOct32p.has_value()) {
+    errors.emplaceError(
+        "I3dm has NORMAL_RIGHT_OCT32P semantic without NORMAL_UP_OCT32P.");
     return {};
   }
-  parsedContent.scale = parseOffsetForSemantic(
-      featureTableJson,
-      "SCALE",
-      errors);
-  parsedContent.scaleNonUniform = parseOffsetForSemantic(
-      featureTableJson,
-      "SCALE_NON_UNIFORM",
-      errors);
-  parsedContent.batchId = parseOffsetForSemantic(
-      featureTableJson,
-      "BATCH_ID",
-      errors);
+  parsedContent.scale =
+      parseOffsetForSemantic(featureTableJson, "SCALE", errors);
+  parsedContent.scaleNonUniform =
+      parseOffsetForSemantic(featureTableJson, "SCALE_NON_UNIFORM", errors);
+  parsedContent.batchId =
+      parseOffsetForSemantic(featureTableJson, "BATCH_ID", errors);
   if (errors.hasErrors()) {
     return {};
   }
@@ -316,7 +306,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   DecodedInstances& decodedInstances = convertedI3dm.decodedInstances;
   convertedI3dm.gltfResult = result;
   auto finishEarly = [&]() {
-    return assetFetcher.asyncSystem.createResolvedFuture(std::move(convertedI3dm));
+    return assetFetcher.asyncSystem.createResolvedFuture(
+        std::move(convertedI3dm));
   };
   if (header.featureTableJsonByteLength == 0 ||
       header.featureTableBinaryByteLength == 0) {
@@ -347,14 +338,16 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   const uint32_t numInstances = parsedContent.instancesLength;
   decodedInstances.positions.resize(numInstances, glm::vec3(0.0f, 0.0f, 0.0f));
   if (parsedContent.position.has_value()) {
-    gsl::span<const glm::vec3> rawPositions(reinterpret_cast<const glm::vec3*>(
-                                                binaryData + *parsedContent.position),
-                                            numInstances);
+    gsl::span<const glm::vec3> rawPositions(
+        reinterpret_cast<const glm::vec3*>(
+            binaryData + *parsedContent.position),
+        numInstances);
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
   } else {
-    gsl::span<const uint16_t[3]> rawQPositions(reinterpret_cast<const uint16_t(*)[3]>(
-                                             binaryData + *parsedContent.positionQuantized),
-                                         numInstances);
+    gsl::span<const uint16_t[3]> rawQPositions(
+        reinterpret_cast<const uint16_t(*)[3]>(
+            binaryData + *parsedContent.positionQuantized),
+        numInstances);
     std::transform(
         rawQPositions.begin(),
         rawQPositions.end(),
@@ -364,7 +357,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
           for (unsigned j = 0; j < 3; ++j) {
             position[j] = static_cast<float>(
                 posQuantized[j] / 65535.0 *
-                (*parsedContent.quantizedVolumeScale)[j] +
+                    (*parsedContent.quantizedVolumeScale)[j] +
                 (*parsedContent.quantizedVolumeOffset)[j]);
           }
           return position;
@@ -373,36 +366,45 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   decodedInstances.rotations.resize(
       numInstances,
       glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
-  if (parsedContent.normalUp.has_value() && parsedContent.normalRight.has_value()) {
-    gsl::span<const glm::vec3> rawUp(reinterpret_cast<const glm::vec3*>(
-                                         binaryData + *parsedContent.normalUp),
-                                     numInstances);
-    gsl::span<const glm::vec3> rawRight(reinterpret_cast<const glm::vec3*>(
-                                            binaryData + *parsedContent.normalRight),
-                                        numInstances);
-    std::transform(rawUp.begin(),
-                   rawUp.end(),
-                   rawRight.begin(),
-                   decodedInstances.rotations.begin(),
-                   rotationFromUpRight);
+  if (parsedContent.normalUp.has_value() &&
+      parsedContent.normalRight.has_value()) {
+    gsl::span<const glm::vec3> rawUp(
+        reinterpret_cast<const glm::vec3*>(
+            binaryData + *parsedContent.normalUp),
+        numInstances);
+    gsl::span<const glm::vec3> rawRight(
+        reinterpret_cast<const glm::vec3*>(
+            binaryData + *parsedContent.normalRight),
+        numInstances);
+    std::transform(
+        rawUp.begin(),
+        rawUp.end(),
+        rawRight.begin(),
+        decodedInstances.rotations.begin(),
+        rotationFromUpRight);
 
-  } else if (parsedContent.normalUpOct32p.has_value() && parsedContent.normalRightOct32p.has_value()) {
+  } else if (
+      parsedContent.normalUpOct32p.has_value() &&
+      parsedContent.normalRightOct32p.has_value()) {
 
-    gsl::span<const uint16_t[2]> rawUpOct(reinterpret_cast<const uint16_t(*)[2]>(
-                                              binaryData + *parsedContent.normalUpOct32p),
-                                          numInstances);
-    gsl::span<const uint16_t[2]> rawRightOct(reinterpret_cast<const uint16_t(*)[2]>(
-                                                 binaryData + *parsedContent.normalRightOct32p),
-                                             numInstances);
-    std::transform(rawUpOct.begin(),
-                   rawUpOct.end(),
-                   rawRightOct.begin(),
-                   decodedInstances.rotations.begin(),
-                   [](const auto&& upOct, const auto&& rightOct) {
-                     return rotationFromUpRight(
-                         decodeOct32P(upOct),
-                         decodeOct32P(rightOct));
-                   });
+    gsl::span<const uint16_t[2]> rawUpOct(
+        reinterpret_cast<const uint16_t(*)[2]>(
+            binaryData + *parsedContent.normalUpOct32p),
+        numInstances);
+    gsl::span<const uint16_t[2]> rawRightOct(
+        reinterpret_cast<const uint16_t(*)[2]>(
+            binaryData + *parsedContent.normalRightOct32p),
+        numInstances);
+    std::transform(
+        rawUpOct.begin(),
+        rawUpOct.end(),
+        rawRightOct.begin(),
+        decodedInstances.rotations.begin(),
+        [](const auto&& upOct, const auto&& rightOct) {
+          return rotationFromUpRight(
+              decodeOct32P(upOct),
+              decodeOct32P(rightOct));
+        });
   } else if (decodedInstances.rotationENU) {
     glm::dmat4 worldTransform = assetFetcher.tileTransform;
     if (decodedInstances.rtcCenter) {
@@ -424,15 +426,14 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   }
   decodedInstances.scales.resize(numInstances, glm::vec3(1.0, 1.0, 1.0));
   if (parsedContent.scale.has_value()) {
-    gsl::span<const float> rawScales(reinterpret_cast<const float*>(
-                                   binaryData + *parsedContent.scale),
-                               numInstances);
-    std::transform(rawScales.begin(),
-                   rawScales.end(),
-                   decodedInstances.scales.begin(),
-                   [](float scaleVal) {
-                     return glm::vec3(scaleVal);
-                   });
+    gsl::span<const float> rawScales(
+        reinterpret_cast<const float*>(binaryData + *parsedContent.scale),
+        numInstances);
+    std::transform(
+        rawScales.begin(),
+        rawScales.end(),
+        decodedInstances.scales.begin(),
+        [](float scaleVal) { return glm::vec3(scaleVal); });
   }
   if (parsedContent.scaleNonUniform.has_value()) {
     gsl::span<const glm::vec3> rawScalesNonUniform(
