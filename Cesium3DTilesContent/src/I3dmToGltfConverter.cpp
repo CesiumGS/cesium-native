@@ -352,7 +352,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         rawQPositions.begin(),
         rawQPositions.end(),
         decodedInstances.positions.begin(),
-        [&parsedContent](const auto&& posQuantized) {
+        [&parsedContent](auto&& posQuantized) {
           glm::vec3 position;
           for (unsigned j = 0; j < 3; ++j) {
             position[j] = static_cast<float>(
@@ -400,7 +400,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         rawUpOct.end(),
         rawRightOct.begin(),
         decodedInstances.rotations.begin(),
-        [](const auto&& upOct, const auto&& rightOct) {
+        [](auto&& upOct, auto&& rightOct) {
           return rotationFromUpRight(
               decodeOct32P(upOct),
               decodeOct32P(rightOct));

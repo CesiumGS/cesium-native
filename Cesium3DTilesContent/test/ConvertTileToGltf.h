@@ -22,6 +22,6 @@ public:
 
 private:
   static CesiumAsync::AsyncSystem asyncSystem;
-  static ConverterSubprocessor makeSubprocessor(const std::string& baseUrl);
+  static AssetFetcher makeAssetFetcher(const std::string& baseUrl);
 };
 } // namespace Cesium3DTilesContent
