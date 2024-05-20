@@ -44,11 +44,12 @@ public:
     // is awoken, avoiding the potential deadlock.
 
     std::atomic<bool> isDone = false;
-    async::task<T> unblockTask =
-        task.then(async::inline_scheduler(), [this, &isDone](auto&& value) {
+    async::task<T> unblockTask = task.then(
+        async::inline_scheduler(),
+        [this, &isDone](async::task<T>&& task) {
           isDone = true;
           this->unblock();
-          return std::move(value);
+          return task.get();
         });
 
     while (!isDone) {
@@ -66,7 +67,7 @@ public:
     // task to terminate the loop while unblocking in a separate continuation
     // guaranteed to run only after that termination condition is satisfied.
     async::task<void> unblockTask =
-        task.then(async::inline_scheduler(), [this](const auto&) {
+        task.then(async::inline_scheduler(), [this](const shared_task<T>&) {
           this->unblock();
         });
 
