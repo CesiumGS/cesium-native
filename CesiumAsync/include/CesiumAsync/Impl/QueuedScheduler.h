@@ -66,10 +66,9 @@ public:
     // supports multiple continuations. We can use readiness of the _original_
     // task to terminate the loop while unblocking in a separate continuation
     // guaranteed to run only after that termination condition is satisfied.
-    async::task<void> unblockTask =
-        task.then(async::inline_scheduler(), [this](const shared_task<T>&) {
-          this->unblock();
-        });
+    async::task<void> unblockTask = task.then(
+        async::inline_scheduler(),
+        [this](const async::shared_task<T>&) { this->unblock(); });
 
     while (!task.ready()) {
       this->dispatchInternal(true);
