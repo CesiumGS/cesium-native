@@ -698,6 +698,43 @@ TEST_CASE("Decodes images with data uris") {
   CHECK(image.width == 256);
   CHECK(image.height == 256);
   CHECK(!image.pixelData.empty());
+
+  REQUIRE(model.buffers.size() == 1);
+
+  const Buffer& buffer = model.buffers.front();
+  CHECK(buffer.byteLength >= 0);
+  CHECK(size_t(buffer.byteLength) == buffer.cesium.data.size());
+}
+
+TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
+          "byteLength") {
+  std::vector<std::byte> gltfBytes = readFile(
+      CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf"));
+  std::string gltfString(
+      reinterpret_cast<const char*>(gltfBytes.data()),
+      gltfBytes.size());
+
+  // Make the byteLength incorrect
+  constexpr std::string_view toReplace = "\"byteLength\": 840";
+  gltfString.replace(
+      gltfString.find(toReplace),
+      toReplace.size(),
+      "\"byteLength\": 1");
+
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(gltfString.data()),
+      gltfString.size()));
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.size() == 1);
+
+  const Model& model = result.model.value();
+  REQUIRE(model.buffers.size() == 1);
+
+  const Buffer& buffer = model.buffers.front();
+  CHECK(buffer.byteLength >= 0);
+  CHECK(size_t(buffer.byteLength) == buffer.cesium.data.size());
 }
 
 TEST_CASE("GltfReader::loadGltf") {
