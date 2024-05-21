@@ -61,7 +61,8 @@ gltf = pygltflib.GLTF2(
         pygltflib.Mesh(
             primitives=[
                 pygltflib.Primitive(
-                    attributes=pygltflib.Attributes(POSITION=0)
+                    attributes=pygltflib.Attributes(POSITION=0),
+                    mode=4 #"TRIANGLES"
                 )
             ]
         )
