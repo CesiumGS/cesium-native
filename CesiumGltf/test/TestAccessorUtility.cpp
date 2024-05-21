@@ -118,6 +118,64 @@ TEST_CASE("Test getPositionAccessorView") {
   }
 }
 
+TEST_CASE("Test getNormalAccessorView") {
+  Model model;
+  std::vector<glm::vec3> normals{
+      glm::vec3(0, 1, 0),
+      glm::vec3(1, 0, 0),
+      glm::vec3(0, 0, 1)};
+
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(normals.size() * sizeof(glm::vec3));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        normals.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = 0;
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = 0;
+    accessor.componentType = Accessor::ComponentType::FLOAT;
+    accessor.type = Accessor::Type::VEC3;
+    accessor.count = static_cast<int64_t>(normals.size());
+  }
+
+  Mesh& mesh = model.meshes.emplace_back();
+  MeshPrimitive primitive = mesh.primitives.emplace_back();
+  primitive.attributes.insert({"NORMAL", 0});
+
+  SECTION("Handles invalid accessor type") {
+    model.accessors[0].type = Accessor::Type::SCALAR;
+
+    NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
+    REQUIRE(normalAccessor.status() != AccessorViewStatus::Valid);
+    REQUIRE(normalAccessor.size() == 0);
+
+    model.accessors[0].type = Accessor::Type::VEC3;
+  }
+
+  SECTION("Handles unsupported accessor component type") {
+    model.accessors[0].componentType = Accessor::ComponentType::BYTE;
+
+    NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
+    REQUIRE(normalAccessor.status() != AccessorViewStatus::Valid);
+    REQUIRE(normalAccessor.size() == 0);
+
+    model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
+  }
+
+  SECTION("Creates from valid accessor") {
+    NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
+    REQUIRE(normalAccessor.status() == AccessorViewStatus::Valid);
+    REQUIRE(static_cast<size_t>(normalAccessor.size()) == normals.size());
+  }
+}
+
 TEST_CASE("Test getFeatureIdAccessorView") {
   Model model;
   std::vector<uint8_t> featureIds0{1, 2, 3, 4};
@@ -617,6 +675,66 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
       REQUIRE(indicesForFace[0] == 0);
       REQUIRE(indicesForFace[1] == i + 1);
       REQUIRE(indicesForFace[2] == i + 2);
+    }
+  }
+}
+
+TEST_CASE("Test IndexFromAccessor") {
+  Model model;
+
+  std::vector<uint32_t> indices{0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 6, 7, 8};
+  {
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.cesium.data.resize(indices.size() * sizeof(uint32_t));
+    std::memcpy(
+        buffer.cesium.data.data(),
+        indices.data(),
+        buffer.cesium.data.size());
+    buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+    BufferView& bufferView = model.bufferViews.emplace_back();
+    bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+    bufferView.byteLength = buffer.byteLength;
+
+    Accessor& accessor = model.accessors.emplace_back();
+    accessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+    accessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+    accessor.type = Accessor::Type::SCALAR;
+    accessor.count =
+        bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
+  }
+
+  SECTION("Handles invalid accessor") {
+    REQUIRE(model.accessors.size() > 0);
+    // Wrong component type
+    IndexAccessorType indexAccessor =
+        AccessorView<uint8_t>(model, model.accessors[0]);
+    auto index = std::visit(IndexFromAccessor{0}, indexAccessor);
+    REQUIRE(index == -1);
+  }
+
+  SECTION("Handles invalid index") {
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+    auto index = std::visit(IndexFromAccessor{-1}, indexAccessor);
+    REQUIRE(index == -1);
+
+    index = std::visit(
+        IndexFromAccessor{static_cast<int64_t>(indices.size())},
+        indexAccessor);
+    REQUIRE(index == -1);
+  }
+
+  SECTION("Retrieves from valid accessor and index") {
+    REQUIRE(model.accessors.size() > 0);
+    IndexAccessorType indexAccessor =
+        AccessorView<uint32_t>(model, model.accessors[0]);
+
+    for (size_t i = 0; i < indices.size(); i++) {
+      auto index =
+          std::visit(IndexFromAccessor{static_cast<int64_t>(i)}, indexAccessor);
+      REQUIRE(index == indices[i]);
     }
   }
 }

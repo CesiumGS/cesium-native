@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check source formatting
         run: |
           npm install
@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo apt install -y doxygen
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Generate Documentation
@@ -27,139 +27,101 @@ jobs:
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ReferenceDocumentation
           path: build/doc/html
-  VS2019:
-    name: "Windows + VS2019"
-    runs-on: windows-2019
-    steps:
-      - name: Install nasm
-        run: |
-          choco install -y nasm
-      - name: Check out repository code
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Compile Debug Configuration
-        run: |
-          cmake -B build -S .
-          cmake --build build --config Debug --parallel 4
-      - name: Test Debug Configuration
-        run: |
-          cd build
-          ctest -V
-      - name: Compile RelWithDebInfo Configuration
-        run: |
-          cmake --build build --config RelWithDebInfo --parallel 4
-      - name: Test RelWithDebInfo Configuration
-        run: |
-          cd build
-          ctest -V
-  VS2022:
-    name: "Windows + VS2022"
-    runs-on: windows-2022
-    steps:
-      - name: Install nasm
-        run: |
-          choco install -y nasm
-      - name: Check out repository code
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Compile Debug Configuration
-        run: |
-          cmake -B build -S .
-          cmake --build build --config Debug --parallel 4
-      - name: Test Debug Configuration
-        run: |
-          cd build
-          ctest -V
-      - name: Compile RelWithDebInfo Configuration
-        run: |
-          cmake --build build --config RelWithDebInfo --parallel 4
-      - name: Test RelWithDebInfo Configuration
-        run: |
-          cd build
-          ctest -V
-  LinuxGCC:
-    name: "Linux + GCC"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install nasm
-        run: |
-          sudo apt-get install nasm
-      - name: Check out repository code
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Compile Debug Configuration
-        run: |
-          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
-          cmake --build build-debug --parallel 4
-      - name: Test Debug Configuration
-        run: |
-          cd build-debug
-          ctest -V
-      - name: Compile RelWithDebInfo Configuration
-        run: |
-          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
-          cmake --build build-release --config RelWithDebInfo --parallel 4
-      - name: Test RelWithDebInfo Configuration
-        run: |
-          cd build-release
-          ctest -V
-  LinuxClang:
-    name: "Linux + Clang"
-    runs-on: ubuntu-20.04
+  WindowsBuild:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-2019, windows-2022]
+        build_type: [Debug, RelWithDebInfo]
+    name: "${{matrix.platform}} / ${{matrix.build_type}}"
     env:
-      CC: clang-12
-      CXX: clang++-12
+      CACHE_KEY: "${{ matrix.platform }}"
+    runs-on: ${{ matrix.platform }}
     steps:
+      - name: Install ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
       - name: Install nasm
-        run: |
-          sudo apt-get install nasm
+        uses: ilammy/setup-nasm@v1
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Compile Debug Configuration
+      - name: Setup MSVC for command-line builds
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: sccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
+          variant: sccache
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: /.ezvcpkg
+          key: vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-${{ env.CACHE_KEY }}
+      - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
-          cmake --build build-debug --parallel 4
-      - name: Test Debug Configuration
+          cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake --build build
+      - name: Test ${{matrix.build_type}} Configuration
         run: |
-          cd build-debug
+          cd build
           ctest -V
-      - name: Compile RelWithDebInfo Configuration
-        run: |
-          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
-          cmake --build build-release --config RelWithDebInfo --parallel 4
-      - name: Test RelWithDebInfo Configuration
-        run: |
-          cd build-release
-          ctest -V
-  macOS:
-    runs-on: macos-latest
+  PosixBuild:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ gcc, clang ]
+        platform: [ ubuntu-latest, ubuntu-20.04, macos-12 ]
+        build_type: [Debug, RelWithDebInfo]
+        exclude:
+          - compiler: clang
+            platform: ubuntu-latest
+          - compiler: gcc
+            platform: macos-12
+          - compiler: gcc
+            platform: ubuntu-20.04
+    name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
+    env:
+      CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
+    runs-on: ${{ matrix.platform }}
     steps:
+      - name: Install ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install nasm
+        uses: ilammy/setup-nasm@v1
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Compile Debug Configuration
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.ezvcpkg
+          key:  vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-${{ env.CACHE_KEY }}
+      - name: Set CC and CXX
+        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-12'}}
         run: |
-          cmake -B build-debug -S . -DCMAKE_BUILD_TYPE:STRING=Debug
-          cmake --build build-debug --parallel 4
-      - name: Test Debug Configuration
+          echo "CC=clang-12" >> "$GITHUB_ENV"
+          echo "CXX=clang++-12" >> "$GITHUB_ENV"
+      - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cd build-debug
-          ctest -V
-      - name: Compile RelWithDebInfo Configuration
+          cmake -B build -S . -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}}
+          cmake --build build --parallel
+      - name: Test ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build-release -S . -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
-          cmake --build build-release --config RelWithDebInfo --parallel 4
-      - name: Test RelWithDebInfo Configuration
-        run: |
-          cd build-release
+          cd build
           ctest -V
