@@ -2,6 +2,7 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -281,7 +282,12 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
     Buffer& sourceBuffer = gltf.buffers[i];
 
     // Leave intact any buffers that have a URI and no data.
-    if (sourceBuffer.uri && sourceBuffer.cesium.data.empty()) {
+    // Also leave intact meshopt fallback buffers without any data.
+    ExtensionBufferExtMeshoptCompression* pMeshOpt =
+        sourceBuffer.getExtension<ExtensionBufferExtMeshoptCompression>();
+    bool isMeshOptFallback = pMeshOpt && pMeshOpt->fallback;
+    if (sourceBuffer.cesium.data.empty() &&
+        (sourceBuffer.uri || isMeshOptFallback)) {
       keepBuffer[i] = true;
       continue;
     }
