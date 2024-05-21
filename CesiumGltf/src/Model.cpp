@@ -1,6 +1,7 @@
 #include "CesiumGltf/Model.h"
 
 #include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h"
 #include "CesiumGltf/ExtensionCesiumPrimitiveOutline.h"
 #include "CesiumGltf/ExtensionCesiumTileEdges.h"
 #include "CesiumGltf/ExtensionExtMeshFeatures.h"
@@ -198,6 +199,12 @@ ErrorList Model::merge(Model&& rhs) {
   for (size_t i = firstBufferView; i < this->bufferViews.size(); ++i) {
     BufferView& bufferView = this->bufferViews[i];
     updateIndex(bufferView.buffer, firstBuffer);
+
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt) {
+      updateIndex(pMeshOpt->buffer, firstBuffer);
+    }
   }
 
   for (size_t i = firstImage; i < this->images.size(); ++i) {

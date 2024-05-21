@@ -2,6 +2,7 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -26,6 +27,10 @@
 using namespace CesiumGltf;
 
 namespace CesiumGltfContent {
+
+namespace {
+std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices);
+}
 
 /*static*/ std::optional<glm::dmat4x4>
 GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
@@ -270,13 +275,60 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   Buffer& destinationBuffer = gltf.buffers[0];
 
+  std::vector<bool> keepBuffer(gltf.buffers.size(), false);
+  keepBuffer[0] = true;
+
   for (size_t i = 1; i < gltf.buffers.size(); ++i) {
     Buffer& sourceBuffer = gltf.buffers[i];
+
+    // Leave intact any buffers that have a URI and no data.
+    // Also leave intact meshopt fallback buffers without any data.
+    ExtensionBufferExtMeshoptCompression* pMeshOpt =
+        sourceBuffer.getExtension<ExtensionBufferExtMeshoptCompression>();
+    bool isMeshOptFallback = pMeshOpt && pMeshOpt->fallback;
+    if (sourceBuffer.cesium.data.empty() &&
+        (sourceBuffer.uri || isMeshOptFallback)) {
+      keepBuffer[i] = true;
+      continue;
+    }
+
     GltfUtilities::moveBufferContent(gltf, destinationBuffer, sourceBuffer);
   }
 
-  // Remove all the old buffers
-  gltf.buffers.resize(1);
+  // Update the buffer indices based on the buffers being removed.
+  std::vector<int32_t> indexMap = getIndexMap(keepBuffer);
+  for (BufferView& bufferView : gltf.bufferViews) {
+    int32_t& bufferIndex = bufferView.buffer;
+    if (bufferIndex >= 0 && size_t(bufferIndex) < indexMap.size()) {
+      int32_t newIndex = indexMap[size_t(bufferIndex)];
+      assert(newIndex >= 0);
+      bufferIndex = newIndex;
+    }
+
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt) {
+      int32_t& meshOptBufferIndex = pMeshOpt->buffer;
+      if (meshOptBufferIndex >= 0 &&
+          size_t(meshOptBufferIndex) < indexMap.size()) {
+        int32_t newIndex = indexMap[size_t(meshOptBufferIndex)];
+        assert(newIndex >= 0);
+        meshOptBufferIndex = newIndex;
+      }
+    }
+  }
+
+  // Remove the unused elements.
+  gltf.buffers.erase(
+      std::remove_if(
+          gltf.buffers.begin(),
+          gltf.buffers.end(),
+          [&keepBuffer, &gltf](const Buffer& buffer) {
+            int64_t index = &buffer - &gltf.buffers[0];
+            assert(index >= 0 && size_t(index) < keepBuffer.size());
+            return !keepBuffer[size_t(index)];
+          }),
+      gltf.buffers.end());
 }
 
 /*static*/ void GltfUtilities::moveBufferContent(
@@ -331,15 +383,15 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   // refer to the destination Buffer instead.
   for (BufferView& bufferView : gltf.bufferViews) {
     if (bufferView.buffer == sourceIndex) {
-      updateBufferView(bufferView);
+      bufferView.buffer = int32_t(destinationIndex);
+      bufferView.byteOffset += int64_t(start);
     }
 
-    ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
         bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
-    if (pMeshopt) {
-      if (pMeshopt->buffer == sourceIndex) {
-        updateBufferView(*pMeshopt);
-      }
+    if (pMeshOpt && pMeshOpt->buffer == sourceIndex) {
+      pMeshOpt->buffer = int32_t(destinationIndex);
+      pMeshOpt->byteOffset += int64_t(start);
     }
   }
 }
@@ -698,14 +750,32 @@ void deleteBufferRange(
   // Adjust bufferView offsets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
     if (bufferView.buffer == bufferIndex) {
-      adjustBufferViewOffset(bufferView);
+      // Sanity check that we're not removing a part of the buffer used by this
+      // bufferView.
+      assert(
+          bufferView.byteOffset >= end ||
+          (bufferView.byteOffset + bufferView.byteLength) <= start);
+
+      // If this bufferView starts after the bytes we're removing, adjust the
+      // start position accordingly.
+      if (bufferView.byteOffset >= start) {
+        bufferView.byteOffset -= bytesToRemove;
+      }
     }
 
-    ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
         bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
-    if (pMeshopt) {
-      if (pMeshopt->buffer == bufferIndex) {
-        adjustBufferViewOffset(*pMeshopt);
+    if (pMeshOpt && pMeshOpt->buffer == bufferIndex) {
+      // Sanity check that we're not removing a part of the buffer used by this
+      // meshopt extension.
+      assert(
+          pMeshOpt->byteOffset >= end ||
+          (pMeshOpt->byteOffset + pMeshOpt->byteLength) <= start);
+
+      // If this meshopt extension starts after the bytes we're removing, adjust
+      // the start position accordingly.
+      if (pMeshOpt->byteOffset >= start) {
+        pMeshOpt->byteOffset -= bytesToRemove;
       }
     }
   }
@@ -740,12 +810,7 @@ void GltfUtilities::compactBuffer(
 
   std::vector<BufferRange> usedRanges;
 
-  // This accepts anything that is buffer view-like including regular buffer
-  // views and meshopt
-  const auto updateUsedRanges = [&usedRanges](auto& bufferView) {
-    int64_t start = bufferView.byteOffset;
-    int64_t end = start + bufferView.byteLength;
-
+  auto addUsedRange = [&usedRanges](int64_t start, int64_t end) {
     auto it = std::lower_bound(
         usedRanges.begin(),
         usedRanges.end(),
@@ -775,15 +840,17 @@ void GltfUtilities::compactBuffer(
 
   for (BufferView& bufferView : gltf.bufferViews) {
     if (bufferView.buffer == bufferIndex) {
-      updateUsedRanges(bufferView);
+      addUsedRange(
+          bufferView.byteOffset,
+          bufferView.byteOffset + bufferView.byteLength);
     }
 
-    ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
         bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
-    if (pMeshopt) {
-      if (pMeshopt->buffer == bufferIndex) {
-        updateUsedRanges(*pMeshopt);
-      }
+    if (pMeshOpt && pMeshOpt->buffer == bufferIndex) {
+      addUsedRange(
+          pMeshOpt->byteOffset,
+          pMeshOpt->byteOffset + pMeshOpt->byteLength);
     }
   }
 
