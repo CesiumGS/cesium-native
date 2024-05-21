@@ -372,13 +372,6 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 
   destination.byteLength = int64_t(destination.cesium.data.size());
 
-  // This accepts anything that is buffer view-like including regular buffer
-  // views and meshopt
-  const auto updateBufferView = [destinationIndex, start](auto& bufferView) {
-    bufferView.buffer = int32_t(destinationIndex);
-    bufferView.byteOffset += int64_t(start);
-  };
-
   // Update all the bufferViews that previously referred to the source Buffer to
   // refer to the destination Buffer instead.
   for (BufferView& bufferView : gltf.bufferViews) {
@@ -729,23 +722,6 @@ void deleteBufferRange(
 
     end = start + bytesToRemove;
   }
-
-  // This accepts anything that is buffer view-like including regular buffer
-  // views and meshopt
-  const auto adjustBufferViewOffset =
-      [start, end, bytesToRemove](auto& bufferView) {
-        // Sanity check that we're not removing a part of the buffer used by
-        // this bufferView.
-        assert(
-            bufferView.byteOffset >= end ||
-            (bufferView.byteOffset + bufferView.byteLength) <= start);
-
-        // If this bufferView starts after the bytes we're removing, adjust the
-        // start position accordingly.
-        if (bufferView.byteOffset >= start) {
-          bufferView.byteOffset -= bytesToRemove;
-        }
-      };
 
   // Adjust bufferView offsets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
