@@ -1,4 +1,5 @@
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -444,6 +445,29 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     REQUIRE(buffer.cesium.data.size() == 115);
     CHECK(m.bufferViews[0].byteOffset == 1);
     CHECK(m.bufferViews[1].byteOffset == 105);
+
+    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i));
+    }
+  }
+
+  SECTION("counts meshopt bufferViews when determining used byte ranges") {
+    BufferView& bv = m.bufferViews.emplace_back();
+    bv.buffer = 0;
+    bv.byteOffset = 0;
+    bv.byteLength = 100;
+
+    ExtensionBufferViewExtMeshoptCompression& extension =
+        bv.addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    extension.buffer = 0;
+    extension.byteOffset = 100;
+    extension.byteLength = 13;
+
+    GltfUtilities::compactBuffers(m);
+
+    // Any number of bytes can be removed from the end (no alignment impact)
+    CHECK(buffer.byteLength == 123 - 10);
+    REQUIRE(buffer.cesium.data.size() == 123 - 10);
 
     for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
       CHECK(buffer.cesium.data[i] == std::byte(i));
