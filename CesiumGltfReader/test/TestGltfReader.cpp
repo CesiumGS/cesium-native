@@ -2,6 +2,7 @@
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -191,6 +192,15 @@ TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
         CesiumGltfReader_TEST_DATA_DIR +
         std::string("/DucksMeshopt/Duck.glb")));
     const Model& model = result.model.value();
+
+    // These extensions should be removed during the load process.
+    CHECK(!model.isExtensionRequired(
+        ExtensionBufferViewExtMeshoptCompression::ExtensionName));
+    CHECK(!model.isExtensionUsed(
+        ExtensionBufferViewExtMeshoptCompression::ExtensionName));
+    CHECK(!model.isExtensionRequired("KHR_mesh_quantization"));
+    CHECK(!model.isExtensionUsed("KHR_mesh_quantization"));
+
     originalVar = getVertexAttributeRange(model);
   }
 
