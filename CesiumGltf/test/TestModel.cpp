@@ -1,6 +1,7 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
 
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
@@ -1273,6 +1274,31 @@ TEST_CASE("Model::merge") {
     auto it = pMerged->attributes.find("foo");
     REQUIRE(it != pMerged->attributes.end());
     CHECK(it->second == 1);
+  }
+
+  SECTION("updates buffer indices in EXT_meshopt_compression") {
+    Model m1;
+    m1.buffers.emplace_back();
+
+    Model m2;
+    m2.buffers.emplace_back();
+    BufferView& bufferView = m2.bufferViews.emplace_back();
+
+    ExtensionBufferViewExtMeshoptCompression& extension =
+        bufferView.addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    extension.buffer = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.buffers.size() == 2);
+    REQUIRE(m1.bufferViews.size() == 1);
+
+    ExtensionBufferViewExtMeshoptCompression* pMerged =
+        m1.bufferViews[0]
+            .getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    REQUIRE(pMerged);
+
+    CHECK(pMerged->buffer == 1);
   }
 }
 
