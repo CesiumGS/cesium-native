@@ -278,6 +278,8 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   std::vector<bool> keepBuffer(gltf.buffers.size(), false);
   keepBuffer[0] = true;
 
+  std::vector<int64_t> bufferStarts(gltf.buffers.size(), 0);
+
   for (size_t i = 1; i < gltf.buffers.size(); ++i) {
     Buffer& sourceBuffer = gltf.buffers[i];
 
@@ -292,7 +294,35 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
       continue;
     }
 
-    GltfUtilities::moveBufferContent(gltf, destinationBuffer, sourceBuffer);
+    assert(sourceBuffer.byteLength == int64_t(sourceBuffer.cesium.data.size()));
+    assert(
+        destinationBuffer.byteLength ==
+        int64_t(destinationBuffer.cesium.data.size()));
+
+    // Copy the data to the destination and keep track of where we put it.
+    // Align each bufferView to an 8-byte boundary.
+    size_t start = destinationBuffer.cesium.data.size();
+
+    size_t alignmentRemainder = start % 8;
+    if (alignmentRemainder != 0) {
+      start += 8 - alignmentRemainder;
+    }
+
+    destinationBuffer.cesium.data.resize(
+        start + sourceBuffer.cesium.data.size());
+    std::memcpy(
+        destinationBuffer.cesium.data.data() + start,
+        sourceBuffer.cesium.data.data(),
+        sourceBuffer.cesium.data.size());
+
+    sourceBuffer.byteLength = 0;
+    sourceBuffer.cesium.data.clear();
+    sourceBuffer.cesium.data.shrink_to_fit();
+
+    destinationBuffer.byteLength =
+        int64_t(destinationBuffer.cesium.data.size());
+
+    bufferStarts[i] = int64_t(start);
   }
 
   // Update the buffer indices based on the buffers being removed.
@@ -300,9 +330,9 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   for (BufferView& bufferView : gltf.bufferViews) {
     int32_t& bufferIndex = bufferView.buffer;
     if (bufferIndex >= 0 && size_t(bufferIndex) < indexMap.size()) {
+      bufferView.byteOffset += bufferStarts[size_t(bufferIndex)];
       int32_t newIndex = indexMap[size_t(bufferIndex)];
-      assert(newIndex >= 0);
-      bufferIndex = newIndex;
+      bufferIndex = newIndex == -1 ? 0 : newIndex;
     }
 
     ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
@@ -311,9 +341,9 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
       int32_t& meshOptBufferIndex = pMeshOpt->buffer;
       if (meshOptBufferIndex >= 0 &&
           size_t(meshOptBufferIndex) < indexMap.size()) {
+        pMeshOpt->byteOffset += bufferStarts[size_t(meshOptBufferIndex)];
         int32_t newIndex = indexMap[size_t(meshOptBufferIndex)];
-        assert(newIndex >= 0);
-        meshOptBufferIndex = newIndex;
+        meshOptBufferIndex = newIndex == -1 ? 0 : newIndex;
       }
     }
   }
