@@ -1,5 +1,5 @@
 # Write out a gltf test file from python code
-# Unit cube - Triangle list, no indices
+# Unit cube - Triangle strip, no indices
 #
 # Uses pygltflib 1.16.2
 # py -m pip install pygltflib
@@ -42,7 +42,7 @@ points = np.array(
         [0.5, -0.5, -0.5],
         [0.5, 0.5, -0.5],
 
-        # -XZ face
+        # +XZ face
         [0.5, 0.5, -0.5],
         [-0.5, 0.5, -0.5],
         [0.5, 0.5, 0.5],
