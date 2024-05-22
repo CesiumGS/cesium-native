@@ -94,7 +94,15 @@ void checkIntersection(
   CHECK(indicesAreValid);
 }
 
-void checkUnitCubeIntersections(const Model& testModel) {
+void checkUnitCubeIntersections(const std::string& testModelName) {
+  GltfReader reader;
+  Model testModel =
+      *reader
+           .readGltf(readFile(
+               std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
+               testModelName))
+           .model;
+
   // intersects the top side of the cube
   checkIntersection(
       Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
@@ -171,29 +179,22 @@ void checkUnitCubeIntersections(const Model& testModel) {
 }
 
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
+  //checkUnitCubeIntersections("cube.glb");
 
+  checkUnitCubeIntersections("cubeIndexed.glb");
+
+  //checkUnitCubeIntersections("cubeStrip.glb");
+
+  // checkUnitCubeIntersections("cubeFan.glb");
+  
+  // works with a translated/rotated gltf
   GltfReader reader;
-  Model cubeIndexed = *reader
-                    .readGltf(readFile(
-                        std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
-                        "cubeIndexed.glb"))
-                    .model;
   Model translatedCube =
       *reader
            .readGltf(readFile(
                std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
                "translated_cube.glb"))
            .model;
-  Model sphere =
-      *reader
-           .readGltf(readFile(
-               std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
-               "sphere.glb"))
-           .model;
-
-  checkUnitCubeIntersections(cubeIndexed);
-  
-  // works with a translated/rotated gltf
   checkIntersection(
       Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
       translatedCube,
