@@ -508,7 +508,7 @@ void forEachNode(
   glm::dmat4x4 nodeTransform =
       transform * getNodeTransform(node).value_or(glm::dmat4x4(1.0));
 
-  callback(model, node, transform);
+  callback(model, node, nodeTransform);
 
   for (const int childNodeId : node.children) {
     if (childNodeId >= 0 &&
