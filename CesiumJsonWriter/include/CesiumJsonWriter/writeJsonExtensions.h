@@ -14,8 +14,10 @@ void writeJsonExtensions(
   }
   jsonWriter.StartObject();
   for (const auto& item : obj.extensions) {
-    auto handler =
-        context.createExtensionHandler(item.first, TExtended::TypeName);
+    auto handler = context.createExtensionHandler(
+        item.first,
+        item.second,
+        TExtended::TypeName);
     if (!handler) {
       continue;
     }

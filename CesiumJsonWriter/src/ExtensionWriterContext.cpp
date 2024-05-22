@@ -20,6 +20,7 @@ void objWriter(
 ExtensionWriterContext::ExtensionHandler<std::any>
 ExtensionWriterContext::createExtensionHandler(
     const std::string_view& extensionName,
+    const std::any& obj,
     const std::string& extendedObjectType) const {
 
   std::string extensionNameString{extensionName};
@@ -28,19 +29,21 @@ ExtensionWriterContext::createExtensionHandler(
   if (stateIt != this->_extensionStates.end()) {
     if (stateIt->second == ExtensionState::Disabled) {
       return nullptr;
-    } else if (stateIt->second == ExtensionState::JsonOnly) {
-      return objWriter;
     }
+  }
+
+  if (std::any_cast<CesiumUtility::JsonValue>(&obj) != nullptr) {
+    return objWriter;
   }
 
   auto extensionNameIt = this->_extensions.find(extensionNameString);
   if (extensionNameIt == this->_extensions.end()) {
-    return objWriter;
+    return nullptr;
   }
 
   auto objectTypeIt = extensionNameIt->second.find(extendedObjectType);
   if (objectTypeIt == extensionNameIt->second.end()) {
-    return objWriter;
+    return nullptr;
   }
 
   return objectTypeIt->second;
