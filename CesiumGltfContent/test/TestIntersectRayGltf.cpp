@@ -64,7 +64,8 @@ void checkIntersection(
   // Use results to dive into model
   CHECK(hitResult->meshId > -1);
   CHECK(static_cast<size_t>(hitResult->meshId) < model.meshes.size());
-  const CesiumGltf::Mesh& mesh = model.meshes[static_cast<size_t>(hitResult->meshId)];
+  const CesiumGltf::Mesh& mesh =
+      model.meshes[static_cast<size_t>(hitResult->meshId)];
 
   CHECK(hitResult->primitiveId > -1);
   CHECK(static_cast<size_t>(hitResult->primitiveId) < mesh.primitives.size());
@@ -179,14 +180,14 @@ void checkUnitCubeIntersections(const std::string& testModelName) {
 }
 
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
-  //checkUnitCubeIntersections("cube.glb");
+  // checkUnitCubeIntersections("cube.glb");
 
   checkUnitCubeIntersections("cubeIndexed.glb");
 
-  //checkUnitCubeIntersections("cubeStrip.glb");
+  // checkUnitCubeIntersections("cubeStrip.glb");
 
   // checkUnitCubeIntersections("cubeFan.glb");
-  
+
   // works with a translated/rotated gltf
   GltfReader reader;
   Model translatedCube =
