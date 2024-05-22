@@ -570,6 +570,20 @@ struct VisitBufferViewIds {
   }
 };
 
+struct VisitBufferIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (BufferView& bufferView : gltf.bufferViews) {
+      callback(bufferView.buffer);
+
+      ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+          bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+      if (pMeshOpt) {
+        callback(pMeshOpt->buffer);
+      }
+    }
+  }
+};
+
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
     Model& gltf,
@@ -664,6 +678,16 @@ void GltfUtilities::removeUnusedBufferViews(
       VisitBufferViewIds());
 }
 
+void GltfUtilities::removeUnusedBuffers(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedBufferIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedBufferIndices,
+      gltf.buffers,
+      VisitBufferIds());
+}
+
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
   for (size_t i = 0;
        i < gltf.buffers.size() && i < std::numeric_limits<int32_t>::max();
@@ -699,7 +723,7 @@ void deleteBufferRange(
     end = start + bytesToRemove;
   }
 
-  // Adjust bufferView offets for the removed bytes.
+  // Adjust bufferView offsets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
     if (bufferView.buffer == bufferIndex) {
       // Sanity check that we're not removing a part of the buffer used by this
