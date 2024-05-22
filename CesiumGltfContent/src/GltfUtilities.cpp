@@ -605,10 +605,10 @@ struct VisitBufferIds {
     for (BufferView& bufferView : gltf.bufferViews) {
       callback(bufferView.buffer);
 
-      ExtensionBufferViewExtMeshoptCompression* pMeshopt =
+      ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
           bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
-      if (pMeshopt) {
-        callback(pMeshopt->buffer);
+      if (pMeshOpt) {
+        callback(pMeshOpt->buffer);
       }
     }
   }
