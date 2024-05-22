@@ -335,45 +335,79 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
 }
 
 namespace {
-template <class T>
+
 void findClosestRayHit(
     const CesiumGeometry::Ray& ray,
+    AccessorView<glm::vec3>& positionView,
+    const CesiumGltf::MeshPrimitive& primitive,
+    bool cullBackFaces,
+    double& tMinOut) {
+  double tClosest = -1;
+
+  if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
+    bool intersected;
+    double tCurr;
+    for (int32_t i = 0; i < positionView.size(); i += 3) {
+      int32_t vert0Index = i * 3;
+      int32_t vert1Index = i * 3 + 1;
+      int32_t vert2Index = i * 3 + 2;
+
+      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+          ray,
+          glm::dvec3(positionView[vert0Index]),
+          glm::dvec3(positionView[vert1Index]),
+          glm::dvec3(positionView[vert2Index]),
+          tCurr,
+          cullBackFaces);
+      // Set result to this hit if closer, or the first one
+      // Only consider hits in front of the ray
+      bool validHit = intersected && tCurr >= 0;
+      if (validHit && (tCurr < tClosest || tClosest == -1))
+        tClosest = tCurr;
+    }
+  } else {
+    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+
+    bool intersected;
+    double tCurr;
+    for (int32_t i = 0; i < positionView.size() - 2; ++i) {
+      int32_t vert0Index = i * 3;
+      int32_t vert1Index;
+      int32_t vert2Index;
+      if (i % 2) {
+        vert1Index = i * 3 + 2;
+        vert2Index = i * 3 + 1;
+      } else {
+        vert1Index = i * 3 + 1;
+        vert2Index = i * 3 + 2;
+      }
+
+      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+          ray,
+          glm::dvec3(positionView[vert0Index]),
+          glm::dvec3(positionView[vert1Index]),
+          glm::dvec3(positionView[vert2Index]),
+          tCurr,
+          true);
+
+      bool validHit = intersected && tCurr >= 0;
+      if (validHit && (tCurr < tClosest || tClosest == -1))
+        tClosest = tCurr;
+    }
+  }
+  tMinOut = tClosest;
+}
+
+template <class T>
+void findClosestIndexedRayHit(
+    const CesiumGeometry::Ray& ray,
+    AccessorView<glm::vec3>& positionView,
     const CesiumGltf::Model& model,
     const CesiumGltf::MeshPrimitive& primitive,
     bool cullBackFaces,
     double& tMinOut) {
 
-  auto positionAccessorIt = primitive.attributes.find("POSITION");
-  if (positionAccessorIt == primitive.attributes.end()) {
-    return;
-  }
-
-  int positionAccessorID = positionAccessorIt->second;
-  const Accessor* pPositionAccessor =
-      Model::getSafe(&model.accessors, positionAccessorID);
-  if (!pPositionAccessor) {
-    return;
-  }
-
-  const std::vector<double>& min = pPositionAccessor->min;
-  const std::vector<double>& max = pPositionAccessor->max;
-
-  double t;
-  if (!CesiumGeometry::IntersectionTests::rayAABBParametric(
-          ray,
-          CesiumGeometry::AxisAlignedBox(
-              min[0],
-              min[1],
-              min[2],
-              max[0],
-              max[1],
-              max[2]),
-          t)) {
-    return;
-  }
-
   AccessorView<T> indicesView(model, primitive.indices);
-  AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
 
   double tClosest = -1;
 
@@ -843,6 +877,109 @@ void GltfUtilities::compactBuffer(
   }
 }
 
+void intersectRayScenePrimitive(
+    const CesiumGeometry::Ray& ray,
+    const CesiumGltf::Model& model,
+    const int meshId,
+    const CesiumGltf::MeshPrimitive& primitive,
+    const int primitiveId,
+    const glm::dmat4x4& rootTransform,
+    const glm::dmat4x4& nodeTransform,
+    bool cullBackFaces,
+    GltfUtilities::HitParametricResult& result) {
+  // Ignore primitives that are not a triangle or tri strip
+  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
+    return;
+  }
+
+  // Ignore primitives that can't access positions
+  auto positionAccessorIt = primitive.attributes.find("POSITION");
+  if (positionAccessorIt == primitive.attributes.end())
+    return;
+  int positionAccessorID = positionAccessorIt->second;
+  const Accessor* pPositionAccessor =
+      Model::getSafe(&model.accessors, positionAccessorID);
+  if (!pPositionAccessor)
+    return;
+
+  // Ignore primitive if ray doesn't intersect bounding box
+  const std::vector<double>& min = pPositionAccessor->min;
+  const std::vector<double>& max = pPositionAccessor->max;
+
+  double t;
+  if (!CesiumGeometry::IntersectionTests::rayAABBParametric(
+          ray,
+          CesiumGeometry::AxisAlignedBox(
+              min[0],
+              min[1],
+              min[2],
+              max[0],
+              max[1],
+              max[2]),
+          t)) {
+    return;
+  }
+
+  AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
+  glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
+  glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
+  double tClosest = -1;
+
+  bool hasIndexedTriangles = primitive.indices != -1;
+  if (hasIndexedTriangles) {
+    assert(primitive.indices >= 0);
+    switch (model.accessors[static_cast<uint32_t>(primitive.indices)]
+                .componentType) {
+    case Accessor::ComponentType::UNSIGNED_BYTE:
+      findClosestIndexedRayHit<uint8_t>(
+          ray.transform(worldToPrimitive),
+          positionView,
+          model,
+          primitive,
+          cullBackFaces,
+          tClosest);
+      break;
+    case Accessor::ComponentType::UNSIGNED_SHORT:
+      findClosestIndexedRayHit<uint16_t>(
+          ray.transform(worldToPrimitive),
+          positionView,
+          model,
+          primitive,
+          cullBackFaces,
+          tClosest);
+      break;
+    case Accessor::ComponentType::UNSIGNED_INT:
+      findClosestIndexedRayHit<uint32_t>(
+          ray.transform(worldToPrimitive),
+          positionView,
+          model,
+          primitive,
+          cullBackFaces,
+          tClosest);
+      break;
+    }
+  } else {
+    // Non-indexed triangles
+    findClosestRayHit(
+        ray.transform(worldToPrimitive),
+        positionView,
+        primitive,
+        cullBackFaces,
+        tClosest);
+  }
+  assert(tClosest >= -1);
+
+  // Set result to this hit if closer, or the first one
+  bool validHit = tClosest >= 0;
+  if (validHit && (tClosest < result.t || result.t == -1)) {
+    result.t = tClosest;
+    result.meshId = meshId;
+    result.primitiveId = primitiveId;
+    result.primitiveToWorld = primitiveToWorld;
+  }
+}
+
 std::optional<GltfUtilities::HitParametricResult>
 GltfUtilities::intersectRayGltfModelParametric(
     const CesiumGeometry::Ray& ray,
@@ -864,54 +1001,16 @@ GltfUtilities::intersectRayGltfModelParametric(
           const CesiumGltf::MeshPrimitive& primitive,
           const int primitiveId,
           const glm::dmat4& nodeTransform) {
-        if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
-            primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
-          return;
-        }
-
-        glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
-        glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
-
-        double tClosest = -1;
-
-        switch (model.accessors[static_cast<uint32_t>(primitive.indices)]
-                    .componentType) {
-        case Accessor::ComponentType::UNSIGNED_BYTE:
-          findClosestRayHit<uint8_t>(
-              ray.transform(worldToPrimitive),
-              model,
-              primitive,
-              cullBackFaces,
-              tClosest);
-          break;
-        case Accessor::ComponentType::UNSIGNED_SHORT:
-          findClosestRayHit<uint16_t>(
-              ray.transform(worldToPrimitive),
-              model,
-              primitive,
-              cullBackFaces,
-              tClosest);
-          break;
-        case Accessor::ComponentType::UNSIGNED_INT:
-          findClosestRayHit<uint32_t>(
-              ray.transform(worldToPrimitive),
-              model,
-              primitive,
-              cullBackFaces,
-              tClosest);
-          break;
-        }
-
-        assert(tClosest >= -1);
-
-        // Set result to this hit if closer, or the first one
-        bool validHit = tClosest >= 0;
-        if (validHit && (tClosest < result.t || result.t == -1)) {
-          result.t = tClosest;
-          result.meshId = meshId;
-          result.primitiveId = primitiveId;
-          result.primitiveToWorld = primitiveToWorld;
-        }
+        intersectRayScenePrimitive(
+            ray,
+            model,
+            meshId,
+            primitive,
+            primitiveId,
+            rootTransform,
+            nodeTransform,
+            cullBackFaces,
+            result);
       });
 
   return (result.t != -1) ? result
