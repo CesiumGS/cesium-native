@@ -34,7 +34,7 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
 
 void checkIntersection(
     const Ray& ray,
-    Model& model,
+    const Model& model,
     bool cullBackFaces,
     const glm::dmat4x4& modelToWorld,
     bool shouldHit,
@@ -64,11 +64,11 @@ void checkIntersection(
   // Use results to dive into model
   CHECK(hitResult->meshId > -1);
   CHECK(static_cast<size_t>(hitResult->meshId) < model.meshes.size());
-  CesiumGltf::Mesh& mesh = model.meshes[static_cast<size_t>(hitResult->meshId)];
+  const CesiumGltf::Mesh& mesh = model.meshes[static_cast<size_t>(hitResult->meshId)];
 
   CHECK(hitResult->primitiveId > -1);
   CHECK(static_cast<size_t>(hitResult->primitiveId) < mesh.primitives.size());
-  CesiumGltf::MeshPrimitive& primitive =
+  const CesiumGltf::MeshPrimitive& primitive =
       mesh.primitives[static_cast<size_t>(hitResult->primitiveId)];
 
   bool modeIsValid =
@@ -94,13 +94,89 @@ void checkIntersection(
   CHECK(indicesAreValid);
 }
 
+void checkUnitCubeIntersections(const Model& testModel) {
+  // intersects the top side of the cube
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      glm::dmat4x4(1.0),
+      true,
+      glm::dvec3(0.0, 0.0, 0.5));
+
+  // misses the top side of the cube to the right
+  checkIntersection(
+      Ray(glm::dvec3(0.6, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      glm::dmat4x4(1.0),
+      false,
+      {});
+
+  // misses the top side of the cube because it's behind it (avoid backfaces)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      glm::dmat4x4(1.0),
+      false,
+      {});
+
+  // hits backface triangles
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      false,
+      glm::dmat4x4(1.0),
+      true,
+      glm::dvec3(0.0, 0.0, -0.5));
+
+  // tests against backfaces, and picks first hit (top)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      false,
+      glm::dmat4x4(1.0),
+      true,
+      glm::dvec3(0.0, 0.0, 0.5));
+
+  // tests against backfaces, and picks first hit (bottom)
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
+      testModel,
+      false,
+      glm::dmat4x4(1.0),
+      true,
+      glm::dvec3(0.0, 0.0, -0.5));
+
+  // misses the top side of a cube translated to the right
+  glm::dmat4x4 translationMatrix(1.0);
+  translationMatrix[3] = glm::dvec4(10.0, 0.0, 0.0, 1.0);
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      translationMatrix,
+      false,
+      {});
+
+  // hits the top side of a cube translated to the right
+  checkIntersection(
+      Ray(glm::dvec3(10.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      translationMatrix,
+      true,
+      glm::dvec3(10.0, 0.0, 0.5));
+}
+
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   GltfReader reader;
-  Model cube = *reader
+  Model cubeIndexed = *reader
                     .readGltf(readFile(
                         std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
-                        "cube.glb"))
+                        "cubeIndexed.glb"))
                     .model;
   Model translatedCube =
       *reader
@@ -115,70 +191,8 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
                "sphere.glb"))
            .model;
 
-  // intersects the top side of the cube
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      true,
-      glm::dmat4x4(1.0),
-      true,
-      glm::dvec3(0.0, 0.0, 1.0));
-
-  // misses the top side of the cube to the right
-  checkIntersection(
-      Ray(glm::dvec3(2.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      true,
-      glm::dmat4x4(1.0),
-      false,
-      {});
-
-  // misses the top side of the cube because it's behind it
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      true,
-      glm::dmat4x4(1.0),
-      false,
-      {});
-
-  // hits backface triangles
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      false,
-      glm::dmat4x4(1.0),
-      true,
-      glm::dvec3(0.0, 0.0, -1.0));
-
-  // tests against backfaces, and picks first hit (top)
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      false,
-      glm::dmat4x4(1.0),
-      true,
-      glm::dvec3(0.0, 0.0, 1.0));
-
-  // tests against backfaces, and picks first hit (bottom)
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
-      cube,
-      false,
-      glm::dmat4x4(1.0),
-      true,
-      glm::dvec3(0.0, 0.0, -1.0));
-
-  // intersects a corner of the cube
-  checkIntersection(
-      Ray(glm::dvec3(2.0, 2.0, 0.0),
-          glm::dvec3(-1.0 / glm::sqrt(2.0), -1.0 / glm::sqrt(2.0), 0.0)),
-      cube,
-      true,
-      glm::dmat4x4(1.0),
-      true,
-      glm::dvec3(1.0, 1.0, 0.0));
-
+  checkUnitCubeIntersections(cubeIndexed);
+  
   // works with a translated/rotated gltf
   checkIntersection(
       Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
@@ -187,33 +201,4 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
       glm::dmat4x4(1.0),
       true,
       glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2)));
-
-  // avoids backface triangles
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 0.5), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      true,
-      glm::dmat4x4(1.0),
-      false,
-      {});
-
-  // misses the top side of a cube translated to the right
-  glm::dmat4x4 translationMatrix(1.0);
-  translationMatrix[3] = glm::dvec4(10.0, 0.0, 0.0, 1.0);
-  checkIntersection(
-      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      true,
-      translationMatrix,
-      false,
-      {});
-
-  // hits the top side of a cube translated to the right
-  checkIntersection(
-      Ray(glm::dvec3(10.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-      cube,
-      true,
-      translationMatrix,
-      true,
-      glm::dvec3(10.0, 0.0, 1.0));
 }
