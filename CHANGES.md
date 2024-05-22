@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
+- Added `LayerWriter` to the `CesiumQuantizedMeshTerrain` library and namespace.
 
 ##### Fixes :wrench:
 
@@ -22,6 +23,7 @@
 - `GltfUtilities::compactBuffer` now accounts for bufferViews with the `EXT_meshopt_compression` when determining unused buffer ranges.
 - When `GltfReader` decodes buffers with data URLs, and the size of the data in the URL does not match the buffer's `byteLength`, the `byteLength` is now updated and a warning is raised. Previously, the mismatch was ignored and would cause problems later when trying to use these buffers.
 - `EXT_meshopt_compression` and `KHR_mesh_quantization` are now removed from `extensionsUsed` and `extensionsRequired` after they are decoded by `GltfReader`.
+- The glTF accessor for the texture coordinates created by `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` now have min/max values that accurately reflect the range of values. Previously, the minimum was always set to 0.0 and the maximum to 1.0.
 
 ### v0.35.0 - 2024-05-01
 
