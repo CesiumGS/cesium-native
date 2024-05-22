@@ -322,7 +322,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
     destinationBuffer.byteLength =
         int64_t(destinationBuffer.cesium.data.size());
 
-    bufferStarts[i] = start;
+    bufferStarts[i] = int64_t(start);
   }
 
   // Update the buffer indices based on the buffers being removed.
@@ -330,7 +330,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   for (BufferView& bufferView : gltf.bufferViews) {
     int32_t& bufferIndex = bufferView.buffer;
     if (bufferIndex >= 0 && size_t(bufferIndex) < indexMap.size()) {
-      bufferView.byteOffset += bufferStarts[bufferIndex];
+      bufferView.byteOffset += bufferStarts[size_t(bufferIndex)];
       int32_t newIndex = indexMap[size_t(bufferIndex)];
       bufferIndex = newIndex == -1 ? 0 : newIndex;
     }
@@ -341,7 +341,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
       int32_t& meshOptBufferIndex = pMeshOpt->buffer;
       if (meshOptBufferIndex >= 0 &&
           size_t(meshOptBufferIndex) < indexMap.size()) {
-        pMeshOpt->byteOffset += bufferStarts[meshOptBufferIndex];
+        pMeshOpt->byteOffset += bufferStarts[size_t(meshOptBufferIndex)];
         int32_t newIndex = indexMap[size_t(meshOptBufferIndex)];
         meshOptBufferIndex = newIndex == -1 ? 0 : newIndex;
       }
