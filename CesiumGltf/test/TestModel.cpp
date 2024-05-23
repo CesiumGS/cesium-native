@@ -235,22 +235,22 @@ static Model createCubeGltf() {
 
                                       3, 2, 6, 3, 6, 7};
 
-  size_t vertexbyteStride = sizeof(glm::vec3);
-  size_t vertexbyteLength = 8 * vertexbyteStride;
+  size_t vertexByteStride = sizeof(glm::vec3);
+  size_t vertexByteLength = 8 * vertexByteStride;
 
   Buffer& vertexBuffer = model.buffers.emplace_back();
-  vertexBuffer.byteLength = static_cast<int64_t>(vertexbyteLength);
-  vertexBuffer.cesium.data.resize(vertexbyteLength);
+  vertexBuffer.byteLength = static_cast<int64_t>(vertexByteLength);
+  vertexBuffer.cesium.data.resize(vertexByteLength);
   std::memcpy(
       vertexBuffer.cesium.data.data(),
       &cubeVertices[0],
-      vertexbyteLength);
+      vertexByteLength);
 
   BufferView& vertexBufferView = model.bufferViews.emplace_back();
   vertexBufferView.buffer = 0;
   vertexBufferView.byteLength = vertexBuffer.byteLength;
   vertexBufferView.byteOffset = 0;
-  vertexBufferView.byteStride = static_cast<int64_t>(vertexbyteStride);
+  vertexBufferView.byteStride = static_cast<int64_t>(vertexByteStride);
   vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   Accessor& vertexAccessor = model.accessors.emplace_back();
