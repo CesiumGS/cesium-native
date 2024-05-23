@@ -366,20 +366,20 @@ void findClosestRayHit(
         tClosest = tCurr;
     }
   } else {
-    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP);
 
     bool intersected;
     double tCurr;
-    for (int32_t i = 0; i < positionView.size() - 2; ++i) {
-      int32_t vert0Index = i * 3;
+    for (int32_t i = 3; i < positionView.size(); ++i) {
+      int32_t vert0Index = i - 3;
       int32_t vert1Index;
       int32_t vert2Index;
       if (i % 2) {
-        vert1Index = i + 2;
-        vert2Index = i + 1;
+        vert1Index = i - 2;
+        vert2Index = i - 1;
       } else {
-        vert1Index = i + 1;
-        vert2Index = i + 2;
+        vert1Index = i - 1;
+        vert2Index = i - 2;
       }
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
@@ -388,7 +388,7 @@ void findClosestRayHit(
           glm::dvec3(positionView[vert1Index]),
           glm::dvec3(positionView[vert2Index]),
           tCurr,
-          true);
+          cullBackFaces);
 
       bool validHit = intersected && tCurr >= 0;
       if (validHit && (tCurr < tClosest || tClosest == -1))
@@ -433,7 +433,7 @@ void findClosestIndexedRayHit(
         tClosest = tCurr;
     }
   } else {
-    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP);
 
     bool intersected;
     double tCurr;

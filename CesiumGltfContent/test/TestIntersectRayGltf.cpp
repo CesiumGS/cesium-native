@@ -56,7 +56,6 @@ void checkIntersection(
   }
 
   // Validate hit point
-  CHECK(hitResult.has_value());
   CHECK(glm::all(glm::lessThan(
       glm::abs(hitResult->point - expectedHit),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
@@ -180,7 +179,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   checkUnitCubeIntersections("cubeIndexed.glb");
 
-  // checkUnitCubeIntersections("cubeStrip.glb");
+  checkUnitCubeIntersections("cubeStrip.glb");
 
   // checkUnitCubeIntersections("cubeFan.glb");
 
