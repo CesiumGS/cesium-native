@@ -455,7 +455,7 @@ void findClosestIndexedRayHit(
           glm::dvec3(positionView[vert1Index]),
           glm::dvec3(positionView[vert2Index]),
           tCurr,
-          true);
+          cullBackFaces);
 
       bool validHit = intersected && tCurr >= 0;
       if (validHit && (tCurr < tClosest || tClosest == -1))

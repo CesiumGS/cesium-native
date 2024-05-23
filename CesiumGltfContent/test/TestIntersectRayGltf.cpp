@@ -181,6 +181,8 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   checkUnitCubeIntersections("cubeStrip.glb");
 
+  checkUnitCubeIntersections("cubeStripIndexed.glb");
+
   // checkUnitCubeIntersections("cubeFan.glb");
 
   // works with a translated/rotated gltf
