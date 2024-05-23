@@ -1506,7 +1506,7 @@ void writeJson(
     writeJson(obj.texture, jsonWriter, context);
   }
 
-  if (obj.propertyTable.has_value()) {
+  if (obj.propertyTable > -1) {
     jsonWriter.Key("propertyTable");
     writeJson(obj.propertyTable, jsonWriter, context);
   }
