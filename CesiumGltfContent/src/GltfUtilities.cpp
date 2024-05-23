@@ -401,9 +401,9 @@ void findClosestRayHit(
 
     glm::dvec3 vert0(positionView[0]);
 
-    for (int32_t i = 3; i < positionView.size(); ++i) {
-      int32_t vert1Index = i - 2;
-      int32_t vert2Index = i - 1;
+    for (int32_t i = 2; i < positionView.size(); ++i) {
+      int32_t vert1Index = i - 1;
+      int32_t vert2Index = i - 0;
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -432,11 +432,15 @@ void findClosestIndexedRayHit(
 
   AccessorView<T> indicesView(model, primitive.indices);
 
+  // Need at least 3 vertices to form a triangle
+  if (indicesView.size() < 3)
+    return;
+
   double tClosest = -1;
+  bool intersected;
+  double tCurr;
 
   if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
-    bool intersected;
-    double tCurr;
     for (int32_t i = 0; i < indicesView.size(); i += 3) {
       int32_t vert0Index = static_cast<int32_t>(indicesView[i]);
       int32_t vert1Index = static_cast<int32_t>(indicesView[i + 1]);
@@ -455,11 +459,8 @@ void findClosestIndexedRayHit(
       if (validHit && (tCurr < tClosest || tClosest == -1))
         tClosest = tCurr;
     }
-  } else {
-    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP);
-
-    bool intersected;
-    double tCurr;
+  } else if (
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int32_t i = 0; i < indicesView.size() - 2; ++i) {
       int32_t vert0Index = static_cast<int32_t>(indicesView[i]);
       int32_t vert1Index;
@@ -475,6 +476,28 @@ void findClosestIndexedRayHit(
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           glm::dvec3(positionView[vert0Index]),
+          glm::dvec3(positionView[vert1Index]),
+          glm::dvec3(positionView[vert2Index]),
+          tCurr,
+          cullBackFaces);
+
+      bool validHit = intersected && tCurr >= 0;
+      if (validHit && (tCurr < tClosest || tClosest == -1))
+        tClosest = tCurr;
+    }
+  } else {
+    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+
+    int32_t vert0Index = static_cast<int32_t>(indicesView[0]);
+    glm::dvec3 vert0(positionView[vert0Index]);
+
+    for (int32_t i = 2; i < indicesView.size(); ++i) {
+      int32_t vert1Index = static_cast<int32_t>(indicesView[i - 1]);
+      int32_t vert2Index = static_cast<int32_t>(indicesView[i]);
+
+      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+          ray,
+          vert0,
           glm::dvec3(positionView[vert1Index]),
           glm::dvec3(positionView[vert2Index]),
           tCurr,
