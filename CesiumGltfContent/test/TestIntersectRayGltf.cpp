@@ -73,7 +73,8 @@ void checkIntersection(
 
   bool modeIsValid =
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES ||
-      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP;
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP ||
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN;
   CHECK(modeIsValid);
 
   // Returned matrix should be invertible
@@ -183,7 +184,7 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   checkUnitCubeIntersections("cubeStripIndexed.glb");
 
-  // checkUnitCubeIntersections("cubeFan.glb");
+  checkUnitCubeIntersections("cubeFan.glb");
 
   // works with a translated/rotated gltf
   GltfReader reader;

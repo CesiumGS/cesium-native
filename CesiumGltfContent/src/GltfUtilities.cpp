@@ -342,11 +342,16 @@ void findClosestRayHit(
     const CesiumGltf::MeshPrimitive& primitive,
     bool cullBackFaces,
     double& tMinOut) {
+
+  // Need at least 3 positions to form a triangle
+  if (positionView.size() < 3)
+    return;
+
   double tClosest = -1;
+  bool intersected;
+  double tCurr;
 
   if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
-    bool intersected;
-    double tCurr;
     for (int32_t i = 0; i < positionView.size(); i += 3) {
       int32_t vert0Index = i;
       int32_t vert1Index = i + 1;
@@ -365,11 +370,8 @@ void findClosestRayHit(
       if (validHit && (tCurr < tClosest || tClosest == -1))
         tClosest = tCurr;
     }
-  } else {
-    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP);
-
-    bool intersected;
-    double tCurr;
+  } else if (
+      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int32_t i = 3; i < positionView.size(); ++i) {
       int32_t vert0Index = i - 3;
       int32_t vert1Index;
@@ -385,6 +387,27 @@ void findClosestRayHit(
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           glm::dvec3(positionView[vert0Index]),
+          glm::dvec3(positionView[vert1Index]),
+          glm::dvec3(positionView[vert2Index]),
+          tCurr,
+          cullBackFaces);
+
+      bool validHit = intersected && tCurr >= 0;
+      if (validHit && (tCurr < tClosest || tClosest == -1))
+        tClosest = tCurr;
+    }
+  } else {
+    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+
+    glm::dvec3 vert0(positionView[0]);
+
+    for (int32_t i = 3; i < positionView.size(); ++i) {
+      int32_t vert1Index = i - 2;
+      int32_t vert2Index = i - 1;
+
+      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+          ray,
+          vert0,
           glm::dvec3(positionView[vert1Index]),
           glm::dvec3(positionView[vert2Index]),
           tCurr,
@@ -887,11 +910,12 @@ void intersectRayScenePrimitive(
     const glm::dmat4x4& nodeTransform,
     bool cullBackFaces,
     GltfUtilities::HitParametricResult& result) {
-  // Ignore primitives that are not a triangle or tri strip
-  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
-      primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
+  // Ignore non-triangle primitives. Points and lines have no area to intersect
+  bool validMode = primitive.mode == MeshPrimitive::Mode::TRIANGLES ||
+                   primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
+                   primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN;
+  if (!validMode)
     return;
-  }
 
   // Ignore primitives that can't access positions
   auto positionAccessorIt = primitive.attributes.find("POSITION");
