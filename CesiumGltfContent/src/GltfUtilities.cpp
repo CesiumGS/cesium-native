@@ -348,9 +348,9 @@ void findClosestRayHit(
     bool intersected;
     double tCurr;
     for (int32_t i = 0; i < positionView.size(); i += 3) {
-      int32_t vert0Index = i * 3;
-      int32_t vert1Index = i * 3 + 1;
-      int32_t vert2Index = i * 3 + 2;
+      int32_t vert0Index = i;
+      int32_t vert1Index = i + 1;
+      int32_t vert2Index = i + 2;
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -375,11 +375,11 @@ void findClosestRayHit(
       int32_t vert1Index;
       int32_t vert2Index;
       if (i % 2) {
-        vert1Index = i * 3 + 2;
-        vert2Index = i * 3 + 1;
+        vert1Index = i + 2;
+        vert2Index = i + 1;
       } else {
-        vert1Index = i * 3 + 1;
-        vert2Index = i * 3 + 2;
+        vert1Index = i + 1;
+        vert2Index = i + 2;
       }
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(

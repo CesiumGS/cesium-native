@@ -89,10 +89,6 @@ void checkIntersection(
   const Accessor* pPositionAccessor =
       Model::getSafe(&model.accessors, positionAccessorID);
   CHECK(pPositionAccessor);
-
-  // This should have exactly 3 indices (or none if no index buffer)
-  bool indicesAreValid = primitive.indices == 3 || primitive.indices == 0;
-  CHECK(indicesAreValid);
 }
 
 void checkUnitCubeIntersections(const std::string& testModelName) {
@@ -180,7 +176,7 @@ void checkUnitCubeIntersections(const std::string& testModelName) {
 }
 
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
-  // checkUnitCubeIntersections("cube.glb");
+  checkUnitCubeIntersections("cube.glb");
 
   checkUnitCubeIntersections("cubeIndexed.glb");
 
