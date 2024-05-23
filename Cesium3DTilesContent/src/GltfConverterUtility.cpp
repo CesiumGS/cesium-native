@@ -1,4 +1,4 @@
-#include <Cesium3DTilesContent/LegacyUtilities.h>
+#include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -14,7 +14,7 @@
 #include <string>
 
 namespace Cesium3DTilesContent {
-namespace LegacyUtilities {
+namespace GltfConverterUtility {
 using namespace CesiumGltf;
 
 std::optional<uint32_t> parseOffsetForSemantic(
@@ -133,5 +133,5 @@ void applyRtcToNodes(Model& gltf, const glm::dvec3& rtc) {
   });
 }
 
-} // namespace LegacyUtilities
+} // namespace GltfConverterUtility
 } // namespace Cesium3DTilesContent

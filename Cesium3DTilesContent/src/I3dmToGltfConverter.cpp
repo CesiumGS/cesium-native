@@ -2,7 +2,7 @@
 
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
-#include <Cesium3DTilesContent/LegacyUtilities.h>
+#include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
@@ -25,7 +25,7 @@
 using namespace CesiumGltf;
 
 namespace Cesium3DTilesContent {
-using namespace LegacyUtilities;
+using namespace GltfConverterUtility;
 
 namespace {
 struct I3dmHeader {

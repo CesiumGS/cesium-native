@@ -21,7 +21,7 @@ class Buffer;
 
 namespace Cesium3DTilesContent {
 
-namespace LegacyUtilities {
+namespace GltfConverterUtility {
 std::optional<uint32_t> parseOffsetForSemantic(
     const rapidjson::Document& document,
     const char* semantic,
@@ -120,5 +120,5 @@ toGlmQuat(const CesiumGltf::AccessorTypes::VEC4<ComponentType>& gltfVal) {
   }
 }
 
-} // namespace LegacyUtilities
+} // namespace GltfConverterUtility
 } // namespace Cesium3DTilesContent
