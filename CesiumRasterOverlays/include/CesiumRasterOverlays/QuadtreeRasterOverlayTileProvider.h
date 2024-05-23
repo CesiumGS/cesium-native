@@ -101,23 +101,49 @@ protected:
    * @brief Asynchronously loads a tile in the quadtree.
    *
    * @param tileID The ID of the quadtree tile to load.
+   * @param requestUrl Original url of content request
+   * @param statusCode Response code of content request
+   * @param data Bytes of content response
    * @return A Future that resolves to the loaded image data or error
    * information.
    */
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const = 0;
+
+  /**
+   * @brief Gets the request data for a load
+   *
+   * @param tileID The ID of the quadtree tile to load.
+   * @param requestData Output data for content request
+   * @param errorString Output string for any errors encountered
+   * @return bool indicating success of failure
+   */
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      CesiumAsync::RequestData& requestData,
+      std::string& errorString) const = 0;
 
 private:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override final;
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      const RasterOverlayTile& overlayTile,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl) override final;
+
+  virtual void getLoadTileImageWork(
+      const RasterOverlayTile& overlayTile,
+      CesiumAsync::RequestData& outRequest,
+      RasterProcessingCallback& outCallback) override;
 
   struct LoadedQuadtreeImage {
-    std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
+    std::shared_ptr<RasterLoadResult> pResult = nullptr;
     std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
   };
 
-  CesiumAsync::SharedFuture<LoadedQuadtreeImage>
-  getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
+  CesiumAsync::Future<LoadedQuadtreeImage> getQuadtreeTile(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl);
 
   /**
    * @brief Map raster tiles to geometry tile.
@@ -125,14 +151,16 @@ private:
    * @param geometryRectangle The rectangle for which to load tiles.
    * @param targetGeometricError The geometric error controlling which quadtree
    * level to use to cover the rectangle.
-   * @return A vector of shared futures, each of which will resolve to image
-   * data that is required to cover the rectangle with the given geometric
+   * @param responsesByUrl Content responses available
+   * @param outTiles A vector of shared futures, each of which will resolve to
+   * image data that is required to cover the rectangle with the given geometric
    * error.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
-  mapRasterTilesToGeometryTile(
+  void mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
-      const glm::dvec2 targetScreenPixels);
+      const glm::dvec2 targetScreenPixels,
+      const CesiumAsync::UrlResponseDataMap& responsesByUrl,
+      std::vector<CesiumAsync::Future<LoadedQuadtreeImage>>& outTiles);
 
   void unloadCachedTiles();
 
@@ -148,7 +176,7 @@ private:
       const CesiumGeometry::Rectangle& targetRectangle,
       const std::vector<LoadedQuadtreeImage>& images);
 
-  static LoadedRasterOverlayImage combineImages(
+  static RasterLoadResult combineImages(
       const CesiumGeometry::Rectangle& targetRectangle,
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);
@@ -161,7 +189,7 @@ private:
 
   struct CacheEntry {
     CesiumGeometry::QuadtreeTileID tileID;
-    CesiumAsync::SharedFuture<LoadedQuadtreeImage> future;
+    LoadedQuadtreeImage loadedImage;
   };
 
   // Tiles at the beginning of this list are the least recently used (oldest),

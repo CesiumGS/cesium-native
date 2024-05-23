@@ -19,7 +19,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   const Tile* pParent = loadInput.tile.getParent();
   if (pParent == nullptr) {
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
@@ -28,7 +28,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   if (pTileID == nullptr) {
     // this tile is not marked to be upsampled, so just fail it
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // The tile content manager guarantees that the parent tile is already loaded
@@ -43,7 +43,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   if (!pParentRenderContent) {
     // parent doesn't have mesh, so it's not possible to upsample
     return loadInput.asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   int32_t index = 0;
@@ -75,7 +75,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
             textureCoordinateIndex);
         if (!model) {
-          return TileLoadResult::createFailedResult(nullptr);
+          return TileLoadResult::createFailedResult();
         }
 
         return TileLoadResult{
@@ -84,10 +84,22 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            nullptr,
+            std::string(),
             {},
+            CesiumAsync::RequestData{},
             TileLoadResultState::Success};
       });
+}
+
+bool RasterOverlayUpsampler::getLoadWork(
+    const Tile*,
+    CesiumAsync::RequestData&,
+    TileLoaderCallback& outCallback) {
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
+  return true;
 }
 
 TileChildrenResult

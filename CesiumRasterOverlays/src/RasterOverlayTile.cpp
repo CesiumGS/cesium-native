@@ -43,14 +43,12 @@ RasterOverlayTile::~RasterOverlayTile() {
       pPrepareRendererResources = tileProvider.getPrepareRendererResources();
 
   if (pPrepareRendererResources) {
-    void* pLoadThreadResult =
-        this->getState() == RasterOverlayTile::LoadState::Done
-            ? nullptr
-            : this->_pRendererResources;
-    void* pMainThreadResult =
-        this->getState() == RasterOverlayTile::LoadState::Done
-            ? this->_pRendererResources
-            : nullptr;
+    void* pLoadThreadResult = this->getState() == LoadState::Done
+                                  ? nullptr
+                                  : this->_pRendererResources;
+    void* pMainThreadResult = this->getState() == LoadState::Done
+                                  ? this->_pRendererResources
+                                  : nullptr;
 
     pPrepareRendererResources->freeRaster(
         *this,
@@ -71,7 +69,7 @@ const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
 }
 
 void RasterOverlayTile::loadInMainThread() {
-  if (this->getState() != RasterOverlayTile::LoadState::Loaded) {
+  if (this->getState() != LoadState::Loaded) {
     return;
   }
 

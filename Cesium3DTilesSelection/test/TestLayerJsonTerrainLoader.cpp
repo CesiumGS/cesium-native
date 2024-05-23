@@ -46,7 +46,7 @@ Future<TileLoadResult> loadTile(
     const QuadtreeTileID& tileID,
     LayerJsonTerrainLoader& loader,
     AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
+    const std::shared_ptr<SimpleAssetAccessor>& pAssetAccessor) {
   Tile tile(&loader);
   tile.setTileID(tileID);
   tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
@@ -54,15 +54,21 @@ Future<TileLoadResult> loadTile(
        -1000.0,
        9000.0}});
 
+  RequestData requestData;
+  TileLoaderCallback processingCallback;
+  loader.getLoadWork(&tile, requestData, processingCallback);
+
+  UrlResponseDataMap responseDataMap;
+  pAssetAccessor->fillResponseDataMap(responseDataMap);
+
   TileLoadInput loadInput{
       tile,
       {},
       asyncSystem,
-      pAssetAccessor,
       spdlog::default_logger(),
-      {}};
+      responseDataMap};
 
-  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
+  auto tileLoadResultFuture = processingCallback(loadInput, &loader);
 
   asyncSystem.dispatchMainThreadTasks();
 

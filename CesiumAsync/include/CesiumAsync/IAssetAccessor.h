@@ -70,4 +70,19 @@ public:
   virtual void tick() noexcept = 0;
 };
 
+struct RequestData {
+  std::string url = "";
+  std::vector<CesiumAsync::IAssetAccessor::THeader> headers = {};
+};
+
+struct ResponseData {
+  const CesiumAsync::IAssetRequest* pRequest;
+  const CesiumAsync::IAssetResponse* pResponse;
+};
+
+using UrlResponseDataMap = std::map<std::string, ResponseData>;
+
+using UrlAssetRequestMap =
+    std::map<std::string, std::shared_ptr<CesiumAsync::IAssetRequest>>;
+
 } // namespace CesiumAsync

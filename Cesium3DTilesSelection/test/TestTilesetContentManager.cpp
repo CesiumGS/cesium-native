@@ -42,6 +42,17 @@ public:
         std::move(mockLoadTileContent));
   }
 
+  bool getLoadWork(
+      const Tile*,
+      CesiumAsync::RequestData&,
+      TileLoaderCallback& outCallback) override {
+    outCallback = [](const TileLoadInput& loadInput,
+                     TilesetContentLoader* loader) {
+      return loader->loadTileContent(loadInput);
+    };
+    return true;
+  };
+
   TileChildrenResult
   createTileChildren([[maybe_unused]] const Tile& tile) override {
     return std::move(mockCreateTileChildren);
@@ -180,6 +191,19 @@ CesiumGltf::Model createGlobeGrid(
 
   return model;
 }
+
+void loadTileWithManager(
+    Tile* pTile,
+    TilesetContentManager* pManager,
+    TilesetOptions& options) {
+  std::vector<TileLoadRequest> loadRequests;
+  if (pTile) {
+    loadRequests.emplace_back(
+        TileLoadRequest{pTile, TileLoadPriorityGroup::Normal});
+  }
+  pManager->processLoadRequests(loadRequests, options);
+}
+
 } // namespace
 
 TEST_CASE("Test the manager can be initialized with correct loaders") {
@@ -316,14 +340,16 @@ TEST_CASE("Test tile state machine") {
     // create mock loader
     bool initializerCall = false;
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         [&](Tile&) { initializerCall = true; },
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -349,7 +375,8 @@ TEST_CASE("Test tile state machine") {
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, options);
+
+    loadTileWithManager(&tile, pManager.get(), options);
 
     SECTION("Load tile from ContentLoading -> Done") {
       // Unloaded -> ContentLoading
@@ -420,14 +447,16 @@ TEST_CASE("Test tile state machine") {
     // create mock loader
     bool initializerCall = false;
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         [&](Tile&) { initializerCall = true; },
+        CesiumAsync::RequestData(),
         TileLoadResultState::RetryLater};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -453,18 +482,12 @@ TEST_CASE("Test tile state machine") {
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, options);
 
-    // Unloaded -> ContentLoading
-    CHECK(pManager->getNumberOfTilesLoading() == 1);
-    CHECK(tile.getState() == TileLoadState::ContentLoading);
-    CHECK(tile.getChildren().empty());
-    CHECK(tile.getContent().isUnknownContent());
-    CHECK(!tile.getContent().isRenderContent());
-    CHECK(!tile.getContent().getRenderContent());
-
-    // ContentLoading -> FailedTemporarily
+    loadTileWithManager(&tile, pManager.get(), options);
     pManager->waitUntilIdle();
+
+    // Unloaded -> FailedTemporarily
+    CHECK(tile.getState() == TileLoadState::FailedTemporarily);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -485,24 +508,28 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
     CHECK(!initializerCall);
 
-    // FailedTemporarily -> ContentLoading
-    pManager->loadTileContent(tile, options);
-    CHECK(pManager->getNumberOfTilesLoading() == 1);
-    CHECK(tile.getState() == TileLoadState::ContentLoading);
+    // FailedTemporarily -> FailedTemporarily
+    loadTileWithManager(&tile, pManager.get(), options);
+    pManager->waitUntilIdle();
+
+    CHECK(pManager->getNumberOfTilesLoading() == 0);
+    CHECK(tile.getState() == TileLoadState::FailedTemporarily);
   }
 
   SECTION("Loader requests failed") {
     // create mock loader
     bool initializerCall = false;
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+
     pMockedLoader->mockLoadTileContent = {
         CesiumGltf::Model(),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         [&](Tile&) { initializerCall = true; },
+        CesiumAsync::RequestData(),
         TileLoadResultState::Failed};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -528,18 +555,11 @@ TEST_CASE("Test tile state machine") {
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, options);
 
-    // Unloaded -> ContentLoading
-    CHECK(pManager->getNumberOfTilesLoading() == 1);
-    CHECK(tile.getState() == TileLoadState::ContentLoading);
-    CHECK(tile.getChildren().empty());
-    CHECK(tile.getContent().isUnknownContent());
-    CHECK(!tile.getContent().isRenderContent());
-    CHECK(!tile.getContent().getRenderContent());
-
-    // ContentLoading -> Failed
+    loadTileWithManager(&tile, pManager.get(), options);
     pManager->waitUntilIdle();
+
+    // Unloaded -> Failed
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -561,7 +581,8 @@ TEST_CASE("Test tile state machine") {
     CHECK(!initializerCall);
 
     // cannot transition from Failed -> ContentLoading
-    pManager->loadTileContent(tile, options);
+    loadTileWithManager(&tile, pManager.get(), options);
+
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getState() == TileLoadState::Failed);
     CHECK(tile.getContent().isUnknownContent());
@@ -593,8 +614,9 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         [&](Tile&) { initializerCall = true; },
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -631,7 +653,7 @@ TEST_CASE("Test tile state machine") {
     Tile& upsampledTile = tile.getChildren().back();
 
     // test manager loading upsample tile
-    pManager->loadTileContent(upsampledTile, options);
+    loadTileWithManager(&upsampledTile, pManager.get(), options);
 
     // since parent is not yet loaded, it will load the parent first.
     // The upsampled tile will not be loaded at the moment
@@ -646,7 +668,8 @@ TEST_CASE("Test tile state machine") {
 
     // try again with upsample tile, but still not able to load it
     // because parent is not done yet
-    pManager->loadTileContent(upsampledTile, options);
+    loadTileWithManager(&upsampledTile, pManager.get(), options);
+
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
 
     // parent moves from ContentLoaded -> Done
@@ -659,19 +682,23 @@ TEST_CASE("Test tile state machine") {
 
     // load the upsampled tile again: Unloaded -> ContentLoading
     initializerCall = false;
+
     pMockedLoaderRaw->mockLoadTileContent = {
         CesiumGltf::Model(),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         [&](Tile&) { initializerCall = true; },
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoaderRaw->mockCreateTileChildren = {
         {},
         TileLoadResultState::Failed};
-    pManager->loadTileContent(upsampledTile, options);
+
+    loadTileWithManager(&upsampledTile, pManager.get(), options);
+
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoading);
 
     // trying to unload parent while upsampled children is loading while put the
@@ -686,7 +713,8 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.isRenderContent());
 
     // Attempting to load won't do anything - unloading must finish first.
-    pManager->loadTileContent(tile, options);
+    loadTileWithManager(&tile, pManager.get(), options);
+
     CHECK(tile.getState() == TileLoadState::Unloading);
 
     // upsampled tile: ContentLoading -> ContentLoaded
@@ -748,14 +776,16 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+
     pMockedLoader->mockLoadTileContent = {
         std::move(*modelReadResult.model),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         {},
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -780,7 +810,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, {});
+
+    TilesetOptions options;
+    loadTileWithManager(&tile, pManager.get(), options);
+
     pManager->waitUntilIdle();
 
     // check the buffer is already loaded
@@ -824,8 +857,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         {},
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -848,7 +882,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, options);
+
+    loadTileWithManager(&tile, pManager.get(), options);
+
     pManager->waitUntilIdle();
 
     // check that normal is generated
@@ -891,8 +927,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         {},
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -911,7 +948,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pRootTile)};
 
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, {});
+
+    TilesetOptions options;
+    loadTileWithManager(&tile, pManager.get(), options);
+
     pManager->waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();
@@ -941,8 +981,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        nullptr,
+        "test",
         {},
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -963,7 +1004,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         "Generate raster overlay details when tile don't have loose region") {
       // test the gltf model
       Tile& tile = *pManager->getRootTile();
-      pManager->loadTileContent(tile, {});
+
+      TilesetOptions options;
+      loadTileWithManager(&tile, pManager.get(), options);
+
       pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -1026,7 +1070,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
               9000.0}};
       tile.setBoundingVolume(originalLooseRegion);
 
-      pManager->loadTileContent(tile, {});
+      // Tick the manager twice
+      // Child overlay work has to complete before parent work
+      TilesetOptions options;
+      loadTileWithManager(&tile, pManager.get(), options);
+      pManager->waitUntilIdle();
+      loadTileWithManager(nullptr, pManager.get(), options);
       pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -1120,7 +1169,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
               9000.0}};
       tile.setBoundingVolume(originalLooseRegion);
 
-      pManager->loadTileContent(tile, {});
+      TilesetOptions options;
+      loadTileWithManager(&tile, pManager.get(), options);
+
       pManager->waitUntilIdle();
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -1175,8 +1226,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::move(rasterOverlayDetails),
-        nullptr,
+        "test",
         {},
+        CesiumAsync::RequestData(),
         TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -1194,7 +1246,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pRootTile)};
 
     Tile& tile = *pManager->getRootTile();
-    pManager->loadTileContent(tile, {});
+
+    TilesetOptions options;
+    loadTileWithManager(&tile, pManager.get(), options);
+
     pManager->waitUntilIdle();
 
     const auto& renderContent = tile.getContent().getRenderContent();

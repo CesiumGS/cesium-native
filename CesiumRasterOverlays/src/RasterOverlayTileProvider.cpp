@@ -35,9 +35,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
                              computeMaximumProjectedRectangle()),
       _pPlaceholder(),
-      _tileDataBytes(0),
-      _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {
+      _tileDataBytes(0) {
   this->_pPlaceholder = new RasterOverlayTile(*this);
 }
 
@@ -60,9 +58,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _projection(projection),
       _coverageRectangle(coverageRectangle),
       _pPlaceholder(nullptr),
-      _tileDataBytes(0),
-      _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {}
+      _tileDataBytes(0) {}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
@@ -94,174 +90,172 @@ void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   this->_tileDataBytes -= pTile->getImage().sizeBytes;
 }
 
-CesiumAsync::Future<TileProviderAndTile>
-RasterOverlayTileProvider::loadTile(RasterOverlayTile& tile) {
+CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::loadTile(
+    RasterOverlayTile& tile,
+    const UrlResponseDataMap& responsesByUrl,
+    RasterProcessingCallback rasterCallback) {
   if (this->_pPlaceholder) {
     // Refuse to load placeholders.
-    return this->getAsyncSystem().createResolvedFuture(
-        TileProviderAndTile{this, nullptr});
+    return this->getAsyncSystem().createResolvedFuture(RasterLoadResult{});
   }
 
-  return this->doLoad(tile, false);
+  // Already loading or loaded, do nothing.
+  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
+    return this->getAsyncSystem().createResolvedFuture(RasterLoadResult{});
+
+  // Don't let this tile be destroyed while it's loading.
+  tile.setState(RasterOverlayTile::LoadState::Loading);
+
+  // Keep the tile and tile provider alive while the async operation is in
+  // progress.
+  IntrusivePointer<RasterOverlayTile> pTile = &tile;
+  IntrusivePointer<RasterOverlayTileProvider> thiz = this;
+
+  return this->doLoad(tile, responsesByUrl, rasterCallback)
+      .thenInMainThread([thiz, pTile](RasterLoadResult&& result) noexcept {
+        if (result.state == RasterOverlayTile::LoadState::RequestRequired)
+          return thiz->_asyncSystem.createResolvedFuture<RasterLoadResult>(
+              std::move(result));
+
+        pTile->_rectangle = result.rectangle;
+        pTile->_pRendererResources = result.pRendererResources;
+        assert(result.image.has_value());
+        pTile->_image = std::move(result.image.value());
+        pTile->_tileCredits = std::move(result.credits);
+        pTile->_moreDetailAvailable =
+            result.moreDetailAvailable
+                ? RasterOverlayTile::MoreDetailAvailable::Yes
+                : RasterOverlayTile::MoreDetailAvailable::No;
+        pTile->setState(result.state);
+
+        result.pTile = pTile;
+
+        thiz->_tileDataBytes += int64_t(pTile->getImage().pixelData.size());
+
+        return thiz->_asyncSystem.createResolvedFuture<RasterLoadResult>(
+            std::move(result));
+      })
+      .catchInMainThread([thiz, pTile](const std::exception& /*e*/) {
+        pTile->_pRendererResources = nullptr;
+        pTile->_image = {};
+        pTile->_tileCredits = {};
+        pTile->_moreDetailAvailable =
+            RasterOverlayTile::MoreDetailAvailable::No;
+        pTile->setState(RasterOverlayTile::LoadState::Failed);
+
+        RasterLoadResult result;
+        result.state = RasterOverlayTile::LoadState::Failed;
+
+        return thiz->_asyncSystem.createResolvedFuture<RasterLoadResult>(
+            std::move(result));
+      });
 }
 
-bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
-  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
-    return true;
-  }
-
-  if (this->_throttledTilesCurrentlyLoading >=
-      this->getOwner().getOptions().maximumSimultaneousTileLoads) {
-    return false;
-  }
-
-  this->doLoad(tile, true);
-  return true;
+CesiumAsync::Future<RasterLoadResult>
+RasterOverlayTileProvider::loadTileThrottled(
+    RasterOverlayTile& tile,
+    const UrlResponseDataMap& responsesByUrl,
+    RasterProcessingCallback rasterCallback) {
+  return this->doLoad(tile, responsesByUrl, rasterCallback);
 }
 
-CesiumAsync::Future<LoadedRasterOverlayImage>
+void RasterOverlayTileProvider::getLoadTileThrottledWork(
+    const RasterOverlayTile& tile,
+    RequestData& outRequest,
+    RasterProcessingCallback& outCallback) {
+  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded)
+    return;
+
+  getLoadTileImageWork(tile, outRequest, outCallback);
+}
+
+CesiumAsync::Future<RasterLoadResult>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
-    const std::vector<IAssetAccessor::THeader>& headers,
+    const gsl::span<const std::byte>& data,
     LoadTileImageFromUrlOptions&& options) const {
 
-  return this->getAssetAccessor()
-      ->get(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread(
-          [options = std::move(options),
-           Ktx2TranscodeTargets =
-               this->getOwner().getOptions().ktx2TranscodeTargets](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            CESIUM_TRACE("load image");
-            const IAssetResponse* pResponse = pRequest->response();
-            if (pResponse == nullptr) {
-              return LoadedRasterOverlayImage{
-                  std::nullopt,
-                  options.rectangle,
-                  std::move(options.credits),
-                  {"Image request for " + pRequest->url() + " failed."},
-                  {},
-                  options.moreDetailAvailable};
-            }
+  return this->getAsyncSystem().runInWorkerThread(
+      [options = std::move(options),
+       url = url,
+       data = data,
+       asyncSystem = this->getAsyncSystem(),
+       Ktx2TranscodeTargets =
+           this->getOwner().getOptions().ktx2TranscodeTargets]() mutable {
+        CESIUM_TRACE("load image");
 
-            if (pResponse->statusCode() != 0 &&
-                (pResponse->statusCode() < 200 ||
-                 pResponse->statusCode() >= 300)) {
-              std::string message = "Image response code " +
-                                    std::to_string(pResponse->statusCode()) +
-                                    " for " + pRequest->url();
-              return LoadedRasterOverlayImage{
-                  std::nullopt,
-                  options.rectangle,
-                  std::move(options.credits),
-                  {message},
-                  {},
-                  options.moreDetailAvailable};
-            }
+        CesiumGltfReader::ImageReaderResult loadedImage =
+            RasterOverlayTileProvider::_gltfReader.readImage(
+                data,
+                Ktx2TranscodeTargets);
 
-            if (pResponse->data().empty()) {
-              if (options.allowEmptyImages) {
-                return LoadedRasterOverlayImage{
-                    CesiumGltf::ImageCesium(),
-                    options.rectangle,
-                    std::move(options.credits),
-                    {},
-                    {},
-                    options.moreDetailAvailable};
-              }
-              return LoadedRasterOverlayImage{
-                  std::nullopt,
-                  options.rectangle,
-                  std::move(options.credits),
-                  {"Image response for " + pRequest->url() + " is empty."},
-                  {},
-                  options.moreDetailAvailable};
-            }
+        if (!loadedImage.errors.empty()) {
+          loadedImage.errors.push_back("Image url: " + url);
+        }
+        if (!loadedImage.warnings.empty()) {
+          loadedImage.warnings.push_back("Image url: " + url);
+        }
 
-            const gsl::span<const std::byte> data = pResponse->data();
-
-            CesiumGltfReader::ImageReaderResult loadedImage =
-                RasterOverlayTileProvider::_gltfReader.readImage(
-                    data,
-                    Ktx2TranscodeTargets);
-
-            if (!loadedImage.errors.empty()) {
-              loadedImage.errors.push_back("Image url: " + pRequest->url());
-            }
-            if (!loadedImage.warnings.empty()) {
-              loadedImage.warnings.push_back("Image url: " + pRequest->url());
-            }
-
-            return LoadedRasterOverlayImage{
+        return asyncSystem.createResolvedFuture<RasterLoadResult>(
+            RasterLoadResult{
                 loadedImage.image,
                 options.rectangle,
                 std::move(options.credits),
                 std::move(loadedImage.errors),
                 std::move(loadedImage.warnings),
-                options.moreDetailAvailable};
-          });
+                options.moreDetailAvailable});
+      });
 }
 
 namespace {
-struct LoadResult {
-  RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
-  CesiumGltf::ImageCesium image = {};
-  CesiumGeometry::Rectangle rectangle = {};
-  std::vector<Credit> credits = {};
-  void* pRendererResources = nullptr;
-  bool moreDetailAvailable = true;
-};
 
 /**
- * @brief Processes the given `LoadedRasterOverlayImage`, producing a
- * `LoadResult`.
+ * @brief Processes the given `RasterLoadResult`
  *
  * This function is intended to be called on the worker thread.
  *
- * If the given `loadedImage` contains no valid image data, then a
- * `LoadResult` with the state `RasterOverlayTile::LoadState::Failed` will be
- * returned.
+ * If the given `RasterLoadResult::image` contains no valid image data, then a
+ * `RasterLoadResult` with the state `RasterOverlayTile::LoadState::Failed` will
+ * be returned.
  *
  * Otherwise, the image data will be passed to
- * `IPrepareRasterOverlayRendererResources::prepareRasterInLoadThread`, and the
- * function will return a `LoadResult` with the image, the prepared renderer
+ * `IPrepareRendererResources::prepareRasterInLoadThread`, and the function
+ * will modify a `RasterLoadResult` with the image, the prepared renderer
  * resources, and the state `RasterOverlayTile::LoadState::Loaded`.
  *
  * @param tileId The {@link TileID} - only used for logging
  * @param pPrepareRendererResources The `IPrepareRasterOverlayRendererResources`
  * @param pLogger The logger
- * @param loadedImage The `LoadedRasterOverlayImage`
+ * @param loadResult The `RasterLoadResult`
  * @param rendererOptions Renderer options
- * @return The `LoadResult`
  */
-static LoadResult createLoadResultFromLoadedImage(
+static void prepareLoadResultImage(
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    LoadedRasterOverlayImage&& loadedImage,
+    RasterLoadResult& loadResult,
     const std::any& rendererOptions) {
-  if (!loadedImage.image.has_value()) {
+  if (!loadResult.image.has_value()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Failed to load image for tile {}:\n- {}",
         "TODO",
         // Cesium3DTilesSelection::TileIdUtilities::createTileIdString(tileId),
-        CesiumUtility::joinToString(loadedImage.errors, "\n- "));
-    LoadResult result;
-    result.state = RasterOverlayTile::LoadState::Failed;
-    return result;
+        CesiumUtility::joinToString(loadResult.errors, "\n- "));
+    loadResult.state = RasterOverlayTile::LoadState::Failed;
+    return;
   }
 
-  if (!loadedImage.warnings.empty()) {
+  if (!loadResult.warnings.empty()) {
     SPDLOG_LOGGER_WARN(
         pLogger,
         "Warnings while loading image for tile {}:\n- {}",
         "TODO",
         // Cesium3DTilesSelection::TileIdUtilities::createTileIdString(tileId),
-        CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+        CesiumUtility::joinToString(loadResult.warnings, "\n- "));
   }
 
-  CesiumGltf::ImageCesium& image = loadedImage.image.value();
+  CesiumGltf::ImageCesium& image = loadResult.image.value();
 
   const int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
   const int64_t requiredBytes =
@@ -280,119 +274,45 @@ static LoadResult createLoadResultFromLoadedImage(
           rendererOptions);
     }
 
-    LoadResult result;
-    result.state = RasterOverlayTile::LoadState::Loaded;
-    result.image = std::move(image);
-    result.rectangle = loadedImage.rectangle;
-    result.credits = std::move(loadedImage.credits);
-    result.pRendererResources = pRendererResources;
-    result.moreDetailAvailable = loadedImage.moreDetailAvailable;
-    return result;
+    loadResult.state = RasterOverlayTile::LoadState::Loaded;
+    loadResult.pRendererResources = pRendererResources;
+
+    return;
   }
-  LoadResult result;
-  result.pRendererResources = nullptr;
-  result.state = RasterOverlayTile::LoadState::Failed;
-  result.moreDetailAvailable = false;
-  return result;
+
+  loadResult.pRendererResources = nullptr;
+  loadResult.state = RasterOverlayTile::LoadState::Failed;
+  loadResult.moreDetailAvailable = false;
 }
 
 } // namespace
 
-CesiumAsync::Future<TileProviderAndTile> RasterOverlayTileProvider::doLoad(
+CesiumAsync::Future<RasterLoadResult> RasterOverlayTileProvider::doLoad(
     RasterOverlayTile& tile,
-    bool isThrottledLoad) {
-  if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
-    // Already loading or loaded, do nothing.
-    return this->getAsyncSystem().createResolvedFuture(
-        TileProviderAndTile{this, nullptr});
-  }
-
+    const UrlResponseDataMap& responsesByUrl,
+    RasterProcessingCallback rasterCallback) {
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);
 
-  // Don't let this tile be destroyed while it's loading.
-  tile.setState(RasterOverlayTile::LoadState::Loading);
+  assert(rasterCallback);
 
-  this->beginTileLoad(isThrottledLoad);
-
-  // Keep the tile and tile provider alive while the async operation is in
-  // progress.
-  IntrusivePointer<RasterOverlayTile> pTile = &tile;
-  IntrusivePointer<RasterOverlayTileProvider> thiz = this;
-
-  return this->loadTileImage(tile)
+  return rasterCallback(tile, this, responsesByUrl)
       .thenInWorkerThread(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger = this->getLogger(),
            rendererOptions = this->_pOwner->getOptions().rendererOptions](
-              LoadedRasterOverlayImage&& loadedImage) {
-            return createLoadResultFromLoadedImage(
-                pPrepareRendererResources,
-                pLogger,
-                std::move(loadedImage),
-                rendererOptions);
-          })
-      .thenInMainThread(
-          [thiz, pTile, isThrottledLoad](LoadResult&& result) noexcept {
-            pTile->_rectangle = result.rectangle;
-            pTile->_pRendererResources = result.pRendererResources;
-            pTile->_image = std::move(result.image);
-            pTile->_tileCredits = std::move(result.credits);
-            pTile->_moreDetailAvailable =
-                result.moreDetailAvailable
-                    ? RasterOverlayTile::MoreDetailAvailable::Yes
-                    : RasterOverlayTile::MoreDetailAvailable::No;
-            pTile->setState(result.state);
-
-            ImageCesium& imageCesium = pTile->getImage();
-
-            // If the image size hasn't been overridden, store the pixelData
-            // size now. We'll add this number to our total memory usage now,
-            // and remove it when the tile is later unloaded, and we must use
-            // the same size in each case.
-            if (imageCesium.sizeBytes < 0) {
-              imageCesium.sizeBytes = int64_t(imageCesium.pixelData.size());
+              RasterLoadResult&& loadResult) {
+            if (loadResult.state ==
+                RasterOverlayTile::LoadState::RequestRequired) {
+              // Can't prepare this image yet
+            } else {
+              prepareLoadResultImage(
+                  pPrepareRendererResources,
+                  pLogger,
+                  loadResult,
+                  rendererOptions);
             }
-
-            thiz->_tileDataBytes += imageCesium.sizeBytes;
-
-            thiz->finalizeTileLoad(isThrottledLoad);
-
-            return TileProviderAndTile{thiz, pTile};
-          })
-      .catchInMainThread(
-          [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
-            pTile->_pRendererResources = nullptr;
-            pTile->_image = {};
-            pTile->_tileCredits = {};
-            pTile->_moreDetailAvailable =
-                RasterOverlayTile::MoreDetailAvailable::No;
-            pTile->setState(RasterOverlayTile::LoadState::Failed);
-
-            thiz->finalizeTileLoad(isThrottledLoad);
-
-            return TileProviderAndTile{thiz, pTile};
+            return std::move(loadResult);
           });
-}
-
-void RasterOverlayTileProvider::beginTileLoad(bool isThrottledLoad) noexcept {
-  ++this->_totalTilesCurrentlyLoading;
-  if (isThrottledLoad) {
-    ++this->_throttledTilesCurrentlyLoading;
-  }
-}
-
-void RasterOverlayTileProvider::finalizeTileLoad(
-    bool isThrottledLoad) noexcept {
-  --this->_totalTilesCurrentlyLoading;
-  if (isThrottledLoad) {
-    --this->_throttledTilesCurrentlyLoading;
-  }
-}
-
-TileProviderAndTile::~TileProviderAndTile() noexcept {
-  // Ensure the tile is released before the tile provider.
-  pTile = nullptr;
-  pTileProvider = nullptr;
 }
 
 } // namespace CesiumRasterOverlays

@@ -85,14 +85,18 @@ public:
    * @return A future that resolves to a `SubtreeAvailability` instance for the
    * subtree file, or std::nullopt if something goes wrong.
    */
-  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
+
+  using LoadResult =
+      std::pair<std::optional<SubtreeAvailability>, CesiumAsync::RequestData>;
+
+  static CesiumAsync::Future<LoadResult> loadSubtree(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::string& subtreeUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const std::string& baseUrl,
+      const CesiumAsync::IAssetResponse* baseResponse,
+      const CesiumAsync::UrlResponseDataMap& additionalResponse);
 
   /**
    * @brief An AvailibilityView that indicates that either all tiles are

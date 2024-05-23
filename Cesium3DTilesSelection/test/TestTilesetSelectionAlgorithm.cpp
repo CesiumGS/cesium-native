@@ -243,6 +243,7 @@ TEST_CASE("Test replace refinement for render") {
 
     SECTION("Children cannot be rendered because response has an failed status "
             "code") {
+
       // remove one of children completed response to mock network error
       mockAssetAccessor->mockCompletedRequests["ll.b3dm"]
           ->pResponse->mockStatusCode = 404;
@@ -256,7 +257,7 @@ TEST_CASE("Test replace refinement for render") {
 
     ViewState viewState = zoomToTileset(tileset);
 
-    // 1st frame. Root doesn't meet sse, so it goes to children. But because
+    // 1st frame. Root doesn't meet sse, so it goes to children.But because
     // children haven't started loading, root should be rendered.
     {
       ViewUpdateResult result = tileset.updateView({viewState});
@@ -266,7 +267,7 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == TileLoadState::ContentLoading);
+        REQUIRE(child.getState() == TileLoadState::Failed);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -308,6 +309,7 @@ TEST_CASE("Test replace refinement for render") {
   }
 
   SECTION("Parent meets sse but not renderable") {
+
     // Zoom to tileset. Expect the root will not meet sse in this configure
     ViewState viewState = zoomToTileset(tileset);
     glm::dvec3 zoomInPosition =
@@ -329,11 +331,16 @@ TEST_CASE("Test replace refinement for render") {
     {
       ViewUpdateResult result = tileset.updateView({zoomInViewState});
 
-      // check tiles status. All the children should have loading status
+      // check tiles status
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(zoomInViewState, *root, tileset));
+
+      // All the children should be loading or failed
       for (const auto& child : root->getChildren()) {
-        REQUIRE(child.getState() == TileLoadState::ContentLoading);
+        bool childStateIsExpected =
+            child.getState() == TileLoadState::ContentLoading ||
+            child.getState() == TileLoadState::Failed;
+        REQUIRE(childStateIsExpected);
       }
 
       const Tile& ll = root->getChildren().front();
@@ -556,15 +563,14 @@ TEST_CASE("Test additive refinement") {
   Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
-  // root is external tileset. Since its content is loading, we won't know if it
-  // has children or not
+  // root is external tileset. Content is loaded immediately, but not done
   const Tile* pTilesetJson = tileset.getRootTile();
   REQUIRE(pTilesetJson);
   REQUIRE(pTilesetJson->getChildren().size() == 1);
 
   const Tile* root = &pTilesetJson->getChildren()[0];
-  REQUIRE(root->getState() == TileLoadState::ContentLoading);
-  REQUIRE(root->getChildren().size() == 0);
+  REQUIRE(root->getState() == TileLoadState::ContentLoaded);
+  REQUIRE(root->getChildren().size() == 1);
 
   SECTION("Load external tilesets") {
     ViewState viewState = zoomToTileset(tileset);
@@ -587,7 +593,9 @@ TEST_CASE("Test additive refinement") {
       REQUIRE(parentB3DM.getChildren().size() == 4);
 
       for (const Tile& child : parentB3DM.getChildren()) {
-        REQUIRE(child.getState() == TileLoadState::ContentLoading);
+        bool childLoading = child.getState() == TileLoadState::ContentLoading ||
+                            child.getState() == TileLoadState::ContentLoaded;
+        REQUIRE(childLoading);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
       }
 
@@ -725,10 +733,6 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // non-renderable, so render root only
   {
     ViewUpdateResult result = tileset.updateView({viewState});
-
-    for (const Tile& child : root->getChildren()) {
-      CHECK(child.getState() == TileLoadState::ContentLoading);
-    }
 
     REQUIRE(result.tilesToRenderThisFrame.size() == 2);
     REQUIRE(result.tilesFadingOut.size() == 0);
@@ -1512,6 +1516,15 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       return pRootTile;
     }
 
+    bool getLoadWork(const Tile*, RequestData&, TileLoaderCallback& outCallback)
+        override {
+      outCallback = [](const TileLoadInput& loadInput,
+                       TilesetContentLoader* loader) {
+        return loader->loadTileContent(loadInput);
+      };
+      return true;
+    };
+
     virtual CesiumAsync::Future<TileLoadResult>
     loadTileContent(const TileLoadInput& input) override {
       if (&input.tile == this->_pRootTile) {
@@ -1531,7 +1544,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       }
 
       return input.asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult());
     }
 
     virtual TileChildrenResult createTileChildren(const Tile&) override {

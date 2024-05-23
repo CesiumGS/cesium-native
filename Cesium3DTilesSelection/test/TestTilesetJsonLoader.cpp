@@ -3,6 +3,7 @@
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/TileWorkManager.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -71,6 +72,7 @@ createLoader(const std::filesystem::path& tilesetPath) {
 
 TileLoadResult loadTileContent(
     const std::filesystem::path& tilePath,
+    const std::string& tileUrl,
     TilesetContentLoader& loader,
     Tile& tile) {
   auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -80,7 +82,7 @@ TileLoadResult loadTileContent(
       readFile(tilePath));
   auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
       "GET",
-      "doesn't matter",
+      tileUrl,
       CesiumAsync::HttpHeaders{},
       std::move(pMockCompletedResponse));
 
@@ -94,19 +96,72 @@ TileLoadResult loadTileContent(
 
   AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
-  TileLoadInput loadInput{
-      tile,
-      {},
-      asyncSystem,
-      pMockAssetAccessor,
-      spdlog::default_logger(),
-      {}};
+  RequestData requestData;
+  TileLoaderCallback processingCallback;
+  loader.getLoadWork(&tile, requestData, processingCallback);
 
-  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
+  std::shared_ptr<TileWorkManager> workManager =
+      std::make_shared<TileWorkManager>(
+          asyncSystem,
+          pMockAssetAccessor,
+          spdlog::default_logger());
+
+  std::vector<TileWorkManager::Order> orders;
+  orders.push_back(TileWorkManager::Order{
+      requestData,
+      TileProcessingData{&tile, processingCallback},
+      TileLoadPriorityGroup::Normal,
+      0});
+
+  TileWorkManager::TileDispatchFunc tileDispatch =
+      [pLoader = &loader, asyncSystem, workManager](
+          TileProcessingData& processingData,
+          const CesiumAsync::UrlResponseDataMap& responseDataMap,
+          TileWorkManager::Work* work) mutable {
+        assert(processingData.pTile);
+        assert(processingData.loaderCallback);
+        Tile* pTile = processingData.pTile;
+
+        TileLoadInput loadInput{
+            *pTile,
+            {},
+            asyncSystem,
+            spdlog::default_logger(),
+            responseDataMap};
+
+        processingData.loaderCallback(loadInput, pLoader)
+            .thenInMainThread(
+                [_work = work, workManager](TileLoadResult&& result) mutable {
+                  _work->tileLoadResult = std::move(result);
+                  workManager->SignalWorkComplete(_work);
+                  TileWorkManager::TryDispatchProcessing(workManager);
+                });
+      };
+
+  TileWorkManager::RasterDispatchFunc rasterDispatch =
+      [](RasterProcessingData&,
+         const CesiumAsync::UrlResponseDataMap&,
+         TileWorkManager::Work*) {};
+
+  workManager->SetDispatchFunctions(tileDispatch, rasterDispatch);
+
+  size_t maxRequests = 20;
+  std::vector<const TileWorkManager::Work*> workCreated;
+  TileWorkManager::TryAddOrders(workManager, orders, maxRequests, workCreated);
+  assert(workCreated.size() == 1);
 
   asyncSystem.dispatchMainThreadTasks();
 
-  return tileLoadResultFuture.wait();
+  std::vector<TileWorkManager::DoneOrder> doneOrders;
+  std::vector<TileWorkManager::FailedOrder> failedOrders;
+  workManager->TakeCompletedWork(doneOrders, failedOrders);
+
+  assert(doneOrders.size() == 1);
+  assert(failedOrders.size() == 0);
+
+  auto tileLoadResult = doneOrders.begin()->loadResult;
+
+  return tileLoadResult;
 }
 } // namespace
 
@@ -438,6 +493,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     // check tile content
     auto tileLoadResult = loadTileContent(
         testDataPath / "ReplaceTileset" / tileID,
+        "parent.b3dm",
         *loaderResult.pLoader,
         *pRootTile);
     CHECK(
@@ -463,6 +519,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     // check tile content
     auto tileLoadResult = loadTileContent(
         testDataPath / "AddTileset" / tileID,
+        "tileset2.json",
         *loaderResult.pLoader,
         *pRootTile);
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
@@ -559,13 +616,16 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will tell to retry later since it needs subtree
+
+      UrlResponseDataMap responseDataMap;
+      pMockAssetAccessor->fillResponseDataMap(responseDataMap);
+
       TileLoadInput loadInput{
           implicitTile,
           {},
           asyncSystem,
-          pMockAssetAccessor,
           spdlog::default_logger(),
-          {}};
+          responseDataMap};
       auto implicitContentResultFuture =
           loaderResult.pLoader->loadTileContent(loadInput);
 
@@ -577,13 +637,15 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     {
       // loader will be able to load the tile the second time around
+      UrlResponseDataMap responseDataMap;
+      pMockAssetAccessor->fillResponseDataMap(responseDataMap);
+
       TileLoadInput loadInput{
           implicitTile,
           {},
           asyncSystem,
-          pMockAssetAccessor,
           spdlog::default_logger(),
-          {}};
+          responseDataMap};
       auto implicitContentResultFuture =
           loaderResult.pLoader->loadTileContent(loadInput);
 

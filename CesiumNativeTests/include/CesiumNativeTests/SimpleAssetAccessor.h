@@ -48,6 +48,16 @@ public:
 
   virtual void tick() noexcept override {}
 
+  void fillResponseDataMap(CesiumAsync::UrlResponseDataMap& responseDataMap) {
+    for (auto& pair : mockCompletedRequests) {
+      responseDataMap.emplace(
+          pair.first,
+          CesiumAsync::ResponseData{
+              pair.second.get(),
+              pair.second->response()});
+    }
+  }
+
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
 };

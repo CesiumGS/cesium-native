@@ -48,7 +48,7 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
   if (loadResult.errors || !loadResult.model) {
-    return TileLoadResult::createFailedResult(loadResult.pRequest);
+    return TileLoadResult::createFailedResult();
   }
 
   return TileLoadResult{
@@ -57,8 +57,9 @@ TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
-      nullptr,
+      std::string(),
       {},
+      RequestData{},
       TileLoadResultState::Success};
 }
 
@@ -635,90 +636,36 @@ std::string resolveTileUrl(
 Future<QuantizedMeshLoadResult> requestTileContent(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const QuadtreeTileID& tileID,
     const BoundingRegion& boundingRegion,
-    const LayerJsonTerrainLoader::Layer& layer,
-    const std::vector<IAssetAccessor::THeader>& requestHeaders,
-    bool enableWaterMask) {
-  std::string url = resolveTileUrl(tileID, layer);
-  return pAssetAccessor->get(asyncSystem, url, requestHeaders)
-      .thenInWorkerThread(
-          [asyncSystem, pLogger, tileID, boundingRegion, enableWaterMask](
-              std::shared_ptr<IAssetRequest>&& pRequest) {
-            const IAssetResponse* pResponse = pRequest->response();
-            if (!pResponse) {
-              QuantizedMeshLoadResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Did not receive a valid response for tile content {}",
-                  pRequest->url()));
-              result.pRequest = std::move(pRequest);
-              return result;
-            }
-
-            if (pResponse->statusCode() != 0 &&
-                (pResponse->statusCode() < 200 ||
-                 pResponse->statusCode() >= 300)) {
-              QuantizedMeshLoadResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Receive status code {} for tile content {}",
-                  pResponse->statusCode(),
-                  pRequest->url()));
-              result.pRequest = std::move(pRequest);
-              return result;
-            }
-
-            return QuantizedMeshLoader::load(
-                tileID,
-                boundingRegion,
-                pRequest->url(),
-                pResponse->data(),
-                enableWaterMask);
-          });
+    bool enableWaterMask,
+    const std::string& requestUrl,
+    const gsl::span<const std::byte>& responseData) {
+  return asyncSystem.runInWorkerThread([asyncSystem,
+                                        pLogger,
+                                        tileID,
+                                        boundingRegion,
+                                        enableWaterMask,
+                                        requestUrl,
+                                        responseData]() {
+    return QuantizedMeshLoader::load(
+        tileID,
+        boundingRegion,
+        requestUrl,
+        responseData,
+        enableWaterMask);
+  });
 }
 
-Future<int> loadTileAvailability(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const QuadtreeTileID& tileID,
-    LayerJsonTerrainLoader::Layer& layer,
-    const std::vector<IAssetAccessor::THeader>& requestHeaders) {
-  std::string url = resolveTileUrl(tileID, layer);
-  return pAssetAccessor->get(asyncSystem, url, requestHeaders)
-      .thenInWorkerThread([pLogger,
-                           tileID](std::shared_ptr<IAssetRequest>&& pRequest) {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (pResponse) {
-          uint16_t statusCode = pResponse->statusCode();
-
-          if (!(statusCode != 0 && (statusCode < 200 || statusCode >= 300))) {
-            return QuantizedMeshLoader::loadMetadata(pResponse->data(), tileID);
-          }
-        }
-
-        SPDLOG_LOGGER_ERROR(
-            pLogger,
-            "Failed to load availability data from {}",
-            pRequest->url());
-        return QuantizedMeshMetadataResult();
-      })
-      .thenInMainThread([&layer,
-                         tileID](QuantizedMeshMetadataResult&& metadata) {
-        addRectangleAvailabilityToLayer(layer, tileID, metadata.availability);
-        return 0;
-      });
-}
 } // namespace
 
 Future<TileLoadResult>
 LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& tile = loadInput.tile;
   const auto& asyncSystem = loadInput.asyncSystem;
-  const auto& pAssetAccessor = loadInput.pAssetAccessor;
   const auto& pLogger = loadInput.pLogger;
-  const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+  const auto& responsesByUrl = loadInput.responsesByUrl;
 
   // This type of loader should never have child loaders.
   assert(tile.getLoader() == this);
@@ -732,7 +679,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     if (!pUpsampleTileID) {
       // This loader only handles QuadtreeTileIDs and UpsampledQuadtreeNode.
       return asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult());
     }
 
     // now do upsampling
@@ -751,7 +698,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (firstAvailableIt == this->_layers.end()) {
     // No layer has this tile available.
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // Also load the same tile in any underlying layers for which this tile
@@ -764,21 +711,62 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   auto it = firstAvailableIt;
   ++it;
 
-  while (it != this->_layers.end()) {
-    if (it->availabilityLevels >= 1 &&
-        (int32_t(pQuadtreeTileID->level) % it->availabilityLevels) == 0) {
-      if (!isSubtreeLoadedInLayer(*pQuadtreeTileID, *it)) {
-        availabilityRequests.emplace_back(loadTileAvailability(
-            pLogger,
-            asyncSystem,
-            pAssetAccessor,
-            *pQuadtreeTileID,
-            *it,
-            requestHeaders));
-      }
+  for (; it != this->_layers.end(); ++it) {
+    LayerJsonTerrainLoader::Layer& layer = *it;
+
+    bool hasAvailability =
+        layer.availabilityLevels >= 1 &&
+        (int32_t(pQuadtreeTileID->level) % layer.availabilityLevels) == 0;
+    if (!hasAvailability)
+      continue;
+
+    if (isSubtreeLoadedInLayer(*pQuadtreeTileID, layer))
+      continue;
+
+    std::string url = resolveTileUrl(*pQuadtreeTileID, layer);
+
+    // If url is not loaded, request it and come back later
+    auto foundIt = responsesByUrl.find(url);
+    if (foundIt == responsesByUrl.end()) {
+      return asyncSystem.createResolvedFuture<TileLoadResult>(
+          TileLoadResult::createRequestResult(
+              CesiumAsync::RequestData{url, {}}));
     }
 
-    ++it;
+    const IAssetResponse* pResponse = foundIt->second.pResponse;
+    assert(pResponse);
+    uint16_t statusCode = pResponse->statusCode();
+    assert(statusCode != 0);
+    bool statusValid = statusCode >= 200 && statusCode < 300;
+
+    if (!statusValid) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          "Failed to load availability data from {}",
+          url);
+
+      addRectangleAvailabilityToLayer(
+          layer,
+          *pQuadtreeTileID,
+          std::vector<CesiumGeometry::QuadtreeTileRectangularRange>{});
+    } else {
+      Future<int> requestFuture =
+          asyncSystem
+              .runInWorkerThread(
+                  [tileID = *pQuadtreeTileID, data = pResponse->data()]() {
+                    return QuantizedMeshLoader::loadMetadata(data, tileID);
+                  })
+              .thenInMainThread([&layer, tileID = *pQuadtreeTileID](
+                                    QuantizedMeshMetadataResult&& metadata) {
+                addRectangleAvailabilityToLayer(
+                    layer,
+                    tileID,
+                    metadata.availability);
+                return 0;
+              });
+
+      availabilityRequests.emplace_back(std::move(requestFuture));
+    }
   }
 
   const BoundingRegion* pRegion =
@@ -786,20 +774,49 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (!pRegion) {
     // This tile does not have the required bounding volume type.
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   // Start the actual content request.
   auto& currentLayer = *firstAvailableIt;
+
+  std::string url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
+
+  auto foundIt = responsesByUrl.find(url);
+  assert(foundIt != responsesByUrl.end());
+
+  auto response = foundIt->second.pResponse;
+  assert(response);
+
+  uint16_t statusCode = response->statusCode();
+  if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Received status code {} for tile content {}",
+        statusCode,
+        url);
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult());
+  }
+
+  const gsl::span<const std::byte>& responseData = response->data();
+  if (responseData.empty()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Did not receive a valid response for tile content {}",
+        url);
+    return asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult());
+  }
+
   Future<QuantizedMeshLoadResult> futureQuantizedMesh = requestTileContent(
       pLogger,
       asyncSystem,
-      pAssetAccessor,
       *pQuadtreeTileID,
       *pRegion,
-      currentLayer,
-      requestHeaders,
-      contentOptions.enableWaterMask);
+      contentOptions.enableWaterMask,
+      url,
+      responseData);
 
   // determine if this tile is at the availability level of the current layer
   // and if we need to add the availability rectangles to the current layer. We
@@ -889,6 +906,41 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 
         return result;
       });
+}
+
+bool LayerJsonTerrainLoader::getLoadWork(
+    const Tile* pTile,
+    RequestData& outRequest,
+    TileLoaderCallback& outCallback) {
+
+  const QuadtreeTileID* pQuadtreeTileID =
+      std::get_if<QuadtreeTileID>(&pTile->getTileID());
+  if (pQuadtreeTileID) {
+    // Always request the tile from the first layer in which this tile ID is
+    // available.
+    auto firstAvailableIt = this->_layers.begin();
+    while (firstAvailableIt != this->_layers.end() &&
+           !firstAvailableIt->contentAvailability.isTileAvailable(
+               *pQuadtreeTileID)) {
+      ++firstAvailableIt;
+    }
+
+    if (firstAvailableIt == this->_layers.end())
+      return false; // No layer has this tile available.
+
+    // Start the actual content request.
+    auto& currentLayer = *firstAvailableIt;
+    outRequest.url = resolveTileUrl(*pQuadtreeTileID, currentLayer);
+  } else {
+    // Upsampling tiles do not have a tile id and do not request a url
+  }
+
+  outCallback = [](const TileLoadInput& loadInput,
+                   TilesetContentLoader* loader) {
+    return loader->loadTileContent(loadInput);
+  };
+
+  return true;
 }
 
 TileChildrenResult
@@ -1102,7 +1154,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
       parentContent.getRenderContent();
   if (!pParentRenderContent) {
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult());
   }
 
   const UpsampledQuadtreeNode* pUpsampledTileID =
@@ -1141,7 +1193,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
             textureCoordinateIndex);
         if (!model) {
-          return TileLoadResult::createFailedResult(nullptr);
+          return TileLoadResult::createFailedResult();
         }
 
         return TileLoadResult{
@@ -1150,8 +1202,9 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             std::nullopt,
             std::nullopt,
             std::nullopt,
-            nullptr,
+            std::string(),
             {},
+            RequestData{},
             TileLoadResultState::Success};
       });
 }

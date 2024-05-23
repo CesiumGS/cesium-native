@@ -145,27 +145,13 @@ public:
   virtual ~BingMapsTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-        this->_urlTemplate,
-        [this, &tileID](const std::string& key) {
-          if (key == "quadkey") {
-            return BingMapsTileProvider::tileXYToQuadKey(
-                tileID.level,
-                tileID.x,
-                tileID.computeInvertedY(this->getTilingScheme()));
-          }
-          if (key == "subdomain") {
-            const size_t subdomainIndex =
-                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
-            return this->_subdomains[subdomainIndex];
-          }
-          return key;
-        });
+  virtual CesiumAsync::Future<RasterLoadResult> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const std::string& requestUrl,
+      uint16_t statusCode,
+      const gsl::span<const std::byte>& data) const override {
 
     LoadTileImageFromUrlOptions options;
-    options.allowEmptyImages = true;
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     std::vector<Credit>& tileCredits = options.credits =
@@ -193,7 +179,55 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, std::move(options));
+    if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+      std::string message = "Image response code " +
+                            std::to_string(statusCode) + " for " + requestUrl;
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              std::nullopt,
+              options.rectangle,
+              std::move(options.credits),
+              {message},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    if (data.empty()) {
+      // This tile is - as expected - not available
+      return this->getAsyncSystem().createResolvedFuture<RasterLoadResult>(
+          RasterLoadResult{
+              CesiumGltf::ImageCesium(),
+              options.rectangle,
+              std::move(options.credits),
+              {},
+              {},
+              options.moreDetailAvailable});
+    }
+
+    return this->loadTileImageFromUrl(requestUrl, data, std::move(options));
+  }
+
+  virtual bool getQuadtreeTileImageRequest(
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      RequestData& requestData,
+      std::string&) const override {
+    requestData.url = CesiumUtility::Uri::substituteTemplateParameters(
+        this->_urlTemplate,
+        [this, &tileID](const std::string& key) {
+          if (key == "quadkey") {
+            return BingMapsTileProvider::tileXYToQuadKey(
+                tileID.level,
+                tileID.x,
+                tileID.computeInvertedY(this->getTilingScheme()));
+          }
+          if (key == "subdomain") {
+            const size_t subdomainIndex =
+                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
+            return this->_subdomains[subdomainIndex];
+          }
+          return key;
+        });
+    return true;
   }
 
 private:

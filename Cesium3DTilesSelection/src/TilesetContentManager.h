@@ -6,6 +6,8 @@
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileWorkManager.h>
+#include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
@@ -60,7 +62,51 @@ public:
 
   ~TilesetContentManager() noexcept;
 
-  void loadTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
+  struct TileWorkChain {
+    Tile* pTile;
+    CesiumAsync::RequestData requestData;
+    TileLoaderCallback tileCallback;
+
+    // Must have a valid tile and some work
+    bool isValid() {
+      return pTile && (!requestData.url.empty() || tileCallback);
+    }
+  };
+
+  struct RasterWorkChain {
+    RasterMappedTo3DTile* pRasterTile;
+    CesiumAsync::RequestData requestData;
+    CesiumRasterOverlays::RasterProcessingCallback rasterCallback;
+
+    // Must have a valid tile and some work
+    bool isValid() {
+      return pRasterTile && (!requestData.url.empty() || rasterCallback);
+    }
+  };
+
+  struct ParsedTileWork {
+    size_t depthIndex = 0;
+
+    TileWorkChain tileWorkChain = {};
+
+    std::vector<RasterWorkChain> rasterWorkChains = {};
+
+    std::vector<CesiumGeospatial::Projection> projections = {};
+
+    bool operator<(const ParsedTileWork& rhs) const noexcept {
+      return this->depthIndex > rhs.depthIndex;
+    }
+  };
+
+  void processLoadRequests(
+      std::vector<TileLoadRequest>& requests,
+      TilesetOptions& options);
+
+  void parseTileWork(
+      Tile* pTile,
+      size_t depthIndex,
+      double maximumScreenSpaceError,
+      std::vector<ParsedTileWork>& outWork);
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
@@ -100,6 +146,18 @@ public:
 
   int64_t getTotalDataUsed() const noexcept;
 
+  int32_t getNumberOfRastersLoading() const noexcept;
+
+  int32_t getNumberOfRastersLoaded() const noexcept;
+
+  size_t getActiveWorkCount();
+
+  void getLoadingWorkStats(
+      size_t& requestCount,
+      size_t& inFlightCount,
+      size_t& processingCount,
+      size_t& failedCount);
+
   bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
   bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
 
@@ -127,12 +185,39 @@ private:
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
 
+  void notifyRasterStartLoading() noexcept;
+
+  void notifyRasterDoneLoading() noexcept;
+
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
       TilesetLoadType type,
       const std::function<void(const TilesetLoadFailureDetails&)>&
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
+
+  void createWorkManager(const TilesetExternals& externals);
+
+  void discoverLoadWork(
+      const std::vector<TileLoadRequest>& requests,
+      double maximumScreenSpaceError,
+      const TilesetOptions& tilesetOptions,
+      std::vector<TileWorkManager::Order>& outOrders);
+
+  void markWorkTilesAsLoading(
+      const std::vector<const TileWorkManager::Work*>& workVector);
+
+  void handleCompletedWork();
+
+  void dispatchTileWork(
+      TileProcessingData& processingData,
+      const CesiumAsync::UrlResponseDataMap& responseDataMap,
+      TileWorkManager::Work* work);
+
+  void dispatchRasterWork(
+      RasterProcessingData& processingData,
+      const CesiumAsync::UrlResponseDataMap& responseDataMap,
+      TileWorkManager::Work* work);
 
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
@@ -142,9 +227,16 @@ private:
   std::vector<CesiumUtility::Credit> _tilesetCredits;
   RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection _overlayCollection;
+
+  // Thread safe shared pointer
+  std::shared_ptr<TileWorkManager> _pTileWorkManager;
+
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+
+  int32_t _rasterLoadsInProgress;
+  int32_t _loadedRastersCount;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;

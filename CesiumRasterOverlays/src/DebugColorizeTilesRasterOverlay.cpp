@@ -30,9 +30,10 @@ public:
             GeographicProjection(),
             GeographicProjection::computeMaximumProjectedRectangle()) {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override {
-    LoadedRasterOverlayImage result;
+  virtual CesiumAsync::Future<RasterLoadResult> loadTileImage(
+      const RasterOverlayTile& overlayTile,
+      const CesiumAsync::UrlResponseDataMap&) override {
+    RasterLoadResult result;
 
     // Indicate that there is no more detail available so that tiles won't get
     // refined on our behalf.
@@ -58,6 +59,20 @@ public:
     pixels[0] = color;
 
     return this->getAsyncSystem().createResolvedFuture(std::move(result));
+  }
+
+  virtual void getLoadTileImageWork(
+      const RasterOverlayTile&,
+      CesiumAsync::RequestData&,
+      RasterProcessingCallback& outCallback) override {
+    // There is no content request, just processing
+    outCallback = [](RasterOverlayTile& overlayTile,
+                     RasterOverlayTileProvider* provider,
+                     const CesiumAsync::UrlResponseDataMap& responsesByUrl) {
+      DebugTileProvider* thisProvider =
+          static_cast<DebugTileProvider*>(provider);
+      return thisProvider->loadTileImage(overlayTile, responsesByUrl);
+    };
   }
 };
 

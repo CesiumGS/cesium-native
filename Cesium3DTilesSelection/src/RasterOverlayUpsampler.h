@@ -8,6 +8,11 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
+  bool getLoadWork(
+      const Tile* pTile,
+      CesiumAsync::RequestData& outRequest,
+      TileLoaderCallback& outCallback) override;
+
   TileChildrenResult createTileChildren(const Tile& tile) override;
 };
 } // namespace Cesium3DTilesSelection

@@ -289,16 +289,30 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
   auto pMockTaskProcessor = std::make_shared<ThreadTaskProcessor>();
   CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
+  auto testEntry = pMockAssetAccessor->mockCompletedRequests.find("test");
+  assert(testEntry != pMockAssetAccessor->mockCompletedRequests.end());
+  const CesiumAsync::IAssetResponse* testResponse =
+      testEntry->second->response();
+  assert(testResponse);
+
+  CesiumAsync::UrlResponseDataMap additionalResponses;
+  auto bufferEntry = pMockAssetAccessor->mockCompletedRequests.find("buffer");
+  additionalResponses.emplace(
+      bufferEntry->first,
+      CesiumAsync::ResponseData{
+          bufferEntry->second.get(),
+          bufferEntry->second->response()});
+
   auto subtreeFuture = SubtreeAvailability::loadSubtree(
       ImplicitTileSubdivisionScheme::Quadtree,
       levelsInSubtree,
       asyncSystem,
-      pMockAssetAccessor,
       spdlog::default_logger(),
       "test",
-      {});
+      testResponse,
+      additionalResponses);
 
-  return waitForFuture(asyncSystem, std::move(subtreeFuture));
+  return waitForFuture(asyncSystem, std::move(subtreeFuture)).first;
 }
 } // namespace
 
@@ -557,10 +571,6 @@ TEST_CASE("Test parsing subtree format") {
         "test",
         CesiumAsync::HttpHeaders{},
         std::move(pMockResponse));
-    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
-        {"test", std::move(pMockRequest)}};
-    auto pMockAssetAccessor =
-        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
     // mock async system
     auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
@@ -570,13 +580,14 @@ TEST_CASE("Test parsing subtree format") {
         ImplicitTileSubdivisionScheme::Quadtree,
         maxSubtreeLevels,
         asyncSystem,
-        pMockAssetAccessor,
         spdlog::default_logger(),
         "test",
-        {});
+        pMockRequest->response(),
+        CesiumAsync::UrlResponseDataMap{});
 
     asyncSystem.dispatchMainThreadTasks();
-    auto parsedSubtree = subtreeFuture.wait();
+    SubtreeAvailability::LoadResult loadResult = subtreeFuture.wait();
+    std::optional<SubtreeAvailability>& parsedSubtree = loadResult.first;
     REQUIRE(parsedSubtree != std::nullopt);
 
     for (const auto& tileID : availableTileIDs) {
@@ -595,7 +606,6 @@ TEST_CASE("Test parsing subtree format") {
       CHECK(parsedSubtree->isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
-
     for (const auto& subtreeID : unavailableSubtreeIDs) {
       CHECK(!parsedSubtree->isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));

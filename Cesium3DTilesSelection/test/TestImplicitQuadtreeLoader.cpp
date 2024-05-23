@@ -51,9 +51,8 @@ TEST_CASE("Test implicit quadtree loader") {
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        CesiumAsync::UrlResponseDataMap{}};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -83,9 +82,8 @@ TEST_CASE("Test implicit quadtree loader") {
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        CesiumAsync::UrlResponseDataMap{}};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -131,13 +129,15 @@ TEST_CASE("Test implicit quadtree loader") {
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID{2, 1, 1});
 
+    CesiumAsync::UrlResponseDataMap responseDataMap;
+    pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
+
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        responseDataMap};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 
@@ -184,13 +184,15 @@ TEST_CASE("Test implicit quadtree loader") {
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID{2, 1, 1});
 
+    CesiumAsync::UrlResponseDataMap responseDataMap;
+    pMockedAssetAccessor->fillResponseDataMap(responseDataMap);
+
     TileLoadInput loadInput{
         tile,
         {},
         asyncSystem,
-        pMockedAssetAccessor,
         spdlog::default_logger(),
-        {}};
+        responseDataMap};
 
     auto tileLoadResultFuture = loader.loadTileContent(loadInput);
 

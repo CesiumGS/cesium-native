@@ -14,6 +14,7 @@ using namespace CesiumGltf;
 using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
+using namespace CesiumAsync;
 
 TEST_CASE("TileMapServiceRasterOverlay") {
   // Set up some mock resources for the raster overlay.
@@ -22,6 +23,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
   CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest;
+  UrlResponseDataMap responseDataMap;
   for (const auto& entry : std::filesystem::recursive_directory_iterator(
            dataDir / "Cesium_Logo_Color")) {
     if (!entry.is_regular_file())
@@ -37,6 +39,11 @@ TEST_CASE("TileMapServiceRasterOverlay") {
         url,
         CesiumAsync::HttpHeaders{},
         std::move(pResponse));
+
+    responseDataMap.emplace(
+        url,
+        ResponseData{pRequest.get(), pRequest->response()});
+
     mapUrlToRequest[url] = std::move(pRequest);
   }
 
@@ -70,7 +77,18 @@ TEST_CASE("TileMapServiceRasterOverlay") {
         pTileProvider->getCoverageRectangle(),
         glm::dvec2(256.0, 256.0));
     REQUIRE(pTile);
-    waitForFuture(asyncSystem, pTileProvider->loadTile(*pTile));
+
+    RequestData requestData;
+    RasterProcessingCallback rasterCallback;
+    pTileProvider->getLoadTileThrottledWork(
+        *pTile,
+        requestData,
+        rasterCallback);
+
+    auto loadFuture =
+        pTileProvider->loadTile(*pTile, responseDataMap, rasterCallback);
+
+    waitForFuture(asyncSystem, std::move(loadFuture));
 
     ImageCesium& image = pTile->getImage();
     CHECK(image.width > 0);

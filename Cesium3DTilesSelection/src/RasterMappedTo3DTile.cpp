@@ -211,17 +211,6 @@ void RasterMappedTo3DTile::detachFromTile(
   this->_state = AttachmentState::Unattached;
 }
 
-bool RasterMappedTo3DTile::loadThrottled() noexcept {
-  CESIUM_TRACE("RasterMappedTo3DTile::loadThrottled");
-  RasterOverlayTile* pLoading = this->getLoadingTile();
-  if (!pLoading) {
-    return true;
-  }
-
-  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  return provider.loadTileThrottled(*pLoading);
-}
-
 namespace {
 
 IntrusivePointer<RasterOverlayTile>
