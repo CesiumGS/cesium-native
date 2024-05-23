@@ -1,9 +1,9 @@
 #pragma once
 
 #include <glm/geometric.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <glm/gtx/quaternion.hpp>
 
 #include <cmath>
 #include <random>
@@ -12,16 +12,14 @@ namespace CesiumNativeTests {
 
 // Produce a random N-dimensional unit vector. Use a constant seed in order to
 // get a repeatable stream of vectors that can then be debugged!
-template <typename Vec>
-struct RandomUnitVectorGenerator {
+template <typename Vec> struct RandomUnitVectorGenerator {
   using value_type = typename Vec::value_type;
   std::mt19937 gen;
   std::uniform_real_distribution<value_type> dis;
 
   RandomUnitVectorGenerator()
-      : dis(
-          std::nextafter(static_cast<value_type>(-1), value_type()),
-          static_cast<value_type>(1)) {
+      : dis(std::nextafter(static_cast<value_type>(-1), value_type()),
+            static_cast<value_type>(1)) {
     gen.seed(42);
   }
 
@@ -40,8 +38,7 @@ struct RandomUnitVectorGenerator {
   }
 };
 
-template <typename T>
-struct RandomQuaternionGenerator {
+template <typename T> struct RandomQuaternionGenerator {
   RandomUnitVectorGenerator<glm::vec<4, T>> vecGenerator;
 
   glm::qua<T> operator()() {

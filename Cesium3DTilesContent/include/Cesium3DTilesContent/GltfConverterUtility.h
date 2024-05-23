@@ -32,7 +32,8 @@ typedef bool (rapidjson::Value::*ValuePredicate)() const;
 template <typename T> bool isValue(const rapidjson::Value& value);
 template <typename T> T getValue(const rapidjson::Value& value);
 
-template <typename T> std::optional<T> getOpt(const rapidjson::Value& value) {
+template <typename T>
+std::optional<T> getOptional(const rapidjson::Value& value) {
   if (isValue<T>(value)) {
     return std::make_optional(getValue<T>(value));
   }
