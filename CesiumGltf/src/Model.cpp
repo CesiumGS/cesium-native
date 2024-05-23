@@ -244,9 +244,7 @@ ErrorList Model::merge(Model&& rhs) {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       if (pMeshFeatures) {
         for (FeatureId& featureId : pMeshFeatures->featureIds) {
-          if (featureId.propertyTable) {
-            updateIndex(featureId.propertyTable, firstPropertyTable);
-          }
+          updateIndex(featureId.propertyTable, firstPropertyTable);
 
           if (featureId.texture) {
             updateIndex(featureId.texture->index, firstTexture);
