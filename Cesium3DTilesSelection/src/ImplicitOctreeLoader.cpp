@@ -118,14 +118,17 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
+        auto fail = [&]() {
+          return asyncSystem.createResolvedFuture(
+              TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+        };
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
           SPDLOG_LOGGER_ERROR(
               pLogger,
               "Did not receive a valid response for tile content {}",
               tileUrl);
-          return asyncSystem.createResolvedFuture(
-              TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+          return fail();
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -135,8 +138,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl);
-          return asyncSystem.createResolvedFuture(
-              TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+          return fail();
         }
 
         // find gltf converter
@@ -180,8 +182,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               });
         }
         // content type is not supported
-        return asyncSystem.createResolvedFuture(
-            TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+        return fail();
       });
 }
 } // namespace
