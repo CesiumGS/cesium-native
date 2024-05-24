@@ -30,7 +30,6 @@ using namespace CesiumUtility;
 #define DEFAULT_EPSILON 1e-6f
 
 TEST_CASE("Test forEachPrimitive") {
-
   Model model;
 
   model.scenes.resize(2);
@@ -88,9 +87,7 @@ TEST_CASE("Test forEachPrimitive") {
   node2.children = {3};
 
   std::memcpy(node2.matrix.data(), &parentNodeMatrix, sizeof(glm::dmat4));
-  scene1.nodes = {2};
   std::memcpy(node3.matrix.data(), &childNodeMatrix, sizeof(glm::dmat4));
-  node2.children = {3};
 
   model.meshes.resize(3);
   Mesh& mesh0 = model.meshes[0];
@@ -110,7 +107,6 @@ TEST_CASE("Test forEachPrimitive") {
   MeshPrimitive& primitive3 = mesh2.primitives.emplace_back();
 
   SECTION("Check that the correct primitives are iterated over.") {
-
     std::vector<MeshPrimitive*> iteratedPrimitives;
 
     model.forEachPrimitiveInScene(
@@ -189,7 +185,6 @@ TEST_CASE("Test forEachPrimitive") {
   }
 
   SECTION("Check the node transform") {
-
     std::vector<glm::dmat4> nodeTransforms;
 
     model.forEachPrimitiveInScene(
@@ -1380,5 +1375,164 @@ TEST_CASE("Model::forEachRootNodeInScene") {
       // This should not be called.
       CHECK(false);
     });
+  }
+}
+
+TEST_CASE("Model::forEachNodeInScene") {
+  Model m;
+
+  SECTION("with scenes and nodes") {
+    m.scenes.emplace_back();
+    m.scenes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    m.scenes.front().nodes.push_back(0);
+    m.scenes.front().nodes.push_back(1);
+    m.scenes.back().nodes.push_back(2);
+
+    m.nodes[2].children.push_back(3);
+
+    m.scene = 0;
+
+    glm::dmat4 parentNodeMatrix(
+        1.0,
+        6.0,
+        23.1,
+        10.3,
+        0.0,
+        3.0,
+        2.0,
+        1.0,
+        0.0,
+        4.5,
+        1.0,
+        0.0,
+        3.7,
+        0.0,
+        0.0,
+        1.0);
+
+    glm::dmat4 childNodeMatrix(
+        4.0,
+        0.0,
+        0.0,
+        3.0,
+        2.8,
+        2.0,
+        3.0,
+        2.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        5.3,
+        0.0,
+        1.0);
+
+    glm::dmat4 expectedNodeTransform = parentNodeMatrix * childNodeMatrix;
+
+    std::memcpy(
+        m.nodes[2].matrix.data(),
+        &parentNodeMatrix,
+        sizeof(glm::dmat4));
+    std::memcpy(m.nodes[3].matrix.data(), &childNodeMatrix, sizeof(glm::dmat4));
+
+    SECTION("it enumerates a specified scene") {
+      std::vector<Node*> visited;
+      m.forEachNodeInScene(
+          1,
+          [&visited,
+           &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+            CHECK(&m == &model);
+            visited.push_back(&node);
+          });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[2]);
+      CHECK(visited[1] == &m.nodes[3]);
+    }
+
+    SECTION("it enumerates the default scene") {
+      std::vector<Node*> visited;
+      m.forEachNodeInScene(
+          -1,
+          [&visited,
+           &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+            CHECK(&m == &model);
+            visited.push_back(&node);
+          });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[1]);
+    }
+
+    SECTION("it enumerates the first scene if there is no default") {
+      m.scene = -1;
+
+      std::vector<Node*> visited;
+      m.forEachNodeInScene(
+          -1,
+          [&visited,
+           &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+            CHECK(&m == &model);
+            visited.push_back(&node);
+          });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[1]);
+    }
+
+    SECTION("check the node transforms") {
+      std::vector<glm::dmat4> transforms;
+      m.forEachNodeInScene(
+          1,
+          [&transforms](
+              Model& /* model */,
+              Node& /* node */,
+              const glm::dmat4& transform) {
+            transforms.push_back(transform);
+          });
+
+      REQUIRE(transforms.size() == 2);
+      CHECK(transforms[0] == parentNodeMatrix);
+      CHECK(transforms[1] == expectedNodeTransform);
+    }
+  }
+
+  SECTION("with nodes only") {
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    // Check that it enumerates the first node.
+    std::vector<Node*> visited;
+    m.forEachNodeInScene(
+        -1,
+        [&visited,
+         &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+          CHECK(&m == &model);
+          visited.push_back(&node);
+        });
+
+    REQUIRE(visited.size() == 1);
+    CHECK(visited[0] == &m.nodes[0]);
+  }
+
+  SECTION("with no scenes or nodes") {
+    // Check that it enumerates nothing.
+    m.forEachNodeInScene(
+        -1,
+        [](Model& /* model */,
+           Node& /* node */,
+           const glm::dmat4& /* transform */) {
+          // This should not be called.
+          CHECK(false);
+        });
   }
 }
