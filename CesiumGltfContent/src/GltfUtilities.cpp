@@ -269,6 +269,44 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   return result;
 }
 
+namespace {
+
+size_t moveBufferContentWithoutRenumbering(
+    CesiumGltf::Buffer& destinationBuffer,
+    CesiumGltf::Buffer& sourceBuffer) {
+  // Assert that the byteLength and the size of the cesium data vector are in
+  // sync.
+  assert(sourceBuffer.byteLength == int64_t(sourceBuffer.cesium.data.size()));
+  assert(
+      destinationBuffer.byteLength ==
+      int64_t(destinationBuffer.cesium.data.size()));
+
+  // Copy the data to the destination and keep track of where we put it.
+  // Align each bufferView to an 8-byte boundary.
+  size_t start = destinationBuffer.cesium.data.size();
+
+  size_t alignmentRemainder = start % 8;
+  if (alignmentRemainder != 0) {
+    start += 8 - alignmentRemainder;
+  }
+
+  destinationBuffer.cesium.data.resize(start + sourceBuffer.cesium.data.size());
+  std::memcpy(
+      destinationBuffer.cesium.data.data() + start,
+      sourceBuffer.cesium.data.data(),
+      sourceBuffer.cesium.data.size());
+
+  sourceBuffer.byteLength = 0;
+  sourceBuffer.cesium.data.clear();
+  sourceBuffer.cesium.data.shrink_to_fit();
+
+  destinationBuffer.byteLength = int64_t(destinationBuffer.cesium.data.size());
+
+  return start;
+}
+
+} // namespace
+
 /*static*/ void GltfUtilities::collapseToSingleBuffer(CesiumGltf::Model& gltf) {
   if (gltf.buffers.empty())
     return;
@@ -294,34 +332,8 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
       continue;
     }
 
-    assert(sourceBuffer.byteLength == int64_t(sourceBuffer.cesium.data.size()));
-    assert(
-        destinationBuffer.byteLength ==
-        int64_t(destinationBuffer.cesium.data.size()));
-
-    // Copy the data to the destination and keep track of where we put it.
-    // Align each bufferView to an 8-byte boundary.
-    size_t start = destinationBuffer.cesium.data.size();
-
-    size_t alignmentRemainder = start % 8;
-    if (alignmentRemainder != 0) {
-      start += 8 - alignmentRemainder;
-    }
-
-    destinationBuffer.cesium.data.resize(
-        start + sourceBuffer.cesium.data.size());
-    std::memcpy(
-        destinationBuffer.cesium.data.data() + start,
-        sourceBuffer.cesium.data.data(),
-        sourceBuffer.cesium.data.size());
-
-    sourceBuffer.byteLength = 0;
-    sourceBuffer.cesium.data.clear();
-    sourceBuffer.cesium.data.shrink_to_fit();
-
-    destinationBuffer.byteLength =
-        int64_t(destinationBuffer.cesium.data.size());
-
+    size_t start =
+        moveBufferContentWithoutRenumbering(destinationBuffer, sourceBuffer);
     bufferStarts[i] = int64_t(start);
   }
 
@@ -365,11 +377,6 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
     CesiumGltf::Model& gltf,
     CesiumGltf::Buffer& destination,
     CesiumGltf::Buffer& source) {
-  // Assert that the byteLength and the size of the cesium data vector are in
-  // sync.
-  assert(source.byteLength == int64_t(source.cesium.data.size()));
-  assert(destination.byteLength == int64_t(destination.cesium.data.size()));
-
   int64_t sourceIndex = &source - &gltf.buffers[0];
   int64_t destinationIndex = &destination - &gltf.buffers[0];
 
@@ -381,26 +388,7 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
     return;
   }
 
-  // Copy the data to the destination and keep track of where we put it.
-  // Align each bufferView to an 8-byte boundary.
-  size_t start = destination.cesium.data.size();
-
-  size_t alignmentRemainder = start % 8;
-  if (alignmentRemainder != 0) {
-    start += 8 - alignmentRemainder;
-  }
-
-  destination.cesium.data.resize(start + source.cesium.data.size());
-  std::memcpy(
-      destination.cesium.data.data() + start,
-      source.cesium.data.data(),
-      source.cesium.data.size());
-
-  source.byteLength = 0;
-  source.cesium.data.clear();
-  source.cesium.data.shrink_to_fit();
-
-  destination.byteLength = int64_t(destination.cesium.data.size());
+  size_t start = moveBufferContentWithoutRenumbering(destination, source);
 
   // Update all the bufferViews that previously referred to the source Buffer to
   // refer to the destination Buffer instead.
