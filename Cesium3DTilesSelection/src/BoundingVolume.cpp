@@ -78,7 +78,7 @@ std::optional<GlobeRectangle> estimateGlobeRectangle(
   struct Operation {
     const CesiumGeospatial::Ellipsoid& ellipsoid;
 
-    Operation(const Ellipsoid& ellipsoid) : ellipsoid(ellipsoid) {}
+    Operation(const Ellipsoid& ellipsoid_) : ellipsoid(ellipsoid_) {}
 
     std::optional<GlobeRectangle>
     operator()(const BoundingSphere& boundingSphere) {
