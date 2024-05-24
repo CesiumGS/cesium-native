@@ -217,7 +217,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    */
   template <typename T>
   static T* getSafe(std::vector<T>* pItems, int32_t index) noexcept {
-    if (index < 0 || index >= pItems->size()) {
+    if (index < 0 || size_t(index) >= pItems->size()) {
       return nullptr;
     } else {
       return &(*pItems)[size_t(index)];
