@@ -1,9 +1,15 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
 
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
+#include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
 
 #include <catch2/catch.hpp>
 #include <glm/common.hpp>
@@ -24,7 +30,6 @@ using namespace CesiumUtility;
 #define DEFAULT_EPSILON 1e-6f
 
 TEST_CASE("Test forEachPrimitive") {
-
   Model model;
 
   model.scenes.resize(2);
@@ -82,9 +87,7 @@ TEST_CASE("Test forEachPrimitive") {
   node2.children = {3};
 
   std::memcpy(node2.matrix.data(), &parentNodeMatrix, sizeof(glm::dmat4));
-  scene1.nodes = {2};
   std::memcpy(node3.matrix.data(), &childNodeMatrix, sizeof(glm::dmat4));
-  node2.children = {3};
 
   model.meshes.resize(3);
   Mesh& mesh0 = model.meshes[0];
@@ -104,7 +107,6 @@ TEST_CASE("Test forEachPrimitive") {
   MeshPrimitive& primitive3 = mesh2.primitives.emplace_back();
 
   SECTION("Check that the correct primitives are iterated over.") {
-
     std::vector<MeshPrimitive*> iteratedPrimitives;
 
     model.forEachPrimitiveInScene(
@@ -183,7 +185,6 @@ TEST_CASE("Test forEachPrimitive") {
   }
 
   SECTION("Check the node transform") {
-
     std::vector<glm::dmat4> nodeTransforms;
 
     model.forEachPrimitiveInScene(
@@ -229,22 +230,22 @@ static Model createCubeGltf() {
 
                                       3, 2, 6, 3, 6, 7};
 
-  size_t vertexbyteStride = sizeof(glm::vec3);
-  size_t vertexbyteLength = 8 * vertexbyteStride;
+  size_t vertexByteStride = sizeof(glm::vec3);
+  size_t vertexByteLength = 8 * vertexByteStride;
 
   Buffer& vertexBuffer = model.buffers.emplace_back();
-  vertexBuffer.byteLength = static_cast<int64_t>(vertexbyteLength);
-  vertexBuffer.cesium.data.resize(vertexbyteLength);
+  vertexBuffer.byteLength = static_cast<int64_t>(vertexByteLength);
+  vertexBuffer.cesium.data.resize(vertexByteLength);
   std::memcpy(
       vertexBuffer.cesium.data.data(),
       &cubeVertices[0],
-      vertexbyteLength);
+      vertexByteLength);
 
   BufferView& vertexBufferView = model.bufferViews.emplace_back();
   vertexBufferView.buffer = 0;
   vertexBufferView.byteLength = vertexBuffer.byteLength;
   vertexBufferView.byteOffset = 0;
-  vertexBufferView.byteStride = static_cast<int64_t>(vertexbyteStride);
+  vertexBufferView.byteStride = static_cast<int64_t>(vertexByteStride);
   vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   Accessor& vertexAccessor = model.accessors.emplace_back();
@@ -1143,6 +1144,157 @@ TEST_CASE("Model::merge") {
       }
     }
   }
+
+  SECTION("updates image index in KHR_texture_basisu") {
+    Model m1;
+    m1.images.emplace_back();
+
+    Model m2;
+    m2.images.emplace_back();
+    Texture& texture = m2.textures.emplace_back();
+    ExtensionKhrTextureBasisu& extension =
+        texture.addExtension<ExtensionKhrTextureBasisu>();
+    extension.source = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.images.size() == 2);
+    REQUIRE(m1.textures.size() == 1);
+
+    ExtensionKhrTextureBasisu* pMerged =
+        m1.textures[0].getExtension<ExtensionKhrTextureBasisu>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->source == 1);
+  }
+
+  SECTION("updates image index in EXT_texture_webp") {
+    Model m1;
+    m1.images.emplace_back();
+
+    Model m2;
+    m2.images.emplace_back();
+    Texture& texture = m2.textures.emplace_back();
+    ExtensionTextureWebp& extension =
+        texture.addExtension<ExtensionTextureWebp>();
+    extension.source = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.images.size() == 2);
+    REQUIRE(m1.textures.size() == 1);
+
+    ExtensionTextureWebp* pMerged =
+        m1.textures[0].getExtension<ExtensionTextureWebp>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->source == 1);
+  }
+
+  SECTION("updates accessor index in CESIUM_primitive_outline") {
+    Model m1;
+    m1.accessors.emplace_back();
+
+    Model m2;
+    m2.accessors.emplace_back();
+    MeshPrimitive& primitive =
+        m2.meshes.emplace_back().primitives.emplace_back();
+    ExtensionCesiumPrimitiveOutline& extension =
+        primitive.addExtension<ExtensionCesiumPrimitiveOutline>();
+    extension.indices = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.accessors.size() == 2);
+    REQUIRE(m1.meshes.size() == 1);
+    REQUIRE(m1.meshes[0].primitives.size() == 1);
+
+    ExtensionCesiumPrimitiveOutline* pMerged =
+        m1.meshes[0]
+            .primitives[0]
+            .getExtension<ExtensionCesiumPrimitiveOutline>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->indices == 1);
+  }
+
+  SECTION("updates accessor indices in CESIUM_tile_edges") {
+    Model m1;
+    m1.accessors.emplace_back();
+
+    Model m2;
+    m2.accessors.emplace_back();
+    MeshPrimitive& primitive =
+        m2.meshes.emplace_back().primitives.emplace_back();
+    ExtensionCesiumTileEdges& extension =
+        primitive.addExtension<ExtensionCesiumTileEdges>();
+    extension.left = 0;
+    extension.bottom = 0;
+    extension.right = 0;
+    extension.top = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.accessors.size() == 2);
+    REQUIRE(m1.meshes.size() == 1);
+    REQUIRE(m1.meshes[0].primitives.size() == 1);
+
+    ExtensionCesiumTileEdges* pMerged =
+        m1.meshes[0].primitives[0].getExtension<ExtensionCesiumTileEdges>();
+    REQUIRE(pMerged);
+    CHECK(pMerged->left == 1);
+    CHECK(pMerged->bottom == 1);
+    CHECK(pMerged->right == 1);
+    CHECK(pMerged->top == 1);
+  }
+
+  SECTION("updates accessor indices in EXT_mesh_gpu_instancing") {
+    Model m1;
+    m1.accessors.emplace_back();
+
+    Model m2;
+    m2.accessors.emplace_back();
+    Node& node = m2.nodes.emplace_back();
+
+    ExtensionExtMeshGpuInstancing& extension =
+        node.addExtension<ExtensionExtMeshGpuInstancing>();
+    extension.attributes["foo"] = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.accessors.size() == 2);
+    REQUIRE(m1.nodes.size() == 1);
+
+    ExtensionExtMeshGpuInstancing* pMerged =
+        m1.nodes[0].getExtension<ExtensionExtMeshGpuInstancing>();
+    REQUIRE(pMerged);
+
+    auto it = pMerged->attributes.find("foo");
+    REQUIRE(it != pMerged->attributes.end());
+    CHECK(it->second == 1);
+  }
+
+  SECTION("updates buffer indices in EXT_meshopt_compression") {
+    Model m1;
+    m1.buffers.emplace_back();
+
+    Model m2;
+    m2.buffers.emplace_back();
+    BufferView& bufferView = m2.bufferViews.emplace_back();
+
+    ExtensionBufferViewExtMeshoptCompression& extension =
+        bufferView.addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    extension.buffer = 0;
+
+    m1.merge(std::move(m2));
+
+    REQUIRE(m1.buffers.size() == 2);
+    REQUIRE(m1.bufferViews.size() == 1);
+
+    ExtensionBufferViewExtMeshoptCompression* pMerged =
+        m1.bufferViews[0]
+            .getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    REQUIRE(pMerged);
+
+    CHECK(pMerged->buffer == 1);
+  }
 }
 
 TEST_CASE("Model::forEachRootNodeInScene") {
@@ -1223,5 +1375,164 @@ TEST_CASE("Model::forEachRootNodeInScene") {
       // This should not be called.
       CHECK(false);
     });
+  }
+}
+
+TEST_CASE("Model::forEachNodeInScene") {
+  Model m;
+
+  SECTION("with scenes and nodes") {
+    m.scenes.emplace_back();
+    m.scenes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    m.scenes.front().nodes.push_back(0);
+    m.scenes.front().nodes.push_back(1);
+    m.scenes.back().nodes.push_back(2);
+
+    m.nodes[2].children.push_back(3);
+
+    m.scene = 0;
+
+    glm::dmat4 parentNodeMatrix(
+        1.0,
+        6.0,
+        23.1,
+        10.3,
+        0.0,
+        3.0,
+        2.0,
+        1.0,
+        0.0,
+        4.5,
+        1.0,
+        0.0,
+        3.7,
+        0.0,
+        0.0,
+        1.0);
+
+    glm::dmat4 childNodeMatrix(
+        4.0,
+        0.0,
+        0.0,
+        3.0,
+        2.8,
+        2.0,
+        3.0,
+        2.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        5.3,
+        0.0,
+        1.0);
+
+    glm::dmat4 expectedNodeTransform = parentNodeMatrix * childNodeMatrix;
+
+    std::memcpy(
+        m.nodes[2].matrix.data(),
+        &parentNodeMatrix,
+        sizeof(glm::dmat4));
+    std::memcpy(m.nodes[3].matrix.data(), &childNodeMatrix, sizeof(glm::dmat4));
+
+    SECTION("it enumerates a specified scene") {
+      std::vector<Node*> visited;
+      m.forEachNodeInScene(
+          1,
+          [&visited,
+           &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+            CHECK(&m == &model);
+            visited.push_back(&node);
+          });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[2]);
+      CHECK(visited[1] == &m.nodes[3]);
+    }
+
+    SECTION("it enumerates the default scene") {
+      std::vector<Node*> visited;
+      m.forEachNodeInScene(
+          -1,
+          [&visited,
+           &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+            CHECK(&m == &model);
+            visited.push_back(&node);
+          });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[1]);
+    }
+
+    SECTION("it enumerates the first scene if there is no default") {
+      m.scene = -1;
+
+      std::vector<Node*> visited;
+      m.forEachNodeInScene(
+          -1,
+          [&visited,
+           &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+            CHECK(&m == &model);
+            visited.push_back(&node);
+          });
+
+      REQUIRE(visited.size() == 2);
+      CHECK(visited[0] == &m.nodes[0]);
+      CHECK(visited[1] == &m.nodes[1]);
+    }
+
+    SECTION("check the node transforms") {
+      std::vector<glm::dmat4> transforms;
+      m.forEachNodeInScene(
+          1,
+          [&transforms](
+              Model& /* model */,
+              Node& /* node */,
+              const glm::dmat4& transform) {
+            transforms.push_back(transform);
+          });
+
+      REQUIRE(transforms.size() == 2);
+      CHECK(transforms[0] == parentNodeMatrix);
+      CHECK(transforms[1] == expectedNodeTransform);
+    }
+  }
+
+  SECTION("with nodes only") {
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+    m.nodes.emplace_back();
+
+    // Check that it enumerates the first node.
+    std::vector<Node*> visited;
+    m.forEachNodeInScene(
+        -1,
+        [&visited,
+         &m](Model& model, Node& node, const glm::dmat4& /* transform */) {
+          CHECK(&m == &model);
+          visited.push_back(&node);
+        });
+
+    REQUIRE(visited.size() == 1);
+    CHECK(visited[0] == &m.nodes[0]);
+  }
+
+  SECTION("with no scenes or nodes") {
+    // Check that it enumerates nothing.
+    m.forEachNodeInScene(
+        -1,
+        [](Model& /* model */,
+           Node& /* node */,
+           const glm::dmat4& /* transform */) {
+          // This should not be called.
+          CHECK(false);
+        });
   }
 }

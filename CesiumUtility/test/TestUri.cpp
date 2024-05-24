@@ -96,3 +96,65 @@ TEST_CASE("Uri::resolve") {
           false,
           false) == "http://www.example.com/page/test");
 }
+
+TEST_CASE("Uri::escape") {
+  CHECK(Uri::escape("foo") == "foo");
+  CHECK(Uri::escape("foo/bar") == "foo%2Fbar");
+  CHECK(Uri::escape("🤞") == "%F0%9F%A4%9E");
+}
+
+TEST_CASE("Uri::unescape") {
+  CHECK(Uri::unescape("foo") == "foo");
+  CHECK(Uri::unescape("foo%2Fbar") == "foo/bar");
+  CHECK(Uri::unescape("%F0%9F%A4%9E") == "🤞");
+}
+
+TEST_CASE("Uri::unixPathToUriPath") {
+  CHECK(Uri::unixPathToUriPath("/wat") == "/wat");
+  CHECK(Uri::unixPathToUriPath("wat") == "wat");
+  CHECK(Uri::unixPathToUriPath("wat/the") == "wat/the");
+  CHECK(Uri::unixPathToUriPath("/foo/bar") == "/foo/bar");
+  CHECK(Uri::unixPathToUriPath("/some:file") == "/some%3Afile");
+  CHECK(Uri::unixPathToUriPath("/🤞/😱/") == "/%F0%9F%A4%9E/%F0%9F%98%B1/");
+}
+
+TEST_CASE("Uri::windowsPathToUriPath") {
+  CHECK(Uri::windowsPathToUriPath("c:\\wat") == "/c:/wat");
+  CHECK(Uri::windowsPathToUriPath("c:/wat") == "/c:/wat");
+  CHECK(Uri::windowsPathToUriPath("wat") == "wat");
+  CHECK(Uri::windowsPathToUriPath("/foo/bar") == "/foo/bar");
+  CHECK(Uri::windowsPathToUriPath("d:\\foo/bar\\") == "/d:/foo/bar/");
+  CHECK(Uri::windowsPathToUriPath("e:\\some:file") == "/e:/some%3Afile");
+  CHECK(
+      Uri::windowsPathToUriPath("c:/🤞/😱/") ==
+      "/c:/%F0%9F%A4%9E/%F0%9F%98%B1/");
+  CHECK(
+      Uri::windowsPathToUriPath("notadriveletter:\\file") ==
+      "notadriveletter%3A/file");
+  CHECK(
+      Uri::windowsPathToUriPath("\\notadriveletter:\\file") ==
+      "/notadriveletter%3A/file");
+}
+
+TEST_CASE("Uri::uriPathToUnixPath") {
+  CHECK(Uri::uriPathToUnixPath("/wat") == "/wat");
+  CHECK(Uri::uriPathToUnixPath("wat") == "wat");
+  CHECK(Uri::uriPathToUnixPath("wat/the") == "wat/the");
+  CHECK(Uri::uriPathToUnixPath("/foo/bar") == "/foo/bar");
+  CHECK(Uri::uriPathToUnixPath("/some%3Afile") == "/some:file");
+  CHECK(Uri::uriPathToUnixPath("/%F0%9F%A4%9E/%F0%9F%98%B1/") == "/🤞/😱/");
+}
+
+TEST_CASE("Uri::uriPathToWindowsPath") {
+  CHECK(Uri::uriPathToWindowsPath("/c:/wat") == "c:\\wat");
+  CHECK(Uri::uriPathToWindowsPath("wat") == "wat");
+  CHECK(Uri::uriPathToWindowsPath("/foo/bar") == "\\foo\\bar");
+  CHECK(Uri::uriPathToWindowsPath("/d:/foo/bar/") == "d:\\foo\\bar\\");
+  CHECK(Uri::uriPathToWindowsPath("/e:/some%3Afile") == "e:\\some:file");
+  CHECK(
+      Uri::uriPathToWindowsPath("/c:/%F0%9F%A4%9E/%F0%9F%98%B1/") ==
+      "c:\\🤞\\😱\\");
+  CHECK(
+      Uri::uriPathToWindowsPath("/notadriveletter:/file") ==
+      "\\notadriveletter:\\file");
+}
