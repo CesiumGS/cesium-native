@@ -2,8 +2,8 @@
 
 #include "Library.h"
 
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 
 #include <functional>
 #include <memory>
