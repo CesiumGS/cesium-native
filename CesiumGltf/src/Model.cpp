@@ -480,19 +480,18 @@ void forEachPrimitiveInNodeObject(
   glm::dmat4x4 nodeTransform =
       transform * getNodeTransform(node).value_or(glm::dmat4x4(1.0));
 
-  const int meshId = node.mesh;
-  if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
-    const Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
+  const int32_t meshId = node.mesh;
+  if (meshId >= 0 && size_t(meshId) < model.meshes.size()) {
+    const Mesh& mesh = model.meshes[size_t(meshId)];
     forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
   }
 
-  for (const int childNodeId : node.children) {
-    if (childNodeId >= 0 &&
-        childNodeId < static_cast<int>(model.nodes.size())) {
+  for (const int32_t childNodeId : node.children) {
+    if (childNodeId >= 0 && size_t(childNodeId) < model.nodes.size()) {
       forEachPrimitiveInNodeObject(
           nodeTransform,
           model,
-          model.nodes[static_cast<size_t>(childNodeId)],
+          model.nodes[size_t(childNodeId)],
           callback);
     }
   }
@@ -510,13 +509,12 @@ void forEachNode(
 
   callback(model, node, nodeTransform);
 
-  for (const int childNodeId : node.children) {
-    if (childNodeId >= 0 &&
-        childNodeId < static_cast<int>(model.nodes.size())) {
+  for (const int32_t childNodeId : node.children) {
+    if (childNodeId >= 0 && size_t(childNodeId) < model.nodes.size()) {
       forEachNode(
           nodeTransform,
           model,
-          model.nodes[static_cast<size_t>(childNodeId)],
+          model.nodes[size_t(childNodeId)],
           callback);
     }
   }
@@ -539,7 +537,7 @@ void forEachNodeInSceneObject(
 } // namespace
 
 void Model::forEachRootNodeInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachRootNodeInSceneCallback>&& callback) {
   return const_cast<const Model*>(this)->forEachRootNodeInScene(
       sceneID,
@@ -549,23 +547,18 @@ void Model::forEachRootNodeInScene(
 }
 
 void Model::forEachRootNodeInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachRootNodeInSceneConstCallback>&& callback) const {
   if (sceneID >= 0) {
     // Use the user-specified scene if it exists.
-    if (sceneID < static_cast<int>(this->scenes.size())) {
-      forEachNodeInSceneObject(
-          *this,
-          this->scenes[static_cast<size_t>(sceneID)],
-          callback);
+    if (size_t(sceneID) < this->scenes.size()) {
+      forEachNodeInSceneObject(*this, this->scenes[size_t(sceneID)], callback);
     }
-  } else if (
-      this->scene >= 0 &&
-      this->scene < static_cast<int32_t>(this->scenes.size())) {
+  } else if (this->scene >= 0 && size_t(this->scene) < this->scenes.size()) {
     // Use the default scene
     forEachNodeInSceneObject(
         *this,
-        this->scenes[static_cast<size_t>(this->scene)],
+        this->scenes[size_t(this->scene)],
         callback);
   } else if (!this->scenes.empty()) {
     // There's no default, so use the first scene
@@ -578,7 +571,7 @@ void Model::forEachRootNodeInScene(
 }
 
 void Model::forEachNodeInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachNodeInSceneCallback>&& callback) {
   return const_cast<const Model*>(this)->forEachNodeInScene(
       sceneID,
@@ -591,7 +584,7 @@ void Model::forEachNodeInScene(
 }
 
 void Model::forEachNodeInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachNodeInSceneConstCallback>&& callback) const {
   this->forEachRootNodeInScene(
       sceneID,
@@ -601,7 +594,7 @@ void Model::forEachNodeInScene(
 }
 
 void Model::forEachPrimitiveInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachPrimitiveInSceneCallback>&& callback) {
   return const_cast<const Model*>(this)->forEachPrimitiveInScene(
       sceneID,
@@ -621,7 +614,7 @@ void Model::forEachPrimitiveInScene(
 }
 
 void Model::forEachPrimitiveInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const {
   bool anythingVisited = false;
   this->forEachRootNodeInScene(
@@ -809,28 +802,26 @@ void generateSmoothNormals(
 
   const size_t normalBufferId = gltf.buffers.size();
   Buffer& normalBuffer = gltf.buffers.emplace_back();
-  normalBuffer.byteLength = static_cast<int64_t>(normalBufferSize);
+  normalBuffer.byteLength = int64_t(normalBufferSize);
   normalBuffer.cesium.data = std::move(normalByteBuffer);
 
   const size_t normalBufferViewId = gltf.bufferViews.size();
   BufferView& normalBufferView = gltf.bufferViews.emplace_back();
-  normalBufferView.buffer = static_cast<int32_t>(normalBufferId);
-  normalBufferView.byteLength = static_cast<int64_t>(normalBufferSize);
+  normalBufferView.buffer = int32_t(normalBufferId);
+  normalBufferView.byteLength = int64_t(normalBufferSize);
   normalBufferView.byteOffset = 0;
-  normalBufferView.byteStride = static_cast<int64_t>(normalBufferStride);
+  normalBufferView.byteStride = int64_t(normalBufferStride);
   normalBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   const size_t normalAccessorId = gltf.accessors.size();
   Accessor& normalAccessor = gltf.accessors.emplace_back();
   normalAccessor.byteOffset = 0;
-  normalAccessor.bufferView = static_cast<int32_t>(normalBufferViewId);
+  normalAccessor.bufferView = int32_t(normalBufferViewId);
   normalAccessor.componentType = Accessor::ComponentType::FLOAT;
   normalAccessor.count = positionView.size();
   normalAccessor.type = Accessor::Type::VEC3;
 
-  primitive.attributes.emplace(
-      "NORMAL",
-      static_cast<int32_t>(normalAccessorId));
+  primitive.attributes.emplace("NORMAL", int32_t(normalAccessorId));
 }
 
 void generateSmoothNormals(
@@ -894,18 +885,17 @@ void Model::generateMissingNormalsSmooth() {
           return;
         }
 
-        const int positionAccessorId = positionIt->second;
+        const int32_t positionAccessorId = positionIt->second;
         const AccessorView<glm::vec3> positionView(gltf, positionAccessorId);
         if (positionView.status() != AccessorViewStatus::Valid) {
           return;
         }
 
         if (primitive.indices < 0 ||
-            static_cast<size_t>(primitive.indices) >= gltf.accessors.size()) {
+            size_t(primitive.indices) >= gltf.accessors.size()) {
           generateSmoothNormals(gltf, primitive, positionView, std::nullopt);
         } else {
-          Accessor& indexAccessor =
-              gltf.accessors[static_cast<size_t>(primitive.indices)];
+          Accessor& indexAccessor = gltf.accessors[size_t(primitive.indices)];
           generateSmoothNormals(gltf, primitive, positionView, indexAccessor);
         }
       });

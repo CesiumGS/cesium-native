@@ -57,12 +57,12 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * @param callback The callback to apply
    */
   void forEachRootNodeInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachRootNodeInSceneCallback>&& callback);
 
   /** @copydoc Gltf::forEachRootNodeInScene() */
   void forEachRootNodeInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachRootNodeInSceneConstCallback>&& callback) const;
 
   /**
@@ -94,7 +94,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * @param callback The callback to apply
    */
   void forEachNodeInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachNodeInSceneCallback>&& callback);
 
   /**
@@ -107,7 +107,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
 
   /** @copydoc Gltf::forEachNodeInScene() */
   void forEachNodeInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachNodeInSceneConstCallback>&& callback) const;
 
   /**
@@ -142,7 +142,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * @param callback The callback to apply
    */
   void forEachPrimitiveInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachPrimitiveInSceneCallback>&& callback);
 
   /**
@@ -157,7 +157,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
 
   /** @copydoc Gltf::forEachPrimitiveInScene() */
   void forEachPrimitiveInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const;
 
   /**
@@ -178,10 +178,10 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   template <typename T>
   static const T& getSafe(const std::vector<T>& items, int32_t index) {
     static T defaultObject;
-    if (index < 0 || static_cast<size_t>(index) >= items.size()) {
+    if (index < 0 || size_t(index) >= items.size()) {
       return defaultObject;
     } else {
-      return items[static_cast<size_t>(index)];
+      return items[size_t(index)];
     }
   }
 
@@ -198,10 +198,10 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   template <typename T>
   static const T*
   getSafe(const std::vector<T>* pItems, int32_t index) noexcept {
-    if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
+    if (index < 0 || size_t(index) >= pItems->size()) {
       return nullptr;
     } else {
-      return &(*pItems)[static_cast<size_t>(index)];
+      return &(*pItems)[size_t(index)];
     }
   }
 
@@ -217,10 +217,10 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    */
   template <typename T>
   static T* getSafe(std::vector<T>* pItems, int32_t index) noexcept {
-    if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
+    if (index < 0 || index >= pItems->size()) {
       return nullptr;
     } else {
-      return &(*pItems)[static_cast<size_t>(index)];
+      return &(*pItems)[size_t(index)];
     }
   }
 
