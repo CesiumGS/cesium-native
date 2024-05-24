@@ -135,7 +135,7 @@ GltfConverters::ConverterFunction GltfConverters::getConverterByMagic(
   return nullptr;
 }
 
-CesiumAsync::Future<ByteResult>
+CesiumAsync::Future<AssetFetcherResult>
 AssetFetcher::get(const std::string& relativeUrl) const {
   auto resolvedUrl = Uri::resolve(baseUrl, relativeUrl);
   return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
@@ -144,28 +144,31 @@ AssetFetcher::get(const std::string& relativeUrl) const {
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
             const CesiumAsync::IAssetResponse* pResponse =
                 pCompletedRequest->response();
-            ByteResult byteResult;
+            AssetFetcherResult assetFetcherResult;
             const auto& url = pCompletedRequest->url();
             if (!pResponse) {
-              byteResult.errorList.emplaceError(fmt::format(
+              assetFetcherResult.errorList.emplaceError(fmt::format(
                   "Did not receive a valid response for asset {}",
                   url));
-              return asyncSystem.createResolvedFuture(std::move(byteResult));
+              return asyncSystem.createResolvedFuture(
+                  std::move(assetFetcherResult));
             }
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              byteResult.errorList.emplaceError(fmt::format(
+              assetFetcherResult.errorList.emplaceError(fmt::format(
                   "Received status code {} for asset {}",
                   statusCode,
                   url));
-              return asyncSystem.createResolvedFuture(std::move(byteResult));
+              return asyncSystem.createResolvedFuture(
+                  std::move(assetFetcherResult));
             }
             gsl::span<const std::byte> asset = pResponse->data();
             std::copy(
                 asset.begin(),
                 asset.end(),
-                std::back_inserter(byteResult.bytes));
-            return asyncSystem.createResolvedFuture(std::move(byteResult));
+                std::back_inserter(assetFetcherResult.bytes));
+            return asyncSystem.createResolvedFuture(
+                std::move(assetFetcherResult));
           });
 }
 } // namespace Cesium3DTilesContent

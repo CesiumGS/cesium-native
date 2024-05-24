@@ -15,7 +15,7 @@
 
 namespace Cesium3DTilesContent {
 
-struct ByteResult {
+struct AssetFetcherResult {
   std::vector<std::byte> bytes;
   CesiumUtility::ErrorList errorList;
 };
@@ -37,7 +37,8 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
         tileTransform(tileTransform_),
         requestHeaders(requestHeaders_) {}
 
-  CesiumAsync::Future<ByteResult> get(const std::string& relativeUrl) const;
+  CesiumAsync::Future<AssetFetcherResult>
+  get(const std::string& relativeUrl) const;
 
   const CesiumAsync::AsyncSystem& asyncSystem;
   const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
