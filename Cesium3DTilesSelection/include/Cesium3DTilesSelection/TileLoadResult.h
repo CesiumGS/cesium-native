@@ -122,6 +122,11 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   TileLoadResultState state;
 
   /**
+   * The ellipsoid that this tile uses.
+   */
+  std::shared_ptr<CesiumGeospatial::Ellipsoid> ellipsoid = nullptr;
+
+  /**
    * @brief Create a result with Failed state
    *
    * @param pCompletedRequest The failed request
