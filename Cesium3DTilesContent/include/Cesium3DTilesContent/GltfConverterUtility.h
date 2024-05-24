@@ -93,6 +93,13 @@ int32_t createAccessorInGltf(
     const int64_t count,
     const std::string type);
 
+/**
+ * Applies the given relative-to-center (RTC) translation to the transforms of
+ * all nodes in the glTF. This is useful in converting i3dm files, where the RTC
+ * translation must be applied to the model before the i3dm instance
+ * transform. It's also the 3D Tiles 1.1 "way" to do away with RTC and encode it
+ * directly in the glTF.
+ */
 void applyRtcToNodes(CesiumGltf::Model& gltf, const glm::dvec3& rtc);
 
 template <typename GlmType, typename GLTFType>

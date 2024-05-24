@@ -608,7 +608,7 @@ const size_t scaleOffset = rotOffset + sizeof(glm::quat);
 const size_t totalStride =
     sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::vec3);
 
-void copyToBuffer(
+void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
@@ -621,13 +621,24 @@ void copyToBuffer(
   std::memcpy(bufferLoc + scaleOffset, &fscale, sizeof(fscale));
 }
 
-void copyToBuffer(
+void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
     std::vector<std::byte>& bufferData,
     size_t i) {
-  copyToBuffer(position, rotation, scale, &bufferData[i * totalStride]);
+  copyInstanceToBuffer(position, rotation, scale, &bufferData[i * totalStride]);
+}
+
+void copyInstanceToBuffer(
+    const glm::dmat4& instanceTransform,
+    std::vector<std::byte>& bufferData,
+    size_t i) {
+  glm::dvec3 position, scale, skew;
+  glm::dquat rotation;
+  glm::dvec4 perspective;
+  decompose(instanceTransform, scale, rotation, position, skew, perspective);
+  copyInstanceToBuffer(position, rotation, scale, bufferData, i);
 }
 
 void instantiateGltfInstances(
@@ -656,54 +667,50 @@ void instantiateGltfInstances(
           Mesh&,
           MeshPrimitive&,
           const glm::dmat4& transform) {
-        auto [nodeItr, notSeen] = meshNodes.insert(&node);
-        if (!notSeen) {
+        auto [nodeItr, inserted] = meshNodes.insert(&node);
+        if (!inserted) {
           return;
         }
-        std::vector<glm::dmat4> existingInstances{glm::dmat4(1.0)};
+        std::vector<glm::dmat4> modelInstanceTransforms{glm::dmat4(1.0)};
         auto& gpuExt = node.addExtension<ExtensionExtMeshGpuInstancing>();
         if (!gpuExt.attributes.empty()) {
           // The model already has instances! We will need to create the outer
           // product of these instances and those coming from i3dm.
-          existingInstances = getMeshGpuInstancingTransforms(
+          modelInstanceTransforms = getMeshGpuInstancingTransforms(
               *result.model,
               gpuExt,
               result.errors);
-          if (numInstances * existingInstances.size() >
+          if (numInstances * modelInstanceTransforms.size() >
               std::numeric_limits<uint32_t>::max()) {
             result.errors.emplaceError(fmt::format(
                 "Too many instances: {} from i3dm and {} from glb",
                 numInstances,
-                existingInstances.size()));
+                modelInstanceTransforms.size()));
             return;
           }
         }
         if (result.errors.hasErrors()) {
           return;
         }
-        const uint32_t numNewInstances =
-            static_cast<uint32_t>(numInstances * existingInstances.size());
+        const uint32_t numNewInstances = static_cast<uint32_t>(
+            numInstances * modelInstanceTransforms.size());
         const size_t instanceDataSize = totalStride * numNewInstances;
         auto dataBaseOffset =
             static_cast<uint32_t>(instanceBuffer.cesium.data.size());
         instanceBuffer.cesium.data.resize(dataBaseOffset + instanceDataSize);
         // Transform instance transform into local glTF coordinate system.
-        const auto toTile = upToZ * transform;
-        const auto toTileInv = inverse(toTile);
+        const glm::dmat4 toTile = upToZ * transform;
+        const glm::dmat4 toTileInv = inverse(toTile);
         size_t destInstanceIndx = 0;
         for (unsigned i = 0; i < numInstances; ++i) {
-          auto instMat = composeInstanceTransform(i, decodedInstances);
-          instMat = toTileInv * instMat * toTile;
-          for (const auto& innerMat : existingInstances) {
-            auto finalMat = instMat * innerMat;
-            glm::dvec3 position, scale, skew;
-            glm::dquat rotation;
-            glm::dvec4 perspective;
-            decompose(finalMat, scale, rotation, position, skew, perspective);
-            copyToBuffer(
-                position,
-                rotation,
-                scale,
+          const glm::dmat4 instanceTransform =
+              toTileInv * composeInstanceTransform(i, decodedInstances) *
+              toTile;
+          for (const auto& modelInstanceTransform : modelInstanceTransforms) {
+            glm::dmat4 finalTransform =
+                instanceTransform * modelInstanceTransform;
+            copyInstanceToBuffer(
+                finalTransform,
                 instanceBuffer.cesium.data,
                 destInstanceIndx++);
           }
@@ -714,8 +721,9 @@ void instantiateGltfInstances(
             Accessor::ComponentType::FLOAT,
             numNewInstances,
             Accessor::Type::VEC3);
-        auto& posAcessor = gltf.accessors[static_cast<uint32_t>(posAccessorId)];
-        posAcessor.byteOffset = dataBaseOffset;
+        auto& posAccessor =
+            gltf.accessors[static_cast<uint32_t>(posAccessorId)];
+        posAccessor.byteOffset = dataBaseOffset;
         gpuExt.attributes["TRANSLATION"] = posAccessorId;
         auto rotAccessorId = createAccessorInGltf(
             gltf,
