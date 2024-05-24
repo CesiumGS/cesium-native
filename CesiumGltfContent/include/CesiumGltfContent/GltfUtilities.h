@@ -165,6 +165,9 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void removeUnusedBufferViews(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedBufferViewIndices = {});
+  static void removeUnusedBuffers(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedBufferIndices = {});
 
   /**
    * @brief Shrink buffers by removing any sections that are not referenced by

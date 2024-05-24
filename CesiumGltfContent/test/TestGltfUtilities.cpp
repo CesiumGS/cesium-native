@@ -366,6 +366,45 @@ TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
   }
 }
 
+TEST_CASE("GltfUtilities::removeUnusedBuffers") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.buffers.emplace_back();
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(m.buffers.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back().buffer = 0;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(!m.buffers.empty());
+  }
+
+  SECTION("does not remove buffer used by EXT_meshopt_compression") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back()
+        .addExtension<ExtensionBufferViewExtMeshoptCompression>()
+        .buffer = 0;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(!m.buffers.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+
+    m.bufferViews.emplace_back().buffer = 1;
+
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(m.buffers.size() == 1);
+
+    REQUIRE(m.bufferViews.size() == 1);
+    CHECK(m.bufferViews[0].buffer == 0);
+  }
+}
+
 TEST_CASE("GltfUtilities::compactBuffers") {
   Model m;
 
