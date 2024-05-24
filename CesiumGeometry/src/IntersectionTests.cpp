@@ -46,7 +46,7 @@ std::optional<glm::dvec3> IntersectionTests::rayTriangle(
     bool cullBackFaces) {
   double t;
   return rayTriangleParametric(ray, v0, v1, v2, t, cullBackFaces) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
              : std::nullopt;
 }
 
@@ -109,7 +109,7 @@ std::optional<glm::dvec3>
 IntersectionTests::rayAABB(const Ray& ray, const AxisAlignedBox& aabb) {
   double t;
   return rayAABBParametric(ray, aabb, t) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
              : std::nullopt;
 }
 
@@ -150,7 +150,7 @@ std::optional<glm::dvec3>
 IntersectionTests::rayOBB(const Ray& ray, const OrientedBoundingBox& obb) {
   double t;
   return rayOBBParametric(ray, obb, t) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
              : std::nullopt;
 }
 
@@ -182,7 +182,7 @@ std::optional<glm::dvec3>
 IntersectionTests::raySphere(const Ray& ray, const BoundingSphere& sphere) {
   double t;
   return raySphereParametric(ray, sphere, t) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.getPointAlongRay(t))
+             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
              : std::nullopt;
 }
 

@@ -34,13 +34,13 @@ public:
   const glm::dvec3& getDirection() const noexcept { return this->_direction; }
 
   /**
-   * @brief Calculates the point on the ray that corresponds to the given
-   * parameter `t`.
+   * @brief Calculates a point on the ray that corresponds to the given
+   * distance from origin. Can be positive, negative, or 0.
    *
-   * @param t The parameter value used in the ray equation.
+   * @param distance Desired distance from origin
    * @return The point along the ray.
    */
-  glm::dvec3 getPointAlongRay(double t) const noexcept;
+  glm::dvec3 pointFromDistance(double distance) const noexcept;
 
   /**
    * @brief Transforms the ray using a given 4x4 transformation matrix.

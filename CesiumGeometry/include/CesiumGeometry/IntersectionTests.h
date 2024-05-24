@@ -88,20 +88,13 @@ public:
       glm::dvec3& barycentricCoordinates) noexcept;
 
   /**
-   * The parametric functions below return a boolean value indicating whether a
-   * ray and a volume intersect and take a parameter t by reference. The
-   * parameter t is positive if the intersection point is in front of the ray
-   * origin, negative if it is behind it, or zero if the two points coincide.
-   */
-
-  /**
-   * @brief Tests if a ray hits a triangle and returns the hit point, if any.
+   * @brief Tests if a ray hits a triangle and returns the hit point.
    *
    * @param ray The ray.
    * @param p0 The first vertex of the triangle.
    * @param p1 The second vertex of the triangle.
    * @param p2 The third vertex of the triangle.
-   * @param cullBackFaces Whether to cull back faces or not.
+   * @param cullBackFaces Ignore triangles that face away from ray.
    * @return The point of intersection, or `std::nullopt` if there is no
    * intersection.
    */
@@ -112,6 +105,22 @@ public:
       const glm::dvec3& p2,
       bool cullBackFaces = false);
 
+  /**
+   * @brief Tests if an infinite ray hits a triangle and returns the parametric
+   * hit position.
+   *
+   * The parameter t is positive if the intersection point is in front of the
+   * ray origin, negative if it is behind it, or zero if the two points
+   * coincide.
+   *
+   * @param ray The ray.
+   * @param p0 The first vertex of the triangle.
+   * @param p1 The second vertex of the triangle.
+   * @param p2 The third vertex of the triangle.
+   * @param t Returned parametric value, if a hit is detected.
+   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @return True if a hit occurred, false otherwise.
+   */
   static bool rayTriangleParametric(
       const Ray& ray,
       const glm::dvec3& p0,
@@ -131,6 +140,19 @@ public:
   static std::optional<glm::dvec3>
   rayAABB(const Ray& ray, const AxisAlignedBox& aabb);
 
+  /**
+   * @brief Computes the intersection of an infinite ray and an axis aligned
+   * bounding box and returns the parametric hit position.
+   *
+   * The parameter t is positive if the intersection point is in front of the
+   * ray origin, negative if it is behind it, or zero if the two points
+   * coincide.
+   *
+   * @param ray The ray.
+   * @param aabb The axis aligned bounding box.
+   * @param t Returned parametric value, if a hit is detected.
+   * @return True if a hit occurred, false otherwise.
+   */
   static bool
   rayAABBParametric(const Ray& ray, const AxisAlignedBox& aabb, double& t);
 
@@ -145,6 +167,19 @@ public:
   static std::optional<glm::dvec3>
   rayOBB(const Ray& ray, const OrientedBoundingBox& obb);
 
+  /**
+   * @brief Computes the intersection of an infinite ray and an oriented
+   * bounding box and returns the parametric hit position.
+   *
+   * The parameter t is positive if the intersection point is in front of the
+   * ray origin, negative if it is behind it, or zero if the two points
+   * coincide.
+   *
+   * @param ray The ray.
+   * @param obb The oriented bounding box.
+   * @param t Returned parametric value, if a hit is detected.
+   * @return True if a hit occurred, false otherwise.
+   */
   static bool
   rayOBBParametric(const Ray& ray, const OrientedBoundingBox& obb, double& t);
 
@@ -159,6 +194,19 @@ public:
   static std::optional<glm::dvec3>
   raySphere(const Ray& ray, const BoundingSphere& sphere);
 
+  /**
+   * @brief Computes the intersection of an infinite ray and a bounding sphere
+   * and returns the parametric hit position.
+   *
+   * The parameter t is positive if the intersection point is in front of the
+   * ray origin, negative if it is behind it, or zero if the two points
+   * coincide.
+   *
+   * @param ray The ray.
+   * @param sphere The bounding sphere.
+   * @param t Returned parametric value, if a hit is detected.
+   * @return True if a hit occurred, false otherwise.
+   */
   static bool
   raySphereParametric(const Ray& ray, const BoundingSphere& sphere, double& t);
 };
