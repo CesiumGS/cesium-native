@@ -802,21 +802,21 @@ void generateSmoothNormals(
 
   const size_t normalBufferId = gltf.buffers.size();
   Buffer& normalBuffer = gltf.buffers.emplace_back();
-  normalBuffer.byteLength = int64_t(normalBufferSize);
+  normalBuffer.byteLength = static_cast<int64_t>(normalBufferSize);
   normalBuffer.cesium.data = std::move(normalByteBuffer);
 
   const size_t normalBufferViewId = gltf.bufferViews.size();
   BufferView& normalBufferView = gltf.bufferViews.emplace_back();
-  normalBufferView.buffer = int32_t(normalBufferId);
-  normalBufferView.byteLength = int64_t(normalBufferSize);
+  normalBufferView.buffer = static_cast<int32_t>(normalBufferId);
+  normalBufferView.byteLength = static_cast<int64_t>(normalBufferSize);
   normalBufferView.byteOffset = 0;
-  normalBufferView.byteStride = int64_t(normalBufferStride);
+  normalBufferView.byteStride = static_cast<int64_t>(normalBufferStride);
   normalBufferView.target = BufferView::Target::ARRAY_BUFFER;
 
   const size_t normalAccessorId = gltf.accessors.size();
   Accessor& normalAccessor = gltf.accessors.emplace_back();
   normalAccessor.byteOffset = 0;
-  normalAccessor.bufferView = int32_t(normalBufferViewId);
+  normalAccessor.bufferView = static_cast<int32_t>(normalBufferViewId);
   normalAccessor.componentType = Accessor::ComponentType::FLOAT;
   normalAccessor.count = positionView.size();
   normalAccessor.type = Accessor::Type::VEC3;
