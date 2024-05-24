@@ -2,6 +2,11 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `FeatureId::propertyTable` is now `int32_t` instead of `std::optional<int64_t>`
+- `ExtensionMeshPrimitiveExtStructuralMetadata::propertyTextures` and `ExtensionMeshPrimitiveExtStructuralMetadata::propertyAttributes` are now vectors of `int32_t` instead of `int64_t`.
+
 ##### Additions :tada:
 
 - Added `forEachNodeInScene` to `CesiumGltf::Model`.

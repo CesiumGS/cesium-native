@@ -44,13 +44,6 @@ void updateIndex(int32_t& index, size_t offset) noexcept {
   index += int32_t(offset);
 }
 
-void updateIndex(int64_t& index, size_t offset) noexcept {
-  if (index == -1) {
-    return;
-  }
-  index += int64_t(offset);
-}
-
 void mergeSchemas(
     Schema& lhs,
     Schema& rhs,
@@ -238,11 +231,11 @@ ErrorList Model::merge(Model&& rhs) {
       ExtensionMeshPrimitiveExtStructuralMetadata* pMetadata =
           primitive.getExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
       if (pMetadata) {
-        for (int64_t& propertyTextureID : pMetadata->propertyTextures) {
+        for (int32_t& propertyTextureID : pMetadata->propertyTextures) {
           updateIndex(propertyTextureID, firstPropertyTexture);
         }
 
-        for (int64_t& propertyAttributeID : pMetadata->propertyAttributes) {
+        for (int32_t& propertyAttributeID : pMetadata->propertyAttributes) {
           updateIndex(propertyAttributeID, firstPropertyAttribute);
         }
       }
@@ -251,9 +244,7 @@ ErrorList Model::merge(Model&& rhs) {
           primitive.getExtension<ExtensionExtMeshFeatures>();
       if (pMeshFeatures) {
         for (FeatureId& featureId : pMeshFeatures->featureIds) {
-          if (featureId.propertyTable) {
-            updateIndex(*featureId.propertyTable, firstPropertyTable);
-          }
+          updateIndex(featureId.propertyTable, firstPropertyTable);
 
           if (featureId.texture) {
             updateIndex(featureId.texture->index, firstTexture);
