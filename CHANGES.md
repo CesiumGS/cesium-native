@@ -2,11 +2,17 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `FeatureId::propertyTable` is now `int32_t` instead of `std::optional<int64_t>`
+- `ExtensionMeshPrimitiveExtStructuralMetadata::propertyTextures` and `ExtensionMeshPrimitiveExtStructuralMetadata::propertyAttributes` are now vectors of `int32_t` instead of `int64_t`.
+
 ##### Additions :tada:
 
 - Added `forEachNodeInScene` to `CesiumGltf::Model`.
 - Added `removeUnusedBuffers` to `GltfUtilities`.
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
+- Drastically improved the performance of `GltfUtilities::collapseToSingleBuffer` for glTFs with many buffers and bufferViews.
 
 ##### Fixes :wrench:
 
@@ -30,8 +36,6 @@
 
 ##### Breaking Changes :mega:
 
-- `ExtensionMeshPrimitiveExtStructuralMetadata::propertyTextures` and `ExtensionMeshPrimitiveExtStructuralMetadata::propertyAttributes` are now vectors of `int32_t` instead of `int64_t`.
-- `FeatureId::propertyTable` is now `int32_t` instead of `std::optional<int64_t>`
 - Moved `upsampleGltfForRasterOverlays` into `RasterOverlayUtilities`. Previously it was a global function. Also added two new parameters to it, prior to the existing `textureCoordinateIndex` parameter.
 - Moved `QuantizedMeshLoader` from `Cesium3DTilesContent` to `CesiumQuantizedMeshTerrain`. If experiencing related linker errors, add `CesiumQuantizedMeshTerrain` to the libraries you link against.
 - `Connection::authorize` now requires an `ApplicationData` parameter, which represents the `appData` retrieved from a Cesium ion server.
