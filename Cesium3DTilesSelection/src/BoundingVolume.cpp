@@ -72,9 +72,14 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
   return std::visit(Operation{}, boundingVolume);
 }
 
-std::optional<GlobeRectangle>
-estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
+std::optional<GlobeRectangle> estimateGlobeRectangle(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   struct Operation {
+    const CesiumGeospatial::Ellipsoid& ellipsoid;
+
+    Operation(const Ellipsoid& ellipsoid) : ellipsoid(ellipsoid) {}
+
     std::optional<GlobeRectangle>
     operator()(const BoundingSphere& boundingSphere) {
       if (boundingSphere.contains(glm::dvec3(0.0))) {
@@ -105,13 +110,13 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
                                               1.0);
 
       std::optional<Cartographic> east =
-          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[0]));
+          this->ellipsoid.cartesianToCartographic(glm::dvec3(ecefBounds[0]));
       std::optional<Cartographic> west =
-          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[1]));
+          this->ellipsoid.cartesianToCartographic(glm::dvec3(ecefBounds[1]));
       std::optional<Cartographic> north =
-          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[2]));
+          this->ellipsoid.cartesianToCartographic(glm::dvec3(ecefBounds[2]));
       std::optional<Cartographic> south =
-          Ellipsoid::WGS84.cartesianToCartographic(glm::dvec3(ecefBounds[3]));
+          this->ellipsoid.cartesianToCartographic(glm::dvec3(ecefBounds[3]));
 
       if (!east || !west || !north || !south) {
         return std::nullopt;
@@ -145,7 +150,7 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
 
       glm::dvec3 vert0Ecef = centerEcef + halfAxes * obbVertices[0];
       std::optional<Cartographic> c =
-          Ellipsoid::WGS84.cartesianToCartographic(vert0Ecef);
+          this->ellipsoid.cartesianToCartographic(vert0Ecef);
       if (!c) {
         return std::nullopt;
       }
@@ -157,7 +162,7 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
 
       for (int8_t i = 1; i < 8; ++i) {
         glm::dvec3 vertEcef = centerEcef + halfAxes * obbVertices[i];
-        c = Ellipsoid::WGS84.cartesianToCartographic(vertEcef);
+        c = this->ellipsoid.cartesianToCartographic(vertEcef);
         if (!c) {
           return std::nullopt;
         }
@@ -189,7 +194,7 @@ estimateGlobeRectangle(const BoundingVolume& boundingVolume) {
     }
   };
 
-  return std::visit(Operation{}, boundingVolume);
+  return std::visit(Operation(ellipsoid), boundingVolume);
 }
 
 const CesiumGeospatial::BoundingRegion*

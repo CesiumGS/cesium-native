@@ -494,6 +494,10 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
+  std::shared_ptr<CesiumGeospatial::Ellipsoid> _ellipsoid;
+
+  const CesiumGeospatial::Ellipsoid& GetEllipsoid() const;
+
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 

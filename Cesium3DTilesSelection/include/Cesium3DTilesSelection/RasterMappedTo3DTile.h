@@ -223,7 +223,8 @@ public:
       CesiumRasterOverlays::RasterOverlayTileProvider& tileProvider,
       CesiumRasterOverlays::RasterOverlayTileProvider& placeholder,
       Tile& tile,
-      std::vector<CesiumGeospatial::Projection>& missingProjections);
+      std::vector<CesiumGeospatial::Projection>& missingProjections,
+      const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
 
 private:
   void computeTranslationAndScale(const Tile& tile);

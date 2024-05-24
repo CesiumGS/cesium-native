@@ -63,7 +63,9 @@ TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
 }
 
 TilesetContentLoaderResult<LayerJsonTerrainLoader>
-convertToTilesetContentLoaderResult(LoadLayersResult&& loadLayersResult) {
+convertToTilesetContentLoaderResult(
+    const Ellipsoid& ellipsoid,
+    LoadLayersResult&& loadLayersResult) {
   if (loadLayersResult.errors) {
     TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
     result.errors = std::move(loadLayersResult.errors);
@@ -108,7 +110,7 @@ convertToTilesetContentLoaderResult(LoadLayersResult&& loadLayersResult) {
     childTile.setBoundingVolume(
         createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
     childTile.setGeometricError(
-        8.0 * calcQuadtreeMaxGeometricError(Ellipsoid::WGS84) *
+        8.0 * calcQuadtreeMaxGeometricError(ellipsoid) *
         childGlobeRectangle.computeWidth());
   }
 
@@ -511,10 +513,15 @@ LayerJsonTerrainLoader::createLoader(
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   bool useWaterMask = contentOptions.enableWaterMask;
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid = externals.pEllipsoid == nullptr
+                                                     ? Ellipsoid::WGS84
+                                                     : *externals.pEllipsoid;
+
   return externals.pAssetAccessor
       ->get(externals.asyncSystem, layerJsonUrl, requestHeaders)
       .thenInWorkerThread(
-          [asyncSystem = externals.asyncSystem,
+          [externals,
+           asyncSystem = externals.asyncSystem,
            pAssetAccessor = externals.pAssetAccessor,
            useWaterMask](
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
@@ -554,19 +561,26 @@ LayerJsonTerrainLoader::createLoader(
                 pResponse->data(),
                 useWaterMask);
           })
-      .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
-        return convertToTilesetContentLoaderResult(std::move(loadLayersResult));
+      .thenInMainThread([ellipsoid](LoadLayersResult&& loadLayersResult) {
+        return convertToTilesetContentLoaderResult(
+            ellipsoid,
+            std::move(loadLayersResult));
       });
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
 Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
+    const TilesetExternals& externals,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const TilesetContentOptions& contentOptions,
     const std::string& layerJsonUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const rapidjson::Document& layerJson) {
+  const CesiumGeospatial::Ellipsoid& ellipsoid = externals.pEllipsoid == nullptr
+                                                     ? Ellipsoid::WGS84
+                                                     : *externals.pEllipsoid;
+
   return loadLayerJson(
              asyncSystem,
              pAssetAccessor,
@@ -574,8 +588,10 @@ Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
              requestHeaders,
              layerJson,
              contentOptions.enableWaterMask)
-      .thenInMainThread([](LoadLayersResult&& loadLayersResult) {
-        return convertToTilesetContentLoaderResult(std::move(loadLayersResult));
+      .thenInMainThread([ellipsoid](LoadLayersResult&& loadLayersResult) {
+        return convertToTilesetContentLoaderResult(
+            ellipsoid,
+            std::move(loadLayersResult));
       });
 }
 

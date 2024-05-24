@@ -4,6 +4,7 @@
 
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -62,10 +63,13 @@ getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
  * given {@link BoundingVolume}.
  *
  * @param boundingVolume The bounding volume.
+ * @param ellipsoid The ellipsoid to use for globe calculations.
  * @return The bounding {@link CesiumGeospatial::GlobeRectangle}.
  */
 CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
-estimateGlobeRectangle(const BoundingVolume& boundingVolume);
+estimateGlobeRectangle(
+  const BoundingVolume& boundingVolume,
+  const CesiumGeospatial::Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
 
 /**
  * @brief Returns the bounding region if the bounding volume is a

@@ -69,6 +69,11 @@ public:
    */
   std::shared_ptr<TileOcclusionRendererProxyPool> pTileOcclusionProxyPool =
       nullptr;
+
+  /**
+   * @brief The ellipsoid that will be used for constructing tiles.
+   */
+  std::shared_ptr<CesiumGeospatial::Ellipsoid> pEllipsoid = nullptr;
 };
 
 } // namespace Cesium3DTilesSelection

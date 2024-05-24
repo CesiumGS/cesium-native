@@ -286,6 +286,10 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       placeholders = overlays.getPlaceholderTileProviders();
   assert(tileProviders.size() == placeholders.size());
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid =
+      tilesetOptions.ellipsoid == nullptr ? CesiumGeospatial::Ellipsoid::WGS84
+                                          : *tilesetOptions.ellipsoid;
+
   for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
     RasterOverlayTileProvider& tileProvider = *tileProviders[i];
     RasterOverlayTileProvider& placeholder = *placeholders[i];
@@ -295,7 +299,8 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
         tileProvider,
         placeholder,
         tile,
-        projections);
+        projections,
+        ellipsoid);
     if (pMapped) {
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
@@ -660,7 +665,8 @@ TilesetContentManager::TilesetContentManager(
     externals.pAssetAccessor
         ->get(externals.asyncSystem, url, this->_requestHeaders)
         .thenInWorkerThread(
-            [pLogger = externals.pLogger,
+            [externals,
+             pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
              contentOptions = tilesetOptions.contentOptions](
@@ -725,6 +731,7 @@ TilesetContentManager::TilesetContentManager(
                       completedRequestHeaders.begin(),
                       completedRequestHeaders.end());
                   return LayerJsonTerrainLoader::createLoader(
+                             externals,
                              asyncSystem,
                              pAssetAccessor,
                              contentOptions,
@@ -1338,6 +1345,10 @@ void TilesetContentManager::updateDoneState(
     return;
   }
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid =
+      tilesetOptions.ellipsoid == nullptr ? CesiumGeospatial::Ellipsoid::WGS84
+                                          : *tilesetOptions.ellipsoid;
+
   // update raster overlay
   TileContent& content = tile.getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
@@ -1375,7 +1386,8 @@ void TilesetContentManager::updateDoneState(
               *pProvider,
               *pPlaceholder,
               tile,
-              missingProjections);
+              missingProjections,
+              ellipsoid);
 
           if (!missingProjections.empty()) {
             // The mesh doesn't have the right texture coordinates for this
