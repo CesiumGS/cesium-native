@@ -664,7 +664,19 @@ TEST_CASE("AsyncSystem") {
       CHECK(called3);
     }
 
-    SECTION("Future rejecting") {
+    SECTION("Future rejecting with throw") {
+      bool called = false;
+      auto future =
+          asyncSystem.runInWorkerThread([]() { throw std::runtime_error(""); })
+              .thenInMainThread([&called]() {
+                called = true;
+                return 4;
+              });
+      CHECK_THROWS(std::move(future).waitInMainThread());
+      CHECK(!called);
+    }
+
+    SECTION("Future rejecting with Promise::reject") {
       bool called = false;
       auto promise = asyncSystem.createPromise<void>();
       promise.reject(std::runtime_error("Some exception"));
