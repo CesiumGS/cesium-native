@@ -112,6 +112,10 @@ if (MSVC)
   target_compile_definitions(s2geometry PRIVATE NOMINMAX _USE_MATH_DEFINES)
 endif()
 
+# S2 embeds Abseil, which may be used elsewhere as well.
+# So force it into an alternative namespace using the preprocessor.
+target_compile_definitions(s2geometry PRIVATE absl=cesium_s2geometry_absl)
+
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
 set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
 set(HTTPLIB_USE_OPENSSL_IF_AVAILABLE OFF CACHE BOOL "Don't use OpenSSL")
