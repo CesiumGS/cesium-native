@@ -2,10 +2,18 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `FeatureId::propertyTable` is now `int32_t` instead of `std::optional<int64_t>`
+- `ExtensionMeshPrimitiveExtStructuralMetadata::propertyTextures` and `ExtensionMeshPrimitiveExtStructuralMetadata::propertyAttributes` are now vectors of `int32_t` instead of `int64_t`.
+
 ##### Additions :tada:
 
+- Added `forEachNodeInScene` to `CesiumGltf::Model`.
+- Added `removeUnusedBuffers` to `GltfUtilities`.
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
 - Added `LayerWriter` to the `CesiumQuantizedMeshTerrain` library and namespace.
+- Drastically improved the performance of `GltfUtilities::collapseToSingleBuffer` for glTFs with many buffers and bufferViews.
 
 ##### Fixes :wrench:
 
@@ -24,6 +32,7 @@
 - When `GltfReader` decodes buffers with data URLs, and the size of the data in the URL does not match the buffer's `byteLength`, the `byteLength` is now updated and a warning is raised. Previously, the mismatch was ignored and would cause problems later when trying to use these buffers.
 - `EXT_meshopt_compression` and `KHR_mesh_quantization` are now removed from `extensionsUsed` and `extensionsRequired` after they are decoded by `GltfReader`.
 - The glTF accessor for the texture coordinates created by `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` now have min/max values that accurately reflect the range of values. Previously, the minimum was always set to 0.0 and the maximum to 1.0.
+- Fixed a bug in the `waitInMainThread` method on `Future` and `SharedFuture` that could cause it to never return if the waited-for future rejected.
 
 ### v0.35.0 - 2024-05-01
 
