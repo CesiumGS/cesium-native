@@ -21,8 +21,7 @@ class TilesetHeightFinder {
     uint32_t numRaysDone;
     std::vector<CesiumGeospatial::Cartographic> coordinates = {
         CesiumGeospatial::Cartographic(0.0, 0.0)};
-    std::vector<double> heights;
-    CesiumAsync::Promise<std::vector<double>> promise;
+    CesiumAsync::Promise<std::vector<CesiumGeospatial::Cartographic>> promise;
   };
 
   TilesetHeightFinder(
@@ -31,8 +30,9 @@ class TilesetHeightFinder {
           pTilesetContentManager)
       : _pTileset(pTileset), _pTilesetContentManager(pTilesetContentManager){};
 
-  CesiumAsync::Future<std::vector<double>> _getHeightsAtCoordinates(
-      std::vector<CesiumGeospatial::Cartographic> coordinates);
+  CesiumAsync::Future<std::vector<CesiumGeospatial::Cartographic>>
+  _getHeightsAtCoordinates(
+      const std::vector<CesiumGeospatial::Cartographic>& coordinates);
 
   bool _loadTileIfNeeded(Tile* pTile);
 

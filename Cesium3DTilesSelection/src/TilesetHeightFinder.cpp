@@ -167,7 +167,9 @@ void TilesetHeightFinder::_processHeightRequests() {
   RayInfo& current = requests.current;
   _processTilesLoadingQueue(current);
   while (current.tilesLoading.empty()) {
-    requests.heights[requests.numRaysDone++] =
+    CesiumGeospatial::Cartographic& currentCoordinate =
+        requests.coordinates[requests.numRaysDone++];
+    currentCoordinate.height =
         current.tMin >= 0 ? 100000.0 - current.tMin : -9999.0;
     if (requests.numRaysDone < requests.coordinates.size()) {
       current.coordinate = requests.coordinates[requests.numRaysDone];
@@ -176,28 +178,29 @@ void TilesetHeightFinder::_processHeightRequests() {
       Tile* pRoot = _pTilesetContentManager->getRootTile();
       _findAndIntersectVisibleTiles(pRoot, current, current.tilesLoading);
     } else {
-      requests.promise.resolve(std::move(requests.heights));
+      requests.promise.resolve(std::move(requests.coordinates));
       _heightRequests.erase(_heightRequests.begin());
       return;
     }
   }
 }
 
-Future<std::vector<double>> TilesetHeightFinder::_getHeightsAtCoordinates(
-    std::vector<CesiumGeospatial::Cartographic> coordinates) {
+Future<std::vector<CesiumGeospatial::Cartographic>>
+TilesetHeightFinder::_getHeightsAtCoordinates(
+    const std::vector<CesiumGeospatial::Cartographic>& coordinates) {
   Tile* pRoot = _pTilesetContentManager->getRootTile();
   if (pRoot == nullptr || coordinates.empty()) {
     return _pTileset->getAsyncSystem()
-        .createResolvedFuture<std::vector<double>>(
-            std::vector<double>(coordinates.size(), -9999.0));
+        .createResolvedFuture<std::vector<Cartographic>>(
+            std::vector<Cartographic>(coordinates.size(), {0, 0, 0}));
   }
   Promise promise =
-      _pTileset->getAsyncSystem().createPromise<std::vector<double>>();
+      _pTileset->getAsyncSystem()
+          .createPromise<std::vector<CesiumGeospatial::Cartographic>>();
   _heightRequests.emplace_back(HeightRequests{
       RayInfo{createRay(coordinates[0]), coordinates[0], -1.0, {pRoot}},
       0,
       coordinates,
-      std::vector<double>(coordinates.size()),
       promise});
   return promise.getFuture();
 }

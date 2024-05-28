@@ -259,7 +259,8 @@ public:
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
 
-  CesiumAsync::Future<std::vector<double>> getHeightsAtCoordinates(
+  CesiumAsync::Future<std::vector<CesiumGeospatial::Cartographic>>
+  getHeightsAtCoordinates(
       const std::vector<CesiumGeospatial::Cartographic>& coordinates);
 
 private:
