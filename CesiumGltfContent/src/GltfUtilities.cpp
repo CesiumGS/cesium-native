@@ -950,13 +950,16 @@ void intersectRayScenePrimitive(
   if (!pPositionAccessor)
     return;
 
+  glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
+  glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
+
   // Ignore primitive if ray doesn't intersect bounding box
   const std::vector<double>& min = pPositionAccessor->min;
   const std::vector<double>& max = pPositionAccessor->max;
 
   double t;
   if (!CesiumGeometry::IntersectionTests::rayAABBParametric(
-          ray,
+          ray.transform(worldToPrimitive),
           CesiumGeometry::AxisAlignedBox(
               min[0],
               min[1],
@@ -969,8 +972,6 @@ void intersectRayScenePrimitive(
   }
 
   AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
-  glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
-  glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
   double tClosest = -1;
 
   bool hasIndexedTriangles = primitive.indices != -1;
