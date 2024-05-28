@@ -191,17 +191,15 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * @brief Intersects a ray with a glTF model and returns the first
    * intersection point.
    *
-   * This function only handles primitives with TRIANGLES or TRIANGLE_FAN mode.
-   * Other modes are ignored.
+   * Supports all mesh primitive modes.
+   * Points and lines are assumed to have no area, and are ignored
    *
    * @param ray The ray.
    * @param gltf The glTF model.
-   * @param cullBackFaces An optional boolean flag to indicate whether to cull
-   * @param modelToWorld An optional 4x4 matrix to transform from model to world
-   * space. If this parameter is not provided, the ray is assumed to be already
-   * in model space.
-   * backfaces or not. Defaults to true.
-   * @param return The intersection point along the ray, if any.
+   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param modelToWorld Matrix to transform from model to world
+   * space. Defaults to identity matrix.
+   * @param return HitResult data if an intersection occurred.
    */
   struct HitResult {
     glm::dvec3 point = {};
@@ -216,6 +214,20 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       bool cullBackFaces = true,
       const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
 
+  /**
+   * @brief Intersects a ray with a glTF model and returns the first
+   * intersection point. Returns parametric hit results.
+   *
+   * Supports all mesh primitive modes.
+   * Points and lines are assumed to have no area, and are ignored
+   *
+   * @param ray The ray.
+   * @param gltf The glTF model.
+   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param modelToWorld Matrix to transform from model to world
+   * space. Defaults to identity matrix.
+   * @param return HitResult data if an intersection occurred.
+   */
   struct HitParametricResult {
     double t = -1;
     int meshId = -1;
@@ -228,10 +240,5 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       const CesiumGltf::Model& gltf,
       bool cullBackFaces = true,
       const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
-
-  static bool rayIntersectsGltfPrimitiveAABBs(
-      const CesiumGeometry::Ray& ray,
-      const CesiumGltf::Model& gltf,
-      const glm::dmat4x4& modelToWorld);
 };
 } // namespace CesiumGltfContent
