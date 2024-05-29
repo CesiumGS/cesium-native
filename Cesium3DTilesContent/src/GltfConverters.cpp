@@ -1,4 +1,6 @@
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Uri.h>
 
 #include <spdlog/spdlog.h>
 
@@ -37,20 +39,21 @@ GltfConverters::getConverterByMagic(const gsl::span<const std::byte>& content) {
   return getConverterByMagic(content, magic);
 }
 
-GltfConverterResult GltfConverters::convert(
+CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const std::string& filePath,
     const gsl::span<const std::byte>& content,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    const AssetFetcher& assetFetcher) {
   std::string magic;
   auto converterFun = getConverterByMagic(content, magic);
   if (converterFun) {
-    return converterFun(content, options);
+    return converterFun(content, options, assetFetcher);
   }
 
   std::string fileExtension;
   converterFun = getConverterByFileExtension(filePath, fileExtension);
   if (converterFun) {
-    return converterFun(content, options);
+    return converterFun(content, options, assetFetcher);
   }
 
   ErrorList errors;
@@ -60,16 +63,18 @@ GltfConverterResult GltfConverters::convert(
       fileExtension,
       magic));
 
-  return GltfConverterResult{std::nullopt, std::move(errors)};
+  return assetFetcher.asyncSystem.createResolvedFuture(
+      GltfConverterResult{std::nullopt, std::move(errors)});
 }
 
-GltfConverterResult GltfConverters::convert(
+CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const gsl::span<const std::byte>& content,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    const AssetFetcher& assetFetcher) {
   std::string magic;
   auto converter = getConverterByMagic(content, magic);
   if (converter) {
-    return converter(content, options);
+    return converter(content, options, assetFetcher);
   }
 
   ErrorList errors;
@@ -77,7 +82,8 @@ GltfConverterResult GltfConverters::convert(
       "No loader registered for tile with magic value '{}'",
       magic));
 
-  return GltfConverterResult{std::nullopt, std::move(errors)};
+  return assetFetcher.asyncSystem.createResolvedFuture(
+      GltfConverterResult{std::nullopt, std::move(errors)});
 }
 
 std::string GltfConverters::toLowerCase(const std::string_view& str) {
@@ -127,5 +133,42 @@ GltfConverters::ConverterFunction GltfConverters::getConverterByMagic(
   }
 
   return nullptr;
+}
+
+CesiumAsync::Future<AssetFetcherResult>
+AssetFetcher::get(const std::string& relativeUrl) const {
+  auto resolvedUrl = Uri::resolve(baseUrl, relativeUrl);
+  return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
+      .thenImmediately(
+          [asyncSystem = asyncSystem](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
+            const CesiumAsync::IAssetResponse* pResponse =
+                pCompletedRequest->response();
+            AssetFetcherResult assetFetcherResult;
+            const auto& url = pCompletedRequest->url();
+            if (!pResponse) {
+              assetFetcherResult.errorList.emplaceError(fmt::format(
+                  "Did not receive a valid response for asset {}",
+                  url));
+              return asyncSystem.createResolvedFuture(
+                  std::move(assetFetcherResult));
+            }
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              assetFetcherResult.errorList.emplaceError(fmt::format(
+                  "Received status code {} for asset {}",
+                  statusCode,
+                  url));
+              return asyncSystem.createResolvedFuture(
+                  std::move(assetFetcherResult));
+            }
+            gsl::span<const std::byte> asset = pResponse->data();
+            std::copy(
+                asset.begin(),
+                asset.end(),
+                std::back_inserter(assetFetcherResult.bytes));
+            return asyncSystem.createResolvedFuture(
+                std::move(assetFetcherResult));
+          });
 }
 } // namespace Cesium3DTilesContent

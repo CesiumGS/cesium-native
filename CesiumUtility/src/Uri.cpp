@@ -267,11 +267,11 @@ std::string Uri::windowsPathToUriPath(const std::string& windowsPath) {
 }
 
 std::string Uri::nativePathToUriPath(const std::string& nativePath) {
-  if constexpr (std::filesystem::path::preferred_separator == '\\') {
-    return windowsPathToUriPath(nativePath);
-  } else {
-    return unixPathToUriPath(nativePath);
-  }
+#ifdef _WIN32
+  return windowsPathToUriPath(nativePath);
+#else
+  return unixPathToUriPath(nativePath);
+#endif
 }
 
 std::string Uri::uriPathToUnixPath(const std::string& uriPath) {
@@ -319,11 +319,11 @@ std::string Uri::uriPathToWindowsPath(const std::string& uriPath) {
 }
 
 std::string Uri::uriPathToNativePath(const std::string& nativePath) {
-  if constexpr (std::filesystem::path::preferred_separator == '\\') {
-    return uriPathToWindowsPath(nativePath);
-  } else {
-    return uriPathToUnixPath(nativePath);
-  }
+#ifdef _WIN32
+  return uriPathToWindowsPath(nativePath);
+#else
+  return uriPathToUnixPath(nativePath);
+#endif
 }
 
 std::string Uri::getPath(const std::string& uri) {
