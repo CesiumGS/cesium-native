@@ -1,6 +1,8 @@
+#include "CesiumNativeTests/RandomVector.h"
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
+#include <glm/glm.hpp>
 
 using namespace CesiumUtility;
 
@@ -143,4 +145,53 @@ TEST_CASE("Math::mod") {
   CHECK(Math::mod(-0.5, -1.0) == -0.5);
   CHECK(Math::mod(-1.0, -1.0) == -0.0);
   CHECK(Math::equalsEpsilon(Math::mod(-1.1, -1.0), -0.1, Math::Epsilon15));
+}
+
+TEST_CASE("Math::perpVec") {
+  glm::vec3 v0(.2f, .3f, .4f);
+  glm::vec3 perp = Math::perpVec(v0);
+  // perp is normalized
+  glm::vec3 mutual = glm::cross(v0, perp);
+  CHECK(Math::equalsEpsilon(length(v0), length(mutual), Math::Epsilon5));
+  glm::vec3 v1(.3f, .2f, -1.0f);
+  glm::vec3 perp1 = Math::perpVec(v1);
+  glm::vec3 mutual1 = glm::cross(v1, perp1);
+  CHECK(Math::equalsEpsilon(length(v1), length(mutual1), Math::Epsilon5));
+}
+
+TEST_CASE("Math::rotation") {
+  CesiumNativeTests::RandomUnitVectorGenerator<glm::vec3> generator;
+  for (int i = 0; i < 100; ++i) {
+    glm::vec3 vec1 = generator();
+    glm::vec3 vec2 = generator();
+    glm::quat rotation = Math::rotation(vec1, vec2);
+    // Not a unit vector!
+    glm::vec3 axis(rotation.x, rotation.y, rotation.z);
+    // Is the rotation axis perpendicular to vec1 and vec2?
+    CHECK(Math::equalsEpsilon(dot(vec1, axis), 0.0f, Math::Epsilon5));
+    CHECK(Math::equalsEpsilon(dot(vec2, axis), 0.0f, Math::Epsilon5));
+    // Does the quaternion match the trig values we get with dot and cross?
+    const float c = dot(vec1, vec2);
+    const float s = length(cross(vec1, vec2));
+    const float qc = rotation.w;
+    const float qs = length(axis);
+    // Double angle formulae
+    float testSin = 2.0f * qs * qc;
+    float testCos = qc * qc - qs * qs;
+    CHECK(Math::equalsEpsilon(s, testSin, Math::Epsilon5));
+    CHECK(Math::equalsEpsilon(c, testCos, Math::Epsilon5));
+  }
+  for (int i = 0; i < 100; ++i) {
+    glm::vec3 vec = generator();
+    glm::quat rotation = Math::rotation(vec, vec);
+    CHECK(Math::equalsEpsilon(rotation.w, 1.0f, Math::Epsilon5));
+  }
+  for (int i = 0; i < 100; ++i) {
+    glm::vec3 vec1 = generator();
+    glm::vec3 vec2 = vec1 * -1.0f;
+    glm::quat rotation = Math::rotation(vec1, vec2);
+    glm::vec3 axis(rotation.x, rotation.y, rotation.z);
+    CHECK(Math::equalsEpsilon(rotation.w, 0.0f, Math::Epsilon5));
+    CHECK(Math::equalsEpsilon(dot(vec1, axis), 0.0f, Math::Epsilon5));
+  }
 }

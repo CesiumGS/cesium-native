@@ -1065,7 +1065,7 @@ TEST_CASE("Draco-compressed b3dm uses _FEATURE_ID_0 attribute name in glTF") {
   options.decodeDraco = false;
 
   GltfConverterResult result =
-      B3dmToGltfConverter::convert(readFile(testFilePath), options);
+      ConvertTileToGltf::fromB3dm(testFilePath, options);
   CHECK(result.errors.errors.empty());
   CHECK(result.errors.warnings.empty());
   REQUIRE(result.model);
