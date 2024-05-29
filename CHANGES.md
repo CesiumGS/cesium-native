@@ -9,6 +9,7 @@
 
 ##### Additions :tada:
 
+- Added support for I3DM 3D Tile content files.
 - Added `forEachNodeInScene` to `CesiumGltf::Model`.
 - Added `removeUnusedBuffers` to `GltfUtilities`.
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
@@ -59,7 +60,6 @@
 - Added `getNodeTransform`, `setNodeTransform`, `removeUnusedTextures`, `removeUnusedSamplers`, `removeUnusedImages`, `removeUnusedAccessors`, `removeUnusedBufferViews`, and `compactBuffers` methods to `GltfUtilities`.
 - Added `postprocessGltf` method to `GltfReader`.
 - `Model::merge` now merges the `EXT_structural_metadata` and `EXT_mesh_features` extensions. It also now returns an `ErrorList`, used to report warnings and errors about the merge process.
-- Added support for I3dm 3D Tile content files.
 
 ##### Fixes :wrench:
 
