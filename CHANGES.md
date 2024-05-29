@@ -9,6 +9,7 @@
 
 ##### Additions :tada:
 
+- Added support for I3DM 3D Tile content files.
 - Added `forEachNodeInScene` to `CesiumGltf::Model`.
 - Added `removeUnusedBuffers` to `GltfUtilities`.
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
