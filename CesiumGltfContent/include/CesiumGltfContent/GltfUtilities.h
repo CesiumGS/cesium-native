@@ -168,6 +168,12 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void removeUnusedBuffers(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedBufferIndices = {});
+  static void removeUnusedMeshes(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedMeshIndices = {});
+  static void removeUnusedMaterials(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedMaterialIndices = {});
 
   /**
    * @brief Shrink buffers by removing any sections that are not referenced by
