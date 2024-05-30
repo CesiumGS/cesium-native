@@ -1,5 +1,6 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -32,13 +33,13 @@ using namespace CesiumUtility;
 namespace Cesium3DTilesContent {
 namespace {
 struct PntsHeader {
-  unsigned char magic[4];
-  uint32_t version;
-  uint32_t byteLength;
-  uint32_t featureTableJsonByteLength;
-  uint32_t featureTableBinaryByteLength;
-  uint32_t batchTableJsonByteLength;
-  uint32_t batchTableBinaryByteLength;
+  unsigned char magic[4] = {0, 0, 0, 0};
+  uint32_t version = 0;
+  uint32_t byteLength = 0;
+  uint32_t featureTableJsonByteLength = 0;
+  uint32_t featureTableBinaryByteLength = 0;
+  uint32_t batchTableJsonByteLength = 0;
+  uint32_t batchTableBinaryByteLength = 0;
 };
 
 void parsePntsHeader(
@@ -1629,18 +1630,18 @@ void convertPntsContentToGltf(
 }
 } // namespace
 
-GltfConverterResult PntsToGltfConverter::convert(
+CesiumAsync::Future<GltfConverterResult> PntsToGltfConverter::convert(
     const gsl::span<const std::byte>& pntsBinary,
-    const CesiumGltfReader::GltfReaderOptions& /*options*/) {
+    const CesiumGltfReader::GltfReaderOptions& /*options*/,
+    const AssetFetcher& assetFetcher) {
   GltfConverterResult result;
   PntsHeader header;
   uint32_t headerLength = 0;
   parsePntsHeader(pntsBinary, header, headerLength, result);
-  if (result.errors) {
-    return result;
+  if (!result.errors) {
+    convertPntsContentToGltf(pntsBinary, header, headerLength, result);
   }
 
-  convertPntsContentToGltf(pntsBinary, header, headerLength, result);
-  return result;
+  return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
 }
 } // namespace Cesium3DTilesContent

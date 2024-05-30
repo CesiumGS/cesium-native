@@ -75,10 +75,10 @@ public:
    * suitable for use as the path portion of a URI. Characters that are not
    * allowed in the path portion of a URI are percent-encoded as necessary.
    *
-   * If `std::filesystem::path::preferred_separator` is backslash (`\`), this is
-   * assumed to be a Windows-like system and this function calls
-   * {@link windowsPathToUriPath}. Otherwise, this is assumed to be a Unix-like
-   * system and this function calls {@link unixPathToUriPath}.
+   * If the `_WIN32` preprocessor definition is defined when compiling
+   * cesium-native, this is assumed to be a Windows-like system and this
+   * function calls {@link windowsPathToUriPath}. Otherwise, this is assumed to
+   * be a Unix-like system and this function calls {@link unixPathToUriPath}.
    *
    * @param nativePath The file system path.
    * @return The URI path.
@@ -113,10 +113,10 @@ public:
    * @brief Converts the path portion of a URI to a file system path on the
    * current system. Percent-encoded characters in the URI are decoded.
    *
-   * If `std::filesystem::path::preferred_separator` is backslash (`\`), this is
-   * assumed to be a Windows-like system and this function calls
-   * {@link uriPathToWindowsPath}. Otherwise, this is assumed to be a Unix-like
-   * system and this function calls {@link uriPathToUnixPath}.
+   * If the `_WIN32` preprocessor definition is defined when compiling
+   * cesium-native, this is assumed to be a Windows-like system and this
+   * function calls {@link uriPathToWindowsPath}. Otherwise, this is assumed to
+   * be a Unix-like system and this function calls {@link uriPathToUnixPath}.
    *
    * @param uriPath The URI path.
    * @return The file system path.

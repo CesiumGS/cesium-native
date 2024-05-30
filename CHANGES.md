@@ -2,9 +2,19 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `FeatureId::propertyTable` is now `int32_t` instead of `std::optional<int64_t>`
+- `ExtensionMeshPrimitiveExtStructuralMetadata::propertyTextures` and `ExtensionMeshPrimitiveExtStructuralMetadata::propertyAttributes` are now vectors of `int32_t` instead of `int64_t`.
+
 ##### Additions :tada:
 
+- Added support for I3DM 3D Tile content files.
+- Added `forEachNodeInScene` to `CesiumGltf::Model`.
+- Added `removeUnusedBuffers` to `GltfUtilities`.
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
+- Added `LayerWriter` to the `CesiumQuantizedMeshTerrain` library and namespace.
+- Drastically improved the performance of `GltfUtilities::collapseToSingleBuffer` for glTFs with many buffers and bufferViews.
 
 ##### Fixes :wrench:
 
