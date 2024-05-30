@@ -1035,8 +1035,8 @@ GltfUtilities::intersectRayGltfModelParametric(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& gltf,
     bool cullBackFaces,
-    const glm::dmat4x4& modelToWorld) {
-  glm::dmat4x4 rootTransform = applyRtcCenter(gltf, modelToWorld);
+    const glm::dmat4x4& gltfTransform) {
+  glm::dmat4x4 rootTransform = applyRtcCenter(gltf, gltfTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
   HitParametricResult result;
@@ -1071,10 +1071,10 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& gltf,
     bool cullBackFaces,
-    const glm::dmat4x4& modelToWorld) {
+    const glm::dmat4x4& gltfTransform) {
   std::optional<GltfUtilities::HitParametricResult> result;
   result =
-      intersectRayGltfModelParametric(ray, gltf, cullBackFaces, modelToWorld);
+      intersectRayGltfModelParametric(ray, gltf, cullBackFaces, gltfTransform);
 
   if (!result.has_value() || result->t < 0)
     return {};

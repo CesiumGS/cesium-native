@@ -194,11 +194,10 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * Supports all mesh primitive modes.
    * Points and lines are assumed to have no area, and are ignored
    *
-   * @param ray The ray.
-   * @param gltf The glTF model.
+   * @param ray A ray in world space.
+   * @param gltf The glTF model to intersect.
    * @param cullBackFaces Ignore triangles that face away from ray.
-   * @param modelToWorld Matrix to transform from model to world
-   * space. Defaults to identity matrix.
+   * @param gltfTransform Optional matrix to apply to entire gltf model.
    * @param return HitResult data if an intersection occurred.
    */
   struct HitResult {
@@ -211,7 +210,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
       bool cullBackFaces = true,
-      const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
+      const glm::dmat4x4& gltfTransform = glm::dmat4(1.0));
 
   /**
    * @brief Intersects a ray with a glTF model and returns the first
@@ -220,18 +219,16 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * Supports all mesh primitive modes.
    * Points and lines are assumed to have no area, and are ignored
    *
-   * @param ray The ray.
-   * @param gltf The glTF model.
+   * @param ray A ray in world space.
+   * @param gltf The glTF model to intersect.
    * @param cullBackFaces Ignore triangles that face away from ray.
-   * @param modelToWorld Matrix to transform from model to world
-   * space. Defaults to identity matrix.
+   * @param gltfTransform Optional matrix to apply to entire gltf model.
    * @param return HitResult data if an intersection occurred.
    */
   struct HitParametricResult {
     double t = -1;
     glm::dvec3 primitivePoint = {};
     glm::dmat4x4 primitiveToWorld = {};
-
     int meshId = -1;
     int primitiveId = -1;
   };
@@ -240,6 +237,6 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
       bool cullBackFaces = true,
-      const glm::dmat4x4& modelToWorld = glm::dmat4(1.0));
+      const glm::dmat4x4& gltfTransform = glm::dmat4(1.0));
 };
 } // namespace CesiumGltfContent
