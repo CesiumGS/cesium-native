@@ -120,7 +120,11 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
         // after we've created an AccessorWriter for it and then add _another_
         // buffer.
         std::vector<CesiumGltf::AccessorWriter<glm::vec2>> uvWriters;
+        std::vector<std::vector<double>*> mins;
+        std::vector<std::vector<double>*> maxs;
         uvWriters.reserve(projections.size());
+        mins.reserve(projections.size());
+        maxs.reserve(projections.size());
         buffers.reserve(buffers.size() + projections.size());
         bufferViews.reserve(bufferViews.size() + projections.size());
         accessors.reserve(accessors.size() + projections.size());
@@ -174,8 +178,8 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
           uvAccessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
           uvAccessor.count = int64_t(positionView.size());
           uvAccessor.type = CesiumGltf::Accessor::Type::VEC2;
-          uvAccessor.min = {0.0, 0.0};
-          uvAccessor.max = {1.0, 1.0};
+          uvAccessor.min = {1.0, 1.0};
+          uvAccessor.max = {0.0, 0.0};
 
           [[maybe_unused]] CesiumGltf::AccessorWriter<glm::vec2>& uvWriter =
               uvWriters.emplace_back(gltf, uvAccessorId);
@@ -185,6 +189,9 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
               std::string(textureCoordinateAttributeBaseName) +
               std::to_string(firstTextureCoordinateID + int32_t(i));
           primitive.attributes[attributeName] = uvAccessorId;
+
+          mins.emplace_back(&uvAccessor.min);
+          maxs.emplace_back(&uvAccessor.max);
         }
 
         // Generate texture coordinates for each position.
@@ -280,6 +287,14 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
               uv.y = 1.0f - uv.y;
             }
 
+            mins[projectionIndex]->at(0) =
+                glm::min(mins[projectionIndex]->at(0), double(uv.x));
+            mins[projectionIndex]->at(1) =
+                glm::min(mins[projectionIndex]->at(1), double(uv.y));
+            maxs[projectionIndex]->at(0) =
+                glm::max(maxs[projectionIndex]->at(0), double(uv.x));
+            maxs[projectionIndex]->at(1) =
+                glm::max(maxs[projectionIndex]->at(1), double(uv.y));
             uvWriters[projectionIndex][positionIndex] = uv;
           }
         }

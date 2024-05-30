@@ -52,6 +52,6 @@ struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
    * @brief The index of the property table containing per-feature property
    * values. Only applicable when using the `EXT_structural_metadata` extension.
    */
-  std::optional<int64_t> propertyTable;
+  int32_t propertyTable = -1;
 };
 } // namespace CesiumGltf
