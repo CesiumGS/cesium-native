@@ -973,6 +973,7 @@ void intersectRayScenePrimitive(
 
   AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
   double tClosest = -1;
+  CesiumGeometry::Ray transformedRay = ray.transform(worldToPrimitive);
 
   bool hasIndexedTriangles = primitive.indices != -1;
   if (hasIndexedTriangles) {
@@ -981,7 +982,7 @@ void intersectRayScenePrimitive(
                 .componentType) {
     case Accessor::ComponentType::UNSIGNED_BYTE:
       findClosestIndexedRayHit<uint8_t>(
-          ray.transform(worldToPrimitive),
+          transformedRay,
           positionView,
           model,
           primitive,
@@ -990,7 +991,7 @@ void intersectRayScenePrimitive(
       break;
     case Accessor::ComponentType::UNSIGNED_SHORT:
       findClosestIndexedRayHit<uint16_t>(
-          ray.transform(worldToPrimitive),
+          transformedRay,
           positionView,
           model,
           primitive,
@@ -999,7 +1000,7 @@ void intersectRayScenePrimitive(
       break;
     case Accessor::ComponentType::UNSIGNED_INT:
       findClosestIndexedRayHit<uint32_t>(
-          ray.transform(worldToPrimitive),
+          transformedRay,
           positionView,
           model,
           primitive,
@@ -1010,7 +1011,7 @@ void intersectRayScenePrimitive(
   } else {
     // Non-indexed triangles
     findClosestRayHit(
-        ray.transform(worldToPrimitive),
+        transformedRay,
         positionView,
         primitive,
         cullBackFaces,
@@ -1022,9 +1023,10 @@ void intersectRayScenePrimitive(
   bool validHit = tClosest >= 0;
   if (validHit && (tClosest < result.t || result.t == -1)) {
     result.t = tClosest;
+    result.primitivePoint = transformedRay.pointFromDistance(tClosest);
+    result.primitiveToWorld = primitiveToWorld;
     result.meshId = meshId;
     result.primitiveId = primitiveId;
-    result.primitiveToWorld = primitiveToWorld;
   }
 }
 
@@ -1077,11 +1079,23 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
   if (!result.has_value() || result->t < 0)
     return {};
 
+  // Transform primitive point into world space
+  glm::dvec4 worldPoint =
+      result->primitiveToWorld * glm::dvec4(result->primitivePoint, 1.0);
+
+  // Normalize the homogeneous coordinates
+  // Ex. transformed by projection matrx
+  bool needsWDivide = worldPoint.w != 1.0 && worldPoint.w != 0.0;
+  if (needsWDivide) {
+    worldPoint.x /= worldPoint.w;
+    worldPoint.y /= worldPoint.w;
+    worldPoint.z /= worldPoint.w;
+  }
+
   return GltfUtilities::HitResult{
-      ray.pointFromDistance(result->t),
+      glm::dvec3(worldPoint),
       result->meshId,
-      result->primitiveId,
-      std::move(result->primitiveToWorld)};
+      result->primitiveId};
 }
 
 } // namespace CesiumGltfContent
