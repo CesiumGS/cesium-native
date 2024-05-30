@@ -38,7 +38,10 @@ TilesetWriterResult TilesetWriter::writeTileset(
   }
 
   TilesetJsonWriter::write(tileset, *writer, context);
+
   result.tilesetBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }
