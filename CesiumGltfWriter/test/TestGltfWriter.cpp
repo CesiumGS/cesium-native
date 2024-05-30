@@ -47,7 +47,6 @@ bool hasSpaces(const std::string& input) {
 }
 
 struct ExtensionModelTest final : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ExtensionModelTest";
   static inline constexpr const char* ExtensionName = "PRIVATE_model_test";
 };
 
