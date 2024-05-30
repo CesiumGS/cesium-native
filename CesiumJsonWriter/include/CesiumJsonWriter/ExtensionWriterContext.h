@@ -20,7 +20,7 @@ enum class ExtensionState {
    *
    * If the extension is a {@link CesiumUtility::JsonValue} or a registered
    * statically-typed class it will be written to the serialized model;
-   * otherwise it will be ignored.
+   * otherwise it will be ignored and a warning will be reported.
    */
   Enabled,
 
@@ -79,10 +79,20 @@ public:
   }
 
   /**
+   * @brief Returns whether an extension is enabled or disabled.
+   *
+   * By default, all extensions are enabled.
+   *
+   * @param extensionName The name of the extension.
+   */
+  ExtensionState getExtensionState(const std::string& extensionName) const;
+
+  /**
    * @brief Enables or disables an extension.
    *
    * By default, all extensions are enabled. However, if the extension is a
-   * statically-typed class and is not registered it will be ignored.
+   * statically-typed class and is not registered it will be ignored and a
+   * warning will be reported.
    *
    * When a disabled extension is encountered, it is ignored completely.
    *
