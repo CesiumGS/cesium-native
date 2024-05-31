@@ -425,7 +425,7 @@ template <class T>
 void findClosestIndexedRayHit(
     const CesiumGeometry::Ray& ray,
     AccessorView<glm::vec3>& positionView,
-    const T& indicesView,
+    const AccessorView<T>& indicesView,
     const CesiumGltf::MeshPrimitive& primitive,
     bool cullBackFaces,
     double& tMinOut) {
@@ -990,7 +990,10 @@ void intersectRayScenePrimitive(
           if (accessorView.status() != AccessorViewStatus::Valid)
             return;
 
-          findClosestIndexedRayHit<decltype(accessorView)>(
+          using AccessorType =
+              std::remove_cv_t<std::remove_reference_t<decltype(accessorView)>>;
+
+          findClosestIndexedRayHit<AccessorType::value_type>(
               transformedRay,
               positionView,
               accessorView,
