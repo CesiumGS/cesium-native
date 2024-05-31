@@ -425,16 +425,16 @@ template <class T>
 void findClosestIndexedRayHit(
     const CesiumGeometry::Ray& ray,
     AccessorView<glm::vec3>& positionView,
-    const CesiumGltf::Model& model,
+    const T& indicesView,
     const CesiumGltf::MeshPrimitive& primitive,
     bool cullBackFaces,
     double& tMinOut) {
 
-  AccessorView<T> indicesView(model, primitive.indices);
-
   // Need at least 3 vertices to form a triangle
   if (indicesView.size() < 3)
     return;
+
+  // Converts from various Accessor::ComponentType::XXX values
 
   double tClosest = -1;
   bool intersected;
@@ -442,9 +442,9 @@ void findClosestIndexedRayHit(
 
   if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
     for (int32_t i = 0; i < indicesView.size(); i += 3) {
-      int32_t vert0Index = static_cast<int32_t>(indicesView[i]);
-      int32_t vert1Index = static_cast<int32_t>(indicesView[i + 1]);
-      int32_t vert2Index = static_cast<int32_t>(indicesView[i + 2]);
+      int32_t vert0Index = static_cast<int32_t>(indicesView[i].value[0]);
+      int32_t vert1Index = static_cast<int32_t>(indicesView[i + 1].value[0]);
+      int32_t vert2Index = static_cast<int32_t>(indicesView[i + 2].value[0]);
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -462,15 +462,15 @@ void findClosestIndexedRayHit(
   } else if (
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int32_t i = 0; i < indicesView.size() - 2; ++i) {
-      int32_t vert0Index = static_cast<int32_t>(indicesView[i]);
+      int32_t vert0Index = static_cast<int32_t>(indicesView[i].value[0]);
       int32_t vert1Index;
       int32_t vert2Index;
       if (i % 2) {
-        vert1Index = static_cast<int32_t>(indicesView[i + 2]);
-        vert2Index = static_cast<int32_t>(indicesView[i + 1]);
+        vert1Index = static_cast<int32_t>(indicesView[i + 2].value[0]);
+        vert2Index = static_cast<int32_t>(indicesView[i + 1].value[0]);
       } else {
-        vert1Index = static_cast<int32_t>(indicesView[i + 1]);
-        vert2Index = static_cast<int32_t>(indicesView[i + 2]);
+        vert1Index = static_cast<int32_t>(indicesView[i + 1].value[0]);
+        vert2Index = static_cast<int32_t>(indicesView[i + 2].value[0]);
       }
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
@@ -488,12 +488,12 @@ void findClosestIndexedRayHit(
   } else {
     assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
 
-    int32_t vert0Index = static_cast<int32_t>(indicesView[0]);
+    int32_t vert0Index = static_cast<int32_t>(indicesView[0].value[0]);
     glm::dvec3 vert0(positionView[vert0Index]);
 
     for (int32_t i = 2; i < indicesView.size(); ++i) {
-      int32_t vert1Index = static_cast<int32_t>(indicesView[i - 1]);
-      int32_t vert2Index = static_cast<int32_t>(indicesView[i]);
+      int32_t vert1Index = static_cast<int32_t>(indicesView[i - 1].value[0]);
+      int32_t vert2Index = static_cast<int32_t>(indicesView[i].value[0]);
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -978,36 +978,26 @@ void intersectRayScenePrimitive(
   bool hasIndexedTriangles = primitive.indices != -1;
   if (hasIndexedTriangles) {
     assert(primitive.indices >= 0);
-    switch (model.accessors[static_cast<uint32_t>(primitive.indices)]
-                .componentType) {
-    case Accessor::ComponentType::UNSIGNED_BYTE:
-      findClosestIndexedRayHit<uint8_t>(
-          transformedRay,
-          positionView,
-          model,
-          primitive,
-          cullBackFaces,
-          tClosest);
-      break;
-    case Accessor::ComponentType::UNSIGNED_SHORT:
-      findClosestIndexedRayHit<uint16_t>(
-          transformedRay,
-          positionView,
-          model,
-          primitive,
-          cullBackFaces,
-          tClosest);
-      break;
-    case Accessor::ComponentType::UNSIGNED_INT:
-      findClosestIndexedRayHit<uint32_t>(
-          transformedRay,
-          positionView,
-          model,
-          primitive,
-          cullBackFaces,
-          tClosest);
-      break;
-    }
+    const Accessor& accessor =
+        model.accessors[static_cast<size_t>(primitive.indices)];
+
+    createAccessorView(
+        model,
+        accessor,
+        [&transformedRay, &positionView, &primitive, cullBackFaces, &tClosest](
+            const auto& accessorView) {
+          // Bail on invalid view
+          if (accessorView.status() != AccessorViewStatus::Valid)
+            return;
+
+          findClosestIndexedRayHit<decltype(accessorView)>(
+              transformedRay,
+              positionView,
+              accessorView,
+              primitive,
+              cullBackFaces,
+              tClosest);
+        });
   } else {
     // Non-indexed triangles
     findClosestRayHit(
