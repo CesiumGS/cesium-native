@@ -370,8 +370,7 @@ void findClosestRayHit(
       if (validHit && (tCurr < tClosest || tClosest == -1))
         tClosest = tCurr;
     }
-  } else if (
-      primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
+  } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int64_t i = 3; i < positionView.size(); ++i) {
       int64_t vert0Index = i - 3;
       int64_t vert1Index;
@@ -1002,26 +1001,36 @@ void intersectRayScenePrimitive(
     const Accessor& accessor =
         model.accessors[static_cast<size_t>(primitive.indices)];
 
-    createAccessorView(
-        model,
-        accessor,
-        [&transformedRay, &positionView, &primitive, cullBackFaces, &tClosest](
-            const auto& accessorView) {
-          // Bail on invalid view
-          if (accessorView.status() != AccessorViewStatus::Valid)
-            return;
+    // Ignore float value types, these are invalid
+    // From the glTF spec..."Indices MUST be non-negative integer numbers."
+    bool validComponentType =
+        accessor.componentType != Accessor::ComponentType::FLOAT;
 
-          using AccessorType =
-              std::remove_cv_t<std::remove_reference_t<decltype(accessorView)>>;
+    if (validComponentType) {
+      createAccessorView(
+          model,
+          accessor,
+          [&transformedRay,
+           &positionView,
+           &primitive,
+           cullBackFaces,
+           &tClosest](const auto& accessorView) {
+            // Bail on invalid view
+            if (accessorView.status() != AccessorViewStatus::Valid)
+              return;
 
-          findClosestIndexedRayHit<AccessorType::value_type>(
-              transformedRay,
-              positionView,
-              accessorView,
-              primitive,
-              cullBackFaces,
-              tClosest);
-        });
+            using AccessorType = std::remove_cv_t<
+                std::remove_reference_t<decltype(accessorView)>>;
+
+            findClosestIndexedRayHit<AccessorType::value_type>(
+                transformedRay,
+                positionView,
+                accessorView,
+                primitive,
+                cullBackFaces,
+                tClosest);
+          });
+    }
   } else {
     // Non-indexed triangles
     findClosestRayHit(
