@@ -39,6 +39,8 @@ SchemaWriterResult SchemaWriter::writeSchema(
 
   SchemaJsonWriter::write(schema, *writer, context);
   result.schemaBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }

@@ -154,5 +154,19 @@ void decodeMeshOpt(Model& model, CesiumGltfReader::GltfReaderResult& readGltf) {
           ExtensionBufferViewExtMeshoptCompression::ExtensionName);
     }
   }
+
+  model.extensionsUsed.erase(
+      std::remove(
+          model.extensionsUsed.begin(),
+          model.extensionsUsed.end(),
+          CesiumGltf::ExtensionBufferViewExtMeshoptCompression::ExtensionName),
+      model.extensionsUsed.end());
+
+  model.extensionsRequired.erase(
+      std::remove(
+          model.extensionsRequired.begin(),
+          model.extensionsRequired.end(),
+          CesiumGltf::ExtensionBufferViewExtMeshoptCompression::ExtensionName),
+      model.extensionsRequired.end());
 }
 } // namespace CesiumGltfReader
