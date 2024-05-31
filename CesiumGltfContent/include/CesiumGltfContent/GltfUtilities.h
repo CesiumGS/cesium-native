@@ -188,6 +188,35 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void compactBuffer(CesiumGltf::Model& gltf, int32_t bufferIndex);
 
   /**
+   * @brief Hit result data for intersectRayGltfModelParametric
+   */
+  struct HitResult {
+    glm::dvec3 primitivePoint = {};
+    glm::dmat4x4 primitiveToWorld = {};
+
+    glm::dvec3 worldPoint = {};
+    double rayToWorldPointDistanceSq = -1;
+
+    int meshId = -1;
+    int primitiveId = -1;
+
+    glm::dvec3 toWorldPoint() const {
+      glm::dvec4 worldPoint =
+          primitiveToWorld * glm::dvec4(primitivePoint, 1.0);
+
+      // Normalize the homogeneous coordinates
+      // Ex. transformed by projection matrx
+      bool needsWDivide = worldPoint.w != 1.0 && worldPoint.w != 0.0;
+      if (needsWDivide) {
+        worldPoint.x /= worldPoint.w;
+        worldPoint.y /= worldPoint.w;
+        worldPoint.z /= worldPoint.w;
+      }
+      return glm::dvec3(worldPoint);
+    }
+  };
+
+  /**
    * @brief Intersects a ray with a glTF model and returns the first
    * intersection point.
    *
@@ -200,40 +229,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * @param gltfTransform Optional matrix to apply to entire gltf model.
    * @param return HitResult data if an intersection occurred.
    */
-  struct HitResult {
-    glm::dvec3 worldPoint = {};
-    int meshId = -1;
-    int primitiveId = -1;
-  };
-
   static std::optional<HitResult> intersectRayGltfModel(
-      const CesiumGeometry::Ray& ray,
-      const CesiumGltf::Model& gltf,
-      bool cullBackFaces = true,
-      const glm::dmat4x4& gltfTransform = glm::dmat4(1.0));
-
-  /**
-   * @brief Intersects a ray with a glTF model and returns the first
-   * intersection point. Returns parametric hit results.
-   *
-   * Supports all mesh primitive modes.
-   * Points and lines are assumed to have no area, and are ignored
-   *
-   * @param ray A ray in world space.
-   * @param gltf The glTF model to intersect.
-   * @param cullBackFaces Ignore triangles that face away from ray.
-   * @param gltfTransform Optional matrix to apply to entire gltf model.
-   * @param return HitResult data if an intersection occurred.
-   */
-  struct HitParametricResult {
-    double t = -1;
-    glm::dvec3 primitivePoint = {};
-    glm::dmat4x4 primitiveToWorld = {};
-    int meshId = -1;
-    int primitiveId = -1;
-  };
-
-  static std::optional<HitParametricResult> intersectRayGltfModelParametric(
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
       bool cullBackFaces = true,

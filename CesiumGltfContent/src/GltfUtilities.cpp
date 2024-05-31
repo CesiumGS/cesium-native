@@ -943,38 +943,14 @@ void GltfUtilities::compactBuffer(
   }
 }
 
-void intersectRayScenePrimitive(
+std::optional<GltfUtilities::HitResult> intersectRayScenePrimitive(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& model,
-    const int meshId,
     const CesiumGltf::MeshPrimitive& primitive,
-    const int primitiveId,
+    const Accessor* pPositionAccessor,
     const glm::dmat4x4& rootTransform,
     const glm::dmat4x4& nodeTransform,
-    bool cullBackFaces,
-    GltfUtilities::HitParametricResult& result) {
-  // Ignore non-triangle primitives. Points and lines have no area to intersect
-  bool validMode = primitive.mode == MeshPrimitive::Mode::TRIANGLES ||
-                   primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
-                   primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN;
-  if (!validMode)
-    return;
-
-  // Ignore primitives that can't access positions
-  auto positionAccessorIt = primitive.attributes.find("POSITION");
-  if (positionAccessorIt == primitive.attributes.end())
-    return;
-  int positionAccessorID = positionAccessorIt->second;
-  const Accessor* pPositionAccessor =
-      Model::getSafe(&model.accessors, positionAccessorID);
-  if (!pPositionAccessor)
-    return;
-
-  // Ignore non-float positions, these are unsupported
-  // Although valid from the glTF spec, they aren't generally useful here
-  if (pPositionAccessor->componentType != Accessor::ComponentType::FLOAT)
-    return;
-
+    bool cullBackFaces) {
   glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
   glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
 
@@ -993,7 +969,7 @@ void intersectRayScenePrimitive(
               max[1],
               max[2]),
           t)) {
-    return;
+    return std::optional<GltfUtilities::HitResult>();
   }
 
   // From the glTF spec...
@@ -1049,52 +1025,17 @@ void intersectRayScenePrimitive(
   }
   assert(tClosest >= -1);
 
-  // Set result to this hit if closer, or the first one
-  bool validHit = tClosest >= 0;
-  if (validHit && (tClosest < result.t || result.t == -1)) {
-    result.t = tClosest;
-    result.primitivePoint = transformedRay.pointFromDistance(tClosest);
-    result.primitiveToWorld = primitiveToWorld;
-    result.meshId = meshId;
-    result.primitiveId = primitiveId;
-  }
-}
+  if (tClosest == -1)
+    return std::optional<GltfUtilities::HitResult>();
 
-std::optional<GltfUtilities::HitParametricResult>
-GltfUtilities::intersectRayGltfModelParametric(
-    const CesiumGeometry::Ray& ray,
-    const CesiumGltf::Model& gltf,
-    bool cullBackFaces,
-    const glm::dmat4x4& gltfTransform) {
-  glm::dmat4x4 rootTransform = applyRtcCenter(gltf, gltfTransform);
-  rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
-
-  HitParametricResult result;
-
-  gltf.forEachPrimitiveInScene(
-      -1,
-      [ray, cullBackFaces, rootTransform, &result](
-          const CesiumGltf::Model& model,
-          const CesiumGltf::Node& /*node*/,
-          const CesiumGltf::Mesh& /*mesh*/,
-          const int meshId,
-          const CesiumGltf::MeshPrimitive& primitive,
-          const int primitiveId,
-          const glm::dmat4& nodeTransform) {
-        intersectRayScenePrimitive(
-            ray,
-            model,
-            meshId,
-            primitive,
-            primitiveId,
-            rootTransform,
-            nodeTransform,
-            cullBackFaces,
-            result);
-      });
-
-  return (result.t != -1) ? result
-                          : std::optional<GltfUtilities::HitParametricResult>{};
+  // If hit, populate result with partial data
+  // It's temping to return the t value to the caller, but each primitive might
+  // have different matrix transforms with different scaling values. The caller
+  // should instead compare world distances.
+  GltfUtilities::HitResult partialResult;
+  partialResult.primitivePoint = transformedRay.pointFromDistance(tClosest);
+  partialResult.primitiveToWorld = primitiveToWorld;
+  return partialResult;
 }
 
 std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
@@ -1102,30 +1043,80 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
     const CesiumGltf::Model& gltf,
     bool cullBackFaces,
     const glm::dmat4x4& gltfTransform) {
-  std::optional<GltfUtilities::HitParametricResult> result;
-  result =
-      intersectRayGltfModelParametric(ray, gltf, cullBackFaces, gltfTransform);
+  glm::dmat4x4 rootTransform = applyRtcCenter(gltf, gltfTransform);
+  rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
-  if (!result.has_value() || result->t < 0)
-    return {};
+  HitResult closestResult;
 
-  // Transform primitive point into world space
-  glm::dvec4 worldPoint =
-      result->primitiveToWorld * glm::dvec4(result->primitivePoint, 1.0);
+  gltf.forEachPrimitiveInScene(
+      -1,
+      [ray, cullBackFaces, rootTransform, &closestResult](
+          const CesiumGltf::Model& model,
+          const CesiumGltf::Node& /*node*/,
+          const CesiumGltf::Mesh& /*mesh*/,
+          const int meshId,
+          const CesiumGltf::MeshPrimitive& primitive,
+          const int primitiveId,
+          const glm::dmat4& nodeTransform) {
+        // Ignore non-triangles. Points and lines have no area to intersect
+        bool validMode =
+            primitive.mode == MeshPrimitive::Mode::TRIANGLES ||
+            primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
+            primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN;
+        if (!validMode)
+          return;
 
-  // Normalize the homogeneous coordinates
-  // Ex. transformed by projection matrx
-  bool needsWDivide = worldPoint.w != 1.0 && worldPoint.w != 0.0;
-  if (needsWDivide) {
-    worldPoint.x /= worldPoint.w;
-    worldPoint.y /= worldPoint.w;
-    worldPoint.z /= worldPoint.w;
-  }
+        // Ignore primitives that can't access positions
+        auto positionAccessorIt = primitive.attributes.find("POSITION");
+        if (positionAccessorIt == primitive.attributes.end())
+          return;
+        int positionAccessorID = positionAccessorIt->second;
+        const Accessor* pPositionAccessor =
+            Model::getSafe(&model.accessors, positionAccessorID);
+        if (!pPositionAccessor)
+          return;
 
-  return GltfUtilities::HitResult{
-      glm::dvec3(worldPoint),
-      result->meshId,
-      result->primitiveId};
+        // Ignore non-float positions, these are unsupported
+        // Although valid from the glTF spec, they aren't generally useful here
+        if (pPositionAccessor->componentType != Accessor::ComponentType::FLOAT)
+          return;
+
+        std::optional<HitResult> thisHitResult;
+        thisHitResult = intersectRayScenePrimitive(
+            ray,
+            model,
+            primitive,
+            pPositionAccessor,
+            rootTransform,
+            nodeTransform,
+            cullBackFaces);
+
+        if (!thisHitResult.has_value())
+          return;
+
+        // We have a hit, flesh out the result
+        thisHitResult->worldPoint = thisHitResult->toWorldPoint();
+        glm::dvec3 toWorldPoint = thisHitResult->worldPoint - ray.getOrigin();
+        thisHitResult->rayToWorldPointDistanceSq =
+            glm::dot(toWorldPoint, toWorldPoint);
+        thisHitResult->meshId = meshId;
+        thisHitResult->primitiveId = primitiveId;
+
+        if (closestResult.rayToWorldPointDistanceSq == -1) {
+          // If this is the first hit, store it
+          closestResult = std::move(*thisHitResult);
+        } else {
+          // There's already a hit, check if this one is closer
+          if (thisHitResult->rayToWorldPointDistanceSq <
+              closestResult.rayToWorldPointDistanceSq)
+            closestResult = std::move(*thisHitResult);
+        }
+      });
+
+  if (closestResult.rayToWorldPointDistanceSq == -1)
+    return std::optional<GltfUtilities::HitResult>();
+
+  return closestResult;
 }
 
 } // namespace CesiumGltfContent
