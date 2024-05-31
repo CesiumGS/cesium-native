@@ -57,7 +57,7 @@ void checkIntersection(
 
   // Validate hit point
   CHECK(glm::all(glm::lessThan(
-      glm::abs(hitResult->point - expectedHit),
+      glm::abs(hitResult->worldPoint - expectedHit),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // Use results to dive into model
@@ -76,9 +76,6 @@ void checkIntersection(
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP ||
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN;
   CHECK(modeIsValid);
-
-  // Returned matrix should be invertible
-  CHECK(glm::determinant(hitResult->primitiveToWorld) != 0);
 
   // There should be positions
   auto positionAccessorIt = primitive.attributes.find("POSITION");
@@ -154,9 +151,9 @@ void checkUnitCubeIntersections(const std::string& testModelName) {
       true,
       glm::dvec3(0.0, 0.0, -0.5));
 
-  // misses the top side of a cube translated to the right
+  // just misses the top side of a cube translated to the right
   glm::dmat4x4 translationMatrix(1.0);
-  translationMatrix[3] = glm::dvec4(10.0, 0.0, 0.0, 1.0);
+  translationMatrix[3] = glm::dvec4(0.6, 0.0, 0.0, 1.0);
   checkIntersection(
       Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       testModel,
@@ -165,14 +162,37 @@ void checkUnitCubeIntersections(const std::string& testModelName) {
       false,
       {});
 
-  // hits the top side of a cube translated to the right
+  // just hits the top side of a cube translated to the right
   checkIntersection(
-      Ray(glm::dvec3(10.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      Ray(glm::dvec3(0.6, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
       testModel,
       true,
       translationMatrix,
       true,
-      glm::dvec3(10.0, 0.0, 0.5));
+      glm::dvec3(0.6, 0.0, 0.5));
+
+  // correctly hits a scaled cube
+  glm::dmat4x4 scaleMatrix = glm::dmat4(
+      glm::dvec4(2.0, 0.0, 0.0, 0.0),
+      glm::dvec4(0.0, 2.0, 0.0, 0.0),
+      glm::dvec4(0.0, 0.0, 2.0, 0.0),
+      glm::dvec4(0.0, 0.0, 0.0, 1.0));
+  checkIntersection(
+      Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      scaleMatrix,
+      true,
+      glm::dvec3(0.0, 0.0, 1.0));
+
+  // just misses a scaled cube to the right
+  checkIntersection(
+      Ray(glm::dvec3(1.1, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+      testModel,
+      true,
+      scaleMatrix,
+      false,
+      {});
 }
 
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {

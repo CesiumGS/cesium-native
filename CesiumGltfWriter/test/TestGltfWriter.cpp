@@ -45,6 +45,11 @@ bool hasSpaces(const std::string& input) {
     return std::isspace(c);
   });
 }
+
+struct ExtensionModelTest final : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* ExtensionName = "PRIVATE_model_test";
+};
+
 } // namespace
 
 TEST_CASE("Writes glTF") {
@@ -594,4 +599,24 @@ TEST_CASE("Reports an error if asked to write a GLB larger than 4GB") {
       writer.writeGlb(model, buffer.cesium.data);
   REQUIRE(!result.errors.empty());
   CHECK(result.gltfBytes.empty());
+}
+
+TEST_CASE("Handles models with unregistered extension") {
+  CesiumGltf::Model model;
+  model.addExtension<ExtensionModelTest>();
+
+  SECTION("Reports a warning if the extension is enabled") {
+    CesiumGltfWriter::GltfWriter writer;
+    CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
+    REQUIRE(!result.warnings.empty());
+  }
+
+  SECTION("Does not report a warning if the extension is disabled") {
+    CesiumGltfWriter::GltfWriter writer;
+    writer.getExtensions().setExtensionState(
+        ExtensionModelTest::ExtensionName,
+        CesiumJsonWriter::ExtensionState::Disabled);
+    CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
+    REQUIRE(result.warnings.empty());
+  }
 }

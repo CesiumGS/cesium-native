@@ -1,34 +1,34 @@
-#include "Cesium3DTilesWriter/SubtreeWriter.h"
+#include "CesiumQuantizedMeshTerrain/LayerWriter.h"
 
-#include "TilesetJsonWriter.h"
+#include "LayerJsonWriter.h"
 #include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Tracing.h>
 
-namespace Cesium3DTilesWriter {
+namespace CesiumQuantizedMeshTerrain {
 
-SubtreeWriter::SubtreeWriter() { registerWriterExtensions(this->_context); }
+LayerWriter::LayerWriter() { registerWriterExtensions(this->_context); }
 
-CesiumJsonWriter::ExtensionWriterContext& SubtreeWriter::getExtensions() {
+CesiumJsonWriter::ExtensionWriterContext& LayerWriter::getExtensions() {
   return this->_context;
 }
 
 const CesiumJsonWriter::ExtensionWriterContext&
-SubtreeWriter::getExtensions() const {
+LayerWriter::getExtensions() const {
   return this->_context;
 }
 
-SubtreeWriterResult SubtreeWriter::writeSubtree(
-    const Cesium3DTiles::Subtree& subtree,
-    const SubtreeWriterOptions& options) const {
-  CESIUM_TRACE("SubtreeWriter::writeSubtree");
+LayerWriterResult LayerWriter::write(
+    const Layer& layer,
+    const LayerWriterOptions& options) const {
+  CESIUM_TRACE("LayerWriter::write");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
-  SubtreeWriterResult result;
+  LayerWriterResult result;
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -37,11 +37,12 @@ SubtreeWriterResult SubtreeWriter::writeSubtree(
     writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  SubtreeJsonWriter::write(subtree, *writer, context);
-  result.subtreeBytes = writer->toBytes();
+  LayerJsonWriter::write(layer, *writer, context);
+  result.bytes = writer->toBytes();
   result.errors = writer->getErrors();
   result.warnings = writer->getWarnings();
 
   return result;
 }
-} // namespace Cesium3DTilesWriter
+
+} // namespace CesiumQuantizedMeshTerrain
