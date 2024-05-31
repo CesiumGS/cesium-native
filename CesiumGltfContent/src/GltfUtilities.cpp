@@ -1076,8 +1076,8 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
         if (!pPositionAccessor)
           return;
 
-        // Ignore non-float positions, these are unsupported
-        // Although valid from the glTF spec, they aren't generally useful here
+        // From the glTF spec, the POSITION accessor must use VEC3/float
+        // But we should still protect against malformed gltfs
         if (pPositionAccessor->componentType != Accessor::ComponentType::FLOAT)
           return;
 
