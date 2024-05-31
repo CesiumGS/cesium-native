@@ -1005,7 +1005,7 @@ std::optional<GltfUtilities::HitResult> intersectRayScenePrimitive(
             using AccessorType = std::remove_cv_t<
                 std::remove_reference_t<decltype(accessorView)>>;
 
-            findClosestIndexedRayHit<AccessorType::value_type>(
+            findClosestIndexedRayHit<typename AccessorType::value_type>(
                 transformedRay,
                 positionView,
                 accessorView,
