@@ -489,7 +489,8 @@ void forEachPrimitiveInNodeObject(
         model,
         node,
         mesh,
-        meshId, callback);
+        meshId,
+        callback);
   }
 
   for (const int32_t childNodeId : node.children) {
