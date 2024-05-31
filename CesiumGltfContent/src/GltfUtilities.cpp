@@ -1257,7 +1257,7 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
   if (closestResult.rayToWorldPointDistanceSq == -1)
     return std::optional<GltfUtilities::HitResult>();
 
-  return std::move(closestResult);
+  return closestResult;
 }
 
 } // namespace CesiumGltfContent
