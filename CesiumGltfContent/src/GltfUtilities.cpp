@@ -351,11 +351,11 @@ void findClosestRayHit(
   bool intersected;
   double tCurr;
 
-  if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
-    for (int32_t i = 0; i < positionView.size(); i += 3) {
-      int32_t vert0Index = i;
-      int32_t vert1Index = i + 1;
-      int32_t vert2Index = i + 2;
+  if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
+    for (int64_t i = 0; i < positionView.size(); i += 3) {
+      int64_t vert0Index = i;
+      int64_t vert1Index = i + 1;
+      int64_t vert2Index = i + 2;
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -371,11 +371,11 @@ void findClosestRayHit(
         tClosest = tCurr;
     }
   } else if (
-      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP) {
-    for (int32_t i = 3; i < positionView.size(); ++i) {
-      int32_t vert0Index = i - 3;
-      int32_t vert1Index;
-      int32_t vert2Index;
+      primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
+    for (int64_t i = 3; i < positionView.size(); ++i) {
+      int64_t vert0Index = i - 3;
+      int64_t vert1Index;
+      int64_t vert2Index;
       if (i % 2) {
         vert1Index = i - 2;
         vert2Index = i - 1;
@@ -397,13 +397,13 @@ void findClosestRayHit(
         tClosest = tCurr;
     }
   } else {
-    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+    assert(primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN);
 
     glm::dvec3 vert0(positionView[0]);
 
-    for (int32_t i = 2; i < positionView.size(); ++i) {
-      int32_t vert1Index = i - 1;
-      int32_t vert2Index = i - 0;
+    for (int64_t i = 2; i < positionView.size(); ++i) {
+      int64_t vert1Index = i - 1;
+      int64_t vert2Index = i - 0;
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -439,12 +439,20 @@ void findClosestIndexedRayHit(
   double tClosest = -1;
   bool intersected;
   double tCurr;
+  int64_t positionsCount = positionView.size();
 
-  if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
-    for (int32_t i = 0; i < indicesView.size(); i += 3) {
-      int32_t vert0Index = static_cast<int32_t>(indicesView[i].value[0]);
-      int32_t vert1Index = static_cast<int32_t>(indicesView[i + 1].value[0]);
-      int32_t vert2Index = static_cast<int32_t>(indicesView[i + 2].value[0]);
+  if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
+    for (int64_t i = 0; i < indicesView.size(); i += 3) {
+      int64_t vert0Index = static_cast<int64_t>(indicesView[i].value[0]);
+      int64_t vert1Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
+      int64_t vert2Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
+
+      // Ignore triangle if any index is bogus
+      bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
+                          vert1Index >= 0 && vert1Index < positionsCount &&
+                          vert2Index >= 0 && vert2Index < positionsCount;
+      if (!validIndices)
+        continue;
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -459,19 +467,24 @@ void findClosestIndexedRayHit(
       if (validHit && (tCurr < tClosest || tClosest == -1))
         tClosest = tCurr;
     }
-  } else if (
-      primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP) {
-    for (int32_t i = 0; i < indicesView.size() - 2; ++i) {
-      int32_t vert0Index = static_cast<int32_t>(indicesView[i].value[0]);
-      int32_t vert1Index;
-      int32_t vert2Index;
+  } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
+    for (int64_t i = 0; i < indicesView.size() - 2; ++i) {
+      int64_t vert0Index = static_cast<int64_t>(indicesView[i].value[0]);
+      int64_t vert1Index;
+      int64_t vert2Index;
       if (i % 2) {
-        vert1Index = static_cast<int32_t>(indicesView[i + 2].value[0]);
-        vert2Index = static_cast<int32_t>(indicesView[i + 1].value[0]);
+        vert1Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
+        vert2Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
       } else {
-        vert1Index = static_cast<int32_t>(indicesView[i + 1].value[0]);
-        vert2Index = static_cast<int32_t>(indicesView[i + 2].value[0]);
+        vert1Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
+        vert2Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
       }
+
+      bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
+                          vert1Index >= 0 && vert1Index < positionsCount &&
+                          vert2Index >= 0 && vert2Index < positionsCount;
+      if (!validIndices)
+        continue;
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
@@ -486,26 +499,34 @@ void findClosestIndexedRayHit(
         tClosest = tCurr;
     }
   } else {
-    assert(primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+    assert(primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN);
 
-    int32_t vert0Index = static_cast<int32_t>(indicesView[0].value[0]);
-    glm::dvec3 vert0(positionView[vert0Index]);
+    int64_t vert0Index = static_cast<int64_t>(indicesView[0].value[0]);
 
-    for (int32_t i = 2; i < indicesView.size(); ++i) {
-      int32_t vert1Index = static_cast<int32_t>(indicesView[i - 1].value[0]);
-      int32_t vert2Index = static_cast<int32_t>(indicesView[i].value[0]);
+    if (vert0Index >= 0 && vert0Index < positionsCount) {
+      glm::dvec3 vert0(positionView[vert0Index]);
 
-      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
-          ray,
-          vert0,
-          glm::dvec3(positionView[vert1Index]),
-          glm::dvec3(positionView[vert2Index]),
-          tCurr,
-          cullBackFaces);
+      for (int64_t i = 2; i < indicesView.size(); ++i) {
+        int64_t vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
+        int64_t vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
 
-      bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1))
-        tClosest = tCurr;
+        bool validIndices = vert1Index >= 0 && vert1Index < positionsCount &&
+                            vert2Index >= 0 && vert2Index < positionsCount;
+        if (!validIndices)
+          continue;
+
+        intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+            ray,
+            vert0,
+            glm::dvec3(positionView[vert1Index]),
+            glm::dvec3(positionView[vert2Index]),
+            tCurr,
+            cullBackFaces);
+
+        bool validHit = intersected && tCurr >= 0;
+        if (validHit && (tCurr < tClosest || tClosest == -1))
+          tClosest = tCurr;
+      }
     }
   }
   tMinOut = tClosest;
