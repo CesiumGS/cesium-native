@@ -87,5 +87,4 @@ private:
   std::vector<std::string> _errors;
   std::vector<std::string> _warnings;
 };
-
 } // namespace CesiumJsonWriter
