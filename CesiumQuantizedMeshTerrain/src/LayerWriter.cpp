@@ -39,6 +39,8 @@ LayerWriterResult LayerWriter::write(
 
   LayerJsonWriter::write(layer, *writer, context);
   result.bytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }
