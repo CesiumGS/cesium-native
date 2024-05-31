@@ -88,13 +88,15 @@ bool TilesetHeightFinder::_loadTileIfNeeded(Tile* pTile) {
   return false;
 }
 
-void TilesetHeightFinder::_intersectVisibleTile(Tile* pTile, RayInfo& rayInfo) {
+void TilesetHeightFinder::_intersectVisibleTile(
+    Tile* pTile,
+    RayIntersect& rayInfo) {
   TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
   if (!pRenderContent)
     return;
 
-  auto hitResult =
-      CesiumGltfContent::GltfUtilities::intersectRayGltfModelParametric(
+  std::optional<CesiumGltfContent::GltfUtilities::HitResult> hitResult =
+      CesiumGltfContent::GltfUtilities::intersectRayGltfModel(
           rayInfo.ray,
           pRenderContent->getModel(),
           true,
@@ -104,14 +106,16 @@ void TilesetHeightFinder::_intersectVisibleTile(Tile* pTile, RayInfo& rayInfo) {
     return;
 
   // Set ray info to this hit if closer, or the first hit
-  assert(hitResult->t >= 0);
-  if (hitResult->t < rayInfo.tMin || rayInfo.tMin == -1)
-    rayInfo.tMin = hitResult->t;
+  assert(hitResult->rayToWorldPointDistanceSq >= 0);
+  if (rayInfo.hitResult.rayToWorldPointDistanceSq == -1 ||
+      hitResult->rayToWorldPointDistanceSq <
+          rayInfo.hitResult.rayToWorldPointDistanceSq)
+    rayInfo.hitResult = std::move(*hitResult);
 }
 
 void TilesetHeightFinder::_findAndIntersectVisibleTiles(
     Tile* pTile,
-    RayInfo& rayInfo,
+    RayIntersect& rayInfo,
     std::vector<Tile*>& newTilesToLoad) {
   if (pTile->getState() == TileLoadState::Failed) {
     return;
@@ -144,7 +148,7 @@ void TilesetHeightFinder::_findAndIntersectVisibleTiles(
   }
 }
 
-void TilesetHeightFinder::_processTilesLoadingQueue(RayInfo& rayInfo) {
+void TilesetHeightFinder::_processTilesLoadingQueue(RayIntersect& rayInfo) {
   std::vector<Tile*> newTilesToLoad;
   for (auto it = rayInfo.tilesLoading.begin();
        it != rayInfo.tilesLoading.end();) {
@@ -164,43 +168,64 @@ void TilesetHeightFinder::_processTilesLoadingQueue(RayInfo& rayInfo) {
 
 void TilesetHeightFinder::_processHeightRequests() {
   HeightRequests& requests = _heightRequests.front();
-  RayInfo& current = requests.current;
-  _processTilesLoadingQueue(current);
-  while (current.tilesLoading.empty()) {
-    CesiumGeospatial::Cartographic& currentCoordinate =
-        requests.coordinates[requests.numRaysDone++];
-    currentCoordinate.height =
-        current.tMin >= 0 ? 100000.0 - current.tMin : -9999.0;
-    if (requests.numRaysDone < requests.coordinates.size()) {
-      current.coordinate = requests.coordinates[requests.numRaysDone];
-      current.ray = createRay(current.coordinate);
-      current.tMin = -1.0;
+  RayIntersect* currentIntersect =
+      &requests.rayIntersects[requests.numRaysDone];
+  _processTilesLoadingQueue(*currentIntersect);
+
+  while (currentIntersect->tilesLoading.empty()) {
+    // Our ray is done loading and should have found a hit or not
+    // Go to next ray in this request batch
+    requests.numRaysDone++;
+
+    // If there are more rays to process, set up the next one
+    if (requests.numRaysDone < requests.rayIntersects.size()) {
+      currentIntersect = &requests.rayIntersects[requests.numRaysDone];
       Tile* pRoot = _pTilesetContentManager->getRootTile();
-      _findAndIntersectVisibleTiles(pRoot, current, current.tilesLoading);
-    } else {
-      requests.promise.resolve(std::move(requests.coordinates));
-      _heightRequests.erase(_heightRequests.begin());
-      return;
+      _findAndIntersectVisibleTiles(
+          pRoot,
+          *currentIntersect,
+          currentIntersect->tilesLoading);
+      continue;
     }
+
+    // All rays are done, create results
+    std::vector<Tileset::HeightResult> results;
+    for (RayIntersect& ray : requests.rayIntersects) {
+      bool heightAvailable = ray.hitResult.rayToWorldPointDistanceSq != -1;
+      if (heightAvailable) {
+        ray.coordinate.height =
+            100000.0 - glm::sqrt(ray.hitResult.rayToWorldPointDistanceSq);
+      }
+
+      results.push_back(Tileset::HeightResult{heightAvailable, ray.coordinate});
+    }
+    requests.promise.resolve(std::move(results));
+    _heightRequests.erase(_heightRequests.begin());
+    return;
   }
 }
 
-Future<std::vector<CesiumGeospatial::Cartographic>>
+Future<std::vector<Tileset::HeightResult>>
 TilesetHeightFinder::_getHeightsAtCoordinates(
     const std::vector<CesiumGeospatial::Cartographic>& coordinates) {
   Tile* pRoot = _pTilesetContentManager->getRootTile();
   if (pRoot == nullptr || coordinates.empty()) {
     return _pTileset->getAsyncSystem()
-        .createResolvedFuture<std::vector<Cartographic>>(
-            std::vector<Cartographic>(coordinates.size(), {0, 0, 0}));
+        .createResolvedFuture<std::vector<Tileset::HeightResult>>(
+            std::vector<Tileset::HeightResult>(
+                coordinates.size(),
+                {false, {-1, -1, -1}}));
   }
-  Promise promise =
-      _pTileset->getAsyncSystem()
-          .createPromise<std::vector<CesiumGeospatial::Cartographic>>();
-  _heightRequests.emplace_back(HeightRequests{
-      RayInfo{createRay(coordinates[0]), coordinates[0], -1.0, {pRoot}},
-      0,
-      coordinates,
-      promise});
+  Promise promise = _pTileset->getAsyncSystem()
+                        .createPromise<std::vector<Tileset::HeightResult>>();
+
+  std::vector<RayIntersect> rayIntersects;
+  for (const CesiumGeospatial::Cartographic& coordinate : coordinates)
+    rayIntersects.push_back(
+        RayIntersect{createRay(coordinate), coordinate, {}, {pRoot}});
+
+  _heightRequests.emplace_back(
+      HeightRequests{std::move(rayIntersects), 0, promise});
+
   return promise.getFuture();
 }

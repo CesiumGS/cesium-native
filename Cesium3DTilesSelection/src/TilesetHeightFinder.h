@@ -1,6 +1,7 @@
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumGeometry/Ray.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 
 #include <vector>
 
@@ -9,19 +10,17 @@ namespace Cesium3DTilesSelection {
 class TilesetHeightFinder {
   friend class Tileset;
 
-  struct RayInfo {
+  struct RayIntersect {
     CesiumGeometry::Ray ray;
     CesiumGeospatial::Cartographic coordinate;
-    double tMin;
+    CesiumGltfContent::GltfUtilities::HitResult hitResult;
     std::vector<Tile*> tilesLoading;
   };
 
   struct HeightRequests {
-    RayInfo current;
+    std::vector<RayIntersect> rayIntersects;
     uint32_t numRaysDone;
-    std::vector<CesiumGeospatial::Cartographic> coordinates = {
-        CesiumGeospatial::Cartographic(0.0, 0.0)};
-    CesiumAsync::Promise<std::vector<CesiumGeospatial::Cartographic>> promise;
+    CesiumAsync::Promise<std::vector<Tileset::HeightResult>> promise;
   };
 
   TilesetHeightFinder(
@@ -30,20 +29,20 @@ class TilesetHeightFinder {
           pTilesetContentManager)
       : _pTileset(pTileset), _pTilesetContentManager(pTilesetContentManager){};
 
-  CesiumAsync::Future<std::vector<CesiumGeospatial::Cartographic>>
+  CesiumAsync::Future<std::vector<Tileset::HeightResult>>
   _getHeightsAtCoordinates(
       const std::vector<CesiumGeospatial::Cartographic>& coordinates);
 
   bool _loadTileIfNeeded(Tile* pTile);
 
-  void _intersectVisibleTile(Tile* pTile, RayInfo& rayInfo);
+  void _intersectVisibleTile(Tile* pTile, RayIntersect& rayInfo);
 
   void _findAndIntersectVisibleTiles(
       Tile* pTile,
-      RayInfo& rayInfo,
+      RayIntersect& rayInfo,
       std::vector<Tile*>& newTilesToLoad);
 
-  void _processTilesLoadingQueue(RayInfo& rayInfo);
+  void _processTilesLoadingQueue(RayIntersect& rayInfo);
 
   void _processHeightRequests();
 
