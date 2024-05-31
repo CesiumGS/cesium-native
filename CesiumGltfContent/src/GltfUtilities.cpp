@@ -970,6 +970,11 @@ void intersectRayScenePrimitive(
   if (!pPositionAccessor)
     return;
 
+  // Ignore non-float positions, these are unsupported
+  // Although valid from the glTF spec, they aren't generally useful here
+  if (pPositionAccessor->componentType != Accessor::ComponentType::FLOAT)
+    return;
+
   glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
   glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
 
@@ -991,6 +996,8 @@ void intersectRayScenePrimitive(
     return;
   }
 
+  // From the glTF spec...
+  // "Floating-point data MUST use IEEE-754 single precision format."
   AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
   double tClosest = -1;
   CesiumGeometry::Ray transformedRay = ray.transform(worldToPrimitive);
