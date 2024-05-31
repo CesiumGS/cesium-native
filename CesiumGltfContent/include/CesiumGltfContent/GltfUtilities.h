@@ -202,21 +202,6 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
 
     int meshId = -1;
     int primitiveId = -1;
-
-    glm::dvec3 toWorldPoint() const {
-      glm::dvec4 worldPoint =
-          primitiveToWorld * glm::dvec4(primitivePoint, 1.0);
-
-      // Normalize the homogeneous coordinates
-      // Ex. transformed by projection matrx
-      bool needsWDivide = worldPoint.w != 1.0 && worldPoint.w != 0.0;
-      if (needsWDivide) {
-        worldPoint.x /= worldPoint.w;
-        worldPoint.y /= worldPoint.w;
-        worldPoint.z /= worldPoint.w;
-      }
-      return glm::dvec3(worldPoint);
-    }
   };
 
   /**

@@ -1221,10 +1221,25 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
           return;
 
         // We have a hit, flesh out the result
-        thisHitResult->worldPoint = thisHitResult->toWorldPoint();
-        glm::dvec3 toWorldPoint = thisHitResult->worldPoint - ray.getOrigin();
+
+        // Normalize the homogeneous coordinates
+        // Ex. transformed by projection matrx
+        glm::dvec4 homogeneousWorldPoint =
+            thisHitResult->primitiveToWorld *
+            glm::dvec4(thisHitResult->primitivePoint, 1.0);
+        bool needsWDivide =
+            homogeneousWorldPoint.w != 1.0 && homogeneousWorldPoint.w != 0.0;
+        if (needsWDivide) {
+          homogeneousWorldPoint.x /= homogeneousWorldPoint.w;
+          homogeneousWorldPoint.y /= homogeneousWorldPoint.w;
+          homogeneousWorldPoint.z /= homogeneousWorldPoint.w;
+        }
+        thisHitResult->worldPoint = glm::dvec3(homogeneousWorldPoint);
+
+        glm::dvec3 rayToWorldPoint =
+            thisHitResult->worldPoint - ray.getOrigin();
         thisHitResult->rayToWorldPointDistanceSq =
-            glm::dot(toWorldPoint, toWorldPoint);
+            glm::dot(rayToWorldPoint, rayToWorldPoint);
         thisHitResult->meshId = meshId;
         thisHitResult->primitiveId = primitiveId;
 
@@ -1242,7 +1257,7 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
   if (closestResult.rayToWorldPointDistanceSq == -1)
     return std::optional<GltfUtilities::HitResult>();
 
-  return closestResult;
+  return std::move(closestResult);
 }
 
 } // namespace CesiumGltfContent
