@@ -38,6 +38,96 @@ TEST_CASE("IntersectionTests::rayPlane") {
   CHECK(intersectionPoint == testCase.expectedIntersectionPoint);
 }
 
+const glm::dvec3 unitInverseRadii(1.0, 1.0, 1.0);
+const glm::dvec3 wgs84Radii(6378137.0, 6378137.0, 6356752.3142451793);
+const glm::dvec3 wgs84InverseRadii = 1.0 / wgs84Radii;
+
+TEST_CASE("IntersectionTests::rayEllipsoid") {
+  struct TestCase {
+    Ray ray;
+    glm::dvec3 inverseRadii;
+    std::optional<glm::dvec2> expectedIntersection;
+  };
+
+  auto testCase = GENERATE(
+      // RayEllipsoid outside intersections
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
+          unitInverseRadii,
+          glm::dvec2(1.0, 3.0)},
+      TestCase{
+          Ray(glm::dvec3(0.0, 2.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
+          unitInverseRadii,
+          glm::dvec2(1.0, 3.0)},
+      TestCase{
+          Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+          unitInverseRadii,
+          glm::dvec2{1.0, 3.0}},
+      TestCase{
+          Ray(glm::dvec3(-2.0, 0.0, 0.0), glm::dvec3(1.0, 0.0, 0.0)),
+          unitInverseRadii,
+          glm::dvec2(1.0, 3.0)},
+      TestCase{
+          Ray(glm::dvec3(0.0, -2.0, 0.0), glm::dvec3(0.0, 1.0, 0.0)),
+          unitInverseRadii,
+          glm::dvec2(1.0, 3.0)},
+      TestCase{
+          Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
+          unitInverseRadii,
+          glm::dvec2(1.0, 3.0)},
+
+      TestCase{
+          Ray(glm::dvec3(-2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
+          unitInverseRadii,
+          std::nullopt},
+      TestCase{
+          Ray(glm::dvec3(0.0, -2.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
+          unitInverseRadii,
+          std::nullopt},
+      TestCase{
+          Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, -1.0)),
+          unitInverseRadii,
+          std::nullopt},
+
+      // rayEllipsoid ray inside pointing in intersection
+      TestCase{
+          Ray(glm::dvec3(20000.0, 0.0, 0.0),
+              glm::normalize(glm::dvec3(20000.0, 0.0, 0.0))),
+          wgs84InverseRadii,
+          glm::dvec2(0.0, wgs84Radii.x - 20000.0)},
+
+      // rayEllipsoid tangent intersections
+      TestCase{
+          Ray(glm::dvec3(1.0, 0.0, 0.0),
+              glm::normalize(glm::dvec3(0.0, 0.0, 1.0))),
+          unitInverseRadii,
+          std::nullopt},
+
+      // rayEllipsoid no intersections
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 1.0)),
+          unitInverseRadii,
+          std::nullopt},
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
+          unitInverseRadii,
+          std::nullopt},
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 1.0, 0.0)),
+          unitInverseRadii,
+          std::nullopt},
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
+          unitInverseRadii,
+          std::nullopt}
+
+  );
+
+  std::optional<glm::dvec2> intersection =
+      IntersectionTests::rayEllipsoid(testCase.ray, testCase.inverseRadii);
+  CHECK(intersection == testCase.expectedIntersection);
+}
+
 TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
   struct TestCase {
     glm::dvec2 point;
