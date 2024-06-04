@@ -23,12 +23,12 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
    * @brief An array of indexes of property textures in the root
    * `EXT_structural_metadata` object.
    */
-  std::vector<int64_t> propertyTextures;
+  std::vector<int32_t> propertyTextures;
 
   /**
    * @brief An array of indexes of property attributes in the root
    * `EXT_structural_metadata` object.
    */
-  std::vector<int64_t> propertyAttributes;
+  std::vector<int32_t> propertyAttributes;
 };
 } // namespace CesiumGltf

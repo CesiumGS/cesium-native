@@ -1,3 +1,5 @@
+#include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -364,6 +366,45 @@ TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
   }
 }
 
+TEST_CASE("GltfUtilities::removeUnusedBuffers") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.buffers.emplace_back();
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(m.buffers.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back().buffer = 0;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(!m.buffers.empty());
+  }
+
+  SECTION("does not remove buffer used by EXT_meshopt_compression") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back()
+        .addExtension<ExtensionBufferViewExtMeshoptCompression>()
+        .buffer = 0;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(!m.buffers.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+
+    m.bufferViews.emplace_back().buffer = 1;
+
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK(m.buffers.size() == 1);
+
+    REQUIRE(m.bufferViews.size() == 1);
+    CHECK(m.bufferViews[0].buffer == 0);
+  }
+}
+
 TEST_CASE("GltfUtilities::compactBuffers") {
   Model m;
 
@@ -447,5 +488,158 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
       CHECK(buffer.cesium.data[i] == std::byte(i));
     }
+  }
+
+  SECTION("counts meshopt bufferViews when determining used byte ranges") {
+    BufferView& bv = m.bufferViews.emplace_back();
+    bv.buffer = 0;
+    bv.byteOffset = 0;
+    bv.byteLength = 100;
+
+    ExtensionBufferViewExtMeshoptCompression& extension =
+        bv.addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    extension.buffer = 0;
+    extension.byteOffset = 100;
+    extension.byteLength = 13;
+
+    GltfUtilities::compactBuffers(m);
+
+    // Any number of bytes can be removed from the end (no alignment impact)
+    CHECK(buffer.byteLength == 123 - 10);
+    REQUIRE(buffer.cesium.data.size() == 123 - 10);
+
+    for (size_t i = 0; i < buffer.cesium.data.size(); ++i) {
+      CHECK(buffer.cesium.data[i] == std::byte(i));
+    }
+  }
+}
+
+TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
+  SECTION("merges two buffers into one") {
+    Model m;
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    Buffer& buffer1 = m.buffers[0];
+    buffer1.byteLength = 10;
+    buffer1.cesium.data.resize(10, std::byte('1'));
+
+    Buffer& buffer2 = m.buffers[1];
+    buffer2.byteLength = 12;
+    buffer2.cesium.data.resize(12, std::byte('2'));
+
+    BufferView& bufferView1 = m.bufferViews[0];
+    bufferView1.buffer = 1;
+    bufferView1.byteLength = 12;
+    BufferView& bufferView2 = m.bufferViews[1];
+    bufferView2.buffer = 0;
+    bufferView2.byteLength = 10;
+
+    GltfUtilities::collapseToSingleBuffer(m);
+
+    REQUIRE(m.buffers.size() == 1);
+    CHECK(m.bufferViews[0].buffer == 0);
+    // expect 8-byte alignment
+    CHECK(m.bufferViews[0].byteOffset == 16);
+    CHECK(m.bufferViews[0].byteLength == 12);
+    CHECK(m.bufferViews[1].buffer == 0);
+    CHECK(m.bufferViews[1].byteOffset == 0);
+    CHECK(m.bufferViews[1].byteLength == 10);
+  }
+
+  SECTION("leaves buffer with a URI and no data intact") {
+    Model m;
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    Buffer& buffer1 = m.buffers[0];
+    buffer1.byteLength = 10;
+    buffer1.cesium.data.resize(10, std::byte('1'));
+
+    Buffer& buffer2 = m.buffers[1];
+    buffer2.byteLength = 100;
+    buffer2.uri = "foo";
+
+    Buffer& buffer3 = m.buffers[2];
+    buffer3.byteLength = 12;
+    buffer3.cesium.data.resize(12, std::byte('2'));
+
+    BufferView& bufferView1 = m.bufferViews[0];
+    bufferView1.buffer = 2;
+    bufferView1.byteLength = 12;
+    BufferView& bufferView2 = m.bufferViews[1];
+    bufferView2.buffer = 0;
+    bufferView2.byteLength = 10;
+    BufferView& bufferView3 = m.bufferViews[2];
+    bufferView3.buffer = 1;
+    bufferView3.byteLength = 100;
+
+    GltfUtilities::collapseToSingleBuffer(m);
+
+    REQUIRE(m.buffers.size() == 2);
+    CHECK(m.bufferViews[0].buffer == 0);
+    // expect 8-byte alignment
+    CHECK(m.bufferViews[0].byteOffset == 16);
+    CHECK(m.bufferViews[0].byteLength == 12);
+    CHECK(m.bufferViews[1].buffer == 0);
+    CHECK(m.bufferViews[1].byteOffset == 0);
+    CHECK(m.bufferViews[1].byteLength == 10);
+    CHECK(m.bufferViews[2].buffer == 1);
+    CHECK(m.bufferViews[2].byteLength == 100);
+  }
+
+  SECTION("leaves a meshopt fallback buffer with no data intact even if it has "
+          "no URI") {
+    Model m;
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    Buffer& buffer1 = m.buffers[0];
+    buffer1.byteLength = 10;
+    buffer1.cesium.data.resize(10, std::byte('1'));
+
+    Buffer& buffer2 = m.buffers[1];
+    buffer2.byteLength = 100;
+    ExtensionBufferExtMeshoptCompression& extension =
+        buffer2.addExtension<ExtensionBufferExtMeshoptCompression>();
+    extension.fallback = true;
+
+    Buffer& buffer3 = m.buffers[2];
+    buffer3.byteLength = 12;
+    buffer3.cesium.data.resize(12, std::byte('2'));
+
+    BufferView& bufferView1 = m.bufferViews[0];
+    bufferView1.buffer = 2;
+    bufferView1.byteLength = 12;
+    BufferView& bufferView2 = m.bufferViews[1];
+    bufferView2.buffer = 0;
+    bufferView2.byteLength = 10;
+    BufferView& bufferView3 = m.bufferViews[2];
+    bufferView3.buffer = 1;
+    bufferView3.byteLength = 100;
+
+    GltfUtilities::collapseToSingleBuffer(m);
+
+    REQUIRE(m.buffers.size() == 2);
+    CHECK(m.buffers[1].hasExtension<ExtensionBufferExtMeshoptCompression>());
+    CHECK(m.bufferViews[0].buffer == 0);
+    // expect 8-byte alignment
+    CHECK(m.bufferViews[0].byteOffset == 16);
+    CHECK(m.bufferViews[0].byteLength == 12);
+    CHECK(m.bufferViews[1].buffer == 0);
+    CHECK(m.bufferViews[1].byteOffset == 0);
+    CHECK(m.bufferViews[1].byteLength == 10);
+    CHECK(m.bufferViews[2].buffer == 1);
+    CHECK(m.bufferViews[2].byteLength == 100);
   }
 }

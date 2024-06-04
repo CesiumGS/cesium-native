@@ -44,10 +44,10 @@ protected:
 private:
   CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata* _pObject = nullptr;
   CesiumJsonReader::
-      ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>>
+      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
           _propertyTextures;
   CesiumJsonReader::
-      ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>>
+      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
           _propertyAttributes;
 };
 } // namespace CesiumGltfReader

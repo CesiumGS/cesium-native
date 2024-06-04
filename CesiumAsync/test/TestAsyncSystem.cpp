@@ -663,5 +663,43 @@ TEST_CASE("AsyncSystem") {
       CHECK(called2);
       CHECK(called3);
     }
+
+    SECTION("Future rejecting with throw") {
+      bool called = false;
+      auto future =
+          asyncSystem.runInWorkerThread([]() { throw std::runtime_error(""); })
+              .thenInMainThread([&called]() {
+                called = true;
+                return 4;
+              });
+      CHECK_THROWS(std::move(future).waitInMainThread());
+      CHECK(!called);
+    }
+
+    SECTION("Future rejecting with Promise::reject") {
+      bool called = false;
+      auto promise = asyncSystem.createPromise<void>();
+      promise.reject(std::runtime_error("Some exception"));
+      Future<int> future = promise.getFuture().thenInMainThread([&called]() {
+        called = true;
+        return 4;
+      });
+      CHECK_THROWS(std::move(future).waitInMainThread());
+      CHECK(!called);
+    }
+
+    SECTION("SharedFuture rejecting") {
+      bool called = false;
+      auto promise = asyncSystem.createPromise<void>();
+      promise.reject(std::runtime_error("Some exception"));
+      SharedFuture<int> future = promise.getFuture()
+                                     .thenInMainThread([&called]() {
+                                       called = true;
+                                       return 4;
+                                     })
+                                     .share();
+      CHECK_THROWS(future.waitInMainThread());
+      CHECK(!called);
+    }
   }
 }

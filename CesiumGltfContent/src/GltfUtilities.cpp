@@ -2,6 +2,8 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
@@ -25,6 +27,10 @@
 using namespace CesiumGltf;
 
 namespace CesiumGltfContent {
+
+namespace {
+std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices);
+}
 
 /*static*/ std::optional<glm::dmat4x4>
 GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
@@ -263,30 +269,114 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   return result;
 }
 
+namespace {
+
+size_t moveBufferContentWithoutRenumbering(
+    CesiumGltf::Buffer& destinationBuffer,
+    CesiumGltf::Buffer& sourceBuffer) {
+  // Assert that the byteLength and the size of the cesium data vector are in
+  // sync.
+  assert(sourceBuffer.byteLength == int64_t(sourceBuffer.cesium.data.size()));
+  assert(
+      destinationBuffer.byteLength ==
+      int64_t(destinationBuffer.cesium.data.size()));
+
+  // Copy the data to the destination and keep track of where we put it.
+  // Align each bufferView to an 8-byte boundary.
+  size_t start = destinationBuffer.cesium.data.size();
+
+  size_t alignmentRemainder = start % 8;
+  if (alignmentRemainder != 0) {
+    start += 8 - alignmentRemainder;
+  }
+
+  destinationBuffer.cesium.data.resize(start + sourceBuffer.cesium.data.size());
+  std::memcpy(
+      destinationBuffer.cesium.data.data() + start,
+      sourceBuffer.cesium.data.data(),
+      sourceBuffer.cesium.data.size());
+
+  sourceBuffer.byteLength = 0;
+  sourceBuffer.cesium.data.clear();
+  sourceBuffer.cesium.data.shrink_to_fit();
+
+  destinationBuffer.byteLength = int64_t(destinationBuffer.cesium.data.size());
+
+  return start;
+}
+
+} // namespace
+
 /*static*/ void GltfUtilities::collapseToSingleBuffer(CesiumGltf::Model& gltf) {
   if (gltf.buffers.empty())
     return;
 
   Buffer& destinationBuffer = gltf.buffers[0];
 
+  std::vector<bool> keepBuffer(gltf.buffers.size(), false);
+  keepBuffer[0] = true;
+
+  std::vector<int64_t> bufferStarts(gltf.buffers.size(), 0);
+
   for (size_t i = 1; i < gltf.buffers.size(); ++i) {
     Buffer& sourceBuffer = gltf.buffers[i];
-    GltfUtilities::moveBufferContent(gltf, destinationBuffer, sourceBuffer);
+
+    // Leave intact any buffers that have a URI and no data.
+    // Also leave intact meshopt fallback buffers without any data.
+    ExtensionBufferExtMeshoptCompression* pMeshOpt =
+        sourceBuffer.getExtension<ExtensionBufferExtMeshoptCompression>();
+    bool isMeshOptFallback = pMeshOpt && pMeshOpt->fallback;
+    if (sourceBuffer.cesium.data.empty() &&
+        (sourceBuffer.uri || isMeshOptFallback)) {
+      keepBuffer[i] = true;
+      continue;
+    }
+
+    size_t start =
+        moveBufferContentWithoutRenumbering(destinationBuffer, sourceBuffer);
+    bufferStarts[i] = int64_t(start);
   }
 
-  // Remove all the old buffers
-  gltf.buffers.resize(1);
+  // Update the buffer indices based on the buffers being removed.
+  std::vector<int32_t> indexMap = getIndexMap(keepBuffer);
+  for (BufferView& bufferView : gltf.bufferViews) {
+    int32_t& bufferIndex = bufferView.buffer;
+    if (bufferIndex >= 0 && size_t(bufferIndex) < indexMap.size()) {
+      bufferView.byteOffset += bufferStarts[size_t(bufferIndex)];
+      int32_t newIndex = indexMap[size_t(bufferIndex)];
+      bufferIndex = newIndex == -1 ? 0 : newIndex;
+    }
+
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt) {
+      int32_t& meshOptBufferIndex = pMeshOpt->buffer;
+      if (meshOptBufferIndex >= 0 &&
+          size_t(meshOptBufferIndex) < indexMap.size()) {
+        pMeshOpt->byteOffset += bufferStarts[size_t(meshOptBufferIndex)];
+        int32_t newIndex = indexMap[size_t(meshOptBufferIndex)];
+        meshOptBufferIndex = newIndex == -1 ? 0 : newIndex;
+      }
+    }
+  }
+
+  // Remove the unused elements.
+  gltf.buffers.erase(
+      std::remove_if(
+          gltf.buffers.begin(),
+          gltf.buffers.end(),
+          [&keepBuffer, &gltf](const Buffer& buffer) {
+            int64_t index = &buffer - &gltf.buffers[0];
+            assert(index >= 0 && size_t(index) < keepBuffer.size());
+            return !keepBuffer[size_t(index)];
+          }),
+      gltf.buffers.end());
 }
 
 /*static*/ void GltfUtilities::moveBufferContent(
     CesiumGltf::Model& gltf,
     CesiumGltf::Buffer& destination,
     CesiumGltf::Buffer& source) {
-  // Assert that the byteLength and the size of the cesium data vector are in
-  // sync.
-  assert(source.byteLength == int64_t(source.cesium.data.size()));
-  assert(destination.byteLength == int64_t(destination.cesium.data.size()));
-
   int64_t sourceIndex = &source - &gltf.buffers[0];
   int64_t destinationIndex = &destination - &gltf.buffers[0];
 
@@ -298,35 +388,22 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
     return;
   }
 
-  // Copy the data to the destination and keep track of where we put it.
-  // Align each bufferView to an 8-byte boundary.
-  size_t start = destination.cesium.data.size();
-
-  size_t alignmentRemainder = start % 8;
-  if (alignmentRemainder != 0) {
-    start += 8 - alignmentRemainder;
-  }
-
-  destination.cesium.data.resize(start + source.cesium.data.size());
-  std::memcpy(
-      destination.cesium.data.data() + start,
-      source.cesium.data.data(),
-      source.cesium.data.size());
-
-  source.byteLength = 0;
-  source.cesium.data.clear();
-  source.cesium.data.shrink_to_fit();
-
-  destination.byteLength = int64_t(destination.cesium.data.size());
+  size_t start = moveBufferContentWithoutRenumbering(destination, source);
 
   // Update all the bufferViews that previously referred to the source Buffer to
   // refer to the destination Buffer instead.
   for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer != sourceIndex)
-      continue;
+    if (bufferView.buffer == sourceIndex) {
+      bufferView.buffer = int32_t(destinationIndex);
+      bufferView.byteOffset += int64_t(start);
+    }
 
-    bufferView.buffer = int32_t(destinationIndex);
-    bufferView.byteOffset += int64_t(start);
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt && pMeshOpt->buffer == sourceIndex) {
+      pMeshOpt->buffer = int32_t(destinationIndex);
+      pMeshOpt->byteOffset += int64_t(start);
+    }
   }
 }
 
@@ -511,6 +588,20 @@ struct VisitBufferViewIds {
   }
 };
 
+struct VisitBufferIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (BufferView& bufferView : gltf.bufferViews) {
+      callback(bufferView.buffer);
+
+      ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+          bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+      if (pMeshOpt) {
+        callback(pMeshOpt->buffer);
+      }
+    }
+  }
+};
+
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
     Model& gltf,
@@ -605,6 +696,16 @@ void GltfUtilities::removeUnusedBufferViews(
       VisitBufferViewIds());
 }
 
+void GltfUtilities::removeUnusedBuffers(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedBufferIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedBufferIndices,
+      gltf.buffers,
+      VisitBufferIds());
+}
+
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
   for (size_t i = 0;
        i < gltf.buffers.size() && i < std::numeric_limits<int32_t>::max();
@@ -640,21 +741,36 @@ void deleteBufferRange(
     end = start + bytesToRemove;
   }
 
-  // Adjust bufferView offets for the removed bytes.
+  // Adjust bufferView offsets for the removed bytes.
   for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer != bufferIndex)
-      continue;
+    if (bufferView.buffer == bufferIndex) {
+      // Sanity check that we're not removing a part of the buffer used by this
+      // bufferView.
+      assert(
+          bufferView.byteOffset >= end ||
+          (bufferView.byteOffset + bufferView.byteLength) <= start);
 
-    // Sanity check that we're not removing a part of the buffer used by this
-    // bufferView.
-    assert(
-        bufferView.byteOffset >= end ||
-        (bufferView.byteOffset + bufferView.byteLength) <= start);
+      // If this bufferView starts after the bytes we're removing, adjust the
+      // start position accordingly.
+      if (bufferView.byteOffset >= start) {
+        bufferView.byteOffset -= bytesToRemove;
+      }
+    }
 
-    // If this bufferView starts after the bytes we're removing, adjust the
-    // start position accordingly.
-    if (bufferView.byteOffset >= start) {
-      bufferView.byteOffset -= bytesToRemove;
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt && pMeshOpt->buffer == bufferIndex) {
+      // Sanity check that we're not removing a part of the buffer used by this
+      // meshopt extension.
+      assert(
+          pMeshOpt->byteOffset >= end ||
+          (pMeshOpt->byteOffset + pMeshOpt->byteLength) <= start);
+
+      // If this meshopt extension starts after the bytes we're removing, adjust
+      // the start position accordingly.
+      if (pMeshOpt->byteOffset >= start) {
+        pMeshOpt->byteOffset -= bytesToRemove;
+      }
     }
   }
 
@@ -688,13 +804,7 @@ void GltfUtilities::compactBuffer(
 
   std::vector<BufferRange> usedRanges;
 
-  for (BufferView& bufferView : gltf.bufferViews) {
-    if (bufferView.buffer != bufferIndex)
-      continue;
-
-    int64_t start = bufferView.byteOffset;
-    int64_t end = start + bufferView.byteLength;
-
+  auto addUsedRange = [&usedRanges](int64_t start, int64_t end) {
     auto it = std::lower_bound(
         usedRanges.begin(),
         usedRanges.end(),
@@ -719,6 +829,22 @@ void GltfUtilities::compactBuffer(
         it->end = std::max(it->end, nextIt->end);
         it = usedRanges.erase(nextIt) - 1;
       }
+    }
+  };
+
+  for (BufferView& bufferView : gltf.bufferViews) {
+    if (bufferView.buffer == bufferIndex) {
+      addUsedRange(
+          bufferView.byteOffset,
+          bufferView.byteOffset + bufferView.byteLength);
+    }
+
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt && pMeshOpt->buffer == bufferIndex) {
+      addUsedRange(
+          pMeshOpt->byteOffset,
+          pMeshOpt->byteOffset + pMeshOpt->byteLength);
     }
   }
 
