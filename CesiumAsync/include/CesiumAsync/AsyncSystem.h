@@ -12,6 +12,7 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <memory>
+#include <type_traits>
 
 namespace CesiumAsync {
 class ITaskProcessor;
