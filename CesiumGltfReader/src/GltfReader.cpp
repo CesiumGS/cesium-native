@@ -1,12 +1,12 @@
 #include "CesiumGltfReader/GltfReader.h"
 
 #include "ModelJsonHandler.h"
-#include "applyKHRTextureTransform.h"
+#include "applyKhrTextureTransform.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
 #include "dequantizeMeshData.h"
-#include "registerExtensions.h"
+#include "registerReaderExtensions.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -28,10 +28,19 @@
 #include <sstream>
 #include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
-#include <stb_image.h>
+
+namespace Cesium {
+// Use STB resize in our own namespace to avoid conflicts from other libs
+#define STBIRDEF
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
+#undef STBIRDEF
+}; // namespace Cesium
+
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include <turbojpeg.h>
 
 using namespace CesiumAsync;
@@ -39,6 +48,7 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
+using namespace Cesium;
 
 namespace {
 #pragma pack(push, 1)
@@ -207,11 +217,24 @@ GltfReaderResult readBinaryGltf(
     }
 
     const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
-    if (buffer.byteLength > binaryChunkSize ||
-        buffer.byteLength + 3 < binaryChunkSize) {
-      result.errors.emplace_back("GLB binary chunk size does not match the "
-                                 "size of the first buffer in the JSON chunk.");
+    if (buffer.byteLength > binaryChunkSize) {
+      result.errors.emplace_back(
+          "The size of the first buffer in the JSON chunk is " +
+          std::to_string(buffer.byteLength) +
+          ", which is larger than the size of the GLB binary chunk (" +
+          std::to_string(binaryChunkSize) + ")");
       return result;
+    }
+    // The byte length of the BIN chunk MAY be up to 3 bytes
+    // bigger than JSON-defined buffer.byteLength. When it is
+    // more than 3 bytes bigger, generate a warning.
+    if (binaryChunkSize - buffer.byteLength > 3) {
+      result.warnings.emplace_back(
+          "The size of the first buffer in the JSON chunk is " +
+          std::to_string(buffer.byteLength) +
+          ", which is more than 3 bytes smaller than the size of the GLB "
+          "binary chunk (" +
+          std::to_string(binaryChunkSize) + ")");
     }
 
     buffer.cesium.data = std::vector<std::byte>(
@@ -342,13 +365,15 @@ void postprocess(
           model.extensionsUsed.begin(),
           model.extensionsUsed.end(),
           "KHR_texture_transform") != model.extensionsUsed.end()) {
-    applyKHRTextureTransform(model);
+    applyKhrTextureTransform(model);
   }
 }
 
 } // namespace
 
-GltfReader::GltfReader() : _context() { registerExtensions(this->_context); }
+GltfReader::GltfReader() : _context() {
+  registerReaderExtensions(this->_context);
+}
 
 CesiumJsonReader::JsonReaderOptions& GltfReader::getOptions() {
   return this->_context;
@@ -428,8 +453,15 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
       });
 }
 
-/*static*/
-Future<GltfReaderResult> GltfReader::resolveExternalData(
+void CesiumGltfReader::GltfReader::postprocessGltf(
+    GltfReaderResult& readGltf,
+    const GltfReaderOptions& options) {
+  if (readGltf.model) {
+    postprocess(*this, readGltf, options);
+  }
+}
+
+/*static*/ Future<GltfReaderResult> GltfReader::resolveExternalData(
     AsyncSystem asyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,

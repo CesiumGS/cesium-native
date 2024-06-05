@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check source formatting
         run: |
           npm install
@@ -18,7 +18,7 @@ jobs:
         run: |
           sudo apt install -y doxygen
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Generate Documentation
@@ -27,16 +27,17 @@ jobs:
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ReferenceDocumentation
           path: build/doc/html
   WindowsBuild:
     strategy:
+      fail-fast: false
       matrix:
         platform: [windows-2019, windows-2022]
         build_type: [Debug, RelWithDebInfo]
-    name: "Build ${{matrix.build_type}} for ${{matrix.platform}}"
+    name: "${{matrix.platform}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}"
     runs-on: ${{ matrix.platform }}
@@ -46,7 +47,7 @@ jobs:
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup MSVC for command-line builds
@@ -57,7 +58,7 @@ jobs:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
           variant: sccache
       - name: Cache vcpkg artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /.ezvcpkg
           key: vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
@@ -74,18 +75,19 @@ jobs:
           ctest -V
   PosixBuild:
     strategy:
+      fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-latest, ubuntu-20.04, macos-latest ]
+        platform: [ ubuntu-latest, ubuntu-20.04, macos-12 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
             platform: ubuntu-latest
           - compiler: gcc
-            platform: macos-latest
+            platform: macos-12
           - compiler: gcc
             platform: ubuntu-20.04
-    name: "Build ${{matrix.build_type}} on ${{matrix.platform}} with ${{matrix.compiler}}"
+    name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
     runs-on: ${{ matrix.platform }}
@@ -95,7 +97,7 @@ jobs:
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: ccache
@@ -103,7 +105,7 @@ jobs:
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
       - name: Cache vcpkg artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.ezvcpkg
           key:  vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
@@ -111,7 +113,7 @@ jobs:
             vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
             vcpkg-${{ env.CACHE_KEY }}
       - name: Set CC and CXX
-        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-latest'}}
+        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-12'}}
         run: |
           echo "CC=clang-12" >> "$GITHUB_ENV"
           echo "CXX=clang++-12" >> "$GITHUB_ENV"

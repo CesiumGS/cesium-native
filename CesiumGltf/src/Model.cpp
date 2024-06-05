@@ -1,7 +1,16 @@
 #include "CesiumGltf/Model.h"
 
 #include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h"
+#include "CesiumGltf/ExtensionCesiumPrimitiveOutline.h"
+#include "CesiumGltf/ExtensionCesiumTileEdges.h"
+#include "CesiumGltf/ExtensionExtMeshFeatures.h"
+#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
 #include "CesiumGltf/ExtensionKhrDracoMeshCompression.h"
+#include "CesiumGltf/ExtensionKhrTextureBasisu.h"
+#include "CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h"
+#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/ExtensionTextureWebp.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
@@ -9,9 +18,14 @@
 #include <gsl/span>
 
 #include <algorithm>
+#include <charconv>
+
+using namespace CesiumUtility;
 
 namespace CesiumGltf {
+
 namespace {
+
 template <typename T>
 size_t copyElements(std::vector<T>& to, std::vector<T>& from) {
   const size_t out = to.size();
@@ -29,9 +43,17 @@ void updateIndex(int32_t& index, size_t offset) noexcept {
   }
   index += int32_t(offset);
 }
+
+void mergeSchemas(
+    Schema& lhs,
+    Schema& rhs,
+    std::map<std::string, std::string>& classNameMap);
+
 } // namespace
 
-void Model::merge(Model&& rhs) {
+ErrorList Model::merge(Model&& rhs) {
+  ErrorList result;
+
   // TODO: we could generate this pretty easily if the glTF JSON schema made
   // it clear which index properties refer to which types of objects.
 
@@ -65,6 +87,83 @@ void Model::merge(Model&& rhs) {
   const size_t firstSkin = copyElements(this->skins, rhs.skins);
   const size_t firstTexture = copyElements(this->textures, rhs.textures);
 
+  size_t firstPropertyTable = 0;
+  size_t firstPropertyTexture = 0;
+  size_t firstPropertyAttribute = 0;
+
+  ExtensionModelExtStructuralMetadata* pRhsMetadata =
+      rhs.getExtension<ExtensionModelExtStructuralMetadata>();
+  if (pRhsMetadata) {
+    ExtensionModelExtStructuralMetadata& metadata =
+        this->addExtension<ExtensionModelExtStructuralMetadata>();
+
+    if (metadata.schemaUri && pRhsMetadata->schemaUri &&
+        *metadata.schemaUri != *pRhsMetadata->schemaUri) {
+      // We can't merge schema URIs. So the thing to do here is download both
+      // schemas and merge them. But for now we're just reporting an error.
+      result.emplaceError("Cannot merge EXT_structural_metadata extensions "
+                          "with different schemaUris.");
+    } else if (pRhsMetadata->schemaUri) {
+      metadata.schemaUri = pRhsMetadata->schemaUri;
+    }
+
+    std::map<std::string, std::string> classNameMap;
+
+    if (metadata.schema && pRhsMetadata->schema) {
+      mergeSchemas(*metadata.schema, *pRhsMetadata->schema, classNameMap);
+    } else if (pRhsMetadata->schema) {
+      metadata.schema = std::move(pRhsMetadata->schema);
+    }
+
+    firstPropertyTable =
+        copyElements(metadata.propertyTables, pRhsMetadata->propertyTables);
+    firstPropertyTexture =
+        copyElements(metadata.propertyTextures, pRhsMetadata->propertyTextures);
+    firstPropertyAttribute = copyElements(
+        metadata.propertyAttributes,
+        pRhsMetadata->propertyAttributes);
+
+    for (size_t i = firstPropertyTable; i < metadata.propertyTables.size();
+         ++i) {
+      PropertyTable& propertyTable = metadata.propertyTables[i];
+      auto it = classNameMap.find(propertyTable.classProperty);
+      if (it != classNameMap.end()) {
+        propertyTable.classProperty = it->second;
+      }
+
+      for (std::pair<const std::string, PropertyTableProperty>& pair :
+           propertyTable.properties) {
+        updateIndex(pair.second.values, firstBufferView);
+        updateIndex(pair.second.arrayOffsets, firstBufferView);
+        updateIndex(pair.second.stringOffsets, firstBufferView);
+      }
+    }
+
+    for (size_t i = firstPropertyTexture; i < metadata.propertyTextures.size();
+         ++i) {
+      PropertyTexture& propertyTexture = metadata.propertyTextures[i];
+      auto it = classNameMap.find(propertyTexture.classProperty);
+      if (it != classNameMap.end()) {
+        propertyTexture.classProperty = it->second;
+      }
+
+      for (std::pair<const std::string, PropertyTextureProperty>& pair :
+           propertyTexture.properties) {
+        updateIndex(pair.second.index, firstTexture);
+      }
+    }
+
+    for (size_t i = firstPropertyAttribute;
+         i < metadata.propertyAttributes.size();
+         ++i) {
+      PropertyAttribute& propertyAttribute = metadata.propertyAttributes[i];
+      auto it = classNameMap.find(propertyAttribute.classProperty);
+      if (it != classNameMap.end()) {
+        propertyAttribute.classProperty = it->second;
+      }
+    }
+  }
+
   // Update the copied indices
   for (size_t i = firstAccessor; i < this->accessors.size(); ++i) {
     Accessor& accessor = this->accessors[i];
@@ -93,6 +192,12 @@ void Model::merge(Model&& rhs) {
   for (size_t i = firstBufferView; i < this->bufferViews.size(); ++i) {
     BufferView& bufferView = this->bufferViews[i];
     updateIndex(bufferView.buffer, firstBuffer);
+
+    ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
+        bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
+    if (pMeshOpt) {
+      updateIndex(pMeshOpt->buffer, firstBuffer);
+    }
   }
 
   for (size_t i = firstImage; i < this->images.size(); ++i) {
@@ -122,6 +227,45 @@ void Model::merge(Model&& rhs) {
       if (pDraco) {
         updateIndex(pDraco->bufferView, firstBufferView);
       }
+
+      ExtensionMeshPrimitiveExtStructuralMetadata* pMetadata =
+          primitive.getExtension<ExtensionMeshPrimitiveExtStructuralMetadata>();
+      if (pMetadata) {
+        for (int32_t& propertyTextureID : pMetadata->propertyTextures) {
+          updateIndex(propertyTextureID, firstPropertyTexture);
+        }
+
+        for (int32_t& propertyAttributeID : pMetadata->propertyAttributes) {
+          updateIndex(propertyAttributeID, firstPropertyAttribute);
+        }
+      }
+
+      ExtensionExtMeshFeatures* pMeshFeatures =
+          primitive.getExtension<ExtensionExtMeshFeatures>();
+      if (pMeshFeatures) {
+        for (FeatureId& featureId : pMeshFeatures->featureIds) {
+          updateIndex(featureId.propertyTable, firstPropertyTable);
+
+          if (featureId.texture) {
+            updateIndex(featureId.texture->index, firstTexture);
+          }
+        }
+      }
+
+      ExtensionCesiumTileEdges* pTileEdges =
+          primitive.getExtension<ExtensionCesiumTileEdges>();
+      if (pTileEdges) {
+        updateIndex(pTileEdges->left, firstAccessor);
+        updateIndex(pTileEdges->bottom, firstAccessor);
+        updateIndex(pTileEdges->right, firstAccessor);
+        updateIndex(pTileEdges->top, firstAccessor);
+      }
+
+      ExtensionCesiumPrimitiveOutline* pPrimitiveOutline =
+          primitive.getExtension<ExtensionCesiumPrimitiveOutline>();
+      if (pPrimitiveOutline) {
+        updateIndex(pPrimitiveOutline->indices, firstAccessor);
+      }
     }
   }
 
@@ -134,6 +278,14 @@ void Model::merge(Model&& rhs) {
 
     for (auto& nodeIndex : node.children) {
       updateIndex(nodeIndex, firstNode);
+    }
+
+    ExtensionExtMeshGpuInstancing* pInstancing =
+        node.getExtension<ExtensionExtMeshGpuInstancing>();
+    if (pInstancing) {
+      for (auto& pair : pInstancing->attributes) {
+        updateIndex(pair.second, firstAccessor);
+      }
     }
   }
 
@@ -160,6 +312,15 @@ void Model::merge(Model&& rhs) {
 
     updateIndex(texture.sampler, firstSampler);
     updateIndex(texture.source, firstImage);
+
+    ExtensionKhrTextureBasisu* pKtx =
+        texture.getExtension<ExtensionKhrTextureBasisu>();
+    if (pKtx)
+      updateIndex(pKtx->source, firstImage);
+
+    ExtensionTextureWebp* pWebP = texture.getExtension<ExtensionTextureWebp>();
+    if (pWebP)
+      updateIndex(pWebP->source, firstImage);
   }
 
   for (size_t i = firstMaterial; i < this->materials.size(); ++i) {
@@ -215,6 +376,8 @@ void Model::merge(Model&& rhs) {
 
     this->scene = int32_t(this->scenes.size() - 1);
   }
+
+  return result;
 }
 
 namespace {
@@ -230,121 +393,210 @@ void forEachPrimitiveInMeshObject(
   }
 }
 
+std::optional<glm::dmat4x4> getNodeTransform(const CesiumGltf::Node& node) {
+  if (!node.matrix.empty() && node.matrix.size() < 16) {
+    return std::nullopt;
+  }
+
+  // clang-format off
+  // This is column-major, just like glm and glTF
+  static constexpr std::array<double, 16> identityMatrix = {
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0};
+  // clang-format on
+
+  const std::vector<double>& matrix = node.matrix;
+
+  if (node.matrix.size() >= 16 && !std::equal(
+                                      identityMatrix.begin(),
+                                      identityMatrix.end(),
+                                      matrix.begin())) {
+    return glm::dmat4x4(
+        glm::dvec4(matrix[0], matrix[1], matrix[2], matrix[3]),
+        glm::dvec4(matrix[4], matrix[5], matrix[6], matrix[7]),
+        glm::dvec4(matrix[8], matrix[9], matrix[10], matrix[11]),
+        glm::dvec4(matrix[12], matrix[13], matrix[14], matrix[15]));
+  }
+
+  if (!node.translation.empty() || !node.rotation.empty() ||
+      !node.scale.empty()) {
+    glm::dmat4x4 translation(1.0);
+    if (node.translation.size() >= 3) {
+      translation[3] = glm::dvec4(
+          node.translation[0],
+          node.translation[1],
+          node.translation[2],
+          1.0);
+    } else if (!node.translation.empty()) {
+      return std::nullopt;
+    }
+
+    glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
+    if (node.rotation.size() >= 4) {
+      rotationQuat[0] = node.rotation[0];
+      rotationQuat[1] = node.rotation[1];
+      rotationQuat[2] = node.rotation[2];
+      rotationQuat[3] = node.rotation[3];
+    } else if (!node.rotation.empty()) {
+      return std::nullopt;
+    }
+
+    glm::dmat4x4 scale(1.0);
+    if (node.scale.size() >= 3) {
+      scale[0].x = node.scale[0];
+      scale[1].y = node.scale[1];
+      scale[2].z = node.scale[2];
+    } else if (!node.scale.empty()) {
+      return std::nullopt;
+    }
+
+    return translation * glm::dmat4x4(rotationQuat) * scale;
+  }
+
+  return glm::dmat4x4(1.0);
+}
+
 template <typename TCallback>
 void forEachPrimitiveInNodeObject(
     const glm::dmat4x4& transform,
     const Model& model,
     const Node& node,
     TCallback& callback) {
-  static constexpr std::array<double, 16> identityMatrix = {
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      1.0};
 
-  glm::dmat4x4 nodeTransform = transform;
-  const std::vector<double>& matrix = node.matrix;
+  // This should just call GltfUtilities::getNodeTransform, but it can't because
+  // it's in CesiumGltfContent. We should merge these two libraries, but until
+  // then, it's duplicated.
+  glm::dmat4x4 nodeTransform =
+      transform * getNodeTransform(node).value_or(glm::dmat4x4(1.0));
 
-  if (node.matrix.size() == 16 &&
-      !std::equal(matrix.begin(), matrix.end(), identityMatrix.begin())) {
-
-    const glm::dmat4& nodeTransformGltf =
-        *reinterpret_cast<const glm::dmat4*>(matrix.data());
-
-    nodeTransform = nodeTransform * nodeTransformGltf;
-  } else if (
-      !node.translation.empty() || !node.rotation.empty() ||
-      !node.scale.empty()) {
-
-    glm::dmat4 translation(1.0);
-    if (node.translation.size() == 3) {
-      translation[3] = glm::dvec4(
-          node.translation[0],
-          node.translation[1],
-          node.translation[2],
-          1.0);
-    }
-
-    glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
-    if (node.rotation.size() == 4) {
-      rotationQuat[0] = node.rotation[0];
-      rotationQuat[1] = node.rotation[1];
-      rotationQuat[2] = node.rotation[2];
-      rotationQuat[3] = node.rotation[3];
-    }
-
-    glm::dmat4 scale(1.0);
-    if (node.scale.size() == 3) {
-      scale[0].x = node.scale[0];
-      scale[1].y = node.scale[1];
-      scale[2].z = node.scale[2];
-    }
-
-    nodeTransform =
-        nodeTransform * translation * glm::dmat4(rotationQuat) * scale;
-  }
-
-  const int meshId = node.mesh;
-  if (meshId >= 0 && meshId < static_cast<int>(model.meshes.size())) {
-    const Mesh& mesh = model.meshes[static_cast<size_t>(meshId)];
+  const int32_t meshId = node.mesh;
+  if (meshId >= 0 && size_t(meshId) < model.meshes.size()) {
+    const Mesh& mesh = model.meshes[size_t(meshId)];
     forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
   }
 
-  for (const int childNodeId : node.children) {
-    if (childNodeId >= 0 &&
-        childNodeId < static_cast<int>(model.nodes.size())) {
+  for (const int32_t childNodeId : node.children) {
+    if (childNodeId >= 0 && size_t(childNodeId) < model.nodes.size()) {
       forEachPrimitiveInNodeObject(
           nodeTransform,
           model,
-          model.nodes[static_cast<size_t>(childNodeId)],
+          model.nodes[size_t(childNodeId)],
           callback);
     }
   }
 }
 
 template <typename TCallback>
-void forEachPrimitiveInSceneObject(
+void forEachNode(
     const glm::dmat4x4& transform,
     const Model& model,
-    const Scene& scene,
+    const Node& node,
     TCallback& callback) {
-  for (const int nodeID : scene.nodes) {
-    if (nodeID >= 0 && nodeID < static_cast<int>(model.nodes.size())) {
-      forEachPrimitiveInNodeObject(
-          transform,
+
+  glm::dmat4x4 nodeTransform =
+      transform * getNodeTransform(node).value_or(glm::dmat4x4(1.0));
+
+  callback(model, node, nodeTransform);
+
+  for (const int32_t childNodeId : node.children) {
+    if (childNodeId >= 0 && size_t(childNodeId) < model.nodes.size()) {
+      forEachNode(
+          nodeTransform,
           model,
-          model.nodes[static_cast<size_t>(nodeID)],
+          model.nodes[size_t(childNodeId)],
           callback);
     }
   }
 }
+
+template <typename TCallback>
+void forEachNodeInSceneObject(
+    const Model& model,
+    const Scene& scene,
+    TCallback& callback) {
+  for (int32_t node : scene.nodes) {
+    const Node* pNode = model.getSafe(&model.nodes, node);
+    if (!pNode)
+      continue;
+
+    callback(model, *pNode);
+  }
+}
+
 } // namespace
 
+void Model::forEachRootNodeInScene(
+    int32_t sceneID,
+    std::function<ForEachRootNodeInSceneCallback>&& callback) {
+  return const_cast<const Model*>(this)->forEachRootNodeInScene(
+      sceneID,
+      [&callback](const Model& gltf, const Node& node) {
+        callback(const_cast<Model&>(gltf), const_cast<Node&>(node));
+      });
+}
+
+void Model::forEachRootNodeInScene(
+    int32_t sceneID,
+    std::function<ForEachRootNodeInSceneConstCallback>&& callback) const {
+  if (sceneID >= 0) {
+    // Use the user-specified scene if it exists.
+    if (size_t(sceneID) < this->scenes.size()) {
+      forEachNodeInSceneObject(*this, this->scenes[size_t(sceneID)], callback);
+    }
+  } else if (this->scene >= 0 && size_t(this->scene) < this->scenes.size()) {
+    // Use the default scene
+    forEachNodeInSceneObject(
+        *this,
+        this->scenes[size_t(this->scene)],
+        callback);
+  } else if (!this->scenes.empty()) {
+    // There's no default, so use the first scene
+    const Scene& defaultScene = this->scenes[0];
+    forEachNodeInSceneObject(*this, defaultScene, callback);
+  } else if (!this->nodes.empty()) {
+    // No scenes at all, use the first node as the root node.
+    callback(*this, this->nodes.front());
+  }
+}
+
+void Model::forEachNodeInScene(
+    int32_t sceneID,
+    std::function<ForEachNodeInSceneCallback>&& callback) {
+  return const_cast<const Model*>(this)->forEachNodeInScene(
+      sceneID,
+      [&callback](
+          const Model& gltf,
+          const Node& node,
+          const glm::dmat4& transform) {
+        callback(const_cast<Model&>(gltf), const_cast<Node&>(node), transform);
+      });
+}
+
+void Model::forEachNodeInScene(
+    int32_t sceneID,
+    std::function<ForEachNodeInSceneConstCallback>&& callback) const {
+  this->forEachRootNodeInScene(
+      sceneID,
+      [callback = std::move(callback)](const Model& model, const Node& node) {
+        forEachNode(glm::dmat4x4(1.0), model, node, callback);
+      });
+}
+
 void Model::forEachPrimitiveInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachPrimitiveInSceneCallback>&& callback) {
   return const_cast<const Model*>(this)->forEachPrimitiveInScene(
       sceneID,
       [&callback](
-          const Model& gltf_,
+          const Model& gltf,
           const Node& node,
           const Mesh& mesh,
           const MeshPrimitive& primitive,
           const glm::dmat4& transform) {
         callback(
-            const_cast<Model&>(gltf_),
+            const_cast<Model&>(gltf),
             const_cast<Node&>(node),
             const_cast<Mesh&>(mesh),
             const_cast<MeshPrimitive&>(primitive),
@@ -353,44 +605,22 @@ void Model::forEachPrimitiveInScene(
 }
 
 void Model::forEachPrimitiveInScene(
-    int sceneID,
+    int32_t sceneID,
     std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const {
-  const glm::dmat4x4 rootTransform(1.0);
+  bool anythingVisited = false;
+  this->forEachRootNodeInScene(
+      sceneID,
+      [&anythingVisited,
+       callback = std::move(callback)](const Model& model, const Node& node) {
+        anythingVisited = true;
+        forEachPrimitiveInNodeObject(glm::dmat4x4(1.0), model, node, callback);
+      });
 
-  if (sceneID >= 0) {
-    // Use the user-specified scene if it exists.
-    if (sceneID < static_cast<int>(this->scenes.size())) {
-      forEachPrimitiveInSceneObject(
-          rootTransform,
-          *this,
-          this->scenes[static_cast<size_t>(sceneID)],
-          callback);
-    }
-  } else if (
-      this->scene >= 0 &&
-      this->scene < static_cast<int32_t>(this->scenes.size())) {
-    // Use the default scene
-    forEachPrimitiveInSceneObject(
-        rootTransform,
-        *this,
-        this->scenes[static_cast<size_t>(this->scene)],
-        callback);
-  } else if (!this->scenes.empty()) {
-    // There's no default, so use the first scene
-    const Scene& defaultScene = this->scenes[0];
-    forEachPrimitiveInSceneObject(rootTransform, *this, defaultScene, callback);
-  } else if (!this->nodes.empty()) {
-    // No scenes at all, use the first node as the root node.
-    forEachPrimitiveInNodeObject(
-        rootTransform,
-        *this,
-        this->nodes[0],
-        callback);
-  } else if (!this->meshes.empty()) {
-    // No nodes either, show all the meshes.
+  if (!anythingVisited) {
+    // No root nodes at all in this model, so enumerate all the meshes.
     for (const Mesh& mesh : this->meshes) {
       forEachPrimitiveInMeshObject(
-          rootTransform,
+          glm::dmat4x4(1.0),
           *this,
           Node(),
           mesh,
@@ -582,9 +812,7 @@ void generateSmoothNormals(
   normalAccessor.count = positionView.size();
   normalAccessor.type = Accessor::Type::VEC3;
 
-  primitive.attributes.emplace(
-      "NORMAL",
-      static_cast<int32_t>(normalAccessorId));
+  primitive.attributes.emplace("NORMAL", int32_t(normalAccessorId));
 }
 
 void generateSmoothNormals(
@@ -631,7 +859,7 @@ void generateSmoothNormals(
 void Model::generateMissingNormalsSmooth() {
   forEachPrimitiveInScene(
       -1,
-      [](Model& gltf_,
+      [](Model& gltf,
          Node& /*node*/,
          Mesh& /*mesh*/,
          MeshPrimitive& primitive,
@@ -648,20 +876,130 @@ void Model::generateMissingNormalsSmooth() {
           return;
         }
 
-        const int positionAccessorId = positionIt->second;
-        const AccessorView<glm::vec3> positionView(gltf_, positionAccessorId);
+        const int32_t positionAccessorId = positionIt->second;
+        const AccessorView<glm::vec3> positionView(gltf, positionAccessorId);
         if (positionView.status() != AccessorViewStatus::Valid) {
           return;
         }
 
         if (primitive.indices < 0 ||
-            static_cast<size_t>(primitive.indices) >= gltf_.accessors.size()) {
-          generateSmoothNormals(gltf_, primitive, positionView, std::nullopt);
+            size_t(primitive.indices) >= gltf.accessors.size()) {
+          generateSmoothNormals(gltf, primitive, positionView, std::nullopt);
         } else {
-          Accessor& indexAccessor =
-              gltf_.accessors[static_cast<size_t>(primitive.indices)];
-          generateSmoothNormals(gltf_, primitive, positionView, indexAccessor);
+          Accessor& indexAccessor = gltf.accessors[size_t(primitive.indices)];
+          generateSmoothNormals(gltf, primitive, positionView, indexAccessor);
         }
       });
 }
+
+void Model::addExtensionUsed(const std::string& extensionName) {
+  if (!this->isExtensionUsed(extensionName)) {
+    this->extensionsUsed.emplace_back(extensionName);
+  }
+}
+
+void Model::addExtensionRequired(const std::string& extensionName) {
+  this->addExtensionUsed(extensionName);
+
+  if (!this->isExtensionRequired(extensionName)) {
+    this->extensionsRequired.emplace_back(extensionName);
+  }
+}
+
+bool Model::isExtensionUsed(const std::string& extensionName) const noexcept {
+  return std::find(
+             this->extensionsUsed.begin(),
+             this->extensionsUsed.end(),
+             extensionName) != this->extensionsUsed.end();
+}
+
+bool Model::isExtensionRequired(
+    const std::string& extensionName) const noexcept {
+  return std::find(
+             this->extensionsRequired.begin(),
+             this->extensionsRequired.end(),
+             extensionName) != this->extensionsRequired.end();
+}
+
+namespace {
+
+template <typename T>
+std::string findAvailableName(
+    const std::unordered_map<std::string, T>& map,
+    const std::string& name) {
+  auto it = map.find(name);
+  if (it == map.end())
+    return name;
+
+  // Name already exists in the map, so find a numbered name that doesn't.
+
+  uint64_t number = 1;
+  while (number < std::numeric_limits<uint64_t>::max()) {
+    std::string newName = fmt::format("{}_{}", name, number);
+    it = map.find(newName);
+    if (it == map.end()) {
+      return newName;
+    }
+
+    ++number;
+  }
+
+  // Realistically, this can't happen. It would mean we checked all 2^64
+  // possible names and none of them are available.
+  assert(false);
+  return name;
+}
+
+void mergeSchemas(
+    Schema& lhs,
+    Schema& rhs,
+    std::map<std::string, std::string>& classNameMap) {
+  if (!lhs.name)
+    lhs.name = rhs.name;
+  else if (rhs.name && *lhs.name != *rhs.name)
+    lhs.name.emplace("Merged");
+
+  if (!lhs.description)
+    lhs.description = rhs.description;
+  else if (rhs.description && *lhs.description != *rhs.description)
+    lhs.description.emplace("This is a merged schema created by combining "
+                            "together the schemas from multiple glTFs.");
+
+  if (!lhs.version)
+    lhs.version = rhs.version;
+  else if (rhs.version && *lhs.version != *rhs.version)
+    lhs.version.reset();
+
+  std::map<std::string, std::string> enumNameMap;
+
+  for (std::pair<const std::string, Enum>& pair : rhs.enums) {
+    std::string availableName = findAvailableName(lhs.enums, pair.first);
+    lhs.enums[availableName] = std::move(pair.second);
+    if (availableName != pair.first)
+      enumNameMap.emplace(pair.first, availableName);
+  }
+
+  for (std::pair<const std::string, Class>& pair : rhs.classes) {
+    std::string availableName = findAvailableName(lhs.classes, pair.first);
+    Class& klass = lhs.classes[availableName];
+    klass = std::move(pair.second);
+
+    if (availableName != pair.first)
+      classNameMap.emplace(pair.first, availableName);
+
+    // Remap enum names in class properties.
+    for (std::pair<const std::string, ClassProperty>& propertyPair :
+         klass.properties) {
+      if (propertyPair.second.enumType) {
+        auto it = enumNameMap.find(*propertyPair.second.enumType);
+        if (it != enumNameMap.end()) {
+          propertyPair.second.enumType = it->second;
+        }
+      }
+    }
+  }
+}
+
+} // namespace
+
 } // namespace CesiumGltf

@@ -7,12 +7,14 @@
 
 #include <glm/fwd.hpp>
 
+#include <optional>
 #include <string_view>
 #include <vector>
 
 namespace CesiumGltf {
 struct Buffer;
 struct Model;
+struct Node;
 } // namespace CesiumGltf
 
 namespace CesiumGltfContent {
@@ -21,6 +23,32 @@ namespace CesiumGltfContent {
  * gltf model
  */
 struct CESIUMGLTFCONTENT_API GltfUtilities {
+  /**
+   * @brief Gets the transformation matrix for a given node.
+   *
+   * This returns the node's local transform as-is. It does not incorporate
+   * transforms from any of the node's ancestors.
+   *
+   * @param node The node from which to get the transformation matrix.
+   * @return The transformation matrix, or std::nullopt if the node's
+   * transformation is invalid, .e.g, because it has a matrix with fewer than
+   * 16 elements in it.
+   */
+  static std::optional<glm::dmat4x4>
+  getNodeTransform(const CesiumGltf::Node& node);
+
+  /**
+   * @brief Sets the transformation matrix for a given node.
+   *
+   * This sets only the local transform of the node. It does not affect the
+   * transforms of any ancestor or descendant nodes, if present.
+   *
+   * @param node The node on which to set the transformation matrix.
+   * @param newTransform The new transformation matrix.
+   */
+  static void
+  setNodeTransform(CesiumGltf::Node& node, const glm::dmat4x4& newTransform);
+
   /**
    * @brief Applies the glTF's RTC_CENTER, if any, to the given transform.
    *
@@ -121,5 +149,41 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       CesiumGltf::Model& gltf,
       CesiumGltf::Buffer& destination,
       CesiumGltf::Buffer& source);
+
+  static void removeUnusedTextures(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedTextureIndices = {});
+  static void removeUnusedSamplers(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedSamplerIndices = {});
+  static void removeUnusedImages(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedImageIndices = {});
+  static void removeUnusedAccessors(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedAccessorIndices = {});
+  static void removeUnusedBufferViews(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedBufferViewIndices = {});
+  static void removeUnusedBuffers(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedBufferIndices = {});
+
+  /**
+   * @brief Shrink buffers by removing any sections that are not referenced by
+   * any BufferView.
+   *
+   * @param gltf The glTF to modify.
+   */
+  static void compactBuffers(CesiumGltf::Model& gltf);
+
+  /**
+   * @brief Shrink a buffer by removing any sections that are not referenced by
+   * any BufferView.
+   *
+   * @param gltf The glTF to modify.
+   * @param bufferIndex The index of the buffer to compact.
+   */
+  static void compactBuffer(CesiumGltf::Model& gltf, int32_t bufferIndex);
 };
 } // namespace CesiumGltfContent

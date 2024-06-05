@@ -1,7 +1,7 @@
 #include "Cesium3DTilesWriter/TilesetWriter.h"
 
 #include "TilesetJsonWriter.h"
-#include "registerExtensions.h"
+#include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -9,7 +9,7 @@
 
 namespace Cesium3DTilesWriter {
 
-TilesetWriter::TilesetWriter() { registerExtensions(this->_context); }
+TilesetWriter::TilesetWriter() { registerWriterExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& TilesetWriter::getExtensions() {
   return this->_context;
@@ -39,6 +39,8 @@ TilesetWriterResult TilesetWriter::writeTileset(
 
   TilesetJsonWriter::write(tileset, *writer, context);
   result.tilesetBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }

@@ -38,6 +38,6 @@ private:
   CesiumJsonReader::StringJsonHandler _label;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _attribute;
   FeatureIdTextureJsonHandler _texture;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _propertyTable;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _propertyTable;
 };
 } // namespace CesiumGltfReader

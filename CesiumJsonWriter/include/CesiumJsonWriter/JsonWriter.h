@@ -12,9 +12,6 @@
 
 namespace CesiumJsonWriter {
 class JsonWriter {
-  rapidjson::StringBuffer _compactBuffer;
-  std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> compact;
-
 public:
   JsonWriter();
   virtual ~JsonWriter() {}
@@ -71,5 +68,23 @@ public:
   virtual std::string toString();
   virtual std::string_view toStringView();
   virtual std::vector<std::byte> toBytes();
+
+  template <typename ErrorStr> void emplaceError(ErrorStr&& error) {
+    _errors.emplace_back(std::forward<ErrorStr>(error));
+  }
+
+  template <typename WarningStr> void emplaceWarning(WarningStr&& warning) {
+    _warnings.emplace_back(std::forward<WarningStr>(warning));
+  }
+
+  const std::vector<std::string>& getErrors() const { return _errors; }
+  const std::vector<std::string>& getWarnings() const { return _warnings; }
+
+private:
+  rapidjson::StringBuffer _compactBuffer;
+  std::unique_ptr<rapidjson::Writer<rapidjson::StringBuffer>> _compact;
+
+  std::vector<std::string> _errors;
+  std::vector<std::string> _warnings;
 };
 } // namespace CesiumJsonWriter

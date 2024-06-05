@@ -572,4 +572,134 @@ TEST_CASE("AsyncSystem") {
 
     CHECK(checksCompleted);
   }
+
+  SECTION("waitInMainThread") {
+    SECTION("Future returning a value") {
+      bool called = false;
+      Future<int> future =
+          asyncSystem.createResolvedFuture().thenInMainThread([&called]() {
+            called = true;
+            return 4;
+          });
+      int value = std::move(future).waitInMainThread();
+      CHECK(called);
+      CHECK(value == 4);
+    }
+
+    SECTION("Future returning void") {
+      bool called = false;
+      Future<void> future = asyncSystem.createResolvedFuture().thenInMainThread(
+          [&called]() { called = true; });
+      std::move(future).waitInMainThread();
+      CHECK(called);
+    }
+
+    SECTION("SharedFuture returning a value") {
+      bool called = false;
+      SharedFuture<int> future = asyncSystem.createResolvedFuture()
+                                     .thenInMainThread([&called]() {
+                                       called = true;
+                                       return 4;
+                                     })
+                                     .share();
+      int value = future.waitInMainThread();
+      CHECK(called);
+      CHECK(value == 4);
+    }
+
+    SECTION("SharedFuture returning void") {
+      bool called = false;
+      SharedFuture<void> future =
+          asyncSystem.createResolvedFuture()
+              .thenInMainThread([&called]() { called = true; })
+              .share();
+      future.waitInMainThread();
+      CHECK(called);
+    }
+
+    SECTION("Future resolving while main thread is waiting") {
+      bool called1 = false;
+      bool called2 = false;
+      Future<void> future =
+          asyncSystem.createResolvedFuture()
+              .thenInWorkerThread([&called1]() {
+                using namespace std::chrono_literals;
+                // should be long enough for the main thread to start waiting on
+                // the conditional, without slowing the test down too much.
+                std::this_thread::sleep_for(20ms);
+                called1 = true;
+              })
+              .thenInMainThread([&called2]() { called2 = true; });
+      future.waitInMainThread();
+      CHECK(called1);
+      CHECK(called2);
+    }
+
+    SECTION("Future resolving from a worker while main thread is waiting") {
+      bool called1 = false;
+      bool called2 = false;
+      bool called3 = false;
+      Future<void> future =
+          asyncSystem.createResolvedFuture()
+              .thenInWorkerThread([&called1]() {
+                using namespace std::chrono_literals;
+                // should be long enough for the main thread to start waiting on
+                // the conditional, without slowing the test down too much.
+                std::this_thread::sleep_for(20ms);
+                called1 = true;
+              })
+              .thenInMainThread([&called2]() { called2 = true; })
+              .thenInWorkerThread([&called3]() {
+                using namespace std::chrono_literals;
+                // Sufficient time for the main thread to drop back into waiting
+                // on the conditional again after it was awakened by the
+                // scheduling of the main thread continuation above. It should
+                // awaken again when this continuation completes.
+                std::this_thread::sleep_for(20ms);
+                called3 = true;
+              });
+      future.waitInMainThread();
+      CHECK(called1);
+      CHECK(called2);
+      CHECK(called3);
+    }
+
+    SECTION("Future rejecting with throw") {
+      bool called = false;
+      auto future =
+          asyncSystem.runInWorkerThread([]() { throw std::runtime_error(""); })
+              .thenInMainThread([&called]() {
+                called = true;
+                return 4;
+              });
+      CHECK_THROWS(std::move(future).waitInMainThread());
+      CHECK(!called);
+    }
+
+    SECTION("Future rejecting with Promise::reject") {
+      bool called = false;
+      auto promise = asyncSystem.createPromise<void>();
+      promise.reject(std::runtime_error("Some exception"));
+      Future<int> future = promise.getFuture().thenInMainThread([&called]() {
+        called = true;
+        return 4;
+      });
+      CHECK_THROWS(std::move(future).waitInMainThread());
+      CHECK(!called);
+    }
+
+    SECTION("SharedFuture rejecting") {
+      bool called = false;
+      auto promise = asyncSystem.createPromise<void>();
+      promise.reject(std::runtime_error("Some exception"));
+      SharedFuture<int> future = promise.getFuture()
+                                     .thenInMainThread([&called]() {
+                                       called = true;
+                                       return 4;
+                                     })
+                                     .share();
+      CHECK_THROWS(future.waitInMainThread());
+      CHECK(!called);
+    }
+  }
 }

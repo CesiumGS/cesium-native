@@ -2,6 +2,7 @@
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -191,6 +192,15 @@ TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
         CesiumGltfReader_TEST_DATA_DIR +
         std::string("/DucksMeshopt/Duck.glb")));
     const Model& model = result.model.value();
+
+    // These extensions should be removed during the load process.
+    CHECK(!model.isExtensionRequired(
+        ExtensionBufferViewExtMeshoptCompression::ExtensionName));
+    CHECK(!model.isExtensionUsed(
+        ExtensionBufferViewExtMeshoptCompression::ExtensionName));
+    CHECK(!model.isExtensionRequired("KHR_mesh_quantization"));
+    CHECK(!model.isExtensionUsed("KHR_mesh_quantization"));
+
     originalVar = getVertexAttributeRange(model);
   }
 
@@ -244,6 +254,16 @@ TEST_CASE("Read TriangleWithoutIndices") {
   CHECK(position[0] == glm::vec3(0.0, 0.0, 0.0));
   CHECK(position[1] == glm::vec3(1.0, 0.0, 0.0));
   CHECK(position[2] == glm::vec3(0.0, 1.0, 0.0));
+}
+
+TEST_CASE("Read TriangleWithPaddingInGlbBin") {
+  std::filesystem::path glbFile = CesiumGltfReader_TEST_DATA_DIR;
+  glbFile /= "TriangleWithPaddingInGlbBin/TriangleWithPaddingInGlbBin.glb";
+  std::vector<std::byte> data = readFile(glbFile);
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(data);
+  REQUIRE(result.model);
+  REQUIRE(result.warnings.size() == 1);
 }
 
 TEST_CASE("Nested extras deserializes properly") {
@@ -313,6 +333,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   )";
 
   GltfReaderOptions options;
+  options.decodeDraco = false;
+
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
       gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
@@ -686,6 +708,43 @@ TEST_CASE("Decodes images with data uris") {
   CHECK(image.width == 256);
   CHECK(image.height == 256);
   CHECK(!image.pixelData.empty());
+
+  REQUIRE(model.buffers.size() == 1);
+
+  const Buffer& buffer = model.buffers.front();
+  CHECK(buffer.byteLength >= 0);
+  CHECK(size_t(buffer.byteLength) == buffer.cesium.data.size());
+}
+
+TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
+          "byteLength") {
+  std::vector<std::byte> gltfBytes = readFile(
+      CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf"));
+  std::string gltfString(
+      reinterpret_cast<const char*>(gltfBytes.data()),
+      gltfBytes.size());
+
+  // Make the byteLength incorrect
+  constexpr std::string_view toReplace = "\"byteLength\": 840";
+  gltfString.replace(
+      gltfString.find(toReplace),
+      toReplace.size(),
+      "\"byteLength\": 1");
+
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(gsl::span<const std::byte>(
+      reinterpret_cast<const std::byte*>(gltfString.data()),
+      gltfString.size()));
+
+  REQUIRE(result.errors.empty());
+  REQUIRE(result.warnings.size() == 1);
+
+  const Model& model = result.model.value();
+  REQUIRE(model.buffers.size() == 1);
+
+  const Buffer& buffer = model.buffers.front();
+  CHECK(buffer.byteLength >= 0);
+  CHECK(size_t(buffer.byteLength) == buffer.cesium.data.size());
 }
 
 TEST_CASE("GltfReader::loadGltf") {
@@ -743,5 +802,42 @@ TEST_CASE("GltfReader::loadGltf") {
   CHECK(!result.model->buffers.empty());
   for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
     CHECK(!buffer.cesium.data.empty());
+  }
+}
+
+TEST_CASE("GltfReader::postprocessGltf") {
+  GltfReaderOptions options;
+  GltfReader reader;
+  GltfReaderResult readerResult;
+
+  SECTION("returns immediately if there is no model") {
+    reader.postprocessGltf(readerResult, options);
+    CHECK(!readerResult.model);
+    CHECK(readerResult.errors.empty());
+    CHECK(readerResult.warnings.empty());
+  }
+
+  SECTION("performs requested post processing") {
+    options.decodeDataUrls = true;
+
+    Model& model = readerResult.model.emplace();
+
+    Buffer& buffer = model.buffers.emplace_back();
+    buffer.uri = "data:;base64,dGVzdA==";
+    buffer.byteLength = 4;
+
+    reader.postprocessGltf(readerResult, options);
+
+    CHECK(readerResult.errors.empty());
+    CHECK(readerResult.warnings.empty());
+    REQUIRE(readerResult.model);
+
+    REQUIRE(readerResult.model->buffers.size() == 1);
+
+    std::vector<std::byte>& data = readerResult.model->buffers[0].cesium.data;
+    std::string s(
+        reinterpret_cast<char*>(data.data()),
+        reinterpret_cast<char*>(data.data()) + data.size());
+    CHECK(s == "test");
   }
 }

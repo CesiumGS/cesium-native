@@ -109,6 +109,6 @@ struct CESIUMGLTF_API ImageCesium final {
    *   * The cost of any renderer resources (e.g., GPU textures) created for
    * this image.
    */
-  int64_t lastKnownSizeInBytes = -1;
+  int64_t sizeBytes = -1;
 };
 } // namespace CesiumGltf
