@@ -2,6 +2,13 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
+- Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
+
+### v0.36.0 - 2024-06-03
+
 ##### Breaking Changes :mega:
 
 - `FeatureId::propertyTable` is now `int32_t` instead of `std::optional<int64_t>`
@@ -11,7 +18,7 @@
 
 - Added support for I3DM 3D Tile content files.
 - Added `forEachNodeInScene` to `CesiumGltf::Model`.
-- Added `removeUnusedBuffers`, `removeUnusedMeshes`, and `removeUnusedMaterials` to `GltfUtilities`.
+- Added `removeUnusedBuffers` to `GltfUtilities`.
 - Added the following new methods to the `Uri` class: `unescape`, `unixPathToUriPath`, `windowsPathToUriPath`, `nativePathToUriPath`, `uriPathToUnixPath`, `uriPathToWindowsPath`, and `uriPathToNativePath`.
 - Added `LayerWriter` to the `CesiumQuantizedMeshTerrain` library and namespace.
 - Drastically improved the performance of `GltfUtilities::collapseToSingleBuffer` for glTFs with many buffers and bufferViews.

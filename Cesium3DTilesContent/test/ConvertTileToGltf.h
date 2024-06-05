@@ -1,8 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumNativeTests/readFile.h>
@@ -17,6 +15,9 @@ public:
       const std::filesystem::path& filePath,
       const CesiumGltfReader::GltfReaderOptions& options = {});
   static GltfConverterResult fromPnts(
+      const std::filesystem::path& filePath,
+      const CesiumGltfReader::GltfReaderOptions& options = {});
+  static GltfConverterResult fromI3dm(
       const std::filesystem::path& filePath,
       const CesiumGltfReader::GltfReaderOptions& options = {});
 
