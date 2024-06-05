@@ -1,6 +1,7 @@
 #include "CesiumGeometry/IntersectionTests.h"
 #include "CesiumGeometry/Plane.h"
 #include "CesiumGeometry/Ray.h"
+#include "CesiumGeospatial/Ellipsoid.h"
 
 #include <catch2/catch.hpp>
 #include <glm/glm.hpp>
@@ -8,6 +9,7 @@
 #include <array>
 
 using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 
 TEST_CASE("IntersectionTests::rayPlane") {
   struct TestCase {
@@ -38,9 +40,11 @@ TEST_CASE("IntersectionTests::rayPlane") {
   CHECK(intersectionPoint == testCase.expectedIntersectionPoint);
 }
 
+namespace {
 const glm::dvec3 unitInverseRadii(1.0, 1.0, 1.0);
-const glm::dvec3 wgs84Radii(6378137.0, 6378137.0, 6356752.3142451793);
+const glm::dvec3 wgs84Radii = Ellipsoid::WGS84.getRadii();
 const glm::dvec3 wgs84InverseRadii = 1.0 / wgs84Radii;
+} // namespace
 
 TEST_CASE("IntersectionTests::rayEllipsoid") {
   struct TestCase {
