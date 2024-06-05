@@ -324,7 +324,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   std::optional<I3dmContent> parsedJsonResult =
       parseI3dmJson(featureTableJsonData, convertedI3dm.gltfResult.errors);
   if (!parsedJsonResult) {
-    finishEarly();
+    return finishEarly();
   }
   const I3dmContent& parsedContent = *parsedJsonResult;
   decodedInstances.rtcCenter = parsedContent.rtcCenter;
@@ -477,21 +477,18 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
             })
         .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
                              GltfConverterResult&& converterResult) mutable {
-          if (converterResult.errors.hasErrors()) {
-            convertedI3dm.gltfResult.errors.merge(converterResult.errors);
-          } else {
-            convertedI3dm.gltfResult = converterResult;
-          }
+          if (converterResult.model)
+            convertedI3dm.gltfResult.model = std::move(converterResult.model);
+          convertedI3dm.gltfResult.errors.merge(converterResult.errors);
           return convertedI3dm;
         });
   } else {
     return BinaryToGltfConverter::convert(gltfData, options, assetFetcher)
         .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
                              GltfConverterResult&& converterResult) mutable {
-          if (converterResult.errors.hasErrors()) {
-            return convertedI3dm;
-          }
-          convertedI3dm.gltfResult = converterResult;
+          if (converterResult.model)
+            convertedI3dm.gltfResult.model = std::move(converterResult.model);
+          convertedI3dm.gltfResult.errors.merge(converterResult.errors);
           return convertedI3dm;
         });
   }
@@ -644,6 +641,7 @@ void copyInstanceToBuffer(
 void instantiateGltfInstances(
     GltfConverterResult& result,
     const DecodedInstances& decodedInstances) {
+  assert(result.model.has_value());
   std::set<CesiumGltf::Node*> meshNodes;
   int32_t instanceBufferId = createBufferInGltf(*result.model);
   auto& instanceBuffer =
@@ -673,6 +671,7 @@ void instantiateGltfInstances(
         }
         std::vector<glm::dmat4> modelInstanceTransforms{glm::dmat4(1.0)};
         auto& gpuExt = node.addExtension<ExtensionExtMeshGpuInstancing>();
+        gltf.addExtensionRequired(ExtensionExtMeshGpuInstancing::ExtensionName);
         if (!gpuExt.attributes.empty()) {
           // The model already has instances! We will need to create the outer
           // product of these instances and those coming from i3dm.
@@ -781,12 +780,11 @@ CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
              assetFetcher,
              convertedI3dm)
       .thenImmediately([](ConvertedI3dm&& convertedI3dm) {
-        if (convertedI3dm.gltfResult.errors.hasErrors()) {
-          return convertedI3dm.gltfResult;
+        if (convertedI3dm.gltfResult.model) {
+          instantiateGltfInstances(
+              convertedI3dm.gltfResult,
+              convertedI3dm.decodedInstances);
         }
-        instantiateGltfInstances(
-            convertedI3dm.gltfResult,
-            convertedI3dm.decodedInstances);
         return convertedI3dm.gltfResult;
       });
 }

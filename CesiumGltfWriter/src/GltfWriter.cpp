@@ -142,6 +142,8 @@ GltfWriterResult GltfWriter::writeGltf(
 
   ModelJsonWriter::write(model, *writer, context);
   result.gltfBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }
@@ -156,7 +158,6 @@ GltfWriterResult GltfWriter::writeGlb(
       this->getExtensions();
 
   GltfWriterResult result;
-
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -173,6 +174,16 @@ GltfWriterResult GltfWriter::writeGlb(
       gsl::span(jsonData),
       bufferData,
       options.binaryChunkByteAlignment);
+
+  result.errors.insert(
+      result.errors.end(),
+      writer->getErrors().begin(),
+      writer->getErrors().end());
+
+  result.warnings.insert(
+      result.warnings.end(),
+      writer->getWarnings().begin(),
+      writer->getWarnings().end());
 
   return result;
 }

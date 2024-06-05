@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.36.0 - 2024-06-03
 
 ##### Breaking Changes :mega:
 
@@ -35,6 +35,7 @@
 - The glTF accessor for the texture coordinates created by `RasterOverlayUtilities::createRasterOverlayTextureCoordinates` now has min/max values that accurately reflect the range of values. Previously, the minimum was always set to 0.0 and the maximum to 1.0.
 - Fixed a bug in the `waitInMainThread` method on `Future` and `SharedFuture` that could cause it to never return if the waited-for future rejected.
 - Moved the small amount of Abseil code embedded into the s2geometry library from the `absl` namespace to the `cesium_s2geometry_absl` namespace, in order to avoid linker errors when linking against both cesium-native and the full Abseil library.
+- Fixed a crash in `ExtensionWriterContext` when attempting to write statically-typed extensions that aren't registered. Now a warning is reported.
 
 ### v0.35.0 - 2024-05-01
 
