@@ -5,6 +5,7 @@
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
@@ -124,7 +125,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * The ellipsoid that this tile uses.
    */
-  std::shared_ptr<CesiumGeospatial::Ellipsoid> ellipsoid = nullptr;
+  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid = std::nullopt;
 
   /**
    * @brief Create a result with Failed state

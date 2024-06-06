@@ -1,5 +1,7 @@
 #include "CesiumGeospatial/Projection.h"
 
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
@@ -94,7 +96,8 @@ CesiumGeometry::AxisAlignedBox projectRegionSimple(
 
 BoundingRegion unprojectRegionSimple(
     const Projection& projection,
-    const CesiumGeometry::AxisAlignedBox& box) {
+    const CesiumGeometry::AxisAlignedBox& box,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   GlobeRectangle rectangle = unprojectRectangleSimple(
       projection,
       CesiumGeometry::Rectangle(
@@ -102,7 +105,7 @@ BoundingRegion unprojectRegionSimple(
           box.minimumY,
           box.maximumX,
           box.maximumY));
-  return BoundingRegion(rectangle, box.minimumZ, box.maximumZ);
+  return BoundingRegion(rectangle, box.minimumZ, box.maximumZ, ellipsoid);
 }
 
 glm::dvec2 computeProjectedRectangleSize(
@@ -194,6 +197,22 @@ glm::dvec2 computeProjectedRectangleSize(
   }
 
   return glm::dvec2(x, y);
+}
+
+const Ellipsoid& getProjectionEllipsoid(const Projection& projection) {
+  struct Operation {
+    const Ellipsoid&
+    operator()(const GeographicProjection& geographic) noexcept {
+      return geographic.getEllipsoid();
+    }
+
+    const Ellipsoid&
+    operator()(const WebMercatorProjection& webMercator) noexcept {
+      return webMercator.getEllipsoid();
+    }
+  };
+
+  return std::visit(Operation{}, projection);
 }
 
 double computeApproximateConversionFactorToMetersNearPosition(

@@ -30,7 +30,11 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
   }
 
   SECTION("for others, their aggregated oriented bounding box is returned") {
-    BoundingRegion region(GlobeRectangle(0.5, 1.0, 1.5, 2.0), 100.0, 200.0);
+    BoundingRegion region(
+        GlobeRectangle(0.5, 1.0, 1.5, 2.0),
+        100.0,
+        200.0,
+        Ellipsoid::WGS84);
     BoundingVolume bv = region;
     OrientedBoundingBox newObb = getOrientedBoundingBoxFromBoundingVolume(bv);
     CHECK(region.getBoundingBox().getCenter() == newObb.getCenter());
@@ -45,7 +49,8 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     S2CellBoundingVolume s2(
         S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(10, 1, 2)),
         100.0,
-        200.0);
+        200.0,
+        Ellipsoid::WGS84);
     bv = s2;
     newObb = getOrientedBoundingBoxFromBoundingVolume(bv);
     CHECK(

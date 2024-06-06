@@ -12,6 +12,8 @@
 
 namespace CesiumGeospatial {
 
+class Ellipsoid;
+
 /**
  * @brief A projection.
  *
@@ -106,7 +108,8 @@ projectRegionSimple(const Projection& projection, const BoundingRegion& region);
  */
 BoundingRegion unprojectRegionSimple(
     const Projection& projection,
-    const CesiumGeometry::AxisAlignedBox& box);
+    const CesiumGeometry::AxisAlignedBox& box,
+    const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 /**
  * @brief Computes the approximate real-world size, in meters, of a given
@@ -127,6 +130,11 @@ glm::dvec2 computeProjectedRectangleSize(
     const Projection& projection,
     const CesiumGeometry::Rectangle& rectangle,
     double maxHeight,
-    const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+    const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+/**
+ * @brief Obtains the ellipsoid used by a Projection variant.
+ */
+const Ellipsoid& getProjectionEllipsoid(const Projection& projection);
 
 } // namespace CesiumGeospatial

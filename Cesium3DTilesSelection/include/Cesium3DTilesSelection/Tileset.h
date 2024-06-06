@@ -148,6 +148,18 @@ public:
   TilesetOptions& getOptions() noexcept { return this->_options; }
 
   /**
+   * @brief Gets the {@link CesiumGeospatial::Ellipsoid} used by this tileset.
+   */
+  const CesiumGeospatial::Ellipsoid& getEllipsoid() const {
+    return this->_ellipsoid;
+  }
+
+  /** @copydoc Tileset::getEllipsoid */
+  CesiumGeospatial::Ellipsoid& getEllipsoid() noexcept {
+    return this->_ellipsoid;
+  }
+
+  /**
    * @brief Gets the root tile of this tileset.
    *
    * This may be `nullptr` if there is currently no root tile.
@@ -494,9 +506,7 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
-  std::shared_ptr<CesiumGeospatial::Ellipsoid> _ellipsoid;
-
-  const CesiumGeospatial::Ellipsoid& GetEllipsoid() const;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;

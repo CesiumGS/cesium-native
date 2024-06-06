@@ -723,7 +723,7 @@ static std::vector<std::byte> generateNormals(
   glm::dvec3 positionMinimums{std::numeric_limits<double>::max()};
   glm::dvec3 positionMaximums{std::numeric_limits<double>::lowest()};
 
-  const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
+  const Ellipsoid& ellipsoid = tileBoundingVolume.getEllipsoid();
   const CesiumGeospatial::GlobeRectangle& rectangle =
       tileBoundingVolume.getRectangle();
   const double west = rectangle.getWest();
@@ -1137,7 +1137,7 @@ static std::vector<std::byte> generateNormals(
   model.scene = 0;
 
   result.updatedBoundingVolume =
-      BoundingRegion(rectangle, minimumHeight, maximumHeight);
+      BoundingRegion(rectangle, minimumHeight, maximumHeight, ellipsoid);
 
   if (result.model) {
     result.model->extras["Cesium3DTiles_TileUrl"] = url;

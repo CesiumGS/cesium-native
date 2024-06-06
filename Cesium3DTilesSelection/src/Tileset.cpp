@@ -44,7 +44,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid),
+      _ellipsoid(options.ellipsoid.value_or(Ellipsoid::WGS84)),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -63,7 +63,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid),
+      _ellipsoid(options.ellipsoid.value_or(Ellipsoid::WGS84)),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -82,7 +82,7 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid),
+      _ellipsoid(options.ellipsoid.value_or(Ellipsoid::WGS84)),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -649,7 +649,7 @@ void Tileset::_frustumCull(
     return;
   }
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid = this->GetEllipsoid();
+  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getEllipsoid();
 
   const std::vector<ViewState>& frustums = frameState.frustums;
   // Frustum cull using the children's bounds.
@@ -1519,14 +1519,6 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
-}
-
-const CesiumGeospatial::Ellipsoid& Tileset::GetEllipsoid() const {
-  if (_ellipsoid == nullptr) {
-    return CesiumGeospatial::Ellipsoid::WGS84;
-  }
-
-  return *this->_ellipsoid;
 }
 
 void Tileset::addTileToLoadQueue(

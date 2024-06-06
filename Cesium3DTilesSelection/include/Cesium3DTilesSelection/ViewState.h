@@ -47,8 +47,7 @@ public:
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84);
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed

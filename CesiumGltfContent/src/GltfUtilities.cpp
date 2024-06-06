@@ -175,7 +175,8 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
 /*static*/ CesiumGeospatial::BoundingRegion
 GltfUtilities::computeBoundingRegion(
     const CesiumGltf::Model& gltf,
-    const glm::dmat4& transform) {
+    const glm::dmat4& transform,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   glm::dmat4 rootTransform = transform;
   rootTransform = applyRtcCenter(gltf, rootTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
@@ -187,7 +188,7 @@ GltfUtilities::computeBoundingRegion(
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [&rootTransform, &computedBounds](
+      [&rootTransform, &computedBounds, &ellipsoid](
           const CesiumGltf::Model& gltf_,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -233,8 +234,7 @@ GltfUtilities::computeBoundingRegion(
 
           // Convert it to cartographic
           std::optional<CesiumGeospatial::Cartographic> cartographic =
-              CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
-                  positionEcef);
+              ellipsoid.cartesianToCartographic(positionEcef);
           if (!cartographic) {
             continue;
           }
@@ -243,7 +243,7 @@ GltfUtilities::computeBoundingRegion(
         }
       });
 
-  return computedBounds.toRegion();
+  return computedBounds.toRegion(ellipsoid);
 }
 
 std::vector<std::string_view>

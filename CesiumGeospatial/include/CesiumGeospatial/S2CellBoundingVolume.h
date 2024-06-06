@@ -31,7 +31,7 @@ public:
       const S2CellID& cellID,
       double minimumHeight,
       double maximumHeight,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets this bounding volume's cell ID.
@@ -47,6 +47,11 @@ public:
    * @brief Gets the maximum height of the cell.
    */
   double getMaximumHeight() const noexcept { return this->_maximumHeight; }
+
+  /**
+   * Gets the ellipsoid of the cell.
+   */
+  const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
   /**
    * @brief Gets the center of this bounding volume in ellipsoid-fixed (ECEF)
@@ -103,6 +108,8 @@ public:
   BoundingRegion computeBoundingRegion() const noexcept;
 
 private:
+  Ellipsoid _ellipsoid;
+
   S2CellID _cellID;
   double _minimumHeight;
   double _maximumHeight;

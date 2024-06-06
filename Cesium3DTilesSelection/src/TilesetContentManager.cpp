@@ -137,6 +137,7 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
 }
 
 void createQuadtreeSubdividedChildren(
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
     Tile& parent,
     RasterOverlayUpsampler& upsampler) {
   std::optional<RegionAndCenter> maybeRegionAndCenter =
@@ -232,7 +233,8 @@ void createQuadtreeSubdividedChildren(
               center.longitude,
               center.latitude),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   se.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -242,7 +244,8 @@ void createQuadtreeSubdividedChildren(
               parentRectangle.getEast(),
               center.latitude),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   nw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -252,7 +255,8 @@ void createQuadtreeSubdividedChildren(
               center.longitude,
               parentRectangle.getNorth()),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   ne.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -262,7 +266,8 @@ void createQuadtreeSubdividedChildren(
               parentRectangle.getEast(),
               parentRectangle.getNorth()),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   // set children transforms
   sw.setTransform(parent.getTransform());
@@ -287,8 +292,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
   assert(tileProviders.size() == placeholders.size());
 
   const CesiumGeospatial::Ellipsoid& ellipsoid =
-      tilesetOptions.ellipsoid == nullptr ? CesiumGeospatial::Ellipsoid::WGS84
-                                          : *tilesetOptions.ellipsoid;
+      tilesetOptions.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
 
   for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
     RasterOverlayTileProvider& tileProvider = *tileProviders[i];
@@ -467,7 +471,8 @@ void calcFittestBoundingRegionForLooseTile(
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
           model,
-          tileLoadInfo.tileTransform);
+          tileLoadInfo.tileTransform,
+          *result.ellipsoid);
     }
   }
 }
@@ -715,7 +720,11 @@ TilesetContentManager::TilesetContentManager(
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
                 TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
+                    TilesetJsonLoader::createLoader(
+                        pLogger,
+                        url,
+                        tilesetJson,
+                        *externals.pEllipsoid);
                 return asyncSystem.createResolvedFuture(std::move(result));
               } else {
                 const auto formatIt = tilesetJson.FindMember("format");
@@ -1349,8 +1358,7 @@ void TilesetContentManager::updateDoneState(
   }
 
   const CesiumGeospatial::Ellipsoid& ellipsoid =
-      tilesetOptions.ellipsoid == nullptr ? CesiumGeospatial::Ellipsoid::WGS84
-                                          : *tilesetOptions.ellipsoid;
+      tilesetOptions.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
 
   // update raster overlay
   TileContent& content = tile.getContent();
@@ -1426,7 +1434,7 @@ void TilesetContentManager::updateDoneState(
     // children to hang more detailed rasters on by subdividing this tile.
     if (!skippedUnknown && moreRasterDetailAvailable &&
         tile.getChildren().empty()) {
-      createQuadtreeSubdividedChildren(tile, this->_upsampler);
+      createQuadtreeSubdividedChildren(ellipsoid, tile, this->_upsampler);
     }
   } else {
     // We can't hang raster images on a tile without geometry, and their

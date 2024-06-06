@@ -19,6 +19,7 @@ BoundingRegion::BoundingRegion(
     double maximumHeight,
     const Ellipsoid& ellipsoid)
     : _rectangle(rectangle),
+      _ellipsoid(ellipsoid),
       _minimumHeight(minimumHeight),
       _maximumHeight(maximumHeight),
       _boundingBox(BoundingRegion::_computeBoundingBox(
@@ -223,7 +224,8 @@ BoundingRegion::computeUnion(const BoundingRegion& other) const noexcept {
   return BoundingRegion(
       this->_rectangle.computeUnion(other._rectangle),
       glm::min(this->_minimumHeight, other._minimumHeight),
-      glm::max(this->_maximumHeight, other._maximumHeight));
+      glm::max(this->_maximumHeight, other._maximumHeight),
+      this->_ellipsoid);
 }
 
 static OrientedBoundingBox fromPlaneExtents(

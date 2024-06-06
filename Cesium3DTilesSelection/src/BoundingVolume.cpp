@@ -90,7 +90,7 @@ std::optional<GlobeRectangle> estimateGlobeRectangle(
       double radius = boundingSphere.getRadius();
 
       glm::dmat4 enuToEcef =
-          GlobeTransforms::eastNorthUpToFixedFrame(centerEcef /*, ellipsoid*/);
+          GlobeTransforms::eastNorthUpToFixedFrame(centerEcef, ellipsoid);
       glm::dmat4 ecefBounds = enuToEcef * glm::dmat4(
                                               radius,
                                               0.0,

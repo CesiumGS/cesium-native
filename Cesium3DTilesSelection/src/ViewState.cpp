@@ -138,7 +138,8 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
             viewState._position);
       }
       return boundingRegion.computeDistanceSquaredToPosition(
-          viewState._position);
+          viewState._position,
+          boundingRegion.getEllipsoid());
     }
 
     double operator()(const BoundingSphere& boundingSphere) noexcept {
@@ -154,7 +155,8 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
             viewState._position);
       }
       return boundingRegion.computeConservativeDistanceSquaredToPosition(
-          viewState._position);
+          viewState._position,
+          boundingRegion.getBoundingRegion().getEllipsoid());
     }
 
     double operator()(const S2CellBoundingVolume& s2Cell) noexcept {

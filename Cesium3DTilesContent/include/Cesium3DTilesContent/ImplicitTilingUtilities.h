@@ -2,6 +2,7 @@
 
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 #include <array>
 #include <iterator>
@@ -301,7 +302,9 @@ public:
    */
   static Cesium3DTiles::BoundingVolume computeBoundingVolume(
       const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
-      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid =
+          CesiumGeospatial::Ellipsoid::WGS84) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit octree tile with the
@@ -313,7 +316,9 @@ public:
    */
   static Cesium3DTiles::BoundingVolume computeBoundingVolume(
       const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
-      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+      const CesiumGeometry::OctreeTileID& tileID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid =
+          CesiumGeospatial::Ellipsoid::WGS84) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit quadtree tile with the

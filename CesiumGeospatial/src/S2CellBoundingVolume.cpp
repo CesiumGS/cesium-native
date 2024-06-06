@@ -136,7 +136,8 @@ S2CellBoundingVolume::S2CellBoundingVolume(
     const Ellipsoid& ellipsoid)
     : _cellID(cellID),
       _minimumHeight(minimumHeight),
-      _maximumHeight(maximumHeight) {
+      _maximumHeight(maximumHeight),
+      _ellipsoid(ellipsoid) {
   Cartographic result = this->_cellID.getCenter();
   result.height = (this->_minimumHeight + this->_maximumHeight) * 0.5;
   this->_center = ellipsoid.cartographicToCartesian(result);
@@ -427,5 +428,6 @@ BoundingRegion S2CellBoundingVolume::computeBoundingRegion() const noexcept {
   return BoundingRegion(
       this->_cellID.computeBoundingRectangle(),
       this->_minimumHeight,
-      this->_maximumHeight);
+      this->_maximumHeight,
+      this->_ellipsoid);
 }

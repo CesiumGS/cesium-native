@@ -59,7 +59,8 @@ void RasterOverlayCollection::add(
   IntrusivePointer<RasterOverlayTileProvider> pPlaceholder =
       pOverlay->createPlaceholder(
           this->_externals.asyncSystem,
-          this->_externals.pAssetAccessor);
+          this->_externals.pAssetAccessor,
+          *this->_externals.pEllipsoid);
 
   pList->tileProviders.emplace_back(pPlaceholder);
   pList->placeholders.emplace_back(pPlaceholder);

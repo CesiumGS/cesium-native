@@ -149,8 +149,9 @@ public:
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>&
-          pAssetAccessor) noexcept;
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Creates a new instance.

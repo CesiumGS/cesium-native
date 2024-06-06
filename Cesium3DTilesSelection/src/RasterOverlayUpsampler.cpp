@@ -62,9 +62,14 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
     }
   }
 
+  const CesiumGeospatial::Projection& projection = parentProjections.at(index);
+  const CesiumGeospatial::Ellipsoid& ellipsoid =
+      getProjectionEllipsoid(projection);
+
   const CesiumGltf::Model& parentModel = pParentRenderContent->getModel();
   return loadInput.asyncSystem.runInWorkerThread(
       [&parentModel,
+       ellipsoid,
        transform = loadInput.tile.getTransform(),
        textureCoordinateIndex = index,
        TileID = *pTileID]() mutable {
@@ -73,7 +78,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             TileID,
             false,
             RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
-            textureCoordinateIndex);
+            textureCoordinateIndex,
+            ellipsoid);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);
         }

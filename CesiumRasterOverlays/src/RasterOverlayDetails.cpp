@@ -8,7 +8,8 @@ RasterOverlayDetails::RasterOverlayDetails()
     : boundingRegion{
           CesiumGeospatial::GlobeRectangle::EMPTY,
           std::numeric_limits<double>::max(),
-          std::numeric_limits<double>::lowest()} {}
+          std::numeric_limits<double>::lowest(),
+          CesiumGeospatial::Ellipsoid::WGS84} {}
 
 RasterOverlayDetails::RasterOverlayDetails(
     std::vector<CesiumGeospatial::Projection>&& rasterOverlayProjections_,

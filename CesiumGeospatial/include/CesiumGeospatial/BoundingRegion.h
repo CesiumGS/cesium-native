@@ -6,6 +6,7 @@
 
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 namespace CesiumGeometry {
 class Plane;
@@ -32,7 +33,7 @@ public:
       const GlobeRectangle& rectangle,
       double minimumHeight,
       double maximumHeight,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the bounding rectangle of the region.
@@ -40,6 +41,11 @@ public:
   const GlobeRectangle& getRectangle() const noexcept {
     return this->_rectangle;
   }
+
+  /**
+   * Gets the ellipsoid of the region.
+   */
+  const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
   /**
    * @brief Gets the minimum height of the region.
@@ -88,7 +94,7 @@ public:
    */
   double computeDistanceSquaredToPosition(
       const glm::dvec3& position,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
   /**
    * @brief Computes the distance-squared from a longitude-latitude-height
@@ -101,7 +107,7 @@ public:
    */
   double computeDistanceSquaredToPosition(
       const Cartographic& position,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
   /**
    * @brief Computes the distance-squared from a position to the closest point
@@ -138,6 +144,7 @@ private:
   double _minimumHeight;
   double _maximumHeight;
   CesiumGeometry::OrientedBoundingBox _boundingBox;
+  Ellipsoid _ellipsoid;
 
   glm::dvec3 _southwestCornerCartesian;
   glm::dvec3 _northeastCornerCartesian;

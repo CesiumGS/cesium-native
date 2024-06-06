@@ -14,8 +14,13 @@ public:
   PlaceholderTileProvider(
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
-      : RasterOverlayTileProvider(pOwner, asyncSystem, pAssetAccessor) {}
+      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
+      : RasterOverlayTileProvider(
+            pOwner,
+            asyncSystem,
+            pAssetAccessor,
+            ellipsoid) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& /* overlayTile */) override {
@@ -58,6 +63,11 @@ RasterOverlay::getAsyncDestructionCompleteEvent(
 CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
 RasterOverlay::createPlaceholder(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const {
-  return new PlaceholderTileProvider(this, asyncSystem, pAssetAccessor);
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const {
+  return new PlaceholderTileProvider(
+      this,
+      asyncSystem,
+      pAssetAccessor,
+      ellipsoid);
 }

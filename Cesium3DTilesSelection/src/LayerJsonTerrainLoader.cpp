@@ -41,9 +41,10 @@ struct LoadLayersResult {
  * @return The {@link BoundingRegionWithLooseFittingHeights}
  */
 BoundingVolume createDefaultLooseEarthBoundingVolume(
-    const CesiumGeospatial::GlobeRectangle& globeRectangle) {
+    const CesiumGeospatial::GlobeRectangle& globeRectangle,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(globeRectangle, -1000.0, 9000.0));
+      BoundingRegion(globeRectangle, -1000.0, 9000.0, ellipsoid));
 }
 
 TileLoadResult convertToTileLoadResult(QuantizedMeshLoadResult&& loadResult) {
@@ -108,7 +109,7 @@ convertToTilesetContentLoaderResult(
             *loadLayersResult.projection,
             loadLayersResult.tilingScheme->tileToRectangle(id));
     childTile.setBoundingVolume(
-        createDefaultLooseEarthBoundingVolume(childGlobeRectangle));
+        createDefaultLooseEarthBoundingVolume(childGlobeRectangle, ellipsoid));
     childTile.setGeometricError(
         8.0 * calcQuadtreeMaxGeometricError(ellipsoid) *
         childGlobeRectangle.computeWidth());
@@ -417,13 +418,14 @@ Future<LoadLayersResult> loadLayerJson(
     const std::string& baseUrl,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     const rapidjson::Document& layerJson,
-    bool useWaterMask) {
+    bool useWaterMask,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   // Use the projection and tiling scheme of the main layer.
   // Any underlying layers must use the same.
   std::string projectionString =
       JsonHelpers::getStringOrDefault(layerJson, "projection", "EPSG:4326");
 
-  CesiumGeospatial::Projection projection;
+  CesiumGeospatial::Projection projection = WebMercatorProjection(ellipsoid);
   CesiumGeospatial::GlobeRectangle quadtreeRectangleGlobe(0.0, 0.0, 0.0, 0.0);
   CesiumGeometry::Rectangle quadtreeRectangleProjected(0.0, 0.0, 0.0, 0.0);
   uint32_t quadtreeXTiles;
@@ -433,13 +435,13 @@ Future<LoadLayersResult> loadLayerJson(
   // See https://community.cesium.com/t/cesium-terrain-for-unreal/17940/18
 
   if (projectionString == "EPSG:4326") {
-    CesiumGeospatial::GeographicProjection geographic;
+    CesiumGeospatial::GeographicProjection geographic(ellipsoid);
     projection = geographic;
     quadtreeRectangleGlobe = GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
     quadtreeRectangleProjected = geographic.project(quadtreeRectangleGlobe);
     quadtreeXTiles = 2;
   } else if (projectionString == "EPSG:3857") {
-    CesiumGeospatial::WebMercatorProjection webMercator;
+    CesiumGeospatial::WebMercatorProjection webMercator(ellipsoid);
     projection = webMercator;
     quadtreeRectangleGlobe = WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
     quadtreeRectangleProjected = webMercator.project(quadtreeRectangleGlobe);
@@ -453,7 +455,7 @@ Future<LoadLayersResult> loadLayerJson(
   }
 
   BoundingVolume boundingVolume =
-      createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe);
+      createDefaultLooseEarthBoundingVolume(quadtreeRectangleGlobe, ellipsoid);
 
   CesiumGeometry::QuadtreeTilingScheme tilingScheme(
       quadtreeRectangleProjected,
@@ -480,7 +482,8 @@ Future<LoadLayersResult> loadLayerJson(
     const std::string& baseUrl,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
     const gsl::span<const std::byte>& layerJsonBinary,
-    bool useWaterMask) {
+    bool useWaterMask,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   rapidjson::Document layerJson;
   layerJson.Parse(
       reinterpret_cast<const char*>(layerJsonBinary.data()),
@@ -500,7 +503,8 @@ Future<LoadLayersResult> loadLayerJson(
       baseUrl,
       requestHeaders,
       layerJson,
-      useWaterMask);
+      useWaterMask,
+      ellipsoid);
 }
 } // namespace
 
@@ -521,6 +525,7 @@ LayerJsonTerrainLoader::createLoader(
       ->get(externals.asyncSystem, layerJsonUrl, requestHeaders)
       .thenInWorkerThread(
           [externals,
+           ellipsoid,
            asyncSystem = externals.asyncSystem,
            pAssetAccessor = externals.pAssetAccessor,
            useWaterMask](
@@ -559,7 +564,8 @@ LayerJsonTerrainLoader::createLoader(
                 pCompletedRequest->url(),
                 flatHeaders,
                 pResponse->data(),
-                useWaterMask);
+                useWaterMask,
+                ellipsoid);
           })
       .thenInMainThread([ellipsoid](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(
@@ -587,7 +593,8 @@ Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
              layerJsonUrl,
              requestHeaders,
              layerJson,
-             contentOptions.enableWaterMask)
+             contentOptions.enableWaterMask,
+             ellipsoid)
       .thenInMainThread([ellipsoid](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(
             ellipsoid,
@@ -1105,8 +1112,11 @@ void LayerJsonTerrainLoader::createChildTile(
       unprojectRectangleSimple(
           this->_projection,
           this->_tilingScheme.tileToRectangle(childID));
-  child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(
-      BoundingRegion(childGlobeRectangle, minHeight, maxHeight)));
+  child.setBoundingVolume(BoundingRegionWithLooseFittingHeights(BoundingRegion(
+      childGlobeRectangle,
+      minHeight,
+      maxHeight,
+      getProjectionEllipsoid(this->_projection))));
 }
 
 CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
@@ -1141,12 +1151,16 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
 
   index = int32_t(it - parentProjections.begin());
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid =
+      getProjectionEllipsoid(this->_projection);
+
   // it's totally safe to capture the const ref parent model in the worker
   // thread. The tileset content manager will guarantee that the parent tile
   // will not be unloaded when upsampled tile is on the fly.
   const CesiumGltf::Model& parentModel = pParentRenderContent->getModel();
   return asyncSystem.runInWorkerThread(
       [&parentModel,
+       ellipsoid,
        boundingVolume = tile.getBoundingVolume(),
        textureCoordinateIndex = index,
        tileID = *pUpsampledTileID]() mutable {
@@ -1155,7 +1169,8 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             tileID,
             false,
             RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
-            textureCoordinateIndex);
+            textureCoordinateIndex,
+            ellipsoid);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);
         }

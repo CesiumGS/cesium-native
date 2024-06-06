@@ -21,7 +21,8 @@ public:
    * its maximum height will be -1.0 (the minimum will be greater than the
    * maximum).
    */
-  BoundingRegion toRegion() const;
+  BoundingRegion
+  toRegion(const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) const;
 
   /**
    * @brief Gets the final globe rectangle from this builder.
