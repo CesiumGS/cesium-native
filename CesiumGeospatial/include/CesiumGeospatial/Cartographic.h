@@ -47,6 +47,14 @@ public:
   }
 
   /**
+   * @brief Returns `true` if two cartographics are equal.
+   */
+  constexpr bool operator==(const Cartographic& rhs) const noexcept {
+    return this->longitude == rhs.longitude && this->latitude == rhs.latitude &&
+           this->height == rhs.height;
+  };
+
+  /**
    * @brief The longitude, in radians.
    */
   double longitude;
