@@ -66,3 +66,5 @@ target_link_libraries(Cesium3DTilesContent
     PRIVATE
         libmorton::libmorton
 )
+
+target_compile_definitions(Cesium3DTilesContent PRIVATE GLM_ENABLE_EXPERIMENTAL)

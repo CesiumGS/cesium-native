@@ -1,37 +1,40 @@
 cmake_minimum_required(VERSION 3.15)
 
-set(VCPKG_LIBRARY_LINKAGE static)
+if (NOT VCPKG_LIBRARY_LINKAGE)
+    set(VCPKG_LIBRARY_LINKAGE static)
+endif()
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 
+if (NOT VCPKG_TRIPLET)
+    if (WIN32)
+        set(VCPKG_TRIPLET "x64-windows-static-md")
+    elseif(APPLE)
+        set(VCPKG_TRIPLET "x64-osx")
+    else()
+        set(VCPKG_TRIPLET "x64-linux")
+    endif()
 
-if (WIN32)
-    set(VCPKG_TRIPLET "x64-windows-static-md")
-elseif(APPLE)
-    set(VCPKG_TRIPLET "x64-osx")
-else()
-    set(VCPKG_TRIPLET "x64-linux")
+    if(ANDROID)
+        set(VCPKG_TRIPLET "arm64-android")
+        set(VCPKG_HOST_TRIPLET "${VCPKG_TRIPLET}")
+    endif()
 endif()
-
-if(ANDROID)
-    set(VCPKG_TRIPLET "arm64-android")
-    set(VCPKG_HOST_TRIPLET "${VCPKG_TRIPLET}")
-endif()
-
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
-# STB isn't technically part of the public interface, but it's used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb)
+# STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
+set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
-    libjpeg-turbo uriparser sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton
+    libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
+    earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
 # Packages only used for testing
@@ -41,6 +44,7 @@ set(PACKAGES_ALL ${PACKAGES_PUBLIC})
 list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
 list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
+set(ENV{VCPKG_OVERLAY_PORTS} "${CMAKE_CURRENT_LIST_DIR}/extern/vcpkg-overlays")
 ezvcpkg_fetch(
     COMMIT 2024.02.14
     PACKAGES ${PACKAGES_ALL}
@@ -66,31 +70,37 @@ project(cesium-native
     LANGUAGES CXX C
 )
 
+include(GNUInstallDirs)
+
 message(STATUS "EZVCPKG_PACKAGES_DIR ${EZVCPKG_PACKAGES_DIR}")
 foreach(PACKAGE ${PACKAGES_PUBLIC})
     string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
     set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
     message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
     install(
-        DIRECTORY ${PACKAGE_DIR}/include
-        DESTINATION ${CMAKE_INSTALL_PREFIX}
+        DIRECTORY ${PACKAGE_DIR}/include/
+        TYPE INCLUDE
     )
     if (EXISTS ${PACKAGE_DIR}/lib)
+        # file(GLOB_RECURSE LIBS RELATIVE "${PACKAGE_DIR}/lib" "${PACKAGE_DIR}/lib/**/*")
+        # install(
+        #   FILES
+        # )
         install(
-            DIRECTORY ${PACKAGE_DIR}/lib
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
+            DIRECTORY ${PACKAGE_DIR}/lib/
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
         )
-        install(
-            DIRECTORY ${PACKAGE_DIR}/debug/lib
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
-        )
+        # install(
+        #     DIRECTORY ${PACKAGE_DIR}/debug/lib
+        #     DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        # )
     endif()
-    if (EXISTS ${PACKAGE_DIR}/share)
-        install(
-            DIRECTORY ${PACKAGE_DIR}/share
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
-        )
-    endif()
+    # if (EXISTS ${PACKAGE_DIR}/share)
+    #     install(
+    #         DIRECTORY ${PACKAGE_DIR}/share
+    #         DESTINATION ${CMAKE_INSTALL_PREFIX}
+    #     )
+    # endif()
 endforeach()
 
 foreach(PACKAGE ${PACKAGES_PRIVATE})
@@ -98,13 +108,13 @@ foreach(PACKAGE ${PACKAGES_PRIVATE})
     message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
     if (EXISTS ${PACKAGE_DIR}/lib)
         install(
-            DIRECTORY ${PACKAGE_DIR}/lib
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
+            DIRECTORY ${PACKAGE_DIR}/lib/
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
         )
-        install(
-            DIRECTORY ${PACKAGE_DIR}/debug/lib
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
-        )
+        # install(
+        #     DIRECTORY ${PACKAGE_DIR}/debug/lib
+        #     DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        # )
     endif()
 endforeach()
 
