@@ -57,11 +57,6 @@ struct QuantizedMeshHeader {
   uint32_t vertexCount;
 };
 
-struct ExtensionHeader {
-  uint8_t extensionId;
-  uint32_t extensionLength;
-};
-
 enum class QuantizedMeshIndexType { UnsignedShort, UnsignedInt };
 
 struct QuantizedMeshView {

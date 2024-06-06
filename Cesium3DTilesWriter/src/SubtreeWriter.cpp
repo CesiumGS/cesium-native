@@ -39,6 +39,8 @@ SubtreeWriterResult SubtreeWriter::writeSubtree(
 
   SubtreeJsonWriter::write(subtree, *writer, context);
   result.subtreeBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }
