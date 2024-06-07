@@ -155,7 +155,7 @@ macro(EZVCPKG_BUILD)
         foreach(_PACKAGE ${EZVCPKG_PACKAGES})
             message(STATUS "EZVCPKG Building/Verifying package ${_PACKAGE} using triplet ${VCPKG_TRIPLET}")
             execute_process(
-                COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} --overlay-ports=${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg-overlays install --triplet ${VCPKG_TRIPLET} ${_PACKAGE}
+                COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET} ${_PACKAGE}
                 WORKING_DIRECTORY ${EZVCPKG_DIR}
                 RESULTS_VARIABLE EZVCPKG_RESULT
                 OUTPUT_VARIABLE EZVCPKG_OUTPUT
@@ -168,7 +168,7 @@ macro(EZVCPKG_BUILD)
     else()
         message(STATUS "EZVCPKG Building/Verifying packages ${EZVCPKG_PACKAGES} using triplet ${VCPKG_TRIPLET}")
         execute_process(
-            COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} --overlay-ports=${CMAKE_CURRENT_SOURCE_DIR}/../../extern/vcpkg-overlays install --triplet ${VCPKG_TRIPLET} ${EZVCPKG_PACKAGES}
+            COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET} ${EZVCPKG_PACKAGES}
             WORKING_DIRECTORY ${EZVCPKG_DIR}
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
