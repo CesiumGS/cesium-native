@@ -160,8 +160,8 @@ macro(EZVCPKG_BUILD)
                 RESULTS_VARIABLE EZVCPKG_RESULT
                 OUTPUT_VARIABLE EZVCPKG_OUTPUT
                 ERROR_VARIABLE EZVCPKG_OUTPUT
-                OUTPUT_QUIET
-                ERROR_QUIET
+                # OUTPUT_QUIET
+                # ERROR_QUIET
             )
             EZVCPKG_CHECK_RESULTS()
         endforeach()
@@ -173,8 +173,8 @@ macro(EZVCPKG_BUILD)
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            OUTPUT_QUIET
-            ERROR_QUIET
+            # OUTPUT_QUIET
+            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
     endif()
