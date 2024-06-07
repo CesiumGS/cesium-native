@@ -54,7 +54,7 @@ macro(EZVCPKG_CALCULATE_PATHS)
     endif()
 
 
-    if (WIN32)
+    if (CMAKE_HOST_WIN32)
         file(TO_CMAKE_PATH "${EZVCPKG_DIR}/vcpkg.exe" EZVCPKG_EXE)
         file(TO_CMAKE_PATH "${EZVCPKG_DIR}/bootstrap-vcpkg.bat" EZVCPKG_BOOTSTRAP)
     else()
