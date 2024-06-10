@@ -100,8 +100,8 @@ macro(EZVCPKG_BOOTSTRAP)
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            OUTPUT_QUIET
-            ERROR_QUIET
+            # OUTPUT_QUIET
+            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
 
@@ -115,8 +115,8 @@ macro(EZVCPKG_BOOTSTRAP)
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            OUTPUT_QUIET
-            ERROR_QUIET
+            # OUTPUT_QUIET
+            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
     endif()
@@ -133,8 +133,8 @@ macro(EZVCPKG_BOOTSTRAP)
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            OUTPUT_QUIET
-            ERROR_QUIET
+            # OUTPUT_QUIET
+            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
     endif()
