@@ -7,7 +7,9 @@ endif()
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 
 if (NOT VCPKG_TRIPLET)
-    if (CMAKE_HOST_WIN32)
+    if(DEFINED ENV{VCPKG_TRIPLET})
+        set(VCPKG_TRIPLET $ENV{VCPKG_TRIPLET})
+    elseif (CMAKE_HOST_WIN32)
         set(VCPKG_TRIPLET "x64-windows-static-md")
     elseif(CMAKE_HOST_APPLE)
         if (CMAKE_APPLE_SILICON_PROCESSOR STREQUAL "arm64")
@@ -42,7 +44,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog 
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
-    abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
+    abseil[cxx17] draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
