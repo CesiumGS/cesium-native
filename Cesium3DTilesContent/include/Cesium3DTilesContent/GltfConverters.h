@@ -5,6 +5,7 @@
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <gsl/span>
@@ -30,12 +31,14 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor_,
       const std::string& baseUrl_,
       const glm::dmat4 tileTransform_,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders_)
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders_,
+      CesiumGeometry::Axis upAxis_)
       : asyncSystem(asyncSystem_),
         pAssetAccessor(pAssetAccessor_),
         baseUrl(baseUrl_),
         tileTransform(tileTransform_),
-        requestHeaders(requestHeaders_) {}
+        requestHeaders(requestHeaders_),
+        upAxis(upAxis_) {}
 
   CesiumAsync::Future<AssetFetcherResult>
   get(const std::string& relativeUrl) const;
@@ -45,6 +48,7 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
   const std::string baseUrl;
   glm::dmat4 tileTransform; // For ENU transforms in i3dm
   const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+  const CesiumGeometry::Axis upAxis;
 };
 
 /**
