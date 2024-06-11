@@ -325,7 +325,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    *
    * If no ellipsoid is set, Ellipsoid::WGS84 will be used by default.
    */
-  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid = std::nullopt;
+  CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
 };
 
 } // namespace Cesium3DTilesSelection

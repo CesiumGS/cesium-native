@@ -514,12 +514,9 @@ LayerJsonTerrainLoader::createLoader(
     const TilesetExternals& externals,
     const TilesetContentOptions& contentOptions,
     const std::string& layerJsonUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   bool useWaterMask = contentOptions.enableWaterMask;
-
-  const CesiumGeospatial::Ellipsoid& ellipsoid = externals.pEllipsoid == nullptr
-                                                     ? Ellipsoid::WGS84
-                                                     : *externals.pEllipsoid;
 
   return externals.pAssetAccessor
       ->get(externals.asyncSystem, layerJsonUrl, requestHeaders)
@@ -576,17 +573,13 @@ LayerJsonTerrainLoader::createLoader(
 
 CesiumAsync::Future<TilesetContentLoaderResult<LayerJsonTerrainLoader>>
 Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
-    const TilesetExternals& externals,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const TilesetContentOptions& contentOptions,
     const std::string& layerJsonUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const rapidjson::Document& layerJson) {
-  const CesiumGeospatial::Ellipsoid& ellipsoid = externals.pEllipsoid == nullptr
-                                                     ? Ellipsoid::WGS84
-                                                     : *externals.pEllipsoid;
-
+    const rapidjson::Document& layerJson,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return loadLayerJson(
              asyncSystem,
              pAssetAccessor,

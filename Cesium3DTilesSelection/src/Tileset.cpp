@@ -44,11 +44,11 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid.value_or(Ellipsoid::WGS84)),
+      _ellipsoid(options.ellipsoid),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           std::vector<CesiumAsync::IAssetAccessor::THeader>{},
           std::move(pCustomLoader),
           std::move(pRootTile))} {}
@@ -63,11 +63,11 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid.value_or(Ellipsoid::WGS84)),
+      _ellipsoid(options.ellipsoid),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           url)} {}
 
 Tileset::Tileset(
@@ -82,11 +82,11 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid.value_or(Ellipsoid::WGS84)),
+      _ellipsoid(options.ellipsoid),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)} {}

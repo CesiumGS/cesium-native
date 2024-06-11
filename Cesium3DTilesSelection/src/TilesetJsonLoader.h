@@ -36,7 +36,8 @@ public:
   createLoader(
       const TilesetExternals& externals,
       const std::string& tilesetJsonUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   static TilesetContentLoaderResult<TilesetJsonLoader> createLoader(
       const std::shared_ptr<spdlog::logger>& pLogger,

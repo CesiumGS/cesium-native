@@ -756,9 +756,8 @@ CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
     const TilesetExternals& externals,
     const std::string& tilesetJsonUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-
-  const CesiumGeospatial::Ellipsoid ellipsoid = *externals.pEllipsoid;
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
 
   return externals.pAssetAccessor
       ->get(externals.asyncSystem, tilesetJsonUrl, requestHeaders)

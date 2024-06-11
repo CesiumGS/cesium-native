@@ -291,8 +291,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       placeholders = overlays.getPlaceholderTileProviders();
   assert(tileProviders.size() == placeholders.size());
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid =
-      tilesetOptions.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+  const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
   for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
     RasterOverlayTileProvider& tileProvider = *tileProviders[i];
@@ -666,11 +665,13 @@ TilesetContentManager::TilesetContentManager(
     this->notifyTileStartLoading(nullptr);
 
     CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+    const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
     externals.pAssetAccessor
         ->get(externals.asyncSystem, url, this->_requestHeaders)
         .thenInWorkerThread(
             [externals,
+             ellipsoid,
              pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
@@ -724,7 +725,7 @@ TilesetContentManager::TilesetContentManager(
                         pLogger,
                         url,
                         tilesetJson,
-                        *externals.pEllipsoid);
+                        ellipsoid);
                 return asyncSystem.createResolvedFuture(std::move(result));
               } else {
                 const auto formatIt = tilesetJson.FindMember("format");
@@ -740,13 +741,13 @@ TilesetContentManager::TilesetContentManager(
                       completedRequestHeaders.begin(),
                       completedRequestHeaders.end());
                   return LayerJsonTerrainLoader::createLoader(
-                             externals,
                              asyncSystem,
                              pAssetAccessor,
                              contentOptions,
                              url,
                              flatHeaders,
-                             tilesetJson)
+                             tilesetJson,
+                             ellipsoid)
                       .thenImmediately(
                           [](TilesetContentLoaderResult<TilesetContentLoader>&&
                                  result) { return std::move(result); });
@@ -834,7 +835,8 @@ TilesetContentManager::TilesetContentManager(
         ionAccessToken,
         ionAssetEndpointUrl,
         authorizationChangeListener,
-        tilesetOptions.showCreditsOnScreen)
+        tilesetOptions.showCreditsOnScreen,
+        tilesetOptions.ellipsoid)
         .thenInMainThread(
             [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
@@ -1357,8 +1359,7 @@ void TilesetContentManager::updateDoneState(
     return;
   }
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid =
-      tilesetOptions.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+  const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
   // update raster overlay
   TileContent& content = tile.getContent();
