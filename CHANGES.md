@@ -6,6 +6,7 @@
 
 - Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
 - Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
+- Added `CESIUM_MSVC_STATIC_RUNTIME_ENABLED` option to the CMake scripts. It is OFF by default, and when enabled, configures any MS visual studio projects for the "Multi-threaded" (/MT) runtime library rather than "Multi-threaded DLL" (/MD)
 
 ### v0.36.0 - 2024-06-03
 
