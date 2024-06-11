@@ -78,8 +78,6 @@ std::optional<GlobeRectangle> estimateGlobeRectangle(
   struct Operation {
     const CesiumGeospatial::Ellipsoid& ellipsoid;
 
-    Operation(const Ellipsoid& ellipsoid_) : ellipsoid(ellipsoid_) {}
-
     std::optional<GlobeRectangle>
     operator()(const BoundingSphere& boundingSphere) {
       if (boundingSphere.contains(glm::dvec3(0.0))) {
@@ -194,7 +192,7 @@ std::optional<GlobeRectangle> estimateGlobeRectangle(
     }
   };
 
-  return std::visit(Operation(ellipsoid), boundingVolume);
+  return std::visit(Operation{ellipsoid}, boundingVolume);
 }
 
 const CesiumGeospatial::BoundingRegion*
