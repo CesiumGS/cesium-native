@@ -199,8 +199,6 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
       asyncSystem,
       pMockedCreditSystem};
 
-  externals.pEllipsoid = std::make_shared<Ellipsoid>(Ellipsoid::WGS84);
-
   SECTION("Initialize manager with tileset.json url") {
     // create mock request
     pMockedAssetAccessor->mockCompletedRequests.insert(
