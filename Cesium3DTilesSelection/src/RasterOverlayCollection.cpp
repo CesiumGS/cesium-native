@@ -32,7 +32,10 @@ RasterOverlayCollection::RasterOverlayCollection(
     Tile::LoadedLinkedList& loadedTiles,
     const TilesetExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
-    : _pLoadedTiles(&loadedTiles), _externals{externals}, _pOverlays(nullptr), _ellipsoid(ellipsoid) {}
+    : _pLoadedTiles(&loadedTiles),
+      _externals{externals},
+      _pOverlays(nullptr),
+      _ellipsoid(ellipsoid) {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (this->_pOverlays) {

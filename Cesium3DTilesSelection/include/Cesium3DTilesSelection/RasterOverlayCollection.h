@@ -41,7 +41,8 @@ public:
   RasterOverlayCollection(
       Tile::LoadedLinkedList& loadedTiles,
       const TilesetExternals& externals,
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) noexcept;
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Deleted Copy constructor.
