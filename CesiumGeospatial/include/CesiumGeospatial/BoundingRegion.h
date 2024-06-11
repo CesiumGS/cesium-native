@@ -141,10 +141,10 @@ private:
       const Ellipsoid& ellipsoid);
 
   GlobeRectangle _rectangle;
+  Ellipsoid _ellipsoid;
   double _minimumHeight;
   double _maximumHeight;
   CesiumGeometry::OrientedBoundingBox _boundingBox;
-  Ellipsoid _ellipsoid;
 
   glm::dvec3 _southwestCornerCartesian;
   glm::dvec3 _northeastCornerCartesian;
