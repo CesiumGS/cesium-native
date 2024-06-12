@@ -1,5 +1,5 @@
 # Write out a gltf test file from python code
-# Unit cube - Triangle fan, indexed
+# Unit cube - Triangle fan, indexed (UNSIGNED_INT)
 #
 # Uses pygltflib 1.16.2
 # py -m pip install pygltflib
@@ -44,9 +44,9 @@ triangles = np.array(
         # +XZ face
         7, 2, 3, 6,
     ],
-    dtype="uint8",
+    dtype="uint32",
 )
-triangle_face_byte_length = 4
+triangle_face_byte_length = 16
 
 points_binary_blob = points.tobytes()
 triangles_binary_blob = triangles.tobytes()
@@ -129,7 +129,7 @@ gltf = pygltflib.GLTF2(
         ),
         pygltflib.Accessor(
             bufferView=1,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_INT,
             count=4,
             type=pygltflib.SCALAR,
             max=[int(triangles[0:4].max())],
@@ -138,7 +138,7 @@ gltf = pygltflib.GLTF2(
         pygltflib.Accessor(
             bufferView=1,
             byteOffset=triangle_face_byte_length,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_INT,
             count=4,
             type=pygltflib.SCALAR,
             max=[int(triangles[4:8].max())],
@@ -147,7 +147,7 @@ gltf = pygltflib.GLTF2(
         pygltflib.Accessor(
             bufferView=1,
             byteOffset=triangle_face_byte_length * 2,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_INT,
             count=4,
             type=pygltflib.SCALAR,
             max=[int(triangles[8:12].max())],
@@ -156,7 +156,7 @@ gltf = pygltflib.GLTF2(
         pygltflib.Accessor(
             bufferView=1,
             byteOffset=triangle_face_byte_length * 3,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_INT,
             count=4,
             type=pygltflib.SCALAR,
             max=[int(triangles[12:16].max())],
@@ -165,7 +165,7 @@ gltf = pygltflib.GLTF2(
         pygltflib.Accessor(
             bufferView=1,
             byteOffset=triangle_face_byte_length * 4,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_INT,
             count=4,
             type=pygltflib.SCALAR,
             max=[int(triangles[16:20].max())],
@@ -174,7 +174,7 @@ gltf = pygltflib.GLTF2(
         pygltflib.Accessor(
             bufferView=1,
             byteOffset=triangle_face_byte_length * 5,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_INT,
             count=4,
             type=pygltflib.SCALAR,
             max=[int(triangles[20:24].max())],

@@ -1,5 +1,5 @@
 # Write out a gltf test file from python code
-# Unit cube - Triangle strip, indexed
+# Unit cube - Triangle strip, indexed (UNSIGNED_SHORT)
 #
 # Uses pygltflib 1.16.2
 # py -m pip install pygltflib
@@ -50,7 +50,7 @@ triangles = np.array(
         [6, 7, 3],
         [7, 3, 2],
     ],
-    dtype="uint8",
+    dtype="uint16",
 )
 
 triangles_binary_blob = triangles.flatten().tobytes()
@@ -73,7 +73,7 @@ gltf = pygltflib.GLTF2(
     accessors=[
         pygltflib.Accessor(
             bufferView=0,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_SHORT,
             count=triangles.size,
             type=pygltflib.SCALAR,
             max=[int(triangles.max())],
