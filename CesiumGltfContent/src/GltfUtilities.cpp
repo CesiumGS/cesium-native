@@ -468,16 +468,16 @@ void findClosestRayHit(
         tClosest = tCurr;
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
-    for (int64_t i = 3; i < positionView.size(); ++i) {
-      int64_t vert0Index = i - 3;
+    for (int64_t i = 2; i < positionView.size(); ++i) {
+      int64_t vert0Index = i - 2;
       int64_t vert1Index;
       int64_t vert2Index;
       if (i % 2) {
-        vert1Index = i - 2;
+        vert1Index = i;
         vert2Index = i - 1;
       } else {
         vert1Index = i - 1;
-        vert2Index = i - 2;
+        vert2Index = i;
       }
 
       auto& viewVert0 = positionView[vert0Index];
