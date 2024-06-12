@@ -571,10 +571,11 @@ void findClosestIndexedRayHit(
   int64_t positionsCount = positionView.size();
 
   if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
-    for (int64_t i = 0; i < indicesView.size(); i += 3) {
-      int64_t vert0Index = static_cast<int64_t>(indicesView[i].value[0]);
-      int64_t vert1Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
-      int64_t vert2Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
+    // Iterate through all complete triangles
+    for (int64_t i = 2; i < indicesView.size(); i += 3) {
+      int64_t vert0Index = static_cast<int64_t>(indicesView[i - 2].value[0]);
+      int64_t vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
+      int64_t vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
 
       // Ignore triangle if any index is bogus
       bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
@@ -607,6 +608,7 @@ void findClosestIndexedRayHit(
           vert2,
           tCurr,
           cullBackFaces);
+
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
       bool validHit = intersected && tCurr >= 0;
@@ -614,16 +616,16 @@ void findClosestIndexedRayHit(
         tClosest = tCurr;
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
-    for (int64_t i = 0; i < indicesView.size() - 2; ++i) {
-      int64_t vert0Index = static_cast<int64_t>(indicesView[i].value[0]);
+    for (int64_t i = 2; i < indicesView.size(); ++i) {
+      int64_t vert0Index = static_cast<int64_t>(indicesView[i - 2].value[0]);
       int64_t vert1Index;
       int64_t vert2Index;
       if (i % 2) {
-        vert1Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
-        vert2Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
+        vert1Index = static_cast<int64_t>(indicesView[i].value[0]);
+        vert2Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
       } else {
-        vert1Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
-        vert2Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
+        vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
+        vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
       }
 
       bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
