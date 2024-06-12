@@ -152,7 +152,7 @@ EllipsoidTilesetLoader::createGeometry(const Tile& tile) const {
       double latitude = (latStep * y) + north;
       Cartographic cartographic(longitude, latitude);
 
-      uint16_t index = (resolution * x) + y;
+      uint16_t index = static_cast<uint16_t>((resolution * x) + y);
       vertices[index] = glm::dvec3(
           inverseTransform *
           glm::dvec4(ellipsoid.cartographicToCartesian(cartographic), 1.0));
@@ -200,36 +200,37 @@ Model EllipsoidTilesetLoader::createModel(const Geometry& geometry) const {
   BufferView& bufferViewIndices = model.bufferViews[0];
   bufferViewIndices.buffer = 0;
   bufferViewIndices.byteOffset = 0;
-  bufferViewIndices.byteLength = indicesSize;
+  bufferViewIndices.byteLength = static_cast<int64_t>(indicesSize);
   bufferViewIndices.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   BufferView& bufferViewVertices = model.bufferViews[1];
   bufferViewVertices.buffer = 0;
-  bufferViewVertices.byteOffset = indicesSize;
-  bufferViewVertices.byteLength = verticesSize;
+  bufferViewVertices.byteOffset = static_cast<int64_t>(indicesSize);
+  bufferViewVertices.byteLength = static_cast<int64_t>(verticesSize);
   bufferViewVertices.target = BufferView::Target::ARRAY_BUFFER;
 
   BufferView& bufferViewNormals = model.bufferViews[2];
   bufferViewNormals.buffer = 0;
-  bufferViewNormals.byteOffset = indicesSize + verticesSize;
-  bufferViewNormals.byteLength = normalsSize;
+  bufferViewNormals.byteOffset =
+      static_cast<int64_t>(indicesSize + verticesSize);
+  bufferViewNormals.byteLength = static_cast<int64_t>(normalsSize);
   bufferViewNormals.target = BufferView::Target::ARRAY_BUFFER;
 
   Accessor& accessorIndices = model.accessors[0];
   accessorIndices.bufferView = 0;
-  accessorIndices.count = indices.size();
+  accessorIndices.count = static_cast<int64_t>(indices.size());
   accessorIndices.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
   accessorIndices.type = Accessor::Type::SCALAR;
 
   Accessor& accessorVertices = model.accessors[1];
   accessorVertices.bufferView = 1;
-  accessorVertices.count = vertices.size();
+  accessorVertices.count = static_cast<int64_t>(vertices.size());
   accessorVertices.componentType = Accessor::ComponentType::FLOAT;
   accessorVertices.type = Accessor::Type::VEC3;
 
   Accessor& accessorNormals = model.accessors[2];
   accessorNormals.bufferView = 2;
-  accessorNormals.count = normals.size();
+  accessorNormals.count = static_cast<int64_t>(normals.size());
   accessorNormals.componentType = Accessor::ComponentType::FLOAT;
   accessorNormals.type = Accessor::Type::VEC3;
 
