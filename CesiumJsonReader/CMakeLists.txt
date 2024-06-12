@@ -39,11 +39,6 @@ target_include_directories(
 
 target_link_libraries(CesiumJsonReader
     PUBLIC
-        GSL
+        Microsoft.GSL::GSL
         CesiumUtility
-)
-
-install(TARGETS CesiumJsonReader
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumJsonReader
 )

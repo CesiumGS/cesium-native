@@ -6,7 +6,6 @@
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/common.hpp>
-#include <glm/gtx/quaternion.hpp>
 
 #include <optional>
 #include <string>

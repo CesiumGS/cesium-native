@@ -12,12 +12,6 @@
     "license": ["MIT"]
   },
   {
-    "name": "CSPRNG",
-    "url": "https://github.com/Duthomhas/CSPRNG",
-    "version": "8768a94b4b04213c0798b80824a04ae4990e9847",
-    "license": ["Boost Software License 1.0"]
-  },
-  {
     "name": "Draco",
     "url": "https://github.com/google/draco",
     "version": "1.5.2",

@@ -6,6 +6,7 @@
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumUtility/AttributeCompression.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Math.h>
 
 #ifdef _MSC_VER
@@ -23,7 +24,6 @@
 #endif
 
 #include <rapidjson/document.h>
-#include <spdlog/fmt/fmt.h>
 
 #include <limits>
 

@@ -15,8 +15,8 @@
 #include <vector>
 
 namespace CesiumGltf {
-class Model;
-class Buffer;
+struct Model;
+struct Buffer;
 } // namespace CesiumGltf
 
 namespace Cesium3DTilesContent {

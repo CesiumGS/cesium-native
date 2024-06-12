@@ -55,10 +55,5 @@ target_link_libraries(Cesium3DTilesWriter
     PUBLIC
         Cesium3DTiles
         CesiumJsonWriter
-        GSL
-)
-
-install(TARGETS Cesium3DTilesWriter
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesWriter
+        Microsoft.GSL::GSL
 )

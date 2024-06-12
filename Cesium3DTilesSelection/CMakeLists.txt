@@ -54,26 +54,12 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
         CesiumUtility
-        spdlog
-    # PRIVATE
-        uriparser
-        libmorton
-	${CESIUM_NATIVE_DRACO_LIBRARY}
-)
-
-target_link_libraries_system(
-  Cesium3DTilesSelection
-    PUBLIC
-        expected-lite
-)
-
-target_link_libraries_system(
-  Cesium3DTilesSelection
-    PRIVATE
-        tinyxml2
-)
-
-install(TARGETS Cesium3DTilesSelection
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesSelection
+        spdlog::spdlog spdlog::spdlog_header_only
+# PRIVATE
+        uriparser::uriparser
+        libmorton::libmorton
+        draco::draco
+        nonstd::expected-lite
+PRIVATE
+        tinyxml2::tinyxml2
 )

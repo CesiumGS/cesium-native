@@ -15,10 +15,10 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
-#include <spdlog/logger.h>
 
 #include <chrono>
 

@@ -56,10 +56,5 @@ target_link_libraries(Cesium3DTilesReader
         Cesium3DTiles
         CesiumAsync
         CesiumJsonReader
-        GSL
-)
-
-install(TARGETS Cesium3DTilesReader
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTilesReader
+        Microsoft.GSL::GSL
 )
