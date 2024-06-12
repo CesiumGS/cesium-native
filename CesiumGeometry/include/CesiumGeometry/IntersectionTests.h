@@ -32,12 +32,12 @@ public:
    * @brief Computes the intersection of a ray and a ellipsoid.
    *
    * @param ray The ray.
-   * @param inverseRadii The inverse Radii of ellipsoid.
+   * @param radii The radii of ellipsoid.
    * @return The start and stop of intersection, x is start, y is stop, or
    * `std::nullopt` if there is no intersection.
    */
   static std::optional<glm::dvec2>
-  rayEllipsoid(const Ray& ray, const glm::dvec3& inverseRadii) noexcept;
+  rayEllipsoid(const Ray& ray, const glm::dvec3& radii) noexcept;
 
   /**
    * @brief Determines whether a given point is completely inside a triangle

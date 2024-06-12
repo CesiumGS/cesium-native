@@ -34,7 +34,9 @@ IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
 
 std::optional<glm::dvec2> IntersectionTests::rayEllipsoid(
     const Ray& ray,
-    const glm::dvec3& inverseRadii) noexcept {
+    const glm::dvec3& radii) noexcept {
+  glm::dvec3 inverseRadii = 1.0 / radii;
+
   glm::dvec3 origin = ray.getOrigin();
   glm::dvec3 direction = ray.getDirection();
 
