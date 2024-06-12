@@ -909,6 +909,24 @@ struct VisitBufferIds {
   }
 };
 
+struct VisitMeshIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (Node& node : gltf.nodes) {
+      callback(node.mesh);
+    }
+  }
+};
+
+struct VisitMaterialIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (Mesh& mesh : gltf.meshes) {
+      for (MeshPrimitive& primitive : mesh.primitives) {
+        callback(primitive.material);
+      }
+    }
+  }
+};
+
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
     Model& gltf,
@@ -1011,6 +1029,22 @@ void GltfUtilities::removeUnusedBuffers(
       extraUsedBufferIndices,
       gltf.buffers,
       VisitBufferIds());
+}
+
+void GltfUtilities::removeUnusedMeshes(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedMeshIndices) {
+  removeUnusedElements(gltf, extraUsedMeshIndices, gltf.meshes, VisitMeshIds());
+}
+
+void GltfUtilities::removeUnusedMaterials(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedMaterialIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedMaterialIndices,
+      gltf.materials,
+      VisitMaterialIds());
 }
 
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
