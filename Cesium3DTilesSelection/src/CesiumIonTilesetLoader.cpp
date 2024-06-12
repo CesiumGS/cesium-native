@@ -353,13 +353,13 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
     std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
     AuthorizationHeaderChangeListener&& headerChangeListener,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
-    : _refreshTokenState{TokenRefreshState::None},
+    : _ellipsoid{ellipsoid},
+      _refreshTokenState{TokenRefreshState::None},
       _ionAssetID{ionAssetID},
       _ionAccessToken{std::move(ionAccessToken)},
       _ionAssetEndpointUrl{std::move(ionAssetEndpointUrl)},
       _pAggregatedLoader{std::move(pAggregatedLoader)},
-      _headerChangeListener{std::move(headerChangeListener)},
-      _ellipsoid{ellipsoid} {}
+      _headerChangeListener{std::move(headerChangeListener)} {}
 
 CesiumAsync::Future<TileLoadResult>
 CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {

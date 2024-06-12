@@ -46,7 +46,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResult::createFailedResult(nullptr));
   }
 
-  int32_t index = 0;
+  std::vector<CesiumGeospatial::Projection>::size_type index = 0;
   const std::vector<CesiumGeospatial::Projection>& parentProjections =
       pParentRenderContent->getRasterOverlayDetails().rasterOverlayProjections;
   for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
@@ -57,7 +57,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
           parentProjections.begin(),
           parentProjections.end(),
           projection);
-      index = int32_t(it - parentProjections.begin());
+      index = it - parentProjections.begin();
       break;
     }
   }
@@ -78,7 +78,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             TileID,
             false,
             RasterOverlayUtilities::DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
-            textureCoordinateIndex,
+            static_cast<int32_t>(textureCoordinateIndex),
             ellipsoid);
         if (!model) {
           return TileLoadResult::createFailedResult(nullptr);

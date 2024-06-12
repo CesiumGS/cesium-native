@@ -34,8 +34,8 @@ RasterOverlayCollection::RasterOverlayCollection(
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pLoadedTiles(&loadedTiles),
       _externals{externals},
-      _pOverlays(nullptr),
-      _ellipsoid(ellipsoid) {}
+      _ellipsoid(ellipsoid),
+      _pOverlays(nullptr) {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (this->_pOverlays) {
