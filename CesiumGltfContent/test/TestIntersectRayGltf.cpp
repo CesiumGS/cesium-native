@@ -208,6 +208,8 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   checkUnitCubeIntersections("cubeFanIndexed.glb");
 
+  checkUnitCubeIntersections("cubeQuantized.glb");
+
   // works with a translated/rotated gltf
   GltfReader reader;
   Model translatedCube =
