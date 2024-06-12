@@ -210,19 +210,5 @@ TEST_CASE("GltfUtilities::intersectRayGltfModel") {
 
   checkUnitCubeIntersections("cubeQuantized.glb");
 
-  // works with a translated/rotated gltf
-  GltfReader reader;
-  Model translatedCube =
-      *reader
-           .readGltf(readFile(
-               std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
-               "translated_cube.glb"))
-           .model;
-  checkIntersection(
-      Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
-      translatedCube,
-      false,
-      glm::dmat4x4(1.0),
-      true,
-      glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2)));
+  checkUnitCubeIntersections("cubeTranslated.glb");
 }
