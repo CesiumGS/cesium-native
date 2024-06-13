@@ -36,6 +36,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -49,7 +50,7 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
     : _projection(ellipsoid),
       _tilingScheme(
           _projection.project(_projection.MAXIMUM_GLOBE_RECTANGLE),
-          1,
+          2,
           1) {}
 
 /*static*/ std::unique_ptr<Tileset> EllipsoidTilesetLoader::createTileset(
@@ -61,7 +62,8 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
   std::unique_ptr<Tile> pRootTile =
       std::make_unique<Tile>(pCustomLoader.get(), TileEmptyContent{});
 
-  pRootTile->setTileID(QuadtreeTileID{0, 0, 0});
+  pRootTile->setTileID(
+      QuadtreeTileID{std::numeric_limits<uint32_t>::max(), 0, 0});
   pRootTile->setRefine(TileRefine::Replace);
   pRootTile->setUnconditionallyRefine();
 
@@ -89,27 +91,38 @@ TileChildrenResult
 EllipsoidTilesetLoader::createTileChildren(const Tile& tile) {
   const QuadtreeTileID& parentID = std::get<QuadtreeTileID>(tile.getTileID());
 
-  QuadtreeChildren childIDs = ImplicitTilingUtilities::getChildren(parentID);
-
   std::vector<Tile> children;
-  children.reserve(childIDs.size());
 
-  for (const QuadtreeTileID& childID : childIDs) {
-    Tile& child = children.emplace_back(this);
+  if (parentID.level == std::numeric_limits<uint32_t>::max()) {
+    uint32_t rootTilesX = _tilingScheme.getRootTilesX();
+    children.reserve(rootTilesX);
 
-    BoundingRegion boundingRegion = createBoundingRegion(childID);
-    const GlobeRectangle& globeRectangle = boundingRegion.getRectangle();
+    for (uint32_t x = 0; x < rootTilesX; x++) {
+      Tile& child = children.emplace_back(tile.getLoader(), TileEmptyContent{});
+      child.setTileID(QuadtreeTileID{0, x, 0});
+      child.setRefine(tile.getRefine());
+      child.setUnconditionallyRefine();
+    }
+  } else {
+    QuadtreeChildren childIDs = ImplicitTilingUtilities::getChildren(parentID);
+    children.reserve(childIDs.size());
 
-    child.setTileID(childID);
-    child.setRefine(tile.getRefine());
-    child.setTransform(glm::translate(
-        glm::dmat4x4(1.0),
-        _projection.getEllipsoid().cartographicToCartesian(
-            globeRectangle.getNorthwest())));
-    child.setBoundingVolume(boundingRegion);
-    child.setGeometricError(
-        4.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *
-        globeRectangle.computeWidth());
+    for (const QuadtreeTileID& childID : childIDs) {
+      BoundingRegion boundingRegion = createBoundingRegion(childID);
+      const GlobeRectangle& globeRectangle = boundingRegion.getRectangle();
+
+      Tile& child = children.emplace_back(tile.getLoader());
+      child.setTileID(childID);
+      child.setRefine(tile.getRefine());
+      child.setTransform(glm::translate(
+          glm::dmat4x4(1.0),
+          _projection.getEllipsoid().cartographicToCartesian(
+              globeRectangle.getNorthwest())));
+      child.setBoundingVolume(boundingRegion);
+      child.setGeometricError(
+          6.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *
+          globeRectangle.computeWidth());
+    }
   }
 
   return TileChildrenResult{std::move(children), TileLoadResultState::Success};
@@ -126,7 +139,7 @@ BoundingRegion EllipsoidTilesetLoader::createBoundingRegion(
 
 EllipsoidTilesetLoader::Geometry
 EllipsoidTilesetLoader::createGeometry(const Tile& tile) const {
-  static constexpr uint16_t resolution = 32;
+  static constexpr uint16_t resolution = 24;
 
   std::vector<uint16_t> indices(6 * (resolution - 1) * (resolution - 1));
   std::vector<glm::vec3> vertices(resolution * resolution);
