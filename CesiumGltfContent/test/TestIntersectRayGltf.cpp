@@ -39,7 +39,7 @@ void checkIntersection(
     const glm::dmat4x4& modelToWorld,
     bool shouldHit,
     const glm::dvec3& expectedHit) {
-  std::optional<GltfUtilities::HitResult> hitResult =
+  GltfUtilities::IntersectResult hitResult =
       GltfUtilities::intersectRayGltfModel(
           ray,
           model,
@@ -47,29 +47,30 @@ void checkIntersection(
           modelToWorld);
 
   if (shouldHit) {
-    CHECK(hitResult.has_value());
-    if (!hitResult.has_value())
+    CHECK(hitResult.hit.has_value());
+    if (!hitResult.hit.has_value())
       return;
   } else {
-    CHECK(!hitResult.has_value());
+    CHECK(!hitResult.hit.has_value());
     return;
   }
 
   // Validate hit point
   CHECK(glm::all(glm::lessThan(
-      glm::abs(hitResult->worldPoint - expectedHit),
+      glm::abs(hitResult.hit->worldPoint - expectedHit),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // Use results to dive into model
-  CHECK(hitResult->meshId > -1);
-  CHECK(static_cast<size_t>(hitResult->meshId) < model.meshes.size());
+  CHECK(hitResult.hit->meshId > -1);
+  CHECK(static_cast<size_t>(hitResult.hit->meshId) < model.meshes.size());
   const CesiumGltf::Mesh& mesh =
-      model.meshes[static_cast<size_t>(hitResult->meshId)];
+      model.meshes[static_cast<size_t>(hitResult.hit->meshId)];
 
-  CHECK(hitResult->primitiveId > -1);
-  CHECK(static_cast<size_t>(hitResult->primitiveId) < mesh.primitives.size());
+  CHECK(hitResult.hit->primitiveId > -1);
+  CHECK(
+      static_cast<size_t>(hitResult.hit->primitiveId) < mesh.primitives.size());
   const CesiumGltf::MeshPrimitive& primitive =
-      mesh.primitives[static_cast<size_t>(hitResult->primitiveId)];
+      mesh.primitives[static_cast<size_t>(hitResult.hit->primitiveId)];
 
   bool modeIsValid =
       primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES ||
