@@ -89,7 +89,36 @@ void checkIntersection(
   CHECK(pPositionAccessor);
 }
 
-void checkUnitCubeIntersections(const std::string& testModelName) {
+void checkBadUnitCube(const std::string& testModelName, bool shouldHitAnyway) {
+  GltfReader reader;
+  Model testModel =
+      *reader
+           .readGltf(readFile(
+               std::filesystem::path(CesiumGltfContent_TEST_DATA_DIR) /
+               testModelName))
+           .model;
+
+  // Do an intersection with top side of the cube
+  GltfUtilities::IntersectResult hitResult =
+      GltfUtilities::intersectRayGltfModel(
+          Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
+          testModel,
+          true,
+          glm::dmat4x4(1.0));
+
+  // We're expecting a bad model, so it shouldn't crash or assert
+  // and we should get some warnings about that
+  CHECK(hitResult.warnings.size() > 0);
+
+  // Check for a bad model that is mostly good, and should produce good results
+  if (shouldHitAnyway) {
+    CHECK(hitResult.hit.has_value());
+  } else {
+    CHECK(!hitResult.hit.has_value());
+  }
+}
+
+void checkValidUnitCube(const std::string& testModelName) {
   GltfReader reader;
   Model testModel =
       *reader
@@ -197,19 +226,15 @@ void checkUnitCubeIntersections(const std::string& testModelName) {
 }
 
 TEST_CASE("GltfUtilities::intersectRayGltfModel") {
-  checkUnitCubeIntersections("cube.glb");
+  checkValidUnitCube("cube.glb");
+  checkValidUnitCube("cubeIndexed.glb");
+  checkValidUnitCube("cubeStrip.glb");
+  checkValidUnitCube("cubeStripIndexed.glb");
+  checkValidUnitCube("cubeFan.glb");
+  checkValidUnitCube("cubeFanIndexed.glb");
+  checkValidUnitCube("cubeQuantized.glb");
+  checkValidUnitCube("cubeTranslated.glb");
 
-  checkUnitCubeIntersections("cubeIndexed.glb");
-
-  checkUnitCubeIntersections("cubeStrip.glb");
-
-  checkUnitCubeIntersections("cubeStripIndexed.glb");
-
-  checkUnitCubeIntersections("cubeFan.glb");
-
-  checkUnitCubeIntersections("cubeFanIndexed.glb");
-
-  checkUnitCubeIntersections("cubeQuantized.glb");
-
-  checkUnitCubeIntersections("cubeTranslated.glb");
+  checkBadUnitCube("cubeInvalidVertCount.glb", false);
+  checkBadUnitCube("cubeSomeBadIndices.glb", true);
 }
