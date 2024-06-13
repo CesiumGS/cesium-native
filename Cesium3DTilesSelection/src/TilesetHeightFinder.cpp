@@ -106,12 +106,14 @@ void TilesetHeightFinder::_intersectVisibleTile(
     return;
 
   // Set ray info to this hit if closer, or the first hit
-  double prevDistSq = rayInfo.intersectResult.hit->rayToWorldPointDistanceSq;
-  double thisDistSq = intersectResult.hit->rayToWorldPointDistanceSq;
-
-  bool setClosest = prevDistSq == -1 || thisDistSq < prevDistSq;
-  if (setClosest)
+  if (!rayInfo.intersectResult.hit.has_value()) {
     rayInfo.intersectResult = std::move(intersectResult);
+  } else {
+    double prevDistSq = rayInfo.intersectResult.hit->rayToWorldPointDistanceSq;
+    double thisDistSq = intersectResult.hit->rayToWorldPointDistanceSq;
+    if (thisDistSq < prevDistSq)
+      rayInfo.intersectResult = std::move(intersectResult);
+  }
 }
 
 void TilesetHeightFinder::_findAndIntersectVisibleTiles(
