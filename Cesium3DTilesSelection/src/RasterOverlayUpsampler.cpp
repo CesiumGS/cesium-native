@@ -46,7 +46,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
         TileLoadResult::createFailedResult(nullptr));
   }
 
-  std::vector<CesiumGeospatial::Projection>::size_type index = 0;
+  size_t index = 0;
   const std::vector<CesiumGeospatial::Projection>& parentProjections =
       pParentRenderContent->getRasterOverlayDetails().rasterOverlayProjections;
   for (const RasterMappedTo3DTile& mapped : pParent->getMappedRasterTiles()) {
@@ -57,7 +57,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
           parentProjections.begin(),
           parentProjections.end(),
           projection);
-      index = it - parentProjections.begin();
+      index = static_cast<size_t>(it - parentProjections.begin());
       break;
     }
   }
