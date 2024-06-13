@@ -1,5 +1,5 @@
 # Write out a gltf test file from python code
-# Unit cube - Triangle list, indexed
+# Unit cube - Triangle list, indexed (UNSIGNED_BYTE)
 #
 # Uses pygltflib 1.16.2
 # py -m pip install pygltflib

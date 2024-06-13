@@ -1,5 +1,6 @@
 # Write out a gltf test file from python code
-# Unit cube - Triangle strip, indexed (UNSIGNED_SHORT)
+# Unit cube - Triangle list, indexed (UNSIGNED_BYTE)
+# Intentionally specify 4 out of range indices
 #
 # Uses pygltflib 1.16.2
 # py -m pip install pygltflib
@@ -8,7 +9,7 @@ import numpy as np
 import pygltflib
 
 # Change extension to .gltf for text based
-outputFileName = "cubeStripIndexed.glb"
+outputFileName = "cubeSomeBadIndices.glb"
 
 points = np.array(
     [
@@ -23,34 +24,22 @@ points = np.array(
     ],
     dtype="float32",
 )
-
 triangles = np.array(
     [
-        # +XY face
-        [2, 0, 3],
-        [0, 3, 1],
-
-        # +YZ face
+        [0, 1, 2],
+        [3, 2, 1],
+        [1, 0, 4],
+        [5, 4, 0],
         [3, 1, 6],
-        [1, 6, 4],
-
-        # -XY face
-        [6, 4, 7],
-        [4, 7, 5],
-
-        # -YZ face
-        [7, 5, 2],
-        [5, 2, 0],
-
-        # -XZ face
-        [0, 5, 1],
-        [5, 1, 4],
-
-        # +XZ face
+        [4, 6, 1],
+        [2, 3, 7],
         [6, 7, 3],
-        [7, 3, 2],
+        [0, 2, 15],
+        [7, 5, 12],
+        [5, 7, 14],
+        [6, 4, 17],
     ],
-    dtype="uint16",
+    dtype="uint8",
 )
 
 triangles_binary_blob = triangles.flatten().tobytes()
@@ -63,9 +52,9 @@ gltf = pygltflib.GLTF2(
         pygltflib.Mesh(
             primitives=[
                 pygltflib.Primitive(
-                    attributes=pygltflib.Attributes(POSITION=1),
+                    attributes=pygltflib.Attributes(POSITION=1), 
                     indices=0, 
-                    mode=5 #"TRIANGLE_STRIP"
+                    mode=4 #"TRIANGLES"
                 )
             ]
         )
@@ -73,7 +62,7 @@ gltf = pygltflib.GLTF2(
     accessors=[
         pygltflib.Accessor(
             bufferView=0,
-            componentType=pygltflib.UNSIGNED_SHORT,
+            componentType=pygltflib.UNSIGNED_BYTE,
             count=triangles.size,
             type=pygltflib.SCALAR,
             max=[int(triangles.max())],

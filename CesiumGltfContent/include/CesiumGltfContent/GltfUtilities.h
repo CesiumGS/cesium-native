@@ -172,6 +172,12 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void removeUnusedBuffers(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedBufferIndices = {});
+  static void removeUnusedMeshes(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedMeshIndices = {});
+  static void removeUnusedMaterials(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedMaterialIndices = {});
 
   /**
    * @brief Shrink buffers by removing any sections that are not referenced by
@@ -193,15 +199,21 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   /**
    * @brief Hit result data for intersectRayGltfModelParametric
    */
-  struct HitResult {
-    glm::dvec3 primitivePoint = {};
-    glm::dmat4x4 primitiveToWorld = {};
+  struct IntersectResult {
+    struct Hit {
+      glm::dvec3 primitivePoint = {};
+      glm::dmat4x4 primitiveToWorld = {};
 
-    glm::dvec3 worldPoint = {};
-    double rayToWorldPointDistanceSq = -1;
+      glm::dvec3 worldPoint = {};
+      double rayToWorldPointDistanceSq = -1;
 
-    int meshId = -1;
-    int primitiveId = -1;
+      int meshId = -1;
+      int primitiveId = -1;
+    };
+
+    std::optional<Hit> hit;
+
+    std::vector<std::string> warnings{};
   };
 
   /**
@@ -215,9 +227,9 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * @param gltf The glTF model to intersect.
    * @param cullBackFaces Ignore triangles that face away from ray.
    * @param gltfTransform Optional matrix to apply to entire gltf model.
-   * @param return HitResult data if an intersection occurred.
+   * @param return IntersectResult describing outcome
    */
-  static std::optional<HitResult> intersectRayGltfModel(
+  static IntersectResult intersectRayGltfModel(
       const CesiumGeometry::Ray& ray,
       const CesiumGltf::Model& gltf,
       bool cullBackFaces = true,

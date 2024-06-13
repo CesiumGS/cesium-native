@@ -413,34 +413,57 @@ size_t moveBufferContentWithoutRenumbering(
 
 namespace {
 
+template <class PositionViewType>
 void findClosestRayHit(
     const CesiumGeometry::Ray& ray,
-    AccessorView<glm::vec3>& positionView,
+    const PositionViewType& positionView,
     const CesiumGltf::MeshPrimitive& primitive,
     bool cullBackFaces,
-    double& tMinOut) {
+    double& tMinOut,
+    std::vector<std::string>& warnings) {
 
   // Need at least 3 positions to form a triangle
-  if (positionView.size() < 3)
+  if (positionView.size() < 3) {
+    warnings.push_back("Skipping mesh with less than 3 vertex positions");
     return;
+  }
 
   double tClosest = -1;
   bool intersected;
   double tCurr;
 
   if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
-    for (int64_t i = 0; i < positionView.size(); i += 3) {
-      int64_t vert0Index = i;
-      int64_t vert1Index = i + 1;
-      int64_t vert2Index = i + 2;
+    // Iterate through all complete triangles
+    for (int64_t i = 2; i < positionView.size(); i += 3) {
+      int64_t vert0Index = i - 2;
+      int64_t vert1Index = i - 1;
+      int64_t vert2Index = i;
+
+      auto& viewVert0 = positionView[vert0Index];
+      auto& viewVert1 = positionView[vert1Index];
+      auto& viewVert2 = positionView[vert2Index];
+
+      glm::dvec3 vert0(
+          static_cast<double>(viewVert0.value[0]),
+          static_cast<double>(viewVert0.value[1]),
+          static_cast<double>(viewVert0.value[2]));
+      glm::dvec3 vert1(
+          static_cast<double>(viewVert1.value[0]),
+          static_cast<double>(viewVert1.value[1]),
+          static_cast<double>(viewVert1.value[2]));
+      glm::dvec3 vert2(
+          static_cast<double>(viewVert2.value[0]),
+          static_cast<double>(viewVert2.value[1]),
+          static_cast<double>(viewVert2.value[2]));
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
-          glm::dvec3(positionView[vert0Index]),
-          glm::dvec3(positionView[vert1Index]),
-          glm::dvec3(positionView[vert2Index]),
+          vert0,
+          vert1,
+          vert2,
           tCurr,
           cullBackFaces);
+
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
       bool validHit = intersected && tCurr >= 0;
@@ -448,23 +471,40 @@ void findClosestRayHit(
         tClosest = tCurr;
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
-    for (int64_t i = 3; i < positionView.size(); ++i) {
-      int64_t vert0Index = i - 3;
+    for (int64_t i = 2; i < positionView.size(); ++i) {
+      int64_t vert0Index = i - 2;
       int64_t vert1Index;
       int64_t vert2Index;
       if (i % 2) {
-        vert1Index = i - 2;
+        vert1Index = i;
         vert2Index = i - 1;
       } else {
         vert1Index = i - 1;
-        vert2Index = i - 2;
+        vert2Index = i;
       }
+
+      auto& viewVert0 = positionView[vert0Index];
+      auto& viewVert1 = positionView[vert1Index];
+      auto& viewVert2 = positionView[vert2Index];
+
+      glm::dvec3 vert0(
+          static_cast<double>(viewVert0.value[0]),
+          static_cast<double>(viewVert0.value[1]),
+          static_cast<double>(viewVert0.value[2]));
+      glm::dvec3 vert1(
+          static_cast<double>(viewVert1.value[0]),
+          static_cast<double>(viewVert1.value[1]),
+          static_cast<double>(viewVert1.value[2]));
+      glm::dvec3 vert2(
+          static_cast<double>(viewVert2.value[0]),
+          static_cast<double>(viewVert2.value[1]),
+          static_cast<double>(viewVert2.value[2]));
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
-          glm::dvec3(positionView[vert0Index]),
-          glm::dvec3(positionView[vert1Index]),
-          glm::dvec3(positionView[vert2Index]),
+          vert0,
+          vert1,
+          vert2,
           tCurr,
           cullBackFaces);
 
@@ -475,17 +515,33 @@ void findClosestRayHit(
   } else {
     assert(primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN);
 
-    glm::dvec3 vert0(positionView[0]);
+    auto& viewVert0 = positionView[0];
+    glm::dvec3 vert0(
+        static_cast<double>(viewVert0.value[0]),
+        static_cast<double>(viewVert0.value[1]),
+        static_cast<double>(viewVert0.value[2]));
 
     for (int64_t i = 2; i < positionView.size(); ++i) {
       int64_t vert1Index = i - 1;
       int64_t vert2Index = i - 0;
 
+      auto& viewVert1 = positionView[vert1Index];
+      auto& viewVert2 = positionView[vert2Index];
+
+      glm::dvec3 vert1(
+          static_cast<double>(viewVert1.value[0]),
+          static_cast<double>(viewVert1.value[1]),
+          static_cast<double>(viewVert1.value[2]));
+      glm::dvec3 vert2(
+          static_cast<double>(viewVert2.value[0]),
+          static_cast<double>(viewVert2.value[1]),
+          static_cast<double>(viewVert2.value[2]));
+
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           vert0,
-          glm::dvec3(positionView[vert1Index]),
-          glm::dvec3(positionView[vert2Index]),
+          vert1,
+          vert2,
           tCurr,
           cullBackFaces);
 
@@ -497,18 +553,21 @@ void findClosestRayHit(
   tMinOut = tClosest;
 }
 
-template <class T>
+template <class PositionViewType, class IndexViewType>
 void findClosestIndexedRayHit(
     const CesiumGeometry::Ray& ray,
-    AccessorView<glm::vec3>& positionView,
-    const AccessorView<T>& indicesView,
+    const PositionViewType& positionView,
+    const IndexViewType& indicesView,
     const CesiumGltf::MeshPrimitive& primitive,
     bool cullBackFaces,
-    double& tMinOut) {
+    double& tMinOut,
+    std::vector<std::string>& warnings) {
 
   // Need at least 3 vertices to form a triangle
-  if (indicesView.size() < 3)
+  if (indicesView.size() < 3) {
+    warnings.push_back("Skipping indexed mesh with less than 3 indices");
     return;
+  }
 
   // Converts from various Accessor::ComponentType::XXX values
 
@@ -516,27 +575,49 @@ void findClosestIndexedRayHit(
   bool intersected;
   double tCurr;
   int64_t positionsCount = positionView.size();
+  bool foundInvalidIndex = false;
 
   if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
-    for (int64_t i = 0; i < indicesView.size(); i += 3) {
-      int64_t vert0Index = static_cast<int64_t>(indicesView[i].value[0]);
-      int64_t vert1Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
-      int64_t vert2Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
+    // Iterate through all complete triangles
+    for (int64_t i = 2; i < indicesView.size(); i += 3) {
+      int64_t vert0Index = static_cast<int64_t>(indicesView[i - 2].value[0]);
+      int64_t vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
+      int64_t vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
 
       // Ignore triangle if any index is bogus
       bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
                           vert1Index >= 0 && vert1Index < positionsCount &&
                           vert2Index >= 0 && vert2Index < positionsCount;
-      if (!validIndices)
+      if (!validIndices) {
+        foundInvalidIndex = true;
         continue;
+      }
+
+      auto& viewVert0 = positionView[vert0Index];
+      auto& viewVert1 = positionView[vert1Index];
+      auto& viewVert2 = positionView[vert2Index];
+
+      glm::dvec3 vert0(
+          static_cast<double>(viewVert0.value[0]),
+          static_cast<double>(viewVert0.value[1]),
+          static_cast<double>(viewVert0.value[2]));
+      glm::dvec3 vert1(
+          static_cast<double>(viewVert1.value[0]),
+          static_cast<double>(viewVert1.value[1]),
+          static_cast<double>(viewVert1.value[2]));
+      glm::dvec3 vert2(
+          static_cast<double>(viewVert2.value[0]),
+          static_cast<double>(viewVert2.value[1]),
+          static_cast<double>(viewVert2.value[2]));
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
-          glm::dvec3(positionView[vert0Index]),
-          glm::dvec3(positionView[vert1Index]),
-          glm::dvec3(positionView[vert2Index]),
+          vert0,
+          vert1,
+          vert2,
           tCurr,
           cullBackFaces);
+
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
       bool validHit = intersected && tCurr >= 0;
@@ -544,29 +625,48 @@ void findClosestIndexedRayHit(
         tClosest = tCurr;
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
-    for (int64_t i = 0; i < indicesView.size() - 2; ++i) {
-      int64_t vert0Index = static_cast<int64_t>(indicesView[i].value[0]);
+    for (int64_t i = 2; i < indicesView.size(); ++i) {
+      int64_t vert0Index = static_cast<int64_t>(indicesView[i - 2].value[0]);
       int64_t vert1Index;
       int64_t vert2Index;
       if (i % 2) {
-        vert1Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
-        vert2Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
+        vert1Index = static_cast<int64_t>(indicesView[i].value[0]);
+        vert2Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
       } else {
-        vert1Index = static_cast<int64_t>(indicesView[i + 1].value[0]);
-        vert2Index = static_cast<int64_t>(indicesView[i + 2].value[0]);
+        vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
+        vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
       }
 
       bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
                           vert1Index >= 0 && vert1Index < positionsCount &&
                           vert2Index >= 0 && vert2Index < positionsCount;
-      if (!validIndices)
+      if (!validIndices) {
+        foundInvalidIndex = true;
         continue;
+      }
+
+      auto& viewVert0 = positionView[vert0Index];
+      auto& viewVert1 = positionView[vert1Index];
+      auto& viewVert2 = positionView[vert2Index];
+
+      glm::dvec3 vert0(
+          static_cast<double>(viewVert0.value[0]),
+          static_cast<double>(viewVert0.value[1]),
+          static_cast<double>(viewVert0.value[2]));
+      glm::dvec3 vert1(
+          static_cast<double>(viewVert1.value[0]),
+          static_cast<double>(viewVert1.value[1]),
+          static_cast<double>(viewVert1.value[2]));
+      glm::dvec3 vert2(
+          static_cast<double>(viewVert2.value[0]),
+          static_cast<double>(viewVert2.value[1]),
+          static_cast<double>(viewVert2.value[2]));
 
       intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
-          glm::dvec3(positionView[vert0Index]),
-          glm::dvec3(positionView[vert1Index]),
-          glm::dvec3(positionView[vert2Index]),
+          vert0,
+          vert1,
+          vert2,
           tCurr,
           cullBackFaces);
 
@@ -579,8 +679,14 @@ void findClosestIndexedRayHit(
 
     int64_t vert0Index = static_cast<int64_t>(indicesView[0].value[0]);
 
-    if (vert0Index >= 0 && vert0Index < positionsCount) {
-      glm::dvec3 vert0(positionView[vert0Index]);
+    if (vert0Index < 0 || vert0Index >= positionsCount) {
+      foundInvalidIndex = true;
+    } else {
+      auto& viewVert0 = positionView[vert0Index];
+      glm::dvec3 vert0(
+          static_cast<double>(viewVert0.value[0]),
+          static_cast<double>(viewVert0.value[1]),
+          static_cast<double>(viewVert0.value[2]));
 
       for (int64_t i = 2; i < indicesView.size(); ++i) {
         int64_t vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
@@ -588,14 +694,28 @@ void findClosestIndexedRayHit(
 
         bool validIndices = vert1Index >= 0 && vert1Index < positionsCount &&
                             vert2Index >= 0 && vert2Index < positionsCount;
-        if (!validIndices)
+        if (!validIndices) {
+          foundInvalidIndex = true;
           continue;
+        }
+
+        auto& viewVert1 = positionView[vert1Index];
+        auto& viewVert2 = positionView[vert2Index];
+
+        glm::dvec3 vert1(
+            static_cast<double>(viewVert1.value[0]),
+            static_cast<double>(viewVert1.value[1]),
+            static_cast<double>(viewVert1.value[2]));
+        glm::dvec3 vert2(
+            static_cast<double>(viewVert2.value[0]),
+            static_cast<double>(viewVert2.value[1]),
+            static_cast<double>(viewVert2.value[2]));
 
         intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
             ray,
             vert0,
-            glm::dvec3(positionView[vert1Index]),
-            glm::dvec3(positionView[vert2Index]),
+            vert1,
+            vert2,
             tCurr,
             cullBackFaces);
 
@@ -605,6 +725,11 @@ void findClosestIndexedRayHit(
       }
     }
   }
+
+  if (foundInvalidIndex)
+    warnings.push_back(
+        "Found one or more invalid index values for indexed mesh");
+
   tMinOut = tClosest;
 }
 } // namespace
@@ -804,6 +929,24 @@ struct VisitBufferIds {
   }
 };
 
+struct VisitMeshIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (Node& node : gltf.nodes) {
+      callback(node.mesh);
+    }
+  }
+};
+
+struct VisitMaterialIds {
+  template <typename Func> void operator()(Model& gltf, Func&& callback) {
+    for (Mesh& mesh : gltf.meshes) {
+      for (MeshPrimitive& primitive : mesh.primitives) {
+        callback(primitive.material);
+      }
+    }
+  }
+};
+
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
     Model& gltf,
@@ -906,6 +1049,22 @@ void GltfUtilities::removeUnusedBuffers(
       extraUsedBufferIndices,
       gltf.buffers,
       VisitBufferIds());
+}
+
+void GltfUtilities::removeUnusedMeshes(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedMeshIndices) {
+  removeUnusedElements(gltf, extraUsedMeshIndices, gltf.meshes, VisitMeshIds());
+}
+
+void GltfUtilities::removeUnusedMaterials(
+    CesiumGltf::Model& gltf,
+    const std::vector<int32_t>& extraUsedMaterialIndices) {
+  removeUnusedElements(
+      gltf,
+      extraUsedMaterialIndices,
+      gltf.materials,
+      VisitMaterialIds());
 }
 
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
@@ -1069,24 +1228,55 @@ void GltfUtilities::compactBuffer(
   }
 }
 
-std::optional<GltfUtilities::HitResult> intersectRayScenePrimitive(
+template <typename TCallback>
+std::invoke_result_t<TCallback, AccessorView<AccessorTypes::VEC3<float>>>
+createPositionView(
+    const Model& model,
+    const Accessor& accessor,
+    TCallback&& callback) {
+  assert(accessor.type == Accessor::Type::VEC3);
+
+  switch (accessor.componentType) {
+  case Accessor::ComponentType::BYTE:
+    return callback(AccessorView<AccessorTypes::VEC3<int8_t>>(model, accessor));
+  case Accessor::ComponentType::UNSIGNED_BYTE:
+    return callback(
+        AccessorView<AccessorTypes::VEC3<uint8_t>>(model, accessor));
+  case Accessor::ComponentType::SHORT:
+    return callback(
+        AccessorView<AccessorTypes::VEC3<int16_t>>(model, accessor));
+  case Accessor::ComponentType::UNSIGNED_SHORT:
+    return callback(
+        AccessorView<AccessorTypes::VEC3<uint16_t>>(model, accessor));
+  case Accessor::ComponentType::UNSIGNED_INT:
+    return callback(
+        AccessorView<AccessorTypes::VEC3<uint32_t>>(model, accessor));
+  case Accessor::ComponentType::FLOAT:
+    return callback(AccessorView<AccessorTypes::VEC3<float>>(model, accessor));
+  default:
+    return callback(AccessorView<AccessorTypes::VEC3<float>>(
+        AccessorViewStatus::InvalidComponentType));
+  }
+}
+
+std::optional<glm::dvec3> intersectRayScenePrimitive(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& model,
     const CesiumGltf::MeshPrimitive& primitive,
-    const Accessor* pPositionAccessor,
-    const glm::dmat4x4& rootTransform,
-    const glm::dmat4x4& nodeTransform,
-    bool cullBackFaces) {
-  glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
+    const Accessor& positionAccessor,
+    const glm::dmat4x4& primitiveToWorld,
+    bool cullBackFaces,
+    std::vector<std::string>& warnings) {
   glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
+  CesiumGeometry::Ray transformedRay = ray.transform(worldToPrimitive);
 
   // Ignore primitive if ray doesn't intersect bounding box
-  const std::vector<double>& min = pPositionAccessor->min;
-  const std::vector<double>& max = pPositionAccessor->max;
+  const std::vector<double>& min = positionAccessor.min;
+  const std::vector<double>& max = positionAccessor.max;
 
   double t;
   if (!CesiumGeometry::IntersectionTests::rayAABBParametric(
-          ray.transform(worldToPrimitive),
+          transformedRay,
           CesiumGeometry::AxisAlignedBox(
               min[0],
               min[1],
@@ -1095,76 +1285,99 @@ std::optional<GltfUtilities::HitResult> intersectRayScenePrimitive(
               max[1],
               max[2]),
           t)) {
-    return std::optional<GltfUtilities::HitResult>();
+    return std::optional<glm::dvec3>();
   }
 
+  double tClosest = -1;
+
+  // Support all variations of position component types
+  //
   // From the glTF spec...
   // "Floating-point data MUST use IEEE-754 single precision format."
-  AccessorView<glm::vec3> positionView(model, *pPositionAccessor);
-  double tClosest = -1;
-  CesiumGeometry::Ray transformedRay = ray.transform(worldToPrimitive);
+  //
+  // Yet, the KHR_mesh_quantization extension can specify more
+  //
+  createPositionView(
+      model,
+      positionAccessor,
+      [&transformedRay,
+       &model,
+       &primitive,
+       cullBackFaces,
+       &tClosest,
+       &warnings](const auto& positionView) {
+        // Bail on invalid view
+        if (positionView.status() != AccessorViewStatus::Valid) {
+          warnings.push_back(
+              "Skipping mesh with an invalid position component type");
+          return;
+        }
 
-  bool hasIndexedTriangles = primitive.indices != -1;
-  if (hasIndexedTriangles) {
-    assert(primitive.indices >= 0);
-    const Accessor& accessor =
-        model.accessors[static_cast<size_t>(primitive.indices)];
+        bool hasIndexedTriangles = primitive.indices != -1;
+        if (hasIndexedTriangles) {
+          assert(primitive.indices >= 0);
+          const Accessor& indexAccessor =
+              model.accessors[static_cast<size_t>(primitive.indices)];
 
-    // Ignore float value types, these are invalid
-    // From the glTF spec..."Indices MUST be non-negative integer numbers."
-    bool validComponentType =
-        accessor.componentType != Accessor::ComponentType::FLOAT;
+          // Ignore float index types, these are invalid
+          // From the glTF spec...
+          // "Indices MUST be non-negative integer numbers."
+          if (indexAccessor.componentType == Accessor::ComponentType::FLOAT) {
+            warnings.push_back(
+                "Skipping mesh with an invalid index component type");
+            return;
+          }
 
-    if (validComponentType) {
-      createAccessorView(
-          model,
-          accessor,
-          [&transformedRay,
-           &positionView,
-           &primitive,
-           cullBackFaces,
-           &tClosest](const auto& accessorView) {
-            // Bail on invalid view
-            if (accessorView.status() != AccessorViewStatus::Valid)
-              return;
+          createAccessorView(
+              model,
+              indexAccessor,
+              [&transformedRay,
+               &positionView,
+               &primitive,
+               cullBackFaces,
+               &tClosest,
+               &warnings](const auto& indexView) {
+                // Bail on invalid view
+                if (indexView.status() != AccessorViewStatus::Valid) {
+                  warnings.push_back(
+                      "Could not create accessor view for mesh indices");
+                  return;
+                }
 
-            using AccessorType = std::remove_cv_t<
-                std::remove_reference_t<decltype(accessorView)>>;
-
-            findClosestIndexedRayHit<typename AccessorType::value_type>(
-                transformedRay,
-                positionView,
-                accessorView,
-                primitive,
-                cullBackFaces,
-                tClosest);
-          });
-    }
-  } else {
-    // Non-indexed triangles
-    findClosestRayHit(
-        transformedRay,
-        positionView,
-        primitive,
-        cullBackFaces,
-        tClosest);
-  }
+                findClosestIndexedRayHit<
+                    decltype(positionView),
+                    decltype(indexView)>(
+                    transformedRay,
+                    positionView,
+                    indexView,
+                    primitive,
+                    cullBackFaces,
+                    tClosest,
+                    warnings);
+              });
+        } else {
+          // Non-indexed triangles
+          findClosestRayHit<decltype(positionView)>(
+              transformedRay,
+              positionView,
+              primitive,
+              cullBackFaces,
+              tClosest,
+              warnings);
+        }
+      });
   assert(tClosest >= -1);
 
   if (tClosest == -1)
-    return std::optional<GltfUtilities::HitResult>();
+    return std::optional<glm::dvec3>();
 
-  // If hit, populate result with partial data
   // It's temping to return the t value to the caller, but each primitive might
   // have different matrix transforms with different scaling values. The caller
   // should instead compare world distances.
-  GltfUtilities::HitResult partialResult;
-  partialResult.primitivePoint = transformedRay.pointFromDistance(tClosest);
-  partialResult.primitiveToWorld = primitiveToWorld;
-  return partialResult;
+  return transformedRay.pointFromDistance(tClosest);
 }
 
-std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
+GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
     const CesiumGeometry::Ray& ray,
     const CesiumGltf::Model& gltf,
     bool cullBackFaces,
@@ -1172,11 +1385,16 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
   glm::dmat4x4 rootTransform = applyRtcCenter(gltf, gltfTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
-  HitResult closestResult;
+  IntersectResult result;
+  IntersectResult::Hit closestHit;
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [ray, cullBackFaces, rootTransform, &closestResult](
+      [ray,
+       cullBackFaces,
+       rootTransform,
+       &closestHit,
+       &warnings = result.warnings](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -1185,48 +1403,56 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
           const int primitiveId,
           const glm::dmat4& nodeTransform) {
         // Ignore non-triangles. Points and lines have no area to intersect
-        bool validMode =
+        bool isTriangleMode =
             primitive.mode == MeshPrimitive::Mode::TRIANGLES ||
             primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
             primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN;
-        if (!validMode)
+        if (!isTriangleMode)
           return;
 
-        // Ignore primitives that can't access positions
+        // Skip primitives that can't access positions
         auto positionAccessorIt = primitive.attributes.find("POSITION");
-        if (positionAccessorIt == primitive.attributes.end())
+        if (positionAccessorIt == primitive.attributes.end()) {
+          warnings.push_back("Skipping mesh without a position attribute");
           return;
+        }
         int positionAccessorID = positionAccessorIt->second;
         const Accessor* pPositionAccessor =
             Model::getSafe(&model.accessors, positionAccessorID);
-        if (!pPositionAccessor)
+        if (!pPositionAccessor) {
+          warnings.push_back(
+              "Skipping mesh with an invalid position accessor id");
           return;
+        }
 
-        // From the glTF spec, the POSITION accessor must use VEC3/float
+        // From the glTF spec, the POSITION accessor must use VEC3
         // But we should still protect against malformed gltfs
-        if (pPositionAccessor->componentType != Accessor::ComponentType::FLOAT)
+        if (pPositionAccessor->type != AccessorSpec::Type::VEC3) {
+          warnings.push_back("Skipping mesh with a non-vec3 position accessor");
           return;
+        }
 
-        std::optional<HitResult> thisHitResult;
-        thisHitResult = intersectRayScenePrimitive(
+        glm::dmat4x4 primitiveToWorld = rootTransform * nodeTransform;
+
+        std::optional<glm::dvec3> primitiveHitPoint;
+        primitiveHitPoint = intersectRayScenePrimitive(
             ray,
             model,
             primitive,
-            pPositionAccessor,
-            rootTransform,
-            nodeTransform,
-            cullBackFaces);
+            *pPositionAccessor,
+            primitiveToWorld,
+            cullBackFaces,
+            warnings);
 
-        if (!thisHitResult.has_value())
+        if (!primitiveHitPoint.has_value())
           return;
 
-        // We have a hit, flesh out the result
+        // We have a hit, determine if it's the closest one
 
         // Normalize the homogeneous coordinates
         // Ex. transformed by projection matrx
         glm::dvec4 homogeneousWorldPoint =
-            thisHitResult->primitiveToWorld *
-            glm::dvec4(thisHitResult->primitivePoint, 1.0);
+            primitiveToWorld * glm::dvec4(*primitiveHitPoint, 1.0);
         bool needsWDivide =
             homogeneousWorldPoint.w != 1.0 && homogeneousWorldPoint.w != 0.0;
         if (needsWDivide) {
@@ -1234,30 +1460,33 @@ std::optional<GltfUtilities::HitResult> GltfUtilities::intersectRayGltfModel(
           homogeneousWorldPoint.y /= homogeneousWorldPoint.w;
           homogeneousWorldPoint.z /= homogeneousWorldPoint.w;
         }
-        thisHitResult->worldPoint = glm::dvec3(homogeneousWorldPoint);
+        glm::dvec3 worldPoint(
+            homogeneousWorldPoint.x,
+            homogeneousWorldPoint.y,
+            homogeneousWorldPoint.z);
 
-        glm::dvec3 rayToWorldPoint =
-            thisHitResult->worldPoint - ray.getOrigin();
-        thisHitResult->rayToWorldPointDistanceSq =
+        glm::dvec3 rayToWorldPoint = worldPoint - ray.getOrigin();
+        double rayToWorldPointDistanceSq =
             glm::dot(rayToWorldPoint, rayToWorldPoint);
-        thisHitResult->meshId = meshId;
-        thisHitResult->primitiveId = primitiveId;
 
-        if (closestResult.rayToWorldPointDistanceSq == -1) {
-          // If this is the first hit, store it
-          closestResult = std::move(*thisHitResult);
-        } else {
-          // There's already a hit, check if this one is closer
-          if (thisHitResult->rayToWorldPointDistanceSq <
-              closestResult.rayToWorldPointDistanceSq)
-            closestResult = std::move(*thisHitResult);
+        // Use as closest if it's first, or closer
+        bool setClosest =
+            closestHit.rayToWorldPointDistanceSq == -1 ||
+            rayToWorldPointDistanceSq < closestHit.rayToWorldPointDistanceSq;
+        if (setClosest) {
+          closestHit.primitivePoint = std::move(*primitiveHitPoint);
+          closestHit.primitiveToWorld = std::move(primitiveToWorld);
+          closestHit.worldPoint = std::move(worldPoint);
+          closestHit.rayToWorldPointDistanceSq = rayToWorldPointDistanceSq;
+          closestHit.meshId = meshId;
+          closestHit.primitiveId = primitiveId;
         }
       });
 
-  if (closestResult.rayToWorldPointDistanceSq == -1)
-    return std::optional<GltfUtilities::HitResult>();
+  if (closestHit.rayToWorldPointDistanceSq != -1)
+    result.hit = std::move(closestHit);
 
-  return closestResult;
+  return result;
 }
 
 } // namespace CesiumGltfContent

@@ -1,5 +1,5 @@
 # Write out a gltf test file from python code
-# Unit cube - Triangle strip, indexed (UNSIGNED_SHORT)
+# Unit cube - Triangle list, indexed, short positions, scaled by 0.5
 #
 # Uses pygltflib 1.16.2
 # py -m pip install pygltflib
@@ -8,49 +8,37 @@ import numpy as np
 import pygltflib
 
 # Change extension to .gltf for text based
-outputFileName = "cubeStripIndexed.glb"
+outputFileName = "cubeQuantized.glb"
 
 points = np.array(
     [
-        [-0.5, -0.5, 0.5],
-        [0.5, -0.5, 0.5],
-        [-0.5, 0.5, 0.5],
-        [0.5, 0.5, 0.5],
-        [0.5, -0.5, -0.5],
-        [-0.5, -0.5, -0.5],
-        [0.5, 0.5, -0.5],
-        [-0.5, 0.5, -0.5],
+        [-1, -1, 1],
+        [1, -1, 1],
+        [-1, 1, 1],
+        [1, 1, 1],
+        [1, -1, -1],
+        [-1, -1, -1],
+        [1, 1, -1],
+        [-1, 1, -1],
     ],
-    dtype="float32",
+    dtype="int16",
 )
-
 triangles = np.array(
     [
-        # +XY face
-        [2, 0, 3],
-        [0, 3, 1],
-
-        # +YZ face
+        [0, 1, 2],
+        [3, 2, 1],
+        [1, 0, 4],
+        [5, 4, 0],
         [3, 1, 6],
-        [1, 6, 4],
-
-        # -XY face
-        [6, 4, 7],
-        [4, 7, 5],
-
-        # -YZ face
-        [7, 5, 2],
-        [5, 2, 0],
-
-        # -XZ face
-        [0, 5, 1],
-        [5, 1, 4],
-
-        # +XZ face
+        [4, 6, 1],
+        [2, 3, 7],
         [6, 7, 3],
-        [7, 3, 2],
+        [0, 2, 5],
+        [7, 5, 2],
+        [5, 7, 4],
+        [6, 4, 7],
     ],
-    dtype="uint16",
+    dtype="uint8",
 )
 
 triangles_binary_blob = triangles.flatten().tobytes()
@@ -58,14 +46,19 @@ points_binary_blob = points.tobytes()
 gltf = pygltflib.GLTF2(
     scene=0,
     scenes=[pygltflib.Scene(nodes=[0])],
-    nodes=[pygltflib.Node(mesh=0)],
+    nodes=[
+        pygltflib.Node(
+            mesh=0, 
+            matrix=[0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0]
+        )
+    ],
     meshes=[
         pygltflib.Mesh(
             primitives=[
                 pygltflib.Primitive(
-                    attributes=pygltflib.Attributes(POSITION=1),
+                    attributes=pygltflib.Attributes(POSITION=1), 
                     indices=0, 
-                    mode=5 #"TRIANGLE_STRIP"
+                    mode=4 #"TRIANGLES"
                 )
             ]
         )
@@ -73,7 +66,7 @@ gltf = pygltflib.GLTF2(
     accessors=[
         pygltflib.Accessor(
             bufferView=0,
-            componentType=pygltflib.UNSIGNED_SHORT,
+            componentType=pygltflib.UNSIGNED_BYTE,
             count=triangles.size,
             type=pygltflib.SCALAR,
             max=[int(triangles.max())],
@@ -81,7 +74,7 @@ gltf = pygltflib.GLTF2(
         ),
         pygltflib.Accessor(
             bufferView=1,
-            componentType=pygltflib.FLOAT,
+            componentType=pygltflib.SHORT,
             count=len(points),
             type=pygltflib.VEC3,
             max=points.max(axis=0).tolist(),
