@@ -95,22 +95,23 @@ void TilesetHeightFinder::_intersectVisibleTile(
   if (!pRenderContent)
     return;
 
-  std::optional<CesiumGltfContent::GltfUtilities::HitResult> hitResult =
+  auto intersectResult =
       CesiumGltfContent::GltfUtilities::intersectRayGltfModel(
           rayInfo.ray,
           pRenderContent->getModel(),
           true,
           pTile->getTransform());
 
-  if (!hitResult.has_value())
+  if (!intersectResult.hit.has_value())
     return;
 
   // Set ray info to this hit if closer, or the first hit
-  assert(hitResult->rayToWorldPointDistanceSq >= 0);
-  if (rayInfo.hitResult.rayToWorldPointDistanceSq == -1 ||
-      hitResult->rayToWorldPointDistanceSq <
-          rayInfo.hitResult.rayToWorldPointDistanceSq)
-    rayInfo.hitResult = std::move(*hitResult);
+  double prevDistSq = rayInfo.intersectResult.hit->rayToWorldPointDistanceSq;
+  double thisDistSq = intersectResult.hit->rayToWorldPointDistanceSq;
+
+  bool setClosest = prevDistSq == -1 || thisDistSq < prevDistSq;
+  if (setClosest)
+    rayInfo.intersectResult = std::move(intersectResult);
 }
 
 void TilesetHeightFinder::_findAndIntersectVisibleTiles(
@@ -191,10 +192,12 @@ void TilesetHeightFinder::_processHeightRequests() {
     // All rays are done, create results
     std::vector<Tileset::HeightResult> results;
     for (RayIntersect& ray : requests.rayIntersects) {
-      bool heightAvailable = ray.hitResult.rayToWorldPointDistanceSq != -1;
+      bool heightAvailable =
+          ray.intersectResult.hit->rayToWorldPointDistanceSq != -1;
       if (heightAvailable) {
         ray.coordinate.height =
-            100000.0 - glm::sqrt(ray.hitResult.rayToWorldPointDistanceSq);
+            100000.0 -
+            glm::sqrt(ray.intersectResult.hit->rayToWorldPointDistanceSq);
       }
 
       results.push_back(Tileset::HeightResult{heightAvailable, ray.coordinate});

@@ -13,7 +13,7 @@ class TilesetHeightFinder {
   struct RayIntersect {
     CesiumGeometry::Ray ray;
     CesiumGeospatial::Cartographic coordinate;
-    CesiumGltfContent::GltfUtilities::HitResult hitResult;
+    CesiumGltfContent::GltfUtilities::IntersectResult intersectResult;
     std::vector<Tile*> tilesLoading;
   };
 
