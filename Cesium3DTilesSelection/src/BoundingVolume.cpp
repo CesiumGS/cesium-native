@@ -208,9 +208,12 @@ getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume) {
   return pResult;
 }
 
-OrientedBoundingBox
-getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume) {
+OrientedBoundingBox getOrientedBoundingBoxFromBoundingVolume(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   struct Operation {
+    const CesiumGeospatial::Ellipsoid& ellipsoid;
+
     OrientedBoundingBox operator()(const BoundingSphere& sphere) const {
       return OrientedBoundingBox::fromSphere(sphere);
     }
@@ -233,11 +236,11 @@ getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume) {
 
     OrientedBoundingBox
     operator()(const CesiumGeospatial::S2CellBoundingVolume& s2) const {
-      return s2.computeBoundingRegion().getBoundingBox();
+      return s2.computeBoundingRegion(ellipsoid).getBoundingBox();
     }
   };
 
-  return std::visit(Operation(), boundingVolume);
+  return std::visit(Operation{ellipsoid}, boundingVolume);
 }
 
 } // namespace Cesium3DTilesSelection

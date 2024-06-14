@@ -445,7 +445,7 @@ void calcRasterOverlayDetailsInWorkerThread(
   }
 
   if (result.rasterOverlayDetails && overlayDetails) {
-    result.rasterOverlayDetails->merge(*overlayDetails);
+    result.rasterOverlayDetails->merge(*overlayDetails, result.ellipsoid);
   } else if (overlayDetails) {
     result.rasterOverlayDetails = std::move(*overlayDetails);
   }
@@ -471,7 +471,7 @@ void calcFittestBoundingRegionForLooseTile(
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
           model,
           tileLoadInfo.tileTransform,
-          *result.ellipsoid);
+          result.ellipsoid);
     }
   }
 }
@@ -963,7 +963,8 @@ void TilesetContentManager::loadTileContent(
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
       this->_externals.pLogger,
-      this->_requestHeaders};
+      this->_requestHeaders,
+      tilesetOptions.ellipsoid};
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
@@ -972,7 +973,7 @@ void TilesetContentManager::loadTileContent(
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections),
                         rendererOptions = tilesetOptions.rendererOptions,
-                        ellipsoid = tilesetOptions.ellipsoid](
+                        &ellipsoid = tilesetOptions.ellipsoid](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -983,8 +984,6 @@ void TilesetContentManager::loadTileContent(
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::Success) {
           if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            result.ellipsoid = ellipsoid;
-
             auto asyncSystem = tileLoadInfo.asyncSystem;
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
@@ -1036,7 +1035,7 @@ void TilesetContentManager::updateTileContent(
 
   if (tile.shouldContentContinueUpdating()) {
     TileChildrenResult childrenResult =
-        this->_pLoader->createTileChildren(tile);
+        this->_pLoader->createTileChildren(tile, tilesetOptions.ellipsoid);
     if (childrenResult.state == TileLoadResultState::Success) {
       tile.createChildTiles(std::move(childrenResult.children));
     }

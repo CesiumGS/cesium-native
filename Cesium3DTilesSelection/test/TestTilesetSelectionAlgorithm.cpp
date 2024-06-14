@@ -1543,7 +1543,9 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
           TileLoadResult::createFailedResult(nullptr));
     }
 
-    virtual TileChildrenResult createTileChildren(const Tile&) override {
+    virtual TileChildrenResult createTileChildren(
+        const Tile&,
+        const CesiumGeospatial::Ellipsoid&) override {
       return TileChildrenResult{{}, TileLoadResultState::Failed};
     }
   };

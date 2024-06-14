@@ -69,7 +69,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   const CesiumGltf::Model& parentModel = pParentRenderContent->getModel();
   return loadInput.asyncSystem.runInWorkerThread(
       [&parentModel,
-       ellipsoid,
+       &ellipsoid,
        transform = loadInput.tile.getTransform(),
        textureCoordinateIndex = index,
        TileID = *pTileID]() mutable {
@@ -92,12 +92,14 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             std::nullopt,
             nullptr,
             {},
-            TileLoadResultState::Success};
+            TileLoadResultState::Success,
+            ellipsoid};
       });
 }
 
-TileChildrenResult
-RasterOverlayUpsampler::createTileChildren([[maybe_unused]] const Tile& tile) {
+TileChildrenResult RasterOverlayUpsampler::createTileChildren(
+    [[maybe_unused]] const Tile& tile,
+    [[maybe_unused]] const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return {{}, TileLoadResultState::Failed};
 }
 } // namespace Cesium3DTilesSelection

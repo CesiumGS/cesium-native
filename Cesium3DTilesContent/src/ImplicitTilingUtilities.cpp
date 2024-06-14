@@ -149,8 +149,10 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
   std::optional<BoundingRegion> maybeRegion =
       TileBoundingVolumes::getBoundingRegion(rootBoundingVolume, ellipsoid);
   if (maybeRegion) {
-    BoundingRegion region =
-        ImplicitTilingUtilities::computeBoundingVolume(*maybeRegion, tileID);
+    BoundingRegion region = ImplicitTilingUtilities::computeBoundingVolume(
+        *maybeRegion,
+        tileID,
+        ellipsoid);
     TileBoundingVolumes::setBoundingRegion(result, region);
   }
 
@@ -159,8 +161,10 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
           rootBoundingVolume,
           ellipsoid);
   if (maybeS2) {
-    S2CellBoundingVolume s2 =
-        ImplicitTilingUtilities::computeBoundingVolume(*maybeS2, tileID);
+    S2CellBoundingVolume s2 = ImplicitTilingUtilities::computeBoundingVolume(
+        *maybeS2,
+        tileID,
+        ellipsoid);
     TileBoundingVolumes::setS2CellBoundingVolume(result, s2);
   }
 
@@ -210,7 +214,8 @@ CesiumGeospatial::GlobeRectangle subdivideRectangle(
 
 CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
   return CesiumGeospatial::BoundingRegion{
       subdivideRectangle(
@@ -219,12 +224,13 @@ CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
           denominator),
       rootBoundingVolume.getMinimumHeight(),
       rootBoundingVolume.getMaximumHeight(),
-      rootBoundingVolume.getEllipsoid()};
+      ellipsoid};
 }
 
 CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
   double heightSize = (rootBoundingVolume.getMaximumHeight() -
                        rootBoundingVolume.getMinimumHeight()) /
@@ -242,7 +248,7 @@ CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
           denominator),
       childMinHeight,
       childMaxHeight,
-      rootBoundingVolume.getEllipsoid()};
+      ellipsoid};
 }
 
 CesiumGeometry::OrientedBoundingBox
@@ -293,20 +299,22 @@ ImplicitTilingUtilities::computeBoundingVolume(
 CesiumGeospatial::S2CellBoundingVolume
 ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   return CesiumGeospatial::S2CellBoundingVolume(
       CesiumGeospatial::S2CellID::fromQuadtreeTileID(
           rootBoundingVolume.getCellID().getFace(),
           tileID),
       rootBoundingVolume.getMinimumHeight(),
       rootBoundingVolume.getMaximumHeight(),
-      rootBoundingVolume.getEllipsoid());
+      ellipsoid);
 }
 
 CesiumGeospatial::S2CellBoundingVolume
 ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
   double heightSize = (rootBoundingVolume.getMaximumHeight() -
                        rootBoundingVolume.getMinimumHeight()) /
@@ -323,7 +331,7 @@ ImplicitTilingUtilities::computeBoundingVolume(
           QuadtreeTileID(tileID.level, tileID.x, tileID.y)),
       childMinHeight,
       childMaxHeight,
-      rootBoundingVolume.getEllipsoid());
+      ellipsoid);
 }
 
 double

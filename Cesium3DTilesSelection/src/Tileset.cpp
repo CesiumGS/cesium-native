@@ -44,7 +44,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -63,7 +62,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -82,7 +80,6 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _ellipsoid(options.ellipsoid),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
@@ -657,7 +654,7 @@ void Tileset::_frustumCull(
     if (std::any_of(
             frustums.begin(),
             frustums.end(),
-            [ellipsoid,
+            [&ellipsoid,
              children = tile.getChildren(),
              renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
                 const ViewState& frustum) {
@@ -680,7 +677,7 @@ void Tileset::_frustumCull(
   } else if (std::any_of(
                  frustums.begin(),
                  frustums.end(),
-                 [ellipsoid,
+                 [&ellipsoid,
                   &boundingVolume = tile.getBoundingVolume(),
                   renderTilesUnderCamera =
                       this->_options.renderTilesUnderCamera](

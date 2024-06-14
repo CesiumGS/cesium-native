@@ -151,12 +151,12 @@ public:
    * @brief Gets the {@link CesiumGeospatial::Ellipsoid} used by this tileset.
    */
   const CesiumGeospatial::Ellipsoid& getEllipsoid() const {
-    return this->_ellipsoid;
+    return this->_options.ellipsoid;
   }
 
   /** @copydoc Tileset::getEllipsoid */
   CesiumGeospatial::Ellipsoid& getEllipsoid() noexcept {
-    return this->_ellipsoid;
+    return this->_options.ellipsoid;
   }
 
   /**
@@ -505,8 +505,6 @@ private:
   // Holds the occlusion proxies of the children of a tile. Store them in this
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
-
-  CesiumGeospatial::Ellipsoid _ellipsoid;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;

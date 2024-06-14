@@ -47,6 +47,11 @@ public:
   static /*constexpr*/ const Ellipsoid WGS84;
 
   /**
+   * @brief An Ellipsoid with all three radii set to one meter.
+   */
+  static const Ellipsoid UNIT_SPHERE;
+
+  /**
    * @brief Creates a new instance.
    *
    * @param x The radius in x-direction.

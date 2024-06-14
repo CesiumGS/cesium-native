@@ -106,7 +106,8 @@ public:
       const std::string& key,
       const std::string& mapStyle = BingMapsStyle::AERIAL,
       const std::string& culture = "",
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid =
+          CesiumGeospatial::Ellipsoid::WGS84,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~BingMapsRasterOverlay() override;
 

@@ -402,10 +402,11 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-TileChildrenResult
-CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
+TileChildrenResult CesiumIonTilesetLoader::createTileChildren(
+    const Tile& tile,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   auto pLoader = tile.getLoader();
-  return pLoader->createTileChildren(tile);
+  return pLoader->createTileChildren(tile, ellipsoid);
 }
 
 void CesiumIonTilesetLoader::refreshTokenInMainThread(

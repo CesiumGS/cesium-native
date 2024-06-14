@@ -134,8 +134,7 @@ S2CellBoundingVolume::S2CellBoundingVolume(
     double minimumHeight,
     double maximumHeight,
     const Ellipsoid& ellipsoid)
-    : _ellipsoid(ellipsoid),
-      _cellID(cellID),
+    : _cellID(cellID),
       _minimumHeight(minimumHeight),
       _maximumHeight(maximumHeight) {
   Cartographic result = this->_cellID.getCenter();
@@ -424,10 +423,11 @@ S2CellBoundingVolume::getBoundingPlanes() const noexcept {
   return this->_boundingPlanes;
 }
 
-BoundingRegion S2CellBoundingVolume::computeBoundingRegion() const noexcept {
+BoundingRegion S2CellBoundingVolume::computeBoundingRegion(
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const noexcept {
   return BoundingRegion(
       this->_cellID.computeBoundingRectangle(),
       this->_minimumHeight,
       this->_maximumHeight,
-      this->_ellipsoid);
+      ellipsoid);
 }

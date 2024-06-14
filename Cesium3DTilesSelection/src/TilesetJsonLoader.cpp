@@ -741,7 +741,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::nullopt,
       std::move(pCompletedRequest),
       std::move(externalContentInitializer),
-      TileLoadResultState::Success};
+      TileLoadResultState::Success,
+      ellipsoid};
 }
 
 } // namespace
@@ -935,23 +936,25 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
           gltfOptions.applyTextureTransform =
               contentOptions.applyTextureTransform;
           return converter(responseData, gltfOptions, assetFetcher)
-              .thenImmediately([pLogger, upAxis, tileUrl, pCompletedRequest](
-                                   GltfConverterResult&& result) {
-                logTileLoadResult(pLogger, tileUrl, result.errors);
-                if (result.errors) {
-                  return TileLoadResult::createFailedResult(
-                      std::move(pCompletedRequest));
-                }
-                return TileLoadResult{
-                    std::move(*result.model),
-                    upAxis,
-                    std::nullopt,
-                    std::nullopt,
-                    std::nullopt,
-                    std::move(pCompletedRequest),
-                    {},
-                    TileLoadResultState::Success};
-              });
+              .thenImmediately(
+                  [ellipsoid, pLogger, upAxis, tileUrl, pCompletedRequest](
+                      GltfConverterResult&& result) {
+                    logTileLoadResult(pLogger, tileUrl, result.errors);
+                    if (result.errors) {
+                      return TileLoadResult::createFailedResult(
+                          std::move(pCompletedRequest));
+                    }
+                    return TileLoadResult{
+                        std::move(*result.model),
+                        upAxis,
+                        std::nullopt,
+                        std::nullopt,
+                        std::nullopt,
+                        std::move(pCompletedRequest),
+                        {},
+                        TileLoadResultState::Success,
+                        ellipsoid};
+                  });
         } else {
           // not a renderable content, then it must be external tileset
           return asyncSystem.createResolvedFuture(
@@ -967,10 +970,12 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-TileChildrenResult TilesetJsonLoader::createTileChildren(const Tile& tile) {
+TileChildrenResult TilesetJsonLoader::createTileChildren(
+    const Tile& tile,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   auto pLoader = tile.getLoader();
   if (pLoader != this) {
-    return pLoader->createTileChildren(tile);
+    return pLoader->createTileChildren(tile, ellipsoid);
   }
 
   return {{}, TileLoadResultState::Failed};

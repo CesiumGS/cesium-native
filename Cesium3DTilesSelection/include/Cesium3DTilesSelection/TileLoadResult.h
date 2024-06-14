@@ -123,9 +123,12 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   TileLoadResultState state;
 
   /**
-   * The ellipsoid that this tile uses.
+   * @brief The ellipsoid that this tile uses.
+   *
+   * This value is only guaranteed to be accurate when {@link TileLoadResult::state} is equal to {@link TileLoadResultState::Success}.
    */
-  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid = std::nullopt;
+  CesiumGeospatial::Ellipsoid ellipsoid =
+      CesiumGeospatial::Ellipsoid::UNIT_SPHERE;
 
   /**
    * @brief Create a result with Failed state

@@ -43,11 +43,6 @@ public:
   }
 
   /**
-   * Gets the ellipsoid of the region.
-   */
-  const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
-
-  /**
    * @brief Gets the minimum height of the region.
    */
   double getMinimumHeight() const noexcept { return this->_minimumHeight; }
@@ -131,7 +126,10 @@ public:
    * @param other The other bounding region.
    * @return The union.
    */
-  BoundingRegion computeUnion(const BoundingRegion& other) const noexcept;
+  BoundingRegion computeUnion(
+      const BoundingRegion& other,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
 private:
   static CesiumGeometry::OrientedBoundingBox _computeBoundingBox(
@@ -141,7 +139,6 @@ private:
       const Ellipsoid& ellipsoid);
 
   GlobeRectangle _rectangle;
-  Ellipsoid _ellipsoid;
   double _minimumHeight;
   double _maximumHeight;
   CesiumGeometry::OrientedBoundingBox _boundingBox;

@@ -71,7 +71,10 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  TileChildrenResult createTileChildren(const Tile& tile) override;
+  TileChildrenResult createTileChildren(
+      const Tile& tile,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) override;
 
   const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept;
 

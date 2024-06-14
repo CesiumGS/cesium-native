@@ -303,8 +303,8 @@ public:
   static Cesium3DTiles::BoundingVolume computeBoundingVolume(
       const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
       const CesiumGeometry::QuadtreeTileID& tileID,
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84) noexcept;
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit octree tile with the
@@ -317,8 +317,8 @@ public:
   static Cesium3DTiles::BoundingVolume computeBoundingVolume(
       const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
       const CesiumGeometry::OctreeTileID& tileID,
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84) noexcept;
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit quadtree tile with the
@@ -330,7 +330,9 @@ public:
    */
   static CesiumGeospatial::BoundingRegion computeBoundingVolume(
       const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
-      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit octree tile with the
@@ -342,7 +344,9 @@ public:
    */
   static CesiumGeospatial::BoundingRegion computeBoundingVolume(
       const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
-      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+      const CesiumGeometry::OctreeTileID& tileID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit quadtree tile
@@ -378,7 +382,9 @@ public:
    */
   static CesiumGeospatial::S2CellBoundingVolume computeBoundingVolume(
       const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
-      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+      const CesiumGeometry::QuadtreeTileID& tileID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit octree tile
@@ -390,7 +396,9 @@ public:
    */
   static CesiumGeospatial::S2CellBoundingVolume computeBoundingVolume(
       const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
-      const CesiumGeometry::OctreeTileID& tileID) noexcept;
+      const CesiumGeometry::OctreeTileID& tileID,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 };
 
 } // namespace Cesium3DTilesContent

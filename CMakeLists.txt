@@ -35,9 +35,14 @@ option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing 
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
 option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 option(CESIUM_GLM_STRICT_ENABLED "Whether to force strict GLM compile definitions." ON)
+option(CESIUM_DISABLE_DEFAULT_ELLIPSOID "Whether to disable the WGS84 default value for ellipsoid parameters across cesium-native." OFF)
 
 if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
+endif()
+
+if(CESIUM_DISABLE_DEFAULT_ELLIPSOID)
+  add_compile_definitions(CESIUM_DISABLE_DEFAULT_ELLIPSOID=1)
 endif()
 
 # Add Modules

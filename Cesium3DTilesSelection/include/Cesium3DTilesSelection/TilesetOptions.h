@@ -322,6 +322,8 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
 
   /**
    * @brief The ellipsoid to use for this tileset.
+   * This value shouldn't be changed after the tileset is constructed. If you
+   * need to change a tileset's ellipsoid, please recreate the tileset.
    *
    * If no ellipsoid is set, Ellipsoid::WGS84 will be used by default.
    */

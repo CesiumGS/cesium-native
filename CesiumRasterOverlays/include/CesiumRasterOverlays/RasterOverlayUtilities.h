@@ -117,8 +117,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
       const std::string_view& textureCoordinateAttributeBaseName =
           DEFAULT_TEXTURE_COORDINATE_BASE_NAME,
       int32_t textureCoordinateIndex = 0,
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84);
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Computes the desired screen pixels for a raster overlay texture.

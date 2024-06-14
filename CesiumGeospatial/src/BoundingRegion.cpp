@@ -19,7 +19,6 @@ BoundingRegion::BoundingRegion(
     double maximumHeight,
     const Ellipsoid& ellipsoid)
     : _rectangle(rectangle),
-      _ellipsoid(ellipsoid),
       _minimumHeight(minimumHeight),
       _maximumHeight(maximumHeight),
       _boundingBox(BoundingRegion::_computeBoundingBox(
@@ -219,13 +218,14 @@ double BoundingRegion::computeDistanceSquaredToPosition(
   return glm::max(bboxDistanceSquared, result);
 }
 
-BoundingRegion
-BoundingRegion::computeUnion(const BoundingRegion& other) const noexcept {
+BoundingRegion BoundingRegion::computeUnion(
+    const BoundingRegion& other,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const noexcept {
   return BoundingRegion(
       this->_rectangle.computeUnion(other._rectangle),
       glm::min(this->_minimumHeight, other._minimumHeight),
       glm::max(this->_maximumHeight, other._maximumHeight),
-      this->_ellipsoid);
+      ellipsoid);
 }
 
 static OrientedBoundingBox fromPlaneExtents(

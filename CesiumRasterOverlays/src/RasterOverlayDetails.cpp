@@ -40,7 +40,9 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   return nullptr;
 }
 
-void RasterOverlayDetails::merge(const RasterOverlayDetails& other) {
+void RasterOverlayDetails::merge(
+    const RasterOverlayDetails& other,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   rasterOverlayProjections.insert(
       rasterOverlayProjections.end(),
       other.rasterOverlayProjections.begin(),
@@ -51,6 +53,6 @@ void RasterOverlayDetails::merge(const RasterOverlayDetails& other) {
       other.rasterOverlayRectangles.begin(),
       other.rasterOverlayRectangles.end());
 
-  boundingRegion.computeUnion(other.boundingRegion);
+  boundingRegion.computeUnion(other.boundingRegion, ellipsoid);
 }
 } // namespace CesiumRasterOverlays

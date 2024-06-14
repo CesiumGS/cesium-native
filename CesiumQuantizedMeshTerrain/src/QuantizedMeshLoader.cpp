@@ -673,7 +673,8 @@ static std::vector<std::byte> generateNormals(
     const BoundingRegion& tileBoundingVolume,
     const std::string& url,
     const gsl::span<const std::byte>& data,
-    bool enableWaterMask) {
+    bool enableWaterMask,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
 
   CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshLoader::load");
 
@@ -718,7 +719,6 @@ static std::vector<std::byte> generateNormals(
   glm::dvec3 positionMinimums{std::numeric_limits<double>::max()};
   glm::dvec3 positionMaximums{std::numeric_limits<double>::lowest()};
 
-  const Ellipsoid& ellipsoid = tileBoundingVolume.getEllipsoid();
   const CesiumGeospatial::GlobeRectangle& rectangle =
       tileBoundingVolume.getRectangle();
   const double west = rectangle.getWest();
