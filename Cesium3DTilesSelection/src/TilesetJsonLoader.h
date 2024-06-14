@@ -24,7 +24,10 @@ public:
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
 
-  TileChildrenResult createTileChildren(const Tile& tile, const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) override;
+  TileChildrenResult createTileChildren(
+      const Tile& tile,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) override;
 
   const std::string& getBaseUrl() const noexcept;
 
