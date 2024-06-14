@@ -36,7 +36,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -57,15 +56,26 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
     const TilesetExternals& externals,
     const Ellipsoid& ellipsoid,
     const TilesetOptions& options) {
-  std::unique_ptr<TilesetContentLoader> pCustomLoader =
+  std::unique_ptr<EllipsoidTilesetLoader> pCustomLoader =
       std::make_unique<EllipsoidTilesetLoader>(ellipsoid);
   std::unique_ptr<Tile> pRootTile =
       std::make_unique<Tile>(pCustomLoader.get(), TileEmptyContent{});
 
-  pRootTile->setTileID(
-      QuadtreeTileID{std::numeric_limits<uint32_t>::max(), 0, 0});
   pRootTile->setRefine(TileRefine::Replace);
   pRootTile->setUnconditionallyRefine();
+
+  std::vector<Tile> children;
+  uint32_t rootTilesX = pCustomLoader->_tilingScheme.getRootTilesX();
+  children.reserve(rootTilesX);
+
+  for (uint32_t x = 0; x < rootTilesX; x++) {
+    pCustomLoader->createChildTile(
+        *pRootTile,
+        children,
+        QuadtreeTileID{0, x, 0});
+  }
+
+  pRootTile->createChildTiles(std::move(children));
 
   return std::make_unique<Tileset>(
       externals,
@@ -89,43 +99,45 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
 
 TileChildrenResult
 EllipsoidTilesetLoader::createTileChildren(const Tile& tile) {
-  const QuadtreeTileID& parentID = std::get<QuadtreeTileID>(tile.getTileID());
+  const QuadtreeTileID* pParentID =
+      std::get_if<QuadtreeTileID>(&tile.getTileID());
 
-  std::vector<Tile> children;
-
-  if (parentID.level == std::numeric_limits<uint32_t>::max()) {
-    uint32_t rootTilesX = _tilingScheme.getRootTilesX();
-    children.reserve(rootTilesX);
-
-    for (uint32_t x = 0; x < rootTilesX; x++) {
-      Tile& child = children.emplace_back(tile.getLoader(), TileEmptyContent{});
-      child.setTileID(QuadtreeTileID{0, x, 0});
-      child.setRefine(tile.getRefine());
-      child.setUnconditionallyRefine();
-    }
-  } else {
-    QuadtreeChildren childIDs = ImplicitTilingUtilities::getChildren(parentID);
+  if (pParentID) {
+    std::vector<Tile> children;
+    QuadtreeChildren childIDs =
+        ImplicitTilingUtilities::getChildren(*pParentID);
     children.reserve(childIDs.size());
 
     for (const QuadtreeTileID& childID : childIDs) {
-      BoundingRegion boundingRegion = createBoundingRegion(childID);
-      const GlobeRectangle& globeRectangle = boundingRegion.getRectangle();
-
-      Tile& child = children.emplace_back(tile.getLoader());
-      child.setTileID(childID);
-      child.setRefine(tile.getRefine());
-      child.setTransform(glm::translate(
-          glm::dmat4x4(1.0),
-          _projection.getEllipsoid().cartographicToCartesian(
-              globeRectangle.getNorthwest())));
-      child.setBoundingVolume(boundingRegion);
-      child.setGeometricError(
-          6.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *
-          globeRectangle.computeWidth());
+      createChildTile(tile, children, childID);
     }
+
+    return TileChildrenResult{
+        std::move(children),
+        TileLoadResultState::Success};
   }
 
-  return TileChildrenResult{std::move(children), TileLoadResultState::Success};
+  return TileChildrenResult{{}, TileLoadResultState::Failed};
+}
+
+void EllipsoidTilesetLoader::createChildTile(
+    const Tile& parent,
+    std::vector<Tile>& children,
+    const QuadtreeTileID& childID) const {
+  BoundingRegion boundingRegion = createBoundingRegion(childID);
+  const GlobeRectangle& globeRectangle = boundingRegion.getRectangle();
+
+  Tile& child = children.emplace_back(parent.getLoader());
+  child.setTileID(childID);
+  child.setRefine(parent.getRefine());
+  child.setTransform(glm::translate(
+      glm::dmat4x4(1.0),
+      _projection.getEllipsoid().cartographicToCartesian(
+          globeRectangle.getNorthwest())));
+  child.setBoundingVolume(boundingRegion);
+  child.setGeometricError(
+      6.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *
+      globeRectangle.computeWidth());
 }
 
 BoundingRegion EllipsoidTilesetLoader::createBoundingRegion(

@@ -46,6 +46,11 @@ private:
     std::vector<glm::vec3> normals;
   };
 
+  void createChildTile(
+      const Tile& parent,
+      std::vector<Tile>& children,
+      const QuadtreeTileID& childID) const;
+
   BoundingRegion createBoundingRegion(const QuadtreeTileID& quadtreeID) const;
   Geometry createGeometry(const Tile& tile) const;
   Model createModel(const Geometry& geometry) const;
