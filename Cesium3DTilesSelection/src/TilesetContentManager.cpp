@@ -972,8 +972,7 @@ void TilesetContentManager::loadTileContent(
   pLoader->loadTileContent(loadInput)
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections),
-                        rendererOptions = tilesetOptions.rendererOptions,
-                        &ellipsoid = tilesetOptions.ellipsoid](
+                        rendererOptions = tilesetOptions.rendererOptions](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
