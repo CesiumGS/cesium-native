@@ -213,6 +213,10 @@ Model EllipsoidTilesetLoader::createModel(const Geometry& geometry) const {
   model.scenes.resize(1);
   model.nodes.resize(1);
 
+  model.meshes[0].primitives.resize(1);
+  model.scenes[0].nodes.emplace_back(0);
+  model.nodes[0].mesh = 0;
+
   std::vector<std::byte>& buffer = model.buffers[0].cesium.data;
   buffer.resize(indicesSize + verticesSize + normalsSize);
   std::memcpy(buffer.data(), indices.data(), indicesSize);
@@ -259,15 +263,11 @@ Model EllipsoidTilesetLoader::createModel(const Geometry& geometry) const {
   accessorNormals.componentType = Accessor::ComponentType::FLOAT;
   accessorNormals.type = Accessor::Type::VEC3;
 
-  MeshPrimitive primitive;
+  MeshPrimitive& primitive = model.meshes[0].primitives[0];
   primitive.attributes["POSITION"] = 1;
   primitive.attributes["NORMAL"] = 2;
   primitive.indices = 0;
   primitive.material = 0;
-
-  model.meshes[0].primitives.emplace_back(std::move(primitive));
-  model.nodes[0].mesh = 0;
-  model.scenes[0].nodes.emplace_back(0);
 
   return model;
 }
