@@ -42,18 +42,20 @@ public:
    * @param values The vector containing the values.
    */
   PropertyArrayView(const std::vector<ElementType>&& values)
-      : _values{std::move(values)} {}
+      : _values{/* std::move(values) */} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
-    return std::visit(
-        [index](auto const& values) -> auto const& { return values[index]; },
-        _values);
+    return this->_values[index];
+    // return std::visit(
+    //     [index](auto const& values) -> auto const& { return values[index]; },
+    //     _values);
   }
 
   int64_t size() const noexcept {
-    return std::visit(
-        [](auto const& values) { return static_cast<int64_t>(values.size()); },
-        _values);
+    return this->_values.size();
+    // return std::visit(
+    //     [](auto const& values) { return static_cast<int64_t>(values.size()); },
+    //     _values);
   }
 
   bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
@@ -75,8 +77,9 @@ public:
   }
 
 private:
-  using ArrayType =
-      std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
+  // using ArrayType =
+  //     std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
+  using ArrayType = gsl::span<const ElementType>;
   ArrayType _values;
 };
 
