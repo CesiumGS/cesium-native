@@ -47,7 +47,7 @@ public:
   auto end() const { return this->_values.end(); }
 
 private:
-  template <typename ElementType> friend class PropertyArrayView;
+  template <typename T> friend class PropertyArrayView;
   std::vector<ElementType> _values;
 };
 
