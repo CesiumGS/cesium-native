@@ -663,6 +663,7 @@ TilesetContentManager::TilesetContentManager(
             [pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
+             &requestHeaders = _requestHeaders,
              contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
@@ -708,9 +709,16 @@ TilesetContentManager::TilesetContentManager(
               // and create corresponding loader
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
-                return asyncSystem.createResolvedFuture(std::move(result));
+                return TilesetJsonLoader::createLoader(
+                           asyncSystem,
+                           pAssetAccessor,
+                           pLogger,
+                           url,
+                           requestHeaders,
+                           tilesetJson)
+                    .thenImmediately(
+                        [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                               result) { return std::move(result); });
               } else {
                 const auto formatIt = tilesetJson.FindMember("format");
                 bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
@@ -1447,8 +1455,8 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
   pRenderContent->setRenderResources(nullptr);
 }
 
-void TilesetContentManager::notifyTileStartLoading(
-    [[maybe_unused]] const Tile* pTile) noexcept {
+void TilesetContentManager::notifyTileStartLoading([
+    [maybe_unused]] const Tile* pTile) noexcept {
   ++this->_tileLoadsInProgress;
 }
 

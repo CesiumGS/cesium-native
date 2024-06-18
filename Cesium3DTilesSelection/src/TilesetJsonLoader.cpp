@@ -746,7 +746,10 @@ TilesetJsonLoader::createLoader(
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   return externals.pAssetAccessor
       ->get(externals.asyncSystem, tilesetJsonUrl, requestHeaders)
-      .thenInWorkerThread([pLogger = externals.pLogger](
+      .thenInWorkerThread([asyncSystem = externals.asyncSystem,
+                           pAssetAccessor = externals.pAssetAccessor,
+                           pLogger = externals.pLogger,
+                           &requestHeaders](
                               const std::shared_ptr<CesiumAsync::IAssetRequest>&
                                   pCompletedRequest) {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -788,15 +791,23 @@ TilesetJsonLoader::createLoader(
         }
 
         return TilesetJsonLoader::createLoader(
-            pLogger,
-            pCompletedRequest->url(),
-            tilesetJson);
+                   asyncSystem,
+                   pAssetAccessor,
+                   pLogger,
+                   pCompletedRequest->url(),
+                   requestHeaders,
+                   tilesetJson)
+            .wait();
       });
 }
 
-TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
+CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
+TilesetJsonLoader::createLoader(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& /*requestHeaders*/,
     const rapidjson::Document& tilesetJson) {
   TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
       pLogger,
@@ -828,7 +839,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
     parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
   }
 
-  return result;
+  return asyncSystem.createResolvedFuture(std::move(result));
 }
 
 CesiumAsync::Future<TileLoadResult>
