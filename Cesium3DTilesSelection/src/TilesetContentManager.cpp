@@ -663,7 +663,6 @@ TilesetContentManager::TilesetContentManager(
             [pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
-             &requestHeaders = _requestHeaders,
              contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
@@ -714,7 +713,7 @@ TilesetContentManager::TilesetContentManager(
                            pAssetAccessor,
                            pLogger,
                            url,
-                           requestHeaders,
+                           pCompletedRequest->headers(),
                            tilesetJson)
                     .thenImmediately(
                         [](TilesetContentLoaderResult<TilesetContentLoader>&&

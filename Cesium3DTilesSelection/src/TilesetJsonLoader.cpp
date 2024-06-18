@@ -748,8 +748,7 @@ TilesetJsonLoader::createLoader(
       ->get(externals.asyncSystem, tilesetJsonUrl, requestHeaders)
       .thenInWorkerThread([asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
-                           pLogger = externals.pLogger,
-                           &requestHeaders](
+                           pLogger = externals.pLogger](
                               const std::shared_ptr<CesiumAsync::IAssetRequest>&
                                   pCompletedRequest) {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -760,7 +759,7 @@ TilesetJsonLoader::createLoader(
           result.errors.emplaceError(fmt::format(
               "Did not receive a valid response for tile content {}",
               tileUrl));
-          return result;
+          return asyncSystem.createResolvedFuture(std::move(result));
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -771,7 +770,7 @@ TilesetJsonLoader::createLoader(
               statusCode,
               tileUrl));
           result.statusCode = statusCode;
-          return result;
+          return asyncSystem.createResolvedFuture(std::move(result));
         }
 
         gsl::span<const std::byte> data = pResponse->data();
@@ -787,17 +786,16 @@ TilesetJsonLoader::createLoader(
               "{}",
               tilesetJson.GetParseError(),
               tilesetJson.GetErrorOffset()));
-          return result;
+          return asyncSystem.createResolvedFuture(std::move(result));
         }
 
         return TilesetJsonLoader::createLoader(
-                   asyncSystem,
-                   pAssetAccessor,
-                   pLogger,
-                   pCompletedRequest->url(),
-                   requestHeaders,
-                   tilesetJson)
-            .wait();
+            asyncSystem,
+            pAssetAccessor,
+            pLogger,
+            pCompletedRequest->url(),
+            pCompletedRequest->headers(),
+            tilesetJson);
       });
 }
 
@@ -807,7 +805,7 @@ TilesetJsonLoader::createLoader(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& /*requestHeaders*/,
+    const CesiumAsync::HttpHeaders& /*requestHeaders*/,
     const rapidjson::Document& tilesetJson) {
   TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
       pLogger,

@@ -41,7 +41,7 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& tilesetJsonUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      const CesiumAsync::HttpHeaders& requestHeaders,
       const rapidjson::Document& tilesetJson);
 
 private:
