@@ -303,30 +303,26 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<ElementType> get(int64_t index) const noexcept {
+  std::optional<PropertyValueViewToCopy<ElementType>>
+  get(int64_t index) const noexcept {
     if (this->_status ==
         PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
       assert(index >= 0 && "index must be non-negative");
       assert(index < size() && "index must be less than size");
-
-      return this->defaultValue();
+      return propertyValueViewToCopy(this->defaultValue());
     }
 
     ElementType value = getRaw(index);
 
     if (value == this->noData()) {
-      return this->defaultValue();
+      return propertyValueViewToCopy(this->defaultValue());
+    } else if constexpr (IsMetadataNumeric<ElementType>::value) {
+      return transformValue(value, this->offset(), this->scale());
+    } else if constexpr (IsMetadataNumericArray<ElementType>::value) {
+      return transformArray(value, this->offset(), this->scale());
+    } else {
+      return value;
     }
-
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      value = transformValue(value, this->offset(), this->scale());
-    }
-
-    if constexpr (IsMetadataNumericArray<ElementType>::value) {
-      value = transformArray(value, this->offset(), this->scale());
-    }
-
-    return value;
   }
 
   /**
@@ -649,28 +645,25 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<NormalizedType> get(int64_t index) const noexcept {
+  std::optional<PropertyValueViewToCopy<NormalizedType>>
+  get(int64_t index) const noexcept {
     if (this->_status ==
         PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
       assert(index >= 0 && "index must be non-negative");
       assert(index < size() && "index must be less than size");
 
-      return this->defaultValue();
+      return propertyValueViewToCopy(this->defaultValue());
     }
 
     ElementType value = getRaw(index);
     if (this->noData() && value == *(this->noData())) {
-      return this->defaultValue();
-    }
-
-    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return propertyValueViewToCopy(this->defaultValue());
+    } else if constexpr (IsMetadataScalar<ElementType>::value) {
       return transformValue<NormalizedType>(
           normalize<ElementType>(value),
           this->offset(),
           this->scale());
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
+    } else if constexpr (IsMetadataVecN<ElementType>::value) {
       constexpr glm::length_t N = ElementType::length();
       using T = typename ElementType::value_type;
       using NormalizedT = typename NormalizedType::value_type;
@@ -678,9 +671,7 @@ public:
           normalize<N, T>(value),
           this->offset(),
           this->scale());
-    }
-
-    if constexpr (IsMetadataMatN<ElementType>::value) {
+    } else if constexpr (IsMetadataMatN<ElementType>::value) {
       constexpr glm::length_t N = ElementType::length();
       using T = typename ElementType::value_type;
       using NormalizedT = typename NormalizedType::value_type;
@@ -688,27 +679,21 @@ public:
           normalize<N, T>(value),
           this->offset(),
           this->scale());
-    }
-
-    if constexpr (IsMetadataArray<ElementType>::value) {
+    } else if constexpr (IsMetadataArray<ElementType>::value) {
       using ArrayElementType = typename MetadataArrayType<ElementType>::type;
       if constexpr (IsMetadataScalar<ArrayElementType>::value) {
         return transformNormalizedArray<ArrayElementType>(
             value,
             this->offset(),
             this->scale());
-      }
-
-      if constexpr (IsMetadataVecN<ArrayElementType>::value) {
+      } else if constexpr (IsMetadataVecN<ArrayElementType>::value) {
         constexpr glm::length_t N = ArrayElementType::length();
         using T = typename ArrayElementType::value_type;
         return transformNormalizedVecNArray<N, T>(
             value,
             this->offset(),
             this->scale());
-      }
-
-      if constexpr (IsMetadataMatN<ArrayElementType>::value) {
+      } else if constexpr (IsMetadataMatN<ArrayElementType>::value) {
         constexpr glm::length_t N = ArrayElementType::length();
         using T = typename ArrayElementType::value_type;
         return transformNormalizedMatNArray<N, T>(

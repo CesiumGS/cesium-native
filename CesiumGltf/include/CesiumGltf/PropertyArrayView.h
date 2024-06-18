@@ -20,30 +20,20 @@ namespace CesiumGltf {
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
  */
-template <typename ElementType> class PropertyArrayView {
+template <typename ElementType> class PropertyArrayCopy {
 public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _storage{}, _values{} {}
+  PropertyArrayCopy() : _values{} {}
 
   /**
    * @brief Constructs an array view from a buffer.
    *
    * @param buffer The buffer containing the values.
    */
-  PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
-      : _storage{},
-        _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
-
-  /**
-   * @brief Constructs an array view from a vector of values. This is mainly
-   * used when the values cannot be viewed in place.
-   *
-   * @param values The vector containing the values.
-   */
-  PropertyArrayView(std::vector<ElementType>&& values)
-      : _storage{std::move(values)}, _values(_storage) {}
+  PropertyArrayCopy(std::vector<ElementType>&& values) noexcept
+      : _values{std::move(values)} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
     return this->_values[index];
@@ -51,29 +41,59 @@ public:
 
   int64_t size() const noexcept { return this->_values.size(); }
 
-  bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
-    if (this->size() != other.size()) {
-      return false;
-    }
-
-    for (int64_t i = 0; i < size(); i++) {
-      if ((*this)[i] != other[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  bool operator!=(const PropertyArrayView<ElementType>& other) const noexcept {
-    return !operator==(other);
-  }
+  auto begin() { return this->_values.begin(); }
+  auto end() { return this->_values.end(); }
+  auto begin() const { return this->_values.begin(); }
+  auto end() const { return this->_values.end(); }
 
 private:
-  // This is empty when this PropertyArrayView is simply a view into an existing
-  // array. However, when the view is constructed with a std::vector, this field
-  // is used to "own" the given vector data .
-  std::vector<ElementType> _storage;
+  template <typename ElementType> friend class PropertyArrayView;
+  std::vector<ElementType> _values;
+};
+
+/**
+ * @brief A view on an array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
+ *
+ * Provides utility to retrieve the data stored in the array of
+ * elements via the array index operator.
+ */
+template <typename ElementType> class PropertyArrayView {
+public:
+  /**
+   * @brief Constructs an empty array view.
+   */
+  PropertyArrayView() : _values{} {}
+
+  /**
+   * @brief Constructs an array view from a buffer.
+   *
+   * @param buffer The buffer containing the values.
+   */
+  PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
+      : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
+
+  /**
+   * @brief Constructs an array view from a buffer.
+   *
+   * @param buffer The buffer containing the values.
+   */
+  explicit PropertyArrayView(
+      const PropertyArrayCopy<ElementType>& copyToView) noexcept
+      : _values{copyToView._values} {}
+
+  const ElementType& operator[](int64_t index) const noexcept {
+    return this->_values[index];
+  }
+
+  int64_t size() const noexcept { return this->_values.size(); }
+
+  auto begin() { return this->_values.begin(); }
+  auto end() { return this->_values.end(); }
+  auto begin() const { return this->_values.begin(); }
+  auto end() const { return this->_values.end(); }
+
+private:
   gsl::span<const ElementType> _values;
 };
 
@@ -107,24 +127,6 @@ public:
   }
 
   int64_t size() const noexcept { return _size; }
-
-  bool operator==(const PropertyArrayView<bool>& other) const noexcept {
-    if (this->size() != other.size()) {
-      return false;
-    }
-
-    for (int64_t i = 0; i < size(); i++) {
-      if ((*this)[i] != other[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  bool operator!=(const PropertyArrayView<bool>& other) const noexcept {
-    return !operator==(other);
-  }
 
 private:
   gsl::span<const std::byte> _values;
@@ -175,30 +177,78 @@ public:
 
   int64_t size() const noexcept { return _size; }
 
-  bool
-  operator==(const PropertyArrayView<std::string_view>& other) const noexcept {
-    if (this->size() != other.size()) {
-      return false;
-    }
-
-    for (int64_t i = 0; i < size(); i++) {
-      if ((*this)[i] != other[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  bool
-  operator!=(const PropertyArrayView<std::string_view>& other) const noexcept {
-    return !operator==(other);
-  }
-
 private:
   gsl::span<const std::byte> _values;
   gsl::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _size;
 };
+
+template <typename T>
+bool operator==(
+    const PropertyArrayView<T>& lhs,
+    const PropertyArrayView<T>& rhs) {
+  int64_t size = lhs.size();
+  if (size != rhs.size()) {
+    return false;
+  }
+
+  for (int64_t i = 0; i < size; ++i) {
+    if (lhs[i] != rhs[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template <typename T>
+bool operator==(
+    const PropertyArrayView<T>& lhs,
+    const PropertyArrayCopy<T>& rhs) {
+  return lhs == PropertyArrayView(rhs);
+}
+
+template <typename T>
+bool operator==(
+    const PropertyArrayCopy<T>& lhs,
+    const PropertyArrayView<T>& rhs) {
+  return PropertyArrayView(lhs) == rhs;
+}
+
+template <typename T>
+bool operator==(
+    const PropertyArrayCopy<T>& lhs,
+    const PropertyArrayCopy<T>& rhs) {
+  return PropertyArrayView(lhs) == PropertyArrayView(rhs);
+}
+
+template <typename T>
+bool operator!=(
+    const PropertyArrayView<T>& lhs,
+    const PropertyArrayView<T>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename T>
+bool operator!=(
+    const PropertyArrayView<T>& lhs,
+    const PropertyArrayCopy<T>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename T>
+bool operator!=(
+    const PropertyArrayCopy<T>& lhs,
+    const PropertyArrayView<T>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename T>
+bool operator!=(
+    const PropertyArrayCopy<T>& lhs,
+    const PropertyArrayCopy<T>& rhs) {
+  return !(lhs == rhs);
+}
+
 } // namespace CesiumGltf
