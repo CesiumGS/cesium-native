@@ -25,7 +25,7 @@ public:
   /**
    * @brief Constructs an empty array view.
    */
-  PropertyArrayView() : _values{} {}
+  PropertyArrayView() : _storage{}, _values{} {}
 
   /**
    * @brief Constructs an array view from a buffer.
@@ -33,7 +33,8 @@ public:
    * @param buffer The buffer containing the values.
    */
   PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
-      : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
+      : _storage{},
+        _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
   /**
    * @brief Constructs an array view from a vector of values. This is mainly
@@ -41,22 +42,14 @@ public:
    *
    * @param values The vector containing the values.
    */
-  PropertyArrayView(const std::vector<ElementType>&& values)
-      : _values{/* std::move(values) */} {}
+  PropertyArrayView(std::vector<ElementType>&& values)
+      : _storage{std::move(values)}, _values(_storage) {}
 
   const ElementType& operator[](int64_t index) const noexcept {
     return this->_values[index];
-    // return std::visit(
-    //     [index](auto const& values) -> auto const& { return values[index]; },
-    //     _values);
   }
 
-  int64_t size() const noexcept {
-    return this->_values.size();
-    // return std::visit(
-    //     [](auto const& values) { return static_cast<int64_t>(values.size()); },
-    //     _values);
-  }
+  int64_t size() const noexcept { return this->_values.size(); }
 
   bool operator==(const PropertyArrayView<ElementType>& other) const noexcept {
     if (this->size() != other.size()) {
@@ -77,10 +70,11 @@ public:
   }
 
 private:
-  // using ArrayType =
-  //     std::variant<gsl::span<const ElementType>, std::vector<ElementType>>;
-  using ArrayType = gsl::span<const ElementType>;
-  ArrayType _values;
+  // This is empty when this PropertyArrayView is simply a view into an existing
+  // array. However, when the view is constructed with a std::vector, this field
+  // is used to "own" the given vector data .
+  std::vector<ElementType> _storage;
+  gsl::span<const ElementType> _values;
 };
 
 template <> class PropertyArrayView<bool> {
