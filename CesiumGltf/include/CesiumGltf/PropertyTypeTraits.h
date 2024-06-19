@@ -97,6 +97,8 @@ template <typename... T> struct IsMetadataArray;
 template <typename T> struct IsMetadataArray<T> : std::false_type {};
 template <typename T>
 struct IsMetadataArray<PropertyArrayView<T>> : std::true_type {};
+template <typename T>
+struct IsMetadataArray<PropertyArrayCopy<T>> : std::true_type {};
 
 /**
  * @brief Check if a C++ type can be represented as an array of numeric elements
@@ -135,6 +137,10 @@ template <typename T> struct MetadataArrayType {
 };
 template <typename T>
 struct MetadataArrayType<CesiumGltf::PropertyArrayView<T>> {
+  using type = T;
+};
+template <typename T>
+struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
   using type = T;
 };
 
@@ -400,6 +406,15 @@ propertyValueViewToCopy(const std::optional<T>& view) {
     } else {
       return std::nullopt;
     }
+  } else {
+    return view;
+  }
+}
+
+template <typename T>
+static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
+    return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
   } else {
     return view;
   }
