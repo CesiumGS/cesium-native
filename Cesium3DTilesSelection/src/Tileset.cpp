@@ -1541,8 +1541,18 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
-  // Don't clear the children of this tile next frame
-  this->_externalTilesPendingClear.remove(&tile);
+
+  // If the tile is present in _externalTilesPendingClear, it needs to be removed since we're still using it.
+  // This way lets us do the find and remove in one search.
+  auto it = std::find(this->_externalTilesPendingClear.begin(), this->_externalTilesPendingClear.end(), &tile);
+  if (it == this->_externalTilesPendingClear.end()) {
+    // Tile isn't in _externalTilesPendingClear, nothing to do.
+    return;
+  }
+  
+  // Actually remove the tile from the pending list
+  this->_externalTilesPendingClear.erase(it);
+
   if (tile.getState() == TileLoadState::Unloaded &&
       !tile.getChildren().empty()) {
     // We were going to clear this tile's children, but it's still in use, so we
