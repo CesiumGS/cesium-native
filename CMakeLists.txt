@@ -41,10 +41,6 @@ if (CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
 endif()
 
-if(CESIUM_DISABLE_DEFAULT_ELLIPSOID)
-  add_compile_definitions(CESIUM_DISABLE_DEFAULT_ELLIPSOID=1)
-endif()
-
 # Add Modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 

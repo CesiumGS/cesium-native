@@ -663,7 +663,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::string url = resolveTileUrl(tileID, layer);
   return pAssetAccessor->get(asyncSystem, url, requestHeaders)
-      .thenInWorkerThread([&ellipsoid,
+      .thenInWorkerThread([ellipsoid,
                            asyncSystem,
                            pLogger,
                            tileID,

@@ -132,7 +132,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const glm::dmat4& tileTransform,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread([&ellipsoid,
+      .thenInWorkerThread([ellipsoid,
                            pLogger,
                            ktx2TranscodeTargets,
                            applyTextureTransform,
@@ -188,7 +188,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               requestHeaders};
           return converter(responseData, gltfOptions, assetFetcher)
               .thenImmediately(
-                  [&ellipsoid, pLogger, tileUrl, pCompletedRequest](
+                  [ellipsoid, pLogger, tileUrl, pCompletedRequest](
                       GltfConverterResult&& result) {
                     // Report any errors if there are any
                     logTileLoadResult(pLogger, tileUrl, result.errors);
