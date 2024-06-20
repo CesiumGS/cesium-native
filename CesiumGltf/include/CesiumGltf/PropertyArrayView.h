@@ -13,43 +13,6 @@
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief A view on an array element of a {@link PropertyTableProperty}
- * or {@link PropertyTextureProperty}.
- *
- * Provides utility to retrieve the data stored in the array of
- * elements via the array index operator.
- */
-template <typename ElementType> class PropertyArrayCopy {
-public:
-  /**
-   * @brief Constructs an empty array view.
-   */
-  PropertyArrayCopy() : _values{} {}
-
-  /**
-   * @brief Constructs an array view from a buffer.
-   *
-   * @param buffer The buffer containing the values.
-   */
-  PropertyArrayCopy(std::vector<ElementType>&& values) noexcept
-      : _values{std::move(values)} {}
-
-  const ElementType& operator[](int64_t index) const noexcept {
-    return this->_values[index];
-  }
-
-  int64_t size() const noexcept { return this->_values.size(); }
-
-  auto begin() { return this->_values.begin(); }
-  auto end() { return this->_values.end(); }
-  auto begin() const { return this->_values.begin(); }
-  auto end() const { return this->_values.end(); }
-
-private:
-  template <typename T> friend class PropertyArrayView;
-  std::vector<ElementType> _values;
-};
 
 /**
  * @brief A view on an array element of a {@link PropertyTableProperty}
@@ -73,15 +36,6 @@ public:
   PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
       : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
-  /**
-   * @brief Constructs an array view from a buffer.
-   *
-   * @param buffer The buffer containing the values.
-   */
-  explicit PropertyArrayView(
-      const PropertyArrayCopy<ElementType>& copyToView) noexcept
-      : _values{copyToView._values} {}
-
   const ElementType& operator[](int64_t index) const noexcept {
     return this->_values[index];
   }
@@ -95,6 +49,78 @@ public:
 
 private:
   gsl::span<const ElementType> _values;
+};
+
+/**
+ * @brief A view on an array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
+ *
+ * Provides utility to retrieve the data stored in the array of
+ * elements via the array index operator.
+ */
+template <typename ElementType> class PropertyArrayCopy {
+public:
+  /**
+   * @brief Constructs an empty array view.
+   */
+  PropertyArrayCopy() : _storage{}, _view() {}
+
+  /**
+   * @brief Constructs an array view from a buffer.
+   *
+   * @param buffer The buffer containing the values.
+   */
+  PropertyArrayCopy(const std::vector<ElementType>& values) noexcept
+      : _storage(), _view() {
+    size_t numberOfElements = values.size();
+    size_t sizeInBytes = numberOfElements * sizeof(ElementType);
+    this->_storage.resize(sizeInBytes);
+    std::memcpy(
+        this->_storage.data(),
+        reinterpret_cast<const std::byte*>(values.data()),
+        sizeInBytes);
+    this->_view = PropertyArrayView<ElementType>(this->_storage);
+  }
+
+  PropertyArrayCopy(PropertyArrayCopy&&) = default;
+  PropertyArrayCopy& operator=(PropertyArrayCopy&&) = default;
+
+  PropertyArrayCopy(std::vector<std::byte>&& buffer) noexcept
+      : _storage(std::move(buffer)), _view(this->_storage) {}
+
+  PropertyArrayCopy(const PropertyArrayCopy& rhs)
+      : _storage(rhs._storage), _view(this->_storage) {}
+
+  PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
+    this->_storage = rhs._storage;
+    this->_view = PropertyArrayView<ElementType>(this->_storage);
+    return *this;
+  }
+
+  const ElementType& operator[](int64_t index) const noexcept {
+    return this->_view[index];
+  }
+
+  int64_t size() const noexcept { return this->_view.size(); }
+
+  auto begin() { return this->_view.begin(); }
+  auto end() { return this->_view.end(); }
+  auto begin() const { return this->_view.begin(); }
+  auto end() const { return this->_view.end(); }
+
+  const PropertyArrayView<ElementType>& view() const { return this->_view; }
+
+  PropertyArrayView<ElementType>
+  toViewAndExternalBuffer(std::vector<std::byte>& outBuffer) && {
+    outBuffer = std::move(this->_storage);
+    PropertyArrayView<ElementType> result = std::move(this->_view);
+    this->_view = PropertyArrayView<ElementType>();
+    return result;
+  }
+
+private:
+  std::vector<std::byte> _storage;
+  PropertyArrayView<ElementType> _view;
 };
 
 template <> class PropertyArrayView<bool> {
@@ -213,14 +239,14 @@ template <typename T>
 bool operator==(
     const PropertyArrayCopy<T>& lhs,
     const PropertyArrayView<T>& rhs) {
-  return PropertyArrayView(lhs) == rhs;
+  return lhs.view() == rhs;
 }
 
 template <typename T>
 bool operator==(
     const PropertyArrayCopy<T>& lhs,
     const PropertyArrayCopy<T>& rhs) {
-  return PropertyArrayView(lhs) == PropertyArrayView(rhs);
+  return lhs.view() == rhs.view();
 }
 
 template <typename T>

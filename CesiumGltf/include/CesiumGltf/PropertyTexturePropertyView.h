@@ -386,7 +386,7 @@ public:
       return transformValue(value, this->offset(), this->scale());
     } else if constexpr (IsMetadataNumericArray<ElementType>::value) {
       return transformArray(
-          PropertyArrayView(value),
+          propertyValueCopyToView(value),
           this->offset(),
           this->scale());
     } else {
@@ -631,14 +631,14 @@ public:
       using ArrayElementType = typename MetadataArrayType<ElementType>::type;
       if constexpr (IsMetadataScalar<ArrayElementType>::value) {
         return transformNormalizedArray<ArrayElementType>(
-            PropertyArrayView(value),
+            propertyValueCopyToView(value),
             this->offset(),
             this->scale());
       } else if constexpr (IsMetadataVecN<ArrayElementType>::value) {
         constexpr glm::length_t N = ArrayElementType::length();
         using T = typename ArrayElementType::value_type;
         return transformNormalizedVecNArray<N, T>(
-            PropertyArrayView(value),
+            propertyValueCopyToView(value),
             this->offset(),
             this->scale());
       }

@@ -109,6 +109,9 @@ template <typename T> struct IsMetadataNumericArray<T> : std::false_type {};
 template <typename T> struct IsMetadataNumericArray<PropertyArrayView<T>> {
   static constexpr bool value = IsMetadataNumeric<T>::value;
 };
+template <typename T> struct IsMetadataNumericArray<PropertyArrayCopy<T>> {
+  static constexpr bool value = IsMetadataNumeric<T>::value;
+};
 
 /**
  * @brief Check if a C++ type can be represented as an array of booleans
@@ -387,6 +390,12 @@ using PropertyValueViewToCopy = std::conditional_t<
     PropertyArrayCopy<typename MetadataArrayType<T>::type>,
     T>;
 
+template <typename T>
+using PropertyValueCopyToView = std::conditional_t<
+    IsMetadataNumericArray<T>::value,
+    PropertyArrayView<typename MetadataArrayType<T>::type>,
+    T>;
+
 /**
  * @brief Creates an optional instance of a type that can be used to own a
  * property value from an optional instance that is only a view on that value.
@@ -417,6 +426,15 @@ static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
     return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
   } else {
     return view;
+  }
+}
+
+template <typename T>
+static PropertyValueCopyToView<T> propertyValueCopyToView(const T& copy) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
+    return copy.view();
+  } else {
+    return copy;
   }
 }
 
