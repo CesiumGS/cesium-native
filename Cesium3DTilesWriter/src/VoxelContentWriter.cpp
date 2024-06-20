@@ -41,6 +41,8 @@ VoxelContentWriterResult VoxelContentWriter::writeVoxelContent(
 
   VoxelContentJsonWriter::write(voxel, *writer, context);
   result.voxelContentBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }
