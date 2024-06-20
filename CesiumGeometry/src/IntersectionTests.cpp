@@ -32,6 +32,74 @@ IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
   return ray.getOrigin() + ray.getDirection() * t;
 }
 
+std::optional<glm::dvec2> IntersectionTests::rayEllipsoid(
+    const Ray& ray,
+    const glm::dvec3& radii) noexcept {
+  glm::dvec3 inverseRadii = 1.0 / radii;
+
+  glm::dvec3 origin = ray.getOrigin();
+  glm::dvec3 direction = ray.getDirection();
+
+  glm::dvec3 q = inverseRadii * origin;
+  glm::dvec3 w = inverseRadii * direction;
+
+  const double q2 = pow(length(q), 2);
+  const double qw = dot(q, w);
+
+  double difference, w2, product, discriminant, temp;
+  if (q2 > 1.0) {
+    // Outside ellipsoid.
+    if (qw >= 0.0) {
+      // Looking outward or tangent (0 intersections).
+      return std::optional<glm::dvec2>();
+    }
+
+    // qw < 0.0.
+    const double qw2 = qw * qw;
+    difference = q2 - 1.0; // Positively valued.
+    w2 = pow(length(w), 2);
+    product = w2 * difference;
+
+    if (qw2 < product) {
+      // Imaginary roots (0 intersections).
+      return std::optional<glm::dvec2>();
+    }
+    if (qw2 > product) {
+      // Distinct roots (2 intersections).
+      discriminant = qw * qw - product;
+      temp = -qw + sqrt(discriminant); // Avoid cancellation.
+      const double root0 = temp / w2;
+      const double root1 = difference / temp;
+      if (root0 < root1) {
+        return glm::dvec2(root0, root1);
+      }
+
+      return glm::dvec2(root1, root0);
+    }
+    // qw2 == product.  Repeated roots (2 intersections).
+    const double root = sqrt(difference / w2);
+    return glm::dvec2(root, root);
+  }
+  if (q2 < 1.0) {
+    // Inside ellipsoid (2 intersections).
+    difference = q2 - 1.0; // Negatively valued.
+    w2 = pow(length(w), 2);
+    product = w2 * difference; // Negatively valued.
+
+    discriminant = qw * qw - product;
+    temp = -qw + sqrt(discriminant); // Positively valued.
+    return glm::dvec2(0.0, temp / w2);
+  }
+  // q2 == 1.0. On ellipsoid.
+  if (qw < 0.0) {
+    // Looking inward.
+    w2 = pow(length(w), 2);
+    return glm::dvec2(0.0, -qw / w2);
+  }
+  // qw >= 0.0.  Looking outward or tangent.
+  return std::optional<glm::dvec2>();
+}
+
 bool IntersectionTests::pointInTriangle(
     const glm::dvec2& point,
     const glm::dvec2& triangleVertA,

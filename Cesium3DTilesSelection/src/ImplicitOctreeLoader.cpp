@@ -104,23 +104,31 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
-    bool applyTextureTransform) {
+    bool applyTextureTransform,
+    const glm::dmat4& tileTransform) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread([pLogger,
                            ktx2TranscodeTargets,
-                           applyTextureTransform](
+                           applyTextureTransform,
+                           &asyncSystem,
+                           pAssetAccessor,
+                           tileTransform,
+                           requestHeaders](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
+        auto fail = [&]() {
+          return asyncSystem.createResolvedFuture(
+              TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+        };
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
           SPDLOG_LOGGER_ERROR(
               pLogger,
               "Did not receive a valid response for tile content {}",
               tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
+          return fail();
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -130,8 +138,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
+          return fail();
         }
 
         // find gltf converter
@@ -147,28 +154,35 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
           gltfOptions.applyTextureTransform = applyTextureTransform;
-          GltfConverterResult result = converter(responseData, gltfOptions);
+          AssetFetcher assetFetcher{
+              asyncSystem,
+              pAssetAccessor,
+              tileUrl,
+              tileTransform,
+              requestHeaders};
+          return converter(responseData, gltfOptions, assetFetcher)
+              .thenImmediately([pLogger, tileUrl, pCompletedRequest](
+                                   GltfConverterResult&& result) {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
+                      std::move(pCompletedRequest));
+                }
 
-          // Report any errors if there are any
-          logTileLoadResult(pLogger, tileUrl, result.errors);
-          if (result.errors || !result.model) {
-            return TileLoadResult::createFailedResult(
-                std::move(pCompletedRequest));
-          }
-
-          return TileLoadResult{
-              std::move(*result.model),
-              CesiumGeometry::Axis::Y,
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              std::move(pCompletedRequest),
-              {},
-              TileLoadResultState::Success};
+                return TileLoadResult{
+                    std::move(*result.model),
+                    CesiumGeometry::Axis::Y,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success};
+              });
         }
-
         // content type is not supported
-        return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+        return fail();
       });
 }
 } // namespace
@@ -261,7 +275,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       tileUrl,
       requestHeaders,
       contentOptions.ktx2TranscodeTargets,
-      contentOptions.applyTextureTransform);
+      contentOptions.applyTextureTransform,
+      tile.getTransform());
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {

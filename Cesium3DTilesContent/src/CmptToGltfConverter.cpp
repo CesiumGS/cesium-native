@@ -22,13 +22,14 @@ static_assert(sizeof(CmptHeader) == 16);
 static_assert(sizeof(InnerHeader) == 12);
 } // namespace
 
-GltfConverterResult CmptToGltfConverter::convert(
+CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
     const gsl::span<const std::byte>& cmptBinary,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    const AssetFetcher& assetFetcher) {
   GltfConverterResult result;
   if (cmptBinary.size() < sizeof(CmptHeader)) {
     result.errors.emplaceWarning("Composite tile must be at least 16 bytes.");
-    return result;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   const CmptHeader* pHeader =
@@ -36,14 +37,14 @@ GltfConverterResult CmptToGltfConverter::convert(
   if (std::string(pHeader->magic, 4) != "cmpt") {
     result.errors.emplaceWarning(
         "Composite tile does not have the expected magic vaue 'cmpt'.");
-    return result;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   if (pHeader->version != 1) {
     result.errors.emplaceWarning(fmt::format(
         "Unsupported composite tile version {}.",
         pHeader->version));
-    return result;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   if (pHeader->byteLength > cmptBinary.size()) {
@@ -51,10 +52,10 @@ GltfConverterResult CmptToGltfConverter::convert(
         "Composite tile byteLength is {} but only {} bytes are available.",
         pHeader->byteLength,
         cmptBinary.size()));
-    return result;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  std::vector<GltfConverterResult> innerTiles;
+  std::vector<CesiumAsync::Future<GltfConverterResult>> innerTiles;
   uint32_t pos = sizeof(CmptHeader);
 
   for (uint32_t i = 0; i < pHeader->tilesLength && pos < pHeader->byteLength;
@@ -78,7 +79,8 @@ GltfConverterResult CmptToGltfConverter::convert(
 
     pos += pInner->byteLength;
 
-    innerTiles.emplace_back(GltfConverters::convert(innerData, options));
+    innerTiles.emplace_back(
+        GltfConverters::convert(innerData, options, assetFetcher));
   }
 
   uint32_t tilesLength = pHeader->tilesLength;
@@ -88,26 +90,26 @@ GltfConverterResult CmptToGltfConverter::convert(
           "Composite tile does not contain any loadable inner "
           "tiles.");
     }
-
-    return result;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  if (innerTiles.size() == 1) {
-    return std::move(innerTiles[0]);
-  }
-
-  for (size_t i = 0; i < innerTiles.size(); ++i) {
-    if (innerTiles[i].model) {
-      if (result.model) {
-        result.model->merge(std::move(*innerTiles[i].model));
-      } else {
-        result.model = std::move(innerTiles[i].model);
-      }
-    }
-
-    result.errors.merge(innerTiles[i].errors);
-  }
-
-  return result;
+  return assetFetcher.asyncSystem.all(std::move(innerTiles))
+      .thenImmediately([](std::vector<GltfConverterResult>&& innerResults) {
+        if (innerResults.size() == 1) {
+          return innerResults[0];
+        }
+        GltfConverterResult cmptResult;
+        for (auto& innerTile : innerResults) {
+          if (innerTile.model) {
+            if (cmptResult.model) {
+              cmptResult.model->merge(std::move(*innerTile.model));
+            } else {
+              cmptResult.model = std::move(innerTile.model);
+            }
+          }
+          cmptResult.errors.merge(innerTile.errors);
+        }
+        return cmptResult;
+      });
 }
 } // namespace Cesium3DTilesContent

@@ -110,6 +110,7 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
   accessor.componentType = AccessorSpec::ComponentType::FLOAT;
   accessor.byteOffset = 0;
   accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
+  accessor.normalized = false;
 
   BufferView& bufferView = model.bufferViews.emplace_back(*pBufferView);
   bufferView.byteOffset = 0;
@@ -176,5 +177,19 @@ void dequantizeMeshData(Model& model) {
       }
     }
   }
+
+  model.extensionsUsed.erase(
+      std::remove(
+          model.extensionsUsed.begin(),
+          model.extensionsUsed.end(),
+          "KHR_mesh_quantization"),
+      model.extensionsUsed.end());
+
+  model.extensionsRequired.erase(
+      std::remove(
+          model.extensionsRequired.begin(),
+          model.extensionsRequired.end(),
+          "KHR_mesh_quantization"),
+      model.extensionsRequired.end());
 }
 } // namespace CesiumGltfReader

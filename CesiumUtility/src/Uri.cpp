@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <stdexcept>
 #include <vector>
 
@@ -198,6 +199,131 @@ std::string Uri::escape(const std::string& s) {
       URI_FALSE);
   result.resize(size_t(pTerminator - result.data()));
   return result;
+}
+
+std::string Uri::unescape(const std::string& s) {
+  std::string result = s;
+  const char* pNewNull =
+      uriUnescapeInPlaceExA(result.data(), URI_FALSE, URI_BR_DONT_TOUCH);
+  result.resize(size_t(pNewNull - result.data()));
+  return result;
+}
+
+std::string Uri::unixPathToUriPath(const std::string& unixPath) {
+  // UriParser docs:
+  //   The destination buffer must be large enough to hold 7 + 3 * len(filename)
+  //   + 1 characters in case of an absolute filename or 3 * len(filename) + 1
+  //   in case of a relative filename.
+  std::string result(7 + 3 * unixPath.size() + 1, '\0');
+  if (uriUnixFilenameToUriStringA(unixPath.data(), result.data()) != 0) {
+    // Error - return original string.
+    return unixPath;
+  } else {
+    // An absolute URI will start with "file://". Remove this.
+    if (result.find("file://", 0, 7) != std::string::npos) {
+      result.erase(0, 7);
+    }
+
+    // Truncate at first null character
+    result.resize(std::strlen(result.data()));
+    return result;
+  }
+}
+
+std::string Uri::windowsPathToUriPath(const std::string& windowsPath) {
+  // uriWindowsFilenameToUriStringA doesn't allow `/` character in the path (it
+  // percent encodes them) even though that's a perfectly valid path separator
+  // on Windows. So convert all forward slashes to back slashes before calling
+  // it.
+  std::string windowsPathClean;
+  windowsPathClean.resize(windowsPath.size());
+  std::replace_copy(
+      windowsPath.begin(),
+      windowsPath.end(),
+      windowsPathClean.begin(),
+      '/',
+      '\\');
+
+  // UriParser docs:
+  //   The destination buffer must be large enough to hold 8 + 3 * len(filename)
+  //   + 1 characters in case of an absolute filename or 3 * len(filename) + 1
+  //   in case of a relative filename.
+  std::string result(8 + 3 * windowsPathClean.size() + 1, '\0');
+
+  if (uriWindowsFilenameToUriStringA(windowsPathClean.data(), result.data()) !=
+      0) {
+    // Error - return original string.
+    return windowsPath;
+  } else {
+    // An absolute URI will start with "file://". Remove this.
+    if (result.find("file://", 0, 7) != std::string::npos) {
+      result.erase(0, 7);
+    }
+
+    // Truncate at first null character
+    result.resize(std::strlen(result.data()));
+    return result;
+  }
+}
+
+std::string Uri::nativePathToUriPath(const std::string& nativePath) {
+#ifdef _WIN32
+  return windowsPathToUriPath(nativePath);
+#else
+  return unixPathToUriPath(nativePath);
+#endif
+}
+
+std::string Uri::uriPathToUnixPath(const std::string& uriPath) {
+  // UriParser docs:
+  //   The destination buffer must be large enough to hold len(uriString) + 1
+  //   - 5 characters in case of an absolute URI or len(uriString) + 1 in case
+  //   of a relative URI.
+  // However, the above seems to assume that uriPath starts with "file:", which
+  // is not required.
+  std::string result(uriPath.size() + 1, '\0');
+  if (uriUriStringToUnixFilenameA(uriPath.data(), result.data()) != 0) {
+    // Error - return original string.
+    return uriPath;
+  } else {
+    // Truncate at first null character
+    result.resize(std::strlen(result.data()));
+    return result;
+  }
+}
+
+std::string Uri::uriPathToWindowsPath(const std::string& uriPath) {
+  // If the URI starts with `/c:` or similar, remove the initial slash.
+  size_t skip = 0;
+  if (uriPath.size() >= 3 && uriPath[0] == '/' && uriPath[1] != '/' &&
+      uriPath[2] == ':') {
+    skip = 1;
+  }
+
+  // UriParser docs:
+  //   The destination buffer must be large enough to hold len(uriString) + 1
+  //   - 5 characters in case of an absolute URI or len(uriString) + 1 in case
+  //   of a relative URI.
+  // However, the above seems to assume that uriPath starts with "file:", which
+  // is not required.
+  std::string result(uriPath.size() + 1, '\0');
+  if (uriUriStringToWindowsFilenameA(uriPath.data() + skip, result.data()) !=
+      0) {
+    // Error - return original string.
+    return uriPath;
+  } else {
+    // Truncate at first null character
+    result.resize(std::strlen(result.data()));
+    return result;
+  }
+}
+
+std::string Uri::uriPathToNativePath(const std::string& nativePath) {
+#ifdef _WIN32
+  return uriPathToWindowsPath(nativePath);
+#else
+  return uriPathToUnixPath(nativePath);
+#endif
 }
 
 std::string Uri::getPath(const std::string& uri) {
