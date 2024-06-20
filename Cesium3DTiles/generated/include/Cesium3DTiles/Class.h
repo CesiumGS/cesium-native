@@ -34,5 +34,10 @@ struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, Cesium3DTiles::ClassProperty> properties;
+
+  /**
+   * @brief The parent class ID.
+   */
+  std::optional<std::string> parent;
 };
 } // namespace Cesium3DTiles
