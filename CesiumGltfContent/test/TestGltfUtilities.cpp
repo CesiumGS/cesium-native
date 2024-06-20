@@ -405,6 +405,67 @@ TEST_CASE("GltfUtilities::removeUnusedBuffers") {
   }
 }
 
+TEST_CASE("GltfUtilities::removeUnusedMeshes") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.meshes.emplace_back();
+    GltfUtilities::removeUnusedMeshes(m);
+    CHECK(m.meshes.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.meshes.emplace_back();
+    m.nodes.emplace_back().mesh = 0;
+    GltfUtilities::removeUnusedMeshes(m);
+    CHECK(!m.meshes.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.meshes.emplace_back();
+    m.meshes.emplace_back();
+
+    m.nodes.emplace_back().mesh = 1;
+
+    GltfUtilities::removeUnusedMeshes(m);
+    CHECK(m.meshes.size() == 1);
+
+    REQUIRE(m.nodes.size() == 1);
+    CHECK(m.nodes[0].mesh == 0);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeUnusedMaterials") {
+  Model m;
+
+  SECTION("removes unused") {
+    m.materials.emplace_back();
+    GltfUtilities::removeUnusedMaterials(m);
+    CHECK(m.materials.empty());
+  }
+
+  SECTION("does not removed used") {
+    m.materials.emplace_back();
+    m.meshes.emplace_back().primitives.emplace_back().material = 0;
+    GltfUtilities::removeUnusedMaterials(m);
+    CHECK(!m.materials.empty());
+  }
+
+  SECTION("updates indices when removing") {
+    m.materials.emplace_back();
+    m.materials.emplace_back();
+
+    m.meshes.emplace_back().primitives.emplace_back().material = 1;
+
+    GltfUtilities::removeUnusedMaterials(m);
+    CHECK(m.materials.size() == 1);
+
+    REQUIRE(m.meshes.size() == 1);
+    REQUIRE(m.meshes[0].primitives.size() == 1);
+    CHECK(m.meshes[0].primitives[0].material == 0);
+  }
+}
+
 TEST_CASE("GltfUtilities::compactBuffers") {
   Model m;
 

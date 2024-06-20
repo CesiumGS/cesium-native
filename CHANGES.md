@@ -1,5 +1,12 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
+- Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
+
 ### v0.36.0 - 2024-06-03
 
 ##### Breaking Changes :mega:
