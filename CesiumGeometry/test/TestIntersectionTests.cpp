@@ -41,9 +41,8 @@ TEST_CASE("IntersectionTests::rayPlane") {
 }
 
 namespace {
-const glm::dvec3 unitInverseRadii(1.0, 1.0, 1.0);
+const glm::dvec3 unitRadii(1.0, 1.0, 1.0);
 const glm::dvec3 wgs84Radii = Ellipsoid::WGS84.getRadii();
-const glm::dvec3 wgs84InverseRadii = 1.0 / wgs84Radii;
 } // namespace
 
 TEST_CASE("IntersectionTests::rayEllipsoid") {
@@ -57,72 +56,72 @@ TEST_CASE("IntersectionTests::rayEllipsoid") {
       // RayEllipsoid outside intersections
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           glm::dvec2(1.0, 3.0)},
       TestCase{
           Ray(glm::dvec3(0.0, 2.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           glm::dvec2(1.0, 3.0)},
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, 2.0), glm::dvec3(0.0, 0.0, -1.0)),
-          unitInverseRadii,
+          unitRadii,
           glm::dvec2{1.0, 3.0}},
       TestCase{
           Ray(glm::dvec3(-2.0, 0.0, 0.0), glm::dvec3(1.0, 0.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           glm::dvec2(1.0, 3.0)},
       TestCase{
           Ray(glm::dvec3(0.0, -2.0, 0.0), glm::dvec3(0.0, 1.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           glm::dvec2(1.0, 3.0)},
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, 1.0)),
-          unitInverseRadii,
+          unitRadii,
           glm::dvec2(1.0, 3.0)},
 
       TestCase{
           Ray(glm::dvec3(-2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
       TestCase{
           Ray(glm::dvec3(0.0, -2.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, -1.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
 
       // rayEllipsoid ray inside pointing in intersection
       TestCase{
           Ray(glm::dvec3(20000.0, 0.0, 0.0),
               glm::normalize(glm::dvec3(20000.0, 0.0, 0.0))),
-          wgs84InverseRadii,
+          wgs84Radii,
           glm::dvec2(0.0, wgs84Radii.x - 20000.0)},
 
       // rayEllipsoid tangent intersections
       TestCase{
           Ray(glm::dvec3(1.0, 0.0, 0.0),
               glm::normalize(glm::dvec3(0.0, 0.0, 1.0))),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
 
       // rayEllipsoid no intersections
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, 1.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 0.0, -1.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 1.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt},
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
-          unitInverseRadii,
+          unitRadii,
           std::nullopt}
 
   );
