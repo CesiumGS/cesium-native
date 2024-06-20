@@ -259,12 +259,17 @@ public:
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
 
-  struct HeightResult {
-    bool heightAvailable = false;
-    CesiumGeospatial::Cartographic coordinate = {-1, -1, -1};
+  struct HeightResults {
+    struct CoordinateResult {
+      bool heightAvailable = false;
+      CesiumGeospatial::Cartographic coordinate = {-1, -1, -1};
+      std::vector<std::string> warnings = {};
+    };
+
+    std::vector<CoordinateResult> coordinateResults;
   };
 
-  CesiumAsync::Future<std::vector<HeightResult>> getHeightsAtCoordinates(
+  CesiumAsync::Future<HeightResults> getHeightsAtCoordinates(
       const std::vector<CesiumGeospatial::Cartographic>& coordinates);
 
 private:

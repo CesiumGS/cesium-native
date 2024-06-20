@@ -13,6 +13,11 @@ using namespace CesiumGeometry;
 using namespace CesiumUtility;
 using namespace CesiumAsync;
 
+// 10,000 meters above ellisoid
+// Highest point on ellipsoid is Mount Everest at 8,848 m
+// Nothing intersectable should be above this
+#define RAY_ORIGIN_HEIGHT 10000.0
+
 namespace {
 bool boundingVolumeContainsCoordinate(
     const BoundingVolume& boundingVolume,
@@ -51,7 +56,7 @@ bool boundingVolumeContainsCoordinate(
 }
 
 Ray createRay(Cartographic cartographic) {
-  cartographic.height = 100000.0;
+  cartographic.height = RAY_ORIGIN_HEIGHT;
   return Ray(
       Ellipsoid::WGS84.cartographicToCartesian(cartographic),
       -Ellipsoid::WGS84.geodeticSurfaceNormal(cartographic));
@@ -135,12 +140,12 @@ void TilesetHeightFinder::_findAndIntersectVisibleTiles(
         if (!boundingVolumeContainsCoordinate(
                 *child.getContentBoundingVolume(),
                 rayInfo.ray,
-                rayInfo.coordinate))
+                rayInfo.inputCoordinate))
           continue;
       } else if (!boundingVolumeContainsCoordinate(
                      child.getBoundingVolume(),
                      rayInfo.ray,
-                     rayInfo.coordinate))
+                     rayInfo.inputCoordinate))
         continue;
       if (_loadTileIfNeeded(&child)) {
         newTilesToLoad.push_back(&child);
@@ -192,42 +197,41 @@ void TilesetHeightFinder::_processHeightRequests() {
     }
 
     // All rays are done, create results
-    std::vector<Tileset::HeightResult> results;
+    Tileset::HeightResults results;
     for (RayIntersect& ray : requests.rayIntersects) {
-      bool heightAvailable =
-          ray.intersectResult.hit->rayToWorldPointDistanceSq != -1;
-      if (heightAvailable) {
-        ray.coordinate.height =
-            100000.0 -
-            glm::sqrt(ray.intersectResult.hit->rayToWorldPointDistanceSq);
-      }
+      Tileset::HeightResults::CoordinateResult coordinateResult = {
+          ray.intersectResult.hit.has_value(),
+          std::move(ray.inputCoordinate),
+          std::move(ray.intersectResult.warnings)};
 
-      results.push_back(Tileset::HeightResult{heightAvailable, ray.coordinate});
+      if (coordinateResult.heightAvailable)
+        coordinateResult.coordinate.height =
+            RAY_ORIGIN_HEIGHT -
+            glm::sqrt(ray.intersectResult.hit->rayToWorldPointDistanceSq);
+
+      results.coordinateResults.push_back(coordinateResult);
     }
+
     requests.promise.resolve(std::move(results));
     _heightRequests.erase(_heightRequests.begin());
     return;
   }
 }
 
-Future<std::vector<Tileset::HeightResult>>
-TilesetHeightFinder::_getHeightsAtCoordinates(
+Future<Tileset::HeightResults> TilesetHeightFinder::_getHeightsAtCoordinates(
     const std::vector<CesiumGeospatial::Cartographic>& coordinates) {
   Tile* pRoot = _pTilesetContentManager->getRootTile();
   if (pRoot == nullptr || coordinates.empty()) {
     return _pTileset->getAsyncSystem()
-        .createResolvedFuture<std::vector<Tileset::HeightResult>>(
-            std::vector<Tileset::HeightResult>(
-                coordinates.size(),
-                {false, {-1, -1, -1}}));
+        .createResolvedFuture<Tileset::HeightResults>({});
   }
-  Promise promise = _pTileset->getAsyncSystem()
-                        .createPromise<std::vector<Tileset::HeightResult>>();
+  Promise promise =
+      _pTileset->getAsyncSystem().createPromise<Tileset::HeightResults>();
 
   std::vector<RayIntersect> rayIntersects;
   for (const CesiumGeospatial::Cartographic& coordinate : coordinates)
     rayIntersects.push_back(
-        RayIntersect{createRay(coordinate), coordinate, {}, {pRoot}});
+        RayIntersect{coordinate, createRay(coordinate), {}, {pRoot}});
 
   _heightRequests.emplace_back(
       HeightRequests{std::move(rayIntersects), 0, promise});

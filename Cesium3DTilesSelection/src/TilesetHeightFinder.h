@@ -11,8 +11,8 @@ class TilesetHeightFinder {
   friend class Tileset;
 
   struct RayIntersect {
+    CesiumGeospatial::Cartographic inputCoordinate;
     CesiumGeometry::Ray ray;
-    CesiumGeospatial::Cartographic coordinate;
     CesiumGltfContent::GltfUtilities::IntersectResult intersectResult;
     std::vector<Tile*> tilesLoading;
   };
@@ -20,7 +20,7 @@ class TilesetHeightFinder {
   struct HeightRequests {
     std::vector<RayIntersect> rayIntersects;
     uint32_t numRaysDone;
-    CesiumAsync::Promise<std::vector<Tileset::HeightResult>> promise;
+    CesiumAsync::Promise<Tileset::HeightResults> promise;
   };
 
   TilesetHeightFinder(
@@ -29,8 +29,7 @@ class TilesetHeightFinder {
           pTilesetContentManager)
       : _pTileset(pTileset), _pTilesetContentManager(pTilesetContentManager){};
 
-  CesiumAsync::Future<std::vector<Tileset::HeightResult>>
-  _getHeightsAtCoordinates(
+  CesiumAsync::Future<Tileset::HeightResults> _getHeightsAtCoordinates(
       const std::vector<CesiumGeospatial::Cartographic>& coordinates);
 
   bool _loadTileIfNeeded(Tile* pTile);

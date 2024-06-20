@@ -539,7 +539,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
       });
 }
 
-CesiumAsync::Future<std::vector<Tileset::HeightResult>>
+CesiumAsync::Future<Tileset::HeightResults>
 Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
   return _pTilesetHeightFinder->_getHeightsAtCoordinates(coordinates);
 }
