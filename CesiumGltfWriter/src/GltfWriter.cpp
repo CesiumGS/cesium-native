@@ -13,7 +13,7 @@ namespace {
 
 [[nodiscard]] size_t
 getPadding(size_t byteCount, size_t byteAlignment) noexcept {
-  ASSERT(byteAlignment > 0);
+  CESIUM_ASSERT(byteAlignment > 0);
   size_t remainder = byteCount % byteAlignment;
   size_t padding = remainder == 0 ? 0 : byteAlignment - remainder;
   return padding;
@@ -24,7 +24,8 @@ void writeGlbBuffer(
     const gsl::span<const std::byte>& jsonData,
     const gsl::span<const std::byte>& bufferData,
     size_t binaryChunkByteAlignment) {
-  ASSERT(binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
+  CESIUM_ASSERT(
+      binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
 
   size_t headerSize = 12;
   size_t chunkHeaderSize = 8;

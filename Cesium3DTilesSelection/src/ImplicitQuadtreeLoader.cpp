@@ -322,7 +322,8 @@ TileChildrenResult
 ImplicitQuadtreeLoader::createTileChildren(const Tile& tile) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
-  ASSERT(pQuadtreeID != nullptr && "This loader only serves quadtree tile");
+  CESIUM_ASSERT(
+      pQuadtreeID != nullptr && "This loader only serves quadtree tile");
 
   // find the subtree ID
   CesiumGeometry::QuadtreeTileID subtreeID =

@@ -41,7 +41,7 @@ void LayerJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 LayerJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyLayer(
       CesiumQuantizedMeshTerrain::Layer::TypeName,
       str,
@@ -157,7 +157,7 @@ void AvailabilityRectangleJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AvailabilityRectangleJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAvailabilityRectangle(
       CesiumQuantizedMeshTerrain::AvailabilityRectangle::TypeName,
       str,

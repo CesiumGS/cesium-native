@@ -31,7 +31,7 @@ void Extension3dTilesBoundingVolumeS2JsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 Extension3dTilesBoundingVolumeS2JsonHandler::readObjectKey(
     const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtension3dTilesBoundingVolumeS2(
       Cesium3DTiles::Extension3dTilesBoundingVolumeS2::TypeName,
       str,
@@ -141,7 +141,7 @@ void StatisticsJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 StatisticsJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyStatistics(
       Cesium3DTiles::Statistics::TypeName,
       str,
@@ -224,7 +224,7 @@ void ClassStatisticsJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClassStatistics(
       Cesium3DTiles::ClassStatistics::TypeName,
       str,
@@ -318,7 +318,7 @@ void PropertyStatisticsJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyStatistics(
       Cesium3DTiles::PropertyStatistics::TypeName,
       str,
@@ -426,7 +426,7 @@ void SchemaJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SchemaJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySchema(
       Cesium3DTiles::Schema::TypeName,
       str,
@@ -517,7 +517,7 @@ void EnumJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 EnumJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyEnum(
       Cesium3DTiles::Enum::TypeName,
       str,
@@ -603,7 +603,7 @@ void EnumValueJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 EnumValueJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyEnumValue(
       Cesium3DTiles::EnumValue::TypeName,
       str,
@@ -688,7 +688,7 @@ void ClassJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClass(
       Cesium3DTiles::Class::TypeName,
       str,
@@ -785,7 +785,7 @@ void ClassPropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassPropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClassProperty(
       Cesium3DTiles::ClassProperty::TypeName,
       str,
@@ -907,7 +907,7 @@ void SubtreeJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SubtreeJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySubtree(
       Cesium3DTiles::Subtree::TypeName,
       str,
@@ -1017,7 +1017,7 @@ void MetadataEntityJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 MetadataEntityJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMetadataEntity(
       Cesium3DTiles::MetadataEntity::TypeName,
       str,
@@ -1105,7 +1105,7 @@ void AvailabilityJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AvailabilityJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAvailability(
       Cesium3DTiles::Availability::TypeName,
       str,
@@ -1195,7 +1195,7 @@ void PropertyTableJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTableJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTable(
       Cesium3DTiles::PropertyTable::TypeName,
       str,
@@ -1293,7 +1293,7 @@ void PropertyTablePropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTablePropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTableProperty(
       Cesium3DTiles::PropertyTableProperty::TypeName,
       str,
@@ -1405,7 +1405,7 @@ void BufferViewJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBufferView(
       Cesium3DTiles::BufferView::TypeName,
       str,
@@ -1495,7 +1495,7 @@ void BufferJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BufferJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBuffer(
       Cesium3DTiles::Buffer::TypeName,
       str,
@@ -1587,7 +1587,7 @@ void TilesetJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 TilesetJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyTileset(
       Cesium3DTiles::Tileset::TypeName,
       str,
@@ -1697,7 +1697,7 @@ void TileJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 TileJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyTile(
       Cesium3DTiles::Tile::TypeName,
       str,
@@ -1799,7 +1799,7 @@ void ImplicitTilingJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ImplicitTilingJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyImplicitTiling(
       Cesium3DTiles::ImplicitTiling::TypeName,
       str,
@@ -1894,7 +1894,7 @@ void SubtreesJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SubtreesJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySubtrees(
       Cesium3DTiles::Subtrees::TypeName,
       str,
@@ -1976,7 +1976,7 @@ void ContentJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ContentJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyContent(
       Cesium3DTiles::Content::TypeName,
       str,
@@ -2062,7 +2062,7 @@ void BoundingVolumeJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BoundingVolumeJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBoundingVolume(
       Cesium3DTiles::BoundingVolume::TypeName,
       str,
@@ -2149,7 +2149,7 @@ void GroupMetadataJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 GroupMetadataJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyGroupMetadata(
       Cesium3DTiles::GroupMetadata::TypeName,
       str,
@@ -2233,7 +2233,7 @@ void PropertiesJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertiesJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyProperties(
       Cesium3DTiles::Properties::TypeName,
       str,
@@ -2318,7 +2318,7 @@ void AssetJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AssetJsonHandler::readObjectKey(const std::string_view& str) {
-  ASSERT(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAsset(
       Cesium3DTiles::Asset::TypeName,
       str,

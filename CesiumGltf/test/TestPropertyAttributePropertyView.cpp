@@ -55,7 +55,7 @@ const Accessor& addValuesToModel(Model& model, const std::vector<T>& values) {
     accessor.type = Accessor::Type::MAT4;
     break;
   default:
-    ASSERT(false && "Input type is not supported as an accessor type");
+    CESIUM_ASSERT(false && "Input type is not supported as an accessor type");
     break;
   }
 
@@ -77,7 +77,7 @@ const Accessor& addValuesToModel(Model& model, const std::vector<T>& values) {
     accessor.componentType = Accessor::ComponentType::FLOAT;
     break;
   default:
-    ASSERT(
+    CESIUM_ASSERT(
         false &&
         "Input component type is not supported as an accessor component type");
     break;

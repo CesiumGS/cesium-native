@@ -289,7 +289,7 @@ public:
    * @brief Returns the number of tiles that are currently loading.
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
-    ASSERT(this->_totalTilesCurrentlyLoading > -1);
+    CESIUM_ASSERT(this->_totalTilesCurrentlyLoading > -1);
     return this->_totalTilesCurrentlyLoading;
   }
 

@@ -68,7 +68,7 @@ RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
   // be destroyed before the tile provider that created them.
   if (this->_pPlaceholder) {
-    ASSERT(this->_pPlaceholder->getReferenceCount() == 1);
+    CESIUM_ASSERT(this->_pPlaceholder->getReferenceCount() == 1);
     this->_pPlaceholder = nullptr;
   }
 }
@@ -89,7 +89,7 @@ RasterOverlayTileProvider::getTile(
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
-  ASSERT(pTile->getReferenceCount() == 0);
+  CESIUM_ASSERT(pTile->getReferenceCount() == 0);
 
   this->_tileDataBytes -= pTile->getImage().sizeBytes;
 }

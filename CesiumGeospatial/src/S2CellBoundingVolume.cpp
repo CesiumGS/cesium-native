@@ -28,7 +28,7 @@ std::array<Plane, 6> computeBoundingPlanes(
   glm::dvec3 centerSurfaceNormal = ellipsoid.geodeticSurfaceNormal(centerPoint);
   std::optional<Cartographic> maybeTopCartographic =
       ellipsoid.cartesianToCartographic(centerPoint);
-  ASSERT(maybeTopCartographic);
+  CESIUM_ASSERT(maybeTopCartographic);
   Cartographic& topCartographic = *maybeTopCartographic;
   topCartographic.height = s2Cell.getMaximumHeight();
   glm::dvec3 top = ellipsoid.cartographicToCartesian(topCartographic);

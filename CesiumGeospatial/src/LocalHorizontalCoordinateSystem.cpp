@@ -69,9 +69,12 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
     double scaleToMeters,
     const Ellipsoid& ellipsoid) {
   // The three axes must be orthogonal
-  ASSERT(directionToAxis(xAxisDirection) != directionToAxis(yAxisDirection));
-  ASSERT(directionToAxis(xAxisDirection) != directionToAxis(zAxisDirection));
-  ASSERT(directionToAxis(yAxisDirection) != directionToAxis(zAxisDirection));
+  CESIUM_ASSERT(
+      directionToAxis(xAxisDirection) != directionToAxis(yAxisDirection));
+  CESIUM_ASSERT(
+      directionToAxis(xAxisDirection) != directionToAxis(zAxisDirection));
+  CESIUM_ASSERT(
+      directionToAxis(yAxisDirection) != directionToAxis(zAxisDirection));
 
   // Construct a local horizontal system with East-North-Up axes (right-handed)
   glm::dmat4 enuToFixed =

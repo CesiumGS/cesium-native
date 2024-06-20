@@ -948,7 +948,7 @@ std::string findAvailableName(
 
   // Realistically, this can't happen. It would mean we checked all 2^64
   // possible names and none of them are available.
-  ASSERT(false);
+  CESIUM_ASSERT(false);
   return name;
 }
 

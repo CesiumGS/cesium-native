@@ -103,7 +103,7 @@ S2CellID S2CellID::getParent() const {
 }
 
 S2CellID S2CellID::getChild(size_t index) const {
-  ASSERT(index <= 3);
+  CESIUM_ASSERT(index <= 3);
   return S2CellID(GoogleS2CellID(this->_id).child(int(index)).id());
 }
 
@@ -212,7 +212,7 @@ GlobeRectangle S2CellID::computeBoundingRectangle() const {
   static const double kPoleMinLat = asin(sqrt(1. / 3)) - 0.5 * DBL_EPSILON;
 
   // The face centers are the +X, +Y, +Z, -X, -Y, -Z axes in that order.
-  ASSERT(((face_ < 3) ? 1 : -1) == S2::GetNorm(face_)[face_ % 3]);
+  CESIUM_ASSERT(((face_ < 3) ? 1 : -1) == S2::GetNorm(face_)[face_ % 3]);
 
   R1Interval lat;
   S1Interval lng;

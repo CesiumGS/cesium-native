@@ -32,7 +32,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 
   // The tile content manager guarantees that the parent tile is already loaded
   // before upsampled tile is loaded. If that's not the case, it's a bug
-  ASSERT(
+  CESIUM_ASSERT(
       pParent->getState() == TileLoadState::Done &&
       "Parent must be loaded before upsampling");
 

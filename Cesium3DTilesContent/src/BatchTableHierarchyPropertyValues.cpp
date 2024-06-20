@@ -232,7 +232,7 @@ BatchTableHierarchyPropertyValues::const_iterator::operator->() const {
 const rapidjson::Value*
 BatchTableHierarchyPropertyValues::const_iterator::getValue(
     int64_t index) const {
-  ASSERT(index < this->_classIds.Size());
+  CESIUM_ASSERT(index < this->_classIds.Size());
   const rapidjson::Value& classIdValue =
       this->_classIds[rapidjson::SizeType(index)];
   if (!classIdValue.IsInt64()) {
@@ -251,7 +251,7 @@ BatchTableHierarchyPropertyValues::const_iterator::getValue(
     return nullptr;
   }
 
-  ASSERT(pProperty->IsArray());
+  CESIUM_ASSERT(pProperty->IsArray());
   if (instanceId < 0 || instanceId >= pProperty->Size()) {
     return nullptr;
   }

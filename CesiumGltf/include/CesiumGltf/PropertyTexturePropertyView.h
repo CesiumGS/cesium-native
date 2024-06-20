@@ -84,7 +84,7 @@ public:
 template <typename ElementType>
 ElementType assembleScalarValue(const gsl::span<uint8_t> bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
-    ASSERT(
+    CESIUM_ASSERT(
         bytes.size() == sizeof(float) &&
         "Not enough channel inputs to construct a float.");
     uint32_t resultAsUint = 0;
@@ -116,11 +116,12 @@ ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
       getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
   using T = typename ElementType::value_type;
 
-  ASSERT(
+  CESIUM_ASSERT(
       sizeof(T) <= 2 && "Components cannot be larger than two bytes in size.");
 
   if constexpr (std::is_same_v<T, int16_t>) {
-    ASSERT(N == 2 && "Only vec2s can contain two-byte integer components.");
+    CESIUM_ASSERT(
+        N == 2 && "Only vec2s can contain two-byte integer components.");
     uint16_t x = static_cast<uint16_t>(bytes[0]) |
                  (static_cast<uint16_t>(bytes[1]) << 8);
     uint16_t y = static_cast<uint16_t>(bytes[2]) |
@@ -131,7 +132,8 @@ ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
   }
 
   if constexpr (std::is_same_v<T, uint16_t>) {
-    ASSERT(N == 2 && "Only vec2s can contain two-byte integer components.");
+    CESIUM_ASSERT(
+        N == 2 && "Only vec2s can contain two-byte integer components.");
     result[0] = static_cast<uint16_t>(bytes[0]) |
                 (static_cast<uint16_t>(bytes[1]) << 8);
     result[1] = static_cast<uint16_t>(bytes[2]) |
@@ -176,7 +178,8 @@ assembleArrayValue(const gsl::span<uint8_t> bytes) noexcept {
 
 template <typename ElementType>
 ElementType assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
-  ASSERT(bytes.size() > 0 && "Channel input must have at least one value.");
+  CESIUM_ASSERT(
+      bytes.size() > 0 && "Channel input must have at least one value.");
 
   if constexpr (IsMetadataScalar<ElementType>::value) {
     return assembleScalarValue<ElementType>(bytes);
@@ -242,7 +245,7 @@ public:
         TextureView(),
         _channels(),
         _swizzle() {
-    ASSERT(
+    CESIUM_ASSERT(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
@@ -347,7 +350,8 @@ public:
         _swizzle += "a";
         break;
       default:
-        ASSERT(false && "A valid channels vector must be passed to the view.");
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
       }
     }
   }
@@ -407,7 +411,7 @@ public:
    */
 
   ElementType getRaw(double u, double v) const noexcept {
-    ASSERT(
+    CESIUM_ASSERT(
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
@@ -472,7 +476,7 @@ public:
         TextureView(),
         _channels(),
         _swizzle() {
-    ASSERT(
+    CESIUM_ASSERT(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid "
         "status");
@@ -577,7 +581,8 @@ public:
         _swizzle += "a";
         break;
       default:
-        ASSERT(false && "A valid channels vector must be passed to the view.");
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
       }
     }
   }
@@ -664,7 +669,7 @@ public:
    */
 
   ElementType getRaw(double u, double v) const noexcept {
-    ASSERT(
+    CESIUM_ASSERT(
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 

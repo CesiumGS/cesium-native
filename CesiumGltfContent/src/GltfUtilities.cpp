@@ -385,7 +385,7 @@ size_t moveBufferContentWithoutRenumbering(
   if (sourceIndex < 0 || sourceIndex >= int64_t(gltf.buffers.size()) ||
       destinationIndex < 0 ||
       destinationIndex >= int64_t(gltf.buffers.size())) {
-    ASSERT(false);
+    CESIUM_ASSERT(false);
     return;
   }
 
@@ -645,7 +645,7 @@ void removeUnusedElements(
   visitFunction(gltf, [&indexMap](int32_t& elementIndex) {
     if (elementIndex >= 0 && size_t(elementIndex) < indexMap.size()) {
       int32_t newIndex = indexMap[size_t(elementIndex)];
-      ASSERT(newIndex >= 0);
+      CESIUM_ASSERT(newIndex >= 0);
       elementIndex = newIndex;
     }
   });
@@ -657,7 +657,7 @@ void removeUnusedElements(
           elements.end(),
           [&usedElements, &elements](T& element) {
             int64_t index = &element - &elements[0];
-            ASSERT(index >= 0 && size_t(index) < usedElements.size());
+            CESIUM_ASSERT(index >= 0 && size_t(index) < usedElements.size());
             return !usedElements[size_t(index)];
           }),
       elements.end());
@@ -760,7 +760,7 @@ void deleteBufferRange(
   if (pBuffer == nullptr)
     return;
 
-  ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+  CESIUM_ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   int64_t bytesToRemove = end - start;
 
@@ -825,7 +825,7 @@ void GltfUtilities::compactBuffer(
   if (!pBuffer)
     return;
 
-  ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+  CESIUM_ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   struct BufferRange {
     int64_t start; // first byte

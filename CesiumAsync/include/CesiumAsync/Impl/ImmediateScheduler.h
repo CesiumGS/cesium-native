@@ -54,8 +54,8 @@ public:
       if (this->_pScheduler) {
         std::vector<TScheduler*>& inSuitable =
             ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
-        ASSERT(!inSuitable.empty());
-        ASSERT(inSuitable.back() == this->_pScheduler);
+        CESIUM_ASSERT(!inSuitable.empty());
+        CESIUM_ASSERT(inSuitable.back() == this->_pScheduler);
         inSuitable.pop_back();
 
         this->_pScheduler = nullptr;

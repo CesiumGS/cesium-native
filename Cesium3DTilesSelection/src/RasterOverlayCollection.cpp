@@ -168,8 +168,8 @@ void RasterOverlayCollection::remove(
 
   OverlayList& list = *this->_pOverlays;
 
-  ASSERT(list.overlays.size() == list.tileProviders.size());
-  ASSERT(list.overlays.size() == list.placeholders.size());
+  CESIUM_ASSERT(list.overlays.size() == list.tileProviders.size());
+  CESIUM_ASSERT(list.overlays.size() == list.placeholders.size());
 
   auto it = std::find_if(
       list.overlays.begin(),
@@ -233,7 +233,7 @@ RasterOverlayCollection::findTileProviderForOverlay(
   const auto& overlays = this->_pOverlays->overlays;
   const auto& tileProviders = this->_pOverlays->tileProviders;
 
-  ASSERT(overlays.size() == tileProviders.size());
+  CESIUM_ASSERT(overlays.size() == tileProviders.size());
 
   for (size_t i = 0; i < overlays.size() && i < tileProviders.size(); ++i) {
     if (overlays[i].get() == &overlay)
@@ -262,7 +262,7 @@ RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
   const auto& overlays = this->_pOverlays->overlays;
   const auto& placeholders = this->_pOverlays->placeholders;
 
-  ASSERT(overlays.size() == placeholders.size());
+  CESIUM_ASSERT(overlays.size() == placeholders.size());
 
   for (size_t i = 0; i < overlays.size() && i < placeholders.size(); ++i) {
     if (overlays[i].get() == &overlay)

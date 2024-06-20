@@ -184,7 +184,8 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
 
           [[maybe_unused]] CesiumGltf::AccessorWriter<glm::vec2>& uvWriter =
               uvWriters.emplace_back(gltf, uvAccessorId);
-          ASSERT(uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
+          CESIUM_ASSERT(
+              uvWriter.status() == CesiumGltf::AccessorViewStatus::Valid);
 
           std::string attributeName =
               std::string(textureCoordinateAttributeBaseName) +

@@ -49,7 +49,8 @@ RasterOverlay::getAsyncDestructionCompleteEvent(
   } else {
     // All invocations of getAsyncDestructionCompleteEvent on a particular
     // RasterOverlay must pass equivalent AsyncSystems.
-    ASSERT(this->_destructionCompleteDetails->asyncSystem == asyncSystem);
+    CESIUM_ASSERT(
+        this->_destructionCompleteDetails->asyncSystem == asyncSystem);
   }
 
   return this->_destructionCompleteDetails->future;

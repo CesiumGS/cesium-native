@@ -492,7 +492,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
        asyncSystem =
            this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
         Tile* pRoot = pManager->getRootTile();
-        ASSERT(pRoot);
+        CESIUM_ASSERT(pRoot);
 
         TileExternalContent* pExternal =
             pRoot->getContent().getExternalContent();
@@ -512,7 +512,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
             .thenInMainThread(
                 [pManager, pAssetAccessor]() -> const TilesetMetadata* {
                   Tile* pRoot = pManager->getRootTile();
-                  ASSERT(pRoot);
+                  CESIUM_ASSERT(pRoot);
 
                   TileExternalContent* pExternal =
                       pRoot->getContent().getExternalContent();
@@ -1516,13 +1516,13 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   // Assert that this tile hasn't been added to a queue already.
-  ASSERT(
+  CESIUM_ASSERT(
       std::find_if(
           this->_workerThreadLoadQueue.begin(),
           this->_workerThreadLoadQueue.end(),
           [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
       this->_workerThreadLoadQueue.end());
-  ASSERT(
+  CESIUM_ASSERT(
       std::find_if(
           this->_mainThreadLoadQueue.begin(),
           this->_mainThreadLoadQueue.end(),

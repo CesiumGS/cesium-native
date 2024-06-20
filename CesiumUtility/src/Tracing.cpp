@@ -159,7 +159,7 @@ TrackSet::TrackSet(const char* name_) : name(name_) {}
 TrackSet::~TrackSet() {
   std::scoped_lock lock(this->mutex);
   for (auto& track : this->tracks) {
-    ASSERT(!track.inUse);
+    CESIUM_ASSERT(!track.inUse);
     Tracer::instance().writeAsyncEventEnd(
         (this->name + " " + std::to_string(track.id)).c_str(),
         track.id);
@@ -196,7 +196,7 @@ void TrackSet::addReference(size_t trackIndex) noexcept {
 void TrackSet::releaseReference(size_t trackIndex) noexcept {
   std::scoped_lock lock(this->mutex);
   Track& track = this->tracks[trackIndex];
-  ASSERT(track.referenceCount > 0);
+  CESIUM_ASSERT(track.referenceCount > 0);
   --track.referenceCount;
   if (track.referenceCount == 0) {
     track.inUse = false;
@@ -342,7 +342,7 @@ void TrackReference::dismissCurrentThread() {
     return;
   }
 
-  ASSERT(
+  CESIUM_ASSERT(
       TrackReference::_threadEnlistedTracks.size() > 0 &&
       TrackReference::_threadEnlistedTracks.back() == this);
 

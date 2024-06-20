@@ -27,7 +27,7 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   const std::vector<CesiumGeometry::Rectangle>& rectangles =
       this->rasterOverlayRectangles;
 
-  ASSERT(projections.size() == rectangles.size());
+  CESIUM_ASSERT(projections.size() == rectangles.size());
 
   auto it = std::find(projections.begin(), projections.end(), projection);
   if (it != projections.end()) {

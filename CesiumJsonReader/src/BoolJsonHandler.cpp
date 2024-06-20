@@ -12,7 +12,7 @@ void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
 }
 
 IJsonHandler* BoolJsonHandler::readBool(bool b) {
-  ASSERT(this->_pBool);
+  CESIUM_ASSERT(this->_pBool);
   *this->_pBool = b;
   return this->parent();
 }

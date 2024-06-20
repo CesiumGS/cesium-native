@@ -31,7 +31,7 @@ struct Dispatcher {
       size_t /* length */,
       bool /* copy */) noexcept {
     // This should not be called.
-    ASSERT(false);
+    CESIUM_ASSERT(false);
     return false;
   }
   bool String(const char* str, size_t length, bool /* copy */) {

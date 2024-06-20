@@ -150,7 +150,7 @@ void subtreeHash(
 bool isSubtreeLoadedInLayer(
     const CesiumGeometry::QuadtreeTileID& subtreeID,
     const LayerJsonTerrainLoader::Layer& layer) {
-  ASSERT(
+  CESIUM_ASSERT(
       layer.availabilityLevels > 0 &&
       "Layer needs to support availabilityLevels");
 
@@ -721,7 +721,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& contentOptions = loadInput.contentOptions;
 
   // This type of loader should never have child loaders.
-  ASSERT(tile.getLoader() == this);
+  CESIUM_ASSERT(tile.getLoader() == this);
 
   const QuadtreeTileID* pQuadtreeTileID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
@@ -1118,7 +1118,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
 
   // Cannot find raster overlay UVs that has this projection, so we can't
   // upsample right now
-  ASSERT(
+  CESIUM_ASSERT(
       it != parentProjections.end() &&
       "Cannot find raster overlay UVs that has this projection. "
       "Should not happen");

@@ -9,10 +9,10 @@
 namespace CesiumUtility {
 void forceAssertFailure();
 };
-#define ASSERT(expression)                                                     \
+#define CESIUM_ASSERT(expression)                                              \
   ((expression) ? 0 : CesiumUtility::forceAssertFailure())
 #else
 // Let assertions get defined with default behavior
 #include <cassert>
-#define ASSERT(expression) assert(expression)
+#define CESIUM_ASSERT(expression) assert(expression)
 #endif

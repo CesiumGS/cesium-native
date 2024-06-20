@@ -68,7 +68,7 @@ public:
       return this->invalid("An object")->readObjectStart();
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     T& o = this->_pArray->emplace_back();
     this->_objectHandler->reset(this, &o);
     return this->_objectHandler->readObjectStart();
@@ -154,7 +154,7 @@ public:
       return this->invalid("An integer")->readInt32(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<double>(i));
     return this;
   }
@@ -164,7 +164,7 @@ public:
       return this->invalid("An integer")->readUint32(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<double>(i));
     return this;
   }
@@ -174,7 +174,7 @@ public:
       return this->invalid("An integer")->readInt64(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<double>(i));
     return this;
   }
@@ -184,7 +184,7 @@ public:
       return this->invalid("An integer")->readUint64(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<double>(i));
     return this;
   }
@@ -194,7 +194,7 @@ public:
       return this->invalid("An integer")->readDouble(d);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(d);
     return this;
   }
@@ -273,7 +273,7 @@ public:
       return this->invalid("An integer")->readInt32(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<T>(i));
     return this;
   }
@@ -283,7 +283,7 @@ public:
       return this->invalid("An integer")->readUint32(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<T>(i));
     return this;
   }
@@ -293,7 +293,7 @@ public:
       return this->invalid("An integer")->readInt64(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<T>(i));
     return this;
   }
@@ -303,7 +303,7 @@ public:
       return this->invalid("An integer")->readUint64(i);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(static_cast<T>(i));
     return this;
   }
@@ -422,7 +422,7 @@ public:
       return this->invalid("A string")->readString(str);
     }
 
-    ASSERT(this->_pArray);
+    CESIUM_ASSERT(this->_pArray);
     this->_pArray->emplace_back(str);
     return this;
   }
@@ -513,7 +513,7 @@ public:
 
   virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
-      ASSERT(this->_pArray);
+      CESIUM_ASSERT(this->_pArray);
       std::vector<T>& o = this->_pArray->emplace_back();
       this->_elementHandler->reset(this, &o);
       return this->_elementHandler->readArrayStart();

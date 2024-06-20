@@ -29,7 +29,7 @@ public:
   }
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
-    ASSERT(this->_pDictionary1 || this->_pDictionary2);
+    CESIUM_ASSERT(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {
       auto it = this->_pDictionary1->emplace(str, T()).first;
