@@ -47,7 +47,7 @@ Tileset::Tileset(
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           std::vector<CesiumAsync::IAssetAccessor::THeader>{},
           std::move(pCustomLoader),
           std::move(pRootTile))} {}
@@ -65,7 +65,7 @@ Tileset::Tileset(
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           url)} {}
 
 Tileset::Tileset(
@@ -83,7 +83,7 @@ Tileset::Tileset(
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)} {}
@@ -597,6 +597,7 @@ static void markTileAndChildrenNonRendered(
 static bool isVisibleFromCamera(
     const ViewState& viewState,
     const BoundingVolume& boundingVolume,
+    const Ellipsoid& ellipsoid,
     bool forceRenderTilesUnderCamera) {
   if (viewState.isBoundingVolumeVisible(boundingVolume)) {
     return true;
@@ -612,7 +613,7 @@ static bool isVisibleFromCamera(
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
   std::optional<GlobeRectangle> maybeRectangle =
-      estimateGlobeRectangle(boundingVolume);
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (position && maybeRectangle) {
     return maybeRectangle->contains(position.value());
   }
@@ -645,19 +646,23 @@ void Tileset::_frustumCull(
     return;
   }
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getEllipsoid();
+
   const std::vector<ViewState>& frustums = frameState.frustums;
   // Frustum cull using the children's bounds.
   if (cullWithChildrenBounds) {
     if (std::any_of(
             frustums.begin(),
             frustums.end(),
-            [children = tile.getChildren(),
+            [&ellipsoid,
+             children = tile.getChildren(),
              renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
                 const ViewState& frustum) {
               for (const Tile& child : children) {
                 if (isVisibleFromCamera(
                         frustum,
                         child.getBoundingVolume(),
+                        ellipsoid,
                         renderTilesUnderCamera)) {
                   return true;
                 }
@@ -672,13 +677,15 @@ void Tileset::_frustumCull(
   } else if (std::any_of(
                  frustums.begin(),
                  frustums.end(),
-                 [&boundingVolume = tile.getBoundingVolume(),
+                 [&ellipsoid,
+                  &boundingVolume = tile.getBoundingVolume(),
                   renderTilesUnderCamera =
                       this->_options.renderTilesUnderCamera](
                      const ViewState& frustum) {
                    return isVisibleFromCamera(
                        frustum,
                        boundingVolume,
+                       ellipsoid,
                        renderTilesUnderCamera);
                  })) {
     // The tile is visible in at least one frustum, so don't cull.

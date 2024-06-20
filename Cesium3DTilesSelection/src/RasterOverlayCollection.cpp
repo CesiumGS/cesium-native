@@ -30,8 +30,12 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 
 RasterOverlayCollection::RasterOverlayCollection(
     Tile::LoadedLinkedList& loadedTiles,
-    const TilesetExternals& externals) noexcept
-    : _pLoadedTiles(&loadedTiles), _externals{externals}, _pOverlays(nullptr) {}
+    const TilesetExternals& externals,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
+    : _pLoadedTiles(&loadedTiles),
+      _externals{externals},
+      _ellipsoid(ellipsoid),
+      _pOverlays(nullptr) {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (this->_pOverlays) {
@@ -59,7 +63,8 @@ void RasterOverlayCollection::add(
   IntrusivePointer<RasterOverlayTileProvider> pPlaceholder =
       pOverlay->createPlaceholder(
           this->_externals.asyncSystem,
-          this->_externals.pAssetAccessor);
+          this->_externals.pAssetAccessor,
+          this->_ellipsoid);
 
   pList->tileProviders.emplace_back(pPlaceholder);
   pList->placeholders.emplace_back(pPlaceholder);

@@ -281,7 +281,8 @@ RasterMappedTo3DTile* addRealTile(
     RasterOverlayTileProvider& tileProvider,
     RasterOverlayTileProvider& placeholder,
     Tile& tile,
-    std::vector<Projection>& missingProjections) {
+    std::vector<Projection>& missingProjections,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
@@ -308,7 +309,7 @@ RasterMappedTo3DTile* addRealTile(
               maximumScreenSpaceError,
               projection,
               *pRectangle,
-              Ellipsoid::WGS84);
+              ellipsoid);
       return addRealTile(tile, tileProvider, *pRectangle, screenPixels, index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
@@ -338,7 +339,7 @@ RasterMappedTo3DTile* addRealTile(
             maximumScreenSpaceError,
             projection,
             *maybeRectangle,
-            Ellipsoid::WGS84);
+            ellipsoid);
     return addRealTile(
         tile,
         tileProvider,

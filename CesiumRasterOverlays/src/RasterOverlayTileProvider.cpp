@@ -24,16 +24,17 @@ namespace CesiumRasterOverlays {
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(std::nullopt),
       _pPrepareRendererResources(nullptr),
       _pLogger(nullptr),
-      _projection(CesiumGeospatial::GeographicProjection()),
+      _projection(CesiumGeospatial::GeographicProjection(ellipsoid)),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
-                             computeMaximumProjectedRectangle()),
+                             computeMaximumProjectedRectangle(ellipsoid)),
       _pPlaceholder(),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),

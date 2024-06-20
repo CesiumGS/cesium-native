@@ -87,8 +87,8 @@ public:
    */
   void setAnchorToFixedTransform(
       const glm::dmat4& newAnchorToFixed,
-      bool adjustOrientation = true,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      bool adjustOrientation,
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the transformation from the anchor's coordinate system to the
@@ -125,8 +125,8 @@ public:
   void setAnchorToLocalTransform(
       const LocalHorizontalCoordinateSystem& localCoordinateSystem,
       const glm::dmat4& newAnchorToLocal,
-      bool adjustOrientation = true,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      bool adjustOrientation,
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 private:
   glm::dmat4 _anchorToFixed;

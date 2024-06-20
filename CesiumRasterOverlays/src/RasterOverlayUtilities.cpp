@@ -1,5 +1,6 @@
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
@@ -31,12 +32,16 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
     return std::nullopt;
   }
 
+  const Ellipsoid& ellipsoid = getProjectionEllipsoid(projections.front());
+
   // Compute the bounds of the tile if they're not provided.
   CesiumGeospatial::GlobeRectangle bounds =
-      globeRectangle
-          ? *globeRectangle
-          : GltfUtilities::computeBoundingRegion(model, modelToEcefTransform)
-                .getRectangle();
+      globeRectangle ? *globeRectangle
+                     : GltfUtilities::computeBoundingRegion(
+                           model,
+                           modelToEcefTransform,
+                           ellipsoid)
+                           .getRectangle();
 
   // Don't let the bounding rectangle cross the anti-meridian. If it does, split
   // it into two rectangles. Ideally we'd map both of them (separately) to the
@@ -204,8 +209,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
 
           // Convert it to cartographic
           const std::optional<CesiumGeospatial::Cartographic> cartographic =
-              CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
-                  positionEcef);
+              ellipsoid.cartesianToCartographic(positionEcef);
           if (!cartographic) {
             for (CesiumGltf::AccessorWriter<glm::vec2>& uvWriter : uvWriters) {
               uvWriter[positionIndex] = glm::dvec2(0.0, 0.0);
@@ -305,7 +309,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
   return RasterOverlayDetails{
       std::move(projections),
       std::move(rectangles),
-      computedBounds.toRegion()};
+      computedBounds.toRegion(ellipsoid)};
 }
 
 namespace {
@@ -329,7 +333,8 @@ bool upsamplePrimitiveForRasterOverlays(
     CesiumGeometry::UpsampledQuadtreeNode childID,
     bool hasInvertedVCoordinate,
     const std::string_view& textureCoordinateAttributeBaseName,
-    int32_t textureCoordinateIndex);
+    int32_t textureCoordinateIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid);
 
 struct FloatVertexAttribute {
   const std::vector<std::byte>& buffer;
@@ -370,7 +375,8 @@ void addSkirt(
     const glm::dvec3& center,
     double skirtHeight,
     int64_t vertexSizeFloats,
-    int32_t positionAttributeIndex);
+    int32_t positionAttributeIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid);
 
 void addSkirts(
     std::vector<float>& output,
@@ -382,7 +388,8 @@ void addSkirts(
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex,
-    bool hasInvertedVCoordinate);
+    bool hasInvertedVCoordinate,
+    const CesiumGeospatial::Ellipsoid& ellipsoid);
 
 bool isWestChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
   return (childID.tileID.x % 2) == 0;
@@ -402,7 +409,8 @@ RasterOverlayUtilities::upsampleGltfForRasterOverlays(
     UpsampledQuadtreeNode childID,
     bool hasInvertedVCoordinate,
     const std::string_view& textureCoordinateAttributeBaseName,
-    int32_t textureCoordinateIndex) {
+    int32_t textureCoordinateIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CESIUM_TRACE("upsampleGltfForRasterOverlays");
   Model result;
 
@@ -463,7 +471,8 @@ RasterOverlayUtilities::upsampleGltfForRasterOverlays(
           childID,
           hasInvertedVCoordinate,
           textureCoordinateAttributeBaseName,
-          textureCoordinateIndex);
+          textureCoordinateIndex,
+          ellipsoid);
 
       // We're assuming here that nothing references primitives by index, so we
       // can remove them without any drama.
@@ -761,7 +770,8 @@ bool upsamplePrimitiveForRasterOverlays(
     CesiumGeometry::UpsampledQuadtreeNode childID,
     bool hasInvertedVCoordinate,
     const std::string_view& textureCoordinateAttributeBaseName,
-    int32_t textureCoordinateIndex) {
+    int32_t textureCoordinateIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
 
   // Add up the per-vertex size of all attributes and create buffers,
@@ -1052,7 +1062,8 @@ bool upsamplePrimitiveForRasterOverlays(
         edgeIndices,
         vertexSizeFloats,
         positionAttributeIndex,
-        hasInvertedVCoordinate);
+        hasInvertedVCoordinate,
+        ellipsoid);
   }
 
   if (newVertexFloats.empty() || indices.empty()) {
@@ -1326,10 +1337,8 @@ void addSkirt(
     const glm::dvec3& center,
     double skirtHeight,
     int64_t vertexSizeFloats,
-    int32_t positionAttributeIndex) {
-  const CesiumGeospatial::Ellipsoid& ellipsoid =
-      CesiumGeospatial::Ellipsoid::WGS84;
-
+    int32_t positionAttributeIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   uint32_t newEdgeIndex = uint32_t(output.size() / size_t(vertexSizeFloats));
   for (size_t i = 0; i < edgeIndices.size(); ++i) {
     const uint32_t edgeIdx = edgeIndices[i];
@@ -1395,7 +1404,8 @@ void addSkirts(
     EdgeIndices& edgeIndices,
     int64_t vertexSizeFloats,
     int32_t positionAttributeIndex,
-    bool hasInvertedVCoordinate) {
+    bool hasInvertedVCoordinate,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CESIUM_TRACE("addSkirts");
 
   const glm::dvec3 center = currentSkirt.meshCenter;
@@ -1433,7 +1443,8 @@ void addSkirts(
       center,
       currentSkirt.skirtWestHeight,
       vertexSizeFloats,
-      positionAttributeIndex);
+      positionAttributeIndex,
+      ellipsoid);
 
   // south
   if (isSouthChild(childID)) {
@@ -1471,7 +1482,8 @@ void addSkirts(
       center,
       currentSkirt.skirtSouthHeight,
       vertexSizeFloats,
-      positionAttributeIndex);
+      positionAttributeIndex,
+      ellipsoid);
 
   // east
   if (!isWestChild(childID)) {
@@ -1500,7 +1512,8 @@ void addSkirts(
       center,
       currentSkirt.skirtEastHeight,
       vertexSizeFloats,
-      positionAttributeIndex);
+      positionAttributeIndex,
+      ellipsoid);
 
   // north
   if (!isSouthChild(childID)) {
@@ -1538,7 +1551,8 @@ void addSkirts(
       center,
       currentSkirt.skirtNorthHeight,
       vertexSizeFloats,
-      positionAttributeIndex);
+      positionAttributeIndex,
+      ellipsoid);
 }
 
 bool upsamplePrimitiveForRasterOverlays(
@@ -1549,7 +1563,8 @@ bool upsamplePrimitiveForRasterOverlays(
     CesiumGeometry::UpsampledQuadtreeNode childID,
     bool hasInvertedVCoordinate,
     const std::string_view& textureCoordinateAttributeBaseName,
-    int32_t textureCoordinateIndex) {
+    int32_t textureCoordinateIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
       primitive.indices < 0 ||
       primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
@@ -1570,7 +1585,8 @@ bool upsamplePrimitiveForRasterOverlays(
         childID,
         hasInvertedVCoordinate,
         textureCoordinateAttributeBaseName,
-        textureCoordinateIndex);
+        textureCoordinateIndex,
+        ellipsoid);
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_SHORT) {
@@ -1582,7 +1598,8 @@ bool upsamplePrimitiveForRasterOverlays(
         childID,
         hasInvertedVCoordinate,
         textureCoordinateAttributeBaseName,
-        textureCoordinateIndex);
+        textureCoordinateIndex,
+        ellipsoid);
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_INT) {
@@ -1594,7 +1611,8 @@ bool upsamplePrimitiveForRasterOverlays(
         childID,
         hasInvertedVCoordinate,
         textureCoordinateAttributeBaseName,
-        textureCoordinateIndex);
+        textureCoordinateIndex,
+        ellipsoid);
   }
 
   return false;

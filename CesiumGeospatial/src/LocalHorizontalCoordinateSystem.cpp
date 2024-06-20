@@ -58,7 +58,8 @@ LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
           xAxisDirection,
           yAxisDirection,
           zAxisDirection,
-          scaleToMeters) {}
+          scaleToMeters,
+          ellipsoid) {}
 
 LocalHorizontalCoordinateSystem::LocalHorizontalCoordinateSystem(
     const glm::dvec3& originEcef,
