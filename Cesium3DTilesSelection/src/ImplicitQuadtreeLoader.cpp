@@ -187,27 +187,26 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               tileTransform,
               requestHeaders};
           return converter(responseData, gltfOptions, assetFetcher)
-              .thenImmediately(
-                  [ellipsoid, pLogger, tileUrl, pCompletedRequest](
-                      GltfConverterResult&& result) {
-                    // Report any errors if there are any
-                    logTileLoadResult(pLogger, tileUrl, result.errors);
-                    if (result.errors || !result.model) {
-                      return TileLoadResult::createFailedResult(
-                          std::move(pCompletedRequest));
-                    }
+              .thenImmediately([ellipsoid, pLogger, tileUrl, pCompletedRequest](
+                                   GltfConverterResult&& result) {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
+                      std::move(pCompletedRequest));
+                }
 
-                    return TileLoadResult{
-                        std::move(*result.model),
-                        CesiumGeometry::Axis::Y,
-                        std::nullopt,
-                        std::nullopt,
-                        std::nullopt,
-                        std::move(pCompletedRequest),
-                        {},
-                        TileLoadResultState::Success,
-                        ellipsoid};
-                  });
+                return TileLoadResult{
+                    std::move(*result.model),
+                    CesiumGeometry::Axis::Y,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success,
+                    ellipsoid};
+              });
         }
         // content type is not supported
         return fail();
