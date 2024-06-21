@@ -14,9 +14,12 @@
 namespace CesiumGeospatial {
 
 /**
- * @brief Loads and queries heights from an Earth Gravitational Model 96 (EGM96) grid.
- * 
- * EGM96 is a standard geopotential model of the earth's surface, which can be used to obtain an approximation of the mean sea level (MSL) at any location on a WGS84 ellipsoid.
+ * @brief Loads and queries heights from an Earth Gravitational Model 96 (EGM96)
+ * grid.
+ *
+ * EGM96 is a standard geopotential model of the earth's surface, which can be
+ * used to obtain an approximation of the mean sea level (MSL) at any location
+ * on a WGS84 ellipsoid.
  */
 class CESIUMGEOSPATIAL_API EarthGravitationalModel96Grid final {
 public:
@@ -42,9 +45,10 @@ public:
    * @brief Samples the height at the given position.
    *
    * @param position The position to sample.
-   * @returns The height (in meters) of the EGM96 surface above the WGS84 ellipsoid. 
-   *          A positive value indicates that MSL is above the ellipsoid's surface,
-   *          while a negative value indicates that MSL is below the ellipsoid's surface.
+   * @returns The height (in meters) of the EGM96 surface above the WGS84
+   * ellipsoid. A positive value indicates that MSL is above the ellipsoid's
+   * surface, while a negative value indicates that MSL is below the ellipsoid's
+   * surface.
    */
   double sampleHeight(const Cartographic& position) const;
 

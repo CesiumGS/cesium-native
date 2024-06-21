@@ -26,7 +26,8 @@ public:
 
   void write(
       const gsl::span<const std::byte>& buffer,
-      std::ios::fmtflags flags = std::ios::out | std::ios::binary | std::ios::trunc) {
+      std::ios::fmtflags flags = std::ios::out | std::ios::binary |
+                                 std::ios::trunc) {
     std::fstream stream(_filePath, flags);
     REQUIRE(stream.good());
     stream.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());

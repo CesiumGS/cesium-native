@@ -238,22 +238,19 @@ TEST_CASE("EarthGravitationalModel96Grid::fromBuffer") {
 
   SECTION("Fails on too-short buffer") {
     gsl::span<const std::byte> buffer(&zeroByte, 4);
-    auto grid =
-        EarthGravitationalModel96Grid::fromBuffer(buffer);
+    auto grid = EarthGravitationalModel96Grid::fromBuffer(buffer);
     CHECK(!grid.has_value());
   }
 
   SECTION("Fails on odd-length buffer") {
     gsl::span<const std::byte> buffer(&zeroByte, 3000001);
-    auto grid =
-        EarthGravitationalModel96Grid::fromBuffer(buffer);
+    auto grid = EarthGravitationalModel96Grid::fromBuffer(buffer);
     CHECK(!grid.has_value());
   }
 
   SECTION("Loads an arbitrary correctly-formed buffer") {
     gsl::span<const std::byte> buffer(&zeroByte, 3000000);
-    auto grid =
-        EarthGravitationalModel96Grid::fromBuffer(buffer);
+    auto grid = EarthGravitationalModel96Grid::fromBuffer(buffer);
     CHECK(grid.has_value());
   }
 }
