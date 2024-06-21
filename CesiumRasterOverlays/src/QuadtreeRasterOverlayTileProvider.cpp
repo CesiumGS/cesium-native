@@ -519,7 +519,7 @@ void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
     if (pImage.use_count() == 1) {
       if (pImage->image) {
         this->_cachedBytes -= int64_t(pImage->image->pixelData.size());
-        assert(this->_cachedBytes >= 0);
+        CESIUM_ASSERT(this->_cachedBytes >= 0);
       }
     }
   }
@@ -578,7 +578,7 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
         targetRectangle.computeIntersection(sourceSubset);
     if (!maybeIntersection) {
       // We really shouldn't have an image that doesn't overlap the target.
-      assert(false);
+      CESIUM_ASSERT(false);
       continue;
     }
 

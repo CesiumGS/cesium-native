@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 
 #include <glm/fwd.hpp>
@@ -107,7 +108,8 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    */
   static CesiumGeospatial::BoundingRegion computeBoundingRegion(
       const CesiumGltf::Model& gltf,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Parse the copyright field of a glTF model and return the individual

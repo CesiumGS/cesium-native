@@ -6,6 +6,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
@@ -62,10 +63,13 @@ getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
  * given {@link BoundingVolume}.
  *
  * @param boundingVolume The bounding volume.
+ * @param ellipsoid The ellipsoid to use for globe calculations.
  * @return The bounding {@link CesiumGeospatial::GlobeRectangle}.
  */
 CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
-estimateGlobeRectangle(const BoundingVolume& boundingVolume);
+estimateGlobeRectangle(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 /**
  * @brief Returns the bounding region if the bounding volume is a
@@ -85,6 +89,8 @@ getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
  * @return The oriented bounding box.
  */
 CESIUM3DTILESSELECTION_API CesiumGeometry::OrientedBoundingBox
-getOrientedBoundingBoxFromBoundingVolume(const BoundingVolume& boundingVolume);
+getOrientedBoundingBoxFromBoundingVolume(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 } // namespace Cesium3DTilesSelection

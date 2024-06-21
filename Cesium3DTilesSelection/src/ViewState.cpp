@@ -24,7 +24,8 @@ namespace Cesium3DTilesSelection {
       viewportSize,
       horizontalFieldOfView,
       verticalFieldOfView,
-      ellipsoid.cartesianToCartographic(position));
+      ellipsoid.cartesianToCartographic(position),
+      ellipsoid);
 }
 
 ViewState::ViewState(
@@ -34,13 +35,15 @@ ViewState::ViewState(
     const glm::dvec2& viewportSize,
     double horizontalFieldOfView,
     double verticalFieldOfView,
-    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic)
+    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position(position),
       _direction(direction),
       _up(up),
       _viewportSize(viewportSize),
       _horizontalFieldOfView(horizontalFieldOfView),
       _verticalFieldOfView(verticalFieldOfView),
+      _ellipsoid(ellipsoid),
       _sseDenominator(2.0 * glm::tan(0.5 * verticalFieldOfView)),
       _positionCartographic(positionCartographic),
       _cullingVolume(createCullingVolume(
@@ -138,7 +141,8 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
             viewState._position);
       }
       return boundingRegion.computeDistanceSquaredToPosition(
-          viewState._position);
+          viewState._position,
+          viewState._ellipsoid);
     }
 
     double operator()(const BoundingSphere& boundingSphere) noexcept {
@@ -154,7 +158,8 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
             viewState._position);
       }
       return boundingRegion.computeConservativeDistanceSquaredToPosition(
-          viewState._position);
+          viewState._position,
+          viewState._ellipsoid);
     }
 
     double operator()(const S2CellBoundingVolume& s2Cell) noexcept {

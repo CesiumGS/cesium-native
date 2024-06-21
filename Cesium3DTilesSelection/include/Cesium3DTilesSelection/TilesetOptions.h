@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 
 #include <functional>
@@ -318,6 +319,15 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * so it must be inexpensive to copy.
    */
   std::any rendererOptions;
+
+  /**
+   * @brief The ellipsoid to use for this tileset.
+   * This value shouldn't be changed after the tileset is constructed. If you
+   * need to change a tileset's ellipsoid, please recreate the tileset.
+   *
+   * If no ellipsoid is set, Ellipsoid::WGS84 will be used by default.
+   */
+  CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
 };
 
 } // namespace Cesium3DTilesSelection

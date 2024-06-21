@@ -1,6 +1,6 @@
 #include "HilbertOrder.h"
 
-#include <cassert>
+#include "CesiumUtility/Assert.h"
 
 using namespace CesiumGeospatial;
 
@@ -27,7 +27,7 @@ void rotate(uint32_t n, uint32_t& x, uint32_t& y, bool rx, bool ry) {
 HilbertOrder::encode2D(uint32_t level, uint32_t x, uint32_t y) {
   uint32_t n = 1U << level;
 
-  assert(x < n && y < n);
+  CESIUM_ASSERT(x < n && y < n);
 
   uint64_t index = 0;
 
