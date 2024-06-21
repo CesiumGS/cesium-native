@@ -24,7 +24,7 @@ public:
 
   void write(
       const gsl::span<const std::byte>& buffer,
-      std::ios::fmtflags flags = std::ios::out | std::ios::binary |
+      std::ios::openmode flags = std::ios::out | std::ios::binary |
                                  std::ios::trunc);
 
 private:

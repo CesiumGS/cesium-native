@@ -15,7 +15,7 @@ static std::string getTempFilename() {
   std::random_device d;
   std::mt19937 gen(d());
 
-  for (int i = 0; i < randFilenameLen; i++) {
+  for (size_t i = 0; i < randFilenameLen; i++) {
     str += randFilenameChars[dist(gen)];
   }
 
@@ -32,8 +32,8 @@ OwnedTempFile::OwnedTempFile(const gsl::span<const std::byte>& buffer)
 
 void OwnedTempFile::write(
     const gsl::span<const std::byte>& buffer,
-    std::ios::fmtflags flags) {
-  std::fstream stream(_filePath, flags);
+    std::ios::openmode flags) {
+  std::fstream stream(_filePath.string(), flags);
   REQUIRE(stream.good());
   stream.write(
       reinterpret_cast<const char*>(buffer.data()),
