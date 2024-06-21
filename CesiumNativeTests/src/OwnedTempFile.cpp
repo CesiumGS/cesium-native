@@ -1,0 +1,41 @@
+#include <CesiumNativeTests/OwnedTempFile.h>
+
+#include <random>
+
+constexpr size_t randFilenameLen = 8;
+constexpr size_t randFilenameNumChars = 63;
+static const char randFilenameChars[randFilenameNumChars] =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+static std::string getTempFilename() {
+  std::string str = "CesiumTest_";
+  str.reserve(str.length() + randFilenameLen);
+
+  std::uniform_int_distribution<size_t> dist(0, randFilenameNumChars - 1);
+  std::random_device d;
+  std::mt19937 gen(d());
+
+  for (int i = 0; i < randFilenameLen; i++) {
+    str += randFilenameChars[dist(gen)];
+  }
+
+  auto path = std::filesystem::temp_directory_path() / str;
+  return path.string();
+}
+
+OwnedTempFile::OwnedTempFile() : _filePath(getTempFilename()) {}
+
+OwnedTempFile::OwnedTempFile(const gsl::span<const std::byte>& buffer)
+    : OwnedTempFile() {
+  write(buffer);
+}
+
+void OwnedTempFile::write(
+    const gsl::span<const std::byte>& buffer,
+    std::ios::fmtflags flags) {
+  std::fstream stream(_filePath, flags);
+  REQUIRE(stream.good());
+  stream.write(
+      reinterpret_cast<const char*>(buffer.data()),
+      static_cast<std::streamsize>(buffer.size()));
+}
