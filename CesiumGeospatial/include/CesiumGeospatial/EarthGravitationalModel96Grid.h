@@ -14,13 +14,14 @@
 namespace CesiumGeospatial {
 
 /**
- * @brief Allows elevation data in the format provided by the Earth
- * Gravitational Model 1996 to be loaded and queried.
+ * @brief Loads and queries heights from an Earth Gravitational Model 96 (EGM96) grid.
+ * 
+ * EGM96 is a standard geopotential model of the earth's surface, which can be used to obtain an approximation of the mean sea level (MSL) at any location on a WGS84 ellipsoid.
  */
 class CESIUMGEOSPATIAL_API EarthGravitationalModel96Grid final {
 public:
   /**
-   * Attempts to create a {@link EarthGravitationalModel96Grid} from the given file.
+   * @brief Attempts to create a {@link EarthGravitationalModel96Grid} from the given file.
    *
    * This method expects a file in the format of the WW15MGH.DAC 15-arcminute
    * grid.
@@ -38,16 +39,17 @@ public:
   fromBuffer(const gsl::span<const std::byte>& buffer);
 
   /**
-   * Samples the height at the given position.
+   * @brief Samples the height at the given position.
    *
    * @param position The position to sample.
-   * @returns The height representing the difference in meters of mean sea-level
-   * from the surface of a WGS84 ellipsoid.
+   * @returns The height (in meters) of the EGM96 surface above the WGS84 ellipsoid. 
+   *          A positive value indicates that MSL is above the ellipsoid's surface,
+   *          while a negative value indicates that MSL is below the ellipsoid's surface.
    */
-  double sampleHeight(Cartographic& position) const;
+  double sampleHeight(const Cartographic& position) const;
 
 private:
-  EarthGravitationalModel96Grid(const std::vector<int16_t>& gridValues);
+  EarthGravitationalModel96Grid(std::vector<int16_t>&& gridValues);
 
   /**
    * Returns the height of the given grid value, in meters.

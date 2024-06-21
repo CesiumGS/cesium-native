@@ -1,4 +1,6 @@
 #include <CesiumGeospatial/EarthGravitationalModel96Grid.h>
+#include <CesiumNativeTests/OwnedTempFile.h>
+#include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
@@ -16,6 +18,9 @@ public:
   Egm96TestCase(Cartographic position, double height)
       : cartographicPosition(position), expectedHeight(height) {}
 };
+
+const std::filesystem::path testFilePath =
+    std::filesystem::path(CesiumGeospatial_TEST_DATA_DIR) / "WW15MGH.DAC";
 
 // Long, Lat values calculated randomly and paired with expected results from
 // https://www.unavco.org/software/geodetic-utilities/geoid-height-calculator/geoid-height-calculator.html
@@ -185,21 +190,82 @@ const Egm96TestCase boundsCases[] = {
     Egm96TestCase(Cartographic::fromDegrees(-180, 90, 0), 13.61),
 };
 
-TEST_CASE("EarthGravitationalModel96Grid") {
-  std::filesystem::path testFilePath = CesiumGeospatial_TEST_DATA_DIR;
-  testFilePath = testFilePath / "WW15MGH.DAC";
+const std::byte zeroByte{0};
 
-  std::optional<EarthGravitationalModel96Grid> grid =
-      EarthGravitationalModel96Grid::fromFile(testFilePath.string());
-
-  SECTION("Can load the EGM96 model from WW15MGH.DAC properly") {
+TEST_CASE("EarthGravitationalModel96Grid::fromFile") {
+  SECTION("Loads a valid WW15MGH.DAC from file") {
+    auto grid = EarthGravitationalModel96Grid::fromFile(testFilePath.string());
     CHECK(grid.has_value());
   }
 
-  SECTION("Correct values at bounds") {
-    CHECK(grid.has_value());
+  SECTION("Fails on missing file") {
+    auto grid = EarthGravitationalModel96Grid::fromFile("_does_not_exist");
+    CHECK(!grid.has_value());
+  }
 
-    for (Egm96TestCase testCase : boundsCases) {
+  SECTION("Fails on too-short file") {
+    OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 4));
+    auto grid =
+        EarthGravitationalModel96Grid::fromFile(file.getPath().string());
+    CHECK(!grid.has_value());
+  }
+
+  SECTION("Fails on odd-length file") {
+    // Use a file that is otherwise long enough to be considered valid
+    OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 3000001));
+    auto grid =
+        EarthGravitationalModel96Grid::fromFile(file.getPath().string());
+    CHECK(!grid.has_value());
+  }
+
+  // While EGM96 is meant to only parse the one WW15MGH.DAC file, there's no
+  // reason it shouldn't be able to parse any file that meets the same
+  // requirements.
+  SECTION("Loads an arbitrary correctly-formed file") {
+    OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 3000000));
+    auto grid =
+        EarthGravitationalModel96Grid::fromFile(file.getPath().string());
+    CHECK(grid.has_value());
+  }
+}
+
+TEST_CASE("EarthGravitationalModel96Grid::fromBuffer") {
+  SECTION("Loads a valid WW15MGH.DAC from buffer") {
+    auto grid =
+        EarthGravitationalModel96Grid::fromBuffer(readFile(testFilePath));
+    CHECK(grid.has_value());
+  }
+
+  SECTION("Fails on too-short buffer") {
+    gsl::span<const std::byte> buffer(&zeroByte, 4);
+    auto grid =
+        EarthGravitationalModel96Grid::fromBuffer(buffer);
+    CHECK(!grid.has_value());
+  }
+
+  SECTION("Fails on odd-length buffer") {
+    gsl::span<const std::byte> buffer(&zeroByte, 3000001);
+    auto grid =
+        EarthGravitationalModel96Grid::fromBuffer(buffer);
+    CHECK(!grid.has_value());
+  }
+
+  SECTION("Loads an arbitrary correctly-formed buffer") {
+    gsl::span<const std::byte> buffer(&zeroByte, 3000000);
+    auto grid =
+        EarthGravitationalModel96Grid::fromBuffer(buffer);
+    CHECK(grid.has_value());
+  }
+}
+
+TEST_CASE("EarthGravitationalModel96Grid::sampleHeight") {
+  std::optional<EarthGravitationalModel96Grid> grid =
+      EarthGravitationalModel96Grid::fromFile(testFilePath.string());
+
+  SECTION("Correct values at bounds") {
+    REQUIRE(grid.has_value());
+
+    for (const Egm96TestCase& testCase : boundsCases) {
       const double obtainedValue =
           grid->sampleHeight(testCase.cartographicPosition);
       CHECK(Math::equalsEpsilon(
@@ -210,9 +276,9 @@ TEST_CASE("EarthGravitationalModel96Grid") {
   }
 
   SECTION("Calculates correct height values") {
-    CHECK(grid.has_value());
+    REQUIRE(grid.has_value());
 
-    for (Egm96TestCase testCase : testCases) {
+    for (const Egm96TestCase& testCase : testCases) {
       const double obtainedValue =
           grid->sampleHeight(testCase.cartographicPosition);
       const bool equals = (Math::equalsEpsilon(

@@ -37,36 +37,38 @@ CesiumGeospatial::EarthGravitationalModel96Grid::fromFile(
 std::optional<EarthGravitationalModel96Grid>
 CesiumGeospatial::EarthGravitationalModel96Grid::fromBuffer(
     const gsl::span<const std::byte>& buffer) {
-  const int expectedBytes = NUM_ROWS * NUM_COLUMNS * sizeof(int16_t);
+  const size_t expectedBytes = NUM_ROWS * NUM_COLUMNS * sizeof(int16_t);
 
-  // Not enough data - is this a valid WW15MGH.DAC?
-  if (buffer.size_bytes() < expectedBytes) {
+  if (
+      // Not enough data - is this a valid WW15MGH.DAC?
+      buffer.size_bytes() < expectedBytes ||
+      // WW15MGH.DAC should just be full of 2-byte int16_t, so if it's not even
+      // then something has gone wrong (so we should stop now before we overflow
+      // the end of the gridValues buffer!)
+      buffer.size_bytes() % 2 != 0) {
     return std::nullopt;
   }
 
+  const size_t size = buffer.size_bytes();
+  const std::byte* pRead = buffer.data();
   std::vector<int16_t> gridValues;
-  const int size = static_cast<int>(buffer.size_bytes());
+  gridValues.resize(size / 2);
+  std::byte* pWrite = reinterpret_cast<std::byte*>(gridValues.data());
 
-  for (int i = 0; i < size; i += 2) {
+  for (size_t i = 0; i < size; i += 2) {
     // WW15MGH.DAC is in big endian, so we swap the bytes
-    const std::byte msb = buffer.data()[i];
-    const std::byte lsb = buffer.data()[i + 1];
-    const int16_t gridValue =
-        static_cast<int16_t>(lsb) |
-        static_cast<int16_t>(static_cast<int16_t>(msb) << 8);
-    gridValues.push_back(gridValue);
+    pWrite[i] = pRead[i + 1];
+    pWrite[i + 1] = pRead[i];
   }
 
-  return EarthGravitationalModel96Grid(gridValues);
+  return EarthGravitationalModel96Grid(std::move(gridValues));
 }
 
-double
-EarthGravitationalModel96Grid::sampleHeight(Cartographic& position) const {
-  const double longitude =
-      std::remainder(position.longitude - Math::OnePi, Math::TwoPi) +
-      Math::OnePi;
+double EarthGravitationalModel96Grid::sampleHeight(
+    const Cartographic& position) const {
+  const double longitude = Math::zeroToTwoPi(position.longitude);
   const double latitude =
-      std::clamp(position.latitude, -Math::PiOverTwo, Math::PiOverTwo);
+      Math::clamp(position.latitude, -Math::PiOverTwo, Math::PiOverTwo);
 
   const double horizontalIndexDecimal = (NUM_COLUMNS * longitude) / Math::TwoPi;
   const int horizontalIndex = static_cast<int>(horizontalIndexDecimal);
@@ -96,7 +98,7 @@ EarthGravitationalModel96Grid::sampleHeight(Cartographic& position) const {
 }
 
 EarthGravitationalModel96Grid::EarthGravitationalModel96Grid(
-    const std::vector<int16_t>& gridValues)
+    std::vector<int16_t>&& gridValues)
     : _gridValues(gridValues) {}
 
 double EarthGravitationalModel96Grid::getHeightForIndices(
@@ -108,10 +110,9 @@ double EarthGravitationalModel96Grid::getHeightForIndices(
     clampedVertical = NUM_ROWS - 1;
   }
 
-  const std::vector<int16_t>::size_type index =
-      static_cast<std::vector<int16_t>::size_type>(
-          clampedVertical * NUM_COLUMNS + horizontal);
-  const double result = static_cast<double>(_gridValues[index]) / 100.0;
+  const size_t index =
+      static_cast<size_t>(clampedVertical * NUM_COLUMNS + horizontal);
+  const double result = _gridValues[index] / 100.0;
 
   return result;
 }
