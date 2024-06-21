@@ -35,7 +35,7 @@ IntersectionTests::rayPlane(const Ray& ray, const Plane& plane) noexcept {
 std::optional<glm::dvec2> IntersectionTests::rayEllipsoid(
     const Ray& ray,
     const glm::dvec3& radii) noexcept {
-  if (radii.x == 0 || radii.y == 0 || radii.z == 0) {
+  if (radii.x == 0.0 || radii.y == 0.0 || radii.z == 0.0) {
     return std::nullopt;
   }
 
