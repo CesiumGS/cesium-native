@@ -9,6 +9,22 @@
 
 #include <optional>
 
+// The comments are copied here so that the doc comment always shows up in
+// Intellisense whether the default is toggled or not.
+#ifndef CESIUM_DISABLE_DEFAULT_ELLIPSOID
+// To keep from breaking our API, a lot of things now need default Ellipsoid
+// parameters. However, we shouldn't rely on these defaults internally, so
+// disabling them is a good way to get a compile-time check that they're not
+// being used. This macro allows us to toggle this check.
+#define CESIUM_DEFAULT_ELLIPSOID = CesiumGeospatial::Ellipsoid::WGS84
+#else
+// To keep from breaking our API, a lot of things now need default Ellipsoid
+// parameters. However, we shouldn't rely on these defaults internally, so
+// disabling them is a good way to get a compile-time check that they're not
+// being used. This macro allows us to toggle this check.
+#define CESIUM_DEFAULT_ELLIPSOID
+#endif
+
 namespace CesiumGeospatial {
 
 /**
@@ -29,6 +45,11 @@ public:
    * https://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf.
    */
   static /*constexpr*/ const Ellipsoid WGS84;
+
+  /**
+   * @brief An Ellipsoid with all three radii set to one meter.
+   */
+  static const Ellipsoid UNIT_SPHERE;
 
   /**
    * @brief Creates a new instance.

@@ -52,7 +52,8 @@ Future<TileLoadResult> loadTile(
   tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
       {GlobeRectangle(-Math::OnePi, -Math::PiOverTwo, 0.0, Math::PiOverTwo),
        -1000.0,
-       9000.0}});
+       9000.0,
+       Ellipsoid::WGS84}});
 
   TileLoadInput loadInput{
       tile,
@@ -401,7 +402,7 @@ TEST_CASE("Test load layer json tile content") {
 
   CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
-  GeographicProjection projection;
+  GeographicProjection projection(Ellipsoid::WGS84);
   auto quadtreeRectangleProjected =
       projection.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE);
 
@@ -691,7 +692,7 @@ TEST_CASE("Test creating tile children for layer json") {
 
   CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
-  GeographicProjection projection;
+  GeographicProjection projection(Ellipsoid::WGS84);
   auto quadtreeRectangleProjected =
       projection.project(GeographicProjection::MAXIMUM_GLOBE_RECTANGLE);
 
@@ -741,7 +742,8 @@ TEST_CASE("Test creating tile children for layer json") {
     tile.setBoundingVolume(BoundingRegion(
         GlobeRectangle(-Math::OnePi, -Math::PiOverTwo, 0.0, Math::PiOverTwo),
         -1000.0,
-        9000.0));
+        9000.0,
+        Ellipsoid::WGS84));
 
     {
       MockTilesetContentManagerTestFixture::setTileLoadState(
@@ -837,7 +839,8 @@ TEST_CASE("Test creating tile children for layer json") {
     tile.setBoundingVolume(BoundingRegion(
         GlobeRectangle(-Math::OnePi, 0, -Math::PiOverTwo, Math::PiOverTwo),
         -1000.0,
-        9000.0));
+        9000.0,
+        Ellipsoid::WGS84));
     auto tileChildrenResult = loader.createTileChildren(tile);
     CHECK(tileChildrenResult.state == TileLoadResultState::Success);
 
@@ -911,7 +914,8 @@ TEST_CASE("Test creating tile children for layer json") {
     tile.setBoundingVolume(BoundingRegion(
         GlobeRectangle(-Math::PiOverTwo, -Math::PiOverTwo, 0, 0),
         -1000.0,
-        9000.0));
+        9000.0,
+        Ellipsoid::WGS84));
     auto tileChildrenResult = loader.createTileChildren(tile);
     CHECK(tileChildrenResult.state == TileLoadResultState::Success);
 

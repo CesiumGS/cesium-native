@@ -62,6 +62,11 @@ struct WebMapServiceRasterOverlayOptions {
    * @brief Pixel height of image tiles.
    */
   int32_t tileHeight = 256;
+
+  /**
+   * @brief The ellipsoid used for this overlay.
+   */
+  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid = std::nullopt;
 };
 
 /**

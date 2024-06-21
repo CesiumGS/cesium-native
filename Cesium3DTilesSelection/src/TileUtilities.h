@@ -19,7 +19,9 @@ namespace CesiumImpl {
 bool withinPolygons(
     const BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
-        cartographicPolygons) noexcept;
+        cartographicPolygons,
+    const CesiumGeospatial::Ellipsoid& ellipsoid
+        CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
 /**
  * @brief Returns whether the tile is completely outside all the polygons.
@@ -31,6 +33,8 @@ bool withinPolygons(
 bool outsidePolygons(
     const BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
-        cartographicPolygons) noexcept;
+        cartographicPolygons,
+    const CesiumGeospatial::Ellipsoid& ellipsoid
+        CESIUM_DEFAULT_ELLIPSOID) noexcept;
 } // namespace CesiumImpl
 } // namespace Cesium3DTilesSelection

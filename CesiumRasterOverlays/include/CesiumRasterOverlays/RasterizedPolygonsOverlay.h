@@ -47,6 +47,10 @@ public:
 
   bool getInvertSelection() const noexcept { return this->_invertSelection; }
 
+  const CesiumGeospatial::Ellipsoid& getEllipsoid() const noexcept {
+    return this->_ellipsoid;
+  }
+
 private:
   std::vector<CesiumGeospatial::CartographicPolygon> _polygons;
   bool _invertSelection;

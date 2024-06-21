@@ -3,8 +3,6 @@
 #include "JsonHandler.h"
 #include "Library.h"
 
-#include <cassert>
-
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API DoubleJsonHandler : public JsonHandler {
 public:

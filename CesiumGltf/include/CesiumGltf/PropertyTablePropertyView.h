@@ -7,7 +7,6 @@
 
 #include <gsl/span>
 
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
@@ -189,7 +188,7 @@ public:
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
         _stringOffsetTypeSize{0} {
-    assert(
+    CESIUM_ASSERT(
         this->_status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
@@ -306,8 +305,8 @@ public:
   std::optional<ElementType> get(int64_t index) const noexcept {
     if (this->_status ==
         PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
-      assert(index >= 0 && "index must be non-negative");
-      assert(index < size() && "index must be less than size");
+      CESIUM_ASSERT(index >= 0 && "index must be non-negative");
+      CESIUM_ASSERT(index < size() && "index must be less than size");
 
       return this->defaultValue();
     }
@@ -340,14 +339,14 @@ public:
    * @return The value of the element
    */
   ElementType getRaw(int64_t index) const noexcept {
-    assert(
+    CESIUM_ASSERT(
         this->_status == PropertyTablePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
-    assert(
+    CESIUM_ASSERT(
         size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
+    CESIUM_ASSERT(index >= 0 && "index must be non-negative");
+    CESIUM_ASSERT(index < size() && "index must be less than size");
 
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumericValue(index);
@@ -547,7 +546,7 @@ public:
         _arrayOffsets{},
         _arrayOffsetType{PropertyComponentType::None},
         _arrayOffsetTypeSize{0} {
-    assert(
+    CESIUM_ASSERT(
         this->_status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
@@ -652,8 +651,8 @@ public:
   std::optional<NormalizedType> get(int64_t index) const noexcept {
     if (this->_status ==
         PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
-      assert(index >= 0 && "index must be non-negative");
-      assert(index < size() && "index must be less than size");
+      CESIUM_ASSERT(index >= 0 && "index must be non-negative");
+      CESIUM_ASSERT(index < size() && "index must be less than size");
 
       return this->defaultValue();
     }
@@ -730,14 +729,14 @@ public:
    * @return The value of the element
    */
   ElementType getRaw(int64_t index) const noexcept {
-    assert(
+    CESIUM_ASSERT(
         this->_status == PropertyTablePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
-    assert(
+    CESIUM_ASSERT(
         size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
+    CESIUM_ASSERT(index >= 0 && "index must be non-negative");
+    CESIUM_ASSERT(index < size() && "index must be less than size");
 
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getValue(index);

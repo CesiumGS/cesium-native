@@ -434,7 +434,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
             Math::OnePi,
             Math::PiOverTwo},
         0.0,
-        100.0};
+        100.0,
+        Ellipsoid::WGS84};
 
     ImplicitOctreeLoader loader{
         "tileset.json",
