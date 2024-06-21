@@ -6,6 +6,7 @@
 
 - Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
 - Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
+- Added equality operator for `Cartographic`.
 - Added `CESIUM_MSVC_STATIC_RUNTIME_ENABLED` option to the CMake scripts. It is OFF by default, and when enabled, configures any MS visual studio projects for the "Multi-threaded" (/MT) runtime library rather than "Multi-threaded DLL" (/MD)
 - Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
   - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
