@@ -11,18 +11,19 @@ const std::string geographicString("EPSG:4326");
 const std::string webMercatorString("EPSG:3857");
 } // namespace
 
-std::optional<Projection> Layer::getProjection() const noexcept {
+std::optional<Projection> Layer::getProjection(
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const noexcept {
   if (this->projection == geographicString)
-    return GeographicProjection();
+    return GeographicProjection(ellipsoid);
   else if (this->projection == webMercatorString)
-    return WebMercatorProjection();
+    return WebMercatorProjection(ellipsoid);
   else
     return std::nullopt;
 }
 
-std::optional<CesiumGeometry::QuadtreeTilingScheme>
-Layer::getTilingScheme() const noexcept {
-  std::optional<Projection> maybeProjection = this->getProjection();
+std::optional<CesiumGeometry::QuadtreeTilingScheme> Layer::getTilingScheme(
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const noexcept {
+  std::optional<Projection> maybeProjection = this->getProjection(ellipsoid);
   if (!maybeProjection)
     return std::nullopt;
 
@@ -45,9 +46,9 @@ Layer::getTilingScheme() const noexcept {
   return std::visit(Operation(), *maybeProjection);
 }
 
-std::optional<CesiumGeospatial::BoundingRegion>
-Layer::getRootBoundingRegion() const noexcept {
-  std::optional<Projection> maybeProjection = this->getProjection();
+std::optional<CesiumGeospatial::BoundingRegion> Layer::getRootBoundingRegion(
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const noexcept {
+  std::optional<Projection> maybeProjection = this->getProjection(ellipsoid);
   if (!maybeProjection)
     return std::nullopt;
 
@@ -67,5 +68,9 @@ Layer::getRootBoundingRegion() const noexcept {
   const double defaultMinimumHeight = -1000.0;
   const double defaultMaximumHeight = 9000.0;
 
-  return BoundingRegion(rectangle, defaultMinimumHeight, defaultMaximumHeight);
+  return BoundingRegion(
+      rectangle,
+      defaultMinimumHeight,
+      defaultMaximumHeight,
+      getProjectionEllipsoid(*maybeProjection));
 }

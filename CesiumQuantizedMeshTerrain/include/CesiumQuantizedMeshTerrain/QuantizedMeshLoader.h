@@ -5,6 +5,7 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/ErrorList.h>
 
@@ -81,7 +82,8 @@ public:
       const CesiumGeospatial::BoundingRegion& tileBoundingVolume,
       const std::string& url,
       const gsl::span<const std::byte>& data,
-      bool enableWaterMask);
+      bool enableWaterMask,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Parses the metadata (tile availability) from the given

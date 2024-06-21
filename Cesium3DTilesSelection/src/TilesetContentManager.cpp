@@ -94,15 +94,16 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // Get an accurate bounding region from the content first.
   const TileContent& parentContent = parent.getContent();
   const TileRenderContent* pRenderContent = parentContent.getRenderContent();
-  assert(pRenderContent && "This function only deal with render content");
+  CESIUM_ASSERT(
+      pRenderContent && "This function only deal with render content");
 
   const RasterOverlayDetails& details =
       pRenderContent->getRasterOverlayDetails();
 
   // If we don't have any overlay projections/rectangles, why are we
   // upsampling?
-  assert(!details.rasterOverlayProjections.empty());
-  assert(!details.rasterOverlayRectangles.empty());
+  CESIUM_ASSERT(!details.rasterOverlayProjections.empty());
+  CESIUM_ASSERT(!details.rasterOverlayRectangles.empty());
 
   // Use the projected center of the tile as the subdivision center.
   // The tile will be subdivided by (0.5, 0.5) in the first overlay's
@@ -128,6 +129,7 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
 }
 
 void createQuadtreeSubdividedChildren(
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
     Tile& parent,
     RasterOverlayUpsampler& upsampler) {
   std::optional<RegionAndCenter> maybeRegionAndCenter =
@@ -223,7 +225,8 @@ void createQuadtreeSubdividedChildren(
               center.longitude,
               center.latitude),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   se.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -233,7 +236,8 @@ void createQuadtreeSubdividedChildren(
               parentRectangle.getEast(),
               center.latitude),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   nw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -243,7 +247,8 @@ void createQuadtreeSubdividedChildren(
               center.longitude,
               parentRectangle.getNorth()),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   ne.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -253,7 +258,8 @@ void createQuadtreeSubdividedChildren(
               parentRectangle.getEast(),
               parentRectangle.getNorth()),
           minimumHeight,
-          maximumHeight)));
+          maximumHeight,
+          ellipsoid)));
 
   // set children transforms
   sw.setTransform(parent.getTransform());
@@ -275,7 +281,9 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       tileProviders = overlays.getTileProviders();
   const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
       placeholders = overlays.getPlaceholderTileProviders();
-  assert(tileProviders.size() == placeholders.size());
+  CESIUM_ASSERT(tileProviders.size() == placeholders.size());
+
+  const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
   for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
     RasterOverlayTileProvider& tileProvider = *tileProviders[i];
@@ -286,7 +294,8 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
         tileProvider,
         placeholder,
         tile,
-        projections);
+        projections,
+        ellipsoid);
     if (pMapped) {
       // Try to load now, but if the mapped raster tile is a placeholder this
       // won't do anything.
@@ -309,7 +318,7 @@ const BoundingVolume& getEffectiveBoundingVolume(
 
   // If we _only_ have an updated _content_ bounding volume, that's a developer
   // error.
-  assert(!updatedTileContentBoundingVolume);
+  CESIUM_ASSERT(!updatedTileContentBoundingVolume);
 
   return tileBoundingVolume;
 }
@@ -428,7 +437,7 @@ void calcRasterOverlayDetailsInWorkerThread(
   }
 
   if (result.rasterOverlayDetails && overlayDetails) {
-    result.rasterOverlayDetails->merge(*overlayDetails);
+    result.rasterOverlayDetails->merge(*overlayDetails, result.ellipsoid);
   } else if (overlayDetails) {
     result.rasterOverlayDetails = std::move(*overlayDetails);
   }
@@ -453,7 +462,8 @@ void calcFittestBoundingRegionForLooseTile(
       // We need to compute an accurate bounding region
       result.updatedBoundingVolume = GltfUtilities::computeBoundingRegion(
           model,
-          tileLoadInfo.tileTransform);
+          tileLoadInfo.tileTransform,
+          result.ellipsoid);
     }
   }
 }
@@ -494,7 +504,7 @@ postProcessContentInWorkerThread(
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
     const std::any& rendererOptions) {
-  assert(
+  CESIUM_ASSERT(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
@@ -647,11 +657,14 @@ TilesetContentManager::TilesetContentManager(
     this->notifyTileStartLoading(nullptr);
 
     CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+    const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
     externals.pAssetAccessor
         ->get(externals.asyncSystem, url, this->_requestHeaders)
         .thenInWorkerThread(
-            [pLogger = externals.pLogger,
+            [externals,
+             ellipsoid,
+             pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
              contentOptions = tilesetOptions.contentOptions](
@@ -700,7 +713,11 @@ TilesetContentManager::TilesetContentManager(
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
                 TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(pLogger, url, tilesetJson);
+                    TilesetJsonLoader::createLoader(
+                        pLogger,
+                        url,
+                        tilesetJson,
+                        ellipsoid);
                 return asyncSystem.createResolvedFuture(std::move(result));
               } else {
                 const auto formatIt = tilesetJson.FindMember("format");
@@ -721,7 +738,8 @@ TilesetContentManager::TilesetContentManager(
                              contentOptions,
                              url,
                              flatHeaders,
-                             tilesetJson)
+                             tilesetJson,
+                             ellipsoid)
                       .thenImmediately(
                           [](TilesetContentLoaderResult<TilesetContentLoader>&&
                                  result) { return std::move(result); });
@@ -809,7 +827,8 @@ TilesetContentManager::TilesetContentManager(
         ionAccessToken,
         ionAssetEndpointUrl,
         authorizationChangeListener,
-        tilesetOptions.showCreditsOnScreen)
+        tilesetOptions.showCreditsOnScreen,
+        tilesetOptions.ellipsoid)
         .thenInMainThread(
             [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
@@ -843,7 +862,7 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  assert(this->_tileLoadsInProgress == 0);
+  CESIUM_ASSERT(this->_tileLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
@@ -936,7 +955,8 @@ void TilesetContentManager::loadTileContent(
       this->_externals.asyncSystem,
       this->_externals.pAssetAccessor,
       this->_externals.pLogger,
-      this->_requestHeaders};
+      this->_requestHeaders,
+      tilesetOptions.ellipsoid};
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
@@ -1006,7 +1026,7 @@ void TilesetContentManager::updateTileContent(
 
   if (tile.shouldContentContinueUpdating()) {
     TileChildrenResult childrenResult =
-        this->_pLoader->createTileChildren(tile);
+        this->_pLoader->createTileChildren(tile, tilesetOptions.ellipsoid);
     if (childrenResult.state == TileLoadResultState::Success) {
       tile.createChildTiles(std::move(childrenResult.children));
     }
@@ -1199,13 +1219,13 @@ bool TilesetContentManager::tileNeedsMainThreadLoading(
 void TilesetContentManager::finishLoading(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  assert(tile.getState() == TileLoadState::ContentLoaded);
+  CESIUM_ASSERT(tile.getState() == TileLoadState::ContentLoaded);
 
   // Run the main thread part of loading.
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
 
-  assert(pRenderContent != nullptr);
+  CESIUM_ASSERT(pRenderContent != nullptr);
 
   // add copyright
   CreditSystem* pCreditSystem = this->_externals.pCreditSystem.get();
@@ -1345,6 +1365,8 @@ void TilesetContentManager::updateDoneState(
     return;
   }
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
+
   // update raster overlay
   TileContent& content = tile.getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
@@ -1382,7 +1404,8 @@ void TilesetContentManager::updateDoneState(
               *pProvider,
               *pPlaceholder,
               tile,
-              missingProjections);
+              missingProjections,
+              ellipsoid);
 
           if (!missingProjections.empty()) {
             // The mesh doesn't have the right texture coordinates for this
@@ -1418,7 +1441,7 @@ void TilesetContentManager::updateDoneState(
     // children to hang more detailed rasters on by subdividing this tile.
     if (!skippedUnknown && moreRasterDetailAvailable &&
         tile.getChildren().empty()) {
-      createQuadtreeSubdividedChildren(tile, this->_upsampler);
+      createQuadtreeSubdividedChildren(ellipsoid, tile, this->_upsampler);
     }
   } else {
     // We can't hang raster images on a tile without geometry, and their
@@ -1466,7 +1489,7 @@ void TilesetContentManager::notifyTileStartLoading(
 }
 
 void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
-  assert(
+  CESIUM_ASSERT(
       this->_tileLoadsInProgress > 0 &&
       "There are no tile loads currently in flight");
   --this->_tileLoadsInProgress;

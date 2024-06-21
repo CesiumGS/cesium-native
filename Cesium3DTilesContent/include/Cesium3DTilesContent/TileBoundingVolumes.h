@@ -51,8 +51,9 @@ public:
    * @return The region, or `std::nullopt` if the bounding volume does not
    * define a region. The region is defined in geographic coordinates.
    */
-  static std::optional<CesiumGeospatial::BoundingRegion>
-  getBoundingRegion(const Cesium3DTiles::BoundingVolume& boundingVolume);
+  static std::optional<CesiumGeospatial::BoundingRegion> getBoundingRegion(
+      const Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Sets the `region` property in a {@link Cesium3DTiles::BoundingVolume}
@@ -103,7 +104,9 @@ public:
    * volume is defined in geographic coordinates.
    */
   static std::optional<CesiumGeospatial::S2CellBoundingVolume>
-  getS2CellBoundingVolume(const Cesium3DTiles::BoundingVolume& boundingVolume);
+  getS2CellBoundingVolume(
+      const Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Adds the `3DTILES_bounding_volume_S2` extension to a

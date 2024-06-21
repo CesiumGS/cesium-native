@@ -39,8 +39,9 @@ void TileBoundingVolumes::setOrientedBoundingBox(
       halfAxes[2].z};
 }
 
-std::optional<BoundingRegion>
-TileBoundingVolumes::getBoundingRegion(const BoundingVolume& boundingVolume) {
+std::optional<BoundingRegion> TileBoundingVolumes::getBoundingRegion(
+    const BoundingVolume& boundingVolume,
+    const Ellipsoid& ellipsoid) {
   if (boundingVolume.region.size() < 6)
     return std::nullopt;
 
@@ -48,7 +49,8 @@ TileBoundingVolumes::getBoundingRegion(const BoundingVolume& boundingVolume) {
   return CesiumGeospatial::BoundingRegion(
       CesiumGeospatial::GlobeRectangle(a[0], a[1], a[2], a[3]),
       a[4],
-      a[5]);
+      a[5],
+      ellipsoid);
 }
 
 void TileBoundingVolumes::setBoundingRegion(
@@ -84,7 +86,8 @@ void TileBoundingVolumes::setBoundingSphere(
 
 std::optional<S2CellBoundingVolume>
 TileBoundingVolumes::getS2CellBoundingVolume(
-    const BoundingVolume& boundingVolume) {
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const Extension3dTilesBoundingVolumeS2* pExtension =
       boundingVolume.getExtension<Extension3dTilesBoundingVolumeS2>();
   if (!pExtension)
@@ -93,7 +96,8 @@ TileBoundingVolumes::getS2CellBoundingVolume(
   return CesiumGeospatial::S2CellBoundingVolume(
       CesiumGeospatial::S2CellID::fromToken(pExtension->token),
       pExtension->minimumHeight,
-      pExtension->maximumHeight);
+      pExtension->maximumHeight,
+      ellipsoid);
 }
 
 void TileBoundingVolumes::setS2CellBoundingVolume(

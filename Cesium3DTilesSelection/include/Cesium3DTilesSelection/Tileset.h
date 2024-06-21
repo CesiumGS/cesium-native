@@ -148,6 +148,18 @@ public:
   TilesetOptions& getOptions() noexcept { return this->_options; }
 
   /**
+   * @brief Gets the {@link CesiumGeospatial::Ellipsoid} used by this tileset.
+   */
+  const CesiumGeospatial::Ellipsoid& getEllipsoid() const {
+    return this->_options.ellipsoid;
+  }
+
+  /** @copydoc Tileset::getEllipsoid */
+  CesiumGeospatial::Ellipsoid& getEllipsoid() noexcept {
+    return this->_options.ellipsoid;
+  }
+
+  /**
    * @brief Gets the root tile of this tileset.
    *
    * This may be `nullptr` if there is currently no root tile.

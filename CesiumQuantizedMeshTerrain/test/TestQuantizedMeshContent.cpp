@@ -769,7 +769,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileRectangle.maximumX,
             tileRectangle.maximumY),
         0.0,
-        0.0);
+        0.0,
+        Ellipsoid::WGS84);
     QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(
         boundingVolume,
         verticesWidth,
@@ -842,7 +843,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileRectangle.maximumX,
             tileRectangle.maximumY),
         0.0,
-        0.0);
+        0.0,
+        Ellipsoid::WGS84);
     QuantizedMesh<uint32_t> quantizedMesh = createGridQuantizedMesh<uint32_t>(
         boundingVolume,
         verticesWidth,
@@ -915,7 +917,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileRectangle.maximumX,
             tileRectangle.maximumY),
         0.0,
-        0.0);
+        0.0,
+        Ellipsoid::WGS84);
     QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(
         boundingVolume,
         verticesWidth,
@@ -988,7 +991,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
             tileRectangle.maximumX,
             tileRectangle.maximumY),
         0.0,
-        0.0);
+        0.0,
+        Ellipsoid::WGS84);
     QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(
         boundingVolume,
         verticesWidth,
@@ -1074,7 +1078,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
           tileRectangle.maximumX,
           tileRectangle.maximumY),
       0.0,
-      0.0);
+      0.0,
+      Ellipsoid::WGS84);
   QuantizedMesh<uint16_t> quantizedMesh = createGridQuantizedMesh<uint16_t>(
       boundingVolume,
       verticesWidth,

@@ -10,6 +10,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
@@ -44,7 +45,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -76,6 +78,11 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @brief The request headers that will be attached to the request.
    */
   const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+
+  /**
+   * @brief The ellipsoid that this tileset uses.
+   */
+  const CesiumGeospatial::Ellipsoid& ellipsoid;
 };
 
 /**
@@ -134,6 +141,9 @@ public:
    * @param tile The tile to create children for.
    * @return The {@link TileChildrenResult} that stores the tile's children
    */
-  virtual TileChildrenResult createTileChildren(const Tile& tile) = 0;
+  virtual TileChildrenResult createTileChildren(
+      const Tile& tile,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) = 0;
 };
 } // namespace Cesium3DTilesSelection
