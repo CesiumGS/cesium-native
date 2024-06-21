@@ -336,7 +336,7 @@ function generate(options, schema, writers) {
         }
 
         CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
-          ASSERT(this->_pObject);
+          CESIUM_ASSERT(this->_pObject);
           return this->readObjectKey${name}(${namespace}::${name}::TypeName, str, *this->_pObject);
         }
 
