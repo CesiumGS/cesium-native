@@ -11,6 +11,7 @@
 - Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
   - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
   - `CESIUM_DISABLE_DEFAULT_ELLIPSOID` can be defined to disable the WGS84 default parameter, exposing through errors the places in your code that are still assuming a WGS84 ellipsoid.
+- Added `CesiumGeospatial::EarthGravitationalModel96Grid` class to allow transforming heights on a WGS84 ellipsoid into heights above mean sea level using the EGM96 model.
 
 ### v0.36.0 - 2024-06-03
 
