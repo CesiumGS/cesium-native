@@ -53,6 +53,11 @@ TEST_CASE("IntersectionTests::rayEllipsoid") {
   };
 
   auto testCase = GENERATE(
+      // Degenerate ellipsoid
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0)),
+          glm::dvec3(0),
+          std::nullopt},
       // RayEllipsoid outside intersections
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),

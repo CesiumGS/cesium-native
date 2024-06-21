@@ -7,13 +7,15 @@ TileLoadInput::TileLoadInput(
     const CesiumAsync::AsyncSystem& asyncSystem_,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders_)
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders_,
+    const CesiumGeospatial::Ellipsoid& ellipsoid_)
     : tile{tile_},
       contentOptions{contentOptions_},
       asyncSystem{asyncSystem_},
       pAssetAccessor{pAssetAccessor_},
       pLogger{pLogger_},
-      requestHeaders{requestHeaders_} {}
+      requestHeaders{requestHeaders_},
+      ellipsoid(ellipsoid_) {}
 
 TileLoadResult TileLoadResult::createFailedResult(
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
@@ -25,7 +27,8 @@ TileLoadResult TileLoadResult::createFailedResult(
       std::nullopt,
       std::move(pCompletedRequest),
       {},
-      TileLoadResultState::Failed};
+      TileLoadResultState::Failed,
+      CesiumGeospatial::Ellipsoid::UNIT_SPHERE};
 }
 
 TileLoadResult TileLoadResult::createRetryLaterResult(
@@ -38,6 +41,7 @@ TileLoadResult TileLoadResult::createRetryLaterResult(
       std::nullopt,
       std::move(pCompletedRequest),
       {},
-      TileLoadResultState::RetryLater};
+      TileLoadResultState::RetryLater,
+      CesiumGeospatial::Ellipsoid::UNIT_SPHERE};
 }
 } // namespace Cesium3DTilesSelection

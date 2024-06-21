@@ -1,8 +1,8 @@
 #include "CesiumJsonReader/JsonReader.h"
 
-#include <rapidjson/reader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
+#include <rapidjson/reader.h>
 
 namespace CesiumJsonReader {
 namespace {
@@ -31,7 +31,7 @@ struct Dispatcher {
       size_t /* length */,
       bool /* copy */) noexcept {
     // This should not be called.
-    assert(false);
+    CESIUM_ASSERT(false);
     return false;
   }
   bool String(const char* str, size_t length, bool /* copy */) {

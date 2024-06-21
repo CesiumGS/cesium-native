@@ -7,8 +7,8 @@
 #include <CesiumGltfReader/ExtensionCesiumRTCReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -26,7 +26,7 @@ void ExtensionCesiumRTCJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ExtensionCesiumRTCJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionCesiumRTC(
       CesiumGltf::ExtensionCesiumRTC::TypeName,
       str,
@@ -104,8 +104,8 @@ ExtensionCesiumRTCReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionCesiumTileEdgesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -128,7 +128,7 @@ void ExtensionCesiumTileEdgesJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionCesiumTileEdgesJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionCesiumTileEdges(
       CesiumGltf::ExtensionCesiumTileEdges::TypeName,
       str,
@@ -216,8 +216,8 @@ ExtensionCesiumTileEdgesReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionExtInstanceFeaturesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -238,7 +238,7 @@ void ExtensionExtInstanceFeaturesJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionExtInstanceFeaturesJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionExtInstanceFeatures(
       CesiumGltf::ExtensionExtInstanceFeatures::TypeName,
       str,
@@ -320,8 +320,8 @@ ExtensionExtInstanceFeaturesReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionExtMeshFeaturesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -341,7 +341,7 @@ void ExtensionExtMeshFeaturesJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionExtMeshFeaturesJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionExtMeshFeatures(
       CesiumGltf::ExtensionExtMeshFeatures::TypeName,
       str,
@@ -423,8 +423,8 @@ ExtensionExtMeshFeaturesReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionExtMeshGpuInstancingReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -444,7 +444,7 @@ void ExtensionExtMeshGpuInstancingJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionExtMeshGpuInstancingJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionExtMeshGpuInstancing(
       CesiumGltf::ExtensionExtMeshGpuInstancing::TypeName,
       str,
@@ -526,8 +526,8 @@ ExtensionExtMeshGpuInstancingReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionBufferExtMeshoptCompressionReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -547,7 +547,7 @@ void ExtensionBufferExtMeshoptCompressionJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionBufferExtMeshoptCompressionJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionBufferExtMeshoptCompression(
       CesiumGltf::ExtensionBufferExtMeshoptCompression::TypeName,
       str,
@@ -634,8 +634,8 @@ ExtensionBufferExtMeshoptCompressionReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionBufferViewExtMeshoptCompressionReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -662,7 +662,7 @@ void ExtensionBufferViewExtMeshoptCompressionJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionBufferViewExtMeshoptCompressionJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionBufferViewExtMeshoptCompression(
       CesiumGltf::ExtensionBufferViewExtMeshoptCompression::TypeName,
       str,
@@ -872,8 +872,8 @@ ExtensionNodeExtStructuralMetadataReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionModelExtStructuralMetadataReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -898,7 +898,7 @@ void ExtensionModelExtStructuralMetadataJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionModelExtStructuralMetadataJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionModelExtStructuralMetadata(
       CesiumGltf::ExtensionModelExtStructuralMetadata::TypeName,
       str,
@@ -998,8 +998,8 @@ ExtensionModelExtStructuralMetadataReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionMeshPrimitiveExtStructuralMetadataReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1021,7 +1021,7 @@ void ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionMeshPrimitiveExtStructuralMetadata(
       CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata::TypeName,
       str,
@@ -1120,8 +1120,8 @@ ExtensionMeshPrimitiveExtStructuralMetadataReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionKhrDracoMeshCompressionReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1143,7 +1143,7 @@ void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionKhrDracoMeshCompressionJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionKhrDracoMeshCompression(
       CesiumGltf::ExtensionKhrDracoMeshCompression::TypeName,
       str,
@@ -1229,8 +1229,8 @@ ExtensionKhrDracoMeshCompressionReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionKhrMaterialsUnlitReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1249,7 +1249,7 @@ void ExtensionKhrMaterialsUnlitJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionKhrMaterialsUnlitJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionKhrMaterialsUnlit(
       CesiumGltf::ExtensionKhrMaterialsUnlit::TypeName,
       str,
@@ -1330,8 +1330,8 @@ ExtensionKhrMaterialsUnlitReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionModelKhrMaterialsVariantsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1352,7 +1352,7 @@ void ExtensionModelKhrMaterialsVariantsJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionModelKhrMaterialsVariantsJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionModelKhrMaterialsVariants(
       CesiumGltf::ExtensionModelKhrMaterialsVariants::TypeName,
       str,
@@ -1436,8 +1436,8 @@ ExtensionModelKhrMaterialsVariantsReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionMeshPrimitiveKhrMaterialsVariantsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1458,7 +1458,7 @@ void ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionMeshPrimitiveKhrMaterialsVariants(
       CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants::TypeName,
       str,
@@ -1547,8 +1547,8 @@ ExtensionMeshPrimitiveKhrMaterialsVariantsReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionKhrTextureBasisuReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1567,7 +1567,7 @@ void ExtensionKhrTextureBasisuJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionKhrTextureBasisuJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionKhrTextureBasisu(
       CesiumGltf::ExtensionKhrTextureBasisu::TypeName,
       str,
@@ -1649,8 +1649,8 @@ ExtensionKhrTextureBasisuReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionModelMaxarMeshVariantsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1672,7 +1672,7 @@ void ExtensionModelMaxarMeshVariantsJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionModelMaxarMeshVariantsJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionModelMaxarMeshVariants(
       CesiumGltf::ExtensionModelMaxarMeshVariants::TypeName,
       str,
@@ -1756,8 +1756,8 @@ ExtensionModelMaxarMeshVariantsReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionNodeMaxarMeshVariantsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1778,7 +1778,7 @@ void ExtensionNodeMaxarMeshVariantsJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionNodeMaxarMeshVariantsJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionNodeMaxarMeshVariants(
       CesiumGltf::ExtensionNodeMaxarMeshVariants::TypeName,
       str,
@@ -1860,8 +1860,8 @@ ExtensionNodeMaxarMeshVariantsReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionKhrTextureTransformReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1885,7 +1885,7 @@ void ExtensionKhrTextureTransformJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionKhrTextureTransformJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionKhrTextureTransform(
       CesiumGltf::ExtensionKhrTextureTransform::TypeName,
       str,
@@ -1973,8 +1973,8 @@ ExtensionKhrTextureTransformReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionTextureWebpReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -1992,7 +1992,7 @@ void ExtensionTextureWebpJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ExtensionTextureWebpJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionTextureWebp(
       CesiumGltf::ExtensionTextureWebp::TypeName,
       str,
@@ -2070,8 +2070,8 @@ ExtensionTextureWebpReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionCesiumPrimitiveOutlineReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2091,7 +2091,7 @@ void ExtensionCesiumPrimitiveOutlineJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionCesiumPrimitiveOutlineJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionCesiumPrimitiveOutline(
       CesiumGltf::ExtensionCesiumPrimitiveOutline::TypeName,
       str,
@@ -2173,8 +2173,8 @@ ExtensionCesiumPrimitiveOutlineReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionNodeMaxarMeshVariantsMappingsValueReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2197,7 +2197,7 @@ void ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionNodeMaxarMeshVariantsMappingsValue(
       CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue::TypeName,
       str,
@@ -2276,8 +2276,8 @@ ExtensionNodeMaxarMeshVariantsMappingsValueReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionModelMaxarMeshVariantsValueReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2297,7 +2297,7 @@ void ExtensionModelMaxarMeshVariantsValueJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionModelMaxarMeshVariantsValueJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionModelMaxarMeshVariantsValue(
       CesiumGltf::ExtensionModelMaxarMeshVariantsValue::TypeName,
       str,
@@ -2370,8 +2370,8 @@ ExtensionModelMaxarMeshVariantsValueReader::readArrayFromJson(
 #include <CesiumGltfReader/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2395,7 +2395,7 @@ void ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler::
     readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this
       ->readObjectKeyExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue(
           CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue::
@@ -2478,8 +2478,8 @@ ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueReader::
 #include <CesiumGltfReader/ExtensionModelKhrMaterialsVariantsValueReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2499,7 +2499,7 @@ void ExtensionModelKhrMaterialsVariantsValueJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionModelKhrMaterialsVariantsValueJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionModelKhrMaterialsVariantsValue(
       CesiumGltf::ExtensionModelKhrMaterialsVariantsValue::TypeName,
       str,
@@ -2572,8 +2572,8 @@ ExtensionModelKhrMaterialsVariantsValueReader::readArrayFromJson(
 #include <CesiumGltfReader/PropertyAttributeReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2594,7 +2594,7 @@ void PropertyAttributeJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyAttributeJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyAttribute(
       CesiumGltf::PropertyAttribute::TypeName,
       str,
@@ -2664,8 +2664,8 @@ PropertyAttributeReader::readArrayFromJson(
 #include <CesiumGltfReader/PropertyAttributePropertyReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2689,7 +2689,7 @@ void PropertyAttributePropertyJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 PropertyAttributePropertyJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyAttributeProperty(
       CesiumGltf::PropertyAttributeProperty::TypeName,
       str,
@@ -2766,8 +2766,8 @@ PropertyAttributePropertyReader::readArrayFromJson(
 #include <CesiumGltfReader/PropertyTextureReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2788,7 +2788,7 @@ void PropertyTextureJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTextureJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTexture(
       CesiumGltf::PropertyTexture::TypeName,
       str,
@@ -2856,8 +2856,8 @@ PropertyTextureReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/PropertyTexturePropertyReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2880,7 +2880,7 @@ void PropertyTexturePropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTexturePropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTextureProperty(
       CesiumGltf::PropertyTextureProperty::TypeName,
       str,
@@ -2957,8 +2957,8 @@ PropertyTexturePropertyReader::readArrayFromJson(
 #include <CesiumGltfReader/TextureInfoReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -2978,7 +2978,7 @@ void TextureInfoJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 TextureInfoJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyTextureInfo(
       CesiumGltf::TextureInfo::TypeName,
       str,
@@ -3043,8 +3043,8 @@ TextureInfoReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/PropertyTableReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3066,7 +3066,7 @@ void PropertyTableJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTableJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTable(
       CesiumGltf::PropertyTable::TypeName,
       str,
@@ -3136,8 +3136,8 @@ PropertyTableReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/PropertyTablePropertyReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3164,7 +3164,7 @@ void PropertyTablePropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTablePropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTableProperty(
       CesiumGltf::PropertyTableProperty::TypeName,
       str,
@@ -3252,8 +3252,8 @@ PropertyTablePropertyReader::readArrayFromJson(
 #include <CesiumGltfReader/SchemaReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3277,7 +3277,7 @@ void SchemaJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SchemaJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySchema(
       CesiumGltf::Schema::TypeName,
       str,
@@ -3345,8 +3345,8 @@ SchemaReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/EnumReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3368,7 +3368,7 @@ void EnumJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 EnumJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyEnum(
       CesiumGltf::Enum::TypeName,
       str,
@@ -3432,8 +3432,8 @@ EnumReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/EnumValueReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3454,7 +3454,7 @@ void EnumValueJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 EnumValueJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyEnumValue(
       CesiumGltf::EnumValue::TypeName,
       str,
@@ -3517,8 +3517,8 @@ EnumValueReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/ClassReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3540,7 +3540,7 @@ void ClassJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClass(
       CesiumGltf::Class::TypeName,
       str,
@@ -3604,8 +3604,8 @@ ClassReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/ClassPropertyReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3639,7 +3639,7 @@ void ClassPropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassPropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClassProperty(
       CesiumGltf::ClassProperty::TypeName,
       str,
@@ -3733,8 +3733,8 @@ ClassPropertyReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/FeatureIdReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3758,7 +3758,7 @@ void FeatureIdJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 FeatureIdJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyFeatureId(
       CesiumGltf::FeatureId::TypeName,
       str,
@@ -3827,8 +3827,8 @@ FeatureIdReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/FeatureIdTextureReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3846,7 +3846,7 @@ void FeatureIdTextureJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 FeatureIdTextureJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyFeatureIdTexture(
       CesiumGltf::FeatureIdTexture::TypeName,
       str,
@@ -3911,8 +3911,8 @@ FeatureIdTextureReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/ExtensionExtInstanceFeaturesFeatureIdReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -3937,7 +3937,7 @@ void ExtensionExtInstanceFeaturesFeatureIdJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 ExtensionExtInstanceFeaturesFeatureIdJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtensionExtInstanceFeaturesFeatureId(
       CesiumGltf::ExtensionExtInstanceFeaturesFeatureId::TypeName,
       str,
@@ -4018,8 +4018,8 @@ ExtensionExtInstanceFeaturesFeatureIdReader::readArrayFromJson(
 #include <CesiumGltfReader/ModelReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4054,7 +4054,7 @@ void ModelJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ModelJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyModel(
       CesiumGltf::Model::TypeName,
       str,
@@ -4147,8 +4147,8 @@ ModelReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/TextureReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4168,7 +4168,7 @@ void TextureJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 TextureJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyTexture(
       CesiumGltf::Texture::TypeName,
       str,
@@ -4228,8 +4228,8 @@ TextureReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/SkinReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4250,7 +4250,7 @@ void SkinJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SkinJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySkin(
       CesiumGltf::Skin::TypeName,
       str,
@@ -4315,8 +4315,8 @@ SkinReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/SceneReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4334,7 +4334,7 @@ void SceneJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SceneJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyScene(
       CesiumGltf::Scene::TypeName,
       str,
@@ -4392,8 +4392,8 @@ SceneReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/SamplerReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4415,7 +4415,7 @@ void SamplerJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SamplerJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySampler(
       CesiumGltf::Sampler::TypeName,
       str,
@@ -4479,8 +4479,8 @@ SamplerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/NodeReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4507,7 +4507,7 @@ void NodeJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 NodeJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyNode(
       CesiumGltf::Node::TypeName,
       str,
@@ -4581,8 +4581,8 @@ NodeReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/MeshReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4602,7 +4602,7 @@ void MeshJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 MeshJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMesh(
       CesiumGltf::Mesh::TypeName,
       str,
@@ -4662,8 +4662,8 @@ MeshReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/MeshPrimitiveReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4686,7 +4686,7 @@ void MeshPrimitiveJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 MeshPrimitiveJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMeshPrimitive(
       CesiumGltf::MeshPrimitive::TypeName,
       str,
@@ -4758,8 +4758,8 @@ MeshPrimitiveReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/MaterialReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4785,7 +4785,7 @@ void MaterialJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 MaterialJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMaterial(
       CesiumGltf::Material::TypeName,
       str,
@@ -4866,8 +4866,8 @@ MaterialReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/MaterialOcclusionTextureInfoReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4887,7 +4887,7 @@ void MaterialOcclusionTextureInfoJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 MaterialOcclusionTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMaterialOcclusionTextureInfo(
       CesiumGltf::MaterialOcclusionTextureInfo::TypeName,
       str,
@@ -4956,8 +4956,8 @@ MaterialOcclusionTextureInfoReader::readArrayFromJson(
 #include <CesiumGltfReader/MaterialNormalTextureInfoReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -4976,7 +4976,7 @@ void MaterialNormalTextureInfoJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 MaterialNormalTextureInfoJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMaterialNormalTextureInfo(
       CesiumGltf::MaterialNormalTextureInfo::TypeName,
       str,
@@ -5045,8 +5045,8 @@ MaterialNormalTextureInfoReader::readArrayFromJson(
 #include <CesiumGltfReader/MaterialPBRMetallicRoughnessReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5071,7 +5071,7 @@ void MaterialPBRMetallicRoughnessJsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 MaterialPBRMetallicRoughnessJsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMaterialPBRMetallicRoughness(
       CesiumGltf::MaterialPBRMetallicRoughness::TypeName,
       str,
@@ -5160,8 +5160,8 @@ MaterialPBRMetallicRoughnessReader::readArrayFromJson(
 #include <CesiumGltfReader/ImageReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5182,7 +5182,7 @@ void ImageJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ImageJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyImage(
       CesiumGltf::Image::TypeName,
       str,
@@ -5244,8 +5244,8 @@ ImageReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/CameraReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5266,7 +5266,7 @@ void CameraJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 CameraJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyCamera(
       CesiumGltf::Camera::TypeName,
       str,
@@ -5328,8 +5328,8 @@ CameraReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/CameraPerspectiveReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5351,7 +5351,7 @@ void CameraPerspectiveJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 CameraPerspectiveJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyCameraPerspective(
       CesiumGltf::CameraPerspective::TypeName,
       str,
@@ -5423,8 +5423,8 @@ CameraPerspectiveReader::readArrayFromJson(
 #include <CesiumGltfReader/CameraOrthographicReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5446,7 +5446,7 @@ void CameraOrthographicJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 CameraOrthographicJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyCameraOrthographic(
       CesiumGltf::CameraOrthographic::TypeName,
       str,
@@ -5518,8 +5518,8 @@ CameraOrthographicReader::readArrayFromJson(
 #include <CesiumGltfReader/BufferViewReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5542,7 +5542,7 @@ void BufferViewJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBufferView(
       CesiumGltf::BufferView::TypeName,
       str,
@@ -5612,8 +5612,8 @@ BufferViewReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/BufferReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5633,7 +5633,7 @@ void BufferJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BufferJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBuffer(
       CesiumGltf::Buffer::TypeName,
       str,
@@ -5693,8 +5693,8 @@ BufferReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AssetReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5716,7 +5716,7 @@ void AssetJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AssetJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAsset(
       CesiumGltf::Asset::TypeName,
       str,
@@ -5780,8 +5780,8 @@ AssetReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AnimationReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5801,7 +5801,7 @@ void AnimationJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AnimationJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAnimation(
       CesiumGltf::Animation::TypeName,
       str,
@@ -5862,8 +5862,8 @@ AnimationReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AnimationSamplerReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5884,7 +5884,7 @@ void AnimationSamplerJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AnimationSamplerJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAnimationSampler(
       CesiumGltf::AnimationSampler::TypeName,
       str,
@@ -5953,8 +5953,8 @@ AnimationSamplerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AnimationChannelReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -5974,7 +5974,7 @@ void AnimationChannelJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AnimationChannelJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAnimationChannel(
       CesiumGltf::AnimationChannel::TypeName,
       str,
@@ -6041,8 +6041,8 @@ AnimationChannelReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AnimationChannelTargetReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -6062,7 +6062,7 @@ void AnimationChannelTargetJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AnimationChannelTargetJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAnimationChannelTarget(
       CesiumGltf::AnimationChannelTarget::TypeName,
       str,
@@ -6133,8 +6133,8 @@ AnimationChannelTargetReader::readArrayFromJson(
 #include <CesiumGltfReader/AccessorReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -6161,7 +6161,7 @@ void AccessorJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AccessorJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAccessor(
       CesiumGltf::Accessor::TypeName,
       str,
@@ -6235,8 +6235,8 @@ AccessorReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AccessorSparseReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -6257,7 +6257,7 @@ void AccessorSparseJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AccessorSparseJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAccessorSparse(
       CesiumGltf::AccessorSparse::TypeName,
       str,
@@ -6325,8 +6325,8 @@ AccessorSparseReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumGltfReader/AccessorSparseValuesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -6346,7 +6346,7 @@ void AccessorSparseValuesJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AccessorSparseValuesJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAccessorSparseValues(
       CesiumGltf::AccessorSparseValues::TypeName,
       str,
@@ -6414,8 +6414,8 @@ AccessorSparseValuesReader::readArrayFromJson(
 #include <CesiumGltfReader/AccessorSparseIndicesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumGltfReader {
@@ -6436,7 +6436,7 @@ void AccessorSparseIndicesJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AccessorSparseIndicesJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAccessorSparseIndices(
       CesiumGltf::AccessorSparseIndices::TypeName,
       str,

@@ -57,7 +57,7 @@ void addAttributeToModel(
     accessor.type = Accessor::Type::MAT4;
     break;
   default:
-    assert(false && "Input type is not supported as an accessor type");
+    CESIUM_ASSERT(false && "Input type is not supported as an accessor type");
     break;
   }
 
@@ -79,7 +79,7 @@ void addAttributeToModel(
     accessor.componentType = Accessor::ComponentType::FLOAT;
     break;
   default:
-    assert(
+    CESIUM_ASSERT(
         false &&
         "Input component type is not supported as an accessor component type");
     break;

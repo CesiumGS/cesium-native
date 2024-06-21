@@ -29,7 +29,7 @@ public:
    */
   EllipsoidTangentPlane(
       const glm::dvec3& origin,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Creates a new instance.
@@ -40,7 +40,7 @@ public:
    */
   EllipsoidTangentPlane(
       const glm::dmat4& eastNorthUpToFixedFrame,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Returns the {@link Ellipsoid}.
@@ -100,7 +100,7 @@ private:
    */
   static glm::dmat4 computeEastNorthUpToFixedFrame(
       const glm::dvec3& origin,
-      const Ellipsoid& ellipsoid);
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   Ellipsoid _ellipsoid;
   glm::dvec3 _origin;

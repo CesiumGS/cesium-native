@@ -31,7 +31,7 @@ public:
       const S2CellID& cellID,
       double minimumHeight,
       double maximumHeight,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets this bounding volume's cell ID.
@@ -100,7 +100,9 @@ public:
    *
    * @return The bounding region.
    */
-  BoundingRegion computeBoundingRegion() const noexcept;
+  BoundingRegion
+  computeBoundingRegion(const CesiumGeospatial::Ellipsoid& ellipsoid
+                            CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
 private:
   S2CellID _cellID;

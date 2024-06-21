@@ -42,8 +42,9 @@ public:
         std::move(mockLoadTileContent));
   }
 
-  TileChildrenResult
-  createTileChildren([[maybe_unused]] const Tile& tile) override {
+  TileChildrenResult createTileChildren(
+      [[maybe_unused]] const Tile& tile,
+      [[maybe_unused]] const Ellipsoid& ellipsoid) override {
     return std::move(mockCreateTileChildren);
   }
 
@@ -324,7 +325,8 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         nullptr,
         [&](Tile&) { initializerCall = true; },
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
@@ -428,7 +430,8 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         nullptr,
         [&](Tile&) { initializerCall = true; },
-        TileLoadResultState::RetryLater};
+        TileLoadResultState::RetryLater,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
@@ -503,7 +506,8 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         nullptr,
         [&](Tile&) { initializerCall = true; },
-        TileLoadResultState::Failed};
+        TileLoadResultState::Failed,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
@@ -595,7 +599,8 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         nullptr,
         [&](Tile&) { initializerCall = true; },
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
@@ -667,7 +672,8 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         nullptr,
         [&](Tile&) { initializerCall = true; },
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoaderRaw->mockCreateTileChildren = {
         {},
         TileLoadResultState::Failed};
@@ -756,7 +762,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         nullptr,
         {},
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // add external buffer to the completed request
@@ -826,7 +833,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         nullptr,
         {},
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
@@ -893,7 +901,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         nullptr,
         {},
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
@@ -943,7 +952,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         nullptr,
         {},
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile
@@ -973,7 +983,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           tileContent.getRenderContent()->getRasterOverlayDetails();
 
       // ensure the raster overlay details has geographic projection
-      GeographicProjection geographicProjection{};
+      GeographicProjection geographicProjection{Ellipsoid::WGS84};
       auto existingProjectionIt = std::find(
           rasterOverlayDetails.rasterOverlayProjections.begin(),
           rasterOverlayDetails.rasterOverlayProjections.end(),
@@ -1023,7 +1033,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           BoundingRegionWithLooseFittingHeights{BoundingRegion{
               GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
               -1000.0,
-              9000.0}};
+              9000.0,
+              Ellipsoid::WGS84}};
       tile.setBoundingVolume(originalLooseRegion);
 
       pManager->loadTileContent(tile, {});
@@ -1036,7 +1047,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           tileContent.getRenderContent()->getRasterOverlayDetails();
 
       // ensure the raster overlay details has geographic projection
-      GeographicProjection geographicProjection{};
+      GeographicProjection geographicProjection{Ellipsoid::WGS84};
       auto existingProjectionIt = std::find(
           rasterOverlayDetails.rasterOverlayProjections.begin(),
           rasterOverlayDetails.rasterOverlayProjections.end(),
@@ -1117,7 +1128,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           BoundingRegionWithLooseFittingHeights{BoundingRegion{
               GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
               -1000.0,
-              9000.0}};
+              9000.0,
+              Ellipsoid::WGS84}};
       tile.setBoundingVolume(originalLooseRegion);
 
       pManager->loadTileContent(tile, {});
@@ -1150,7 +1162,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             CesiumGeometry::Axis::Z);
 
     // mock raster overlay detail
-    GeographicProjection projection;
+    GeographicProjection projection(Ellipsoid::WGS84);
     RasterOverlayDetails rasterOverlayDetails;
     rasterOverlayDetails.rasterOverlayProjections.emplace_back(projection);
     rasterOverlayDetails.rasterOverlayRectangles.emplace_back(
@@ -1158,7 +1170,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     rasterOverlayDetails.boundingRegion = BoundingRegion{
         GeographicProjection::MAXIMUM_GLOBE_RECTANGLE,
         -1000.0,
-        9000.0};
+        9000.0,
+        Ellipsoid::WGS84};
 
     // add raster overlay
     Tile::LoadedLinkedList loadedTiles;
@@ -1177,7 +1190,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::move(rasterOverlayDetails),
         nullptr,
         {},
-        TileLoadResultState::Success};
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
     // create tile

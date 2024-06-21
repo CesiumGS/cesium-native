@@ -3,6 +3,7 @@
 #include "Library.h"
 #include "TilesetExternals.h"
 
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -39,7 +40,9 @@ public:
    */
   RasterOverlayCollection(
       Tile::LoadedLinkedList& loadedTiles,
-      const TilesetExternals& externals) noexcept;
+      const TilesetExternals& externals,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Deleted Copy constructor.
@@ -206,6 +209,7 @@ private:
 
   Tile::LoadedLinkedList* _pLoadedTiles;
   TilesetExternals _externals;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot");
 };
