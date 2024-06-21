@@ -1,4 +1,5 @@
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumUtility/Assert.h>
 
 #include <algorithm>
 #include <limits>
@@ -27,7 +28,7 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   const std::vector<CesiumGeometry::Rectangle>& rectangles =
       this->rasterOverlayRectangles;
 
-  assert(projections.size() == rectangles.size());
+  CESIUM_ASSERT(projections.size() == rectangles.size());
 
   auto it = std::find(projections.begin(), projections.end(), projection);
   if (it != projections.end()) {

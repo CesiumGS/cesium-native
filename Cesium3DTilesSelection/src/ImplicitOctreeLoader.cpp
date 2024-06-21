@@ -302,7 +302,7 @@ TileChildrenResult ImplicitOctreeLoader::createTileChildren(
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::OctreeTileID* pOctreeID =
       std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
-  assert(pOctreeID != nullptr && "This loader only serves octree tile");
+  CESIUM_ASSERT(pOctreeID != nullptr && "This loader only serves octree tile");
 
   // find the subtree ID
   CesiumGeometry::OctreeTileID subtreeID =

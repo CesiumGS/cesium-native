@@ -7,7 +7,6 @@
 
 #include <gsl/span>
 
-#include <cassert>
 #include <cstddef>
 #include <variant>
 #include <vector>

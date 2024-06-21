@@ -59,13 +59,13 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
       _originalFailed(false) {
-  assert(this->_pLoadingTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr);
 }
 
 RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
     IPrepareRendererResources& prepareRendererResources,
     Tile& tile) {
-  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
@@ -170,7 +170,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
                                        : AttachmentState::Attached;
   }
 
-  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   // TODO: check more precise raster overlay tile availability, rather than just
   // max level?
@@ -357,7 +357,7 @@ RasterMappedTo3DTile* addRealTile(
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   if (!this->_pReadyTile) {
     // This shouldn't happen
-    assert(false);
+    CESIUM_ASSERT(false);
     return;
   }
 

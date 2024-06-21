@@ -842,7 +842,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> TilesetJsonLoader::createLoader(
   // Populate the root tile with metadata
   TileExternalContent* pExternal =
       result.pRootTile->getContent().getExternalContent();
-  assert(pExternal);
+  CESIUM_ASSERT(pExternal);
   if (pExternal) {
     parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
   }

@@ -1,5 +1,7 @@
 #include "BatchTableHierarchyPropertyValues.h"
 
+#include "CesiumUtility/Assert.h"
+
 #include <glm/common.hpp>
 
 using namespace Cesium3DTilesContent::CesiumImpl;
@@ -230,7 +232,7 @@ BatchTableHierarchyPropertyValues::const_iterator::operator->() const {
 const rapidjson::Value*
 BatchTableHierarchyPropertyValues::const_iterator::getValue(
     int64_t index) const {
-  assert(index < this->_classIds.Size());
+  CESIUM_ASSERT(index < this->_classIds.Size());
   const rapidjson::Value& classIdValue =
       this->_classIds[rapidjson::SizeType(index)];
   if (!classIdValue.IsInt64()) {
@@ -249,7 +251,7 @@ BatchTableHierarchyPropertyValues::const_iterator::getValue(
     return nullptr;
   }
 
-  assert(pProperty->IsArray());
+  CESIUM_ASSERT(pProperty->IsArray());
   if (instanceId < 0 || instanceId >= pProperty->Size()) {
     return nullptr;
   }

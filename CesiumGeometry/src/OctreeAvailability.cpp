@@ -1,6 +1,6 @@
 #include "CesiumGeometry/OctreeAvailability.h"
 
-#include <cassert>
+#include "CesiumUtility/Assert.h"
 
 namespace CesiumGeometry {
 
@@ -170,7 +170,7 @@ uint8_t OctreeAvailability::computeAvailability(
   // This is the only case where execution should reach here. It means that a
   // subtree we need to traverse is known to be available, but it isn't yet
   // loaded.
-  assert(pNode == nullptr || pNode->subtree == std::nullopt);
+  CESIUM_ASSERT(pNode == nullptr || pNode->subtree == std::nullopt);
 
   // This means the tile was the root of a subtree that was available, but not
   // loaded. It is not reachable though, pending the load of the subtree. This

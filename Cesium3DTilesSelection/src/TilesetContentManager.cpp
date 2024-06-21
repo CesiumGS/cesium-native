@@ -103,15 +103,16 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // Get an accurate bounding region from the content first.
   const TileContent& parentContent = parent.getContent();
   const TileRenderContent* pRenderContent = parentContent.getRenderContent();
-  assert(pRenderContent && "This function only deal with render content");
+  CESIUM_ASSERT(
+      pRenderContent && "This function only deal with render content");
 
   const RasterOverlayDetails& details =
       pRenderContent->getRasterOverlayDetails();
 
   // If we don't have any overlay projections/rectangles, why are we
   // upsampling?
-  assert(!details.rasterOverlayProjections.empty());
-  assert(!details.rasterOverlayRectangles.empty());
+  CESIUM_ASSERT(!details.rasterOverlayProjections.empty());
+  CESIUM_ASSERT(!details.rasterOverlayRectangles.empty());
 
   // Use the projected center of the tile as the subdivision center.
   // The tile will be subdivided by (0.5, 0.5) in the first overlay's
@@ -289,7 +290,7 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
       tileProviders = overlays.getTileProviders();
   const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
       placeholders = overlays.getPlaceholderTileProviders();
-  assert(tileProviders.size() == placeholders.size());
+  CESIUM_ASSERT(tileProviders.size() == placeholders.size());
 
   const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
@@ -326,7 +327,7 @@ const BoundingVolume& getEffectiveBoundingVolume(
 
   // If we _only_ have an updated _content_ bounding volume, that's a developer
   // error.
-  assert(!updatedTileContentBoundingVolume);
+  CESIUM_ASSERT(!updatedTileContentBoundingVolume);
 
   return tileBoundingVolume;
 }
@@ -512,7 +513,7 @@ postProcessContentInWorkerThread(
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
     const std::any& rendererOptions) {
-  assert(
+  CESIUM_ASSERT(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
@@ -870,7 +871,7 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  assert(this->_tileLoadsInProgress == 0);
+  CESIUM_ASSERT(this->_tileLoadsInProgress == 0);
   this->unloadAll();
 
   this->_destructionCompletePromise.resolve();
@@ -1211,13 +1212,13 @@ bool TilesetContentManager::tileNeedsMainThreadLoading(
 void TilesetContentManager::finishLoading(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  assert(tile.getState() == TileLoadState::ContentLoaded);
+  CESIUM_ASSERT(tile.getState() == TileLoadState::ContentLoaded);
 
   // Run the main thread part of loading.
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
 
-  assert(pRenderContent != nullptr);
+  CESIUM_ASSERT(pRenderContent != nullptr);
 
   // add copyright
   CreditSystem* pCreditSystem = this->_externals.pCreditSystem.get();
@@ -1446,7 +1447,8 @@ void TilesetContentManager::updateDoneState(
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
-  assert(pRenderContent && "Tile must have render content to be unloaded");
+  CESIUM_ASSERT(
+      pRenderContent && "Tile must have render content to be unloaded");
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(
@@ -1459,7 +1461,8 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
 void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
-  assert(pRenderContent && "Tile must have render content to be unloaded");
+  CESIUM_ASSERT(
+      pRenderContent && "Tile must have render content to be unloaded");
 
   void* pMainThreadRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(
@@ -1475,7 +1478,7 @@ void TilesetContentManager::notifyTileStartLoading(
 }
 
 void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
-  assert(
+  CESIUM_ASSERT(
       this->_tileLoadsInProgress > 0 &&
       "There are no tile loads currently in flight");
   --this->_tileLoadsInProgress;

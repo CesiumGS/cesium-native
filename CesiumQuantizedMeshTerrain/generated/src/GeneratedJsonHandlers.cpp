@@ -7,8 +7,8 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumQuantizedMeshTerrain/Layer.h>
 #include <CesiumQuantizedMeshTerrain/LayerReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumQuantizedMeshTerrain {
@@ -41,7 +41,7 @@ void LayerJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 LayerJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyLayer(
       CesiumQuantizedMeshTerrain::Layer::TypeName,
       str,
@@ -134,8 +134,8 @@ LayerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangle.h>
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangleReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace CesiumQuantizedMeshTerrain {
@@ -157,7 +157,7 @@ void AvailabilityRectangleJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AvailabilityRectangleJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAvailabilityRectangle(
       CesiumQuantizedMeshTerrain::AvailabilityRectangle::TypeName,
       str,
