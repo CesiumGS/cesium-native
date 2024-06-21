@@ -19,4 +19,5 @@ TEST_CASE("Uri::getQueryValue") {
       Uri::getQueryValue(
           "https://example.com/?name=John%20Doe&age=25",
           "name") == "John Doe");
+  CHECK(Uri::getQueryValue("//example.com?value=1", "value") == "1");
 }

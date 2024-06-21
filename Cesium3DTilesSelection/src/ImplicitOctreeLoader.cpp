@@ -18,7 +18,10 @@ namespace Cesium3DTilesSelection {
 namespace {
 struct BoundingVolumeSubdivision {
   BoundingVolume operator()(const CesiumGeospatial::BoundingRegion& region) {
-    return ImplicitTilingUtilities::computeBoundingVolume(region, this->tileID);
+    return ImplicitTilingUtilities::computeBoundingVolume(
+        region,
+        this->tileID,
+        this->ellipsoid);
   }
 
   BoundingVolume operator()(const CesiumGeometry::OrientedBoundingBox& obb) {
@@ -26,12 +29,16 @@ struct BoundingVolumeSubdivision {
   }
 
   const CesiumGeometry::OctreeTileID& tileID;
+  const CesiumGeospatial::Ellipsoid& ellipsoid;
 };
 
 BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::OctreeTileID& tileID,
-    const ImplicitOctreeBoundingVolume& rootBoundingVolume) {
-  return std::visit(BoundingVolumeSubdivision{tileID}, rootBoundingVolume);
+    const ImplicitOctreeBoundingVolume& rootBoundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  return std::visit(
+      BoundingVolumeSubdivision{tileID, ellipsoid},
+      rootBoundingVolume);
 }
 
 std::vector<Tile> populateSubtree(
@@ -39,7 +46,8 @@ std::vector<Tile> populateSubtree(
     uint32_t subtreeLevels,
     const CesiumGeometry::OctreeTileID& subtreeRootID,
     const Tile& tile,
-    ImplicitOctreeLoader& loader) {
+    ImplicitOctreeLoader& loader,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::OctreeTileID& octreeID =
       std::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
 
@@ -64,8 +72,10 @@ std::vector<Tile> populateSubtree(
       if (subtreeAvailability.isSubtreeAvailable(relativeChildMortonID)) {
         Tile& child = children.emplace_back(&loader);
         child.setTransform(tile.getTransform());
-        child.setBoundingVolume(
-            subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+        child.setBoundingVolume(subdivideBoundingVolume(
+            childID,
+            loader.getBoundingVolume(),
+            ellipsoid));
         child.setGeometricError(tile.getGeometricError() * 0.5);
         child.setRefine(tile.getRefine());
         child.setTileID(childID);
@@ -85,8 +95,10 @@ std::vector<Tile> populateSubtree(
 
         Tile& child = children.back();
         child.setTransform(tile.getTransform());
-        child.setBoundingVolume(
-            subdivideBoundingVolume(childID, loader.getBoundingVolume()));
+        child.setBoundingVolume(subdivideBoundingVolume(
+            childID,
+            loader.getBoundingVolume(),
+            ellipsoid));
         child.setGeometricError(tile.getGeometricError() * 0.5);
         child.setRefine(tile.getRefine());
         child.setTileID(childID);
@@ -104,23 +116,33 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
-    bool applyTextureTransform) {
+    bool applyTextureTransform,
+    const glm::dmat4& tileTransform,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread([pLogger,
                            ktx2TranscodeTargets,
-                           applyTextureTransform](
+                           applyTextureTransform,
+                           &asyncSystem,
+                           pAssetAccessor,
+                           tileTransform,
+                           requestHeaders,
+                           ellipsoid](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
+        auto fail = [&]() {
+          return asyncSystem.createResolvedFuture(
+              TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+        };
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
           SPDLOG_LOGGER_ERROR(
               pLogger,
               "Did not receive a valid response for tile content {}",
               tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
+          return fail();
         }
 
         uint16_t statusCode = pResponse->statusCode();
@@ -130,8 +152,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               "Received status code {} for tile content {}",
               statusCode,
               tileUrl);
-          return TileLoadResult::createFailedResult(
-              std::move(pCompletedRequest));
+          return fail();
         }
 
         // find gltf converter
@@ -147,28 +168,36 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
           gltfOptions.applyTextureTransform = applyTextureTransform;
-          GltfConverterResult result = converter(responseData, gltfOptions);
+          AssetFetcher assetFetcher{
+              asyncSystem,
+              pAssetAccessor,
+              tileUrl,
+              tileTransform,
+              requestHeaders};
+          return converter(responseData, gltfOptions, assetFetcher)
+              .thenImmediately([pLogger, tileUrl, pCompletedRequest, ellipsoid](
+                                   GltfConverterResult&& result) {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
+                      std::move(pCompletedRequest));
+                }
 
-          // Report any errors if there are any
-          logTileLoadResult(pLogger, tileUrl, result.errors);
-          if (result.errors || !result.model) {
-            return TileLoadResult::createFailedResult(
-                std::move(pCompletedRequest));
-          }
-
-          return TileLoadResult{
-              std::move(*result.model),
-              CesiumGeometry::Axis::Y,
-              std::nullopt,
-              std::nullopt,
-              std::nullopt,
-              std::move(pCompletedRequest),
-              {},
-              TileLoadResultState::Success};
+                return TileLoadResult{
+                    std::move(*result.model),
+                    CesiumGeometry::Axis::Y,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success,
+                    ellipsoid};
+              });
         }
-
         // content type is not supported
-        return TileLoadResult::createFailedResult(std::move(pCompletedRequest));
+        return fail();
       });
 }
 } // namespace
@@ -181,6 +210,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& pLogger = loadInput.pLogger;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+  const auto& ellipsoid = loadInput.ellipsoid;
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
@@ -247,7 +277,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::nullopt,
         nullptr,
         {},
-        TileLoadResultState::Success});
+        TileLoadResultState::Success,
+        ellipsoid});
   }
 
   std::string tileUrl = ImplicitTilingUtilities::resolveUrl(
@@ -261,13 +292,17 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       tileUrl,
       requestHeaders,
       contentOptions.ktx2TranscodeTargets,
-      contentOptions.applyTextureTransform);
+      contentOptions.applyTextureTransform,
+      tile.getTransform(),
+      ellipsoid);
 }
 
-TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {
+TileChildrenResult ImplicitOctreeLoader::createTileChildren(
+    const Tile& tile,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::OctreeTileID* pOctreeID =
       std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
-  assert(pOctreeID != nullptr && "This loader only serves octree tile");
+  CESIUM_ASSERT(pOctreeID != nullptr && "This loader only serves octree tile");
 
   // find the subtree ID
   CesiumGeometry::OctreeTileID subtreeID =
@@ -291,7 +326,8 @@ TileChildrenResult ImplicitOctreeLoader::createTileChildren(const Tile& tile) {
         this->_subtreeLevels,
         subtreeID,
         tile,
-        *this);
+        *this,
+        ellipsoid);
 
     return {std::move(children), TileLoadResultState::Success};
   }

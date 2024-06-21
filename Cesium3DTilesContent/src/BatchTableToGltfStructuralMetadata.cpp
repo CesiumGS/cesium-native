@@ -3,6 +3,7 @@
 #include "BatchTableHierarchyPropertyValues.h"
 
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
@@ -769,7 +770,7 @@ void updateExtensionWithJsonScalarProperty(
     PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue,
     const std::string& componentTypeName) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = componentTypeName;
@@ -805,7 +806,7 @@ void updateExtensionWithJsonBooleanProperty(
     const PropertyTable& propertyTable,
     PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   std::vector<std::byte> buffer(static_cast<size_t>(
       glm::ceil(static_cast<double>(propertyTable.count) / 8.0)));
@@ -868,7 +869,7 @@ void updateScalarArrayProperty(
     const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType =
@@ -1020,7 +1021,7 @@ void updateStringArrayProperty(
     const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   size_t stringCount = 0;
   size_t totalCharCount = 0;
@@ -1174,7 +1175,7 @@ void updateBooleanArrayProperty(
     const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::BOOLEAN;
   classProperty.array = true;
@@ -1270,7 +1271,7 @@ void updateExtensionWithArrayProperty(
     PropertyTableProperty& propertyTableProperty,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   const MaskedType& elementType = arrayType.elementType;
   if (elementType.isBool) {
@@ -1541,7 +1542,7 @@ void updateExtensionWithBinaryProperty(
     const std::string& propertyName,
     const rapidjson::Value& propertyValue,
     ErrorList& result) {
-  assert(
+  CESIUM_ASSERT(
       gltfBufferIndex >= 0 &&
       "gltfBufferIndex is negative. Need to allocate buffer before "
       "converting the binary property");
@@ -1697,6 +1698,10 @@ void updateExtensionWithBatchTableHierarchy(
         propertyTable,
         propertyTableProperty,
         batchTableHierarchyValues);
+    if (propertyTableProperty.values < 0) {
+      // Don't include properties without _any_ values.
+      propertyTable.properties.erase(name);
+    }
   }
 }
 
@@ -1719,6 +1724,8 @@ void convertBatchTableToGltfStructuralMetadataExtension(
 
   ExtensionModelExtStructuralMetadata& modelExtension =
       gltf.addExtension<ExtensionModelExtStructuralMetadata>();
+  gltf.addExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName);
+
   Schema& schema = modelExtension.schema.emplace();
   schema.id = "default"; // Required by the spec.
 
@@ -1770,6 +1777,11 @@ void convertBatchTableToGltfStructuralMetadataExtension(
           propertyValue,
           result);
       gltfBufferOffset += roundUp(binaryProperty.byteLength, 8);
+    }
+
+    if (propertyTableProperty.values < 0) {
+      // Don't include properties without _any_ values.
+      propertyTable.properties.erase(name);
     }
   }
 
@@ -1854,8 +1866,21 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
       primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
       primitive.attributes.erase("_BATCHID");
 
+      // Also rename the attribute in the Draco extension, if it exists.
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+      if (pDraco) {
+        auto dracoIt = pDraco->attributes.find("_BATCHID");
+        if (dracoIt != pDraco->attributes.end()) {
+          pDraco->attributes["_FEATURE_ID_0"] = dracoIt->second;
+          pDraco->attributes.erase("_BATCHID");
+        }
+      }
+
       ExtensionExtMeshFeatures& extension =
           primitive.addExtension<ExtensionExtMeshFeatures>();
+      gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
       FeatureId& featureID = extension.featureIds.emplace_back();
 
       // No fast way to count the unique feature IDs in this primitive, so
@@ -1922,14 +1947,16 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
       result);
 
   // Create the EXT_mesh_features extension for the single mesh primitive.
-  assert(gltf.meshes.size() == 1);
+  CESIUM_ASSERT(gltf.meshes.size() == 1);
   Mesh& mesh = gltf.meshes[0];
 
-  assert(mesh.primitives.size() == 1);
+  CESIUM_ASSERT(mesh.primitives.size() == 1);
   MeshPrimitive& primitive = mesh.primitives[0];
 
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
+  gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
   FeatureId& featureID = extension.featureIds.emplace_back();
 
   // Setting the feature count is sufficient for implicit feature IDs.
@@ -1941,6 +1968,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     // If _BATCHID is present, rename the _BATCHID attribute to _FEATURE_ID_0
     primitive.attributes["_FEATURE_ID_0"] = primitiveBatchIdIt->second;
     primitive.attributes.erase("_BATCHID");
+
     featureID.attribute = 0;
     featureID.label = "_FEATURE_ID_0";
   }

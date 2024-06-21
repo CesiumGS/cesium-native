@@ -3,6 +3,8 @@
 #include "Library.h"
 
 #include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <gsl/span>
@@ -12,6 +14,39 @@
 #include <string_view>
 
 namespace Cesium3DTilesContent {
+
+struct AssetFetcherResult {
+  std::vector<std::byte> bytes;
+  CesiumUtility::ErrorList errorList;
+};
+
+/**
+ * Object that makes a recursive request to fetch an asset, mostly for the
+ * benefit of i3dm files.
+ */
+struct CESIUM3DTILESCONTENT_API AssetFetcher {
+  AssetFetcher(
+      const CesiumAsync::AsyncSystem& asyncSystem_,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor_,
+      const std::string& baseUrl_,
+      const glm::dmat4 tileTransform_,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders_)
+      : asyncSystem(asyncSystem_),
+        pAssetAccessor(pAssetAccessor_),
+        baseUrl(baseUrl_),
+        tileTransform(tileTransform_),
+        requestHeaders(requestHeaders_) {}
+
+  CesiumAsync::Future<AssetFetcherResult>
+  get(const std::string& relativeUrl) const;
+
+  const CesiumAsync::AsyncSystem& asyncSystem;
+  const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+  const std::string baseUrl;
+  glm::dmat4 tileTransform; // For ENU transforms in i3dm
+  const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+};
+
 /**
  * @brief Creates {@link GltfConverterResult} objects from a
  * a binary content.
@@ -32,9 +67,10 @@ public:
    * @brief A function pointer that can create a {@link GltfConverterResult} from a
    * tile binary content.
    */
-  using ConverterFunction = GltfConverterResult (*)(
+  using ConverterFunction = CesiumAsync::Future<GltfConverterResult> (*)(
       const gsl::span<const std::byte>& content,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      const AssetFetcher& subprocessor);
 
   /**
    * @brief Register the given function for the given magic header.
@@ -117,13 +153,16 @@ public:
    * the converter.
    * @param content The tile binary content that may contains the magic header
    * to look up the converter and is used to convert to gltf model.
-   * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to read a glTF.
+   * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to
+   * read a glTF.
+   * @param assetFetcher An object that can perform recursive asset requests.
    * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
-  static GltfConverterResult convert(
+  static CesiumAsync::Future<GltfConverterResult> convert(
       const std::string& filePath,
       const gsl::span<const std::byte>& content,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      const AssetFetcher& assetFetcher);
 
   /**
    * @brief Creates the {@link GltfConverterResult} from the given
@@ -142,12 +181,15 @@ public:
    *
    * @param content The tile binary content that may contains the magic header
    * to look up the converter and is used to convert to gltf model.
-   * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to read a glTF.
+   * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to
+   * read a glTF.
+   * @param assetFetcher An object that can perform recursive asset requests.
    * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
-  static GltfConverterResult convert(
+  static CesiumAsync::Future<GltfConverterResult> convert(
       const gsl::span<const std::byte>& content,
-      const CesiumGltfReader::GltfReaderOptions& options);
+      const CesiumGltfReader::GltfReaderOptions& options,
+      const AssetFetcher& assetFetcher);
 
 private:
   static std::string toLowerCase(const std::string_view& str);

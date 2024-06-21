@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
-#include "CesiumGltf/ModelSpec.h"
+#include <CesiumGltf/Library.h>
+#include <CesiumGltf/ModelSpec.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <glm/mat4x4.hpp>
 
@@ -22,7 +23,92 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    *
    * @param rhs The model to merge into this one.
    */
-  void merge(Model&& rhs);
+  CesiumUtility::ErrorList merge(Model&& rhs);
+
+  /**
+   * @brief A callback function for {@link forEachRootNodeInScene}.
+   */
+  typedef void ForEachRootNodeInSceneCallback(Model& gltf, Node& node);
+
+  /**
+   * @brief A callback function for {@link forEachRootNodeInScene}.
+   */
+  typedef void
+  ForEachRootNodeInSceneConstCallback(const Model& gltf, const Node& node);
+
+  /**
+   * @brief Apply the given callback to the root nodes of the scene.
+   *
+   * If the given `sceneID` is non-negative and exists in the given glTF,
+   * then the given callback will be applied to all root nodes of this scene.
+   *
+   * If the given `sceneId` is negative, then the nodes that the callback
+   * will be applied to depends on the structure of the glTF model:
+   *
+   * * If the glTF model has a default scene, then it will
+   *   be applied to all root nodes of the default scene.
+   * * Otherwise, it will be applied to all root nodes of the first scene.
+   * * Otherwise (if the glTF model does not contain any scenes), it will
+   *   be applied to the first node.
+   * * Otherwise (if there are no scenes and no nodes), then this method will do
+   *   nothing.
+   *
+   * @param sceneID The scene ID (index)
+   * @param callback The callback to apply
+   */
+  void forEachRootNodeInScene(
+      int32_t sceneID,
+      std::function<ForEachRootNodeInSceneCallback>&& callback);
+
+  /** @copydoc Gltf::forEachRootNodeInScene() */
+  void forEachRootNodeInScene(
+      int32_t sceneID,
+      std::function<ForEachRootNodeInSceneConstCallback>&& callback) const;
+
+  /**
+   * @brief A callback function for {@link forEachNodeInScene}.
+   */
+  typedef void ForEachNodeInSceneCallback(
+      Model& gltf,
+      Node& node,
+      const glm::dmat4& transform);
+
+  /**
+   * @brief Apply the given callback to all nodes in the scene.
+   *
+   * If the given `sceneID` is non-negative and exists in the given glTF,
+   * then the given callback will be applied to all nodes in this scene.
+   *
+   * If the given `sceneId` is negative, then the nodes that the callback
+   * will be applied to depends on the structure of the glTF model:
+   *
+   * * If the glTF model has a default scene, then it will
+   *   be applied to all nodes in the default scene.
+   * * Otherwise, it will be applied to all nodes in the first scene.
+   * * Otherwise (if the glTF model does not contain any scenes), it will
+   *   be applied to the first node.
+   * * Otherwise (if there are no scenes and no nodes), then this method will do
+   *   nothing.
+   *
+   * @param sceneID The scene ID (index)
+   * @param callback The callback to apply
+   */
+  void forEachNodeInScene(
+      int32_t sceneID,
+      std::function<ForEachNodeInSceneCallback>&& callback);
+
+  /**
+   * @brief A callback function for {@link forEachNodeInScene}.
+   */
+  typedef void ForEachNodeInSceneConstCallback(
+      const Model& gltf,
+      const Node& node,
+      const glm::dmat4& transform);
+
+  /** @copydoc Gltf::forEachNodeInScene() */
+  void forEachNodeInScene(
+      int32_t sceneID,
+      std::function<ForEachNodeInSceneConstCallback>&& callback) const;
 
   /**
    * @brief A callback function for {@link forEachPrimitiveInScene}.
@@ -56,7 +142,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * @param callback The callback to apply
    */
   void forEachPrimitiveInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachPrimitiveInSceneCallback>&& callback);
 
   /**
@@ -71,7 +157,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
 
   /** @copydoc Gltf::forEachPrimitiveInScene() */
   void forEachPrimitiveInScene(
-      int sceneID,
+      int32_t sceneID,
       std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const;
 
   /**
@@ -92,10 +178,10 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   template <typename T>
   static const T& getSafe(const std::vector<T>& items, int32_t index) {
     static T defaultObject;
-    if (index < 0 || static_cast<size_t>(index) >= items.size()) {
+    if (index < 0 || size_t(index) >= items.size()) {
       return defaultObject;
     } else {
-      return items[static_cast<size_t>(index)];
+      return items[size_t(index)];
     }
   }
 
@@ -112,10 +198,10 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   template <typename T>
   static const T*
   getSafe(const std::vector<T>* pItems, int32_t index) noexcept {
-    if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
+    if (index < 0 || size_t(index) >= pItems->size()) {
       return nullptr;
     } else {
-      return &(*pItems)[static_cast<size_t>(index)];
+      return &(*pItems)[size_t(index)];
     }
   }
 
@@ -131,11 +217,51 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    */
   template <typename T>
   static T* getSafe(std::vector<T>* pItems, int32_t index) noexcept {
-    if (index < 0 || static_cast<size_t>(index) >= pItems->size()) {
+    if (index < 0 || size_t(index) >= pItems->size()) {
       return nullptr;
     } else {
-      return &(*pItems)[static_cast<size_t>(index)];
+      return &(*pItems)[size_t(index)];
     }
   }
+
+  /**
+   * @brief Adds an extension to the {@link ModelSpec::extensionsUsed}
+   * property, if it is not already present.
+   *
+   * @param extensionName The name of the used extension.
+   */
+  void addExtensionUsed(const std::string& extensionName);
+
+  /**
+   * @brief Adds an extension to the {@link ModelSpec::extensionsRequired}
+   * property, if it is not already present.
+   *
+   * Calling this function also adds the extension to `extensionsUsed`, if it's
+   * not already present.
+   *
+   * @param extensionName The name of the required extension.
+   */
+  void addExtensionRequired(const std::string& extensionName);
+
+  /**
+   * @brief Determines whether a given extension name is listed in the model's
+   * {@link ModelSpec::extensionsUsed} property.
+   *
+   * @param extensionName The extension name to check.
+   * @returns True if the extension is found in `extensionsUsed`; otherwise,
+   * false.
+   */
+  bool isExtensionUsed(const std::string& extensionName) const noexcept;
+
+  /**
+   * @brief Determines whether a given extension name is listed in the model's
+   * {@link ModelSpec::extensionsRequired} property.
+   *
+   * @param extensionName The extension name to check.
+   * @returns True if the extension is found in `extensionsRequired`; otherwise,
+   * false.
+   */
+  bool isExtensionRequired(const std::string& extensionName) const noexcept;
 };
+
 } // namespace CesiumGltf

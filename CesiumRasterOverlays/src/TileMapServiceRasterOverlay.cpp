@@ -231,14 +231,24 @@ Future<GetXmlDocumentResult> getXmlDocument(
             }
             if (hasError) {
               if (url.find("tilemapresource.xml") == std::string::npos) {
-                std::string baseUrl = url;
-                if (baseUrl.size() > 0 && baseUrl[baseUrl.size() - 1] != '/') {
-                  baseUrl += '/';
+                std::string updatedUrl = url;
+
+                std::string urlPath = Uri::getPath(url);
+                if (!(urlPath.size() < 4)) {
+                  if (urlPath.substr(urlPath.size() - 4, 4) != ".xml") {
+                    if (urlPath[urlPath.size() - 1] != '/') {
+                      urlPath += "/";
+                      updatedUrl = Uri::setPath(url, urlPath);
+                    }
+                  }
                 }
+
                 return getXmlDocument(
                     asyncSystem,
                     pAssetAccessor,
-                    CesiumUtility::Uri::resolve(baseUrl, "tilemapresource.xml"),
+                    CesiumUtility::Uri::resolve(
+                        updatedUrl,
+                        "tilemapresource.xml"),
                     headers);
               } else {
                 return asyncSystem.createResolvedFuture<GetXmlDocumentResult>(
@@ -331,9 +341,13 @@ TileMapServiceRasterOverlay::createTileProvider(
               maximumLevel = 25;
             }
 
+            const CesiumGeospatial::Ellipsoid& ellipsoid =
+                options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
-            CesiumGeospatial::Projection projection;
+            CesiumGeospatial::Projection projection =
+                CesiumGeospatial::WebMercatorProjection(ellipsoid);
             uint32_t rootTilesX = 1;
             bool isRectangleInDegrees = false;
 
@@ -345,7 +359,7 @@ TileMapServiceRasterOverlay::createTileProvider(
 
               if (projectionName == "mercator" ||
                   projectionName == "global-mercator") {
-                projection = CesiumGeospatial::WebMercatorProjection();
+                projection = CesiumGeospatial::WebMercatorProjection(ellipsoid);
                 tilingSchemeRectangle = CesiumGeospatial::
                     WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
 
@@ -359,7 +373,7 @@ TileMapServiceRasterOverlay::createTileProvider(
               } else if (
                   projectionName == "geodetic" ||
                   projectionName == "global-geodetic") {
-                projection = CesiumGeospatial::GeographicProjection();
+                projection = CesiumGeospatial::GeographicProjection(ellipsoid);
                 tilingSchemeRectangle = CesiumGeospatial::GeographicProjection::
                     MAXIMUM_GLOBE_RECTANGLE;
                 rootTilesX = 2;
@@ -371,7 +385,8 @@ TileMapServiceRasterOverlay::createTileProvider(
                 if (srs) {
                   std::string srsText = srs->GetText();
                   if (srsText.find("4326") != std::string::npos) {
-                    projection = CesiumGeospatial::GeographicProjection();
+                    projection =
+                        CesiumGeospatial::GeographicProjection(ellipsoid);
                     tilingSchemeRectangle = CesiumGeospatial::
                         GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
                     rootTilesX = 2;
@@ -379,7 +394,8 @@ TileMapServiceRasterOverlay::createTileProvider(
                   } else if (
                       srsText.find("3857") != std::string::npos ||
                       srsText.find("900913") != std::string::npos) {
-                    projection = CesiumGeospatial::WebMercatorProjection();
+                    projection =
+                        CesiumGeospatial::WebMercatorProjection(ellipsoid);
                     tilingSchemeRectangle = CesiumGeospatial::
                         WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
                     isRectangleInDegrees = true;
@@ -435,12 +451,14 @@ TileMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 1);
 
-            std::string baseUrl = url;
+            std::string updatedUrl = url;
 
-            if (!(baseUrl.size() < 4)) {
-              if (baseUrl.substr(baseUrl.size() - 4, 4) != ".xml") {
-                if (baseUrl[baseUrl.size() - 1] != '/') {
-                  baseUrl += "/";
+            std::string urlPath = Uri::getPath(url);
+            if (!(urlPath.size() < 4)) {
+              if (urlPath.substr(urlPath.size() - 4, 4) != ".xml") {
+                if (urlPath[urlPath.size() - 1] != '/') {
+                  urlPath += "/";
+                  updatedUrl = Uri::setPath(url, urlPath);
                 }
               }
             }
@@ -455,7 +473,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 projection,
                 tilingScheme,
                 coverageRectangle,
-                baseUrl,
+                updatedUrl,
                 headers,
                 !fileExtension.empty() ? "." + fileExtension : fileExtension,
                 tileWidth,

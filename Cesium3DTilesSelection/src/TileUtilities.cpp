@@ -13,10 +13,11 @@ namespace CesiumImpl {
 
 bool withinPolygons(
     const BoundingVolume& boundingVolume,
-    const std::vector<CartographicPolygon>& cartographicPolygons) noexcept {
+    const std::vector<CartographicPolygon>& cartographicPolygons,
+    const Ellipsoid& ellipsoid) noexcept {
 
   std::optional<GlobeRectangle> maybeRectangle =
-      estimateGlobeRectangle(boundingVolume);
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!maybeRectangle) {
     return false;
   }
@@ -29,10 +30,11 @@ bool withinPolygons(
 bool outsidePolygons(
     const BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
-        cartographicPolygons) noexcept {
+        cartographicPolygons,
+    const Ellipsoid& ellipsoid) noexcept {
 
   std::optional<GlobeRectangle> maybeRectangle =
-      estimateGlobeRectangle(boundingVolume);
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!maybeRectangle) {
     return false;
   }

@@ -241,10 +241,48 @@ public:
    */
   GlobeRectangle computeUnion(const GlobeRectangle& other) const noexcept;
 
+  /**
+   * @brief Splits this rectangle at the anti-meridian (180 degrees longitude),
+   * if necessary.
+   *
+   * If the rectangle does not cross the anti-meridian, the entire rectangle is
+   * returned in the `first` field of the pair and the `second` is std::nullopt.
+   * If it does cross the anti-meridian, this function returns two rectangles
+   * that touch but do not cross it. The larger of the two rectangles is
+   * returned in `first` and the smaller one is returned in `second`.
+   */
+  std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
+  splitAtAntiMeridian() const noexcept;
+
+  /**
+   * @brief Checks whether two globe rectangles are exactly equal.
+   *
+   * @param left The first rectangle.
+   * @param right The second rectangle.
+   * @return Whether the rectangles are equal
+   */
+  static bool
+  equals(const GlobeRectangle& left, const GlobeRectangle& right) noexcept;
+
+  /**
+   * @brief Checks whether two globe rectangles are equal up to a given relative
+   * epsilon.
+   *
+   * @param left The first rectangle.
+   * @param right The second rectangle.
+   * @param relativeEpsilon The relative epsilon.
+   * @return Whether the rectangles are epsilon-equal
+   */
+  static bool equalsEpsilon(
+      const GlobeRectangle& left,
+      const GlobeRectangle& right,
+      double relativeEpsilon) noexcept;
+
 private:
   double _west;
   double _south;
   double _east;
   double _north;
 };
+
 } // namespace CesiumGeospatial

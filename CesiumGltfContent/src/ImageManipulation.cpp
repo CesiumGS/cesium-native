@@ -1,11 +1,18 @@
 #include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 
-#include <cassert>
 #include <cstring>
 
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
+namespace Cesium {
+// Use STB resize in our own namespace to avoid conflicts from other libs
+#define STBIRDEF
 #include <stb_image_resize.h>
+#undef STBIRDEF
+}; // namespace Cesium
+
+using namespace Cesium;
+
+#define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 

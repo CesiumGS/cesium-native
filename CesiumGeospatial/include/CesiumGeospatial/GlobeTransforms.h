@@ -33,7 +33,7 @@ public:
    */
   static glm::dmat4x4 eastNorthUpToFixedFrame(
       const glm::dvec3& origin,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84) noexcept;
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) noexcept;
 };
 
 } // namespace CesiumGeospatial

@@ -109,6 +109,15 @@ public:
   }
 
   /**
+   * @brief Returns whether an extension is enabled or disabled.
+   *
+   * By default, all extensions are enabled.
+   *
+   * @param extensionName The name of the extension.
+   */
+  ExtensionState getExtensionState(const std::string& extensionName) const;
+
+  /**
    * @brief Enables or disables an extension.
    *
    * By default, all extensions are enabled. When an enabled extension is

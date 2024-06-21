@@ -1,5 +1,6 @@
 #include "CesiumIonClient/Response.h"
 
+#include "CesiumIonClient/ApplicationData.h"
 #include "CesiumIonClient/Assets.h"
 #include "CesiumIonClient/Defaults.h"
 #include "CesiumIonClient/Profile.h"
@@ -9,8 +10,6 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
-
-#include <cassert>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -79,5 +78,6 @@ template struct Response<NoValue>;
 template struct Response<Profile>;
 template struct Response<Token>;
 template struct Response<TokenList>;
+template struct Response<ApplicationData>;
 
 } // namespace CesiumIonClient

@@ -28,6 +28,16 @@ public:
   virtual IJsonHandler& getHandler() override { return *this; }
 };
 
+ExtensionState
+JsonReaderOptions::getExtensionState(const std::string& extensionName) const {
+  auto stateIt = this->_extensionStates.find(extensionName);
+  if (stateIt == this->_extensionStates.end()) {
+    return ExtensionState::Enabled;
+  }
+
+  return stateIt->second;
+}
+
 void JsonReaderOptions::setExtensionState(
     const std::string& extensionName,
     ExtensionState newState) {

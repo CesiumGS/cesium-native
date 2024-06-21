@@ -2,6 +2,7 @@
 
 #include <Cesium3DTilesContent/B3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 
 #include <rapidjson/document.h>
@@ -113,12 +114,12 @@ void parseB3dmHeader(
   }
 }
 
-void convertB3dmContentToGltf(
+CesiumAsync::Future<GltfConverterResult> convertB3dmContentToGltf(
     const gsl::span<const std::byte>& b3dmBinary,
     const B3dmHeader& header,
     uint32_t headerLength,
     const CesiumGltfReader::GltfReaderOptions& options,
-    GltfConverterResult& result) {
+    const AssetFetcher& assetFetcher) {
   const uint32_t glbStart = headerLength + header.featureTableJsonByteLength +
                             header.featureTableBinaryByteLength +
                             header.batchTableJsonByteLength +
@@ -126,20 +127,17 @@ void convertB3dmContentToGltf(
   const uint32_t glbEnd = header.byteLength;
 
   if (glbEnd <= glbStart) {
+    GltfConverterResult result;
     result.errors.emplaceError(
         "The B3DM is invalid because the start of the "
         "glTF model is after the end of the entire B3DM.");
-    return;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   const gsl::span<const std::byte> glbData =
       b3dmBinary.subspan(glbStart, glbEnd - glbStart);
 
-  GltfConverterResult binToGltfResult =
-      BinaryToGltfConverter::convert(glbData, options);
-
-  result.model = std::move(binToGltfResult.model);
-  result.errors.merge(std::move(binToGltfResult.errors));
+  return BinaryToGltfConverter::convert(glbData, options, assetFetcher);
 }
 
 rapidjson::Document parseFeatureTableJsonData(
@@ -166,6 +164,8 @@ rapidjson::Document parseFeatureTableJsonData(
     rapidjson::Value& rtcValue = rtcIt->value;
     auto& cesiumRTC =
         result.model->addExtension<CesiumGltf::ExtensionCesiumRTC>();
+    result.model->addExtensionRequired(
+        CesiumGltf::ExtensionCesiumRTC::ExtensionName);
     cesiumRTC.center = {
         rtcValue[0].GetDouble(),
         rtcValue[1].GetDouble(),
@@ -229,28 +229,34 @@ void convertB3dmMetadataToGltfStructuralMetadata(
 }
 } // namespace
 
-GltfConverterResult B3dmToGltfConverter::convert(
+CesiumAsync::Future<GltfConverterResult> B3dmToGltfConverter::convert(
     const gsl::span<const std::byte>& b3dmBinary,
-    const CesiumGltfReader::GltfReaderOptions& options) {
+    const CesiumGltfReader::GltfReaderOptions& options,
+    const AssetFetcher& assetFetcher) {
   GltfConverterResult result;
   B3dmHeader header;
   uint32_t headerLength = 0;
   parseB3dmHeader(b3dmBinary, header, headerLength, result);
   if (result.errors) {
-    return result;
+    return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  convertB3dmContentToGltf(b3dmBinary, header, headerLength, options, result);
-  if (result.errors) {
-    return result;
-  }
-
-  convertB3dmMetadataToGltfStructuralMetadata(
-      b3dmBinary,
-      header,
-      headerLength,
-      result);
-
-  return result;
+  return convertB3dmContentToGltf(
+             b3dmBinary,
+             header,
+             headerLength,
+             options,
+             assetFetcher)
+      .thenImmediately(
+          [b3dmBinary, header, headerLength](GltfConverterResult&& glbResult) {
+            if (!glbResult.errors) {
+              convertB3dmMetadataToGltfStructuralMetadata(
+                  b3dmBinary,
+                  header,
+                  headerLength,
+                  glbResult);
+            }
+            return std::move(glbResult);
+          });
 }
 } // namespace Cesium3DTilesContent

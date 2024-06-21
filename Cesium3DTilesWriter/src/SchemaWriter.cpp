@@ -1,7 +1,7 @@
 #include "Cesium3DTilesWriter/SchemaWriter.h"
 
 #include "TilesetJsonWriter.h"
-#include "registerExtensions.h"
+#include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
@@ -9,7 +9,7 @@
 
 namespace Cesium3DTilesWriter {
 
-SchemaWriter::SchemaWriter() { registerExtensions(this->_context); }
+SchemaWriter::SchemaWriter() { registerWriterExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& SchemaWriter::getExtensions() {
   return this->_context;
@@ -39,6 +39,8 @@ SchemaWriterResult SchemaWriter::writeSchema(
 
   SchemaJsonWriter::write(schema, *writer, context);
   result.schemaBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }

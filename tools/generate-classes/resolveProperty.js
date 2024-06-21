@@ -727,7 +727,11 @@ function createEnumReaderTypeImpl(parentName, enumName, propertyName, enums) {
 }
 
 function makeNameIntoValidIdentifier(name) {
-  if (cppReservedWords.indexOf(name) >= 0) {
+  const generatorReservedWords = ["extensions", "extras", "unknownProperties"];
+  if (
+    cppReservedWords.indexOf(name) >= 0 ||
+    generatorReservedWords.indexOf(name) >= 0
+  ) {
     name += "Property";
   }
   return name;

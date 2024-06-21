@@ -353,7 +353,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
             Math::OnePi,
             Math::PiOverTwo},
         0.0,
-        100.0};
+        100.0,
+        Ellipsoid::WGS84};
     ImplicitQuadtreeLoader loader{
         "tileset.json",
         "content/{level}.{x}.{y}.b3dm",
@@ -487,7 +488,11 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     S2CellID rootID = S2CellID::fromToken("1");
     CHECK(rootID.getFace() == 0);
 
-    S2CellBoundingVolume loaderBoundingVolume{rootID, 0, 1000.0};
+    S2CellBoundingVolume loaderBoundingVolume{
+        rootID,
+        0,
+        1000.0,
+        Ellipsoid::WGS84};
 
     ImplicitQuadtreeLoader loader{
         "tileset.json",

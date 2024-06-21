@@ -1,29 +1,31 @@
 #include "CesiumGltfWriter/GltfWriter.h"
 
 #include "ModelJsonWriter.h"
-#include "registerExtensions.h"
+#include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
-
 namespace CesiumGltfWriter {
 
 namespace {
 
 [[nodiscard]] size_t
 getPadding(size_t byteCount, size_t byteAlignment) noexcept {
-  assert(byteAlignment > 0);
+  CESIUM_ASSERT(byteAlignment > 0);
   size_t remainder = byteCount % byteAlignment;
   size_t padding = remainder == 0 ? 0 : byteAlignment - remainder;
   return padding;
 }
 
-[[nodiscard]] std::vector<std::byte> writeGlbBuffer(
+void writeGlbBuffer(
+    GltfWriterResult& result,
     const gsl::span<const std::byte>& jsonData,
     const gsl::span<const std::byte>& bufferData,
     size_t binaryChunkByteAlignment) {
-  assert(binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
+  CESIUM_ASSERT(
+      binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
 
   size_t headerSize = 12;
   size_t chunkHeaderSize = 8;
@@ -51,7 +53,17 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
     glbSize += chunkHeaderSize + binaryChunkDataSize;
   }
 
-  std::vector<std::byte> glb(glbSize);
+  // GLB stores its own length as a uint32. So if that would be >= 4GB , we
+  // can't output a valid GLB.
+  if (glbSize > size_t(std::numeric_limits<uint32_t>::max())) {
+    result.errors.emplace_back(
+        "glTF is too large to represent as a binary glTF (GLB). The total size "
+        "of the GLB must be less than 4GB.");
+    return;
+  }
+
+  std::vector<std::byte>& glb = result.gltfBytes;
+  glb.resize(glbSize);
   uint8_t* glb8 = reinterpret_cast<uint8_t*>(glb.data());
   uint32_t* glb32 = reinterpret_cast<uint32_t*>(glb.data());
 
@@ -98,12 +110,10 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
     // Binary chunk padding
     memset(glb8 + byteOffset, 0, binaryPaddingSize);
   }
-
-  return glb;
 }
 } // namespace
 
-GltfWriter::GltfWriter() { registerExtensions(this->_context); }
+GltfWriter::GltfWriter() { registerWriterExtensions(this->_context); }
 
 CesiumJsonWriter::ExtensionWriterContext& GltfWriter::getExtensions() {
   return this->_context;
@@ -133,6 +143,8 @@ GltfWriterResult GltfWriter::writeGltf(
 
   ModelJsonWriter::write(model, *writer, context);
   result.gltfBytes = writer->toBytes();
+  result.errors = writer->getErrors();
+  result.warnings = writer->getWarnings();
 
   return result;
 }
@@ -147,7 +159,6 @@ GltfWriterResult GltfWriter::writeGlb(
       this->getExtensions();
 
   GltfWriterResult result;
-
   std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
 
   if (options.prettyPrint) {
@@ -159,10 +170,21 @@ GltfWriterResult GltfWriter::writeGlb(
   ModelJsonWriter::write(model, *writer, context);
   std::vector<std::byte> jsonData = writer->toBytes();
 
-  result.gltfBytes = writeGlbBuffer(
+  writeGlbBuffer(
+      result,
       gsl::span(jsonData),
       bufferData,
       options.binaryChunkByteAlignment);
+
+  result.errors.insert(
+      result.errors.end(),
+      writer->getErrors().begin(),
+      writer->getErrors().end());
+
+  result.warnings.insert(
+      result.warnings.end(),
+      writer->getWarnings().begin(),
+      writer->getWarnings().end());
 
   return result;
 }

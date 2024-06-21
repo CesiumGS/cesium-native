@@ -4,6 +4,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyTableView.h>
@@ -389,6 +390,8 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_structural_metadata") {
   ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -479,6 +482,7 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_structural_metadata") {
       ExtensionExtMeshFeatures* pPrimitiveExtension =
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
+      CHECK(gltf.isExtensionUsed(ExtensionExtMeshFeatures::ExtensionName));
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
       const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
@@ -619,6 +623,7 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
       const ExtensionExtMeshFeatures* pPrimitiveExtension =
           primitive.getExtension<ExtensionExtMeshFeatures>();
       REQUIRE(pPrimitiveExtension);
+      CHECK(model.isExtensionUsed(ExtensionExtMeshFeatures::ExtensionName));
       REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
       const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
       CHECK(featureId.featureCount == 10);
@@ -761,6 +766,8 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
   const ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -831,6 +838,7 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
   const ExtensionExtMeshFeatures* pPrimitiveExtension =
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
+  CHECK(gltf.isExtensionUsed(ExtensionExtMeshFeatures::ExtensionName));
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
   const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
@@ -907,6 +915,8 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
   const ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -982,6 +992,7 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
   const ExtensionExtMeshFeatures* pPrimitiveExtension =
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
+  CHECK(gltf.isExtensionUsed(ExtensionExtMeshFeatures::ExtensionName));
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
   const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
@@ -1045,6 +1056,39 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
   }
 }
 
+TEST_CASE("Draco-compressed b3dm uses _FEATURE_ID_0 attribute name in glTF") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath =
+      testFilePath / "BatchTables" / "batchedWithBatchTable-draco.b3dm";
+
+  CesiumGltfReader::GltfReaderOptions options;
+  options.decodeDraco = false;
+
+  GltfConverterResult result =
+      ConvertTileToGltf::fromB3dm(testFilePath, options);
+  CHECK(result.errors.errors.empty());
+  CHECK(result.errors.warnings.empty());
+  REQUIRE(result.model);
+
+  const Model& gltf = *result.model;
+
+  CHECK(!gltf.meshes.empty());
+  for (const Mesh& mesh : gltf.meshes) {
+    CHECK(!mesh.primitives.empty());
+    for (const MeshPrimitive& primitive : mesh.primitives) {
+      CHECK(
+          primitive.attributes.find("_FEATURE_ID_0") !=
+          primitive.attributes.end());
+
+      const ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+      REQUIRE(pDraco);
+      CHECK(
+          pDraco->attributes.find("_FEATURE_ID_0") != pDraco->attributes.end());
+    }
+  }
+}
+
 TEST_CASE("Converts Draco per-point PNTS batch table to "
           "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -1058,6 +1102,8 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
   const ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -1133,6 +1179,7 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
   const ExtensionExtMeshFeatures* pPrimitiveExtension =
       primitive.getExtension<ExtensionExtMeshFeatures>();
   REQUIRE(pPrimitiveExtension);
+  CHECK(gltf.isExtensionUsed(ExtensionExtMeshFeatures::ExtensionName));
   REQUIRE(pPrimitiveExtension->featureIds.size() == 1);
   const FeatureId& featureId = pPrimitiveExtension->featureIds[0];
   CHECK(featureId.featureCount == 8);
@@ -2238,6 +2285,8 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -2319,6 +2368,101 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   }
 }
 
+TEST_CASE("Omits value-less properties when converting "
+          "3DTILES_batch_table_hierarchy to EXT_structural_metadata") {
+  Model gltf;
+
+  std::string featureTableJson = R"(
+    {
+      "BATCH_LENGTH": 8
+    }
+  )";
+
+  // "Feature classes" example from the spec:
+  // https://github.com/CesiumGS/3d-tiles/tree/main/extensions/3DTILES_batch_table_hierarchy#feature-classes
+  std::string batchTableJson = R"(
+    {
+      "extensions" : {
+        "3DTILES_batch_table_hierarchy" : {
+          "classes" : [
+            {
+              "name" : "Lamp",
+              "length" : 3,
+              "instances" : {
+                "lampStrength" : [10, 5, 7],
+                "lampColor" : ["yellow", "white", "white"],
+                "missingValues": []
+              }
+            },
+            {
+              "name" : "Car",
+              "length" : 3,
+              "instances" : {
+                "carType" : ["truck", "bus", "sedan"],
+                "carColor" : ["green", "blue", "red"]
+              }
+            },
+            {
+              "name" : "Tree",
+              "length" : 2,
+              "instances" : {
+                "treeHeight" : [10, 15],
+                "treeAge" : [5, 8]
+              }
+            }
+          ],
+          "instancesLength" : 8,
+          "classIds" : [0, 0, 0, 1, 1, 1, 2, 2]
+        }
+      }
+    }
+  )";
+
+  rapidjson::Document featureTableParsed;
+  featureTableParsed.Parse(featureTableJson.data(), featureTableJson.size());
+
+  rapidjson::Document batchTableParsed;
+  batchTableParsed.Parse(batchTableJson.data(), batchTableJson.size());
+
+  auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
+      featureTableParsed,
+      batchTableParsed,
+      gsl::span<const std::byte>(),
+      gltf);
+
+  ExtensionModelExtStructuralMetadata* pExtension =
+      gltf.getExtension<ExtensionModelExtStructuralMetadata>();
+  REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
+
+  // Check the schema
+  REQUIRE(pExtension->schema);
+  REQUIRE(pExtension->schema->classes.size() == 1);
+
+  auto firstClassIt = pExtension->schema->classes.begin();
+  CHECK(firstClassIt->first == "default");
+
+  Class& defaultClass = firstClassIt->second;
+  REQUIRE(defaultClass.properties.size() == 7);
+
+  // Check the property table
+  REQUIRE(pExtension->propertyTables.size() == 1);
+  PropertyTable& propertyTable = pExtension->propertyTables[0];
+  CHECK(propertyTable.classProperty == "default");
+
+  // Verify that all property table properties refer to a valid bufferView.
+  for (const std::pair<const std::string, PropertyTableProperty>& pair :
+       propertyTable.properties) {
+    CHECK(pair.second.values >= 0);
+    CHECK(size_t(pair.second.values) < gltf.bufferViews.size());
+  }
+
+  CHECK(
+      propertyTable.properties.find("missingValues") ==
+      propertyTable.properties.end());
+}
+
 TEST_CASE(
     "Converts \"Feature Hierarchy\" 3DTILES_batch_table_hierarchy example to "
     "EXT_structural_metadata") {
@@ -2386,6 +2530,8 @@ TEST_CASE(
   ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -2590,6 +2736,8 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts is okay if all "
   const ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
@@ -2679,6 +2827,8 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts values != 1 is "
   const ExtensionModelExtStructuralMetadata* pExtension =
       gltf.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pExtension);
+  CHECK(
+      gltf.isExtensionUsed(ExtensionModelExtStructuralMetadata::ExtensionName));
 
   // Check the schema
   REQUIRE(pExtension->schema);
