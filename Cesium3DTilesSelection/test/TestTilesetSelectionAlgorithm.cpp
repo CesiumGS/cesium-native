@@ -76,7 +76,8 @@ static void initializeTileset(Tileset& tileset) {
       viewUp,
       viewPortSize,
       horizontalFieldOfView,
-      verticalFieldOfView);
+      verticalFieldOfView,
+      Ellipsoid::WGS84);
 
   tileset.updateView({viewState});
 }
@@ -107,7 +108,8 @@ static ViewState zoomToTile(const Tile& tile) {
       viewUp,
       viewPortSize,
       horizontalFieldOfView,
-      verticalFieldOfView);
+      verticalFieldOfView,
+      Ellipsoid::WGS84);
 }
 
 static ViewState zoomToTileset(const Tileset& tileset) {
@@ -195,7 +197,8 @@ TEST_CASE("Test replace refinement for render") {
         viewState.getUp(),
         viewState.getViewportSize(),
         viewState.getHorizontalFieldOfView(),
-        viewState.getVerticalFieldOfView());
+        viewState.getVerticalFieldOfView(),
+        Ellipsoid::WGS84);
 
     // Check 1st and 2nd frame. Root should meet sse and render. No transitions
     // are expected here
@@ -318,7 +321,8 @@ TEST_CASE("Test replace refinement for render") {
         viewState.getUp(),
         viewState.getViewportSize(),
         viewState.getHorizontalFieldOfView(),
-        viewState.getVerticalFieldOfView());
+        viewState.getVerticalFieldOfView(),
+        Ellipsoid::WGS84);
 
     // remove the ll.b3dm (one of the root's children) request to replicate
     // network failure
@@ -409,7 +413,8 @@ TEST_CASE("Test replace refinement for render") {
           viewState.getUp(),
           viewState.getViewportSize(),
           viewState.getHorizontalFieldOfView(),
-          viewState.getVerticalFieldOfView());
+          viewState.getVerticalFieldOfView(),
+          Ellipsoid::WGS84);
 
       ViewUpdateResult result = tileset.updateView({zoomOutViewState});
 
@@ -830,7 +835,8 @@ TEST_CASE("Test multiple frustums") {
       viewState.getUp(),
       viewState.getViewportSize(),
       viewState.getHorizontalFieldOfView(),
-      viewState.getVerticalFieldOfView());
+      viewState.getVerticalFieldOfView(),
+      Ellipsoid::WGS84);
 
   SECTION("The frustum with the highest SSE should be used for deciding to "
           "refine") {
@@ -901,7 +907,8 @@ TEST_CASE("Test multiple frustums") {
         zoomToTileViewState.getUp(),
         zoomToTileViewState.getViewportSize(),
         0.5 * zoomToTileViewState.getHorizontalFieldOfView(),
-        0.5 * zoomToTileViewState.getVerticalFieldOfView());
+        0.5 * zoomToTileViewState.getVerticalFieldOfView(),
+        Ellipsoid::WGS84);
 
     zoomInPosition = zoomToTileViewState.getPosition() +
                      glm::dvec3(15.0, 0, 0) +
@@ -912,7 +919,8 @@ TEST_CASE("Test multiple frustums") {
         zoomToTileViewState.getUp(),
         zoomToTileViewState.getViewportSize(),
         0.5 * zoomToTileViewState.getHorizontalFieldOfView(),
-        0.5 * zoomToTileViewState.getVerticalFieldOfView());
+        0.5 * zoomToTileViewState.getVerticalFieldOfView(),
+        Ellipsoid::WGS84);
 
     // frame 3 & 4
     {
@@ -1487,7 +1495,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
               center.longitude + 0.001,
               center.latitude + 0.001),
           0.0,
-          10.0));
+          10.0,
+          Ellipsoid::WGS84));
       pRootTile->setGeometricError(100000000000.0);
 
       Tile child(this);
@@ -1534,7 +1543,9 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
           TileLoadResult::createFailedResult(nullptr));
     }
 
-    virtual TileChildrenResult createTileChildren(const Tile&) override {
+    virtual TileChildrenResult createTileChildren(
+        const Tile&,
+        const CesiumGeospatial::Ellipsoid&) override {
       return TileChildrenResult{{}, TileLoadResultState::Failed};
     }
   };
@@ -1670,7 +1681,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
       viewState.getUp(),
       viewState.getViewportSize(),
       viewState.getHorizontalFieldOfView(),
-      viewState.getVerticalFieldOfView());
+      viewState.getVerticalFieldOfView(),
+      Ellipsoid::WGS84);
   updateResult = tileset.updateView({zoomedOut});
 
   // Only the root tile (plus the tileset.json) is visible now, and the other

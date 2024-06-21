@@ -9,7 +9,11 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 TEST_CASE("S2CellBoundingVolume") {
-  S2CellBoundingVolume tileS2Cell(S2CellID::fromToken("1"), 0.0, 100000.0);
+  S2CellBoundingVolume tileS2Cell(
+      S2CellID::fromToken("1"),
+      0.0,
+      100000.0,
+      Ellipsoid::WGS84);
 
   SECTION("distance-squared to position is 0 when camera is inside bounding "
           "volume") {
@@ -128,7 +132,11 @@ TEST_CASE("S2CellBoundingVolume") {
   }
 
   SECTION("can construct face 2 (North pole)") {
-    S2CellBoundingVolume face2Root(S2CellID::fromToken("5"), 1000.0, 2000.0);
+    S2CellBoundingVolume face2Root(
+        S2CellID::fromToken("5"),
+        1000.0,
+        2000.0,
+        Ellipsoid::WGS84);
     CHECK(face2Root.getCellID().isValid());
     CHECK(face2Root.getCellID().getID() == 5764607523034234880U);
   }

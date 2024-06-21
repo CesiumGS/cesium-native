@@ -71,7 +71,7 @@ TEST_CASE("TileBoundingVolumes") {
         20.0};
 
     std::optional<BoundingRegion> region =
-        TileBoundingVolumes::getBoundingRegion(bv);
+        TileBoundingVolumes::getBoundingRegion(bv, Ellipsoid::WGS84);
     REQUIRE(region);
 
     CHECK(region->getRectangle().getWest() == Approx(-1.3197004795898053));
@@ -97,7 +97,7 @@ TEST_CASE("TileBoundingVolumes") {
     extension.maximumHeight = 1000.0;
 
     std::optional<S2CellBoundingVolume> s2 =
-        TileBoundingVolumes::getS2CellBoundingVolume(bv);
+        TileBoundingVolumes::getS2CellBoundingVolume(bv, Ellipsoid::WGS84);
     REQUIRE(s2);
 
     CHECK(s2->getCellID().getID() == S2CellID::fromToken("89c6c7").getID());
@@ -117,7 +117,9 @@ TEST_CASE("TileBoundingVolumes") {
     BoundingVolume bv{};
     CHECK(!TileBoundingVolumes::getOrientedBoundingBox(bv).has_value());
     CHECK(!TileBoundingVolumes::getBoundingSphere(bv).has_value());
-    CHECK(!TileBoundingVolumes::getBoundingRegion(bv).has_value());
-    CHECK(!TileBoundingVolumes::getS2CellBoundingVolume(bv).has_value());
+    CHECK(!TileBoundingVolumes::getBoundingRegion(bv, Ellipsoid::WGS84)
+               .has_value());
+    CHECK(!TileBoundingVolumes::getS2CellBoundingVolume(bv, Ellipsoid::WGS84)
+               .has_value());
   }
 }
