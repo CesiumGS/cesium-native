@@ -2,6 +2,8 @@
 
 #include "cesium-async++.h"
 
+#include <CesiumUtility/Assert.h>
+
 #include <spdlog/spdlog.h>
 
 namespace CesiumAsync {
@@ -52,8 +54,8 @@ public:
       if (this->_pScheduler) {
         std::vector<TScheduler*>& inSuitable =
             ImmediateScheduler<TScheduler>::getSchedulersCurrentlyDispatching();
-        assert(!inSuitable.empty());
-        assert(inSuitable.back() == this->_pScheduler);
+        CESIUM_ASSERT(!inSuitable.empty());
+        CESIUM_ASSERT(inSuitable.back() == this->_pScheduler);
         inSuitable.pop_back();
 
         this->_pScheduler = nullptr;

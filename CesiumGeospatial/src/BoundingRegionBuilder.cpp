@@ -24,14 +24,16 @@ BoundingRegionBuilder::BoundingRegionBuilder() noexcept
       _maximumHeight(std::numeric_limits<double>::lowest()),
       _longitudeRangeIsEmpty(true) {}
 
-BoundingRegion BoundingRegionBuilder::toRegion() const {
+BoundingRegion
+BoundingRegionBuilder::toRegion(const Ellipsoid& ellipsoid) const {
   if (this->_longitudeRangeIsEmpty) {
-    return BoundingRegion(GlobeRectangle::EMPTY, 1.0, -1.0);
+    return BoundingRegion(GlobeRectangle::EMPTY, 1.0, -1.0, ellipsoid);
   } else {
     return BoundingRegion(
         this->_rectangle,
         this->_minimumHeight,
-        this->_maximumHeight);
+        this->_maximumHeight,
+        ellipsoid);
   }
 }
 

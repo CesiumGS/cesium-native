@@ -1,8 +1,6 @@
 #define _CRT_RAND_S
 #include "fillWithRandomBytes.h"
 
-#include <cassert>
-
 // When WINAPI_FAMILY_PARTITION && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 // is true, this is a Univeral Windows Platform build. csprng doesn't work on
 // UWP. So we use the Windows-only rand_s function instead.
@@ -41,7 +39,7 @@ void fillWithRandomBytes(const gsl::span<uint8_t>& buffer) {
   }
 
   if (i < buffer.size()) {
-    assert(buffer.size() - i < sizeof(uint32_t));
+    CESIUM_ASSERT(buffer.size() - i < sizeof(uint32_t));
 
     std::uint32_t extra;
     if (rand_s(&extra) != 0) {

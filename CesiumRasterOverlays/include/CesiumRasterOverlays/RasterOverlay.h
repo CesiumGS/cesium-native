@@ -4,6 +4,7 @@
 #include "RasterOverlayLoadFailureDetails.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -106,6 +107,11 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    * so it must be inexpensive to copy.
    */
   std::any rendererOptions;
+
+  /**
+   * @brief The ellipsoid used for this raster overlay.
+   */
+  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid = std::nullopt;
 };
 
 /**
@@ -190,7 +196,9 @@ public:
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> createPlaceholder(
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const;
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) const;
 
   using CreateTileProviderResult = nonstd::expected<
       CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>,

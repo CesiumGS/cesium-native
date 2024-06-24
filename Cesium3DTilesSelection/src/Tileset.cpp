@@ -47,7 +47,7 @@ Tileset::Tileset(
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           std::vector<CesiumAsync::IAssetAccessor::THeader>{},
           std::move(pCustomLoader),
           std::move(pRootTile))} {}
@@ -65,7 +65,7 @@ Tileset::Tileset(
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           url)} {}
 
 Tileset::Tileset(
@@ -83,7 +83,7 @@ Tileset::Tileset(
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals},
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)} {}
@@ -492,7 +492,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
        asyncSystem =
            this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
         Tile* pRoot = pManager->getRootTile();
-        assert(pRoot);
+        CESIUM_ASSERT(pRoot);
 
         TileExternalContent* pExternal =
             pRoot->getContent().getExternalContent();
@@ -512,7 +512,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
             .thenInMainThread(
                 [pManager, pAssetAccessor]() -> const TilesetMetadata* {
                   Tile* pRoot = pManager->getRootTile();
-                  assert(pRoot);
+                  CESIUM_ASSERT(pRoot);
 
                   TileExternalContent* pExternal =
                       pRoot->getContent().getExternalContent();
@@ -597,6 +597,7 @@ static void markTileAndChildrenNonRendered(
 static bool isVisibleFromCamera(
     const ViewState& viewState,
     const BoundingVolume& boundingVolume,
+    const Ellipsoid& ellipsoid,
     bool forceRenderTilesUnderCamera) {
   if (viewState.isBoundingVolumeVisible(boundingVolume)) {
     return true;
@@ -612,7 +613,7 @@ static bool isVisibleFromCamera(
   // camera against the bounding volume itself, rather than transforming the
   // bounding volume to a region.
   std::optional<GlobeRectangle> maybeRectangle =
-      estimateGlobeRectangle(boundingVolume);
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (position && maybeRectangle) {
     return maybeRectangle->contains(position.value());
   }
@@ -645,19 +646,23 @@ void Tileset::_frustumCull(
     return;
   }
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getEllipsoid();
+
   const std::vector<ViewState>& frustums = frameState.frustums;
   // Frustum cull using the children's bounds.
   if (cullWithChildrenBounds) {
     if (std::any_of(
             frustums.begin(),
             frustums.end(),
-            [children = tile.getChildren(),
+            [&ellipsoid,
+             children = tile.getChildren(),
              renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
                 const ViewState& frustum) {
               for (const Tile& child : children) {
                 if (isVisibleFromCamera(
                         frustum,
                         child.getBoundingVolume(),
+                        ellipsoid,
                         renderTilesUnderCamera)) {
                   return true;
                 }
@@ -672,13 +677,15 @@ void Tileset::_frustumCull(
   } else if (std::any_of(
                  frustums.begin(),
                  frustums.end(),
-                 [&boundingVolume = tile.getBoundingVolume(),
+                 [&ellipsoid,
+                  &boundingVolume = tile.getBoundingVolume(),
                   renderTilesUnderCamera =
                       this->_options.renderTilesUnderCamera](
                      const ViewState& frustum) {
                    return isVisibleFromCamera(
                        frustum,
                        boundingVolume,
+                       ellipsoid,
                        renderTilesUnderCamera);
                  })) {
     // The tile is visible in at least one frustum, so don't cull.
@@ -1516,13 +1523,13 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   // Assert that this tile hasn't been added to a queue already.
-  assert(
+  CESIUM_ASSERT(
       std::find_if(
           this->_workerThreadLoadQueue.begin(),
           this->_workerThreadLoadQueue.end(),
           [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
       this->_workerThreadLoadQueue.end());
-  assert(
+  CESIUM_ASSERT(
       std::find_if(
           this->_mainThreadLoadQueue.begin(),
           this->_mainThreadLoadQueue.end(),

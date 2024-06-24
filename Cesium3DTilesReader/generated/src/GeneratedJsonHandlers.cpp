@@ -7,8 +7,8 @@
 #include <Cesium3DTilesReader/Extension3dTilesBoundingVolumeS2Reader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -31,7 +31,7 @@ void Extension3dTilesBoundingVolumeS2JsonHandler::reset(
 CesiumJsonReader::IJsonHandler*
 Extension3dTilesBoundingVolumeS2JsonHandler::readObjectKey(
     const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyExtension3dTilesBoundingVolumeS2(
       Cesium3DTiles::Extension3dTilesBoundingVolumeS2::TypeName,
       str,
@@ -121,8 +121,8 @@ Extension3dTilesBoundingVolumeS2Reader::readArrayFromJson(
 #include <Cesium3DTilesReader/StatisticsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -141,7 +141,7 @@ void StatisticsJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 StatisticsJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyStatistics(
       Cesium3DTiles::Statistics::TypeName,
       str,
@@ -203,8 +203,8 @@ StatisticsReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/ClassStatisticsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -224,7 +224,7 @@ void ClassStatisticsJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClassStatistics(
       Cesium3DTiles::ClassStatistics::TypeName,
       str,
@@ -291,8 +291,8 @@ ClassStatisticsReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/PropertyStatisticsReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -318,7 +318,7 @@ void PropertyStatisticsJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyStatisticsJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyStatistics(
       Cesium3DTiles::PropertyStatistics::TypeName,
       str,
@@ -401,8 +401,8 @@ PropertyStatisticsReader::readArrayFromJson(
 #include <Cesium3DTilesReader/SchemaReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -426,7 +426,7 @@ void SchemaJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SchemaJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySchema(
       Cesium3DTiles::Schema::TypeName,
       str,
@@ -494,8 +494,8 @@ SchemaReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/EnumReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -517,7 +517,7 @@ void EnumJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 EnumJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyEnum(
       Cesium3DTiles::Enum::TypeName,
       str,
@@ -581,8 +581,8 @@ EnumReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/EnumValueReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -603,7 +603,7 @@ void EnumValueJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 EnumValueJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyEnumValue(
       Cesium3DTiles::EnumValue::TypeName,
       str,
@@ -666,8 +666,8 @@ EnumValueReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/ClassReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -688,7 +688,7 @@ void ClassJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClass(
       Cesium3DTiles::Class::TypeName,
       str,
@@ -750,8 +750,8 @@ ClassReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/ClassPropertyReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -785,7 +785,7 @@ void ClassPropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ClassPropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyClassProperty(
       Cesium3DTiles::ClassProperty::TypeName,
       str,
@@ -879,8 +879,8 @@ ClassPropertyReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/SubtreeReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -907,7 +907,7 @@ void SubtreeJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SubtreeJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySubtree(
       Cesium3DTiles::Subtree::TypeName,
       str,
@@ -996,8 +996,8 @@ SubtreeReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1017,7 +1017,7 @@ void MetadataEntityJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 MetadataEntityJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyMetadataEntity(
       Cesium3DTiles::MetadataEntity::TypeName,
       str,
@@ -1083,8 +1083,8 @@ MetadataEntityReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/AvailabilityReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1105,7 +1105,7 @@ void AvailabilityJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AvailabilityJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAvailability(
       Cesium3DTiles::Availability::TypeName,
       str,
@@ -1172,8 +1172,8 @@ AvailabilityReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/PropertyTableReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1195,7 +1195,7 @@ void PropertyTableJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTableJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTable(
       Cesium3DTiles::PropertyTable::TypeName,
       str,
@@ -1265,8 +1265,8 @@ PropertyTableReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/PropertyTablePropertyReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1293,7 +1293,7 @@ void PropertyTablePropertyJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertyTablePropertyJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyPropertyTableProperty(
       Cesium3DTiles::PropertyTableProperty::TypeName,
       str,
@@ -1382,8 +1382,8 @@ PropertyTablePropertyReader::readArrayFromJson(
 #include <Cesium3DTilesReader/BufferViewReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1405,7 +1405,7 @@ void BufferViewJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BufferViewJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBufferView(
       Cesium3DTiles::BufferView::TypeName,
       str,
@@ -1473,8 +1473,8 @@ BufferViewReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/BufferReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1495,7 +1495,7 @@ void BufferJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BufferJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBuffer(
       Cesium3DTiles::Buffer::TypeName,
       str,
@@ -1557,8 +1557,8 @@ BufferReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1587,7 +1587,7 @@ void TilesetJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 TilesetJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyTileset(
       Cesium3DTiles::Tileset::TypeName,
       str,
@@ -1668,8 +1668,8 @@ TilesetReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/TileReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1697,7 +1697,7 @@ void TileJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 TileJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyTile(
       Cesium3DTiles::Tile::TypeName,
       str,
@@ -1776,8 +1776,8 @@ TileReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/ImplicitTilingReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1799,7 +1799,7 @@ void ImplicitTilingJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ImplicitTilingJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyImplicitTiling(
       Cesium3DTiles::ImplicitTiling::TypeName,
       str,
@@ -1875,8 +1875,8 @@ ImplicitTilingReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/SubtreesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1894,7 +1894,7 @@ void SubtreesJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 SubtreesJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeySubtrees(
       Cesium3DTiles::Subtrees::TypeName,
       str,
@@ -1953,8 +1953,8 @@ SubtreesReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -1976,7 +1976,7 @@ void ContentJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 ContentJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyContent(
       Cesium3DTiles::Content::TypeName,
       str,
@@ -2040,8 +2040,8 @@ ContentReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -2062,7 +2062,7 @@ void BoundingVolumeJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 BoundingVolumeJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyBoundingVolume(
       Cesium3DTiles::BoundingVolume::TypeName,
       str,
@@ -2130,8 +2130,8 @@ BoundingVolumeReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -2149,7 +2149,7 @@ void GroupMetadataJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 GroupMetadataJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyGroupMetadata(
       Cesium3DTiles::GroupMetadata::TypeName,
       str,
@@ -2212,8 +2212,8 @@ GroupMetadataReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/PropertiesReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -2233,7 +2233,7 @@ void PropertiesJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 PropertiesJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyProperties(
       Cesium3DTiles::Properties::TypeName,
       str,
@@ -2297,8 +2297,8 @@ PropertiesReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <Cesium3DTilesReader/AssetReader.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumUtility/Assert.h>
 
-#include <cassert>
 #include <string>
 
 namespace Cesium3DTilesReader {
@@ -2318,7 +2318,7 @@ void AssetJsonHandler::reset(
 
 CesiumJsonReader::IJsonHandler*
 AssetJsonHandler::readObjectKey(const std::string_view& str) {
-  assert(this->_pObject);
+  CESIUM_ASSERT(this->_pObject);
   return this->readObjectKeyAsset(
       Cesium3DTiles::Asset::TypeName,
       str,
