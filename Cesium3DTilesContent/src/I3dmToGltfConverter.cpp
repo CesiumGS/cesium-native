@@ -12,6 +12,7 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/Uri.h>
 
 #include <glm/gtx/matrix_decompose.hpp>
 
@@ -420,8 +421,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
           CesiumGeospatial::LocalHorizontalCoordinateSystem enu(
               (glm::dvec3(worldPos)));
           const glm::dmat4& ecef = enu.getLocalToEcefTransformation();
-          // Express the rotation in the tile's coordinate system, like explicit
-          // I3dm instance rotations.
+          // Express the rotation in the tile's coordinate system, just like
+          // explicit i3dm instance rotations.
           glm::dmat4 tileFrame = worldTransformInv * ecef;
           return rotationFromUpRight(
               glm::vec3(tileFrame[1]),
@@ -454,44 +455,75 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         });
   }
   repositionInstances(decodedInstances);
-  AssetFetcherResult assetFetcherResult;
+  std::string baseUri;
   if (header.gltfFormat == 0) {
-    // Recursively fetch and read the glTF content.
-    auto gltfUri = std::string(
+    std::string gltfUri(
         reinterpret_cast<const char*>(gltfData.data()),
         gltfData.size());
-    return assetFetcher.get(gltfUri)
-        .thenImmediately(
-            [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
-                -> CesiumAsync::Future<GltfConverterResult> {
-              if (assetFetcherResult.errorList.hasErrors()) {
-                GltfConverterResult errorResult;
-                errorResult.errors.merge(assetFetcherResult.errorList);
-                return assetFetcher.asyncSystem.createResolvedFuture(
-                    std::move(errorResult));
-              }
-              return BinaryToGltfConverter::convert(
-                  assetFetcherResult.bytes,
-                  options,
-                  assetFetcher);
-            })
-        .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
-                             GltfConverterResult&& converterResult) mutable {
-          if (converterResult.model)
-            convertedI3dm.gltfResult.model = std::move(converterResult.model);
-          convertedI3dm.gltfResult.errors.merge(converterResult.errors);
-          return convertedI3dm;
-        });
+    baseUri = CesiumUtility::Uri::resolve(assetFetcher.baseUrl, gltfUri);
   } else {
-    return BinaryToGltfConverter::convert(gltfData, options, assetFetcher)
-        .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
-                             GltfConverterResult&& converterResult) mutable {
-          if (converterResult.model)
-            convertedI3dm.gltfResult.model = std::move(converterResult.model);
-          convertedI3dm.gltfResult.errors.merge(converterResult.errors);
-          return convertedI3dm;
-        });
+    baseUri = assetFetcher.baseUrl;
   }
+  // This use of a lambda is the only way timoore knows to conditionally pass
+  // different futures to a then...() member function.
+  return
+      [&]() -> CesiumAsync::Future<GltfConverterResult> {
+        if (header.gltfFormat == 0) {
+          // Recursively fetch and read the glTF content.
+          return assetFetcher.get(baseUri).thenImmediately(
+              [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
+                  -> CesiumAsync::Future<GltfConverterResult> {
+                if (assetFetcherResult.errorList.hasErrors()) {
+                  GltfConverterResult errorResult;
+                  errorResult.errors.merge(assetFetcherResult.errorList);
+                  return assetFetcher.asyncSystem.createResolvedFuture(
+                      std::move(errorResult));
+                }
+                return BinaryToGltfConverter::convert(
+                    assetFetcherResult.bytes,
+                    options,
+                    assetFetcher);
+              });
+        } else {
+          return BinaryToGltfConverter::convert(
+              gltfData,
+              options,
+              assetFetcher);
+        }
+      }()
+                   .thenImmediately([options, assetFetcher, baseUri](
+                                        GltfConverterResult&& converterResult) {
+                     if (converterResult.model.has_value()) {
+                       CesiumGltfReader::GltfReaderResult readerResult{
+                           std::move(*converterResult.model)};
+                       CesiumAsync::HttpHeaders externalRequestHeaders(
+                           assetFetcher.requestHeaders.begin(),
+                           assetFetcher.requestHeaders.end());
+                       return CesiumGltfReader::GltfReader::resolveExternalData(
+                           assetFetcher.asyncSystem,
+                           baseUri,
+                           externalRequestHeaders,
+                           assetFetcher.pAssetAccessor,
+                           options,
+                           std::move(readerResult));
+                     }
+                     return assetFetcher.asyncSystem.createResolvedFuture(
+                         CesiumGltfReader::GltfReaderResult{
+                             std::nullopt,
+                             std::move(converterResult.errors.errors)});
+                   })
+                   .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
+                                        CesiumGltfReader::GltfReaderResult&&
+                                            readerResult) mutable {
+                     if (readerResult.model)
+                       convertedI3dm.gltfResult.model =
+                           std::move(readerResult.model);
+                     CesiumUtility::ErrorList resolvedExternalErrors{
+                         std::move(readerResult.errors)};
+                     convertedI3dm.gltfResult.errors.merge(
+                         resolvedExternalErrors);
+                     return convertedI3dm;
+                   });
 }
 
 glm::dmat4
