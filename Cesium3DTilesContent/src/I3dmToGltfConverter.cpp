@@ -631,9 +631,9 @@ void copyInstanceToBuffer(
     const glm::dmat4& instanceTransform,
     std::vector<std::byte>& bufferData,
     size_t i) {
-  glm::dvec3 position(0.0), scale(0.0), skew(0.0);
-  glm::dquat rotation(0.0, 0.0, 0.0, 0.0);
-  glm::dvec4 perspective(0.0);
+  glm::dvec3 position, scale, skew;
+  glm::dquat rotation;
+  glm::dvec4 perspective;
   decompose(instanceTransform, scale, rotation, position, skew, perspective);
   copyInstanceToBuffer(position, rotation, scale, bufferData, i);
 }
