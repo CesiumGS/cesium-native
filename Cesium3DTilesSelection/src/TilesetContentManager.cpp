@@ -120,8 +120,10 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
     if (mapped.isMoreDetailAvailable()) {
       const CesiumGeospatial::Projection& projection =
           mapped.getReadyTile()->getTileProvider().getProjection();
+      const CesiumGeospatial::GlobeRectangle& parentRectangle =
+          details.boundingRegion.getRectangle();
       glm::dvec2 centerProjected =
-          details.findRectangleForOverlayProjection(projection)->getCenter();
+          projectRectangleSimple(projection, parentRectangle).getCenter();
       CesiumGeospatial::Cartographic center =
           CesiumGeospatial::unprojectPosition(
               projection,
