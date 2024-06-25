@@ -721,13 +721,17 @@ TilesetContentManager::TilesetContentManager(
               // and create corresponding loader
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(
-                        pLogger,
-                        url,
-                        tilesetJson,
-                        ellipsoid);
-                return asyncSystem.createResolvedFuture(std::move(result));
+                return TilesetJsonLoader::createLoader(
+                           asyncSystem,
+                           pAssetAccessor,
+                           pLogger,
+                           url,
+                           pCompletedRequest->headers(),
+                           tilesetJson,
+                           ellipsoid)
+                    .thenImmediately(
+                        [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                               result) { return std::move(result); });
               } else {
                 const auto formatIt = tilesetJson.FindMember("format");
                 bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&

@@ -659,15 +659,28 @@ void copyInstanceToBuffer(
   copyInstanceToBuffer(position, rotation, scale, &bufferData[i * totalStride]);
 }
 
-void copyInstanceToBuffer(
+bool copyInstanceToBuffer(
     const glm::dmat4& instanceTransform,
     std::vector<std::byte>& bufferData,
     size_t i) {
+  bool result = true;
   glm::dvec3 position, scale, skew;
   glm::dquat rotation;
   glm::dvec4 perspective;
-  decompose(instanceTransform, scale, rotation, position, skew, perspective);
+  if (!decompose(
+          instanceTransform,
+          scale,
+          rotation,
+          position,
+          skew,
+          perspective)) {
+    position = glm::dvec3(0.0);
+    rotation = glm::dquat(1.0, 0.0, 0.0, 0.0);
+    scale = glm::dvec3(1.0);
+    result = false;
+  }
   copyInstanceToBuffer(position, rotation, scale, bufferData, i);
+  return result;
 }
 
 void instantiateGltfInstances(
@@ -740,10 +753,14 @@ void instantiateGltfInstances(
           for (const auto& modelInstanceTransform : modelInstanceTransforms) {
             glm::dmat4 finalTransform =
                 instanceTransform * modelInstanceTransform;
-            copyInstanceToBuffer(
-                finalTransform,
-                instanceBuffer.cesium.data,
-                destInstanceIndx++);
+            if (!copyInstanceToBuffer(
+                    finalTransform,
+                    instanceBuffer.cesium.data,
+                    destInstanceIndx++)) {
+              result.errors.emplaceWarning(
+                  "Matrix decompose failed. Default identity values copied to "
+                  "instance buffer.");
+            }
           }
         }
         auto posAccessorId = createAccessorInGltf(
