@@ -7,6 +7,10 @@
 - Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
 - Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
 
+##### Fixes :wrench:
+
+- When a 3D Tiles Instanced 3D Mesh (i3dm) file contains an instance transform that cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
+
 ### v0.36.0 - 2024-06-03
 
 ##### Breaking Changes :mega:

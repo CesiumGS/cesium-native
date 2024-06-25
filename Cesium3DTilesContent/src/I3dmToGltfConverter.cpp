@@ -635,10 +635,16 @@ bool copyInstanceToBuffer(
   glm::dvec3 position, scale, skew;
   glm::dquat rotation;
   glm::dvec4 perspective;
-  if (!decompose(instanceTransform, scale, rotation, position, skew, perspective)) {
-    position = glm::dvec3{.0};
-    rotation = glm::quat_identity<double, glm::defaultp>();
-    scale = glm::dvec3{1.0};
+  if (!decompose(
+          instanceTransform,
+          scale,
+          rotation,
+          position,
+          skew,
+          perspective)) {
+    position = glm::dvec3(0.0);
+    rotation = glm::dquat(1.0, 0.0, 0.0, 0.0);
+    scale = glm::dvec3(1.0);
     result = false;
   }
   copyInstanceToBuffer(position, rotation, scale, bufferData, i);
@@ -715,8 +721,13 @@ void instantiateGltfInstances(
           for (const auto& modelInstanceTransform : modelInstanceTransforms) {
             glm::dmat4 finalTransform =
                 instanceTransform * modelInstanceTransform;
-            if (!copyInstanceToBuffer(finalTransform, instanceBuffer.cesium.data, destInstanceIndx++)) {
-              result.errors.emplaceWarning("Matrix decompose failed. Default identity values copied to instance buffer.");
+            if (!copyInstanceToBuffer(
+                    finalTransform,
+                    instanceBuffer.cesium.data,
+                    destInstanceIndx++)) {
+              result.errors.emplaceWarning(
+                  "Matrix decompose failed. Default identity values copied to "
+                  "instance buffer.");
             }
           }
         }
