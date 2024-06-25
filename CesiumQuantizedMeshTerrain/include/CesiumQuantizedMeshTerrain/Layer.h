@@ -21,7 +21,9 @@ struct Layer : public LayerSpec {
    * @return The projection, or std::nullopt if this layer.json does not specify
    * a valid projection.
    */
-  std::optional<CesiumGeospatial::Projection> getProjection() const noexcept;
+  std::optional<CesiumGeospatial::Projection>
+  getProjection(const CesiumGeospatial::Ellipsoid& ellipsoid
+                    CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
   /**
    * @brief Gets the tiling scheme specified by this layer.json.
@@ -30,7 +32,8 @@ struct Layer : public LayerSpec {
    * specify a tiling scheme.
    */
   std::optional<CesiumGeometry::QuadtreeTilingScheme>
-  getTilingScheme() const noexcept;
+  getTilingScheme(const CesiumGeospatial::Ellipsoid& ellipsoid
+                      CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
   /**
    * @brief Gets the bounding region for the root tile.
@@ -43,7 +46,8 @@ struct Layer : public LayerSpec {
    * cannot be determined from this layer.json.
    */
   std::optional<CesiumGeospatial::BoundingRegion>
-  getRootBoundingRegion() const noexcept;
+  getRootBoundingRegion(const CesiumGeospatial::Ellipsoid& ellipsoid
+                            CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 };
 
 } // namespace CesiumQuantizedMeshTerrain

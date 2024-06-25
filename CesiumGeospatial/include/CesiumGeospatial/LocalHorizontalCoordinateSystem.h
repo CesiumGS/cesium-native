@@ -46,7 +46,9 @@ public:
       LocalDirection yAxisDirection = LocalDirection::North,
       LocalDirection zAxisDirection = LocalDirection::Up,
       double scaleToMeters = 1.0,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      // Can't use CESIUM_DEFAULT_ELLIPSOID here because of the other default
+      // parameters
+      const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
    * @brief Create a new coordinate system centered at a Earth-Centered,
@@ -70,7 +72,7 @@ public:
       LocalDirection yAxisDirection = LocalDirection::North,
       LocalDirection zAxisDirection = LocalDirection::Up,
       double scaleToMeters = 1.0,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+      const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
    * @brief Create a new coordinate system with a specified transformation to

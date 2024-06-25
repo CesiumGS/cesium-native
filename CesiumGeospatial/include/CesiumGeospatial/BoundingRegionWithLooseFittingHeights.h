@@ -53,7 +53,7 @@ public:
    */
   double computeConservativeDistanceSquaredToPosition(
       const glm::dvec3& position,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
   /**
    * @brief Computes the conservative distance-squared from a
@@ -76,7 +76,7 @@ public:
    */
   double computeConservativeDistanceSquaredToPosition(
       const Cartographic& position,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84) const noexcept;
+      const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
   /**
    * @brief Computes the conservative distance-squared from a position to the

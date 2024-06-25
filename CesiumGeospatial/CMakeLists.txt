@@ -42,6 +42,10 @@ target_link_libraries(CesiumGeospatial PUBLIC
       s2geometry
 )
 
+if(CESIUM_DISABLE_DEFAULT_ELLIPSOID)
+  target_compile_definitions(CesiumGeospatial PUBLIC CESIUM_DISABLE_DEFAULT_ELLIPSOID=1)
+endif()
+
 install(TARGETS CesiumGeospatial
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGeospatial
