@@ -6,6 +6,15 @@
 
 - Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
 - Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
+- Added equality operator for `Cartographic`.
+- Added `CESIUM_MSVC_STATIC_RUNTIME_ENABLED` option to the CMake scripts. It is OFF by default, and when enabled, configures any MS visual studio projects for the "Multi-threaded" (/MT) runtime library rather than "Multi-threaded DLL" (/MD)
+- Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
+  - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
+  - `CESIUM_DISABLE_DEFAULT_ELLIPSOID` can be defined to disable the WGS84 default parameter, exposing through errors the places in your code that are still assuming a WGS84 ellipsoid.
+
+##### Fixes :wrench:
+
+- When a 3D Tiles Instanced 3D Mesh (i3dm) file contains an instance transform that cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
 
 ### v0.36.0 - 2024-06-03
 

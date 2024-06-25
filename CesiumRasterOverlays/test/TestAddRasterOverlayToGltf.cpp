@@ -47,7 +47,8 @@ TEST_CASE("Add raster overlay to glTF") {
   // Place the glTF in Philly and make it huge.
   glm::dmat4 enuToFixed = GlobeTransforms::eastNorthUpToFixedFrame(
       Ellipsoid::WGS84.cartographicToCartesian(
-          Cartographic::fromDegrees(-75.14777, 39.95021, 200.0)));
+          Cartographic::fromDegrees(-75.14777, 39.95021, 200.0)),
+      Ellipsoid::WGS84);
   glm::dmat4 scale =
       glm::scale(glm::dmat4(1.0), glm::dvec3(100000.0, 100000.0, 100000.0));
   glm::dmat4 modelToEcef = enuToFixed * scale;

@@ -53,7 +53,9 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
    * @param other The other instance of RasterOverlayDetails that will be merged
    * with this.
    */
-  void merge(const RasterOverlayDetails& other);
+  void merge(
+      const RasterOverlayDetails& other,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief The raster overlay projections for which texture coordinates have

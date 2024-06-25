@@ -11,7 +11,7 @@ using namespace CesiumUtility;
 
 TEST_CASE("BoundingRegionBuilder::expandToIncludePosition") {
   BoundingRegionBuilder builder;
-  GlobeRectangle rectangle = builder.toRegion().getRectangle();
+  GlobeRectangle rectangle = builder.toRegion(Ellipsoid::WGS84).getRectangle();
   CHECK(!rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
   CHECK(!rectangle.contains(Cartographic(1.0, 0.0, 0.0)));
   CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
@@ -23,7 +23,7 @@ TEST_CASE("BoundingRegionBuilder::expandToIncludePosition") {
   CHECK(GlobeRectangle::equals(rectangle, rectangle2));
 
   builder.expandToIncludePosition(Cartographic(0.0, 0.0, 0.0));
-  rectangle = builder.toRegion().getRectangle();
+  rectangle = builder.toRegion(Ellipsoid::WGS84).getRectangle();
   CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
   CHECK(!rectangle.contains(Cartographic(1.0, 0.0, 0.0)));
   CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
@@ -34,7 +34,7 @@ TEST_CASE("BoundingRegionBuilder::expandToIncludePosition") {
   CHECK(GlobeRectangle::equals(rectangle, rectangle2));
 
   builder.expandToIncludePosition(Cartographic(Math::OnePi, 1.0, 0.0));
-  rectangle = builder.toRegion().getRectangle();
+  rectangle = builder.toRegion(Ellipsoid::WGS84).getRectangle();
   CHECK(rectangle.contains(Cartographic(0.0, 0.0, 0.0)));
   CHECK(rectangle.contains(Cartographic(1.0, 0.0, 0.0)));
   CHECK(!rectangle.contains(Cartographic(-1.0, 0.0, 0.0)));
@@ -46,7 +46,8 @@ TEST_CASE("BoundingRegionBuilder::expandToIncludePosition") {
 
   BoundingRegionBuilder simpleBuilder = builder;
   simpleBuilder.expandToIncludePosition(Cartographic(-1.0, 1.0, 0.0));
-  GlobeRectangle simple = simpleBuilder.toRegion().getRectangle();
+  GlobeRectangle simple =
+      simpleBuilder.toRegion(Ellipsoid::WGS84).getRectangle();
   CHECK(simple.contains(Cartographic(0.0, 0.0, 0.0)));
   CHECK(simple.contains(Cartographic(1.0, 0.0, 0.0)));
   CHECK(simple.contains(Cartographic(-1.0, 0.0, 0.0)));
@@ -59,7 +60,8 @@ TEST_CASE("BoundingRegionBuilder::expandToIncludePosition") {
 
   BoundingRegionBuilder wrappedBuilder = builder;
   wrappedBuilder.expandToIncludePosition(Cartographic(-3.0, 1.0, 0.0));
-  GlobeRectangle wrapped = wrappedBuilder.toRegion().getRectangle();
+  GlobeRectangle wrapped =
+      wrappedBuilder.toRegion(Ellipsoid::WGS84).getRectangle();
   CHECK(wrapped.contains(Cartographic(0.0, 0.0, 0.0)));
   CHECK(wrapped.contains(Cartographic(1.0, 0.0, 0.0)));
   CHECK(!wrapped.contains(Cartographic(-1.0, 0.0, 0.0)));
