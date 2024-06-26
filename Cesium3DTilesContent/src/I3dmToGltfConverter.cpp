@@ -495,7 +495,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                                         GltfConverterResult&& converterResult) {
                      if (converterResult.model.has_value()) {
                        CesiumGltfReader::GltfReaderResult readerResult{
-                           std::move(*converterResult.model)};
+                           std::move(*converterResult.model), {}, {}};
                        CesiumAsync::HttpHeaders externalRequestHeaders(
                            assetFetcher.requestHeaders.begin(),
                            assetFetcher.requestHeaders.end());
@@ -510,7 +510,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                      return assetFetcher.asyncSystem.createResolvedFuture(
                          CesiumGltfReader::GltfReaderResult{
                              std::nullopt,
-                             std::move(converterResult.errors.errors)});
+                             std::move(converterResult.errors.errors),
+                             {}});
                    })
                    .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
                                         CesiumGltfReader::GltfReaderResult&&
@@ -519,7 +520,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                        convertedI3dm.gltfResult.model =
                            std::move(readerResult.model);
                      CesiumUtility::ErrorList resolvedExternalErrors{
-                         std::move(readerResult.errors)};
+                         std::move(readerResult.errors),
+                         {}};
                      convertedI3dm.gltfResult.errors.merge(
                          resolvedExternalErrors);
                      return convertedI3dm;
