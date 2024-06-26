@@ -42,9 +42,13 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
-  static TilesetContentLoaderResult<TilesetJsonLoader> createLoader(
+  static CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
+  createLoader(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& tilesetJsonUrl,
+      const CesiumAsync::HttpHeaders& requestHeaders,
       const rapidjson::Document& tilesetJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
