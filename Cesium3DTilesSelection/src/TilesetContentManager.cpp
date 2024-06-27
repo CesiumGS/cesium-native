@@ -132,13 +132,20 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
         assert(false);
         continue;
       }
+      CesiumGeospatial::GlobeRectangle globeRectangle =
+          CesiumGeospatial::unprojectRectangleSimple(projection, *pRectangle);
       glm::dvec2 centerProjected = pRectangle->getCenter();
       CesiumGeospatial::Cartographic center =
           CesiumGeospatial::unprojectPosition(
               projection,
               glm::dvec3(centerProjected, 0.0));
 
-      return RegionAndCenter{details.boundingRegion, center};
+      return RegionAndCenter{
+          CesiumGeospatial::BoundingRegion(
+              globeRectangle,
+              details.boundingRegion.getMinimumHeight(),
+              details.boundingRegion.getMaximumHeight()),
+          center};
     }
   }
 
