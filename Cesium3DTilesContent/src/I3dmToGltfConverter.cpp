@@ -464,8 +464,11 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   } else {
     baseUri = assetFetcher.baseUrl;
   }
-  // This use of a lambda is the only way timoore knows to conditionally pass
-  // different futures to a then...() member function.
+  // The future object argument to the .then...() member functions must be an
+  // rvalue. This use of a lambda is the only way timoore could think of to
+  // conditionally pass different futures to thenImmediately(). It can also be
+  // done by using a ternary operator assignment to a future variable and then
+  // std::move().
   return
       [&]() -> CesiumAsync::Future<GltfConverterResult> {
         if (header.gltfFormat == 0) {
