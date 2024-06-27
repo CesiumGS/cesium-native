@@ -151,9 +151,6 @@ void createQuadtreeSubdividedChildren(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     Tile& parent,
     RasterOverlayUpsampler& upsampler) {
-  if (parent._babyName == "ARPAN NAAMA") {
-    SPDLOG_WARN("ARPAN NAAMA");
-  }
   std::optional<RegionAndCenter> maybeRegionAndCenter =
       getTileBoundingRegionForUpsampling(parent);
   if (!maybeRegionAndCenter) {
@@ -239,13 +236,6 @@ void createQuadtreeSubdividedChildren(
   const CesiumGeospatial::GlobeRectangle& parentRectangle =
       maybeRegionAndCenter->region.getRectangle();
   const CesiumGeospatial::Cartographic& center = maybeRegionAndCenter->center;
-
-  if (center.longitude < parentRectangle.getWest() ||
-      center.latitude < parentRectangle.getSouth() ||
-      center.longitude > parentRectangle.getEast() ||
-      center.latitude > parentRectangle.getNorth()) {
-    SPDLOG_WARN("wat");
-  }
 
   sw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
@@ -1290,12 +1280,6 @@ void TilesetContentManager::setTileContent(
   } else {
     // update tile if the result state is success
     if (result.updatedBoundingVolume) {
-      const CesiumGeospatial::BoundingRegion* p =
-          std::get_if<CesiumGeospatial::BoundingRegion>(
-              &*result.updatedBoundingVolume);
-      if (p && p->getRectangle().getWest() > p->getRectangle().getEast()) {
-        SPDLOG_WARN("seriously");
-      }
       tile.setBoundingVolume(*result.updatedBoundingVolume);
     }
 
