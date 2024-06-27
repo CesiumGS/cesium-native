@@ -457,9 +457,16 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   repositionInstances(decodedInstances);
   std::string baseUri;
   if (header.gltfFormat == 0) {
+    // The spec says that the URL can be padded with ' ' (0x20) characters in
+    // order to make the size of the whole i3dm file 8-byte aligned.
+    auto rLastNotSpace =
+        std::find_if_not(gltfData.rbegin(), gltfData.rend(), [](auto&& b) {
+          return static_cast<int>(b) == ' ';
+        });
+    auto spaceDistance = gltfData.rend() - rLastNotSpace;
     std::string gltfUri(
         reinterpret_cast<const char*>(gltfData.data()),
-        gltfData.size());
+        spaceDistance);
     baseUri = CesiumUtility::Uri::resolve(assetFetcher.baseUrl, gltfUri);
   } else {
     baseUri = assetFetcher.baseUrl;
