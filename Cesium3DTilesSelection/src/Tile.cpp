@@ -5,6 +5,7 @@
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/BabyNames.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -74,7 +75,8 @@ Tile::Tile(Tile&& rhs) noexcept
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
-      _shouldContentContinueUpdating{rhs._shouldContentContinueUpdating} {
+      _shouldContentContinueUpdating{rhs._shouldContentContinueUpdating},
+      _babyName(std::move(rhs._babyName)) {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -95,6 +97,7 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     }
 
     this->_id = std::move(rhs._id);
+    this->_babyName = std::move(rhs._babyName);
     this->_boundingVolume = rhs._boundingVolume;
     this->_viewerRequestVolume = rhs._viewerRequestVolume;
     this->_contentBoundingVolume = rhs._contentBoundingVolume;
@@ -109,6 +112,12 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
   }
 
   return *this;
+}
+
+void Tile::setTileID(const TileID& id) noexcept {
+  this->_id = id;
+  this->_babyName =
+      BabyNames::instance().lookup(TileIdUtilities::createTileIdString(id));
 }
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {

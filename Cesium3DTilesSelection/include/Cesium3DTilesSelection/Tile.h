@@ -370,7 +370,7 @@ public:
    *
    * @param id The tile ID.
    */
-  void setTileID(const TileID& id) noexcept { this->_id = id; }
+  void setTileID(const TileID& id) noexcept;
 
   /**
    * @brief Returns the {@link BoundingVolume} of the renderable content of this
@@ -538,6 +538,8 @@ private:
   friend class MockTilesetContentManagerTestFixture;
 
 public:
+  std::string _babyName;
+
   /**
    * @brief A {@link CesiumUtility::DoublyLinkedList} for tile objects.
    */
