@@ -119,10 +119,20 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // texture coordinates which overlay had more detail.
   for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
     if (mapped.isMoreDetailAvailable()) {
+      const RasterOverlayTile* pReadyTile = mapped.getReadyTile();
+      if (!pReadyTile) {
+        assert(false);
+        continue;
+      }
       const CesiumGeospatial::Projection& projection =
-          mapped.getReadyTile()->getTileProvider().getProjection();
-      glm::dvec2 centerProjected =
-          details.findRectangleForOverlayProjection(projection)->getCenter();
+          pReadyTile->getTileProvider().getProjection();
+      const CesiumGeometry::Rectangle* pRectangle =
+          details.findRectangleForOverlayProjection(projection);
+      if (!pRectangle) {
+        assert(false);
+        continue;
+      }
+      glm::dvec2 centerProjected = pRectangle->getCenter();
       CesiumGeospatial::Cartographic center =
           CesiumGeospatial::unprojectPosition(
               projection,
@@ -141,6 +151,9 @@ void createQuadtreeSubdividedChildren(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     Tile& parent,
     RasterOverlayUpsampler& upsampler) {
+  if (parent._babyName == "ARPAN NAAMA") {
+    SPDLOG_WARN("ARPAN NAAMA");
+  }
   std::optional<RegionAndCenter> maybeRegionAndCenter =
       getTileBoundingRegionForUpsampling(parent);
   if (!maybeRegionAndCenter) {
@@ -226,6 +239,14 @@ void createQuadtreeSubdividedChildren(
   const CesiumGeospatial::GlobeRectangle& parentRectangle =
       maybeRegionAndCenter->region.getRectangle();
   const CesiumGeospatial::Cartographic& center = maybeRegionAndCenter->center;
+
+  if (center.longitude < parentRectangle.getWest() ||
+      center.latitude < parentRectangle.getSouth() ||
+      center.longitude > parentRectangle.getEast() ||
+      center.latitude > parentRectangle.getNorth()) {
+    SPDLOG_WARN("wat");
+  }
+
   sw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
           CesiumGeospatial::GlobeRectangle(
@@ -1269,6 +1290,12 @@ void TilesetContentManager::setTileContent(
   } else {
     // update tile if the result state is success
     if (result.updatedBoundingVolume) {
+      const CesiumGeospatial::BoundingRegion* p =
+          std::get_if<CesiumGeospatial::BoundingRegion>(
+              &*result.updatedBoundingVolume);
+      if (p && p->getRectangle().getWest() > p->getRectangle().getEast()) {
+        SPDLOG_WARN("seriously");
+      }
       tile.setBoundingVolume(*result.updatedBoundingVolume);
     }
 
