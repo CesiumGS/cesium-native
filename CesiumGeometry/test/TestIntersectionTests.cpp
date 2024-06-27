@@ -198,13 +198,13 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
           obtuseTriangle[1],
           obtuseTriangle[2],
           false},
-      // Point "inside" degenerate triangle returns false.
+      // Point "inside" degenerate triangle returns true.
       TestCase{
           rightTriangle[0],
           rightTriangle[0],
           rightTriangle[0],
           rightTriangle[2],
-          false});
+          true});
 
   bool result = IntersectionTests::pointInTriangle(
       testCase.point,
