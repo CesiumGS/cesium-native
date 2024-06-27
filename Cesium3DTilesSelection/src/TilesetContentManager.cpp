@@ -132,13 +132,23 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
         assert(false);
         continue;
       }
-      CesiumGeospatial::GlobeRectangle globeRectangle =
-          CesiumGeospatial::unprojectRectangleSimple(projection, *pRectangle);
+
+      // The subdivision center must be at exactly the location of the (0.5,
+      // 0.5) raster overlay texture coordinate for this projection.
       glm::dvec2 centerProjected = pRectangle->getCenter();
       CesiumGeospatial::Cartographic center =
           CesiumGeospatial::unprojectPosition(
               projection,
               glm::dvec3(centerProjected, 0.0));
+
+      // Subdivide the same rectangle that was used to generate the raster
+      // overlay texture coordinates. But union it with the tight-fitting
+      // content bounds in order to avoid error from repeated subdivision in
+      // extreme cases.
+      CesiumGeospatial::GlobeRectangle globeRectangle =
+          CesiumGeospatial::unprojectRectangleSimple(projection, *pRectangle);
+      globeRectangle =
+          globeRectangle.computeUnion(details.boundingRegion.getRectangle());
 
       return RegionAndCenter{
           CesiumGeospatial::BoundingRegion(
