@@ -463,7 +463,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         std::find_if_not(gltfData.rbegin(), gltfData.rend(), [](auto&& b) {
           return static_cast<int>(b) == ' ';
         });
-    auto spaceDistance = gltfData.rend() - rLastNotSpace;
+    auto spaceDistance = static_cast<size_t>(gltfData.rend() - rLastNotSpace);
     std::string gltfUri(
         reinterpret_cast<const char*>(gltfData.data()),
         spaceDistance);
