@@ -53,6 +53,11 @@ TEST_CASE("IntersectionTests::rayEllipsoid") {
   };
 
   auto testCase = GENERATE(
+      // Degenerate ellipsoid
+      TestCase{
+          Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0)),
+          glm::dvec3(0),
+          std::nullopt},
       // RayEllipsoid outside intersections
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
@@ -193,13 +198,13 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
           obtuseTriangle[1],
           obtuseTriangle[2],
           false},
-      // Point "inside" degenerate triangle returns false.
+      // Point "inside" degenerate triangle returns true.
       TestCase{
           rightTriangle[0],
           rightTriangle[0],
           rightTriangle[0],
           rightTriangle[2],
-          false});
+          true});
 
   bool result = IntersectionTests::pointInTriangle(
       testCase.point,

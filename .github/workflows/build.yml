@@ -67,7 +67,7 @@ jobs:
             vcpkg-${{ env.CACHE_KEY }}
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -B build -S . -G Ninja -DCESIUM_MSVC_STATIC_RUNTIME_ENABLED=ON -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build build
       - name: Test ${{matrix.build_type}} Configuration
         run: |

@@ -29,12 +29,17 @@ public:
   rayPlane(const Ray& ray, const Plane& plane) noexcept;
 
   /**
-   * @brief Computes the intersection of a ray and a ellipsoid.
+   * @brief Computes the intersection of a ray and an ellipsoid with the given
+   * radii, centered at the origin.
+   *
+   * Returns false if any of the radii are 0.
    *
    * @param ray The ray.
    * @param radii The radii of ellipsoid.
-   * @return The start and stop of intersection, x is start, y is stop, or
-   * `std::nullopt` if there is no intersection.
+   * @return The distances along the ray where it intersects the ellipsoid, or
+   * `std::nullopt` if there are no intersections. X is the entry, and y is the
+   * exit.
+   *
    */
   static std::optional<glm::dvec2>
   rayEllipsoid(const Ray& ray, const glm::dvec3& radii) noexcept;
@@ -43,7 +48,7 @@ public:
    * @brief Determines whether a given point is completely inside a triangle
    * defined by three 2D points.
    *
-   * Returns false for degenerate triangles.
+   * This function does not check for degeneracy of the triangle.
    *
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.
