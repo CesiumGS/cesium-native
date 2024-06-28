@@ -54,10 +54,9 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
 
 /*static*/ std::unique_ptr<Tileset> EllipsoidTilesetLoader::createTileset(
     const TilesetExternals& externals,
-    const Ellipsoid& ellipsoid,
     const TilesetOptions& options) {
   std::unique_ptr<EllipsoidTilesetLoader> pCustomLoader =
-      std::make_unique<EllipsoidTilesetLoader>(ellipsoid);
+      std::make_unique<EllipsoidTilesetLoader>(options.ellipsoid);
   std::unique_ptr<Tile> pRootTile =
       std::make_unique<Tile>(pCustomLoader.get(), TileEmptyContent{});
 
@@ -97,8 +96,14 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
       TileLoadResultState::Success});
 }
 
-TileChildrenResult
-EllipsoidTilesetLoader::createTileChildren(const Tile& tile) {
+TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
+    const Tile& tile,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  // We don't use the ellipsoid parameter, since we already have an ellipsoid
+  // specified, but if we don't use the variable we'll get an error. This line
+  // counts as using it.
+  (void)ellipsoid;
+
   const QuadtreeTileID* pParentID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
 

@@ -29,15 +29,17 @@ using namespace CesiumGeospatial;
 namespace Cesium3DTilesSelection {
 class EllipsoidTilesetLoader : public TilesetContentLoader {
 public:
-  EllipsoidTilesetLoader(const Ellipsoid& ellipsoid = Ellipsoid::WGS84);
+  EllipsoidTilesetLoader(const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   static std::unique_ptr<Tileset> createTileset(
       const TilesetExternals& externals,
-      const Ellipsoid& ellipsoid = Ellipsoid::WGS84,
       const TilesetOptions& options = TilesetOptions{});
 
   Future<TileLoadResult> loadTileContent(const TileLoadInput& input) override;
-  TileChildrenResult createTileChildren(const Tile& tile) override;
+  TileChildrenResult createTileChildren(
+      const Tile& tile,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) override;
 
 private:
   struct Geometry {
