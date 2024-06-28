@@ -15,6 +15,8 @@
 ##### Fixes :wrench:
 
 - When a 3D Tiles Instanced 3D Mesh (i3dm) file contains an instance transform that cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
+- Removed an overly-eager degenerate triangle test in the 2D version of `IntersectionTests::pointInTriangle` that could discard intersections in small - but valid - triangles.
+- Fixed a bug while upsampling tiles for raster overlays that could cause them to have an incorrect bounding box, which in some cases would lead to the raster overlay being missing entirely from the upsampled tile.
 
 ### v0.36.0 - 2024-06-03
 

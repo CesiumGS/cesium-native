@@ -48,7 +48,7 @@ public:
    * @brief Determines whether a given point is completely inside a triangle
    * defined by three 2D points.
    *
-   * Returns false for degenerate triangles.
+   * This function does not check for degeneracy of the triangle.
    *
    * @param point The point to check.
    * @param triangleVertA The first vertex of the triangle.
