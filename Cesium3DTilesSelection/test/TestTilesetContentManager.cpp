@@ -1434,8 +1434,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       loadUntilChildrenExist(se);
 
-      // The southeast child should have a sensible bounding volume, and a
-      // raster overlay mapped to it.
+      // Verify the bounding volume is sensible
       const BoundingRegion* pRegion =
           std::get_if<BoundingRegion>(&se.getBoundingVolume());
       REQUIRE(pRegion != nullptr);
@@ -1446,7 +1445,102 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           pRegion->getRectangle().getNorth() >
           pRegion->getRectangle().getSouth());
 
+      // The tight-fitting bounding region from the raster overlay process
+      // should be sensible and smaller than the _original_ tile rectangle.
+      TileRenderContent* pRenderContent = se.getContent().getRenderContent();
+      REQUIRE(pRenderContent != nullptr);
+      const GlobeRectangle& tightRectangle =
+          pRenderContent->getRasterOverlayDetails()
+              .boundingRegion.getRectangle();
+      CHECK(tightRectangle.getEast() > tightRectangle.getWest());
+      CHECK(tightRectangle.getNorth() > tightRectangle.getSouth());
+      CHECK(
+          tightRectangle.computeWidth() * 2.0 <
+          tileRectangle.computeWidth() * 0.5);
+      CHECK(
+          tightRectangle.computeHeight() * 2.0 <
+          tileRectangle.computeHeight() * 0.5);
+
+      // The rectangle used for texture coordinates should also be sensible and
+      // match the southeast quadrant of the original parent tile rectangle.
+      REQUIRE(!pRenderContent->getRasterOverlayDetails()
+                   .rasterOverlayRectangles.empty());
+      const Rectangle& overlayRectangle =
+          pRenderContent->getRasterOverlayDetails()
+              .rasterOverlayRectangles.front();
+      GlobeRectangle overlayGlobeRectangle =
+          unprojectRectangleSimple(GeographicProjection(), overlayRectangle);
+
+      GlobeRectangle seQuadrant(
+          tileRectangle.computeCenter().longitude,
+          tileRectangle.getSouth(),
+          tileRectangle.getEast(),
+          tileRectangle.computeCenter().latitude);
+      CHECK(GlobeRectangle::equalsEpsilon(
+          overlayGlobeRectangle,
+          seQuadrant,
+          Math::Epsilon13));
+
+      // The tile should have a raster overlay mapped to it.
       REQUIRE(se.getMappedRasterTiles().size() == 1);
+
+      // Load the southeast child's southwest child
+      REQUIRE(se.getChildren().size() == 4);
+      Tile& sw = se.getChildren()[0];
+      REQUIRE(std::get_if<UpsampledQuadtreeNode>(&sw.getTileID()) != nullptr);
+      REQUIRE(
+          std::get<UpsampledQuadtreeNode>(sw.getTileID()).tileID ==
+          QuadtreeTileID(2, 2, 0));
+
+      loadUntilChildrenExist(sw);
+
+      // Verify the bounding volume is sensible
+      pRegion = std::get_if<BoundingRegion>(&sw.getBoundingVolume());
+      REQUIRE(pRegion != nullptr);
+      CHECK(
+          pRegion->getRectangle().getEast() >
+          pRegion->getRectangle().getWest());
+      CHECK(
+          pRegion->getRectangle().getNorth() >
+          pRegion->getRectangle().getSouth());
+
+      // The tight-fitting bounding region from the raster overlay process
+      // should be sensible and smaller than the _original_ tile rectangle.
+      pRenderContent = sw.getContent().getRenderContent();
+      REQUIRE(pRenderContent != nullptr);
+      const GlobeRectangle& swTightRectangle =
+          pRenderContent->getRasterOverlayDetails()
+              .boundingRegion.getRectangle();
+      CHECK(swTightRectangle.getEast() > swTightRectangle.getWest());
+      CHECK(swTightRectangle.getNorth() > swTightRectangle.getSouth());
+      CHECK(
+          swTightRectangle.computeWidth() * 2.0 <
+          tileRectangle.computeWidth() * 0.25);
+      CHECK(
+          swTightRectangle.computeHeight() * 2.0 <
+          tileRectangle.computeHeight() * 0.25);
+
+      // The rectangle used for texture coordinates should also be sensible and
+      // match the southwest quadrant of the southeast quadrant of the original
+      // parent tile rectangle.
+      REQUIRE(!pRenderContent->getRasterOverlayDetails()
+                   .rasterOverlayRectangles.empty());
+      const Rectangle& swOverlayRectangle =
+          pRenderContent->getRasterOverlayDetails()
+              .rasterOverlayRectangles.front();
+      GlobeRectangle swOverlayGlobeRectangle =
+          unprojectRectangleSimple(GeographicProjection(), swOverlayRectangle);
+      CHECK(GlobeRectangle::equalsEpsilon(
+          swOverlayGlobeRectangle,
+          GlobeRectangle(
+              seQuadrant.getWest(),
+              seQuadrant.getSouth(),
+              seQuadrant.computeCenter().longitude,
+              seQuadrant.computeCenter().latitude),
+          Math::Epsilon13));
+
+      // The tile should have a raster overlay mapped to it.
+      REQUIRE(sw.getMappedRasterTiles().size() == 1);
     }
   }
 
