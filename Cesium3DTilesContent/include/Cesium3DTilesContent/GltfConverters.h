@@ -43,12 +43,12 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
   CesiumAsync::Future<AssetFetcherResult>
   get(const std::string& relativeUrl) const;
 
-  const CesiumAsync::AsyncSystem& asyncSystem;
-  const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
-  const std::string baseUrl;
+  CesiumAsync::AsyncSystem asyncSystem;
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+  std::string baseUrl;
   glm::dmat4 tileTransform; // For ENU transforms in i3dm
-  const std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
-  const CesiumGeometry::Axis upAxis;
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
+  CesiumGeometry::Axis upAxis;
 };
 
 /**

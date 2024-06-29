@@ -461,7 +461,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
     // order to make the size of the whole i3dm file 8-byte aligned.
     auto rLastNotSpace =
         std::find_if_not(gltfData.rbegin(), gltfData.rend(), [](auto&& b) {
-          return static_cast<int>(b) == ' ';
+          return b == std::byte(' ');
         });
     auto spaceDistance = static_cast<size_t>(gltfData.rend() - rLastNotSpace);
     std::string gltfUri(
@@ -471,73 +471,65 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   } else {
     baseUri = assetFetcher.baseUrl;
   }
-  // The future object argument to the .then...() member functions must be an
-  // rvalue. This use of a lambda is the only way timoore could think of to
-  // conditionally pass different futures to thenImmediately(). It can also be
-  // done by using a ternary operator assignment to a future variable and then
-  // std::move().
-  return
-      [&]() -> CesiumAsync::Future<GltfConverterResult> {
-        if (header.gltfFormat == 0) {
-          // Recursively fetch and read the glTF content.
-          return assetFetcher.get(baseUri).thenImmediately(
-              [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
-                  -> CesiumAsync::Future<GltfConverterResult> {
-                if (assetFetcherResult.errorList.hasErrors()) {
-                  GltfConverterResult errorResult;
-                  errorResult.errors.merge(assetFetcherResult.errorList);
-                  return assetFetcher.asyncSystem.createResolvedFuture(
-                      std::move(errorResult));
-                }
-                return BinaryToGltfConverter::convert(
-                    assetFetcherResult.bytes,
-                    options,
-                    assetFetcher);
-              });
-        } else {
-          return BinaryToGltfConverter::convert(
-              gltfData,
+
+  auto getGltf = [&]() -> CesiumAsync::Future<GltfConverterResult> {
+    if (header.gltfFormat == 0) {
+      // Recursively fetch and read the glTF content.
+      return assetFetcher.get(baseUri).thenImmediately(
+          [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
+              -> CesiumAsync::Future<GltfConverterResult> {
+            if (assetFetcherResult.errorList.hasErrors()) {
+              GltfConverterResult errorResult;
+              errorResult.errors.merge(assetFetcherResult.errorList);
+              return assetFetcher.asyncSystem.createResolvedFuture(
+                  std::move(errorResult));
+            }
+            return BinaryToGltfConverter::convert(
+                assetFetcherResult.bytes,
+                options,
+                assetFetcher);
+          });
+    } else {
+      return BinaryToGltfConverter::convert(gltfData, options, assetFetcher);
+    }
+  };
+
+  return getGltf()
+      .thenImmediately([options, assetFetcher, baseUri](
+                           GltfConverterResult&& converterResult) {
+        if (converterResult.model.has_value()) {
+          CesiumGltfReader::GltfReaderResult readerResult{
+              std::move(*converterResult.model),
+              {},
+              {}};
+          CesiumAsync::HttpHeaders externalRequestHeaders(
+              assetFetcher.requestHeaders.begin(),
+              assetFetcher.requestHeaders.end());
+          return CesiumGltfReader::GltfReader::resolveExternalData(
+              assetFetcher.asyncSystem,
+              baseUri,
+              externalRequestHeaders,
+              assetFetcher.pAssetAccessor,
               options,
-              assetFetcher);
+              std::move(readerResult));
         }
-      }()
-                   .thenImmediately([options, assetFetcher, baseUri](
-                                        GltfConverterResult&& converterResult) {
-                     if (converterResult.model.has_value()) {
-                       CesiumGltfReader::GltfReaderResult readerResult{
-                           std::move(*converterResult.model),
-                           {},
-                           {}};
-                       CesiumAsync::HttpHeaders externalRequestHeaders(
-                           assetFetcher.requestHeaders.begin(),
-                           assetFetcher.requestHeaders.end());
-                       return CesiumGltfReader::GltfReader::resolveExternalData(
-                           assetFetcher.asyncSystem,
-                           baseUri,
-                           externalRequestHeaders,
-                           assetFetcher.pAssetAccessor,
-                           options,
-                           std::move(readerResult));
-                     }
-                     return assetFetcher.asyncSystem.createResolvedFuture(
-                         CesiumGltfReader::GltfReaderResult{
-                             std::nullopt,
-                             std::move(converterResult.errors.errors),
-                             {}});
-                   })
-                   .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
-                                        CesiumGltfReader::GltfReaderResult&&
-                                            readerResult) mutable {
-                     if (readerResult.model)
-                       convertedI3dm.gltfResult.model =
-                           std::move(readerResult.model);
-                     CesiumUtility::ErrorList resolvedExternalErrors{
-                         std::move(readerResult.errors),
-                         {}};
-                     convertedI3dm.gltfResult.errors.merge(
-                         resolvedExternalErrors);
-                     return convertedI3dm;
-                   });
+        return assetFetcher.asyncSystem.createResolvedFuture(
+            CesiumGltfReader::GltfReaderResult{
+                std::nullopt,
+                std::move(converterResult.errors.errors),
+                {}});
+      })
+      .thenImmediately(
+          [convertedI3dm = std::move(convertedI3dm)](
+              CesiumGltfReader::GltfReaderResult&& readerResult) mutable {
+            if (readerResult.model)
+              convertedI3dm.gltfResult.model = std::move(readerResult.model);
+            CesiumUtility::ErrorList resolvedExternalErrors{
+                std::move(readerResult.errors),
+                {}};
+            convertedI3dm.gltfResult.errors.merge(resolvedExternalErrors);
+            return convertedI3dm;
+          });
 }
 
 glm::dmat4
