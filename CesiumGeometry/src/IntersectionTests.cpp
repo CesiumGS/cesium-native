@@ -114,13 +114,6 @@ bool IntersectionTests::pointInTriangle(
   const glm::dvec2 bc = triangleVertC - triangleVertB;
   const glm::dvec2 ca = triangleVertA - triangleVertC;
 
-  // Return false for degenerate triangles.
-  if (glm::length2(ab) < CesiumUtility::Math::Epsilon8 ||
-      glm::length2(bc) < CesiumUtility::Math::Epsilon8 ||
-      glm::length2(ca) < CesiumUtility::Math::Epsilon8) {
-    return false;
-  }
-
   // Get the vector perpendicular to each triangle edge in the same 2D plane).
   const glm::dvec2 ab_perp(-ab.y, ab.x);
   const glm::dvec2 bc_perp(-bc.y, bc.x);

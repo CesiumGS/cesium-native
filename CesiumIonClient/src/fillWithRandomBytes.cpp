@@ -17,6 +17,8 @@
 #endif
 
 #if IS_UWP
+#include <CesiumUtility/Assert.h>
+
 #include <cstdlib>
 #else
 #include <duthomhas/csprng.hpp>
