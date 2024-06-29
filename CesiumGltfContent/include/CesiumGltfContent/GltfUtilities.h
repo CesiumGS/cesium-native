@@ -18,6 +18,10 @@ struct Model;
 struct Node;
 } // namespace CesiumGltf
 
+namespace CesiumGeometry {
+class Ray;
+} // namespace CesiumGeometry
+
 namespace CesiumGltfContent {
 /**
  * A collection of utility functions that are used to process and transform a
@@ -193,5 +197,44 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * @param bufferIndex The index of the buffer to compact.
    */
   static void compactBuffer(CesiumGltf::Model& gltf, int32_t bufferIndex);
+
+  /**
+   * @brief Hit result data for intersectRayGltfModelParametric
+   */
+  struct IntersectResult {
+    struct Hit {
+      glm::dvec3 primitivePoint = {};
+      glm::dmat4x4 primitiveToWorld = {};
+
+      glm::dvec3 worldPoint = {};
+      double rayToWorldPointDistanceSq = -1;
+
+      int meshId = -1;
+      int primitiveId = -1;
+    };
+
+    std::optional<Hit> hit;
+
+    std::vector<std::string> warnings{};
+  };
+
+  /**
+   * @brief Intersects a ray with a glTF model and returns the first
+   * intersection point.
+   *
+   * Supports all mesh primitive modes.
+   * Points and lines are assumed to have no area, and are ignored
+   *
+   * @param ray A ray in world space.
+   * @param gltf The glTF model to intersect.
+   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param gltfTransform Optional matrix to apply to entire gltf model.
+   * @param return IntersectResult describing outcome
+   */
+  static IntersectResult intersectRayGltfModel(
+      const CesiumGeometry::Ray& ray,
+      const CesiumGltf::Model& gltf,
+      bool cullBackFaces = true,
+      const glm::dmat4x4& gltfTransform = glm::dmat4(1.0));
 };
 } // namespace CesiumGltfContent

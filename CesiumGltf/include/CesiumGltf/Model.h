@@ -117,7 +117,9 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       Model& gltf,
       Node& node,
       Mesh& mesh,
+      const int meshId,
       MeshPrimitive& primitive,
+      const int primitiveId,
       const glm::dmat4& transform);
 
   /**
@@ -152,7 +154,9 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       const Model& gltf,
       const Node& node,
       const Mesh& mesh,
+      const int meshId,
       const MeshPrimitive& primitive,
+      const int primitiveId,
       const glm::dmat4& transform);
 
   /** @copydoc Gltf::forEachPrimitiveInScene() */
