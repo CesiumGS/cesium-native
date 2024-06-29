@@ -14,7 +14,11 @@
 
 ##### Fixes :wrench:
 
-- When a 3D Tiles Instanced 3D Mesh (i3dm) file contains an instance transform that cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
+- Fixed several problems with the loader for the 3D Tiles Instanced 3D Mesh (i3dm) format:
+  - When an instance transform cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
+  - The `gltfUpAxis` property is now accounted for, if present.
+  - Paths to images in i3dm content are now resolved correctly.
+  - Extraneous spaces at the end of an external glTF URI are now ignored. These are sometimes added as padding in order to meet alignment requirements.
 - Removed an overly-eager degenerate triangle test in the 2D version of `IntersectionTests::pointInTriangle` that could discard intersections in small - but valid - triangles.
 - Fixed a bug while upsampling tiles for raster overlays that could cause them to have an incorrect bounding box, which in some cases would lead to the raster overlay being missing entirely from the upsampled tile.
 
