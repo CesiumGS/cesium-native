@@ -247,7 +247,7 @@ CesiumGltf::Model createSparseMesh(const GlobeRectangle& rectangle) {
     CHECK(writer.size() == int64_t(positions.size()));
 
     for (size_t i = 0; i < positions.size(); ++i) {
-      writer[i] = glm::vec3(positions[i] - center);
+      writer[int64_t(i)] = glm::vec3(positions[i] - center);
     }
 
     meshPrimitive.attributes["POSITION"] = int32_t(model.accessors.size() - 1);
@@ -1331,7 +1331,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         return asyncSystem.createResolvedFuture(CreateTileProviderResult(
             CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
                 new AlwaysMoreDetailProvider(
-                    this,
+                    pOwner,
                     asyncSystem,
                     pAssetAccessor,
                     std::nullopt,
