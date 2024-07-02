@@ -939,7 +939,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               pAssetAccessor,
               tileUrl,
               tileTransform,
-              requestHeaders};
+              requestHeaders,
+              upAxis};
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets =
               contentOptions.ktx2TranscodeTargets;
