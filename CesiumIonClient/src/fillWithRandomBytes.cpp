@@ -2,25 +2,72 @@
 #include "fillWithRandomBytes.h"
 
 #include <cassert>
-#include <climits>
-#include <ctime>
-#include <random>
+#include <stdexcept>
+
+#if defined(_WIN32)
+#pragma comment(lib, "Bcrypt.lib")
+#include <Windows.h>
+#include <bcrypt.h>
+using ProviderHandle = BCRYPT_ALG_HANDLE;
+
+static ProviderHandle getProvider() {
+  static ProviderHandle ALG_HANDLE = nullptr;
+  if (ALG_HANDLE == nullptr) {
+    NTSTATUS status = BCryptOpenAlgorithmProvider(
+        &ALG_HANDLE,
+        BCRYPT_RNG_ALGORITHM,
+        nullptr,
+        0);
+    if (status != 0) {
+      throw std::runtime_error("Failed to open algorithm provider");
+    }
+  }
+  return ALG_HANDLE;
+}
+
+static void fillWithRandomBytesImpl(
+    ProviderHandle handle,
+    const gsl::span<uint8_t>& buffer) {
+  uint32_t cbBuffer = static_cast<uint32_t>(buffer.size());
+  NTSTATUS status = BCryptGenRandom(handle, buffer.data(), cbBuffer, 0);
+  if (status != 0) {
+    throw std::runtime_error("Failed to generate random bytes");
+  }
+}
+
+#else
+#include <cstdio>
+using ProviderHandle = FILE*;
+
+static ProviderHandle getProvider() {
+  static ProviderHandle HANDLE = nullptr;
+  if (HANDLE == nullptr) {
+    HANDLE = fopen("/dev/urandom", "rb");
+    assert(HANDLE != nullptr);
+  }
+  return HANDLE;
+}
+
+static void fillWithRandomBytesImpl(
+    ProviderHandle handle,
+    const gsl::span<uint8_t>& buffer) {
+  auto bufferSize = buffer.size();
+  auto readCount = fread((char*)buffer.data(), 1, bufferSize, handle);
+  if (readCount != bufferSize) {
+    throw std::runtime_error("Failed to generate random bytes");
+  }
+}
+
+#endif
 
 namespace CesiumIonClient {
 
-// using unsigned short as unsigned char is not supported by
-// independent_bits_engine
-using random_bytes_engine = std::
-    independent_bits_engine<std::default_random_engine, CHAR_BIT, uint16_t>;
-
-uint8_t randomByte() {
-  static thread_local auto seed = static_cast<uint16_t>(time(nullptr));
-  static thread_local random_bytes_engine engine{seed};
-  return static_cast<uint8_t>(engine());
-}
-
 void fillWithRandomBytes(const gsl::span<uint8_t>& buffer) {
-  std::generate(begin(buffer), end(buffer), std::ref(randomByte));
+  if (buffer.empty()) {
+    return;
+  }
+  ProviderHandle handle = getProvider();
+  ::fillWithRandomBytesImpl(handle, buffer);
 }
 
 } // namespace CesiumIonClient
