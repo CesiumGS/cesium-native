@@ -4,11 +4,26 @@
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 
 namespace Cesium3DTilesSelection {
+/**
+ * @brief A loader that will generate a tileset by tesselating the surface of an
+ * ellipsoid, producing a simple globe tileset without any terrain features.
+ */
 class EllipsoidTilesetLoader : public TilesetContentLoader {
 public:
+  /**
+   * @brief Constructs a new instance.
+   *
+   * @param ellipsoid The {@link Ellipsoid}.
+   */
   EllipsoidTilesetLoader(
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+  /**
+   * @brief Creates a new tileset with this loader.
+   *
+   * @param externals The external interfaces to use.
+   * @param options Additional options for the tileset.
+   */
   static std::unique_ptr<Tileset> createTileset(
       const TilesetExternals& externals,
       const TilesetOptions& options = TilesetOptions{});
