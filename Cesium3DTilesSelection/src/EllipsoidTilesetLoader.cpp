@@ -172,6 +172,10 @@ Model EllipsoidTilesetLoader::createModel(const Geometry& geometry) const {
   size_t normalsSize = verticesSize;
 
   Model model;
+
+  model.asset.version = "2.0";
+  model.extras["gltfUpAxis"] = JsonValue(std::underlying_type_t<Axis>(Axis::Z));
+
   model.buffers.resize(1);
   model.bufferViews.resize(3);
   model.accessors.resize(3);
