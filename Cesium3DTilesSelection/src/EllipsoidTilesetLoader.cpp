@@ -103,7 +103,7 @@ void EllipsoidTilesetLoader::createChildTile(
           globeRectangle.getNorthwest())));
   child.setBoundingVolume(boundingRegion);
   child.setGeometricError(
-      6.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *
+      8.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *
       globeRectangle.computeWidth());
 }
 
