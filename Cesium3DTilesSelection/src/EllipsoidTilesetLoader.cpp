@@ -65,12 +65,7 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
 
 TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
     const Tile& tile,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  // We don't use the ellipsoid parameter, since we already have an ellipsoid
-  // specified, but if we don't use the variable we'll get an error. This line
-  // counts as using it.
-  (void)ellipsoid;
-
+    const CesiumGeospatial::Ellipsoid& /*ellipsoid*/) {
   const QuadtreeTileID* pParentID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
 
