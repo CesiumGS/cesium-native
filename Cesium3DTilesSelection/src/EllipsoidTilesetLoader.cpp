@@ -42,6 +42,11 @@
 #include <variant>
 #include <vector>
 
+using namespace CesiumGltf;
+using namespace CesiumAsync;
+using namespace CesiumUtility;
+using namespace CesiumGeometry;
+using namespace CesiumGeospatial;
 using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {

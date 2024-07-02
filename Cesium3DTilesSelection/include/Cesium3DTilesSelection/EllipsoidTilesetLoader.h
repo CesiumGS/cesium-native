@@ -20,22 +20,18 @@
 #include <memory>
 #include <vector>
 
-using namespace CesiumGltf;
-using namespace CesiumAsync;
-using namespace CesiumUtility;
-using namespace CesiumGeometry;
-using namespace CesiumGeospatial;
-
 namespace Cesium3DTilesSelection {
 class EllipsoidTilesetLoader : public TilesetContentLoader {
 public:
-  EllipsoidTilesetLoader(const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+  EllipsoidTilesetLoader(
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   static std::unique_ptr<Tileset> createTileset(
       const TilesetExternals& externals,
       const TilesetOptions& options = TilesetOptions{});
 
-  Future<TileLoadResult> loadTileContent(const TileLoadInput& input) override;
+  CesiumAsync::Future<TileLoadResult>
+  loadTileContent(const TileLoadInput& input) override;
   TileChildrenResult createTileChildren(
       const Tile& tile,
       const CesiumGeospatial::Ellipsoid& ellipsoid
@@ -51,13 +47,14 @@ private:
   void createChildTile(
       const Tile& parent,
       std::vector<Tile>& children,
-      const QuadtreeTileID& childID) const;
+      const CesiumGeometry::QuadtreeTileID& childID) const;
 
-  BoundingRegion createBoundingRegion(const QuadtreeTileID& quadtreeID) const;
+  CesiumGeospatial::BoundingRegion
+  createBoundingRegion(const CesiumGeometry::QuadtreeTileID& quadtreeID) const;
   Geometry createGeometry(const Tile& tile) const;
-  Model createModel(const Geometry& geometry) const;
+  CesiumGltf::Model createModel(const Geometry& geometry) const;
 
-  GeographicProjection _projection;
-  QuadtreeTilingScheme _tilingScheme;
+  CesiumGeospatial::GeographicProjection _projection;
+  CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
 };
 } // namespace Cesium3DTilesSelection
