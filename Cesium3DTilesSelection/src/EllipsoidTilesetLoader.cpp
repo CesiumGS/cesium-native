@@ -1,46 +1,8 @@
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
-#include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/TileContent.h>
-#include <Cesium3DTilesSelection/TileLoadResult.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
-#include <Cesium3DTilesSelection/Tileset.h>
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
-#include <CesiumAsync/Future.h>
-#include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GeographicProjection.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
-#include <CesiumGltf/Accessor.h>
-#include <CesiumGltf/AccessorSpec.h>
-#include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/BufferCesium.h>
-#include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/Mesh.h>
-#include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Model.h>
-#include <CesiumGltf/Node.h>
-#include <CesiumGltf/Scene.h>
 
-#include <glm/detail/type_vec3.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/fwd.hpp>
-
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <memory>
-#include <optional>
-#include <type_traits>
-#include <variant>
-#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumAsync;

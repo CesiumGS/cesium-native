@@ -1,24 +1,7 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/Tileset.h>
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
-#include <CesiumAsync/Future.h>
-#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
-#include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GeographicProjection.h>
-#include <CesiumGltf/Model.h>
-
-#include <glm/fwd.hpp>
-
-#include <cstdint>
-#include <memory>
-#include <vector>
 
 namespace Cesium3DTilesSelection {
 class EllipsoidTilesetLoader : public TilesetContentLoader {
