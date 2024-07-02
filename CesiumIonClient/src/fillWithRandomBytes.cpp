@@ -1,7 +1,6 @@
 #define _CRT_RAND_S
 #include "fillWithRandomBytes.h"
 
-#include <cassert>
 #include <climits>
 #include <ctime>
 #include <random>

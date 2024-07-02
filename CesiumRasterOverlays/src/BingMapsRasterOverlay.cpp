@@ -100,7 +100,8 @@ public:
       uint32_t height,
       uint32_t minimumLevel,
       uint32_t maximumLevel,
-      const std::string& culture)
+      const std::string& culture,
+      const CesiumGeospatial::Ellipsoid& ellipsoid)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -108,14 +109,13 @@ public:
             bingCredit,
             pPrepareRendererResources,
             pLogger,
-            WebMercatorProjection(),
+            WebMercatorProjection(ellipsoid),
             QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(
-                    Ellipsoid::WGS84),
+                    ellipsoid),
                 2,
                 2),
-            WebMercatorProjection::computeMaximumProjectedRectangle(
-                Ellipsoid::WGS84),
+            WebMercatorProjection::computeMaximumProjectedRectangle(ellipsoid),
             minimumLevel,
             maximumLevel,
             width,
@@ -351,6 +351,8 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
+  const CesiumGeospatial::Ellipsoid& ellipsoid = this->_ellipsoid;
+
   auto handleResponse =
       [pOwner,
        asyncSystem,
@@ -358,6 +360,7 @@ BingMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
+       ellipsoid,
        baseUrl = this->_url,
        culture = this->_culture](
           const std::shared_ptr<IAssetRequest>& pRequest,
@@ -437,7 +440,8 @@ BingMapsRasterOverlay::createTileProvider(
         height,
         0,
         maximumLevel,
-        culture);
+        culture,
+        ellipsoid);
   };
 
   auto cacheResultIt = sessionCache.find(metadataUrl);

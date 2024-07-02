@@ -76,7 +76,8 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
     std::string ionAssetEndpointUrl,
     CesiumIonTilesetLoader::AuthorizationHeaderChangeListener
         headerChangeListener,
-    bool showCreditsOnScreen) {
+    bool showCreditsOnScreen,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::vector<LoaderCreditResult> credits;
   if (externals.pCreditSystem) {
     credits.reserve(endpoint.attributions.size());
@@ -96,40 +97,43 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
   return TilesetJsonLoader::createLoader(
              externals,
              endpoint.url,
-             requestHeaders)
-      .thenImmediately([credits = std::move(credits),
-                        requestHeaders,
-                        ionAssetID,
-                        ionAccessToken = std::move(ionAccessToken),
-                        ionAssetEndpointUrl = std::move(ionAssetEndpointUrl),
-                        headerChangeListener = std::move(headerChangeListener)](
-                           TilesetContentLoaderResult<TilesetJsonLoader>&&
-                               tilesetJsonResult) mutable {
-        if (tilesetJsonResult.credits.empty()) {
-          tilesetJsonResult.credits = std::move(credits);
-        } else {
-          tilesetJsonResult.credits.insert(
-              tilesetJsonResult.credits.end(),
-              credits.begin(),
-              credits.end());
-        }
+             requestHeaders,
+             ellipsoid)
+      .thenImmediately(
+          [credits = std::move(credits),
+           requestHeaders,
+           ionAssetID,
+           ionAccessToken = std::move(ionAccessToken),
+           ionAssetEndpointUrl = std::move(ionAssetEndpointUrl),
+           headerChangeListener = std::move(headerChangeListener),
+           ellipsoid](TilesetContentLoaderResult<TilesetJsonLoader>&&
+                          tilesetJsonResult) mutable {
+            if (tilesetJsonResult.credits.empty()) {
+              tilesetJsonResult.credits = std::move(credits);
+            } else {
+              tilesetJsonResult.credits.insert(
+                  tilesetJsonResult.credits.end(),
+                  credits.begin(),
+                  credits.end());
+            }
 
-        TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-        if (!tilesetJsonResult.errors) {
-          result.pLoader = std::make_unique<CesiumIonTilesetLoader>(
-              ionAssetID,
-              std::move(ionAccessToken),
-              std::move(ionAssetEndpointUrl),
-              std::move(tilesetJsonResult.pLoader),
-              std::move(headerChangeListener));
-          result.pRootTile = std::move(tilesetJsonResult.pRootTile);
-          result.credits = std::move(tilesetJsonResult.credits);
-          result.requestHeaders = std::move(requestHeaders);
-        }
-        result.errors = std::move(tilesetJsonResult.errors);
-        result.statusCode = tilesetJsonResult.statusCode;
-        return result;
-      });
+            TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+            if (!tilesetJsonResult.errors) {
+              result.pLoader = std::make_unique<CesiumIonTilesetLoader>(
+                  ionAssetID,
+                  std::move(ionAccessToken),
+                  std::move(ionAssetEndpointUrl),
+                  std::move(tilesetJsonResult.pLoader),
+                  std::move(headerChangeListener),
+                  ellipsoid);
+              result.pRootTile = std::move(tilesetJsonResult.pRootTile);
+              result.credits = std::move(tilesetJsonResult.credits);
+              result.requestHeaders = std::move(requestHeaders);
+            }
+            result.errors = std::move(tilesetJsonResult.errors);
+            result.statusCode = tilesetJsonResult.statusCode;
+            return result;
+          });
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
@@ -142,7 +146,8 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
     std::string ionAssetEndpointUrl,
     CesiumIonTilesetLoader::AuthorizationHeaderChangeListener
         headerChangeListener,
-    bool showCreditsOnScreen) {
+    bool showCreditsOnScreen,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::vector<LoaderCreditResult> credits;
   if (externals.pCreditSystem) {
     credits.reserve(endpoint.attributions.size());
@@ -166,8 +171,10 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
              externals,
              contentOptions,
              url,
-             requestHeaders)
-      .thenImmediately([credits = std::move(credits),
+             requestHeaders,
+             ellipsoid)
+      .thenImmediately([ellipsoid,
+                        credits = std::move(credits),
                         requestHeaders,
                         ionAssetID,
                         ionAccessToken = std::move(ionAccessToken),
@@ -191,7 +198,8 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
               std::move(ionAccessToken),
               std::move(ionAssetEndpointUrl),
               std::move(tilesetJsonResult.pLoader),
-              std::move(headerChangeListener));
+              std::move(headerChangeListener),
+              ellipsoid);
           result.pRootTile = std::move(tilesetJsonResult.pRootTile);
           result.credits = std::move(tilesetJsonResult.credits);
           result.requestHeaders = std::move(requestHeaders);
@@ -212,7 +220,8 @@ mainThreadHandleEndpointResponse(
     const TilesetContentOptions& contentOptions,
     CesiumIonTilesetLoader::AuthorizationHeaderChangeListener&&
         headerChangeListener,
-    bool showCreditsOnScreen) {
+    bool showCreditsOnScreen,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
   const std::string& requestUrl = pRequest->url();
   if (!pResponse) {
@@ -311,7 +320,8 @@ mainThreadHandleEndpointResponse(
         std::move(ionAccessToken),
         std::move(ionAssetEndpointUrl),
         std::move(headerChangeListener),
-        showCreditsOnScreen);
+        showCreditsOnScreen,
+        ellipsoid);
   } else if (type == "3DTILES") {
     endpoint.type = type;
     endpoint.url = url;
@@ -324,7 +334,8 @@ mainThreadHandleEndpointResponse(
         std::move(ionAccessToken),
         std::move(ionAssetEndpointUrl),
         std::move(headerChangeListener),
-        showCreditsOnScreen);
+        showCreditsOnScreen,
+        ellipsoid);
   }
 
   TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
@@ -339,10 +350,10 @@ CesiumIonTilesetLoader::CesiumIonTilesetLoader(
     std::string&& ionAccessToken,
     std::string&& ionAssetEndpointUrl,
     std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
-    std::function<
-        void(const std::string& header, const std::string& headerValue)>&&
-        headerChangeListener)
-    : _refreshTokenState{TokenRefreshState::None},
+    AuthorizationHeaderChangeListener&& headerChangeListener,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
+    : _ellipsoid{ellipsoid},
+      _refreshTokenState{TokenRefreshState::None},
       _ionAssetID{ionAssetID},
       _ionAccessToken{std::move(ionAccessToken)},
       _ionAssetEndpointUrl{std::move(ionAssetEndpointUrl)},
@@ -390,10 +401,11 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
       });
 }
 
-TileChildrenResult
-CesiumIonTilesetLoader::createTileChildren(const Tile& tile) {
+TileChildrenResult CesiumIonTilesetLoader::createTileChildren(
+    const Tile& tile,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   auto pLoader = tile.getLoader();
-  return pLoader->createTileChildren(tile);
+  return pLoader->createTileChildren(tile, ellipsoid);
 }
 
 void CesiumIonTilesetLoader::refreshTokenInMainThread(
@@ -453,7 +465,8 @@ CesiumIonTilesetLoader::createLoader(
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl,
     const AuthorizationHeaderChangeListener& headerChangeListener,
-    bool showCreditsOnScreen) {
+    bool showCreditsOnScreen,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::string ionUrl =
       createEndpointResource(ionAssetID, ionAccessToken, ionAssetEndpointUrl);
   auto cacheIt = endpointCache.find(ionUrl);
@@ -468,9 +481,11 @@ CesiumIonTilesetLoader::createLoader(
                  ionAccessToken,
                  ionAssetEndpointUrl,
                  headerChangeListener,
-                 showCreditsOnScreen)
+                 showCreditsOnScreen,
+                 ellipsoid)
           .thenInMainThread(
               [externals,
+               ellipsoid,
                contentOptions,
                ionAssetID,
                ionAccessToken,
@@ -486,7 +501,8 @@ CesiumIonTilesetLoader::createLoader(
                     ionAssetEndpointUrl,
                     headerChangeListener,
                     showCreditsOnScreen,
-                    std::move(result));
+                    std::move(result),
+                    ellipsoid);
               });
     } else if (endpoint.type == "3DTILES") {
       return mainThreadLoadTilesetJsonFromAssetEndpoint(
@@ -496,7 +512,8 @@ CesiumIonTilesetLoader::createLoader(
                  ionAccessToken,
                  ionAssetEndpointUrl,
                  headerChangeListener,
-                 showCreditsOnScreen)
+                 showCreditsOnScreen,
+                 ellipsoid)
           .thenInMainThread(
               [externals,
                contentOptions,
@@ -504,7 +521,8 @@ CesiumIonTilesetLoader::createLoader(
                ionAccessToken,
                ionAssetEndpointUrl,
                headerChangeListener,
-               showCreditsOnScreen](
+               showCreditsOnScreen,
+               ellipsoid](
                   TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
                 return refreshTokenIfNeeded(
                     externals,
@@ -514,7 +532,8 @@ CesiumIonTilesetLoader::createLoader(
                     ionAssetEndpointUrl,
                     headerChangeListener,
                     showCreditsOnScreen,
-                    std::move(result));
+                    std::move(result),
+                    ellipsoid);
               });
     }
 
@@ -527,6 +546,7 @@ CesiumIonTilesetLoader::createLoader(
     return externals.pAssetAccessor->get(externals.asyncSystem, ionUrl)
         .thenInMainThread(
             [externals,
+             ellipsoid,
              ionAssetID,
              ionAccessToken = ionAccessToken,
              ionAssetEndpointUrl = ionAssetEndpointUrl,
@@ -542,7 +562,8 @@ CesiumIonTilesetLoader::createLoader(
                   std::move(ionAssetEndpointUrl),
                   contentOptions,
                   std::move(headerChangeListener),
-                  showCreditsOnScreen);
+                  showCreditsOnScreen,
+                  ellipsoid);
             });
   }
 }
@@ -555,7 +576,8 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
     const std::string& ionAssetEndpointUrl,
     const AuthorizationHeaderChangeListener& headerChangeListener,
     bool showCreditsOnScreen,
-    TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+    TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (result.errors.hasErrors()) {
     if (result.statusCode == 401) {
       endpointCache.erase(createEndpointResource(
@@ -569,7 +591,8 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
           ionAccessToken,
           ionAssetEndpointUrl,
           headerChangeListener,
-          showCreditsOnScreen);
+          showCreditsOnScreen,
+          ellipsoid);
     }
   }
   return externals.asyncSystem.createResolvedFuture(std::move(result));

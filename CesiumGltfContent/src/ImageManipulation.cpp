@@ -1,7 +1,6 @@
 #include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 
-#include <cassert>
 #include <cstring>
 
 namespace Cesium {

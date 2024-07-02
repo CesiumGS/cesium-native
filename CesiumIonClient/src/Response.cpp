@@ -11,8 +11,6 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 
-#include <cassert>
-
 using namespace CesiumAsync;
 using namespace CesiumUtility;
 

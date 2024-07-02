@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 
 #include <glm/fwd.hpp>
@@ -107,7 +108,8 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    */
   static CesiumGeospatial::BoundingRegion computeBoundingRegion(
       const CesiumGltf::Model& gltf,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Parse the copyright field of a glTF model and return the individual
@@ -168,6 +170,12 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void removeUnusedBuffers(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedBufferIndices = {});
+  static void removeUnusedMeshes(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedMeshIndices = {});
+  static void removeUnusedMaterials(
+      CesiumGltf::Model& gltf,
+      const std::vector<int32_t>& extraUsedMaterialIndices = {});
 
   /**
    * @brief Shrink buffers by removing any sections that are not referenced by

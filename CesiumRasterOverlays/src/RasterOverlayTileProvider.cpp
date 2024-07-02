@@ -24,16 +24,17 @@ namespace CesiumRasterOverlays {
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor) noexcept
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
       _credit(std::nullopt),
       _pPrepareRendererResources(nullptr),
       _pLogger(nullptr),
-      _projection(CesiumGeospatial::GeographicProjection()),
+      _projection(CesiumGeospatial::GeographicProjection(ellipsoid)),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
-                             computeMaximumProjectedRectangle()),
+                             computeMaximumProjectedRectangle(ellipsoid)),
       _pPlaceholder(),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
@@ -68,7 +69,7 @@ RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
   // be destroyed before the tile provider that created them.
   if (this->_pPlaceholder) {
-    assert(this->_pPlaceholder->getReferenceCount() == 1);
+    CESIUM_ASSERT(this->_pPlaceholder->getReferenceCount() == 1);
     this->_pPlaceholder = nullptr;
   }
 }
@@ -89,7 +90,7 @@ RasterOverlayTileProvider::getTile(
 }
 
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
-  assert(pTile->getReferenceCount() == 0);
+  CESIUM_ASSERT(pTile->getReferenceCount() == 0);
 
   this->_tileDataBytes -= pTile->getImage().sizeBytes;
 }

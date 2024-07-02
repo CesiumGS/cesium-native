@@ -322,8 +322,8 @@ function generate(options, schema, writers) {
         #include <${readerNamespace}/${name}Reader.h>
         #include <CesiumJsonReader/JsonReader.h>
         #include <CesiumJsonReader/ArrayJsonHandler.h>
+        #include <CesiumUtility/Assert.h>
         #include "registerReaderExtensions.h"
-        #include <cassert>
         #include <string>
 
         namespace ${readerNamespace} {
@@ -336,7 +336,7 @@ function generate(options, schema, writers) {
         }
 
         CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey(const std::string_view& str) {
-          assert(this->_pObject);
+          CESIUM_ASSERT(this->_pObject);
           return this->readObjectKey${name}(${namespace}::${name}::TypeName, str, *this->_pObject);
         }
 

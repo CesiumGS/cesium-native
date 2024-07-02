@@ -38,8 +38,8 @@ set_target_properties(picosha2::picosha2 PROPERTIES
 find_library(ZLIB_NG_RELEASE_LIB NAMES zlibstatic-ng z-ng PATHS ${EZVCPKG_DIR}/lib NO_DEFAULT_PATH)
 find_library(ZLIB_NG_DEBUG_LIB NAMES zlibstatic-ngd z-ng PATHS ${EZVCPKG_DIR}/debug/lib NO_DEFAULT_PATH)
 add_library(zlib-ng::zlib-ng STATIC IMPORTED GLOBAL)
+target_include_directories(zlib-ng::zlib-ng INTERFACE "${EZVCPKG_DIR}/include")
 set_target_properties(zlib-ng::zlib-ng PROPERTIES
-  INCLUDE_DIRECTORIES "${EZVCPKG_DIR}/include"
   IMPORTED_LOCATION "${ZLIB_NG_RELEASE_LIB}"
   IMPORTED_LOCATION_DEBUG "${ZLIB_NG_DEBUG_LIB}"
 )
