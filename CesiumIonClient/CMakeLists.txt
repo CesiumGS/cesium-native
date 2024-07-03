@@ -43,4 +43,5 @@ target_link_libraries(CesiumIonClient
         picosha2::picosha2
         modp_b64::modp_b64
         httplib::httplib
+        OpenSSL::Crypto
 )
