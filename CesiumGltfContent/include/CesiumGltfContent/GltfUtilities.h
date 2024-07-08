@@ -227,7 +227,8 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    *
    * @param ray A ray in world space.
    * @param gltf The glTF model to intersect.
-   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param cullBackFaces Ignore triangles that face away from ray. Front faces
+   * use CCW winding order.
    * @param gltfTransform Optional matrix to apply to entire gltf model.
    * @param return IntersectResult describing outcome
    */

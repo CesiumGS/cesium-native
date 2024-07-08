@@ -110,7 +110,8 @@ public:
    * @param p0 The first vertex of the triangle.
    * @param p1 The second vertex of the triangle.
    * @param p2 The third vertex of the triangle.
-   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param cullBackFaces Ignore triangles that face away from ray. Front faces
+   * use CCW winding order.
    * @return The point of intersection, or `std::nullopt` if there is no
    * intersection.
    */
@@ -134,7 +135,8 @@ public:
    * @param p1 The second vertex of the triangle.
    * @param p2 The third vertex of the triangle.
    * @param t Returned parametric value, if a hit is detected.
-   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param cullBackFaces Ignore triangles that face away from ray. Front faces
+   * use CCW winding order.
    * @return True if a hit occurred, false otherwise.
    */
   static bool rayTriangleParametric(
