@@ -134,7 +134,8 @@ namespace {
 template <typename T>
 Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
     const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
-    const T& tileID) noexcept {
+    const T& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   Cesium3DTiles::BoundingVolume result;
 
   std::optional<OrientedBoundingBox> maybeBox =
@@ -146,18 +147,24 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
   }
 
   std::optional<BoundingRegion> maybeRegion =
-      TileBoundingVolumes::getBoundingRegion(rootBoundingVolume);
+      TileBoundingVolumes::getBoundingRegion(rootBoundingVolume, ellipsoid);
   if (maybeRegion) {
-    BoundingRegion region =
-        ImplicitTilingUtilities::computeBoundingVolume(*maybeRegion, tileID);
+    BoundingRegion region = ImplicitTilingUtilities::computeBoundingVolume(
+        *maybeRegion,
+        tileID,
+        ellipsoid);
     TileBoundingVolumes::setBoundingRegion(result, region);
   }
 
   std::optional<S2CellBoundingVolume> maybeS2 =
-      TileBoundingVolumes::getS2CellBoundingVolume(rootBoundingVolume);
+      TileBoundingVolumes::getS2CellBoundingVolume(
+          rootBoundingVolume,
+          ellipsoid);
   if (maybeS2) {
-    S2CellBoundingVolume s2 =
-        ImplicitTilingUtilities::computeBoundingVolume(*maybeS2, tileID);
+    S2CellBoundingVolume s2 = ImplicitTilingUtilities::computeBoundingVolume(
+        *maybeS2,
+        tileID,
+        ellipsoid);
     TileBoundingVolumes::setS2CellBoundingVolume(result, s2);
   }
 
@@ -167,14 +174,16 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
 
 Cesium3DTiles::BoundingVolume ImplicitTilingUtilities::computeBoundingVolume(
     const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
-  return computeBoundingVolumeInternal(rootBoundingVolume, tileID);
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
+  return computeBoundingVolumeInternal(rootBoundingVolume, tileID, ellipsoid);
 }
 
 Cesium3DTiles::BoundingVolume ImplicitTilingUtilities::computeBoundingVolume(
     const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
-  return computeBoundingVolumeInternal(rootBoundingVolume, tileID);
+    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
+  return computeBoundingVolumeInternal(rootBoundingVolume, tileID, ellipsoid);
 }
 
 namespace {
@@ -205,7 +214,8 @@ CesiumGeospatial::GlobeRectangle subdivideRectangle(
 
 CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
   return CesiumGeospatial::BoundingRegion{
       subdivideRectangle(
@@ -213,12 +223,14 @@ CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
           tileID,
           denominator),
       rootBoundingVolume.getMinimumHeight(),
-      rootBoundingVolume.getMaximumHeight()};
+      rootBoundingVolume.getMaximumHeight(),
+      ellipsoid};
 }
 
 CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::BoundingRegion& rootBoundingVolume,
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
   double heightSize = (rootBoundingVolume.getMaximumHeight() -
                        rootBoundingVolume.getMinimumHeight()) /
@@ -235,7 +247,8 @@ CesiumGeospatial::BoundingRegion ImplicitTilingUtilities::computeBoundingVolume(
           QuadtreeTileID(tileID.level, tileID.x, tileID.y),
           denominator),
       childMinHeight,
-      childMaxHeight};
+      childMaxHeight,
+      ellipsoid};
 }
 
 CesiumGeometry::OrientedBoundingBox
@@ -286,19 +299,22 @@ ImplicitTilingUtilities::computeBoundingVolume(
 CesiumGeospatial::S2CellBoundingVolume
 ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
-    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   return CesiumGeospatial::S2CellBoundingVolume(
       CesiumGeospatial::S2CellID::fromQuadtreeTileID(
           rootBoundingVolume.getCellID().getFace(),
           tileID),
       rootBoundingVolume.getMinimumHeight(),
-      rootBoundingVolume.getMaximumHeight());
+      rootBoundingVolume.getMaximumHeight(),
+      ellipsoid);
 }
 
 CesiumGeospatial::S2CellBoundingVolume
 ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeospatial::S2CellBoundingVolume& rootBoundingVolume,
-    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+    const CesiumGeometry::OctreeTileID& tileID,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
   double heightSize = (rootBoundingVolume.getMaximumHeight() -
                        rootBoundingVolume.getMinimumHeight()) /
@@ -314,7 +330,8 @@ ImplicitTilingUtilities::computeBoundingVolume(
           rootBoundingVolume.getCellID().getFace(),
           QuadtreeTileID(tileID.level, tileID.x, tileID.y)),
       childMinHeight,
-      childMaxHeight);
+      childMaxHeight,
+      ellipsoid);
 }
 
 double

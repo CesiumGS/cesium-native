@@ -1,8 +1,7 @@
 #include "CesiumJsonReader/BoolJsonHandler.h"
 
 #include "CesiumJsonReader/JsonHandler.h"
-
-#include <cassert>
+#include "CesiumUtility/Assert.h"
 
 namespace CesiumJsonReader {
 BoolJsonHandler::BoolJsonHandler() noexcept : JsonHandler() {}
@@ -13,7 +12,7 @@ void BoolJsonHandler::reset(IJsonHandler* pParent, bool* pBool) {
 }
 
 IJsonHandler* BoolJsonHandler::readBool(bool b) {
-  assert(this->_pBool);
+  CESIUM_ASSERT(this->_pBool);
   *this->_pBool = b;
   return this->parent();
 }

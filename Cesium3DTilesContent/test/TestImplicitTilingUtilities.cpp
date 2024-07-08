@@ -260,11 +260,16 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
   SECTION("BoundingRegion") {
     SECTION("quadtree") {
-      BoundingRegion root(GlobeRectangle(1.0, 2.0, 3.0, 4.0), 10.0, 20.0);
+      BoundingRegion root(
+          GlobeRectangle(1.0, 2.0, 3.0, 4.0),
+          10.0,
+          20.0,
+          Ellipsoid::WGS84);
 
       BoundingRegion l1x0y0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          QuadtreeTileID(1, 0, 0));
+          QuadtreeTileID(1, 0, 0),
+          Ellipsoid::WGS84);
       CHECK(l1x0y0.getRectangle().getWest() == 1.0);
       CHECK(l1x0y0.getRectangle().getSouth() == 2.0);
       CHECK(l1x0y0.getRectangle().getEast() == 2.0);
@@ -274,7 +279,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingRegion l1x1y0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          QuadtreeTileID(1, 1, 0));
+          QuadtreeTileID(1, 1, 0),
+          Ellipsoid::WGS84);
       CHECK(l1x1y0.getRectangle().getWest() == 2.0);
       CHECK(l1x1y0.getRectangle().getSouth() == 2.0);
       CHECK(l1x1y0.getRectangle().getEast() == 3.0);
@@ -284,7 +290,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingRegion l1x0y1 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          QuadtreeTileID(1, 0, 1));
+          QuadtreeTileID(1, 0, 1),
+          Ellipsoid::WGS84);
       CHECK(l1x0y1.getRectangle().getWest() == 1.0);
       CHECK(l1x0y1.getRectangle().getSouth() == 3.0);
       CHECK(l1x0y1.getRectangle().getEast() == 2.0);
@@ -294,11 +301,16 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
 
     SECTION("octree") {
-      BoundingRegion root(GlobeRectangle(1.0, 2.0, 3.0, 4.0), 10.0, 20.0);
+      BoundingRegion root(
+          GlobeRectangle(1.0, 2.0, 3.0, 4.0),
+          10.0,
+          20.0,
+          Ellipsoid::WGS84);
 
       BoundingRegion l1x0y0z0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 0, 0, 0));
+          OctreeTileID(1, 0, 0, 0),
+          Ellipsoid::WGS84);
       CHECK(l1x0y0z0.getRectangle().getWest() == 1.0);
       CHECK(l1x0y0z0.getRectangle().getSouth() == 2.0);
       CHECK(l1x0y0z0.getRectangle().getEast() == 2.0);
@@ -308,7 +320,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingRegion l1x1y0z0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 1, 0, 0));
+          OctreeTileID(1, 1, 0, 0),
+          Ellipsoid::WGS84);
       CHECK(l1x1y0z0.getRectangle().getWest() == 2.0);
       CHECK(l1x1y0z0.getRectangle().getSouth() == 2.0);
       CHECK(l1x1y0z0.getRectangle().getEast() == 3.0);
@@ -318,7 +331,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingRegion l1x0y1z0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 0, 1, 0));
+          OctreeTileID(1, 0, 1, 0),
+          Ellipsoid::WGS84);
       CHECK(l1x0y1z0.getRectangle().getWest() == 1.0);
       CHECK(l1x0y1z0.getRectangle().getSouth() == 3.0);
       CHECK(l1x0y1z0.getRectangle().getEast() == 2.0);
@@ -328,7 +342,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingRegion l1x0y0z1 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 0, 0, 1));
+          OctreeTileID(1, 0, 0, 1),
+          Ellipsoid::WGS84);
       CHECK(l1x0y0z1.getRectangle().getWest() == 1.0);
       CHECK(l1x0y0z1.getRectangle().getSouth() == 2.0);
       CHECK(l1x0y0z1.getRectangle().getEast() == 2.0);
@@ -343,12 +358,14 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume root(
           S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
           10.0,
-          20.0);
+          20.0,
+          Ellipsoid::WGS84);
 
       S2CellBoundingVolume l1x0y0 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              QuadtreeTileID(1, 0, 0));
+              QuadtreeTileID(1, 0, 0),
+              Ellipsoid::WGS84);
       CHECK(l1x0y0.getCellID().getFace() == 1);
       CHECK(
           l1x0y0.getCellID().getID() ==
@@ -359,7 +376,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume l1x1y0 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              QuadtreeTileID(1, 1, 0));
+              QuadtreeTileID(1, 1, 0),
+              Ellipsoid::WGS84);
       CHECK(l1x1y0.getCellID().getFace() == 1);
       CHECK(
           l1x1y0.getCellID().getID() ==
@@ -370,7 +388,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume l1x0y1 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              QuadtreeTileID(1, 0, 1));
+              QuadtreeTileID(1, 0, 1),
+              Ellipsoid::WGS84);
       CHECK(l1x0y1.getCellID().getFace() == 1);
       CHECK(
           l1x0y1.getCellID().getID() ==
@@ -383,12 +402,14 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume root(
           S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
           10.0,
-          20.0);
+          20.0,
+          Ellipsoid::WGS84);
 
       S2CellBoundingVolume l1x0y0z0 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              OctreeTileID(1, 0, 0, 0));
+              OctreeTileID(1, 0, 0, 0),
+              Ellipsoid::WGS84);
       CHECK(l1x0y0z0.getCellID().getFace() == 1);
       CHECK(
           l1x0y0z0.getCellID().getID() ==
@@ -399,7 +420,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume l1x1y0z0 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              OctreeTileID(1, 1, 0, 0));
+              OctreeTileID(1, 1, 0, 0),
+              Ellipsoid::WGS84);
       CHECK(l1x1y0z0.getCellID().getFace() == 1);
       CHECK(
           l1x1y0z0.getCellID().getID() ==
@@ -410,7 +432,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume l1x0y1z0 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              OctreeTileID(1, 0, 1, 0));
+              OctreeTileID(1, 0, 1, 0),
+              Ellipsoid::WGS84);
       CHECK(l1x0y1z0.getCellID().getFace() == 1);
       CHECK(
           l1x0y1z0.getCellID().getID() ==
@@ -421,7 +444,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       S2CellBoundingVolume l1x0y0z1 =
           ImplicitTilingUtilities::computeBoundingVolume(
               root,
-              OctreeTileID(1, 0, 0, 1));
+              OctreeTileID(1, 0, 0, 1),
+              Ellipsoid::WGS84);
       CHECK(l1x0y0z1.getCellID().getFace() == 1);
       CHECK(
           l1x0y0z1.getCellID().getID() ==
@@ -440,17 +464,23 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
           OrientedBoundingBox(glm::dvec3(1.0, 2.0, 3.0), glm::dmat3(10.0)));
       TileBoundingVolumes::setBoundingRegion(
           root,
-          BoundingRegion(GlobeRectangle(1.0, 2.0, 3.0, 4.0), 10.0, 20.0));
+          BoundingRegion(
+              GlobeRectangle(1.0, 2.0, 3.0, 4.0),
+              10.0,
+              20.0,
+              Ellipsoid::WGS84));
       TileBoundingVolumes::setS2CellBoundingVolume(
           root,
           S2CellBoundingVolume(
               S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
               10.0,
-              20.0));
+              20.0,
+              Ellipsoid::WGS84));
 
       BoundingVolume l1x0y0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          QuadtreeTileID(1, 0, 0));
+          QuadtreeTileID(1, 0, 0),
+          Ellipsoid::WGS84);
       std::optional<OrientedBoundingBox> maybeBox =
           TileBoundingVolumes::getOrientedBoundingBox(l1x0y0);
       REQUIRE(maybeBox);
@@ -459,9 +489,10 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingVolume l1x1y0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          QuadtreeTileID(1, 1, 0));
+          QuadtreeTileID(1, 1, 0),
+          Ellipsoid::WGS84);
       std::optional<BoundingRegion> maybeRegion =
-          TileBoundingVolumes::getBoundingRegion(l1x1y0);
+          TileBoundingVolumes::getBoundingRegion(l1x1y0, Ellipsoid::WGS84);
       REQUIRE(maybeRegion);
       CHECK(maybeRegion->getRectangle().getWest() == 2.0);
       CHECK(maybeRegion->getRectangle().getSouth() == 2.0);
@@ -472,9 +503,12 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingVolume l1x0y1 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          QuadtreeTileID(1, 0, 1));
+          QuadtreeTileID(1, 0, 1),
+          Ellipsoid::WGS84);
       std::optional<S2CellBoundingVolume> maybeS2 =
-          TileBoundingVolumes::getS2CellBoundingVolume(l1x0y1);
+          TileBoundingVolumes::getS2CellBoundingVolume(
+              l1x0y1,
+              Ellipsoid::WGS84);
       REQUIRE(maybeS2);
       CHECK(maybeS2->getCellID().getFace() == 1);
       CHECK(
@@ -492,17 +526,23 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
           OrientedBoundingBox(glm::dvec3(1.0, 2.0, 3.0), glm::dmat3(10.0)));
       TileBoundingVolumes::setBoundingRegion(
           root,
-          BoundingRegion(GlobeRectangle(1.0, 2.0, 3.0, 4.0), 10.0, 20.0));
+          BoundingRegion(
+              GlobeRectangle(1.0, 2.0, 3.0, 4.0),
+              10.0,
+              20.0,
+              Ellipsoid::WGS84));
       TileBoundingVolumes::setS2CellBoundingVolume(
           root,
           S2CellBoundingVolume(
               S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
               10.0,
-              20.0));
+              20.0,
+              Ellipsoid::WGS84));
 
       BoundingVolume l1x0y0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 0, 0, 0));
+          OctreeTileID(1, 0, 0, 0),
+          Ellipsoid::WGS84);
       std::optional<OrientedBoundingBox> maybeBox =
           TileBoundingVolumes::getOrientedBoundingBox(l1x0y0);
       REQUIRE(maybeBox);
@@ -511,9 +551,10 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingVolume l1x1y0 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 1, 0, 0));
+          OctreeTileID(1, 1, 0, 0),
+          Ellipsoid::WGS84);
       std::optional<BoundingRegion> maybeRegion =
-          TileBoundingVolumes::getBoundingRegion(l1x1y0);
+          TileBoundingVolumes::getBoundingRegion(l1x1y0, Ellipsoid::WGS84);
       REQUIRE(maybeRegion);
       CHECK(maybeRegion->getRectangle().getWest() == 2.0);
       CHECK(maybeRegion->getRectangle().getSouth() == 2.0);
@@ -524,9 +565,12 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
       BoundingVolume l1x0y1 = ImplicitTilingUtilities::computeBoundingVolume(
           root,
-          OctreeTileID(1, 0, 1, 0));
+          OctreeTileID(1, 0, 1, 0),
+          Ellipsoid::WGS84);
       std::optional<S2CellBoundingVolume> maybeS2 =
-          TileBoundingVolumes::getS2CellBoundingVolume(l1x0y1);
+          TileBoundingVolumes::getS2CellBoundingVolume(
+              l1x0y1,
+              Ellipsoid::WGS84);
       REQUIRE(maybeS2);
       CHECK(maybeS2->getCellID().getFace() == 1);
       CHECK(

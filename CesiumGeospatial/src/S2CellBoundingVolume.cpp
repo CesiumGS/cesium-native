@@ -1,5 +1,6 @@
 #include "CesiumGeospatial/S2CellBoundingVolume.h"
 
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/geometric.hpp>
@@ -27,7 +28,7 @@ std::array<Plane, 6> computeBoundingPlanes(
   glm::dvec3 centerSurfaceNormal = ellipsoid.geodeticSurfaceNormal(centerPoint);
   std::optional<Cartographic> maybeTopCartographic =
       ellipsoid.cartesianToCartographic(centerPoint);
-  assert(maybeTopCartographic);
+  CESIUM_ASSERT(maybeTopCartographic);
   Cartographic& topCartographic = *maybeTopCartographic;
   topCartographic.height = s2Cell.getMaximumHeight();
   glm::dvec3 top = ellipsoid.cartographicToCartesian(topCartographic);
@@ -423,9 +424,11 @@ S2CellBoundingVolume::getBoundingPlanes() const noexcept {
   return this->_boundingPlanes;
 }
 
-BoundingRegion S2CellBoundingVolume::computeBoundingRegion() const noexcept {
+BoundingRegion S2CellBoundingVolume::computeBoundingRegion(
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const noexcept {
   return BoundingRegion(
       this->_cellID.computeBoundingRectangle(),
       this->_minimumHeight,
-      this->_maximumHeight);
+      this->_maximumHeight,
+      ellipsoid);
 }

@@ -770,7 +770,7 @@ void updateExtensionWithJsonScalarProperty(
     PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue,
     const std::string& componentTypeName) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = componentTypeName;
@@ -806,7 +806,7 @@ void updateExtensionWithJsonBooleanProperty(
     const PropertyTable& propertyTable,
     PropertyTableProperty& propertyTableProperty,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   std::vector<std::byte> buffer(static_cast<size_t>(
       glm::ceil(static_cast<double>(propertyTable.count) / 8.0)));
@@ -869,7 +869,7 @@ void updateScalarArrayProperty(
     const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType =
@@ -1021,7 +1021,7 @@ void updateStringArrayProperty(
     const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   size_t stringCount = 0;
   size_t totalCharCount = 0;
@@ -1175,7 +1175,7 @@ void updateBooleanArrayProperty(
     const PropertyTable& propertyTable,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::BOOLEAN;
   classProperty.array = true;
@@ -1271,7 +1271,7 @@ void updateExtensionWithArrayProperty(
     PropertyTableProperty& propertyTableProperty,
     const MaskedArrayType& arrayType,
     const TValueGetter& propertyValue) {
-  assert(propertyValue.size() >= propertyTable.count);
+  CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   const MaskedType& elementType = arrayType.elementType;
   if (elementType.isBool) {
@@ -1542,7 +1542,7 @@ void updateExtensionWithBinaryProperty(
     const std::string& propertyName,
     const rapidjson::Value& propertyValue,
     ErrorList& result) {
-  assert(
+  CESIUM_ASSERT(
       gltfBufferIndex >= 0 &&
       "gltfBufferIndex is negative. Need to allocate buffer before "
       "converting the binary property");
@@ -1947,10 +1947,10 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
       result);
 
   // Create the EXT_mesh_features extension for the single mesh primitive.
-  assert(gltf.meshes.size() == 1);
+  CESIUM_ASSERT(gltf.meshes.size() == 1);
   Mesh& mesh = gltf.meshes[0];
 
-  assert(mesh.primitives.size() == 1);
+  CESIUM_ASSERT(mesh.primitives.size() == 1);
   MeshPrimitive& primitive = mesh.primitives[0];
 
   ExtensionExtMeshFeatures& extension =

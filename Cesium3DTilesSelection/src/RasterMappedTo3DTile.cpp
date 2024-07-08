@@ -59,13 +59,13 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
       _originalFailed(false) {
-  assert(this->_pLoadingTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr);
 }
 
 RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
     IPrepareRendererResources& prepareRendererResources,
     Tile& tile) {
-  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
@@ -170,7 +170,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
                                        : AttachmentState::Attached;
   }
 
-  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   // TODO: check more precise raster overlay tile availability, rather than just
   // max level?
@@ -281,7 +281,8 @@ RasterMappedTo3DTile* addRealTile(
     RasterOverlayTileProvider& tileProvider,
     RasterOverlayTileProvider& placeholder,
     Tile& tile,
-    std::vector<Projection>& missingProjections) {
+    std::vector<Projection>& missingProjections,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
@@ -308,7 +309,7 @@ RasterMappedTo3DTile* addRealTile(
               maximumScreenSpaceError,
               projection,
               *pRectangle,
-              Ellipsoid::WGS84);
+              ellipsoid);
       return addRealTile(tile, tileProvider, *pRectangle, screenPixels, index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
@@ -338,7 +339,7 @@ RasterMappedTo3DTile* addRealTile(
             maximumScreenSpaceError,
             projection,
             *maybeRectangle,
-            Ellipsoid::WGS84);
+            ellipsoid);
     return addRealTile(
         tile,
         tileProvider,
@@ -356,7 +357,7 @@ RasterMappedTo3DTile* addRealTile(
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   if (!this->_pReadyTile) {
     // This shouldn't happen
-    assert(false);
+    CESIUM_ASSERT(false);
     return;
   }
 

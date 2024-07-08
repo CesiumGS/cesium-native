@@ -1,11 +1,26 @@
 # Change Log
 
-### ? - ?
+### v0.37.0 - 2024-07-01
 
 ##### Additions :tada:
 
+- Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
+  - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
+  - `CESIUM_DISABLE_DEFAULT_ELLIPSOID` can be defined to disable the WGS84 default parameter, exposing through errors the places in your code that are still assuming a WGS84 ellipsoid.
 - Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
 - Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
+- Added equality operator for `Cartographic`.
+- Added `CESIUM_MSVC_STATIC_RUNTIME_ENABLED` option to the CMake scripts. It is OFF by default, and when enabled, configures any MS visual studio projects for the "Multi-threaded" (/MT) runtime library rather than "Multi-threaded DLL" (/MD)
+
+##### Fixes :wrench:
+
+- Fixed several problems with the loader for the 3D Tiles Instanced 3D Mesh (i3dm) format:
+  - When an instance transform cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
+  - The `gltfUpAxis` property is now accounted for, if present.
+  - Paths to images in i3dm content are now resolved correctly.
+  - Extraneous spaces at the end of an external glTF URI are now ignored. These are sometimes added as padding in order to meet alignment requirements.
+- Removed an overly-eager degenerate triangle test in the 2D version of `IntersectionTests::pointInTriangle` that could discard intersections in small - but valid - triangles.
+- Fixed a bug while upsampling tiles for raster overlays that could cause them to have an incorrect bounding box, which in some cases would lead to the raster overlay being missing entirely from the upsampled tile.
 
 ### v0.36.0 - 2024-06-03
 

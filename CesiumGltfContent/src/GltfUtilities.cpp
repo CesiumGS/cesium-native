@@ -19,6 +19,7 @@
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumUtility/Assert.h>
 
 #include <glm/gtc/quaternion.hpp>
 
@@ -177,7 +178,8 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
 /*static*/ CesiumGeospatial::BoundingRegion
 GltfUtilities::computeBoundingRegion(
     const CesiumGltf::Model& gltf,
-    const glm::dmat4& transform) {
+    const glm::dmat4& transform,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   glm::dmat4 rootTransform = transform;
   rootTransform = applyRtcCenter(gltf, rootTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
@@ -189,7 +191,7 @@ GltfUtilities::computeBoundingRegion(
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [&rootTransform, &computedBounds](
+      [&rootTransform, &computedBounds, &ellipsoid](
           const CesiumGltf::Model& gltf_,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -237,8 +239,7 @@ GltfUtilities::computeBoundingRegion(
 
           // Convert it to cartographic
           std::optional<CesiumGeospatial::Cartographic> cartographic =
-              CesiumGeospatial::Ellipsoid::WGS84.cartesianToCartographic(
-                  positionEcef);
+              ellipsoid.cartesianToCartographic(positionEcef);
           if (!cartographic) {
             continue;
           }
@@ -247,7 +248,7 @@ GltfUtilities::computeBoundingRegion(
         }
       });
 
-  return computedBounds.toRegion();
+  return computedBounds.toRegion(ellipsoid);
 }
 
 std::vector<std::string_view>
@@ -388,7 +389,7 @@ size_t moveBufferContentWithoutRenumbering(
   if (sourceIndex < 0 || sourceIndex >= int64_t(gltf.buffers.size()) ||
       destinationIndex < 0 ||
       destinationIndex >= int64_t(gltf.buffers.size())) {
-    assert(false);
+    CESIUM_ASSERT(false);
     return;
   }
 
@@ -971,7 +972,7 @@ void removeUnusedElements(
   visitFunction(gltf, [&indexMap](int32_t& elementIndex) {
     if (elementIndex >= 0 && size_t(elementIndex) < indexMap.size()) {
       int32_t newIndex = indexMap[size_t(elementIndex)];
-      assert(newIndex >= 0);
+      CESIUM_ASSERT(newIndex >= 0);
       elementIndex = newIndex;
     }
   });
@@ -983,7 +984,7 @@ void removeUnusedElements(
           elements.end(),
           [&usedElements, &elements](T& element) {
             int64_t index = &element - &elements[0];
-            assert(index >= 0 && size_t(index) < usedElements.size());
+            CESIUM_ASSERT(index >= 0 && size_t(index) < usedElements.size());
             return !usedElements[size_t(index)];
           }),
       elements.end());
@@ -1086,7 +1087,7 @@ void deleteBufferRange(
   if (pBuffer == nullptr)
     return;
 
-  assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+  CESIUM_ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   int64_t bytesToRemove = end - start;
 
@@ -1151,7 +1152,7 @@ void GltfUtilities::compactBuffer(
   if (!pBuffer)
     return;
 
-  assert(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
+  CESIUM_ASSERT(size_t(pBuffer->byteLength) == pBuffer->cesium.data.size());
 
   struct BufferRange {
     int64_t start; // first byte
