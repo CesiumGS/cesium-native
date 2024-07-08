@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `ForEachPrimitiveInSceneCallback` now passes `meshId` and `primitiveId` to the caller. Existing callbacks will need to add these new parameters
+
 ##### Additions :tada:
 
 - Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
