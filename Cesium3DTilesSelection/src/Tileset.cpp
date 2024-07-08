@@ -49,7 +49,10 @@ Tileset::Tileset(
           new TilesetContentManager(
               _externals,
               _options,
-              RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
+              RasterOverlayCollection{
+                  _loadedTiles,
+                  externals,
+                  options.ellipsoid},
               std::vector<CesiumAsync::IAssetAccessor::THeader>{},
               std::move(pCustomLoader),
               std::move(pRootTile)),
@@ -71,7 +74,10 @@ Tileset::Tileset(
           new TilesetContentManager(
               _externals,
               _options,
-              RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
+              RasterOverlayCollection{
+                  _loadedTiles,
+                  externals,
+                  options.ellipsoid},
               url),
       },
       _pTilesetHeightFinder{
