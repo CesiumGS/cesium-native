@@ -207,10 +207,10 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       glm::dmat4x4 primitiveToWorld = {};
 
       glm::dvec3 worldPoint = {};
-      double rayToWorldPointDistanceSq = -1;
+      double rayToWorldPointDistanceSq = -1.0;
 
-      int meshId = -1;
-      int primitiveId = -1;
+      int32_t meshId = -1;
+      int32_t primitiveId = -1;
     };
 
     std::optional<Hit> hit;
@@ -227,7 +227,8 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    *
    * @param ray A ray in world space.
    * @param gltf The glTF model to intersect.
-   * @param cullBackFaces Ignore triangles that face away from ray.
+   * @param cullBackFaces Ignore triangles that face away from ray. Front faces
+   * use CCW winding order.
    * @param gltfTransform Optional matrix to apply to entire gltf model.
    * @param return IntersectResult describing outcome
    */

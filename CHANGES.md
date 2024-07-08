@@ -1,5 +1,16 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `ForEachPrimitiveInSceneCallback` now passes `meshId` and `primitiveId` to the caller. Existing callbacks will need to add these new parameters
+
+##### Additions :tada:
+
+- Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
+- Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
+
 ### v0.37.0 - 2024-07-01
 
 ##### Additions :tada:
@@ -186,11 +197,6 @@
 ##### Additions :tada:
 
 - Add `defaults` method to `CesiumIonClient::Connection`.
-
-##### Additions :tada:
-
-- Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
-- Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
 
 ##### Fixes :wrench:
 
