@@ -429,7 +429,7 @@ void findClosestRayHit(
     return;
   }
 
-  double tClosest = -1;
+  double tClosest = -1.0;
   bool intersected;
   double tCurr;
 
@@ -468,7 +468,7 @@ void findClosestRayHit(
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
       bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1))
+      if (validHit && (tCurr < tClosest || tClosest == -1.0))
         tClosest = tCurr;
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
@@ -510,7 +510,7 @@ void findClosestRayHit(
           cullBackFaces);
 
       bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1))
+      if (validHit && (tCurr < tClosest || tClosest == -1.0))
         tClosest = tCurr;
     }
   } else {
@@ -547,7 +547,7 @@ void findClosestRayHit(
           cullBackFaces);
 
       bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1))
+      if (validHit && (tCurr < tClosest || tClosest == -1.0))
         tClosest = tCurr;
     }
   }
@@ -572,7 +572,7 @@ void findClosestIndexedRayHit(
 
   // Converts from various Accessor::ComponentType::XXX values
 
-  double tClosest = -1;
+  double tClosest = -1.0;
   bool intersected;
   double tCurr;
   int64_t positionsCount = positionView.size();
@@ -622,7 +622,7 @@ void findClosestIndexedRayHit(
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
       bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1))
+      if (validHit && (tCurr < tClosest || tClosest == -1.0))
         tClosest = tCurr;
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
@@ -672,7 +672,7 @@ void findClosestIndexedRayHit(
           cullBackFaces);
 
       bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1))
+      if (validHit && (tCurr < tClosest || tClosest == -1.0))
         tClosest = tCurr;
     }
   } else {
@@ -721,7 +721,7 @@ void findClosestIndexedRayHit(
             cullBackFaces);
 
         bool validHit = intersected && tCurr >= 0;
-        if (validHit && (tCurr < tClosest || tClosest == -1))
+        if (validHit && (tCurr < tClosest || tClosest == -1.0))
           tClosest = tCurr;
       }
     }
@@ -1289,7 +1289,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
     return std::optional<glm::dvec3>();
   }
 
-  double tClosest = -1;
+  double tClosest = -1.0;
 
   // Support all variations of position component types
   //
@@ -1367,9 +1367,9 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               warnings);
         }
       });
-  assert(tClosest >= -1);
+  assert(tClosest >= -1.0);
 
-  if (tClosest == -1)
+  if (tClosest == -1.0)
     return std::optional<glm::dvec3>();
 
   // It's temping to return the t value to the caller, but each primitive might
@@ -1472,7 +1472,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         // Use as closest if it's first, or closer
         bool setClosest =
-            closestHit.rayToWorldPointDistanceSq == -1 ||
+            closestHit.rayToWorldPointDistanceSq == -1.0 ||
             rayToWorldPointDistanceSq < closestHit.rayToWorldPointDistanceSq;
         if (setClosest) {
           closestHit.primitivePoint = std::move(*primitiveHitPoint);
@@ -1484,7 +1484,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         }
       });
 
-  if (closestHit.rayToWorldPointDistanceSq != -1)
+  if (closestHit.rayToWorldPointDistanceSq != -1.0)
     result.hit = std::move(closestHit);
 
   return result;

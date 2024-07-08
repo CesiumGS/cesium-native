@@ -207,7 +207,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       glm::dmat4x4 primitiveToWorld = {};
 
       glm::dvec3 worldPoint = {};
-      double rayToWorldPointDistanceSq = -1;
+      double rayToWorldPointDistanceSq = -1.0;
 
       int32_t meshId = -1;
       int32_t primitiveId = -1;
