@@ -21,13 +21,14 @@ Ray::Ray(const glm::dvec3& origin, const glm::dvec3& direction)
 }
 
 glm::dvec3 Ray::pointFromDistance(double distance) const noexcept {
-  return _origin + distance * _direction;
+  return this->_origin + distance * this->_direction;
 }
 
 Ray Ray::transform(const glm::dmat4x4& transformation) const noexcept {
   return Ray(
-      glm::dvec3(transformation * glm::dvec4(_origin, 1.0)),
-      glm::normalize(glm::dvec3(transformation * glm::dvec4(_direction, 0.0))));
+      glm::dvec3(transformation * glm::dvec4(this->_origin, 1.0)),
+      glm::normalize(
+          glm::dvec3(transformation * glm::dvec4(this->_direction, 0.0))));
 }
 
 Ray Ray::operator-() const noexcept {
