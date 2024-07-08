@@ -1,4 +1,5 @@
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumUtility/Assert.h>
 
 #include <algorithm>
 #include <limits>
@@ -8,7 +9,8 @@ RasterOverlayDetails::RasterOverlayDetails()
     : boundingRegion{
           CesiumGeospatial::GlobeRectangle::EMPTY,
           std::numeric_limits<double>::max(),
-          std::numeric_limits<double>::lowest()} {}
+          std::numeric_limits<double>::lowest(),
+          CesiumGeospatial::Ellipsoid::WGS84} {}
 
 RasterOverlayDetails::RasterOverlayDetails(
     std::vector<CesiumGeospatial::Projection>&& rasterOverlayProjections_,
@@ -26,7 +28,7 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   const std::vector<CesiumGeometry::Rectangle>& rectangles =
       this->rasterOverlayRectangles;
 
-  assert(projections.size() == rectangles.size());
+  CESIUM_ASSERT(projections.size() == rectangles.size());
 
   auto it = std::find(projections.begin(), projections.end(), projection);
   if (it != projections.end()) {
@@ -39,7 +41,9 @@ RasterOverlayDetails::findRectangleForOverlayProjection(
   return nullptr;
 }
 
-void RasterOverlayDetails::merge(const RasterOverlayDetails& other) {
+void RasterOverlayDetails::merge(
+    const RasterOverlayDetails& other,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   rasterOverlayProjections.insert(
       rasterOverlayProjections.end(),
       other.rasterOverlayProjections.begin(),
@@ -50,6 +54,6 @@ void RasterOverlayDetails::merge(const RasterOverlayDetails& other) {
       other.rasterOverlayRectangles.begin(),
       other.rasterOverlayRectangles.end());
 
-  boundingRegion.computeUnion(other.boundingRegion);
+  boundingRegion.computeUnion(other.boundingRegion, ellipsoid);
 }
 } // namespace CesiumRasterOverlays

@@ -25,7 +25,6 @@
 #else
 
 #include <atomic>
-#include <cassert>
 #include <chrono>
 #include <fstream>
 #include <mutex>

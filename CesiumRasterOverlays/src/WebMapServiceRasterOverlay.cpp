@@ -326,7 +326,11 @@ WebMapServiceRasterOverlay::createTileProvider(
                   validationError});
             }
 
-            const auto projection = CesiumGeospatial::GeographicProjection();
+            const Ellipsoid& ellipsoid =
+                options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+
+            const auto projection =
+                CesiumGeospatial::GeographicProjection(ellipsoid);
 
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
