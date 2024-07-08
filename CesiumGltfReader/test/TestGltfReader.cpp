@@ -7,6 +7,7 @@
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumUtility/Math.h>
 
@@ -25,21 +26,6 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
-
-namespace {
-std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
-  std::ifstream file(fileName, std::ios::binary | std::ios::ate);
-  REQUIRE(file);
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::vector<std::byte> buffer(static_cast<size_t>(size));
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
-
-  return buffer;
-}
-} // namespace
 
 TEST_CASE("CesiumGltfReader::GltfReader") {
   using namespace std::string_literals;
