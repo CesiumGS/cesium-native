@@ -209,8 +209,8 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       glm::dvec3 worldPoint = {};
       double rayToWorldPointDistanceSq = -1;
 
-      int meshId = -1;
-      int primitiveId = -1;
+      int32_t meshId = -1;
+      int32_t primitiveId = -1;
     };
 
     std::optional<Hit> hit;

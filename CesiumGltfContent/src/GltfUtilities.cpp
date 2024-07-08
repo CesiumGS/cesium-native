@@ -195,9 +195,9 @@ GltfUtilities::computeBoundingRegion(
           const CesiumGltf::Model& gltf_,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
-          const int /*meshId*/,
+          const int32_t /*meshId*/,
           const CesiumGltf::MeshPrimitive& primitive,
-          const int /*primitiveId*/,
+          const int32_t /*primitiveId*/,
           const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {
@@ -1399,9 +1399,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
-          const int meshId,
+          const int32_t meshId,
           const CesiumGltf::MeshPrimitive& primitive,
-          const int primitiveId,
+          const int32_t primitiveId,
           const glm::dmat4& nodeTransform) {
         // Ignore non-triangles. Points and lines have no area to intersect
         bool isTriangleMode =
