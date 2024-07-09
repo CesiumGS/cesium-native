@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <glm/mat4x4.hpp>
 
 TEST_CASE("Transforms convert the axes correctly") {
 
