@@ -199,22 +199,52 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void compactBuffer(CesiumGltf::Model& gltf, int32_t bufferIndex);
 
   /**
-   * @brief Hit result data for intersectRayGltfModelParametric
+   * @brief Data describing a hit from a ray / gltf intersection test
+   */
+  struct RayGltfHit {
+    /**
+     * @brief Hit point in primitive space
+     */
+    glm::dvec3 primitivePoint = {};
+
+    /**
+     * @brief Transformation from primitive to world space
+     */
+    glm::dmat4x4 primitiveToWorld = {};
+
+    /**
+     * @brief Hit point in world space
+     */
+    glm::dvec3 worldPoint = {};
+
+    /**
+     * @brief Square dist from intersection ray origin to world point
+     */
+    double rayToWorldPointDistanceSq = -1.0;
+
+    /**
+     * @brief ID of the glTF mesh that was hit
+     */
+    int32_t meshId = -1;
+
+    /**
+     * @brief ID of the glTF primitive that was hit
+     */
+    int32_t primitiveId = -1;
+  };
+
+  /**
+   * @brief Hit result data for intersectRayGltfModel
    */
   struct IntersectResult {
-    struct Hit {
-      glm::dvec3 primitivePoint = {};
-      glm::dmat4x4 primitiveToWorld = {};
+    /**
+     * @brief Optional hit result, if an intersection occurred
+     */
+    std::optional<RayGltfHit> hit;
 
-      glm::dvec3 worldPoint = {};
-      double rayToWorldPointDistanceSq = -1.0;
-
-      int32_t meshId = -1;
-      int32_t primitiveId = -1;
-    };
-
-    std::optional<Hit> hit;
-
+    /**
+     * @brief Warnings encountered when traversing the glTF model
+     */
     std::vector<std::string> warnings{};
   };
 

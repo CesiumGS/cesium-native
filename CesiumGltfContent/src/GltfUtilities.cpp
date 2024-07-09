@@ -1385,7 +1385,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
   IntersectResult result;
-  IntersectResult::Hit closestHit;
+  RayGltfHit closestHit;
 
   gltf.forEachPrimitiveInScene(
       -1,
