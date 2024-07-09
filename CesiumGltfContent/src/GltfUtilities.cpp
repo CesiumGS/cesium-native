@@ -1345,9 +1345,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
                   return;
                 }
 
-                findClosestIndexedRayHit<
-                    decltype(positionView),
-                    decltype(indexView)>(
+                findClosestIndexedRayHit(
                     transformedRay,
                     positionView,
                     indexView,
@@ -1358,7 +1356,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               });
         } else {
           // Non-indexed triangles
-          findClosestRayHit<decltype(positionView)>(
+          findClosestRayHit(
               transformedRay,
               positionView,
               primitive,
