@@ -1316,14 +1316,19 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
 
         bool hasIndexedTriangles = primitive.indices != -1;
         if (hasIndexedTriangles) {
-          assert(primitive.indices >= 0);
-          const Accessor& indexAccessor =
-              model.accessors[static_cast<size_t>(primitive.indices)];
+          const Accessor* indexAccessor =
+              Model::getSafe(&model.accessors, primitive.indices);
+
+          if (!indexAccessor) {
+            warnings.push_back(
+                "Skipping mesh with an invalid index accessor id");
+            return;
+          }
 
           // Ignore float index types, these are invalid
           // From the glTF spec...
           // "Indices MUST be non-negative integer numbers."
-          if (indexAccessor.componentType == Accessor::ComponentType::FLOAT) {
+          if (indexAccessor->componentType == Accessor::ComponentType::FLOAT) {
             warnings.push_back(
                 "Skipping mesh with an invalid index component type");
             return;
@@ -1331,7 +1336,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
 
           createAccessorView(
               model,
-              indexAccessor,
+              *indexAccessor,
               [&transformedRay,
                &positionView,
                &primitive,
