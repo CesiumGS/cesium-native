@@ -233,9 +233,9 @@ bool IntersectionTests::rayOBBParametric(
 
   const glm::dmat3x3& inverseHalfAxis = obb.getInverseHalfAxes();
   glm::dmat4x4 transformation(
-      glm::normalize(glm::dvec4(inverseHalfAxis[0], 0.0)),
-      glm::normalize(glm::dvec4(inverseHalfAxis[1], 0.0)),
-      glm::normalize(glm::dvec4(inverseHalfAxis[2], 0.0)),
+      glm::dvec4(glm::normalize(inverseHalfAxis[0]), 0.0),
+      glm::dvec4(glm::normalize(inverseHalfAxis[1]), 0.0),
+      glm::dvec4(glm::normalize(inverseHalfAxis[2]), 0.0),
       glm::dvec4(0.0, 0.0, 0.0, 1.0));
 
   glm::dvec3 center =

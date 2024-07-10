@@ -1316,14 +1316,19 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
 
         bool hasIndexedTriangles = primitive.indices != -1;
         if (hasIndexedTriangles) {
-          assert(primitive.indices >= 0);
-          const Accessor& indexAccessor =
-              model.accessors[static_cast<size_t>(primitive.indices)];
+          const Accessor* indexAccessor =
+              Model::getSafe(&model.accessors, primitive.indices);
+
+          if (!indexAccessor) {
+            warnings.push_back(
+                "Skipping mesh with an invalid index accessor id");
+            return;
+          }
 
           // Ignore float index types, these are invalid
           // From the glTF spec...
           // "Indices MUST be non-negative integer numbers."
-          if (indexAccessor.componentType == Accessor::ComponentType::FLOAT) {
+          if (indexAccessor->componentType == Accessor::ComponentType::FLOAT) {
             warnings.push_back(
                 "Skipping mesh with an invalid index component type");
             return;
@@ -1331,7 +1336,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
 
           createAccessorView(
               model,
-              indexAccessor,
+              *indexAccessor,
               [&transformedRay,
                &positionView,
                &primitive,
@@ -1345,9 +1350,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
                   return;
                 }
 
-                findClosestIndexedRayHit<
-                    decltype(positionView),
-                    decltype(indexView)>(
+                findClosestIndexedRayHit(
                     transformedRay,
                     positionView,
                     indexView,
@@ -1358,7 +1361,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               });
         } else {
           // Non-indexed triangles
-          findClosestRayHit<decltype(positionView)>(
+          findClosestRayHit(
               transformedRay,
               positionView,
               primitive,
@@ -1387,15 +1390,10 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 
   IntersectResult result;
-  IntersectResult::Hit closestHit;
 
   gltf.forEachPrimitiveInScene(
       -1,
-      [ray,
-       cullBackFaces,
-       rootTransform,
-       &closestHit,
-       &warnings = result.warnings](
+      [ray, cullBackFaces, rootTransform, &result](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -1414,14 +1412,15 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // Skip primitives that can't access positions
         auto positionAccessorIt = primitive.attributes.find("POSITION");
         if (positionAccessorIt == primitive.attributes.end()) {
-          warnings.push_back("Skipping mesh without a position attribute");
+          result.warnings.push_back(
+              "Skipping mesh without a position attribute");
           return;
         }
         int positionAccessorID = positionAccessorIt->second;
         const Accessor* pPositionAccessor =
             Model::getSafe(&model.accessors, positionAccessorID);
         if (!pPositionAccessor) {
-          warnings.push_back(
+          result.warnings.push_back(
               "Skipping mesh with an invalid position accessor id");
           return;
         }
@@ -1429,7 +1428,8 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // From the glTF spec, the POSITION accessor must use VEC3
         // But we should still protect against malformed gltfs
         if (pPositionAccessor->type != AccessorSpec::Type::VEC3) {
-          warnings.push_back("Skipping mesh with a non-vec3 position accessor");
+          result.warnings.push_back(
+              "Skipping mesh with a non-vec3 position accessor");
           return;
         }
 
@@ -1443,7 +1443,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
             *pPositionAccessor,
             primitiveToWorld,
             cullBackFaces,
-            warnings);
+            result.warnings);
 
         if (!primitiveHitPoint.has_value())
           return;
@@ -1470,22 +1470,28 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         double rayToWorldPointDistanceSq =
             glm::dot(rayToWorldPoint, rayToWorldPoint);
 
-        // Use as closest if it's first, or closer
-        bool setClosest =
-            closestHit.rayToWorldPointDistanceSq == -1.0 ||
-            rayToWorldPointDistanceSq < closestHit.rayToWorldPointDistanceSq;
-        if (setClosest) {
-          closestHit.primitivePoint = std::move(*primitiveHitPoint);
-          closestHit.primitiveToWorld = std::move(primitiveToWorld);
-          closestHit.worldPoint = std::move(worldPoint);
-          closestHit.rayToWorldPointDistanceSq = rayToWorldPointDistanceSq;
-          closestHit.meshId = meshId;
-          closestHit.primitiveId = primitiveId;
+        // Use in result if it's first
+        if (!result.hit.has_value()) {
+          result.hit = RayGltfHit{
+              std::move(*primitiveHitPoint),
+              std::move(primitiveToWorld),
+              std::move(worldPoint),
+              rayToWorldPointDistanceSq,
+              meshId,
+              primitiveId};
+          return;
+        }
+
+        // Use in result if it's closer
+        if (rayToWorldPointDistanceSq < result.hit->rayToWorldPointDistanceSq) {
+          result.hit->primitivePoint = std::move(*primitiveHitPoint);
+          result.hit->primitiveToWorld = std::move(primitiveToWorld);
+          result.hit->worldPoint = std::move(worldPoint);
+          result.hit->rayToWorldPointDistanceSq = rayToWorldPointDistanceSq;
+          result.hit->meshId = meshId;
+          result.hit->primitiveId = primitiveId;
         }
       });
-
-  if (closestHit.rayToWorldPointDistanceSq != -1.0)
-    result.hit = std::move(closestHit);
 
   return result;
 }
