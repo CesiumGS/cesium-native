@@ -173,7 +173,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               pAssetAccessor,
               tileUrl,
               tileTransform,
-              requestHeaders};
+              requestHeaders,
+              CesiumGeometry::Axis::Y};
           return converter(responseData, gltfOptions, assetFetcher)
               .thenImmediately([pLogger, tileUrl, pCompletedRequest, ellipsoid](
                                    GltfConverterResult&& result) {
