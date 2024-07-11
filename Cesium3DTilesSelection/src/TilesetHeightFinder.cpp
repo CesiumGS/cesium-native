@@ -172,19 +172,20 @@ void TilesetHeightFinder::_findCandidateTiles(
 }
 
 void TilesetHeightFinder::_processHeightRequests(
-    std::vector<Tile*>& tilesNeedingLoading) {
+    std::set<Tile*>& tilesNeedingLoading) {
   HeightRequests& requests = _heightRequests.front();
-  RayIntersect* currentIntersect =
-      &requests.rayIntersects[requests.numRaysDone];
   Tile* pRoot = _pTilesetContentManager->getRootTile();
 
-  std::vector<Tile*> candidateTiles;
-  _findCandidateTiles(pRoot, *currentIntersect, candidateTiles);
+  for (RayIntersect& intersect : requests.rayIntersects) {
+    intersect.candidateTiles.clear();
 
-  // If any candidates need loading, return them
-  for (Tile* pTile : candidateTiles) {
-    if (pTile->getState() != TileLoadState::Done)
-      tilesNeedingLoading.push_back(pTile);
+    _findCandidateTiles(pRoot, intersect, intersect.candidateTiles);
+
+    // If any candidates need loading, add to return set
+    for (Tile* pTile : intersect.candidateTiles) {
+      if (pTile->getState() != TileLoadState::Done)
+        tilesNeedingLoading.insert(pTile);
+    }
   }
 
   // Bail if we're waiting on tiles to load
@@ -192,16 +193,10 @@ void TilesetHeightFinder::_processHeightRequests(
     return;
 
   // Do the intersect tests
-  for (Tile* pTile : candidateTiles)
-    _intersectVisibleTile(pTile, *currentIntersect);
-
-  // Our ray is done loading and should have found a hit or not
-  // Go to next ray in this request batch
-  requests.numRaysDone++;
-
-  // If there are more rays to process, come back the next frame
-  if (requests.numRaysDone < requests.rayIntersects.size())
-    return;
+  for (RayIntersect& intersect : requests.rayIntersects) {
+    for (Tile* pTile : intersect.candidateTiles)
+      _intersectVisibleTile(pTile, intersect);
+  }
 
   // All rays are done, create results
   Tileset::HeightResults results;
@@ -239,7 +234,7 @@ Future<Tileset::HeightResults> TilesetHeightFinder::_getHeightsAtCoordinates(
         RayIntersect{coordinate, createRay(coordinate), {}});
 
   _heightRequests.emplace_back(
-      HeightRequests{std::move(rayIntersects), 0, promise});
+      HeightRequests{std::move(rayIntersects), promise});
 
   return promise.getFuture();
 }

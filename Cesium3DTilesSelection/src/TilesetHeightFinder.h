@@ -3,6 +3,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 
+#include <set>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -14,11 +15,11 @@ class TilesetHeightFinder {
     CesiumGeospatial::Cartographic inputCoordinate;
     CesiumGeometry::Ray ray;
     CesiumGltfContent::GltfUtilities::IntersectResult intersectResult;
+    std::vector<Tile*> candidateTiles;
   };
 
   struct HeightRequests {
     std::vector<RayIntersect> rayIntersects;
-    uint32_t numRaysDone;
     CesiumAsync::Promise<Tileset::HeightResults> promise;
   };
 
@@ -40,7 +41,7 @@ class TilesetHeightFinder {
       RayIntersect& rayInfo,
       std::vector<Tile*>& tilesNeedingLoading);
 
-  void _processHeightRequests(std::vector<Tile*>& tilesNeedingLoading);
+  void _processHeightRequests(std::set<Tile*>& tilesNeedingLoading);
 
   std::vector<HeightRequests> _heightRequests;
   Cesium3DTilesSelection::Tileset* _pTileset;

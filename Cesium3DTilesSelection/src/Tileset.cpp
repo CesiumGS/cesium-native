@@ -375,7 +375,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   }
 
   if (_pTilesetHeightFinder->_heightRequests.size() != 0) {
-    std::vector<Tile*> tilesNeedingLoading;
+    std::set<Tile*> tilesNeedingLoading;
     _pTilesetHeightFinder->_processHeightRequests(tilesNeedingLoading);
 
     // Add a load request for tiles that haven't started
