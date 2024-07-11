@@ -1,7 +1,8 @@
 
 #ifndef CESIUM_OVERRIDE_TRACING
-
 #include "CesiumUtility/Tracing.h"
+
+#include <CesiumUtility/Assert.h>
 
 #include <algorithm>
 

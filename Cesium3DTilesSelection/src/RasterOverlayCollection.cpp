@@ -1,4 +1,5 @@
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
