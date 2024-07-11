@@ -387,12 +387,37 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       CESIUM_ASSERT(loadState != TileLoadState::Done);
 
       // Push to appropriate queue based on state
-      // TO DO, check for overlap with view selection
       if (pTile->getState() == TileLoadState::Unloaded) {
-        this->_workerThreadLoadQueue.push_back(
-            {pTile, priorityGroup, priority});
+
+        // Only add if not already in queue
+        auto foundIt = std::find_if(
+            this->_workerThreadLoadQueue.begin(),
+            this->_workerThreadLoadQueue.end(),
+            [pTile](const TileLoadTask& task) { return task.pTile == pTile; });
+
+        if (foundIt == this->_workerThreadLoadQueue.end())
+          this->_workerThreadLoadQueue.push_back(
+              {pTile, priorityGroup, priority});
+
       } else if (pTile->getState() == TileLoadState::ContentLoaded) {
-        this->_mainThreadLoadQueue.push_back({pTile, priorityGroup, priority});
+
+        if (pTile->isRenderContent()) {
+          // If it's render content, let our main thread throttling take it
+
+          // Only add if not already in queue
+          auto foundIt = std::find_if(
+              this->_mainThreadLoadQueue.begin(),
+              this->_mainThreadLoadQueue.end(),
+              [pTile](const TileLoadTask& task) {
+                return task.pTile == pTile;
+              });
+          if (foundIt == this->_mainThreadLoadQueue.end())
+            this->_mainThreadLoadQueue.push_back(
+                {pTile, priorityGroup, priority});
+        } else {
+          // If not render content, let's transition to done ourselves
+          this->_pTilesetContentManager->updateTileContent(*pTile, _options);
+        }
       }
     }
   }
