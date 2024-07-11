@@ -387,7 +387,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       CESIUM_ASSERT(loadState != TileLoadState::Done);
 
       // Push to appropriate queue based on state
-      if (pTile->getState() == TileLoadState::Unloaded) {
+      if (loadState == TileLoadState::Unloaded) {
 
         // Only add if not already in queue
         auto foundIt = std::find_if(
@@ -399,7 +399,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
           this->_workerThreadLoadQueue.push_back(
               {pTile, priorityGroup, priority});
 
-      } else if (pTile->getState() == TileLoadState::ContentLoaded) {
+      } else if (loadState == TileLoadState::ContentLoaded) {
 
         if (pTile->isRenderContent()) {
           // If it's render content, let our main thread throttling take it
