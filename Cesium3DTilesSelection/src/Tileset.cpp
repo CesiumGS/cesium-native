@@ -344,10 +344,6 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     return result;
   }
 
-  if (_pTilesetHeightFinder->_heightRequests.size() != 0) {
-    _pTilesetHeightFinder->_processHeightRequests();
-  }
-
   for (const std::shared_ptr<ITileExcluder>& pExcluder :
        this->_options.excluders) {
     pExcluder->startNewFrame();
@@ -376,6 +372,29 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
   } else {
     result = ViewUpdateResult();
+  }
+
+  if (_pTilesetHeightFinder->_heightRequests.size() != 0) {
+    std::vector<Tile*> tilesNeedingLoading;
+    _pTilesetHeightFinder->_processHeightRequests(tilesNeedingLoading);
+
+    // Add a load request for tiles that haven't started
+    TileLoadPriorityGroup priorityGroup = TileLoadPriorityGroup::Urgent;
+    double priority = 0.0;
+    for (Tile* pTile : tilesNeedingLoading) {
+      TileLoadState loadState = pTile->getState();
+
+      CESIUM_ASSERT(loadState != TileLoadState::Done);
+
+      // Push to appropriate queue based on state
+      // TO DO, check for overlap with view selection
+      if (pTile->getState() == TileLoadState::Unloaded) {
+        this->_workerThreadLoadQueue.push_back(
+            {pTile, priorityGroup, priority});
+      } else if (pTile->getState() == TileLoadState::ContentLoaded) {
+        this->_mainThreadLoadQueue.push_back({pTile, priorityGroup, priority});
+      }
+    }
   }
 
   result.workerThreadTileLoadQueueLength =

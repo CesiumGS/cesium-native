@@ -14,7 +14,6 @@ class TilesetHeightFinder {
     CesiumGeospatial::Cartographic inputCoordinate;
     CesiumGeometry::Ray ray;
     CesiumGltfContent::GltfUtilities::IntersectResult intersectResult;
-    std::vector<Tile*> tilesLoading;
   };
 
   struct HeightRequests {
@@ -36,14 +35,12 @@ class TilesetHeightFinder {
 
   void _intersectVisibleTile(Tile* pTile, RayIntersect& rayInfo);
 
-  void _findAndIntersectVisibleTiles(
+  void _findCandidateTiles(
       Tile* pTile,
       RayIntersect& rayInfo,
-      std::vector<Tile*>& newTilesToLoad);
+      std::vector<Tile*>& tilesNeedingLoading);
 
-  void _processTilesLoadingQueue(RayIntersect& rayInfo);
-
-  void _processHeightRequests();
+  void _processHeightRequests(std::vector<Tile*>& tilesNeedingLoading);
 
   std::vector<HeightRequests> _heightRequests;
   Cesium3DTilesSelection::Tileset* _pTileset;

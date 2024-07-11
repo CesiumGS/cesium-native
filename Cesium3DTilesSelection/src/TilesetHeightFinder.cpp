@@ -121,101 +121,106 @@ void TilesetHeightFinder::_intersectVisibleTile(
   }
 }
 
-void TilesetHeightFinder::_findAndIntersectVisibleTiles(
+void TilesetHeightFinder::_findCandidateTiles(
     Tile* pTile,
     RayIntersect& rayInfo,
-    std::vector<Tile*>& newTilesToLoad) {
-  if (pTile->getState() == TileLoadState::Failed) {
+    std::vector<Tile*>& candidateTiles) {
+
+  // If tile failed to load, this means we can't complete the intersection
+  // TODO, need to return warning, or abort the intersect
+  if (pTile->getState() == TileLoadState::Failed)
+    return;
+
+  // If tile not done loading, add it to the list
+  if (pTile->getState() != TileLoadState::Done) {
+    candidateTiles.push_back(pTile);
     return;
   }
 
   if (pTile->getChildren().empty()) {
-    _intersectVisibleTile(pTile, rayInfo);
+    // This is a leaf node, add it to the list
+    candidateTiles.push_back(pTile);
   } else {
-    if (pTile->getRefine() == TileRefine::Add) {
-      _intersectVisibleTile(pTile, rayInfo);
-    }
+    // We have children
+
+    // If additive refinement, add parent to the list with children
+    if (pTile->getRefine() == TileRefine::Add)
+      candidateTiles.push_back(pTile);
+
+    // Traverse children
     for (Tile& child : pTile->getChildren()) {
-      if (child.getContentBoundingVolume()) {
-        if (!boundingVolumeContainsCoordinate(
-                *child.getContentBoundingVolume(),
-                rayInfo.ray,
-                rayInfo.inputCoordinate))
-          continue;
-      } else if (!boundingVolumeContainsCoordinate(
-                     child.getBoundingVolume(),
-                     rayInfo.ray,
-                     rayInfo.inputCoordinate))
+      auto& contentBoundingVolume = child.getContentBoundingVolume();
+
+      // If content bounding volume exists and no intersection, we can skip it
+      if (contentBoundingVolume && !boundingVolumeContainsCoordinate(
+                                       *contentBoundingVolume,
+                                       rayInfo.ray,
+                                       rayInfo.inputCoordinate))
         continue;
-      if (_loadTileIfNeeded(&child)) {
-        newTilesToLoad.push_back(&child);
-      } else {
-        _findAndIntersectVisibleTiles(&child, rayInfo, newTilesToLoad);
-      }
+
+      // if bounding volume doesn't intersect this ray, we can skip it
+      if (!boundingVolumeContainsCoordinate(
+              child.getBoundingVolume(),
+              rayInfo.ray,
+              rayInfo.inputCoordinate))
+        continue;
+
+      // Child is a candidate, traverse it and its children
+      _findCandidateTiles(&child, rayInfo, candidateTiles);
     }
   }
 }
 
-void TilesetHeightFinder::_processTilesLoadingQueue(RayIntersect& rayInfo) {
-  std::vector<Tile*> newTilesToLoad;
-  for (auto it = rayInfo.tilesLoading.begin();
-       it != rayInfo.tilesLoading.end();) {
-    Tile* pTile = *it;
-    if (_loadTileIfNeeded(pTile)) {
-      ++it;
-    } else {
-      it = rayInfo.tilesLoading.erase(it);
-      _findAndIntersectVisibleTiles(pTile, rayInfo, newTilesToLoad);
-    }
-  }
-  rayInfo.tilesLoading.insert(
-      rayInfo.tilesLoading.end(),
-      newTilesToLoad.begin(),
-      newTilesToLoad.end());
-}
-
-void TilesetHeightFinder::_processHeightRequests() {
+void TilesetHeightFinder::_processHeightRequests(
+    std::vector<Tile*>& tilesNeedingLoading) {
   HeightRequests& requests = _heightRequests.front();
   RayIntersect* currentIntersect =
       &requests.rayIntersects[requests.numRaysDone];
-  _processTilesLoadingQueue(*currentIntersect);
+  Tile* pRoot = _pTilesetContentManager->getRootTile();
 
-  while (currentIntersect->tilesLoading.empty()) {
-    // Our ray is done loading and should have found a hit or not
-    // Go to next ray in this request batch
-    requests.numRaysDone++;
+  std::vector<Tile*> candidateTiles;
+  _findCandidateTiles(pRoot, *currentIntersect, candidateTiles);
 
-    // If there are more rays to process, set up the next one
-    if (requests.numRaysDone < requests.rayIntersects.size()) {
-      currentIntersect = &requests.rayIntersects[requests.numRaysDone];
-      Tile* pRoot = _pTilesetContentManager->getRootTile();
-      _findAndIntersectVisibleTiles(
-          pRoot,
-          *currentIntersect,
-          currentIntersect->tilesLoading);
-      continue;
-    }
-
-    // All rays are done, create results
-    Tileset::HeightResults results;
-    for (RayIntersect& ray : requests.rayIntersects) {
-      Tileset::HeightResults::CoordinateResult coordinateResult = {
-          ray.intersectResult.hit.has_value(),
-          std::move(ray.inputCoordinate),
-          std::move(ray.intersectResult.warnings)};
-
-      if (coordinateResult.heightAvailable)
-        coordinateResult.coordinate.height =
-            RAY_ORIGIN_HEIGHT -
-            glm::sqrt(ray.intersectResult.hit->rayToWorldPointDistanceSq);
-
-      results.coordinateResults.push_back(coordinateResult);
-    }
-
-    requests.promise.resolve(std::move(results));
-    _heightRequests.erase(_heightRequests.begin());
-    return;
+  // If any candidates need loading, return them
+  for (Tile* pTile : candidateTiles) {
+    if (pTile->getState() != TileLoadState::Done)
+      tilesNeedingLoading.push_back(pTile);
   }
+
+  // Bail if we're waiting on tiles to load
+  if (!tilesNeedingLoading.empty())
+    return;
+
+  // Do the intersect tests
+  for (Tile* pTile : candidateTiles)
+    _intersectVisibleTile(pTile, *currentIntersect);
+
+  // Our ray is done loading and should have found a hit or not
+  // Go to next ray in this request batch
+  requests.numRaysDone++;
+
+  // If there are more rays to process, come back the next frame
+  if (requests.numRaysDone < requests.rayIntersects.size())
+    return;
+
+  // All rays are done, create results
+  Tileset::HeightResults results;
+  for (RayIntersect& ray : requests.rayIntersects) {
+    Tileset::HeightResults::CoordinateResult coordinateResult = {
+        ray.intersectResult.hit.has_value(),
+        std::move(ray.inputCoordinate),
+        std::move(ray.intersectResult.warnings)};
+
+    if (coordinateResult.heightAvailable)
+      coordinateResult.coordinate.height =
+          RAY_ORIGIN_HEIGHT -
+          glm::sqrt(ray.intersectResult.hit->rayToWorldPointDistanceSq);
+
+    results.coordinateResults.push_back(coordinateResult);
+  }
+
+  requests.promise.resolve(std::move(results));
+  _heightRequests.erase(_heightRequests.begin());
 }
 
 Future<Tileset::HeightResults> TilesetHeightFinder::_getHeightsAtCoordinates(
@@ -231,7 +236,7 @@ Future<Tileset::HeightResults> TilesetHeightFinder::_getHeightsAtCoordinates(
   std::vector<RayIntersect> rayIntersects;
   for (const CesiumGeospatial::Cartographic& coordinate : coordinates)
     rayIntersects.push_back(
-        RayIntersect{coordinate, createRay(coordinate), {}, {pRoot}});
+        RayIntersect{coordinate, createRay(coordinate), {}});
 
   _heightRequests.emplace_back(
       HeightRequests{std::move(rayIntersects), 0, promise});
