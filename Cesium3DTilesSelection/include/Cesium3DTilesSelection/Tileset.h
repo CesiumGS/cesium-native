@@ -2,6 +2,7 @@
 
 #include "Library.h"
 #include "RasterOverlayCollection.h"
+#include "TerrainQuery.h"
 #include "Tile.h"
 #include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
@@ -17,13 +18,14 @@
 
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
-class TilesetHeightFinder;
+class TerrainQuery;
 
 /**
  * @brief A <a
@@ -437,6 +439,11 @@ private:
       double tilePriority,
       bool queuedForLoad);
 
+  struct HeightRequest {
+    std::vector<TerrainQuery> queries;
+    CesiumAsync::Promise<Tileset::HeightResults> promise;
+  };
+
   void _processWorkerThreadLoadQueue();
   void _processMainThreadLoadQueue();
 
@@ -523,12 +530,18 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  std::unique_ptr<TilesetHeightFinder> _pTilesetHeightFinder;
+  std::vector<HeightRequest> _heightRequests;
 
   void addTileToLoadQueue(
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
+
+  void visitHeightRequests();
+
+  void tryCompleteHeightRequest(
+      HeightRequest& request,
+      std::set<Tile*>& tilesNeedingLoading);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,

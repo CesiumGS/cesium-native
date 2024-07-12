@@ -1,6 +1,5 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
-#include "TilesetHeightFinder.h"
 
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -32,6 +31,11 @@ using namespace CesiumGeospatial;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
+// 10,000 meters above ellisoid
+// Highest point on ellipsoid is Mount Everest at 8,848 m
+// Nothing intersectable should be above this
+#define RAY_ORIGIN_HEIGHT 10000.0
+
 namespace Cesium3DTilesSelection {
 
 Tileset::Tileset(
@@ -56,9 +60,7 @@ Tileset::Tileset(
               std::vector<CesiumAsync::IAssetAccessor::THeader>{},
               std::move(pCustomLoader),
               std::move(pRootTile)),
-      },
-      _pTilesetHeightFinder{
-          new TilesetHeightFinder(this, _pTilesetContentManager)} {}
+      } {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -79,9 +81,7 @@ Tileset::Tileset(
                   externals,
                   options.ellipsoid},
               url),
-      },
-      _pTilesetHeightFinder{
-          new TilesetHeightFinder(this, _pTilesetContentManager)} {}
+      } {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -101,9 +101,7 @@ Tileset::Tileset(
           RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           ionAssetID,
           ionAccessToken,
-          ionAssetEndpointUrl)},
-      _pTilesetHeightFinder{
-          new TilesetHeightFinder(this, _pTilesetContentManager)} {}
+          ionAssetEndpointUrl)} {}
 
 Tileset::~Tileset() noexcept {
   this->_pTilesetContentManager->unloadAll();
@@ -310,6 +308,104 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
+void Tileset::tryCompleteHeightRequest(
+    HeightRequest& request,
+    std::set<Tile*>& tilesNeedingLoading) {
+  Tile* pRoot = _pTilesetContentManager->getRootTile();
+
+  for (TerrainQuery& query : request.queries) {
+    query.candidateTiles.clear();
+
+    query.findCandidateTiles(pRoot);
+
+    // If any candidates need loading, add to return set
+    for (Tile* pTile : query.candidateTiles) {
+      if (pTile->getState() != TileLoadState::Done)
+        tilesNeedingLoading.insert(pTile);
+    }
+  }
+
+  // Bail if we're waiting on tiles to load
+  if (!tilesNeedingLoading.empty())
+    return;
+
+  // Do the intersect tests
+  for (TerrainQuery& query : request.queries) {
+    for (Tile* pTile : query.candidateTiles)
+      query.intersectVisibleTile(pTile);
+  }
+
+  // All rays are done, create results
+  Tileset::HeightResults results;
+  for (TerrainQuery& query : request.queries) {
+    Tileset::HeightResults::CoordinateResult coordinateResult = {
+        query.intersectResult.hit.has_value(),
+        std::move(query.inputCoordinate),
+        std::move(query.intersectResult.warnings)};
+
+    if (coordinateResult.heightAvailable)
+      coordinateResult.coordinate.height =
+          RAY_ORIGIN_HEIGHT -
+          glm::sqrt(query.intersectResult.hit->rayToWorldPointDistanceSq);
+
+    results.coordinateResults.push_back(coordinateResult);
+  }
+
+  request.promise.resolve(std::move(results));
+  _heightRequests.erase(_heightRequests.begin());
+}
+
+void Tileset::visitHeightRequests() {
+  if (_heightRequests.size() == 0)
+    return;
+
+  HeightRequest& request = _heightRequests.front();
+
+  std::set<Tile*> tilesNeedingLoading;
+  tryCompleteHeightRequest(request, tilesNeedingLoading);
+
+  // Add a load request for tiles that haven't started
+  TileLoadPriorityGroup priorityGroup = TileLoadPriorityGroup::Urgent;
+  double priority = 0.0;
+  for (Tile* pTile : tilesNeedingLoading) {
+    TileLoadState loadState = pTile->getState();
+
+    CESIUM_ASSERT(loadState != TileLoadState::Done);
+
+    // Push to appropriate queue based on state
+    if (loadState == TileLoadState::Unloaded) {
+
+      // Only add if not already in queue
+      auto foundIt = std::find_if(
+          this->_workerThreadLoadQueue.begin(),
+          this->_workerThreadLoadQueue.end(),
+          [pTile](const TileLoadTask& task) { return task.pTile == pTile; });
+
+      if (foundIt == this->_workerThreadLoadQueue.end())
+        this->_workerThreadLoadQueue.push_back(
+            {pTile, priorityGroup, priority});
+
+    } else if (loadState == TileLoadState::ContentLoaded) {
+
+      if (pTile->isRenderContent()) {
+        // If it's render content, let our main thread throttling take it
+
+        // Only add if not already in queue
+        auto foundIt = std::find_if(
+            this->_mainThreadLoadQueue.begin(),
+            this->_mainThreadLoadQueue.end(),
+            [pTile](const TileLoadTask& task) { return task.pTile == pTile; });
+        if (foundIt == this->_mainThreadLoadQueue.end())
+          this->_mainThreadLoadQueue.push_back(
+              {pTile, priorityGroup, priority});
+      } else {
+        // If not render content, let's transition to done ourselves
+        this->_pTilesetContentManager->updateTileContent(*pTile, _options);
+      }
+    }
+  }
+}
+
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -374,53 +470,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  if (_pTilesetHeightFinder->_heightRequests.size() != 0) {
-    std::set<Tile*> tilesNeedingLoading;
-    _pTilesetHeightFinder->_processHeightRequests(tilesNeedingLoading);
-
-    // Add a load request for tiles that haven't started
-    TileLoadPriorityGroup priorityGroup = TileLoadPriorityGroup::Urgent;
-    double priority = 0.0;
-    for (Tile* pTile : tilesNeedingLoading) {
-      TileLoadState loadState = pTile->getState();
-
-      CESIUM_ASSERT(loadState != TileLoadState::Done);
-
-      // Push to appropriate queue based on state
-      if (loadState == TileLoadState::Unloaded) {
-
-        // Only add if not already in queue
-        auto foundIt = std::find_if(
-            this->_workerThreadLoadQueue.begin(),
-            this->_workerThreadLoadQueue.end(),
-            [pTile](const TileLoadTask& task) { return task.pTile == pTile; });
-
-        if (foundIt == this->_workerThreadLoadQueue.end())
-          this->_workerThreadLoadQueue.push_back(
-              {pTile, priorityGroup, priority});
-
-      } else if (loadState == TileLoadState::ContentLoaded) {
-
-        if (pTile->isRenderContent()) {
-          // If it's render content, let our main thread throttling take it
-
-          // Only add if not already in queue
-          auto foundIt = std::find_if(
-              this->_mainThreadLoadQueue.begin(),
-              this->_mainThreadLoadQueue.end(),
-              [pTile](const TileLoadTask& task) {
-                return task.pTile == pTile;
-              });
-          if (foundIt == this->_mainThreadLoadQueue.end())
-            this->_mainThreadLoadQueue.push_back(
-                {pTile, priorityGroup, priority});
-        } else {
-          // If not render content, let's transition to done ourselves
-          this->_pTilesetContentManager->updateTileContent(*pTile, _options);
-        }
-      }
-    }
-  }
+  visitHeightRequests();
 
   result.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(this->_workerThreadLoadQueue.size());
@@ -591,7 +641,30 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
 
 CesiumAsync::Future<Tileset::HeightResults>
 Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
-  return _pTilesetHeightFinder->_getHeightsAtCoordinates(coordinates);
+  Tile* pRoot = _pTilesetContentManager->getRootTile();
+  if (pRoot == nullptr || coordinates.empty()) {
+    return this->_asyncSystem.createResolvedFuture<Tileset::HeightResults>({});
+  }
+
+  Promise promise = this->_asyncSystem.createPromise<Tileset::HeightResults>();
+
+  std::vector<TerrainQuery> queries;
+  for (const CesiumGeospatial::Cartographic& coordinate : coordinates) {
+    CesiumGeospatial::Cartographic startCoordinate(
+        coordinate.longitude,
+        coordinate.latitude,
+        RAY_ORIGIN_HEIGHT);
+
+    Ray ray(
+        Ellipsoid::WGS84.cartographicToCartesian(startCoordinate),
+        -Ellipsoid::WGS84.geodeticSurfaceNormal(startCoordinate));
+
+    queries.push_back(TerrainQuery{coordinate, std::move(ray)});
+  }
+
+  _heightRequests.emplace_back(HeightRequest{std::move(queries), promise});
+
+  return promise.getFuture();
 }
 
 static void markTileNonRendered(
