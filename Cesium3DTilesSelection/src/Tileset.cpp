@@ -1,3 +1,4 @@
+#include "TerrainQuery.h"
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
 

@@ -2,7 +2,6 @@
 
 #include "Library.h"
 #include "RasterOverlayCollection.h"
-#include "TerrainQuery.h"
 #include "Tile.h"
 #include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
