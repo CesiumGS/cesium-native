@@ -230,8 +230,7 @@ Future<Tileset::HeightResults> TilesetHeightFinder::_getHeightsAtCoordinates(
 
   std::vector<RayIntersect> rayIntersects;
   for (const CesiumGeospatial::Cartographic& coordinate : coordinates)
-    rayIntersects.push_back(
-        RayIntersect{coordinate, createRay(coordinate), {}});
+    rayIntersects.push_back(RayIntersect{coordinate, createRay(coordinate)});
 
   _heightRequests.emplace_back(
       HeightRequests{std::move(rayIntersects), promise});
