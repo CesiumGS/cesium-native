@@ -1,3 +1,4 @@
+#include "CesiumGltf/AccessorSpec.h"
 #include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyType.h"
@@ -231,6 +232,34 @@ TEST_CASE("Test convertStringOffsetTypeStringToPropertyComponentType") {
 
   REQUIRE(
       convertStringOffsetTypeStringToPropertyComponentType("invalid") ==
+      PropertyComponentType::None);
+}
+
+TEST_CASE("Test convertAccessorComponentTypeToPropertyComponentType") {
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::BYTE) == PropertyComponentType::Int8);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::UNSIGNED_BYTE) ==
+      PropertyComponentType::Uint8);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::SHORT) == PropertyComponentType::Int16);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::UNSIGNED_SHORT) ==
+      PropertyComponentType::Uint16);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::UNSIGNED_INT) ==
+      PropertyComponentType::Uint32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::FLOAT) ==
+      PropertyComponentType::Float32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(-1) ==
       PropertyComponentType::None);
 }
 
