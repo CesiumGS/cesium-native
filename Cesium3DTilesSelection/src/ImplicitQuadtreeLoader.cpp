@@ -7,6 +7,7 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Uri.h>
 
 #include <spdlog/logger.h>
