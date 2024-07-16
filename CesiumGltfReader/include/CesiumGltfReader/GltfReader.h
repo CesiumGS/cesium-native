@@ -95,6 +95,8 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    */
   bool decodeEmbeddedImages = true;
 
+  bool resolveExternalImages = true;
+
   /**
    * @brief Whether geometry compressed using the `KHR_draco_mesh_compression`
    * extension should be automatically decoded as part of the load process.
