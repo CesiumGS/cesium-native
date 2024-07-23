@@ -5,11 +5,13 @@
 ##### Breaking Changes :mega:
 
 - `ForEachPrimitiveInSceneCallback` now passes `meshId` and `primitiveId` to the caller. Existing callbacks will need to add these new parameters
+- `AccessorWriter` constructor now takes `std::byte*` instead of `uint8_t*`.
 
 ##### Additions :tada:
 
 - Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
 - Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
+- Added `convertAccessorComponentTypeToPropertyComponentType`, which converts integer glTF accessor component types to their best-fitting `PropertyComponentType`.
 
 ### v0.37.0 - 2024-07-01
 

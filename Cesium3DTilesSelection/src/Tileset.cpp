@@ -11,6 +11,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/ScopeGuard.h>

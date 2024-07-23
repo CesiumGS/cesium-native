@@ -1,6 +1,7 @@
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
 
 #include <spdlog/fwd.h>
 

@@ -5,6 +5,8 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 
+#include <CesiumUtility/Assert.h>
+
 #include <gsl/span>
 
 #include <cstddef>
