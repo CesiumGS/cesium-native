@@ -274,7 +274,7 @@ public:
               pPendingAssets->erase(idHash);
 
               if (result.has_value()) {
-                auto& [it, ok] = pAssets->emplace(
+                auto [it, ok] = pAssets->emplace(
                     idHash,
                     AssetContainer<AssetType>(idHash, result.value(), pThiz));
                 if (!ok) {
