@@ -24,6 +24,8 @@ struct TileContentLoadInfo {
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::optional<std::shared_ptr<CesiumGltf::SharedAssetDepot>>
+          maybeAssetDepot,
       const TilesetContentOptions& contentOptions,
       const Tile& tile);
 
@@ -40,6 +42,7 @@ struct TileContentLoadInfo {
   BoundingVolume tileBoundingVolume;
 
   std::optional<BoundingVolume> tileContentBoundingVolume;
+  std::optional<std::shared_ptr<CesiumGltf::SharedAssetDepot>> maybeAssetDepot;
 
   TileRefine tileRefine;
 

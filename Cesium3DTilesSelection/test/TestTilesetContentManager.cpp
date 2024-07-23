@@ -1,5 +1,7 @@
 #include "SimplePrepareRendererResource.h"
+#include "TestTilesetJsonLoader.h"
 #include "TilesetContentManager.h"
+#include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -1234,5 +1236,66 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     pManager->unloadTileContent(tile);
+  }
+
+  SECTION("Resolve external images, with deduplication") {
+    std::filesystem::path dirPath(testDataPath / "SharedImages");
+
+    // mock the requests for all files
+    for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+      pMockedAssetAccessor->mockCompletedRequests.insert(
+          {entry.path().filename().string(), createMockRequest(entry.path())});
+    }
+
+    std::filesystem::path tilesetPath(dirPath / "tileset.json");
+    auto pExternals = createMockJsonTilesetExternals(
+        tilesetPath.string(),
+        pMockedAssetAccessor);
+
+    auto pJsonLoaderFuture =
+        TilesetJsonLoader::createLoader(pExternals, tilesetPath.string(), {});
+
+    externals.asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = pJsonLoaderFuture.wait();
+
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto& rootTile = *loaderResult.pRootTile;
+    auto& containerTile = rootTile.getChildren()[0];
+
+    REQUIRE(containerTile.getChildren().size() == 100);
+
+    // create manager
+    Tile::LoadedLinkedList loadedTiles;
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(loaderResult.pLoader),
+            std::move(loaderResult.pRootTile)};
+
+    for (auto& child : containerTile.getChildren()) {
+      pManager->loadTileContent(child, {});
+      externals.asyncSystem.dispatchMainThreadTasks();
+      pManager->waitUntilIdle();
+
+      CHECK(child.getState() == TileLoadState::ContentLoaded);
+      CHECK(child.isRenderContent());
+
+      const auto& renderContent = child.getContent().getRenderContent();
+      const auto& images = renderContent->getModel().images;
+      CHECK(images.size() == 1);
+    }
+
+    CHECK(pManager->getSharedAssetDepot()->getImagesCount() == 2);
+
+    // unload the tile content
+    for (auto& child : containerTile.getChildren()) {
+      pManager->unloadTileContent(child);
+    }
   }
 }

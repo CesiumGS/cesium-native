@@ -110,8 +110,8 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * appear in this glTF. If not present, assets will not be shared between
    * glTFs, even if they're loaded from the same URL.
    */
-  std::variant<std::monostate, CesiumGltf::SharedAssetDepot*> sharedAssets =
-      std::monostate();
+  std::variant<std::monostate, std::shared_ptr<CesiumGltf::SharedAssetDepot>>
+      sharedAssets = std::monostate();
 };
 
 /**

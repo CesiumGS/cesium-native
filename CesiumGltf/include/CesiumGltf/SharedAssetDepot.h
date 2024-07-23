@@ -132,10 +132,11 @@ public:
   /**
    * Move assignment operator for SharedAsset.
    */
-  void operator=(SharedAsset<AssetType>&& other) {
+  void operator=(SharedAsset<AssetType>&& other) noexcept {
     if (*this != other) {
       this->maybeChangeCounter(-1);
-      this->contents = other.contents;
+      this->contents = std::move(other.contents);
+      other.contents = nullptr;
     }
   }
 
@@ -153,7 +154,8 @@ public:
    * Move constructor.
    */
   SharedAsset(SharedAsset<AssetType>&& other) noexcept {
-    contents = other.contents;
+    contents = std::move(other.contents);
+    other.contents = nullptr;
   }
 
 private:
@@ -195,7 +197,7 @@ private:
  */
 template <typename AssetType> class SingleAssetDepot {
 public:
-  SingleAssetDepot();
+  SingleAssetDepot() {}
 
   /**
    * Stores the AssetType in this depot and returns a reference to it,
@@ -216,7 +218,7 @@ public:
   }
 
   /**
-   * Fetches an asset that implements {@link FetchableAsset} and constructs it if possible.
+   * Fetches an asset that has a {@link AssetFactory} defined and constructs it if possible.
    * If the asset is already in this depot, it will be returned instead.
    * If the asset has already started loading in this depot but hasn't finished,
    * its future will be returned.
@@ -280,7 +282,7 @@ public:
                 }
 
                 return std::optional<SharedAsset<AssetType>>(
-                    SharedAsset<AssetType>(&it->second));
+                    std::move(SharedAsset<AssetType>(&it->second)));
               }
 
               return std::optional<SharedAsset<AssetType>>();
@@ -296,6 +298,8 @@ public:
 
     return it->second;
   }
+
+  size_t getDistinctCount() const { return this->assets.size(); }
 
 private:
   /**
@@ -320,7 +324,7 @@ private:
  */
 class SharedAssetDepot {
 public:
-  SharedAsset<CesiumGltf::ImageCesium> store(CesiumGltf::ImageCesium& image);
+  SharedAssetDepot() {}
 
   /**
    * Obtains an existing {@link ImageCesium} or constructs a new one using the provided factory.
@@ -342,6 +346,8 @@ public:
         headers);
   }
 
+  size_t getImagesCount() const { return this->images.getDistinctCount(); }
+
 private:
   SingleAssetDepot<CesiumGltf::ImageCesium> images;
 };
@@ -349,6 +355,7 @@ private:
 } // namespace SharedAssetDepotInternals
 
 // actually export the public types to the right namespace
+// fairly sure this is anti-pattern actually but i'll fix it later
 using SharedAssetDepotInternals::AssetFactory;
 using SharedAssetDepotInternals::SharedAsset;
 using SharedAssetDepotInternals::SharedAssetDepot;
