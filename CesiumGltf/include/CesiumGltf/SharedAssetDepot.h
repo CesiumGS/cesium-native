@@ -176,7 +176,7 @@ private:
         }
       }
 
-      void operator()(AssetType& asset) {}
+      void operator()([[maybe_unused]] AssetType& asset) {}
     };
 
     std::visit(Operation{amt}, this->contents);
