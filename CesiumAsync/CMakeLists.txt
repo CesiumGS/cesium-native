@@ -48,3 +48,8 @@ target_link_libraries(CesiumAsync
     PRIVATE
         unofficial::sqlite3::sqlite3
 )
+
+
+if (PRIVATE_CESIUM_SQLITE)
+  target_compile_definitions(CesiumAsync PUBLIC PRIVATE_CESIUM_SQLITE)
+endif()
