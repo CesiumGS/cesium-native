@@ -15,6 +15,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>

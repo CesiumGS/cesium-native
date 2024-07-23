@@ -1,5 +1,15 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `AccessorWriter` constructor now takes `std::byte*` instead of `uint8_t*`.
+
+##### Additions :tada:
+
+- Added `convertAccessorComponentTypeToPropertyComponentType`, which converts integer glTF accessor component types to their best-fitting `PropertyComponentType`.
+
 ### v0.37.0 - 2024-07-01
 
 ##### Additions :tada:
