@@ -139,12 +139,11 @@ public:
    * use CCW winding order.
    * @return True if a hit occurred, false otherwise.
    */
-  static bool rayTriangleParametric(
+  static std::optional<double> rayTriangleParametric(
       const Ray& ray,
       const glm::dvec3& p0,
       const glm::dvec3& p1,
       const glm::dvec3& p2,
-      double& t,
       bool cullBackFaces = false);
 
   /**

@@ -389,19 +389,9 @@ void forEachPrimitiveInMeshObject(
     const Model& model,
     const Node& node,
     const Mesh& mesh,
-    const int32_t meshId,
     TCallback& callback) {
-  for (size_t primitiveId = 0; primitiveId < mesh.primitives.size();
-       ++primitiveId) {
-    const MeshPrimitive& primitive = mesh.primitives[primitiveId];
-    callback(
-        model,
-        node,
-        mesh,
-        meshId,
-        primitive,
-        static_cast<int32_t>(primitiveId),
-        transform);
+  for (const MeshPrimitive& primitive : mesh.primitives) {
+    callback(model, node, mesh, primitive, transform);
   }
 }
 
@@ -486,13 +476,7 @@ void forEachPrimitiveInNodeObject(
   const int32_t meshId = node.mesh;
   if (meshId >= 0 && size_t(meshId) < model.meshes.size()) {
     const Mesh& mesh = model.meshes[size_t(meshId)];
-    forEachPrimitiveInMeshObject(
-        nodeTransform,
-        model,
-        node,
-        mesh,
-        meshId,
-        callback);
+    forEachPrimitiveInMeshObject(nodeTransform, model, node, mesh, callback);
   }
 
   for (const int32_t childNodeId : node.children) {
@@ -611,17 +595,13 @@ void Model::forEachPrimitiveInScene(
           const Model& gltf,
           const Node& node,
           const Mesh& mesh,
-          const int32_t meshId,
           const MeshPrimitive& primitive,
-          const int32_t primitiveId,
           const glm::dmat4& transform) {
         callback(
             const_cast<Model&>(gltf),
             const_cast<Node&>(node),
             const_cast<Mesh&>(mesh),
-            meshId,
             const_cast<MeshPrimitive&>(primitive),
-            primitiveId,
             transform);
       });
 }
@@ -640,14 +620,12 @@ void Model::forEachPrimitiveInScene(
 
   if (!anythingVisited) {
     // No root nodes at all in this model, so enumerate all the meshes.
-    for (size_t meshId = 0; meshId < this->meshes.size(); ++meshId) {
-      const Mesh& mesh = this->meshes[meshId];
+    for (const Mesh& mesh : this->meshes) {
       forEachPrimitiveInMeshObject(
           glm::dmat4x4(1.0),
           *this,
           Node(),
           mesh,
-          static_cast<int32_t>(meshId),
           callback);
     }
   }
@@ -886,9 +864,7 @@ void Model::generateMissingNormalsSmooth() {
       [](Model& gltf,
          Node& /*node*/,
          Mesh& /*mesh*/,
-         const int32_t /*meshId*/,
          MeshPrimitive& primitive,
-         const int32_t /*primitiveId*/,
          const glm::dmat4& /*transform*/) {
         // if normals already exist, there is nothing to do
         auto normalIt = primitive.attributes.find("NORMAL");

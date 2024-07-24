@@ -116,18 +116,19 @@ std::optional<glm::dvec3> IntersectionTests::rayTriangle(
     const glm::dvec3& v1,
     const glm::dvec3& v2,
     bool cullBackFaces) {
-  double t;
-  return rayTriangleParametric(ray, v0, v1, v2, t, cullBackFaces) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
-             : std::nullopt;
+  std::optional<double> t =
+      rayTriangleParametric(ray, v0, v1, v2, cullBackFaces);
+  if (t && t.value() >= 0)
+    return std::make_optional<glm::dvec3>(ray.pointFromDistance(t.value()));
+  else
+    return std::nullopt;
 }
 
-bool IntersectionTests::rayTriangleParametric(
+std::optional<double> IntersectionTests::rayTriangleParametric(
     const Ray& ray,
     const glm::dvec3& p0,
     const glm::dvec3& p1,
     const glm::dvec3& p2,
-    double& t,
     bool cullBackFaces) {
 
   const glm::dvec3& origin = ray.getOrigin();
@@ -140,40 +141,38 @@ bool IntersectionTests::rayTriangleParametric(
   double det = glm::dot(edge0, p);
   if (cullBackFaces) {
     if (det < Math::Epsilon6)
-      return false;
+      return std::nullopt;
 
     glm::dvec3 tvec = origin - p0;
     double u = glm::dot(tvec, p);
     if (u < 0.0 || u > det)
-      return false;
+      return std::nullopt;
 
     glm::dvec3 q = glm::cross(tvec, edge0);
     double v = glm::dot(direction, q);
     if (v < 0.0 || u + v > det)
-      return false;
+      return std::nullopt;
 
-    t = glm::dot(edge1, q) / det;
-    return true;
+    return glm::dot(edge1, q) / det;
 
   } else {
 
     if (glm::abs(det) < Math::Epsilon6)
-      return false;
+      return std::nullopt;
 
     double invDet = 1.0 / det;
 
     glm::dvec3 tvec = origin - p0;
     double u = glm::dot(tvec, p) * invDet;
     if (u < 0.0 || u > 1.0)
-      return false;
+      return std::nullopt;
 
     glm::dvec3 q = glm::cross(tvec, edge0);
     double v = glm::dot(direction, q) * invDet;
     if (v < 0.0 || u + v > 1.0)
-      return false;
+      return std::nullopt;
 
-    t = glm::dot(edge1, q) * invDet;
-    return true;
+    return glm::dot(edge1, q) * invDet;
   }
 }
 

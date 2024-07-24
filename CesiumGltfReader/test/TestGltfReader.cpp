@@ -138,9 +138,7 @@ VertexAttributeRange getVertexAttributeRange(const Model& model) {
           const Model& model,
           const Node&,
           const Mesh&,
-          const int32_t /*meshId*/,
           const MeshPrimitive& primitive,
-          const int32_t /*primitiveId*/,
           const glm::dmat4& transform) {
         for (std::pair<const std::string, int32_t> attribute :
              primitive.attributes) {
