@@ -428,8 +428,7 @@ void findClosestRayHit(
   }
 
   double tClosest = -1.0;
-  bool intersected;
-  double tCurr;
+  std::optional<double> tCurr;
 
   if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
     // Iterate through all complete triangles
@@ -455,19 +454,18 @@ void findClosestRayHit(
           static_cast<double>(viewVert2.value[1]),
           static_cast<double>(viewVert2.value[2]));
 
-      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+      tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           vert0,
           vert1,
           vert2,
-          tCurr,
           cullBackFaces);
 
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
-      bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1.0))
-        tClosest = tCurr;
+      bool validHit = tCurr && tCurr.value() >= 0;
+      if (validHit && (tClosest == -1.0 || tCurr.value() < tClosest))
+        tClosest = tCurr.value();
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int64_t i = 2; i < positionView.size(); ++i) {
@@ -499,17 +497,16 @@ void findClosestRayHit(
           static_cast<double>(viewVert2.value[1]),
           static_cast<double>(viewVert2.value[2]));
 
-      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+      tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           vert0,
           vert1,
           vert2,
-          tCurr,
           cullBackFaces);
 
-      bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1.0))
-        tClosest = tCurr;
+      bool validHit = tCurr && tCurr.value() >= 0;
+      if (validHit && (tClosest == -1.0 || tCurr.value() < tClosest))
+        tClosest = tCurr.value();
     }
   } else {
     assert(primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN);
@@ -536,17 +533,16 @@ void findClosestRayHit(
           static_cast<double>(viewVert2.value[1]),
           static_cast<double>(viewVert2.value[2]));
 
-      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+      tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           vert0,
           vert1,
           vert2,
-          tCurr,
           cullBackFaces);
 
-      bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1.0))
-        tClosest = tCurr;
+      bool validHit = tCurr && tCurr.value() >= 0;
+      if (validHit && (tClosest == -1.0 || tCurr.value() < tClosest))
+        tClosest = tCurr.value();
     }
   }
   tMinOut = tClosest;
@@ -571,8 +567,7 @@ void findClosestIndexedRayHit(
   // Converts from various Accessor::ComponentType::XXX values
 
   double tClosest = -1.0;
-  bool intersected;
-  double tCurr;
+  std::optional<double> tCurr;
   int64_t positionsCount = positionView.size();
   bool foundInvalidIndex = false;
 
@@ -609,19 +604,18 @@ void findClosestIndexedRayHit(
           static_cast<double>(viewVert2.value[1]),
           static_cast<double>(viewVert2.value[2]));
 
-      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+      tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           vert0,
           vert1,
           vert2,
-          tCurr,
           cullBackFaces);
 
       // Set result to this hit if closer, or the first one
       // Only consider hits in front of the ray
-      bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1.0))
-        tClosest = tCurr;
+      bool validHit = tCurr && tCurr.value() >= 0;
+      if (validHit && (tClosest == -1.0 || tCurr.value() < tClosest))
+        tClosest = tCurr.value();
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int64_t i = 2; i < indicesView.size(); ++i) {
@@ -661,17 +655,16 @@ void findClosestIndexedRayHit(
           static_cast<double>(viewVert2.value[1]),
           static_cast<double>(viewVert2.value[2]));
 
-      intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+      tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
           ray,
           vert0,
           vert1,
           vert2,
-          tCurr,
           cullBackFaces);
 
-      bool validHit = intersected && tCurr >= 0;
-      if (validHit && (tCurr < tClosest || tClosest == -1.0))
-        tClosest = tCurr;
+      bool validHit = tCurr && tCurr.value() >= 0;
+      if (validHit && (tClosest == -1.0 || tCurr.value() < tClosest))
+        tClosest = tCurr.value();
     }
   } else {
     assert(primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN);
@@ -710,17 +703,16 @@ void findClosestIndexedRayHit(
             static_cast<double>(viewVert2.value[1]),
             static_cast<double>(viewVert2.value[2]));
 
-        intersected = CesiumGeometry::IntersectionTests::rayTriangleParametric(
+        tCurr = CesiumGeometry::IntersectionTests::rayTriangleParametric(
             ray,
             vert0,
             vert1,
             vert2,
-            tCurr,
             cullBackFaces);
 
-        bool validHit = intersected && tCurr >= 0;
+        bool validHit = tCurr && tCurr.value() >= 0;
         if (validHit && (tCurr < tClosest || tClosest == -1.0))
-          tClosest = tCurr;
+          tClosest = tCurr.value();
       }
     }
   }
@@ -1468,7 +1460,8 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         // Use in result if it's first
         int32_t meshId = static_cast<int32_t>(&mesh - &model.meshes[0]);
-        int32_t primitiveId = static_cast<int32_t>(&primitive - &mesh.primitives[0]);
+        int32_t primitiveId =
+            static_cast<int32_t>(&primitive - &mesh.primitives[0]);
 
         if (!result.hit.has_value()) {
           result.hit = RayGltfHit{
