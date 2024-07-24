@@ -390,9 +390,7 @@ void forEachPrimitiveInMeshObject(
     const Node& node,
     const Mesh& mesh,
     TCallback& callback) {
-  for (size_t primitiveId = 0; primitiveId < mesh.primitives.size();
-       ++primitiveId) {
-    const MeshPrimitive& primitive = mesh.primitives[primitiveId];
+  for (const MeshPrimitive& primitive : mesh.primitives) {
     callback(model,node,mesh,primitive,transform);
   }
 }
