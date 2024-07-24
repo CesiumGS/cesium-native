@@ -391,7 +391,7 @@ void forEachPrimitiveInMeshObject(
     const Mesh& mesh,
     TCallback& callback) {
   for (const MeshPrimitive& primitive : mesh.primitives) {
-    callback(model,node,mesh,primitive,transform);
+    callback(model, node, mesh, primitive, transform);
   }
 }
 
