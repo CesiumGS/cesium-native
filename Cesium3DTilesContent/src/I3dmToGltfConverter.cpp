@@ -714,9 +714,7 @@ void instantiateGltfInstances(
       [&](Model& gltf,
           Node& node,
           Mesh&,
-          const int32_t /*meshId*/,
           MeshPrimitive&,
-          const int32_t /*primitiveId*/,
           const glm::dmat4& transform) {
         auto [nodeItr, inserted] = meshNodes.insert(&node);
         if (!inserted) {

@@ -82,9 +82,7 @@ RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
       [&](CesiumGltf::Model& gltf,
           CesiumGltf::Node& /*node*/,
           CesiumGltf::Mesh& /*mesh*/,
-          const int32_t /*meshId*/,
           CesiumGltf::MeshPrimitive& primitive,
-          const int32_t /*primitiveId*/,
           const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {

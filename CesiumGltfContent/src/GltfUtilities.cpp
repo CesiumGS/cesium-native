@@ -195,9 +195,7 @@ GltfUtilities::computeBoundingRegion(
           const CesiumGltf::Model& gltf_,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
-          const int32_t /*meshId*/,
           const CesiumGltf::MeshPrimitive& primitive,
-          const int32_t /*primitiveId*/,
           const glm::dmat4& nodeTransform) {
         auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) {
@@ -1396,10 +1394,8 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
       [ray, cullBackFaces, rootTransform, &result](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
-          const CesiumGltf::Mesh& /*mesh*/,
-          const int32_t meshId,
+          const CesiumGltf::Mesh& mesh,
           const CesiumGltf::MeshPrimitive& primitive,
-          const int32_t primitiveId,
           const glm::dmat4& nodeTransform) {
         // Ignore non-triangles. Points and lines have no area to intersect
         bool isTriangleMode =
@@ -1471,6 +1467,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
             glm::dot(rayToWorldPoint, rayToWorldPoint);
 
         // Use in result if it's first
+        int32_t meshId = static_cast<int32_t>(&mesh - &model.meshes[0]);
+        int32_t primitiveId = static_cast<int32_t>(&primitive - &mesh.primitives[0]);
+
         if (!result.hit.has_value()) {
           result.hit = RayGltfHit{
               std::move(*primitiveHitPoint),
