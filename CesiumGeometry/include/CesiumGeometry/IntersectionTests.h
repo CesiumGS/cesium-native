@@ -126,8 +126,8 @@ public:
    * @brief Tests if an infinite ray hits a triangle and returns the parametric
    * hit position.
    *
-   * The parameter t is positive if the intersection point is in front of the
-   * ray origin, negative if it is behind it, or zero if the two points
+   * The return parameter is positive if the intersection point is in front of
+   * the ray origin, negative if it is behind it, or zero if the two points
    * coincide.
    *
    * @param ray The ray.
@@ -160,7 +160,7 @@ public:
    * @brief Computes the intersection of an infinite ray and an axis aligned
    * bounding box and returns the parametric hit position.
    *
-   * The parameter t is positive if the intersection point is in front of the
+   * The return value is positive if the intersection point is in front of the
    * ray origin, negative if it is behind it, or zero if the two points
    * coincide.
    *
@@ -186,8 +186,8 @@ public:
    * @brief Computes the intersection of an infinite ray and an oriented
    * bounding box and returns the parametric hit position.
    *
-   * The parameter t is positive if the intersection point is in front of the
-   * ray origin, negative if it is behind it, or zero if the two points
+   * The return parameter is positive if the intersection point is in front of
+   * the ray origin, negative if it is behind it, or zero if the two points
    * coincide.
    *
    * @param ray The ray.
@@ -212,17 +212,16 @@ public:
    * @brief Computes the intersection of an infinite ray and a bounding sphere
    * and returns the parametric hit position.
    *
-   * The parameter t is positive if the intersection point is in front of the
-   * ray origin, negative if it is behind it, or zero if the two points
+   * The return parameter is positive if the intersection point is in front of
+   * the ray origin, negative if it is behind it, or zero if the two points
    * coincide.
    *
    * @param ray The ray.
    * @param sphere The bounding sphere.
-   * @param t Returned parametric value, if a hit is detected.
-   * @return True if a hit occurred, false otherwise.
+   * @return optional hit parametric value, if one is detected.
    */
-  static bool
-  raySphereParametric(const Ray& ray, const BoundingSphere& sphere, double& t);
+  static std::optional<double>
+  raySphereParametric(const Ray& ray, const BoundingSphere& sphere);
 };
 
 } // namespace CesiumGeometry

@@ -250,10 +250,11 @@ std::optional<double> IntersectionTests::rayOBBParametric(
 
 std::optional<glm::dvec3>
 IntersectionTests::raySphere(const Ray& ray, const BoundingSphere& sphere) {
-  double t;
-  return raySphereParametric(ray, sphere, t) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
-             : std::nullopt;
+  std::optional<double> t = raySphereParametric(ray, sphere);
+  if (t && t.value() >= 0)
+    return std::make_optional<glm::dvec3>(ray.pointFromDistance(t.value()));
+  else
+    return std::nullopt;
 }
 
 namespace {
@@ -288,10 +289,9 @@ bool solveQuadratic(
 }
 } // namespace
 
-bool IntersectionTests::raySphereParametric(
+std::optional<double> IntersectionTests::raySphereParametric(
     const Ray& ray,
-    const BoundingSphere& sphere,
-    double& t) {
+    const BoundingSphere& sphere) {
   const glm::dvec3& origin = ray.getOrigin();
   const glm::dvec3& direction = ray.getDirection();
 
@@ -305,10 +305,9 @@ bool IntersectionTests::raySphereParametric(
 
   double t0, t1;
   if (solveQuadratic(1.0, b, c, t0, t1)) {
-    t = t0 < 0 ? t1 : t0;
-    return true;
+    return t0 < 0 ? t1 : t0;
   }
-  return false;
+  return std::nullopt;
 }
 
 bool IntersectionTests::pointInTriangle(
