@@ -15,6 +15,7 @@
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
@@ -24,7 +25,6 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
-#include <CesiumGltf/ExtensionNodeExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureIdTexture.h>
@@ -80,7 +80,7 @@ void registerWriterExtensions(
       ExtensionExtMeshGpuInstancingJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
-      ExtensionNodeExtStructuralMetadataJsonWriter>();
+      ExtensionExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonWriter>();
@@ -90,6 +90,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Material,
+      ExtensionExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonWriter>();

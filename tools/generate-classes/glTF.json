@@ -61,7 +61,7 @@
       "overrideName": "ExtensionBufferViewExtMeshoptCompression"
     },
     "EXT_structural_metadata glTF extension": {
-      "overrideName": "ExtensionNodeExtStructuralMetadata"
+      "overrideName": "ExtensionExtStructuralMetadata"
     },
     "EXT_structural_metadata glTF Document extension": {
       "overrideName": "ExtensionModelExtStructuralMetadata"
@@ -175,7 +175,8 @@
       "extensionName": "EXT_structural_metadata",
       "schema": "Vendor/EXT_structural_metadata/schema/EXT_structural_metadata.schema.json",
       "attachTo": [
-        "node"
+        "node",
+        "material"
       ]
     },
     {

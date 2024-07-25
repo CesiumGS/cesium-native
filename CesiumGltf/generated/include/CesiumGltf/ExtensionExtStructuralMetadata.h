@@ -15,10 +15,10 @@ namespace CesiumGltf {
 /**
  * @brief Structural metadata about a glTF element.
  */
-struct CESIUMGLTF_API ExtensionNodeExtStructuralMetadata final
+struct CESIUMGLTF_API ExtensionExtStructuralMetadata final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName =
-      "ExtensionNodeExtStructuralMetadata";
+      "ExtensionExtStructuralMetadata";
   static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
 
   /**
