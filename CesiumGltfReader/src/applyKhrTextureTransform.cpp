@@ -118,5 +118,8 @@ void applyKhrTextureTransform(Model& model) {
       }
     }
   }
+
+  // TODO: there's more textures than the ones above
+  model.removeExtensionRequired(ExtensionKhrTextureTransform::ExtensionName);
 }
 } // namespace CesiumGltfReader
