@@ -178,16 +178,17 @@ std::optional<double> IntersectionTests::rayTriangleParametric(
 
 std::optional<glm::dvec3>
 IntersectionTests::rayAABB(const Ray& ray, const AxisAlignedBox& aabb) {
-  double t;
-  return rayAABBParametric(ray, aabb, t) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
-             : std::nullopt;
+  std::optional<double> t = rayAABBParametric(ray, aabb);
+
+  if (t && t.value() >= 0)
+    return std::make_optional<glm::dvec3>(ray.pointFromDistance(t.value()));
+  else
+    return std::nullopt;
 }
 
-bool IntersectionTests::rayAABBParametric(
+std::optional<double> IntersectionTests::rayAABBParametric(
     const Ray& ray,
-    const AxisAlignedBox& aabb,
-    double& t) {
+    const AxisAlignedBox& aabb) {
   const glm::dvec3& dir = ray.getDirection();
   const glm::dvec3& origin = ray.getOrigin();
   const glm::dvec3* min = reinterpret_cast<const glm::dvec3*>(&aabb.minimumX);
@@ -211,24 +212,23 @@ bool IntersectionTests::rayAABBParametric(
     smallestMax = glm::min(tmax, smallestMax);
   }
   if (smallestMax < 0.0 || greatestMin > smallestMax) {
-    return false;
+    return std::nullopt;
   }
-  t = greatestMin < 0.0 ? smallestMax : greatestMin;
-  return true;
+  return greatestMin < 0.0 ? smallestMax : greatestMin;
 }
 
 std::optional<glm::dvec3>
 IntersectionTests::rayOBB(const Ray& ray, const OrientedBoundingBox& obb) {
-  double t;
-  return rayOBBParametric(ray, obb, t) && t >= 0
-             ? std::make_optional<glm::dvec3>(ray.pointFromDistance(t))
-             : std::nullopt;
+  std::optional<double> t = rayOBBParametric(ray, obb);
+  if (t && t.value() >= 0)
+    return std::make_optional<glm::dvec3>(ray.pointFromDistance(t.value()));
+  else
+    return std::nullopt;
 }
 
-bool IntersectionTests::rayOBBParametric(
+std::optional<double> IntersectionTests::rayOBBParametric(
     const Ray& ray,
-    const OrientedBoundingBox& obb,
-    double& t) {
+    const OrientedBoundingBox& obb) {
 
   const glm::dmat3x3& inverseHalfAxis = obb.getInverseHalfAxes();
   glm::dmat4x4 transformation(
@@ -245,8 +245,7 @@ bool IntersectionTests::rayOBBParametric(
 
   return rayAABBParametric(
       ray.transform(transformation),
-      AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z),
-      t);
+      AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z));
 }
 
 std::optional<glm::dvec3>

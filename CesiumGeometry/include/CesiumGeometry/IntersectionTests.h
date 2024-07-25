@@ -134,10 +134,9 @@ public:
    * @param p0 The first vertex of the triangle.
    * @param p1 The second vertex of the triangle.
    * @param p2 The third vertex of the triangle.
-   * @param t Returned parametric value, if a hit is detected.
    * @param cullBackFaces Ignore triangles that face away from ray. Front faces
    * use CCW winding order.
-   * @return True if a hit occurred, false otherwise.
+   * @return optional hit parametric value, if one is detected.
    */
   static std::optional<double> rayTriangleParametric(
       const Ray& ray,
@@ -167,11 +166,10 @@ public:
    *
    * @param ray The ray.
    * @param aabb The axis aligned bounding box.
-   * @param t Returned parametric value, if a hit is detected.
-   * @return True if a hit occurred, false otherwise.
+   * @return optional hit parametric value, if one is detected.
    */
-  static bool
-  rayAABBParametric(const Ray& ray, const AxisAlignedBox& aabb, double& t);
+  static std::optional<double>
+  rayAABBParametric(const Ray& ray, const AxisAlignedBox& aabb);
 
   /**
    * @brief Computes the intersection of a ray and an oriented bounding box.
@@ -194,11 +192,10 @@ public:
    *
    * @param ray The ray.
    * @param obb The oriented bounding box.
-   * @param t Returned parametric value, if a hit is detected.
-   * @return True if a hit occurred, false otherwise.
+   * @return optional hit parametric value, if one is detected.
    */
-  static bool
-  rayOBBParametric(const Ray& ray, const OrientedBoundingBox& obb, double& t);
+  static std::optional<double>
+  rayOBBParametric(const Ray& ray, const OrientedBoundingBox& obb);
 
   /**
    * @brief Computes the intersection of a ray and a bounding sphere.
