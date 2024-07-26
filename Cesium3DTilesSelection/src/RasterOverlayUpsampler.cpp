@@ -84,9 +84,20 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
           return TileLoadResult::createFailedResult(nullptr);
         }
 
+        // Adopt the glTF up axis from the glTF itself.
+        // It came from the parent, which by this point has already been
+        // populated from the Tile, if necessary.
+        CesiumGeometry::Axis upAxis = CesiumGeometry::Axis::Y;
+
+        auto upIt = model->extras.find("gltfUpAxis");
+        if (upIt != model->extras.end()) {
+          upAxis = CesiumGeometry::Axis(
+              upIt->second.getInt64OrDefault(int64_t(CesiumGeometry::Axis::Y)));
+        }
+
         return TileLoadResult{
             std::move(*model),
-            CesiumGeometry::Axis::Y,
+            upAxis,
             std::nullopt,
             std::nullopt,
             std::nullopt,
