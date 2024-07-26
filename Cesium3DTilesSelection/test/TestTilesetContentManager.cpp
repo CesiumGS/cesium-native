@@ -1084,7 +1084,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pRootTile)};
 
     SECTION(
-        "Generate raster overlay details when tile don't have loose region") {
+        "Generate raster overlay details when tile doesn't have loose region") {
       // test the gltf model
       Tile& tile = *pManager->getRootTile();
       pManager->loadTileContent(tile, {});
@@ -1331,7 +1331,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         return asyncSystem.createResolvedFuture(CreateTileProviderResult(
             CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
                 new AlwaysMoreDetailProvider(
-                    pOwner,
+                    pOwner ? pOwner : this,
                     asyncSystem,
                     pAssetAccessor,
                     std::nullopt,
@@ -1377,7 +1377,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pRootTile)};
 
     SECTION(
-        "Generate raster overlay details when tile don't have loose region") {
+        "Generate raster overlay details when tile doesn't have loose region") {
       // test the gltf model
       Tile& tile = *pManager->getRootTile();
 
