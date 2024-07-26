@@ -6,6 +6,7 @@
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Uri.h>
 
 #include <spdlog/logger.h>
@@ -173,7 +174,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               pAssetAccessor,
               tileUrl,
               tileTransform,
-              requestHeaders};
+              requestHeaders,
+              CesiumGeometry::Axis::Y};
           return converter(responseData, gltfOptions, assetFetcher)
               .thenImmediately([pLogger, tileUrl, pCompletedRequest, ellipsoid](
                                    GltfConverterResult&& result) {

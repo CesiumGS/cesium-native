@@ -1,6 +1,8 @@
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTilesContent/TileTransform.h>
 
+#include <glm/mat4x4.hpp>
+
 namespace Cesium3DTilesContent {
 
 std::optional<glm::dmat4>
