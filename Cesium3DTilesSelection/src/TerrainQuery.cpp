@@ -23,8 +23,9 @@ bool boundingVolumeContainsCoordinate(
     const Cartographic& coordinate;
 
     bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
-      double t;
-      return IntersectionTests::rayOBBParametric(ray, boundingBox, t);
+      std::optional<double> t =
+          IntersectionTests::rayOBBParametric(ray, boundingBox);
+      return t && t.value() >= 0;
     }
 
     bool operator()(const BoundingRegion& boundingRegion) noexcept {
@@ -32,8 +33,9 @@ bool boundingVolumeContainsCoordinate(
     }
 
     bool operator()(const BoundingSphere& boundingSphere) noexcept {
-      double t;
-      return IntersectionTests::raySphereParametric(ray, boundingSphere, t);
+      std::optional<double> t =
+          IntersectionTests::raySphereParametric(ray, boundingSphere);
+      return t && t.value() >= 0;
     }
 
     bool operator()(
