@@ -1265,8 +1265,8 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
   const std::vector<double>& min = positionAccessor.min;
   const std::vector<double>& max = positionAccessor.max;
 
-  double t;
-  if (!CesiumGeometry::IntersectionTests::rayAABBParametric(
+  std::optional<double> boxT =
+      CesiumGeometry::IntersectionTests::rayAABBParametric(
           transformedRay,
           CesiumGeometry::AxisAlignedBox(
               min[0],
@@ -1274,10 +1274,9 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               min[2],
               max[0],
               max[1],
-              max[2]),
-          t)) {
+              max[2]));
+  if (!boxT)
     return std::optional<glm::dvec3>();
-  }
 
   double tClosest = -1.0;
 
