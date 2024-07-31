@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <list>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
