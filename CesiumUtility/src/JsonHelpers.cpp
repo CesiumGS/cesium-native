@@ -1,5 +1,6 @@
 #include "CesiumUtility/JsonHelpers.h"
 
+#include <glm/mat4x4.hpp>
 #include <rapidjson/document.h>
 
 namespace CesiumUtility {

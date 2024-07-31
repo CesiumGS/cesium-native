@@ -1,4 +1,5 @@
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumUtility/Assert.h>
 
 namespace Cesium3DTilesSelection {
 TileLoadInput::TileLoadInput(

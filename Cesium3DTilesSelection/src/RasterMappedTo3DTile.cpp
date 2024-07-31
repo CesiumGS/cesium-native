@@ -9,6 +9,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
+#include <CesiumUtility/Assert.h>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;

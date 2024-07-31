@@ -8,6 +8,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumUtility/Assert.h>
 
 #include <glm/glm.hpp>
 #include <rapidjson/writer.h>

@@ -20,7 +20,8 @@ AssetFetcher ConvertTileToGltf::makeAssetFetcher(const std::string& baseUrl) {
       fileAccessor,
       baseUrl,
       glm::dmat4(1.0),
-      requestHeaders);
+      requestHeaders,
+      CesiumGeometry::Axis::Y);
 }
 
 GltfConverterResult ConvertTileToGltf::fromB3dm(
