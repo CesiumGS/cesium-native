@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/gtc/epsilon.hpp>
+#include <glm/mat4x4.hpp>
 
 using namespace CesiumUtility;
 

@@ -15,6 +15,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
@@ -939,7 +940,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
               pAssetAccessor,
               tileUrl,
               tileTransform,
-              requestHeaders};
+              requestHeaders,
+              upAxis};
           CesiumGltfReader::GltfReaderOptions gltfOptions;
           gltfOptions.ktx2TranscodeTargets =
               contentOptions.ktx2TranscodeTargets;

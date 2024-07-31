@@ -51,6 +51,9 @@ convertArrayOffsetTypeStringToPropertyComponentType(const std::string& str);
 PropertyComponentType
 convertStringOffsetTypeStringToPropertyComponentType(const std::string& str);
 
+PropertyComponentType
+convertAccessorComponentTypeToPropertyComponentType(int componentType);
+
 bool isPropertyTypeVecN(PropertyType type);
 
 bool isPropertyTypeMatN(PropertyType type);

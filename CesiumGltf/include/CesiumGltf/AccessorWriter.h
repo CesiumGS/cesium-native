@@ -21,8 +21,8 @@ public:
       : _accessor(accessorView) {}
 
   /** @copydoc AccessorView::AccessorView(const
-   * uint8_t*,int64_t,int64_t,int64_t) */
-  AccessorWriter(uint8_t* pData, int64_t stride, int64_t offset, int64_t size)
+   * std::byte*,int64_t,int64_t,int64_t) */
+  AccessorWriter(std::byte* pData, int64_t stride, int64_t offset, int64_t size)
       : _accessor(pData, stride, offset, size) {}
 
   /** @copydoc AccessorView::AccessorView(const Model&,const Accessor&) */
