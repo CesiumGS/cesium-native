@@ -529,7 +529,7 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  std::vector<HeightRequest> _heightRequests;
+  std::list<HeightRequest> _heightRequests;
 
   void addTileToLoadQueue(
       Tile& tile,
@@ -538,7 +538,7 @@ private:
 
   void visitHeightRequests();
 
-  void tryCompleteHeightRequest(
+  bool tryCompleteHeightRequest(
       HeightRequest& request,
       std::set<Tile*>& tilesNeedingLoading);
 

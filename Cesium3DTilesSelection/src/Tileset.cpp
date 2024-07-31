@@ -310,7 +310,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
-void Tileset::tryCompleteHeightRequest(
+bool Tileset::tryCompleteHeightRequest(
     HeightRequest& request,
     std::set<Tile*>& tilesNeedingLoading) {
   Tile* pRoot = _pTilesetContentManager->getRootTile();
@@ -329,7 +329,7 @@ void Tileset::tryCompleteHeightRequest(
 
   // Bail if we're waiting on tiles to load
   if (!tilesNeedingLoading.empty())
-    return;
+    return false;
 
   // Do the intersect tests
   for (TerrainQuery& query : request.queries) {
@@ -354,19 +354,28 @@ void Tileset::tryCompleteHeightRequest(
   }
 
   request.promise.resolve(std::move(results));
-  _heightRequests.erase(_heightRequests.begin());
+  return true;
 }
 
 void Tileset::visitHeightRequests() {
   if (_heightRequests.size() == 0)
     return;
 
-  HeightRequest& request = _heightRequests.front();
-
+  // Go through all requests, either complete them, or gather the tiles they
+  // need for completion
   std::set<Tile*> tilesNeedingLoading;
-  tryCompleteHeightRequest(request, tilesNeedingLoading);
+  for (auto it = _heightRequests.begin(); it != _heightRequests.end();) {
+    HeightRequest& request = *it;
+    if (!tryCompleteHeightRequest(request, tilesNeedingLoading)) {
+      ++it;
+    } else {
+      auto deleteIt = it;
+      ++it;
+      _heightRequests.erase(deleteIt);
+    }
+  }
 
-  // Add a load request for tiles that haven't started
+  // Add a load request for tiles that are needed, and haven't started
   TileLoadPriorityGroup priorityGroup = TileLoadPriorityGroup::Urgent;
   double priority = 0.0;
   for (Tile* pTile : tilesNeedingLoading) {
