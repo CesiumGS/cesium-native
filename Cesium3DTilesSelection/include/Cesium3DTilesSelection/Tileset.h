@@ -15,12 +15,12 @@
 
 #include <rapidjson/fwd.h>
 
+#include <list>
 #include <memory>
 #include <optional>
 #include <set>
 #include <string>
 #include <vector>
-#include <list>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
