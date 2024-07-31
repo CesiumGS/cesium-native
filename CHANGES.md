@@ -1,10 +1,9 @@
 # Change Log
 
-### ? - ?
+### v0.38.0 - 2024-08-01
 
 ##### Breaking Changes :mega:
 
-- `ForEachPrimitiveInSceneCallback` now passes `meshId` and `primitiveId` to the caller. Existing callbacks will need to add these new parameters
 - `AccessorWriter` constructor now takes `std::byte*` instead of `uint8_t*`.
 
 ##### Additions :tada:
@@ -12,6 +11,10 @@
 - Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
 - Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
 - Added `convertAccessorComponentTypeToPropertyComponentType`, which converts integer glTF accessor component types to their best-fitting `PropertyComponentType`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented raster overlays from being correctly applied when a non-standard "glTF up axis" is in use.
 
 ### v0.37.0 - 2024-07-01
 
@@ -34,7 +37,6 @@
   - Extraneous spaces at the end of an external glTF URI are now ignored. These are sometimes added as padding in order to meet alignment requirements.
 - Removed an overly-eager degenerate triangle test in the 2D version of `IntersectionTests::pointInTriangle` that could discard intersections in small - but valid - triangles.
 - Fixed a bug while upsampling tiles for raster overlays that could cause them to have an incorrect bounding box, which in some cases would lead to the raster overlay being missing entirely from the upsampled tile.
-- Fixed a bug that prevented raster overlays from being correctly applied when a non-standard "glTF up axis" is in use.
 
 ### v0.36.0 - 2024-06-03
 

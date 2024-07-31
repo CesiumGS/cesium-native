@@ -1219,6 +1219,8 @@ void GltfUtilities::compactBuffer(
   }
 }
 
+namespace {
+
 template <typename TCallback>
 std::invoke_result_t<TCallback, AccessorView<AccessorTypes::VEC3<float>>>
 createPositionView(
@@ -1369,6 +1371,8 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
   // should instead compare world distances.
   return transformedRay.pointFromDistance(tClosest);
 }
+
+} // namespace
 
 GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
     const CesiumGeometry::Ray& ray,
