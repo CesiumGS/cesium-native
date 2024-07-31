@@ -315,6 +315,7 @@ bool Tileset::tryCompleteHeightRequest(
     std::set<Tile*>& tilesNeedingLoading) {
   Tile* pRoot = _pTilesetContentManager->getRootTile();
 
+  bool tileStillNeedsLoading = false;
   for (TerrainQuery& query : request.queries) {
     query.candidateTiles.clear();
 
@@ -322,13 +323,15 @@ bool Tileset::tryCompleteHeightRequest(
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.candidateTiles) {
-      if (pTile->getState() != TileLoadState::Done)
+      if (pTile->getState() != TileLoadState::Done) {
         tilesNeedingLoading.insert(pTile);
+        tileStillNeedsLoading = true;
+      }
     }
   }
 
   // Bail if we're waiting on tiles to load
-  if (!tilesNeedingLoading.empty())
+  if (tileStillNeedsLoading)
     return false;
 
   // Do the intersect tests
