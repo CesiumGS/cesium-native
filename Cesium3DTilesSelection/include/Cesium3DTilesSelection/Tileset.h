@@ -277,10 +277,10 @@ public:
     struct CoordinateResult {
       bool heightAvailable = false;
       CesiumGeospatial::Cartographic coordinate = {-1, -1, -1};
-      std::vector<std::string> warnings = {};
     };
 
     std::vector<CoordinateResult> coordinateResults;
+    std::vector<std::string> warnings;
   };
 
   CesiumAsync::Future<HeightResults> getHeightsAtCoordinates(

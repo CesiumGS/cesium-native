@@ -19,7 +19,7 @@ public:
 
   void intersectVisibleTile(Tile* pTile);
 
-  void findCandidateTiles(Tile* pTile);
+  void findCandidateTiles(Tile* pTile, std::vector<std::string>& warnings);
 };
 
 } // namespace Cesium3DTilesSelection

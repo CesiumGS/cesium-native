@@ -80,12 +80,15 @@ void TerrainQuery::intersectVisibleTile(Tile* pTile) {
   }
 }
 
-void TerrainQuery::findCandidateTiles(Tile* pTile) {
+void TerrainQuery::findCandidateTiles(
+    Tile* pTile,
+    std::vector<std::string>& warnings) {
 
   // If tile failed to load, this means we can't complete the intersection
-  // TODO, need to return warning, or abort the intersect
-  if (pTile->getState() == TileLoadState::Failed)
+  if (pTile->getState() == TileLoadState::Failed) {
+    warnings.push_back("Tile load failed during query. Ignoring.");
     return;
+  }
 
   // If tile not done loading, add it to the list
   if (pTile->getState() != TileLoadState::Done) {
@@ -122,7 +125,7 @@ void TerrainQuery::findCandidateTiles(Tile* pTile) {
         continue;
 
       // Child is a candidate, traverse it and its children
-      findCandidateTiles(&child);
+      findCandidateTiles(&child, warnings);
     }
   }
 }

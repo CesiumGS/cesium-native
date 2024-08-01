@@ -316,10 +316,11 @@ bool Tileset::tryCompleteHeightRequest(
   Tile* pRoot = _pTilesetContentManager->getRootTile();
 
   bool tileStillNeedsLoading = false;
+  std::vector<std::string> warnings;
   for (TerrainQuery& query : request.queries) {
     query.candidateTiles.clear();
 
-    query.findCandidateTiles(pRoot);
+    query.findCandidateTiles(pRoot, warnings);
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.candidateTiles) {
@@ -342,11 +343,21 @@ bool Tileset::tryCompleteHeightRequest(
 
   // All rays are done, create results
   Tileset::HeightResults results;
+
+  // Start with any warnings from tile traversal
+  results.warnings = std::move(warnings);
+
+  // Populate results with completed queries
   for (TerrainQuery& query : request.queries) {
     Tileset::HeightResults::CoordinateResult coordinateResult = {
         query.intersectResult.hit.has_value(),
-        std::move(query.inputCoordinate),
-        std::move(query.intersectResult.warnings)};
+        std::move(query.inputCoordinate)};
+
+    // Add query warnings into the height result
+    std::copy(
+        query.intersectResult.warnings.begin(),
+        query.intersectResult.warnings.end(),
+        std::back_inserter(results.warnings));
 
     if (coordinateResult.heightAvailable)
       coordinateResult.coordinate.height =
