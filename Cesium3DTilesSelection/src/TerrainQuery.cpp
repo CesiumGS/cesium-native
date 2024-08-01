@@ -90,12 +90,6 @@ void TerrainQuery::findCandidateTiles(
     return;
   }
 
-  // If tile not done loading, add it to the list
-  if (pTile->getState() != TileLoadState::Done) {
-    candidateTiles.push_back(pTile);
-    return;
-  }
-
   if (pTile->getChildren().empty()) {
     // This is a leaf node, add it to the list
     candidateTiles.push_back(pTile);
