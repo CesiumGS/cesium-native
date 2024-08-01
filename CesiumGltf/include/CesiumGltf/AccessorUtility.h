@@ -299,8 +299,8 @@ struct TexCoordFromAccessor {
     double v = static_cast<double>(value[index].value[1]);
 
     // TODO: do normalization logic in accessor view?
-    u /= std::numeric_limits<T>::max();
-    v /= std::numeric_limits<T>::max();
+    u /= (std::numeric_limits<T>::max)();
+    v /= (std::numeric_limits<T>::max)();
 
     return glm::dvec2(u, v);
   }
