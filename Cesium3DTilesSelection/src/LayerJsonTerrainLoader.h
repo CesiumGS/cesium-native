@@ -9,6 +9,7 @@
 #include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumUtility/Assert.h>
 
 #include <rapidjson/fwd.h>
 

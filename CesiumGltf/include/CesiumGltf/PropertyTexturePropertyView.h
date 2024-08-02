@@ -9,6 +9,8 @@
 #include "CesiumGltf/Sampler.h"
 #include "CesiumGltf/TextureView.h"
 
+#include <CesiumUtility/Assert.h>
+
 #include <array>
 #include <cmath>
 #include <cstdint>

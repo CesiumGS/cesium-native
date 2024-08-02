@@ -7,6 +7,7 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
+
 namespace CesiumGltfWriter {
 
 namespace {

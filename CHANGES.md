@@ -1,5 +1,27 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug in `WebMapTileServiceRasterOverlay` that caused it to compute the `TileRow` incorrectly when used with a tiling scheme with multiple tiles in the Y direction at the root.
+
+### v0.38.0 - 2024-08-01
+
+##### Breaking Changes :mega:
+
+- `AccessorWriter` constructor now takes `std::byte*` instead of `uint8_t*`.
+
+##### Additions :tada:
+
+- Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
+- Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
+- Added `convertAccessorComponentTypeToPropertyComponentType`, which converts integer glTF accessor component types to their best-fitting `PropertyComponentType`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented raster overlays from being correctly applied when a non-standard "glTF up axis" is in use.
+
 ### v0.37.0 - 2024-07-01
 
 ##### Additions :tada:
