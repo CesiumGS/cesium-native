@@ -82,7 +82,7 @@ protected:
 
     uint32_t level = tileID.level;
     uint32_t col = tileID.x;
-    uint32_t row = (1u << level) - tileID.y - 1u;
+    uint32_t row = tileID.computeInvertedY(this->getTilingScheme());
 
     std::map<std::string, std::string> urlTemplateMap;
     std::string tileMatrix;
