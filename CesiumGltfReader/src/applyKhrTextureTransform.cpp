@@ -118,5 +118,7 @@ void applyKhrTextureTransform(Model& model) {
       }
     }
   }
+
+  model.removeExtensionRequired(ExtensionKhrTextureTransform::ExtensionName);
 }
 } // namespace CesiumGltfReader

@@ -178,18 +178,6 @@ void dequantizeMeshData(Model& model) {
     }
   }
 
-  model.extensionsUsed.erase(
-      std::remove(
-          model.extensionsUsed.begin(),
-          model.extensionsUsed.end(),
-          "KHR_mesh_quantization"),
-      model.extensionsUsed.end());
-
-  model.extensionsRequired.erase(
-      std::remove(
-          model.extensionsRequired.begin(),
-          model.extensionsRequired.end(),
-          "KHR_mesh_quantization"),
-      model.extensionsRequired.end());
+  model.removeExtensionRequired("KHR_mesh_quantization");
 }
 } // namespace CesiumGltfReader

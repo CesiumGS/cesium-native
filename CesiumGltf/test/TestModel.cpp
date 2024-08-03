@@ -584,6 +584,66 @@ TEST_CASE("Model::addExtensionRequired") {
   }
 }
 
+TEST_CASE("Model::removeExtensionUsed") {
+  SECTION("removes an extension") {
+    Model m;
+    m.extensionsUsed = {"Foo", "Bar"};
+
+    m.removeExtensionUsed("Foo");
+
+    CHECK(m.extensionsUsed == std::vector<std::string>{"Bar"});
+
+    m.removeExtensionUsed("Bar");
+
+    CHECK(m.extensionsUsed.empty());
+
+    m.removeExtensionUsed("Other");
+
+    CHECK(m.extensionsUsed.empty());
+  }
+
+  SECTION("does not also remove the extension from extensionsRequired") {
+    Model m;
+    m.extensionsUsed = {"Foo"};
+    m.extensionsRequired = {"Foo"};
+
+    m.removeExtensionUsed("Foo");
+
+    CHECK(m.extensionsUsed.empty());
+    CHECK(!m.extensionsRequired.empty());
+  }
+}
+
+TEST_CASE("Model::removeExtensionRequired") {
+  SECTION("removes an extension") {
+    Model m;
+    m.extensionsRequired = {"Foo", "Bar"};
+
+    m.removeExtensionRequired("Foo");
+
+    CHECK(m.extensionsRequired == std::vector<std::string>{"Bar"});
+
+    m.removeExtensionRequired("Bar");
+
+    CHECK(m.extensionsRequired.empty());
+
+    m.removeExtensionRequired("Other");
+
+    CHECK(m.extensionsRequired.empty());
+  }
+
+  SECTION("also removes the extension from extensionsUsed if present") {
+    Model m;
+    m.extensionsUsed = {"Foo"};
+    m.extensionsRequired = {"Foo"};
+
+    m.removeExtensionRequired("Foo");
+
+    CHECK(m.extensionsUsed.empty());
+    CHECK(m.extensionsRequired.empty());
+  }
+}
+
 TEST_CASE("Model::merge") {
   SECTION("performs a simple merge") {
     Model m1;

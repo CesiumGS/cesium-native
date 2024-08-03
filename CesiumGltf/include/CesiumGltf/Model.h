@@ -244,6 +244,24 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   void addExtensionRequired(const std::string& extensionName);
 
   /**
+   * @brief Removes an extension from the {@link ModelSpec::extensionsUsed}
+   * property.
+   *
+   * @param extensionName The name of the used extension.
+   */
+  void removeExtensionUsed(const std::string& extensionName);
+
+  /**
+   * @brief Removes an extension from the {@link ModelSpec::extensionsRequired}
+   * property.
+   *
+   * Calling this function also removes the extension from `extensionsUsed`.
+   *
+   * @param extensionName The name of the required extension.
+   */
+  void removeExtensionRequired(const std::string& extensionName);
+
+  /**
    * @brief Determines whether a given extension name is listed in the model's
    * {@link ModelSpec::extensionsUsed} property.
    *

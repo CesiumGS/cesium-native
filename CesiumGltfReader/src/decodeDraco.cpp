@@ -350,19 +350,8 @@ void decodeDraco(CesiumGltfReader::GltfReaderResult& readGltf) {
     }
   }
 
-  model.extensionsRequired.erase(
-      std::remove(
-          model.extensionsRequired.begin(),
-          model.extensionsRequired.end(),
-          CesiumGltf::ExtensionKhrDracoMeshCompression::ExtensionName),
-      model.extensionsRequired.end());
-
-  model.extensionsUsed.erase(
-      std::remove(
-          model.extensionsUsed.begin(),
-          model.extensionsUsed.end(),
-          CesiumGltf::ExtensionKhrDracoMeshCompression::ExtensionName),
-      model.extensionsUsed.end());
+  model.removeExtensionRequired(
+      CesiumGltf::ExtensionKhrDracoMeshCompression::ExtensionName);
 }
 
 } // namespace CesiumGltfReader
