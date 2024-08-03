@@ -2,9 +2,15 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `removeExtensionUsed` and `removeExtensionRequired` methods to `CesiumGltf::Model`.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `WebMapTileServiceRasterOverlay` that caused it to compute the `TileRow` incorrectly when used with a tiling scheme with multiple tiles in the Y direction at the root.
+- `KHR_texture_transform` is now removed from `extensionsUsed` and `extensionsRequired` after it is decoded by `GltfReader`.
+
 
 ### v0.38.0 - 2024-08-01
 
