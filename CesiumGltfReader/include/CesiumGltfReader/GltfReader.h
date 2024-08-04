@@ -95,8 +95,6 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    */
   bool decodeEmbeddedImages = true;
 
-  bool resolveExternalImages = true;
-
   /**
    * @brief Whether external images should be resolved.
    */
