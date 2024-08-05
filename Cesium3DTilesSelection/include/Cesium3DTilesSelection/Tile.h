@@ -188,6 +188,11 @@ public:
   }
 
   /**
+   * Clears the list of this tile's children.
+   */
+  void clearChildren() { this->_children.clear(); }
+
+  /**
    * @brief Assigns the given child tiles to this tile.
    *
    * This function is not supposed to be called by clients.
@@ -475,6 +480,16 @@ public:
   bool isEmptyContent() const noexcept;
 
   /**
+   * @brief Determines if this tile has unknown content.
+   */
+  bool isUnknownContent() const noexcept;
+
+  /**
+   * Determines if this tile and all of its children are ready to unload.
+   */
+  bool isReadyToUnload() const noexcept;
+
+  /**
    * @brief get the loader that is used to load the tile content.
    */
   TilesetContentLoader* getLoader() const noexcept;
@@ -534,6 +549,7 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   friend class TilesetContentManager;
+  friend class Tileset;
   friend class MockTilesetContentManagerTestFixture;
 
 public:

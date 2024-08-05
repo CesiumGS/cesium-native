@@ -72,15 +72,6 @@ struct ContentKindSetter {
   void* pRenderResources;
 };
 
-void unloadTileRecursively(
-    Tile& tile,
-    TilesetContentManager& tilesetContentManager) {
-  tilesetContentManager.unloadTileContent(tile);
-  for (Tile& child : tile.getChildren()) {
-    unloadTileRecursively(child, tilesetContentManager);
-  }
-}
-
 bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
     const RasterOverlayTile* pLoading = mapped.getLoadingTile();
@@ -1078,6 +1069,27 @@ void TilesetContentManager::updateTileContent(
   }
 }
 
+bool TilesetContentManager::handleUpsampledTileChildren(Tile& tile) {
+  for (Tile& child : tile.getChildren()) {
+    if (child.getState() == TileLoadState::ContentLoading &&
+        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
+            child.getTileID())) {
+      // Yes, a child is upsampling from this tile, so it may be using the
+      // tile's content from another thread via lambda capture. We can't unload
+      // it right now. So mark the tile as in the process of unloading and stop
+      // here.
+      tile.setState(TileLoadState::Unloading);
+      return false;
+    }
+
+    if (!this->handleUpsampledTileChildren(child)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
@@ -1089,9 +1101,16 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   TileContent& content = tile.getContent();
+  bool isReadyToUnload = tile.isReadyToUnload();
+  bool isExternalContent = tile.isExternalContent();
 
-  // don't unload external or empty tile
-  if (content.isExternalContent() || content.isEmptyContent()) {
+  // don't unload external or empty tile while children are still loading
+  if ((isExternalContent || content.isEmptyContent()) && !isReadyToUnload) {
+    return false;
+  }
+
+  // Don't unload this tile if children are still upsampling
+  if (!this->handleUpsampledTileChildren(tile)) {
     return false;
   }
 
@@ -1102,31 +1121,19 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   }
   tile.getMappedRasterTiles().clear();
 
-  // Unload the renderer resources and clear any raster overlay tiles. We can do
-  // this even if the tile can't be fully unloaded because this tile's geometry
-  // is being using by an async upsample operation (checked below).
-  switch (state) {
-  case TileLoadState::ContentLoaded:
-    unloadContentLoadedState(tile);
-    break;
-  case TileLoadState::Done:
-    unloadDoneState(tile);
-    break;
-  default:
-    break;
-  }
-
-  // Are any children currently being upsampled from this tile?
-  for (const Tile& child : tile.getChildren()) {
-    if (child.getState() == TileLoadState::ContentLoading &&
-        std::holds_alternative<CesiumGeometry::UpsampledQuadtreeNode>(
-            child.getTileID())) {
-      // Yes, a child is upsampling from this tile, so it may be using the
-      // tile's content from another thread via lambda capture. We can't unload
-      // it right now. So mark the tile as in the process of unloading and stop
-      // here.
-      tile.setState(TileLoadState::Unloading);
-      return false;
+  if (!tile.isEmptyContent() && !tile.isUnknownContent()) {
+    // Unload the renderer resources and clear any raster overlay tiles. We can
+    // do this even if the tile can't be fully unloaded because this tile's
+    // geometry is being using by an async upsample operation (checked below).
+    switch (state) {
+    case TileLoadState::ContentLoaded:
+      unloadContentLoadedState(tile);
+      break;
+    case TileLoadState::Done:
+      unloadDoneState(tile);
+      break;
+    default:
+      break;
     }
   }
 
@@ -1141,7 +1148,7 @@ void TilesetContentManager::unloadAll() {
   // TODO: use the linked-list of loaded tiles instead of walking the entire
   // tile tree.
   if (this->_pRootTile) {
-    unloadTileRecursively(*this->_pRootTile, *this);
+    this->unloadTileContent(*this->_pRootTile);
   }
 }
 
@@ -1479,8 +1486,10 @@ void TilesetContentManager::updateDoneState(
 void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
-  CESIUM_ASSERT(
-      pRenderContent && "Tile must have render content to be unloaded");
+  if (pRenderContent == nullptr) {
+    // No resources we need to clean up
+    return;
+  }
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(
@@ -1493,8 +1502,10 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
 void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
-  CESIUM_ASSERT(
-      pRenderContent && "Tile must have render content to be unloaded");
+  if (pRenderContent == nullptr) {
+    // No resources to clean up
+    return;
+  }
 
   void* pMainThreadRenderResources = pRenderContent->getRenderResources();
   this->_externals.pPrepareRendererResources->free(

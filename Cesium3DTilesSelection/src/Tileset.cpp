@@ -90,7 +90,6 @@ Tileset::Tileset(
           ionAssetEndpointUrl)} {}
 
 Tileset::~Tileset() noexcept {
-  this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
   }
@@ -1469,7 +1468,32 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
+void Tileset::_unloadPendingChildren(Tile& tile) noexcept {
+  for (Tile& childTile : tile.getChildren()) {
+    this->_loadedTiles.remove(childTile);
+    this->_externalTilesPendingClear.remove(&childTile);
+    childTile.setState(TileLoadState::Unloaded);
+    this->_unloadPendingChildren(childTile);
+  }
+
+  tile.clearChildren();
+}
+
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
+  // Clear children of external tilesets unloaded last frame
+  Tile* pPendingExternalTile;
+  while (!this->_externalTilesPendingClear.empty()) {
+    pPendingExternalTile = this->_externalTilesPendingClear.front();
+    this->_externalTilesPendingClear.pop_front();
+    // We need to remove children recursively, as children of this tile might
+    // also be in the _externalTilesPendingClear list
+    this->_unloadPendingChildren(*pPendingExternalTile);
+    pPendingExternalTile->setState(TileLoadState::Unloaded);
+  }
+
+  // Clear list of pending external tiles
+  this->_externalTilesPendingClear.clear();
+
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
   const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
@@ -1500,10 +1524,18 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
+    // Check for external content before unloading, as an unloaded tile will
+    // always have Unknown content set
+    const bool wasExternalTile = pTile->isExternalContent();
     const bool removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
       this->_loadedTiles.remove(*pTile);
+      if (wasExternalTile) {
+        // The Unreal implementation, at the least, requires a frame between a
+        // tile being unloaded and its pointers becoming invalidated.
+        this->_externalTilesPendingClear.push_back(pTile);
+      }
     }
 
     pTile = pNext;
@@ -1517,6 +1549,25 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
+
+  // If the tile is present in _externalTilesPendingClear, it needs to be removed since we're still using it.
+  // This way lets us do the find and remove in one search.
+  auto it = std::find(this->_externalTilesPendingClear.begin(), this->_externalTilesPendingClear.end(), &tile);
+  if (it == this->_externalTilesPendingClear.end()) {
+    // Tile isn't in _externalTilesPendingClear, nothing to do.
+    return;
+  }
+  
+  // Actually remove the tile from the pending list
+  this->_externalTilesPendingClear.erase(it);
+
+  if (tile.getState() == TileLoadState::Unloaded &&
+      !tile.getChildren().empty()) {
+    // We were going to clear this tile's children, but it's still in use, so we
+    // should restore it to Done instead.
+    tile.setState(TileLoadState::Done);
+    tile.setContentShouldContinueUpdating(false);
+  }
 }
 
 void Tileset::addTileToLoadQueue(
