@@ -90,27 +90,40 @@ void TerrainQuery::findCandidateTiles(
     return;
   }
 
+  auto& contentBoundingVolume = pTile->getContentBoundingVolume();
+
   if (pTile->getChildren().empty()) {
-    // This is a leaf node, add it to the list
-    candidateTiles.push_back(pTile);
+    // This is a leaf node, it's a candidate
+
+    // If optional content bounding volume exists, test against it
+    if (contentBoundingVolume) {
+      if (boundingVolumeContainsCoordinate(
+              *contentBoundingVolume,
+              this->ray,
+              this->inputCoordinate))
+        candidateTiles.push_back(pTile);
+    } else {
+      candidateTiles.push_back(pTile);
+    }
   } else {
     // We have children
 
     // If additive refinement, add parent to the list with children
-    if (pTile->getRefine() == TileRefine::Add)
-      candidateTiles.push_back(pTile);
+    if (pTile->getRefine() == TileRefine::Add) {
+      // If optional content bounding volume exists, test against it
+      if (contentBoundingVolume) {
+        if (boundingVolumeContainsCoordinate(
+                *contentBoundingVolume,
+                this->ray,
+                this->inputCoordinate))
+          candidateTiles.push_back(pTile);
+      } else {
+        candidateTiles.push_back(pTile);
+      }
+    }
 
     // Traverse children
     for (Tile& child : pTile->getChildren()) {
-      auto& contentBoundingVolume = child.getContentBoundingVolume();
-
-      // If content bounding volume exists and no intersection, we can skip it
-      if (contentBoundingVolume && !boundingVolumeContainsCoordinate(
-                                       *contentBoundingVolume,
-                                       this->ray,
-                                       this->inputCoordinate))
-        continue;
-
       // if bounding volume doesn't intersect this ray, we can skip it
       if (!boundingVolumeContainsCoordinate(
               child.getBoundingVolume(),
