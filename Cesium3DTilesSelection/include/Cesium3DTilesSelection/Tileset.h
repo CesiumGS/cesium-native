@@ -15,14 +15,17 @@
 
 #include <rapidjson/fwd.h>
 
+#include <list>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
+class TerrainQuery;
 
 /**
  * @brief A <a
@@ -270,6 +273,19 @@ public:
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
 
+  struct HeightResults {
+    struct CoordinateResult {
+      bool heightAvailable = false;
+      CesiumGeospatial::Cartographic coordinate = {-1, -1, -1};
+    };
+
+    std::vector<CoordinateResult> coordinateResults;
+    std::vector<std::string> warnings;
+  };
+
+  CesiumAsync::Future<HeightResults> getHeightsAtCoordinates(
+      const std::vector<CesiumGeospatial::Cartographic>& coordinates);
+
 private:
   /**
    * @brief The result of traversing one branch of the tile hierarchy.
@@ -423,6 +439,11 @@ private:
       double tilePriority,
       bool queuedForLoad);
 
+  struct HeightRequest {
+    std::vector<TerrainQuery> queries;
+    CesiumAsync::Promise<Tileset::HeightResults> promise;
+  };
+
   void _processWorkerThreadLoadQueue();
   void _processMainThreadLoadQueue();
 
@@ -509,10 +530,18 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
+  std::list<HeightRequest> _heightRequests;
+
   void addTileToLoadQueue(
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
+
+  void visitHeightRequests();
+
+  bool tryCompleteHeightRequest(
+      HeightRequest& request,
+      std::set<Tile*>& tilesNeedingLoading);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
