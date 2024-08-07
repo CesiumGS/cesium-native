@@ -41,7 +41,7 @@ TextureView::TextureView(
     return;
   }
 
-  this->_pImage = &model.images[static_cast<size_t>(texture.source)].cesium;
+  this->_pImage = model.images[static_cast<size_t>(texture.source)].cesium;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_textureViewStatus = TextureViewStatus::ErrorEmptyImage;
     return;
@@ -85,7 +85,7 @@ TextureView::TextureView(
     const TextureViewOptions& options) noexcept
     : _textureViewStatus(TextureViewStatus::ErrorUninitialized),
       _pSampler(&sampler),
-      _pImage(&image),
+      _pImage(image),
       _texCoordSetIndex(textureCoordinateSetIndex),
       _applyTextureTransform(options.applyKhrTextureTransformExtension),
       _textureTransform(std::nullopt),

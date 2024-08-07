@@ -748,7 +748,7 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    const ImageCesium& image = _pModel->images[imageIndex].cesium;
+    const ImageCesium& image = *_pModel->images[imageIndex].cesium;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
     status = checkChannels(channels, image);

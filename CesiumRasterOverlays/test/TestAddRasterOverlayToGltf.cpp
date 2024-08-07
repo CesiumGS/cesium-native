@@ -266,7 +266,7 @@ TEST_CASE("Add raster overlay to glTF") {
   const Model& gltfBack = *resultBack.model;
 
   REQUIRE(gltfBack.images.size() == 1);
-  CHECK(!gltfBack.images[0].cesium.pixelData.empty());
+  CHECK(!gltfBack.images[0].cesium->pixelData.empty());
 
   REQUIRE(!gltfBack.meshes.empty());
   REQUIRE(!gltfBack.meshes[0].primitives.empty());

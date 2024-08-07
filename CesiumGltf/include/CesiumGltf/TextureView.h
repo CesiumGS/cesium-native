@@ -3,6 +3,7 @@
 #include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/SharedAssetDepot.h"
 #include "CesiumGltf/TextureInfo.h"
 
 #include <vector>
@@ -176,7 +177,7 @@ public:
     if (this->_imageCopy) {
       return &(this->_imageCopy.value());
     }
-    return this->_pImage;
+    return &*this->_pImage;
   }
 
   /**
@@ -210,7 +211,7 @@ private:
   TextureViewStatus _textureViewStatus;
 
   const Sampler* _pSampler;
-  const ImageCesium* _pImage;
+  SharedAsset<ImageCesium> _pImage;
   int64_t _texCoordSetIndex;
 
   bool _applyTextureTransform;
