@@ -42,21 +42,26 @@ function(configure_cesium_library targetName)
                 ${capitalizedTargetName}_BUILDING
         )
 
-        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
-        )
-        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/generated/include
-            DESTINATION ${CMAKE_INSTALL_PREFIX}
-            OPTIONAL
-        )
-        install(TARGETS ${targetName}
-            CONFIGURATIONS Release RelWithDebInfo
-            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        )
-        install(TARGETS ${targetName}
-            CONFIGURATIONS Debug
-            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/debug/lib
-        )
+        if(CESIUM_INSTALL_HEADERS)
+            install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
+                DESTINATION ${CMAKE_INSTALL_PREFIX}
+            )
+            install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/generated/include
+                DESTINATION ${CMAKE_INSTALL_PREFIX}
+                OPTIONAL
+            )
+        endif()
+
+        if(CESIUM_INSTALL_STATIC_LIBS)
+            install(TARGETS ${targetName}
+                CONFIGURATIONS Release RelWithDebInfo
+                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+            )
+            install(TARGETS ${targetName}
+                CONFIGURATIONS Debug
+                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/debug/lib
+            )
+        endif()
     endif()
 
     if (CESIUM_EXTRA_INCLUDES)

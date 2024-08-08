@@ -71,51 +71,44 @@ project(cesium-native
 include(GNUInstallDirs)
 
 message(STATUS "EZVCPKG_PACKAGES_DIR ${EZVCPKG_PACKAGES_DIR}")
-foreach(PACKAGE ${PACKAGES_PUBLIC})
-    string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
-    set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
-    message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
-    install(
-        DIRECTORY ${PACKAGE_DIR}/include/
-        TYPE INCLUDE
-    )
-    if (EXISTS ${PACKAGE_DIR}/lib)
-        # file(GLOB_RECURSE LIBS RELATIVE "${PACKAGE_DIR}/lib" "${PACKAGE_DIR}/lib/**/*")
-        # install(
-        #   FILES
-        # )
-        install(
-            DIRECTORY ${PACKAGE_DIR}/lib/
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        )
-        # install(
-        #     DIRECTORY ${PACKAGE_DIR}/debug/lib
-        #     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        # )
-    endif()
-    # if (EXISTS ${PACKAGE_DIR}/share)
-    #     install(
-    #         DIRECTORY ${PACKAGE_DIR}/share
-    #         DESTINATION ${CMAKE_INSTALL_PREFIX}
-    #     )
-    # endif()
-endforeach()
 
-foreach(PACKAGE ${PACKAGES_PRIVATE})
-    set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
-    message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
-    if (EXISTS ${PACKAGE_DIR}/lib)
-        install(
-            DIRECTORY ${PACKAGE_DIR}/lib/
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        )
-        # install(
-        #     DIRECTORY ${PACKAGE_DIR}/debug/lib
-        #     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        # )
-    endif()
-endforeach()
+option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
+option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
 
+if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
+    foreach(PACKAGE ${PACKAGES_PUBLIC})
+        string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
+        set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
+
+        if(CESIUM_INSTALL_HEADERS)
+            install(
+                DIRECTORY ${PACKAGE_DIR}/include/
+                TYPE INCLUDE
+            )
+        endif()
+
+        if (CESIUM_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
+            install(
+                DIRECTORY ${PACKAGE_DIR}/lib/
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            )
+        endif()
+    endforeach()
+endif()
+
+if(CESIUM_INSTALL_STATIC_LIBS)
+    foreach(PACKAGE ${PACKAGES_PRIVATE})
+        set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
+        if (EXISTS ${PACKAGE_DIR}/lib)
+            install(
+                DIRECTORY ${PACKAGE_DIR}/lib/
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            )
+        endif()
+    endforeach()
+endif()
 
 if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
     find_program(CCACHE_FOUND ccache)
