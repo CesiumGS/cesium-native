@@ -61,10 +61,7 @@ target_link_libraries(CesiumGltfWriter
     PUBLIC
         CesiumGltf
         CesiumJsonWriter
-        modp_b64
+    PRIVATE
+        modp_b64::modp_b64
 )
 
-install(TARGETS CesiumGltfWriter
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltfWriter
-)

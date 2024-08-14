@@ -1,6 +1,6 @@
 #include "CesiumUtility/Gunzip.h"
 #define ZLIB_CONST
-#include "zlib.h"
+#include "zlib-ng.h"
 
 #define CHUNK 65536
 
@@ -16,13 +16,13 @@ bool CesiumUtility::gunzip(
     std::vector<std::byte>& out) {
   int ret;
   unsigned int index = 0;
-  z_stream strm;
+  zng_stream strm;
   strm.zalloc = Z_NULL;
   strm.zfree = Z_NULL;
   strm.opaque = Z_NULL;
   strm.avail_in = 0;
   strm.next_in = Z_NULL;
-  ret = inflateInit2(&strm, 16 + MAX_WBITS);
+  ret = zng_inflateInit2(&strm, 16 + MAX_WBITS);
   if (ret != Z_OK) {
     return false;
   }
@@ -34,18 +34,18 @@ bool CesiumUtility::gunzip(
     out.resize(index + CHUNK);
     strm.next_out = reinterpret_cast<Bytef*>(&out[index]);
     strm.avail_out = CHUNK;
-    ret = inflate(&strm, Z_NO_FLUSH);
+    ret = zng_inflate(&strm, Z_NO_FLUSH);
     switch (ret) {
     case Z_NEED_DICT:
     case Z_DATA_ERROR:
     case Z_MEM_ERROR:
-      inflateEnd(&strm);
+      zng_inflateEnd(&strm);
       return false;
     }
     index += CHUNK - strm.avail_out;
   } while (ret != Z_STREAM_END);
 
-  inflateEnd(&strm);
+  zng_inflateEnd(&strm);
   out.resize(index);
   return true;
 }

@@ -4,9 +4,7 @@
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
-
-#include <rapidjson/document.h>
-#include <spdlog/fmt/fmt.h>
+#include <CesiumUtility/Log.h>
 
 namespace Cesium3DTilesContent {
 namespace {
