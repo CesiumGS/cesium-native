@@ -908,6 +908,26 @@ void Model::addExtensionRequired(const std::string& extensionName) {
   }
 }
 
+void Model::removeExtensionUsed(const std::string& extensionName) {
+  this->extensionsUsed.erase(
+      std::remove(
+          this->extensionsUsed.begin(),
+          this->extensionsUsed.end(),
+          extensionName),
+      this->extensionsUsed.end());
+}
+
+void Model::removeExtensionRequired(const std::string& extensionName) {
+  this->removeExtensionUsed(extensionName);
+
+  this->extensionsRequired.erase(
+      std::remove(
+          this->extensionsRequired.begin(),
+          this->extensionsRequired.end(),
+          extensionName),
+      this->extensionsRequired.end());
+}
+
 bool Model::isExtensionUsed(const std::string& extensionName) const noexcept {
   return std::find(
              this->extensionsUsed.begin(),

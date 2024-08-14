@@ -2,9 +2,16 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `CesiumGltfWriter::SchemaWriter` for serializing schemas in [EXT_structural_metadata](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata).
+- Added `resolveExternalImages` flag to `GltfReaderOptions`, which is true by default.
+- Added `removeExtensionUsed` and `removeExtensionRequired` methods to `CesiumGltf::Model`.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `WebMapTileServiceRasterOverlay` that caused it to compute the `TileRow` incorrectly when used with a tiling scheme with multiple tiles in the Y direction at the root.
+- `KHR_texture_transform` is now removed from `extensionsUsed` and `extensionsRequired` after it is applied by `GltfReader`.
 
 ### v0.38.0 - 2024-08-01
 
