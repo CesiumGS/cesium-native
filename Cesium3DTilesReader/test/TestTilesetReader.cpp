@@ -1,6 +1,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumNativeTests/readFile.h>
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
@@ -10,21 +11,6 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-
-namespace {
-std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
-  std::ifstream file(fileName, std::ios::binary | std::ios::ate);
-  REQUIRE(file);
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::vector<std::byte> buffer(static_cast<size_t>(size));
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
-
-  return buffer;
-}
-} // namespace
 
 TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;

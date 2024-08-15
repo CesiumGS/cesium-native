@@ -5,7 +5,6 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 
-#include <glm/mat4x4.hpp>
 #include <gsl/span>
 
 #include <optional>
