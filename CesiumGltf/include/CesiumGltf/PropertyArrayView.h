@@ -52,11 +52,14 @@ private:
 };
 
 /**
- * @brief A view on an array element of a {@link PropertyTableProperty}
- * or {@link PropertyTextureProperty}.
+ * @brief A copy of an array element of a {@link PropertyTableProperty} or
+ * {@link PropertyTextureProperty}.
  *
- * Provides utility to retrieve the data stored in the array of
- * elements via the array index operator.
+ * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * place, a PropertyArrayCopy owns the data that it's viewing.
+ *
+ * Provides utility to retrieve the data stored in the array of elements via the
+ * array index operator.
  */
 template <typename ElementType> class PropertyArrayCopy {
 public:

@@ -7,6 +7,10 @@ namespace {
 
 // This class is copied from async++'s fifo_queue.h:
 // https://github.com/Amanieu/asyncplusplus/blob/4159da79e20ad6d0eb1f13baa0f10e989edd9fba/src/fifo_queue.h
+// It's private within Async++, meaning it is defined in a header in the src
+// directory rather than the include directory. When we use Async++ via vcpkg,
+// we have no way to access files in the src directory. So, we copy it here
+// instead.
 class fifo_queue {
   async::detail::aligned_array<void*, LIBASYNC_CACHELINE_SIZE> items;
   std::size_t head, tail;

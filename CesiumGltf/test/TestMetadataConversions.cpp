@@ -3,7 +3,7 @@
 #include <catch2/catch.hpp>
 
 #ifdef _MSC_VER
-// Some tests intentiontionally use a double value that overflows a float.
+// Some tests intentionally use a double value that overflows a float.
 // Disable Visual Studio's spurious warning about this:
 //  warning C4756: overflow in constant arithmetic
 #pragma warning(disable : 4756)
