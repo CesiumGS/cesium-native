@@ -855,4 +855,5 @@ struct MetadataConversions<
 
 #ifdef GLM_ENABLE_EXPERIMENTAL_defined_locally
 #undef GLM_ENABLE_EXPERIMENTAL
+#undef GLM_ENABLE_EXPERIMENTAL_defined_locally
 #endif

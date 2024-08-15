@@ -2,6 +2,11 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Setting the CMake variable `PRIVATE_CESIUM_SQLITE` will no longer automatically rename all of the SQLite symbols. It must also be paired with a vcpkg overlay port that renames the symbols in SQLite itself.
+- `PropertyArrayView` is now exclusively a view, with no ability to own the data it is viewing. The new `PropertyArrayCopy` can be used when an owning view is required.
+
 ##### Additions :tada:
 
 - Added `CesiumGltfWriter::SchemaWriter` for serializing schemas in [EXT_structural_metadata](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata).

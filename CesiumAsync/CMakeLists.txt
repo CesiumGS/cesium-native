@@ -35,8 +35,6 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/
-        # For the cesium-sqlite3.h header
-        ${PROJECT_SOURCE_DIR}/extern/include
 )
 
 target_link_libraries(CesiumAsync

@@ -109,7 +109,7 @@ TEST_CASE("S2CellID") {
     // The "longitude" of the international dateline can either be -180 or 180,
     // depending on the implementation, so we need to take the absolute value.
     CHECK(Math::equalsEpsilon(
-        fabs(center.longitude),
+        glm::abs(center.longitude),
         Math::degreesToRadians(180.0),
         0.0,
         Math::Epsilon10));
@@ -134,7 +134,7 @@ TEST_CASE("S2CellID") {
     CHECK(Math::equalsEpsilon(center.height, 0.0, 0.0, Math::Epsilon10));
 
     center = S2CellID::fromToken("b").getCenter();
-    // Don't validate the "longitude" of the north pole, as it's meaningless.
+    // Don't validate the "longitude" of the south pole, as it's meaningless.
     // CHECK(Math::equalsEpsilon(
     //     center.longitude,
     //     Math::degreesToRadians(0.0),
