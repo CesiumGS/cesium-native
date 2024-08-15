@@ -59,11 +59,11 @@ FeatureIdAccessorType getFeatureIdViewFromAccessorIndex(
     return AccessorView<int16_t>(model, *pAccessor);
   case Accessor::ComponentType::UNSIGNED_SHORT:
     return AccessorView<uint16_t>(model, *pAccessor);
-  // UNSIGNED_INT isn't supported for vertex attribute accessors, as described
-  // in the implementation notes for EXT_mesh_features. But neither
-  // EXT_instance_features nor EXT_mesh_gpu_instancing mention such a
-  // restriction.
   case Accessor::ComponentType::UNSIGNED_INT:
+    // UNSIGNED_INT isn't supported for vertex attribute accessors, as described
+    // in the implementation notes for EXT_mesh_features. But neither
+    // EXT_instance_features nor EXT_mesh_gpu_instancing mention such a
+    // restriction.
     if (instanceAttribute) {
       return AccessorView<uint32_t>(model, *pAccessor);
     } else {

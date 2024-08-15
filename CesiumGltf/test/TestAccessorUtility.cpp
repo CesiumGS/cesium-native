@@ -1,4 +1,5 @@
 #include "CesiumGltf/AccessorUtility.h"
+#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
 
 #include <catch2/catch.hpp>
 
@@ -975,6 +976,45 @@ TEST_CASE("Test TexCoordFromAccessor") {
       expected /= 255;
 
       REQUIRE(*maybeTexCoord == expected);
+    }
+  }
+}
+
+TEST_CASE("getFeatureIdAccessorView") {
+  Model model;
+  std::vector<int8_t> featureIds{1, 2, 3, 4};
+
+  Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data.resize(featureIds.size() * sizeof(int8_t));
+  std::memcpy(
+      buffer.cesium.data.data(),
+      featureIds.data(),
+      buffer.cesium.data.size());
+  buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
+
+  BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = 0;
+  bufferView.byteLength = buffer.byteLength;
+
+  Accessor& accessor = model.accessors.emplace_back();
+  accessor.bufferView = 0;
+  accessor.componentType = Accessor::ComponentType::BYTE;
+  accessor.type = Accessor::Type::SCALAR;
+  accessor.count = bufferView.byteLength;
+
+  Node& node = model.nodes.emplace_back();
+  ExtensionExtMeshGpuInstancing& instancingExtension =
+      node.addExtension<ExtensionExtMeshGpuInstancing>();
+  instancingExtension.attributes["_FEATURE_ID_0"] = 0;
+
+  SECTION("Retrieves from valid accessor") {
+    FeatureIdAccessorType featureIdAccessor =
+        getFeatureIdAccessorView(model, node, 0);
+    for (size_t i = 0; i < featureIds.size(); i++) {
+      int64_t featureID = std::visit(
+          FeatureIdFromAccessor{static_cast<int64_t>(i)},
+          featureIdAccessor);
+      REQUIRE(featureID == featureIds[i]);
     }
   }
 }
