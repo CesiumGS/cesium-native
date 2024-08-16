@@ -560,29 +560,31 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
           std::string uri;
           std::vector<IAssetAccessor::THeader> headers;
 
-        SharedFuture<std::optional<SharedAsset<ImageCesium>>>
-        operator()(std::monostate) {
-          // We don't have a depot, we have to fetch this the old way.
-          return pAssetAccessor->get(asyncSystem, uri, headers)
-              .thenInWorkerThread(
-                  [uri = this->uri, pFactory = &this->factory](
-                      std::shared_ptr<IAssetRequest>&& pRequest) {
-            const IAssetResponse* pResponse = pRequest->response();
+          SharedFuture<std::optional<SharedAsset<ImageCesium>>>
+          operator()(std::monostate) {
+            // We don't have a depot, we have to fetch this the old way.
+            return pAssetAccessor->get(asyncSystem, uri, headers)
+                .thenInWorkerThread(
+                    [uri = this->uri, pFactory = &this->factory](
+                        std::shared_ptr<IAssetRequest>&& pRequest) {
+                      const IAssetResponse* pResponse = pRequest->response();
 
-            if (pResponse) {
-              gsl::span<const std::byte> bytes = pResponse->data();
-              auto asset = pFactory->createFrom(bytes);
-              if (asset.has_value()) {
-                return std::optional<SharedAsset<ImageCesium>>(asset.value());
-              }
+                      if (pResponse) {
+                        gsl::span<const std::byte> bytes = pResponse->data();
+                        auto asset = pFactory->createFrom(bytes);
+                        if (asset.has_value()) {
+                          return std::optional<SharedAsset<ImageCesium>>(
+                              asset.value());
+                        }
+                      }
 
-              return std::optional<SharedAsset<ImageCesium>>();
-            })
-              .share();
-        }
+                      return std::optional<SharedAsset<ImageCesium>>();
+                    })
+                .share();
+          }
 
-        SharedFuture<std::optional<SharedAsset<ImageCesium>>>
-        operator()(std::shared_ptr<SharedAssetDepot> depot) {
+          SharedFuture<std::optional<SharedAsset<ImageCesium>>>
+          operator()(std::shared_ptr<SharedAssetDepot> depot) {
             // We have a depot, this is easy!
             return depot->getOrFetch<ImageAssetFactory>(
                 asyncSystem,
@@ -590,8 +592,8 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 factory,
                 uri,
                 headers);
-        }
-      };
+          }
+        };
 
         SharedFuture<std::optional<SharedAsset<ImageCesium>>> future =
             std::visit(
@@ -616,21 +618,21 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 
               return ExternalBufferLoadResult{false, imageUri};
             }));
-        }
       }
     }
-
-    return asyncSystem.all(std::move(resolvedBuffers))
-        .thenInWorkerThread(
-            [pResult = std::move(pResult)](
-                std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
-              for (auto& bufferResult : loadResults) {
-                if (!bufferResult.success) {
-                  pResult->warnings.push_back(
-                      "Could not load the external gltf buffer: " +
-                      bufferResult.bufferUri);
-                }
-              }
-              return std::move(*pResult.release());
-            });
   }
+
+  return asyncSystem.all(std::move(resolvedBuffers))
+      .thenInWorkerThread(
+          [pResult = std::move(pResult)](
+              std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
+            for (auto& bufferResult : loadResults) {
+              if (!bufferResult.success) {
+                pResult->warnings.push_back(
+                    "Could not load the external gltf buffer: " +
+                    bufferResult.bufferUri);
+              }
+            }
+            return std::move(*pResult.release());
+          });
+}
