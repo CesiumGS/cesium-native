@@ -1060,7 +1060,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1118,7 +1118,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1126,7 +1126,8 @@ TEST_CASE("Test array PropertyTextureProperty") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -1162,7 +1163,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1170,7 +1171,8 @@ TEST_CASE("Test array PropertyTextureProperty") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -1327,14 +1329,15 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
       for (int64_t j = 0; j < value.size(); j++) {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<double>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == normalize(value[j]));
@@ -1385,7 +1388,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1393,7 +1396,8 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<double>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == normalize(value[j]));
@@ -1430,7 +1434,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1438,7 +1442,8 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<double>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == normalize(value[j]));
@@ -2727,7 +2732,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
+              PropertyArrayCopy<uint16_t> array =
                   propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(
@@ -2736,7 +2741,8 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
                 REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
               }
 
-              auto maybeArray = propertyValue.get(uv[0], uv[1]);
+              std::optional<PropertyArrayCopy<uint16_t>> maybeArray =
+                  propertyValue.get(uv[0], uv[1]);
               REQUIRE(maybeArray);
               REQUIRE(
                   static_cast<size_t>(maybeArray->size()) ==
@@ -2782,8 +2788,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
-                  propertyValue.getRaw(uv[0], uv[1]);
+              auto array = propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(
                   static_cast<size_t>(array.size()) == expectedArray.size());
@@ -2897,7 +2902,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
+              PropertyArrayCopy<uint16_t> array =
                   propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(
@@ -2953,7 +2958,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
+              PropertyArrayCopy<uint16_t> array =
                   propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(

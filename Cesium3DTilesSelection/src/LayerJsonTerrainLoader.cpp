@@ -6,6 +6,7 @@
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
 
 #include <libmorton/morton.h>

@@ -548,16 +548,17 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
     }
   }
 
-  for (Image& image : pResult->model->images) {
-    if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
-      const std::string uri = Uri::resolve(baseUrl, *image.uri);
+  if (options.resolveExternalImages) {
+    for (Image& image : pResult->model->images) {
+      if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
+        const std::string uri = Uri::resolve(baseUrl, *image.uri);
 
-      struct Operation {
-        ImageAssetFactory factory;
-        AsyncSystem& asyncSystem;
-        std::shared_ptr<IAssetAccessor> pAssetAccessor;
-        std::string uri;
-        std::vector<IAssetAccessor::THeader> headers;
+        struct Operation {
+          ImageAssetFactory factory;
+          AsyncSystem& asyncSystem;
+          std::shared_ptr<IAssetAccessor> pAssetAccessor;
+          std::string uri;
+          std::vector<IAssetAccessor::THeader> headers;
 
         SharedFuture<std::optional<SharedAsset<ImageCesium>>>
         operator()(std::monostate) {
@@ -566,70 +567,70 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               .thenInWorkerThread(
                   [uri = this->uri, pFactory = &this->factory](
                       std::shared_ptr<IAssetRequest>&& pRequest) {
-                    const IAssetResponse* pResponse = pRequest->response();
+            const IAssetResponse* pResponse = pRequest->response();
 
-                    if (pResponse) {
-                      gsl::span<const std::byte> bytes = pResponse->data();
-                      auto asset = pFactory->createFrom(bytes);
-                      if (asset.has_value()) {
-                        return std::optional<SharedAsset<ImageCesium>>(
-                            asset.value());
-                      }
-                    }
+            if (pResponse) {
+              gsl::span<const std::byte> bytes = pResponse->data();
+              auto asset = pFactory->createFrom(bytes);
+              if (asset.has_value()) {
+                return std::optional<SharedAsset<ImageCesium>>(asset.value());
+              }
 
-                    return std::optional<SharedAsset<ImageCesium>>();
-                  })
+              return std::optional<SharedAsset<ImageCesium>>();
+            })
               .share();
         }
 
         SharedFuture<std::optional<SharedAsset<ImageCesium>>>
         operator()(std::shared_ptr<SharedAssetDepot> depot) {
-          // We have a depot, this is easy!
-          return depot->getOrFetch<ImageAssetFactory>(
-              asyncSystem,
-              pAssetAccessor,
-              factory,
-              uri,
-              headers);
+            // We have a depot, this is easy!
+            return depot->getOrFetch<ImageAssetFactory>(
+                asyncSystem,
+                pAssetAccessor,
+                factory,
+                uri,
+                headers);
         }
       };
 
-      SharedFuture<std::optional<SharedAsset<ImageCesium>>> future = std::visit(
-          Operation{
-              ImageAssetFactory(options.ktx2TranscodeTargets),
-              asyncSystem,
-              pAssetAccessor,
-              uri,
-              tHeaders},
-          options.sharedAssets);
+        SharedFuture<std::optional<SharedAsset<ImageCesium>>> future =
+            std::visit(
+                Operation{
+                    ImageAssetFactory(options.ktx2TranscodeTargets),
+                    asyncSystem,
+                    pAssetAccessor,
+                    uri,
+                    tHeaders},
+                options.sharedAssets);
 
-      resolvedBuffers.push_back(future.thenInWorkerThread(
-          [pImage = &image](
-              std::optional<SharedAsset<ImageCesium>> maybeLoadedImage) {
-            std::string imageUri = *pImage->uri;
-            pImage->uri = std::nullopt;
+        resolvedBuffers.push_back(future.thenInWorkerThread(
+            [pImage = &image](
+                std::optional<SharedAsset<ImageCesium>> maybeLoadedImage) {
+              std::string imageUri = *pImage->uri;
+              pImage->uri = std::nullopt;
 
-            if (maybeLoadedImage.has_value()) {
-              pImage->cesium = std::move(maybeLoadedImage.value());
-              return ExternalBufferLoadResult{true, imageUri};
-            }
-
-            return ExternalBufferLoadResult{false, imageUri};
-          }));
-    }
-  }
-
-  return asyncSystem.all(std::move(resolvedBuffers))
-      .thenInWorkerThread(
-          [pResult = std::move(pResult)](
-              std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
-            for (auto& bufferResult : loadResults) {
-              if (!bufferResult.success) {
-                pResult->warnings.push_back(
-                    "Could not load the external gltf buffer: " +
-                    bufferResult.bufferUri);
+              if (maybeLoadedImage.has_value()) {
+                pImage->cesium = std::move(maybeLoadedImage.value());
+                return ExternalBufferLoadResult{true, imageUri};
               }
-            }
-            return std::move(*pResult.release());
-          });
-}
+
+              return ExternalBufferLoadResult{false, imageUri};
+            }));
+        }
+      }
+    }
+
+    return asyncSystem.all(std::move(resolvedBuffers))
+        .thenInWorkerThread(
+            [pResult = std::move(pResult)](
+                std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
+              for (auto& bufferResult : loadResults) {
+                if (!bufferResult.success) {
+                  pResult->warnings.push_back(
+                      "Could not load the external gltf buffer: " +
+                      bufferResult.bufferUri);
+                }
+              }
+              return std::move(*pResult.release());
+            });
+  }

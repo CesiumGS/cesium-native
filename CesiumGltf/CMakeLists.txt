@@ -53,12 +53,9 @@ target_include_directories(
 
 target_link_libraries(CesiumGltf
     PUBLIC
-    CesiumUtility
     CesiumAsync
-    GSL
+    CesiumUtility
+    Microsoft.GSL::GSL
 )
 
-install(TARGETS CesiumGltf
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltf
-)
+target_compile_definitions(CesiumGltf PRIVATE GLM_ENABLE_EXPERIMENTAL)

@@ -6,6 +6,8 @@
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeometry/Ray.h>
 
+#include <glm/mat4x4.hpp>
+
 #include <stdexcept>
 
 using namespace CesiumGeometry;

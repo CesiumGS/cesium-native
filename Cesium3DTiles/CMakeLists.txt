@@ -54,10 +54,5 @@ target_include_directories(
 target_link_libraries(Cesium3DTiles
     PUBLIC
         CesiumUtility
-        GSL
-)
-
-install(TARGETS Cesium3DTiles
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Cesium3DTiles
+        Microsoft.GSL::GSL
 )

@@ -6,6 +6,7 @@
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
