@@ -2,6 +2,13 @@
 
 #include <catch2/catch.hpp>
 
+#ifdef _MSC_VER
+// Some tests intentionally use a double value that overflows a float.
+// Disable Visual Studio's spurious warning about this:
+//  warning C4756: overflow in constant arithmetic
+#pragma warning(disable : 4756)
+#endif
+
 using namespace CesiumGltf;
 
 void testStringToBooleanConversion(
@@ -949,7 +956,7 @@ TEST_CASE("Test MetadataConversions for mat3") {
       0.0f, 0.0f, 0.0f, 1.0f
     );
     glm::dmat3 expectedDoubleMat(
-      1.0f, 2.5f, 3.0f, 
+      1.0f, 2.5f, 3.0f,
       4.5f, 5.0f, 6.0f,
       7.8f, 8.9f, 9.99f
     );
@@ -1174,7 +1181,7 @@ TEST_CASE("Test MetadataConversions for mat4") {
     // clang-format off
     glm::mat3 mat3(
       1.0f, 2.5f, 3.0f,
-      4.5f, 5.0f, 6.0f, 
+      4.5f, 5.0f, 6.0f,
       7.8f, 8.9f, 9.99f
     );
     glm::dmat4 expectedDoubleMat(
