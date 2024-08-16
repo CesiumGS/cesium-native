@@ -12,6 +12,7 @@
 - Added `CesiumGltfWriter::SchemaWriter` for serializing schemas in [EXT_structural_metadata](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata).
 - Added `resolveExternalImages` flag to `GltfReaderOptions`, which is true by default.
 - Added `removeExtensionUsed` and `removeExtensionRequired` methods to `CesiumGltf::Model`.
+- Added `getFeatureIdAccessorView` overload for retrieving feature IDs from `EXT_instance_features`.
 
 ##### Fixes :wrench:
 
