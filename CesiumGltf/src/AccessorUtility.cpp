@@ -1,5 +1,6 @@
 #include "CesiumGltf/AccessorUtility.h"
 
+#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
 #include "CesiumGltf/Model.h"
 
 namespace CesiumGltf {
@@ -37,19 +38,13 @@ getNormalAccessorView(const Model& model, const MeshPrimitive& primitive) {
   return NormalAccessorType(model, *pAccessor);
 }
 
-FeatureIdAccessorType getFeatureIdAccessorView(
+namespace {
+FeatureIdAccessorType getFeatureIdViewFromAccessorIndex(
     const Model& model,
-    const MeshPrimitive& primitive,
-    int32_t featureIdAttributeIndex) {
-  const std::string attributeName =
-      "_FEATURE_ID_" + std::to_string(featureIdAttributeIndex);
-  auto featureId = primitive.attributes.find(attributeName);
-  if (featureId == primitive.attributes.end()) {
-    return FeatureIdAccessorType();
-  }
-
+    int32_t featureIdAccessor,
+    bool instanceAttribute) {
   const Accessor* pAccessor =
-      model.getSafe<Accessor>(&model.accessors, featureId->second);
+      model.getSafe<Accessor>(&model.accessors, featureIdAccessor);
   if (!pAccessor || pAccessor->type != Accessor::Type::SCALAR ||
       pAccessor->normalized) {
     return FeatureIdAccessorType();
@@ -64,11 +59,54 @@ FeatureIdAccessorType getFeatureIdAccessorView(
     return AccessorView<int16_t>(model, *pAccessor);
   case Accessor::ComponentType::UNSIGNED_SHORT:
     return AccessorView<uint16_t>(model, *pAccessor);
+  case Accessor::ComponentType::UNSIGNED_INT:
+    // UNSIGNED_INT isn't supported for vertex attribute accessors, as described
+    // in the implementation notes for EXT_mesh_features. But neither
+    // EXT_instance_features nor EXT_mesh_gpu_instancing mention such a
+    // restriction.
+    if (instanceAttribute) {
+      return AccessorView<uint32_t>(model, *pAccessor);
+    } else {
+      return FeatureIdAccessorType();
+    }
   case Accessor::ComponentType::FLOAT:
     return AccessorView<float>(model, *pAccessor);
   default:
     return FeatureIdAccessorType();
   }
+}
+} // namespace
+
+FeatureIdAccessorType getFeatureIdAccessorView(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    int32_t featureIdAttributeIndex) {
+  const std::string attributeName =
+      "_FEATURE_ID_" + std::to_string(featureIdAttributeIndex);
+  auto featureId = primitive.attributes.find(attributeName);
+  if (featureId == primitive.attributes.end()) {
+    return FeatureIdAccessorType();
+  }
+
+  return getFeatureIdViewFromAccessorIndex(model, featureId->second, false);
+}
+
+FeatureIdAccessorType getFeatureIdAccessorView(
+    const Model& model,
+    const Node& node,
+    int32_t featureIdAttributeIndex) {
+  const auto* extInstancing =
+      node.getExtension<ExtensionExtMeshGpuInstancing>();
+  if (!extInstancing) {
+    return FeatureIdAccessorType();
+  }
+  const std::string attributeName =
+      "_FEATURE_ID_" + std::to_string(featureIdAttributeIndex);
+  auto featureId = extInstancing->attributes.find(attributeName);
+  if (featureId == extInstancing->attributes.end()) {
+    return FeatureIdAccessorType();
+  }
+  return getFeatureIdViewFromAccessorIndex(model, featureId->second, true);
 }
 
 IndexAccessorType
