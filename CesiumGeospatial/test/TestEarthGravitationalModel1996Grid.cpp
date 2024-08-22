@@ -16,7 +16,7 @@ public:
   Cartographic cartographicPosition;
   double expectedHeight;
 
-  Egm96TestCase(Cartographic position, double height)
+  Egm96TestCase(const Cartographic& position, double height)
       : cartographicPosition(position), expectedHeight(height) {}
 };
 
@@ -196,7 +196,7 @@ const std::byte zeroByte{0};
 TEST_CASE("EarthGravitationalModel1996Grid::fromFile") {
   SECTION("Loads a valid WW15MGH.DAC from file") {
     auto grid =
-        EarthGravitationalModel1996Grid::fromFile(testFilePath.string());
+        EarthGravitationalModel1996Grid::fromFile(testFilePath.u8string());
     CHECK(grid.has_value());
   }
 
@@ -206,9 +206,9 @@ TEST_CASE("EarthGravitationalModel1996Grid::fromFile") {
   }
 
   SECTION("Fails on too-short file") {
-    OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 4));
+    OwnedTempFile file(std::vector<std::byte>(4, zeroByte));
     auto grid =
-        EarthGravitationalModel1996Grid::fromFile(file.getPath().string());
+        EarthGravitationalModel1996Grid::fromFile(file.getPath().u8string());
     CHECK(!grid.has_value());
   }
 
@@ -216,9 +216,9 @@ TEST_CASE("EarthGravitationalModel1996Grid::fromFile") {
   // reason it shouldn't be able to parse any file that meets the same
   // requirements.
   SECTION("Loads an arbitrary correctly-formed file") {
-    OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 3000000));
+    OwnedTempFile file(std::vector<std::byte>(3000000, zeroByte));
     auto grid =
-        EarthGravitationalModel1996Grid::fromFile(file.getPath().string());
+        EarthGravitationalModel1996Grid::fromFile(file.getPath().u8string());
     CHECK(grid.has_value());
   }
 }
@@ -231,13 +231,13 @@ TEST_CASE("EarthGravitationalModel1996Grid::fromBuffer") {
   }
 
   SECTION("Fails on too-short buffer") {
-    gsl::span<const std::byte> buffer(&zeroByte, 4);
+    std::vector<std::byte> buffer(4, zeroByte);
     auto grid = EarthGravitationalModel1996Grid::fromBuffer(buffer);
     CHECK(!grid.has_value());
   }
 
   SECTION("Loads an arbitrary correctly-formed buffer") {
-    gsl::span<const std::byte> buffer(&zeroByte, 3000000);
+    std::vector<std::byte> buffer(3000000, zeroByte);
     auto grid = EarthGravitationalModel1996Grid::fromBuffer(buffer);
     CHECK(grid.has_value());
   }
@@ -245,7 +245,7 @@ TEST_CASE("EarthGravitationalModel1996Grid::fromBuffer") {
 
 TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
   std::optional<EarthGravitationalModel1996Grid> grid =
-      EarthGravitationalModel1996Grid::fromFile(testFilePath.string());
+      EarthGravitationalModel1996Grid::fromFile(testFilePath.u8string());
 
   SECTION("Correct values at bounds") {
     REQUIRE(grid.has_value());
@@ -256,7 +256,8 @@ TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
       CHECK(Math::equalsEpsilon(
           testCase.expectedHeight,
           obtainedValue,
-          Math::Epsilon3));
+          0.0,
+          Math::Epsilon2));
     }
   }
 
@@ -269,6 +270,7 @@ TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
       const bool equals = (Math::equalsEpsilon(
           testCase.expectedHeight,
           obtainedValue,
+          0.0,
           Math::Epsilon2));
       CHECK(equals);
     }

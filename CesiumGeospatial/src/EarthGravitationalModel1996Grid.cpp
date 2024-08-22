@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <vector>
 
@@ -28,7 +29,9 @@ constexpr size_t TOTAL_BYTES = TOTAL_VALUES * sizeof(int16_t);
 std::optional<EarthGravitationalModel1996Grid>
 CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
     const std::string& filename) {
-  std::ifstream file(filename, std::ios::binary | std::ios::ate);
+  std::ifstream file(
+      std::filesystem::u8path(filename),
+      std::ios::binary | std::ios::ate);
   if (!file.good()) {
     return std::nullopt;
   }
