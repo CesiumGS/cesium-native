@@ -1,5 +1,8 @@
 #include <CesiumNativeTests/OwnedTempFile.h>
 
+#include <catch2/catch.hpp>
+
+#include <fstream>
 #include <random>
 
 constexpr size_t randFilenameLen = 8;
@@ -28,6 +31,12 @@ OwnedTempFile::OwnedTempFile() : _filePath(getTempFilename()) {}
 OwnedTempFile::OwnedTempFile(const gsl::span<const std::byte>& buffer)
     : OwnedTempFile() {
   write(buffer);
+}
+
+OwnedTempFile::~OwnedTempFile() { std::filesystem::remove(this->_filePath); }
+
+const std::filesystem::path& OwnedTempFile::getPath() const {
+  return this->_filePath;
 }
 
 void OwnedTempFile::write(

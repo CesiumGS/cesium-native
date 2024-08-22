@@ -1,12 +1,9 @@
 #pragma once
 
-#include <catch2/catch.hpp>
 #include <gsl/span>
 
-#include <cstdio>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
+#include <ios>
 
 /**
  * Creates and holds on to a path for a temporary file on disk.
@@ -16,11 +13,9 @@ class OwnedTempFile {
 public:
   OwnedTempFile();
   OwnedTempFile(const gsl::span<const std::byte>& buffer);
-  ~OwnedTempFile() {
-    std::remove(reinterpret_cast<const char*>(_filePath.c_str()));
-  }
+  ~OwnedTempFile();
 
-  const std::filesystem::path& getPath() const { return _filePath; }
+  const std::filesystem::path& getPath() const;
 
   void write(
       const gsl::span<const std::byte>& buffer,
