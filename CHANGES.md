@@ -2,16 +2,61 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Setting the CMake variable `PRIVATE_CESIUM_SQLITE` will no longer automatically rename all of the SQLite symbols. It must also be paired with a vcpkg overlay port that renames the symbols in SQLite itself.
+- `PropertyArrayView` is now exclusively a view, with no ability to own the data it is viewing. The new `PropertyArrayCopy` can be used when an owning view is required.
+
 ##### Additions :tada:
 
+- Added `CesiumGltfWriter::SchemaWriter` for serializing schemas in [EXT_structural_metadata](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata).
+- Added `resolveExternalImages` flag to `GltfReaderOptions`, which is true by default.
+- Added `removeExtensionUsed` and `removeExtensionRequired` methods to `CesiumGltf::Model`.
+- Added `getFeatureIdAccessorView` overload for retrieving feature IDs from `EXT_instance_features`.
+- Added `CesiumGeospatial::EarthGravitationalModel96Grid` class to allow transforming heights on a WGS84 ellipsoid into heights above mean sea level using the EGM96 model.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `WebMapTileServiceRasterOverlay` that caused it to compute the `TileRow` incorrectly when used with a tiling scheme with multiple tiles in the Y direction at the root.
+- `KHR_texture_transform` is now removed from `extensionsUsed` and `extensionsRequired` after it is applied by `GltfReader`.
+
+### v0.38.0 - 2024-08-01
+
+##### Breaking Changes :mega:
+
+- `AccessorWriter` constructor now takes `std::byte*` instead of `uint8_t*`.
+
+##### Additions :tada:
+
+- Added `rayTriangle` intersection function that returns the intersection point between a ray and a triangle.
+- Added `intersectRayGltfModel` intersection function that returns the first intersection point between a ray and a glTF model.
+- Added `convertAccessorComponentTypeToPropertyComponentType`, which converts integer glTF accessor component types to their best-fitting `PropertyComponentType`.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented raster overlays from being correctly applied when a non-standard "glTF up axis" is in use.
+
+### v0.37.0 - 2024-07-01
+
+##### Additions :tada:
+
+- Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
+  - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
+  - `CESIUM_DISABLE_DEFAULT_ELLIPSOID` can be defined to disable the WGS84 default parameter, exposing through errors the places in your code that are still assuming a WGS84 ellipsoid.
 - Added `removeUnusedMeshes` and `removeUnusedMaterials` to `GltfUtilities`.
 - Added `rayEllipsoid` static method to `CesiumGeometry::IntersectionTests`.
 - Added equality operator for `Cartographic`.
 - Added `CESIUM_MSVC_STATIC_RUNTIME_ENABLED` option to the CMake scripts. It is OFF by default, and when enabled, configures any MS visual studio projects for the "Multi-threaded" (/MT) runtime library rather than "Multi-threaded DLL" (/MD)
-- Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
-  - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
-  - `CESIUM_DISABLE_DEFAULT_ELLIPSOID` can be defined to disable the WGS84 default parameter, exposing through errors the places in your code that are still assuming a WGS84 ellipsoid.
-- Added `CesiumGeospatial::EarthGravitationalModel96Grid` class to allow transforming heights on a WGS84 ellipsoid into heights above mean sea level using the EGM96 model.
+
+##### Fixes :wrench:
+
+- Fixed several problems with the loader for the 3D Tiles Instanced 3D Mesh (i3dm) format:
+  - When an instance transform cannot be decomposed into position, rotation, and scale, a warning will now be logged and an identity transformation will be used. Previously, an undefined transformation would be used.
+  - The `gltfUpAxis` property is now accounted for, if present.
+  - Paths to images in i3dm content are now resolved correctly.
+  - Extraneous spaces at the end of an external glTF URI are now ignored. These are sometimes added as padding in order to meet alignment requirements.
+- Removed an overly-eager degenerate triangle test in the 2D version of `IntersectionTests::pointInTriangle` that could discard intersections in small - but valid - triangles.
+- Fixed a bug while upsampling tiles for raster overlays that could cause them to have an incorrect bounding box, which in some cases would lead to the raster overlay being missing entirely from the upsampled tile.
 
 ### v0.36.0 - 2024-06-03
 

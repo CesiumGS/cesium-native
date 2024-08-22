@@ -7,6 +7,7 @@
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumUtility/Math.h>
 
@@ -25,21 +26,6 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
-
-namespace {
-std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
-  std::ifstream file(fileName, std::ios::binary | std::ios::ate);
-  REQUIRE(file);
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::vector<std::byte> buffer(static_cast<size_t>(size));
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
-
-  return buffer;
-}
-} // namespace
 
 TEST_CASE("CesiumGltfReader::GltfReader") {
   using namespace std::string_literals;
@@ -776,32 +762,55 @@ TEST_CASE("GltfReader::loadGltf") {
   auto pMockAssetAccessor =
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
-  GltfReader reader{};
-  Future<GltfReaderResult> future = reader.loadGltf(
-      asyncSystem,
+  std::string uri =
       "file:///" + std::filesystem::directory_entry(
                        dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
                        .path()
-                       .generic_u8string(),
-      {},
-      pMockAssetAccessor);
-  GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
-  REQUIRE(result.model);
-  CHECK(result.errors.empty());
-  // There will be warnings, because this model has accessors that don't match
-  // the Draco-decoded size. It seems to be ambiguous whether this is
-  // technically allowed or not. See:
-  // https://github.com/KhronosGroup/glTF/issues/1342
+                       .generic_u8string();
 
-  REQUIRE(result.model->images.size() == 1);
-  const CesiumGltf::Image& image = result.model->images[0];
-  CHECK(image.cesium.width == 2048);
-  CHECK(image.cesium.height == 2048);
-  CHECK(image.cesium.pixelData.size() == 2048 * 2048 * 4);
+  SECTION("loads glTF") {
+    GltfReader reader{};
+    Future<GltfReaderResult> future =
+        reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor);
+    GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
+    REQUIRE(result.model);
+    CHECK(result.errors.empty());
+    // There will be warnings, because this model has accessors that don't match
+    // the Draco-decoded size. It seems to be ambiguous whether this is
+    // technically allowed or not. See:
+    // https://github.com/KhronosGroup/glTF/issues/1342
 
-  CHECK(!result.model->buffers.empty());
-  for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
-    CHECK(!buffer.cesium.data.empty());
+    REQUIRE(result.model->images.size() == 1);
+    const CesiumGltf::Image& image = result.model->images[0];
+    CHECK(image.cesium.width == 2048);
+    CHECK(image.cesium.height == 2048);
+    CHECK(image.cesium.pixelData.size() == 2048 * 2048 * 4);
+
+    CHECK(!result.model->buffers.empty());
+    for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
+      CHECK(!buffer.cesium.data.empty());
+    }
+  }
+
+  SECTION(
+      "does not resolve external images when resolveExternalImages is false") {
+    GltfReaderOptions options;
+    options.resolveExternalImages = false;
+    GltfReader reader{};
+    Future<GltfReaderResult> future =
+        reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor, options);
+    GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
+    REQUIRE(result.model);
+    CHECK(result.errors.empty());
+    // There will be warnings, because this model has accessors that don't match
+    // the Draco-decoded size. It seems to be ambiguous whether this is
+    // technically allowed or not. See:
+    // https://github.com/KhronosGroup/glTF/issues/1342
+
+    REQUIRE(result.model->images.size() == 1);
+    const CesiumGltf::Image& image = result.model->images[0];
+    CHECK(image.uri.has_value());
+    CHECK(image.cesium.pixelData.empty());
   }
 }
 

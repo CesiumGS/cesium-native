@@ -15,6 +15,7 @@
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
@@ -534,32 +535,34 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
     }
   }
 
-  for (Image& image : pResult->model->images) {
-    if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
-      resolvedBuffers.push_back(
-          pAssetAccessor
-              ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
-              .thenInWorkerThread(
-                  [pImage = &image,
-                   ktx2TranscodeTargets = options.ktx2TranscodeTargets](
-                      std::shared_ptr<IAssetRequest>&& pRequest) {
-                    const IAssetResponse* pResponse = pRequest->response();
+  if (options.resolveExternalImages) {
+    for (Image& image : pResult->model->images) {
+      if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
+        resolvedBuffers.push_back(
+            pAssetAccessor
+                ->get(asyncSystem, Uri::resolve(baseUrl, *image.uri), tHeaders)
+                .thenInWorkerThread(
+                    [pImage = &image,
+                     ktx2TranscodeTargets = options.ktx2TranscodeTargets](
+                        std::shared_ptr<IAssetRequest>&& pRequest) {
+                      const IAssetResponse* pResponse = pRequest->response();
 
-                    std::string imageUri = *pImage->uri;
+                      std::string imageUri = *pImage->uri;
 
-                    if (pResponse) {
-                      pImage->uri = std::nullopt;
+                      if (pResponse) {
+                        pImage->uri = std::nullopt;
 
-                      ImageReaderResult imageResult =
-                          readImage(pResponse->data(), ktx2TranscodeTargets);
-                      if (imageResult.image) {
-                        pImage->cesium = std::move(*imageResult.image);
-                        return ExternalBufferLoadResult{true, imageUri};
+                        ImageReaderResult imageResult =
+                            readImage(pResponse->data(), ktx2TranscodeTargets);
+                        if (imageResult.image) {
+                          pImage->cesium = std::move(*imageResult.image);
+                          return ExternalBufferLoadResult{true, imageUri};
+                        }
                       }
-                    }
 
-                    return ExternalBufferLoadResult{false, imageUri};
-                  }));
+                      return ExternalBufferLoadResult{false, imageUri};
+                    }));
+      }
     }
   }
 

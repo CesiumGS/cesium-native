@@ -6,6 +6,7 @@
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 #include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>

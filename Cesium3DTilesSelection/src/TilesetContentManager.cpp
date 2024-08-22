@@ -15,10 +15,10 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
-#include <spdlog/logger.h>
 
 #include <chrono>
 
@@ -119,16 +119,43 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // texture coordinates which overlay had more detail.
   for (const RasterMappedTo3DTile& mapped : parent.getMappedRasterTiles()) {
     if (mapped.isMoreDetailAvailable()) {
+      const RasterOverlayTile* pReadyTile = mapped.getReadyTile();
+      if (!pReadyTile) {
+        assert(false);
+        continue;
+      }
       const CesiumGeospatial::Projection& projection =
-          mapped.getReadyTile()->getTileProvider().getProjection();
-      glm::dvec2 centerProjected =
-          details.findRectangleForOverlayProjection(projection)->getCenter();
+          pReadyTile->getTileProvider().getProjection();
+      const CesiumGeometry::Rectangle* pRectangle =
+          details.findRectangleForOverlayProjection(projection);
+      if (!pRectangle) {
+        assert(false);
+        continue;
+      }
+
+      // The subdivision center must be at exactly the location of the (0.5,
+      // 0.5) raster overlay texture coordinate for this projection.
+      glm::dvec2 centerProjected = pRectangle->getCenter();
       CesiumGeospatial::Cartographic center =
           CesiumGeospatial::unprojectPosition(
               projection,
               glm::dvec3(centerProjected, 0.0));
 
-      return RegionAndCenter{details.boundingRegion, center};
+      // Subdivide the same rectangle that was used to generate the raster
+      // overlay texture coordinates. But union it with the tight-fitting
+      // content bounds in order to avoid error from repeated subdivision in
+      // extreme cases.
+      CesiumGeospatial::GlobeRectangle globeRectangle =
+          CesiumGeospatial::unprojectRectangleSimple(projection, *pRectangle);
+      globeRectangle =
+          globeRectangle.computeUnion(details.boundingRegion.getRectangle());
+
+      return RegionAndCenter{
+          CesiumGeospatial::BoundingRegion(
+              globeRectangle,
+              details.boundingRegion.getMinimumHeight(),
+              details.boundingRegion.getMaximumHeight()),
+          center};
     }
   }
 
@@ -226,6 +253,7 @@ void createQuadtreeSubdividedChildren(
   const CesiumGeospatial::GlobeRectangle& parentRectangle =
       maybeRegionAndCenter->region.getRectangle();
   const CesiumGeospatial::Cartographic& center = maybeRegionAndCenter->center;
+
   sw.setBoundingVolume(CesiumGeospatial::BoundingRegionWithLooseFittingHeights(
       CesiumGeospatial::BoundingRegion(
           CesiumGeospatial::GlobeRectangle(
@@ -721,13 +749,17 @@ TilesetContentManager::TilesetContentManager(
               // and create corresponding loader
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result =
-                    TilesetJsonLoader::createLoader(
-                        pLogger,
-                        url,
-                        tilesetJson,
-                        ellipsoid);
-                return asyncSystem.createResolvedFuture(std::move(result));
+                return TilesetJsonLoader::createLoader(
+                           asyncSystem,
+                           pAssetAccessor,
+                           pLogger,
+                           url,
+                           pCompletedRequest->headers(),
+                           tilesetJson,
+                           ellipsoid)
+                    .thenImmediately(
+                        [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                               result) { return std::move(result); });
               } else {
                 const auto formatIt = tilesetJson.FindMember("format");
                 bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&

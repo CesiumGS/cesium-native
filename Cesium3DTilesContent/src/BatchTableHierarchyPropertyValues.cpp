@@ -1,6 +1,6 @@
 #include "BatchTableHierarchyPropertyValues.h"
 
-#include "CesiumUtility/Assert.h"
+#include <CesiumUtility/Assert.h>
 
 #include <glm/common.hpp>
 

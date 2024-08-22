@@ -6,6 +6,8 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 
+#include <CesiumUtility/Assert.h>
+
 #include <cmath>
 #include <cstdint>
 

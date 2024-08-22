@@ -38,7 +38,4 @@ target_link_libraries(CesiumGeometry PUBLIC
     CesiumUtility
 )
 
-install(TARGETS CesiumGeometry
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGeometry
-)
+target_compile_definitions(CesiumGeometry PRIVATE GLM_ENABLE_EXPERIMENTAL)
