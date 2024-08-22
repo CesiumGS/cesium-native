@@ -27,16 +27,24 @@ public:
    * @brief Attempts to create a {@link EarthGravitationalModel1996Grid} from the given file.
    *
    * This method expects a file in the format of the WW15MGH.DAC 15-arcminute
-   * grid.
+   * grid. The file must be at least 721 * 1440 * 2 = 2,076,480 bytes.
+   * Any additional bytes at the end of the file are ignored.
+   *
+   * @returns The instance created from the file, or `std::nullopt` if the file
+   * could not be loaded or is invalid.
    */
   static std::optional<EarthGravitationalModel1996Grid>
   fromFile(const std::string& filename);
 
   /**
-   * Attempts to create a {@link EarthGravitationalModel1996Grid} from the given buffer.
+   * @brief Attempts to create a {@link EarthGravitationalModel1996Grid} from the given buffer.
    *
    * This method expects the buffer to contain the contents of the WW15MGH.DAC
-   * 15-arcminute grid.
+   * 15-arcminute grid. It must be at least 721 * 1440 * 2 = 2,076,480 bytes.
+   * Any additional bytes at the end of the buffer are ignored.
+   *
+   * @returns The instance created from the buffer, or `std::nullopt` if the
+   * buffer cannot be interpreted as an EGM96 grid.
    */
   static std::optional<EarthGravitationalModel1996Grid>
   fromBuffer(const gsl::span<const std::byte>& buffer);
@@ -44,7 +52,7 @@ public:
   /**
    * @brief Samples the height at the given position.
    *
-   * @param position The position to sample.
+   * @param position The position to sample. The `height` is ignored.
    * @returns The height (in meters) of the EGM96 surface above the WGS84
    * ellipsoid. A positive value indicates that EGM96 is above the ellipsoid's
    * surface, while a negative value indicates that EGM96 is below the

@@ -16,9 +16,12 @@ namespace {
 // representing the range (0E, 360E)
 
 // The number of rows in the file
-const size_t NUM_ROWS = 721;
+constexpr size_t NUM_ROWS = 721;
 // The number of columns in the file
-const size_t NUM_COLUMNS = 1440;
+constexpr size_t NUM_COLUMNS = 1440;
+
+constexpr size_t TOTAL_VALUES = NUM_ROWS * NUM_COLUMNS;
+constexpr size_t TOTAL_BYTES = TOTAL_VALUES * sizeof(int16_t);
 
 } // namespace
 
@@ -30,10 +33,10 @@ CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
     return std::nullopt;
   }
 
-  std::streamsize size = file.tellg();
+  size_t size = std::min(size_t(file.tellg()), TOTAL_BYTES);
   file.seekg(0, std::ios::beg);
 
-  std::vector<std::byte> buffer(static_cast<size_t>(size));
+  std::vector<std::byte> buffer(size);
   file.read(reinterpret_cast<char*>(buffer.data()), size);
   return fromBuffer(buffer);
 }
@@ -41,21 +44,18 @@ CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
 std::optional<EarthGravitationalModel1996Grid>
 CesiumGeospatial::EarthGravitationalModel1996Grid::fromBuffer(
     const gsl::span<const std::byte>& buffer) {
-  const size_t expectedValues = NUM_ROWS * NUM_COLUMNS;
-  const size_t expectedBytes = expectedValues * sizeof(int16_t);
-
-  if (buffer.size_bytes() < expectedBytes) {
+  if (buffer.size_bytes() < TOTAL_BYTES) {
     // Not enough data - is this a valid WW15MGH.DAC?
     return std::nullopt;
   }
 
   std::vector<int16_t> gridValues;
-  gridValues.resize(expectedValues);
+  gridValues.resize(TOTAL_VALUES);
 
   const std::byte* pRead = buffer.data();
   std::byte* pWrite = reinterpret_cast<std::byte*>(gridValues.data());
 
-  for (size_t i = 0; i < expectedBytes; i += 2) {
+  for (size_t i = 0; i < TOTAL_BYTES; i += 2) {
     // WW15MGH.DAC is in big endian, so we swap the bytes
     pWrite[i] = pRead[i + 1];
     pWrite[i + 1] = pRead[i];
