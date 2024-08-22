@@ -40,7 +40,7 @@ CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
   file.seekg(0, std::ios::beg);
 
   std::vector<std::byte> buffer(size);
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
+  file.read(reinterpret_cast<char*>(buffer.data()), std::streamsize(size));
   return fromBuffer(buffer);
 }
 
