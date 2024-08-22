@@ -36,7 +36,7 @@ CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
     return std::nullopt;
   }
 
-  size_t size = std::min(size_t(file.tellg()), TOTAL_BYTES);
+  size_t size = std::min(size_t(file.tellg()), size_t(TOTAL_BYTES));
   file.seekg(0, std::ios::beg);
 
   std::vector<std::byte> buffer(size);
@@ -81,8 +81,8 @@ double EarthGravitationalModel1996Grid::sampleHeight(
   const size_t verticalIndex = static_cast<size_t>(verticalIndexDecimal);
 
   // Get the normalized position of the coordinates within the grid tile
-  const double xn = horizontalIndexDecimal - horizontalIndex;
-  const double iyn = verticalIndexDecimal - verticalIndex;
+  const double xn = horizontalIndexDecimal - double(horizontalIndex);
+  const double iyn = verticalIndexDecimal - double(verticalIndex);
   const double ixn = 1.0 - xn;
   const double yn = 1.0 - iyn;
 
