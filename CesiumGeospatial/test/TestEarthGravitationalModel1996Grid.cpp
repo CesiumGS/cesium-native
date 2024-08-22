@@ -1,4 +1,4 @@
-#include <CesiumGeospatial/EarthGravitationalModel96Grid.h>
+#include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
 #include <CesiumNativeTests/OwnedTempFile.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
@@ -20,7 +20,7 @@ public:
 };
 
 const std::filesystem::path testFilePath =
-    std::filesystem::path(CesiumGeospatial_TEST_DATA_DIR) / "WW15MGH.DAC";
+    std::filesystem::path(CESIUM_NATIVE_DATA_DIR) / "WW15MGH.DAC";
 
 // Long, Lat values calculated randomly and paired with expected results from
 // https://www.unavco.org/software/geodetic-utilities/geoid-height-calculator/geoid-height-calculator.html
@@ -192,29 +192,22 @@ const Egm96TestCase boundsCases[] = {
 
 const std::byte zeroByte{0};
 
-TEST_CASE("EarthGravitationalModel96Grid::fromFile") {
+TEST_CASE("EarthGravitationalModel1996Grid::fromFile") {
   SECTION("Loads a valid WW15MGH.DAC from file") {
-    auto grid = EarthGravitationalModel96Grid::fromFile(testFilePath.string());
+    auto grid =
+        EarthGravitationalModel1996Grid::fromFile(testFilePath.string());
     CHECK(grid.has_value());
   }
 
   SECTION("Fails on missing file") {
-    auto grid = EarthGravitationalModel96Grid::fromFile("_does_not_exist");
+    auto grid = EarthGravitationalModel1996Grid::fromFile("_does_not_exist");
     CHECK(!grid.has_value());
   }
 
   SECTION("Fails on too-short file") {
     OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 4));
     auto grid =
-        EarthGravitationalModel96Grid::fromFile(file.getPath().string());
-    CHECK(!grid.has_value());
-  }
-
-  SECTION("Fails on odd-length file") {
-    // Use a file that is otherwise long enough to be considered valid
-    OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 3000001));
-    auto grid =
-        EarthGravitationalModel96Grid::fromFile(file.getPath().string());
+        EarthGravitationalModel1996Grid::fromFile(file.getPath().string());
     CHECK(!grid.has_value());
   }
 
@@ -224,40 +217,34 @@ TEST_CASE("EarthGravitationalModel96Grid::fromFile") {
   SECTION("Loads an arbitrary correctly-formed file") {
     OwnedTempFile file(gsl::span<const std::byte>(&zeroByte, 3000000));
     auto grid =
-        EarthGravitationalModel96Grid::fromFile(file.getPath().string());
+        EarthGravitationalModel1996Grid::fromFile(file.getPath().string());
     CHECK(grid.has_value());
   }
 }
 
-TEST_CASE("EarthGravitationalModel96Grid::fromBuffer") {
+TEST_CASE("EarthGravitationalModel1996Grid::fromBuffer") {
   SECTION("Loads a valid WW15MGH.DAC from buffer") {
     auto grid =
-        EarthGravitationalModel96Grid::fromBuffer(readFile(testFilePath));
+        EarthGravitationalModel1996Grid::fromBuffer(readFile(testFilePath));
     CHECK(grid.has_value());
   }
 
   SECTION("Fails on too-short buffer") {
     gsl::span<const std::byte> buffer(&zeroByte, 4);
-    auto grid = EarthGravitationalModel96Grid::fromBuffer(buffer);
-    CHECK(!grid.has_value());
-  }
-
-  SECTION("Fails on odd-length buffer") {
-    gsl::span<const std::byte> buffer(&zeroByte, 3000001);
-    auto grid = EarthGravitationalModel96Grid::fromBuffer(buffer);
+    auto grid = EarthGravitationalModel1996Grid::fromBuffer(buffer);
     CHECK(!grid.has_value());
   }
 
   SECTION("Loads an arbitrary correctly-formed buffer") {
     gsl::span<const std::byte> buffer(&zeroByte, 3000000);
-    auto grid = EarthGravitationalModel96Grid::fromBuffer(buffer);
+    auto grid = EarthGravitationalModel1996Grid::fromBuffer(buffer);
     CHECK(grid.has_value());
   }
 }
 
-TEST_CASE("EarthGravitationalModel96Grid::sampleHeight") {
-  std::optional<EarthGravitationalModel96Grid> grid =
-      EarthGravitationalModel96Grid::fromFile(testFilePath.string());
+TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
+  std::optional<EarthGravitationalModel1996Grid> grid =
+      EarthGravitationalModel1996Grid::fromFile(testFilePath.string());
 
   SECTION("Correct values at bounds") {
     REQUIRE(grid.has_value());

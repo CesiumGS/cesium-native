@@ -1,4 +1,4 @@
-#include <CesiumGeospatial/EarthGravitationalModel96Grid.h>
+#include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 
@@ -10,16 +10,20 @@ using namespace CesiumUtility;
 
 namespace CesiumGeospatial {
 
+namespace {
+
 // WW15MGH.DAC has 721 rows representing the range (90N, 90S) and 1440 columns
 // representing the range (0E, 360E)
 
 // The number of rows in the file
-const int NUM_ROWS = 721;
+const size_t NUM_ROWS = 721;
 // The number of columns in the file
-const int NUM_COLUMNS = 1440;
+const size_t NUM_COLUMNS = 1440;
 
-std::optional<EarthGravitationalModel96Grid>
-CesiumGeospatial::EarthGravitationalModel96Grid::fromFile(
+} // namespace
+
+std::optional<EarthGravitationalModel1996Grid>
+CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
     const std::string& filename) {
   std::ifstream file(filename, std::ios::binary | std::ios::ate);
   if (!file.good()) {
@@ -34,48 +38,44 @@ CesiumGeospatial::EarthGravitationalModel96Grid::fromFile(
   return fromBuffer(buffer);
 }
 
-std::optional<EarthGravitationalModel96Grid>
-CesiumGeospatial::EarthGravitationalModel96Grid::fromBuffer(
+std::optional<EarthGravitationalModel1996Grid>
+CesiumGeospatial::EarthGravitationalModel1996Grid::fromBuffer(
     const gsl::span<const std::byte>& buffer) {
-  const size_t expectedBytes = NUM_ROWS * NUM_COLUMNS * sizeof(int16_t);
+  const size_t expectedValues = NUM_ROWS * NUM_COLUMNS;
+  const size_t expectedBytes = expectedValues * sizeof(int16_t);
 
-  if (
-      // Not enough data - is this a valid WW15MGH.DAC?
-      buffer.size_bytes() < expectedBytes ||
-      // WW15MGH.DAC should just be full of 2-byte int16_t, so if it's not even
-      // then something has gone wrong (so we should stop now before we overflow
-      // the end of the gridValues buffer!)
-      buffer.size_bytes() % 2 != 0) {
+  if (buffer.size_bytes() < expectedBytes) {
+    // Not enough data - is this a valid WW15MGH.DAC?
     return std::nullopt;
   }
 
-  const size_t size = buffer.size_bytes();
-  const std::byte* pRead = buffer.data();
   std::vector<int16_t> gridValues;
-  gridValues.resize(size / 2);
+  gridValues.resize(expectedValues);
+
+  const std::byte* pRead = buffer.data();
   std::byte* pWrite = reinterpret_cast<std::byte*>(gridValues.data());
 
-  for (size_t i = 0; i < size; i += 2) {
+  for (size_t i = 0; i < expectedBytes; i += 2) {
     // WW15MGH.DAC is in big endian, so we swap the bytes
     pWrite[i] = pRead[i + 1];
     pWrite[i + 1] = pRead[i];
   }
 
-  return EarthGravitationalModel96Grid(std::move(gridValues));
+  return EarthGravitationalModel1996Grid(std::move(gridValues));
 }
 
-double EarthGravitationalModel96Grid::sampleHeight(
+double EarthGravitationalModel1996Grid::sampleHeight(
     const Cartographic& position) const {
   const double longitude = Math::zeroToTwoPi(position.longitude);
   const double latitude =
       Math::clamp(position.latitude, -Math::PiOverTwo, Math::PiOverTwo);
 
   const double horizontalIndexDecimal = (NUM_COLUMNS * longitude) / Math::TwoPi;
-  const int horizontalIndex = static_cast<int>(horizontalIndexDecimal);
+  const size_t horizontalIndex = static_cast<size_t>(horizontalIndexDecimal);
 
   const double verticalIndexDecimal =
       ((NUM_ROWS - 1) * (Math::PiOverTwo - latitude)) / Math::OnePi;
-  const int verticalIndex = static_cast<int>(verticalIndexDecimal);
+  const size_t verticalIndex = static_cast<size_t>(verticalIndexDecimal);
 
   // Get the normalized position of the coordinates within the grid tile
   const double xn = horizontalIndexDecimal - horizontalIndex;
@@ -97,21 +97,20 @@ double EarthGravitationalModel96Grid::sampleHeight(
   return result;
 }
 
-EarthGravitationalModel96Grid::EarthGravitationalModel96Grid(
+EarthGravitationalModel1996Grid::EarthGravitationalModel1996Grid(
     std::vector<int16_t>&& gridValues)
     : _gridValues(gridValues) {}
 
-double EarthGravitationalModel96Grid::getHeightForIndices(
-    const int horizontal,
-    const int vertical) const {
+double EarthGravitationalModel1996Grid::getHeightForIndices(
+    const size_t horizontal,
+    const size_t vertical) const {
 
-  int clampedVertical = vertical;
-  if (vertical > NUM_ROWS - 1) {
+  size_t clampedVertical = vertical;
+  if (vertical >= NUM_ROWS) {
     clampedVertical = NUM_ROWS - 1;
   }
 
-  const size_t index =
-      static_cast<size_t>(clampedVertical * NUM_COLUMNS + horizontal);
+  const size_t index = clampedVertical * NUM_COLUMNS + horizontal;
   const double result = _gridValues[index] / 100.0;
 
   return result;
