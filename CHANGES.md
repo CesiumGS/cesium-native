@@ -13,6 +13,7 @@
 - Added `resolveExternalImages` flag to `GltfReaderOptions`, which is true by default.
 - Added `removeExtensionUsed` and `removeExtensionRequired` methods to `CesiumGltf::Model`.
 - Added `getFeatureIdAccessorView` overload for retrieving feature IDs from `EXT_instance_features`.
+- Added `CesiumGeospatial::EarthGravitationalModel1996Grid` class to allow transforming heights on a WGS84 ellipsoid into heights above mean sea level using the EGM96 model.
 
 ##### Fixes :wrench:
 
