@@ -2,8 +2,6 @@
 
 #include "Library.h"
 
-#include <CesiumGeospatial/Cartographic.h>
-
 #include <gsl/span>
 
 #include <cstdint>
@@ -12,6 +10,8 @@
 #include <vector>
 
 namespace CesiumGeospatial {
+
+class Cartographic;
 
 /**
  * @brief Loads and queries heights from an Earth Gravitational Model 1996

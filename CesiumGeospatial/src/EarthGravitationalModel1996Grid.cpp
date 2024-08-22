@@ -1,5 +1,5 @@
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
-#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 
 #include <algorithm>

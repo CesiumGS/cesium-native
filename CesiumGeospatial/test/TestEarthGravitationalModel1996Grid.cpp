@@ -1,3 +1,4 @@
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
 #include <CesiumNativeTests/OwnedTempFile.h>
 #include <CesiumNativeTests/readFile.h>
