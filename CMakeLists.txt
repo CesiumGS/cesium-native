@@ -43,20 +43,20 @@ set(PACKAGES_PRIVATE
 set(PACKAGES_TEST catch2)
 
 if(NOT VCPKG_MANIFEST_MODE)
-  set(PACKAGES_ALL ${PACKAGES_PUBLIC})
-  list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
-  list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
+    set(PACKAGES_ALL ${PACKAGES_PUBLIC})
+    list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
+    list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
-  ezvcpkg_fetch(
-      COMMIT 2024.07.12
-      PACKAGES ${PACKAGES_ALL}
-      # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
-      CLEAN_BUILDTREES
-      # Update the cmake toolchain so it can find the above packages
-      UPDATE_TOOLCHAIN
-      # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
-      SERIALIZE
-  )
+    ezvcpkg_fetch(
+        COMMIT 2024.07.12
+        PACKAGES ${PACKAGES_ALL}
+        # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
+        CLEAN_BUILDTREES
+        # Update the cmake toolchain so it can find the above packages
+        UPDATE_TOOLCHAIN
+        # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
+        SERIALIZE
+    )
 endif()
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
@@ -64,8 +64,6 @@ if (NOT CMAKE_TOOLCHAIN_FILE)
 else()
     message(STATUS "CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE}")
 endif()
-
-execute_process(COMMAND vcpkg install WORKING_DIRECTORY CMAKE_CURRENT_LIST_DIR)
 
 # Set defaults that should be set BEFORE compiler / IDE detection
 include("cmake/defaults.cmake")
@@ -77,19 +75,17 @@ project(cesium-native
 
 include(GNUInstallDirs)
 
-set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
-if(VCPKG_MANIFEST_MODE)
-  set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
-endif()
-
-message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
-
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
+set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
+
 if(VCPKG_MANIFEST_MODE)
-  set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
+    set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
+    set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
 endif()
 
 message(STATUS "PACKAGE_BASE_DIR ${PACKAGE_BASE_DIR}")
+message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
+
 
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
