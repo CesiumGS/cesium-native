@@ -45,7 +45,7 @@ template <typename AssetType>
 class AssetContainer
     : public CesiumUtility::ReferenceCounted<AssetContainer<AssetType>, true> {
 public:
-  uint32_t counter;
+  std::atomic<std::int32_t> counter;
   IdHash assetId;
   AssetType asset;
 
@@ -213,6 +213,14 @@ public:
       std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
     IdHash idHash = std::hash<std::string>{}(uri);
 
+    // We need to avoid:
+    // - Two assets starting loading before the first asset has updated the
+    //   pendingAssets map
+    // - An asset starting to load after the previous load has been removed from
+    //   the pendingAssets map, but before the completed asset has been added to
+    //   the assets map.
+    std::lock_guard lock(pendingAssetsMutex);
+
     auto existingIt = this->assets.find(idHash);
     if (existingIt != this->assets.end()) {
       // We've already loaded an asset with this ID - we can just use that.
@@ -247,8 +255,11 @@ public:
             .thenInMainThread([idHash,
                                pThiz = this,
                                pAssets = &this->assets,
+                               pPendingAssetsMutex = &this->pendingAssetsMutex,
                                pPendingAssets = &this->pendingAssets](
                                   std::optional<AssetType>& result) {
+              std::lock_guard lock(*pPendingAssetsMutex);
+
               // Get rid of our future.
               pPendingAssets->erase(idHash);
 
@@ -300,6 +311,8 @@ private:
       IdHash,
       CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>>>
       pendingAssets;
+  // Mutex for checking or editing the pendingAssets map
+  std::mutex pendingAssetsMutex;
 
   friend class SharedAsset<AssetType>;
 };
