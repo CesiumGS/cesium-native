@@ -37,16 +37,16 @@ message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
  set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
-# # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
-# # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
-# # OpenSSL and abseil are both dependencies of s2geometry
+# These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
+# to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
+# OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
-# # Packages only used for testing
+# Packages only used for testing
 set(PACKAGES_TEST catch2)
 
 if(NOT VCPKG_MANIFEST_MODE)
@@ -84,8 +84,6 @@ project(cesium-native
 
 include(GNUInstallDirs)
 
-set(PACKAGE_BASE_DIR )
-
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES}")
 if(VCPKG_MANIFEST_MODE)
   set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
@@ -103,7 +101,7 @@ option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-nat
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
-        set(PACKAGE_DIR ${PACKAGES_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
 
         if(CESIUM_INSTALL_HEADERS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_HEADERS)
@@ -124,7 +122,7 @@ endif()
 
 if(CESIUM_INSTALL_STATIC_LIBS)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
-        set(PACKAGE_DIR ${VCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
         if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
@@ -198,9 +196,11 @@ endif()
 
 # On the CI builds, I have to do this explicitly for some reason or it fails to find the vcpkg packages.
 # The toolchain is supposed to manage this, but I haven't figured out why it isn't yet.
-list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}/share/s2")
-list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}/share")
-list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}")
+
+list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share/s2")
+list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share")
+list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
+
 # Find the VCPKG dependnecies
 # Note that while we could push these into the extern/CMakeLists.txt as an organization tidy-up, that would require
 # us to update the minimum version of CMake to 3.24 and to add the GLOBAL option to the find_package calls, otherwise
