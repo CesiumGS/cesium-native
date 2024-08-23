@@ -4,7 +4,7 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
 
 if (NOT VCPKG_TRIPLET)
@@ -22,43 +22,54 @@ endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 
+
+set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
+if(VCPKG_MANIFEST_MODE)
+  set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
+endif()
+
+message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
-# These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
-# to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
-# OpenSSL and abseil are both dependencies of s2geometry
+ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
+# # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
+# # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
+# # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
-# Packages only used for testing
+# # Packages only used for testing
 set(PACKAGES_TEST catch2)
 
-set(PACKAGES_ALL ${PACKAGES_PUBLIC})
-list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
-list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
+if(NOT VCPKG_MANIFEST_MODE)
+  set(PACKAGES_ALL ${PACKAGES_PUBLIC})
+  list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
+  list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
-ezvcpkg_fetch(
-    COMMIT 2024.07.12
-    PACKAGES ${PACKAGES_ALL}
-    # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
-    CLEAN_BUILDTREES
-    # Update the cmake toolchain so it can find the above packages
-    UPDATE_TOOLCHAIN
-    # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
-    SERIALIZE
-)
+  ezvcpkg_fetch(
+      COMMIT 2024.07.12
+      PACKAGES ${PACKAGES_ALL}
+      # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
+      CLEAN_BUILDTREES
+      # Update the cmake toolchain so it can find the above packages
+      UPDATE_TOOLCHAIN
+      # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
+      SERIALIZE
+  )
+endif()
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Specify the VCPKG toolchain on the command line as '-DCMAKE_TOOLCHAIN_FILE=<VCPKG_ROOT>/scripts/buildsystems/vcpkg.cmake'")
 else()
     message(STATUS "CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE}")
 endif()
+
+execute_process(COMMAND vcpkg install WORKING_DIRECTORY CMAKE_CURRENT_LIST_DIR)
 
 # Set defaults that should be set BEFORE compiler / IDE detection
 include("cmake/defaults.cmake")
@@ -70,7 +81,18 @@ project(cesium-native
 
 include(GNUInstallDirs)
 
-message(STATUS "EZVCPKG_PACKAGES_DIR ${EZVCPKG_PACKAGES_DIR}")
+set(PACKAGE_BASE_DIR )
+
+set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES}")
+if(VCPKG_MANIFEST_MODE)
+  set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
+else()
+
+endif()
+
+message(STATUS "PACKAGE_BASE_DIR ${PACKAGE_BASE_DIR}")
+
+
 
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
@@ -78,7 +100,7 @@ option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-nat
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
-        set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        set(PACKAGE_DIR ${PACKAGES_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
 
         if(CESIUM_INSTALL_HEADERS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_HEADERS)
@@ -99,7 +121,7 @@ endif()
 
 if(CESIUM_INSTALL_STATIC_LIBS)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
-        set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        set(PACKAGE_DIR ${VCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
         if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
