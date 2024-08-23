@@ -25,13 +25,6 @@ endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 
-
-set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
-if(VCPKG_MANIFEST_MODE)
-  set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
-endif()
-
-message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
@@ -84,7 +77,14 @@ project(cesium-native
 
 include(GNUInstallDirs)
 
-set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES}")
+set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
+if(VCPKG_MANIFEST_MODE)
+  set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
+endif()
+
+message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
+
+set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
 if(VCPKG_MANIFEST_MODE)
   set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
 else()
@@ -92,8 +92,6 @@ else()
 endif()
 
 message(STATUS "PACKAGE_BASE_DIR ${PACKAGE_BASE_DIR}")
-
-
 
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
