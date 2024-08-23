@@ -608,12 +608,12 @@ postProcessContentInWorkerThread(
                     "Warning when resolving external gltf buffers from "
                     "{}:\n- {}",
                     result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                    CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
               } else {
                 SPDLOG_LOGGER_ERROR(
                     tileLoadInfo.pLogger,
                     "Warning resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                    CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
               }
             }
 

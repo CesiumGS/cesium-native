@@ -6,6 +6,8 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCounted.h>
 
 #include <cstddef>
 #include <forward_list>
@@ -39,7 +41,9 @@ public:
 /**
  * Contains the current state of an asset within the SharedAssetDepot.
  */
-template <typename AssetType> class AssetContainer {
+template <typename AssetType>
+class AssetContainer
+    : public CesiumUtility::ReferenceCounted<AssetContainer<AssetType>, true> {
 public:
   uint32_t counter;
   IdHash assetId;
@@ -64,36 +68,16 @@ public:
  * @tparam AssetType The type of the asset that we're getting a reference to.
  */
 template <typename AssetType> class SharedAsset {
-  typedef std::variant<AssetContainer<AssetType>*, AssetType> AssetContents;
-
 public:
-  SharedAsset(const AssetType& asset) : contents(asset) {}
+  SharedAsset(AssetType& asset)
+      : contents(new AssetContainer<AssetType>(0, asset, nullptr)) {}
   SharedAsset(std::nullptr_t) : contents(nullptr) {}
-  SharedAsset() : contents(AssetType()) {}
+  SharedAsset()
+      : contents(new AssetContainer<AssetType>(0, AssetType(), nullptr)) {}
 
-  AssetType* get() {
-    struct Operation {
-      AssetType* operator()(AssetType& asset) { return &asset; }
+  AssetType* get() { return &this->contents->asset; }
 
-      AssetType* operator()(AssetContainer<AssetType>* container) {
-        return &container->asset;
-      }
-    };
-
-    return std::visit(Operation{}, this->contents);
-  }
-
-  const AssetType* get() const {
-    struct Operation {
-      const AssetType* operator()(const AssetType& asset) { return &asset; }
-
-      const AssetType* operator()(const AssetContainer<AssetType>* container) {
-        return &container->asset;
-      }
-    };
-
-    return std::visit(Operation{}, this->contents);
-  }
+  const AssetType* get() const { return &this->contents->asset; }
 
   AssetType* operator->() { return this->get(); }
   const AssetType* operator->() const { return this->get(); }
@@ -122,10 +106,10 @@ public:
   void operator=(const SharedAsset<AssetType>& other) {
     if (*this != other) {
       // Decrement this reference
-      this->maybeChangeCounter(-1);
+      this->changeCounter(-1);
       this->contents = other.contents;
       // Increment the new reference
-      this->maybeChangeCounter(1);
+      this->changeCounter(1);
     }
   }
 
@@ -134,20 +118,20 @@ public:
    */
   void operator=(SharedAsset<AssetType>&& other) noexcept {
     if (*this != other) {
-      this->maybeChangeCounter(-1);
+      this->changeCounter(-1);
       this->contents = std::move(other.contents);
       other.contents = nullptr;
     }
   }
 
-  ~SharedAsset() { this->maybeChangeCounter(-1); }
+  ~SharedAsset() { this->changeCounter(-1); }
 
   /**
    * Copy constructor.
    */
   SharedAsset(const SharedAsset<AssetType>& other) {
     contents = other.contents;
-    this->maybeChangeCounter(1);
+    this->changeCounter(1);
   }
 
   /**
@@ -159,32 +143,27 @@ public:
   }
 
 private:
-  SharedAsset(AssetContainer<AssetType>* container) : contents(container) {
-    this->maybeChangeCounter(1);
+  SharedAsset(
+      CesiumUtility::IntrusivePointer<AssetContainer<AssetType>> container)
+      : contents(container) {
+    this->changeCounter(1);
   }
 
-  void maybeChangeCounter(int amt) {
-    struct Operation {
-      int amt;
-
-      void operator()(AssetContainer<AssetType>* asset) {
-        if (asset != nullptr) {
-          asset->counter += this->amt;
-          if (asset->counter <= 0) {
-            asset->parent->remove(asset->assetId);
-          }
+  void changeCounter(int amt) {
+    if (contents != nullptr) {
+      contents->counter += amt;
+      if (contents->counter <= 0) {
+        if (contents->parent != nullptr) {
+          contents->parent->remove(contents->assetId);
         }
+        contents = nullptr;
       }
-
-      void operator()([[maybe_unused]] AssetType& asset) {}
-    };
-
-    std::visit(Operation{amt}, this->contents);
+    }
   }
 
   // A SharedAssetRef might point to an asset the SharedAssetDepot, or it
   // might not. If it doesn't, we own this asset now.
-  AssetContents contents;
+  CesiumUtility::IntrusivePointer<AssetContainer<AssetType>> contents;
 
   friend class SharedAssetDepot;
   friend class AssetContainer<AssetType>;
@@ -211,7 +190,7 @@ public:
     }
 
     auto [newIt, ok] =
-        this->assets.emplace(assetId, AssetContainer(assetId, asset, this));
+        this->assets.emplace(assetId, new AssetContainer(assetId, asset, this));
     CESIUM_ASSERT(ok);
 
     return newIt->second.toRef();
@@ -239,7 +218,7 @@ public:
       // We've already loaded an asset with this ID - we can just use that.
       return asyncSystem
           .createResolvedFuture(std::optional<SharedAsset<AssetType>>(
-              SharedAsset<AssetType>(&existingIt->second)))
+              SharedAsset<AssetType>(existingIt->second)))
           .share();
     }
 
@@ -276,13 +255,16 @@ public:
               if (result.has_value()) {
                 auto [it, ok] = pAssets->emplace(
                     idHash,
-                    AssetContainer<AssetType>(idHash, result.value(), pThiz));
+                    new AssetContainer<AssetType>(
+                        idHash,
+                        result.value(),
+                        pThiz));
                 if (!ok) {
                   return std::optional<SharedAsset<AssetType>>();
                 }
 
                 return std::optional<SharedAsset<AssetType>>(
-                    std::move(SharedAsset<AssetType>(&it->second)));
+                    std::move(SharedAsset<AssetType>(it->second)));
               }
 
               return std::optional<SharedAsset<AssetType>>();
@@ -309,7 +291,10 @@ private:
   void remove(IdHash hash) { this->assets.erase(hash); }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
-  std::unordered_map<IdHash, AssetContainer<AssetType>> assets;
+  std::unordered_map<
+      IdHash,
+      CesiumUtility::IntrusivePointer<AssetContainer<AssetType>>>
+      assets;
   // Futures for assets that still aren't loaded yet.
   std::unordered_map<
       IdHash,

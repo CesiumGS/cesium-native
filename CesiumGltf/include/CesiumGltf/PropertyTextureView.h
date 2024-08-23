@@ -748,15 +748,15 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    const ImageCesium& image = *_pModel->images[imageIndex].cesium;
+    const SharedAsset<ImageCesium>& image = _pModel->images[imageIndex].cesium;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
-    status = checkChannels(channels, image);
+    status = checkChannels(channels, *image);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    if (channels.size() * image.bytesPerChannel != elementSize) {
+    if (channels.size() * image->bytesPerChannel != elementSize) {
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 

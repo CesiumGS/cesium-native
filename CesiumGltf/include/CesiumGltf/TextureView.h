@@ -125,7 +125,7 @@ public:
    */
   TextureView(
       const Sampler& sampler,
-      const ImageCesium& image,
+      const SharedAsset<ImageCesium>& image,
       int64_t textureCoordinateSetIndex,
       const ExtensionKhrTextureTransform* pKhrTextureTransformExtension =
           nullptr,

@@ -79,7 +79,7 @@ TextureView::TextureView(
 
 TextureView::TextureView(
     const Sampler& sampler,
-    const ImageCesium& image,
+    const SharedAsset<ImageCesium>& image,
     int64_t textureCoordinateSetIndex,
     const ExtensionKhrTextureTransform* pKhrTextureTransformExtension,
     const TextureViewOptions& options) noexcept
