@@ -209,8 +209,8 @@ void Tileset::_updateLodTransitions(
 
       // Remove tile from fade-out list if it is back on the render list.
       TileSelectionState::Result selectionResult =
-          (*tileIt)->getLastSelectionState().getResult(
-              frameState.currentFrameNumber);
+          getPreviousTraversal(frameState.previousTraversal, *tileIt, pNextTile)
+              .selectionResult;
       if (selectionResult == TileSelectionState::Result::Rendered) {
         // This tile will already be on the render list.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
@@ -353,7 +353,14 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       currentFrameNumber};
 
   if (!frustums.empty()) {
-    this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
+    this->_visitTileIfNeeded(
+        frameState,
+        0,
+        false,
+        *pRootTile,
+        0,
+        nullptr,
+        result);
   } else {
     result = ViewUpdateResult();
   }
@@ -429,6 +436,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   return result;
 }
+
 int32_t Tileset::getNumberOfTilesLoaded() const {
   return this->_pTilesetContentManager->getNumberOfTilesLoaded();
 }
@@ -820,7 +828,14 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
+    size_t previousTraversalNextIndex,
+    const Tile* pNextTile,
     ViewUpdateResult& result) {
+  TraversedTile traversedTile = this->getPreviousTraversal(
+      frameState.previousTraversal,
+      previousTraversalNextIndex,
+      tile,
+      pNextTile);
 
   std::vector<double>& distances = this->_distances;
   computeDistances(tile, frameState.frustums, distances);
@@ -870,8 +885,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   }
 
   if (!cullResult.shouldVisit) {
-    const TileSelectionState lastFrameSelectionState =
-        tile.getLastSelectionState();
+    const TileSelectionState::Result lastFrameSelectionState =
+        traversedTile.selectionResult;
 
     markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
     tile.setLastSelectionState(TileSelectionState(
@@ -914,6 +929,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       ancestorMeetsSse,
       tile,
       tilePriority,
+      previousTraversalNextIndex,
+      pNextTile,
       result);
 }
 
@@ -1213,6 +1230,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
                            // children!
     Tile& tile,
     double tilePriority,
+    size_t previousTraversalNextIndex,
+    const Tile* pNextTile,
     ViewUpdateResult& result) {
   ++result.tilesVisited;
   result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
@@ -1393,24 +1412,34 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
+    size_t previousTraversalNextIndex,
+    const Tile* pNextTile,
     ViewUpdateResult& result) {
   TraversalDetails traversalDetails;
 
   // TODO: actually visit near-to-far, rather than in order of occurrence.
   gsl::span<Tile> children = tile.getChildren();
-  for (Tile& child : children) {
+  for (size_t i = 0; i < children.size(); ++i) {
+    Tile& child = children[i];
+    const Tile* pChildNextTile =
+        i < children.size() - 1 ? &children[i + 1] : pNextTile;
     const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,
         depth + 1,
         ancestorMeetsSse,
         child,
+        previousTraversalNextIndex,
+        pChildNextTile,
         result);
+
+    previousTraversalNextIndex = childTraversal.previousTraversalNextIndex;
 
     traversalDetails.allAreRenderable &= childTraversal.allAreRenderable;
     traversalDetails.anyWereRenderedLastFrame |=
         childTraversal.anyWereRenderedLastFrame;
     traversalDetails.notYetRenderableCount +=
         childTraversal.notYetRenderableCount;
+    traversalDetails.previousTraversalNextIndex = previousTraversalNextIndex;
   }
 
   return traversalDetails;
@@ -1563,6 +1592,50 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
 
   return traversalDetails;
+}
+
+// Either all children are traversed, or none are traversed.
+
+Tileset::TraversedTile Tileset::getPreviousTraversal(
+    const std::vector<TraversedTile>& previousTraversal,
+    size_t& previousTraversalNextIndex,
+    const Tile& tile,
+    const Tile* pNextTile) const {
+  // If the tile currently being traversed is not the same as the tile that was
+  // traversed at this point in the previous traversal, there are two
+  // possibilities:
+  //
+  // 1. Children of the last tile were traversed previously, but not this time.
+  // So `tile` is the first sibling _after_ the children (and possibly their
+  // descendants).
+  // 2. `tile` is the first child of some tile for which no children were
+  // previously traversed.
+  //
+  // So we step the previousTraversalPosition forward until we find either
+  // `tile` or `pNextTile`. In case (1), we'll find `tile`. In case (2), we'll
+  // find `pNextTile`, and the `tile` has no last selection state.
+  while (true) {
+    if (previousTraversalNextIndex >= previousTraversal.size()) {
+      // Past the end of the previous traversal.
+      return TraversedTile{&tile, TileSelectionState::Result::None};
+    }
+
+    const TraversedTile& traversed =
+        previousTraversal[previousTraversalNextIndex];
+    if (traversed.pTile == &tile) {
+      // We traversed this tile at this point in the previous traversal.
+      ++previousTraversalNextIndex;
+      return traversed;
+    }
+
+    if (traversed.pTile == pNextTile) {
+      // This tile was not visited in the previous traversal.
+      return TraversedTile{&tile, TileSelectionState::Result::None};
+    }
+
+    // Skip tile that was traversed previously, but not this time.
+    ++previousTraversalNextIndex;
+  }
 }
 
 } // namespace Cesium3DTilesSelection

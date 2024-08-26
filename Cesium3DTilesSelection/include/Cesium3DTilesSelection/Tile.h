@@ -401,33 +401,6 @@ public:
   }
 
   /**
-   * @brief Returns the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @return The last selection state
-   */
-  TileSelectionState& getLastSelectionState() noexcept {
-    return this->_lastSelectionState;
-  }
-
-  /** @copydoc Tile::getLastSelectionState() */
-  const TileSelectionState& getLastSelectionState() const noexcept {
-    return this->_lastSelectionState;
-  }
-
-  /**
-   * @brief Set the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param newState The new stace
-   */
-  void setLastSelectionState(const TileSelectionState& newState) noexcept {
-    this->_lastSelectionState = newState;
-  }
-
-  /**
    * @brief Determines the number of bytes in this tile's geometry and texture
    * data.
    */
@@ -519,9 +492,6 @@ private:
   double _geometricError;
   TileRefine _refine;
   glm::dmat4x4 _transform;
-
-  // Selection state
-  TileSelectionState _lastSelectionState;
 
   // tile content
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;

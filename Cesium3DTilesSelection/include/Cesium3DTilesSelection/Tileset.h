@@ -319,6 +319,13 @@ private:
      * {@link TilesetOptions::loadingDescendantLimit}.
      */
     uint32_t notYetRenderableCount = 0;
+
+    size_t previousTraversalNextIndex = 0;
+  };
+
+  struct TraversedTile {
+    const Tile* pTile;
+    TileSelectionState::Result selectionResult;
   };
 
   /**
@@ -333,7 +340,17 @@ private:
     std::vector<double> fogDensities;
     int32_t lastFrameNumber;
     int32_t currentFrameNumber;
+    std::vector<TraversedTile> previousTraversal;
+    // std::vector<TraversedTile> currentTraversal;
+    // size_t previousTraversalPosition;
+    // size_t currentTraversalPosition;
   };
+
+  TraversedTile getPreviousTraversal(
+      const std::vector<TraversedTile>& previousTraversal,
+      size_t& previousTraversalNextIndex,
+      const Tile& tile,
+      const Tile* pNextTile) const;
 
   TraversalDetails _renderLeaf(
       const FrameState& frameState,
@@ -364,6 +381,8 @@ private:
       bool ancestorMeetsSse,
       Tile& tile,
       double tilePriority,
+      size_t previousTraversalNextIndex,
+      const Tile* pNextTile,
       ViewUpdateResult& result);
 
   struct CullResult {
@@ -394,12 +413,16 @@ private:
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
+      size_t previousTraversalNextIndex,
+      const Tile* pNextTile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const FrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
+      size_t previousTraversalNextIndex,
+      const Tile* pNextTile,
       ViewUpdateResult& result);
 
   /**
