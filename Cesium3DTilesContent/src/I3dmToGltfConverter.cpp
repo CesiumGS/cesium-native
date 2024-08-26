@@ -14,6 +14,8 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include <algorithm>
@@ -155,13 +157,14 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
 
 glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   // First rotation: up
-  auto upRot = rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
+  auto upRot = CesiumUtility::Math::rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
   // We can rotate a point vector by a quaternion using q * (0, v) *
   // conj(q). But here we are doing an inverse rotation of the right vector into
   // the "up frame."
-  glm::quat temp = conjugate(upRot) * glm::quat(0.0f, right) * upRot;
+  glm::quat temp = glm::conjugate(upRot) * glm::quat(0.0f, right) * upRot;
   glm::vec3 innerRight(temp.x, temp.y, temp.z);
-  glm::quat rightRot = rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
+  glm::quat rightRot =
+      CesiumUtility::Math::rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
   return upRot * rightRot;
 }
 
@@ -196,7 +199,7 @@ std::optional<I3dmContent> parseI3dmJson(
     errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
-        featureTableJson.GetParseError(),
+        static_cast<uint64_t>(featureTableJson.GetParseError()),
         featureTableJson.GetErrorOffset()));
     return {};
   }
@@ -539,7 +542,7 @@ composeInstanceTransform(size_t i, const DecodedInstances& decodedInstances) {
     result = translate(result, glm::dvec3(decodedInstances.positions[i]));
   }
   if (!decodedInstances.rotations.empty()) {
-    result = result * toMat4(glm::dquat(decodedInstances.rotations[i]));
+    result = result * glm::mat4_cast(glm::dquat(decodedInstances.rotations[i]));
   }
   if (!decodedInstances.scales.empty()) {
     result = scale(result, glm::dvec3(decodedInstances.scales[i]));
@@ -617,7 +620,7 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
         [&](auto&& arg) {
           for (unsigned i = 0; i < count; ++i) {
             auto quat = toGlmQuat<glm::dquat>(arg[i]);
-            instances[i] = instances[i] * glm::toMat4(quat);
+            instances[i] = instances[i] * glm::mat4_cast(quat);
           }
         },
         quatAccessorView);

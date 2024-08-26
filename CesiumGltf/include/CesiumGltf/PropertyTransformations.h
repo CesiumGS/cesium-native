@@ -79,7 +79,7 @@ T transformValue(
 }
 
 template <typename T>
-PropertyArrayView<T> transformArray(
+PropertyArrayCopy<T> transformArray(
     const PropertyArrayView<T>& value,
     const std::optional<PropertyArrayView<T>>& offset,
     const std::optional<PropertyArrayView<T>>& scale) {
@@ -96,13 +96,13 @@ PropertyArrayView<T> transformArray(
     }
   }
 
-  return PropertyArrayView<T>(std::move(result));
+  return PropertyArrayCopy(std::move(result));
 }
 
 template <
     typename T,
     typename NormalizedType = typename TypeToNormalizedType<T>::type>
-PropertyArrayView<NormalizedType> transformNormalizedArray(
+PropertyArrayCopy<NormalizedType> transformNormalizedArray(
     const PropertyArrayView<T>& value,
     const std::optional<PropertyArrayView<NormalizedType>>& offset,
     const std::optional<PropertyArrayView<NormalizedType>>& scale) {
@@ -119,11 +119,11 @@ PropertyArrayView<NormalizedType> transformNormalizedArray(
     }
   }
 
-  return PropertyArrayView<NormalizedType>(std::move(result));
+  return PropertyArrayCopy(std::move(result));
 }
 
 template <glm::length_t N, typename T>
-PropertyArrayView<glm::vec<N, double>> transformNormalizedVecNArray(
+PropertyArrayCopy<glm::vec<N, double>> transformNormalizedVecNArray(
     const PropertyArrayView<glm::vec<N, T>>& value,
     const std::optional<PropertyArrayView<glm::vec<N, double>>>& offset,
     const std::optional<PropertyArrayView<glm::vec<N, double>>>& scale) {
@@ -140,11 +140,11 @@ PropertyArrayView<glm::vec<N, double>> transformNormalizedVecNArray(
     }
   }
 
-  return PropertyArrayView<glm::vec<N, double>>(std::move(result));
+  return PropertyArrayCopy(std::move(result));
 }
 
 template <glm::length_t N, typename T>
-PropertyArrayView<glm::mat<N, N, double>> transformNormalizedMatNArray(
+PropertyArrayCopy<glm::mat<N, N, double>> transformNormalizedMatNArray(
     const PropertyArrayView<glm::mat<N, N, T>>& value,
     const std::optional<PropertyArrayView<glm::mat<N, N, double>>>& offset,
     const std::optional<PropertyArrayView<glm::mat<N, N, double>>>& scale) {
@@ -161,6 +161,6 @@ PropertyArrayView<glm::mat<N, N, double>> transformNormalizedMatNArray(
     }
   }
 
-  return PropertyArrayView<glm::mat<N, N, double>>(std::move(result));
+  return PropertyArrayCopy(std::move(result));
 }
 } // namespace CesiumGltf

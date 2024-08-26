@@ -5,13 +5,20 @@
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/common.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <cerrno>
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
+
+#ifndef GLM_ENABLE_EXPERIMENTAL
+// If we define GLM_ENABLE_EXPERIMENTAL here, we undefine it at the end of this
+// header file.
+#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL_defined_locally
+#endif
+#include <glm/gtx/string_cast.hpp>
 
 namespace CesiumGltf {
 /**
@@ -845,3 +852,8 @@ struct MetadataConversions<
 #pragma endregion
 
 } // namespace CesiumGltf
+
+#ifdef GLM_ENABLE_EXPERIMENTAL_defined_locally
+#undef GLM_ENABLE_EXPERIMENTAL
+#undef GLM_ENABLE_EXPERIMENTAL_defined_locally
+#endif
