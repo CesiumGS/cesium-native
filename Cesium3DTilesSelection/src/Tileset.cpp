@@ -319,7 +319,6 @@ bool Tileset::tryCompleteHeightRequest(
   std::vector<std::string> warnings;
   for (TerrainQuery& query : request.queries) {
     if (query.candidateTiles.empty()) {
-      ++findCandidateTilesCalls;
       query.findCandidateTiles(pRoot, warnings);
     } else {
       std::swap(query.candidateTiles, query.previousCandidateTiles);
