@@ -116,7 +116,7 @@ Partly covered by C++ Core Guidelines.
 * By default, use signed types ([ES.106](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Res-nonnegative)).
 * By default, use fixed width integer types, e.g. `int32_t` instead of `int`.
 * Use constructor notation for very safe integer conversions (where the range is checked) rather than `static_cast`.
-* Use a safe form of index checking accessing elements in standard library containers:
+* Use a safe form of index checking when accessing elements in standard library containers:
 
 ```cpp
 if (meshId >= 0 && size_t(meshId) < model.meshes.size())
