@@ -318,9 +318,24 @@ bool Tileset::tryCompleteHeightRequest(
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
   for (TerrainQuery& query : request.queries) {
-    query.candidateTiles.clear();
+    if (query.candidateTiles.empty()) {
+      ++findCandidateTilesCalls;
+      query.findCandidateTiles(pRoot, warnings);
+    } else {
+      std::swap(query.candidateTiles, query.previousCandidateTiles);
 
-    query.findCandidateTiles(pRoot, warnings);
+      query.candidateTiles.clear();
+
+      for (Tile* pCandidate : query.previousCandidateTiles) {
+        TileLoadState loadState = pCandidate->getState();
+        if (loadState == TileLoadState::Done ||
+            loadState == TileLoadState::Failed) {
+          query.findCandidateTiles(pCandidate, warnings);
+        } else {
+          query.candidateTiles.emplace_back(pCandidate);
+        }
+      }
+    }
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.candidateTiles) {

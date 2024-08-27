@@ -16,6 +16,7 @@ public:
   CesiumGeometry::Ray ray;
   CesiumGltfContent::GltfUtilities::IntersectResult intersectResult = {};
   std::vector<Tile*> candidateTiles = {};
+  std::vector<Tile*> previousCandidateTiles = {};
 
   void intersectVisibleTile(Tile* pTile);
 
