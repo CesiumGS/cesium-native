@@ -663,14 +663,18 @@ void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
-    std::vector<std::byte>& bufferData,
+    std::byte* bufferData,
     size_t i) {
-  copyInstanceToBuffer(position, rotation, scale, &bufferData[i * totalStride]);
+  copyInstanceToBuffer(
+      position,
+      rotation,
+      scale,
+      bufferData + (i * totalStride));
 }
 
 bool copyInstanceToBuffer(
     const glm::dmat4& instanceTransform,
-    std::vector<std::byte>& bufferData,
+    std::byte* bufferData,
     size_t i) {
   bool result = true;
   glm::dvec3 position, scale, skew;
@@ -764,7 +768,7 @@ void instantiateGltfInstances(
                 instanceTransform * modelInstanceTransform;
             if (!copyInstanceToBuffer(
                     finalTransform,
-                    instanceBuffer.cesium.data,
+                    &instanceBuffer.cesium.data[dataBaseOffset],
                     destInstanceIndx++)) {
               result.errors.emplaceWarning(
                   "Matrix decompose failed. Default identity values copied to "
