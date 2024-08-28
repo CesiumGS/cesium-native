@@ -327,8 +327,9 @@ bool Tileset::tryCompleteHeightRequest(
 
       for (Tile* pCandidate : query.previousCandidateTiles) {
         TileLoadState loadState = pCandidate->getState();
-        if (loadState == TileLoadState::Done ||
-            loadState == TileLoadState::Failed) {
+        if (!pCandidate->getChildren().empty() &&
+            (loadState == TileLoadState::Done ||
+             loadState == TileLoadState::Failed)) {
           query.findCandidateTiles(pCandidate, warnings);
         } else {
           query.candidateTiles.emplace_back(pCandidate);

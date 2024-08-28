@@ -230,43 +230,30 @@ IntersectionTests::rayOBB(const Ray& ray, const OrientedBoundingBox& obb) {
 std::optional<double> IntersectionTests::rayOBBParametric(
     const Ray& ray,
     const OrientedBoundingBox& obb) {
+  // Extract the rotation from the OBB's rotatin/scale transformation and
+  // invert it. This code assumes that there is not a negative scale, that
+  // there's no skew, that there's no other funny business. Non-uniform scale
+  // is fine!
   const glm::dmat3& halfAxes = obb.getHalfAxes();
-  glm::dmat4 cubeToWorld = glm::dmat4(
-      glm::dvec4(halfAxes[0], 0.0),
-      glm::dvec4(halfAxes[1], 0.0),
-      glm::dvec4(halfAxes[2], 0.0),
-      glm::dvec4(obb.getCenter(), 1.0));
-  glm::dmat4 worldToCube = glm::affineInverse(cubeToWorld);
+  glm::dvec3 halfLengths = obb.getLengths() * 0.5;
+  glm::dmat3 rotationOnly(
+      halfAxes[0] / halfLengths.x,
+      halfAxes[1] / halfLengths.y,
+      halfAxes[2] / halfLengths.z);
+  glm::dmat3 inverseRotation = glm::transpose(rotationOnly);
 
-  Ray rayForAABB = ray.transform(worldToCube);
-  std::optional<double> intersection = IntersectionTests::rayAABBParametric(
-      rayForAABB,
-      AxisAlignedBox(-1.0, -1.0, -1.0, 1.0, 1.0, 1.0));
+  // Find the equivalent ray in the coordinate system where the OBB is not
+  // rotated or translated. That is, where it's an AABB at the origin.
+  glm::dvec3 relativeOrigin = ray.getOrigin() - obb.getCenter();
+  glm::dvec3 rayOrigin(inverseRotation * relativeOrigin);
+  glm::dvec3 rayDirection(inverseRotation * ray.getDirection());
 
-  if (!intersection)
-    return intersection;
-
-  glm::dvec3 pointRelativeToAABB = rayForAABB.pointFromDistance(*intersection);
-  return glm::length(
-      glm::dvec3(cubeToWorld * glm::dvec4(pointRelativeToAABB, 1.0)) -
-      ray.getOrigin());
-
-  // const glm::dmat3x3& inverseHalfAxis = obb.getInverseHalfAxes();
-  // glm::dmat4x4 transformation(
-  //     glm::dvec4(glm::normalize(inverseHalfAxis[0]), 0.0),
-  //     glm::dvec4(glm::normalize(inverseHalfAxis[1]), 0.0),
-  //     glm::dvec4(glm::normalize(inverseHalfAxis[2]), 0.0),
-  //     glm::dvec4(0.0, 0.0, 0.0, 1.0));
-
-  // glm::dvec3 center =
-  //     glm::dvec3(transformation * glm::dvec4(obb.getCenter(), 1.0));
-  // glm::dvec3 halfLengths = obb.getLengths() / 2.0;
-  // glm::dvec3 ll = center - halfLengths;
-  // glm::dvec3 ur = center + halfLengths;
-
-  // return rayAABBParametric(
-  //     ray.transform(transformation),
-  //     AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z));
+  // Find the distance to the new ray's intersection with the AABB, which is
+  // equivalent to the distance of the original ray intersection with the OBB.
+  glm::dvec3 ll = -halfLengths;
+  glm::dvec3 ur = +halfLengths;
+  AxisAlignedBox aabb(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z);
+  return rayAABBParametric(Ray(rayOrigin, rayDirection), aabb);
 }
 
 std::optional<glm::dvec3>
