@@ -10,6 +10,7 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/norm.hpp>
 
 #include <limits>
@@ -229,23 +230,43 @@ IntersectionTests::rayOBB(const Ray& ray, const OrientedBoundingBox& obb) {
 std::optional<double> IntersectionTests::rayOBBParametric(
     const Ray& ray,
     const OrientedBoundingBox& obb) {
+  const glm::dmat3& halfAxes = obb.getHalfAxes();
+  glm::dmat4 cubeToWorld = glm::dmat4(
+      glm::dvec4(halfAxes[0], 0.0),
+      glm::dvec4(halfAxes[1], 0.0),
+      glm::dvec4(halfAxes[2], 0.0),
+      glm::dvec4(obb.getCenter(), 1.0));
+  glm::dmat4 worldToCube = glm::affineInverse(cubeToWorld);
 
-  const glm::dmat3x3& inverseHalfAxis = obb.getInverseHalfAxes();
-  glm::dmat4x4 transformation(
-      glm::dvec4(glm::normalize(inverseHalfAxis[0]), 0.0),
-      glm::dvec4(glm::normalize(inverseHalfAxis[1]), 0.0),
-      glm::dvec4(glm::normalize(inverseHalfAxis[2]), 0.0),
-      glm::dvec4(0.0, 0.0, 0.0, 1.0));
+  Ray rayForAABB = ray.transform(worldToCube);
+  std::optional<double> intersection = IntersectionTests::rayAABBParametric(
+      rayForAABB,
+      AxisAlignedBox(-1.0, -1.0, -1.0, 1.0, 1.0, 1.0));
 
-  glm::dvec3 center =
-      glm::dvec3(transformation * glm::dvec4(obb.getCenter(), 1.0));
-  glm::dvec3 halfLengths = obb.getLengths() / 2.0;
-  glm::dvec3 ll = center - halfLengths;
-  glm::dvec3 ur = center + halfLengths;
+  if (!intersection)
+    return intersection;
 
-  return rayAABBParametric(
-      ray.transform(transformation),
-      AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z));
+  glm::dvec3 pointRelativeToAABB = rayForAABB.pointFromDistance(*intersection);
+  return glm::length(
+      glm::dvec3(cubeToWorld * glm::dvec4(pointRelativeToAABB, 1.0)) -
+      ray.getOrigin());
+
+  // const glm::dmat3x3& inverseHalfAxis = obb.getInverseHalfAxes();
+  // glm::dmat4x4 transformation(
+  //     glm::dvec4(glm::normalize(inverseHalfAxis[0]), 0.0),
+  //     glm::dvec4(glm::normalize(inverseHalfAxis[1]), 0.0),
+  //     glm::dvec4(glm::normalize(inverseHalfAxis[2]), 0.0),
+  //     glm::dvec4(0.0, 0.0, 0.0, 1.0));
+
+  // glm::dvec3 center =
+  //     glm::dvec3(transformation * glm::dvec4(obb.getCenter(), 1.0));
+  // glm::dvec3 halfLengths = obb.getLengths() / 2.0;
+  // glm::dvec3 ll = center - halfLengths;
+  // glm::dvec3 ur = center + halfLengths;
+
+  // return rayAABBParametric(
+  //     ray.transform(transformation),
+  //     AxisAlignedBox(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z));
 }
 
 std::optional<glm::dvec3>
