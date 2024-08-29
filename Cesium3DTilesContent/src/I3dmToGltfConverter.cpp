@@ -650,27 +650,31 @@ void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
-    std::byte* bufferLoc) {
+    std::byte* pBufferLoc) {
   glm::vec3 fposition(position);
-  std::memcpy(bufferLoc, &fposition, sizeof(fposition));
+  std::memcpy(pBufferLoc, &fposition, sizeof(fposition));
   glm::quat frotation(rotation);
-  std::memcpy(bufferLoc + rotOffset, &frotation, sizeof(frotation));
+  std::memcpy(pBufferLoc + rotOffset, &frotation, sizeof(frotation));
   glm::vec3 fscale(scale);
-  std::memcpy(bufferLoc + scaleOffset, &fscale, sizeof(fscale));
+  std::memcpy(pBufferLoc + scaleOffset, &fscale, sizeof(fscale));
 }
 
 void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
-    std::vector<std::byte>& bufferData,
+    std::byte* pBufferData,
     size_t i) {
-  copyInstanceToBuffer(position, rotation, scale, &bufferData[i * totalStride]);
+  copyInstanceToBuffer(
+      position,
+      rotation,
+      scale,
+      pBufferData + (i * totalStride));
 }
 
 bool copyInstanceToBuffer(
     const glm::dmat4& instanceTransform,
-    std::vector<std::byte>& bufferData,
+    std::byte* pBufferData,
     size_t i) {
   bool result = true;
   glm::dvec3 position, scale, skew;
@@ -688,7 +692,7 @@ bool copyInstanceToBuffer(
     scale = glm::dvec3(1.0);
     result = false;
   }
-  copyInstanceToBuffer(position, rotation, scale, bufferData, i);
+  copyInstanceToBuffer(position, rotation, scale, pBufferData, i);
   return result;
 }
 
@@ -764,7 +768,7 @@ void instantiateGltfInstances(
                 instanceTransform * modelInstanceTransform;
             if (!copyInstanceToBuffer(
                     finalTransform,
-                    instanceBuffer.cesium.data,
+                    &instanceBuffer.cesium.data[dataBaseOffset],
                     destInstanceIndx++)) {
               result.errors.emplaceWarning(
                   "Matrix decompose failed. Default identity values copied to "
