@@ -24,19 +24,6 @@ class Cartographic;
 class CESIUMGEOSPATIAL_API EarthGravitationalModel1996Grid final {
 public:
   /**
-   * @brief Attempts to create a {@link EarthGravitationalModel1996Grid} from the given file.
-   *
-   * This method expects a file in the format of the WW15MGH.DAC 15-arcminute
-   * grid. The file must be at least 721 * 1440 * 2 = 2,076,480 bytes.
-   * Any additional bytes at the end of the file are ignored.
-   *
-   * @returns The instance created from the file, or `std::nullopt` if the file
-   * could not be loaded or is invalid.
-   */
-  static std::optional<EarthGravitationalModel1996Grid>
-  fromFile(const std::string& filename);
-
-  /**
    * @brief Attempts to create a {@link EarthGravitationalModel1996Grid} from the given buffer.
    *
    * This method expects the buffer to contain the contents of the WW15MGH.DAC

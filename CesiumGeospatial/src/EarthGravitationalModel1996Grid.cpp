@@ -27,24 +27,6 @@ constexpr size_t TOTAL_BYTES = TOTAL_VALUES * sizeof(int16_t);
 } // namespace
 
 std::optional<EarthGravitationalModel1996Grid>
-CesiumGeospatial::EarthGravitationalModel1996Grid::fromFile(
-    const std::string& filename) {
-  std::ifstream file(
-      std::filesystem::u8path(filename),
-      std::ios::binary | std::ios::ate);
-  if (!file.good()) {
-    return std::nullopt;
-  }
-
-  size_t size = std::min(size_t(file.tellg()), size_t(TOTAL_BYTES));
-  file.seekg(0, std::ios::beg);
-
-  std::vector<std::byte> buffer(size);
-  file.read(reinterpret_cast<char*>(buffer.data()), std::streamsize(size));
-  return fromBuffer(buffer);
-}
-
-std::optional<EarthGravitationalModel1996Grid>
 CesiumGeospatial::EarthGravitationalModel1996Grid::fromBuffer(
     const gsl::span<const std::byte>& buffer) {
   if (buffer.size_bytes() < TOTAL_BYTES) {
