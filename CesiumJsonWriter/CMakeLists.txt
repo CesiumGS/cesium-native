@@ -37,16 +37,9 @@ target_sources(
         ${CESIUM_JSON_WRITER_PUBLIC_HEADERS}
 )
 
-target_compile_definitions(
-    CesiumJsonWriter
-    PRIVATE
-        ${CESIUM_NATIVE_RAPIDJSON_DEFINES}
-)
-
 target_include_directories(
     CesiumJsonWriter
     PUBLIC
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
