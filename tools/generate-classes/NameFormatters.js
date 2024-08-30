@@ -25,12 +25,12 @@ const NameFormatters = {
     const pieces = name.match(qualifiedTypeNameRegex);
     if (pieces && pieces.groups && pieces.groups.namespace) {
       if (pieces.groups.namespace === namespace) {
-        return `"${namespace}/${pieces.groups.name}.h"`;
+        return `<${namespace}/${pieces.groups.name}.h>`;
       } else {
         return `<${pieces.groups.namespace}/${pieces.groups.name}.h>`;
       }
     } else {
-      return `"${namespace}/${name}.h"`;
+      return `<${namespace}/${name}.h>`;
     }
   },
 
