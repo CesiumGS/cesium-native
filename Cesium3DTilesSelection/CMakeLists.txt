@@ -31,7 +31,7 @@ target_sources(
 
 target_include_directories(
     Cesium3DTilesSelection
-    SYSTEM PUBLIC
+    PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
         ${CESIUM_NATIVE_LIBMORTON_INCUDE_DIR}

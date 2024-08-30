@@ -30,7 +30,7 @@ target_sources(
 
 target_include_directories(
     CesiumJsonReader
-    SYSTEM PUBLIC
+    PUBLIC
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE

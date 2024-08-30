@@ -48,7 +48,7 @@ target_compile_definitions(
 
 target_include_directories(
     CesiumGltfWriter
-    SYSTEM PUBLIC
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE

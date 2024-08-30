@@ -31,7 +31,7 @@ target_sources(
 
 target_include_directories(
   CesiumRasterOverlays
-    SYSTEM PUBLIC
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src

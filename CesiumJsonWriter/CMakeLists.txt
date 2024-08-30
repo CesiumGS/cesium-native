@@ -45,7 +45,7 @@ target_compile_definitions(
 
 target_include_directories(
     CesiumJsonWriter
-    SYSTEM PUBLIC
+    PUBLIC
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE

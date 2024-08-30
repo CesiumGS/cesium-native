@@ -43,7 +43,7 @@ target_sources(
 
 target_include_directories(
     CesiumGltfReader
-    SYSTEM PUBLIC
+    PUBLIC
         # Necessary for `draco/draco_features.h`
         ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include

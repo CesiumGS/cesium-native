@@ -30,7 +30,7 @@ target_sources(
 
 target_include_directories(
     CesiumGeometry
-    SYSTEM PUBLIC
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
