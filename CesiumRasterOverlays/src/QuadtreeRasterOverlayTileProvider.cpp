@@ -319,7 +319,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
           .catchImmediately([](std::exception&& e) {
             // Turn an exception into an error.
             LoadedRasterOverlayImage result;
-            result.errors.emplace_back(e.what());
+            result.errors.emplaceError(e.what());
             return result;
           })
           .thenImmediately([&cachedBytes = this->_cachedBytes,
@@ -328,7 +328,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                             asyncSystem = this->getAsyncSystem(),
                             loadParentTile = std::move(loadParentTile)](
                                LoadedRasterOverlayImage&& loaded) {
-            if (loaded.image && loaded.errors.empty() &&
+            if (loaded.image && !loaded.errors.hasErrors() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
               cachedBytes += int64_t(loaded.image->pixelData.size());
@@ -470,11 +470,11 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           // For non-useful sets of images, just return an empty image,
           // signalling that the parent tile should be used instead.
           // See https://github.com/CesiumGS/cesium-native/issues/316 for an
-          // edge case that is not yet handled.
+          // edge case that is not yet handled. Be sure to pass through any
+          // errors and warnings.
           return LoadedRasterOverlayImage{
               ImageCesium(),
               Rectangle(),
-              {},
               {},
               {},
               false};
@@ -659,7 +659,6 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     return LoadedRasterOverlayImage{
         std::nullopt,
         targetRectangle,
-        {},
         {},
         {},
         true // TODO
