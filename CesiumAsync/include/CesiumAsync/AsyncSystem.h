@@ -315,7 +315,7 @@ private:
                   results.reserve(tasks.size());
 
                   for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-                    results.emplace_back(it->get());
+                    results.emplace_back(std::move(it->get()));
                   }
                   return results;
                 });
