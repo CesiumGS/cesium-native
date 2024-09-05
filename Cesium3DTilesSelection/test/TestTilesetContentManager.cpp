@@ -1311,7 +1311,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
                 overlayTile.getRectangle(),
                 {},
                 {},
-                {},
                 true});
       }
     };
