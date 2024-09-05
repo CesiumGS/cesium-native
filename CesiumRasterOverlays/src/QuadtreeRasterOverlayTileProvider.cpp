@@ -472,11 +472,17 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           // See https://github.com/CesiumGS/cesium-native/issues/316 for an
           // edge case that is not yet handled. Be sure to pass through any
           // errors and warnings.
+          ErrorList errors;
+          for (LoadedQuadtreeImage& image : images) {
+            if (image.pLoaded) {
+              errors.merge(image.pLoaded->errors);
+            }
+          }
           return LoadedRasterOverlayImage{
               ImageCesium(),
               Rectangle(),
               {},
-              {},
+              std::move(errors),
               false};
         }
 
@@ -645,6 +651,12 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
     std::vector<LoadedQuadtreeImage>&& images) {
+  ErrorList errors;
+  for (LoadedQuadtreeImage& image : images) {
+    if (image.pLoaded) {
+      errors.merge(std::move(image.pLoaded->errors));
+    }
+  }
 
   const CombinedImageMeasurements measurements =
       QuadtreeRasterOverlayTileProvider::measureCombinedImage(
@@ -660,7 +672,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         std::nullopt,
         targetRectangle,
         {},
-        {},
+        std::move(errors),
         true // TODO
     };
   }
@@ -668,6 +680,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
   result.moreDetailAvailable = false;
+  result.errors = std::move(errors);
 
   ImageCesium& target = result.image.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;

@@ -254,6 +254,10 @@ static LoadResult createLoadResultFromLoadedImage(
     return result;
   }
 
+  if (loadedImage.errors.hasErrors()) {
+    loadedImage.errors.logError(pLogger, "Errors while loading image for tile");
+  }
+
   if (!loadedImage.errors.warnings.empty()) {
     loadedImage.errors.logWarning(
         pLogger,
