@@ -319,7 +319,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
           .catchImmediately([](std::exception&& e) {
             // Turn an exception into an error.
             LoadedRasterOverlayImage result;
-            result.errors.emplaceError(e.what());
+            result.errorList.emplaceError(e.what());
             return result;
           })
           .thenImmediately([&cachedBytes = this->_cachedBytes,
@@ -328,7 +328,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                             asyncSystem = this->getAsyncSystem(),
                             loadParentTile = std::move(loadParentTile)](
                                LoadedRasterOverlayImage&& loaded) {
-            if (loaded.image && !loaded.errors.hasErrors() &&
+            if (loaded.image && !loaded.errorList.hasErrors() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
               cachedBytes += int64_t(loaded.image->pixelData.size());
@@ -475,7 +475,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           ErrorList errors;
           for (LoadedQuadtreeImage& image : images) {
             if (image.pLoaded) {
-              errors.merge(image.pLoaded->errors);
+              errors.merge(image.pLoaded->errorList);
             }
           }
           return LoadedRasterOverlayImage{
@@ -654,7 +654,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   ErrorList errors;
   for (LoadedQuadtreeImage& image : images) {
     if (image.pLoaded) {
-      errors.merge(std::move(image.pLoaded->errors));
+      errors.merge(std::move(image.pLoaded->errorList));
     }
   }
 
@@ -680,7 +680,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
   result.moreDetailAvailable = false;
-  result.errors = std::move(errors);
+  result.errorList = std::move(errors);
 
   ImageCesium& target = result.image.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;

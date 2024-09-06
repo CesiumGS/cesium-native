@@ -54,7 +54,7 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    * If the image was loaded successfully, there should not be any errors (but
    * there may be warnings).
    */
-  CesiumUtility::ErrorList errors{};
+  CesiumUtility::ErrorList errorList{};
 
   /**
    * @brief Whether more detailed data, beyond this image, is available within

@@ -248,18 +248,20 @@ static LoadResult createLoadResultFromLoadedImage(
     LoadedRasterOverlayImage&& loadedImage,
     const std::any& rendererOptions) {
   if (!loadedImage.image.has_value()) {
-    loadedImage.errors.logError(pLogger, "Failed to load image for tile");
+    loadedImage.errorList.logError(pLogger, "Failed to load image for tile");
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Failed;
     return result;
   }
 
-  if (loadedImage.errors.hasErrors()) {
-    loadedImage.errors.logError(pLogger, "Errors while loading image for tile");
+  if (loadedImage.errorList.hasErrors()) {
+    loadedImage.errorList.logError(
+        pLogger,
+        "Errors while loading image for tile");
   }
 
-  if (!loadedImage.errors.warnings.empty()) {
-    loadedImage.errors.logWarning(
+  if (!loadedImage.errorList.warnings.empty()) {
+    loadedImage.errorList.logWarning(
         pLogger,
         "Warnings while loading image for tile");
   }
