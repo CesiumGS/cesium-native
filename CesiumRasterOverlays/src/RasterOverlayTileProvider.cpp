@@ -203,8 +203,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                 loadedImage.image,
                 options.rectangle,
                 std::move(options.credits),
-                std::move(loadedImage.errors),
-                std::move(loadedImage.warnings),
+                ErrorList{
+                    std::move(loadedImage.errors),
+                    std::move(loadedImage.warnings)},
                 options.moreDetailAvailable};
           });
 }
