@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.39.0 - 2024-09-02
 
 ##### Breaking Changes :mega:
 
@@ -19,6 +19,7 @@
 
 - Fixed a bug in `WebMapTileServiceRasterOverlay` that caused it to compute the `TileRow` incorrectly when used with a tiling scheme with multiple tiles in the Y direction at the root.
 - `KHR_texture_transform` is now removed from `extensionsUsed` and `extensionsRequired` after it is applied by `GltfReader`.
+- Fixed a bug in the i3dm loader that caused glTF with multiple nodes to not be instanced correctly.
 
 ### v0.38.0 - 2024-08-01
 
