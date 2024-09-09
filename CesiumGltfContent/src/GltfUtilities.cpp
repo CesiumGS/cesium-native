@@ -1059,9 +1059,8 @@ void GltfUtilities::removeUnusedMaterials(
 }
 
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
-  for (size_t i = 0;
-       i < gltf.buffers.size() &&
-       i < static_cast<size_t>(std::numeric_limits<int32_t>::max());
+  for (size_t i = 0; i < gltf.buffers.size() &&
+                     i < size_t(std::numeric_limits<int32_t>::max());
        ++i) {
     GltfUtilities::compactBuffer(gltf, int32_t(i));
   }
