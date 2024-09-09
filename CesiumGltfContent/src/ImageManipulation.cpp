@@ -8,7 +8,7 @@ namespace Cesium {
 #define STBIRDEF
 #include <stb_image_resize.h>
 #undef STBIRDEF
-}; // namespace Cesium
+} // namespace Cesium
 
 using namespace Cesium;
 
