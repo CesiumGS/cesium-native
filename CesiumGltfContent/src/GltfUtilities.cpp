@@ -23,6 +23,7 @@
 
 #include <glm/gtc/quaternion.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <unordered_set>
 #include <vector>
