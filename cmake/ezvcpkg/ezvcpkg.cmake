@@ -170,11 +170,21 @@ endmacro()
 
 
 macro(EZVCPKG_BUILD)
+    set(INSTALL_COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET})
+
+    if (DEFINED VCPKG_OVERLAY_PORTS)
+        set(INSTALL_COMMAND ${INSTALL_COMMAND} --overlay-ports "${VCPKG_OVERLAY_PORTS}")
+    endif()
+
+    if (DEFINED VCPKG_OVERLAY_TRIPLETS)
+        set(INSTALL_COMMAND ${INSTALL_COMMAND} --overlay-triplets "${VCPKG_OVERLAY_TRIPLETS}")
+    endif()
+
     if (EZVCPKG_SERIALIZE)
         foreach(_PACKAGE ${EZVCPKG_PACKAGES})
             message(STATUS "EZVCPKG Building/Verifying package ${_PACKAGE} using triplet ${VCPKG_TRIPLET}")
             execute_process(
-                COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET} ${_PACKAGE}
+                COMMAND ${INSTALL_COMMAND} ${_PACKAGE}
                 WORKING_DIRECTORY ${EZVCPKG_DIR}
                 RESULTS_VARIABLE EZVCPKG_RESULT
                 OUTPUT_VARIABLE EZVCPKG_OUTPUT
@@ -187,7 +197,7 @@ macro(EZVCPKG_BUILD)
     else()
         message(STATUS "EZVCPKG Building/Verifying packages ${EZVCPKG_PACKAGES} using triplet ${VCPKG_TRIPLET}")
         execute_process(
-            COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET} ${EZVCPKG_PACKAGES}
+            COMMAND ${EZVCPKG_EXE} ${INSTALL_COMMAND} ${EZVCPKG_PACKAGES}
             WORKING_DIRECTORY ${EZVCPKG_DIR}
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
