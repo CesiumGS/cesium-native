@@ -336,12 +336,14 @@ bool Tileset::tryCompleteHeightRequest(
       }
     }
 
-    // If any candidates need loading, add to return set
-    for (Tile* pTile : query.candidateTiles) {
+    auto checkTile = [this,
+                      &tilesNeedingLoading,
+                      &tileStillNeedsLoading,
+                      &query](Tile* pTile) {
       TileLoadState state = pTile->getState();
       if (state == TileLoadState::Unloading) {
-        // This tile is in the process of unloading, which must complete before
-        // we can load it again.
+        // This tile is in the process of unloading, which must complete
+        // before we can load it again.
         this->_pTilesetContentManager->unloadTileContent(*pTile);
         tileStillNeedsLoading = true;
       } else if (
@@ -350,6 +352,14 @@ bool Tileset::tryCompleteHeightRequest(
         tilesNeedingLoading.insert(pTile);
         tileStillNeedsLoading = true;
       }
+    };
+
+    // If any candidates need loading, add to return set
+    for (Tile* pTile : query.additiveCandidateTiles) {
+      checkTile(pTile);
+    }
+    for (Tile* pTile : query.candidateTiles) {
+      checkTile(pTile);
     }
   }
 
@@ -359,8 +369,12 @@ bool Tileset::tryCompleteHeightRequest(
 
   // Do the intersect tests
   for (TerrainQuery& query : request.queries) {
-    for (Tile* pTile : query.candidateTiles)
+    for (Tile* pTile : query.additiveCandidateTiles) {
       query.intersectVisibleTile(pTile);
+    }
+    for (Tile* pTile : query.candidateTiles) {
+      query.intersectVisibleTile(pTile);
+    }
   }
 
   // All rays are done, create results

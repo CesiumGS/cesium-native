@@ -116,9 +116,9 @@ void TerrainQuery::findCandidateTiles(
                 *contentBoundingVolume,
                 this->ray,
                 this->inputCoordinate))
-          candidateTiles.push_back(pTile);
+          additiveCandidateTiles.push_back(pTile);
       } else {
-        candidateTiles.push_back(pTile);
+        additiveCandidateTiles.push_back(pTile);
       }
     }
 

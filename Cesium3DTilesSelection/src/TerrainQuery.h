@@ -15,6 +15,7 @@ public:
   CesiumGeospatial::Cartographic inputCoordinate;
   CesiumGeometry::Ray ray;
   CesiumGltfContent::GltfUtilities::IntersectResult intersectResult = {};
+  std::vector<Tile*> additiveCandidateTiles = {};
   std::vector<Tile*> candidateTiles = {};
   std::vector<Tile*> previousCandidateTiles = {};
 
