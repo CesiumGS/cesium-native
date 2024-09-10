@@ -516,6 +516,7 @@ private:
 
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
+  std::vector<Tile*> _heightQueryLoadQueue;
 
   Tile::LoadedLinkedList _loadedTiles;
 

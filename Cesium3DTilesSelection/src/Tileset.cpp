@@ -338,7 +338,15 @@ bool Tileset::tryCompleteHeightRequest(
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.candidateTiles) {
-      if (pTile->getState() <= TileLoadState::Unloaded) {
+      TileLoadState state = pTile->getState();
+      if (state == TileLoadState::Unloading) {
+        // This tile is in the process of unloading, which must complete before
+        // we can load it again.
+        this->_pTilesetContentManager->unloadTileContent(*pTile);
+        tileStillNeedsLoading = true;
+      } else if (
+          state == TileLoadState::Unloaded ||
+          state == TileLoadState::FailedTemporarily) {
         tilesNeedingLoading.insert(pTile);
         tileStillNeedsLoading = true;
       }
@@ -403,24 +411,9 @@ void Tileset::visitHeightRequests() {
     }
   }
 
-  // Add a load request for tiles that are needed, and haven't started
-  TileLoadPriorityGroup priorityGroup = TileLoadPriorityGroup::Urgent;
-  double priority = 0.0;
-  for (Tile* pTile : tilesNeedingLoading) {
-    TileLoadState loadState = pTile->getState();
-
-    CESIUM_ASSERT(loadState <= TileLoadState::Unloaded);
-    if (loadState > TileLoadState::Unloaded)
-      continue;
-
-    int32_t currentFrameNumber = this->_previousFrameNumber + 1;
-    if (pTile->getLastSelectionState().getResult(currentFrameNumber) ==
-        TileSelectionState::Result::None) {
-      // This tile wasn't visited during the visualization traversal, so it
-      // hasn't been added to the load queue yet.
-      addTileToLoadQueue(*pTile, priorityGroup, priority);
-    }
-  }
+  this->_heightQueryLoadQueue.assign(
+      tilesNeedingLoading.begin(),
+      tilesNeedingLoading.end());
 }
 
 const ViewUpdateResult&
@@ -1586,17 +1579,52 @@ void Tileset::_processWorkerThreadLoadQueue() {
     return;
   }
 
-  std::vector<TileLoadTask>& queue = this->_workerThreadLoadQueue;
-  std::sort(queue.begin(), queue.end());
+  std::sort(
+      this->_workerThreadLoadQueue.begin(),
+      this->_workerThreadLoadQueue.end());
 
-  for (TileLoadTask& task : queue) {
-    this->_pTilesetContentManager->loadTileContent(*task.pTile, _options);
-    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumSimultaneousTileLoads) {
+  // Select tiles alternately from the two queues. Each frame, switch which
+  // queue we pull the first tile from. The goal is to schedule both height
+  // query and visualization tile loads fairly.
+  auto visIt = this->_workerThreadLoadQueue.begin();
+  auto queryIt = this->_heightQueryLoadQueue.begin();
+
+  bool nextIsVis = (this->_previousFrameNumber % 2) == 0;
+
+  while (this->_pTilesetContentManager->getNumberOfTilesLoading() <
+         maximumSimultaneousTileLoads) {
+    // Tell tiles from the current queue to load until one of them actually
+    // does. Calling loadTileContent might not actually start the loading
+    // process
+    int32_t originalNumberOfTilesLoading =
+        this->_pTilesetContentManager->getNumberOfTilesLoading();
+    if (nextIsVis) {
+      while (visIt != this->_workerThreadLoadQueue.end() &&
+             originalNumberOfTilesLoading ==
+                 this->_pTilesetContentManager->getNumberOfTilesLoading()) {
+        this->_pTilesetContentManager->loadTileContent(*visIt->pTile, _options);
+        ++visIt;
+      }
+    } else {
+      while (queryIt != this->_heightQueryLoadQueue.end() &&
+             originalNumberOfTilesLoading ==
+                 this->_pTilesetContentManager->getNumberOfTilesLoading()) {
+        this->_pTilesetContentManager->loadTileContent(**queryIt, _options);
+        ++queryIt;
+      }
+    }
+
+    if (visIt == this->_workerThreadLoadQueue.end() &&
+        queryIt == this->_heightQueryLoadQueue.end()) {
+      // No more work in either queue
       break;
     }
+
+    // Get the next tile from the other queue.
+    nextIsVis = !nextIsVis;
   }
 }
+
 void Tileset::_processMainThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
   // Process deferred main-thread load tasks with a time budget.
