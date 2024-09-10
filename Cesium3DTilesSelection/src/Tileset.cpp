@@ -328,8 +328,7 @@ bool Tileset::tryCompleteHeightRequest(
       for (Tile* pCandidate : query.previousCandidateTiles) {
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
-            (loadState == TileLoadState::Done ||
-             loadState == TileLoadState::Failed)) {
+            loadState >= TileLoadState::ContentLoaded) {
           query.findCandidateTiles(pCandidate, warnings);
         } else {
           query.candidateTiles.emplace_back(pCandidate);
@@ -339,7 +338,7 @@ bool Tileset::tryCompleteHeightRequest(
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.candidateTiles) {
-      if (pTile->getState() != TileLoadState::Done) {
+      if (pTile->getState() < TileLoadState::ContentLoaded) {
         tilesNeedingLoading.insert(pTile);
         tileStillNeedsLoading = true;
       }
@@ -414,7 +413,6 @@ void Tileset::visitHeightRequests() {
 
     // Push to appropriate queue based on state
     if (loadState == TileLoadState::Unloaded) {
-
       // Only add if not already in queue
       auto foundIt = std::find_if(
           this->_workerThreadLoadQueue.begin(),
@@ -424,24 +422,6 @@ void Tileset::visitHeightRequests() {
       if (foundIt == this->_workerThreadLoadQueue.end())
         this->_workerThreadLoadQueue.push_back(
             {pTile, priorityGroup, priority});
-
-    } else if (loadState == TileLoadState::ContentLoaded) {
-
-      if (pTile->isRenderContent()) {
-        // If it's render content, let our main thread throttling take it
-
-        // Only add if not already in queue
-        auto foundIt = std::find_if(
-            this->_mainThreadLoadQueue.begin(),
-            this->_mainThreadLoadQueue.end(),
-            [pTile](const TileLoadTask& task) { return task.pTile == pTile; });
-        if (foundIt == this->_mainThreadLoadQueue.end())
-          this->_mainThreadLoadQueue.push_back(
-              {pTile, priorityGroup, priority});
-      } else {
-        // If not render content, let's transition to done ourselves
-        this->_pTilesetContentManager->updateTileContent(*pTile, _options);
-      }
     }
   }
 }
