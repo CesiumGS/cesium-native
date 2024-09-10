@@ -338,7 +338,7 @@ bool Tileset::tryCompleteHeightRequest(
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.candidateTiles) {
-      if (pTile->getState() < TileLoadState::ContentLoaded) {
+      if (pTile->getState() <= TileLoadState::Unloaded) {
         tilesNeedingLoading.insert(pTile);
         tileStillNeedsLoading = true;
       }
@@ -409,19 +409,16 @@ void Tileset::visitHeightRequests() {
   for (Tile* pTile : tilesNeedingLoading) {
     TileLoadState loadState = pTile->getState();
 
-    CESIUM_ASSERT(loadState != TileLoadState::Done);
+    CESIUM_ASSERT(loadState <= TileLoadState::Unloaded);
+    if (loadState > TileLoadState::Unloaded)
+      continue;
 
-    // Push to appropriate queue based on state
-    if (loadState == TileLoadState::Unloaded) {
-      // Only add if not already in queue
-      auto foundIt = std::find_if(
-          this->_workerThreadLoadQueue.begin(),
-          this->_workerThreadLoadQueue.end(),
-          [pTile](const TileLoadTask& task) { return task.pTile == pTile; });
-
-      if (foundIt == this->_workerThreadLoadQueue.end())
-        this->_workerThreadLoadQueue.push_back(
-            {pTile, priorityGroup, priority});
+    int32_t currentFrameNumber = this->_previousFrameNumber + 1;
+    if (pTile->getLastSelectionState().getResult(currentFrameNumber) ==
+        TileSelectionState::Result::None) {
+      // This tile wasn't visited during the visualization traversal, so it
+      // hasn't been added to the load queue yet.
+      addTileToLoadQueue(*pTile, priorityGroup, priority);
     }
   }
 }
