@@ -47,7 +47,7 @@ TEST_CASE("Tileset height queries") {
 
     Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
         // A point on geometry in "parent.b3dm", which should only be included
-        // because this tileset is additive-refine.
+        // because this tileset is additive-refined.
         {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
 
          // A point on geometry in a leaf tile.
@@ -86,7 +86,7 @@ TEST_CASE("Tileset height queries") {
 
     Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
         // A point on geometry in "parent.b3dm", which should not be included
-        // because this tileset is replace-refine.
+        // because this tileset is replace-refined.
         {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
 
          // A point on geometry in a leaf tile.
@@ -101,6 +101,84 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.coordinateResults.size() == 2);
 
     CHECK(!results.coordinateResults[0].heightAvailable);
+
+    CHECK(results.coordinateResults[1].heightAvailable);
+    CHECK(Math::equalsEpsilon(
+        results.coordinateResults[1].coordinate.height,
+        7.837332,
+        0.0,
+        Math::Epsilon4));
+  }
+
+  SECTION("External tileset") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(
+            (testDataPath / "AddTileset" / "tileset.json").u8string());
+
+    Tileset tileset(externals, url);
+
+    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
+        // A point on geometry in "0/0/0.b3dm", which should only be included
+        // because this tileset is additive-refined.
+        {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
+
+         // A point on geometry in a leaf tile.
+         Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
+
+    while (!future.isReady()) {
+      tileset.updateView({});
+    }
+
+    Tileset::HeightResults results = future.waitInMainThread();
+    CHECK(results.warnings.empty());
+    REQUIRE(results.coordinateResults.size() == 2);
+
+    CHECK(results.coordinateResults[0].heightAvailable);
+    CHECK(Math::equalsEpsilon(
+        results.coordinateResults[0].coordinate.height,
+        78.155809,
+        0.0,
+        Math::Epsilon4));
+
+    CHECK(results.coordinateResults[1].heightAvailable);
+    CHECK(Math::equalsEpsilon(
+        results.coordinateResults[1].coordinate.height,
+        7.837332,
+        0.0,
+        Math::Epsilon4));
+  }
+
+  SECTION("Implicit tileset") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(
+            (testDataPath / "ImplicitTileset" / "tileset_1.1.json").u8string());
+
+    Tileset tileset(externals, url);
+
+    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
+        // A point on geometry in "0/0/0.b3dm", which should only be included
+        // because this tileset is additive-refined.
+        {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
+
+         // A point on geometry in a leaf tile.
+         Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
+
+    while (!future.isReady()) {
+      tileset.updateView({});
+    }
+
+    Tileset::HeightResults results = future.waitInMainThread();
+    CHECK(results.warnings.empty());
+    REQUIRE(results.coordinateResults.size() == 2);
+
+    CHECK(results.coordinateResults[0].heightAvailable);
+    CHECK(Math::equalsEpsilon(
+        results.coordinateResults[0].coordinate.height,
+        78.155809,
+        0.0,
+        Math::Epsilon4));
 
     CHECK(results.coordinateResults[1].heightAvailable);
     CHECK(Math::equalsEpsilon(
