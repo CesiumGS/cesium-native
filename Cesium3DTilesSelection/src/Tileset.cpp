@@ -668,8 +668,7 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
 
 CesiumAsync::Future<Tileset::HeightResults>
 Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
-  Tile* pRoot = _pTilesetContentManager->getRootTile();
-  if (pRoot == nullptr || coordinates.empty()) {
+  if (coordinates.empty()) {
     return this->_asyncSystem.createResolvedFuture<Tileset::HeightResults>({});
   }
 
