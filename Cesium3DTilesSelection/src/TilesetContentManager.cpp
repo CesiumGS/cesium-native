@@ -53,11 +53,6 @@ struct ContentKindSetter {
       // size now. We'll be adding this number to our total memory usage soon,
       // and remove it when the tile is later unloaded, and we must use
       // the same size in each case.
-
-      // TODO: this number will be wrong once we deduplicate images! it'll log
-      // the image's size for each time it's used, instead of only once as it
-      // should. if you are reading this comment in a code review, i forgot to
-      // fix this and you should remind me.
       if (image.cesium->sizeBytes < 0) {
         image.cesium->sizeBytes = int64_t(image.cesium->pixelData.size());
       }

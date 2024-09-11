@@ -586,7 +586,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
           SharedFuture<std::optional<SharedAsset<ImageCesium>>>
           operator()(std::shared_ptr<SharedAssetDepot> depot) {
             // We have a depot, this is easy!
-            return depot->getOrFetch<ImageAssetFactory>(
+            return depot->getOrFetch(
                 asyncSystem,
                 pAssetAccessor,
                 factory,

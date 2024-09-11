@@ -13,6 +13,7 @@
 #include <forward_list>
 #include <functional>
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
@@ -22,7 +23,6 @@ namespace CesiumGltf {
 
 namespace SharedAssetDepotInternals {
 
-typedef size_t IdHash;
 template <typename AssetType> class SharedAsset;
 template <typename AssetType> class SingleAssetDepot;
 
@@ -46,14 +46,14 @@ class AssetContainer
     : public CesiumUtility::ReferenceCounted<AssetContainer<AssetType>, true> {
 public:
   std::atomic<std::int32_t> counter;
-  IdHash assetId;
+  std::string assetId;
   AssetType asset;
 
   // Pointer to this container's parent so we know how to clean it up.
   SingleAssetDepot<AssetType>* parent;
 
   AssetContainer(
-      IdHash assetId_,
+      std::string assetId_,
       AssetType& asset_,
       SingleAssetDepot<AssetType>* parent_)
       : counter(0), assetId(assetId_), asset(asset_), parent(parent_) {}
@@ -70,10 +70,14 @@ public:
 template <typename AssetType> class SharedAsset {
 public:
   SharedAsset(AssetType& asset)
-      : contents(new AssetContainer<AssetType>(0, asset, nullptr)) {}
+      : contents(new AssetContainer<AssetType>(std::string(), asset, nullptr)) {
+  }
   SharedAsset(std::nullptr_t) : contents(nullptr) {}
   SharedAsset()
-      : contents(new AssetContainer<AssetType>(0, AssetType(), nullptr)) {}
+      : contents(new AssetContainer<AssetType>(
+            std::string(),
+            AssetType(),
+            nullptr)) {}
 
   AssetType* get() { return &this->contents->asset; }
 
@@ -176,23 +180,14 @@ private:
  */
 template <typename AssetType> class SingleAssetDepot {
 public:
-  SingleAssetDepot() {}
-
   /**
    * Stores the AssetType in this depot and returns a reference to it,
    * or returns the existing asset if present.
    */
-  SharedAsset<AssetType> store(IdHash assetId, AssetType& asset) {
-    auto it = this->assets.find(assetId);
-    if (it != this->assets.end()) {
-      // already stored
-      return it->second.toRef();
-    }
-
-    auto [newIt, ok] =
-        this->assets.emplace(assetId, new AssetContainer(assetId, asset, this));
-    CESIUM_ASSERT(ok);
-
+  SharedAsset<AssetType> store(std::string& assetId, AssetType&& asset) {
+    auto [newIt, added] = this->assets.try_emplace(
+        assetId,
+        new AssetContainer(assetId, std::move(asset), this));
     return newIt->second.toRef();
   }
 
@@ -202,17 +197,12 @@ public:
    * If the asset has already started loading in this depot but hasn't finished,
    * its future will be returned.
    */
-  template <typename Factory>
   CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>> getOrFetch(
       CesiumAsync::AsyncSystem& asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      typename std::enable_if<
-          std::is_base_of_v<AssetFactory<AssetType>, Factory>,
-          const Factory&>::type factory,
+      const AssetFactory<AssetType>& factory,
       std::string& uri,
       std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
-    IdHash idHash = std::hash<std::string>{}(uri);
-
     // We need to avoid:
     // - Two assets starting loading before the first asset has updated the
     //   pendingAssets map
@@ -221,7 +211,7 @@ public:
     //   the assets map.
     std::lock_guard lock(pendingAssetsMutex);
 
-    auto existingIt = this->assets.find(idHash);
+    auto existingIt = this->assets.find(uri);
     if (existingIt != this->assets.end()) {
       // We've already loaded an asset with this ID - we can just use that.
       return asyncSystem
@@ -230,7 +220,7 @@ public:
           .share();
     }
 
-    auto pendingIt = this->pendingAssets.find(idHash);
+    auto pendingIt = this->pendingAssets.find(uri);
     if (pendingIt != this->pendingAssets.end()) {
       // Return the existing future - the caller can chain off of it.
       return pendingIt->second;
@@ -241,48 +231,51 @@ public:
     CesiumAsync::Future<std::optional<SharedAsset<AssetType>>> future =
         pAssetAccessor->get(asyncSystem, uri, headers)
             .thenInWorkerThread(
-                [factory](
-                    std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+                [&factory](
+                    std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
+                    -> std::optional<AssetType> {
                   const CesiumAsync::IAssetResponse* pResponse =
                       pRequest->response();
                   if (!pResponse) {
-                    return std::optional<AssetType>(std::nullopt);
+                    return std::nullopt;
                   }
 
                   return factory.createFrom(pResponse->data());
                 })
             // Do this in main thread since we're messing with the collections.
-            .thenInMainThread([idHash,
-                               pThiz = this,
-                               pAssets = &this->assets,
-                               pPendingAssetsMutex = &this->pendingAssetsMutex,
-                               pPendingAssets = &this->pendingAssets](
-                                  std::optional<AssetType>& result) {
-              std::lock_guard lock(*pPendingAssetsMutex);
+            .thenInMainThread(
+                [uri,
+                 this,
+                 pAssets = &this->assets,
+                 pPendingAssetsMutex = &this->pendingAssetsMutex,
+                 pPendingAssets =
+                     &this->pendingAssets](std::optional<AssetType>& result)
+                    -> std::optional<SharedAsset<AssetType>> {
+                  std::lock_guard lock(*pPendingAssetsMutex);
 
-              // Get rid of our future.
-              pPendingAssets->erase(idHash);
+                  // Get rid of our future.
+                  pPendingAssets->erase(uri);
 
-              if (result.has_value()) {
-                auto [it, ok] = pAssets->emplace(
-                    idHash,
-                    new AssetContainer<AssetType>(
-                        idHash,
-                        result.value(),
-                        pThiz));
-                if (!ok) {
-                  return std::optional<SharedAsset<AssetType>>();
-                }
+                  if (result.has_value()) {
+                    auto [it, ok] = pAssets->emplace(
+                        uri,
+                        new AssetContainer<AssetType>(
+                            uri,
+                            std::move(result.value()),
+                            this));
+                    if (!ok) {
+                      return std::nullopt;
+                    }
 
-                return std::optional<SharedAsset<AssetType>>(
-                    std::move(SharedAsset<AssetType>(it->second)));
-              }
+                    return std::optional(
+                        std::move(SharedAsset<AssetType>(it->second)));
+                  }
 
-              return std::optional<SharedAsset<AssetType>>();
-            });
+                  return std::nullopt;
+                });
 
     auto& [it, ok] =
-        this->pendingAssets.emplace(idHash, std::move(future).share());
+        this->pendingAssets.emplace(uri, std::move(future).share());
     if (!ok) {
       return asyncSystem
           .createResolvedFuture(std::optional<SharedAsset<AssetType>>())
@@ -299,16 +292,16 @@ private:
    * Removes the given asset from the depot.
    * Should only be called by {@link SharedAsset}.
    */
-  void remove(IdHash hash) { this->assets.erase(hash); }
+  void remove(std::string& hash) { this->assets.erase(hash); }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
   std::unordered_map<
-      IdHash,
+      std::string,
       CesiumUtility::IntrusivePointer<AssetContainer<AssetType>>>
       assets;
   // Futures for assets that still aren't loaded yet.
   std::unordered_map<
-      IdHash,
+      std::string,
       CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>>>
       pendingAssets;
   // Mutex for checking or editing the pendingAssets map
@@ -327,21 +320,14 @@ public:
   /**
    * Obtains an existing {@link ImageCesium} or constructs a new one using the provided factory.
    */
-  template <typename Factory>
   CesiumAsync::SharedFuture<std::optional<SharedAsset<ImageCesium>>> getOrFetch(
       CesiumAsync::AsyncSystem& asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      typename std::enable_if<
-          std::is_base_of_v<AssetFactory<ImageCesium>, Factory>,
-          const Factory&>::type factory,
+      const AssetFactory<ImageCesium>& factory,
       std::string& uri,
       std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
-    return images.getOrFetch<Factory>(
-        asyncSystem,
-        pAssetAccessor,
-        factory,
-        uri,
-        headers);
+    return images
+        .getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
   }
 
   size_t getImagesCount() const { return this->images.getDistinctCount(); }
