@@ -90,7 +90,8 @@ void TerrainQuery::findCandidateTiles(
     return;
   }
 
-  auto& contentBoundingVolume = pTile->getContentBoundingVolume();
+  const std::optional<BoundingVolume>& contentBoundingVolume =
+      pTile->getContentBoundingVolume();
 
   if (pTile->getChildren().empty()) {
     // This is a leaf node, it's a candidate
@@ -101,9 +102,9 @@ void TerrainQuery::findCandidateTiles(
               *contentBoundingVolume,
               this->ray,
               this->inputCoordinate))
-        candidateTiles.push_back(pTile);
+        this->candidateTiles.push_back(pTile);
     } else {
-      candidateTiles.push_back(pTile);
+      this->candidateTiles.push_back(pTile);
     }
   } else {
     // We have children
@@ -116,9 +117,9 @@ void TerrainQuery::findCandidateTiles(
                 *contentBoundingVolume,
                 this->ray,
                 this->inputCoordinate))
-          additiveCandidateTiles.push_back(pTile);
+          this->additiveCandidateTiles.push_back(pTile);
       } else {
-        additiveCandidateTiles.push_back(pTile);
+        this->additiveCandidateTiles.push_back(pTile);
       }
     }
 

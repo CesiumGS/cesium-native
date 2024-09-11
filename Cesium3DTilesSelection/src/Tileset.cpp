@@ -319,8 +319,13 @@ bool Tileset::tryCompleteHeightRequest(
   std::vector<std::string> warnings;
   for (TerrainQuery& query : request.queries) {
     if (query.candidateTiles.empty()) {
+      // Find the initial set of tiles whose bounding volume is intersected by
+      // the query ray.
       query.findCandidateTiles(pRoot, warnings);
     } else {
+      // Refine the current set of candidate tiles, in case further tiles from
+      // implicit tiling, external tilesets, etc. having been loaded since last
+      // frame.
       std::swap(query.candidateTiles, query.previousCandidateTiles);
 
       query.candidateTiles.clear();
