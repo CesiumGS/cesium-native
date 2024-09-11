@@ -572,64 +572,69 @@ postProcessContentInWorkerThread(
              pAssetAccessor,
              gltfOptions,
              std::move(gltfResult))
-      .thenInWorkerThread(
-          [result = std::move(result),
-           projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo),
-           rendererOptions](
-              CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
-            if (!gltfResult.errors.empty()) {
-              if (result.pCompletedRequest) {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Failed resolving external glTF buffers from {}:\n- {}",
-                    result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              } else {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Failed resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              }
-            }
+      .thenInWorkerThread([result = std::move(result),
+                           projections = std::move(projections),
+                           tileLoadInfo = std::move(tileLoadInfo),
+                           rendererOptions](CesiumGltfReader::GltfReaderResult&&
+                                                gltfResult) mutable {
+        if (!gltfResult.errors.empty()) {
+          if (result.pCompletedRequest) {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Failed resolving external glTF buffers from {}:\n- {}",
+                result.pCompletedRequest->url(),
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          } else {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Failed resolving external glTF buffers:\n- {}",
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          }
+        }
 
-            if (!gltfResult.warnings.empty()) {
-              if (result.pCompletedRequest) {
-                SPDLOG_LOGGER_WARN(
-                    tileLoadInfo.pLogger,
-                    "Warning when resolving external gltf buffers from "
-                    "{}:\n- {}",
-                    result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              } else {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Warning resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              }
-            }
+        if (!gltfResult.warnings.empty()) {
+          if (result.pCompletedRequest) {
+            SPDLOG_LOGGER_WARN(
+                tileLoadInfo.pLogger,
+                "Warning when resolving external gltf buffers from "
+                "{}:\n- {}",
+                result.pCompletedRequest->url(),
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          } else {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Warning resolving external glTF buffers:\n- {}",
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          }
+        }
 
-            if (!gltfResult.model) {
-              return tileLoadInfo.asyncSystem.createResolvedFuture(
-                  TileLoadResultAndRenderResources{
-                      TileLoadResult::createFailedResult(nullptr),
-                      nullptr});
-            }
+        if (!gltfResult.model) {
+          return tileLoadInfo.asyncSystem.createResolvedFuture(
+              TileLoadResultAndRenderResources{
+                  TileLoadResult::createFailedResult(nullptr),
+                  nullptr});
+        }
 
-            result.contentKind = std::move(*gltfResult.model);
+        result.contentKind = std::move(*gltfResult.model);
 
-            postProcessGltfInWorkerThread(
-                result,
-                std::move(projections),
-                tileLoadInfo);
+        postProcessGltfInWorkerThread(
+            result,
+            std::move(projections),
+            tileLoadInfo);
 
-            // create render resources
-            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-                tileLoadInfo.asyncSystem,
-                std::move(result),
-                tileLoadInfo.tileTransform,
-                rendererOptions);
-          });
+        // create render resources
+        if (tileLoadInfo.pPrepareRendererResources) {
+          return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+              tileLoadInfo.asyncSystem,
+              std::move(result),
+              tileLoadInfo.tileTransform,
+              rendererOptions);
+        } else {
+          return tileLoadInfo.asyncSystem
+              .createResolvedFuture<TileLoadResultAndRenderResources>(
+                  TileLoadResultAndRenderResources{std::move(result), nullptr});
+        }
+      });
 }
 } // namespace
 
@@ -1483,10 +1488,12 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
       pRenderContent && "Tile must have render content to be unloaded");
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
-  this->_externals.pPrepareRendererResources->free(
-      tile,
-      pWorkerRenderResources,
-      nullptr);
+  if (this->_externals.pPrepareRendererResources) {
+    this->_externals.pPrepareRendererResources->free(
+        tile,
+        pWorkerRenderResources,
+        nullptr);
+  }
   pRenderContent->setRenderResources(nullptr);
 }
 
