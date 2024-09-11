@@ -343,6 +343,10 @@ bool Tileset::tryCompleteHeightRequest(
 
     auto checkTile =
         [this, &tilesNeedingLoading, &tileStillNeedsLoading](Tile* pTile) {
+          this->_pTilesetContentManager->createLatentChildrenIfNecessary(
+              *pTile,
+              this->getOptions());
+
           TileLoadState state = pTile->getState();
           if (state == TileLoadState::Unloading) {
             // This tile is in the process of unloading, which must complete

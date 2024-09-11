@@ -64,6 +64,10 @@ public:
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
+  void createLatentChildrenIfNecessary(
+      Tile& tile,
+      const TilesetOptions& tilesetOptions);
+
   bool unloadTileContent(Tile& tile);
 
   void waitUntilIdle();
