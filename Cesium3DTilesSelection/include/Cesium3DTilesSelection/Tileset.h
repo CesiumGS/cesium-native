@@ -538,7 +538,7 @@ private:
       TileLoadPriorityGroup priorityGroup,
       double priority);
 
-  void visitHeightRequests();
+  void processHeightRequests();
 
   bool tryCompleteHeightRequest(
       HeightRequest& request,

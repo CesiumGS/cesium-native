@@ -410,7 +410,7 @@ bool Tileset::tryCompleteHeightRequest(
   return true;
 }
 
-void Tileset::visitHeightRequests() {
+void Tileset::processHeightRequests() {
   if (_heightRequests.size() == 0)
     return;
 
@@ -497,7 +497,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  visitHeightRequests();
+  processHeightRequests();
 
   result.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(this->_workerThreadLoadQueue.size());
