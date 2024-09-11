@@ -4,7 +4,10 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+if(NOT VCPKG_MANIFEST_MODE)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+endif()
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
 
 if (NOT VCPKG_TRIPLET)
@@ -39,20 +42,22 @@ set(PACKAGES_PRIVATE
 # Packages only used for testing
 set(PACKAGES_TEST catch2)
 
-set(PACKAGES_ALL ${PACKAGES_PUBLIC})
-list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
-list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
+if(NOT VCPKG_MANIFEST_MODE)
+    set(PACKAGES_ALL ${PACKAGES_PUBLIC})
+    list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
+    list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
-ezvcpkg_fetch(
-    COMMIT 2024.07.12
-    PACKAGES ${PACKAGES_ALL}
-    # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
-    CLEAN_BUILDTREES
-    # Update the cmake toolchain so it can find the above packages
-    UPDATE_TOOLCHAIN
-    # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
-    SERIALIZE
-)
+    ezvcpkg_fetch(
+        COMMIT 2024.07.12
+        PACKAGES ${PACKAGES_ALL}
+        # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
+        CLEAN_BUILDTREES
+        # Update the cmake toolchain so it can find the above packages
+        UPDATE_TOOLCHAIN
+        # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
+        SERIALIZE
+    )
+endif()
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Specify the VCPKG toolchain on the command line as '-DCMAKE_TOOLCHAIN_FILE=<VCPKG_ROOT>/scripts/buildsystems/vcpkg.cmake'")
@@ -70,7 +75,17 @@ project(cesium-native
 
 include(GNUInstallDirs)
 
-message(STATUS "EZVCPKG_PACKAGES_DIR ${EZVCPKG_PACKAGES_DIR}")
+set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
+set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
+
+if(VCPKG_MANIFEST_MODE)
+    set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
+    set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
+endif()
+
+message(STATUS "PACKAGE_BASE_DIR ${PACKAGE_BASE_DIR}")
+message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
+
 
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
@@ -78,7 +93,7 @@ option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-nat
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
-        set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
 
         if(CESIUM_INSTALL_HEADERS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_HEADERS)
@@ -99,7 +114,7 @@ endif()
 
 if(CESIUM_INSTALL_STATIC_LIBS)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
-        set(PACKAGE_DIR ${EZVCPKG_PACKAGES_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
         if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
@@ -173,9 +188,11 @@ endif()
 
 # On the CI builds, I have to do this explicitly for some reason or it fails to find the vcpkg packages.
 # The toolchain is supposed to manage this, but I haven't figured out why it isn't yet.
-list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}/share/s2")
-list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}/share")
-list(APPEND CMAKE_PREFIX_PATH "${EZVCPKG_DIR}")
+
+list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share/s2")
+list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share")
+list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
+
 # Find the VCPKG dependnecies
 # Note that while we could push these into the extern/CMakeLists.txt as an organization tidy-up, that would require
 # us to update the minimum version of CMake to 3.24 and to add the GLOBAL option to the find_package calls, otherwise

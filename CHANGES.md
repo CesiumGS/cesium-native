@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.39.0 - 2024-09-02
 
 ##### Breaking Changes :mega:
 
@@ -12,11 +12,14 @@
 - Added `CesiumGltfWriter::SchemaWriter` for serializing schemas in [EXT_structural_metadata](https://github.com/CesiumGS/glTF/tree/3d-tiles-next/extensions/2.0/Vendor/EXT_structural_metadata).
 - Added `resolveExternalImages` flag to `GltfReaderOptions`, which is true by default.
 - Added `removeExtensionUsed` and `removeExtensionRequired` methods to `CesiumGltf::Model`.
+- Added `getFeatureIdAccessorView` overload for retrieving feature IDs from `EXT_instance_features`.
+- Added `CesiumGeospatial::EarthGravitationalModel1996Grid` class to allow transforming heights on a WGS84 ellipsoid into heights above mean sea level using the EGM96 model.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `WebMapTileServiceRasterOverlay` that caused it to compute the `TileRow` incorrectly when used with a tiling scheme with multiple tiles in the Y direction at the root.
 - `KHR_texture_transform` is now removed from `extensionsUsed` and `extensionsRequired` after it is applied by `GltfReader`.
+- Fixed a bug in the i3dm loader that caused glTF with multiple nodes to not be instanced correctly.
 
 ### v0.38.0 - 2024-08-01
 
