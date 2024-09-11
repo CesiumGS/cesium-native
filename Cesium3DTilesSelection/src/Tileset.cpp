@@ -336,23 +336,21 @@ bool Tileset::tryCompleteHeightRequest(
       }
     }
 
-    auto checkTile = [this,
-                      &tilesNeedingLoading,
-                      &tileStillNeedsLoading,
-                      &query](Tile* pTile) {
-      TileLoadState state = pTile->getState();
-      if (state == TileLoadState::Unloading) {
-        // This tile is in the process of unloading, which must complete
-        // before we can load it again.
-        this->_pTilesetContentManager->unloadTileContent(*pTile);
-        tileStillNeedsLoading = true;
-      } else if (
-          state == TileLoadState::Unloaded ||
-          state == TileLoadState::FailedTemporarily) {
-        tilesNeedingLoading.insert(pTile);
-        tileStillNeedsLoading = true;
-      }
-    };
+    auto checkTile =
+        [this, &tilesNeedingLoading, &tileStillNeedsLoading](Tile* pTile) {
+          TileLoadState state = pTile->getState();
+          if (state == TileLoadState::Unloading) {
+            // This tile is in the process of unloading, which must complete
+            // before we can load it again.
+            this->_pTilesetContentManager->unloadTileContent(*pTile);
+            tileStillNeedsLoading = true;
+          } else if (
+              state == TileLoadState::Unloaded ||
+              state == TileLoadState::FailedTemporarily) {
+            tilesNeedingLoading.insert(pTile);
+            tileStillNeedsLoading = true;
+          }
+        };
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.additiveCandidateTiles) {
