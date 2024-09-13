@@ -89,6 +89,9 @@ project(cesium-native
     LANGUAGES CXX C
 )
 
+# Needs to be added to EVERYTHING
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+
 include(GNUInstallDirs)
 
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
