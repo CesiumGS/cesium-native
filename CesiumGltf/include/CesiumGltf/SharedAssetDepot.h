@@ -54,7 +54,7 @@ public:
 
   AssetContainer(
       std::string assetId_,
-      AssetType& asset_,
+      AssetType asset_,
       SingleAssetDepot<AssetType>* parent_)
       : counter(0), assetId(assetId_), asset(asset_), parent(parent_) {}
   SharedAsset<AssetType> toRef() { return SharedAsset(this); }
@@ -274,7 +274,7 @@ public:
                   return std::nullopt;
                 });
 
-    auto& [it, ok] =
+    auto [it, ok] =
         this->pendingAssets.emplace(uri, std::move(future).share());
     if (!ok) {
       return asyncSystem
