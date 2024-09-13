@@ -19,7 +19,6 @@
 #include <list>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -27,6 +26,7 @@ namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
 class TilesetHeightQuery;
+class TilesetHeightRequest;
 
 /**
  * @brief A <a
@@ -443,11 +443,6 @@ private:
       double tilePriority,
       bool queuedForLoad);
 
-  struct HeightRequest {
-    std::vector<TilesetHeightQuery> queries;
-    CesiumAsync::Promise<SampleHeightResult> promise;
-  };
-
   void _processWorkerThreadLoadQueue();
   void _processMainThreadLoadQueue();
 
@@ -535,18 +530,12 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  std::list<HeightRequest> _heightRequests;
+  std::list<TilesetHeightRequest> _heightRequests;
 
   void addTileToLoadQueue(
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
-
-  void processHeightRequests();
-
-  bool tryCompleteHeightRequest(
-      HeightRequest& request,
-      std::set<Tile*>& tilesNeedingLoading);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,

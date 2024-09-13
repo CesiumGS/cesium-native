@@ -310,137 +310,6 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   return this->_updateResult;
 }
 
-bool Tileset::tryCompleteHeightRequest(
-    HeightRequest& request,
-    std::set<Tile*>& tilesNeedingLoading) {
-  Tile* pRoot = _pTilesetContentManager->getRootTile();
-
-  bool tileStillNeedsLoading = false;
-  std::vector<std::string> warnings;
-  for (TilesetHeightQuery& query : request.queries) {
-    if (query.candidateTiles.empty() && query.additiveCandidateTiles.empty()) {
-      // Find the initial set of tiles whose bounding volume is intersected by
-      // the query ray.
-      query.findCandidateTiles(pRoot, warnings);
-    } else {
-      // Refine the current set of candidate tiles, in case further tiles from
-      // implicit tiling, external tilesets, etc. having been loaded since last
-      // frame.
-      std::swap(query.candidateTiles, query.previousCandidateTiles);
-
-      query.candidateTiles.clear();
-
-      for (Tile* pCandidate : query.previousCandidateTiles) {
-        TileLoadState loadState = pCandidate->getState();
-        if (!pCandidate->getChildren().empty() &&
-            loadState >= TileLoadState::ContentLoaded) {
-          query.findCandidateTiles(pCandidate, warnings);
-        } else {
-          query.candidateTiles.emplace_back(pCandidate);
-        }
-      }
-    }
-
-    auto checkTile =
-        [this, &tilesNeedingLoading, &tileStillNeedsLoading](Tile* pTile) {
-          this->_pTilesetContentManager->createLatentChildrenIfNecessary(
-              *pTile,
-              this->getOptions());
-
-          TileLoadState state = pTile->getState();
-          if (state == TileLoadState::Unloading) {
-            // This tile is in the process of unloading, which must complete
-            // before we can load it again.
-            this->_pTilesetContentManager->unloadTileContent(*pTile);
-            tileStillNeedsLoading = true;
-          } else if (
-              state == TileLoadState::Unloaded ||
-              state == TileLoadState::FailedTemporarily) {
-            tilesNeedingLoading.insert(pTile);
-            tileStillNeedsLoading = true;
-          }
-        };
-
-    // If any candidates need loading, add to return set
-    for (Tile* pTile : query.additiveCandidateTiles) {
-      checkTile(pTile);
-    }
-    for (Tile* pTile : query.candidateTiles) {
-      checkTile(pTile);
-    }
-  }
-
-  // Bail if we're waiting on tiles to load
-  if (tileStillNeedsLoading)
-    return false;
-
-  // Do the intersect tests
-  for (TilesetHeightQuery& query : request.queries) {
-    for (Tile* pTile : query.additiveCandidateTiles) {
-      query.intersectVisibleTile(pTile);
-    }
-    for (Tile* pTile : query.candidateTiles) {
-      query.intersectVisibleTile(pTile);
-    }
-  }
-
-  // All rays are done, create results
-  SampleHeightResult results;
-
-  // Start with any warnings from tile traversal
-  results.warnings = std::move(warnings);
-
-  results.positions.resize(request.queries.size(), Cartographic(0.0, 0.0, 0.0));
-  results.heightSampled.resize(request.queries.size());
-
-  // Populate results with completed queries
-  for (size_t i = 0; i < request.queries.size(); ++i) {
-    const TilesetHeightQuery& query = request.queries[i];
-
-    bool heightSampled = query.intersectResult.hit.has_value();
-    results.heightSampled[i] = heightSampled;
-    results.positions[i] = query.inputCoordinate;
-
-    if (heightSampled) {
-      results.positions[i].height =
-          RAY_ORIGIN_HEIGHT -
-          glm::sqrt(query.intersectResult.hit->rayToWorldPointDistanceSq);
-    }
-
-    // Add query warnings into the height result
-    results.warnings.insert(
-        results.warnings.end(),
-        query.intersectResult.warnings.begin(),
-        query.intersectResult.warnings.end());
-  }
-
-  request.promise.resolve(std::move(results));
-  return true;
-}
-
-void Tileset::processHeightRequests() {
-  if (_heightRequests.size() == 0)
-    return;
-
-  // Go through all requests, either complete them, or gather the tiles they
-  // need for completion
-  std::set<Tile*> tilesNeedingLoading;
-  for (auto it = _heightRequests.begin(); it != _heightRequests.end();) {
-    HeightRequest& request = *it;
-    if (!tryCompleteHeightRequest(request, tilesNeedingLoading)) {
-      ++it;
-    } else {
-      auto deleteIt = it;
-      ++it;
-      _heightRequests.erase(deleteIt);
-    }
-  }
-
-  this->_heightQueryLoadQueue.assign(
-      tilesNeedingLoading.begin(),
-      tilesNeedingLoading.end());
-}
-
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
@@ -505,7 +374,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
     result = ViewUpdateResult();
   }
 
-  processHeightRequests();
+  TilesetHeightRequest::processHeightRequests(
+      *this->_pTilesetContentManager,
+      this->_options,
+      this->_heightRequests,
+      this->_heightQueryLoadQueue);
 
   result.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(this->_workerThreadLoadQueue.size());
@@ -683,20 +556,14 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   Promise promise = this->_asyncSystem.createPromise<SampleHeightResult>();
 
   std::vector<TilesetHeightQuery> queries;
-  for (const CesiumGeospatial::Cartographic& coordinate : positions) {
-    CesiumGeospatial::Cartographic startCoordinate(
-        coordinate.longitude,
-        coordinate.latitude,
-        RAY_ORIGIN_HEIGHT);
+  queries.reserve(positions.size());
 
-    Ray ray(
-        Ellipsoid::WGS84.cartographicToCartesian(startCoordinate),
-        -Ellipsoid::WGS84.geodeticSurfaceNormal(startCoordinate));
-
-    queries.push_back(TilesetHeightQuery{coordinate, std::move(ray)});
+  for (const CesiumGeospatial::Cartographic& position : positions) {
+    queries.emplace_back(position, this->_options.ellipsoid);
   }
 
-  _heightRequests.emplace_back(HeightRequest{std::move(queries), promise});
+  this->_heightRequests.emplace_back(
+      TilesetHeightRequest{std::move(queries), promise});
 
   return promise.getFuture();
 }

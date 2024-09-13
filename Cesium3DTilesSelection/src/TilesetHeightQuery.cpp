@@ -3,6 +3,7 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -52,7 +53,36 @@ bool boundingVolumeContainsCoordinate(
   return std::visit(Operation{ray, coordinate}, boundingVolume);
 }
 
+// The ray for height queries starts at this fraction of the ellipsoid max
+// radius above the ellipsoid surface. If a tileset surface is more than this
+// distance above the ellipsoid, it may be missed by height queries.
+// 0.007 is chosen to accomodate Olympus Mons, the tallest peak on Mars. 0.007
+// is seven-tenths of a percent, or about 44,647 meters for WGS84, well above
+// the highest point on Earth.
+const double rayOriginHeightFraction = 0.007;
+
+Ray createRay(const Cartographic& position, const Ellipsoid& ellipsoid) {
+  Cartographic startPosition(
+      position.longitude,
+      position.latitude,
+      ellipsoid.getMaximumRadius() * rayOriginHeightFraction);
+
+  return Ray(
+      Ellipsoid::WGS84.cartographicToCartesian(startPosition),
+      -Ellipsoid::WGS84.geodeticSurfaceNormal(startPosition));
+}
+
 } // namespace
+
+TilesetHeightQuery::TilesetHeightQuery(
+    const Cartographic& position,
+    const Ellipsoid& ellipsoid)
+    : inputCoordinate(position),
+      ray(createRay(position, ellipsoid)),
+      intersectResult(),
+      additiveCandidateTiles(),
+      candidateTiles(),
+      previousCandidateTiles() {}
 
 void TilesetHeightQuery::intersectVisibleTile(Tile* pTile) {
   TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
@@ -140,4 +170,141 @@ void TilesetHeightQuery::findCandidateTiles(
       findCandidateTiles(&child, warnings);
     }
   }
+}
+
+/*static*/ void TilesetHeightRequest::processHeightRequests(
+    TilesetContentManager& contentManager,
+    const TilesetOptions& options,
+    std::list<TilesetHeightRequest>& heightRequests,
+    std::vector<Tile*>& heightQueryLoadQueue) {
+  if (heightRequests.empty())
+    return;
+
+  // Go through all requests, either complete them, or gather the tiles they
+  // need for completion
+  std::set<Tile*> tilesNeedingLoading;
+  for (auto it = heightRequests.begin(); it != heightRequests.end();) {
+    TilesetHeightRequest& request = *it;
+    if (!request.tryCompleteHeightRequest(
+            contentManager,
+            options,
+            tilesNeedingLoading)) {
+      ++it;
+    } else {
+      auto deleteIt = it;
+      ++it;
+      heightRequests.erase(deleteIt);
+    }
+  }
+
+  heightQueryLoadQueue.assign(
+      tilesNeedingLoading.begin(),
+      tilesNeedingLoading.end());
+}
+
+bool TilesetHeightRequest::tryCompleteHeightRequest(
+    TilesetContentManager& contentManager,
+    const TilesetOptions& options,
+    std::set<Tile*>& tilesNeedingLoading) {
+  bool tileStillNeedsLoading = false;
+  std::vector<std::string> warnings;
+  for (TilesetHeightQuery& query : this->queries) {
+    if (query.candidateTiles.empty() && query.additiveCandidateTiles.empty()) {
+      // Find the initial set of tiles whose bounding volume is intersected by
+      // the query ray.
+      query.findCandidateTiles(contentManager.getRootTile(), warnings);
+    } else {
+      // Refine the current set of candidate tiles, in case further tiles from
+      // implicit tiling, external tilesets, etc. having been loaded since last
+      // frame.
+      std::swap(query.candidateTiles, query.previousCandidateTiles);
+
+      query.candidateTiles.clear();
+
+      for (Tile* pCandidate : query.previousCandidateTiles) {
+        TileLoadState loadState = pCandidate->getState();
+        if (!pCandidate->getChildren().empty() &&
+            loadState >= TileLoadState::ContentLoaded) {
+          query.findCandidateTiles(pCandidate, warnings);
+        } else {
+          query.candidateTiles.emplace_back(pCandidate);
+        }
+      }
+    }
+
+    auto checkTile = [&contentManager,
+                      &options,
+                      &tilesNeedingLoading,
+                      &tileStillNeedsLoading](Tile* pTile) {
+      contentManager.createLatentChildrenIfNecessary(*pTile, options);
+
+      TileLoadState state = pTile->getState();
+      if (state == TileLoadState::Unloading) {
+        // This tile is in the process of unloading, which must complete
+        // before we can load it again.
+        contentManager.unloadTileContent(*pTile);
+        tileStillNeedsLoading = true;
+      } else if (
+          state == TileLoadState::Unloaded ||
+          state == TileLoadState::FailedTemporarily) {
+        tilesNeedingLoading.insert(pTile);
+        tileStillNeedsLoading = true;
+      }
+    };
+
+    // If any candidates need loading, add to return set
+    for (Tile* pTile : query.additiveCandidateTiles) {
+      checkTile(pTile);
+    }
+    for (Tile* pTile : query.candidateTiles) {
+      checkTile(pTile);
+    }
+  }
+
+  // Bail if we're waiting on tiles to load
+  if (tileStillNeedsLoading)
+    return false;
+
+  // Do the intersect tests
+  for (TilesetHeightQuery& query : this->queries) {
+    for (Tile* pTile : query.additiveCandidateTiles) {
+      query.intersectVisibleTile(pTile);
+    }
+    for (Tile* pTile : query.candidateTiles) {
+      query.intersectVisibleTile(pTile);
+    }
+  }
+
+  // All rays are done, create results
+  SampleHeightResult results;
+
+  // Start with any warnings from tile traversal
+  results.warnings = std::move(warnings);
+
+  results.positions.resize(this->queries.size(), Cartographic(0.0, 0.0, 0.0));
+  results.heightSampled.resize(this->queries.size());
+
+  // Populate results with completed queries
+  for (size_t i = 0; i < this->queries.size(); ++i) {
+    const TilesetHeightQuery& query = this->queries[i];
+
+    bool heightSampled = query.intersectResult.hit.has_value();
+    results.heightSampled[i] = heightSampled;
+    results.positions[i] = query.inputCoordinate;
+
+    if (heightSampled) {
+      results.positions[i].height =
+          options.ellipsoid.getMaximumRadius() * rayOriginHeightFraction -
+          glm::sqrt(query.intersectResult.hit->rayToWorldPointDistanceSq);
+    }
+
+    // Add query warnings into the height result
+    results.warnings.insert(
+        results.warnings.end(),
+        query.intersectResult.warnings.begin(),
+        query.intersectResult.warnings.end());
+  }
+
+  this->promise.resolve(std::move(results));
+  return true;
 }
