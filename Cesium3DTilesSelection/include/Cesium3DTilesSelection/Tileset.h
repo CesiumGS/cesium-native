@@ -25,7 +25,7 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
-class TerrainQuery;
+class TilesetHeightQuery;
 
 /**
  * @brief A <a
@@ -440,7 +440,7 @@ private:
       bool queuedForLoad);
 
   struct HeightRequest {
-    std::vector<TerrainQuery> queries;
+    std::vector<TilesetHeightQuery> queries;
     CesiumAsync::Promise<Tileset::HeightResults> promise;
   };
 

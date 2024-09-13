@@ -1,4 +1,4 @@
-#include "TerrainQuery.h"
+#include "TilesetHeightQuery.h"
 
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
@@ -54,7 +54,7 @@ bool boundingVolumeContainsCoordinate(
 
 } // namespace
 
-void TerrainQuery::intersectVisibleTile(Tile* pTile) {
+void TilesetHeightQuery::intersectVisibleTile(Tile* pTile) {
   TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
   if (!pRenderContent)
     return;
@@ -84,7 +84,7 @@ void TerrainQuery::intersectVisibleTile(Tile* pTile) {
   }
 }
 
-void TerrainQuery::findCandidateTiles(
+void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
     std::vector<std::string>& warnings) {
 

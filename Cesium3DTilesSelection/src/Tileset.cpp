@@ -1,6 +1,6 @@
-#include "TerrainQuery.h"
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
+#include "TilesetHeightQuery.h"
 
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -317,7 +317,7 @@ bool Tileset::tryCompleteHeightRequest(
 
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
-  for (TerrainQuery& query : request.queries) {
+  for (TilesetHeightQuery& query : request.queries) {
     if (query.candidateTiles.empty() && query.additiveCandidateTiles.empty()) {
       // Find the initial set of tiles whose bounding volume is intersected by
       // the query ray.
@@ -375,7 +375,7 @@ bool Tileset::tryCompleteHeightRequest(
     return false;
 
   // Do the intersect tests
-  for (TerrainQuery& query : request.queries) {
+  for (TilesetHeightQuery& query : request.queries) {
     for (Tile* pTile : query.additiveCandidateTiles) {
       query.intersectVisibleTile(pTile);
     }
@@ -391,7 +391,7 @@ bool Tileset::tryCompleteHeightRequest(
   results.warnings = std::move(warnings);
 
   // Populate results with completed queries
-  for (TerrainQuery& query : request.queries) {
+  for (TilesetHeightQuery& query : request.queries) {
     Tileset::HeightResults::CoordinateResult coordinateResult = {
         query.intersectResult.hit.has_value(),
         std::move(query.inputCoordinate)};
@@ -678,7 +678,7 @@ Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
 
   Promise promise = this->_asyncSystem.createPromise<Tileset::HeightResults>();
 
-  std::vector<TerrainQuery> queries;
+  std::vector<TilesetHeightQuery> queries;
   for (const CesiumGeospatial::Cartographic& coordinate : coordinates) {
     CesiumGeospatial::Cartographic startCoordinate(
         coordinate.longitude,
@@ -689,7 +689,7 @@ Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
         Ellipsoid::WGS84.cartographicToCartesian(startCoordinate),
         -Ellipsoid::WGS84.geodeticSurfaceNormal(startCoordinate));
 
-    queries.push_back(TerrainQuery{coordinate, std::move(ray)});
+    queries.push_back(TilesetHeightQuery{coordinate, std::move(ray)});
   }
 
   _heightRequests.emplace_back(HeightRequest{std::move(queries), promise});

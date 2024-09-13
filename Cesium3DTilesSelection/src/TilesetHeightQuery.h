@@ -1,16 +1,17 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumGeometry/Ray.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 
-#include <set>
+#include <string>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 
-class TerrainQuery {
+class Tile;
+
+class TilesetHeightQuery {
 public:
   CesiumGeospatial::Cartographic inputCoordinate;
   CesiumGeometry::Ray ray;
