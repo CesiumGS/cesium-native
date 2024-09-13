@@ -385,29 +385,33 @@ bool Tileset::tryCompleteHeightRequest(
   }
 
   // All rays are done, create results
-  Tileset::HeightResults results;
+  SampleHeightResult results;
 
   // Start with any warnings from tile traversal
   results.warnings = std::move(warnings);
 
+  results.positions.resize(request.queries.size(), Cartographic(0.0, 0.0, 0.0));
+  results.heightSampled.resize(request.queries.size());
+
   // Populate results with completed queries
-  for (TilesetHeightQuery& query : request.queries) {
-    Tileset::HeightResults::CoordinateResult coordinateResult = {
-        query.intersectResult.hit.has_value(),
-        std::move(query.inputCoordinate)};
+  for (size_t i = 0; i < request.queries.size(); ++i) {
+    const TilesetHeightQuery& query = request.queries[i];
 
-    // Add query warnings into the height result
-    std::copy(
-        query.intersectResult.warnings.begin(),
-        query.intersectResult.warnings.end(),
-        std::back_inserter(results.warnings));
+    bool heightSampled = query.intersectResult.hit.has_value();
+    results.heightSampled[i] = heightSampled;
+    results.positions[i] = query.inputCoordinate;
 
-    if (coordinateResult.heightAvailable)
-      coordinateResult.coordinate.height =
+    if (heightSampled) {
+      results.positions[i].height =
           RAY_ORIGIN_HEIGHT -
           glm::sqrt(query.intersectResult.hit->rayToWorldPointDistanceSq);
+    }
 
-    results.coordinateResults.push_back(coordinateResult);
+    // Add query warnings into the height result
+    results.warnings.insert(
+        results.warnings.end(),
+        query.intersectResult.warnings.begin(),
+        query.intersectResult.warnings.end());
   }
 
   request.promise.resolve(std::move(results));
@@ -670,16 +674,16 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
       });
 }
 
-CesiumAsync::Future<Tileset::HeightResults>
-Tileset::getHeightsAtCoordinates(const std::vector<Cartographic>& coordinates) {
-  if (coordinates.empty()) {
-    return this->_asyncSystem.createResolvedFuture<Tileset::HeightResults>({});
+CesiumAsync::Future<SampleHeightResult>
+Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
+  if (positions.empty()) {
+    return this->_asyncSystem.createResolvedFuture<SampleHeightResult>({});
   }
 
-  Promise promise = this->_asyncSystem.createPromise<Tileset::HeightResults>();
+  Promise promise = this->_asyncSystem.createPromise<SampleHeightResult>();
 
   std::vector<TilesetHeightQuery> queries;
-  for (const CesiumGeospatial::Cartographic& coordinate : coordinates) {
+  for (const CesiumGeospatial::Cartographic& coordinate : positions) {
     CesiumGeospatial::Cartographic startCoordinate(
         coordinate.longitude,
         coordinate.latitude,

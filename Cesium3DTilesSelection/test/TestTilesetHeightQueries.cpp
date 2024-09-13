@@ -45,7 +45,7 @@ TEST_CASE("Tileset height queries") {
 
     Tileset tileset(externals, url);
 
-    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
         // A point on geometry in "parent.b3dm", which should only be included
         // because this tileset is additive-refined.
         {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
@@ -57,20 +57,20 @@ TEST_CASE("Tileset height queries") {
       tileset.updateView({});
     }
 
-    Tileset::HeightResults results = future.waitInMainThread();
+    SampleHeightResult results = future.waitInMainThread();
     CHECK(results.warnings.empty());
-    REQUIRE(results.coordinateResults.size() == 2);
+    REQUIRE(results.positions.size() == 2);
 
-    CHECK(results.coordinateResults[0].heightAvailable);
+    CHECK(results.heightSampled[0]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[0].coordinate.height,
+        results.positions[0].height,
         78.155809,
         0.0,
         Math::Epsilon4));
 
-    CHECK(results.coordinateResults[1].heightAvailable);
+    CHECK(results.heightSampled[1]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[1].coordinate.height,
+        results.positions[1].height,
         7.837332,
         0.0,
         Math::Epsilon4));
@@ -84,9 +84,9 @@ TEST_CASE("Tileset height queries") {
 
     Tileset tileset(externals, url);
 
-    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
-        // A point on geometry in "parent.b3dm", which should not be included
-        // because this tileset is replace-refined.
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        // A point on geometry in "parent.b3dm", which should not be
+        // included because this tileset is replace-refined.
         {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
 
          // A point on geometry in a leaf tile.
@@ -96,15 +96,15 @@ TEST_CASE("Tileset height queries") {
       tileset.updateView({});
     }
 
-    Tileset::HeightResults results = future.waitInMainThread();
+    SampleHeightResult results = future.waitInMainThread();
     CHECK(results.warnings.empty());
-    REQUIRE(results.coordinateResults.size() == 2);
+    REQUIRE(results.positions.size() == 2);
 
-    CHECK(!results.coordinateResults[0].heightAvailable);
+    CHECK(!results.heightSampled[0]);
 
-    CHECK(results.coordinateResults[1].heightAvailable);
+    CHECK(results.heightSampled[1]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[1].coordinate.height,
+        results.positions[1].height,
         7.837332,
         0.0,
         Math::Epsilon4));
@@ -118,9 +118,9 @@ TEST_CASE("Tileset height queries") {
 
     Tileset tileset(externals, url);
 
-    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
-        // A point on geometry in "0/0/0.b3dm", which should only be included
-        // because this tileset is additive-refined.
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        // A point on geometry in "0/0/0.b3dm", which should only be
+        // included because this tileset is additive-refined.
         {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
 
          // A point on geometry in a leaf tile.
@@ -130,20 +130,20 @@ TEST_CASE("Tileset height queries") {
       tileset.updateView({});
     }
 
-    Tileset::HeightResults results = future.waitInMainThread();
+    SampleHeightResult results = future.waitInMainThread();
     CHECK(results.warnings.empty());
-    REQUIRE(results.coordinateResults.size() == 2);
+    REQUIRE(results.positions.size() == 2);
 
-    CHECK(results.coordinateResults[0].heightAvailable);
+    CHECK(results.heightSampled[0]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[0].coordinate.height,
+        results.positions[0].height,
         78.155809,
         0.0,
         Math::Epsilon4));
 
-    CHECK(results.coordinateResults[1].heightAvailable);
+    CHECK(results.heightSampled[1]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[1].coordinate.height,
+        results.positions[1].height,
         7.837332,
         0.0,
         Math::Epsilon4));
@@ -157,9 +157,9 @@ TEST_CASE("Tileset height queries") {
 
     Tileset tileset(externals, url);
 
-    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
-        // A point on geometry in "0/0/0.b3dm", which should only be included
-        // because this tileset is additive-refined.
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        // A point on geometry in "0/0/0.b3dm", which should only be
+        // included because this tileset is additive-refined.
         {Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
 
          // A point on geometry in a leaf tile.
@@ -169,20 +169,20 @@ TEST_CASE("Tileset height queries") {
       tileset.updateView({});
     }
 
-    Tileset::HeightResults results = future.waitInMainThread();
+    SampleHeightResult results = future.waitInMainThread();
     CHECK(results.warnings.empty());
-    REQUIRE(results.coordinateResults.size() == 2);
+    REQUIRE(results.positions.size() == 2);
 
-    CHECK(results.coordinateResults[0].heightAvailable);
+    CHECK(results.heightSampled[0]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[0].coordinate.height,
+        results.positions[0].height,
         78.155809,
         0.0,
         Math::Epsilon4));
 
-    CHECK(results.coordinateResults[1].heightAvailable);
+    CHECK(results.heightSampled[1]);
     CHECK(Math::equalsEpsilon(
-        results.coordinateResults[1].coordinate.height,
+        results.positions[1].height,
         7.837332,
         0.0,
         Math::Epsilon4));
@@ -197,17 +197,17 @@ TEST_CASE("Tileset height queries") {
 
     Tileset tileset(externals, url);
 
-    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
         {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
 
     while (!future.isReady()) {
       tileset.updateView({});
     }
 
-    Tileset::HeightResults results = future.waitInMainThread();
+    SampleHeightResult results = future.waitInMainThread();
     REQUIRE(results.warnings.size() == 1);
-    REQUIRE(results.coordinateResults.size() == 1);
-    CHECK(!results.coordinateResults[0].heightAvailable);
+    REQUIRE(results.positions.size() == 1);
+    CHECK(!results.heightSampled[0]);
     CHECK(
         results.warnings[0].find("EXT_mesh_gpu_instancing") !=
         std::string::npos);

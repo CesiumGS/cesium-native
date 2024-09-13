@@ -2,6 +2,7 @@
 
 #include "Library.h"
 #include "RasterOverlayCollection.h"
+#include "SampleHeightResult.h"
 #include "Tile.h"
 #include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
@@ -273,18 +274,21 @@ public:
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
 
-  struct HeightResults {
-    struct CoordinateResult {
-      bool heightAvailable = false;
-      CesiumGeospatial::Cartographic coordinate = {-1, -1, -1};
-    };
-
-    std::vector<CoordinateResult> coordinateResults;
-    std::vector<std::string> warnings;
-  };
-
-  CesiumAsync::Future<HeightResults> getHeightsAtCoordinates(
-      const std::vector<CesiumGeospatial::Cartographic>& coordinates);
+  /**
+   * @brief Initiates an asynchronous query for the height of this tileset at a
+   * list of positions, expressed as longitude and latitude. The most detailed
+   * available tiles are used to determine each height.
+   *
+   * The height of the input positions is ignored. On output, the height is
+   * expressed in meters above the ellipsoid (usually WGS84), which should not
+   * be confused with a height above mean sea level.
+   *
+   * @param positions The positions for which to sample heights.
+   * @return A future that asynchronously resolves to the result of the height
+   * query.
+   */
+  CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
+      const std::vector<CesiumGeospatial::Cartographic>& positions);
 
 private:
   /**
@@ -441,7 +445,7 @@ private:
 
   struct HeightRequest {
     std::vector<TilesetHeightQuery> queries;
-    CesiumAsync::Promise<Tileset::HeightResults> promise;
+    CesiumAsync::Promise<SampleHeightResult> promise;
   };
 
   void _processWorkerThreadLoadQueue();
