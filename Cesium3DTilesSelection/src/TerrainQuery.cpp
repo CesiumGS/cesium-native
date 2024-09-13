@@ -66,17 +66,21 @@ void TerrainQuery::intersectVisibleTile(Tile* pTile) {
           true,
           pTile->getTransform());
 
-  if (!gltfIntersectResult.hit.has_value())
-    return;
+  if (!gltfIntersectResult.warnings.empty()) {
+    this->intersectResult.warnings.insert(
+        this->intersectResult.warnings.end(),
+        gltfIntersectResult.warnings.begin(),
+        gltfIntersectResult.warnings.end());
+  }
 
   // Set ray info to this hit if closer, or the first hit
   if (!this->intersectResult.hit.has_value()) {
-    this->intersectResult = std::move(gltfIntersectResult);
+    this->intersectResult.hit = std::move(gltfIntersectResult.hit);
   } else {
     double prevDistSq = this->intersectResult.hit->rayToWorldPointDistanceSq;
     double thisDistSq = intersectResult.hit->rayToWorldPointDistanceSq;
     if (thisDistSq < prevDistSq)
-      this->intersectResult = std::move(gltfIntersectResult);
+      this->intersectResult.hit = std::move(gltfIntersectResult.hit);
   }
 }
 

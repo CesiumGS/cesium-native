@@ -187,4 +187,29 @@ TEST_CASE("Tileset height queries") {
         0.0,
         Math::Epsilon4));
   }
+
+  SECTION("Instanced model is not yet supported") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(
+            (testDataPath / "i3dm" / "InstancedWithBatchTable" / "tileset.json")
+                .u8string());
+
+    Tileset tileset(externals, url);
+
+    Future<Tileset::HeightResults> future = tileset.getHeightsAtCoordinates(
+        {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
+
+    while (!future.isReady()) {
+      tileset.updateView({});
+    }
+
+    Tileset::HeightResults results = future.waitInMainThread();
+    REQUIRE(results.warnings.size() == 1);
+    REQUIRE(results.coordinateResults.size() == 1);
+    CHECK(!results.coordinateResults[0].heightAvailable);
+    CHECK(
+        results.warnings[0].find("EXT_mesh_gpu_instancing") !=
+        std::string::npos);
+  }
 }
