@@ -77,14 +77,16 @@ Ray createRay(const Cartographic& position, const Ellipsoid& ellipsoid) {
 TilesetHeightQuery::TilesetHeightQuery(
     const Cartographic& position,
     const Ellipsoid& ellipsoid)
-    : inputCoordinate(position),
+    : inputPosition(position),
       ray(createRay(position, ellipsoid)),
-      intersectResult(),
+      intersection(),
       additiveCandidateTiles(),
       candidateTiles(),
       previousCandidateTiles() {}
 
-void TilesetHeightQuery::intersectVisibleTile(Tile* pTile) {
+void TilesetHeightQuery::intersectVisibleTile(
+    Tile* pTile,
+    std::vector<std::string>& outWarnings) {
   TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
   if (!pRenderContent)
     return;
@@ -97,20 +99,20 @@ void TilesetHeightQuery::intersectVisibleTile(Tile* pTile) {
           pTile->getTransform());
 
   if (!gltfIntersectResult.warnings.empty()) {
-    this->intersectResult.warnings.insert(
-        this->intersectResult.warnings.end(),
-        gltfIntersectResult.warnings.begin(),
-        gltfIntersectResult.warnings.end());
+    outWarnings.insert(
+        outWarnings.end(),
+        std::make_move_iterator(gltfIntersectResult.warnings.begin()),
+        std::make_move_iterator(gltfIntersectResult.warnings.end()));
   }
 
   // Set ray info to this hit if closer, or the first hit
-  if (!this->intersectResult.hit.has_value()) {
-    this->intersectResult.hit = std::move(gltfIntersectResult.hit);
+  if (!this->intersection.has_value()) {
+    this->intersection = std::move(gltfIntersectResult.hit);
   } else {
-    double prevDistSq = this->intersectResult.hit->rayToWorldPointDistanceSq;
-    double thisDistSq = intersectResult.hit->rayToWorldPointDistanceSq;
+    double prevDistSq = this->intersection->rayToWorldPointDistanceSq;
+    double thisDistSq = intersection->rayToWorldPointDistanceSq;
     if (thisDistSq < prevDistSq)
-      this->intersectResult.hit = std::move(gltfIntersectResult.hit);
+      this->intersection = std::move(gltfIntersectResult.hit);
   }
 }
 
@@ -135,7 +137,7 @@ void TilesetHeightQuery::findCandidateTiles(
       if (boundingVolumeContainsCoordinate(
               *contentBoundingVolume,
               this->ray,
-              this->inputCoordinate))
+              this->inputPosition))
         this->candidateTiles.push_back(pTile);
     } else {
       this->candidateTiles.push_back(pTile);
@@ -150,7 +152,7 @@ void TilesetHeightQuery::findCandidateTiles(
         if (boundingVolumeContainsCoordinate(
                 *contentBoundingVolume,
                 this->ray,
-                this->inputCoordinate))
+                this->inputPosition))
           this->additiveCandidateTiles.push_back(pTile);
       } else {
         this->additiveCandidateTiles.push_back(pTile);
@@ -163,7 +165,7 @@ void TilesetHeightQuery::findCandidateTiles(
       if (!boundingVolumeContainsCoordinate(
               child.getBoundingVolume(),
               this->ray,
-              this->inputCoordinate))
+              this->inputPosition))
         continue;
 
       // Child is a candidate, traverse it and its children
@@ -268,10 +270,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
   // Do the intersect tests
   for (TilesetHeightQuery& query : this->queries) {
     for (Tile* pTile : query.additiveCandidateTiles) {
-      query.intersectVisibleTile(pTile);
+      query.intersectVisibleTile(pTile, warnings);
     }
     for (Tile* pTile : query.candidateTiles) {
-      query.intersectVisibleTile(pTile);
+      query.intersectVisibleTile(pTile, warnings);
     }
   }
 
@@ -288,21 +290,15 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
   for (size_t i = 0; i < this->queries.size(); ++i) {
     const TilesetHeightQuery& query = this->queries[i];
 
-    bool heightSampled = query.intersectResult.hit.has_value();
+    bool heightSampled = query.intersection.has_value();
     results.heightSampled[i] = heightSampled;
-    results.positions[i] = query.inputCoordinate;
+    results.positions[i] = query.inputPosition;
 
     if (heightSampled) {
       results.positions[i].height =
           options.ellipsoid.getMaximumRadius() * rayOriginHeightFraction -
-          glm::sqrt(query.intersectResult.hit->rayToWorldPointDistanceSq);
+          glm::sqrt(query.intersection->rayToWorldPointDistanceSq);
     }
-
-    // Add query warnings into the height result
-    results.warnings.insert(
-        results.warnings.end(),
-        query.intersectResult.warnings.begin(),
-        query.intersectResult.warnings.end());
   }
 
   this->promise.resolve(std::move(results));
