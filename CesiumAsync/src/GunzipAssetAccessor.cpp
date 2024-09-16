@@ -2,7 +2,7 @@
 
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Gunzip.h"
+#include "CesiumUtility/Gzip.h"
 
 namespace CesiumAsync {
 
@@ -12,7 +12,7 @@ class GunzippedAssetResponse : public IAssetResponse {
 public:
   GunzippedAssetResponse(const IAssetResponse* pOther) noexcept
       : _pAssetResponse{pOther} {
-    this->_dataValid = CesiumUtility::gunzip(
+    this->_dataValid = CesiumUtility::Gzip::gunzip(
         this->_pAssetResponse->data(),
         this->_gunzippedData);
   }
@@ -44,7 +44,7 @@ class GunzippedAssetRequest : public IAssetRequest {
 public:
   GunzippedAssetRequest(std::shared_ptr<IAssetRequest>&& pOther)
       : _pAssetRequest(std::move(pOther)),
-        _AssetResponse(_pAssetRequest->response()){};
+        _AssetResponse(_pAssetRequest->response()) {};
   virtual const std::string& method() const noexcept override {
     return this->_pAssetRequest->method();
   }
@@ -70,7 +70,7 @@ Future<std::shared_ptr<IAssetRequest>> gunzipIfNeeded(
     const AsyncSystem& asyncSystem,
     std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
   const IAssetResponse* pResponse = pCompletedRequest->response();
-  if (pResponse && CesiumUtility::isGzip(pResponse->data())) {
+  if (pResponse && CesiumUtility::Gzip::isGzip(pResponse->data())) {
     return asyncSystem.runInWorkerThread(
         [pCompletedRequest = std::move(
              pCompletedRequest)]() mutable -> std::shared_ptr<IAssetRequest> {
