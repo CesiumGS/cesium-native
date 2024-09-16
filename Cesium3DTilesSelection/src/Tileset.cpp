@@ -33,11 +33,6 @@ using namespace CesiumGeospatial;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
-// 10,000 meters above ellisoid
-// Highest point on ellipsoid is Mount Everest at 8,848 m
-// Nothing intersectable should be above this
-#define RAY_ORIGIN_HEIGHT 10000.0
-
 namespace Cesium3DTilesSelection {
 
 Tileset::Tileset(

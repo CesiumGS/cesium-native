@@ -283,6 +283,11 @@ public:
    * expressed in meters above the ellipsoid (usually WGS84), which should not
    * be confused with a height above mean sea level.
    *
+   * Note that {@link Tileset::updateView} must be called periodically, or else
+   * the returned `Future` will never resolve. If you are not using this tileset
+   * for visualization, you can call `updateView` with an empty list of
+   * frustums.
+   *
    * @param positions The positions for which to sample heights.
    * @return A future that asynchronously resolves to the result of the height
    * query.

@@ -1,5 +1,22 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Renamed `shouldContentContinueUpdating` to `getMightHaveLatentChildren` and `setContentShouldContinueUpdating` to `setMightHaveLatentChildren` on the `Tile` class.
+
+##### Additions :tada:
+
+- Added `sampleHeightMostDetailed` method to `Tileset`.
+- `AxisAlignedBox` now has `constexpr` constructors.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented use of `Tileset` with a nullptr `IPrepareRendererResources`.
+- Fixed a bug in `IntersectionTests::rayOBBParametric` that could cause incorrect results for some oriented bounding boxes.
+- `GltfUtilities::intersectRayGltfModel` now reports a warning when given a model it can't compute the intersection with because it uses required extensions that are not supported.
+
 ### v0.39.0 - 2024-09-02
 
 ##### Breaking Changes :mega:
