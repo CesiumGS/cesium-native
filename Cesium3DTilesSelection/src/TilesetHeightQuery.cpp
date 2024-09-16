@@ -274,9 +274,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         // before we can load it again.
         contentManager.unloadTileContent(*pTile);
         tileStillNeedsLoading = true;
-      } else if (
-          state == TileLoadState::Unloaded ||
-          state == TileLoadState::FailedTemporarily) {
+      } else if (state <= TileLoadState::ContentLoading) {
         tilesNeedingLoading.insert(pTile);
         tileStillNeedsLoading = true;
       }
