@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumGeometry/Ray.h>
@@ -13,7 +14,6 @@
 
 namespace Cesium3DTilesSelection {
 
-class Tile;
 class TilesetContentManager;
 struct TilesetOptions;
 struct SampleHeightResult;
@@ -90,10 +90,16 @@ public:
    * {@link TilesetHeightQuery::additiveCandidateTiles}.
    *
    * @param pTile The tile at which to start traversal.
+   * @param loadedTiles The linked list of loaded tiles, used to ensure that
+   * tiles loaded for height queries stay loaded long enough to complete the
+   * query and no longer.
    * @param outWarnings On return, any warnings that occurred during candidate
    * search.
    */
-  void findCandidateTiles(Tile* pTile, std::vector<std::string>& outWarnings);
+  void findCandidateTiles(
+      Tile* pTile,
+      Tile::LoadedLinkedList& loadedTiles,
+      std::vector<std::string>& outWarnings);
 };
 
 /**
@@ -117,6 +123,9 @@ struct TilesetHeightRequest {
    *
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
+   * @param loadedTiles The linked list of loaded tiles, used to ensure that
+   * tiles loaded for height queries stay loaded long enough to complete the
+   * query and no longer.
    * @param heightRequests The list of all height requests. Completed requests
    * will be removed from this list.
    * @param heightQueryLoadQueue Tiles that still need to be loaded before all
@@ -125,6 +134,7 @@ struct TilesetHeightRequest {
   static void processHeightRequests(
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
+      Tile::LoadedLinkedList& loadedTiles,
       std::list<TilesetHeightRequest>& heightRequests,
       std::vector<Tile*>& heightQueryLoadQueue);
 
@@ -134,12 +144,16 @@ struct TilesetHeightRequest {
    *
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
+   * @param loadedTiles The linked list of loaded tiles, used to ensure that
+   * tiles loaded for height queries stay loaded long enough to complete the
+   * query and no longer.
    * @param tilesNeedingLoading Tiles that needs to be loaded before this height
    * request can complete.
    */
   bool tryCompleteHeightRequest(
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
+      Tile::LoadedLinkedList& loadedTiles,
       std::set<Tile*>& tilesNeedingLoading);
 };
 

@@ -118,7 +118,10 @@ void TilesetHeightQuery::intersectVisibleTile(
 
 void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
+    Tile::LoadedLinkedList& loadedTiles,
     std::vector<std::string>& warnings) {
+  // Make sure this tile is not unloaded until we're done with it.
+  loadedTiles.insertAtTail(*pTile);
 
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
@@ -169,7 +172,7 @@ void TilesetHeightQuery::findCandidateTiles(
         continue;
 
       // Child is a candidate, traverse it and its children
-      findCandidateTiles(&child, warnings);
+      findCandidateTiles(&child, loadedTiles, warnings);
     }
   }
 }
@@ -177,6 +180,7 @@ void TilesetHeightQuery::findCandidateTiles(
 /*static*/ void TilesetHeightRequest::processHeightRequests(
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
+    Tile::LoadedLinkedList& loadedTiles,
     std::list<TilesetHeightRequest>& heightRequests,
     std::vector<Tile*>& heightQueryLoadQueue) {
   if (heightRequests.empty())
@@ -190,6 +194,7 @@ void TilesetHeightQuery::findCandidateTiles(
     if (!request.tryCompleteHeightRequest(
             contentManager,
             options,
+            loadedTiles,
             tilesNeedingLoading)) {
       ++it;
     } else {
@@ -207,6 +212,7 @@ void TilesetHeightQuery::findCandidateTiles(
 bool TilesetHeightRequest::tryCompleteHeightRequest(
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
+    Tile::LoadedLinkedList& loadedTiles,
     std::set<Tile*>& tilesNeedingLoading) {
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
@@ -214,7 +220,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     if (query.candidateTiles.empty() && query.additiveCandidateTiles.empty()) {
       // Find the initial set of tiles whose bounding volume is intersected by
       // the query ray.
-      query.findCandidateTiles(contentManager.getRootTile(), warnings);
+      query.findCandidateTiles(
+          contentManager.getRootTile(),
+          loadedTiles,
+          warnings);
     } else {
       // Refine the current set of candidate tiles, in case further tiles from
       // implicit tiling, external tilesets, etc. having been loaded since last
@@ -227,8 +236,12 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
-          query.findCandidateTiles(pCandidate, warnings);
+          query.findCandidateTiles(pCandidate, loadedTiles, warnings);
         } else {
+          // Make sure this tile stays loaded.
+          loadedTiles.insertAtTail(*pCandidate);
+
+          // Check again next frame to see if this tile has children.
           query.candidateTiles.emplace_back(pCandidate);
         }
       }

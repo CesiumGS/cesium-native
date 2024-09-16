@@ -377,6 +377,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   TilesetHeightRequest::processHeightRequests(
       *this->_pTilesetContentManager,
       this->_options,
+      this->_loadedTiles,
       this->_heightRequests,
       this->_heightQueryLoadQueue);
 
