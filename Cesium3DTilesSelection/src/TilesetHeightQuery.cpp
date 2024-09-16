@@ -116,12 +116,27 @@ void TilesetHeightQuery::intersectVisibleTile(
   }
 }
 
+namespace {
+
+void markTileVisited(Tile::LoadedLinkedList& loadedTiles, Tile* pTile) {
+  // Don't move the root tile to the tail, because this tile is used to mark the
+  // beginning of the tiles used in the current frame. If we move it, some tiles
+  // may be deemed to have most recently been used last frame, and so will be
+  // unloaded.
+  if (pTile == nullptr || pTile->getParent() == nullptr)
+    return;
+
+  loadedTiles.insertAtTail(*pTile);
+}
+
+} // namespace
+
 void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
     Tile::LoadedLinkedList& loadedTiles,
     std::vector<std::string>& warnings) {
   // Make sure this tile is not unloaded until we're done with it.
-  loadedTiles.insertAtTail(*pTile);
+  markTileVisited(loadedTiles, pTile);
 
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
@@ -239,7 +254,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
           query.findCandidateTiles(pCandidate, loadedTiles, warnings);
         } else {
           // Make sure this tile stays loaded.
-          loadedTiles.insertAtTail(*pCandidate);
+          markTileVisited(loadedTiles, pCandidate);
 
           // Check again next frame to see if this tile has children.
           query.candidateTiles.emplace_back(pCandidate);
@@ -269,6 +284,11 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
     // If any candidates need loading, add to return set
     for (Tile* pTile : query.additiveCandidateTiles) {
+      // Additive tiles are only enumerated once in findCandidateTiles, so we
+      // need to continue every frame to make sure they're not unloaded before
+      // we're done with them.
+      markTileVisited(loadedTiles, pTile);
+
       checkTile(pTile);
     }
     for (Tile* pTile : query.candidateTiles) {
