@@ -45,6 +45,7 @@
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
+#include <CesiumGltf/ExtensionPropertyTableExtStructuralMetadataHierarchy.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumGltf/FeatureIdTexture.h>
@@ -126,6 +127,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionPropertyTableExtStructuralMetadataHierarchy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -780,6 +786,27 @@ void writeJson(
   if (!obj.propertyAttributes.empty()) {
     jsonWriter.Key("propertyAttributes");
     writeJson(obj.propertyAttributes, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionPropertyTableExtStructuralMetadataHierarchy& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.parentPropertyTables > -1) {
+    jsonWriter.Key("parentPropertyTables");
+    writeJson(obj.parentPropertyTables, jsonWriter, context);
+  }
+
+  if (obj.parentIndices > -1) {
+    jsonWriter.Key("parentIndices");
+    writeJson(obj.parentIndices, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2444,6 +2471,13 @@ void ExtensionModelExtStructuralMetadataJsonWriter::write(
 
 void ExtensionMeshPrimitiveExtStructuralMetadataJsonWriter::write(
     const CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionPropertyTableExtStructuralMetadataHierarchyJsonWriter::write(
+    const CesiumGltf::ExtensionPropertyTableExtStructuralMetadataHierarchy& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

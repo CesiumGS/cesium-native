@@ -22,6 +22,7 @@
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
+#include "ExtensionPropertyTableExtStructuralMetadataHierarchyJsonHandler.h"
 #include "ExtensionTextureWebpJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
@@ -33,6 +34,7 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
@@ -94,6 +96,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::PropertyTable,
+      ExtensionPropertyTableExtStructuralMetadataHierarchyJsonHandler>();
   options.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonHandler>();
