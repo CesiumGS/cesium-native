@@ -142,7 +142,7 @@ void decodeDataUrls(
     }
 
     CesiumGltf::ImageCesium& imageCesium = imageResult.image.value();
-    image.cesium = imageCesium;
+    image.cesium = std::move(imageCesium);
 
     if (options.clearDecodedDataUrls) {
       image.uri.reset();

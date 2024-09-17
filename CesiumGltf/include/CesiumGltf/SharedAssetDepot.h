@@ -27,18 +27,6 @@ template <typename AssetType> class SharedAsset;
 template <typename AssetType> class SingleAssetDepot;
 
 /**
- * Implemented for assets that can be constructed from data fetched from a URL.
- */
-template <typename AssetType> class AssetFactory {
-public:
-  /**
-   * Creates a new instance of this asset out of the given data, if possible.
-   */
-  virtual std::optional<AssetType>
-  createFrom(const gsl::span<const gsl::byte>& data) const = 0;
-};
-
-/**
  * Contains the current state of an asset within the SharedAssetDepot.
  */
 template <typename AssetType>
@@ -54,9 +42,12 @@ public:
 
   AssetContainer(
       std::string assetId_,
-      AssetType asset_,
+      AssetType&& asset_,
       SingleAssetDepot<AssetType>* parent_)
-      : counter(0), assetId(assetId_), asset(asset_), parent(parent_) {}
+      : counter(0),
+        assetId(assetId_),
+        asset(std::move(asset_)),
+        parent(parent_) {}
   SharedAsset<AssetType> toRef() { return SharedAsset(this); }
 };
 
@@ -69,9 +60,16 @@ public:
  */
 template <typename AssetType> class SharedAsset {
 public:
+  SharedAsset(AssetType&& asset)
+      : contents(new AssetContainer<AssetType>(
+            std::string(),
+            std::forward<AssetType>(asset),
+            nullptr)) {}
   SharedAsset(AssetType& asset)
-      : contents(new AssetContainer<AssetType>(std::string(), asset, nullptr)) {
-  }
+      : contents(new AssetContainer<AssetType>(
+            std::string(),
+            std::forward<AssetType>(asset),
+            nullptr)) {}
   SharedAsset(std::nullptr_t) : contents(nullptr) {}
   SharedAsset()
       : contents(new AssetContainer<AssetType>(
@@ -197,10 +195,11 @@ public:
    * If the asset has already started loading in this depot but hasn't finished,
    * its future will be returned.
    */
+  template <typename Factory>
   CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>> getOrFetch(
       CesiumAsync::AsyncSystem& asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const AssetFactory<AssetType>& factory,
+      const Factory& factory,
       std::string& uri,
       std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
     // We need to avoid:
@@ -231,7 +230,7 @@ public:
     CesiumAsync::Future<std::optional<SharedAsset<AssetType>>> future =
         pAssetAccessor->get(asyncSystem, uri, headers)
             .thenInWorkerThread(
-                [&factory](
+                [factory = std::move(factory)](
                     std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
                     -> std::optional<AssetType> {
                   const CesiumAsync::IAssetResponse* pResponse =
@@ -249,7 +248,7 @@ public:
                  pAssets = &this->assets,
                  pPendingAssetsMutex = &this->pendingAssetsMutex,
                  pPendingAssets =
-                     &this->pendingAssets](std::optional<AssetType>& result)
+                     &this->pendingAssets](std::optional<AssetType>&& result)
                     -> std::optional<SharedAsset<AssetType>> {
                   std::lock_guard lock(*pPendingAssetsMutex);
 
@@ -274,8 +273,7 @@ public:
                   return std::nullopt;
                 });
 
-    auto [it, ok] =
-        this->pendingAssets.emplace(uri, std::move(future).share());
+    auto [it, ok] = this->pendingAssets.emplace(uri, std::move(future).share());
     if (!ok) {
       return asyncSystem
           .createResolvedFuture(std::optional<SharedAsset<AssetType>>())
@@ -320,10 +318,11 @@ public:
   /**
    * Obtains an existing {@link ImageCesium} or constructs a new one using the provided factory.
    */
+  template <typename Factory>
   CesiumAsync::SharedFuture<std::optional<SharedAsset<ImageCesium>>> getOrFetch(
       CesiumAsync::AsyncSystem& asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const AssetFactory<ImageCesium>& factory,
+      const Factory& factory,
       std::string& uri,
       std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
     return images
@@ -340,7 +339,6 @@ private:
 
 // actually export the public types to the right namespace
 // fairly sure this is anti-pattern actually but i'll fix it later
-using SharedAssetDepotInternals::AssetFactory;
 using SharedAssetDepotInternals::SharedAsset;
 using SharedAssetDepotInternals::SharedAssetDepot;
 

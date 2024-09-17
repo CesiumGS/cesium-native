@@ -43,14 +43,14 @@ using namespace CesiumUtility;
 namespace {
 
 /**
- * Used to construct a CesiumImage.
+ * Used to construct an ImageCesium.
  */
-struct ImageAssetFactory : public AssetFactory<ImageCesium> {
+struct ImageAssetFactory {
   ImageAssetFactory(const Ktx2TranscodeTargets& ktx2TranscodeTargets_)
       : ktx2TranscodeTargets(ktx2TranscodeTargets_) {}
 
-  virtual std::optional<ImageCesium>
-  createFrom(const gsl::span<const gsl::byte>& data) const override {
+  std::optional<ImageCesium>
+  createFrom(const gsl::span<const gsl::byte>& data) const {
     ImageReaderResult imageResult =
         ImageDecoder::readImage(data, this->ktx2TranscodeTargets);
 
@@ -325,7 +325,8 @@ void postprocess(
           imageResult.errors.begin(),
           imageResult.errors.end());
       if (imageResult.image) {
-        image.cesium = SharedAsset<ImageCesium>(imageResult.image.value());
+        image.cesium =
+            SharedAsset<ImageCesium>(std::move(imageResult.image.value()));
       } else {
         if (image.mimeType) {
           readGltf.errors.emplace_back(
@@ -574,7 +575,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                         auto asset = pFactory->createFrom(bytes);
                         if (asset.has_value()) {
                           return std::optional<SharedAsset<ImageCesium>>(
-                              asset.value());
+                              std::move(asset.value()));
                         }
                       }
 
