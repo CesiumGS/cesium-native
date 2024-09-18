@@ -21,8 +21,6 @@
 
 namespace CesiumGltf {
 
-namespace SharedAssetDepotInternals {
-
 template <typename AssetType> class SharedAsset;
 template <typename AssetType> class SingleAssetDepot;
 
@@ -330,7 +328,8 @@ private:
  */
 class SharedAssetDepot {
 public:
-  SharedAssetDepot() {}
+  SharedAssetDepot() = default;
+  void operator=(const SharedAssetDepot& other) = delete;
 
   /**
    * Obtains an existing {@link ImageCesium} or constructs a new one using the provided factory.
@@ -346,17 +345,12 @@ public:
         .getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
   }
 
-  size_t getImagesCount() const { return this->images.getDistinctCount(); }
+  const SingleAssetDepot<CesiumGltf::ImageCesium>* getImageDepot() {
+    return &this->images;
+  }
 
 private:
   SingleAssetDepot<CesiumGltf::ImageCesium> images;
 };
-
-} // namespace SharedAssetDepotInternals
-
-// actually export the public types to the right namespace
-// fairly sure this is anti-pattern actually but i'll fix it later
-using SharedAssetDepotInternals::SharedAsset;
-using SharedAssetDepotInternals::SharedAssetDepot;
 
 } // namespace CesiumGltf
