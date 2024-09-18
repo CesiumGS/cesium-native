@@ -1682,7 +1682,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       CHECK(images.size() == 1);
     }
 
-    CHECK(pManager->getSharedAssetDepot()->getImagesCount() == 2);
+    CHECK(
+        pManager->getSharedAssetDepot()->getImageDepot()->getDistinctCount() ==
+        2);
 
     // unload the tile content
     for (auto& child : containerTile.getChildren()) {
