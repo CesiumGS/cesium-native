@@ -200,8 +200,8 @@ public:
       CesiumAsync::AsyncSystem& asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const Factory& factory,
-      std::string& uri,
-      std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
+      const std::string& uri,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
     // We need to avoid:
     // - Two assets starting loading before the first asset has updated the
     //   pendingAssets map
@@ -283,9 +283,26 @@ public:
     return it->second;
   }
 
+  /**
+   * @brief Returns the total number of distinct assets contained in this depot.
+   */
   size_t getDistinctCount() const { return this->assets.size(); }
 
+  /**
+   * @brief Returns the number of active references to assets in this depot.
+   */
+  size_t getUsageCount() const {
+    size_t count = 0;
+    for (auto& [key, item] : assets) {
+      count += item->counter;
+    }
+    return count;
+  }
+
 private:
+  // Disable copy
+  void operator=(const SharedAsset<AssetType>& other) = delete;
+
   /**
    * Removes the given asset from the depot.
    * Should only be called by {@link SharedAsset}.
@@ -323,8 +340,8 @@ public:
       CesiumAsync::AsyncSystem& asyncSystem,
       std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const Factory& factory,
-      std::string& uri,
-      std::vector<CesiumAsync::IAssetAccessor::THeader> headers) {
+      const std::string& uri,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
     return images
         .getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
   }
