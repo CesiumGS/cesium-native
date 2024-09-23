@@ -139,6 +139,18 @@ struct TilesetHeightRequest {
       std::vector<Tile*>& heightQueryLoadQueue);
 
   /**
+   * @brief Cancels all outstanding height requests and rejects the associated
+   * futures. This is useful when it is known that the height requests will
+   * never complete, such as when the tileset fails to load.
+   *
+   * @param heightRequests The height requests to cancel.
+   * @param message The message explaining what went wrong.
+   */
+  static void failHeightRequests(
+      std::list<TilesetHeightRequest>& heightRequests,
+      const std::string& message);
+
+  /**
    * @brief Tries to complete this height request. Returns false if further data
    * still needs to be loaded and so the request cannot be completed yet.
    *

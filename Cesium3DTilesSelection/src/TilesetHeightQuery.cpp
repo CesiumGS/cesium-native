@@ -224,6 +224,16 @@ void TilesetHeightQuery::findCandidateTiles(
       tilesNeedingLoading.end());
 }
 
+void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
+    std::list<TilesetHeightRequest>& heightRequests,
+    const std::string& message) {
+  for (TilesetHeightRequest& request : heightRequests) {
+    request.promise.reject(std::runtime_error(message));
+  }
+
+  heightRequests.clear();
+}
+
 bool TilesetHeightRequest::tryCompleteHeightRequest(
     TilesetContentManager& contentManager,
     const TilesetOptions& options,

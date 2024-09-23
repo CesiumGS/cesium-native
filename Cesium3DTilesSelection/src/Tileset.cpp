@@ -336,6 +336,15 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
+    // If the root tile is already supposed to be ready, but it's not, it means
+    // the tileset couldn't load. Fail any outstanding height requests.
+    if (!this->_heightRequests.empty() && this->_pTilesetContentManager &&
+        this->_pTilesetContentManager->getRootTileAvailableEvent().isReady()) {
+      TilesetHeightRequest::failHeightRequests(
+          this->_heightRequests,
+          "Height requests could not complete because the tileset failed to "
+          "load.");
+    }
     return result;
   }
 
