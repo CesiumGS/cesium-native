@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 
 namespace CesiumGltf {
@@ -96,6 +97,8 @@ template <typename... T> struct IsMetadataArray;
 template <typename T> struct IsMetadataArray<T> : std::false_type {};
 template <typename T>
 struct IsMetadataArray<PropertyArrayView<T>> : std::true_type {};
+template <typename T>
+struct IsMetadataArray<PropertyArrayCopy<T>> : std::true_type {};
 
 /**
  * @brief Check if a C++ type can be represented as an array of numeric elements
@@ -104,6 +107,9 @@ struct IsMetadataArray<PropertyArrayView<T>> : std::true_type {};
 template <typename... T> struct IsMetadataNumericArray;
 template <typename T> struct IsMetadataNumericArray<T> : std::false_type {};
 template <typename T> struct IsMetadataNumericArray<PropertyArrayView<T>> {
+  static constexpr bool value = IsMetadataNumeric<T>::value;
+};
+template <typename T> struct IsMetadataNumericArray<PropertyArrayCopy<T>> {
   static constexpr bool value = IsMetadataNumeric<T>::value;
 };
 
@@ -129,9 +135,15 @@ struct IsMetadataStringArray<PropertyArrayView<std::string_view>>
 /**
  * @brief Retrieve the component type of a metadata array
  */
-template <typename T> struct MetadataArrayType;
+template <typename T> struct MetadataArrayType {
+  using type = void;
+};
 template <typename T>
 struct MetadataArrayType<CesiumGltf::PropertyArrayView<T>> {
+  using type = T;
+};
+template <typename T>
+struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
   using type = T;
 };
 
@@ -362,5 +374,68 @@ template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
   using type = PropertyArrayView<glm::mat<N, N, double, Q>>;
 };
+
+/**
+ * @brief Transforms a property value type from a view to an equivalent type
+ * that owns the data it is viewing. For most property types this is an identity
+ * transformation, because most property types are held by value. However, it
+ * transforms numeric `PropertyArrayView<T>` to `PropertyArrayCopy<T>` because a
+ * `PropertyArrayView<T>` only has a pointer to the value it is viewing.
+ *
+ * @tparam T The type of the property value view.
+ */
+template <typename T>
+using PropertyValueViewToCopy = std::conditional_t<
+    IsMetadataNumericArray<T>::value,
+    PropertyArrayCopy<typename MetadataArrayType<T>::type>,
+    T>;
+
+template <typename T>
+using PropertyValueCopyToView = std::conditional_t<
+    IsMetadataNumericArray<T>::value,
+    PropertyArrayView<typename MetadataArrayType<T>::type>,
+    T>;
+
+/**
+ * @brief Creates an optional instance of a type that can be used to own a
+ * property value from an optional instance that is only a view on that value.
+ * See {@link PropertyValueViewToOwner}.
+ *
+ * @tparam T
+ * @param view
+ * @return std::optional<PropertyValueViewToOwner<T>>
+ */
+template <typename T>
+static std::optional<PropertyValueViewToCopy<T>>
+propertyValueViewToCopy(const std::optional<T>& view) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
+    if (view) {
+      return std::make_optional<PropertyValueViewToCopy<T>>(
+          std::vector(view->begin(), view->end()));
+    } else {
+      return std::nullopt;
+    }
+  } else {
+    return view;
+  }
+}
+
+template <typename T>
+static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
+    return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
+  } else {
+    return view;
+  }
+}
+
+template <typename T>
+static PropertyValueCopyToView<T> propertyValueCopyToView(const T& copy) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
+    return copy.view();
+  } else {
+    return copy;
+  }
+}
 
 } // namespace CesiumGltf

@@ -23,6 +23,7 @@
 
 #include <glm/gtc/quaternion.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <unordered_set>
 #include <vector>
@@ -1059,8 +1060,8 @@ void GltfUtilities::removeUnusedMaterials(
 }
 
 void GltfUtilities::compactBuffers(CesiumGltf::Model& gltf) {
-  for (size_t i = 0;
-       i < gltf.buffers.size() && i < std::numeric_limits<int32_t>::max();
+  for (size_t i = 0; i < gltf.buffers.size() &&
+                     i < size_t(std::numeric_limits<int32_t>::max());
        ++i) {
     GltfUtilities::compactBuffer(gltf, int32_t(i));
   }
