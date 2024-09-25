@@ -1,5 +1,16 @@
 # Change Log
 
+### Not Released Yet
+
+##### Breaking Changes :mega:
+
+- `LoadedRasterOverlayImage` now has a single `errorList` property instead of separate `errors` and `warnings` properties.
+
+##### Fixes :wrench:
+
+- Errors while loading raster overlays are now logged. Previously, they were silently ignored in many cases.
+- A raster overlay image failing to load will no longer completely prevent the geometry tile to which it is attached from rendering. Instead, once the raster overlay fails, the geometry tile will be shown without the raster overlay.
+
 ### v0.39.0 - 2024-09-02
 
 ##### Breaking Changes :mega:

@@ -319,7 +319,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
           .catchImmediately([](std::exception&& e) {
             // Turn an exception into an error.
             LoadedRasterOverlayImage result;
-            result.errors.emplace_back(e.what());
+            result.errorList.emplaceError(e.what());
             return result;
           })
           .thenImmediately([&cachedBytes = this->_cachedBytes,
@@ -328,7 +328,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                             asyncSystem = this->getAsyncSystem(),
                             loadParentTile = std::move(loadParentTile)](
                                LoadedRasterOverlayImage&& loaded) {
-            if (loaded.image && loaded.errors.empty() &&
+            if (loaded.image && !loaded.errorList.hasErrors() &&
                 loaded.image->width > 0 && loaded.image->height > 0) {
               // Successfully loaded, continue.
               cachedBytes += int64_t(loaded.image->pixelData.size());
@@ -470,13 +470,19 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
           // For non-useful sets of images, just return an empty image,
           // signalling that the parent tile should be used instead.
           // See https://github.com/CesiumGS/cesium-native/issues/316 for an
-          // edge case that is not yet handled.
+          // edge case that is not yet handled. Be sure to pass through any
+          // errors and warnings.
+          ErrorList errors;
+          for (LoadedQuadtreeImage& image : images) {
+            if (image.pLoaded) {
+              errors.merge(image.pLoaded->errorList);
+            }
+          }
           return LoadedRasterOverlayImage{
               ImageCesium(),
               Rectangle(),
               {},
-              {},
-              {},
+              std::move(errors),
               false};
         }
 
@@ -645,6 +651,12 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
     std::vector<LoadedQuadtreeImage>&& images) {
+  ErrorList errors;
+  for (LoadedQuadtreeImage& image : images) {
+    if (image.pLoaded) {
+      errors.merge(std::move(image.pLoaded->errorList));
+    }
+  }
 
   const CombinedImageMeasurements measurements =
       QuadtreeRasterOverlayTileProvider::measureCombinedImage(
@@ -660,8 +672,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         std::nullopt,
         targetRectangle,
         {},
-        {},
-        {},
+        std::move(errors),
         true // TODO
     };
   }
@@ -669,6 +680,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
   result.moreDetailAvailable = false;
+  result.errorList = std::move(errors);
 
   ImageCesium& target = result.image.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;

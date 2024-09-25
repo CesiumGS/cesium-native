@@ -59,7 +59,7 @@ public:
 
     if (std::find(errorTiles.begin(), errorTiles.end(), tileID) !=
         errorTiles.end()) {
-      result.errors.emplace_back("Tile errored.");
+      result.errorList.emplaceError("Tile errored.");
     } else {
       // Return an image where every component of every pixel is equal to the
       // tile level.
