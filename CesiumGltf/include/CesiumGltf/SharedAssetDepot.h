@@ -9,6 +9,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
+#include <chrono>
 #include <cstddef>
 #include <forward_list>
 #include <functional>
@@ -61,12 +62,12 @@ public:
   SharedAsset(AssetType&& asset)
       : contents(new AssetContainer<AssetType>(
             std::string(),
-            std::forward<AssetType>(asset),
+            std::move(asset),
             nullptr)) {}
-  SharedAsset(AssetType& asset)
+  SharedAsset(const AssetType& asset)
       : contents(new AssetContainer<AssetType>(
             std::string(),
-            std::forward<AssetType>(asset),
+            AssetType(asset),
             nullptr)) {}
   SharedAsset(std::nullptr_t) : contents(nullptr) {}
   SharedAsset()
@@ -154,7 +155,7 @@ private:
       contents->counter += amt;
       if (contents->counter <= 0) {
         if (contents->parent != nullptr) {
-          contents->parent->remove(contents->assetId);
+          contents->parent->markDeletionCandidate(contents->assetId);
         }
         contents = nullptr;
       }
@@ -176,6 +177,15 @@ private:
  */
 template <typename AssetType> class SingleAssetDepot {
 public:
+  /**
+   * @brief Number of seconds an asset can remain unused before it's deleted.
+   */
+  float assetDeletionThreshold = 60.0f;
+
+  SingleAssetDepot() {
+    this->lastDeletionTick = std::chrono::steady_clock::now();
+  }
+
   /**
    * Stores the AssetType in this depot and returns a reference to it,
    * or returns the existing asset if present.
@@ -206,7 +216,7 @@ public:
     // - An asset starting to load after the previous load has been removed from
     //   the pendingAssets map, but before the completed asset has been added to
     //   the assets map.
-    std::lock_guard lock(pendingAssetsMutex);
+    std::lock_guard lock(assetsMutex);
 
     auto existingIt = this->assets.find(uri);
     if (existingIt != this->assets.end()) {
@@ -244,7 +254,7 @@ public:
                 [uri,
                  this,
                  pAssets = &this->assets,
-                 pPendingAssetsMutex = &this->pendingAssetsMutex,
+                 pPendingAssetsMutex = &this->assetsMutex,
                  pPendingAssets =
                      &this->pendingAssets](std::optional<AssetType>&& result)
                     -> std::optional<SharedAsset<AssetType>> {
@@ -282,6 +292,36 @@ public:
   }
 
   /**
+   * @brief Should be called every frame to handle deletion of assets that
+   * haven't been used in a while.
+   */
+  void deletionTick() {
+    std::chrono::steady_clock::time_point now =
+        std::chrono::steady_clock::now();
+    std::chrono::duration<float> delta =
+        std::chrono::duration<float>(now - this->lastDeletionTick);
+
+    std::vector<std::string> toDelete;
+
+    std::lock_guard lock(this->deletionCandidatesMutex);
+    for (auto& [hash, age] : this->deletionCandidates) {
+      age += delta.count();
+
+      if (age >= this->assetDeletionThreshold) {
+        toDelete.push_back(hash);
+      }
+    }
+
+    std::lock_guard assetsLock(this->assetsMutex);
+    for (std::string& hash : toDelete) {
+      this->deletionCandidates.erase(hash);
+      this->assets.erase(hash);
+    }
+
+    this->lastDeletionTick = now;
+  }
+
+  /**
    * @brief Returns the total number of distinct assets contained in this depot.
    */
   size_t getDistinctCount() const { return this->assets.size(); }
@@ -297,15 +337,40 @@ public:
     return count;
   }
 
+  /**
+   * @brief Obtains statistics on the number of assets currently listed as
+   * candidates for deletion, along with the average number of seconds that
+   * they've been pending deletion.
+   * @param outAverageAge The average time in seconds that the current deletion
+   * candidates have spent pending deletion.
+   * @param outCount The number of current deletion candidates.
+   */
+  void getDeletionStats(float& outAverageAge, size_t& outCount) const {
+    size_t count = 0;
+    float total = 0;
+
+    std::lock_guard lock(this->deletionCandidatesMutex);
+    for (auto& [asset, age] : this->deletionCandidates) {
+      total += age;
+      count++;
+    }
+
+    outAverageAge = count > 0 ? total / count : 0;
+    outCount = count;
+  }
+
 private:
   // Disable copy
   void operator=(const SharedAsset<AssetType>& other) = delete;
 
   /**
-   * Removes the given asset from the depot.
+   * Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void remove(std::string& hash) { this->assets.erase(hash); }
+  void markDeletionCandidate(const std::string& hash) {
+    std::lock_guard lock(this->deletionCandidatesMutex);
+    this->deletionCandidates.emplace(hash, 0.0f);
+  }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
   std::unordered_map<
@@ -318,7 +383,14 @@ private:
       CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>>>
       pendingAssets;
   // Mutex for checking or editing the pendingAssets map
-  std::mutex pendingAssetsMutex;
+  std::mutex assetsMutex;
+
+  // Maps assets that are being considered for deletion to the time that they
+  // began to be considered for deletion.
+  std::unordered_map<std::string, float> deletionCandidates;
+  // Mutex for modifying the deletionCandidates map.
+  mutable std::mutex deletionCandidatesMutex;
+  std::chrono::steady_clock::time_point lastDeletionTick;
 
   friend class SharedAsset<AssetType>;
 };
@@ -348,6 +420,8 @@ public:
   const SingleAssetDepot<CesiumGltf::ImageCesium>* getImageDepot() {
     return &this->images;
   }
+
+  void deletionTick() { this->images.deletionTick(); }
 
 private:
   SingleAssetDepot<CesiumGltf::ImageCesium> images;
