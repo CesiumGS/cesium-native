@@ -507,11 +507,11 @@ private:
    * by the {@link TilesetContentLoader}.
    *
    * When true, this tile might have children that can be created by the
-   * TilesetContentLoader but that aren't reflected in the `_children` property
-   * yet. For example, in implicit tiling, we save memory by only creating
-   * explicit Tile instances from implicit availability as those instances are
-   * needed. When this flag is true, that creation of explicit instances hasn't
-   * been done yet for this tile.
+   * TilesetContentLoader but aren't yet reflected in the `_children` property.
+   * For example, in implicit tiling, we save memory by only creating explicit
+   * Tile instances from implicit availability as those instances are needed.
+   * When this flag is true, the creation of those explicit instances hasn't
+   * happened yet for this tile.
    *
    * If this flag is false, the children have already been created, if they
    * exist. The tile may still have no children because it is a leaf node.

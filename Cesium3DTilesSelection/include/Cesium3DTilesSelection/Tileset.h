@@ -276,7 +276,7 @@ public:
 
   /**
    * @brief Initiates an asynchronous query for the height of this tileset at a
-   * list of positions, expressed as longitude and latitude. The most detailed
+   * list of positions, expressed in longitude and latitude. The most detailed
    * available tiles are used to determine each height.
    *
    * The height of the input positions is ignored. On output, the height is

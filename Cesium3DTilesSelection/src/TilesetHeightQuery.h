@@ -50,19 +50,19 @@ public:
   std::optional<CesiumGltfContent::GltfUtilities::RayGltfHit> intersection;
 
   /**
-   * @brief The query ray intersect the bounding volume of these non-leaf tiles
-   * that are still relevant because of additive refinement.
+   * @brief Non-leaf tiles with additive refinement whose bounding volumes are
+   * intersected by the query ray.
    */
   std::vector<Tile*> additiveCandidateTiles;
 
   /**
-   * @brief The current set of leaf tiles whose bounding volume the query ray
-   * passes through.
+   * @brief The current set of leaf tiles whose bounding volumes are intersected
+   * by the query ray.
    */
   std::vector<Tile*> candidateTiles;
 
   /**
-   * @brief The previous set of leaf files. Swapping `candidateTiles` and
+   * @brief The previous set of leaf tiles. Swapping `candidateTiles` and
    * `previousCandidateTiles` each frame allows us to avoid a heap allocation
    * for a new vector each frame.
    */
@@ -70,19 +70,19 @@ public:
 
   /**
    * @brief Find the intersection of the ray with the given tile. If there is
-   * one, and it is closer to the origin of the ray than the previous
-   * best-known intersection, then {@link TilesetHeightQuery::intersection}
-   * will be updated.
+   * one, and if it's closer to the ray's origin than the previous best-known
+   * intersection, then {@link TilesetHeightQuery::intersection} will be
+   * updated.
    *
    * @param pTile The tile to test for intersection with the ray.
-   * @param outWarnings On return, any warnings that occurred while attempting
-   * to intersect the ray with the given tile.
+   * @param outWarnings On return, reports any warnings that occurred while
+   * attempting to intersect the ray with the tile.
    */
   void intersectVisibleTile(Tile* pTile, std::vector<std::string>& outWarnings);
 
   /**
-   * @brief Find the candidate tiles for query by traversing the tile tree
-   * starting with a given tile.
+   * @brief Find candidate tiles for the height query by traversing the tile
+   * tree, starting with the given tile.
    *
    * Any tile whose bounding volume intersects the ray will be added to the
    * {@link TilesetHeightQuery::candidateTiles} vector. Non-leaf tiles that are
@@ -91,10 +91,10 @@ public:
    *
    * @param pTile The tile at which to start traversal.
    * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded long enough to complete the
-   * query and no longer.
-   * @param outWarnings On return, any warnings that occurred during candidate
-   * search.
+   * tiles loaded for height queries stay loaded just long enough to complete
+   * the query, and no longer.
+   * @param outWarnings On return, reports any warnings that occurred during
+   * candidate search.
    */
   void findCandidateTiles(
       Tile* pTile,
@@ -119,13 +119,13 @@ struct TilesetHeightRequest {
 
   /**
    * @brief Process a given list of height requests. This is called by the {@link Tileset}
-   * every call to {@link Tileset::updateView}.
+   * in every call to {@link Tileset::updateView}.
    *
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
    * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded long enough to complete the
-   * query and no longer.
+   * tiles loaded for height queries stay loaded just long enough to complete
+   * the query, and no longer.
    * @param heightRequests The list of all height requests. Completed requests
    * will be removed from this list.
    * @param heightQueryLoadQueue Tiles that still need to be loaded before all
@@ -152,13 +152,13 @@ struct TilesetHeightRequest {
 
   /**
    * @brief Tries to complete this height request. Returns false if further data
-   * still needs to be loaded and so the request cannot be completed yet.
+   * still needs to be loaded and thus the request cannot yet complete.
    *
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
    * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded long enough to complete the
-   * query and no longer.
+   * tiles loaded for height queries stay loaded just long enough to complete
+   * the query, and no longer.
    * @param tilesNeedingLoading Tiles that needs to be loaded before this height
    * request can complete.
    */
