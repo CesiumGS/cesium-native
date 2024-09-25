@@ -83,8 +83,10 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
              RasterOverlayTile::LoadState::Failed &&
          pTile) {
     // Note when our original tile fails to load so that we don't report more
-    // data available. This means - by design - we won't refine past a failed
-    // tile.
+    // data available. This means - by design - we won't upsample for a failed
+    // raster overlay tile. However, each real (non-upsampled) geometry tile
+    // will have raster overlay images mapped to it, even if the parent geometry
+    // tile's images already failed to load.
     this->_originalFailed = true;
 
     pTile = pTile->getParent();
@@ -151,6 +153,16 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
       // Compute the translation and scale for the new tile.
       this->computeTranslationAndScale(tile);
+    } else if (
+        pCandidate == nullptr && this->_pReadyTile == nullptr &&
+        this->_pLoadingTile->getState() ==
+            RasterOverlayTile::LoadState::Failed) {
+      // This overlay tile failed to load, and there are no better candidates
+      // available. So mark this failed tile ready so that it doesn't block the
+      // entire tileset from rendering.
+      this->_pReadyTile = this->_pLoadingTile;
+      this->_pLoadingTile = nullptr;
+      this->_state = AttachmentState::Attached;
     }
   }
 
@@ -203,11 +215,15 @@ void RasterMappedTo3DTile::detachFromTile(
     return;
   }
 
-  prepareRendererResources.detachRasterInMainThread(
-      tile,
-      this->getTextureCoordinateID(),
-      *this->_pReadyTile,
-      this->_pReadyTile->getRendererResources());
+  // Failed tiles aren't attached with the renderer, so don't detach them,
+  // either.
+  if (this->_pReadyTile->getState() != RasterOverlayTile::LoadState::Failed) {
+    prepareRendererResources.detachRasterInMainThread(
+        tile,
+        this->getTextureCoordinateID(),
+        *this->_pReadyTile,
+        this->_pReadyTile->getRendererResources());
+  }
 
   this->_state = AttachmentState::Unattached;
 }

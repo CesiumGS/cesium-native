@@ -91,13 +91,14 @@ protected:
           this->_headers,
           std::move(options));
     } else {
+      ErrorList errors;
+      errors.emplaceError("Failed to load image from TMS.");
       return this->getAsyncSystem()
           .createResolvedFuture<LoadedRasterOverlayImage>(
               {std::nullopt,
                options.rectangle,
                {},
-               {"Failed to load image from TMS."},
-               {},
+               std::move(errors),
                options.moreDetailAvailable});
     }
   }
