@@ -37,7 +37,7 @@ namespace Cesium {
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 #undef STBIRDEF
-}; // namespace Cesium
+} // namespace Cesium
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION

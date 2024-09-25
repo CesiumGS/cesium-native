@@ -1,6 +1,6 @@
 #include "CesiumUtility/Gzip.h"
 #define ZLIB_CONST
-#include <zlib.h>
+#include "zlib-ng.h"
 
 #include <cstring>
 
@@ -22,10 +22,10 @@ constexpr unsigned int ChunkSize = 65536;
     std::vector<std::byte>& out) {
   int ret;
   unsigned int index = 0;
-  z_stream strm;
+  zng_stream strm;
   std::memset(&strm, 0, sizeof(strm));
 
-  ret = deflateInit2(
+  ret = zng_deflateInit2(
       &strm,
       Z_BEST_COMPRESSION,
       Z_DEFLATED,
@@ -43,18 +43,18 @@ constexpr unsigned int ChunkSize = 65536;
     out.resize(index + ChunkSize);
     strm.next_out = reinterpret_cast<Bytef*>(&out[index]);
     strm.avail_out = ChunkSize;
-    ret = deflate(&strm, Z_NO_FLUSH);
+    ret = zng_deflate(&strm, Z_NO_FLUSH);
     switch (ret) {
     case Z_NEED_DICT:
     case Z_DATA_ERROR:
     case Z_MEM_ERROR:
-      deflateEnd(&strm);
+      zng_deflateEnd(&strm);
       return false;
     }
     index += ChunkSize - strm.avail_out;
   } while (ret != Z_STREAM_END);
 
-  deflateEnd(&strm);
+  zng_deflateEnd(&strm);
   out.resize(index);
   return true;
 }
@@ -64,10 +64,10 @@ constexpr unsigned int ChunkSize = 65536;
     std::vector<std::byte>& out) {
   int ret;
   unsigned int index = 0;
-  z_stream strm;
+  zng_stream strm;
   std::memset(&strm, 0, sizeof(strm));
 
-  ret = inflateInit2(&strm, 16 + MAX_WBITS);
+  ret = zng_inflateInit2(&strm, 16 + MAX_WBITS);
   if (ret != Z_OK) {
     return false;
   }
@@ -79,18 +79,18 @@ constexpr unsigned int ChunkSize = 65536;
     out.resize(index + ChunkSize);
     strm.next_out = reinterpret_cast<Bytef*>(&out[index]);
     strm.avail_out = ChunkSize;
-    ret = inflate(&strm, Z_NO_FLUSH);
+    ret = zng_inflate(&strm, Z_NO_FLUSH);
     switch (ret) {
     case Z_NEED_DICT:
     case Z_DATA_ERROR:
     case Z_MEM_ERROR:
-      inflateEnd(&strm);
+      zng_inflateEnd(&strm);
       return false;
     }
     index += ChunkSize - strm.avail_out;
   } while (ret != Z_STREAM_END);
 
-  inflateEnd(&strm);
+  zng_inflateEnd(&strm);
   out.resize(index);
   return true;
 }

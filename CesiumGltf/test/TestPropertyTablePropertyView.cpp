@@ -266,7 +266,7 @@ static void checkVariableLengthArray(
 
   // Check values with properties applied
   for (int64_t i = 0; i < property.size(); ++i) {
-    std::optional<PropertyArrayView<DataType>> maybeValues = property.get(i);
+    std::optional<PropertyArrayCopy<DataType>> maybeValues = property.get(i);
     if (!maybeValues) {
       REQUIRE(!expected[static_cast<size_t>(i)]);
       continue;
@@ -344,7 +344,7 @@ static void checkNormalizedVariableLengthArray(
 
   // Check values with properties applied
   for (int64_t i = 0; i < property.size(); ++i) {
-    std::optional<PropertyArrayView<NormalizedType>> maybeValues =
+    std::optional<PropertyArrayCopy<NormalizedType>> maybeValues =
         property.get(i);
     if (!maybeValues) {
       REQUIRE(!expected[static_cast<size_t>(i)]);
@@ -475,7 +475,7 @@ static void checkFixedLengthArray(
 
   // Check values with properties applied
   for (int64_t i = 0; i < property.size(); ++i) {
-    std::optional<PropertyArrayView<T>> maybeValues = property.get(i);
+    std::optional<PropertyArrayCopy<T>> maybeValues = property.get(i);
     if (!maybeValues) {
       REQUIRE(!expected[static_cast<size_t>(i)]);
       continue;
@@ -548,7 +548,7 @@ static void checkNormalizedFixedLengthArray(
 
   // Check values with properties applied
   for (int64_t i = 0; i < property.size(); ++i) {
-    std::optional<PropertyArrayView<D>> maybeValues = property.get(i);
+    std::optional<PropertyArrayCopy<D>> maybeValues = property.get(i);
     if (!maybeValues) {
       REQUIRE(!expected[static_cast<size_t>(i)]);
       continue;
@@ -2721,7 +2721,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         glm::dvec3(-0.02, 2.0, 1.0), glm::dvec3(9.92, 9.0, -8.0),
         glm::dvec3(22.0, 5.5, -3.7), glm::dvec3(1.02, 9.0, -8.0), glm::dvec3(0.0, 0.5, 1.0),
         glm::dvec3(-1.3, -5.0, -90.0),
-        glm::dvec3(4.4, 1.0, 2.3), glm::dvec3(5.8, 7.07, -4.0), 
+        glm::dvec3(4.4, 1.0, 2.3), glm::dvec3(5.8, 7.07, -4.0),
         glm::dvec3(-2.0, 0.85, 0.22), glm::dvec3(-8.8, 5.1, 0.0), glm::dvec3(12.0, 8.0, -2.2),
     };
     // clang-format on

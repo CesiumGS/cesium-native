@@ -15,8 +15,12 @@ if (DOXYGEN_FOUND)
         ../CesiumGltf/generated/include
         ../CesiumGltfReader/include
         ../CesiumGltfWriter/include
-        ../CesiumUtility/include
+        ../CesiumIonClient/include
+        ../CesiumJsonReader/include
+        ../CesiumJsonWriter/include
+        ../CesiumQuantizedMeshTerrain/include
         ../CesiumRasterOverlays/include
+        ../CesiumUtility/include
     )
 
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})
@@ -32,8 +36,12 @@ if (DOXYGEN_FOUND)
         ../CesiumGltf/test
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
-        ../CesiumUtility/test
+        ../CesiumIonClient/test
+        ../CesiumJsonReader/test
+        ../CesiumJsonWriter/test
+        ../CesiumQuantizedMeshTerrain/test        
         ../CesiumRasterOverlays/test
+        ../CesiumUtility/test
     )
 
     # These macro definitions confuse doxygen, causing it
