@@ -159,14 +159,14 @@ struct TilesetHeightRequest {
    * @param loadedTiles The linked list of loaded tiles, used to ensure that
    * tiles loaded for height queries stay loaded just long enough to complete
    * the query, and no longer.
-   * @param tilesNeedingLoading Tiles that needs to be loaded before this height
-   * request can complete.
+   * @param tileLoadSet Tiles that needs to be loaded before this height request
+   * can complete.
    */
   bool tryCompleteHeightRequest(
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
       Tile::LoadedLinkedList& loadedTiles,
-      std::set<Tile*>& tilesNeedingLoading);
+      std::set<Tile*>& tileLoadSet);
 };
 
 } // namespace Cesium3DTilesSelection

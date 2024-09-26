@@ -203,14 +203,14 @@ void TilesetHeightQuery::findCandidateTiles(
 
   // Go through all requests, either complete them, or gather the tiles they
   // need for completion
-  std::set<Tile*> tilesNeedingLoading;
+  std::set<Tile*> tileLoadSet;
   for (auto it = heightRequests.begin(); it != heightRequests.end();) {
     TilesetHeightRequest& request = *it;
     if (!request.tryCompleteHeightRequest(
             contentManager,
             options,
             loadedTiles,
-            tilesNeedingLoading)) {
+            tileLoadSet)) {
       ++it;
     } else {
       auto deleteIt = it;
@@ -219,9 +219,7 @@ void TilesetHeightQuery::findCandidateTiles(
     }
   }
 
-  heightQueryLoadQueue.assign(
-      tilesNeedingLoading.begin(),
-      tilesNeedingLoading.end());
+  heightQueryLoadQueue.assign(tileLoadSet.begin(), tileLoadSet.end());
 }
 
 void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
@@ -238,7 +236,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
     Tile::LoadedLinkedList& loadedTiles,
-    std::set<Tile*>& tilesNeedingLoading) {
+    std::set<Tile*>& tileLoadSet) {
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
   for (TilesetHeightQuery& query : this->queries) {
@@ -274,7 +272,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
     auto checkTile = [&contentManager,
                       &options,
-                      &tilesNeedingLoading,
+                      &tileLoadSet,
                       &tileStillNeedsLoading](Tile* pTile) {
       contentManager.createLatentChildrenIfNecessary(*pTile, options);
 
@@ -285,7 +283,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         contentManager.unloadTileContent(*pTile);
         tileStillNeedsLoading = true;
       } else if (state <= TileLoadState::ContentLoading) {
-        tilesNeedingLoading.insert(pTile);
+        tileLoadSet.insert(pTile);
         tileStillNeedsLoading = true;
       }
     };
