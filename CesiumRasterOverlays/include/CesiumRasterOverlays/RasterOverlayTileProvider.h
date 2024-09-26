@@ -5,14 +5,15 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <spdlog/fwd.h>
 
-#include <cassert>
 #include <optional>
 
 namespace CesiumRasterOverlays {
@@ -48,19 +49,12 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   std::vector<CesiumUtility::Credit> credits{};
 
   /**
-   * @brief Error messages from loading the image.
+   * @brief Errors and warnings from loading the image.
    *
-   * If the image was loaded successfully, this should be empty.
+   * If the image was loaded successfully, there should not be any errors (but
+   * there may be warnings).
    */
-  std::vector<std::string> errors{};
-
-  /**
-   * @brief Warnings from loading the image.
-   */
-  // Implementation note: In the current implementation, this will
-  // always be empty, but it might contain warnings in the future,
-  // when other image types or loaders are used.
-  std::vector<std::string> warnings{};
+  CesiumUtility::ErrorList errorList{};
 
   /**
    * @brief Whether more detailed data, beyond this image, is available within
@@ -149,8 +143,9 @@ public:
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>&
-          pAssetAccessor) noexcept;
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Creates a new instance.
@@ -290,7 +285,7 @@ public:
    * @brief Returns the number of tiles that are currently loading.
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
-    assert(this->_totalTilesCurrentlyLoading > -1);
+    CESIUM_ASSERT(this->_totalTilesCurrentlyLoading > -1);
     return this->_totalTilesCurrentlyLoading;
   }
 

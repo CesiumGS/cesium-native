@@ -6,6 +6,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Uri.h>
 
@@ -194,7 +195,7 @@ SubtreeAvailability::SubtreeAvailability(
       _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
       _contentAvailability{std::move(contentAvailability)} {
-  assert(
+  CESIUM_ASSERT(
       (this->_childCount == 4 || this->_childCount == 8) &&
       "Only support quadtree and octree");
 }
@@ -525,7 +526,7 @@ void SubtreeAvailability::setAvailable(
                                << (this->_powerOf2 * relativeTileLevel);
   if (relativeTileMortonId >= numOfTilesInLevel) {
     // Attempting to set an invalid level. Assert, but otherwise ignore it.
-    assert(false);
+    CESIUM_ASSERT(false);
     return;
   }
 
@@ -576,7 +577,7 @@ void SubtreeAvailability::setAvailableUsingBufferView(
   const uint64_t byteIndex = availabilityBitIndex / 8;
   if (byteIndex >= pBufferViewAvailability->view.size()) {
     // Attempting to set an invalid tile. Assert, but otherwise ignore it.
-    assert(false);
+    CESIUM_ASSERT(false);
     return;
   }
 

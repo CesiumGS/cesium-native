@@ -9,6 +9,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
+#include <CesiumUtility/Assert.h>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -59,13 +60,13 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
       _originalFailed(false) {
-  assert(this->_pLoadingTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr);
 }
 
 RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
     IPrepareRendererResources& prepareRendererResources,
     Tile& tile) {
-  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
@@ -82,8 +83,10 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
              RasterOverlayTile::LoadState::Failed &&
          pTile) {
     // Note when our original tile fails to load so that we don't report more
-    // data available. This means - by design - we won't refine past a failed
-    // tile.
+    // data available. This means - by design - we won't upsample for a failed
+    // raster overlay tile. However, each real (non-upsampled) geometry tile
+    // will have raster overlay images mapped to it, even if the parent geometry
+    // tile's images already failed to load.
     this->_originalFailed = true;
 
     pTile = pTile->getParent();
@@ -150,6 +153,16 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
       // Compute the translation and scale for the new tile.
       this->computeTranslationAndScale(tile);
+    } else if (
+        pCandidate == nullptr && this->_pReadyTile == nullptr &&
+        this->_pLoadingTile->getState() ==
+            RasterOverlayTile::LoadState::Failed) {
+      // This overlay tile failed to load, and there are no better candidates
+      // available. So mark this failed tile ready so that it doesn't block the
+      // entire tileset from rendering.
+      this->_pReadyTile = this->_pLoadingTile;
+      this->_pLoadingTile = nullptr;
+      this->_state = AttachmentState::Attached;
     }
   }
 
@@ -170,7 +183,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
                                        : AttachmentState::Attached;
   }
 
-  assert(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+  CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
 
   // TODO: check more precise raster overlay tile availability, rather than just
   // max level?
@@ -202,11 +215,15 @@ void RasterMappedTo3DTile::detachFromTile(
     return;
   }
 
-  prepareRendererResources.detachRasterInMainThread(
-      tile,
-      this->getTextureCoordinateID(),
-      *this->_pReadyTile,
-      this->_pReadyTile->getRendererResources());
+  // Failed tiles aren't attached with the renderer, so don't detach them,
+  // either.
+  if (this->_pReadyTile->getState() != RasterOverlayTile::LoadState::Failed) {
+    prepareRendererResources.detachRasterInMainThread(
+        tile,
+        this->getTextureCoordinateID(),
+        *this->_pReadyTile,
+        this->_pReadyTile->getRendererResources());
+  }
 
   this->_state = AttachmentState::Unattached;
 }
@@ -281,7 +298,8 @@ RasterMappedTo3DTile* addRealTile(
     RasterOverlayTileProvider& tileProvider,
     RasterOverlayTileProvider& placeholder,
     Tile& tile,
-    std::vector<Projection>& missingProjections) {
+    std::vector<Projection>& missingProjections,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
@@ -308,7 +326,7 @@ RasterMappedTo3DTile* addRealTile(
               maximumScreenSpaceError,
               projection,
               *pRectangle,
-              Ellipsoid::WGS84);
+              ellipsoid);
       return addRealTile(tile, tileProvider, *pRectangle, screenPixels, index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
@@ -338,7 +356,7 @@ RasterMappedTo3DTile* addRealTile(
             maximumScreenSpaceError,
             projection,
             *maybeRectangle,
-            Ellipsoid::WGS84);
+            ellipsoid);
     return addRealTile(
         tile,
         tileProvider,
@@ -356,7 +374,7 @@ RasterMappedTo3DTile* addRealTile(
 void RasterMappedTo3DTile::computeTranslationAndScale(const Tile& tile) {
   if (!this->_pReadyTile) {
     // This shouldn't happen
-    assert(false);
+    CESIUM_ASSERT(false);
     return;
   }
 

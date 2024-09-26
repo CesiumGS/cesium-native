@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumUtility/Assert.h"
 #include "IntegerJsonHandler.h"
 #include "Library.h"
 #include "ObjectJsonHandler.h"
@@ -28,7 +29,7 @@ public:
   }
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
-    assert(this->_pDictionary1 || this->_pDictionary2);
+    CESIUM_ASSERT(this->_pDictionary1 || this->_pDictionary2);
 
     if (this->_pDictionary1) {
       auto it = this->_pDictionary1->emplace(str, T()).first;

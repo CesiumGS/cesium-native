@@ -59,17 +59,11 @@ target_link_libraries(CesiumGltfReader
         CesiumAsync
         CesiumGltf
         CesiumJsonReader
-        modp_b64
-        ${CESIUM_NATIVE_DRACO_LIBRARY}
+        draco::draco
     PRIVATE
-        ktx
-        webp
-        webpdecoder
-        turbojpeg
-        meshoptimizer
-)
-
-install(TARGETS CesiumGltfReader
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumGltfReader
+        meshoptimizer::meshoptimizer
+        modp_b64::modp_b64
+        KTX::ktx
+        WebP::webp WebP::webpdecoder
+        $<IF:$<TARGET_EXISTS:libjpeg-turbo::turbojpeg>,libjpeg-turbo::turbojpeg,libjpeg-turbo::turbojpeg-static>
 )

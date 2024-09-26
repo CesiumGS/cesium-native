@@ -91,13 +91,14 @@ protected:
           this->_headers,
           std::move(options));
     } else {
+      ErrorList errors;
+      errors.emplaceError("Failed to load image from TMS.");
       return this->getAsyncSystem()
           .createResolvedFuture<LoadedRasterOverlayImage>(
               {std::nullopt,
                options.rectangle,
                {},
-               {"Failed to load image from TMS."},
-               {},
+               std::move(errors),
                options.moreDetailAvailable});
     }
   }
@@ -341,9 +342,13 @@ TileMapServiceRasterOverlay::createTileProvider(
               maximumLevel = 25;
             }
 
+            const CesiumGeospatial::Ellipsoid& ellipsoid =
+                options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
-            CesiumGeospatial::Projection projection;
+            CesiumGeospatial::Projection projection =
+                CesiumGeospatial::WebMercatorProjection(ellipsoid);
             uint32_t rootTilesX = 1;
             bool isRectangleInDegrees = false;
 
@@ -355,7 +360,7 @@ TileMapServiceRasterOverlay::createTileProvider(
 
               if (projectionName == "mercator" ||
                   projectionName == "global-mercator") {
-                projection = CesiumGeospatial::WebMercatorProjection();
+                projection = CesiumGeospatial::WebMercatorProjection(ellipsoid);
                 tilingSchemeRectangle = CesiumGeospatial::
                     WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
 
@@ -369,7 +374,7 @@ TileMapServiceRasterOverlay::createTileProvider(
               } else if (
                   projectionName == "geodetic" ||
                   projectionName == "global-geodetic") {
-                projection = CesiumGeospatial::GeographicProjection();
+                projection = CesiumGeospatial::GeographicProjection(ellipsoid);
                 tilingSchemeRectangle = CesiumGeospatial::GeographicProjection::
                     MAXIMUM_GLOBE_RECTANGLE;
                 rootTilesX = 2;
@@ -381,7 +386,8 @@ TileMapServiceRasterOverlay::createTileProvider(
                 if (srs) {
                   std::string srsText = srs->GetText();
                   if (srsText.find("4326") != std::string::npos) {
-                    projection = CesiumGeospatial::GeographicProjection();
+                    projection =
+                        CesiumGeospatial::GeographicProjection(ellipsoid);
                     tilingSchemeRectangle = CesiumGeospatial::
                         GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
                     rootTilesX = 2;
@@ -389,7 +395,8 @@ TileMapServiceRasterOverlay::createTileProvider(
                   } else if (
                       srsText.find("3857") != std::string::npos ||
                       srsText.find("900913") != std::string::npos) {
-                    projection = CesiumGeospatial::WebMercatorProjection();
+                    projection =
+                        CesiumGeospatial::WebMercatorProjection(ellipsoid);
                     tilingSchemeRectangle = CesiumGeospatial::
                         WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
                     isRectangleInDegrees = true;

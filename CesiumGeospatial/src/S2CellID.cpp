@@ -21,6 +21,7 @@
 #include "HilbertOrder.h"
 
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumUtility/Assert.h>
 
 #include <cfloat>
 
@@ -30,7 +31,9 @@ using namespace CesiumGeospatial;
 using GoogleS2CellID = S2CellId;
 
 /*static*/ S2CellID S2CellID::fromToken(const std::string_view& token) {
-  return S2CellID(GoogleS2CellID::FromToken(token.data(), token.size()).id());
+  return S2CellID(
+      GoogleS2CellID::FromToken(absl::string_view(token.data(), token.size()))
+          .id());
 }
 
 /*static*/ S2CellID S2CellID::fromFaceLevelPosition(
@@ -102,7 +105,7 @@ S2CellID S2CellID::getParent() const {
 }
 
 S2CellID S2CellID::getChild(size_t index) const {
-  assert(index <= 3);
+  CESIUM_ASSERT(index <= 3);
   return S2CellID(GoogleS2CellID(this->_id).child(int(index)).id());
 }
 
@@ -211,7 +214,7 @@ GlobeRectangle S2CellID::computeBoundingRectangle() const {
   static const double kPoleMinLat = asin(sqrt(1. / 3)) - 0.5 * DBL_EPSILON;
 
   // The face centers are the +X, +Y, +Z, -X, -Y, -Z axes in that order.
-  assert(((face_ < 3) ? 1 : -1) == S2::GetNorm(face_)[face_ % 3]);
+  CESIUM_ASSERT(((face_ < 3) ? 1 : -1) == S2::GetNorm(face_)[face_ % 3]);
 
   R1Interval lat;
   S1Interval lng;

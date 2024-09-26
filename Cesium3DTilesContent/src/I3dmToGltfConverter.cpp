@@ -12,7 +12,10 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/Uri.h>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include <algorithm>
@@ -154,13 +157,14 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
 
 glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
   // First rotation: up
-  auto upRot = rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
+  auto upRot = CesiumUtility::Math::rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
   // We can rotate a point vector by a quaternion using q * (0, v) *
   // conj(q). But here we are doing an inverse rotation of the right vector into
   // the "up frame."
-  glm::quat temp = conjugate(upRot) * glm::quat(0.0f, right) * upRot;
+  glm::quat temp = glm::conjugate(upRot) * glm::quat(0.0f, right) * upRot;
   glm::vec3 innerRight(temp.x, temp.y, temp.z);
-  glm::quat rightRot = rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
+  glm::quat rightRot =
+      CesiumUtility::Math::rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
   return upRot * rightRot;
 }
 
@@ -195,7 +199,7 @@ std::optional<I3dmContent> parseI3dmJson(
     errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
-        featureTableJson.GetParseError(),
+        static_cast<uint64_t>(featureTableJson.GetParseError()),
         featureTableJson.GetErrorOffset()));
     return {};
   }
@@ -420,8 +424,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
           CesiumGeospatial::LocalHorizontalCoordinateSystem enu(
               (glm::dvec3(worldPos)));
           const glm::dmat4& ecef = enu.getLocalToEcefTransformation();
-          // Express the rotation in the tile's coordinate system, like explicit
-          // I3dm instance rotations.
+          // Express the rotation in the tile's coordinate system, just like
+          // explicit i3dm instance rotations.
           glm::dmat4 tileFrame = worldTransformInv * ecef;
           return rotationFromUpRight(
               glm::vec3(tileFrame[1]),
@@ -454,44 +458,81 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         });
   }
   repositionInstances(decodedInstances);
-  AssetFetcherResult assetFetcherResult;
+  std::string baseUri;
   if (header.gltfFormat == 0) {
-    // Recursively fetch and read the glTF content.
-    auto gltfUri = std::string(
+    // The spec says that the URL can be padded with ' ' (0x20) characters in
+    // order to make the size of the whole i3dm file 8-byte aligned.
+    auto rLastNotSpace =
+        std::find_if_not(gltfData.rbegin(), gltfData.rend(), [](auto&& b) {
+          return b == std::byte(' ');
+        });
+    auto spaceDistance = static_cast<size_t>(gltfData.rend() - rLastNotSpace);
+    std::string gltfUri(
         reinterpret_cast<const char*>(gltfData.data()),
-        gltfData.size());
-    return assetFetcher.get(gltfUri)
-        .thenImmediately(
-            [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
-                -> CesiumAsync::Future<GltfConverterResult> {
-              if (assetFetcherResult.errorList.hasErrors()) {
-                GltfConverterResult errorResult;
-                errorResult.errors.merge(assetFetcherResult.errorList);
-                return assetFetcher.asyncSystem.createResolvedFuture(
-                    std::move(errorResult));
-              }
-              return BinaryToGltfConverter::convert(
-                  assetFetcherResult.bytes,
-                  options,
-                  assetFetcher);
-            })
-        .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
-                             GltfConverterResult&& converterResult) mutable {
-          if (converterResult.model)
-            convertedI3dm.gltfResult.model = std::move(converterResult.model);
-          convertedI3dm.gltfResult.errors.merge(converterResult.errors);
-          return convertedI3dm;
-        });
+        spaceDistance);
+    baseUri = CesiumUtility::Uri::resolve(assetFetcher.baseUrl, gltfUri);
   } else {
-    return BinaryToGltfConverter::convert(gltfData, options, assetFetcher)
-        .thenImmediately([convertedI3dm = std::move(convertedI3dm)](
-                             GltfConverterResult&& converterResult) mutable {
-          if (converterResult.model)
-            convertedI3dm.gltfResult.model = std::move(converterResult.model);
-          convertedI3dm.gltfResult.errors.merge(converterResult.errors);
-          return convertedI3dm;
-        });
+    baseUri = assetFetcher.baseUrl;
   }
+
+  auto getGltf = [&]() -> CesiumAsync::Future<GltfConverterResult> {
+    if (header.gltfFormat == 0) {
+      // Recursively fetch and read the glTF content.
+      return assetFetcher.get(baseUri).thenImmediately(
+          [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
+              -> CesiumAsync::Future<GltfConverterResult> {
+            if (assetFetcherResult.errorList.hasErrors()) {
+              GltfConverterResult errorResult;
+              errorResult.errors.merge(assetFetcherResult.errorList);
+              return assetFetcher.asyncSystem.createResolvedFuture(
+                  std::move(errorResult));
+            }
+            return BinaryToGltfConverter::convert(
+                assetFetcherResult.bytes,
+                options,
+                assetFetcher);
+          });
+    } else {
+      return BinaryToGltfConverter::convert(gltfData, options, assetFetcher);
+    }
+  };
+
+  return getGltf()
+      .thenImmediately([options, assetFetcher, baseUri](
+                           GltfConverterResult&& converterResult) {
+        if (converterResult.model.has_value()) {
+          CesiumGltfReader::GltfReaderResult readerResult{
+              std::move(*converterResult.model),
+              {},
+              {}};
+          CesiumAsync::HttpHeaders externalRequestHeaders(
+              assetFetcher.requestHeaders.begin(),
+              assetFetcher.requestHeaders.end());
+          return CesiumGltfReader::GltfReader::resolveExternalData(
+              assetFetcher.asyncSystem,
+              baseUri,
+              externalRequestHeaders,
+              assetFetcher.pAssetAccessor,
+              options,
+              std::move(readerResult));
+        }
+        return assetFetcher.asyncSystem.createResolvedFuture(
+            CesiumGltfReader::GltfReaderResult{
+                std::nullopt,
+                std::move(converterResult.errors.errors),
+                {}});
+      })
+      .thenImmediately(
+          [convertedI3dm = std::move(convertedI3dm)](
+              CesiumGltfReader::GltfReaderResult&& readerResult) mutable {
+            if (readerResult.model)
+              convertedI3dm.gltfResult.model = std::move(readerResult.model);
+            CesiumUtility::ErrorList resolvedExternalErrors{
+                std::move(readerResult.errors),
+                {}};
+            convertedI3dm.gltfResult.errors.merge(resolvedExternalErrors);
+            return convertedI3dm;
+          });
 }
 
 glm::dmat4
@@ -501,7 +542,7 @@ composeInstanceTransform(size_t i, const DecodedInstances& decodedInstances) {
     result = translate(result, glm::dvec3(decodedInstances.positions[i]));
   }
   if (!decodedInstances.rotations.empty()) {
-    result = result * toMat4(glm::dquat(decodedInstances.rotations[i]));
+    result = result * glm::mat4_cast(glm::dquat(decodedInstances.rotations[i]));
   }
   if (!decodedInstances.scales.empty()) {
     result = scale(result, glm::dvec3(decodedInstances.scales[i]));
@@ -579,7 +620,7 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
         [&](auto&& arg) {
           for (unsigned i = 0; i < count; ++i) {
             auto quat = toGlmQuat<glm::dquat>(arg[i]);
-            instances[i] = instances[i] * glm::toMat4(quat);
+            instances[i] = instances[i] * glm::mat4_cast(quat);
           }
         },
         quatAccessorView);
@@ -609,33 +650,50 @@ void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
-    std::byte* bufferLoc) {
+    std::byte* pBufferLoc) {
   glm::vec3 fposition(position);
-  std::memcpy(bufferLoc, &fposition, sizeof(fposition));
+  std::memcpy(pBufferLoc, &fposition, sizeof(fposition));
   glm::quat frotation(rotation);
-  std::memcpy(bufferLoc + rotOffset, &frotation, sizeof(frotation));
+  std::memcpy(pBufferLoc + rotOffset, &frotation, sizeof(frotation));
   glm::vec3 fscale(scale);
-  std::memcpy(bufferLoc + scaleOffset, &fscale, sizeof(fscale));
+  std::memcpy(pBufferLoc + scaleOffset, &fscale, sizeof(fscale));
 }
 
 void copyInstanceToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
-    std::vector<std::byte>& bufferData,
+    std::byte* pBufferData,
     size_t i) {
-  copyInstanceToBuffer(position, rotation, scale, &bufferData[i * totalStride]);
+  copyInstanceToBuffer(
+      position,
+      rotation,
+      scale,
+      pBufferData + (i * totalStride));
 }
 
-void copyInstanceToBuffer(
+bool copyInstanceToBuffer(
     const glm::dmat4& instanceTransform,
-    std::vector<std::byte>& bufferData,
+    std::byte* pBufferData,
     size_t i) {
+  bool result = true;
   glm::dvec3 position, scale, skew;
   glm::dquat rotation;
   glm::dvec4 perspective;
-  decompose(instanceTransform, scale, rotation, position, skew, perspective);
-  copyInstanceToBuffer(position, rotation, scale, bufferData, i);
+  if (!decompose(
+          instanceTransform,
+          scale,
+          rotation,
+          position,
+          skew,
+          perspective)) {
+    position = glm::dvec3(0.0);
+    rotation = glm::dquat(1.0, 0.0, 0.0, 0.0);
+    scale = glm::dvec3(1.0);
+    result = false;
+  }
+  copyInstanceToBuffer(position, rotation, scale, pBufferData, i);
+  return result;
 }
 
 void instantiateGltfInstances(
@@ -708,10 +766,14 @@ void instantiateGltfInstances(
           for (const auto& modelInstanceTransform : modelInstanceTransforms) {
             glm::dmat4 finalTransform =
                 instanceTransform * modelInstanceTransform;
-            copyInstanceToBuffer(
-                finalTransform,
-                instanceBuffer.cesium.data,
-                destInstanceIndx++);
+            if (!copyInstanceToBuffer(
+                    finalTransform,
+                    &instanceBuffer.cesium.data[dataBaseOffset],
+                    destInstanceIndx++)) {
+              result.errors.emplaceWarning(
+                  "Matrix decompose failed. Default identity values copied to "
+                  "instance buffer.");
+            }
           }
         }
         auto posAccessorId = createAccessorInGltf(

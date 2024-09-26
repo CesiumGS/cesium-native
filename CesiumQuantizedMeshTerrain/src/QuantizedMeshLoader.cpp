@@ -6,6 +6,7 @@
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
@@ -673,7 +674,8 @@ static std::vector<std::byte> generateNormals(
     const BoundingRegion& tileBoundingVolume,
     const std::string& url,
     const gsl::span<const std::byte>& data,
-    bool enableWaterMask) {
+    bool enableWaterMask,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
 
   CESIUM_TRACE("Cesium3DTilesSelection::QuantizedMeshLoader::load");
 
@@ -718,7 +720,6 @@ static std::vector<std::byte> generateNormals(
   glm::dvec3 positionMinimums{std::numeric_limits<double>::max()};
   glm::dvec3 positionMaximums{std::numeric_limits<double>::lowest()};
 
-  const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
   const CesiumGeospatial::GlobeRectangle& rectangle =
       tileBoundingVolume.getRectangle();
   const double west = rectangle.getWest();
@@ -1132,7 +1133,7 @@ static std::vector<std::byte> generateNormals(
   model.scene = 0;
 
   result.updatedBoundingVolume =
-      BoundingRegion(rectangle, minimumHeight, maximumHeight);
+      BoundingRegion(rectangle, minimumHeight, maximumHeight, ellipsoid);
 
   if (result.model) {
     result.model->extras["Cesium3DTiles_TileUrl"] = url;

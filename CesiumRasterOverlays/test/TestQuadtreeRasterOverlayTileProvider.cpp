@@ -59,7 +59,7 @@ public:
 
     if (std::find(errorTiles.begin(), errorTiles.end(), tileID) !=
         errorTiles.end()) {
-      result.errors.emplace_back("Tile errored.");
+      result.errorList.emplaceError("Tile errored.");
     } else {
       // Return an image where every component of every pixel is equal to the
       // tile level.
@@ -105,12 +105,14 @@ public:
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            WebMercatorProjection(),
+            WebMercatorProjection(Ellipsoid::WGS84),
             QuadtreeTilingScheme(
-                WebMercatorProjection::computeMaximumProjectedRectangle(),
+                WebMercatorProjection::computeMaximumProjectedRectangle(
+                    Ellipsoid::WGS84),
                 1,
                 1),
-            WebMercatorProjection::computeMaximumProjectedRectangle(),
+            WebMercatorProjection::computeMaximumProjectedRectangle(
+                Ellipsoid::WGS84),
             0,
             10,
             256,
@@ -156,7 +158,8 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
   SECTION("uses root tile for a large area") {
     Rectangle rectangle =
-        GeographicProjection::computeMaximumProjectedRectangle();
+        GeographicProjection::computeMaximumProjectedRectangle(
+            Ellipsoid::WGS84);
     IntrusivePointer<RasterOverlayTile> pTile =
         pProvider->getTile(rectangle, glm::dvec2(256));
     pProvider->loadTile(*pTile);

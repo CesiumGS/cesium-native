@@ -1,4 +1,7 @@
+#include "EmptyRasterOverlayTileProvider.h"
+
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
 using namespace CesiumGeometry;
@@ -30,8 +33,12 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 
 RasterOverlayCollection::RasterOverlayCollection(
     Tile::LoadedLinkedList& loadedTiles,
-    const TilesetExternals& externals) noexcept
-    : _pLoadedTiles(&loadedTiles), _externals{externals}, _pOverlays(nullptr) {}
+    const TilesetExternals& externals,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
+    : _pLoadedTiles(&loadedTiles),
+      _externals{externals},
+      _ellipsoid(ellipsoid),
+      _pOverlays(nullptr) {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   if (this->_pOverlays) {
@@ -59,7 +66,8 @@ void RasterOverlayCollection::add(
   IntrusivePointer<RasterOverlayTileProvider> pPlaceholder =
       pOverlay->createPlaceholder(
           this->_externals.asyncSystem,
-          this->_externals.pAssetAccessor);
+          this->_externals.pAssetAccessor,
+          this->_ellipsoid);
 
   pList->tileProviders.emplace_back(pPlaceholder);
   pList->placeholders.emplace_back(pPlaceholder);
@@ -107,19 +115,14 @@ void RasterOverlayCollection::add(
                     "Error while creating tile provider: {0}",
                     e.what())});
           })
-      .thenInMainThread([pOverlay, pList, pLogger = this->_externals.pLogger](
+      .thenInMainThread([pOverlay,
+                         pList,
+                         pLogger = this->_externals.pLogger,
+                         asyncSystem = this->_externals.asyncSystem](
                             RasterOverlay::CreateTileProviderResult&& result) {
+        IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
         if (result) {
-          // Find the overlay's current location in the list.
-          // It's possible it has been removed completely.
-          auto it = std::find(
-              pList->overlays.begin(),
-              pList->overlays.end(),
-              pOverlay);
-          if (it != pList->overlays.end()) {
-            std::int64_t index = it - pList->overlays.begin();
-            pList->tileProviders[size_t(index)] = *result;
-          }
+          pProvider = *result;
         } else {
           // Report error creating the tile provider.
           const RasterOverlayLoadFailureDetails& failureDetails =
@@ -128,7 +131,21 @@ void RasterOverlayCollection::add(
           if (pOverlay->getOptions().loadErrorCallback) {
             pOverlay->getOptions().loadErrorCallback(failureDetails);
           }
+
+          // Create a tile provider that does not provide any tiles at all.
+          pProvider = new EmptyRasterOverlayTileProvider(pOverlay, asyncSystem);
         }
+
+        auto it =
+            std::find(pList->overlays.begin(), pList->overlays.end(), pOverlay);
+
+        // Find the overlay's current location in the list.
+        // It's possible it has been removed completely.
+        if (it != pList->overlays.end()) {
+          std::int64_t index = it - pList->overlays.begin();
+          pList->tileProviders[size_t(index)] = pProvider;
+        }
+
         // CESIUM_TRACE_END_IN_TRACK("createTileProvider");
       });
 }
@@ -168,8 +185,8 @@ void RasterOverlayCollection::remove(
 
   OverlayList& list = *this->_pOverlays;
 
-  assert(list.overlays.size() == list.tileProviders.size());
-  assert(list.overlays.size() == list.placeholders.size());
+  CESIUM_ASSERT(list.overlays.size() == list.tileProviders.size());
+  CESIUM_ASSERT(list.overlays.size() == list.placeholders.size());
 
   auto it = std::find_if(
       list.overlays.begin(),
@@ -233,7 +250,7 @@ RasterOverlayCollection::findTileProviderForOverlay(
   const auto& overlays = this->_pOverlays->overlays;
   const auto& tileProviders = this->_pOverlays->tileProviders;
 
-  assert(overlays.size() == tileProviders.size());
+  CESIUM_ASSERT(overlays.size() == tileProviders.size());
 
   for (size_t i = 0; i < overlays.size() && i < tileProviders.size(); ++i) {
     if (overlays[i].get() == &overlay)
@@ -262,7 +279,7 @@ RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
   const auto& overlays = this->_pOverlays->overlays;
   const auto& placeholders = this->_pOverlays->placeholders;
 
-  assert(overlays.size() == placeholders.size());
+  CESIUM_ASSERT(overlays.size() == placeholders.size());
 
   for (size_t i = 0; i < overlays.size() && i < placeholders.size(); ++i) {
     if (overlays[i].get() == &overlay)

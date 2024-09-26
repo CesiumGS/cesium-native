@@ -85,6 +85,17 @@ FeatureIdAccessorType getFeatureIdAccessorView(
     int32_t featureIdAttributeIndex);
 
 /**
+ * Retrieves an accessor view for the specified feature ID attribute from the
+ * given glTF node and model, if the node contains an EXT_mesh_gpu_instancing
+ * property. This verifies that the accessor is of a valid type. If not, the
+ * returned accessor view will be invalid.
+ */
+FeatureIdAccessorType getFeatureIdAccessorView(
+    const Model& model,
+    const Node& node,
+    int32_t featureIdAttributeIndex);
+
+/**
  * Visitor that retrieves the feature ID from the given accessor type as an
  * int64_t. This should be initialized with the index of the vertex whose
  * feature ID is being queried.

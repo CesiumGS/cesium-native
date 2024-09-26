@@ -82,7 +82,7 @@ protected:
 
     uint32_t level = tileID.level;
     uint32_t col = tileID.x;
-    uint32_t row = (1u << level) - tileID.y - 1u;
+    uint32_t row = tileID.computeInvertedY(this->getTilingScheme());
 
     std::map<std::string, std::string> urlTemplateMap;
     std::string tileMatrix;
@@ -222,24 +222,16 @@ WebMapTileServiceRasterOverlay::createTileProvider(
     useKVP = false;
   }
 
-  CesiumGeospatial::Projection projection;
+  CesiumGeospatial::Projection projection =
+      _options.projection.value_or(CesiumGeospatial::WebMercatorProjection(
+          _options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84)));
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
   uint32_t rootTilesX = 1;
-  if (_options.projection) {
-    projection = _options.projection.value();
-    if (std::get_if<CesiumGeospatial::GeographicProjection>(&projection)) {
-      tilingSchemeRectangle =
-          CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
-      rootTilesX = 2;
-    }
-  } else {
-    if (_options.ellipsoid) {
-      projection =
-          CesiumGeospatial::WebMercatorProjection(_options.ellipsoid.value());
-    } else {
-      projection = CesiumGeospatial::WebMercatorProjection();
-    }
+  if (std::get_if<CesiumGeospatial::GeographicProjection>(&projection)) {
+    tilingSchemeRectangle =
+        CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
+    rootTilesX = 2;
   }
   CesiumGeometry::Rectangle coverageRectangle =
       _options.coverageRectangle.value_or(

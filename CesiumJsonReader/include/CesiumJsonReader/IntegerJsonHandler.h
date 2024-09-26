@@ -1,9 +1,9 @@
 #pragma once
 
+#include "CesiumUtility/Assert.h"
 #include "JsonHandler.h"
 #include "Library.h"
 
-#include <cassert>
 #include <cmath>
 
 namespace CesiumJsonReader {
@@ -20,27 +20,27 @@ public:
   T* getObject() { return this->_pInteger; }
 
   virtual IJsonHandler* readInt32(int32_t i) override {
-    assert(this->_pInteger);
+    CESIUM_ASSERT(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
   virtual IJsonHandler* readUint32(uint32_t i) override {
-    assert(this->_pInteger);
+    CESIUM_ASSERT(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
   virtual IJsonHandler* readInt64(int64_t i) override {
-    assert(this->_pInteger);
+    CESIUM_ASSERT(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
   virtual IJsonHandler* readUint64(uint64_t i) override {
-    assert(this->_pInteger);
+    CESIUM_ASSERT(this->_pInteger);
     *this->_pInteger = static_cast<T>(i);
     return this->parent();
   }
   virtual IJsonHandler* readDouble(double d) override {
-    assert(this->_pInteger);
+    CESIUM_ASSERT(this->_pInteger);
     double intPart;
     double fractPart = std::modf(d, &intPart);
     if (fractPart != 0) {

@@ -1,7 +1,8 @@
 #pragma once
 
+#include <CesiumUtility/Assert.h>
+
 #include <atomic>
-#include <cassert>
 #include <cstdint>
 
 #ifndef NDEBUG
@@ -51,7 +52,7 @@ class ReferenceCounted
 {
 public:
   ReferenceCounted() noexcept {}
-  ~ReferenceCounted() noexcept { assert(this->_referenceCount == 0); }
+  ~ReferenceCounted() noexcept { CESIUM_ASSERT(this->_referenceCount == 0); }
 
   /**
    * @brief Adds a counted reference to this object. Use
@@ -61,7 +62,7 @@ public:
   void addReference() const /*noexcept*/ {
 #ifndef NDEBUG
     if constexpr (!isThreadSafe) {
-      assert(std::this_thread::get_id() == this->_threadID);
+      CESIUM_ASSERT(std::this_thread::get_id() == this->_threadID);
     }
 #endif
 
@@ -77,11 +78,11 @@ public:
   void releaseReference() const /*noexcept*/ {
 #ifndef NDEBUG
     if constexpr (!isThreadSafe) {
-      assert(std::this_thread::get_id() == this->_threadID);
+      CESIUM_ASSERT(std::this_thread::get_id() == this->_threadID);
     }
 #endif
 
-    assert(this->_referenceCount > 0);
+    CESIUM_ASSERT(this->_referenceCount > 0);
     const int32_t references = --this->_referenceCount;
     if (references == 0) {
       delete static_cast<const T*>(this);

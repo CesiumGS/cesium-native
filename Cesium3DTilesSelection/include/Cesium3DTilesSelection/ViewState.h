@@ -6,6 +6,7 @@
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 #include <glm/mat3x3.hpp>
 #include <glm/vec2.hpp>
@@ -47,8 +48,7 @@ public:
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84);
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
@@ -162,8 +162,8 @@ private:
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
-      const std::optional<CesiumGeospatial::Cartographic>&
-          positionCartographic);
+      const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
+      const CesiumGeospatial::Ellipsoid& ellipsoid);
 
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
@@ -171,6 +171,7 @@ private:
   const glm::dvec2 _viewportSize;
   const double _horizontalFieldOfView;
   const double _verticalFieldOfView;
+  const CesiumGeospatial::Ellipsoid _ellipsoid;
 
   const double _sseDenominator;
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;

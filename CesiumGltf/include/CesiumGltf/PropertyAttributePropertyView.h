@@ -6,7 +6,8 @@
 #include "CesiumGltf/PropertyTypeTraits.h"
 #include "CesiumGltf/PropertyView.h"
 
-#include <cassert>
+#include <CesiumUtility/Assert.h>
+
 #include <cmath>
 #include <cstdint>
 
@@ -131,7 +132,7 @@ public:
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
-    assert(
+    CESIUM_ASSERT(
         this->_status != PropertyAttributePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
@@ -230,14 +231,14 @@ public:
    * @return The value of the property for the given vertex.
    */
   ElementType getRaw(int64_t index) const noexcept {
-    assert(
+    CESIUM_ASSERT(
         this->_status == PropertyAttributePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
-    assert(
+    CESIUM_ASSERT(
         size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
+    CESIUM_ASSERT(index >= 0 && "index must be non-negative");
+    CESIUM_ASSERT(index < size() && "index must be less than size");
 
     return _accessor[index];
   }
@@ -287,7 +288,7 @@ public:
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status), _accessor{}, _size{0} {
-    assert(
+    CESIUM_ASSERT(
         this->_status != PropertyAttributePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
@@ -411,14 +412,14 @@ public:
    * @return The value of the property for the given vertex.
    */
   ElementType getRaw(int64_t index) const noexcept {
-    assert(
+    CESIUM_ASSERT(
         this->_status == PropertyAttributePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
-    assert(
+    CESIUM_ASSERT(
         size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
-    assert(index >= 0 && "index must be non-negative");
-    assert(index < size() && "index must be less than size");
+    CESIUM_ASSERT(index >= 0 && "index must be non-negative");
+    CESIUM_ASSERT(index < size() && "index must be less than size");
 
     return _accessor[index];
   }

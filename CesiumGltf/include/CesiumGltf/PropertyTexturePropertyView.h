@@ -9,8 +9,9 @@
 #include "CesiumGltf/Sampler.h"
 #include "CesiumGltf/TextureView.h"
 
+#include <CesiumUtility/Assert.h>
+
 #include <array>
-#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <optional>
@@ -85,7 +86,7 @@ public:
 template <typename ElementType>
 ElementType assembleScalarValue(const gsl::span<uint8_t> bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
-    assert(
+    CESIUM_ASSERT(
         bytes.size() == sizeof(float) &&
         "Not enough channel inputs to construct a float.");
     uint32_t resultAsUint = 0;
@@ -117,11 +118,12 @@ ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
       getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
   using T = typename ElementType::value_type;
 
-  assert(
+  CESIUM_ASSERT(
       sizeof(T) <= 2 && "Components cannot be larger than two bytes in size.");
 
   if constexpr (std::is_same_v<T, int16_t>) {
-    assert(N == 2 && "Only vec2s can contain two-byte integer components.");
+    CESIUM_ASSERT(
+        N == 2 && "Only vec2s can contain two-byte integer components.");
     uint16_t x = static_cast<uint16_t>(bytes[0]) |
                  (static_cast<uint16_t>(bytes[1]) << 8);
     uint16_t y = static_cast<uint16_t>(bytes[2]) |
@@ -132,7 +134,8 @@ ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
   }
 
   if constexpr (std::is_same_v<T, uint16_t>) {
-    assert(N == 2 && "Only vec2s can contain two-byte integer components.");
+    CESIUM_ASSERT(
+        N == 2 && "Only vec2s can contain two-byte integer components.");
     result[0] = static_cast<uint16_t>(bytes[0]) |
                 (static_cast<uint16_t>(bytes[1]) << 8);
     result[1] = static_cast<uint16_t>(bytes[2]) |
@@ -155,7 +158,7 @@ ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
 }
 
 template <typename T>
-PropertyArrayView<T>
+PropertyArrayCopy<T>
 assembleArrayValue(const gsl::span<uint8_t> bytes) noexcept {
   std::vector<T> result(bytes.size() / sizeof(T));
 
@@ -172,12 +175,14 @@ assembleArrayValue(const gsl::span<uint8_t> bytes) noexcept {
     }
   }
 
-  return PropertyArrayView<T>(std::move(result));
+  return PropertyArrayCopy<T>(std::move(result));
 }
 
 template <typename ElementType>
-ElementType assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
-  assert(bytes.size() > 0 && "Channel input must have at least one value.");
+PropertyValueViewToCopy<ElementType>
+assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
+  CESIUM_ASSERT(
+      bytes.size() > 0 && "Channel input must have at least one value.");
 
   if constexpr (IsMetadataScalar<ElementType>::value) {
     return assembleScalarValue<ElementType>(bytes);
@@ -243,7 +248,7 @@ public:
         TextureView(),
         _channels(),
         _swizzle() {
-    assert(
+    CESIUM_ASSERT(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
   }
@@ -348,7 +353,8 @@ public:
         _swizzle += "a";
         break;
       default:
-        assert(false && "A valid channels vector must be passed to the view.");
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
       }
     }
   }
@@ -370,27 +376,27 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<ElementType> get(double u, double v) const noexcept {
+  std::optional<PropertyValueViewToCopy<ElementType>>
+  get(double u, double v) const noexcept {
     if (this->_status ==
         PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
-      return this->defaultValue();
+      return propertyValueViewToCopy(this->defaultValue());
     }
 
-    ElementType value = getRaw(u, v);
+    PropertyValueViewToCopy<ElementType> value = getRaw(u, v);
 
     if (value == this->noData()) {
-      return this->defaultValue();
+      return propertyValueViewToCopy(this->defaultValue());
+    } else if constexpr (IsMetadataNumeric<ElementType>::value) {
+      return transformValue(value, this->offset(), this->scale());
+    } else if constexpr (IsMetadataNumericArray<ElementType>::value) {
+      return transformArray(
+          propertyValueCopyToView(value),
+          this->offset(),
+          this->scale());
+    } else {
+      return value;
     }
-
-    if constexpr (IsMetadataNumeric<ElementType>::value) {
-      value = transformValue(value, this->offset(), this->scale());
-    }
-
-    if constexpr (IsMetadataNumericArray<ElementType>::value) {
-      value = transformArray(value, this->offset(), this->scale());
-    }
-
-    return value;
   }
 
   /**
@@ -407,8 +413,9 @@ public:
    * @return The value at the nearest pixel to the texture coordinates.
    */
 
-  ElementType getRaw(double u, double v) const noexcept {
-    assert(
+  PropertyValueViewToCopy<ElementType>
+  getRaw(double u, double v) const noexcept {
+    CESIUM_ASSERT(
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
@@ -473,7 +480,7 @@ public:
         TextureView(),
         _channels(),
         _swizzle() {
-    assert(
+    CESIUM_ASSERT(
         this->_status != PropertyTexturePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid "
         "status");
@@ -578,7 +585,8 @@ public:
         _swizzle += "a";
         break;
       default:
-        assert(false && "A valid channels vector must be passed to the view.");
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
       }
     }
   }
@@ -601,26 +609,23 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<NormalizedType> get(double u, double v) const noexcept {
+  std::optional<PropertyValueViewToCopy<NormalizedType>>
+  get(double u, double v) const noexcept {
     if (this->_status ==
         PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
-      return this->defaultValue();
+      return propertyValueViewToCopy(this->defaultValue());
     }
 
-    ElementType value = getRaw(u, v);
+    PropertyValueViewToCopy<ElementType> value = getRaw(u, v);
 
     if (value == this->noData()) {
-      return this->defaultValue();
-    }
-
-    if constexpr (IsMetadataScalar<ElementType>::value) {
+      return propertyValueViewToCopy(this->defaultValue());
+    } else if constexpr (IsMetadataScalar<ElementType>::value) {
       return transformValue<NormalizedType>(
           normalize<ElementType>(value),
           this->offset(),
           this->scale());
-    }
-
-    if constexpr (IsMetadataVecN<ElementType>::value) {
+    } else if constexpr (IsMetadataVecN<ElementType>::value) {
       constexpr glm::length_t N = ElementType::length();
       using T = typename ElementType::value_type;
       using NormalizedT = typename NormalizedType::value_type;
@@ -628,22 +633,18 @@ public:
           normalize<N, T>(value),
           this->offset(),
           this->scale());
-    }
-
-    if constexpr (IsMetadataArray<ElementType>::value) {
+    } else if constexpr (IsMetadataArray<ElementType>::value) {
       using ArrayElementType = typename MetadataArrayType<ElementType>::type;
       if constexpr (IsMetadataScalar<ArrayElementType>::value) {
         return transformNormalizedArray<ArrayElementType>(
-            value,
+            propertyValueCopyToView(value),
             this->offset(),
             this->scale());
-      }
-
-      if constexpr (IsMetadataVecN<ArrayElementType>::value) {
+      } else if constexpr (IsMetadataVecN<ArrayElementType>::value) {
         constexpr glm::length_t N = ArrayElementType::length();
         using T = typename ArrayElementType::value_type;
         return transformNormalizedVecNArray<N, T>(
-            value,
+            propertyValueCopyToView(value),
             this->offset(),
             this->scale());
       }
@@ -664,8 +665,9 @@ public:
    * @return The value at the nearest pixel to the texture coordinates.
    */
 
-  ElementType getRaw(double u, double v) const noexcept {
-    assert(
+  PropertyValueViewToCopy<ElementType>
+  getRaw(double u, double v) const noexcept {
+    CESIUM_ASSERT(
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
 
