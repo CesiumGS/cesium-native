@@ -12,6 +12,7 @@ set_target_properties(CesiumUtility
     PROPERTIES
         TEST_SOURCES "${CESIUM_UTILITY_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_UTILITY_TEST_HEADERS}"
+        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
 )
 
 set_target_properties(CesiumUtility
