@@ -61,14 +61,14 @@ TEST_CASE("Tileset height queries") {
     CHECK(results.warnings.empty());
     REQUIRE(results.positions.size() == 2);
 
-    CHECK(results.heightSampled[0]);
+    CHECK(results.sampleSuccess[0]);
     CHECK(Math::equalsEpsilon(
         results.positions[0].height,
         78.155809,
         0.0,
         Math::Epsilon4));
 
-    CHECK(results.heightSampled[1]);
+    CHECK(results.sampleSuccess[1]);
     CHECK(Math::equalsEpsilon(
         results.positions[1].height,
         7.837332,
@@ -100,9 +100,9 @@ TEST_CASE("Tileset height queries") {
     CHECK(results.warnings.empty());
     REQUIRE(results.positions.size() == 2);
 
-    CHECK(!results.heightSampled[0]);
+    CHECK(!results.sampleSuccess[0]);
 
-    CHECK(results.heightSampled[1]);
+    CHECK(results.sampleSuccess[1]);
     CHECK(Math::equalsEpsilon(
         results.positions[1].height,
         7.837332,
@@ -134,14 +134,14 @@ TEST_CASE("Tileset height queries") {
     CHECK(results.warnings.empty());
     REQUIRE(results.positions.size() == 2);
 
-    CHECK(results.heightSampled[0]);
+    CHECK(results.sampleSuccess[0]);
     CHECK(Math::equalsEpsilon(
         results.positions[0].height,
         78.155809,
         0.0,
         Math::Epsilon4));
 
-    CHECK(results.heightSampled[1]);
+    CHECK(results.sampleSuccess[1]);
     CHECK(Math::equalsEpsilon(
         results.positions[1].height,
         7.837332,
@@ -173,14 +173,14 @@ TEST_CASE("Tileset height queries") {
     CHECK(results.warnings.empty());
     REQUIRE(results.positions.size() == 2);
 
-    CHECK(results.heightSampled[0]);
+    CHECK(results.sampleSuccess[0]);
     CHECK(Math::equalsEpsilon(
         results.positions[0].height,
         78.155809,
         0.0,
         Math::Epsilon4));
 
-    CHECK(results.heightSampled[1]);
+    CHECK(results.sampleSuccess[1]);
     CHECK(Math::equalsEpsilon(
         results.positions[1].height,
         7.837332,
@@ -207,7 +207,7 @@ TEST_CASE("Tileset height queries") {
     SampleHeightResult results = future.waitInMainThread();
     REQUIRE(results.warnings.size() == 1);
     REQUIRE(results.positions.size() == 1);
-    CHECK(!results.heightSampled[0]);
+    CHECK(!results.sampleSuccess[0]);
     CHECK(
         results.warnings[0].find("EXT_mesh_gpu_instancing") !=
         std::string::npos);

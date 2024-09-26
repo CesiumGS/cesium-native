@@ -325,17 +325,17 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
   results.warnings = std::move(warnings);
 
   results.positions.resize(this->queries.size(), Cartographic(0.0, 0.0, 0.0));
-  results.heightSampled.resize(this->queries.size());
+  results.sampleSuccess.resize(this->queries.size());
 
   // Populate results with completed queries
   for (size_t i = 0; i < this->queries.size(); ++i) {
     const TilesetHeightQuery& query = this->queries[i];
 
-    bool heightSampled = query.intersection.has_value();
-    results.heightSampled[i] = heightSampled;
+    bool sampleSuccess = query.intersection.has_value();
+    results.sampleSuccess[i] = sampleSuccess;
     results.positions[i] = query.inputPosition;
 
-    if (heightSampled) {
+    if (sampleSuccess) {
       results.positions[i].height =
           options.ellipsoid.getMaximumRadius() * rayOriginHeightFraction -
           glm::sqrt(query.intersection->rayToWorldPointDistanceSq);
