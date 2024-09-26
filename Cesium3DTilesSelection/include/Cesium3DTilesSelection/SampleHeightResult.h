@@ -24,12 +24,14 @@ struct SampleHeightResult {
   std::vector<CesiumGeospatial::Cartographic> positions;
 
   /**
-   * @brief Specifies whether the height for the position at this index was
-   * sampled successfully. If true, {@link SampleHeightResult::positions} has
-   * a valid height sampled from the tileset at this index. If false, the height
-   * could not be sampled for the position at this index, and so the height in
-   * {@link SampleHeightResult::positions} is unchanged from the original input
-   * height.
+   * @brief The success of each sample.
+   *
+   * Each entry specifies whether the height for the position at the
+   * corresponding index was successfully sampled. If true, then
+   * {@link SampleHeightResult::positions} has a valid height sampled from the
+   * tileset at this index. If false, the height could not be sampled, leaving the
+   * height in {@link SampleHeightResult::positions} unchanged from the original
+   * input height.
    */
   std::vector<bool> heightSampled;
 
