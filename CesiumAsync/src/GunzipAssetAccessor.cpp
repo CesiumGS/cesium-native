@@ -12,7 +12,7 @@ class GunzippedAssetResponse : public IAssetResponse {
 public:
   GunzippedAssetResponse(const IAssetResponse* pOther) noexcept
       : _pAssetResponse{pOther} {
-    this->_dataValid = CesiumUtility::Gzip::gunzip(
+    this->_dataValid = CesiumUtility::gunzip(
         this->_pAssetResponse->data(),
         this->_gunzippedData);
   }
@@ -70,7 +70,7 @@ Future<std::shared_ptr<IAssetRequest>> gunzipIfNeeded(
     const AsyncSystem& asyncSystem,
     std::shared_ptr<IAssetRequest>&& pCompletedRequest) {
   const IAssetResponse* pResponse = pCompletedRequest->response();
-  if (pResponse && CesiumUtility::Gzip::isGzip(pResponse->data())) {
+  if (pResponse && CesiumUtility::isGzip(pResponse->data())) {
     return asyncSystem.runInWorkerThread(
         [pCompletedRequest = std::move(
              pCompletedRequest)]() mutable -> std::shared_ptr<IAssetRequest> {

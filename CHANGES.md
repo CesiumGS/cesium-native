@@ -5,6 +5,11 @@
 ##### Breaking Changes :mega:
 
 - `LoadedRasterOverlayImage` now has a single `errorList` property instead of separate `errors` and `warnings` properties.
+- Renamed `CesiumUtility/Gunzip.h` to `CesiumUtility/Gzip.h`.
+
+##### Additions :tada:
+
+- Added `CesiumUtility::gzip`.
 
 ##### Fixes :wrench:
 

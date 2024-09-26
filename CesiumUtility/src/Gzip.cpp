@@ -1,6 +1,8 @@
 #include "CesiumUtility/Gzip.h"
-#define ZLIB_CONST
-#include "zlib-ng.h"
+
+#include "CesiumUtility/Assert.h"
+
+#include <zlib-ng.h>
 
 #include <cstring>
 
@@ -10,16 +12,14 @@ namespace {
 constexpr unsigned int ChunkSize = 65536;
 }
 
-/*static*/ bool Gzip::isGzip(const gsl::span<const std::byte>& data) {
+bool isGzip(const gsl::span<const std::byte>& data) {
   if (data.size() < 3) {
     return false;
   }
   return data[0] == std::byte{31} && data[1] == std::byte{139};
 }
 
-/*static*/ bool Gzip::gzip(
-    const gsl::span<const std::byte>& data,
-    std::vector<std::byte>& out) {
+bool gzip(const gsl::span<const std::byte>& data, std::vector<std::byte>& out) {
   int ret;
   unsigned int index = 0;
   zng_stream strm;
@@ -44,13 +44,16 @@ constexpr unsigned int ChunkSize = 65536;
     strm.next_out = reinterpret_cast<Bytef*>(&out[index]);
     strm.avail_out = ChunkSize;
     ret = zng_deflate(&strm, Z_NO_FLUSH);
-    switch (ret) {
-    case Z_NEED_DICT:
-    case Z_DATA_ERROR:
-    case Z_MEM_ERROR:
-      zng_deflateEnd(&strm);
-      return false;
-    }
+    CESIUM_ASSERT(ret != Z_STREAM_ERROR);
+    index += ChunkSize - strm.avail_out;
+  } while (strm.avail_in != 0);
+
+  do {
+    out.resize(index + ChunkSize);
+    strm.next_out = reinterpret_cast<Bytef*>(&out[index]);
+    strm.avail_out = ChunkSize;
+    ret = zng_deflate(&strm, Z_FINISH);
+    CESIUM_ASSERT(ret != Z_STREAM_ERROR);
     index += ChunkSize - strm.avail_out;
   } while (ret != Z_STREAM_END);
 
@@ -59,7 +62,7 @@ constexpr unsigned int ChunkSize = 65536;
   return true;
 }
 
-/*static*/ bool Gzip::gunzip(
+bool gunzip(
     const gsl::span<const std::byte>& data,
     std::vector<std::byte>& out) {
   int ret;
@@ -80,9 +83,11 @@ constexpr unsigned int ChunkSize = 65536;
     strm.next_out = reinterpret_cast<Bytef*>(&out[index]);
     strm.avail_out = ChunkSize;
     ret = zng_inflate(&strm, Z_NO_FLUSH);
+    CESIUM_ASSERT(ret != Z_STREAM_ERROR);
     switch (ret) {
     case Z_NEED_DICT:
     case Z_DATA_ERROR:
+    case Z_BUF_ERROR:
     case Z_MEM_ERROR:
       zng_inflateEnd(&strm);
       return false;
