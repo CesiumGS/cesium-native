@@ -1076,7 +1076,7 @@ void TilesetContentManager::updateTileContent(
 void TilesetContentManager::createLatentChildrenIfNecessary(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  if (tile.getMightHaveLatentChildren()) {
+  if (tile.getChildren().empty() && tile.getMightHaveLatentChildren()) {
     TileChildrenResult childrenResult =
         this->_pLoader->createTileChildren(tile, tilesetOptions.ellipsoid);
     if (childrenResult.state == TileLoadResultState::Success) {
