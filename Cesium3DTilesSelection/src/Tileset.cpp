@@ -336,7 +336,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
-    // If the root tile is already supposed to be ready, but it's not, it means
+    // If the root tile is marked as ready, but doesn't actually exist, then
     // the tileset couldn't load. Fail any outstanding height requests.
     if (!this->_heightRequests.empty() && this->_pTilesetContentManager &&
         this->_pTilesetContentManager->getRootTileAvailableEvent().isReady()) {
