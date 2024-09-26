@@ -6,6 +6,10 @@
 
 - `LoadedRasterOverlayImage` now has a single `errorList` property instead of separate `errors` and `warnings` properties.
 
+##### Additions :tada:
+
+- Added `CesiumGeometry::Transforms::getUpAxisTransform` to get the transform that converts from one up axis to another.
+
 ##### Fixes :wrench:
 
 - Errors while loading raster overlays are now logged. Previously, they were silently ignored in many cases.
