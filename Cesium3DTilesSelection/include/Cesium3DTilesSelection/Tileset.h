@@ -276,10 +276,10 @@ public:
 
   /**
    * @brief Initiates an asynchronous query for the height of this tileset at a
-   * list of positions, expressed in longitude and latitude. The most detailed
+   * list of cartographic positions (longitude and latitude). The most detailed
    * available tiles are used to determine each height.
    *
-   * The height of the input positions is ignored. On output, the height is
+   * The height of the input positions is ignored. The output height is
    * expressed in meters above the ellipsoid (usually WGS84), which should not
    * be confused with a height above mean sea level.
    *
