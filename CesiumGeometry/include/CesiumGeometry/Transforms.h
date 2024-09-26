@@ -93,7 +93,7 @@ struct CESIUMGEOMETRY_API Transforms final {
    *
    * @returns The up axis transform.
    */
-  static glm::dmat4
+  static const glm::dmat4&
   getUpAxisTransform(CesiumGeometry::Axis from, CesiumGeometry::Axis to);
 };
 

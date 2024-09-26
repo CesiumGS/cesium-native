@@ -115,12 +115,16 @@ void Transforms::computeTranslationRotationScaleFromMatrix(
     *pTranslation = glm::dvec3(matrix[3]);
 }
 
-glm::dmat4 Transforms::getUpAxisTransform(Axis from, Axis to) {
+namespace {
+const glm::dmat4 Identity(1.0);
+}
+
+const glm::dmat4& Transforms::getUpAxisTransform(Axis from, Axis to) {
   switch (from) {
   case Axis::X:
     switch (to) {
     case Axis::X:
-      return glm::dmat4(1.0);
+      return Identity;
     case Axis::Y:
       return X_UP_TO_Y_UP;
     case Axis::Z:
@@ -132,7 +136,7 @@ glm::dmat4 Transforms::getUpAxisTransform(Axis from, Axis to) {
     case Axis::X:
       return Y_UP_TO_X_UP;
     case Axis::Y:
-      return glm::dmat4(1.0);
+      return Identity;
     case Axis::Z:
       return Y_UP_TO_Z_UP;
     }
@@ -144,12 +148,12 @@ glm::dmat4 Transforms::getUpAxisTransform(Axis from, Axis to) {
     case Axis::Y:
       return Z_UP_TO_Y_UP;
     case Axis::Z:
-      return glm::dmat4(1.0);
+      return Identity;
     }
     break;
   }
 
-  return glm::dmat4(1.0);
+  return Identity;
 }
 
 } // namespace CesiumGeometry
