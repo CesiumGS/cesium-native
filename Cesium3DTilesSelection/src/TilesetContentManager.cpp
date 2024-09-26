@@ -1386,11 +1386,11 @@ void TilesetContentManager::updateDoneState(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
   if (tile.getMightHaveLatentChildren()) {
-    // This tile might have latent children, so we don't know yet whether it has
-    // children or not. We need to know that before we can continue this
-    // function, which will decide whether or not to create upsampled children
-    // for this tile. It only makes sense to create upsampled children for a
-    // tile that definitely doesn't have real children.
+    // This tile might have latent children, but we don't know yet whether it
+    // *actually* has children. We need to know that before we can continue
+    // this function, which will decide whether or not to create upsampled
+    // children for this tile. It only makes sense to create upsampled children
+    // for a tile that we know for sure doesn't have real children.
     return;
   }
 
