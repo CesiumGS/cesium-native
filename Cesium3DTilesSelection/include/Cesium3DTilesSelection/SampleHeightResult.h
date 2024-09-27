@@ -13,12 +13,12 @@ namespace Cesium3DTilesSelection {
  */
 struct SampleHeightResult {
   /**
-   * @brief The positions and sampled heights.
+   * @brief The positions and their sampled heights.
    *
-   * The longitudes and latitudes will match the values at the same index in the
-   * original input positions. Each height will either be the height sampled
-   * from the tileset at that position, or the original input height if the
-   * height could not be sampled. To determine which, look at the value of
+   * For each resulting position, its longitude and latitude values will match
+   * values from its input. Its height will either be the height sampled from
+   * the tileset at that position, or the original input height if the sample
+   * was unsuccessful. To determine which, look at the value of
    * {@link SampleHeightResult::sampleSuccess} at the same index.
    */
   std::vector<CesiumGeospatial::Cartographic> positions;
