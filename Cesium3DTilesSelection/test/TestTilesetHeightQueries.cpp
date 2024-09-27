@@ -212,4 +212,17 @@ TEST_CASE("Tileset height queries") {
         results.warnings[0].find("EXT_mesh_gpu_instancing") !=
         std::string::npos);
   }
+
+  SECTION("broken tileset") {
+    Tileset tileset(externals, "http://localhost/notgonnawork");
+
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
+
+    while (!future.isReady()) {
+      tileset.updateView({});
+    }
+
+    REQUIRE_THROWS(future.waitInMainThread());
+  }
 }
