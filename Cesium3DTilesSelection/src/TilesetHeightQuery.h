@@ -141,7 +141,8 @@ struct TilesetHeightRequest {
   /**
    * @brief Cancels all outstanding height requests and rejects the associated
    * futures. This is useful when it is known that the height requests will
-   * never complete, such as when the tileset fails to load.
+   * never complete, such as when the tileset fails to load or when it is being
+   * destroyed.
    *
    * @param heightRequests The height requests to cancel.
    * @param message The message explaining what went wrong.

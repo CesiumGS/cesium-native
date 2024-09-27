@@ -101,6 +101,10 @@ Tileset::Tileset(
           ionAssetEndpointUrl)} {}
 
 Tileset::~Tileset() noexcept {
+  TilesetHeightRequest::failHeightRequests(
+      this->_heightRequests,
+      "Tileset is being destroyed.");
+
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
