@@ -2,6 +2,7 @@
 
 #include "Library.h"
 #include "RasterOverlayCollection.h"
+#include "SampleHeightResult.h"
 #include "Tile.h"
 #include "TilesetContentLoader.h"
 #include "TilesetExternals.h"
@@ -15,6 +16,7 @@
 
 #include <rapidjson/fwd.h>
 
+#include <list>
 #include <memory>
 #include <optional>
 #include <string>
@@ -23,6 +25,8 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
+class TilesetHeightQuery;
+class TilesetHeightRequest;
 
 /**
  * @brief A <a
@@ -270,6 +274,27 @@ public:
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
 
+  /**
+   * @brief Initiates an asynchronous query for the height of this tileset at a
+   * list of cartographic positions (longitude and latitude). The most detailed
+   * available tiles are used to determine each height.
+   *
+   * The height of the input positions is ignored. The output height is
+   * expressed in meters above the ellipsoid (usually WGS84), which should not
+   * be confused with a height above mean sea level.
+   *
+   * Note that {@link Tileset::updateView} must be called periodically, or else
+   * the returned `Future` will never resolve. If you are not using this tileset
+   * for visualization, you can call `updateView` with an empty list of
+   * frustums.
+   *
+   * @param positions The positions for which to sample heights.
+   * @return A future that asynchronously resolves to the result of the height
+   * query.
+   */
+  CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
+      const std::vector<CesiumGeospatial::Cartographic>& positions);
+
 private:
   /**
    * @brief The result of traversing one branch of the tile hierarchy.
@@ -495,6 +520,7 @@ private:
 
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
+  std::vector<Tile*> _heightQueryLoadQueue;
 
   Tile::LoadedLinkedList _loadedTiles;
 
@@ -508,6 +534,8 @@ private:
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
+
+  std::list<TilesetHeightRequest> _heightRequests;
 
   void addTileToLoadQueue(
       Tile& tile,
