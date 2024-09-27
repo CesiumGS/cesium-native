@@ -65,6 +65,7 @@ public:
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
   bool unloadTileContent(Tile& tile);
+  bool handleUpsampledTileChildren(Tile& tile);
 
   void waitUntilIdle();
 
