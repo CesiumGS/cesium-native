@@ -714,7 +714,8 @@ TEST_CASE("AsyncSystem") {
                 CHECK(std::string(exception.what()) == "Some exception");
                 return myValue;
               })
-              .thenImmediately([](std::string&& result) { return result; });
+              .thenImmediately(
+                  [](std::string&& result) { return std::move(result); });
       std::string result = future.waitInMainThread();
       CHECK(result == "value from catch");
     }
