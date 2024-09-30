@@ -1,6 +1,6 @@
 # Change Log
 
-### Not Released Yet
+### v0.40.0 - 2024-10-01
 
 ##### Breaking Changes :mega:
 
