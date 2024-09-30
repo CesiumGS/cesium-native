@@ -3,7 +3,7 @@ on: [push, pull_request]
 jobs:
   QuickChecks:
     name: "Quick Checks"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -12,7 +12,7 @@ jobs:
           npm install
           npm run format -- --dry-run -Werror
   Documentation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Install Doxygen
         run: |
@@ -75,11 +75,11 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-latest, ubuntu-20.04, macos-12 ]
+        platform: [ ubuntu-22.04, ubuntu-20.04, macos-12 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-latest
+            platform: ubuntu-22.04	
           - compiler: gcc
             platform: macos-12
           - compiler: gcc

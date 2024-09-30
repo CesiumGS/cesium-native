@@ -1373,6 +1373,12 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
   return transformedRay.pointFromDistance(tClosest);
 }
 
+std::string intersectGltfUnsupportedExtensions[] = {
+    ExtensionKhrDracoMeshCompression::ExtensionName,
+    ExtensionBufferViewExtMeshoptCompression::ExtensionName,
+    ExtensionExtMeshGpuInstancing::ExtensionName,
+    "KHR_mesh_quantization"};
+
 } // namespace
 
 GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
@@ -1380,6 +1386,19 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
     const CesiumGltf::Model& gltf,
     bool cullBackFaces,
     const glm::dmat4x4& gltfTransform) {
+  // We can't currently intersect a ray with a model if the model has any funny
+  // business with its vertex positions or if it uses instancing.
+  for (const std::string& unsupportedExtension :
+       intersectGltfUnsupportedExtensions) {
+    if (gltf.isExtensionRequired(unsupportedExtension)) {
+      return IntersectResult{
+          std::nullopt,
+          {fmt::format(
+              "Cannot intersect a ray with a glTF model with the {} extension.",
+              unsupportedExtension)}};
+    }
+  }
+
   glm::dmat4x4 rootTransform = applyRtcCenter(gltf, gltfTransform);
   rootTransform = applyGltfUpAxisTransform(gltf, rootTransform);
 

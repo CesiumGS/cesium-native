@@ -8,7 +8,7 @@ namespace CesiumGeometry {
 
 struct CESIUMGEOMETRY_API AxisAlignedBox final {
 
-  AxisAlignedBox() noexcept
+  constexpr AxisAlignedBox() noexcept
       : minimumX(0.0),
         minimumY(0.0),
         minimumZ(0.0),
@@ -20,7 +20,7 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
         lengthZ(0.0),
         center(0.0) {}
 
-  AxisAlignedBox(
+  constexpr AxisAlignedBox(
       double minimumX_,
       double minimumY_,
       double minimumZ_,
