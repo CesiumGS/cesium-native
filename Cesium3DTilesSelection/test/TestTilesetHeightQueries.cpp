@@ -223,6 +223,11 @@ TEST_CASE("Tileset height queries") {
       tileset.updateView({});
     }
 
-    REQUIRE_THROWS(future.waitInMainThread());
+    SampleHeightResult results = future.waitInMainThread();
+    REQUIRE(results.warnings.size() == 1);
+    REQUIRE(results.positions.size() == 1);
+    REQUIRE(results.sampleSuccess.size() == 1);
+    CHECK(!results.sampleSuccess[0]);
+    CHECK(results.warnings[0].find("failed to load") != std::string::npos);
   }
 }
