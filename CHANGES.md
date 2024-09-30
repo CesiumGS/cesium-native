@@ -19,6 +19,7 @@
 - `GltfUtilities::intersectRayGltfModel` now reports a warning when given a model it can't compute the intersection with because it uses required extensions that are not supported.
 - Errors while loading raster overlays are now logged. Previously, they were silently ignored in many cases.
 - A raster overlay image failing to load will no longer completely prevent the geometry tile to which it is attached from rendering. Instead, once the raster overlay fails, the geometry tile will be shown without the raster overlay.
+- Fixed a bug in the various `catchImmediately` and `catchInMainThread` functions in `CesiumAsync` that prevented use of a mutable lambda.
 
 ### v0.39.0 - 2024-09-02
 

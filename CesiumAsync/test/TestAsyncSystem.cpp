@@ -701,5 +701,23 @@ TEST_CASE("AsyncSystem") {
       CHECK_THROWS(future.waitInMainThread());
       CHECK(!called);
     }
+
+    SECTION(
+        "catchImmediately can return a value from a mutable lambda capture") {
+      auto promise = asyncSystem.createPromise<std::string>();
+      promise.reject(std::runtime_error("Some exception"));
+      std::string myValue = "value from catch";
+      Future<std::string> future =
+          promise.getFuture()
+              .catchImmediately([myValue = std::move(myValue)](
+                                    std::exception&& exception) mutable {
+                CHECK(std::string(exception.what()) == "Some exception");
+                return myValue;
+              })
+              .thenImmediately(
+                  [](std::string&& result) { return std::move(result); });
+      std::string result = future.waitInMainThread();
+      CHECK(result == "value from catch");
+    }
   }
 }
