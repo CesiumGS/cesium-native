@@ -2,7 +2,7 @@
 
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Gunzip.h"
+#include "CesiumUtility/Gzip.h"
 
 namespace CesiumAsync {
 

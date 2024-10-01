@@ -1,5 +1,15 @@
 # Change Log
 
+### Not Released Yet
+
+##### Breaking Changes :mega:
+
+- Renamed `CesiumUtility/Gunzip.h` to `CesiumUtility/Gzip.h`.
+
+##### Additions :tada:
+
+- Added `CesiumUtility::gzip`.
+
 ### v0.40.1 - 2024-10-01
 
 ##### Fixes :wrench:
