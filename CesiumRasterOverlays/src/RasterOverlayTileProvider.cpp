@@ -136,27 +136,30 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             CESIUM_TRACE("load image");
             const IAssetResponse* pResponse = pRequest->response();
             if (pResponse == nullptr) {
+              ErrorList errors;
+              errors.emplaceError(
+                  fmt::format("Image request for {} failed.", pRequest->url()));
               return LoadedRasterOverlayImage{
                   std::nullopt,
                   options.rectangle,
                   std::move(options.credits),
-                  {"Image request for " + pRequest->url() + " failed."},
-                  {},
+                  std::move(errors),
                   options.moreDetailAvailable};
             }
 
             if (pResponse->statusCode() != 0 &&
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
-              std::string message = "Image response code " +
-                                    std::to_string(pResponse->statusCode()) +
-                                    " for " + pRequest->url();
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Received response code {} for image {}.",
+                  pResponse->statusCode(),
+                  pRequest->url()));
               return LoadedRasterOverlayImage{
                   std::nullopt,
                   options.rectangle,
                   std::move(options.credits),
-                  {message},
-                  {},
+                  std::move(errors),
                   options.moreDetailAvailable};
             }
 
@@ -167,15 +170,18 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                     options.rectangle,
                     std::move(options.credits),
                     {},
-                    {},
                     options.moreDetailAvailable};
               }
+
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Image response for {} is empty.",
+                  pRequest->url()));
               return LoadedRasterOverlayImage{
                   std::nullopt,
                   options.rectangle,
                   std::move(options.credits),
-                  {"Image response for " + pRequest->url() + " is empty."},
-                  {},
+                  std::move(errors),
                   options.moreDetailAvailable};
             }
 
@@ -197,8 +203,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                 loadedImage.image,
                 options.rectangle,
                 std::move(options.credits),
-                std::move(loadedImage.errors),
-                std::move(loadedImage.warnings),
+                ErrorList{
+                    std::move(loadedImage.errors),
+                    std::move(loadedImage.warnings)},
                 options.moreDetailAvailable};
           });
 }
@@ -242,24 +249,22 @@ static LoadResult createLoadResultFromLoadedImage(
     LoadedRasterOverlayImage&& loadedImage,
     const std::any& rendererOptions) {
   if (!loadedImage.image.has_value()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Failed to load image for tile {}:\n- {}",
-        "TODO",
-        // Cesium3DTilesSelection::TileIdUtilities::createTileIdString(tileId),
-        CesiumUtility::joinToString(loadedImage.errors, "\n- "));
+    loadedImage.errorList.logError(pLogger, "Failed to load image for tile");
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Failed;
     return result;
   }
 
-  if (!loadedImage.warnings.empty()) {
-    SPDLOG_LOGGER_WARN(
+  if (loadedImage.errorList.hasErrors()) {
+    loadedImage.errorList.logError(
         pLogger,
-        "Warnings while loading image for tile {}:\n- {}",
-        "TODO",
-        // Cesium3DTilesSelection::TileIdUtilities::createTileIdString(tileId),
-        CesiumUtility::joinToString(loadedImage.warnings, "\n- "));
+        "Errors while loading image for tile");
+  }
+
+  if (!loadedImage.errorList.warnings.empty()) {
+    loadedImage.errorList.logWarning(
+        pLogger,
+        "Warnings while loading image for tile");
   }
 
   CesiumGltf::ImageCesium& image = loadedImage.image.value();

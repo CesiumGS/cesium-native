@@ -1,5 +1,32 @@
 # Change Log
 
+### v0.40.1 - 2024-10-01
+
+##### Fixes :wrench:
+
+- Fixed a regression in v0.40.0 that could cause tilesets with raster overlays to fail to load in some cases.
+
+### v0.40.0 - 2024-10-01
+
+##### Breaking Changes :mega:
+
+- Renamed `shouldContentContinueUpdating` to `getMightHaveLatentChildren` and `setContentShouldContinueUpdating` to `setMightHaveLatentChildren` on the `Tile` class.
+- `LoadedRasterOverlayImage` now has a single `errorList` property instead of separate `errors` and `warnings` properties.
+
+##### Additions :tada:
+
+- Added `sampleHeightMostDetailed` method to `Tileset`.
+- `AxisAlignedBox` now has `constexpr` constructors.
+
+##### Fixes :wrench:
+
+- Fixed a bug that prevented use of `Tileset` with a nullptr `IPrepareRendererResources`.
+- Fixed a bug in `IntersectionTests::rayOBBParametric` that could cause incorrect results for some oriented bounding boxes.
+- `GltfUtilities::intersectRayGltfModel` now reports a warning when given a model it can't compute the intersection with because it uses required extensions that are not supported.
+- Errors while loading raster overlays are now logged. Previously, they were silently ignored in many cases.
+- A raster overlay image failing to load will no longer completely prevent the geometry tile to which it is attached from rendering. Instead, once the raster overlay fails, the geometry tile will be shown without the raster overlay.
+- Fixed a bug in the various `catchImmediately` and `catchInMainThread` functions in `CesiumAsync` that prevented use of a mutable lambda.
+
 ### v0.39.0 - 2024-09-02
 
 ##### Breaking Changes :mega:

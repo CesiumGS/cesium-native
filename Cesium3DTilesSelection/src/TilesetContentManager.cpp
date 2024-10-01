@@ -572,64 +572,69 @@ postProcessContentInWorkerThread(
              pAssetAccessor,
              gltfOptions,
              std::move(gltfResult))
-      .thenInWorkerThread(
-          [result = std::move(result),
-           projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo),
-           rendererOptions](
-              CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
-            if (!gltfResult.errors.empty()) {
-              if (result.pCompletedRequest) {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Failed resolving external glTF buffers from {}:\n- {}",
-                    result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              } else {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Failed resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              }
-            }
+      .thenInWorkerThread([result = std::move(result),
+                           projections = std::move(projections),
+                           tileLoadInfo = std::move(tileLoadInfo),
+                           rendererOptions](CesiumGltfReader::GltfReaderResult&&
+                                                gltfResult) mutable {
+        if (!gltfResult.errors.empty()) {
+          if (result.pCompletedRequest) {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Failed resolving external glTF buffers from {}:\n- {}",
+                result.pCompletedRequest->url(),
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          } else {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Failed resolving external glTF buffers:\n- {}",
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          }
+        }
 
-            if (!gltfResult.warnings.empty()) {
-              if (result.pCompletedRequest) {
-                SPDLOG_LOGGER_WARN(
-                    tileLoadInfo.pLogger,
-                    "Warning when resolving external gltf buffers from "
-                    "{}:\n- {}",
-                    result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              } else {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Warning resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              }
-            }
+        if (!gltfResult.warnings.empty()) {
+          if (result.pCompletedRequest) {
+            SPDLOG_LOGGER_WARN(
+                tileLoadInfo.pLogger,
+                "Warning when resolving external gltf buffers from "
+                "{}:\n- {}",
+                result.pCompletedRequest->url(),
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          } else {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Warning resolving external glTF buffers:\n- {}",
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          }
+        }
 
-            if (!gltfResult.model) {
-              return tileLoadInfo.asyncSystem.createResolvedFuture(
-                  TileLoadResultAndRenderResources{
-                      TileLoadResult::createFailedResult(nullptr),
-                      nullptr});
-            }
+        if (!gltfResult.model) {
+          return tileLoadInfo.asyncSystem.createResolvedFuture(
+              TileLoadResultAndRenderResources{
+                  TileLoadResult::createFailedResult(nullptr),
+                  nullptr});
+        }
 
-            result.contentKind = std::move(*gltfResult.model);
+        result.contentKind = std::move(*gltfResult.model);
 
-            postProcessGltfInWorkerThread(
-                result,
-                std::move(projections),
-                tileLoadInfo);
+        postProcessGltfInWorkerThread(
+            result,
+            std::move(projections),
+            tileLoadInfo);
 
-            // create render resources
-            return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-                tileLoadInfo.asyncSystem,
-                std::move(result),
-                tileLoadInfo.tileTransform,
-                rendererOptions);
-          });
+        // create render resources
+        if (tileLoadInfo.pPrepareRendererResources) {
+          return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
+              tileLoadInfo.asyncSystem,
+              std::move(result),
+              tileLoadInfo.tileTransform,
+              rendererOptions);
+        } else {
+          return tileLoadInfo.asyncSystem
+              .createResolvedFuture<TileLoadResultAndRenderResources>(
+                  TileLoadResultAndRenderResources{std::move(result), nullptr});
+        }
+      });
 }
 } // namespace
 
@@ -1065,16 +1070,29 @@ void TilesetContentManager::updateTileContent(
     updateDoneState(tile, tilesetOptions);
   }
 
-  if (tile.shouldContentContinueUpdating()) {
+  this->createLatentChildrenIfNecessary(tile, tilesetOptions);
+}
+
+void TilesetContentManager::createLatentChildrenIfNecessary(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) {
+  if (!tile.getMightHaveLatentChildren())
+    return;
+
+  // If this tile has no children yet, attempt to create them.
+  if (tile.getChildren().empty()) {
     TileChildrenResult childrenResult =
         this->_pLoader->createTileChildren(tile, tilesetOptions.ellipsoid);
     if (childrenResult.state == TileLoadResultState::Success) {
       tile.createChildTiles(std::move(childrenResult.children));
     }
 
-    bool shouldTileContinueUpdated =
+    bool mightStillHaveLatentChildren =
         childrenResult.state == TileLoadResultState::RetryLater;
-    tile.setContentShouldContinueUpdating(shouldTileContinueUpdated);
+    tile.setMightHaveLatentChildren(mightStillHaveLatentChildren);
+  } else {
+    // A tile with real children can't have latent children.
+    tile.setMightHaveLatentChildren(false);
   }
 }
 
@@ -1374,19 +1392,12 @@ void TilesetContentManager::updateContentLoadedState(
 void TilesetContentManager::updateDoneState(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  // The reason for this method to terminate early when
-  // Tile::shouldContentContinueUpdating() returns true is that: When a tile has
-  // Tile::shouldContentContinueUpdating() to be true, it means the tile's
-  // children need to be created by the
-  // TilesetContentLoader::createTileChildren() which is invoked in the
-  // TilesetContentManager::updateTileContent() method. In the
-  // updateDoneState(), RasterOverlayTiles that are mapped to the tile will
-  // begin updating. If there are more RasterOverlayTiles with higher LOD and
-  // the current tile is a leaf, more upsample children will be created for that
-  // tile. So to accurately determine if a tile is a leaf, it needs the tile to
-  // have no children and Tile::shouldContentContinueUpdating() to return false
-  // which means the loader has no more children for this tile.
-  if (tile.shouldContentContinueUpdating()) {
+  if (tile.getMightHaveLatentChildren()) {
+    // This tile might have latent children, but we don't know yet whether it
+    // *actually* has children. We need to know that before we can continue
+    // this function, which will decide whether or not to create upsampled
+    // children for this tile. It only makes sense to create upsampled children
+    // for a tile that we know for sure doesn't have real children.
     return;
   }
 
@@ -1483,10 +1494,12 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
       pRenderContent && "Tile must have render content to be unloaded");
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
-  this->_externals.pPrepareRendererResources->free(
-      tile,
-      pWorkerRenderResources,
-      nullptr);
+  if (this->_externals.pPrepareRendererResources) {
+    this->_externals.pPrepareRendererResources->free(
+        tile,
+        pWorkerRenderResources,
+        nullptr);
+  }
   pRenderContent->setRenderResources(nullptr);
 }
 

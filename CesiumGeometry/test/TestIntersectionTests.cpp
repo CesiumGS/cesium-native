@@ -7,7 +7,8 @@
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
-#include <glm/glm.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <array>
 
@@ -245,9 +246,7 @@ TEST_CASE("IntersectionTests::rayAABB") {
 TEST_CASE("IntersectionTests::rayOBB") {
   struct TestCase {
     Ray ray;
-    glm::dvec3 xHalf;
-    glm::dvec3 yHalf;
-    glm::dvec3 obbOrigin;
+    OrientedBoundingBox obb;
     std::optional<glm::dvec3> expectedIntersectionPoint;
   };
 
@@ -255,25 +254,118 @@ TEST_CASE("IntersectionTests::rayOBB") {
       // 2x2x2 obb at origin that is rotated -45 degrees on the x-axis.
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, 10.0), glm::dvec3(0.0, 0.0, -1.0)),
-          glm::dvec3(-1.0 / glm::sqrt(2), 0.0, 1.0 / glm::sqrt(2)),
-          glm::dvec3(0.0, 1.0, 0.0),
-          glm::dvec3(0.0, 0.0, 0.0),
-          glm::dvec3(0.0, 0.0, 2.0 / glm::sqrt(2))},
+          OrientedBoundingBox(
+              glm::dvec3(0.0, 0.0, 0.0),
+              glm::dmat3(
+                  glm::rotate(glm::radians(-45.0), glm::dvec3(1.0, 0.0, 0.0)))),
+          glm::dvec3(0.0, 0.0, glm::sqrt(2.0))},
       // 2x2x2 obb at (10,10,10) that is rotated -45 degrees on the x-axis.
       TestCase{
           Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
-          glm::dvec3(-1.0 / glm::sqrt(2), 0.0, 1.0 / glm::sqrt(2)),
-          glm::dvec3(0.0, 1.0, 0.0),
-          glm::dvec3(10.0, 10.0, 10.0),
-          glm::dvec3(10.0, 10.0, 10.0 + 2.0 / glm::sqrt(2))});
-  std::optional<glm::dvec3> intersectionPoint = IntersectionTests::rayOBB(
-      testCase.ray,
-      OrientedBoundingBox(
-          testCase.obbOrigin,
-          glm::dmat3x3(
-              testCase.xHalf,
-              testCase.yHalf,
-              glm::cross(testCase.xHalf, testCase.yHalf))));
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 10.0, 10.0),
+              glm::dmat3(
+                  glm::rotate(glm::radians(-45.0), glm::dvec3(1.0, 0.0, 0.0)))),
+          glm::dvec3(10.0, 10.0, 10.0 + glm::sqrt(2.0))},
+      // 2x2x2 obb at (10,20,30) that is rotated -45 degrees on the x-axis and
+      // hit from an angle.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0 + 2.0, 30.0 + 1.0 + glm::sqrt(2)),
+              glm::normalize(glm::dvec3(0.0, -2.0, -1.0))),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              glm::dmat3(
+                  glm::rotate(glm::radians(-45.0), glm::dvec3(1.0, 0.0, 0.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(2.0))},
+      // 4x4x4 obb at (10,10,10) that is rotated -45 degrees on the x-axis.
+      TestCase{
+          Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 10.0, 10.0),
+              2.0 * glm::dmat3(glm::rotate(
+                        glm::radians(-45.0),
+                        glm::dvec3(1.0, 0.0, 0.0)))),
+          glm::dvec3(10.0, 10.0, 10.0 + glm::sqrt(8.0))},
+      // 4x4x4 obb at (10,20,30) that is rotated -45 degrees on the x-axis and
+      // hit from an angle
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0 + 10.0, 30.0 + 20.0 + glm::sqrt(8.0)),
+              glm::normalize(glm::dvec3(0.0, -1.0, -2.0))),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              2.0 * glm::dmat3(glm::rotate(
+                        glm::radians(-45.0),
+                        glm::dvec3(1.0, 0.0, 0.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(8.0))},
+      // 4x4x2 obb at (10,10,10) that is not rotated.
+      TestCase{
+          Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 10.0, 10.0),
+              glm::dmat3(glm::scale(glm::dvec3(2.0, 2.0, 1.0)))),
+          glm::dvec3(10.0, 10.0, 10.0 + 1.0)},
+      // 4x2x4 obb at (10,20,30) that is not rotated.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              glm::dmat3(glm::scale(glm::dvec3(2.0, 1.0, 2.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + 2.0)},
+      // 2x4x2 obb at (10,20,30) that is rotated 45 degrees on the Y-axis.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              glm::dmat3(glm::scale(glm::dvec3(1.0, 2.0, 1.0))) *
+                  glm::dmat3(glm::rotate(
+                      glm::radians(45.0),
+                      glm::dvec3(0.0, 1.0, 0.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(2.0))},
+      // 2x4x2 obb at (10,20,30) that is rotated 45 degrees on the X-axis.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              glm::dmat3(
+                  glm::rotate(glm::radians(45.0), glm::dvec3(1.0, 0.0, 0.0))) *
+                  glm::dmat3(glm::scale(glm::dvec3(1.0, 2.0, 1.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + 1.0 / glm::cos(glm::radians(45.0)))},
+      // 2x4x2 obb at (10,20,30) that is rotated 225 degrees on the Y-axis.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              glm::dmat3(glm::scale(glm::dvec3(1.0, 2.0, 1.0))) *
+                  glm::dmat3(glm::rotate(
+                      glm::radians(225.0),
+                      glm::dvec3(0.0, 1.0, 0.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(2.0))},
+      // 2x2x4 obb at (10,20,30) that is rotated 90 degrees on the X-axis and
+      // hit from an angle.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0 + 2.0, 30.0 + 1.0 + 1.0),
+              glm::normalize(glm::dvec3(0.0, -2.0, -1.0))),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              glm::dmat3(
+                  glm::rotate(glm::radians(90.0), glm::dvec3(1.0, 0.0, 0.0))) *
+                  glm::dmat3(glm::scale(glm::dvec3(1.0, 1.0, 2.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + 1.0)},
+      // 2x2x2 obb at (10,20,30) that is rotated 45 degrees on the X- and
+      // Y-axis.
+      TestCase{
+          Ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0)),
+          OrientedBoundingBox(
+              glm::dvec3(10.0, 20.0, 30.0),
+              (glm::dmat3(glm::rotate(
+                  glm::atan(1.0 / 2.0, glm::sqrt(2) / 2.0),
+                  glm::dvec3(1.0, 0.0, 0.0)))) *
+                  glm::dmat3(glm::rotate(
+                      glm::radians(45.0),
+                      glm::dvec3(0.0, 1.0, 0.0)))),
+          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(3.0))});
+  std::optional<glm::dvec3> intersectionPoint =
+      IntersectionTests::rayOBB(testCase.ray, testCase.obb);
   CHECK(glm::all(glm::lessThan(
       glm::abs(*intersectionPoint - *testCase.expectedIntersectionPoint),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));

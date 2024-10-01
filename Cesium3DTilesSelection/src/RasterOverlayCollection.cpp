@@ -1,3 +1,5 @@
+#include "EmptyRasterOverlayTileProvider.h"
+
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
@@ -113,19 +115,14 @@ void RasterOverlayCollection::add(
                     "Error while creating tile provider: {0}",
                     e.what())});
           })
-      .thenInMainThread([pOverlay, pList, pLogger = this->_externals.pLogger](
+      .thenInMainThread([pOverlay,
+                         pList,
+                         pLogger = this->_externals.pLogger,
+                         asyncSystem = this->_externals.asyncSystem](
                             RasterOverlay::CreateTileProviderResult&& result) {
+        IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
         if (result) {
-          // Find the overlay's current location in the list.
-          // It's possible it has been removed completely.
-          auto it = std::find(
-              pList->overlays.begin(),
-              pList->overlays.end(),
-              pOverlay);
-          if (it != pList->overlays.end()) {
-            std::int64_t index = it - pList->overlays.begin();
-            pList->tileProviders[size_t(index)] = *result;
-          }
+          pProvider = *result;
         } else {
           // Report error creating the tile provider.
           const RasterOverlayLoadFailureDetails& failureDetails =
@@ -134,7 +131,21 @@ void RasterOverlayCollection::add(
           if (pOverlay->getOptions().loadErrorCallback) {
             pOverlay->getOptions().loadErrorCallback(failureDetails);
           }
+
+          // Create a tile provider that does not provide any tiles at all.
+          pProvider = new EmptyRasterOverlayTileProvider(pOverlay, asyncSystem);
         }
+
+        auto it =
+            std::find(pList->overlays.begin(), pList->overlays.end(), pOverlay);
+
+        // Find the overlay's current location in the list.
+        // It's possible it has been removed completely.
+        if (it != pList->overlays.end()) {
+          std::int64_t index = it - pList->overlays.begin();
+          pList->tileProviders[size_t(index)] = pProvider;
+        }
+
         // CESIUM_TRACE_END_IN_TRACK("createTileProvider");
       });
 }
