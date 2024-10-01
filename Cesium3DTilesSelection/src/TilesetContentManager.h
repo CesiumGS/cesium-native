@@ -64,6 +64,27 @@ public:
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
+  /**
+   * @brief Creates explicit Tile instances for a tile's latent children, if
+   * it is necessary and possible to do so.
+   *
+   * Latent children are child tiles that can be created by
+   * {@link TilesetContentLoader::createChildTiles} but that are not yet
+   * reflected in {@link Tile::getChildren}. For example, in implicit tiling,
+   * we save memory by only creating explicit Tile instances from implicit
+   * availability as those instances are needed. Calling this method will create
+   * the explicit tile instances for the given tile's children.
+   *
+   * This method does nothing if the given tile already has children, or if
+   * {@link Tile::getMightHaveLatentChildren} returns false.
+   *
+   * @param tile The tile for which to create latent children.
+   * @param tilesetOptions The tileset's options.
+   */
+  void createLatentChildrenIfNecessary(
+      Tile& tile,
+      const TilesetOptions& tilesetOptions);
+
   bool unloadTileContent(Tile& tile);
 
   void waitUntilIdle();
