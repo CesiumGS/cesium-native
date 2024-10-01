@@ -1076,7 +1076,11 @@ void TilesetContentManager::updateTileContent(
 void TilesetContentManager::createLatentChildrenIfNecessary(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  if (tile.getChildren().empty() && tile.getMightHaveLatentChildren()) {
+  if (!tile.getMightHaveLatentChildren())
+    return;
+
+  // If this tile has no children yet, attempt to create them.
+  if (tile.getChildren().empty()) {
     TileChildrenResult childrenResult =
         this->_pLoader->createTileChildren(tile, tilesetOptions.ellipsoid);
     if (childrenResult.state == TileLoadResultState::Success) {
@@ -1086,6 +1090,9 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
     bool mightStillHaveLatentChildren =
         childrenResult.state == TileLoadResultState::RetryLater;
     tile.setMightHaveLatentChildren(mightStillHaveLatentChildren);
+  } else {
+    // A tile with real children can't have latent children.
+    tile.setMightHaveLatentChildren(false);
   }
 }
 
