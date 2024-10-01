@@ -142,7 +142,8 @@ TEST_CASE("Add raster overlay to glTF") {
                     geometricError,
                     16.0, // the Max SSE used to render the geometry
                     details->rasterOverlayProjections[0],
-                    details->rasterOverlayRectangles[0]);
+                    details->rasterOverlayRectangles[0],
+                    Ellipsoid::WGS84);
 
             // Get a raster overlay texture of the proper dimensions.
             IntrusivePointer<RasterOverlayTile> pRasterTile =

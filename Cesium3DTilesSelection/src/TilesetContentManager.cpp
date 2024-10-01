@@ -154,7 +154,8 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
           CesiumGeospatial::BoundingRegion(
               globeRectangle,
               details.boundingRegion.getMinimumHeight(),
-              details.boundingRegion.getMaximumHeight()),
+              details.boundingRegion.getMaximumHeight(),
+              getProjectionEllipsoid(projection)),
           center};
     }
   }
