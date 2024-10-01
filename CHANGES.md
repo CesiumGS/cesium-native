@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.40.1 - 2024-10-01
+
+##### Fixes :wrench:
+
+- Fixed a regression in v0.40.0 that could cause tilesets with raster overlays to fail to load in some cases.
+
 ### v0.40.0 - 2024-10-01
 
 ##### Breaking Changes :mega:
