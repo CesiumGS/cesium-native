@@ -1,5 +1,6 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
+#include "TilesetHeightQuery.h"
 
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -45,13 +46,18 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
-          _externals,
-          _options,
-          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
-          std::vector<CesiumAsync::IAssetAccessor::THeader>{},
-          std::move(pCustomLoader),
-          std::move(pRootTile))} {}
+      _pTilesetContentManager{
+          new TilesetContentManager(
+              _externals,
+              _options,
+              RasterOverlayCollection{
+                  _loadedTiles,
+                  externals,
+                  options.ellipsoid},
+              std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+              std::move(pCustomLoader),
+              std::move(pRootTile)),
+      } {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -63,11 +69,16 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
-          _externals,
-          _options,
-          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
-          url)} {}
+      _pTilesetContentManager{
+          new TilesetContentManager(
+              _externals,
+              _options,
+              RasterOverlayCollection{
+                  _loadedTiles,
+                  externals,
+                  options.ellipsoid},
+              url),
+      } {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -90,6 +101,10 @@ Tileset::Tileset(
           ionAssetEndpointUrl)} {}
 
 Tileset::~Tileset() noexcept {
+  TilesetHeightRequest::failHeightRequests(
+      this->_heightRequests,
+      "Tileset is being destroyed.");
+
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();
@@ -325,6 +340,15 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
+    // If the root tile is marked as ready, but doesn't actually exist, then
+    // the tileset couldn't load. Fail any outstanding height requests.
+    if (!this->_heightRequests.empty() && this->_pTilesetContentManager &&
+        this->_pTilesetContentManager->getRootTileAvailableEvent().isReady()) {
+      TilesetHeightRequest::failHeightRequests(
+          this->_heightRequests,
+          "Height requests could not complete because the tileset failed to "
+          "load.");
+    }
     return result;
   }
 
@@ -357,6 +381,13 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   } else {
     result = ViewUpdateResult();
   }
+
+  TilesetHeightRequest::processHeightRequests(
+      *this->_pTilesetContentManager,
+      this->_options,
+      this->_loadedTiles,
+      this->_heightRequests,
+      this->_heightQueryLoadQueue);
 
   result.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(this->_workerThreadLoadQueue.size());
@@ -523,6 +554,27 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
                   return &pExternal->metadata;
                 });
       });
+}
+
+CesiumAsync::Future<SampleHeightResult>
+Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
+  if (positions.empty()) {
+    return this->_asyncSystem.createResolvedFuture<SampleHeightResult>({});
+  }
+
+  Promise promise = this->_asyncSystem.createPromise<SampleHeightResult>();
+
+  std::vector<TilesetHeightQuery> queries;
+  queries.reserve(positions.size());
+
+  for (const CesiumGeospatial::Cartographic& position : positions) {
+    queries.emplace_back(position, this->_options.ellipsoid);
+  }
+
+  this->_heightRequests.emplace_back(
+      TilesetHeightRequest{std::move(queries), promise});
+
+  return promise.getFuture();
 }
 
 static void markTileNonRendered(
@@ -1427,17 +1479,52 @@ void Tileset::_processWorkerThreadLoadQueue() {
     return;
   }
 
-  std::vector<TileLoadTask>& queue = this->_workerThreadLoadQueue;
-  std::sort(queue.begin(), queue.end());
+  std::sort(
+      this->_workerThreadLoadQueue.begin(),
+      this->_workerThreadLoadQueue.end());
 
-  for (TileLoadTask& task : queue) {
-    this->_pTilesetContentManager->loadTileContent(*task.pTile, _options);
-    if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-        maximumSimultaneousTileLoads) {
+  // Select tiles alternately from the two queues. Each frame, switch which
+  // queue we pull the first tile from. The goal is to schedule both height
+  // query and visualization tile loads fairly.
+  auto visIt = this->_workerThreadLoadQueue.begin();
+  auto queryIt = this->_heightQueryLoadQueue.begin();
+
+  bool nextIsVis = (this->_previousFrameNumber % 2) == 0;
+
+  while (this->_pTilesetContentManager->getNumberOfTilesLoading() <
+         maximumSimultaneousTileLoads) {
+    // Tell tiles from the current queue to load until one of them actually
+    // does. Calling loadTileContent might not actually start the loading
+    // process
+    int32_t originalNumberOfTilesLoading =
+        this->_pTilesetContentManager->getNumberOfTilesLoading();
+    if (nextIsVis) {
+      while (visIt != this->_workerThreadLoadQueue.end() &&
+             originalNumberOfTilesLoading ==
+                 this->_pTilesetContentManager->getNumberOfTilesLoading()) {
+        this->_pTilesetContentManager->loadTileContent(*visIt->pTile, _options);
+        ++visIt;
+      }
+    } else {
+      while (queryIt != this->_heightQueryLoadQueue.end() &&
+             originalNumberOfTilesLoading ==
+                 this->_pTilesetContentManager->getNumberOfTilesLoading()) {
+        this->_pTilesetContentManager->loadTileContent(**queryIt, _options);
+        ++queryIt;
+      }
+    }
+
+    if (visIt == this->_workerThreadLoadQueue.end() &&
+        queryIt == this->_heightQueryLoadQueue.end()) {
+      // No more work in either queue
       break;
     }
+
+    // Get the next tile from the other queue.
+    nextIsVis = !nextIsVis;
   }
 }
+
 void Tileset::_processMainThreadLoadQueue() {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
   // Process deferred main-thread load tasks with a time budget.
