@@ -22,7 +22,7 @@ struct CatchFunction {
     } catch (...) {
       // Make an exception_ptr task, then scheduler to a wrapper around f that
       // throws it, catches it, and calls f with a reference to it.
-      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) {
+      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) mutable {
         try {
           std::rethrow_exception(e);
         } catch (std::exception& e) {
@@ -52,7 +52,7 @@ struct CatchFunction<Func, void, Scheduler, TaskParameter> {
     } catch (...) {
       // Make an exception_ptr task, then scheduler to a wrapper around f that
       // throws it, catches it, and calls f with a reference to it.
-      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) {
+      auto ptrToException = [f = std::move(f)](std::exception_ptr&& e) mutable {
         try {
           std::rethrow_exception(e);
         } catch (std::exception& e) {

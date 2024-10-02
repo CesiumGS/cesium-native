@@ -25,6 +25,22 @@ endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 
+if (NOT VCPKG_OVERLAY_PORTS)
+    if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
+        set(VCPKG_OVERLAY_PORTS "$ENV{VCPKG_OVERLAY_PORTS}")
+    endif()
+endif()
+
+message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
+
+if (NOT VCPKG_OVERLAY_TRIPLETS)
+    if (DEFINED ENV{VCPKG_OVERLAY_TRIPLETS})
+        set(VCPKG_OVERLAY_TRIPLETS "$ENV{VCPKG_OVERLAY_TRIPLETS}")
+    endif()
+endif()
+
+message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
+
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
