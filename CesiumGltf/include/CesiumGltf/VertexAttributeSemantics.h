@@ -6,9 +6,9 @@
 namespace CesiumGltf {
 
 /**
- * @brief The standard glTF attribute semantics from the specification.
+ * @brief The standard glTF vertex attribute semantics from the specification.
  */
-struct AttributeSemantics {
+struct VertexAttributeSemantics {
   /**
    * @brief Unitless XYZ vertex positions.
    */
