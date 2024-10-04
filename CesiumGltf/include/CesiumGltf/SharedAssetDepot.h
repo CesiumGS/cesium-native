@@ -30,9 +30,9 @@ class SharedAssetDepot : public CesiumUtility::ReferenceCountedThreadSafe<
                              SharedAssetDepot<AssetType>> {
 public:
   /**
-   * @brief The maximum total byte usage of assets that have been loaded but are no
-   * longer needed.
-   * 
+   * @brief The maximum total byte usage of assets that have been loaded but are
+   * no longer needed.
+   *
    * When cached assets are no longer needed, they're marked as
    * candidates for deletion. However, this deletion doesn't actually occur
    * until the total byte usage of deletion candidates exceeds this threshold.
@@ -203,8 +203,9 @@ private:
 
     if (this->totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
       std::lock_guard assetsLock(this->assetsMutex);
-      while (!this->deletionCandidates.empty() && this->totalDeletionCandidateMemoryUsage >
-             this->staleAssetSizeLimit) {
+      while (!this->deletionCandidates.empty() &&
+             this->totalDeletionCandidateMemoryUsage >
+                 this->staleAssetSizeLimit) {
         const CesiumUtility::IntrusivePointer<AssetType>& pOldAsset =
             this->deletionCandidates.front();
         this->deletionCandidates.pop_front();
