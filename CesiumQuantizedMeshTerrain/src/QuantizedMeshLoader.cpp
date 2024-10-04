@@ -1073,6 +1073,7 @@ static std::vector<std::byte> generateNormals(
     const size_t waterMaskImageId = model.images.size();
     model.images.emplace_back();
     CesiumGltf::Image& waterMaskImage = model.images[waterMaskImageId];
+    waterMaskImage.pCesium.emplace();
     waterMaskImage.pCesium->width = 256;
     waterMaskImage.pCesium->height = 256;
     waterMaskImage.pCesium->channels = 1;

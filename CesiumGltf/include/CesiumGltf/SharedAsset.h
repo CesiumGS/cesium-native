@@ -80,6 +80,18 @@ public:
     }
   }
 
+  /**
+   * @brief Determines if this image is shareable because it is managed by an
+   * asset depot. An image that is not shareable can be understood to be
+   * exclusively owned by, for example, the glTF that references it. If it is
+   * shareable, then potentially multiple glTFs reference it.
+   *
+   * An example of a non-shareable asset is an image embedded in a Binary glTF
+   * (GLB) buffer. An example of a shareable asset is an image referenced in a
+   * glTF by URI.
+   */
+  bool isShareable() const { return this->_pDepot != nullptr; }
+
 private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
   CesiumUtility::IntrusivePointer<SharedAssetDepot<T>> _pDepot;

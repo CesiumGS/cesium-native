@@ -119,6 +119,9 @@ public:
                   pPendingAssets->erase(uri);
 
                   if (pResult) {
+                    pResult->_pDepot = this;
+                    pResult->_uniqueAssetId = uri;
+
                     auto [it, ok] = pAssets->emplace(uri, pResult);
                     if (!ok) {
                       return nullptr;
