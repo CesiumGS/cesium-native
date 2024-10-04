@@ -298,7 +298,7 @@ public:
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const SharedAsset<ImageCesium>& image,
+      const ImageCesium& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         TextureView(
@@ -531,7 +531,7 @@ public:
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const SharedAsset<ImageCesium>& image,
+      const ImageCesium& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         TextureView(

@@ -49,12 +49,15 @@ struct ContentKindSetter {
 
   void operator()(CesiumGltf::Model&& model) {
     for (CesiumGltf::Image& image : model.images) {
+      if (!image.pCesium)
+        continue;
+
       // If the image size hasn't been overridden, store the pixelData
       // size now. We'll be adding this number to our total memory usage soon,
       // and remove it when the tile is later unloaded, and we must use
       // the same size in each case.
-      if (image.cesium->sizeBytes < 0) {
-        image.cesium->sizeBytes = int64_t(image.cesium->pixelData.size());
+      if (image.pCesium->sizeBytes < 0) {
+        image.pCesium->sizeBytes = int64_t(image.pCesium->pixelData.size());
       }
     }
 
@@ -562,8 +565,8 @@ postProcessContentInWorkerThread(
       tileLoadInfo.contentOptions.ktx2TranscodeTargets;
   gltfOptions.applyTextureTransform =
       tileLoadInfo.contentOptions.applyTextureTransform;
-  if (tileLoadInfo.maybeAssetDepot.has_value()) {
-    gltfOptions.sharedAssets = *tileLoadInfo.maybeAssetDepot;
+  if (tileLoadInfo.pAssetDepot) {
+    gltfOptions.pSharedAssets = tileLoadInfo.pAssetDepot;
   }
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
@@ -663,7 +666,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _assetDepot(std::make_shared<CesiumGltf::SharedAssetDepot>()),
+      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -693,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _assetDepot(std::make_shared<CesiumGltf::SharedAssetDepot>()),
+      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -845,7 +848,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _assetDepot(std::make_shared<CesiumGltf::SharedAssetDepot>()),
+      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -991,7 +994,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pAssetAccessor,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
-      std::optional(this->_assetDepot),
+      this->_pAssetDepot,
       tilesetOptions.contentOptions,
       tile};
 
@@ -1234,9 +1237,9 @@ TilesetContentManager::getTilesetCredits() const noexcept {
   return this->_tilesetCredits;
 }
 
-const std::shared_ptr<CesiumGltf::SharedAssetDepot>&
-TilesetContentManager::getSharedAssetDepot() const noexcept {
-  return this->_assetDepot;
+const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>&
+TilesetContentManager::getSharedAssetSystem() const noexcept {
+  return this->_pAssetDepot;
 }
 
 int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {

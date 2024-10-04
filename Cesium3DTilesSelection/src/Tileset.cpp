@@ -149,13 +149,13 @@ const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
   return this->_pTilesetContentManager->getRasterOverlayCollection();
 }
 
-CesiumGltf::SharedAssetDepot& Tileset::getSharedAssetDepot() noexcept {
-  return *this->_pTilesetContentManager->getSharedAssetDepot();
+CesiumGltf::SharedAssetSystem& Tileset::getSharedAssetSystem() noexcept {
+  return *this->_pTilesetContentManager->getSharedAssetSystem();
 }
 
-const CesiumGltf::SharedAssetDepot&
-Tileset::getSharedAssetDepot() const noexcept {
-  return *this->_pTilesetContentManager->getSharedAssetDepot();
+const CesiumGltf::SharedAssetSystem&
+Tileset::getSharedAssetSystem() const noexcept {
+  return *this->_pTilesetContentManager->getSharedAssetSystem();
 }
 
 static bool

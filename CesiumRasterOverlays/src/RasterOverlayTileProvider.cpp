@@ -140,7 +140,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
               errors.emplaceError(
                   fmt::format("Image request for {} failed.", pRequest->url()));
               return LoadedRasterOverlayImage{
-                  std::nullopt,
+                  nullptr,
                   options.rectangle,
                   std::move(options.credits),
                   std::move(errors),
@@ -156,7 +156,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   pResponse->statusCode(),
                   pRequest->url()));
               return LoadedRasterOverlayImage{
-                  std::nullopt,
+                  nullptr,
                   options.rectangle,
                   std::move(options.credits),
                   std::move(errors),
@@ -166,7 +166,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             if (pResponse->data().empty()) {
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
-                    CesiumGltf::ImageCesium(),
+                    new CesiumGltf::ImageCesium(),
                     options.rectangle,
                     std::move(options.credits),
                     {},
@@ -178,7 +178,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   "Image response for {} is empty.",
                   pRequest->url()));
               return LoadedRasterOverlayImage{
-                  std::nullopt,
+                  nullptr,
                   options.rectangle,
                   std::move(options.credits),
                   std::move(errors),
@@ -200,7 +200,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             }
 
             return LoadedRasterOverlayImage{
-                loadedImage.image,
+                loadedImage.pImage,
                 options.rectangle,
                 std::move(options.credits),
                 ErrorList{
@@ -248,7 +248,7 @@ static LoadResult createLoadResultFromLoadedImage(
     const std::shared_ptr<spdlog::logger>& pLogger,
     LoadedRasterOverlayImage&& loadedImage,
     const std::any& rendererOptions) {
-  if (!loadedImage.image.has_value()) {
+  if (!loadedImage.pImage) {
     loadedImage.errorList.logError(pLogger, "Failed to load image for tile");
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Failed;
@@ -267,7 +267,7 @@ static LoadResult createLoadResultFromLoadedImage(
         "Warnings while loading image for tile");
   }
 
-  CesiumGltf::ImageCesium& image = loadedImage.image.value();
+  CesiumGltf::ImageCesium& image = *loadedImage.pImage;
 
   const int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
   const int64_t requiredBytes =

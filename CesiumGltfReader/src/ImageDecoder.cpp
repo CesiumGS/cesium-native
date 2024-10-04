@@ -77,8 +77,7 @@ ImageReaderResult ImageDecoder::readImage(
 
   ImageReaderResult result;
 
-  result.image.emplace();
-  CesiumGltf::ImageCesium& image = result.image.value();
+  CesiumGltf::ImageCesium& image = result.pImage.emplace();
 
   if (isKtx(data)) {
     ktxTexture2* pTexture = nullptr;
@@ -265,7 +264,7 @@ ImageReaderResult ImageDecoder::readImage(
       }
     }
 
-    result.image.reset();
+    result.pImage = nullptr;
     result.errors.emplace_back(
         "KTX2 loading failed with error: " +
         std::string(ktxErrorString(errorCode)));
@@ -289,7 +288,7 @@ ImageReaderResult ImageDecoder::readImage(
           image.pixelData.size(),
           image.width * image.channels);
       if (!pImage) {
-        result.image.reset();
+        result.pImage = nullptr;
         result.errors.emplace_back("Unable to decode WebP");
       }
       return result;
@@ -324,7 +323,7 @@ ImageReaderResult ImageDecoder::readImage(
               TJPF_RGBA,
               0)) {
         result.errors.emplace_back("Unable to decode JPEG");
-        result.image.reset();
+        result.pImage = nullptr;
       }
     } else {
       CESIUM_TRACE("Decode PNG");
@@ -355,7 +354,7 @@ ImageReaderResult ImageDecoder::readImage(
         std::copy(pImage, pImage + lastByte, u8Pointer);
         stbi_image_free(pImage);
       } else {
-        result.image.reset();
+        result.pImage = nullptr;
         result.errors.emplace_back(stbi_failure_reason());
       }
     }

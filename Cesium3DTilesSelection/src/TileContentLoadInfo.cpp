@@ -9,8 +9,8 @@ TileContentLoadInfo::TileContentLoadInfo(
     const std::shared_ptr<IPrepareRendererResources>&
         pPrepareRendererResources_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const std::optional<std::shared_ptr<CesiumGltf::SharedAssetDepot>>
-        maybeAssetDepot_,
+    const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>
+        pAssetDepot_,
     const TilesetContentOptions& contentOptions_,
     const Tile& tile)
     : asyncSystem(asyncSystem_),
@@ -20,7 +20,7 @@ TileContentLoadInfo::TileContentLoadInfo(
       tileID(tile.getTileID()),
       tileBoundingVolume(tile.getBoundingVolume()),
       tileContentBoundingVolume(tile.getContentBoundingVolume()),
-      maybeAssetDepot{maybeAssetDepot_},
+      pAssetDepot{pAssetDepot_},
       tileRefine(tile.getRefine()),
       tileGeometricError(tile.getGeometricError()),
       tileTransform(tile.getTransform()),
