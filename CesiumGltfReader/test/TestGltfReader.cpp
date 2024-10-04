@@ -572,9 +572,9 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
     std::vector<std::byte> data = readFile(ktx2File.string());
     ImageReaderResult imageResult =
         GltfReader::readImage(data, Ktx2TranscodeTargets{});
-    REQUIRE(imageResult.image.has_value());
+    REQUIRE(imageResult.pImage);
 
-    const ImageCesium& image = *imageResult.image;
+    const ImageCesium& image = *imageResult.pImage;
     REQUIRE(image.mipPositions.size() == 1);
     CHECK(image.mipPositions[0].byteOffset == 0);
     CHECK(image.mipPositions[0].byteSize > 0);
@@ -592,9 +592,9 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
     std::vector<std::byte> data = readFile(ktx2File.string());
     ImageReaderResult imageResult =
         GltfReader::readImage(data, Ktx2TranscodeTargets{});
-    REQUIRE(imageResult.image.has_value());
+    REQUIRE(imageResult.pImage);
 
-    const ImageCesium& image = *imageResult.image;
+    const ImageCesium& image = *imageResult.pImage;
     REQUIRE(image.mipPositions.size() == 0);
     CHECK(image.pixelData.size() > 0);
   }
@@ -606,9 +606,9 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
     std::vector<std::byte> data = readFile(ktx2File.string());
     ImageReaderResult imageResult =
         GltfReader::readImage(data, Ktx2TranscodeTargets{});
-    REQUIRE(imageResult.image.has_value());
+    REQUIRE(imageResult.pImage);
 
-    const ImageCesium& image = *imageResult.image;
+    const ImageCesium& image = *imageResult.pImage;
     REQUIRE(image.mipPositions.size() == 9);
     CHECK(image.mipPositions[0].byteSize > 0);
     CHECK(
@@ -689,7 +689,7 @@ TEST_CASE("Decodes images with data uris") {
 
   REQUIRE(model.images.size() == 1);
 
-  const ImageCesium& image = *model.images.front().cesium;
+  const ImageCesium& image = *model.images.front().pCesium;
 
   CHECK(image.width == 256);
   CHECK(image.height == 256);
@@ -782,9 +782,9 @@ TEST_CASE("GltfReader::loadGltf") {
 
     REQUIRE(result.model->images.size() == 1);
     const CesiumGltf::Image& image = result.model->images[0];
-    CHECK(image.cesium->width == 2048);
-    CHECK(image.cesium->height == 2048);
-    CHECK(image.cesium->pixelData.size() == 2048 * 2048 * 4);
+    CHECK(image.pCesium->width == 2048);
+    CHECK(image.pCesium->height == 2048);
+    CHECK(image.pCesium->pixelData.size() == 2048 * 2048 * 4);
 
     CHECK(!result.model->buffers.empty());
     for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
@@ -810,7 +810,7 @@ TEST_CASE("GltfReader::loadGltf") {
     REQUIRE(result.model->images.size() == 1);
     const CesiumGltf::Image& image = result.model->images[0];
     CHECK(image.uri.has_value());
-    CHECK(image.cesium->pixelData.empty());
+    CHECK(!image.pCesium);
   }
 }
 

@@ -1298,7 +1298,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       CesiumAsync::Future<LoadedRasterOverlayImage>
       loadTileImage(RasterOverlayTile& overlayTile) override {
-        CesiumGltf::ImageCesium image{};
+        CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage;
+        CesiumGltf::ImageCesium& image = pImage.emplace();
         image.width = 1;
         image.height = 1;
         image.channels = 1;
@@ -1307,7 +1308,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
         return this->getAsyncSystem().createResolvedFuture(
             LoadedRasterOverlayImage{
-                std::move(image),
+                std::move(pImage),
                 overlayTile.getRectangle(),
                 {},
                 {},

@@ -49,16 +49,12 @@ struct ImageAssetFactory {
   ImageAssetFactory(const Ktx2TranscodeTargets& ktx2TranscodeTargets_)
       : ktx2TranscodeTargets(ktx2TranscodeTargets_) {}
 
-  std::optional<ImageCesium>
+  CesiumUtility::IntrusivePointer<ImageCesium>
   createFrom(const gsl::span<const gsl::byte>& data) const {
     ImageReaderResult imageResult =
         ImageDecoder::readImage(data, this->ktx2TranscodeTargets);
-
-    if (imageResult.image) {
-      return std::optional<ImageCesium>(imageResult.image);
-    }
-
-    return std::nullopt;
+    // TODO: report warnings and errors!
+    return imageResult.pImage;
   }
 
 private:
@@ -290,7 +286,7 @@ void postprocess(
       }
 
       // Image has already been decoded
-      if (!image.cesium->pixelData.empty()) {
+      if (image.pCesium && !image.pCesium->pixelData.empty()) {
         continue;
       }
 
@@ -324,9 +320,8 @@ void postprocess(
           readGltf.errors.end(),
           imageResult.errors.begin(),
           imageResult.errors.end());
-      if (imageResult.image) {
-        image.cesium =
-            SharedAsset<ImageCesium>(std::move(imageResult.image.value()));
+      if (imageResult.pImage) {
+        image.pCesium = imageResult.pImage;
       } else {
         if (image.mimeType) {
           readGltf.errors.emplace_back(
@@ -554,66 +549,57 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
         const std::string uri = Uri::resolve(baseUrl, *image.uri);
 
-        struct Operation {
-          ImageAssetFactory factory;
-          AsyncSystem& asyncSystem;
-          std::shared_ptr<IAssetAccessor> pAssetAccessor;
-          std::string uri;
-          std::vector<IAssetAccessor::THeader> headers;
+        auto getAsset =
+            [&options](
+                const AsyncSystem& asyncSystem,
+                const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+                const std::string& uri,
+                const std::vector<IAssetAccessor::THeader>& headers) {
+              if (options.pSharedAssets == nullptr) {
+                // We don't have a depot, we have to fetch this the old way.
+                return pAssetAccessor->get(asyncSystem, uri, headers)
+                    .thenInWorkerThread(
+                        [uri,
+                         options](std::shared_ptr<IAssetRequest>&& pRequest) {
+                          const IAssetResponse* pResponse =
+                              pRequest->response();
 
-          SharedFuture<std::optional<SharedAsset<ImageCesium>>>
-          operator()(std::monostate) {
-            // We don't have a depot, we have to fetch this the old way.
-            return pAssetAccessor->get(asyncSystem, uri, headers)
-                .thenInWorkerThread(
-                    [uri = this->uri, pFactory = &this->factory](
-                        std::shared_ptr<IAssetRequest>&& pRequest) {
-                      const IAssetResponse* pResponse = pRequest->response();
+                          CesiumUtility::IntrusivePointer<ImageCesium> pAsset =
+                              nullptr;
 
-                      if (pResponse) {
-                        gsl::span<const std::byte> bytes = pResponse->data();
-                        auto asset = pFactory->createFrom(bytes);
-                        if (asset.has_value()) {
-                          return std::optional<SharedAsset<ImageCesium>>(
-                              std::move(asset.value()));
-                        }
-                      }
+                          if (pResponse) {
+                            gsl::span<const std::byte> bytes =
+                                pResponse->data();
+                            pAsset =
+                                ImageAssetFactory(options.ktx2TranscodeTargets)
+                                    .createFrom(bytes);
+                          }
 
-                      return std::optional<SharedAsset<ImageCesium>>();
-                    })
-                .share();
-          }
-
-          SharedFuture<std::optional<SharedAsset<ImageCesium>>>
-          operator()(std::shared_ptr<SharedAssetDepot> depot) {
-            // We have a depot, this is easy!
-            return depot->getOrFetch(
-                asyncSystem,
-                pAssetAccessor,
-                factory,
-                uri,
-                headers);
-          }
-        };
-
-        SharedFuture<std::optional<SharedAsset<ImageCesium>>> future =
-            std::visit(
-                Operation{
-                    ImageAssetFactory(options.ktx2TranscodeTargets),
+                          return pAsset;
+                        })
+                    .share();
+              } else {
+                // We have a depot, this is easy!
+                return options.pSharedAssets->getOrFetch(
                     asyncSystem,
                     pAssetAccessor,
+                    ImageAssetFactory(options.ktx2TranscodeTargets),
                     uri,
-                    tHeaders},
-                options.sharedAssets);
+                    headers);
+              }
+            };
+
+        SharedFuture<IntrusivePointer<ImageCesium>> future =
+            getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
         resolvedBuffers.push_back(future.thenInWorkerThread(
-            [pImage = &image](
-                std::optional<SharedAsset<ImageCesium>> maybeLoadedImage) {
+            [pImage =
+                 &image](const IntrusivePointer<ImageCesium>& pLoadedImage) {
               std::string imageUri = *pImage->uri;
               pImage->uri = std::nullopt;
 
-              if (maybeLoadedImage.has_value()) {
-                pImage->cesium = std::move(maybeLoadedImage.value());
+              if (pLoadedImage) {
+                pImage->pCesium = pLoadedImage;
                 return ExternalBufferLoadResult{true, imageUri};
               }
 

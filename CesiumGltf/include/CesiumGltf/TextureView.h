@@ -1,10 +1,11 @@
 #pragma once
 
-#include "CesiumGltf/ImageCesium.h"
-#include "CesiumGltf/KhrTextureTransform.h"
-#include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/SharedAssetDepot.h"
-#include "CesiumGltf/TextureInfo.h"
+#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/SharedAssetDepot.h>
+#include <CesiumGltf/TextureInfo.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <vector>
 
@@ -125,7 +126,7 @@ public:
    */
   TextureView(
       const Sampler& sampler,
-      const SharedAsset<ImageCesium>& image,
+      const ImageCesium& image,
       int64_t textureCoordinateSetIndex,
       const ExtensionKhrTextureTransform* pKhrTextureTransformExtension =
           nullptr,
@@ -174,10 +175,10 @@ public:
    * problems during construction.
    */
   const ImageCesium* getImage() const noexcept {
-    if (this->_imageCopy) {
-      return &(this->_imageCopy.value());
+    if (this->_pImageCopy) {
+      return this->_pImageCopy.get();
     }
-    return &*this->_pImage;
+    return this->_pImage.get();
   }
 
   /**
@@ -211,12 +212,12 @@ private:
   TextureViewStatus _textureViewStatus;
 
   const Sampler* _pSampler;
-  SharedAsset<ImageCesium> _pImage;
+  CesiumUtility::IntrusivePointer<ImageCesium> _pImage;
   int64_t _texCoordSetIndex;
 
   bool _applyTextureTransform;
   std::optional<KhrTextureTransform> _textureTransform;
 
-  std::optional<ImageCesium> _imageCopy;
+  CesiumUtility::IntrusivePointer<ImageCesium> _pImageCopy;
 };
 } // namespace CesiumGltf

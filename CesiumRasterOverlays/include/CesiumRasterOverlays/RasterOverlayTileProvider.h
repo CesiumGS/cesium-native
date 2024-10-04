@@ -32,7 +32,7 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    * This will be an empty optional if the loading failed. In this case,
    * the `errors` vector will contain the corresponding error messages.
    */
-  std::optional<CesiumGltf::ImageCesium> image{};
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage{nullptr};
 
   /**
    * @brief The projected rectangle defining the bounds of this image.

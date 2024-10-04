@@ -2,7 +2,7 @@
 
 #include "CesiumGltf/Ktx2TranscodeTargets.h"
 #include "CesiumGltf/Library.h"
-#include "CesiumUtility/ExtensibleObject.h"
+#include "CesiumGltf/SharedAsset.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -30,8 +30,7 @@ struct CESIUMGLTF_API ImageCesiumMipPosition {
  * @brief Holds {@link Image} properties that are specific to the glTF loader
  * rather than part of the glTF spec.
  */
-struct CESIUMGLTF_API ImageCesium final
-    : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API ImageCesium final : public SharedAsset<ImageCesium> {
   /**
    * @brief The width of the image in pixels.
    */

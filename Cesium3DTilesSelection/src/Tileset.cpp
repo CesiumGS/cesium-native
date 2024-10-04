@@ -149,11 +149,11 @@ const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
   return this->_pTilesetContentManager->getRasterOverlayCollection();
 }
 
-CesiumGltf::SharedAssetDepot& Tileset::getSharedAssetDepot() noexcept {
+CesiumGltf::SharedAssetDepots& Tileset::getSharedAssetDepot() noexcept {
   return *this->_pTilesetContentManager->getSharedAssetDepot();
 }
 
-const CesiumGltf::SharedAssetDepot&
+const CesiumGltf::SharedAssetDepots&
 Tileset::getSharedAssetDepot() const noexcept {
   return *this->_pTilesetContentManager->getSharedAssetDepot();
 }

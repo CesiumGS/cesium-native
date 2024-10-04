@@ -10,7 +10,7 @@
 #include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/SharedAssetDepot.h>
+#include <CesiumGltf/SharedAssetDepots.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
@@ -115,8 +115,8 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * appear in this glTF. If not present, assets will not be shared between
    * glTFs, even if they're loaded from the same URL.
    */
-  std::variant<std::monostate, std::shared_ptr<CesiumGltf::SharedAssetDepot>>
-      sharedAssets = std::monostate();
+  CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetDepots> pSharedAssets =
+      nullptr;
 };
 
 /**

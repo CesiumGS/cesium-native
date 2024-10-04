@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CesiumGltf/ImageCesium.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -22,167 +20,23 @@
 
 namespace CesiumGltf {
 
-template <typename AssetType> class SharedAsset;
-template <typename AssetType> class SingleAssetDepot;
+template <typename T> class SharedAsset;
 
 /**
- * Contains the current state of an asset within the SharedAssetDepot.
+ * A depot for {@link SharedAsset} instances, which are potentially shared between multiple objects.
+ * @tparam AssetType The type of asset stored in this depot. This should usually
+ * be derived from {@link SharedAsset}.
  */
 template <typename AssetType>
-class AssetContainer
-    : public CesiumUtility::ReferenceCounted<AssetContainer<AssetType>, true> {
-public:
-  std::atomic<std::int32_t> counter;
-  std::string assetId;
-  AssetType asset;
-
-  // Pointer to this container's parent so we know how to clean it up.
-  SingleAssetDepot<AssetType>* parent;
-
-  AssetContainer(
-      std::string assetId_,
-      AssetType&& asset_,
-      SingleAssetDepot<AssetType>* parent_)
-      : counter(0),
-        assetId(assetId_),
-        asset(std::move(asset_)),
-        parent(parent_) {}
-  SharedAsset<AssetType> toRef() { return SharedAsset(this); }
-};
-
-/**
- * An asset that may or may not be stored in the SharedAssetDepot and shared
- * across multiple tiles. This can either be an ImageCesium itself or a
- * reference-counted pointer to an entry in the SharedAssetDepot. You should
- * always treat it as if it was an ImageCesium, not a smart pointer.
- * @tparam AssetType The type of the asset that we're getting a reference to.
- */
-template <typename AssetType> class SharedAsset {
-public:
-  SharedAsset(AssetType&& asset)
-      : contents(new AssetContainer<AssetType>(
-            std::string(),
-            std::move(asset),
-            nullptr)) {}
-  SharedAsset(const AssetType& asset)
-      : contents(new AssetContainer<AssetType>(
-            std::string(),
-            AssetType(asset),
-            nullptr)) {}
-  SharedAsset(std::nullptr_t) : contents(nullptr) {}
-  SharedAsset()
-      : contents(new AssetContainer<AssetType>(
-            std::string(),
-            AssetType(),
-            nullptr)) {}
-
-  AssetType* get() { return &this->contents->asset; }
-
-  const AssetType* get() const { return &this->contents->asset; }
-
-  AssetType* operator->() { return this->get(); }
-  const AssetType* operator->() const { return this->get(); }
-  AssetType& operator*() { return *this->get(); }
-  const AssetType& operator*() const { return *this->get(); }
-
-  bool operator==(const SharedAsset<AssetType>& other) const {
-    return other.get() == this->get();
-  }
-
-  bool operator==(SharedAsset<AssetType>& other) {
-    return other.get() == this->get();
-  }
-
-  bool operator!=(const SharedAsset<AssetType>& other) const {
-    return other.get() != this->get();
-  }
-
-  bool operator!=(SharedAsset<AssetType>& other) {
-    return other.get() != this->get();
-  }
-
-  /**
-   * Copy assignment operator for SharedAsset.
-   */
-  void operator=(const SharedAsset<AssetType>& other) {
-    if (*this != other) {
-      // Decrement this reference
-      this->changeCounter(-1);
-      this->contents = other.contents;
-      // Increment the new reference
-      this->changeCounter(1);
-    }
-  }
-
-  /**
-   * Move assignment operator for SharedAsset.
-   */
-  void operator=(SharedAsset<AssetType>&& other) noexcept {
-    if (*this != other) {
-      this->changeCounter(-1);
-      this->contents = std::move(other.contents);
-      other.contents = nullptr;
-    }
-  }
-
-  ~SharedAsset() { this->changeCounter(-1); }
-
-  /**
-   * Copy constructor.
-   */
-  SharedAsset(const SharedAsset<AssetType>& other) {
-    contents = other.contents;
-    this->changeCounter(1);
-  }
-
-  /**
-   * Move constructor.
-   */
-  SharedAsset(SharedAsset<AssetType>&& other) noexcept {
-    contents = std::move(other.contents);
-    other.contents = nullptr;
-  }
-
-private:
-  SharedAsset(
-      CesiumUtility::IntrusivePointer<AssetContainer<AssetType>> container)
-      : contents(container) {
-    this->changeCounter(1);
-  }
-
-  void changeCounter(int amt) {
-    if (contents != nullptr) {
-      contents->counter += amt;
-      if (contents->counter <= 0) {
-        if (contents->parent != nullptr) {
-          contents->parent->markDeletionCandidate(contents->assetId);
-        }
-        contents = nullptr;
-      }
-    }
-  }
-
-  // A SharedAssetRef might point to an asset the SharedAssetDepot, or it
-  // might not. If it doesn't, we own this asset now.
-  CesiumUtility::IntrusivePointer<AssetContainer<AssetType>> contents;
-
-  friend class SharedAssetDepot;
-  friend class AssetContainer<AssetType>;
-  friend class SingleAssetDepot<AssetType>;
-};
-
-/**
- * Contains one or more assets of the given type.
- * @tparam AssetType The type of asset stored in this depot.
- */
-template <typename AssetType> class SingleAssetDepot {
+class SharedAssetDepot : public CesiumUtility::ReferenceCountedThreadSafe<
+                             SharedAssetDepot<AssetType>> {
 public:
   /**
    * @brief Number of seconds an asset can remain unused before it's deleted.
    */
   float assetDeletionThreshold = 60.0f;
 
-  SingleAssetDepot() {
+  SharedAssetDepot() {
     this->lastDeletionTick = std::chrono::steady_clock::now();
   }
 
@@ -190,11 +44,11 @@ public:
    * Stores the AssetType in this depot and returns a reference to it,
    * or returns the existing asset if present.
    */
-  SharedAsset<AssetType> store(std::string& assetId, AssetType&& asset) {
-    auto [newIt, added] = this->assets.try_emplace(
-        assetId,
-        new AssetContainer(assetId, std::move(asset), this));
-    return newIt->second.toRef();
+  CesiumUtility::IntrusivePointer<AssetType> store(
+      std::string& assetId,
+      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
+    auto [newIt, added] = this->assets.try_emplace(assetId, pAsset);
+    return newIt->second;
   }
 
   /**
@@ -204,9 +58,10 @@ public:
    * its future will be returned.
    */
   template <typename Factory>
-  CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>> getOrFetch(
-      CesiumAsync::AsyncSystem& asyncSystem,
-      std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+  CesiumAsync::SharedFuture<CesiumUtility::IntrusivePointer<AssetType>>
+  getOrFetch(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const Factory& factory,
       const std::string& uri,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
@@ -222,8 +77,8 @@ public:
     if (existingIt != this->assets.end()) {
       // We've already loaded an asset with this ID - we can just use that.
       return asyncSystem
-          .createResolvedFuture(std::optional<SharedAsset<AssetType>>(
-              SharedAsset<AssetType>(existingIt->second)))
+          .createResolvedFuture(
+              CesiumUtility::IntrusivePointer<AssetType>(existingIt->second))
           .share();
     }
 
@@ -235,16 +90,16 @@ public:
 
     // We haven't loaded or started to load this asset yet.
     // Let's do that now.
-    CesiumAsync::Future<std::optional<SharedAsset<AssetType>>> future =
+    CesiumAsync::Future<CesiumUtility::IntrusivePointer<AssetType>> future =
         pAssetAccessor->get(asyncSystem, uri, headers)
             .thenInWorkerThread(
                 [factory = std::move(factory)](
                     std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-                    -> std::optional<AssetType> {
+                    -> CesiumUtility::IntrusivePointer<AssetType> {
                   const CesiumAsync::IAssetResponse* pResponse =
                       pRequest->response();
                   if (!pResponse) {
-                    return std::nullopt;
+                    return nullptr;
                   }
 
                   return factory.createFrom(pResponse->data());
@@ -255,36 +110,31 @@ public:
                  this,
                  pAssets = &this->assets,
                  pPendingAssetsMutex = &this->assetsMutex,
-                 pPendingAssets =
-                     &this->pendingAssets](std::optional<AssetType>&& result)
-                    -> std::optional<SharedAsset<AssetType>> {
+                 pPendingAssets = &this->pendingAssets](
+                    CesiumUtility::IntrusivePointer<AssetType>&& pResult)
+                    -> CesiumUtility::IntrusivePointer<AssetType> {
                   std::lock_guard lock(*pPendingAssetsMutex);
 
                   // Get rid of our future.
                   pPendingAssets->erase(uri);
 
-                  if (result.has_value()) {
-                    auto [it, ok] = pAssets->emplace(
-                        uri,
-                        new AssetContainer<AssetType>(
-                            uri,
-                            std::move(result.value()),
-                            this));
+                  if (pResult) {
+                    auto [it, ok] = pAssets->emplace(uri, pResult);
                     if (!ok) {
-                      return std::nullopt;
+                      return nullptr;
                     }
 
-                    return std::optional(
-                        std::move(SharedAsset<AssetType>(it->second)));
+                    return it->second;
                   }
 
-                  return std::nullopt;
+                  return nullptr;
                 });
 
     auto [it, ok] = this->pendingAssets.emplace(uri, std::move(future).share());
     if (!ok) {
       return asyncSystem
-          .createResolvedFuture(std::optional<SharedAsset<AssetType>>())
+          .createResolvedFuture<CesiumUtility::IntrusivePointer<AssetType>>(
+              nullptr)
           .share();
     }
 
@@ -360,27 +210,27 @@ public:
   }
 
 private:
-  // Disable copy
-  void operator=(const SharedAsset<AssetType>& other) = delete;
+  // Disable copy and move
+  void operator=(const SharedAssetDepot<AssetType>& other) = delete;
 
   /**
    * Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void markDeletionCandidate(const std::string& hash) {
+  void markDeletionCandidate(
+      const std::string& hash,
+      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
     this->deletionCandidates.emplace(hash, 0.0f);
   }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
-  std::unordered_map<
-      std::string,
-      CesiumUtility::IntrusivePointer<AssetContainer<AssetType>>>
+  std::unordered_map<std::string, CesiumUtility::IntrusivePointer<AssetType>>
       assets;
   // Futures for assets that still aren't loaded yet.
   std::unordered_map<
       std::string,
-      CesiumAsync::SharedFuture<std::optional<SharedAsset<AssetType>>>>
+      CesiumAsync::SharedFuture<CesiumUtility::IntrusivePointer<AssetType>>>
       pendingAssets;
   // Mutex for checking or editing the pendingAssets map
   std::mutex assetsMutex;
@@ -393,38 +243,6 @@ private:
   std::chrono::steady_clock::time_point lastDeletionTick;
 
   friend class SharedAsset<AssetType>;
-};
-
-/**
- * @brief Contains assets that are potentially shared across multiple tiles.
- */
-class SharedAssetDepot {
-public:
-  SharedAssetDepot() = default;
-  void operator=(const SharedAssetDepot& other) = delete;
-
-  /**
-   * Obtains an existing {@link ImageCesium} or constructs a new one using the provided factory.
-   */
-  template <typename Factory>
-  CesiumAsync::SharedFuture<std::optional<SharedAsset<ImageCesium>>> getOrFetch(
-      CesiumAsync::AsyncSystem& asyncSystem,
-      std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const Factory& factory,
-      const std::string& uri,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
-    return images
-        .getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
-  }
-
-  const SingleAssetDepot<CesiumGltf::ImageCesium>* getImageDepot() {
-    return &this->images;
-  }
-
-  void deletionTick() { this->images.deletionTick(); }
-
-private:
-  SingleAssetDepot<CesiumGltf::ImageCesium> images;
 };
 
 } // namespace CesiumGltf

@@ -1,6 +1,8 @@
 #include "CesiumGltf/ImageCesium.h"
 #include "CesiumGltfReader/Library.h"
 
+#include <CesiumUtility/IntrusivePointer.h>
+
 #include <gsl/span>
 
 #include <optional>
@@ -20,7 +22,7 @@ struct CESIUMGLTFREADER_API ImageReaderResult {
    *
    * This will be `std::nullopt` if the image could not be read.
    */
-  std::optional<CesiumGltf::ImageCesium> image;
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage;
 
   /**
    * @brief Error messages that occurred while trying to read the image.
