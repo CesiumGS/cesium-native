@@ -184,10 +184,10 @@ public:
   /**
    * @brief Returns the {@link SharedAssetDepot} of this tileset.
    */
-  CesiumGltf::SharedAssetDepots& getSharedAssetDepot() noexcept;
+  CesiumGltf::SharedAssetSystem& getSharedAssetSystem() noexcept;
 
-  /** @copydoc Tileset::getSharedAssetDepot() */
-  const CesiumGltf::SharedAssetDepots& getSharedAssetDepot() const noexcept;
+  /** @copydoc Tileset::getSharedAssetSystem() */
+  const CesiumGltf::SharedAssetSystem& getSharedAssetSystem() const noexcept;
 
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish

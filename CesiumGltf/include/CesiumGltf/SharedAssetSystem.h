@@ -1,19 +1,24 @@
 #pragma once
 
 #include <CesiumAsync/SharedFuture.h>
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/SharedAssetDepot.h>
 
 namespace CesiumGltf {
+
+struct ImageCesium;
 
 /**
  * @brief Contains assets that are potentially shared across multiple glTF
  * models.
  */
-class SharedAssetDepots
-    : public CesiumUtility::ReferenceCountedThreadSafe<SharedAssetDepots> {
+class SharedAssetSystem
+    : public CesiumUtility::ReferenceCountedThreadSafe<SharedAssetSystem> {
 public:
-  SharedAssetDepots() = default;
-  void operator=(const SharedAssetDepots& other) = delete;
+  SharedAssetSystem() noexcept;
+  ~SharedAssetSystem() noexcept;
+
+  SharedAssetSystem(const SharedAssetSystem&) = delete;
+  void operator=(const SharedAssetSystem& other) = delete;
 
   /**
    * Obtains an existing {@link ImageCesium} or constructs a new one using the provided factory.
@@ -27,18 +32,17 @@ public:
       const Factory& factory,
       const std::string& uri,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
-    return images
-        .getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
+    return this->_pImages
+        ->getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
   }
 
-  const SharedAssetDepot<CesiumGltf::ImageCesium>* getImageDepot() {
-    return &this->images;
-  }
+  const SharedAssetDepot<CesiumGltf::ImageCesium>& image();
 
-  void deletionTick() { this->images.deletionTick(); }
+  void deletionTick();
 
 private:
-  SharedAssetDepot<CesiumGltf::ImageCesium> images;
+  CesiumUtility::IntrusivePointer<SharedAssetDepot<CesiumGltf::ImageCesium>>
+      _pImages;
 };
 
 } // namespace CesiumGltf

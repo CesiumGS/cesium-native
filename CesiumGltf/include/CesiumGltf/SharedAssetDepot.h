@@ -9,14 +9,12 @@
 
 #include <chrono>
 #include <cstddef>
-#include <forward_list>
-#include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
-#include <variant>
+#include <vector>
 
 namespace CesiumGltf {
 
@@ -184,8 +182,8 @@ public:
    */
   size_t getUsageCount() const {
     size_t count = 0;
-    for (auto& [key, item] : assets) {
-      count += item->counter;
+    for (const auto& [key, item] : assets) {
+      count += item->_referenceCount;
     }
     return count;
   }

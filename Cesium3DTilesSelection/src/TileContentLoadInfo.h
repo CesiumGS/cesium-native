@@ -9,7 +9,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGltf/SharedAssetDepots.h>
+#include <CesiumGltf/SharedAssetSystem.h>
 
 #include <gsl/span>
 #include <spdlog/fwd.h>
@@ -25,7 +25,7 @@ struct TileContentLoadInfo {
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetDepots>
+      const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>
           maybeAssetDepot,
       const TilesetContentOptions& contentOptions,
       const Tile& tile);
@@ -43,7 +43,7 @@ struct TileContentLoadInfo {
   BoundingVolume tileBoundingVolume;
 
   std::optional<BoundingVolume> tileContentBoundingVolume;
-  CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetDepots> pAssetDepot;
+  CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem> pAssetDepot;
 
   TileRefine tileRefine;
 

@@ -666,7 +666,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pAssetDepot(new CesiumGltf::SharedAssetDepots()),
+      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -696,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pAssetDepot(new CesiumGltf::SharedAssetDepots()),
+      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -848,7 +848,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pAssetDepot(new CesiumGltf::SharedAssetDepots()),
+      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -1237,8 +1237,8 @@ TilesetContentManager::getTilesetCredits() const noexcept {
   return this->_tilesetCredits;
 }
 
-const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetDepots>&
-TilesetContentManager::getSharedAssetDepot() const noexcept {
+const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>&
+TilesetContentManager::getSharedAssetSystem() const noexcept {
   return this->_pAssetDepot;
 }
 
