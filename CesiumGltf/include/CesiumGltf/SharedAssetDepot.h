@@ -7,8 +7,8 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
-#include <chrono>
 #include <cstddef>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -30,13 +30,20 @@ class SharedAssetDepot : public CesiumUtility::ReferenceCountedThreadSafe<
                              SharedAssetDepot<AssetType>> {
 public:
   /**
-   * @brief Number of seconds an asset can remain unused before it's deleted.
+   * @brief The maximum total byte usage of assets that have been loaded but are no
+   * longer needed.
+   * 
+   * When cached assets are no longer needed, they're marked as
+   * candidates for deletion. However, this deletion doesn't actually occur
+   * until the total byte usage of deletion candidates exceeds this threshold.
+   * At that point, assets are cleaned up in the order that they were marked for
+   * deletion until the total dips below this threshold again.
+   *
+   * Default is 100MB.
    */
-  float assetDeletionThreshold = 60.0f;
+  int64_t staleAssetSizeLimit = 1000 * 1000 * 100;
 
-  SharedAssetDepot() {
-    this->lastDeletionTick = std::chrono::steady_clock::now();
-  }
+  SharedAssetDepot() = default;
 
   /**
    * Stores the AssetType in this depot and returns a reference to it,
@@ -64,12 +71,12 @@ public:
       const std::string& uri,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
     // We need to avoid:
-    // - Two assets starting loading before the first asset has updated the
+    // - Two assets starting to load before the first asset has updated the
     //   pendingAssets map
     // - An asset starting to load after the previous load has been removed from
     //   the pendingAssets map, but before the completed asset has been added to
     //   the assets map.
-    std::lock_guard lock(assetsMutex);
+    std::lock_guard lock(this->assetsMutex);
 
     auto existingIt = this->assets.find(uri);
     if (existingIt != this->assets.end()) {
@@ -143,36 +150,6 @@ public:
   }
 
   /**
-   * @brief Should be called every frame to handle deletion of assets that
-   * haven't been used in a while.
-   */
-  void deletionTick() {
-    std::chrono::steady_clock::time_point now =
-        std::chrono::steady_clock::now();
-    std::chrono::duration<float> delta =
-        std::chrono::duration<float>(now - this->lastDeletionTick);
-
-    std::vector<std::string> toDelete;
-
-    std::lock_guard lock(this->deletionCandidatesMutex);
-    for (auto& [hash, age] : this->deletionCandidates) {
-      age += delta.count();
-
-      if (age >= this->assetDeletionThreshold) {
-        toDelete.push_back(hash);
-      }
-    }
-
-    std::lock_guard assetsLock(this->assetsMutex);
-    for (std::string& hash : toDelete) {
-      this->deletionCandidates.erase(hash);
-      this->assets.erase(hash);
-    }
-
-    this->lastDeletionTick = now;
-  }
-
-  /**
    * @brief Returns the total number of distinct assets contained in this depot.
    */
   size_t getDistinctCount() const { return this->assets.size(); }
@@ -211,7 +188,7 @@ public:
   }
 
 private:
-  // Disable copy and move
+  // Disable copy
   void operator=(const SharedAssetDepot<AssetType>& other) = delete;
 
   /**
@@ -219,10 +196,41 @@ private:
    * Should only be called by {@link SharedAsset}.
    */
   void markDeletionCandidate(
-      const std::string& hash,
       const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    this->deletionCandidates.emplace(hash, 0.0f);
+    this->deletionCandidates.push_back(pAsset);
+    this->totalDeletionCandidateMemoryUsage += pAsset->getSizeBytes();
+
+    if (this->totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
+      std::lock_guard assetsLock(this->assetsMutex);
+      while (!this->deletionCandidates.empty() && this->totalDeletionCandidateMemoryUsage >
+             this->staleAssetSizeLimit) {
+        const CesiumUtility::IntrusivePointer<AssetType>& pOldAsset =
+            this->deletionCandidates.front();
+        this->deletionCandidates.pop_front();
+        this->assets.erase(pOldAsset->getUniqueAssetId());
+        this->totalDeletionCandidateMemoryUsage -= pOldAsset->getSizeBytes();
+      }
+    }
+  }
+
+  /**
+   * Unmarks the given asset as a candidate for deletion.
+   * Should only be called by {@link SharedAsset}.
+   */
+  void unmarkDeletionCandidate(
+      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
+    std::lock_guard lock(this->deletionCandidatesMutex);
+    const std::string& assetId = pAsset->getUniqueAssetId();
+    for (auto it = this->deletionCandidates.begin();
+         it != this->deletionCandidates.end();
+         ++it) {
+      if ((*it)->getUniqueAssetId() == assetId) {
+        this->deletionCandidates.erase(it);
+        this->totalDeletionCandidateMemoryUsage -= (*it)->getSizeBytes();
+        break;
+      }
+    }
   }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
@@ -236,12 +244,14 @@ private:
   // Mutex for checking or editing the pendingAssets map
   std::mutex assetsMutex;
 
-  // Maps assets that are being considered for deletion to the time that they
-  // began to be considered for deletion.
-  std::unordered_map<std::string, float> deletionCandidates;
-  // Mutex for modifying the deletionCandidates map.
+  // List of assets that are being considered for deletion, in the order that
+  // they were added.
+  std::list<CesiumUtility::IntrusivePointer<AssetType>> deletionCandidates;
+  // The total amount of memory used by all assets in the deletionCandidates
+  // list.
+  int64_t totalDeletionCandidateMemoryUsage;
+  // Mutex for modifying the deletionCandidates list.
   mutable std::mutex deletionCandidatesMutex;
-  std::chrono::steady_clock::time_point lastDeletionTick;
 
   friend class SharedAsset<AssetType>;
 };

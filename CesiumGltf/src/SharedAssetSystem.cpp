@@ -12,6 +12,4 @@ const SharedAssetDepot<CesiumGltf::ImageCesium>& SharedAssetSystem::image() {
   return *this->_pImages;
 }
 
-void SharedAssetSystem::deletionTick() { this->_pImages->deletionTick(); }
-
 } // namespace CesiumGltf

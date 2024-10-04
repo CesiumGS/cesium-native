@@ -54,7 +54,13 @@ public:
    * {@link CesiumUtility::IntrusivePointer} instead of calling this method
    * directly.
    */
-  void addReference() const /*noexcept*/ { ++this->_referenceCount; }
+  void addReference() const /*noexcept*/ {
+    const int32_t prevReferences = this->_referenceCount++;
+    if (this->_pDepot && prevReferences <= 0) {
+      this->_pDepot->unmarkDeletionCandidate(
+          const_cast<T*>(static_cast<const T*>(this)));
+    }
+  }
 
   /**
    * @brief Removes a counted reference from this object. When the last
@@ -71,7 +77,6 @@ public:
       if (pDepot) {
         // Let the depot manage this object's lifetime.
         pDepot->markDeletionCandidate(
-            this->_uniqueAssetId,
             const_cast<T*>(static_cast<const T*>(this)));
       } else {
         // No depot, so destroy this object directly.
@@ -92,7 +97,15 @@ public:
    */
   bool isShareable() const { return this->_pDepot != nullptr; }
 
+  /**
+   * The number of bytes of memory usage that this asset takes up.
+   * This is used for deletion logic by the {@link SharedAssetDepot}.
+   */
+  virtual int64_t getSizeBytes() const = 0;
+
 private:
+  const std::string& getUniqueAssetId() const { return this->_uniqueAssetId; }
+
   mutable std::atomic<std::int32_t> _referenceCount{0};
   CesiumUtility::IntrusivePointer<SharedAssetDepot<T>> _pDepot;
   std::string _uniqueAssetId;
