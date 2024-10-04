@@ -24,6 +24,7 @@ template <typename T>
 class CESIUMGLTF_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
   SharedAsset() = default;
+  ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
 
   // Assets can be copied, but the fresh instance has no references and is not
   // in the asset depot.
@@ -33,9 +34,13 @@ public:
         _pDepot(nullptr),
         _uniqueAssetId() {}
 
-  // Move construction is not allowed, because existing references to this
-  // shared asset would be affected as well.
-  SharedAsset(SharedAsset&& rhs) = delete;
+  // After a move construction, the content of the asset is moved to the new
+  // instance, but the asset depot still references the old instance.
+  SharedAsset(SharedAsset&& rhs)
+      : ExtensibleObject(std::move(rhs)),
+        _referenceCount(0),
+        _pDepot(nullptr),
+        _uniqueAssetId() {}
 
   // Assignment does not affect the asset's relationship with the depot, but is
   // useful to assign the data in derived classes.
