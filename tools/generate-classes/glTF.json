@@ -132,6 +132,9 @@
     },
     "CESIUM_primitive_outline glTF primitive extension": {
       "overrideName": "ExtensionCesiumPrimitiveOutline"
+    },
+    "KHR_gaussian_splatting glTF primitive extension": {
+      "overrideName": "ExtensionKhrGaussianSplatting"
     }
   },
   "extensions": [
@@ -226,6 +229,13 @@
     {
       "extensionName": "CESIUM_primitive_outline",
       "schema": "Vendor/CESIUM_primitive_outline/schema/primitive.CESIUM_primitive_outline.schema.json",
+      "attachTo": [
+        "mesh.primitive"
+      ]
+    },
+    {
+      "extensionName": "KHR_gaussian_splatting",
+      "schema": "Khronos/KHR_gaussian_splatting/schema/primitive.KHR_gaussian_splatting.schema.json",
       "attachTo": [
         "mesh.primitive"
       ]
