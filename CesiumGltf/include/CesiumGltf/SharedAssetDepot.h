@@ -165,26 +165,13 @@ public:
     return count;
   }
 
-  /**
-   * @brief Obtains statistics on the number of assets currently listed as
-   * candidates for deletion, along with the average number of seconds that
-   * they've been pending deletion.
-   * @param outAverageAge The average time in seconds that the current deletion
-   * candidates have spent pending deletion.
-   * @param outCount The number of current deletion candidates.
-   */
-  void getDeletionStats(float& outAverageAge, size_t& outCount) const {
-    size_t count = 0;
-    float total = 0;
-
+  size_t getDeletionCandidateCount() const {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    for (auto& [asset, age] : this->deletionCandidates) {
-      total += age;
-      count++;
-    }
+    return this->deletionCandidates.size();
+  }
 
-    outAverageAge = count > 0 ? total / count : 0;
-    outCount = count;
+  int64_t getDeletionCandidateTotalSizeBytes() const {
+    return this->totalDeletionCandidateMemoryUsage;
   }
 
 private:
@@ -250,7 +237,7 @@ private:
   std::list<CesiumUtility::IntrusivePointer<AssetType>> deletionCandidates;
   // The total amount of memory used by all assets in the deletionCandidates
   // list.
-  int64_t totalDeletionCandidateMemoryUsage;
+  std::atomic<int64_t> totalDeletionCandidateMemoryUsage;
   // Mutex for modifying the deletionCandidates list.
   mutable std::mutex deletionCandidatesMutex;
 

@@ -108,9 +108,9 @@ public:
    */
   virtual int64_t getSizeBytes() const = 0;
 
-private:
   const std::string& getUniqueAssetId() const { return this->_uniqueAssetId; }
 
+private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
   CesiumUtility::IntrusivePointer<SharedAssetDepot<T>> _pDepot;
   std::string _uniqueAssetId;
