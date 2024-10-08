@@ -3,23 +3,21 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief glTF CESIUM_RTC extension.
- */
-struct CESIUMGLTF_API ExtensionCesiumRTC final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ExtensionCesiumRTC";
-  static inline constexpr const char* ExtensionName = "CESIUM_RTC";
+    /**
+     * @brief glTF CESIUM_RTC extension.
+     */
+    struct CESIUMGLTF_API ExtensionCesiumRTC final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionCesiumRTC";
+        static inline constexpr const char* ExtensionName = "CESIUM_RTC";
 
-  /**
-   * @brief Center that vertex positions are relative to.
-   */
-  std::vector<double> center;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief Center that vertex positions are relative to.
+         */
+        std::vector<double> center;
+
+    };
+}

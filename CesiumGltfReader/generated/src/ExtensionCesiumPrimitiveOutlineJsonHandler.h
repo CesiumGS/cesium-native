@@ -7,42 +7,31 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class ExtensionCesiumPrimitiveOutlineJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionCesiumPrimitiveOutline;
+  class ExtensionCesiumPrimitiveOutlineJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionCesiumPrimitiveOutline;
 
-  static inline constexpr const char* ExtensionName =
-      "CESIUM_primitive_outline";
+    static inline constexpr const char* ExtensionName = "CESIUM_primitive_outline";
 
-  ExtensionCesiumPrimitiveOutlineJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionCesiumPrimitiveOutline* pObject);
+    ExtensionCesiumPrimitiveOutlineJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionCesiumPrimitiveOutline* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+    virtual IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionCesiumPrimitiveOutline(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionCesiumPrimitiveOutline& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionCesiumPrimitiveOutline(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionCesiumPrimitiveOutline& o);
 
-private:
-  CesiumGltf::ExtensionCesiumPrimitiveOutline* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionCesiumPrimitiveOutline* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
+  };
+}

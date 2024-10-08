@@ -6,59 +6,41 @@
 #include "PropertyTableJsonHandler.h"
 #include "PropertyTextureJsonHandler.h"
 #include "SchemaJsonHandler.h"
-
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class ExtensionModelExtStructuralMetadataJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
+  class ExtensionModelExtStructuralMetadataJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
 
-  static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
+    static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
 
-  ExtensionModelExtStructuralMetadataJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionModelExtStructuralMetadata* pObject);
+    ExtensionModelExtStructuralMetadataJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionModelExtStructuralMetadata* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+    virtual IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionModelExtStructuralMetadata(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionModelExtStructuralMetadata& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionModelExtStructuralMetadata(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionModelExtStructuralMetadata& o);
 
-private:
-  CesiumGltf::ExtensionModelExtStructuralMetadata* _pObject = nullptr;
-  SchemaJsonHandler _schema;
-  CesiumJsonReader::StringJsonHandler _schemaUri;
-  CesiumJsonReader::
-      ArrayJsonHandler<CesiumGltf::PropertyTable, PropertyTableJsonHandler>
-          _propertyTables;
-  CesiumJsonReader::
-      ArrayJsonHandler<CesiumGltf::PropertyTexture, PropertyTextureJsonHandler>
-          _propertyTextures;
-  CesiumJsonReader::ArrayJsonHandler<
-      CesiumGltf::PropertyAttribute,
-      PropertyAttributeJsonHandler>
-      _propertyAttributes;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionModelExtStructuralMetadata* _pObject = nullptr;
+    SchemaJsonHandler _schema;
+    CesiumJsonReader::StringJsonHandler _schemaUri;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::PropertyTable, PropertyTableJsonHandler> _propertyTables;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::PropertyTexture, PropertyTextureJsonHandler> _propertyTextures;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::PropertyAttribute, PropertyAttributeJsonHandler> _propertyAttributes;
+  };
+}

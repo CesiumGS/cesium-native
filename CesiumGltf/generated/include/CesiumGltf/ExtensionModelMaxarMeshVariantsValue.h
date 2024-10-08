@@ -4,21 +4,19 @@
 
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
-
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief An object defining a valid mesh variant
- */
-struct CESIUMGLTF_API ExtensionModelMaxarMeshVariantsValue final
-    : public CesiumGltf::NamedObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionModelMaxarMeshVariantsValue";
+    /**
+     * @brief An object defining a valid mesh variant
+     */
+    struct CESIUMGLTF_API ExtensionModelMaxarMeshVariantsValue final : public CesiumGltf::NamedObject {
+        static inline constexpr const char* TypeName = "ExtensionModelMaxarMeshVariantsValue";
 
-  /**
-   * @brief The name of the mesh variant
-   */
-  std::string name;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The name of the mesh variant
+         */
+        std::string name;
+
+    };
+}

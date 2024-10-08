@@ -3,7 +3,6 @@
 #pragma once
 
 #include "PropertyTablePropertyJsonHandler.h"
-
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
@@ -11,35 +10,28 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class PropertyTableJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::PropertyTable;
+  class PropertyTableJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::PropertyTable;
 
-  PropertyTableJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::PropertyTable* pObject);
+    PropertyTableJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::PropertyTable* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyPropertyTable(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::PropertyTable& o);
+  protected:
+    IJsonHandler* readObjectKeyPropertyTable(const std::string& objectType, const std::string_view& str, CesiumGltf::PropertyTable& o);
 
-private:
-  CesiumGltf::PropertyTable* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _name;
-  CesiumJsonReader::StringJsonHandler _classProperty;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-  CesiumJsonReader::DictionaryJsonHandler<
-      CesiumGltf::PropertyTableProperty,
-      PropertyTablePropertyJsonHandler>
-      _properties;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::PropertyTable* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _name;
+    CesiumJsonReader::StringJsonHandler _classProperty;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
+    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::PropertyTableProperty, PropertyTablePropertyJsonHandler> _properties;
+  };
+}

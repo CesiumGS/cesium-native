@@ -8,31 +8,27 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class EnumValueJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::EnumValue;
+  class EnumValueJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::EnumValue;
 
-  EnumValueJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::EnumValue* pObject);
+    EnumValueJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::EnumValue* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyEnumValue(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::EnumValue& o);
+  protected:
+    IJsonHandler* readObjectKeyEnumValue(const std::string& objectType, const std::string_view& str, CesiumGltf::EnumValue& o);
 
-private:
-  CesiumGltf::EnumValue* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _name;
-  CesiumJsonReader::StringJsonHandler _description;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _value;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::EnumValue* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _name;
+    CesiumJsonReader::StringJsonHandler _description;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _value;
+  };
+}

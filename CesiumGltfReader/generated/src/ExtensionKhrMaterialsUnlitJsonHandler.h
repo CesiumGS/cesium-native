@@ -6,40 +6,31 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class ExtensionKhrMaterialsUnlitJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionKhrMaterialsUnlit;
+  class ExtensionKhrMaterialsUnlitJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionKhrMaterialsUnlit;
 
-  static inline constexpr const char* ExtensionName = "KHR_materials_unlit";
+    static inline constexpr const char* ExtensionName = "KHR_materials_unlit";
 
-  ExtensionKhrMaterialsUnlitJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionKhrMaterialsUnlit* pObject);
+    ExtensionKhrMaterialsUnlitJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrMaterialsUnlit* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+    virtual IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionKhrMaterialsUnlit(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionKhrMaterialsUnlit& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionKhrMaterialsUnlit(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrMaterialsUnlit& o);
 
-private:
-  CesiumGltf::ExtensionKhrMaterialsUnlit* _pObject = nullptr;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionKhrMaterialsUnlit* _pObject = nullptr;
+
+  };
+}

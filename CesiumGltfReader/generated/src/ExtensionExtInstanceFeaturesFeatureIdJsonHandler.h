@@ -8,35 +8,29 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class ExtensionExtInstanceFeaturesFeatureIdJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionExtInstanceFeaturesFeatureId;
+  class ExtensionExtInstanceFeaturesFeatureIdJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionExtInstanceFeaturesFeatureId;
 
-  ExtensionExtInstanceFeaturesFeatureIdJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionExtInstanceFeaturesFeatureId* pObject);
+    ExtensionExtInstanceFeaturesFeatureIdJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionExtInstanceFeaturesFeatureId* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyExtensionExtInstanceFeaturesFeatureId(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionExtInstanceFeaturesFeatureId(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& o);
 
-private:
-  CesiumGltf::ExtensionExtInstanceFeaturesFeatureId* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _featureCount;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _nullFeatureId;
-  CesiumJsonReader::StringJsonHandler _label;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _attribute;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _propertyTable;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionExtInstanceFeaturesFeatureId* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _featureCount;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _nullFeatureId;
+    CesiumJsonReader::StringJsonHandler _label;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _attribute;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _propertyTable;
+  };
+}

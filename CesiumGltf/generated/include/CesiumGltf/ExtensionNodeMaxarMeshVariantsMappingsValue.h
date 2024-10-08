@@ -3,36 +3,33 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief ExtensionNodeMaxarMeshVariants Mappings Value
- */
-struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariantsMappingsValue final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionNodeMaxarMeshVariantsMappingsValue";
+    /**
+     * @brief ExtensionNodeMaxarMeshVariants Mappings Value
+     */
+    struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariantsMappingsValue final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionNodeMaxarMeshVariantsMappingsValue";
 
-  /**
-   * @brief An array of variant index values.
-   */
-  std::vector<int32_t> variants;
+        /**
+         * @brief An array of variant index values.
+         */
+        std::vector<int32_t> variants;
 
-  /**
-   * @brief The mesh associated with the set of variants.
-   */
-  int32_t mesh = -1;
+        /**
+         * @brief The mesh associated with the set of variants.
+         */
+        int32_t mesh = -1;
 
-  /**
-   * @brief The user-defined name of this variant mesh mapping.
-   */
-  std::optional<std::string> name;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The user-defined name of this variant mesh mapping.
+         */
+        std::optional<std::string> name;
+
+    };
+}

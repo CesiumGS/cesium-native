@@ -3,42 +3,36 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief `CESIUM_tile_edges` extension for a primitive in a glTF model.
- */
-struct CESIUMGLTF_API ExtensionCesiumTileEdges final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ExtensionCesiumTileEdges";
-  static inline constexpr const char* ExtensionName = "CESIUM_tile_edges";
+    /**
+     * @brief `CESIUM_tile_edges` extension for a primitive in a glTF model.
+     */
+    struct CESIUMGLTF_API ExtensionCesiumTileEdges final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionCesiumTileEdges";
+        static inline constexpr const char* ExtensionName = "CESIUM_tile_edges";
 
-  /**
-   * @brief The index of the accessor containing indices that make up the left
-   * edge.
-   */
-  int32_t left = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the left edge.
+         */
+        int32_t left = -1;
 
-  /**
-   * @brief The index of the accessor containing indices that make up the bottom
-   * edge.
-   */
-  int32_t bottom = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the bottom edge.
+         */
+        int32_t bottom = -1;
 
-  /**
-   * @brief The index of the accessor containing indices that make up the right
-   * edge.
-   */
-  int32_t right = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the right edge.
+         */
+        int32_t right = -1;
 
-  /**
-   * @brief The index of the accessor containing indices that make up the top
-   * edge.
-   */
-  int32_t top = -1;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The index of the accessor containing indices that make up the top edge.
+         */
+        int32_t top = -1;
+
+    };
+}

@@ -3,37 +3,33 @@
 #pragma once
 
 #include "NamedObjectJsonHandler.h"
-
 #include <CesiumGltf/BufferView.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class BufferViewJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::BufferView;
+  class BufferViewJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::BufferView;
 
-  BufferViewJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::BufferView* pObject);
+    BufferViewJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::BufferView* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyBufferView(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::BufferView& o);
+  protected:
+    IJsonHandler* readObjectKeyBufferView(const std::string& objectType, const std::string_view& str, CesiumGltf::BufferView& o);
 
-private:
-  CesiumGltf::BufferView* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _buffer;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteStride;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _target;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::BufferView* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _buffer;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _byteStride;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _target;
+  };
+}
