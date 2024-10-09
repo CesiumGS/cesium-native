@@ -62,8 +62,7 @@ public:
   void addReference() const /*noexcept*/ {
     const int32_t prevReferences = this->_referenceCount++;
     if (this->_pDepot && prevReferences <= 0) {
-      this->_pDepot->unmarkDeletionCandidate(
-          const_cast<T*>(static_cast<const T*>(this)));
+      this->_pDepot->unmarkDeletionCandidate(static_cast<const T*>(this));
     }
   }
 
@@ -77,12 +76,10 @@ public:
     CESIUM_ASSERT(this->_referenceCount > 0);
     const int32_t references = --this->_referenceCount;
     if (references == 0) {
-      CesiumUtility::IntrusivePointer<SharedAssetDepot<T>> pDepot =
-          this->_pDepot;
+      SharedAssetDepot<T>* pDepot = this->_pDepot;
       if (pDepot) {
         // Let the depot manage this object's lifetime.
-        pDepot->markDeletionCandidate(
-            const_cast<T*>(static_cast<const T*>(this)));
+        pDepot->markDeletionCandidate(static_cast<const T*>(this));
       } else {
         // No depot, so destroy this object directly.
         delete static_cast<const T*>(this);
@@ -102,17 +99,11 @@ public:
    */
   bool isShareable() const { return this->_pDepot != nullptr; }
 
-  /**
-   * The number of bytes of memory usage that this asset takes up.
-   * This is used for deletion logic by the {@link SharedAssetDepot}.
-   */
-  virtual int64_t getSizeBytes() const = 0;
-
   const std::string& getUniqueAssetId() const { return this->_uniqueAssetId; }
 
 private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
-  CesiumUtility::IntrusivePointer<SharedAssetDepot<T>> _pDepot;
+  SharedAssetDepot<T>* _pDepot;
   std::string _uniqueAssetId;
 
   // To allow the depot to modify _pDepot and _uniqueAssetId.

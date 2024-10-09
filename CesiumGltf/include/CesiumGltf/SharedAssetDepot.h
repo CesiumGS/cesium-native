@@ -45,15 +45,49 @@ public:
 
   SharedAssetDepot() = default;
 
+  ~SharedAssetDepot() {
+    // It's possible the assets will outlive the depot, if they're still in use.
+    std::lock_guard lock(this->assetsMutex);
+
+    for (auto& pair : this->assets) {
+      // Transfer ownership to the reference counting system.
+      CesiumUtility::IntrusivePointer<AssetType> pCounted =
+          pair.second.release();
+      pCounted->_pDepot = nullptr;
+      pCounted->_uniqueAssetId = "TODO: released";
+    }
+  }
+
   /**
    * Stores the AssetType in this depot and returns a reference to it,
    * or returns the existing asset if present.
    */
   CesiumUtility::IntrusivePointer<AssetType> store(
-      std::string& assetId,
+      const std::string& assetId,
       const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
-    auto [newIt, added] = this->assets.try_emplace(assetId, pAsset);
-    return newIt->second;
+    std::lock_guard lock(this->assetsMutex);
+
+    auto findIt = this->assets.find(assetId);
+    if (findIt != this->assets.end()) {
+      // This asset ID already exists in the depot, so we can't add this asset.
+      return findIt->second.get();
+    }
+
+    pAsset->_pDepot = this;
+    pAsset->_uniqueAssetId = assetId;
+
+    // Now that this asset is owned by the depot, we exclusively
+    // control its lifetime with a std::unique_ptr.
+    std::unique_ptr<AssetType> pOwnedAsset(pAsset.get());
+
+    auto [addIt, added] = this->assets.emplace(assetId, std::move(pOwnedAsset));
+
+    // We should always add successfully, because we verified it didn't already
+    // exist. A failed emplace is disastrous because our unique_ptr will end up
+    // destroying the user's object, which may still be in use.
+    CESIUM_ASSERT(added);
+
+    return addIt->second.get();
   }
 
   /**
@@ -82,8 +116,8 @@ public:
     if (existingIt != this->assets.end()) {
       // We've already loaded an asset with this ID - we can just use that.
       return asyncSystem
-          .createResolvedFuture(
-              CesiumUtility::IntrusivePointer<AssetType>(existingIt->second))
+          .createResolvedFuture(CesiumUtility::IntrusivePointer<AssetType>(
+              existingIt->second.get()))
           .share();
     }
 
@@ -112,30 +146,13 @@ public:
             // Do this in main thread since we're messing with the collections.
             .thenInMainThread(
                 [uri,
-                 this,
-                 pAssets = &this->assets,
-                 pPendingAssetsMutex = &this->assetsMutex,
-                 pPendingAssets = &this->pendingAssets](
-                    CesiumUtility::IntrusivePointer<AssetType>&& pResult)
+                 this](CesiumUtility::IntrusivePointer<AssetType>&& pResult)
                     -> CesiumUtility::IntrusivePointer<AssetType> {
-                  std::lock_guard lock(*pPendingAssetsMutex);
-
                   // Get rid of our future.
-                  pPendingAssets->erase(uri);
+                  this->pendingAssets.erase(uri);
 
-                  if (pResult) {
-                    pResult->_pDepot = this;
-                    pResult->_uniqueAssetId = uri;
-
-                    auto [it, ok] = pAssets->emplace(uri, pResult);
-                    if (!ok) {
-                      return nullptr;
-                    }
-
-                    return it->second;
-                  }
-
-                  return nullptr;
+                  // Store the new asset in the depot.
+                  return this->store(uri, pResult);
                 });
 
     auto [it, ok] = this->pendingAssets.emplace(uri, std::move(future).share());
@@ -182,10 +199,9 @@ private:
    * Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void markDeletionCandidate(
-      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
+  void markDeletionCandidate(const AssetType* pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    this->deletionCandidates.push_back(pAsset);
+    this->deletionCandidates.push_back(const_cast<AssetType*>(pAsset));
     this->totalDeletionCandidateMemoryUsage += pAsset->getSizeBytes();
 
     if (this->totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
@@ -193,9 +209,9 @@ private:
       while (!this->deletionCandidates.empty() &&
              this->totalDeletionCandidateMemoryUsage >
                  this->staleAssetSizeLimit) {
-        const CesiumUtility::IntrusivePointer<AssetType>& pOldAsset =
-            this->deletionCandidates.front();
+        const AssetType* pOldAsset = this->deletionCandidates.front();
         this->deletionCandidates.pop_front();
+        CESIUM_ASSERT(pOldAsset->_referenceCount == 0);
         this->assets.erase(pOldAsset->getUniqueAssetId());
         this->totalDeletionCandidateMemoryUsage -= pOldAsset->getSizeBytes();
       }
@@ -206,8 +222,7 @@ private:
    * Unmarks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void unmarkDeletionCandidate(
-      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
+  void unmarkDeletionCandidate(const AssetType* pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
     const std::string& assetId = pAsset->getUniqueAssetId();
     for (auto it = this->deletionCandidates.begin();
@@ -222,8 +237,7 @@ private:
   }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
-  std::unordered_map<std::string, CesiumUtility::IntrusivePointer<AssetType>>
-      assets;
+  std::unordered_map<std::string, std::unique_ptr<AssetType>> assets;
   // Futures for assets that still aren't loaded yet.
   std::unordered_map<
       std::string,
@@ -234,7 +248,7 @@ private:
 
   // List of assets that are being considered for deletion, in the order that
   // they were added.
-  std::list<CesiumUtility::IntrusivePointer<AssetType>> deletionCandidates;
+  std::list<AssetType*> deletionCandidates;
   // The total amount of memory used by all assets in the deletionCandidates
   // list.
   std::atomic<int64_t> totalDeletionCandidateMemoryUsage;

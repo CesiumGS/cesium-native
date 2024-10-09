@@ -112,6 +112,6 @@ struct CESIUMGLTF_API ImageCesium final : public SharedAsset<ImageCesium> {
    */
   int64_t sizeBytes = -1;
 
-  int64_t getSizeBytes() const override { return this->sizeBytes; }
+  int64_t getSizeBytes() const { return this->sizeBytes; }
 };
 } // namespace CesiumGltf
