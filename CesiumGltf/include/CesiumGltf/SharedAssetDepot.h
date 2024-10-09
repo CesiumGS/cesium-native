@@ -54,7 +54,7 @@ public:
       CesiumUtility::IntrusivePointer<AssetType> pCounted =
           pair.second.release();
       pCounted->_pDepot = nullptr;
-      pCounted->_uniqueAssetId = "TODO: released";
+      pCounted->_uniqueAssetId.clear();
     }
   }
 
