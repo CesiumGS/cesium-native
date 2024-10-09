@@ -229,8 +229,8 @@ private:
          it != this->deletionCandidates.end();
          ++it) {
       if ((*it)->getUniqueAssetId() == assetId) {
-        this->deletionCandidates.erase(it);
         this->totalDeletionCandidateMemoryUsage -= (*it)->getSizeBytes();
+        this->deletionCandidates.erase(it);
         break;
       }
     }
