@@ -1,4 +1,4 @@
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
 
 namespace CesiumGltfReader {

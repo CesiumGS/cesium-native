@@ -381,7 +381,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 namespace {
 
 PixelRectangle computePixelRectangle(
-    const ImageCesium& image,
+    const ImageAsset& image,
     const Rectangle& totalRectangle,
     const Rectangle& partRectangle) {
   // Pixel coordinates are measured from the top left.
@@ -417,9 +417,9 @@ PixelRectangle computePixelRectangle(
 // source image where the source subset rectangle overlaps the target
 // rectangle is copied to the target image.
 void blitImage(
-    ImageCesium& target,
+    ImageAsset& target,
     const Rectangle& targetRectangle,
-    const ImageCesium& source,
+    const ImageAsset& source,
     const Rectangle& sourceRectangle,
     const std::optional<Rectangle>& sourceSubset) {
   const Rectangle sourceToCopy = sourceSubset.value_or(sourceRectangle);
@@ -478,7 +478,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
             }
           }
           return LoadedRasterOverlayImage{
-              new ImageCesium(),
+              new ImageAsset(),
               Rectangle(),
               {},
               std::move(errors),
@@ -681,7 +681,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   result.moreDetailAvailable = false;
   result.errorList = std::move(errors);
 
-  ImageCesium& target = result.pImage.emplace();
+  ImageAsset& target = result.pImage.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;
   target.channels = measurements.channels;
   target.width = measurements.widthPixels;

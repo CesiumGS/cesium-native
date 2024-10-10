@@ -414,7 +414,7 @@ TEST_CASE("Test FeatureIdTextureView with makeImageCopy = true") {
   std::vector<std::byte> emptyData;
   image.pCesium->pixelData.swap(emptyData);
 
-  const ImageCesium* pImage = view.getImage();
+  const ImageAsset* pImage = view.getImage();
   REQUIRE(pImage);
   REQUIRE(pImage->width == image.pCesium->width);
   REQUIRE(pImage->height == image.pCesium->height);

@@ -167,7 +167,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             if (pResponse->data().empty()) {
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
-                    new CesiumGltf::ImageCesium(),
+                    new CesiumGltf::ImageAsset(),
                     options.rectangle,
                     std::move(options.credits),
                     {},
@@ -214,7 +214,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 namespace {
 struct LoadResult {
   RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage = nullptr;
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage = nullptr;
   CesiumGeometry::Rectangle rectangle = {};
   std::vector<Credit> credits = {};
   void* pRendererResources = nullptr;
@@ -268,7 +268,7 @@ static LoadResult createLoadResultFromLoadedImage(
         "Warnings while loading image for tile");
   }
 
-  CesiumGltf::ImageCesium& image = *loadedImage.pImage;
+  CesiumGltf::ImageAsset& image = *loadedImage.pImage;
 
   const int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
   const int64_t requiredBytes =
@@ -351,7 +351,7 @@ CesiumAsync::Future<TileProviderAndTile> RasterOverlayTileProvider::doLoad(
             pTile->setState(result.state);
 
             if (pTile->getImage() != nullptr) {
-              ImageCesium& imageCesium = *pTile->getImage();
+              ImageAsset& imageCesium = *pTile->getImage();
 
               // If the image size hasn't been overridden, store the pixelData
               // size now. We'll add this number to our total memory usage now,

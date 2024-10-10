@@ -14,7 +14,7 @@
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
@@ -43,13 +43,13 @@ using namespace CesiumUtility;
 namespace {
 
 /**
- * Used to construct an ImageCesium.
+ * Used to construct an ImageAsset.
  */
 struct ImageAssetFactory {
   ImageAssetFactory(const Ktx2TranscodeTargets& ktx2TranscodeTargets_)
       : ktx2TranscodeTargets(ktx2TranscodeTargets_) {}
 
-  CesiumUtility::IntrusivePointer<ImageCesium>
+  CesiumUtility::IntrusivePointer<ImageAsset>
   createFrom(const gsl::span<const gsl::byte>& data) const {
     ImageReaderResult imageResult =
         ImageDecoder::readImage(data, this->ktx2TranscodeTargets);
@@ -565,7 +565,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                           const IAssetResponse* pResponse =
                               pRequest->response();
 
-                          CesiumUtility::IntrusivePointer<ImageCesium> pAsset =
+                          CesiumUtility::IntrusivePointer<ImageAsset> pAsset =
                               nullptr;
 
                           if (pResponse) {
@@ -590,12 +590,12 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               }
             };
 
-        SharedFuture<IntrusivePointer<ImageCesium>> future =
+        SharedFuture<IntrusivePointer<ImageAsset>> future =
             getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
         resolvedBuffers.push_back(future.thenInWorkerThread(
             [pImage =
-                 &image](const IntrusivePointer<ImageCesium>& pLoadedImage) {
+                 &image](const IntrusivePointer<ImageAsset>& pLoadedImage) {
               std::string imageUri = *pImage->uri;
               pImage->uri = std::nullopt;
 

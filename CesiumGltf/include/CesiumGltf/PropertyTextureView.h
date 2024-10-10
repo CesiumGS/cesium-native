@@ -748,7 +748,7 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    const CesiumUtility::IntrusivePointer<ImageCesium>& pImage =
+    const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
         _pModel->images[imageIndex].pCesium;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
@@ -781,7 +781,7 @@ private:
 
   PropertyViewStatusType checkChannels(
       const std::vector<int64_t>& channels,
-      const ImageCesium& image) const noexcept;
+      const ImageAsset& image) const noexcept;
 
   const Model* _pModel;
   const PropertyTexture* _pPropertyTexture;

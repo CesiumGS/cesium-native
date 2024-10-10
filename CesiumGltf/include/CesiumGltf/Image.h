@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltf/ImageSpec.h"
 #include "CesiumGltf/Library.h"
 
@@ -14,6 +14,6 @@ struct CESIUMGLTF_API Image final : public ImageSpec {
    * part of the glTF spec. When an image is loaded from a URL, multiple `Image`
    * instances may all point to the same `ImageCesium` instance.
    */
-  CesiumUtility::IntrusivePointer<ImageCesium> pCesium;
+  CesiumUtility::IntrusivePointer<ImageAsset> pCesium;
 };
 } // namespace CesiumGltf

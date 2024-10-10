@@ -19,28 +19,57 @@ namespace CesiumAsync {
  * @tparam T The type that is _deriving_ from this class. For example, you
  * should declare your class as
  * `class MyClass : public SharedAsset<MyClass> { ... };`
+ *
+ * @remarks @parblock
+ * A `SharedAsset` can be in one of three possible states:
+ *
+ * **Independent Asset**
+ * An independent asset isn't affiliated with an asset depot at all.
+ * Its lifetime is controlled exclusively by IntrusivePointer / reference
+ * counting. When the asset's reference count goes to zero, it deletes itself.
+ * An independent asset's `_pDepot` is nullptr.
+ *
+ * **Active Depot Asset**
+ * This is an asset that is owned by an asset depot and that is in use, meaning
+ * it has a reference count greater than zero. The asset depot owns the asset
+ * via an `std::unique_ptr`, not via adding to the reference count. So when the
+ * reference count goes to zero, only the asset depot itself still has a
+ * reference to it, so it becomes an inactive depot asset.
+ *
+ * **Inactive Depot Asset**
+ * This is also an asset that is owned by the asset depot, but there are no
+ * other references to it (it has a reference count of zero). It is found in the
+ * asset depot's `deletionCandidates` list. When a reference to it is added, it
+ * is removed from `deletionCandidates` and it becomes an active depot asset.
+ * @endparblock
  */
 template <typename T>
 class CESIUMASYNC_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
-  // Assets can be copied, but the fresh instance has no references and is not
-  // in the asset depot.
+  /**
+   * Assets can be copied, but the fresh instance has no references and is not
+   * in the asset depot.
+   */
   SharedAsset(const SharedAsset& rhs)
       : ExtensibleObject(rhs),
         _referenceCount(0),
         _pDepot(nullptr),
         _uniqueAssetId() {}
 
-  // After a move construction, the content of the asset is moved to the new
-  // instance, but the asset depot still references the old instance.
+  /**
+   * After a move construction, the content of the asset is moved to the new
+   * instance, but the asset depot still references the old instance.
+   */
   SharedAsset(SharedAsset&& rhs)
       : ExtensibleObject(std::move(rhs)),
         _referenceCount(0),
         _pDepot(nullptr),
         _uniqueAssetId() {}
 
-  // Assignment does not affect the asset's relationship with the depot, but is
-  // useful to assign the data in derived classes.
+  /**
+   * Assignment does not affect the asset's relationship with the depot, but is
+   * useful to assign the data in derived classes.
+   */
   SharedAsset& operator=(const SharedAsset& rhs) {
     CesiumUtility::ExtensibleObject::operator=(rhs);
     return *this;

@@ -4,7 +4,7 @@
 #include <CesiumAsync/SharedFuture.h>
 
 namespace CesiumGltf {
-struct ImageCesium;
+struct ImageAsset;
 }
 
 namespace CesiumGltfReader {
@@ -19,7 +19,7 @@ public:
   static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> getDefault();
 
   CesiumUtility::IntrusivePointer<
-      CesiumAsync::SharedAssetDepot<CesiumGltf::ImageCesium>>
+      CesiumAsync::SharedAssetDepot<CesiumGltf::ImageAsset>>
       pImage;
 };
 

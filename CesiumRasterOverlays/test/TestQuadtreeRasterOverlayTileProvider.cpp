@@ -172,7 +172,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     REQUIRE(pTile->getImage());
 
-    const ImageCesium& image = *pTile->getImage();
+    const ImageAsset& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);
@@ -228,7 +228,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     REQUIRE(pTile->getImage());
 
-    const ImageCesium& image = *pTile->getImage();
+    const ImageAsset& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);

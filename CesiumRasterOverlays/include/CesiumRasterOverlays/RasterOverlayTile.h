@@ -192,7 +192,7 @@ public:
    *
    * @return The image data.
    */
-  CesiumUtility::IntrusivePointer<const CesiumGltf::ImageCesium>
+  CesiumUtility::IntrusivePointer<const CesiumGltf::ImageAsset>
   getImage() const noexcept {
     return this->_pImage;
   }
@@ -205,7 +205,7 @@ public:
    *
    * @return The image data.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> getImage() noexcept {
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> getImage() noexcept {
     return this->_pImage;
   }
 
@@ -259,7 +259,7 @@ private:
   CesiumGeometry::Rectangle _rectangle;
   std::vector<CesiumUtility::Credit> _tileCredits;
   LoadState _state;
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> _pImage;
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _pImage;
   void* _pRendererResources;
   MoreDetailAvailable _moreDetailAvailable;
 };

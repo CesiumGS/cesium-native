@@ -74,7 +74,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
     REQUIRE(pTile->getImage());
 
-    const ImageCesium& image = *pTile->getImage();
+    const ImageAsset& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
   }

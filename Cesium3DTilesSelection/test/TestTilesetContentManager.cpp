@@ -1298,8 +1298,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       CesiumAsync::Future<LoadedRasterOverlayImage>
       loadTileImage(RasterOverlayTile& overlayTile) override {
-        CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage;
-        CesiumGltf::ImageCesium& image = pImage.emplace();
+        CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
+        CesiumGltf::ImageAsset& image = pImage.emplace();
         image.width = 1;
         image.height = 1;
         image.channels = 1;

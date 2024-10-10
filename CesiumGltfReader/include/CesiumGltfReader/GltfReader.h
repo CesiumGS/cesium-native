@@ -7,7 +7,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
@@ -217,7 +217,7 @@ public:
    * @return A string describing the error, if unable to generate mipmaps.
    */
   static std::optional<std::string>
-  generateMipMaps(CesiumGltf::ImageCesium& image) {
+  generateMipMaps(CesiumGltf::ImageAsset& image) {
     return ImageDecoder::generateMipMaps(image);
   }
 

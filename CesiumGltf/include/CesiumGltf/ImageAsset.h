@@ -30,8 +30,8 @@ struct CESIUMGLTF_API ImageCesiumMipPosition {
  * @brief Holds {@link Image} properties that are specific to the glTF loader
  * rather than part of the glTF spec.
  */
-struct CESIUMGLTF_API ImageCesium final
-    : public CesiumAsync::SharedAsset<ImageCesium> {
+struct CESIUMGLTF_API ImageAsset final
+    : public CesiumAsync::SharedAsset<ImageAsset> {
   /**
    * @brief The width of the image in pixels.
    */
