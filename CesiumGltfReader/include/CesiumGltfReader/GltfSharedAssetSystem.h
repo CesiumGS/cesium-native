@@ -16,7 +16,7 @@ namespace CesiumGltfReader {
 class GltfSharedAssetSystem
     : public CesiumUtility::ReferenceCountedThreadSafe<GltfSharedAssetSystem> {
 public:
-  static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> default();
+  static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> getDefault();
 
   CesiumUtility::IntrusivePointer<
       CesiumAsync::SharedAssetDepot<CesiumGltf::ImageCesium>>

@@ -17,7 +17,7 @@ CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> createDefault() {
 } // namespace
 
 /*static*/ CesiumUtility::IntrusivePointer<GltfSharedAssetSystem>
-    GltfSharedAssetSystem::default() {
+GltfSharedAssetSystem::getDefault() {
   static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pDefault =
       createDefault();
   return pDefault;
