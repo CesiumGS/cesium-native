@@ -3,7 +3,6 @@
 #include <CesiumGltf/ImageCesium.h>
 #include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumGltf/Sampler.h>
-#include <CesiumGltf/SharedAssetDepot.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumUtility/IntrusivePointer.h>
 

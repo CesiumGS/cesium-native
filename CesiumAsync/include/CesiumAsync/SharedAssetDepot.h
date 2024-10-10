@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumAsync {
 
 template <typename T> class SharedAsset;
 
@@ -26,8 +26,9 @@ template <typename T> class SharedAsset;
  * be derived from {@link SharedAsset}.
  */
 template <typename AssetType>
-class SharedAssetDepot : public CesiumUtility::ReferenceCountedThreadSafe<
-                             SharedAssetDepot<AssetType>> {
+class CESIUMASYNC_API SharedAssetDepot
+    : public CesiumUtility::ReferenceCountedThreadSafe<
+          SharedAssetDepot<AssetType>> {
 public:
   /**
    * @brief The maximum total byte usage of assets that have been loaded but are
@@ -273,4 +274,4 @@ private:
   friend class SharedAsset<AssetType>;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumAsync

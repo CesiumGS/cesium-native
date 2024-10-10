@@ -11,7 +11,6 @@
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/SharedAssetDepot.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ReferenceCounted.h>
 

@@ -4,11 +4,12 @@
 namespace CesiumGltf {
 
 SharedAssetSystem::SharedAssetSystem() noexcept
-    : _pImages(new SharedAssetDepot<CesiumGltf::ImageCesium>()) {}
+    : _pImages(new CesiumAsync::SharedAssetDepot<CesiumGltf::ImageCesium>()) {}
 
 SharedAssetSystem::~SharedAssetSystem() noexcept = default;
 
-const SharedAssetDepot<CesiumGltf::ImageCesium>& SharedAssetSystem::image() {
+const CesiumAsync::SharedAssetDepot<CesiumGltf::ImageCesium>&
+SharedAssetSystem::image() {
   return *this->_pImages;
 }
 

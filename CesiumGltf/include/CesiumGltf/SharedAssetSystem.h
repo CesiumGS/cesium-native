@@ -1,7 +1,7 @@
 #pragma once
 
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumAsync/SharedFuture.h>
-#include <CesiumGltf/SharedAssetDepot.h>
 
 namespace CesiumGltf {
 
@@ -36,10 +36,11 @@ public:
         ->getOrFetch(asyncSystem, pAssetAccessor, factory, uri, headers);
   }
 
-  const SharedAssetDepot<CesiumGltf::ImageCesium>& image();
+  const CesiumAsync::SharedAssetDepot<CesiumGltf::ImageCesium>& image();
 
 private:
-  CesiumUtility::IntrusivePointer<SharedAssetDepot<CesiumGltf::ImageCesium>>
+  CesiumUtility::IntrusivePointer<
+      CesiumAsync::SharedAssetDepot<CesiumGltf::ImageCesium>>
       _pImages;
 };
 

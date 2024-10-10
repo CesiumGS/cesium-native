@@ -1,12 +1,12 @@
 #pragma once
 
-#include <CesiumGltf/SharedAssetDepot.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <atomic>
 
-namespace CesiumGltf {
+namespace CesiumAsync {
 
 /**
  * @brief An asset that is potentially shared between multiple objects, such as
@@ -21,7 +21,7 @@ namespace CesiumGltf {
  * `class MyClass : public SharedAsset<MyClass> { ... };`
  */
 template <typename T>
-class CESIUMGLTF_API SharedAsset : public CesiumUtility::ExtensibleObject {
+class CESIUMASYNC_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
   // Assets can be copied, but the fresh instance has no references and is not
   // in the asset depot.
@@ -120,4 +120,4 @@ private:
   friend class SharedAssetDepot<T>;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumAsync

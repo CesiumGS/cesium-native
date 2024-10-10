@@ -4,7 +4,7 @@
 #include "CesiumGltf/ImageSpec.h"
 #include "CesiumGltf/Library.h"
 
-#include <CesiumGltf/SharedAssetDepot.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 
 namespace CesiumGltf {
 /** @copydoc ImageSpec */
