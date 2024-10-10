@@ -1,4 +1,4 @@
-#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltfReader/Library.h"
 
 #include <CesiumUtility/IntrusivePointer.h>
@@ -18,11 +18,11 @@ namespace CesiumGltfReader {
 struct CESIUMGLTFREADER_API ImageReaderResult {
 
   /**
-   * @brief The {@link ImageCesium} that was read.
+   * @brief The {@link ImageAsset} that was read.
    *
    * This will be `std::nullopt` if the image could not be read.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage;
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
 
   /**
    * @brief Error messages that occurred while trying to read the image.
@@ -63,7 +63,7 @@ public:
    * @return A string describing the error, if unable to generate mipmaps.
    */
   static std::optional<std::string>
-  generateMipMaps(CesiumGltf::ImageCesium& image);
+  generateMipMaps(CesiumGltf::ImageAsset& image);
 };
 
 } // namespace CesiumGltfReader

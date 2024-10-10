@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumAsync {
 
 template <typename T> class SharedAsset;
 
@@ -26,8 +26,9 @@ template <typename T> class SharedAsset;
  * be derived from {@link SharedAsset}.
  */
 template <typename AssetType>
-class SharedAssetDepot : public CesiumUtility::ReferenceCountedThreadSafe<
-                             SharedAssetDepot<AssetType>> {
+class CESIUMASYNC_API SharedAssetDepot
+    : public CesiumUtility::ReferenceCountedThreadSafe<
+          SharedAssetDepot<AssetType>> {
 public:
   /**
    * @brief The maximum total byte usage of assets that have been loaded but are
@@ -39,9 +40,9 @@ public:
    * At that point, assets are cleaned up in the order that they were marked for
    * deletion until the total dips below this threshold again.
    *
-   * Default is 100MB.
+   * Default is 16MiB.
    */
-  int64_t staleAssetSizeLimit = 1000 * 1000 * 100;
+  int64_t staleAssetSizeLimit = 16 * 1024 * 1024;
 
   SharedAssetDepot() = default;
 
@@ -72,6 +73,11 @@ public:
       // This asset ID already exists in the depot, so we can't add this asset.
       return findIt->second.get();
     }
+
+    // If this asset ID is pending, but hasn't completed yet, where did this
+    // asset come from? It shouldn't happen.
+    CESIUM_ASSERT(
+        this->pendingAssets.find(assetId) == this->pendingAssets.end());
 
     pAsset->_pDepot = this;
     pAsset->_uniqueAssetId = assetId;
@@ -148,20 +154,19 @@ public:
                 [uri,
                  this](CesiumUtility::IntrusivePointer<AssetType>&& pResult)
                     -> CesiumUtility::IntrusivePointer<AssetType> {
-                  // Get rid of our future.
+                  // Remove pending asset.
                   this->pendingAssets.erase(uri);
 
                   // Store the new asset in the depot.
                   return this->store(uri, pResult);
                 });
 
-    auto [it, ok] = this->pendingAssets.emplace(uri, std::move(future).share());
-    if (!ok) {
-      return asyncSystem
-          .createResolvedFuture<CesiumUtility::IntrusivePointer<AssetType>>(
-              nullptr)
-          .share();
-    }
+    auto [it, added] =
+        this->pendingAssets.emplace(uri, std::move(future).share());
+
+    // Should always be added successfully, because we checked above that the
+    // URI doesn't exist in the map yet.
+    CESIUM_ASSERT(added);
 
     return it->second;
   }
@@ -201,19 +206,28 @@ private:
    */
   void markDeletionCandidate(const AssetType* pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    this->deletionCandidates.push_back(const_cast<AssetType*>(pAsset));
-    this->totalDeletionCandidateMemoryUsage += pAsset->getSizeBytes();
+
+    AssetType* pMutableAsset = const_cast<AssetType*>(pAsset);
+    pMutableAsset->_sizeInDepot = pMutableAsset->getSizeBytes();
+    this->totalDeletionCandidateMemoryUsage += pMutableAsset->_sizeInDepot;
+
+    this->deletionCandidates.push_back(pMutableAsset);
 
     if (this->totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
       std::lock_guard assetsLock(this->assetsMutex);
+
+      // Delete the deletion candidates until we're below the limit.
       while (!this->deletionCandidates.empty() &&
              this->totalDeletionCandidateMemoryUsage >
                  this->staleAssetSizeLimit) {
         const AssetType* pOldAsset = this->deletionCandidates.front();
         this->deletionCandidates.pop_front();
+
+        this->totalDeletionCandidateMemoryUsage -= pOldAsset->_sizeInDepot;
+
+        // This will actually delete the asset.
         CESIUM_ASSERT(pOldAsset->_referenceCount == 0);
         this->assets.erase(pOldAsset->getUniqueAssetId());
-        this->totalDeletionCandidateMemoryUsage -= pOldAsset->getSizeBytes();
       }
     }
   }
@@ -224,15 +238,17 @@ private:
    */
   void unmarkDeletionCandidate(const AssetType* pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    const std::string& assetId = pAsset->getUniqueAssetId();
-    for (auto it = this->deletionCandidates.begin();
-         it != this->deletionCandidates.end();
-         ++it) {
-      if ((*it)->getUniqueAssetId() == assetId) {
-        this->totalDeletionCandidateMemoryUsage -= (*it)->getSizeBytes();
-        this->deletionCandidates.erase(it);
-        break;
-      }
+
+    auto it = std::find(
+        this->deletionCandidates.begin(),
+        this->deletionCandidates.end(),
+        pAsset);
+
+    CESIUM_ASSERT(it != this->deletionCandidates.end());
+
+    if (it != this->deletionCandidates.end()) {
+      this->totalDeletionCandidateMemoryUsage -= (*it)->_sizeInDepot;
+      this->deletionCandidates.erase(it);
     }
   }
 
@@ -258,4 +274,4 @@ private:
   friend class SharedAsset<AssetType>;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumAsync

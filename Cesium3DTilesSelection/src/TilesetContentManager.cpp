@@ -666,7 +666,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
+      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -696,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
+      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -848,7 +848,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pAssetDepot(new CesiumGltf::SharedAssetSystem()),
+      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -994,7 +994,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pAssetAccessor,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
-      this->_pAssetDepot,
+      this->_pSharedAssets,
       tilesetOptions.contentOptions,
       tile};
 
@@ -1237,9 +1237,9 @@ TilesetContentManager::getTilesetCredits() const noexcept {
   return this->_tilesetCredits;
 }
 
-const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>&
+const CesiumUtility::IntrusivePointer<CesiumGltfReader::GltfSharedAssetSystem>&
 TilesetContentManager::getSharedAssetSystem() const noexcept {
-  return this->_pAssetDepot;
+  return this->_pSharedAssets;
 }
 
 int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {

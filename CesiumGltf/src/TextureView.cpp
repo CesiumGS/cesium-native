@@ -72,7 +72,7 @@ TextureView::TextureView(
 
   if (options.makeImageCopy) {
     this->_pImageCopy =
-        this->_pImage ? new ImageCesium(*this->_pImage) : nullptr;
+        this->_pImage ? new ImageAsset(*this->_pImage) : nullptr;
   }
 
   this->_textureViewStatus = TextureViewStatus::Valid;
@@ -80,13 +80,13 @@ TextureView::TextureView(
 
 TextureView::TextureView(
     const Sampler& sampler,
-    const ImageCesium& image,
+    const ImageAsset& image,
     int64_t textureCoordinateSetIndex,
     const ExtensionKhrTextureTransform* pKhrTextureTransformExtension,
     const TextureViewOptions& options) noexcept
     : _textureViewStatus(TextureViewStatus::ErrorUninitialized),
       _pSampler(&sampler),
-      _pImage(new ImageCesium(image)),
+      _pImage(new ImageAsset(image)),
       _texCoordSetIndex(textureCoordinateSetIndex),
       _applyTextureTransform(options.applyKhrTextureTransformExtension),
       _textureTransform(std::nullopt),
@@ -106,7 +106,7 @@ TextureView::TextureView(
 
   if (options.makeImageCopy) {
     this->_pImageCopy =
-        this->_pImage ? new ImageCesium(*this->_pImage) : nullptr;
+        this->_pImage ? new ImageAsset(*this->_pImage) : nullptr;
   }
 
   this->_textureViewStatus = TextureViewStatus::Valid;
@@ -132,7 +132,7 @@ std::vector<uint8_t> TextureView::sampleNearestPixel(
   u = applySamplerWrapS(u, this->_pSampler->wrapS);
   v = applySamplerWrapT(v, this->_pSampler->wrapT);
 
-  const ImageCesium& image =
+  const ImageAsset& image =
       this->_pImageCopy != nullptr ? *this->_pImageCopy : *this->_pImage;
 
   // For nearest filtering, std::floor is used instead of std::round.
