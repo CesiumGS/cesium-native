@@ -23,9 +23,6 @@ namespace CesiumGltf {
 template <typename T>
 class CESIUMGLTF_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
-  SharedAsset() = default;
-  ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
-
   // Assets can be copied, but the fresh instance has no references and is not
   // in the asset depot.
   SharedAsset(const SharedAsset& rhs)
@@ -99,12 +96,25 @@ public:
    */
   bool isShareable() const { return this->_pDepot != nullptr; }
 
+  /**
+   * @brief Gets the unique ID of this asset, if it {@link isShareable}.
+   *
+   * If this asset is not shareable, this method will return an empty string.
+   */
   const std::string& getUniqueAssetId() const { return this->_uniqueAssetId; }
+
+protected:
+  SharedAsset() = default;
+  ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
 
 private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
-  SharedAssetDepot<T>* _pDepot;
-  std::string _uniqueAssetId;
+  SharedAssetDepot<T>* _pDepot{nullptr};
+  std::string _uniqueAssetId{};
+
+  // The size of this asset when it was counted by the depot. This is stored so
+  // that the exact same size can be subtracted later.
+  int64_t _sizeInDepot{0};
 
   // To allow the depot to modify _pDepot and _uniqueAssetId.
   friend class SharedAssetDepot<T>;
