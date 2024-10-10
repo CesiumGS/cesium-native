@@ -85,16 +85,16 @@ public:
   }
 
   /**
-   * @brief Determines if this image is shareable because it is managed by an
-   * asset depot. An image that is not shareable can be understood to be
-   * exclusively owned by, for example, the glTF that references it. If it is
-   * shareable, then potentially multiple glTFs reference it.
-   *
-   * An example of a non-shareable asset is an image embedded in a Binary glTF
-   * (GLB) buffer. An example of a shareable asset is an image referenced in a
-   * glTF by URI.
+   * @brief Gets the shared asset depot that owns this asset, or nullptr if this
+   * asset is independent of an asset depot.
    */
-  bool isShareable() const { return this->_pDepot != nullptr; }
+  const SharedAssetDepot<T>* getDepot() const { return this->_pDepot; }
+
+  /**
+   * @brief Gets the shared asset depot that owns this asset, or nullptr if this
+   * asset is independent of an asset depot.
+   */
+  SharedAssetDepot<T>* getDepot() { return this->_pDepot; }
 
   /**
    * @brief Gets the unique ID of this asset, if it {@link isShareable}.
@@ -116,7 +116,7 @@ private:
   // that the exact same size can be subtracted later.
   int64_t _sizeInDepot{0};
 
-  // To allow the depot to modify _pDepot and _uniqueAssetId.
+  // To allow the depot to modify _pDepot, _uniqueAssetId, and _sizeInDepot.
   friend class SharedAssetDepot<T>;
 };
 
