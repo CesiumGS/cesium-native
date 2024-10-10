@@ -170,7 +170,9 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
 
-    const ImageCesium& image = pTile->getImage();
+    REQUIRE(pTile->getImage());
+
+    const ImageCesium& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);
@@ -224,7 +226,9 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
 
-    const ImageCesium& image = pTile->getImage();
+    REQUIRE(pTile->getImage());
+
+    const ImageCesium& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);
