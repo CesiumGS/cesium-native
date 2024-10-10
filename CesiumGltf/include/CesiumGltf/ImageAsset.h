@@ -14,7 +14,7 @@ namespace CesiumGltf {
 /**
  * @brief The byte range within a buffer where this mip exists.
  */
-struct CESIUMGLTF_API ImageCesiumMipPosition {
+struct CESIUMGLTF_API ImageAssetMipPosition {
   /**
    * @brief The byte index where this mip begins.
    */
@@ -67,7 +67,7 @@ struct CESIUMGLTF_API ImageAsset final
    * biggest and etc. If this is empty, assume the entire buffer is a single
    * image, the mip map will need to be generated on the client in this case.
    */
-  std::vector<ImageCesiumMipPosition> mipPositions;
+  std::vector<ImageAssetMipPosition> mipPositions;
 
   /**
    * @brief The pixel data.
