@@ -112,6 +112,14 @@ struct CESIUMGLTF_API ImageCesium final : public SharedAsset<ImageCesium> {
    */
   int64_t sizeBytes = -1;
 
-  int64_t getSizeBytes() const { return this->sizeBytes; }
+  /**
+   * @brief Gets the size of this asset, in bytes.
+   *
+   * If {@link sizeBytes} is greater than or equal to zero, it is returned.
+   * Otherwise, the size of the {@link pixelData} array is returned.
+   */
+  int64_t getSizeBytes() const {
+    return this->sizeBytes >= 0 ? this->sizeBytes : this->pixelData.size();
+  }
 };
 } // namespace CesiumGltf
