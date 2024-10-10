@@ -574,7 +574,7 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
         GltfReader::readImage(data, Ktx2TranscodeTargets{});
     REQUIRE(imageResult.pImage);
 
-    const ImageCesium& image = *imageResult.pImage;
+    const ImageAsset& image = *imageResult.pImage;
     REQUIRE(image.mipPositions.size() == 1);
     CHECK(image.mipPositions[0].byteOffset == 0);
     CHECK(image.mipPositions[0].byteSize > 0);
@@ -594,7 +594,7 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
         GltfReader::readImage(data, Ktx2TranscodeTargets{});
     REQUIRE(imageResult.pImage);
 
-    const ImageCesium& image = *imageResult.pImage;
+    const ImageAsset& image = *imageResult.pImage;
     REQUIRE(image.mipPositions.size() == 0);
     CHECK(image.pixelData.size() > 0);
   }
@@ -608,7 +608,7 @@ TEST_CASE("Can correctly interpret mipmaps in KTX2 files") {
         GltfReader::readImage(data, Ktx2TranscodeTargets{});
     REQUIRE(imageResult.pImage);
 
-    const ImageCesium& image = *imageResult.pImage;
+    const ImageAsset& image = *imageResult.pImage;
     REQUIRE(image.mipPositions.size() == 9);
     CHECK(image.mipPositions[0].byteSize > 0);
     CHECK(
@@ -689,7 +689,7 @@ TEST_CASE("Decodes images with data uris") {
 
   REQUIRE(model.images.size() == 1);
 
-  const ImageCesium& image = *model.images.front().pCesium;
+  const ImageAsset& image = *model.images.front().pCesium;
 
   CHECK(image.width == 256);
   CHECK(image.height == 256);

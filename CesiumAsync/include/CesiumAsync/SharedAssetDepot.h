@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumAsync {
 
 template <typename T> class SharedAsset;
 
@@ -26,8 +26,9 @@ template <typename T> class SharedAsset;
  * be derived from {@link SharedAsset}.
  */
 template <typename AssetType>
-class SharedAssetDepot : public CesiumUtility::ReferenceCountedThreadSafe<
-                             SharedAssetDepot<AssetType>> {
+class CESIUMASYNC_API SharedAssetDepot
+    : public CesiumUtility::ReferenceCountedThreadSafe<
+          SharedAssetDepot<AssetType>> {
 public:
   /**
    * @brief The maximum total byte usage of assets that have been loaded but are
@@ -39,21 +40,60 @@ public:
    * At that point, assets are cleaned up in the order that they were marked for
    * deletion until the total dips below this threshold again.
    *
-   * Default is 100MB.
+   * Default is 16MiB.
    */
-  int64_t staleAssetSizeLimit = 1000 * 1000 * 100;
+  int64_t staleAssetSizeLimit = 16 * 1024 * 1024;
 
   SharedAssetDepot() = default;
+
+  ~SharedAssetDepot() {
+    // It's possible the assets will outlive the depot, if they're still in use.
+    std::lock_guard lock(this->assetsMutex);
+
+    for (auto& pair : this->assets) {
+      // Transfer ownership to the reference counting system.
+      CesiumUtility::IntrusivePointer<AssetType> pCounted =
+          pair.second.release();
+      pCounted->_pDepot = nullptr;
+      pCounted->_uniqueAssetId.clear();
+    }
+  }
 
   /**
    * Stores the AssetType in this depot and returns a reference to it,
    * or returns the existing asset if present.
    */
   CesiumUtility::IntrusivePointer<AssetType> store(
-      std::string& assetId,
+      const std::string& assetId,
       const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
-    auto [newIt, added] = this->assets.try_emplace(assetId, pAsset);
-    return newIt->second;
+    std::lock_guard lock(this->assetsMutex);
+
+    auto findIt = this->assets.find(assetId);
+    if (findIt != this->assets.end()) {
+      // This asset ID already exists in the depot, so we can't add this asset.
+      return findIt->second.get();
+    }
+
+    // If this asset ID is pending, but hasn't completed yet, where did this
+    // asset come from? It shouldn't happen.
+    CESIUM_ASSERT(
+        this->pendingAssets.find(assetId) == this->pendingAssets.end());
+
+    pAsset->_pDepot = this;
+    pAsset->_uniqueAssetId = assetId;
+
+    // Now that this asset is owned by the depot, we exclusively
+    // control its lifetime with a std::unique_ptr.
+    std::unique_ptr<AssetType> pOwnedAsset(pAsset.get());
+
+    auto [addIt, added] = this->assets.emplace(assetId, std::move(pOwnedAsset));
+
+    // We should always add successfully, because we verified it didn't already
+    // exist. A failed emplace is disastrous because our unique_ptr will end up
+    // destroying the user's object, which may still be in use.
+    CESIUM_ASSERT(added);
+
+    return addIt->second.get();
   }
 
   /**
@@ -82,8 +122,8 @@ public:
     if (existingIt != this->assets.end()) {
       // We've already loaded an asset with this ID - we can just use that.
       return asyncSystem
-          .createResolvedFuture(
-              CesiumUtility::IntrusivePointer<AssetType>(existingIt->second))
+          .createResolvedFuture(CesiumUtility::IntrusivePointer<AssetType>(
+              existingIt->second.get()))
           .share();
     }
 
@@ -112,39 +152,21 @@ public:
             // Do this in main thread since we're messing with the collections.
             .thenInMainThread(
                 [uri,
-                 this,
-                 pAssets = &this->assets,
-                 pPendingAssetsMutex = &this->assetsMutex,
-                 pPendingAssets = &this->pendingAssets](
-                    CesiumUtility::IntrusivePointer<AssetType>&& pResult)
+                 this](CesiumUtility::IntrusivePointer<AssetType>&& pResult)
                     -> CesiumUtility::IntrusivePointer<AssetType> {
-                  std::lock_guard lock(*pPendingAssetsMutex);
+                  // Remove pending asset.
+                  this->pendingAssets.erase(uri);
 
-                  // Get rid of our future.
-                  pPendingAssets->erase(uri);
-
-                  if (pResult) {
-                    pResult->_pDepot = this;
-                    pResult->_uniqueAssetId = uri;
-
-                    auto [it, ok] = pAssets->emplace(uri, pResult);
-                    if (!ok) {
-                      return nullptr;
-                    }
-
-                    return it->second;
-                  }
-
-                  return nullptr;
+                  // Store the new asset in the depot.
+                  return this->store(uri, pResult);
                 });
 
-    auto [it, ok] = this->pendingAssets.emplace(uri, std::move(future).share());
-    if (!ok) {
-      return asyncSystem
-          .createResolvedFuture<CesiumUtility::IntrusivePointer<AssetType>>(
-              nullptr)
-          .share();
-    }
+    auto [it, added] =
+        this->pendingAssets.emplace(uri, std::move(future).share());
+
+    // Should always be added successfully, because we checked above that the
+    // URI doesn't exist in the map yet.
+    CESIUM_ASSERT(added);
 
     return it->second;
   }
@@ -182,22 +204,30 @@ private:
    * Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void markDeletionCandidate(
-      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
+  void markDeletionCandidate(const AssetType* pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    this->deletionCandidates.push_back(pAsset);
-    this->totalDeletionCandidateMemoryUsage += pAsset->getSizeBytes();
+
+    AssetType* pMutableAsset = const_cast<AssetType*>(pAsset);
+    pMutableAsset->_sizeInDepot = pMutableAsset->getSizeBytes();
+    this->totalDeletionCandidateMemoryUsage += pMutableAsset->_sizeInDepot;
+
+    this->deletionCandidates.push_back(pMutableAsset);
 
     if (this->totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
       std::lock_guard assetsLock(this->assetsMutex);
+
+      // Delete the deletion candidates until we're below the limit.
       while (!this->deletionCandidates.empty() &&
              this->totalDeletionCandidateMemoryUsage >
                  this->staleAssetSizeLimit) {
-        const CesiumUtility::IntrusivePointer<AssetType>& pOldAsset =
-            this->deletionCandidates.front();
+        const AssetType* pOldAsset = this->deletionCandidates.front();
         this->deletionCandidates.pop_front();
+
+        this->totalDeletionCandidateMemoryUsage -= pOldAsset->_sizeInDepot;
+
+        // This will actually delete the asset.
+        CESIUM_ASSERT(pOldAsset->_referenceCount == 0);
         this->assets.erase(pOldAsset->getUniqueAssetId());
-        this->totalDeletionCandidateMemoryUsage -= pOldAsset->getSizeBytes();
       }
     }
   }
@@ -206,24 +236,24 @@ private:
    * Unmarks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void unmarkDeletionCandidate(
-      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
+  void unmarkDeletionCandidate(const AssetType* pAsset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
-    const std::string& assetId = pAsset->getUniqueAssetId();
-    for (auto it = this->deletionCandidates.begin();
-         it != this->deletionCandidates.end();
-         ++it) {
-      if ((*it)->getUniqueAssetId() == assetId) {
-        this->deletionCandidates.erase(it);
-        this->totalDeletionCandidateMemoryUsage -= (*it)->getSizeBytes();
-        break;
-      }
+
+    auto it = std::find(
+        this->deletionCandidates.begin(),
+        this->deletionCandidates.end(),
+        pAsset);
+
+    CESIUM_ASSERT(it != this->deletionCandidates.end());
+
+    if (it != this->deletionCandidates.end()) {
+      this->totalDeletionCandidateMemoryUsage -= (*it)->_sizeInDepot;
+      this->deletionCandidates.erase(it);
     }
   }
 
   // Assets that have a unique ID that can be used to de-duplicate them.
-  std::unordered_map<std::string, CesiumUtility::IntrusivePointer<AssetType>>
-      assets;
+  std::unordered_map<std::string, std::unique_ptr<AssetType>> assets;
   // Futures for assets that still aren't loaded yet.
   std::unordered_map<
       std::string,
@@ -234,7 +264,7 @@ private:
 
   // List of assets that are being considered for deletion, in the order that
   // they were added.
-  std::list<CesiumUtility::IntrusivePointer<AssetType>> deletionCandidates;
+  std::list<AssetType*> deletionCandidates;
   // The total amount of memory used by all assets in the deletionCandidates
   // list.
   std::atomic<int64_t> totalDeletionCandidateMemoryUsage;
@@ -244,4 +274,4 @@ private:
   friend class SharedAsset<AssetType>;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumAsync

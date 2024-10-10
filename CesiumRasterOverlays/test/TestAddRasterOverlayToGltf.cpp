@@ -186,7 +186,7 @@ TEST_CASE("Add raster overlay to glTF") {
             // PNG-encode the raster overlay image and store it in the main
             // buffer.
             ImageManipulation::savePng(
-                loadResult.pTile->getImage(),
+                *loadResult.pTile->getImage(),
                 buffer.cesium.data);
 
             BufferView& bufferView = gltf.bufferViews.emplace_back();

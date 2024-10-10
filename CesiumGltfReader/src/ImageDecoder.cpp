@@ -77,7 +77,7 @@ ImageReaderResult ImageDecoder::readImage(
 
   ImageReaderResult result;
 
-  CesiumGltf::ImageCesium& image = result.pImage.emplace();
+  CesiumGltf::ImageAsset& image = result.pImage.emplace();
 
   if (isKtx(data)) {
     ktxTexture2* pTexture = nullptr;
@@ -364,7 +364,7 @@ ImageReaderResult ImageDecoder::readImage(
 }
 
 /*static*/
-std::optional<std::string> ImageDecoder::generateMipMaps(ImageCesium& image) {
+std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
   if (!image.mipPositions.empty() ||
       image.compressedPixelFormat != GpuCompressedPixelFormat::NONE) {
     // No error message needed, since this is not technically a failure.

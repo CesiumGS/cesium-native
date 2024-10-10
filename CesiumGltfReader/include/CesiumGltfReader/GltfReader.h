@@ -7,10 +7,10 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/SharedAssetSystem.h>
+#include <CesiumGltfReader/GltfSharedAssetSystem.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
@@ -111,12 +111,11 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
-   * The depot that will be used to store all of the shared assets that might
-   * appear in this glTF. If not present, assets will not be shared between
-   * glTFs, even if they're loaded from the same URL.
+   * The shared asset system that will be used to store all of the shared assets
+   * that might appear in this glTF.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem> pSharedAssets =
-      nullptr;
+  CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssets =
+      GltfSharedAssetSystem::getDefault();
 };
 
 /**
@@ -218,7 +217,7 @@ public:
    * @return A string describing the error, if unable to generate mipmaps.
    */
   static std::optional<std::string>
-  generateMipMaps(CesiumGltf::ImageCesium& image) {
+  generateMipMaps(CesiumGltf::ImageAsset& image) {
     return ImageDecoder::generateMipMaps(image);
   }
 

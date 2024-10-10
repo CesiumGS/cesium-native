@@ -1298,8 +1298,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       CesiumAsync::Future<LoadedRasterOverlayImage>
       loadTileImage(RasterOverlayTile& overlayTile) override {
-        CesiumUtility::IntrusivePointer<CesiumGltf::ImageCesium> pImage;
-        CesiumGltf::ImageCesium& image = pImage.emplace();
+        CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
+        CesiumGltf::ImageAsset& image = pImage.emplace();
         image.width = 1;
         image.height = 1;
         image.channels = 1;
@@ -1682,7 +1682,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       CHECK(images.size() == 1);
     }
 
-    CHECK(pManager->getSharedAssetSystem()->image().getDistinctCount() == 2);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getDistinctCount() == 2);
 
     // unload the tile content
     for (auto& child : containerTile.getChildren()) {

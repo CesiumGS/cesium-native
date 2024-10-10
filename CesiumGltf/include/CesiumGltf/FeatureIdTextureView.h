@@ -2,7 +2,7 @@
 
 #include "CesiumGltf/FeatureIdTexture.h"
 #include "CesiumGltf/Image.h"
-#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/Texture.h"
 #include "CesiumGltf/TextureView.h"

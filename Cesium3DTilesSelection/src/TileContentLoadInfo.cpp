@@ -9,8 +9,8 @@ TileContentLoadInfo::TileContentLoadInfo(
     const std::shared_ptr<IPrepareRendererResources>&
         pPrepareRendererResources_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>
-        pAssetDepot_,
+    const CesiumUtility::IntrusivePointer<
+        CesiumGltfReader::GltfSharedAssetSystem> pAssetDepot_,
     const TilesetContentOptions& contentOptions_,
     const Tile& tile)
     : asyncSystem(asyncSystem_),
