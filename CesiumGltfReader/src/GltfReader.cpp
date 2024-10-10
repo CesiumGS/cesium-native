@@ -555,7 +555,8 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
                 const std::string& uri,
                 const std::vector<IAssetAccessor::THeader>& headers) {
-              if (options.pSharedAssets == nullptr) {
+              if (options.pSharedAssets == nullptr ||
+                  options.pSharedAssets->pImage == nullptr) {
                 // We don't have a depot, we have to fetch this the old way.
                 return pAssetAccessor->get(asyncSystem, uri, headers)
                     .thenInWorkerThread(
@@ -580,7 +581,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                     .share();
               } else {
                 // We have a depot, this is easy!
-                return options.pSharedAssets->getOrFetch(
+                return options.pSharedAssets->pImage->getOrFetch(
                     asyncSystem,
                     pAssetAccessor,
                     ImageAssetFactory(options.ktx2TranscodeTargets),

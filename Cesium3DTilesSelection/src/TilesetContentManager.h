@@ -115,7 +115,8 @@ public:
 
   const std::vector<CesiumUtility::Credit>& getTilesetCredits() const noexcept;
 
-  const CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem>&
+  const CesiumUtility::IntrusivePointer<
+      CesiumGltfReader::GltfSharedAssetSystem>&
   getSharedAssetSystem() const noexcept;
 
   int32_t getNumberOfTilesLoading() const noexcept;
@@ -171,7 +172,8 @@ private:
   int64_t _tilesDataUsed;
 
   // Stores assets that might be shared between tiles.
-  CesiumUtility::IntrusivePointer<CesiumGltf::SharedAssetSystem> _pAssetDepot;
+  CesiumUtility::IntrusivePointer<CesiumGltfReader::GltfSharedAssetSystem>
+      _pSharedAssets;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;
