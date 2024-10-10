@@ -72,7 +72,9 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     REQUIRE(pTile);
     waitForFuture(asyncSystem, pTileProvider->loadTile(*pTile));
 
-    ImageCesium& image = pTile->getImage();
+    REQUIRE(pTile->getImage());
+
+    const ImageAsset& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
   }

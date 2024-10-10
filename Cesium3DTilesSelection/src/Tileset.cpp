@@ -149,6 +149,16 @@ const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
   return this->_pTilesetContentManager->getRasterOverlayCollection();
 }
 
+CesiumGltfReader::GltfSharedAssetSystem&
+Tileset::getSharedAssetSystem() noexcept {
+  return *this->_pTilesetContentManager->getSharedAssetSystem();
+}
+
+const CesiumGltfReader::GltfSharedAssetSystem&
+Tileset::getSharedAssetSystem() const noexcept {
+  return *this->_pTilesetContentManager->getSharedAssetSystem();
+}
+
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
   return fogDensity.cameraHeight < height;

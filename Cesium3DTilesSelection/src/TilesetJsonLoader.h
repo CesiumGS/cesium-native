@@ -6,6 +6,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltfReader/GltfSharedAssetSystem.h>
 
 #include <rapidjson/fwd.h>
 
@@ -55,6 +56,8 @@ public:
 private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;
+  CesiumUtility::IntrusivePointer<CesiumGltfReader::GltfSharedAssetSystem>
+      _pSharedAssets;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.

@@ -5,7 +5,7 @@
 #include <any>
 
 namespace CesiumGltf {
-struct ImageCesium;
+struct ImageAsset;
 }
 
 namespace CesiumRasterOverlays {
@@ -28,7 +28,7 @@ public:
    * `pLoadThreadResult` parameter.
    */
   virtual void* prepareRasterInLoadThread(
-      CesiumGltf::ImageCesium& image,
+      CesiumGltf::ImageAsset& image,
       const std::any& rendererOptions) = 0;
 
   /**

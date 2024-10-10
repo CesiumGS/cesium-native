@@ -42,7 +42,7 @@ public:
 
     result.rectangle = overlayTile.getRectangle();
 
-    ImageCesium& image = result.image.emplace();
+    ImageAsset& image = result.pImage.emplace();
     image.width = 1;
     image.height = 1;
     image.channels = 4;
