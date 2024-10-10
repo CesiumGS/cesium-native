@@ -38,8 +38,6 @@ public:
 
   const SharedAssetDepot<CesiumGltf::ImageCesium>& image();
 
-  void deletionTick();
-
 private:
   CesiumUtility::IntrusivePointer<SharedAssetDepot<CesiumGltf::ImageCesium>>
       _pImages;
