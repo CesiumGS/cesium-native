@@ -4,6 +4,7 @@
 #include "Library.h"
 
 #include <cstdint>
+#include <string>
 
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API IgnoreValueJsonHandler : public IJsonHandler {

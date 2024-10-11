@@ -182,6 +182,15 @@ public:
   const RasterOverlayCollection& getOverlays() const noexcept;
 
   /**
+   * @brief Returns the {@link SharedAssetDepot} of this tileset.
+   */
+  CesiumGltfReader::GltfSharedAssetSystem& getSharedAssetSystem() noexcept;
+
+  /** @copydoc Tileset::getSharedAssetSystem() */
+  const CesiumGltfReader::GltfSharedAssetSystem&
+  getSharedAssetSystem() const noexcept;
+
+  /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
    * loading and ready to be rendered before returning the function. This method
    * is significantly slower than {@link Tileset::updateView} and should only be

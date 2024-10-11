@@ -34,6 +34,17 @@ public:
     return *this;
   }
 
+  /**
+   * @brief Is this item an orphan?
+   *
+   * Items are considered orphaned if their `pPrevious` and `pNext` pointers are
+   * both `nullptr`. This means that the item is either the only item in its
+   * list, or not in a list at all.
+   */
+  bool isOrphan() const {
+    return this->pNext == nullptr && this->pPrevious == nullptr;
+  }
+
 private:
   template <
       class TElement,

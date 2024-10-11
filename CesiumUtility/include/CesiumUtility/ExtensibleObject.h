@@ -70,9 +70,14 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * @tparam T The type of the extension to add.
    * @return The added extension.
    */
-  template <typename T> T& addExtension() {
+  template <typename T, typename... ConstructorArgumentTypes>
+  T& addExtension(ConstructorArgumentTypes&&... constructorArguments) {
     std::any& extension =
-        extensions.try_emplace(T::ExtensionName, std::make_any<T>())
+        extensions
+            .try_emplace(
+                T::ExtensionName,
+                std::make_any<T>(std::forward<ConstructorArgumentTypes>(
+                    constructorArguments)...))
             .first->second;
     return std::any_cast<T&>(extension);
   }
