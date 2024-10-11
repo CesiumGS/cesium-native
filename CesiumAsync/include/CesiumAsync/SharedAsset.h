@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumAsync/SharedAssetDepot.h>
+#include <CesiumUtility/DoublyLinkedList.h>
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
@@ -88,7 +89,8 @@ public:
   void addReference() const /*noexcept*/ {
     const int32_t prevReferences = this->_referenceCount++;
     if (this->_pDepot && prevReferences <= 0) {
-      this->_pDepot->unmarkDeletionCandidate(static_cast<const T*>(this));
+      this->_pDepot->unmarkDeletionCandidate(
+          *const_cast<SharedAsset<T>*>(this));
     }
   }
 
@@ -105,7 +107,7 @@ public:
       SharedAssetDepot<T>* pDepot = this->_pDepot;
       if (pDepot) {
         // Let the depot manage this object's lifetime.
-        pDepot->markDeletionCandidate(static_cast<const T*>(this));
+        pDepot->markDeletionCandidate(*const_cast<SharedAsset<T>*>(this));
       } else {
         // No depot, so destroy this object directly.
         delete static_cast<const T*>(this);
@@ -140,6 +142,8 @@ private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
   SharedAssetDepot<T>* _pDepot{nullptr};
   std::string _uniqueAssetId{};
+
+  CesiumUtility::DoublyLinkedListPointers<SharedAsset<T>> _deletionListPointers;
 
   // The size of this asset when it was counted by the depot. This is stored so
   // that the exact same size can be subtracted later.

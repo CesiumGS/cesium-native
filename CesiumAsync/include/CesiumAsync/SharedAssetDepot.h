@@ -4,6 +4,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/DoublyLinkedList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
@@ -208,24 +209,23 @@ private:
    * Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void markDeletionCandidate(const AssetType* pAsset) {
+  void markDeletionCandidate(SharedAsset<AssetType>& asset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
 
-    AssetType* pMutableAsset = const_cast<AssetType*>(pAsset);
-    pMutableAsset->_sizeInDepot = pMutableAsset->getSizeBytes();
-    this->totalDeletionCandidateMemoryUsage += pMutableAsset->_sizeInDepot;
+    asset._sizeInDepot = static_cast<AssetType&>(asset).getSizeBytes();
+    this->totalDeletionCandidateMemoryUsage += asset._sizeInDepot;
 
-    this->deletionCandidates.push_back(pMutableAsset);
+    this->deletionCandidates.insertAtTail(asset);
 
     if (this->totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
       std::lock_guard assetsLock(this->assetsMutex);
 
       // Delete the deletion candidates until we're below the limit.
-      while (!this->deletionCandidates.empty() &&
+      while (this->deletionCandidates.size() > 0 &&
              this->totalDeletionCandidateMemoryUsage >
                  this->staleAssetSizeLimit) {
-        const AssetType* pOldAsset = this->deletionCandidates.front();
-        this->deletionCandidates.pop_front();
+        SharedAsset<AssetType>* pOldAsset = this->deletionCandidates.head();
+        this->deletionCandidates.remove(*pOldAsset);
 
         this->totalDeletionCandidateMemoryUsage -= pOldAsset->_sizeInDepot;
 
@@ -240,19 +240,21 @@ private:
    * Unmarks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}.
    */
-  void unmarkDeletionCandidate(const AssetType* pAsset) {
+  void unmarkDeletionCandidate(SharedAsset<AssetType>& asset) {
     std::lock_guard lock(this->deletionCandidatesMutex);
 
-    auto it = std::find(
-        this->deletionCandidates.begin(),
-        this->deletionCandidates.end(),
-        pAsset);
+    // We should only be deleting this element if it's in the deletionCandidates
+    // list.
+    bool isFound = !asset._deletionListPointers.isOrphan() ||
+                   (this->deletionCandidates.size() == 1 &&
+                    this->deletionCandidates.head()->_uniqueAssetId ==
+                        asset.getUniqueAssetId());
 
-    CESIUM_ASSERT(it != this->deletionCandidates.end());
+    CESIUM_ASSERT(isFound);
 
-    if (it != this->deletionCandidates.end()) {
-      this->totalDeletionCandidateMemoryUsage -= (*it)->_sizeInDepot;
-      this->deletionCandidates.erase(it);
+    if (isFound) {
+      this->totalDeletionCandidateMemoryUsage -= asset._sizeInDepot;
+      this->deletionCandidates.remove(asset);
     }
   }
 
@@ -268,7 +270,10 @@ private:
 
   // List of assets that are being considered for deletion, in the order that
   // they were added.
-  std::list<AssetType*> deletionCandidates;
+  CesiumUtility::DoublyLinkedList<
+      SharedAsset<AssetType>,
+      &SharedAsset<AssetType>::_deletionListPointers>
+      deletionCandidates;
   // The total amount of memory used by all assets in the deletionCandidates
   // list.
   std::atomic<int64_t> totalDeletionCandidateMemoryUsage;
