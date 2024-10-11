@@ -20,6 +20,12 @@ namespace CesiumAsync {
 
 template <typename T> class SharedAsset;
 
+template <typename AssetType> class AssetFactory {
+public:
+  virtual CesiumUtility::IntrusivePointer<AssetType>
+  createFrom(const gsl::span<const gsl::byte>& data) const = 0;
+};
+
 /**
  * A depot for {@link SharedAsset} instances, which are potentially shared between multiple objects.
  * @tparam AssetType The type of asset stored in this depot. This should usually
@@ -44,7 +50,8 @@ public:
    */
   int64_t staleAssetSizeLimit = 16 * 1024 * 1024;
 
-  SharedAssetDepot() = default;
+  SharedAssetDepot(std::unique_ptr<AssetFactory<AssetType>> _factory)
+      : factory(std::move(_factory)) {}
 
   ~SharedAssetDepot() {
     // It's possible the assets will outlive the depot, if they're still in use.
@@ -102,12 +109,10 @@ public:
    * If the asset has already started loading in this depot but hasn't finished,
    * its future will be returned.
    */
-  template <typename Factory>
   CesiumAsync::SharedFuture<CesiumUtility::IntrusivePointer<AssetType>>
   getOrFetch(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const Factory& factory,
       const std::string& uri,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
     // We need to avoid:
@@ -138,8 +143,7 @@ public:
     CesiumAsync::Future<CesiumUtility::IntrusivePointer<AssetType>> future =
         pAssetAccessor->get(asyncSystem, uri, headers)
             .thenInWorkerThread(
-                [factory = std::move(factory)](
-                    std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
+                [this](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
                     -> CesiumUtility::IntrusivePointer<AssetType> {
                   const CesiumAsync::IAssetResponse* pResponse =
                       pRequest->response();
@@ -147,7 +151,7 @@ public:
                     return nullptr;
                   }
 
-                  return factory.createFrom(pResponse->data());
+                  return this->factory->createFrom(pResponse->data());
                 })
             // Do this in main thread since we're messing with the collections.
             .thenInMainThread(
@@ -270,6 +274,9 @@ private:
   std::atomic<int64_t> totalDeletionCandidateMemoryUsage;
   // Mutex for modifying the deletionCandidates list.
   mutable std::mutex deletionCandidatesMutex;
+
+  // The factory used to create new AssetType instances.
+  std::unique_ptr<AssetFactory<AssetType>> factory;
 
   friend class SharedAsset<AssetType>;
 };

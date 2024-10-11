@@ -115,7 +115,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * that might appear in this glTF.
    */
   CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssets =
-      GltfSharedAssetSystem::getDefault();
+      nullptr;
 };
 
 /**

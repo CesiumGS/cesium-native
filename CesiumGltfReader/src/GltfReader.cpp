@@ -41,26 +41,6 @@ using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
-
-/**
- * Used to construct an ImageAsset.
- */
-struct ImageAssetFactory {
-  ImageAssetFactory(const Ktx2TranscodeTargets& ktx2TranscodeTargets_)
-      : ktx2TranscodeTargets(ktx2TranscodeTargets_) {}
-
-  CesiumUtility::IntrusivePointer<ImageAsset>
-  createFrom(const gsl::span<const gsl::byte>& data) const {
-    ImageReaderResult imageResult =
-        ImageDecoder::readImage(data, this->ktx2TranscodeTargets);
-    // TODO: report warnings and errors!
-    return imageResult.pImage;
-  }
-
-private:
-  const Ktx2TranscodeTargets ktx2TranscodeTargets;
-};
-
 #pragma pack(push, 1)
 struct GlbHeader {
   uint32_t magic;
@@ -581,12 +561,8 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                     .share();
               } else {
                 // We have a depot, this is easy!
-                return options.pSharedAssets->pImage->getOrFetch(
-                    asyncSystem,
-                    pAssetAccessor,
-                    ImageAssetFactory(options.ktx2TranscodeTargets),
-                    uri,
-                    headers);
+                return options.pSharedAssets->pImage
+                    ->getOrFetch(asyncSystem, pAssetAccessor, uri, headers);
               }
             };
 

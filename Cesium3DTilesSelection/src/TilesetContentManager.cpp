@@ -666,7 +666,9 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
+      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault(
+          CesiumGltfReader::AssetSystemOptions{
+              tilesetOptions.contentOptions.ktx2TranscodeTargets})),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -696,7 +698,9 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
+      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault(
+          CesiumGltfReader::AssetSystemOptions{
+              tilesetOptions.contentOptions.ktx2TranscodeTargets})),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -848,7 +852,9 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
+      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault(
+          CesiumGltfReader::AssetSystemOptions{
+              tilesetOptions.contentOptions.ktx2TranscodeTargets})),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},

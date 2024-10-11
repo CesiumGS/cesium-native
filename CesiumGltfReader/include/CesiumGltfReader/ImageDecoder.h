@@ -1,6 +1,7 @@
 #include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltfReader/Library.h"
 
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <gsl/span>
@@ -64,6 +65,26 @@ public:
    */
   static std::optional<std::string>
   generateMipMaps(CesiumGltf::ImageAsset& image);
+};
+
+/**
+ * Used to construct an ImageAsset.
+ */
+struct ImageAssetFactory : CesiumAsync::AssetFactory<CesiumGltf::ImageAsset> {
+  ImageAssetFactory(
+      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets_)
+      : ktx2TranscodeTargets(ktx2TranscodeTargets_) {}
+
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
+  createFrom(const gsl::span<const gsl::byte>& data) const override {
+    CesiumGltfReader::ImageReaderResult imageResult =
+        ImageDecoder::readImage(data, this->ktx2TranscodeTargets);
+    // TODO: report warnings and errors!
+    return imageResult.pImage;
+  }
+
+private:
+  const CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
 };
 
 } // namespace CesiumGltfReader
