@@ -7,15 +7,17 @@
 
 #include <CesiumGltf/Schema.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
-#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
+
+#include "SharedAsset<Schema>JsonHandler.h"
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class SchemaJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+class SchemaJsonHandler : public CesiumGltfReader::SharedAsset<Schema>
+                              JsonHandler {
 public:
   using ValueType = CesiumGltf::Schema;
 

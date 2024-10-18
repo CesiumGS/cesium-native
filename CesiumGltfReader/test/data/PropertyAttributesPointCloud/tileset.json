@@ -1,0 +1,58 @@
+{
+  "asset": {
+    "version": "1.1"
+  },
+  "schemaUri": "MetadataSchema.json",
+  "statistics": {
+    "classes": {
+      "exampleMetadataClass": {
+        "count": 29338,
+        "properties": {
+          "intensity": {
+            "min": 0.0,
+            "max": 0.6333333849906921,
+            "mean": 0.28973701532415364,
+            "median": 0.25416669249534607,
+            "standardDeviation": 0.18222664489583626,
+            "variance": 0.03320655011,
+            "sum": 8500.30455558002,
+            "_skewness": 0.4226942540824248,
+            "_kurtosis": -0.230171075517038
+          },
+          "classification": {
+            "occurrences": {
+              "MediumVegetation": 6876,
+              "Buildings": 22462
+            }
+          }
+        }
+      }
+    }
+  },  
+  "geometricError" : 1024.0,
+  "root" : {
+    "boundingVolume" : {
+      "box" : [ 7.422499656677246, 0.0, 3.9779999256134033, 7.422499656677246, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.9779999256134033 ]
+    },
+    "geometricError" : 512.0,
+    "refine" : "ADD",
+    "children" : [ {
+      "boundingVolume" : {
+        "box" : [ 4.793999671936035, 0.0, 3.9779999256134033, 4.793999671936035, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.9779999256134033 ]
+      },
+      "geometricError" : 0.0,
+      "content" : {
+        "uri" : "PropertyAttributesPointCloudHouse.gltf"
+      }
+    }, {
+      "boundingVolume" : {
+        "box" : [ 2.422499656677246, 0.0, 3.7230000495910645, 2.422499656677246, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.7230000495910645 ]
+      },
+      "geometricError" : 0.0,
+      "transform" : [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 10.0, 0.0, 0.0, 1.0 ],
+      "content" : {
+        "uri" : "PropertyAttributesPointCloudTree.gltf"
+      }
+    } ]
+  }
+}

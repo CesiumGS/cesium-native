@@ -1272,7 +1272,7 @@ void writeJson(
     writeJson(obj.enums, jsonWriter, context);
   }
 
-  writeExtensibleObject(obj, jsonWriter, context);
+  writeSharedAsset<Schema>(obj, jsonWriter, context);
 
   jsonWriter.EndObject();
 }

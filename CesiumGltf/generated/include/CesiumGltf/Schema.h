@@ -6,8 +6,7 @@
 #include "CesiumGltf/Enum.h"
 #include "CesiumGltf/Library.h"
 
-#include <CesiumUtility/ExtensibleObject.h>
-
+#include <CesiumAsync/SharedAsset<Schema>.h>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -16,7 +15,7 @@ namespace CesiumGltf {
 /**
  * @brief An object defining classes and enums.
  */
-struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API Schema final : public CesiumAsync::SharedAsset<Schema> {
   static inline constexpr const char* TypeName = "Schema";
 
   /**
