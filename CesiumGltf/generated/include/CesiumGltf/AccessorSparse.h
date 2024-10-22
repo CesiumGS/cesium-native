@@ -36,5 +36,13 @@ struct CESIUMGLTF_API AccessorSparse final
    * accessor values.
    */
   CesiumGltf::AccessorSparseValues values;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->count);
+    accum += this->indices.getSizeBytes();
+    accum += this->values.getSizeBytes();
+    return accum;
+  }
 };
 } // namespace CesiumGltf

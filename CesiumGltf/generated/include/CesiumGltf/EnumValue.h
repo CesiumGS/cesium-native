@@ -31,5 +31,14 @@ struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
    * @brief The integer enum value.
    */
   int64_t value = int64_t();
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += this->name.size();
+    accum += sizeof(this->description) +
+             (this->description.has_value() ? this->description->size() : 0);
+    accum += sizeof(this->value);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

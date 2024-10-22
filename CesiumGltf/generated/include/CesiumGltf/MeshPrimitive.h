@@ -70,5 +70,24 @@ struct CESIUMGLTF_API MeshPrimitive final
    * @brief An array of morph targets.
    */
   std::vector<std::unordered_map<std::string, int32_t>> targets;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (auto& [k, v] : this->attributes) {
+      accum += k.size();
+      accum += sizeof(v);
+    }
+    accum += sizeof(this->indices);
+    accum += sizeof(this->material);
+    accum += sizeof(this->mode);
+    for (const std::unordered_map<std::string, int32_t>& value :
+         this->targets) {
+      for (auto& [k, v] : value) {
+        accum += k.size();
+        accum += sizeof(v);
+      }
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

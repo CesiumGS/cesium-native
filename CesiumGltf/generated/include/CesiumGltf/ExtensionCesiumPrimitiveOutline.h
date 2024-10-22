@@ -25,5 +25,11 @@ struct CESIUMGLTF_API ExtensionCesiumPrimitiveOutline final
    * the edge of this primitive's triangles.
    */
   int32_t indices = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->indices);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

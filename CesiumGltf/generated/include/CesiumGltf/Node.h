@@ -76,5 +76,31 @@ struct CESIUMGLTF_API Node final : public CesiumGltf::NamedObject {
    * When defined, `mesh` **MUST** also be defined.
    */
   std::vector<double> weights;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->camera);
+    for (const int32_t& value : this->children) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->skin);
+    for (const double& value : this->matrix) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->mesh);
+    for (const double& value : this->rotation) {
+      accum += sizeof(value);
+    }
+    for (const double& value : this->scale) {
+      accum += sizeof(value);
+    }
+    for (const double& value : this->translation) {
+      accum += sizeof(value);
+    }
+    for (const double& value : this->weights) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

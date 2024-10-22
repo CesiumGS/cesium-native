@@ -21,5 +21,11 @@ struct CESIUMGLTF_API MaterialOcclusionTextureInfo final : public TextureInfo {
    * texture value> - 1.0)`.
    */
   double strength = 1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->strength);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

@@ -6,7 +6,8 @@
 #include "CesiumGltf/Enum.h"
 #include "CesiumGltf/Library.h"
 
-#include <CesiumAsync/SharedAsset<Schema>.h>
+#include <CesiumAsync/SharedAsset.h>
+
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -52,5 +53,25 @@ struct CESIUMGLTF_API Schema final : public CesiumAsync::SharedAsset<Schema> {
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, CesiumGltf::Enum> enums;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += this->id.size();
+    accum +=
+        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
+    accum += sizeof(this->description) +
+             (this->description.has_value() ? this->description->size() : 0);
+    accum += sizeof(this->version) +
+             (this->version.has_value() ? this->version->size() : 0);
+    for (auto& [k, v] : this->classes) {
+      accum += k.size();
+      accum += v.getSizeBytes();
+    }
+    for (auto& [k, v] : this->enums) {
+      accum += k.size();
+      accum += v.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

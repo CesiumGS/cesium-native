@@ -39,5 +39,17 @@ struct CESIUMGLTF_API PropertyTexture final
    */
   std::unordered_map<std::string, CesiumGltf::PropertyTextureProperty>
       properties;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum +=
+        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
+    accum += this->classProperty.size();
+    for (auto& [k, v] : this->properties) {
+      accum += k.size();
+      accum += v.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

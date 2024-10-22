@@ -44,5 +44,14 @@ struct CESIUMGLTF_API CameraPerspective final
    * @brief The floating-point distance to the near clipping plane.
    */
   double znear = double();
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->aspectRatio);
+    accum += sizeof(this->yfov);
+    accum += sizeof(this->zfar);
+    accum += sizeof(this->znear);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

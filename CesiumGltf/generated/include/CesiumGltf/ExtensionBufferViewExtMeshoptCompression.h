@@ -83,5 +83,17 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
    *
    */
   std::string filter = Filter::NONE;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->buffer);
+    accum += sizeof(this->byteOffset);
+    accum += sizeof(this->byteLength);
+    accum += sizeof(this->byteStride);
+    accum += sizeof(this->count);
+    accum += sizeof(this->mode);
+    accum += sizeof(this->filter);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

@@ -23,5 +23,14 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariants final
    * @brief variants
    */
   std::vector<CesiumGltf::ExtensionModelKhrMaterialsVariantsValue> variants;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& value :
+         this->variants) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

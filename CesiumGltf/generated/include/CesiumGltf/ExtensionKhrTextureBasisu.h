@@ -23,5 +23,11 @@ struct CESIUMGLTF_API ExtensionKhrTextureBasisu final
    * Universal supercompression.
    */
   int32_t source = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->source);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

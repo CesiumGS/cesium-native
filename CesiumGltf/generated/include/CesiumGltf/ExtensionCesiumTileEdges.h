@@ -40,5 +40,14 @@ struct CESIUMGLTF_API ExtensionCesiumTileEdges final
    * edge.
    */
   int32_t top = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->left);
+    accum += sizeof(this->bottom);
+    accum += sizeof(this->right);
+    accum += sizeof(this->top);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

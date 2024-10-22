@@ -22,5 +22,13 @@ struct CESIUMGLTF_API ExtensionExtMeshFeatures final
    * @brief An array of feature ID sets.
    */
   std::vector<CesiumGltf::FeatureId> featureIds;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const CesiumGltf::FeatureId& value : this->featureIds) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

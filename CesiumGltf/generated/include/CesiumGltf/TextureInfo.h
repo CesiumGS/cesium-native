@@ -31,5 +31,12 @@ struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
    * coordinate attributes for the material to be applicable to it.
    */
   int64_t texCoord = 0;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->index);
+    accum += sizeof(this->texCoord);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

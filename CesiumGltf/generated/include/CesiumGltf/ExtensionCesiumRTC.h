@@ -21,5 +21,13 @@ struct CESIUMGLTF_API ExtensionCesiumRTC final
    * @brief Center that vertex positions are relative to.
    */
   std::vector<double> center;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const double& value : this->center) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

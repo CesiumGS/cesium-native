@@ -621,6 +621,42 @@ public:
   }
 
   /**
+   * @brief Returns the size in bytes of this `JsonValue`.
+   */
+  int64_t getSizeBytes() const noexcept {
+    struct Operation {
+      int64_t operator()(const Null& value) { return sizeof(std::nullptr_t); }
+      int64_t operator()(const double& value) { return sizeof(double); }
+      int64_t operator()(const std::uint64_t& value) {
+        return sizeof(std::uint64_t);
+      }
+      int64_t operator()(const std::int64_t& value) {
+        return sizeof(std::int64_t);
+      }
+      int64_t operator()(const Bool& value) { return sizeof(Bool); }
+      int64_t operator()(const String& value) { return value.size(); }
+      int64_t operator()(const Object& value) {
+        int64_t accum = 0;
+        for (auto& [k, v] : value) {
+          accum += k.size();
+          accum += v.getSizeBytes();
+        }
+
+        return accum;
+      }
+      int64_t operator()(const Array& value) {
+        int64_t accum = 0;
+        for (const JsonValue& v : value) {
+          accum += v.getSizeBytes();
+        }
+        return accum;
+      }
+    };
+
+    return std::visit(Operation{}, this->value);
+  }
+
+  /**
    * @brief The actual value.
    *
    * The type of the value may be queried with the `isNull`, `isDouble`,

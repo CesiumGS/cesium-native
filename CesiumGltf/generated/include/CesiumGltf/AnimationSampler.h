@@ -50,5 +50,13 @@ struct CESIUMGLTF_API AnimationSampler final
    * @brief The index of an accessor, containing keyframe output values.
    */
   int32_t output = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->input);
+    accum += sizeof(this->interpolation);
+    accum += sizeof(this->output);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

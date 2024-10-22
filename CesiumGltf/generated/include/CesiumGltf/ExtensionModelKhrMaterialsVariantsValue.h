@@ -22,5 +22,11 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
    * .
    */
   std::string name;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += this->name.size();
+    return accum;
+  }
 };
 } // namespace CesiumGltf

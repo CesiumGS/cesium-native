@@ -19,5 +19,13 @@ struct CESIUMGLTF_API Scene final : public CesiumGltf::NamedObject {
    * @brief The indices of each root node.
    */
   std::vector<int32_t> nodes;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const int32_t& value : this->nodes) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

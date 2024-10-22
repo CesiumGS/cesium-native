@@ -53,5 +53,18 @@ struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
    * values. Only applicable when using the `EXT_structural_metadata` extension.
    */
   int32_t propertyTable = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->featureCount);
+    accum += sizeof(this->nullFeatureId);
+    accum += sizeof(this->label) +
+             (this->label.has_value() ? this->label->size() : 0);
+    accum += sizeof(this->attribute);
+    accum += sizeof(this->texture) +
+             (this->texture.has_value() ? this->texture->getSizeBytes() : 0);
+    accum += sizeof(this->propertyTable);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

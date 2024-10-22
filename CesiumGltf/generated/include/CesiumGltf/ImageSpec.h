@@ -51,6 +51,15 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
    */
   int32_t bufferView = -1;
 
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum +=
+        sizeof(this->uri) + (this->uri.has_value() ? this->uri->size() : 0);
+    accum += sizeof(this->mimeType);
+    accum += sizeof(this->bufferView);
+    return accum;
+  }
+
 private:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Image} instead.

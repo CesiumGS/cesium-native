@@ -146,6 +146,25 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    */
   std::optional<CesiumGltf::AccessorSparse> sparse;
 
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->bufferView);
+    accum += sizeof(this->byteOffset);
+    accum += sizeof(this->componentType);
+    accum += sizeof(this->normalized);
+    accum += sizeof(this->count);
+    accum += sizeof(this->type);
+    for (const double& value : this->max) {
+      accum += sizeof(value);
+    }
+    for (const double& value : this->min) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->sparse) +
+             (this->sparse.has_value() ? this->sparse->getSizeBytes() : 0);
+    return accum;
+  }
+
 private:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Accessor} instead.

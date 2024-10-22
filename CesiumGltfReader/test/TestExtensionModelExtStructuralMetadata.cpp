@@ -75,7 +75,7 @@ TEST_CASE(
       readerResult.model->getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  REQUIRE(pMetadata->schema.has_value());
+  REQUIRE(pMetadata->schema != nullptr);
   REQUIRE(pMetadata->schema->classes.size() == 1);
 
   auto treesIt = pMetadata->schema->classes.find("tree");

@@ -26,5 +26,12 @@ struct CESIUMGLTF_API Texture final : public CesiumGltf::NamedObject {
    * otherwise behavior is undefined.
    */
   int32_t source = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->sampler);
+    accum += sizeof(this->source);
+    return accum;
+  }
 };
 } // namespace CesiumGltf
