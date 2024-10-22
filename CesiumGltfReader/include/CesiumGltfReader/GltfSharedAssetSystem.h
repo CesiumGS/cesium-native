@@ -3,10 +3,11 @@
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltf/Schema.h>
 
 namespace CesiumGltf {
 struct ImageAsset;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
@@ -28,6 +29,10 @@ public:
   CesiumUtility::IntrusivePointer<
       CesiumAsync::SharedAssetDepot<CesiumGltf::ImageAsset>>
       pImage;
+
+  CesiumUtility::IntrusivePointer<
+      CesiumAsync::SharedAssetDepot<CesiumGltf::Schema>>
+      pExternalMetadataSchema;
 };
 
 } // namespace CesiumGltfReader

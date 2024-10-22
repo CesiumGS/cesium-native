@@ -1,7 +1,9 @@
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumGltfReader/ImageReader.h>
+#include <CesiumGltfReader/SchemaAssetFactory.h>
 
 namespace CesiumGltfReader {
 
@@ -14,6 +16,8 @@ createDefault(const AssetSystemOptions& options) {
 
   p->pImage.emplace(
       std::make_unique<ImageAssetFactory>(options.ktx2TranscodeTargets));
+
+  p->pExternalMetadataSchema.emplace(std::make_unique<SchemaAssetFactory>());
 
   return p;
 }

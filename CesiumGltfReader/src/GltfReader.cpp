@@ -13,9 +13,12 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumGltfReader/SchemaAssetFactory.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
@@ -481,6 +484,19 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
     }
   }
 
+  {
+    // We need to obtain the extension to find out if we have another buffer we
+    // need to resolve. We can't use this pointer later since the result is
+    // moved, so we'll do it twice.
+    ExtensionModelExtStructuralMetadata* pStructuralMetadataTemp =
+        result.model->getExtension<ExtensionModelExtStructuralMetadata>();
+
+    if (pStructuralMetadataTemp &&
+        pStructuralMetadataTemp->schemaUri.has_value()) {
+      ++uriBuffersCount;
+    }
+  }
+
   if (uriBuffersCount == 0) {
     return asyncSystem.createResolvedFuture(std::move(result));
   }
@@ -584,6 +600,62 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
             }));
       }
     }
+  }
+
+  ExtensionModelExtStructuralMetadata* pStructuralMetadata =
+      pResult->model->getExtension<ExtensionModelExtStructuralMetadata>();
+
+  if (options.resolveExternalStructuralMetadata && pStructuralMetadata &&
+      pStructuralMetadata->schemaUri.has_value()) {
+
+    auto getAsset = [&options](
+                        const AsyncSystem& asyncSystem,
+                        const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+                        const std::string& uri,
+                        const std::vector<IAssetAccessor::THeader>& headers) {
+      if (options.pSharedAssets == nullptr ||
+          options.pSharedAssets->pExternalMetadataSchema == nullptr) {
+        return pAssetAccessor->get(asyncSystem, uri, headers)
+            .thenInWorkerThread(
+                [uri, options](std::shared_ptr<IAssetRequest>&& pRequest) {
+                  const IAssetResponse* pResponse = pRequest->response();
+
+                  CesiumUtility::IntrusivePointer<CesiumGltf::Schema> pAsset =
+                      nullptr;
+
+                  if (pResponse) {
+                    gsl::span<const std::byte> bytes = pResponse->data();
+                    pAsset = SchemaAssetFactory().createFrom(bytes);
+                  }
+
+                  return pAsset;
+                })
+            .share();
+      } else {
+        return options.pSharedAssets->pExternalMetadataSchema
+            ->getOrFetch(asyncSystem, pAssetAccessor, uri, headers);
+      }
+    };
+
+    SharedFuture<IntrusivePointer<CesiumGltf::Schema>> future = getAsset(
+        asyncSystem,
+        pAssetAccessor,
+        *pStructuralMetadata->schemaUri,
+        tHeaders);
+
+    resolvedBuffers.push_back(future.thenInWorkerThread(
+        [pStructuralMetadata = pStructuralMetadata](
+            const IntrusivePointer<CesiumGltf::Schema>& pLoadedSchema) {
+          std::string schemaUri = *pStructuralMetadata->schemaUri;
+          pStructuralMetadata->schemaUri = std::nullopt;
+
+          if (pLoadedSchema) {
+            pStructuralMetadata->schema = pLoadedSchema;
+            return ExternalBufferLoadResult{true, schemaUri};
+          }
+
+          return ExternalBufferLoadResult{false, schemaUri};
+        }));
   }
 
   return asyncSystem.all(std::move(resolvedBuffers))

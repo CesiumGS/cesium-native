@@ -4,8 +4,6 @@
 #include "CesiumGltf/ImageSpec.h"
 #include "CesiumGltf/Library.h"
 
-#include <CesiumAsync/SharedAssetDepot.h>
-
 namespace CesiumGltf {
 /** @copydoc ImageSpec */
 struct CESIUMGLTF_API Image final : public ImageSpec {
