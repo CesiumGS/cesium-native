@@ -1,4 +1,4 @@
-const qualifiedTypeNameRegex = /(?:(?<namespace>.+)::)?(?<name>.+)/;
+const qualifiedTypeNameRegex = /(?:(?<namespace>.+)::)?(?<name>[^<]+)/;
 
 const NameFormatters = {
   getReaderNamespace: function getReaderNamespace(namespace, readerNamespace) {

@@ -30,18 +30,18 @@ function generateCombinedWriter(options) {
         // forward declarations
         namespace ${namespace} {
           ${writers
-            .map((writer) => {
-              return writer.writeForwardDeclaration;
-            })
-            .join("\n")}
+      .map((writer) => {
+        return writer.writeForwardDeclaration;
+      })
+      .join("\n")}
         } // namespace ${namespace}
 
         namespace ${writerNamespace} {          
           ${writers
-            .map((writer) => {
-              return writer.writeDeclaration;
-            })
-            .join("\n")}
+      .map((writer) => {
+        return writer.writeDeclaration;
+      })
+      .join("\n")}
 
         } // namespace ${writerNamespace}
   `;
@@ -59,20 +59,20 @@ function generateCombinedWriter(options) {
         #include <CesiumJsonWriter/JsonWriter.h>
 
         ${writers
-          .map((writer) => {
-            return writer.writeInclude;
-          })
-          .join("\n")}
+      .map((writer) => {
+        return writer.writeInclude;
+      })
+      .join("\n")}
         
         namespace ${writerNamespace} {
         
         namespace {
         
         ${writers
-          .map((writer) => {
-            return writer.writeJsonDeclaration;
-          })
-          .join("\n")}
+      .map((writer) => {
+        return writer.writeJsonDeclaration;
+      })
+      .join("\n")}
         
         // Forward declaration to avoid circular dependency since some properties
         // are vector of unordered_map and others are unordered_map of vector
@@ -81,6 +81,14 @@ function generateCombinedWriter(options) {
             const std::vector<T>& list,
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context);
+
+        template <typename T>
+        [[maybe_unused]] void writeJson(
+          const CesiumUtility::IntrusivePointer<T>& ptr,
+          CesiumJsonWriter::JsonWriter& jsonWriter,
+          const CesiumJsonWriter::ExtensionWriterContext& context) {
+          writeJson(*ptr, jsonWriter, context);  
+        }
 
         [[maybe_unused]] void writeJson(
             const std::string& str,
@@ -191,6 +199,14 @@ function generateCombinedWriter(options) {
         }
 
         template <typename T>
+        void writeSharedAsset(
+          const T& obj,
+          CesiumJsonWriter::JsonWriter& jsonWriter,
+          const CesiumJsonWriter::ExtensionWriterContext& context) {
+          writeExtensibleObject(obj, jsonWriter, context);
+        }
+
+        template <typename T>
         void writeNamedObject(
             const T& obj,
             CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -205,24 +221,24 @@ function generateCombinedWriter(options) {
         }
         
         ${writers
-          .map((writer) => {
-            return writer.writeBaseJsonDefinition ? writer.writeBaseJsonDefinition : "";
-          })
-          .join("\n")}
+      .map((writer) => {
+        return writer.writeBaseJsonDefinition ? writer.writeBaseJsonDefinition : "";
+      })
+      .join("\n")}
 
         ${writers
-          .map((writer) => {
-            return writer.writeJsonDefinition;
-          })
-          .join("\n")}
+      .map((writer) => {
+        return writer.writeJsonDefinition;
+      })
+      .join("\n")}
 
         } // namespace ${writerNamespace}
 
         ${writers
-          .map((writer) => {
-            return writer.writeDefinition;
-          })
-          .join("\n")}
+      .map((writer) => {
+        return writer.writeDefinition;
+      })
+      .join("\n")}
         
         } // namespace ${writerNamespace}
   `;

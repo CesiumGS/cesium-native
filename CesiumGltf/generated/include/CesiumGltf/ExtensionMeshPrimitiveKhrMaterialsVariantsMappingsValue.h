@@ -42,5 +42,16 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue
    * not necessarily unique.
    */
   std::optional<std::string> name;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const int32_t& value : this->variants) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->material);
+    accum +=
+        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

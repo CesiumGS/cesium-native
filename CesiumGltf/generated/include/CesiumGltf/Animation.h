@@ -29,5 +29,16 @@ struct CESIUMGLTF_API Animation final : public CesiumGltf::NamedObject {
    * algorithm.
    */
   std::vector<CesiumGltf::AnimationSampler> samplers;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const CesiumGltf::AnimationChannel& value : this->channels) {
+      accum += value.getSizeBytes();
+    }
+    for (const CesiumGltf::AnimationSampler& value : this->samplers) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

@@ -54,5 +54,12 @@ struct CESIUMGLTF_API AnimationChannelTarget final
    *
    */
   std::string path = Path::translation;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->node);
+    accum += sizeof(this->path);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

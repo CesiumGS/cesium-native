@@ -42,5 +42,18 @@ struct CESIUMGLTF_API ExtensionKhrTextureTransform final
    * extension is supported.
    */
   std::optional<int64_t> texCoord;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const double& value : this->offset) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->rotation);
+    for (const double& value : this->scale) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->texCoord);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

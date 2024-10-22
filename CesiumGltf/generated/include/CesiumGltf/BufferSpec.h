@@ -29,6 +29,14 @@ struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
    */
   int64_t byteLength = int64_t();
 
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum +=
+        sizeof(this->uri) + (this->uri.has_value() ? this->uri->size() : 0);
+    accum += sizeof(this->byteLength);
+    return accum;
+  }
+
 private:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.

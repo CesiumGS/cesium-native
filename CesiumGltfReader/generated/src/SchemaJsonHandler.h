@@ -4,10 +4,10 @@
 
 #include "ClassJsonHandler.h"
 #include "EnumJsonHandler.h"
+#include "SharedAssetJsonHandler.h"
 
 #include <CesiumGltf/Schema.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
-#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
@@ -15,7 +15,7 @@ class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class SchemaJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+class SchemaJsonHandler : public CesiumGltfReader::SharedAssetJsonHandler {
 public:
   using ValueType = CesiumGltf::Schema;
 

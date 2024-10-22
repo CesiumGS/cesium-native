@@ -22,5 +22,11 @@ struct CESIUMGLTF_API MaterialNormalTextureInfo final : public TextureInfo {
    * vec3(<normal scale>, <normal scale>, 1.0))`.
    */
   double scale = 1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->scale);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

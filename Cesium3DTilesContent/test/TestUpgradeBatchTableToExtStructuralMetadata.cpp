@@ -176,7 +176,7 @@ static void createTestForNonArrayJson(
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema> schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -252,7 +252,7 @@ static void createTestForNonArrayJson(
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema> schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -332,7 +332,7 @@ static void createTestForArrayJson(
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
   REQUIRE(schema->classes.find("default") != schema->classes.end());
 
@@ -591,7 +591,7 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(metadata);
 
-  std::optional<Schema> schema = metadata->schema;
+  CesiumUtility::IntrusivePointer<Schema> schema = metadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -1258,7 +1258,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
       result.model->getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -1350,7 +1350,7 @@ TEST_CASE("Upgrade JSON booleans to binary") {
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -1952,7 +1952,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
         model.getExtension<ExtensionModelExtStructuralMetadata>();
     REQUIRE(pMetadata);
 
-    const std::optional<Schema> schema = pMetadata->schema;
+    const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
     REQUIRE(schema);
 
     const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -2038,7 +2038,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
         model.getExtension<ExtensionModelExtStructuralMetadata>();
     REQUIRE(pMetadata);
 
-    const std::optional<Schema> schema = pMetadata->schema;
+    const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
     REQUIRE(schema);
 
     const std::unordered_map<std::string, Class>& classes = schema->classes;

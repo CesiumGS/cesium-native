@@ -95,5 +95,14 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    *
    */
   int32_t wrapT = WrapT::REPEAT;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->magFilter);
+    accum += sizeof(this->minFilter);
+    accum += sizeof(this->wrapS);
+    accum += sizeof(this->wrapT);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

@@ -28,7 +28,7 @@ struct CESIUMGLTF_API ExtensionModelExtStructuralMetadata final
   /**
    * @brief An object defining classes and enums.
    */
-  std::optional<CesiumGltf::Schema> schema;
+  CesiumUtility::IntrusivePointer<CesiumGltf::Schema> schema;
 
   /**
    * @brief The URI (or IRI) of the external schema file.
@@ -52,5 +52,23 @@ struct CESIUMGLTF_API ExtensionModelExtStructuralMetadata final
    * by index.
    */
   std::vector<CesiumGltf::PropertyAttribute> propertyAttributes;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += this->schema->getSizeBytes();
+    accum += sizeof(this->schemaUri) +
+             (this->schemaUri.has_value() ? this->schemaUri->size() : 0);
+    for (const CesiumGltf::PropertyTable& value : this->propertyTables) {
+      accum += value.getSizeBytes();
+    }
+    for (const CesiumGltf::PropertyTexture& value : this->propertyTextures) {
+      accum += value.getSizeBytes();
+    }
+    for (const CesiumGltf::PropertyAttribute& value :
+         this->propertyAttributes) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

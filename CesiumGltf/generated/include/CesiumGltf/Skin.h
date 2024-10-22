@@ -37,5 +37,15 @@ struct CESIUMGLTF_API Skin final : public CesiumGltf::NamedObject {
    * @brief Indices of skeleton nodes, used as joints in this skin.
    */
   std::vector<int32_t> joints;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->inverseBindMatrices);
+    accum += sizeof(this->skeleton);
+    for (const int32_t& value : this->joints) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

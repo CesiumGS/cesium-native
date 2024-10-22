@@ -30,5 +30,16 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
    * `EXT_structural_metadata` object.
    */
   std::vector<int32_t> propertyAttributes;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const int32_t& value : this->propertyTextures) {
+      accum += sizeof(value);
+    }
+    for (const int32_t& value : this->propertyAttributes) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

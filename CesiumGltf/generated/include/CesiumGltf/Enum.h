@@ -62,5 +62,18 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
    * are not allowed.
    */
   std::vector<CesiumGltf::EnumValue> values;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum +=
+        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
+    accum += sizeof(this->description) +
+             (this->description.has_value() ? this->description->size() : 0);
+    accum += sizeof(this->valueType);
+    for (const CesiumGltf::EnumValue& value : this->values) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

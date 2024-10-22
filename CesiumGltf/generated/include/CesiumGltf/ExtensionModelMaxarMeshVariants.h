@@ -31,5 +31,15 @@ struct CESIUMGLTF_API ExtensionModelMaxarMeshVariants final
    * @brief variants
    */
   std::vector<CesiumGltf::ExtensionModelMaxarMeshVariantsValue> variants;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->defaultProperty);
+    for (const CesiumGltf::ExtensionModelMaxarMeshVariantsValue& value :
+         this->variants) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

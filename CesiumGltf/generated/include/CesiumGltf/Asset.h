@@ -39,5 +39,17 @@ struct CESIUMGLTF_API Asset final : public CesiumUtility::ExtensibleObject {
    * version.
    */
   std::optional<std::string> minVersion;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->copyright) +
+             (this->copyright.has_value() ? this->copyright->size() : 0);
+    accum += sizeof(this->generator) +
+             (this->generator.has_value() ? this->generator->size() : 0);
+    accum += this->version.size();
+    accum += sizeof(this->minVersion) +
+             (this->minVersion.has_value() ? this->minVersion->size() : 0);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

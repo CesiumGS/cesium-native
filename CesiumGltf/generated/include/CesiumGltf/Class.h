@@ -34,5 +34,18 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
    * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum +=
+        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
+    accum += sizeof(this->description) +
+             (this->description.has_value() ? this->description->size() : 0);
+    for (auto& [k, v] : this->properties) {
+      accum += k.size();
+      accum += v.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

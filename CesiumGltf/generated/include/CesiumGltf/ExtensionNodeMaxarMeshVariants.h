@@ -23,5 +23,14 @@ struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
    * @brief A list of mesh to variant mappings
    */
   std::vector<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue> mappings;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& value :
+         this->mappings) {
+      accum += value.getSizeBytes();
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

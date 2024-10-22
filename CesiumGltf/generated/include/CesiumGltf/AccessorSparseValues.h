@@ -31,5 +31,12 @@ struct CESIUMGLTF_API AccessorSparseValues final
    * @brief The offset relative to the start of the bufferView in bytes.
    */
   int64_t byteOffset = 0;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->bufferView);
+    accum += sizeof(this->byteOffset);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

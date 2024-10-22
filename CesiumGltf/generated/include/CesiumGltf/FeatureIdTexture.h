@@ -22,5 +22,13 @@ struct CESIUMGLTF_API FeatureIdTexture final : public TextureInfo {
    * values are packed in little-endian order.
    */
   std::vector<int64_t> channels = {0};
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const int64_t& value : this->channels) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

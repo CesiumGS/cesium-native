@@ -26,5 +26,16 @@ struct CESIUMGLTF_API Mesh final : public CesiumGltf::NamedObject {
    * array elements **MUST** match the number of morph targets.
    */
   std::vector<double> weights;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (const CesiumGltf::MeshPrimitive& value : this->primitives) {
+      accum += value.getSizeBytes();
+    }
+    for (const double& value : this->weights) {
+      accum += sizeof(value);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

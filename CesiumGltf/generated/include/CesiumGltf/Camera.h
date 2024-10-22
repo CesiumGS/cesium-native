@@ -53,5 +53,18 @@ struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
    * **MUST** be defined.
    */
   std::string type = Type::perspective;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum +=
+        sizeof(this->orthographic) + (this->orthographic.has_value()
+                                          ? this->orthographic->getSizeBytes()
+                                          : 0);
+    accum +=
+        sizeof(this->perspective) +
+        (this->perspective.has_value() ? this->perspective->getSizeBytes() : 0);
+    accum += sizeof(this->type);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

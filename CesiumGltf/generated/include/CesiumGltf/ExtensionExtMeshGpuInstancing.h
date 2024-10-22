@@ -31,5 +31,14 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
    * y, and z axes.
    */
   std::unordered_map<std::string, int32_t> attributes;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    for (auto& [k, v] : this->attributes) {
+      accum += k.size();
+      accum += sizeof(v);
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

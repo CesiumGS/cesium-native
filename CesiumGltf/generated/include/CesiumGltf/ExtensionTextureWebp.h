@@ -21,5 +21,11 @@ struct CESIUMGLTF_API ExtensionTextureWebp final
    * @brief The index of the images node which points to a WebP image.
    */
   int32_t source = -1;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->source);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

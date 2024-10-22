@@ -14,5 +14,11 @@ struct CESIUMGLTF_API ExtensionKhrMaterialsUnlit final
     : public CesiumUtility::ExtensibleObject {
   static inline constexpr const char* TypeName = "ExtensionKhrMaterialsUnlit";
   static inline constexpr const char* ExtensionName = "KHR_materials_unlit";
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+
+    return accum;
+  }
 };
 } // namespace CesiumGltf

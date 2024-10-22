@@ -31,5 +31,12 @@ struct CESIUMGLTF_API AnimationChannel final
    * @brief The descriptor of the animated property.
    */
   CesiumGltf::AnimationChannelTarget target;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->sampler);
+    accum += this->target.getSizeBytes();
+    return accum;
+  }
 };
 } // namespace CesiumGltf

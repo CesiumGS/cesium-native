@@ -49,5 +49,13 @@ struct CESIUMGLTF_API AccessorSparseIndices final
    *
    */
   int32_t componentType = ComponentType::UNSIGNED_BYTE;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->bufferView);
+    accum += sizeof(this->byteOffset);
+    accum += sizeof(this->componentType);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

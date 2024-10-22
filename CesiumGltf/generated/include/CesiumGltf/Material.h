@@ -113,5 +113,32 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
    * equation is evaluated.
    */
   bool doubleSided = false;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->pbrMetallicRoughness) +
+             (this->pbrMetallicRoughness.has_value()
+                  ? this->pbrMetallicRoughness->getSizeBytes()
+                  : 0);
+    accum +=
+        sizeof(this->normalTexture) + (this->normalTexture.has_value()
+                                           ? this->normalTexture->getSizeBytes()
+                                           : 0);
+    accum += sizeof(this->occlusionTexture) +
+             (this->occlusionTexture.has_value()
+                  ? this->occlusionTexture->getSizeBytes()
+                  : 0);
+    accum += sizeof(this->emissiveTexture) +
+             (this->emissiveTexture.has_value()
+                  ? this->emissiveTexture->getSizeBytes()
+                  : 0);
+    for (const double& value : this->emissiveFactor) {
+      accum += sizeof(value);
+    }
+    accum += sizeof(this->alphaMode);
+    accum += sizeof(this->alphaCutoff);
+    accum += sizeof(this->doubleSided);
+    return accum;
+  }
 };
 } // namespace CesiumGltf

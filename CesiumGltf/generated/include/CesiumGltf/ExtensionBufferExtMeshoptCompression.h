@@ -22,5 +22,11 @@ struct CESIUMGLTF_API ExtensionBufferExtMeshoptCompression final
    * need to be loaded.
    */
   bool fallback = false;
+
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(this->fallback);
+    return accum;
+  }
 };
 } // namespace CesiumGltf
