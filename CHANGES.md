@@ -9,6 +9,7 @@
 ##### Additions :tada:
 
 - Added `CesiumUtility::gzip`.
+- Added `CesiumGeometry::Transforms::getUpAxisTransform` to get the transform that converts from one up axis to another.
 
 ### v0.40.1 - 2024-10-01
 
