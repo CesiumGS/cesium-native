@@ -13,7 +13,11 @@ createDefault(const AssetSystemOptions& options) {
       new GltfSharedAssetSystem();
 
   p->pImage.emplace(
-      std::make_unique<ImageAssetFactory>(options.ktx2TranscodeTargets));
+      std::function([pAccessor = options.pAssetAccessor](
+                        const CesiumAsync::AsyncSystem& asyncSystem,
+                        const NetworkImageAssetKey& key) {
+        return key.loadBytesFromNetwork(asyncSystem, pAccessor);
+      }));
 
   return p;
 }

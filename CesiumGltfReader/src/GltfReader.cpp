@@ -561,8 +561,9 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                     .share();
               } else {
                 // We have a depot, this is easy!
-                return options.pSharedAssets->pImage
-                    ->getOrFetch(asyncSystem, pAssetAccessor, uri, headers);
+                return options.pSharedAssets->pImage->getOrFetch(
+                    asyncSystem,
+                    NetworkImageAssetKey{uri, headers});
               }
             };
 

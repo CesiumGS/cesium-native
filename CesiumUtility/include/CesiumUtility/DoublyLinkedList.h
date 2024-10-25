@@ -47,9 +47,10 @@ public:
 
 private:
   template <
-      class TElement,
-      DoublyLinkedListPointers<TElement>(TElement::*Pointers)>
-  friend class DoublyLinkedList;
+      typename TElement,
+      typename TElementBase,
+      DoublyLinkedListPointers<TElement>(TElementBase::*Pointers)>
+  friend class DoublyLinkedListAdvanced;
 
   T* pNext;
   T* pPrevious;
@@ -65,8 +66,11 @@ private:
  * @tparam (T::*Pointers) A member pointer to the field that holds the links to
  * the previous and next nodes.
  */
-template <class T, DoublyLinkedListPointers<T>(T::*Pointers)>
-class DoublyLinkedList final {
+template <
+    typename T,
+    typename TPointerBase,
+    DoublyLinkedListPointers<T>(TPointerBase::*Pointers)>
+class DoublyLinkedListAdvanced final {
 public:
   /**
    * @brief Removes the given node from this list.
@@ -254,5 +258,8 @@ private:
   T* _pHead = nullptr;
   T* _pTail = nullptr;
 };
+
+template <typename T, DoublyLinkedListPointers<T>(T::*Pointers)>
+using DoublyLinkedList = DoublyLinkedListAdvanced<T, T, Pointers>;
 
 } // namespace CesiumUtility
