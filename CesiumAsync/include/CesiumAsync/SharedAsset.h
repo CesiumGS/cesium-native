@@ -1,9 +1,9 @@
 #pragma once
 
-#include <CesiumAsync/SharedAssetDepot.h>
-#include <CesiumUtility/DoublyLinkedList.h>
+#include <CesiumAsync/IDepotOwningAsset.h>
+#include <CesiumAsync/Library.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <atomic>
 
@@ -49,36 +49,6 @@ template <typename TAssetType, typename TAssetKey> class SharedAssetDepot;
 template <typename T>
 class CESIUMASYNC_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
-  /**
-   * Assets can be copied, but the fresh instance has no references and is not
-   * in the asset depot.
-   */
-  SharedAsset(const SharedAsset& rhs)
-      : ExtensibleObject(rhs), _referenceCount(0), _pDepot(nullptr) {}
-
-  /**
-   * After a move construction, the content of the asset is moved to the new
-   * instance, but the asset depot still references the old instance.
-   */
-  SharedAsset(SharedAsset&& rhs)
-      : ExtensibleObject(std::move(rhs)),
-        _referenceCount(0),
-        _pDepot(nullptr) {}
-
-  /**
-   * Assignment does not affect the asset's relationship with the depot, but is
-   * useful to assign the data in derived classes.
-   */
-  SharedAsset& operator=(const SharedAsset& rhs) {
-    CesiumUtility::ExtensibleObject::operator=(rhs);
-    return *this;
-  }
-
-  SharedAsset& operator=(SharedAsset&& rhs) {
-    CesiumUtility::ExtensibleObject::operator=(std::move(rhs));
-    return *this;
-  }
-
   /**
    * @brief Adds a counted reference to this object. Use
    * {@link CesiumUtility::IntrusivePointer} instead of calling this method
@@ -127,6 +97,36 @@ public:
 protected:
   SharedAsset() = default;
   ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
+
+  /**
+   * Assets can be copied, but the fresh instance has no references and is not
+   * in the asset depot.
+   */
+  SharedAsset(const SharedAsset& rhs)
+      : ExtensibleObject(rhs), _referenceCount(0), _pDepot(nullptr) {}
+
+  /**
+   * After a move construction, the content of the asset is moved to the new
+   * instance, but the asset depot still references the old instance.
+   */
+  SharedAsset(SharedAsset&& rhs)
+      : ExtensibleObject(std::move(rhs)),
+        _referenceCount(0),
+        _pDepot(nullptr) {}
+
+  /**
+   * Assignment does not affect the asset's relationship with the depot, but is
+   * useful to assign the data in derived classes.
+   */
+  SharedAsset& operator=(const SharedAsset& rhs) {
+    CesiumUtility::ExtensibleObject::operator=(rhs);
+    return *this;
+  }
+
+  SharedAsset& operator=(SharedAsset&& rhs) {
+    CesiumUtility::ExtensibleObject::operator=(std::move(rhs));
+    return *this;
+  }
 
 private:
   mutable std::atomic<std::int32_t> _referenceCount{0};

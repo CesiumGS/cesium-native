@@ -3,8 +3,7 @@
 #include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltf/ImageSpec.h"
 #include "CesiumGltf/Library.h"
-
-#include <CesiumAsync/SharedAssetDepot.h>
+#include "CesiumUtility/IntrusivePointer.h"
 
 namespace CesiumGltf {
 /** @copydoc ImageSpec */

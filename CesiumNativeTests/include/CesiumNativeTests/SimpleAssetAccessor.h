@@ -3,6 +3,7 @@
 #include "SimpleAssetRequest.h"
 #include "SimpleAssetResponse.h"
 
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 

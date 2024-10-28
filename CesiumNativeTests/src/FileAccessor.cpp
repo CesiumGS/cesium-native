@@ -1,3 +1,4 @@
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumUtility/Uri.h>

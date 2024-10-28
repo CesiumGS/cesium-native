@@ -1,10 +1,11 @@
-#include <CesiumAsync/SharedAssetDepot.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumUtility/Hash.h>
 
 using namespace CesiumUtility;
 
-std::size_t std::hash<CesiumAsync::NetworkAssetKey>::operator()(
-    const CesiumAsync::NetworkAssetKey& key) const noexcept {
+std::size_t std::hash<CesiumAsync::NetworkAssetDescriptor>::operator()(
+    const CesiumAsync::NetworkAssetDescriptor& key) const noexcept {
   std::hash<std::string> hash{};
 
   size_t result = hash(key.url);
@@ -19,7 +20,8 @@ std::size_t std::hash<CesiumAsync::NetworkAssetKey>::operator()(
 
 namespace CesiumAsync {
 
-bool NetworkAssetKey::operator==(const NetworkAssetKey& rhs) const noexcept {
+bool NetworkAssetDescriptor::operator==(
+    const NetworkAssetDescriptor& rhs) const noexcept {
   if (this->url != rhs.url || this->headers.size() != rhs.headers.size())
     return false;
 
@@ -33,13 +35,14 @@ bool NetworkAssetKey::operator==(const NetworkAssetKey& rhs) const noexcept {
 }
 
 Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-NetworkAssetKey::loadFromNetwork(
+NetworkAssetDescriptor::loadFromNetwork(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) const {
   return pAssetAccessor->get(asyncSystem, this->url, this->headers);
 }
 
-Future<Result<std::vector<std::byte>>> NetworkAssetKey::loadBytesFromNetwork(
+Future<Result<std::vector<std::byte>>>
+NetworkAssetDescriptor::loadBytesFromNetwork(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) const {
   return this->loadFromNetwork(asyncSystem, pAssetAccessor)

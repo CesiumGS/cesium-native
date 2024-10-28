@@ -11,7 +11,6 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/ImageAsset.h>
@@ -537,7 +536,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 const std::string& uri,
                 const std::vector<IAssetAccessor::THeader>& headers)
             -> SharedFuture<Result<IntrusivePointer<ImageAsset>>> {
-          NetworkImageAssetKey assetKey{
+          NetworkImageAssetDescriptor assetKey{
               uri,
               headers,
               options.ktx2TranscodeTargets};
