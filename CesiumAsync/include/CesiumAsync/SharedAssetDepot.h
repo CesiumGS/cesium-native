@@ -228,18 +228,21 @@ public:
    */
   size_t getUsageCount() const {
     size_t count = 0;
-    for (const auto& [key, item] : _assets) {
-      count += item->_referenceCount;
+    for (const auto& [key, pEntry] : _assets) {
+      if (pEntry->pAsset) {
+        count += pEntry->pAsset->_referenceCount;
+      }
     }
     return count;
   }
 
   size_t getDeletionCandidateCount() const {
-    std::lock_guard lock(this->_deletionCandidatesMutex);
+    std::lock_guard lock(this->_mutex);
     return this->_deletionCandidates.size();
   }
 
   int64_t getDeletionCandidateTotalSizeBytes() const {
+    std::lock_guard lock(this->_mutex);
     return this->_totalDeletionCandidateMemoryUsage;
   }
 
@@ -411,11 +414,11 @@ private:
 
   // The total amount of memory used by all assets in the _deletionCandidates
   // list.
-  std::atomic<int64_t> _totalDeletionCandidateMemoryUsage;
+  int64_t _totalDeletionCandidateMemoryUsage;
 
   // Mutex serializing access to _assets, _assetsByPointer, _deletionCandidates,
   // and any AssetEntry owned by this depot.
-  std::mutex _mutex;
+  mutable std::mutex _mutex;
 
   // The factory used to create new AssetType instances.
   std::function<FactorySignature> _factory;
