@@ -14,6 +14,8 @@ class GltfSharedAssetSystem
 public:
   static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> getDefault();
 
+  virtual ~GltfSharedAssetSystem() = default;
+
   using ImageDepot = CesiumAsync::
       SharedAssetDepot<CesiumGltf::ImageAsset, NetworkImageAssetDescriptor>;
 

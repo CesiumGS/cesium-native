@@ -565,8 +565,8 @@ postProcessContentInWorkerThread(
       tileLoadInfo.contentOptions.ktx2TranscodeTargets;
   gltfOptions.applyTextureTransform =
       tileLoadInfo.contentOptions.applyTextureTransform;
-  if (tileLoadInfo.pAssetDepot) {
-    gltfOptions.pSharedAssets = tileLoadInfo.pAssetDepot;
+  if (tileLoadInfo.pSharedAssetSystem) {
+    gltfOptions.pSharedAssets = tileLoadInfo.pSharedAssetSystem;
   }
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
@@ -666,7 +666,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
+      _pSharedAssets(TilesetSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -696,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
+      _pSharedAssets(TilesetSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -848,7 +848,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(CesiumGltfReader::GltfSharedAssetSystem::getDefault()),
+      _pSharedAssets(TilesetSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -1237,7 +1237,7 @@ TilesetContentManager::getTilesetCredits() const noexcept {
   return this->_tilesetCredits;
 }
 
-const CesiumUtility::IntrusivePointer<CesiumGltfReader::GltfSharedAssetSystem>&
+const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
 TilesetContentManager::getSharedAssetSystem() const noexcept {
   return this->_pSharedAssets;
 }
