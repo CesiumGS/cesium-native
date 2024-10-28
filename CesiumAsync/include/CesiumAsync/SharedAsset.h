@@ -132,15 +132,7 @@ private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
   IDepotOwningAsset<T>* _pDepot{nullptr};
 
-protected:
-  mutable CesiumUtility::DoublyLinkedListPointers<T> _deletionListPointers;
-
-private:
-  // The size of this asset when it was counted by the depot. This is stored so
-  // that the exact same size can be subtracted later.
-  mutable int64_t _sizeInDepot{0};
-
-  // To allow the depot to modify _pDepot and _sizeInDepot.
+  // To allow the depot to modify _pDepot.
   template <typename TAssetType, typename TAssetKey>
   friend class SharedAssetDepot;
 };

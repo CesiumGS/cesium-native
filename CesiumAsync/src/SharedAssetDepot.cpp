@@ -39,23 +39,22 @@ NetworkAssetKey::loadFromNetwork(
   return pAssetAccessor->get(asyncSystem, this->url, this->headers);
 }
 
-Future<nonstd::expected<std::vector<std::byte>, std::string>>
-NetworkAssetKey::loadBytesFromNetwork(
+Future<Result<std::vector<std::byte>>> NetworkAssetKey::loadBytesFromNetwork(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) const {
   return this->loadFromNetwork(asyncSystem, pAssetAccessor)
       .thenInWorkerThread(
           [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest)
-              -> nonstd::expected<std::vector<std::byte>, std::string> {
+              -> Result<std::vector<std::byte>> {
             const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return nonstd::make_unexpected(
+              return ErrorList::error(
                   fmt::format("Request for {} failed.", pRequest->url()));
             }
 
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              return nonstd::make_unexpected(fmt::format(
+              return ErrorList::error(fmt::format(
                   "Request for {} failed with code {}",
                   pRequest->url(),
                   pResponse->statusCode()));

@@ -490,6 +490,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
   struct ExternalBufferLoadResult {
     bool success = false;
     std::string bufferUri;
+    ErrorList warningsAndErrors;
   };
 
   std::vector<Future<ExternalBufferLoadResult>> resolvedBuffers;
@@ -534,54 +535,47 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 const AsyncSystem& asyncSystem,
                 const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
                 const std::string& uri,
-                const std::vector<IAssetAccessor::THeader>& headers) {
-              if (options.pSharedAssets == nullptr ||
-                  options.pSharedAssets->pImage == nullptr) {
-                // We don't have a depot, we have to fetch this the old way.
-                return pAssetAccessor->get(asyncSystem, uri, headers)
-                    .thenInWorkerThread(
-                        [uri,
-                         options](std::shared_ptr<IAssetRequest>&& pRequest) {
-                          const IAssetResponse* pResponse =
-                              pRequest->response();
+                const std::vector<IAssetAccessor::THeader>& headers)
+            -> SharedFuture<Result<IntrusivePointer<ImageAsset>>> {
+          NetworkImageAssetKey assetKey{
+              uri,
+              headers,
+              options.ktx2TranscodeTargets};
 
-                          CesiumUtility::IntrusivePointer<ImageAsset> pAsset =
-                              nullptr;
+          if (options.pSharedAssets == nullptr ||
+              options.pSharedAssets->pImage == nullptr) {
+            // We don't have a depot, so fetch this asset directly.
+            return assetKey.load(asyncSystem, pAssetAccessor).share();
+          } else {
+            // We have a depot, so fetch this asset via that depot.
+            return options.pSharedAssets->pImage->getOrCreate(
+                asyncSystem,
+                pAssetAccessor,
+                assetKey);
+          }
+        };
 
-                          if (pResponse) {
-                            gsl::span<const std::byte> bytes =
-                                pResponse->data();
-                            pAsset =
-                                ImageAssetFactory(options.ktx2TranscodeTargets)
-                                    .createFrom(bytes);
-                          }
-
-                          return pAsset;
-                        })
-                    .share();
-              } else {
-                // We have a depot, this is easy!
-                return options.pSharedAssets->pImage->getOrFetch(
-                    asyncSystem,
-                    NetworkImageAssetKey{uri, headers});
-              }
-            };
-
-        SharedFuture<IntrusivePointer<ImageAsset>> future =
+        SharedFuture<Result<IntrusivePointer<ImageAsset>>> future =
             getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
         resolvedBuffers.push_back(future.thenInWorkerThread(
-            [pImage =
-                 &image](const IntrusivePointer<ImageAsset>& pLoadedImage) {
+            [pImage = &image](
+                const Result<IntrusivePointer<ImageAsset>>& loadedImage) {
               std::string imageUri = *pImage->uri;
               pImage->uri = std::nullopt;
 
-              if (pLoadedImage) {
-                pImage->pCesium = pLoadedImage;
-                return ExternalBufferLoadResult{true, imageUri};
+              if (loadedImage.pValue) {
+                pImage->pCesium = loadedImage.pValue;
+                return ExternalBufferLoadResult{
+                    true,
+                    imageUri,
+                    loadedImage.errors};
               }
 
-              return ExternalBufferLoadResult{false, imageUri};
+              return ExternalBufferLoadResult{
+                  false,
+                  imageUri,
+                  loadedImage.errors};
             }));
       }
     }
@@ -594,10 +588,29 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
             for (auto& bufferResult : loadResults) {
               if (!bufferResult.success) {
                 pResult->warnings.push_back(
-                    "Could not load the external gltf buffer: " +
+                    "Could not load the external glTF buffer: " +
                     bufferResult.bufferUri);
               }
+
+              if (!bufferResult.warningsAndErrors.errors.empty()) {
+                pResult->warnings.emplace_back(fmt::format(
+                    "Errors while loading external glTF buffer: {}\n- {}",
+                    bufferResult.bufferUri,
+                    CesiumUtility::joinToString(
+                        bufferResult.warningsAndErrors.errors,
+                        "\n- ")));
+              }
+
+              if (!bufferResult.warningsAndErrors.warnings.empty()) {
+                pResult->warnings.emplace_back(fmt::format(
+                    "Warnings while loading external glTF buffer: {}\n- {}",
+                    bufferResult.bufferUri,
+                    CesiumUtility::joinToString(
+                        bufferResult.warningsAndErrors.warnings,
+                        "\n- ")));
+              }
             }
+
             return std::move(*pResult.release());
           });
 }

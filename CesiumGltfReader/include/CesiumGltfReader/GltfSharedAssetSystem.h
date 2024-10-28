@@ -10,14 +10,14 @@ struct ImageAsset;
 
 namespace CesiumGltfReader {
 
-class AssetSystemOptions {
-public:
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
-  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
-};
-
 struct NetworkImageAssetKey : public CesiumAsync::NetworkAssetKey {
   CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets{};
+
+  CesiumAsync::Future<CesiumUtility::Result<
+      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>>>
+  load(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const;
 };
 
 using NetworkImageAssetDepot =
@@ -30,8 +30,7 @@ using NetworkImageAssetDepot =
 class GltfSharedAssetSystem
     : public CesiumUtility::ReferenceCountedThreadSafe<GltfSharedAssetSystem> {
 public:
-  static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem>
-  getDefault(const AssetSystemOptions& options);
+  static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> getDefault();
 
   CesiumUtility::IntrusivePointer<NetworkImageAssetDepot> pImage;
 };

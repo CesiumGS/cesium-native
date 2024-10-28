@@ -34,17 +34,6 @@ public:
     return *this;
   }
 
-  /**
-   * @brief Is this item an orphan?
-   *
-   * Items are considered orphaned if their `pPrevious` and `pNext` pointers are
-   * both `nullptr`. This means that the item is either the only item in its
-   * list, or not in a list at all.
-   */
-  bool isOrphan() const {
-    return this->pNext == nullptr && this->pPrevious == nullptr;
-  }
-
 private:
   template <
       typename TElement,
@@ -251,6 +240,23 @@ public:
   /** @copydoc DoublyLinkedList::previous(T*) */
   const T* previous(const T* pNode) const noexcept {
     return pNode ? this->previous(*pNode) : this->_pTail;
+  }
+
+  /**
+   * @brief Determines if this list contains a given node in constant time. In
+   * order to avoid a full list scan, this method assumes that if the node has
+   * any next or previous node, then it is contained, then it is contained in
+   * this list. Do not use this method to determine which of multiple lists
+   * contain this node.
+   *
+   * @param node The node to check.
+   * @return True if this node is the head of the list, or if the node has next
+   * or previous nodes. False if the node does not have next or previous nodes
+   * and it is not the head of this list.
+   */
+  bool contains(const T& node) const {
+    return this->next(node) != nullptr || this->previous(node) != nullptr ||
+           this->_pHead == &node;
   }
 
 private:

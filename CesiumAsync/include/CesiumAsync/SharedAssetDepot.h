@@ -7,8 +7,7 @@
 #include <CesiumUtility/DoublyLinkedList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
-
-#include <nonstd/expected.hpp>
+#include <CesiumUtility/Result.h>
 
 #include <cstddef>
 #include <functional>
@@ -64,8 +63,7 @@ struct NetworkAssetKey {
    * @return A future that resolves to the downloaded bytes if the request is
    * successful, or a string describing the error if one occurred.
    */
-  Future<nonstd::expected<std::vector<std::byte>, std::string>>
-  loadBytesFromNetwork(
+  Future<CesiumUtility::Result<std::vector<std::byte>>> loadBytesFromNetwork(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor) const;
 };
@@ -102,62 +100,23 @@ public:
    */
   int64_t staleAssetSizeLimit = 16 * 1024 * 1024;
 
-  using FactorySignature =
-      CesiumAsync::Future<CesiumUtility::IntrusivePointer<AssetType>>(
-          const AsyncSystem& asyncSystem,
-          const AssetKey& key);
+  using FactorySignature = CesiumAsync::Future<
+      CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>>(
+      const AsyncSystem& asyncSystem,
+      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const AssetKey& key);
 
   SharedAssetDepot(std::function<FactorySignature> factory)
       : _factory(std::move(factory)) {}
 
   ~SharedAssetDepot() {
     // It's possible the assets will outlive the depot, if they're still in use.
-    std::lock_guard lock(this->_assetsMutex);
-
     for (auto& pair : this->_assets) {
       // Transfer ownership to the reference counting system.
       CesiumUtility::IntrusivePointer<AssetType> pCounted =
-          pair.second.release();
+          pair.second->pAsset.release();
       pCounted->_pDepot = nullptr;
     }
-  }
-
-  /**
-   * Stores the AssetType in this depot and returns a reference to it,
-   * or returns the existing asset if present.
-   */
-  CesiumUtility::IntrusivePointer<AssetType> store(
-      const AssetKey& assetId,
-      const CesiumUtility::IntrusivePointer<AssetType>& pAsset) {
-    std::lock_guard lock(this->_assetsMutex);
-
-    auto findIt = this->_assets.find(assetId);
-    if (findIt != this->_assets.end()) {
-      // This asset ID already exists in the depot, so we can't add this asset.
-      return findIt->second.get();
-    }
-
-    // If this asset ID is pending, but hasn't completed yet, where did this
-    // asset come from? It shouldn't happen.
-    CESIUM_ASSERT(
-        this->_pendingAssets.find(assetId) == this->_pendingAssets.end());
-
-    pAsset->_pDepot = this;
-    this->_assetKeys[pAsset.get()] = assetId;
-
-    // Now that this asset is owned by the depot, we exclusively
-    // control its lifetime with a std::unique_ptr.
-    std::unique_ptr<AssetType> pOwnedAsset(pAsset.get());
-
-    auto [addIt, added] =
-        this->_assets.emplace(assetId, std::move(pOwnedAsset));
-
-    // We should always add successfully, because we verified it didn't already
-    // exist. A failed emplace is disastrous because our unique_ptr will end up
-    // destroying the user's object, which may still be in use.
-    CESIUM_ASSERT(added);
-
-    return addIt->second.get();
   }
 
   /**
@@ -166,9 +125,11 @@ public:
    * If the asset has already started loading in this depot but hasn't finished,
    * its future will be returned.
    */
-  CesiumAsync::SharedFuture<CesiumUtility::IntrusivePointer<AssetType>>
-  getOrFetch(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+  SharedFuture<
+      CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>>
+  getOrCreate(
+      const AsyncSystem& asyncSystem,
+      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       const AssetKey& assetKey) {
     // We need to avoid:
     // - Two assets starting to load before the first asset has updated the
@@ -176,48 +137,85 @@ public:
     // - An asset starting to load after the previous load has been removed from
     //   the pendingAssets map, but before the completed asset has been added to
     //   the assets map.
-    std::lock_guard lock(this->_assetsMutex);
+
+    // Calling the factory function while holding the mutex unnecessarily
+    // limits parallelism. It can even lead to a bug in the scenario where the
+    // `thenInWorkerThread` continuation is invoked immediately in the current
+    // thread, before `thenInWorkerThread` itself returns. That would result
+    // in an attempt to lock the mutex recursively, which is not allowed.
+
+    // So we jump through some hoops here to publish "this thread is working
+    // on it", then unlock the mutex, and _then_ actually call the factory
+    // function.
+    Promise<void> promise = asyncSystem.createPromise<void>();
+
+    std::unique_lock lock(this->_mutex);
 
     auto existingIt = this->_assets.find(assetKey);
     if (existingIt != this->_assets.end()) {
-      // We've already loaded an asset with this ID - we can just use that.
-      return asyncSystem
-          .createResolvedFuture(CesiumUtility::IntrusivePointer<AssetType>(
-              existingIt->second.get()))
-          .share();
-    }
-
-    auto pendingIt = this->_pendingAssets.find(assetKey);
-    if (pendingIt != this->_pendingAssets.end()) {
-      // Return the existing future - the caller can chain off of it.
-      return pendingIt->second;
+      // We've already loaded (or are loading) an asset with this ID - we can
+      // just use that.
+      const AssetEntry& entry = *existingIt->second;
+      if (entry.maybePendingAsset) {
+        // Asset is currently loading.
+        return *entry.maybePendingAsset;
+      } else {
+        // Asset is already loaded (or failed to load).
+        return asyncSystem.createResolvedFuture(entry.toResult()).share();
+      }
     }
 
     // We haven't loaded or started to load this asset yet.
     // Let's do that now.
-    CesiumAsync::Future<CesiumUtility::IntrusivePointer<AssetType>> future =
-        this->_factory(asyncSystem, assetKey)
+    CesiumUtility::IntrusivePointer<SharedAssetDepot<AssetType, AssetKey>>
+        pDepot = this;
+    CesiumUtility::IntrusivePointer<AssetEntry> pEntry =
+        new AssetEntry(assetKey);
+
+    auto future =
+        promise.getFuture()
+            .thenImmediately([pDepot, pEntry, asyncSystem, pAssetAccessor]() {
+              return pDepot->_factory(asyncSystem, pAssetAccessor, pEntry->key);
+            })
             .thenInWorkerThread(
-                [assetKey,
-                 this](CesiumUtility::IntrusivePointer<AssetType>&& pResult)
-                    -> CesiumUtility::IntrusivePointer<AssetType> {
-                  std::lock_guard lock(this->_assetsMutex);
+                [pDepot,
+                 pEntry](CesiumUtility::Result<
+                         CesiumUtility::IntrusivePointer<AssetType>>&& result) {
+                  std::lock_guard lock(pDepot->_mutex);
 
-                  // Remove pending asset.
-                  this->_pendingAssets.erase(assetKey);
+                  if (result.pValue) {
+                    result.pValue->_pDepot = pDepot.get();
+                    pDepot->_assetsByPointer[result.pValue.get()] =
+                        pEntry.get();
+                  }
 
-                  // Store the new asset in the depot.
-                  return this->store(assetKey, pResult);
+                  // Now that this asset is owned by the depot, we exclusively
+                  // control its lifetime with a std::unique_ptr.
+                  pEntry->pAsset =
+                      std::unique_ptr<AssetType>(result.pValue.get());
+                  pEntry->errorsAndWarnings = std::move(result.errors);
+                  pEntry->maybePendingAsset.reset();
+
+                  return pEntry->toResult();
                 });
 
-    auto [it, added] =
-        this->_pendingAssets.emplace(assetKey, std::move(future).share());
+    SharedFuture<
+        CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>>
+        sharedFuture = std::move(future).share();
+
+    pEntry->maybePendingAsset = sharedFuture;
+
+    auto [it, added] = this->_assets.emplace(assetKey, pEntry);
 
     // Should always be added successfully, because we checked above that the
     // asset key doesn't exist in the map yet.
     CESIUM_ASSERT(added);
 
-    return it->second;
+    // Unlock the mutex and then call the factory function.
+    lock.unlock();
+    promise.resolve();
+
+    return sharedFuture;
   }
 
   /**
@@ -251,85 +249,173 @@ private:
 
   /**
    * Marks the given asset as a candidate for deletion.
-   * Should only be called by {@link SharedAsset}.
+   * Should only be called by {@link SharedAsset}. May be called from any thread.
    */
-  void markDeletionCandidate(const AssetType& asset) {
-    std::lock_guard lock(this->_deletionCandidatesMutex);
+  void markDeletionCandidate(const AssetType& asset) override {
+    std::lock_guard lock(this->_mutex);
 
-    asset._sizeInDepot = asset.getSizeBytes();
-    this->_totalDeletionCandidateMemoryUsage += asset._sizeInDepot;
+    auto it = this->_assetsByPointer.find(const_cast<AssetType*>(&asset));
+    CESIUM_ASSERT(it != this->_assetsByPointer.end());
+    if (it == this->_assetsByPointer.end()) {
+      return;
+    }
 
-    this->_deletionCandidates.insertAtTail(const_cast<AssetType&>(asset));
+    CESIUM_ASSERT(it->second != nullptr);
+
+    AssetEntry& entry = *it->second;
+    entry.sizeInDeletionList = asset.getSizeBytes();
+    this->_totalDeletionCandidateMemoryUsage += entry.sizeInDeletionList;
+
+    this->_deletionCandidates.insertAtTail(entry);
 
     if (this->_totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
-      std::lock_guard assetsLock(this->_assetsMutex);
-
       // Delete the deletion candidates until we're below the limit.
       while (this->_deletionCandidates.size() > 0 &&
              this->_totalDeletionCandidateMemoryUsage >
                  this->staleAssetSizeLimit) {
-        AssetType* pOldAsset = this->_deletionCandidates.head();
-        this->_deletionCandidates.remove(const_cast<AssetType&>(*pOldAsset));
+        AssetEntry* pOldEntry = this->_deletionCandidates.head();
+        this->_deletionCandidates.remove(*pOldEntry);
 
-        this->_totalDeletionCandidateMemoryUsage -= pOldAsset->_sizeInDepot;
+        this->_totalDeletionCandidateMemoryUsage -=
+            pOldEntry->sizeInDeletionList;
 
-        CESIUM_ASSERT(pOldAsset->_referenceCount == 0);
+        CESIUM_ASSERT(
+            pOldEntry->pAsset == nullptr ||
+            pOldEntry->pAsset->_referenceCount == 0);
 
-        auto keyIt = this->_assetKeys.find(pOldAsset);
-        CESIUM_ASSERT(keyIt != this->_assetKeys.end());
-        if (keyIt != this->_assetKeys.end()) {
-          // This will actually delete the asset.
-          this->_assets.erase(keyIt->second);
+        if (pOldEntry->pAsset) {
+          this->_assetsByPointer.erase(pOldEntry->pAsset.get());
         }
+
+        // This will actually delete the asset.
+        this->_assets.erase(pOldEntry->key);
       }
     }
   }
 
   /**
    * Unmarks the given asset as a candidate for deletion.
-   * Should only be called by {@link SharedAsset}.
+   * Should only be called by {@link SharedAsset}. May be called from any thread.
    */
-  void unmarkDeletionCandidate(const AssetType& asset) {
-    std::lock_guard lock(this->_deletionCandidatesMutex);
+  void unmarkDeletionCandidate(const AssetType& asset) override {
+    std::lock_guard lock(this->_mutex);
 
-    // We should only be deleting this element if it's in the deletionCandidates
-    // list.
-    bool isFound = !asset._deletionListPointers.isOrphan() ||
-                   (this->_deletionCandidates.size() == 1 &&
-                    this->_deletionCandidates.head() == &asset);
+    auto it = this->_assetsByPointer.find(const_cast<AssetType*>(&asset));
+    CESIUM_ASSERT(it != this->_assetsByPointer.end());
+    if (it == this->_assetsByPointer.end()) {
+      return;
+    }
+
+    CESIUM_ASSERT(it->second != nullptr);
+
+    AssetEntry& entry = *it->second;
+    bool isFound = this->_deletionCandidates.contains(entry);
 
     CESIUM_ASSERT(isFound);
 
     if (isFound) {
-      this->_totalDeletionCandidateMemoryUsage -= asset._sizeInDepot;
-      this->_deletionCandidates.remove(const_cast<AssetType&>(asset));
+      this->_totalDeletionCandidateMemoryUsage -= entry.sizeInDeletionList;
+      this->_deletionCandidates.remove(entry);
     }
   }
 
-  // Assets that have a unique ID that can be used to de-duplicate them.
-  std::unordered_map<AssetKey, std::unique_ptr<AssetType>> _assets;
-  // Futures for assets that still aren't loaded yet.
-  std::unordered_map<
-      AssetKey,
-      CesiumAsync::SharedFuture<CesiumUtility::IntrusivePointer<AssetType>>>
-      _pendingAssets;
-  // Maps assets back to the key by which they are known in this depot.
-  std::unordered_map<AssetType*, AssetKey> _assetKeys;
-  // Mutex for checking or editing the pendingAssets map
-  std::mutex _assetsMutex;
+  /**
+   * @brief An entry for an asset owned by this depot. This is reference counted
+   * so that we can keep it alive during async operations.
+   */
+  struct AssetEntry
+      : public CesiumUtility::ReferenceCountedThreadSafe<AssetEntry> {
+    AssetEntry(AssetKey&& key_)
+        : CesiumUtility::ReferenceCountedThreadSafe<AssetEntry>(),
+          key(std::move(key_)),
+          pAsset(),
+          maybePendingAsset(),
+          errorsAndWarnings(),
+          sizeInDeletionList(0),
+          deletionListPointers() {}
+
+    AssetEntry(const AssetKey& key_) : AssetEntry(AssetKey(key_)) {}
+
+    /**
+     * @brief The unique key identifying this asset.
+     */
+    AssetKey key;
+
+    /**
+     * @brief A pointer to the asset. This may be nullptr if the asset is still
+     * being loaded, or if it failed to load.
+     */
+    std::unique_ptr<AssetType> pAsset;
+
+    /**
+     * @brief If this asset is currently loading, this field holds a shared
+     * future that will resolve when the asset load is complete. This field will
+     * be empty if the asset finished loading, including if it failed to load.
+     */
+    std::optional<SharedFuture<
+        CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>>>
+        maybePendingAsset;
+
+    /**
+     * @brief The errors and warnings that occurred while loading this asset.
+     * This will not contain any errors or warnings if the asset has not
+     * finished loading yet.
+     */
+    CesiumUtility::ErrorList errorsAndWarnings;
+
+    /**
+     * @brief The size of this asset when it was added to the
+     * _deletionCandidates list. This is stored so that the exact same size can
+     * be subtracted later. The value of this field is undefined if the asset is
+     * not currently in the _deletionCandidates list.
+     */
+    int64_t sizeInDeletionList;
+
+    /**
+     * @brief The next and previous pointers to entries in the
+     * _deletionCandidates list.
+     */
+    CesiumUtility::DoublyLinkedListPointers<AssetEntry> deletionListPointers;
+
+    CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>
+    toResult() const {
+      return CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>(
+          pAsset.get(),
+          errorsAndWarnings);
+    }
+
+    SharedFuture<
+        CesiumUtility::Result<CesiumUtility::IntrusivePointer<AssetType>>>
+    toFuture(const AsyncSystem& asyncSystem) const {
+      if (this->maybePendingAsset) {
+        return *this->maybePendingAsset;
+      } else {
+        return asyncSystem.createResolvedFuture(this->toResult()).share();
+      }
+    }
+  };
+
+  // Maps asset keys to AssetEntry instances. This collection owns the asset
+  // entries.
+  std::unordered_map<AssetKey, CesiumUtility::IntrusivePointer<AssetEntry>>
+      _assets;
+
+  // Maps asset pointers to AssetEntry instances. The values in this map refer
+  // to instances owned by the _assets map.
+  std::unordered_map<AssetType*, AssetEntry*> _assetsByPointer;
 
   // List of assets that are being considered for deletion, in the order that
   // they became unused.
-  CesiumUtility::DoublyLinkedListAdvanced<
-      AssetType,
-      SharedAsset<AssetType>,
-      &SharedAsset<AssetType>::_deletionListPointers>
+  CesiumUtility::DoublyLinkedList<AssetEntry, &AssetEntry::deletionListPointers>
       _deletionCandidates;
-  // The total amount of memory used by all assets in the deletionCandidates
+
+  // The total amount of memory used by all assets in the _deletionCandidates
   // list.
   std::atomic<int64_t> _totalDeletionCandidateMemoryUsage;
-  // Mutex for modifying the deletionCandidates list.
-  mutable std::mutex _deletionCandidatesMutex;
+
+  // Mutex serializing access to _assets, _assetsByPointer, _deletionCandidates,
+  // and any AssetEntry owned by this depot.
+  std::mutex _mutex;
 
   // The factory used to create new AssetType instances.
   std::function<FactorySignature> _factory;
