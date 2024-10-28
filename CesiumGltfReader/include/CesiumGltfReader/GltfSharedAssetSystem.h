@@ -17,6 +17,9 @@ public:
   using ImageDepot = CesiumAsync::
       SharedAssetDepot<CesiumGltf::ImageAsset, NetworkImageAssetDescriptor>;
 
+  /**
+   * @brief The asset depot for images.
+   */
   CesiumUtility::IntrusivePointer<ImageDepot> pImage;
 };
 
