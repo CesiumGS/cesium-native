@@ -103,7 +103,8 @@ TEST_CASE("SharedAssetDepot") {
   SECTION("inactive assets are deleted when size threshold is exceeded") {
     auto pDepot = createDepot();
 
-    pDepot->inactiveAssetSizeLimitBytes = std::string("one").size() + 1;
+    pDepot->inactiveAssetSizeLimitBytes =
+        int64_t(std::string("one").size() + 1);
 
     ResultPointer<TestAsset> assetOne =
         pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
