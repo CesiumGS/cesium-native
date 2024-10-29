@@ -1,7 +1,5 @@
 #include <CesiumUtility/Hash.h>
 
-#include <cstdint>
-
 namespace CesiumUtility {
 
 // This function is adapted from Boost v1.86.0, `hash_mix_impl<64>` function.
@@ -59,8 +57,8 @@ namespace CesiumUtility {
 // (https://mostlymangling.blogspot.com/2019/12/stronger-better-morer-moremur-better.html)
 namespace {
 
-inline std::uint64_t mix(std::uint64_t x) {
-  std::uint64_t const m = 0xe9846af9b1a615d;
+inline std::size_t mix(std::size_t x) {
+  std::size_t const m = 0xe9846af9b1a615d;
 
   x ^= x >> 32;
   x *= m;
@@ -74,7 +72,7 @@ inline std::uint64_t mix(std::uint64_t x) {
 } // namespace
 
 // This function is adapted from Boost's `hash_combine`.
-size_t Hash::combine(size_t first, size_t second) {
+std::size_t Hash::combine(std::size_t first, std::size_t second) {
   return mix(first + 0x9e3779b9 + second);
 }
 

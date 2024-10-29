@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstddef>
+
 namespace CesiumUtility {
 
 struct Hash {
-  static size_t combine(size_t first, size_t second);
+  static std::size_t combine(std::size_t first, std::size_t second);
 };
 
 } // namespace CesiumUtility
