@@ -1,5 +1,16 @@
 # Change Log
 
+### Not Released Yet
+
+##### Breaking Changes :mega:
+
+- Renamed `CesiumUtility/Gunzip.h` to `CesiumUtility/Gzip.h`.
+
+##### Additions :tada:
+
+- Added `CesiumUtility::gzip`.
+- Added `CesiumGeometry::Transforms::getUpAxisTransform` to get the transform that converts from one up axis to another.
+
 ### v0.40.1 - 2024-10-01
 
 ##### Fixes :wrench:
