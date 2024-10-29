@@ -54,18 +54,37 @@ public:
           const TAssetKey& key);
 
   SharedAssetDepot(std::function<FactorySignature> factory)
-      : _factory(std::move(factory)) {}
+      : _assets(),
+        _assetsByPointer(),
+        _deletionCandidates(),
+        _totalDeletionCandidateMemoryUsage(0),
+        _mutex(),
+        _factory(std::move(factory)),
+        _pKeepAlive(nullptr) {}
 
   virtual ~SharedAssetDepot() {
-    // It's possible the assets will outlive the depot, if they're still in use.
-    // TODO: lock here, just in case? And swap order to release/set depot ptr
-    // below?
-    for (auto& pair : this->_assets) {
-      // Transfer ownership to the reference counting system.
-      CesiumUtility::IntrusivePointer<TAssetType> pCounted =
-          pair.second->pAsset.release();
-      pCounted->_pDepot = nullptr;
-    }
+    // Ideally, when the depot is destroyed, all the assets it owns would become
+    // independent assets. But this is extremely difficult to manage in a
+    // thread-safe manner.
+
+    // Since we're in the destructor, we can be sure no one has a reference to
+    // this instance anymore. That means that no other thread can be executing
+    // `getOrCreate`, and no async asset creations are in progress.
+
+    // However, if assets owned by this depot are still alive, then other
+    // threads can still be calling addReference / releaseReference on some of
+    // our assets even while we're running the depot's destructor. Which means
+    // that we can end up in `markDeletionCandidate` at the same time the
+    // destructor is running. And in fact it's possible for a `SharedAsset` with
+    // especially poor timing to call into a `SharedAssetDepot` just after it is
+    // destroyed.
+
+    // To avoid this, we use the _pKeepAlive field to maintain an artificial
+    // reference to this depot whenever it owns live assets. This should keep
+    // this destructor from being called except when all of its assets are also
+    // in the _deletionCandidates list.
+
+    CESIUM_ASSERT(this->_assets.size() == this->_deletionCandidates.size());
   }
 
   /**
@@ -148,6 +167,11 @@ public:
                       std::unique_ptr<TAssetType>(result.pValue.get());
                   pEntry->errorsAndWarnings = std::move(result.errors);
                   pEntry->maybePendingAsset.reset();
+
+                  // The asset is initially live because we have an
+                  // IntrusivePointer to it right here. So make sure the depot
+                  // stays alive, too.
+                  pDepot->_pKeepAlive = pDepot;
 
                   return pEntry->toResult();
                 });
@@ -251,6 +275,12 @@ private:
         this->_assets.erase(pOldEntry->key);
       }
     }
+
+    // If this depot is not managing any live assets, then we no longer need to
+    // keep it alive.
+    if (this->_assets.size() == this->_deletionCandidates.size()) {
+      this->_pKeepAlive.reset();
+    }
   }
 
   /**
@@ -277,6 +307,9 @@ private:
       this->_totalDeletionCandidateMemoryUsage -= entry.sizeInDeletionList;
       this->_deletionCandidates.remove(entry);
     }
+
+    // This depot is now managing at least one live asset, so keep it alive.
+    this->_pKeepAlive = this;
   }
 
   /**
@@ -376,6 +409,12 @@ private:
 
   // The factory used to create new AssetType instances.
   std::function<FactorySignature> _factory;
+
+  // This instance keeps a reference to itself whenever it is managing active
+  // assets, preventing it from being destroyed even if all other references to
+  // it are dropped.
+  CesiumUtility::IntrusivePointer<SharedAssetDepot<TAssetType, TAssetKey>>
+      _pKeepAlive;
 
   friend class SharedAsset<TAssetType>;
 };
