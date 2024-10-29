@@ -52,65 +52,50 @@ TEST_CASE("Gets up axis transform") {
   const glm::dmat4 Identity(1.0);
 
   SECTION("Gets X-up to X-up transform") {
-    CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::X,
-            CesiumGeometry::Axis::X) == Identity);
+    CHECK(Transforms::getUpAxisTransform(Axis::X, Axis::X) == Identity);
   }
 
   SECTION("Gets X-up to Y-up transform") {
     CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::X,
-            CesiumGeometry::Axis::Y) == Transforms::X_UP_TO_Y_UP);
+        Transforms::getUpAxisTransform(Axis::X, Axis::Y) ==
+        Transforms::X_UP_TO_Y_UP);
   }
 
   SECTION("Gets X-up to Z-up transform") {
     CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::X,
-            CesiumGeometry::Axis::Z) == Transforms::X_UP_TO_Z_UP);
+        Transforms::getUpAxisTransform(Axis::X, Axis::Z) ==
+        Transforms::X_UP_TO_Z_UP);
   }
 
   SECTION("Gets Y-up to X-up transform") {
     CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::Y,
-            CesiumGeometry::Axis::X) == Transforms::Y_UP_TO_X_UP);
+        Transforms::getUpAxisTransform(Axis::Y, Axis::X) ==
+        Transforms::Y_UP_TO_X_UP);
   }
 
   SECTION("Gets Y-up to Y-up transform") {
-    CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::Y,
-            CesiumGeometry::Axis::Y) == Identity);
+    CHECK(Transforms::getUpAxisTransform(Axis::Y, Axis::Y) == Identity);
   }
 
   SECTION("Gets Y-up to Z-up transform") {
     CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::Y,
-            CesiumGeometry::Axis::Z) == Transforms::Y_UP_TO_Z_UP);
+        Transforms::getUpAxisTransform(Axis::Y, Axis::Z) ==
+        Transforms::Y_UP_TO_Z_UP);
   }
 
   SECTION("Gets Z-up to X-up transform") {
     CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::Z,
-            CesiumGeometry::Axis::X) == Transforms::Z_UP_TO_X_UP);
+        Transforms::getUpAxisTransform(Axis::Z, Axis::X) ==
+        Transforms::Z_UP_TO_X_UP);
   }
 
   SECTION("Gets Z-up to Y-up transform") {
     CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::Z,
-            CesiumGeometry::Axis::Y) == Transforms::Z_UP_TO_Y_UP);
+        Transforms::getUpAxisTransform(Axis::Z, Axis::Y) ==
+        Transforms::Z_UP_TO_Y_UP);
   }
 
   SECTION("Gets Z-up to Z-up transform") {
-    CHECK(
-        Transforms::getUpAxisTransform(
-            CesiumGeometry::Axis::Z,
-            CesiumGeometry::Axis::Z) == Identity);
+    CHECK(Transforms::getUpAxisTransform(Axis::Z, Axis::Z) == Identity);
   }
 }

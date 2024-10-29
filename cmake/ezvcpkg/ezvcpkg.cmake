@@ -70,8 +70,8 @@ macro(EZVCPKG_CALCULATE_PATHS)
     if (NOT VCPKG_TRIPLET)
         message(FATAL_ERROR "VCPKG_TRIPLET must be set")
     endif()
-    file(TO_CMAKE_PATH ${EZVCPKG_DIR}/installed/${VCPKG_TRIPLET} EZVCPKG_INSTALLED_DIR)
-    file(TO_CMAKE_PATH ${EZVCPKG_DIR}/scripts/buildsystems/vcpkg.cmake EZVCPKG_CMAKE_TOOLCHAIN)
+    file(TO_CMAKE_PATH "${EZVCPKG_DIR}/installed/${VCPKG_TRIPLET}" EZVCPKG_INSTALLED_DIR)
+    file(TO_CMAKE_PATH "${EZVCPKG_DIR}/scripts/buildsystems/vcpkg.cmake" EZVCPKG_CMAKE_TOOLCHAIN)
 endmacro()
 
 macro(EZVCPKG_CHECK_RESULTS)
@@ -104,23 +104,19 @@ macro(EZVCPKG_CHECK_RESULTS)
     endif()
 endmacro()
 
-
 macro(EZVCPKG_BOOTSTRAP)
-    if (NOT EXISTS ${EZVCPKG_README})
+    if (NOT EXISTS "${EZVCPKG_README}")
         message(STATUS "EZVCPKG Bootstrapping")
         find_package(Git)
         if (NOT Git_FOUND)
             message(FATAL_ERROR "EZVCPKG Git not found, can't bootstrap vcpkg")
         endif()
-
         message(STATUS "EZVCPKG Cloning repository")
         execute_process(
-            COMMAND "${GIT_EXECUTABLE}" "clone" ${EZVCPKG_URL} ${EZVCPKG_DIR}
+            COMMAND "${GIT_EXECUTABLE}" "clone" ${EZVCPKG_URL} "${EZVCPKG_DIR}"
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            # OUTPUT_QUIET
-            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
 
@@ -130,35 +126,31 @@ macro(EZVCPKG_BOOTSTRAP)
         message(STATUS "EZVCPKG Checking out commit ${EZVCPKG_COMMIT}")
         execute_process(
             COMMAND "${GIT_EXECUTABLE}" "-c" "advice.detachedHead=false" "checkout" ${EZVCPKG_COMMIT}
-            WORKING_DIRECTORY ${EZVCPKG_DIR}
+            WORKING_DIRECTORY "${EZVCPKG_DIR}"
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            # OUTPUT_QUIET
-            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
     endif()
 
     if (EZVCPKG_HOST_VCPKG)
-        set(EZVCPKG_EXE ${EZVCPKG_HOST_VCPKG})
-    elseif(NOT EXISTS ${EZVCPKG_EXE})
+        set(EZVCPKG_EXE "${EZVCPKG_HOST_VCPKG}")
+    elseif(NOT EXISTS "${EZVCPKG_EXE}")
         message(STATUS "EZVCPKG Bootstrapping vcpkg binary")
         message(STATUS "EZVCPKG vcpkg bootstrap command: ${EZVCPKG_BOOTSTRAP}")
         message(STATUS "EZVCPKG vcpkg working dir: ${EZVCPKG_DIR}")
         execute_process(
             COMMAND ${EZVCPKG_BOOTSTRAP}
-            WORKING_DIRECTORY ${EZVCPKG_DIR}
+            WORKING_DIRECTORY "${EZVCPKG_DIR}"
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            # OUTPUT_QUIET
-            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
     endif()
 
-    if (NOT EXISTS ${EZVCPKG_EXE})
+    if (NOT EXISTS "${EZVCPKG_EXE}")
         if (EZVCPKG_IGNORE_ERRORS)
             message(WARNING "EZVCPKG vcpkg binary not failed")
             return()
@@ -168,39 +160,44 @@ macro(EZVCPKG_BOOTSTRAP)
     endif()
 endmacro()
 
-
 macro(EZVCPKG_BUILD)
+    set(INSTALL_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" install --triplet ${VCPKG_TRIPLET})
+
+    if (DEFINED VCPKG_OVERLAY_PORTS)
+        set(INSTALL_COMMAND ${INSTALL_COMMAND} --overlay-ports "${VCPKG_OVERLAY_PORTS}")
+    endif()
+
+    if (DEFINED VCPKG_OVERLAY_TRIPLETS)
+        set(INSTALL_COMMAND ${INSTALL_COMMAND} --overlay-triplets "${VCPKG_OVERLAY_TRIPLETS}")
+    endif()
+
     if (EZVCPKG_SERIALIZE)
         foreach(_PACKAGE ${EZVCPKG_PACKAGES})
             message(STATUS "EZVCPKG Building/Verifying package ${_PACKAGE} using triplet ${VCPKG_TRIPLET}")
             execute_process(
-                COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET} ${_PACKAGE}
-                WORKING_DIRECTORY ${EZVCPKG_DIR}
+                COMMAND ${INSTALL_COMMAND} ${_PACKAGE}
+                WORKING_DIRECTORY "${EZVCPKG_DIR}"
                 RESULTS_VARIABLE EZVCPKG_RESULT
                 OUTPUT_VARIABLE EZVCPKG_OUTPUT
                 ERROR_VARIABLE EZVCPKG_OUTPUT
-                # OUTPUT_QUIET
-                # ERROR_QUIET
             )
             EZVCPKG_CHECK_RESULTS()
         endforeach()
     else()
         message(STATUS "EZVCPKG Building/Verifying packages ${EZVCPKG_PACKAGES} using triplet ${VCPKG_TRIPLET}")
         execute_process(
-            COMMAND ${EZVCPKG_EXE} --vcpkg-root ${EZVCPKG_DIR} install --triplet ${VCPKG_TRIPLET} ${EZVCPKG_PACKAGES}
-            WORKING_DIRECTORY ${EZVCPKG_DIR}
+            COMMAND ${INSTALL_COMMAND} ${EZVCPKG_PACKAGES}
+            WORKING_DIRECTORY "${EZVCPKG_DIR}"
             RESULTS_VARIABLE EZVCPKG_RESULT
             OUTPUT_VARIABLE EZVCPKG_OUTPUT
             ERROR_VARIABLE EZVCPKG_OUTPUT
-            # OUTPUT_QUIET
-            # ERROR_QUIET
         )
         EZVCPKG_CHECK_RESULTS()
     endif()
 
     # if we didn't blow up, wipe the build trees to avoid huge cache usage on CI servers
     if (EZVCPKG_CLEAN_BUILDTREES)
-        file(TO_CMAKE_PATH ${EZVCPKG_DIR}/buildtrees EZVCPKG_BUILDTREES)
+        file(TO_CMAKE_PATH "${EZVCPKG_DIR}/buildtrees" EZVCPKG_BUILDTREES)
         if (EXISTS ${EZVCPKG_BUILDTREES})
             file(REMOVE_RECURSE "${EZVCPKG_DIR}/buildtrees")
         endif()
