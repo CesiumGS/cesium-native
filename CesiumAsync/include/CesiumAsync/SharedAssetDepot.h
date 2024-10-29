@@ -126,8 +126,8 @@ public:
         // Asset is currently loading.
         return *entry.maybePendingAsset;
       } else {
-        // Asset is already loaded (or failed to load).
-        return asyncSystem.createResolvedFuture(entry.toResult()).share();
+        return asyncSystem.createResolvedFuture(entry.toResultUnderLock())
+            .share();
       }
     }
 
@@ -173,7 +173,7 @@ public:
                   // stays alive, too.
                   pDepot->_pKeepAlive = pDepot;
 
-                  return pEntry->toResult();
+                  return pEntry->toResultUnderLock();
                 });
 
     SharedFuture<CesiumUtility::ResultPointer<TAssetType>> sharedFuture =
@@ -235,12 +235,24 @@ private:
   void operator=(const SharedAssetDepot<TAssetType, TAssetKey>& other) = delete;
 
   /**
-   * Marks the given asset as a candidate for deletion.
+   * @brief Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}. May be called from any thread.
+   *
+   * @param asset The asset to mark for deletion.
+   * @param threadOwnsDepotLock True if the calling thread already owns the
+   * depot lock; otherwise, false.
    */
-  void markDeletionCandidate(const TAssetType& asset) override {
-    std::lock_guard lock(this->_mutex);
+  void markDeletionCandidate(const TAssetType& asset, bool threadOwnsDepotLock)
+      override {
+    if (threadOwnsDepotLock) {
+      this->markDeletionCandidateUnderLock(asset);
+    } else {
+      std::lock_guard lock(this->_mutex);
+      this->markDeletionCandidateUnderLock(asset);
+    }
+  }
 
+  void markDeletionCandidateUnderLock(const TAssetType& asset) {
     auto it = this->_assetsByPointer.find(const_cast<TAssetType*>(&asset));
     CESIUM_ASSERT(it != this->_assetsByPointer.end());
     if (it == this->_assetsByPointer.end()) {
@@ -288,12 +300,25 @@ private:
   }
 
   /**
-   * Unmarks the given asset as a candidate for deletion.
+   * @brief Unmarks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}. May be called from any thread.
+   *
+   * @param asset The asset to unmark for deletion.
+   * @param threadOwnsDepotLock True if the calling thread already owns the
+   * depot lock; otherwise, false.
    */
-  void unmarkDeletionCandidate(const TAssetType& asset) override {
-    std::lock_guard lock(this->_mutex);
+  void unmarkDeletionCandidate(
+      const TAssetType& asset,
+      bool threadOwnsDepotLock) override {
+    if (threadOwnsDepotLock) {
+      this->unmarkDeletionCandidateUnderLock(asset);
+    } else {
+      std::lock_guard lock(this->_mutex);
+      this->unmarkDeletionCandidateUnderLock(asset);
+    }
+  }
 
+  void unmarkDeletionCandidateUnderLock(const TAssetType& asset) {
     auto it = this->_assetsByPointer.find(const_cast<TAssetType*>(&asset));
     CESIUM_ASSERT(it != this->_assetsByPointer.end());
     if (it == this->_assetsByPointer.end()) {
@@ -373,19 +398,15 @@ private:
      */
     CesiumUtility::DoublyLinkedListPointers<AssetEntry> deletionListPointers;
 
-    CesiumUtility::ResultPointer<TAssetType> toResult() const {
-      return CesiumUtility::ResultPointer<TAssetType>(
-          pAsset.get(),
-          errorsAndWarnings);
-    }
-
-    SharedFuture<CesiumUtility::ResultPointer<TAssetType>>
-    toFuture(const AsyncSystem& asyncSystem) const {
-      if (this->maybePendingAsset) {
-        return *this->maybePendingAsset;
-      } else {
-        return asyncSystem.createResolvedFuture(this->toResult()).share();
-      }
+    CesiumUtility::ResultPointer<TAssetType> toResultUnderLock() const {
+      // This method is called while the calling thread already owns the depot
+      // mutex. So we must take care not to lock it again, which could happen if
+      // the asset is currently unreferenced and we naively create an
+      // IntrusivePointer for it.
+      pAsset->addReference(true);
+      CesiumUtility::IntrusivePointer<TAssetType> p = pAsset.get();
+      pAsset->releaseReference(true);
+      return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
     }
   };
 

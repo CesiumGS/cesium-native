@@ -54,12 +54,7 @@ public:
    * {@link CesiumUtility::IntrusivePointer} instead of calling this method
    * directly.
    */
-  void addReference() const /*noexcept*/ {
-    const int32_t prevReferences = this->_referenceCount++;
-    if (this->_pDepot && prevReferences <= 0) {
-      this->_pDepot->unmarkDeletionCandidate(*static_cast<const T*>(this));
-    }
-  }
+  void addReference() const noexcept { this->addReference(false); }
 
   /**
    * @brief Removes a counted reference from this object. When the last
@@ -67,20 +62,7 @@ public:
    * {@link CesiumUtility::IntrusivePointer} instead of calling this method
    * directly.
    */
-  void releaseReference() const /*noexcept*/ {
-    CESIUM_ASSERT(this->_referenceCount > 0);
-    const int32_t references = --this->_referenceCount;
-    if (references == 0) {
-      IDepotOwningAsset<T>* pDepot = this->_pDepot;
-      if (pDepot) {
-        // Let the depot manage this object's lifetime.
-        pDepot->markDeletionCandidate(*static_cast<const T*>(this));
-      } else {
-        // No depot, so destroy this object directly.
-        delete static_cast<const T*>(this);
-      }
-    }
-  }
+  void releaseReference() const noexcept { this->releaseReference(false); }
 
   /**
    * @brief Gets the shared asset depot that owns this asset, or nullptr if this
@@ -129,6 +111,32 @@ protected:
   }
 
 private:
+  void addReference(bool threadOwnsDepotLock) const noexcept {
+    const int32_t prevReferences = this->_referenceCount++;
+    if (this->_pDepot && prevReferences <= 0) {
+      this->_pDepot->unmarkDeletionCandidate(
+          *static_cast<const T*>(this),
+          threadOwnsDepotLock);
+    }
+  }
+
+  void releaseReference(bool threadOwnsDepotLock) const noexcept {
+    CESIUM_ASSERT(this->_referenceCount > 0);
+    const int32_t references = --this->_referenceCount;
+    if (references == 0) {
+      IDepotOwningAsset<T>* pDepot = this->_pDepot;
+      if (pDepot) {
+        // Let the depot manage this object's lifetime.
+        pDepot->markDeletionCandidate(
+            *static_cast<const T*>(this),
+            threadOwnsDepotLock);
+      } else {
+        // No depot, so destroy this object directly.
+        delete static_cast<const T*>(this);
+      }
+    }
+  }
+
   mutable std::atomic<std::int32_t> _referenceCount{0};
   IDepotOwningAsset<T>* _pDepot{nullptr};
 
