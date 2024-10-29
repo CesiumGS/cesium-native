@@ -17,4 +17,4 @@ public:
   virtual void unmarkDeletionCandidate(const TAssetType& asset) = 0;
 };
 
-}
+} // namespace CesiumAsync
