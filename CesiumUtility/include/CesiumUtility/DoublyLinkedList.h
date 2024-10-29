@@ -245,9 +245,8 @@ public:
   /**
    * @brief Determines if this list contains a given node in constant time. In
    * order to avoid a full list scan, this method assumes that if the node has
-   * any next or previous node, then it is contained, then it is contained in
-   * this list. Do not use this method to determine which of multiple lists
-   * contain this node.
+   * any next or previous node, then it is contained in this list. Do not use
+   * this method to determine which of multiple lists contain this node.
    *
    * @param node The node to check.
    * @return True if this node is the head of the list, or if the node has next
