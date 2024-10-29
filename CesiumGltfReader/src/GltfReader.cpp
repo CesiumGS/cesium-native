@@ -504,23 +504,35 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       resolvedBuffers.push_back(
           pAssetAccessor
               ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
-              .thenInWorkerThread(
-                  [pBuffer =
-                       &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
-                    const IAssetResponse* pResponse = pRequest->response();
+              .thenInWorkerThread([pBuffer =
+                                       &buffer](std::shared_ptr<IAssetRequest>&&
+                                                    pRequest) {
+                std::string bufferUri = *pBuffer->uri;
 
-                    std::string bufferUri = *pBuffer->uri;
+                const IAssetResponse* pResponse = pRequest->response();
+                if (!pResponse) {
+                  return ExternalBufferLoadResult{
+                      false,
+                      bufferUri,
+                      ErrorList::error("Request failed.")};
+                }
 
-                    if (pResponse) {
-                      pBuffer->uri = std::nullopt;
-                      pBuffer->cesium.data = std::vector<std::byte>(
-                          pResponse->data().begin(),
-                          pResponse->data().end());
-                      return ExternalBufferLoadResult{true, bufferUri};
-                    }
+                uint16_t statusCode = pResponse->statusCode();
+                if (statusCode != 0 &&
+                    (statusCode < 200 || statusCode >= 300)) {
+                  return ExternalBufferLoadResult{
+                      false,
+                      bufferUri,
+                      ErrorList::error(
+                          fmt::format("Received status code {}.", statusCode))};
+                }
 
-                    return ExternalBufferLoadResult{false, bufferUri};
-                  }));
+                pBuffer->uri = std::nullopt;
+                pBuffer->cesium.data = std::vector<std::byte>(
+                    pResponse->data().begin(),
+                    pResponse->data().end());
+                return ExternalBufferLoadResult{true, bufferUri, ErrorList()};
+              }));
     }
   }
 
