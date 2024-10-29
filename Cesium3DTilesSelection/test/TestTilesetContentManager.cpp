@@ -1700,7 +1700,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     CHECK(
         pManager->getSharedAssetSystem()
             ->pImage->getInactiveAssetTotalSizeBytes() <=
-        pManager->getSharedAssetSystem()->pImage->staleAssetSizeLimit);
+        pManager->getSharedAssetSystem()->pImage->inactiveAssetSizeLimitBytes);
     CHECK(pManager->getSharedAssetSystem()->pImage->getAssetCount() == 1);
     CHECK(pManager->getSharedAssetSystem()->pImage->getActiveAssetCount() == 0);
     CHECK(

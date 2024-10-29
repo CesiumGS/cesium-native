@@ -45,7 +45,7 @@ public:
    *
    * Default is 16MiB.
    */
-  int64_t staleAssetSizeLimit = 16 * 1024 * 1024;
+  int64_t inactiveAssetSizeLimitBytes = 16 * 1024 * 1024;
 
   using FactorySignature =
       CesiumAsync::Future<CesiumUtility::ResultPointer<TAssetType>>(
@@ -255,11 +255,12 @@ private:
 
     this->_deletionCandidates.insertAtTail(entry);
 
-    if (this->_totalDeletionCandidateMemoryUsage > this->staleAssetSizeLimit) {
+    if (this->_totalDeletionCandidateMemoryUsage >
+        this->inactiveAssetSizeLimitBytes) {
       // Delete the deletion candidates until we're below the limit.
       while (this->_deletionCandidates.size() > 0 &&
              this->_totalDeletionCandidateMemoryUsage >
-                 this->staleAssetSizeLimit) {
+                 this->inactiveAssetSizeLimitBytes) {
         AssetEntry* pOldEntry = this->_deletionCandidates.head();
         this->_deletionCandidates.remove(*pOldEntry);
 
