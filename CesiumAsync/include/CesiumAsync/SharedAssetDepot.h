@@ -195,34 +195,37 @@ public:
   }
 
   /**
-   * @brief Returns the total number of distinct assets contained in this depot.
+   * @brief Returns the total number of distinct assets contained in this depot,
+   * including both active and inactive assets.
    */
-  size_t getDistinctCount() const {
+  size_t getAssetCount() const {
     std::lock_guard lock(this->_mutex);
     return this->_assets.size();
   }
 
   /**
-   * @brief Returns the number of active references to assets in this depot.
+   * @brief Gets the number of assets owned by this depot that are active,
+   * meaning that they are currently being used in one or more places.
    */
-  size_t getUsageCount() const {
+  size_t getActiveAssetCount() const {
     std::lock_guard lock(this->_mutex);
-
-    size_t count = 0;
-    for (const auto& [key, pEntry] : _assets) {
-      if (pEntry->pAsset) {
-        count += pEntry->pAsset->_referenceCount;
-      }
-    }
-    return count;
+    return this->_assets.size() - this->_deletionCandidates.size();
   }
 
-  size_t getDeletionCandidateCount() const {
+  /**
+   * @brief Gets the number of assets owned by this depot that are inactive,
+   * meaning that they are not currently being used.
+   */
+  size_t getInactiveAssetCount() const {
     std::lock_guard lock(this->_mutex);
     return this->_deletionCandidates.size();
   }
 
-  int64_t getDeletionCandidateTotalSizeBytes() const {
+  /**
+   * @brief Gets the total bytes used by inactive (unused) assets owned by this
+   * depot.
+   */
+  int64_t getInactiveAssetTotalSizeBytes() const {
     std::lock_guard lock(this->_mutex);
     return this->_totalDeletionCandidateMemoryUsage;
   }
