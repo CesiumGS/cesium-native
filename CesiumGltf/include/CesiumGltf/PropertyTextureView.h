@@ -749,7 +749,7 @@ private:
     }
 
     const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
-        _pModel->images[imageIndex].pCesium;
+        _pModel->images[imageIndex].pAsset;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
     status = checkChannels(channels, *pImage);

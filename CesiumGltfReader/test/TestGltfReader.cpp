@@ -689,7 +689,7 @@ TEST_CASE("Decodes images with data uris") {
 
   REQUIRE(model.images.size() == 1);
 
-  const ImageAsset& image = *model.images.front().pCesium;
+  const ImageAsset& image = *model.images.front().pAsset;
 
   CHECK(image.width == 256);
   CHECK(image.height == 256);
@@ -782,9 +782,9 @@ TEST_CASE("GltfReader::loadGltf") {
 
     REQUIRE(result.model->images.size() == 1);
     const CesiumGltf::Image& image = result.model->images[0];
-    CHECK(image.pCesium->width == 2048);
-    CHECK(image.pCesium->height == 2048);
-    CHECK(image.pCesium->pixelData.size() == 2048 * 2048 * 4);
+    CHECK(image.pAsset->width == 2048);
+    CHECK(image.pAsset->height == 2048);
+    CHECK(image.pAsset->pixelData.size() == 2048 * 2048 * 4);
 
     CHECK(!result.model->buffers.empty());
     for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
@@ -810,7 +810,7 @@ TEST_CASE("GltfReader::loadGltf") {
     REQUIRE(result.model->images.size() == 1);
     const CesiumGltf::Image& image = result.model->images[0];
     CHECK(image.uri.has_value());
-    CHECK(!image.pCesium);
+    CHECK(!image.pAsset);
   }
 }
 

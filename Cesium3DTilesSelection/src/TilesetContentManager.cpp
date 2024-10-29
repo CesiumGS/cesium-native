@@ -49,15 +49,15 @@ struct ContentKindSetter {
 
   void operator()(CesiumGltf::Model&& model) {
     for (CesiumGltf::Image& image : model.images) {
-      if (!image.pCesium)
+      if (!image.pAsset)
         continue;
 
       // If the image size hasn't been overridden, store the pixelData
       // size now. We'll be adding this number to our total memory usage soon,
       // and remove it when the tile is later unloaded, and we must use
       // the same size in each case.
-      if (image.pCesium->sizeBytes < 0) {
-        image.pCesium->sizeBytes = int64_t(image.pCesium->pixelData.size());
+      if (image.pAsset->sizeBytes < 0) {
+        image.pAsset->sizeBytes = int64_t(image.pAsset->pixelData.size());
       }
     }
 

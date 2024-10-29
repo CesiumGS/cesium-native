@@ -81,7 +81,7 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
   }
 
   const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
-      _pModel->images[static_cast<size_t>(imageIndex)].pCesium;
+      _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
 
   if (pImage->width < 1 || pImage->height < 1) {
     return PropertyTexturePropertyViewStatus::ErrorEmptyImage;

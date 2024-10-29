@@ -9,10 +9,9 @@ namespace CesiumGltf {
 /** @copydoc ImageSpec */
 struct CESIUMGLTF_API Image final : public ImageSpec {
   /**
-   * @brief Holds properties that are specific to the glTF loader rather than
-   * part of the glTF spec. When an image is loaded from a URL, multiple `Image`
-   * instances may all point to the same `ImageAsset` instance.
+   * @brief The loaded image asset. When an image is loaded from a URL, multiple
+   * `Image` instances may all point to the same `ImageAsset` instance.
    */
-  CesiumUtility::IntrusivePointer<ImageAsset> pCesium;
+  CesiumUtility::IntrusivePointer<ImageAsset> pAsset;
 };
 } // namespace CesiumGltf

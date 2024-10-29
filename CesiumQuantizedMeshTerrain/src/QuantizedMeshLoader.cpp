@@ -1073,14 +1073,14 @@ static std::vector<std::byte> generateNormals(
     const size_t waterMaskImageId = model.images.size();
     model.images.emplace_back();
     CesiumGltf::Image& waterMaskImage = model.images[waterMaskImageId];
-    waterMaskImage.pCesium.emplace();
-    waterMaskImage.pCesium->width = 256;
-    waterMaskImage.pCesium->height = 256;
-    waterMaskImage.pCesium->channels = 1;
-    waterMaskImage.pCesium->bytesPerChannel = 1;
-    waterMaskImage.pCesium->pixelData.resize(65536);
+    waterMaskImage.pAsset.emplace();
+    waterMaskImage.pAsset->width = 256;
+    waterMaskImage.pAsset->height = 256;
+    waterMaskImage.pAsset->channels = 1;
+    waterMaskImage.pAsset->bytesPerChannel = 1;
+    waterMaskImage.pAsset->pixelData.resize(65536);
     std::memcpy(
-        waterMaskImage.pCesium->pixelData.data(),
+        waterMaskImage.pAsset->pixelData.data(),
         meshView->waterMaskBuffer.data(),
         65536);
 

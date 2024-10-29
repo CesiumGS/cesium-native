@@ -41,7 +41,7 @@ TextureView::TextureView(
     return;
   }
 
-  this->_pImage = model.images[static_cast<size_t>(texture.source)].pCesium;
+  this->_pImage = model.images[static_cast<size_t>(texture.source)].pAsset;
   if (this->_pImage->width < 1 || this->_pImage->height < 1) {
     this->_textureViewStatus = TextureViewStatus::ErrorEmptyImage;
     return;

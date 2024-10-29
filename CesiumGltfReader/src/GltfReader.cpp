@@ -265,7 +265,7 @@ void postprocess(
       }
 
       // Image has already been decoded
-      if (image.pCesium && !image.pCesium->pixelData.empty()) {
+      if (image.pAsset && !image.pAsset->pixelData.empty()) {
         continue;
       }
 
@@ -300,7 +300,7 @@ void postprocess(
           imageResult.errors.begin(),
           imageResult.errors.end());
       if (imageResult.pImage) {
-        image.pCesium = imageResult.pImage;
+        image.pAsset = imageResult.pImage;
       } else {
         if (image.mimeType) {
           readGltf.errors.emplace_back(
@@ -574,7 +574,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               pImage->uri = std::nullopt;
 
               if (loadedImage.pValue) {
-                pImage->pCesium = loadedImage.pValue;
+                pImage->pAsset = loadedImage.pValue;
                 return ExternalBufferLoadResult{
                     true,
                     imageUri,

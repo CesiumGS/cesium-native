@@ -141,7 +141,7 @@ void decodeDataUrls(
       continue;
     }
 
-    image.pCesium = imageResult.pImage;
+    image.pAsset = imageResult.pImage;
 
     if (options.clearDecodedDataUrls) {
       image.uri.reset();
