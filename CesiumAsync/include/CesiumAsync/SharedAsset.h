@@ -1,13 +1,15 @@
 #pragma once
 
-#include <CesiumAsync/SharedAssetDepot.h>
-#include <CesiumUtility/DoublyLinkedList.h>
+#include <CesiumAsync/IDepotOwningAsset.h>
+#include <CesiumAsync/Library.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <atomic>
 
 namespace CesiumAsync {
+
+template <typename TAssetType, typename TAssetKey> class SharedAssetDepot;
 
 /**
  * @brief An asset that is potentially shared between multiple objects, such as
@@ -48,14 +50,42 @@ template <typename T>
 class CESIUMASYNC_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
   /**
+   * @brief Adds a counted reference to this object. Use
+   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * directly.
+   */
+  void addReference() const noexcept { this->addReference(false); }
+
+  /**
+   * @brief Removes a counted reference from this object. When the last
+   * reference is removed, this method will delete this instance. Use
+   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * directly.
+   */
+  void releaseReference() const noexcept { this->releaseReference(false); }
+
+  /**
+   * @brief Gets the shared asset depot that owns this asset, or nullptr if this
+   * asset is independent of an asset depot.
+   */
+  const IDepotOwningAsset<T>* getDepot() const { return this->_pDepot; }
+
+  /**
+   * @brief Gets the shared asset depot that owns this asset, or nullptr if this
+   * asset is independent of an asset depot.
+   */
+  IDepotOwningAsset<T>* getDepot() { return this->_pDepot; }
+
+protected:
+  SharedAsset() = default;
+  ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
+
+  /**
    * Assets can be copied, but the fresh instance has no references and is not
    * in the asset depot.
    */
   SharedAsset(const SharedAsset& rhs)
-      : ExtensibleObject(rhs),
-        _referenceCount(0),
-        _pDepot(nullptr),
-        _uniqueAssetId() {}
+      : ExtensibleObject(rhs), _referenceCount(0), _pDepot(nullptr) {}
 
   /**
    * After a move construction, the content of the asset is moved to the new
@@ -64,8 +94,7 @@ public:
   SharedAsset(SharedAsset&& rhs)
       : ExtensibleObject(std::move(rhs)),
         _referenceCount(0),
-        _pDepot(nullptr),
-        _uniqueAssetId() {}
+        _pDepot(nullptr) {}
 
   /**
    * Assignment does not affect the asset's relationship with the depot, but is
@@ -81,33 +110,26 @@ public:
     return *this;
   }
 
-  /**
-   * @brief Adds a counted reference to this object. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
-   * directly.
-   */
-  void addReference() const /*noexcept*/ {
+private:
+  void addReference(bool threadOwnsDepotLock) const noexcept {
     const int32_t prevReferences = this->_referenceCount++;
     if (this->_pDepot && prevReferences <= 0) {
       this->_pDepot->unmarkDeletionCandidate(
-          *const_cast<SharedAsset<T>*>(this));
+          *static_cast<const T*>(this),
+          threadOwnsDepotLock);
     }
   }
 
-  /**
-   * @brief Removes a counted reference from this object. When the last
-   * reference is removed, this method will delete this instance. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
-   * directly.
-   */
-  void releaseReference() const /*noexcept*/ {
+  void releaseReference(bool threadOwnsDepotLock) const noexcept {
     CESIUM_ASSERT(this->_referenceCount > 0);
     const int32_t references = --this->_referenceCount;
     if (references == 0) {
-      SharedAssetDepot<T>* pDepot = this->_pDepot;
+      IDepotOwningAsset<T>* pDepot = this->_pDepot;
       if (pDepot) {
         // Let the depot manage this object's lifetime.
-        pDepot->markDeletionCandidate(*const_cast<SharedAsset<T>*>(this));
+        pDepot->markDeletionCandidate(
+            *static_cast<const T*>(this),
+            threadOwnsDepotLock);
       } else {
         // No depot, so destroy this object directly.
         delete static_cast<const T*>(this);
@@ -115,42 +137,12 @@ public:
     }
   }
 
-  /**
-   * @brief Gets the shared asset depot that owns this asset, or nullptr if this
-   * asset is independent of an asset depot.
-   */
-  const SharedAssetDepot<T>* getDepot() const { return this->_pDepot; }
-
-  /**
-   * @brief Gets the shared asset depot that owns this asset, or nullptr if this
-   * asset is independent of an asset depot.
-   */
-  SharedAssetDepot<T>* getDepot() { return this->_pDepot; }
-
-  /**
-   * @brief Gets the unique ID of this asset, if it {@link isShareable}.
-   *
-   * If this asset is not shareable, this method will return an empty string.
-   */
-  const std::string& getUniqueAssetId() const { return this->_uniqueAssetId; }
-
-protected:
-  SharedAsset() = default;
-  ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
-
-private:
   mutable std::atomic<std::int32_t> _referenceCount{0};
-  SharedAssetDepot<T>* _pDepot{nullptr};
-  std::string _uniqueAssetId{};
+  IDepotOwningAsset<T>* _pDepot{nullptr};
 
-  CesiumUtility::DoublyLinkedListPointers<SharedAsset<T>> _deletionListPointers;
-
-  // The size of this asset when it was counted by the depot. This is stored so
-  // that the exact same size can be subtracted later.
-  int64_t _sizeInDepot{0};
-
-  // To allow the depot to modify _pDepot, _uniqueAssetId, and _sizeInDepot.
-  friend class SharedAssetDepot<T>;
+  // To allow the depot to modify _pDepot.
+  template <typename TAssetType, typename TAssetKey>
+  friend class SharedAssetDepot;
 };
 
 } // namespace CesiumAsync

@@ -1682,11 +1682,28 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       CHECK(images.size() == 1);
     }
 
-    CHECK(pManager->getSharedAssetSystem()->pImage->getDistinctCount() == 2);
+    CHECK(
+        pManager->getSharedAssetSystem()
+            ->pImage->getInactiveAssetTotalSizeBytes() == 0);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getAssetCount() == 2);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getActiveAssetCount() == 2);
+    CHECK(
+        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() == 0);
 
     // unload the tile content
     for (auto& child : containerTile.getChildren()) {
       pManager->unloadTileContent(child);
     }
+
+    // Both of the assets will become inactive, and one of them will be
+    // destroyed, in order to bring the total under the limit.
+    CHECK(
+        pManager->getSharedAssetSystem()
+            ->pImage->getInactiveAssetTotalSizeBytes() <=
+        pManager->getSharedAssetSystem()->pImage->inactiveAssetSizeLimitBytes);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getAssetCount() == 1);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getActiveAssetCount() == 0);
+    CHECK(
+        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() == 1);
   }
 }
