@@ -2,6 +2,10 @@
 
 ### Not Released Yet
 
+##### Fixes :wrench:
+
+- Fixed missing ellipsoid parameters that led to the build failing if `CESIUM_DISABLE_DEFAULT_ELLIPSOID` was defined.
+
 ##### Breaking Changes :mega:
 
 - Renamed `CesiumUtility/Gunzip.h` to `CesiumUtility/Gzip.h`.
