@@ -15,7 +15,7 @@ class TestAsset : public SharedAsset<TestAsset> {
 public:
   std::string someValue;
 
-  int64_t getSizeBytes() const { return this->someValue.size(); }
+  int64_t getSizeBytes() const { return int64_t(this->someValue.size()); }
 };
 
 IntrusivePointer<SharedAssetDepot<TestAsset, std::string>> createDepot() {
