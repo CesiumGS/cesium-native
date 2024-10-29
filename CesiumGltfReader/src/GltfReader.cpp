@@ -549,8 +549,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 const std::vector<IAssetAccessor::THeader>& headers)
             -> SharedFuture<ResultPointer<ImageAsset>> {
           NetworkImageAssetDescriptor assetKey{
-              uri,
-              headers,
+              {uri, headers},
               options.ktx2TranscodeTargets};
 
           if (options.pSharedAssets == nullptr ||
