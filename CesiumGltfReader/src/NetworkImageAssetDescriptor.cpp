@@ -17,19 +17,19 @@ bool NetworkImageAssetDescriptor::operator==(
   return this->ktx2TranscodeTargets.ETC1S_R ==
              rhs.ktx2TranscodeTargets.ETC1S_R &&
          this->ktx2TranscodeTargets.ETC1S_RG ==
-             this->ktx2TranscodeTargets.ETC1S_RG &&
+             rhs.ktx2TranscodeTargets.ETC1S_RG &&
          this->ktx2TranscodeTargets.ETC1S_RGB ==
-             this->ktx2TranscodeTargets.ETC1S_RGB &&
+             rhs.ktx2TranscodeTargets.ETC1S_RGB &&
          this->ktx2TranscodeTargets.ETC1S_RGBA ==
-             this->ktx2TranscodeTargets.ETC1S_RGBA &&
+             rhs.ktx2TranscodeTargets.ETC1S_RGBA &&
          this->ktx2TranscodeTargets.UASTC_R ==
              rhs.ktx2TranscodeTargets.UASTC_R &&
          this->ktx2TranscodeTargets.UASTC_RG ==
-             this->ktx2TranscodeTargets.UASTC_RG &&
+             rhs.ktx2TranscodeTargets.UASTC_RG &&
          this->ktx2TranscodeTargets.UASTC_RGB ==
-             this->ktx2TranscodeTargets.UASTC_RGB &&
+             rhs.ktx2TranscodeTargets.UASTC_RGB &&
          this->ktx2TranscodeTargets.UASTC_RGBA ==
-             this->ktx2TranscodeTargets.UASTC_RGBA;
+             rhs.ktx2TranscodeTargets.UASTC_RGBA;
 }
 
 Future<ResultPointer<ImageAsset>> NetworkImageAssetDescriptor::load(
