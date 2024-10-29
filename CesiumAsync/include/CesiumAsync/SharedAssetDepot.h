@@ -47,11 +47,11 @@ public:
    */
   int64_t staleAssetSizeLimit = 16 * 1024 * 1024;
 
-  using FactorySignature = CesiumAsync::Future<
-      CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>>(
-      const AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const TAssetKey& key);
+  using FactorySignature =
+      CesiumAsync::Future<CesiumUtility::ResultPointer<TAssetType>>(
+          const AsyncSystem& asyncSystem,
+          const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+          const TAssetKey& key);
 
   SharedAssetDepot(std::function<FactorySignature> factory)
       : _factory(std::move(factory)) {}
@@ -78,9 +78,7 @@ public:
    * @param assetKey The key uniquely identifying the asset to get or create.
    * @return A shared future that resolves when the asset is ready or fails.
    */
-  SharedFuture<
-      CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>>
-  getOrCreate(
+  SharedFuture<CesiumUtility::ResultPointer<TAssetType>> getOrCreate(
       const AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       const TAssetKey& assetKey) {
@@ -154,9 +152,8 @@ public:
                   return pEntry->toResult();
                 });
 
-    SharedFuture<
-        CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>>
-        sharedFuture = std::move(future).share();
+    SharedFuture<CesiumUtility::ResultPointer<TAssetType>> sharedFuture =
+        std::move(future).share();
 
     pEntry->maybePendingAsset = sharedFuture;
 
@@ -315,8 +312,7 @@ private:
      * future that will resolve when the asset load is complete. This field will
      * be empty if the asset finished loading, including if it failed to load.
      */
-    std::optional<SharedFuture<
-        CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>>>
+    std::optional<SharedFuture<CesiumUtility::ResultPointer<TAssetType>>>
         maybePendingAsset;
 
     /**
@@ -340,15 +336,13 @@ private:
      */
     CesiumUtility::DoublyLinkedListPointers<AssetEntry> deletionListPointers;
 
-    CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>
-    toResult() const {
-      return CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>(
+    CesiumUtility::ResultPointer<TAssetType> toResult() const {
+      return CesiumUtility::ResultPointer<TAssetType>(
           pAsset.get(),
           errorsAndWarnings);
     }
 
-    SharedFuture<
-        CesiumUtility::Result<CesiumUtility::IntrusivePointer<TAssetType>>>
+    SharedFuture<CesiumUtility::ResultPointer<TAssetType>>
     toFuture(const AsyncSystem& asyncSystem) const {
       if (this->maybePendingAsset) {
         return *this->maybePendingAsset;

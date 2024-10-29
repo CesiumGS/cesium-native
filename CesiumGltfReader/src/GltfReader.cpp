@@ -535,7 +535,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
                 const std::string& uri,
                 const std::vector<IAssetAccessor::THeader>& headers)
-            -> SharedFuture<Result<IntrusivePointer<ImageAsset>>> {
+            -> SharedFuture<ResultPointer<ImageAsset>> {
           NetworkImageAssetDescriptor assetKey{
               uri,
               headers,
@@ -554,12 +554,11 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
           }
         };
 
-        SharedFuture<Result<IntrusivePointer<ImageAsset>>> future =
+        SharedFuture<ResultPointer<ImageAsset>> future =
             getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
         resolvedBuffers.push_back(future.thenInWorkerThread(
-            [pImage = &image](
-                const Result<IntrusivePointer<ImageAsset>>& loadedImage) {
+            [pImage = &image](const ResultPointer<ImageAsset>& loadedImage) {
               std::string imageUri = *pImage->uri;
               pImage->uri = std::nullopt;
 

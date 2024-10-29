@@ -25,7 +25,7 @@ struct TileContentLoadInfo {
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>
+      const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
           pSharedAssetSystem,
       const TilesetContentOptions& contentOptions,
       const Tile& tile);

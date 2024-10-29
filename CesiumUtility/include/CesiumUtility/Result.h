@@ -75,4 +75,12 @@ template <typename T> struct Result<CesiumUtility::IntrusivePointer<T>> {
   ErrorList errors;
 };
 
+/**
+ * @brief A convenient shortcut for
+ * `CesiumUtility::Result<CesiumUtility::IntrusivePointer<T>>`.
+ *
+ * @tparam T The type of object that the IntrusivePointer points to.
+ */
+template <typename T> using ResultPointer = Result<IntrusivePointer<T>>;
+
 } // namespace CesiumUtility

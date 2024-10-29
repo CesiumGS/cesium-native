@@ -9,7 +9,7 @@ TileContentLoadInfo::TileContentLoadInfo(
     const std::shared_ptr<IPrepareRendererResources>&
         pPrepareRendererResources_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
-    const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>
+    const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem_,
     const TilesetContentOptions& contentOptions_,
     const Tile& tile)

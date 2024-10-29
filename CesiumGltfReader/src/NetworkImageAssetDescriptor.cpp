@@ -32,14 +32,14 @@ bool NetworkImageAssetDescriptor::operator==(
              this->ktx2TranscodeTargets.UASTC_RGBA;
 }
 
-Future<Result<IntrusivePointer<ImageAsset>>> NetworkImageAssetDescriptor::load(
+Future<ResultPointer<ImageAsset>> NetworkImageAssetDescriptor::load(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) const {
   return this->loadBytesFromNetwork(asyncSystem, pAssetAccessor)
       .thenInWorkerThread([ktx2TranscodeTargets = this->ktx2TranscodeTargets](
                               Result<std::vector<std::byte>>&& result) {
         if (!result.value) {
-          return Result<IntrusivePointer<ImageAsset>>(result.errors);
+          return ResultPointer<ImageAsset>(result.errors);
         }
 
         ImageReaderResult imageResult =
@@ -48,7 +48,7 @@ Future<Result<IntrusivePointer<ImageAsset>>> NetworkImageAssetDescriptor::load(
         result.errors.merge(
             ErrorList{imageResult.errors, imageResult.warnings});
 
-        return Result<IntrusivePointer<ImageAsset>>(
+        return ResultPointer<ImageAsset>(
             imageResult.pImage,
             std::move(result.errors));
       });

@@ -15,7 +15,7 @@ CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> createDefault() {
       [](const AsyncSystem& asyncSystem,
          const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
          const NetworkImageAssetDescriptor& key)
-          -> Future<Result<IntrusivePointer<ImageAsset>>> {
+          -> Future<ResultPointer<ImageAsset>> {
         return key.load(asyncSystem, pAssetAccessor);
       }));
 
