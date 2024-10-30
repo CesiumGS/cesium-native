@@ -14,8 +14,7 @@
 namespace CesiumGltfReader {
 
 /**
- * @brief The result of reading an image with
- * {@link ImageDecoder::readImage}.
+ * @brief The result of reading an image with {@link ImageDecoder::readImage}.
  */
 struct CESIUMGLTFREADER_API ImageReaderResult {
 
@@ -37,6 +36,9 @@ struct CESIUMGLTFREADER_API ImageReaderResult {
   std::vector<std::string> warnings;
 };
 
+/**
+ * @brief Contains methods for reading and manipulating images.
+ */
 class ImageDecoder {
 public:
   /**

@@ -42,8 +42,7 @@ struct NetworkImageAssetDescriptor
    * @return A future that resolves to the image asset once the request is
    * complete.
    */
-  CesiumAsync::Future<CesiumUtility::Result<
-      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>>>
+  CesiumAsync::Future<CesiumUtility::ResultPointer<CesiumGltf::ImageAsset>>
   load(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const;

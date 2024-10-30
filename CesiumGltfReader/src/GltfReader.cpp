@@ -8,13 +8,10 @@
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
@@ -29,7 +26,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
-#include <memory>
 #include <sstream>
 #include <string>
 
