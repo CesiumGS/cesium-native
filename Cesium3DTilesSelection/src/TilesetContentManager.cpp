@@ -666,7 +666,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssetSystem(TilesetSharedAssetSystem::getDefault()),
+      _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -696,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssetSystem(TilesetSharedAssetSystem::getDefault()),
+      _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -848,7 +848,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssetSystem(TilesetSharedAssetSystem::getDefault()),
+      _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
