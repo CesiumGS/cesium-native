@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AsyncSystem.h"
+#include "Future.h"
 #include "IAssetRequest.h"
 #include "Library.h"
 
@@ -12,6 +12,7 @@
 #include <vector>
 
 namespace CesiumAsync {
+
 class AsyncSystem;
 
 /**

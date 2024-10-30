@@ -69,6 +69,27 @@ public:
   ~IntrusivePointer() noexcept { this->releaseReference(); }
 
   /**
+   * @brief Constructs a new instance and assigns it to this IntrusivePointer.
+   * If this IntrusivePointer already points to another instance,
+   * {@link releaseReference} is called on it.
+   *
+   * @param constructorArguments The arguments to the constructor to create the
+   * new instance.
+   * @return A reference to the newly-created instance.
+   */
+  template <typename... ConstructorArgumentTypes>
+  T& emplace(ConstructorArgumentTypes&&... constructorArguments) {
+    *this =
+        new T(std::forward<ConstructorArgumentTypes>(constructorArguments)...);
+    return *this->get();
+  }
+
+  /**
+   * @brief Reset this pointer to nullptr.
+   */
+  void reset() { *this = nullptr; }
+
+  /**
    * @brief Assignment operator.
    */
   IntrusivePointer& operator=(const IntrusivePointer& rhs) noexcept {

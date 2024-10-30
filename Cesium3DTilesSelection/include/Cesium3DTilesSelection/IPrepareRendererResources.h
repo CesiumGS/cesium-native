@@ -20,7 +20,6 @@ struct Rectangle;
 }
 
 namespace CesiumGltf {
-struct ImageCesium;
 struct Model;
 } // namespace CesiumGltf
 
