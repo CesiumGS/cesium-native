@@ -234,10 +234,7 @@ GltfReaderResult readBinaryGltf(
   return result;
 }
 
-void postprocess(
-    const GltfReader& reader,
-    GltfReaderResult& readGltf,
-    const GltfReaderOptions& options) {
+void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
   Model& model = readGltf.model.value();
 
   auto extFeatureMetadataIter = std::find(
@@ -253,7 +250,7 @@ void postprocess(
   }
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(reader, readGltf, options);
+    decodeDataUrls(readGltf, options);
   }
 
   if (options.decodeEmbeddedImages) {
@@ -381,7 +378,7 @@ GltfReaderResult GltfReader::readGltf(
                                                : readJsonGltf(context, data);
 
   if (result.model) {
-    postprocess(*this, result, options);
+    postprocess(result, options);
   }
 
   return result;
@@ -437,7 +434,7 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
                 std::move(result));
           })
       .thenInWorkerThread([options, this](GltfReaderResult&& result) {
-        postprocess(*this, result, options);
+        postprocess(result, options);
         return std::move(result);
       });
 }
@@ -446,7 +443,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
     GltfReaderResult& readGltf,
     const GltfReaderOptions& options) {
   if (readGltf.model) {
-    postprocess(*this, readGltf, options);
+    postprocess(readGltf, options);
   }
 }
 
@@ -622,4 +619,15 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 
             return std::move(*pResult.release());
           });
+}
+
+/*static*/ ImageReaderResult GltfReader::readImage(
+    const gsl::span<const std::byte>& data,
+    const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
+  return ImageDecoder::readImage(data, ktx2TranscodeTargets);
+}
+
+/*static*/ std::optional<std::string>
+GltfReader::generateMipMaps(CesiumGltf::ImageAsset& image) {
+  return ImageDecoder::generateMipMaps(image);
 }

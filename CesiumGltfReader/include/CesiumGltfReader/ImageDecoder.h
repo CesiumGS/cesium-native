@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltfReader/Library.h"
 
