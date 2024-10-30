@@ -552,13 +552,13 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               {uri, headers},
               options.ktx2TranscodeTargets};
 
-          if (options.pSharedAssets == nullptr ||
-              options.pSharedAssets->pImage == nullptr) {
+          if (options.pSharedAssetSystem == nullptr ||
+              options.pSharedAssetSystem->pImage == nullptr) {
             // We don't have a depot, so fetch this asset directly.
             return assetKey.load(asyncSystem, pAssetAccessor).share();
           } else {
             // We have a depot, so fetch this asset via that depot.
-            return options.pSharedAssets->pImage->getOrCreate(
+            return options.pSharedAssetSystem->pImage->getOrCreate(
                 asyncSystem,
                 pAssetAccessor,
                 assetKey);

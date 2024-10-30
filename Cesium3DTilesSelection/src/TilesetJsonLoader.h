@@ -56,7 +56,7 @@ public:
 private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;
-  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssets;
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.

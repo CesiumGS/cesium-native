@@ -173,7 +173,7 @@ private:
   int64_t _tilesDataUsed;
 
   // Stores assets that might be shared between tiles.
-  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssets;
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;

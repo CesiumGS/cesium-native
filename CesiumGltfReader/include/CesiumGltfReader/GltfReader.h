@@ -114,7 +114,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * The shared asset system that will be used to store all of the shared assets
    * that might appear in this glTF.
    */
-  CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssets =
+  CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssetSystem =
       nullptr;
 };
 

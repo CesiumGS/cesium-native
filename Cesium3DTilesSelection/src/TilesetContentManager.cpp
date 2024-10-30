@@ -566,7 +566,7 @@ postProcessContentInWorkerThread(
   gltfOptions.applyTextureTransform =
       tileLoadInfo.contentOptions.applyTextureTransform;
   if (tileLoadInfo.pSharedAssetSystem) {
-    gltfOptions.pSharedAssets = tileLoadInfo.pSharedAssetSystem;
+    gltfOptions.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
   }
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
@@ -666,7 +666,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(TilesetSharedAssetSystem::getDefault()),
+      _pSharedAssetSystem(TilesetSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -696,7 +696,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(TilesetSharedAssetSystem::getDefault()),
+      _pSharedAssetSystem(TilesetSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -848,7 +848,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
-      _pSharedAssets(TilesetSharedAssetSystem::getDefault()),
+      _pSharedAssetSystem(TilesetSharedAssetSystem::getDefault()),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -994,7 +994,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pAssetAccessor,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
-      this->_pSharedAssets,
+      this->_pSharedAssetSystem,
       tilesetOptions.contentOptions,
       tile};
 
@@ -1239,7 +1239,7 @@ TilesetContentManager::getTilesetCredits() const noexcept {
 
 const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
 TilesetContentManager::getSharedAssetSystem() const noexcept {
-  return this->_pSharedAssets;
+  return this->_pSharedAssetSystem;
 }
 
 int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {

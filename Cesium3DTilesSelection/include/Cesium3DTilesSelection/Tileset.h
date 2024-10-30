@@ -184,7 +184,7 @@ public:
   const RasterOverlayCollection& getOverlays() const noexcept;
 
   /**
-   * @brief Returns the {@link SharedAssetDepot} of this tileset.
+   * @brief Returns the {@link TilesetSharedAssetSystem} of this tileset.
    */
   TilesetSharedAssetSystem& getSharedAssetSystem() noexcept;
 

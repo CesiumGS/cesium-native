@@ -1,8 +1,6 @@
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 
 using namespace Cesium3DTilesSelection;
-using namespace CesiumAsync;
-using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
