@@ -4,7 +4,7 @@
 
 ##### Fixes :wrench:
 
-- Fixed missing ellipsoid parameters that led to the build failing if `CESIUM_DISABLE_DEFAULT_ELLIPSOID` was defined.
+- Fixed missing ellipsoid parameters that would lead to incorrect results when using non-WGS84 ellipsoids.
 
 ##### Breaking Changes :mega:
 
