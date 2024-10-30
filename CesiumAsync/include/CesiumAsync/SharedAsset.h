@@ -30,7 +30,7 @@ template <typename TAssetType, typename TAssetKey> class SharedAssetDepot;
  * An independent asset isn't affiliated with an asset depot at all.
  * Its lifetime is controlled exclusively by IntrusivePointer / reference
  * counting. When the asset's reference count goes to zero, it deletes itself.
- * An independent asset's `_pDepot` is nullptr.
+ * An independent asset's {@link getDepot} returns nullptr.
  *
  * **Active Depot Asset**
  * This is an asset that is owned by an asset depot and that is in use, meaning

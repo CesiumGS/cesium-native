@@ -103,18 +103,6 @@ public:
       const TAssetKey& assetKey) {
     // We need to take care here to avoid two assets starting to load before the
     // first asset has added an entry and set its maybePendingAsset field.
-
-    // Calling the factory function while holding the mutex unnecessarily
-    // limits parallelism. It can even lead to a bug in the scenario where the
-    // `thenInWorkerThread` continuation is invoked immediately in the current
-    // thread, before `thenInWorkerThread` itself returns. That would result
-    // in an attempt to lock the mutex recursively, which is not allowed.
-
-    // So we jump through some hoops here to publish "this thread is working
-    // on it", then unlock the mutex, and _then_ actually call the factory
-    // function.
-    Promise<void> promise = asyncSystem.createPromise<void>();
-
     std::unique_lock lock(this->_mutex);
 
     auto existingIt = this->_assets.find(assetKey);
@@ -130,6 +118,17 @@ public:
             .share();
       }
     }
+
+    // Calling the factory function while holding the mutex unnecessarily
+    // limits parallelism. It can even lead to a bug in the scenario where the
+    // `thenInWorkerThread` continuation is invoked immediately in the current
+    // thread, before `thenInWorkerThread` itself returns. That would result
+    // in an attempt to lock the mutex recursively, which is not allowed.
+
+    // So we jump through some hoops here to publish "this thread is working
+    // on it", then unlock the mutex, and _then_ actually call the factory
+    // function.
+    Promise<void> promise = asyncSystem.createPromise<void>();
 
     // We haven't loaded or started to load this asset yet.
     // Let's do that now.
@@ -440,8 +439,6 @@ private:
   // it are dropped.
   CesiumUtility::IntrusivePointer<SharedAssetDepot<TAssetType, TAssetKey>>
       _pKeepAlive;
-
-  friend class SharedAsset<TAssetType>;
 };
 
 } // namespace CesiumAsync

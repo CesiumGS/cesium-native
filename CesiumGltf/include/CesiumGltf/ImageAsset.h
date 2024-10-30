@@ -27,8 +27,8 @@ struct CESIUMGLTF_API ImageAssetMipPosition {
 };
 
 /**
- * @brief Holds {@link Image} properties that are specific to the glTF loader
- * rather than part of the glTF spec.
+ * @brief A 2D image asset, including its pixel data. The image may have
+ * mipmaps, and it may be encoded in a GPU compression format.
  */
 struct CESIUMGLTF_API ImageAsset final
     : public CesiumAsync::SharedAsset<ImageAsset> {
