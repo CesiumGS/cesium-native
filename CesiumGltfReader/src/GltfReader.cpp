@@ -429,7 +429,7 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
                 options,
                 std::move(result));
           })
-      .thenInWorkerThread([options, this](GltfReaderResult&& result) {
+      .thenInWorkerThread([options](GltfReaderResult&& result) {
         postprocess(result, options);
         return std::move(result);
       });
