@@ -1,7 +1,7 @@
-#include <CesiumAsync/SharedAsset.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumUtility/SharedAsset.h>
 
 #include <catch2/catch.hpp>
 

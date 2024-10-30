@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/SharedAsset.h"
 #include "CesiumGltf/Ktx2TranscodeTargets.h"
 #include "CesiumGltf/Library.h"
+#include "CesiumUtility/SharedAsset.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -31,7 +31,7 @@ struct CESIUMGLTF_API ImageAssetMipPosition {
  * mipmaps, and it may be encoded in a GPU compression format.
  */
 struct CESIUMGLTF_API ImageAsset final
-    : public CesiumAsync::SharedAsset<ImageAsset> {
+    : public CesiumUtility::SharedAsset<ImageAsset> {
   /**
    * @brief The width of the image in pixels.
    */

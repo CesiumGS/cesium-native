@@ -3,8 +3,8 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumAsync/IDepotOwningAsset.h>
 #include <CesiumUtility/DoublyLinkedList.h>
+#include <CesiumUtility/IDepotOwningAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Result.h>
@@ -17,9 +17,11 @@
 #include <string>
 #include <unordered_map>
 
-namespace CesiumAsync {
-
+namespace CesiumUtility {
 template <typename T> class SharedAsset;
+}
+
+namespace CesiumAsync {
 
 /**
  * @brief A depot for {@link SharedAsset} instances, which are potentially shared between multiple objects.
@@ -31,7 +33,7 @@ template <typename TAssetType, typename TAssetKey>
 class CESIUMASYNC_API SharedAssetDepot
     : public CesiumUtility::ReferenceCountedThreadSafe<
           SharedAssetDepot<TAssetType, TAssetKey>>,
-      public IDepotOwningAsset<TAssetType> {
+      public CesiumUtility::IDepotOwningAsset<TAssetType> {
 public:
   /**
    * @brief The maximum total byte usage of assets that have been loaded but are

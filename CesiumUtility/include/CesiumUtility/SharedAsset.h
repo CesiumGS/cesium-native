@@ -1,15 +1,17 @@
 #pragma once
 
-#include <CesiumAsync/IDepotOwningAsset.h>
-#include <CesiumAsync/Library.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/IDepotOwningAsset.h>
+#include <CesiumUtility/Library.h>
 
 #include <atomic>
 
 namespace CesiumAsync {
-
 template <typename TAssetType, typename TAssetKey> class SharedAssetDepot;
+}
+
+namespace CesiumUtility {
 
 /**
  * @brief An asset that is potentially shared between multiple objects, such as
@@ -47,7 +49,7 @@ template <typename TAssetType, typename TAssetKey> class SharedAssetDepot;
  * @endparblock
  */
 template <typename T>
-class CESIUMASYNC_API SharedAsset : public CesiumUtility::ExtensibleObject {
+class CESIUMUTILITY_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
   /**
    * @brief Adds a counted reference to this object. Use
@@ -142,7 +144,7 @@ private:
 
   // To allow the depot to modify _pDepot.
   template <typename TAssetType, typename TAssetKey>
-  friend class SharedAssetDepot;
+  friend class CesiumAsync::SharedAssetDepot;
 };
 
-} // namespace CesiumAsync
+} // namespace CesiumUtility
