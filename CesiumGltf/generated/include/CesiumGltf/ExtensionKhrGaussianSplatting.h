@@ -13,5 +13,10 @@ namespace CesiumGltf {
         static inline constexpr const char* TypeName = "ExtensionKhrGaussianSplatting";
         static inline constexpr const char* ExtensionName = "KHR_gaussian_splatting";
 
+        /**
+         * @brief Scale used when dequantizing position attribute values
+         */
+        double quantizedPositionScale = 1;
+
     };
 }

@@ -953,6 +953,11 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
+  if (obj.quantizedPositionScale != 1) {
+  jsonWriter.Key("quantizedPositionScale");
+  writeJson(obj.quantizedPositionScale, jsonWriter, context);
+  }
+
   writeExtensibleObject(obj, jsonWriter, context);
 
   jsonWriter.EndObject();

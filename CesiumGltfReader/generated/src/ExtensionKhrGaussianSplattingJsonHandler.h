@@ -3,6 +3,7 @@
 #pragma once
 
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumJsonReader/DoubleJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
@@ -31,6 +32,6 @@ namespace CesiumGltfReader {
   private:
 
     CesiumGltf::ExtensionKhrGaussianSplatting* _pObject = nullptr;
-
+    CesiumJsonReader::DoubleJsonHandler _quantizedPositionScale;
   };
 }

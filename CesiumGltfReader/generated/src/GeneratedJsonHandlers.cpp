@@ -1362,7 +1362,7 @@ CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::ExtensionCesiumPrimitiv
 
 namespace CesiumGltfReader {
 
-ExtensionKhrGaussianSplattingJsonHandler::ExtensionKhrGaussianSplattingJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+ExtensionKhrGaussianSplattingJsonHandler::ExtensionKhrGaussianSplattingJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _quantizedPositionScale() {}
 
 void ExtensionKhrGaussianSplattingJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrGaussianSplatting* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
@@ -1386,7 +1386,7 @@ void ExtensionKhrGaussianSplattingJsonHandler::reset(CesiumJsonReader::IJsonHand
 CesiumJsonReader::IJsonHandler* ExtensionKhrGaussianSplattingJsonHandler::readObjectKeyExtensionKhrGaussianSplatting(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrGaussianSplatting& o) {
   using namespace std::string_literals;
 
-  (void)o;
+  if ("quantizedPositionScale"s == str) return property("quantizedPositionScale", this->_quantizedPositionScale, o.quantizedPositionScale);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }
