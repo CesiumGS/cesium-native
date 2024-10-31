@@ -2,6 +2,10 @@
 
 ### Not Released Yet
 
+##### Fixes :wrench:
+
+- Fixed missing ellipsoid parameters that would lead to incorrect results when using non-WGS84 ellipsoids.
+
 ##### Breaking Changes :mega:
 
 - Renamed `CesiumUtility/Gunzip.h` to `CesiumUtility/Gzip.h`.
