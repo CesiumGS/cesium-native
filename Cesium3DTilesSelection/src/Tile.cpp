@@ -175,8 +175,8 @@ int64_t Tile::computeByteSize() const noexcept {
 
       // sizeBytes is set in TilesetContentManager::ContentKindSetter, if not
       // sooner (e.g., by the renderer implementation).
-      if (image.pCesium) {
-        bytes += image.pCesium->sizeBytes;
+      if (image.pAsset) {
+        bytes += image.pAsset->sizeBytes;
       }
     }
   }

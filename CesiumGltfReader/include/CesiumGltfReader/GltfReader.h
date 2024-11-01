@@ -114,9 +114,9 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * The shared asset system that will be used to store all of the shared assets
    * that might appear in this glTF.
    */
-  CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssets =
-      nullptr;
-
+  CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssetSystem =
+      GltfSharedAssetSystem::getDefault();
+      
   /**
    * @brief Whether the `schemaUri` property of `EXT_structural_metadata` will
    * be properly resolved. If false, any external schemas will be ignored.
@@ -204,28 +204,22 @@ public:
       GltfReaderResult&& result);
 
   /**
-   * Reads an Image from a buffer.
+   * @brief Reads an Image from a buffer.
    * @deprecated Use {@link ImageDecoder::readImage} instead.
    */
-  static ImageReaderResult readImage(
+  [[deprecated(
+      "Use ImageDecoder::readImage instead.")]] static ImageReaderResult
+  readImage(
       const gsl::span<const std::byte>& data,
-      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets) {
-    return ImageDecoder::readImage(data, ktx2TranscodeTargets);
-  }
+      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
    * @brief Generate mipmaps for this image.
-   *
-   * Does nothing if mipmaps already exist or the compressedPixelFormat is not
-   * GpuCompressedPixelFormat::NONE.
-   *
-   * @param image The image to generate mipmaps for.   *
-   * @return A string describing the error, if unable to generate mipmaps.
+   * @deprecated Use {@link ImageDecoder::generateMipMaps} instead.
    */
-  static std::optional<std::string>
-  generateMipMaps(CesiumGltf::ImageAsset& image) {
-    return ImageDecoder::generateMipMaps(image);
-  }
+  [[deprecated("Use ImageDecoder::generateMipMaps instead.")]] static std::
+      optional<std::string>
+      generateMipMaps(CesiumGltf::ImageAsset& image);
 
 private:
   CesiumJsonReader::JsonReaderOptions _context;

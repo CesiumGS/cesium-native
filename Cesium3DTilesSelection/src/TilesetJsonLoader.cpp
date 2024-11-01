@@ -1005,5 +1005,4 @@ void TilesetJsonLoader::addChildLoader(
     std::unique_ptr<TilesetContentLoader> pLoader) {
   this->_children.emplace_back(std::move(pLoader));
 }
-
 } // namespace Cesium3DTilesSelection

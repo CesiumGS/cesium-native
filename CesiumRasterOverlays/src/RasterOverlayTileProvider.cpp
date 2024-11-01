@@ -1,5 +1,5 @@
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -17,9 +17,6 @@ using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
-
-/*static*/ CesiumGltfReader::GltfReader
-    RasterOverlayTileProvider::_gltfReader{};
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
@@ -189,9 +186,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             const gsl::span<const std::byte> data = pResponse->data();
 
             CesiumGltfReader::ImageReaderResult loadedImage =
-                RasterOverlayTileProvider::_gltfReader.readImage(
-                    data,
-                    Ktx2TranscodeTargets);
+                ImageDecoder::readImage(data, Ktx2TranscodeTargets);
 
             if (!loadedImage.errors.empty()) {
               loadedImage.errors.push_back("Image url: " + pRequest->url());

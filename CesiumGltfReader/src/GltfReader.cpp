@@ -8,17 +8,11 @@
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
-#include <CesiumGltf/Schema.h>
-#include <CesiumGltfReader/SchemaAssetFactory.h>
 #include <CesiumJsonReader/JsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
@@ -33,7 +27,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
-#include <memory>
 #include <sstream>
 #include <string>
 
@@ -238,10 +231,7 @@ GltfReaderResult readBinaryGltf(
   return result;
 }
 
-void postprocess(
-    const GltfReader& reader,
-    GltfReaderResult& readGltf,
-    const GltfReaderOptions& options) {
+void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
   Model& model = readGltf.model.value();
 
   auto extFeatureMetadataIter = std::find(
@@ -257,7 +247,7 @@ void postprocess(
   }
 
   if (options.decodeDataUrls) {
-    decodeDataUrls(reader, readGltf, options);
+    decodeDataUrls(readGltf, options);
   }
 
   if (options.decodeEmbeddedImages) {
@@ -269,7 +259,7 @@ void postprocess(
       }
 
       // Image has already been decoded
-      if (image.pCesium && !image.pCesium->pixelData.empty()) {
+      if (image.pAsset && !image.pAsset->pixelData.empty()) {
         continue;
       }
 
@@ -304,7 +294,7 @@ void postprocess(
           imageResult.errors.begin(),
           imageResult.errors.end());
       if (imageResult.pImage) {
-        image.pCesium = imageResult.pImage;
+        image.pAsset = imageResult.pImage;
       } else {
         if (image.mimeType) {
           readGltf.errors.emplace_back(
@@ -385,7 +375,7 @@ GltfReaderResult GltfReader::readGltf(
                                                : readJsonGltf(context, data);
 
   if (result.model) {
-    postprocess(*this, result, options);
+    postprocess(result, options);
   }
 
   return result;
@@ -440,8 +430,8 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
                 options,
                 std::move(result));
           })
-      .thenInWorkerThread([options, this](GltfReaderResult&& result) {
-        postprocess(*this, result, options);
+      .thenInWorkerThread([options](GltfReaderResult&& result) {
+        postprocess(result, options);
         return std::move(result);
       });
 }
@@ -450,7 +440,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
     GltfReaderResult& readGltf,
     const GltfReaderOptions& options) {
   if (readGltf.model) {
-    postprocess(*this, readGltf, options);
+    postprocess(readGltf, options);
   }
 }
 
@@ -506,6 +496,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
   struct ExternalBufferLoadResult {
     bool success = false;
     std::string bufferUri;
+    ErrorList warningsAndErrors;
   };
 
   std::vector<Future<ExternalBufferLoadResult>> resolvedBuffers;
@@ -520,23 +511,35 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       resolvedBuffers.push_back(
           pAssetAccessor
               ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri), tHeaders)
-              .thenInWorkerThread(
-                  [pBuffer =
-                       &buffer](std::shared_ptr<IAssetRequest>&& pRequest) {
-                    const IAssetResponse* pResponse = pRequest->response();
+              .thenInWorkerThread([pBuffer =
+                                       &buffer](std::shared_ptr<IAssetRequest>&&
+                                                    pRequest) {
+                std::string bufferUri = *pBuffer->uri;
 
-                    std::string bufferUri = *pBuffer->uri;
+                const IAssetResponse* pResponse = pRequest->response();
+                if (!pResponse) {
+                  return ExternalBufferLoadResult{
+                      false,
+                      bufferUri,
+                      ErrorList::error("Request failed.")};
+                }
 
-                    if (pResponse) {
-                      pBuffer->uri = std::nullopt;
-                      pBuffer->cesium.data = std::vector<std::byte>(
-                          pResponse->data().begin(),
-                          pResponse->data().end());
-                      return ExternalBufferLoadResult{true, bufferUri};
-                    }
+                uint16_t statusCode = pResponse->statusCode();
+                if (statusCode != 0 &&
+                    (statusCode < 200 || statusCode >= 300)) {
+                  return ExternalBufferLoadResult{
+                      false,
+                      bufferUri,
+                      ErrorList::error(
+                          fmt::format("Received status code {}.", statusCode))};
+                }
 
-                    return ExternalBufferLoadResult{false, bufferUri};
-                  }));
+                pBuffer->uri = std::nullopt;
+                pBuffer->cesium.data = std::vector<std::byte>(
+                    pResponse->data().begin(),
+                    pResponse->data().end());
+                return ExternalBufferLoadResult{true, bufferUri, ErrorList()};
+              }));
     }
   }
 
@@ -550,53 +553,45 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                 const AsyncSystem& asyncSystem,
                 const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
                 const std::string& uri,
-                const std::vector<IAssetAccessor::THeader>& headers) {
-              if (options.pSharedAssets == nullptr ||
-                  options.pSharedAssets->pImage == nullptr) {
-                // We don't have a depot, we have to fetch this the old way.
-                return pAssetAccessor->get(asyncSystem, uri, headers)
-                    .thenInWorkerThread(
-                        [uri,
-                         options](std::shared_ptr<IAssetRequest>&& pRequest) {
-                          const IAssetResponse* pResponse =
-                              pRequest->response();
+                const std::vector<IAssetAccessor::THeader>& headers)
+            -> SharedFuture<ResultPointer<ImageAsset>> {
+          NetworkImageAssetDescriptor assetKey{
+              {uri, headers},
+              options.ktx2TranscodeTargets};
 
-                          CesiumUtility::IntrusivePointer<ImageAsset> pAsset =
-                              nullptr;
+          if (options.pSharedAssetSystem == nullptr ||
+              options.pSharedAssetSystem->pImage == nullptr) {
+            // We don't have a depot, so fetch this asset directly.
+            return assetKey.load(asyncSystem, pAssetAccessor).share();
+          } else {
+            // We have a depot, so fetch this asset via that depot.
+            return options.pSharedAssetSystem->pImage->getOrCreate(
+                asyncSystem,
+                pAssetAccessor,
+                assetKey);
+          }
+        };
 
-                          if (pResponse) {
-                            gsl::span<const std::byte> bytes =
-                                pResponse->data();
-                            pAsset =
-                                ImageAssetFactory(options.ktx2TranscodeTargets)
-                                    .createFrom(bytes);
-                          }
-
-                          return pAsset;
-                        })
-                    .share();
-              } else {
-                // We have a depot, this is easy!
-                return options.pSharedAssets->pImage
-                    ->getOrFetch(asyncSystem, pAssetAccessor, uri, headers);
-              }
-            };
-
-        SharedFuture<IntrusivePointer<ImageAsset>> future =
+        SharedFuture<ResultPointer<ImageAsset>> future =
             getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
         resolvedBuffers.push_back(future.thenInWorkerThread(
-            [pImage =
-                 &image](const IntrusivePointer<ImageAsset>& pLoadedImage) {
+            [pImage = &image](const ResultPointer<ImageAsset>& loadedImage) {
               std::string imageUri = *pImage->uri;
               pImage->uri = std::nullopt;
 
-              if (pLoadedImage) {
-                pImage->pCesium = pLoadedImage;
-                return ExternalBufferLoadResult{true, imageUri};
+              if (loadedImage.pValue) {
+                pImage->pAsset = loadedImage.pValue;
+                return ExternalBufferLoadResult{
+                    true,
+                    imageUri,
+                    loadedImage.errors};
               }
 
-              return ExternalBufferLoadResult{false, imageUri};
+              return ExternalBufferLoadResult{
+                  false,
+                  imageUri,
+                  loadedImage.errors};
             }));
       }
     }
@@ -665,10 +660,40 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
             for (auto& bufferResult : loadResults) {
               if (!bufferResult.success) {
                 pResult->warnings.push_back(
-                    "Could not load the external gltf buffer: " +
+                    "Could not load the external glTF buffer: " +
                     bufferResult.bufferUri);
               }
+
+              if (!bufferResult.warningsAndErrors.errors.empty()) {
+                pResult->warnings.emplace_back(fmt::format(
+                    "Errors while loading external glTF buffer: {}\n- {}",
+                    bufferResult.bufferUri,
+                    CesiumUtility::joinToString(
+                        bufferResult.warningsAndErrors.errors,
+                        "\n- ")));
+              }
+
+              if (!bufferResult.warningsAndErrors.warnings.empty()) {
+                pResult->warnings.emplace_back(fmt::format(
+                    "Warnings while loading external glTF buffer: {}\n- {}",
+                    bufferResult.bufferUri,
+                    CesiumUtility::joinToString(
+                        bufferResult.warningsAndErrors.warnings,
+                        "\n- ")));
+              }
             }
+
             return std::move(*pResult.release());
           });
+}
+
+/*static*/ ImageReaderResult GltfReader::readImage(
+    const gsl::span<const std::byte>& data,
+    const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
+  return ImageDecoder::readImage(data, ktx2TranscodeTargets);
+}
+
+/*static*/ std::optional<std::string>
+GltfReader::generateMipMaps(CesiumGltf::ImageAsset& image) {
+  return ImageDecoder::generateMipMaps(image);
 }

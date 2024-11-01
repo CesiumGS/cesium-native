@@ -1,20 +1,9 @@
 #pragma once
 
 #include <CesiumAsync/SharedAssetDepot.h>
-#include <CesiumAsync/SharedFuture.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
-#include <CesiumGltf/Schema.h>
-
-namespace CesiumGltf {
-struct ImageAsset;
-} // namespace CesiumGltf
+#include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
 
 namespace CesiumGltfReader {
-
-class AssetSystemOptions {
-public:
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
-};
 
 /**
  * @brief Contains assets that are potentially shared across multiple glTF
@@ -23,16 +12,25 @@ public:
 class GltfSharedAssetSystem
     : public CesiumUtility::ReferenceCountedThreadSafe<GltfSharedAssetSystem> {
 public:
-  static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem>
-  getDefault(const AssetSystemOptions& options);
+  static CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> getDefault();
 
-  CesiumUtility::IntrusivePointer<
-      CesiumAsync::SharedAssetDepot<CesiumGltf::ImageAsset>>
-      pImage;
+  virtual ~GltfSharedAssetSystem() = default;
 
-  CesiumUtility::IntrusivePointer<
-      CesiumAsync::SharedAssetDepot<CesiumGltf::Schema>>
-      pExternalMetadataSchema;
+  using ImageDepot = CesiumAsync::
+      SharedAssetDepot<CesiumGltf::ImageAsset, NetworkImageAssetDescriptor>;
+
+  /**
+   * @brief The asset depot for images.
+   */
+  CesiumUtility::IntrusivePointer<ImageDepot> pImage;
+
+  using SchemaDepot = CesiumAsync::
+      SharedAssetDepot<CesiumGltf::Schema, NetworkAssetDescriptor>;
+
+  /**
+   * @brief The asset depot for schemas.
+   */
+  CesiumUtility::IntrusivePointer<Schema> pImage;
 };
 
 } // namespace CesiumGltfReader

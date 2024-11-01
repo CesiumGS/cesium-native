@@ -1,5 +1,40 @@
 # Change Log
 
+### v0.41.0 - 2024-11-01
+
+##### Breaking Changes :mega:
+
+- Renamed `CesiumUtility/Gunzip.h` to `CesiumUtility/Gzip.h`.
+- Renamed `ImageCesium` to `ImageAsset`.
+- The `cesium` field in `CesiumGltf::Image` is now named `pAsset` and is an `IntrusivePointer` to an `ImageAsset`.
+- The `image` field in `LoadedRasterOverlayImage` is now named `pImage` and is an `IntrusivePointer` to an `ImageAsset`.
+- Deprecated the `readImage` and `generateMipMaps` methods on `GltfReader`. These methods are now found on `ImageDecoder`.
+
+##### Additions :tada:
+
+- Added `CesiumUtility::gzip`.
+- Added `CesiumGeometry::Transforms::getUpAxisTransform` to get the transform that converts from one up axis to another.
+- Added `TilesetSharedAssetSystem` to `Cesium3DTilesSelection` and `GltfSharedAssetSystem` to `CesiumGltfReader`.
+- Added `SharedAsset` to `CesiumUtility` to serve as the base class for assets such as `ImageAsset`.
+- Added `SharedAssetDepot` to `CesiumAsync` for managing assets, such as images, that can be shared among multiple models or other objects.
+- Added `NetworkAssetDescriptor` and `NetworkImageAssetDescriptor`.
+- `ImageAsset` (formerly `ImageCesium`) is now an `ExtensibleObject`.
+- Added `VertexAttributeSemantics` to `CesiumGltf`.
+- Added `ImageDecoder` to `CesiumGltfReader`.
+- Added `DoublyLinkedListAdvanced` to `CesiumUtility`. It is equivalent to `DoublyLinkedList` except it allows the next and previous pointers to be in a base class of the node class.
+- Added `contains` method to `DoublyLinkedList` (and `DoublyLinkedListAdvanced`).
+- Added static `error` and `warning` methods to `ErrorList`, making it easy to create an instance with a single error or warning.
+- `ExtensibleObject::addExtension` now takes arguments that are passed through to the extension's constructor.
+- Added `Hash` to `CesiumUtility`.
+- Added `emplace` and `reset` methods to `IntrusivePointer`.
+- Added `Result<T>` and `ResultPointer<T>` classes to represent the result of an operation that might complete with warnings and errors.
+
+##### Fixes :wrench:
+
+- Fixed missing ellipsoid parameters that would lead to incorrect results when using non-WGS84 ellipsoids.
+- Fixed a bug in `AsyncSystem::all` where the resolved values of individual futures were copied instead of moved into the output array.
+- Improved the hash function for `QuadtreeTileID`.
+
 ### v0.40.1 - 2024-10-01
 
 ##### Fixes :wrench:

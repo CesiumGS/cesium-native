@@ -18,6 +18,8 @@
 
 namespace Cesium3DTilesSelection {
 
+class TilesetSharedAssetSystem;
+
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           TilesetContentManager> {
@@ -115,8 +117,7 @@ public:
 
   const std::vector<CesiumUtility::Credit>& getTilesetCredits() const noexcept;
 
-  const CesiumUtility::IntrusivePointer<
-      CesiumGltfReader::GltfSharedAssetSystem>&
+  const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
   getSharedAssetSystem() const noexcept;
 
   int32_t getNumberOfTilesLoading() const noexcept;
@@ -172,8 +173,7 @@ private:
   int64_t _tilesDataUsed;
 
   // Stores assets that might be shared between tiles.
-  CesiumUtility::IntrusivePointer<CesiumGltfReader::GltfSharedAssetSystem>
-      _pSharedAssets;
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;

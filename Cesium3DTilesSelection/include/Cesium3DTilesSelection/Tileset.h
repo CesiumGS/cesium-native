@@ -23,10 +23,12 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
+
 class TilesetContentManager;
 class TilesetMetadata;
 class TilesetHeightQuery;
 class TilesetHeightRequest;
+class TilesetSharedAssetSystem;
 
 /**
  * @brief A <a
@@ -182,13 +184,12 @@ public:
   const RasterOverlayCollection& getOverlays() const noexcept;
 
   /**
-   * @brief Returns the {@link SharedAssetDepot} of this tileset.
+   * @brief Returns the {@link TilesetSharedAssetSystem} of this tileset.
    */
-  CesiumGltfReader::GltfSharedAssetSystem& getSharedAssetSystem() noexcept;
+  TilesetSharedAssetSystem& getSharedAssetSystem() noexcept;
 
   /** @copydoc Tileset::getSharedAssetSystem() */
-  const CesiumGltfReader::GltfSharedAssetSystem&
-  getSharedAssetSystem() const noexcept;
+  const TilesetSharedAssetSystem& getSharedAssetSystem() const noexcept;
 
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
