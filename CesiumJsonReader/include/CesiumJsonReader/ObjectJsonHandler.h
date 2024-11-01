@@ -3,7 +3,7 @@
 #include "JsonHandler.h"
 #include "Library.h"
 
-#include <CesiumUtility/IntrusivePointer.h>>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <optional>
 
