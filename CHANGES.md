@@ -1,10 +1,6 @@
 # Change Log
 
-### Not Released Yet
-
-##### Fixes :wrench:
-
-- Fixed missing ellipsoid parameters that would lead to incorrect results when using non-WGS84 ellipsoids.
+### v0.41.0 - 2024-11-01
 
 ##### Breaking Changes :mega:
 
@@ -35,6 +31,7 @@
 
 ##### Fixes :wrench:
 
+- Fixed missing ellipsoid parameters that would lead to incorrect results when using non-WGS84 ellipsoids.
 - Fixed a bug in `AsyncSystem::all` where the resolved values of individual futures were copied instead of moved into the output array.
 - Improved the hash function for `QuadtreeTileID`.
 
