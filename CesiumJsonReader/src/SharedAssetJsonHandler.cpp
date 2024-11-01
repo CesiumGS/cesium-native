@@ -1,11 +1,11 @@
-#include "SharedAssetJsonHandler.h"
+#include "CesiumJsonReader/SharedAssetJsonHandler.h"
 
 #include "CesiumJsonReader/ExtensibleObjectJsonHandler.h"
 #include "CesiumJsonReader/ExtensionsJsonHandler.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumJsonReader/JsonReaderOptions.h"
 
-namespace CesiumGltfReader {
+namespace CesiumJsonReader {
 SharedAssetJsonHandler::SharedAssetJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& context) noexcept
     : ExtensibleObjectJsonHandler(context) {}
@@ -23,4 +23,4 @@ SharedAssetJsonHandler::readObjectKeySharedAsset(
     CesiumUtility::ExtensibleObject& o) {
   return this->readObjectKeyExtensibleObject(objectType, str, o);
 }
-} // namespace CesiumGltfReader
+} // namespace CesiumJsonReader

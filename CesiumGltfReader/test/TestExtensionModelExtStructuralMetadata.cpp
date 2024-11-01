@@ -196,8 +196,8 @@ TEST_CASE("Can load an external structural metadata schema from a URI") {
 
   CesiumGltfReader::GltfReaderOptions options;
   options.resolveExternalStructuralMetadata = true;
-  options.pSharedAssets = CesiumGltfReader::GltfSharedAssetSystem::getDefault(
-      CesiumGltfReader::AssetSystemOptions());
+  options.pSharedAssetSystem =
+      CesiumGltfReader::GltfSharedAssetSystem::getDefault();
   CesiumGltfReader::GltfReader reader;
   CesiumGltfReader::GltfReaderResult readerResult =
       reader.loadGltf(asyncSystem, "test.gltf", {}, pMockAssetAccessor, options)

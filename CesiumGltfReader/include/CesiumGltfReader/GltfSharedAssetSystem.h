@@ -2,6 +2,11 @@
 
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
+#include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
+
+namespace CesiumGltf {
+class Schema;
+}
 
 namespace CesiumGltfReader {
 
@@ -25,12 +30,12 @@ public:
   CesiumUtility::IntrusivePointer<ImageDepot> pImage;
 
   using SchemaDepot = CesiumAsync::
-      SharedAssetDepot<CesiumGltf::Schema, NetworkAssetDescriptor>;
+      SharedAssetDepot<CesiumGltf::Schema, NetworkSchemaAssetDescriptor>;
 
   /**
    * @brief The asset depot for schemas.
    */
-  CesiumUtility::IntrusivePointer<Schema> pImage;
+  CesiumUtility::IntrusivePointer<SchemaDepot> pExternalMetadataSchema;
 };
 
 } // namespace CesiumGltfReader

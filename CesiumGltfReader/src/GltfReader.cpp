@@ -607,32 +607,24 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                         const AsyncSystem& asyncSystem,
                         const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
                         const std::string& uri,
-                        const std::vector<IAssetAccessor::THeader>& headers) {
-      if (options.pSharedAssets == nullptr ||
-          options.pSharedAssets->pExternalMetadataSchema == nullptr) {
-        return pAssetAccessor->get(asyncSystem, uri, headers)
-            .thenInWorkerThread(
-                [uri, options](std::shared_ptr<IAssetRequest>&& pRequest) {
-                  const IAssetResponse* pResponse = pRequest->response();
+                        const std::vector<IAssetAccessor::THeader>& headers)
+        -> SharedFuture<ResultPointer<Schema>> {
+      NetworkSchemaAssetDescriptor assetKey{{uri, headers}};
 
-                  CesiumUtility::IntrusivePointer<CesiumGltf::Schema> pAsset =
-                      nullptr;
-
-                  if (pResponse) {
-                    gsl::span<const std::byte> bytes = pResponse->data();
-                    pAsset = SchemaAssetFactory().createFrom(bytes);
-                  }
-
-                  return pAsset;
-                })
-            .share();
+      if (options.pSharedAssetSystem == nullptr ||
+          options.pSharedAssetSystem->pImage == nullptr) {
+        // We don't have a depot, so fetch this asset directly.
+        return assetKey.load(asyncSystem, pAssetAccessor).share();
       } else {
-        return options.pSharedAssets->pExternalMetadataSchema
-            ->getOrFetch(asyncSystem, pAssetAccessor, uri, headers);
+        // We have a depot, so fetch this asset via that depot.
+        return options.pSharedAssetSystem->pExternalMetadataSchema->getOrCreate(
+            asyncSystem,
+            pAssetAccessor,
+            assetKey);
       }
     };
 
-    SharedFuture<IntrusivePointer<CesiumGltf::Schema>> future = getAsset(
+    SharedFuture<ResultPointer<Schema>> future = getAsset(
         asyncSystem,
         pAssetAccessor,
         *pStructuralMetadata->schemaUri,
@@ -640,16 +632,22 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 
     resolvedBuffers.push_back(future.thenInWorkerThread(
         [pStructuralMetadata = pStructuralMetadata](
-            const IntrusivePointer<CesiumGltf::Schema>& pLoadedSchema) {
+            const ResultPointer<CesiumGltf::Schema>& loadedSchema) {
           std::string schemaUri = *pStructuralMetadata->schemaUri;
           pStructuralMetadata->schemaUri = std::nullopt;
 
-          if (pLoadedSchema) {
-            pStructuralMetadata->schema = pLoadedSchema;
-            return ExternalBufferLoadResult{true, schemaUri};
+          if (loadedSchema.pValue) {
+            pStructuralMetadata->schema = loadedSchema.pValue;
+            return ExternalBufferLoadResult{
+                true,
+                schemaUri,
+                loadedSchema.errors};
           }
 
-          return ExternalBufferLoadResult{false, schemaUri};
+          return ExternalBufferLoadResult{
+              false,
+              schemaUri,
+              loadedSchema.errors};
         }));
   }
 

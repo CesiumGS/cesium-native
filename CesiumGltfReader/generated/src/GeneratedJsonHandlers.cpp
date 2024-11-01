@@ -3151,7 +3151,7 @@ namespace CesiumGltfReader {
 
 SchemaJsonHandler::SchemaJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::SharedAssetJsonHandler(options),
+    : CesiumJsonReader::SharedAssetJsonHandler(options),
       _id(),
       _name(),
       _description(),
@@ -3162,7 +3162,7 @@ SchemaJsonHandler::SchemaJsonHandler(
 void SchemaJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumGltf::Schema* pObject) {
-  CesiumGltfReader::SharedAssetJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::SharedAssetJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 

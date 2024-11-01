@@ -221,6 +221,7 @@ function resolveProperty(
       } else {
         let propertyType = NameFormatters.getName(type, namespace);
         let sizeOfFormatter = undefined;
+        let headers = [NameFormatters.getIncludeFromName(type, namespace)];
         if (config.classes[itemSchema.title] && config.classes[itemSchema.title].isAsset) {
           propertyType = `CesiumUtility::IntrusivePointer<${propertyType}>`;
           // An optional IntrusivePointer will just be a nullptr.
@@ -230,17 +231,16 @@ function resolveProperty(
           sizeOfFormatter = (propertyName, accumName) => {
             return `${accumName} += ${propertyName}->getSizeBytes();`;
           };
+          headers.push(NameFormatters.getIncludeFromName("IntrusivePointer", "CesiumUtility"));
         } else if (makeOptional) {
           propertyType = `std::optional<${propertyType}>`;
+          headers.push("<optional>");
         }
 
         return {
           ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
           type: propertyType,
-          headers: [
-            NameFormatters.getIncludeFromName(type, namespace),
-            ...(makeOptional ? ["<optional>"] : []),
-          ],
+          headers,
           readerType: NameFormatters.getJsonHandlerName(type, readerNamespace),
           readerHeaders: [
             NameFormatters.getJsonHandlerIncludeFromName(type, readerNamespace),

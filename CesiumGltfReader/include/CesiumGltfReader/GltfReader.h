@@ -116,7 +116,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    */
   CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssetSystem =
       GltfSharedAssetSystem::getDefault();
-      
+
   /**
    * @brief Whether the `schemaUri` property of `EXT_structural_metadata` will
    * be properly resolved. If false, any external schemas will be ignored.

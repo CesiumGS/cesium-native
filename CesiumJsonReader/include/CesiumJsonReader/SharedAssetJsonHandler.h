@@ -6,7 +6,7 @@
 
 #include <string_view>
 
-namespace CesiumGltfReader {
+namespace CesiumJsonReader {
 
 class SharedAssetJsonHandler
     : public CesiumJsonReader::ExtensibleObjectJsonHandler {
@@ -23,4 +23,4 @@ protected:
 
 private:
 };
-} // namespace CesiumGltfReader
+} // namespace CesiumJsonReader

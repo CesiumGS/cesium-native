@@ -41,7 +41,7 @@ function generate(options, schema, writers) {
     if (baseSchema !== undefined && baseSchema.title !== 'glTF Property') {
       throw new Error("An asset must inherit from ExtensibleObject.");
     }
-    base = `CesiumAsync::SharedAsset<${baseName}>`;
+    base = `CesiumUtility::SharedAsset<${baseName}>`;
   } else if (baseSchema !== undefined) {
     base = getNameFromTitle(config, baseSchema.title);
   }

@@ -7,6 +7,7 @@
 #include "CesiumGltf/PropertyTable.h"
 #include "CesiumGltf/PropertyTexture.h"
 #include "CesiumGltf/Schema.h"
+#include "CesiumUtility/IntrusivePointer.h"
 
 #include <CesiumUtility/ExtensibleObject.h>
 
