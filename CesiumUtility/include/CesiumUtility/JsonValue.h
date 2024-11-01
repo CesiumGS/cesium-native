@@ -625,15 +625,21 @@ public:
    */
   int64_t getSizeBytes() const noexcept {
     struct Operation {
-      int64_t operator()(const Null& value) { return sizeof(std::nullptr_t); }
-      int64_t operator()(const double& value) { return sizeof(double); }
-      int64_t operator()(const std::uint64_t& value) {
+      int64_t operator()([[maybe_unused]] const Null& value) {
+        return sizeof(std::nullptr_t);
+      }
+      int64_t operator()([[maybe_unused]] const double& value) {
+        return sizeof(double);
+      }
+      int64_t operator()([[maybe_unused]] const std::uint64_t& value) {
         return sizeof(std::uint64_t);
       }
-      int64_t operator()(const std::int64_t& value) {
+      int64_t operator()([[maybe_unused]] const std::int64_t& value) {
         return sizeof(std::int64_t);
       }
-      int64_t operator()(const Bool& value) { return sizeof(Bool); }
+      int64_t operator()([[maybe_unused]] const Bool& value) {
+        return sizeof(Bool);
+      }
       int64_t operator()(const String& value) { return value.size(); }
       int64_t operator()(const Object& value) {
         int64_t accum = 0;
