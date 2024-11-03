@@ -45,8 +45,11 @@ cesium_target_include_directories(
     TARGET
         CesiumGltfReader
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
-        ${CMAKE_CURRENT_LIST_DIR}/generated/include
+        # Necessary for `draco/draco_features.h`
+        $<BUILD_INTERFACE:${CESIUM_NATIVE_DRACO_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
+        $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src

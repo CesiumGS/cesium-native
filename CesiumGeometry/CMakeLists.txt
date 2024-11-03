@@ -32,7 +32,8 @@ cesium_target_include_directories(
     TARGET
         CesiumGeometry
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(CesiumGeometry PUBLIC

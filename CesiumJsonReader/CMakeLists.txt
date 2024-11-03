@@ -32,8 +32,9 @@ cesium_target_include_directories(
     TARGET
         CesiumJsonReader
     PUBLIC
-        ${CMAKE_BINARY_DIR}
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
