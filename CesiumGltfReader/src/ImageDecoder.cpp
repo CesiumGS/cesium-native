@@ -26,23 +26,19 @@
 
 #define STBI_FAILURE_USERMSG
 
-namespace Cesium {
-// Use STB resize in our own namespace to avoid conflicts from other libs
-#define STBIRDEF
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb_image_resize2.h>
-#undef STBIRDEF
-}; // namespace Cesium
-
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_STDIO
+#define STBI_ASSERT(x) CESIUM_ASSERT(x)
 #include <stb_image.h>
-#include <turbojpeg.h>
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_STATIC
+#include <stb_image_resize2.h>
 
 namespace CesiumGltfReader {
 
 using namespace CesiumGltf;
-using namespace Cesium;
 
 namespace {
 
@@ -436,17 +432,16 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
     image.mipPositions[mipIndex].byteOffset = byteOffset;
     image.mipPositions[mipIndex].byteSize = byteSize;
 
-    if (!stbir_resize_uint8_linear(
-            reinterpret_cast<const unsigned char*>(
-                &image.pixelData[lastByteOffset]),
+    if (!ImageDecoder::unsafeResize(
+            &image.pixelData[lastByteOffset],
             lastWidth,
             lastHeight,
             0,
-            reinterpret_cast<unsigned char*>(&image.pixelData[byteOffset]),
+            &image.pixelData[byteOffset],
             mipWidth,
             mipHeight,
             0,
-            static_cast<stbir_pixel_layout>(image.channels))) {
+            image.channels)) {
       // Remove any added mipmaps.
       image.mipPositions.clear();
       image.pixelData.resize(imageByteSize);
@@ -455,6 +450,28 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
   }
 
   return std::nullopt;
+}
+
+/*static*/ bool ImageDecoder::unsafeResize(
+    const std::byte* pInputPixels,
+    int32_t inputWidth,
+    int32_t inputHeight,
+    int32_t inputStrideBytes,
+    std::byte* pOutputPixels,
+    int32_t outputWidth,
+    int32_t outputHeight,
+    int32_t outputStrideBytes,
+    int32_t channels) {
+  return stbir_resize_uint8_linear(
+             reinterpret_cast<const unsigned char*>(pInputPixels),
+             inputWidth,
+             inputHeight,
+             inputStrideBytes,
+             reinterpret_cast<unsigned char*>(pOutputPixels),
+             outputWidth,
+             outputHeight,
+             outputStrideBytes,
+             static_cast<stbir_pixel_layout>(channels)) != nullptr;
 }
 
 } // namespace CesiumGltfReader
