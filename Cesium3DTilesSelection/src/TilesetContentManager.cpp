@@ -49,12 +49,15 @@ struct ContentKindSetter {
 
   void operator()(CesiumGltf::Model&& model) {
     for (CesiumGltf::Image& image : model.images) {
+      if (!image.pAsset)
+        continue;
+
       // If the image size hasn't been overridden, store the pixelData
       // size now. We'll be adding this number to our total memory usage soon,
       // and remove it when the tile is later unloaded, and we must use
       // the same size in each case.
-      if (image.cesium.sizeBytes < 0) {
-        image.cesium.sizeBytes = int64_t(image.cesium.pixelData.size());
+      if (image.pAsset->sizeBytes < 0) {
+        image.pAsset->sizeBytes = int64_t(image.pAsset->pixelData.size());
       }
     }
 
@@ -154,7 +157,8 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
           CesiumGeospatial::BoundingRegion(
               globeRectangle,
               details.boundingRegion.getMinimumHeight(),
-              details.boundingRegion.getMaximumHeight()),
+              details.boundingRegion.getMaximumHeight(),
+              getProjectionEllipsoid(projection)),
           center};
     }
   }
@@ -562,6 +566,9 @@ postProcessContentInWorkerThread(
       tileLoadInfo.contentOptions.ktx2TranscodeTargets;
   gltfOptions.applyTextureTransform =
       tileLoadInfo.contentOptions.applyTextureTransform;
+  if (tileLoadInfo.pSharedAssetSystem) {
+    gltfOptions.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
+  }
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
   auto pAssetAccessor = tileLoadInfo.pAssetAccessor;
@@ -599,12 +606,12 @@ postProcessContentInWorkerThread(
                 "Warning when resolving external gltf buffers from "
                 "{}:\n- {}",
                 result.pCompletedRequest->url(),
-                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
           } else {
             SPDLOG_LOGGER_ERROR(
                 tileLoadInfo.pLogger,
                 "Warning resolving external glTF buffers:\n- {}",
-                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
           }
         }
 
@@ -660,6 +667,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -689,6 +697,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -840,6 +849,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
           this->_destructionCompletePromise.getFuture().share()},
@@ -985,6 +995,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pAssetAccessor,
       this->_externals.pPrepareRendererResources,
       this->_externals.pLogger,
+      this->_pSharedAssetSystem,
       tilesetOptions.contentOptions,
       tile};
 
@@ -1225,6 +1236,11 @@ const Credit* TilesetContentManager::getUserCredit() const noexcept {
 const std::vector<Credit>&
 TilesetContentManager::getTilesetCredits() const noexcept {
   return this->_tilesetCredits;
+}
+
+const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
+TilesetContentManager::getSharedAssetSystem() const noexcept {
+  return this->_pSharedAssetSystem;
 }
 
 int32_t TilesetContentManager::getNumberOfTilesLoading() const noexcept {

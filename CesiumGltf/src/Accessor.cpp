@@ -39,9 +39,14 @@ Accessor::computeByteSizeOfComponent(int32_t componentType) noexcept {
   case CesiumGltf::Accessor::ComponentType::SHORT:
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
     return 2;
+  case CesiumGltf::Accessor::ComponentType::INT:
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
   case CesiumGltf::Accessor::ComponentType::FLOAT:
     return 4;
+  case CesiumGltf::Accessor::ComponentType::INT64:
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT64:
+  case CesiumGltf::Accessor::ComponentType::DOUBLE:
+    return 8;
   default:
     // TODO Print a warning here!
     return 0;

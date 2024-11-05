@@ -18,10 +18,12 @@ namespace {
 bool boundingVolumeContainsCoordinate(
     const BoundingVolume& boundingVolume,
     const Ray& ray,
-    const Cartographic& coordinate) {
+    const Cartographic& coordinate,
+    const Ellipsoid& ellipsoid) {
   struct Operation {
     const Ray& ray;
     const Cartographic& coordinate;
+    const Ellipsoid& ellipsoid;
 
     bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
       std::optional<double> t =
@@ -46,11 +48,12 @@ bool boundingVolumeContainsCoordinate(
     }
 
     bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
-      return s2Cell.computeBoundingRegion().getRectangle().contains(coordinate);
+      return s2Cell.computeBoundingRegion(ellipsoid).getRectangle().contains(
+          coordinate);
     }
   };
 
-  return std::visit(Operation{ray, coordinate}, boundingVolume);
+  return std::visit(Operation{ray, coordinate, ellipsoid}, boundingVolume);
 }
 
 // The ray for height queries starts at this fraction of the ellipsoid max
@@ -76,9 +79,10 @@ Ray createRay(const Cartographic& position, const Ellipsoid& ellipsoid) {
 
 TilesetHeightQuery::TilesetHeightQuery(
     const Cartographic& position,
-    const Ellipsoid& ellipsoid)
+    const Ellipsoid& ellipsoid_)
     : inputPosition(position),
-      ray(createRay(position, ellipsoid)),
+      ray(createRay(position, ellipsoid_)),
+      ellipsoid(ellipsoid_),
       intersection(),
       additiveCandidateTiles(),
       candidateTiles(),
@@ -155,7 +159,8 @@ void TilesetHeightQuery::findCandidateTiles(
       if (boundingVolumeContainsCoordinate(
               *contentBoundingVolume,
               this->ray,
-              this->inputPosition))
+              this->inputPosition,
+              this->ellipsoid))
         this->candidateTiles.push_back(pTile);
     } else {
       this->candidateTiles.push_back(pTile);
@@ -170,7 +175,8 @@ void TilesetHeightQuery::findCandidateTiles(
         if (boundingVolumeContainsCoordinate(
                 *contentBoundingVolume,
                 this->ray,
-                this->inputPosition))
+                this->inputPosition,
+                this->ellipsoid))
           this->additiveCandidateTiles.push_back(pTile);
       } else {
         this->additiveCandidateTiles.push_back(pTile);
@@ -183,7 +189,8 @@ void TilesetHeightQuery::findCandidateTiles(
       if (!boundingVolumeContainsCoordinate(
               child.getBoundingVolume(),
               this->ray,
-              this->inputPosition))
+              this->inputPosition,
+              this->ellipsoid))
         continue;
 
       // Child is a candidate, traverse it and its children

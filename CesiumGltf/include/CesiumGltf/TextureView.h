@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CesiumGltf/ImageCesium.h"
-#include "CesiumGltf/KhrTextureTransform.h"
-#include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/TextureInfo.h"
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/TextureInfo.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <vector>
 
@@ -112,10 +113,10 @@ public:
 
   /**
    * @brief Constructs a view of the texture specified by the given {@link Sampler}
-   * and {@link ImageCesium}.
+   * and {@link ImageAsset}.
    *
    * @param sampler The {@link Sampler} used by the texture.
-   * @param image The {@link ImageCesium} used by the texture.
+   * @param image The {@link ImageAsset} used by the texture.
    * @param textureCoordinateSetIndex The set index for the `TEXCOORD_n`
    * attribute used to sample this texture.
    * @param pKhrTextureTransformExtension A pointer to the KHR_texture_transform
@@ -124,7 +125,7 @@ public:
    */
   TextureView(
       const Sampler& sampler,
-      const ImageCesium& image,
+      const ImageAsset& image,
       int64_t textureCoordinateSetIndex,
       const ExtensionKhrTextureTransform* pKhrTextureTransformExtension =
           nullptr,
@@ -172,11 +173,11 @@ public:
    * This will be nullptr if the texture view runs into
    * problems during construction.
    */
-  const ImageCesium* getImage() const noexcept {
-    if (this->_imageCopy) {
-      return &(this->_imageCopy.value());
+  const ImageAsset* getImage() const noexcept {
+    if (this->_pImageCopy) {
+      return this->_pImageCopy.get();
     }
-    return this->_pImage;
+    return this->_pImage.get();
   }
 
   /**
@@ -210,12 +211,12 @@ private:
   TextureViewStatus _textureViewStatus;
 
   const Sampler* _pSampler;
-  const ImageCesium* _pImage;
+  CesiumUtility::IntrusivePointer<ImageAsset> _pImage;
   int64_t _texCoordSetIndex;
 
   bool _applyTextureTransform;
   std::optional<KhrTextureTransform> _textureTransform;
 
-  std::optional<ImageCesium> _imageCopy;
+  CesiumUtility::IntrusivePointer<ImageAsset> _pImageCopy;
 };
 } // namespace CesiumGltf
