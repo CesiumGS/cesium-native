@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-2019, windows-2022]
+        platform: [windows-2022]
         build_type: [Debug, RelWithDebInfo]
     name: "${{matrix.platform}} / ${{matrix.build_type}}"
     env:
@@ -79,7 +79,7 @@ jobs:
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-22.04	
+            platform: ubuntu-22.04
           - compiler: gcc
             platform: macos-12
           - compiler: gcc
