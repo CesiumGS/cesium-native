@@ -30,7 +30,7 @@ namespace Cesium {
 // Use STB resize in our own namespace to avoid conflicts from other libs
 #define STBIRDEF
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb_image_resize.h>
+#include <stb_image_resize2.h>
 #undef STBIRDEF
 }; // namespace Cesium
 
@@ -436,7 +436,7 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
     image.mipPositions[mipIndex].byteOffset = byteOffset;
     image.mipPositions[mipIndex].byteSize = byteSize;
 
-    if (!stbir_resize_uint8(
+    if (!stbir_resize_uint8_linear(
             reinterpret_cast<const unsigned char*>(
                 &image.pixelData[lastByteOffset]),
             lastWidth,
@@ -446,7 +446,7 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
             mipWidth,
             mipHeight,
             0,
-            image.channels)) {
+            static_cast<stbir_pixel_layout>(image.channels))) {
       // Remove any added mipmaps.
       image.mipPositions.clear();
       image.pixelData.resize(imageByteSize);

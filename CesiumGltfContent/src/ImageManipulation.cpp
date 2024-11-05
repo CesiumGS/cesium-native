@@ -6,7 +6,7 @@
 namespace Cesium {
 // Use STB resize in our own namespace to avoid conflicts from other libs
 #define STBIRDEF
-#include <stb_image_resize.h>
+#include <stb_image_resize2.h>
 #undef STBIRDEF
 } // namespace Cesium
 
@@ -108,7 +108,7 @@ bool ImageManipulation::blitImage(
     }
 
     // Use STB to do the copy / scale
-    stbir_resize_uint8(
+    stbir_resize_uint8_linear(
         reinterpret_cast<const unsigned char*>(pSource),
         sourcePixels.width,
         sourcePixels.height,
@@ -117,7 +117,7 @@ bool ImageManipulation::blitImage(
         targetPixels.width,
         targetPixels.height,
         int(bytesPerTargetRow),
-        target.channels);
+        static_cast<stbir_pixel_layout>(target.channels));
   }
 
   return true;
