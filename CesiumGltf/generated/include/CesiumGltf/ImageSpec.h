@@ -51,7 +51,7 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
    */
   int32_t bufferView = -1;
 
-private:
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Image} instead.
    */

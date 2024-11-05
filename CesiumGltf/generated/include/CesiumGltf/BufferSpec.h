@@ -29,7 +29,7 @@ struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
    */
   int64_t byteLength = int64_t();
 
-private:
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
    */

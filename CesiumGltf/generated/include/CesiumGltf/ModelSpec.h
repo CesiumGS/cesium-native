@@ -137,7 +137,7 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
    */
   std::vector<CesiumGltf::Texture> textures;
 
-private:
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Model} instead.
    */
