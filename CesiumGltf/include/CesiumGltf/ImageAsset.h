@@ -2,6 +2,7 @@
 
 #include "CesiumGltf/Ktx2TranscodeTargets.h"
 #include "CesiumGltf/Library.h"
+#include "CesiumUtility/SharedAsset.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -13,7 +14,7 @@ namespace CesiumGltf {
 /**
  * @brief The byte range within a buffer where this mip exists.
  */
-struct CESIUMGLTF_API ImageCesiumMipPosition {
+struct CESIUMGLTF_API ImageAssetMipPosition {
   /**
    * @brief The byte index where this mip begins.
    */
@@ -26,10 +27,11 @@ struct CESIUMGLTF_API ImageCesiumMipPosition {
 };
 
 /**
- * @brief Holds {@link Image} properties that are specific to the glTF loader
- * rather than part of the glTF spec.
+ * @brief A 2D image asset, including its pixel data. The image may have
+ * mipmaps, and it may be encoded in a GPU compression format.
  */
-struct CESIUMGLTF_API ImageCesium final {
+struct CESIUMGLTF_API ImageAsset final
+    : public CesiumUtility::SharedAsset<ImageAsset> {
   /**
    * @brief The width of the image in pixels.
    */
@@ -65,7 +67,7 @@ struct CESIUMGLTF_API ImageCesium final {
    * biggest and etc. If this is empty, assume the entire buffer is a single
    * image, the mip map will need to be generated on the client in this case.
    */
-  std::vector<ImageCesiumMipPosition> mipPositions;
+  std::vector<ImageAssetMipPosition> mipPositions;
 
   /**
    * @brief The pixel data.
@@ -110,5 +112,15 @@ struct CESIUMGLTF_API ImageCesium final {
    * this image.
    */
   int64_t sizeBytes = -1;
+
+  /**
+   * @brief Gets the size of this asset, in bytes.
+   *
+   * If {@link sizeBytes} is greater than or equal to zero, it is returned.
+   * Otherwise, the size of the {@link pixelData} array is returned.
+   */
+  int64_t getSizeBytes() const {
+    return this->sizeBytes >= 0 ? this->sizeBytes : this->pixelData.size();
+  }
 };
 } // namespace CesiumGltf

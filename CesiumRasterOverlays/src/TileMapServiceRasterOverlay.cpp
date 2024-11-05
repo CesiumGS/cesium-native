@@ -95,7 +95,7 @@ protected:
       errors.emplaceError("Failed to load image from TMS.");
       return this->getAsyncSystem()
           .createResolvedFuture<LoadedRasterOverlayImage>(
-              {std::nullopt,
+              {nullptr,
                options.rectangle,
                {},
                std::move(errors),

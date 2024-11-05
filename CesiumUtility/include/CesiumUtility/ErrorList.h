@@ -16,6 +16,22 @@ namespace CesiumUtility {
  */
 struct CESIUMUTILITY_API ErrorList {
   /**
+   * @brief Creates an {@link ErrorList} containing a single error.
+   *
+   * @param errorMessage The error message.
+   * @return The new list containing the single error.
+   */
+  static ErrorList error(std::string errorMessage);
+
+  /**
+   * @brief Creates an {@link ErrorList} containing a single warning.
+   *
+   * @param warningMessage The warning message.
+   * @return The new list containing the single warning.
+   */
+  static ErrorList warning(std::string warningMessage);
+
+  /**
    * @brief Merge the errors and warnings from other ErrorList together
    *
    * @param errorList The other instance of ErrorList that will be merged with

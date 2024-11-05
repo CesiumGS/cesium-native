@@ -328,21 +328,21 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
                             asyncSystem = this->getAsyncSystem(),
                             loadParentTile = std::move(loadParentTile)](
                                LoadedRasterOverlayImage&& loaded) {
-            if (loaded.image && !loaded.errorList.hasErrors() &&
-                loaded.image->width > 0 && loaded.image->height > 0) {
+            if (loaded.pImage && !loaded.errorList.hasErrors() &&
+                loaded.pImage->width > 0 && loaded.pImage->height > 0) {
               // Successfully loaded, continue.
-              cachedBytes += int64_t(loaded.image->pixelData.size());
+              cachedBytes += int64_t(loaded.pImage->pixelData.size());
 
 #if SHOW_TILE_BOUNDARIES
               // Highlight the edges in red to show tile boundaries.
               gsl::span<uint32_t> pixels =
                   reintepretCastSpan<uint32_t, std::byte>(
                       loaded.image->pixelData);
-              for (int32_t j = 0; j < loaded.image->height; ++j) {
-                for (int32_t i = 0; i < loaded.image->width; ++i) {
-                  if (i == 0 || j == 0 || i == loaded.image->width - 1 ||
-                      j == loaded.image->height - 1) {
-                    pixels[j * loaded.image->width + i] = 0xFF0000FF;
+              for (int32_t j = 0; j < loaded.pImage->height; ++j) {
+                for (int32_t i = 0; i < loaded.pImage->width; ++i) {
+                  if (i == 0 || j == 0 || i == loaded.pImage->width - 1 ||
+                      j == loaded.pImage->height - 1) {
+                    pixels[j * loaded.pImage->width + i] = 0xFF0000FF;
                   }
                 }
               }
@@ -381,7 +381,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 namespace {
 
 PixelRectangle computePixelRectangle(
-    const ImageCesium& image,
+    const ImageAsset& image,
     const Rectangle& totalRectangle,
     const Rectangle& partRectangle) {
   // Pixel coordinates are measured from the top left.
@@ -417,9 +417,9 @@ PixelRectangle computePixelRectangle(
 // source image where the source subset rectangle overlaps the target
 // rectangle is copied to the target image.
 void blitImage(
-    ImageCesium& target,
+    ImageAsset& target,
     const Rectangle& targetRectangle,
-    const ImageCesium& source,
+    const ImageAsset& source,
     const Rectangle& sourceRectangle,
     const std::optional<Rectangle>& sourceSubset) {
   const Rectangle sourceToCopy = sourceSubset.value_or(sourceRectangle);
@@ -462,8 +462,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
             images.begin(),
             images.end(),
             [](const LoadedQuadtreeImage& image) {
-              return image.pLoaded->image.has_value() &&
-                     !image.subset.has_value();
+              return image.pLoaded->pImage && !image.subset.has_value();
             });
 
         if (!haveAnyUsefulImageData) {
@@ -479,7 +478,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
             }
           }
           return LoadedRasterOverlayImage{
-              ImageCesium(),
+              new ImageAsset(),
               Rectangle(),
               {},
               std::move(errors),
@@ -523,8 +522,8 @@ void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
     // If this is the last use of this data, it will be freed when the shared
     // pointer goes out of scope, so reduce the cachedBytes accordingly.
     if (pImage.use_count() == 1) {
-      if (pImage->image) {
-        this->_cachedBytes -= int64_t(pImage->image->pixelData.size());
+      if (pImage->pImage) {
+        this->_cachedBytes -= int64_t(pImage->pImage->pixelData.size());
         CESIUM_ASSERT(this->_cachedBytes >= 0);
       }
     }
@@ -550,28 +549,28 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
   int32_t bytesPerChannel = -1;
   for (const LoadedQuadtreeImage& image : images) {
     const LoadedRasterOverlayImage& loaded = *image.pLoaded;
-    if (!loaded.image || loaded.image->width <= 0 ||
-        loaded.image->height <= 0) {
+    if (!loaded.pImage || loaded.pImage->width <= 0 ||
+        loaded.pImage->height <= 0) {
       continue;
     }
 
     projectedWidthPerPixel = glm::min(
         projectedWidthPerPixel,
-        loaded.rectangle.computeWidth() / loaded.image->width);
+        loaded.rectangle.computeWidth() / loaded.pImage->width);
     projectedHeightPerPixel = glm::min(
         projectedHeightPerPixel,
-        loaded.rectangle.computeHeight() / loaded.image->height);
+        loaded.rectangle.computeHeight() / loaded.pImage->height);
 
-    channels = glm::max(channels, loaded.image->channels);
-    bytesPerChannel = glm::max(bytesPerChannel, loaded.image->bytesPerChannel);
+    channels = glm::max(channels, loaded.pImage->channels);
+    bytesPerChannel = glm::max(bytesPerChannel, loaded.pImage->bytesPerChannel);
   }
 
   std::optional<Rectangle> combinedRectangle;
 
   for (const LoadedQuadtreeImage& image : images) {
     const LoadedRasterOverlayImage& loaded = *image.pLoaded;
-    if (!loaded.image || loaded.image->width <= 0 ||
-        loaded.image->height <= 0) {
+    if (!loaded.pImage || loaded.pImage->width <= 0 ||
+        loaded.pImage->height <= 0) {
       continue;
     }
 
@@ -669,7 +668,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   if (targetImageBytes <= 0) {
     // Target image has no pixels, so our work here is done.
     return LoadedRasterOverlayImage{
-        std::nullopt,
+        nullptr,
         targetRectangle,
         {},
         std::move(errors),
@@ -682,7 +681,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   result.moreDetailAvailable = false;
   result.errorList = std::move(errors);
 
-  ImageCesium& target = result.image.emplace();
+  ImageAsset& target = result.pImage.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;
   target.channels = measurements.channels;
   target.width = measurements.widthPixels;
@@ -692,7 +691,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
   for (auto it = images.begin(); it != images.end(); ++it) {
     const LoadedRasterOverlayImage& loaded = *it->pLoaded;
-    if (!loaded.image) {
+    if (!loaded.pImage) {
       continue;
     }
 
@@ -701,7 +700,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     blitImage(
         target,
         result.rectangle,
-        *loaded.image,
+        *loaded.pImage,
         loaded.rectangle,
         it->subset);
   }
@@ -709,7 +708,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   size_t combinedCreditsCount = 0;
   for (auto it = images.begin(); it != images.end(); ++it) {
     const LoadedRasterOverlayImage& loaded = *it->pLoaded;
-    if (!loaded.image) {
+    if (!loaded.pImage) {
       continue;
     }
 
@@ -719,7 +718,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   result.credits.reserve(combinedCreditsCount);
   for (auto it = images.begin(); it != images.end(); ++it) {
     const LoadedRasterOverlayImage& loaded = *it->pLoaded;
-    if (!loaded.image) {
+    if (!loaded.pImage) {
       continue;
     }
 
@@ -731,12 +730,12 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   // Highlight the edges in yellow to show tile boundaries.
 #if SHOW_TILE_BOUNDARIES
   gsl::span<uint32_t> pixels =
-      reintepretCastSpan<uint32_t, std::byte>(result.image->pixelData);
-  for (int32_t j = 0; j < result.image->height; ++j) {
-    for (int32_t i = 0; i < result.image->width; ++i) {
-      if (i == 0 || j == 0 || i == result.image->width - 1 ||
-          j == result.image->height - 1) {
-        pixels[j * result.image->width + i] = 0xFF00FFFF;
+      reintepretCastSpan<uint32_t, std::byte>(result.pImage->pixelData);
+  for (int32_t j = 0; j < result.pImage->height; ++j) {
+    for (int32_t i = 0; i < result.pImage->width; ++i) {
+      if (i == 0 || j == 0 || i == result.pImage->width - 1 ||
+          j == result.pImage->height - 1) {
+        pixels[j * result.pImage->width + i] = 0xFF00FFFF;
       }
     }
   }

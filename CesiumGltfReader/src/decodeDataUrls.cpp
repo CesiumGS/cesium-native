@@ -1,8 +1,8 @@
 #include "decodeDataUrls.h"
 
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <modp_b64.h>
@@ -87,7 +87,6 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
 } // namespace
 
 void decodeDataUrls(
-    const GltfReader& reader,
     GltfReaderResult& readGltf,
     const GltfReaderOptions& options) {
   CESIUM_TRACE("CesiumGltfReader::decodeDataUrls");
@@ -134,14 +133,15 @@ void decodeDataUrls(
       continue;
     }
 
-    ImageReaderResult imageResult =
-        reader.readImage(decoded.value().data, options.ktx2TranscodeTargets);
+    ImageReaderResult imageResult = ImageDecoder::readImage(
+        decoded.value().data,
+        options.ktx2TranscodeTargets);
 
-    if (!imageResult.image) {
+    if (!imageResult.pImage) {
       continue;
     }
 
-    image.cesium = std::move(imageResult.image.value());
+    image.pAsset = imageResult.pImage;
 
     if (options.clearDecodedDataUrls) {
       image.uri.reset();

@@ -1,6 +1,6 @@
 find_package(Doxygen)
 
-if (DOXYGEN_FOUND)
+if(DOXYGEN_FOUND)
     set(
         LIB_DIRS
         ../Cesium3DTiles/include
@@ -39,7 +39,7 @@ if (DOXYGEN_FOUND)
         ../CesiumIonClient/test
         ../CesiumJsonReader/test
         ../CesiumJsonWriter/test
-        ../CesiumQuantizedMeshTerrain/test        
+        ../CesiumQuantizedMeshTerrain/test
         ../CesiumRasterOverlays/test
         ../CesiumUtility/test
     )
@@ -51,9 +51,20 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
     set(DOXYGEN_PREDEFINED "CESIUM3DTILESSELECTION_API" "CESIUMGEOMETRY_API" "CESIUMUTILITY_API" "CESIUMGEOSPATIAL_API")
+    set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/../node_modules/doxygen-awesome-css/doxygen-awesome.css")
+    set(DOXYGEN_GENERATE_TREEVIEW YES)
+    set(DOXYGEN_DISABLE_INDEX NO)
+    set(DOXYGEN_FULL_SIDEBAR NO)
+    set(DOXYGEN_HTML_COLORSTYLE LIGHT)
+    set(DOXYGEN_SOURCE_BROWSER YES)
+    set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
+    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
+    set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
+    set(DOXYGEN_IMAGE_PATH "./")
 
     doxygen_add_docs(
         cesium-native-docs
+        "../README.md"
         ${LIB_DIRS}
     )
 endif()

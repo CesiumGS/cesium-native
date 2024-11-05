@@ -1,4 +1,4 @@
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 
 #include <cstring>
@@ -43,9 +43,9 @@ void ImageManipulation::unsafeBlitImage(
 }
 
 bool ImageManipulation::blitImage(
-    CesiumGltf::ImageCesium& target,
+    CesiumGltf::ImageAsset& target,
     const PixelRectangle& targetPixels,
-    const CesiumGltf::ImageCesium& source,
+    const CesiumGltf::ImageAsset& source,
     const PixelRectangle& sourcePixels) {
 
   if (sourcePixels.x < 0 || sourcePixels.y < 0 || sourcePixels.width < 0 ||
@@ -134,7 +134,7 @@ void writePngToVector(void* context, void* data, int size) {
 } // namespace
 
 /*static*/ void ImageManipulation::savePng(
-    const CesiumGltf::ImageCesium& image,
+    const CesiumGltf::ImageAsset& image,
     std::vector<std::byte>& output) {
   if (image.bytesPerChannel != 1) {
     // Only 8-bit images can be written.
@@ -152,7 +152,7 @@ void writePngToVector(void* context, void* data, int size) {
 }
 
 /*static*/ std::vector<std::byte>
-ImageManipulation::savePng(const CesiumGltf::ImageCesium& image) {
+ImageManipulation::savePng(const CesiumGltf::ImageAsset& image) {
   std::vector<std::byte> result;
   savePng(image, result);
   return result;
