@@ -114,6 +114,15 @@ jobs:
         run: |
           echo "CC=clang-12" >> "$GITHUB_ENV"
           echo "CXX=clang++-12" >> "$GITHUB_ENV"
+      - name: Make more swap space available
+        if: ${{ matrix.platform != 'macos-12'}}
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 10G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          sudo swapon --show
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}}
