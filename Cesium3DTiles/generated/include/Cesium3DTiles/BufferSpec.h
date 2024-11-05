@@ -37,7 +37,7 @@ struct CESIUM3DTILES_API BufferSpec : public CesiumUtility::ExtensibleObject {
    */
   std::optional<std::string> name;
 
-private:
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
    */
