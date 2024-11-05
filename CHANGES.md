@@ -1,5 +1,11 @@
 # Change Log
 
+### Not Released Yet
+
+##### Additions :tada:
+
+- Added support for `EXT_accessor_additional_types` in `AccessorView`.
+
 ### v0.41.0 - 2024-11-01
 
 ##### Breaking Changes :mega:
