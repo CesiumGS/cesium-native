@@ -3,6 +3,7 @@
 #include "Library.h"
 #include "RasterOverlayLoadFailureDetails.h"
 
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>

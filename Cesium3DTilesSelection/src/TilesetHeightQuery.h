@@ -43,6 +43,11 @@ public:
   CesiumGeometry::Ray ray;
 
   /**
+   * @brief The ellipsoid on which the input position is defined.
+   */
+  CesiumGeospatial::Ellipsoid ellipsoid;
+
+  /**
    * @brief The current intersection of the ray with the tileset. If there are
    * multiple intersections, this will be the one closest to the origin of the
    * ray.
