@@ -80,7 +80,7 @@ jobs:
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-22.04
+            platform: ubuntu-22.04	
           - compiler: gcc
             platform: macos-12
           - compiler: gcc
@@ -110,15 +110,6 @@ jobs:
           restore-keys: |
             vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
             vcpkg-${{ env.CACHE_KEY }}
-      - name: Make more swap space available
-        if: ${{ matrix.platform != 'macos-12'}}
-        run: |
-          sudo swapoff -a
-          sudo fallocate -l 10G /mnt/swapfile
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
-          sudo swapon --show
       - name: Set CC and CXX
         if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-12'}}
         run: |
