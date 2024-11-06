@@ -1,5 +1,7 @@
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumUtility/Uri.h>
 
 #include <cstring>
 #include <fstream>
@@ -8,7 +10,6 @@ namespace CesiumNativeTests {
 
 namespace {
 std::unique_ptr<SimpleAssetResponse> readFileUri(const std::string& uri) {
-
   std::vector<std::byte> result;
   CesiumAsync::HttpHeaders headers;
   std::string contentType;
@@ -23,7 +24,8 @@ std::unique_ptr<SimpleAssetResponse> readFileUri(const std::string& uri) {
   if (protocolPos != 0) {
     return response(400);
   }
-  std::string path = uri.substr(std::strlen("file://"));
+  std::string path =
+      CesiumUtility::Uri::uriPathToNativePath(CesiumUtility::Uri::getPath(uri));
   std::ifstream file(path, std::ios::binary | std::ios::ate);
   if (!file) {
     return response(404);

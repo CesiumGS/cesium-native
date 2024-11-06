@@ -12,6 +12,7 @@ set_target_properties(CesiumUtility
     PROPERTIES
         TEST_SOURCES "${CESIUM_UTILITY_TEST_SOURCES}"
         TEST_HEADERS "${CESIUM_UTILITY_TEST_HEADERS}"
+        TEST_DATA_DIR ${CMAKE_CURRENT_LIST_DIR}/test/data
 )
 
 set_target_properties(CesiumUtility
@@ -39,24 +40,12 @@ target_include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}/../extern/zlib-src
 )
 
-# GLM erroneously does not declare its include a `SYSTEM` include, so
-# we must extract its include_directories using this function and manually
-# reinclude it as 'SYSTEM'.
-target_link_libraries_system(
+target_link_libraries(
     CesiumUtility
     PUBLIC
-        glm
-        uriparser
-        spdlog
-)
-
-target_link_libraries(CesiumUtility
-    PUBLIC
-        GSL
-        zlibstatic
-)
-
-install(TARGETS CesiumUtility
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumUtility
+        zlib-ng::zlib-ng
+        spdlog::spdlog
+        glm::glm
+        uriparser::uriparser
+        Microsoft.GSL::GSL
 )

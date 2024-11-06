@@ -5,7 +5,7 @@
 
 #include <CesiumGeometry/Plane.h>
 
-#include <glm/mat4x4.hpp>
+#include <glm/fwd.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 

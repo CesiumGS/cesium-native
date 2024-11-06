@@ -19,12 +19,13 @@ void addTextureToModel(
     int32_t channels,
     const std::vector<uint8_t>& data) {
   Image& image = model.images.emplace_back();
-  image.cesium.width = width;
-  image.cesium.height = height;
-  image.cesium.channels = channels;
-  image.cesium.bytesPerChannel = 1;
+  image.pAsset.emplace();
+  image.pAsset->width = width;
+  image.pAsset->height = height;
+  image.pAsset->channels = channels;
+  image.pAsset->bytesPerChannel = 1;
 
-  std::vector<std::byte>& imageData = image.cesium.pixelData;
+  std::vector<std::byte>& imageData = image.pAsset->pixelData;
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
@@ -248,7 +249,7 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
-    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -308,7 +309,7 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
   }
 
   SECTION("Channel and type mismatch") {
-    model.images[imageIndex].cesium.channels = 2;
+    model.images[imageIndex].pAsset->channels = 2;
     propertyTextureProperty.channels = {0, 1};
     PropertyTexturePropertyView<uint8_t> uint8Property =
         view.getPropertyView<uint8_t>("TestClassProperty");
@@ -336,7 +337,7 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
   }
 
   SECTION("Invalid bytes per channel") {
-    model.images[imageIndex].cesium.bytesPerChannel = 2;
+    model.images[imageIndex].pAsset->bytesPerChannel = 2;
     PropertyTexturePropertyView<uint8_t> uint8Property =
         view.getPropertyView<uint8_t>("TestClassProperty");
     REQUIRE(
@@ -345,7 +346,7 @@ TEST_CASE("Test scalar PropertyTextureProperty") {
   }
 
   SECTION("Empty image") {
-    model.images[imageIndex].cesium.width = 0;
+    model.images[imageIndex].pAsset->width = 0;
     PropertyTexturePropertyView<uint8_t> uint8Property =
         view.getPropertyView<uint8_t>("TestClassProperty");
     REQUIRE(
@@ -493,7 +494,7 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
-    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -556,7 +557,7 @@ TEST_CASE("Test scalar PropertyTextureProperty (normalized)") {
   }
 
   SECTION("Channel and type mismatch") {
-    model.images[imageIndex].cesium.channels = 2;
+    model.images[imageIndex].pAsset->channels = 2;
     propertyTextureProperty.channels = {0, 1};
     PropertyTexturePropertyView<uint8_t, true> uint8Property =
         view.getPropertyView<uint8_t, true>("TestClassProperty");
@@ -689,7 +690,7 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
-    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -750,7 +751,7 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
   }
 
   SECTION("Channel and type mismatch") {
-    model.images[imageIndex].cesium.channels = 4;
+    model.images[imageIndex].pAsset->channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
     PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
         view.getPropertyView<glm::u8vec2>("TestClassProperty");
@@ -769,7 +770,7 @@ TEST_CASE("Test vecN PropertyTextureProperty") {
   }
 
   SECTION("Invalid bytes per channel") {
-    model.images[imageIndex].cesium.bytesPerChannel = 2;
+    model.images[imageIndex].pAsset->bytesPerChannel = 2;
     PropertyTexturePropertyView<glm::u8vec2> u8vec2Property =
         view.getPropertyView<glm::u8vec2>("TestClassProperty");
     REQUIRE(
@@ -903,7 +904,7 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
-    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -973,7 +974,7 @@ TEST_CASE("Test vecN PropertyTextureProperty (normalized)") {
   }
 
   SECTION("Channel and type mismatch") {
-    model.images[imageIndex].cesium.channels = 4;
+    model.images[imageIndex].pAsset->channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
     PropertyTexturePropertyView<glm::u8vec2, true> u8vec2Property =
         view.getPropertyView<glm::u8vec2, true>("TestClassProperty");
@@ -1060,7 +1061,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1118,7 +1119,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1126,7 +1127,8 @@ TEST_CASE("Test array PropertyTextureProperty") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -1150,7 +1152,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
-    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -1162,7 +1164,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1170,7 +1172,8 @@ TEST_CASE("Test array PropertyTextureProperty") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -1218,7 +1221,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
   }
 
   SECTION("Channel and type mismatch") {
-    model.images[imageIndex].cesium.channels = 4;
+    model.images[imageIndex].pAsset->channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
     PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
         view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
@@ -1237,7 +1240,7 @@ TEST_CASE("Test array PropertyTextureProperty") {
   }
 
   SECTION("Invalid bytes per channel") {
-    model.images[imageIndex].cesium.bytesPerChannel = 2;
+    model.images[imageIndex].pAsset->bytesPerChannel = 2;
     PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
         view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
     REQUIRE(
@@ -1327,14 +1330,15 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
       for (int64_t j = 0; j < value.size(); j++) {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<double>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == normalize(value[j]));
@@ -1385,7 +1389,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1393,7 +1397,8 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<double>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == normalize(value[j]));
@@ -1418,7 +1423,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
-    model.images[model.images.size() - 1].cesium.pixelData.swap(emptyData);
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -1430,7 +1435,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
       glm::dvec2 uv = texCoords[i];
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
-      const PropertyArrayView<uint8_t>& value =
+      PropertyArrayCopy<uint8_t> value =
           uint8ArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
@@ -1438,7 +1443,8 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      std::optional<PropertyArrayCopy<double>> maybeValue =
+          uint8ArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == normalize(value[j]));
@@ -1487,7 +1493,7 @@ TEST_CASE("Test array PropertyTextureProperty (normalized)") {
   }
 
   SECTION("Channel and type mismatch") {
-    model.images[imageIndex].cesium.channels = 4;
+    model.images[imageIndex].pAsset->channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
     PropertyTexturePropertyView<PropertyArrayView<uint8_t>, true>
         uint8ArrayProperty =
@@ -2239,7 +2245,7 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
 
             // Clear the original image data.
             std::vector<std::byte> emptyData;
-            model.images[model.images.size() - 1].cesium.pixelData.swap(
+            model.images[model.images.size() - 1].pAsset->pixelData.swap(
                 emptyData);
 
             for (size_t i = 0; i < expected.size(); ++i) {
@@ -2361,7 +2367,7 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
 
             // Clear the original image data.
             std::vector<std::byte> emptyData;
-            model.images[model.images.size() - 1].cesium.pixelData.swap(
+            model.images[model.images.size() - 1].pAsset->pixelData.swap(
                 emptyData);
 
             for (size_t i = 0; i < expected.size(); ++i) {
@@ -2492,7 +2498,7 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
 
             // Clear the original image data.
             std::vector<std::byte> emptyData;
-            model.images[model.images.size() - 1].cesium.pixelData.swap(
+            model.images[model.images.size() - 1].pAsset->pixelData.swap(
                 emptyData);
 
             for (size_t i = 0; i < expected.size(); ++i) {
@@ -2624,7 +2630,7 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
 
             // Clear the original image data.
             std::vector<std::byte> emptyData;
-            model.images[model.images.size() - 1].cesium.pixelData.swap(
+            model.images[model.images.size() - 1].pAsset->pixelData.swap(
                 emptyData);
 
             for (size_t i = 0; i < expected.size(); ++i) {
@@ -2727,7 +2733,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
+              PropertyArrayCopy<uint16_t> array =
                   propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(
@@ -2736,7 +2742,8 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
                 REQUIRE(array[j] == expectedArray[static_cast<size_t>(j)]);
               }
 
-              auto maybeArray = propertyValue.get(uv[0], uv[1]);
+              std::optional<PropertyArrayCopy<uint16_t>> maybeArray =
+                  propertyValue.get(uv[0], uv[1]);
               REQUIRE(maybeArray);
               REQUIRE(
                   static_cast<size_t>(maybeArray->size()) ==
@@ -2776,14 +2783,13 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
 
             // Clear the original image data.
             std::vector<std::byte> emptyData;
-            model.images[model.images.size() - 1].cesium.pixelData.swap(
+            model.images[model.images.size() - 1].pAsset->pixelData.swap(
                 emptyData);
 
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
-                  propertyValue.getRaw(uv[0], uv[1]);
+              auto array = propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(
                   static_cast<size_t>(array.size()) == expectedArray.size());
@@ -2897,7 +2903,7 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
+              PropertyArrayCopy<uint16_t> array =
                   propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(
@@ -2947,13 +2953,13 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
 
             // Clear the original image data.
             std::vector<std::byte> emptyData;
-            model.images[model.images.size() - 1].cesium.pixelData.swap(
+            model.images[model.images.size() - 1].pAsset->pixelData.swap(
                 emptyData);
 
             for (size_t i = 0; i < expected.size(); ++i) {
               std::vector<uint16_t>& expectedArray = expected[i];
               glm::dvec2& uv = texCoords[i];
-              PropertyArrayView<uint16_t> array =
+              PropertyArrayCopy<uint16_t> array =
                   propertyValue.getRaw(uv[0], uv[1]);
 
               REQUIRE(

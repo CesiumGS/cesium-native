@@ -6,6 +6,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Uri.h>
 

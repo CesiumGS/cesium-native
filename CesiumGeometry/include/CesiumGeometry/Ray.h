@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
 namespace CesiumGeometry {
@@ -31,6 +32,24 @@ public:
    * @brief Gets the direction of the ray.
    */
   const glm::dvec3& getDirection() const noexcept { return this->_direction; }
+
+  /**
+   * @brief Calculates a point on the ray that corresponds to the given
+   * distance from origin. Can be positive, negative, or 0.
+   *
+   * @param distance Desired distance from origin
+   * @return The point along the ray.
+   */
+  glm::dvec3 pointFromDistance(double distance) const noexcept;
+
+  /**
+   * @brief Transforms the ray using a given 4x4 transformation matrix.
+   *
+   * @param transformation The 4x4 transformation matrix used to transform the
+   * ray.
+   * @return The transformed ray.
+   */
+  Ray transform(const glm::dmat4x4& transformation) const noexcept;
 
   /**
    * @brief Constructs a new ray with its direction opposite this one.

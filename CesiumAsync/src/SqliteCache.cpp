@@ -2,8 +2,8 @@
 
 #include "CesiumAsync/IAssetResponse.h"
 
+#include <CesiumAsync/cesium-sqlite3.h>
 #include <CesiumUtility/Tracing.h>
-#include <cesium-sqlite3.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>

@@ -3,7 +3,7 @@ on: [push, pull_request]
 jobs:
   QuickChecks:
     name: "Quick Checks"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -12,7 +12,7 @@ jobs:
           npm install
           npm run format -- --dry-run -Werror
   Documentation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Install Doxygen
         run: |
@@ -23,6 +23,7 @@ jobs:
           submodules: recursive
       - name: Generate Documentation
         run: |
+          npm install
           cmake -B build -S .
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
@@ -55,19 +56,16 @@ jobs:
       - name: sccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
-          key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
+          key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}-1
           variant: sccache
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
           path: /.ezvcpkg
-          key: vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
-            vcpkg-${{ env.CACHE_KEY }}
+          key: vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}-1
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build -S . -G Ninja -DCESIUM_MSVC_STATIC_RUNTIME_ENABLED=ON -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build build
       - name: Test ${{matrix.build_type}} Configuration
         run: |
@@ -78,11 +76,11 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-latest, ubuntu-20.04, macos-12 ]
+        platform: [ ubuntu-22.04, ubuntu-20.04, macos-12 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-latest
+            platform: ubuntu-22.04	
           - compiler: gcc
             platform: macos-12
           - compiler: gcc

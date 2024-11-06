@@ -11,7 +11,6 @@
 #include <CesiumUtility/DoublyLinkedList.h>
 
 #include <glm/common.hpp>
-#include <glm/mat4x4.hpp>
 #include <gsl/span>
 
 #include <atomic>
@@ -502,10 +501,24 @@ private:
 
   void setState(TileLoadState state) noexcept;
 
-  bool shouldContentContinueUpdating() const noexcept;
+  /**
+   * @brief Gets a flag indicating whether this tile might have latent children.
+   * Latent children don't exist in the `_children` property, but can be created
+   * by the {@link TilesetContentLoader}.
+   *
+   * When true, this tile might have children that can be created by the
+   * TilesetContentLoader but aren't yet reflected in the `_children` property.
+   * For example, in implicit tiling, we save memory by only creating explicit
+   * Tile instances from implicit availability as those instances are needed.
+   * When this flag is true, the creation of those explicit instances hasn't
+   * happened yet for this tile.
+   *
+   * If this flag is false, the children have already been created, if they
+   * exist. The tile may still have no children because it is a leaf node.
+   */
+  bool getMightHaveLatentChildren() const noexcept;
 
-  void
-  setContentShouldContinueUpdating(bool shouldContentContinueUpdating) noexcept;
+  void setMightHaveLatentChildren(bool mightHaveLatentChildren) noexcept;
 
   // Position in bounding-volume hierarchy.
   Tile* _pParent;
@@ -529,7 +542,7 @@ private:
   TileContent _content;
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
-  bool _shouldContentContinueUpdating;
+  bool _mightHaveLatentChildren;
 
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;

@@ -6,7 +6,7 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/Uri.h>
 
-#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -122,7 +122,7 @@ void applyRtcToNodes(Model& gltf, const glm::dvec3& rtc) {
   using namespace CesiumGltfContent;
   auto upToZ = GltfUtilities::applyGltfUpAxisTransform(gltf, glm::dmat4x4(1.0));
   auto rtcTransform = inverse(upToZ);
-  rtcTransform = translate(rtcTransform, rtc);
+  rtcTransform = glm::translate(rtcTransform, rtc);
   rtcTransform = rtcTransform * upToZ;
   gltf.forEachRootNodeInScene(-1, [&](Model&, Node& node) {
     auto nodeTransform = GltfUtilities::getNodeTransform(node);

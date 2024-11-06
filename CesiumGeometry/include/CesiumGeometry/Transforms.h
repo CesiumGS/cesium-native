@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Axis.h"
 #include "Library.h"
 
 #include <glm/fwd.hpp>
-#include <glm/mat4x4.hpp>
 
 namespace CesiumGeometry {
 
@@ -84,6 +84,17 @@ struct CESIUMGEOMETRY_API Transforms final {
       glm::dvec3* pTranslation,
       glm::dquat* pRotation,
       glm::dvec3* pScale);
+
+  /**
+   * @brief Gets a transform that converts from one up axis to another.
+   *
+   * @param from The up axis to convert from.
+   * @param to The up axis to convert to.
+   *
+   * @returns The up axis transform.
+   */
+  static const glm::dmat4&
+  getUpAxisTransform(CesiumGeometry::Axis from, CesiumGeometry::Axis to);
 };
 
 } // namespace CesiumGeometry

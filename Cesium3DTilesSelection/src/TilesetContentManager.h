@@ -18,6 +18,8 @@
 
 namespace Cesium3DTilesSelection {
 
+class TilesetSharedAssetSystem;
+
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           TilesetContentManager> {
@@ -64,6 +66,27 @@ public:
 
   void updateTileContent(Tile& tile, const TilesetOptions& tilesetOptions);
 
+  /**
+   * @brief Creates explicit Tile instances for a tile's latent children, if
+   * it is necessary and possible to do so.
+   *
+   * Latent children are child tiles that can be created by
+   * {@link TilesetContentLoader::createChildTiles} but that are not yet
+   * reflected in {@link Tile::getChildren}. For example, in implicit tiling,
+   * we save memory by only creating explicit Tile instances from implicit
+   * availability as those instances are needed. Calling this method will create
+   * the explicit tile instances for the given tile's children.
+   *
+   * This method does nothing if the given tile already has children, or if
+   * {@link Tile::getMightHaveLatentChildren} returns false.
+   *
+   * @param tile The tile for which to create latent children.
+   * @param tilesetOptions The tileset's options.
+   */
+  void createLatentChildrenIfNecessary(
+      Tile& tile,
+      const TilesetOptions& tilesetOptions);
+
   bool unloadTileContent(Tile& tile);
 
   void waitUntilIdle();
@@ -93,6 +116,9 @@ public:
   const CesiumUtility::Credit* getUserCredit() const noexcept;
 
   const std::vector<CesiumUtility::Credit>& getTilesetCredits() const noexcept;
+
+  const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
+  getSharedAssetSystem() const noexcept;
 
   int32_t getNumberOfTilesLoading() const noexcept;
 
@@ -145,6 +171,9 @@ private:
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+
+  // Stores assets that might be shared between tiles.
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
 
   CesiumAsync::Promise<void> _destructionCompletePromise;
   CesiumAsync::SharedFuture<void> _destructionCompleteFuture;

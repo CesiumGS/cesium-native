@@ -4,6 +4,7 @@
 
 #include <uriparser/Uri.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>

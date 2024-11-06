@@ -15,12 +15,13 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <rapidjson/document.h>
-#include <spdlog/logger.h>
 
 #include <cctype>
 

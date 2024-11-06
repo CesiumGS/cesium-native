@@ -42,9 +42,10 @@ target_sources(
 
 target_include_directories(
     CesiumQuantizedMeshTerrain
-    SYSTEM PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
-        ${CMAKE_CURRENT_LIST_DIR}/generated/include
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
+        $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
@@ -60,9 +61,4 @@ target_link_libraries(CesiumQuantizedMeshTerrain
         CesiumJsonReader
         CesiumJsonWriter
         CesiumUtility
-)
-
-install(TARGETS CesiumQuantizedMeshTerrain
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CesiumQuantizedMeshTerrain
 )

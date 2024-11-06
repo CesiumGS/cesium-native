@@ -6,6 +6,7 @@
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
@@ -1072,13 +1073,14 @@ static std::vector<std::byte> generateNormals(
     const size_t waterMaskImageId = model.images.size();
     model.images.emplace_back();
     CesiumGltf::Image& waterMaskImage = model.images[waterMaskImageId];
-    waterMaskImage.cesium.width = 256;
-    waterMaskImage.cesium.height = 256;
-    waterMaskImage.cesium.channels = 1;
-    waterMaskImage.cesium.bytesPerChannel = 1;
-    waterMaskImage.cesium.pixelData.resize(65536);
+    waterMaskImage.pAsset.emplace();
+    waterMaskImage.pAsset->width = 256;
+    waterMaskImage.pAsset->height = 256;
+    waterMaskImage.pAsset->channels = 1;
+    waterMaskImage.pAsset->bytesPerChannel = 1;
+    waterMaskImage.pAsset->pixelData.resize(65536);
     std::memcpy(
-        waterMaskImage.cesium.pixelData.data(),
+        waterMaskImage.pAsset->pixelData.data(),
         meshView->waterMaskBuffer.data(),
         65536);
 

@@ -3,17 +3,63 @@
 #include <condition_variable>
 #include <mutex>
 
-// Hackily use Async++'s internal fifo_queue. We could copy it instead - it's
-// not much code - but why create the duplication? However, we are assuming that
-// Async++'s source (not just headers) are available while building
-// cesium-native. If that's a problem in some context, we'll need to do that
-// duplication of fifo_queue after all.
-#include <async++/../../src/fifo_queue.h>
+namespace {
+
+// This class is copied from async++'s fifo_queue.h:
+// https://github.com/Amanieu/asyncplusplus/blob/4159da79e20ad6d0eb1f13baa0f10e989edd9fba/src/fifo_queue.h
+// It's private within Async++, meaning it is defined in a header in the src
+// directory rather than the include directory. When we use Async++ via vcpkg,
+// we have no way to access files in the src directory. So, we copy it here
+// instead.
+class fifo_queue {
+  async::detail::aligned_array<void*, LIBASYNC_CACHELINE_SIZE> items;
+  std::size_t head, tail;
+
+public:
+  fifo_queue() : items(32), head(0), tail(0) {}
+  ~fifo_queue() {
+    // Free any unexecuted tasks
+    for (std::size_t i = head; i != tail; i = (i + 1) & (items.size() - 1))
+      async::task_run_handle::from_void_ptr(items[i]);
+  }
+
+  // Push a task to the end of the queue
+  void push(async::task_run_handle t) {
+    // Resize queue if it is full
+    if (head == ((tail + 1) & (items.size() - 1))) {
+      async::detail::aligned_array<void*, LIBASYNC_CACHELINE_SIZE> new_items(
+          items.size() * 2);
+      for (std::size_t i = 0; i != items.size(); i++)
+        new_items[i] = items[(i + head) & (items.size() - 1)];
+      head = 0;
+      tail = items.size() - 1;
+      items = std::move(new_items);
+    }
+
+    // Push the item
+    items[tail] = t.to_void_ptr();
+    tail = (tail + 1) & (items.size() - 1);
+  }
+
+  // Pop a task from the front of the queue
+  async::task_run_handle pop() {
+    // See if an item is available
+    if (head == tail)
+      return async::task_run_handle();
+    else {
+      void* x = items[head];
+      head = (head + 1) & (items.size() - 1);
+      return async::task_run_handle::from_void_ptr(x);
+    }
+  }
+};
+
+} // namespace
 
 namespace CesiumAsync::CesiumImpl {
 
 struct QueuedScheduler::Impl {
-  async::detail::fifo_queue queue;
+  fifo_queue queue;
   std::mutex mutex;
   std::condition_variable conditionVariable;
 };

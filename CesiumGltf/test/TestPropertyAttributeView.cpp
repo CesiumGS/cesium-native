@@ -1,5 +1,7 @@
 #include "CesiumGltf/PropertyAttributeView.h"
 
+#include <CesiumUtility/Assert.h>
+
 #include <catch2/catch.hpp>
 #include <gsl/span>
 

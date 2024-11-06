@@ -1,4 +1,5 @@
 add_executable(cesium-native-tests "")
+set_property(TARGET cesium-native-tests PROPERTY FOLDER "Tests")
 configure_cesium_library(cesium-native-tests)
 
 # Add tests here, ensure they define the TEST_SOURCES / TEST_HEADERS
@@ -82,10 +83,19 @@ target_include_directories(
         ${test_include_directories}
 )
 
-target_link_libraries(
-    cesium-native-tests
+target_link_libraries(cesium-native-tests
+PUBLIC
+    Catch2::Catch2 Catch2::Catch2WithMain
+    include_helpers # catch2/catch.hpp For the header fix
     ${cesium_native_targets}
-    Catch2::Catch2
+PRIVATE
+    s2::s2
+)
+
+target_compile_definitions(cesium-native-tests
+PRIVATE
+  GLM_ENABLE_EXPERIMENTAL
+  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/../data\"
 )
 
 include(CTest)

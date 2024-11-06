@@ -1,5 +1,6 @@
 #include "CesiumGltf/PropertyType.h"
 
+#include "CesiumGltf/AccessorSpec.h"
 #include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/PropertyTable.h"
 
@@ -189,6 +190,26 @@ convertStringOffsetTypeStringToPropertyComponentType(const std::string& str) {
   }
 
   return PropertyComponentType::None;
+}
+
+PropertyComponentType
+convertAccessorComponentTypeToPropertyComponentType(int componentType) {
+  switch (componentType) {
+  case AccessorSpec::ComponentType::BYTE:
+    return PropertyComponentType::Int8;
+  case AccessorSpec::ComponentType::UNSIGNED_BYTE:
+    return PropertyComponentType::Uint8;
+  case AccessorSpec::ComponentType::SHORT:
+    return PropertyComponentType::Int16;
+  case AccessorSpec::ComponentType::UNSIGNED_SHORT:
+    return PropertyComponentType::Uint16;
+  case AccessorSpec::ComponentType::UNSIGNED_INT:
+    return PropertyComponentType::Uint32;
+  case AccessorSpec::ComponentType::FLOAT:
+    return PropertyComponentType::Float32;
+  default:
+    return PropertyComponentType::None;
+  }
 }
 
 bool isPropertyTypeVecN(PropertyType type) {

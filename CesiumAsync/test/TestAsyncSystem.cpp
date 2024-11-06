@@ -290,6 +290,30 @@ TEST_CASE("AsyncSystem") {
     CHECK(resolved);
   }
 
+  SECTION("Can use `all` with void-returning Futures") {
+    auto one = asyncSystem.createPromise<void>();
+    auto two = asyncSystem.createPromise<void>();
+    auto three = asyncSystem.createPromise<void>();
+
+    std::vector<Future<void>> futures;
+    futures.emplace_back(one.getFuture());
+    futures.emplace_back(two.getFuture());
+    futures.emplace_back(three.getFuture());
+
+    Future<void> all = asyncSystem.all(std::move(futures));
+
+    bool resolved = false;
+    Future<void> last =
+        std::move(all).thenImmediately([&resolved]() { resolved = true; });
+
+    three.resolve();
+    one.resolve();
+    two.resolve();
+
+    last.wait();
+    CHECK(resolved);
+  }
+
   SECTION("Future returned by 'all' rejects when any Future rejects") {
     auto one = asyncSystem.createPromise<int>();
     auto two = asyncSystem.createPromise<int>();
@@ -491,6 +515,38 @@ TEST_CASE("AsyncSystem") {
     CHECK(result.size() == 2);
     CHECK(result[0] == 10);
     CHECK(result[1] == 11);
+  }
+
+  SECTION("can join two shared futures returning void") {
+    auto promise = asyncSystem.createPromise<void>();
+    auto sharedFuture = promise.getFuture().share();
+
+    bool executed1 = false;
+    Future<void> one =
+        sharedFuture.thenInWorkerThread([&executed1]() { CHECK(!executed1); })
+            .thenInWorkerThread([&executed1]() {
+              CHECK(!executed1);
+              executed1 = true;
+            });
+
+    bool executed2 = false;
+    Future<void> two =
+        sharedFuture.thenInWorkerThread([&executed2]() { CHECK(!executed2); })
+            .thenInWorkerThread([&executed2]() {
+              CHECK(!executed2);
+              executed2 = true;
+            });
+
+    std::vector<SharedFuture<void>> futures;
+    futures.emplace_back(std::move(one).share());
+    futures.emplace_back(std::move(two).share());
+    Future<void> joined = asyncSystem.all(std::move(futures));
+
+    promise.resolve();
+
+    joined.wait();
+    CHECK(executed1);
+    CHECK(executed2);
   }
 
   SECTION("can catch from shared future") {
@@ -700,6 +756,24 @@ TEST_CASE("AsyncSystem") {
                                      .share();
       CHECK_THROWS(future.waitInMainThread());
       CHECK(!called);
+    }
+
+    SECTION(
+        "catchImmediately can return a value from a mutable lambda capture") {
+      auto promise = asyncSystem.createPromise<std::string>();
+      promise.reject(std::runtime_error("Some exception"));
+      std::string myValue = "value from catch";
+      Future<std::string> future =
+          promise.getFuture()
+              .catchImmediately([myValue = std::move(myValue)](
+                                    std::exception&& exception) mutable {
+                CHECK(std::string(exception.what()) == "Some exception");
+                return myValue;
+              })
+              .thenImmediately(
+                  [](std::string&& result) { return std::move(result); });
+      std::string result = future.waitInMainThread();
+      CHECK(result == "value from catch");
     }
   }
 }

@@ -5,6 +5,7 @@
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 
 #include <catch2/catch.hpp>
+#include <glm/vec3.hpp>
 
 using namespace Cesium3DTilesContent;
 using namespace CesiumGltf;
@@ -31,7 +32,7 @@ TEST_CASE("I3dmToGltfConverter") {
     auto translationIt = pExtension->attributes.find("TRANSLATION");
     REQUIRE(translationIt != pExtension->attributes.end());
 
-    AccessorView<glm::fvec3> translations(*result.model, translationIt->second);
+    AccessorView<glm::vec3> translations(*result.model, translationIt->second);
     REQUIRE(translations.status() == AccessorViewStatus::Valid);
     CHECK(translations.size() == 25);
   }
@@ -57,14 +58,14 @@ TEST_CASE("I3dmToGltfConverter") {
     auto translationIt = pExtension->attributes.find("TRANSLATION");
     REQUIRE(translationIt != pExtension->attributes.end());
 
-    AccessorView<glm::fvec3> translations(*result.model, translationIt->second);
+    AccessorView<glm::vec3> translations(*result.model, translationIt->second);
     REQUIRE(translations.status() == AccessorViewStatus::Valid);
     CHECK(translations.size() == 25);
 
     auto rotationIt = pExtension->attributes.find("ROTATION");
     REQUIRE(rotationIt != pExtension->attributes.end());
 
-    AccessorView<glm::fvec4> rotations(*result.model, rotationIt->second);
+    AccessorView<glm::vec4> rotations(*result.model, rotationIt->second);
     REQUIRE(rotations.status() == AccessorViewStatus::Valid);
     CHECK(rotations.size() == 25);
   }

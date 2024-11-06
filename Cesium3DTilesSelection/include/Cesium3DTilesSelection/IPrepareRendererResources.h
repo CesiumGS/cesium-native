@@ -6,7 +6,6 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 
-#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <gsl/span>
 
@@ -21,7 +20,6 @@ struct Rectangle;
 }
 
 namespace CesiumGltf {
-struct ImageCesium;
 struct Model;
 } // namespace CesiumGltf
 
