@@ -290,3 +290,11 @@ endif()
 
 
 add_subdirectory(doc)
+
+install(EXPORT CesiumExports
+  FILE cesium-nativeTargets.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native)
+
+install(FILES cesium-nativeConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native)
+

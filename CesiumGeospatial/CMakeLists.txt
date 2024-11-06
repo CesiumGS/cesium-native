@@ -40,8 +40,8 @@ target_link_libraries(CesiumGeospatial
 PUBLIC
     CesiumGeometry
     CesiumUtility
-    earcut
 PRIVATE
+    $<BUILD_INTERFACE:earcut>
     s2::s2
 )
 
