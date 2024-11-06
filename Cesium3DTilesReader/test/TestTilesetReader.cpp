@@ -5,11 +5,11 @@
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
-#include <gsl/span>
 #include <rapidjson/reader.h>
 
 #include <filesystem>
 #include <fstream>
+#include <span>
 #include <string>
 
 TEST_CASE("Reads tileset JSON") {
@@ -132,7 +132,7 @@ TEST_CASE("Reads extras") {
 
   Cesium3DTilesReader::TilesetReader reader;
   auto result = reader.readFromJson(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   REQUIRE(result.errors.empty());
   REQUIRE(result.warnings.empty());
   REQUIRE(result.value.has_value());
@@ -210,7 +210,7 @@ TEST_CASE("Reads 3DTILES_content_gltf") {
 
   Cesium3DTilesReader::TilesetReader reader;
   auto result = reader.readFromJson(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   REQUIRE(result.errors.empty());
   REQUIRE(result.warnings.empty());
   REQUIRE(result.value.has_value());
@@ -260,7 +260,7 @@ TEST_CASE("Reads custom extension") {
 
   Cesium3DTilesReader::TilesetReader reader;
   auto withCustomExt = reader.readFromJson(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   REQUIRE(withCustomExt.errors.empty());
   REQUIRE(withCustomExt.value.has_value());
 
@@ -287,7 +287,7 @@ TEST_CASE("Reads custom extension") {
       CesiumJsonReader::ExtensionState::Disabled);
 
   auto withoutCustomExt = reader.readFromJson(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
   auto& zeroExtensions = withoutCustomExt.value->extensions;
   REQUIRE(zeroExtensions.empty());

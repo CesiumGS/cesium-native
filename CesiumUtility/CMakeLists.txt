@@ -47,5 +47,4 @@ target_link_libraries(
         spdlog::spdlog
         glm::glm
         uriparser::uriparser
-        Microsoft.GSL::GSL
 )

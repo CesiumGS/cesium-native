@@ -14,11 +14,10 @@
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-#include <gsl/span>
-
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -146,7 +145,7 @@ public:
    * @return The result of reading the glTF.
    */
   GltfReaderResult readGltf(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
@@ -204,7 +203,7 @@ public:
   [[deprecated(
       "Use ImageDecoder::readImage instead.")]] static ImageReaderResult
   readImage(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**

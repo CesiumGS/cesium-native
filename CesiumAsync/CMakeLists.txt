@@ -40,7 +40,6 @@ target_include_directories(
 target_link_libraries(CesiumAsync
     PUBLIC
         CesiumUtility
-        Microsoft.GSL::GSL
         spdlog::spdlog spdlog::spdlog_header_only
         Async++
     PRIVATE

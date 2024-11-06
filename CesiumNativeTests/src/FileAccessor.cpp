@@ -69,7 +69,7 @@ FileAccessor::request(
     const std::string& verb,
     const std::string& url,
     const std::vector<THeader>& headers,
-    const gsl::span<const std::byte>&) {
+    const std::span<const std::byte>&) {
   if (verb == "GET") {
     return get(asyncSystem, url, headers);
   }

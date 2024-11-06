@@ -380,7 +380,7 @@ Future<LoadLayersResult> loadLayersRecursive(
                     std::move(loadLayersResult));
               }
 
-              gsl::span<const std::byte> layerJsonBinary = pResponse->data();
+              std::span<const std::byte> layerJsonBinary = pResponse->data();
 
               rapidjson::Document layerJson;
               layerJson.Parse(
@@ -485,7 +485,7 @@ Future<LoadLayersResult> loadLayerJson(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& baseUrl,
     const std::vector<IAssetAccessor::THeader>& requestHeaders,
-    const gsl::span<const std::byte>& layerJsonBinary,
+    const std::span<const std::byte>& layerJsonBinary,
     bool useWaterMask,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   rapidjson::Document layerJson;
