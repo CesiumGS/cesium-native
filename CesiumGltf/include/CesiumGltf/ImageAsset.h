@@ -114,6 +114,11 @@ struct CESIUMGLTF_API ImageAsset final
   int64_t sizeBytes = -1;
 
   /**
+   * @brief Constructs an empty image asset.
+   */
+  ImageAsset() = default;
+
+  /**
    * @brief Gets the size of this asset, in bytes.
    *
    * If {@link sizeBytes} is greater than or equal to zero, it is returned.
