@@ -24,7 +24,6 @@ target_sources(
     PRIVATE
         ${CESIUM_ASYNC_SOURCES}
         ${CESIUM_ASYNC_HEADERS}
-    PUBLIC
         ${CESIUM_ASYNC_PUBLIC_HEADERS}
 )
 

@@ -24,7 +24,6 @@ target_sources(
     PRIVATE
         ${CESIUM_JSON_READER_SOURCES}
         ${CESIUM_JSON_READER_HEADERS}
-    PUBLIC
         ${CESIUM_JSON_READER_PUBLIC_HEADERS}
 )
 

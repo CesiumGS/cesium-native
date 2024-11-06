@@ -33,7 +33,6 @@ target_sources(
     PRIVATE
         ${CESIUM_JSON_WRITER_SOURCES}
         ${CESIUM_JSON_WRITER_HEADERS}
-    PUBLIC
         ${CESIUM_JSON_WRITER_PUBLIC_HEADERS}
 )
 

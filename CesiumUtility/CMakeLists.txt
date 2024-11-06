@@ -25,7 +25,6 @@ target_sources(
     PRIVATE
         ${CESIUM_UTILITY_SOURCES}
         ${CESIUM_UTILITY_HEADERS}
-    PUBLIC
         ${CESIUM_UTILITY_PUBLIC_HEADERS}
 )
 

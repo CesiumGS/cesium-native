@@ -25,7 +25,6 @@ target_sources(
     PRIVATE
         ${CESIUM_ION_CLIENT_SOURCES}
         ${CESIUM_ION_CLIENT_HEADERS}
-    PUBLIC
         ${CESIUM_ION_CLIENT_PUBLIC_HEADERS}
 )
 

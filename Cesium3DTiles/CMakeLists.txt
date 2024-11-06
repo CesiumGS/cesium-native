@@ -36,7 +36,6 @@ target_sources(
     PRIVATE
         ${CESIUM_3DTILES_SOURCES}
         ${CESIUM_3DTILES_HEADERS}
-    PUBLIC
         ${CESIUM_3DTILES_PUBLIC_HEADERS}
 )
 

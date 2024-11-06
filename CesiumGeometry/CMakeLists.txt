@@ -24,7 +24,6 @@ target_sources(
     PRIVATE
         ${CESIUM_GEOMETRY_SOURCES}
         ${CESIUM_GEOMETRY_HEADERS}
-    PUBLIC
         ${CESIUM_GEOMETRY_PUBLIC_HEADERS}
 )
 

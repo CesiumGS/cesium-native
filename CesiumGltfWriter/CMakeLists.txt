@@ -36,7 +36,6 @@ target_sources(
     PRIVATE
         ${CESIUM_GLTF_WRITER_SOURCES}
         ${CESIUM_GLTF_WRITER_HEADERS}
-    PUBLIC
         ${CESIUM_GLTF_WRITER_PUBLIC_HEADERS}
 )
 
