@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for `EXT_accessor_additional_types` in `AccessorView`.
+- Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
 
 ### v0.41.0 - 2024-11-01
 
@@ -119,7 +120,6 @@
 - Added full support for custom ellipsoids by setting `TilesetOptions::ellipsoid` when creating a tileset.
   - Many methods have been updated with an additional ellipsoid parameter to support this. The WGS84 ellipsoid is used as a default parameter here to ensure API compatibility.
   - `CESIUM_DISABLE_DEFAULT_ELLIPSOID` can be defined to disable the WGS84 default parameter, exposing through errors the places in your code that are still assuming a WGS84 ellipsoid.
-- Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
 
 ##### Fixes :wrench:
 
