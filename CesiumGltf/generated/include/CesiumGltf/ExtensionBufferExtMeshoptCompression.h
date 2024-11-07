@@ -25,7 +25,8 @@ struct CESIUMGLTF_API ExtensionBufferExtMeshoptCompression final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->fallback);
+    accum += sizeof(ExtensionBufferExtMeshoptCompression);
+
     return accum;
   }
 };

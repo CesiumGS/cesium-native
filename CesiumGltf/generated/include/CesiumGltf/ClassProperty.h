@@ -190,34 +190,19 @@ struct CESIUMGLTF_API ClassProperty final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum +=
-        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
-    accum += sizeof(this->description) +
-             (this->description.has_value() ? this->description->size() : 0);
-    accum += sizeof(this->type);
-    accum += sizeof(this->componentType);
-    accum += sizeof(this->enumType) +
-             (this->enumType.has_value() ? this->enumType->size() : 0);
-    accum += sizeof(this->array);
-    accum += sizeof(this->count);
-    accum += sizeof(this->normalized);
-    accum += sizeof(this->offset) +
-             (this->offset.has_value() ? this->offset->getSizeBytes() : 0);
-    accum += sizeof(this->scale) +
-             (this->scale.has_value() ? this->scale->getSizeBytes() : 0);
-    accum += sizeof(this->max) +
-             (this->max.has_value() ? this->max->getSizeBytes() : 0);
-    accum += sizeof(this->min) +
-             (this->min.has_value() ? this->min->getSizeBytes() : 0);
-    accum += sizeof(this->required);
-    accum += sizeof(this->noData) +
-             (this->noData.has_value() ? this->noData->getSizeBytes() : 0);
-    accum += sizeof(this->defaultProperty) +
-             (this->defaultProperty.has_value()
-                  ? this->defaultProperty->getSizeBytes()
-                  : 0);
-    accum += sizeof(this->semantic) +
-             (this->semantic.has_value() ? this->semantic->size() : 0);
+    accum += sizeof(ClassProperty);
+    if (this->name) {
+      accum += this->name->size();
+    }
+    if (this->description) {
+      accum += this->description->size();
+    }
+    if (this->enumType) {
+      accum += this->enumType->size();
+    }
+    if (this->semantic) {
+      accum += this->semantic->size();
+    }
     return accum;
   }
 };

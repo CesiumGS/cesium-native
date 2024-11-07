@@ -17,6 +17,7 @@ struct CESIUMGLTF_API ExtensionKhrMaterialsUnlit final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionKhrMaterialsUnlit);
 
     return accum;
   }

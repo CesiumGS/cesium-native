@@ -112,7 +112,8 @@ function generate(options, schema, writers) {
 
                 int64_t getSizeBytes() const {
                   int64_t accum = 0;
-                  ${indent(properties.map(p => resolveSizeOfForProperty(p, "this->" + p.cppSafeName, "accum")).join("\n"))}
+                  accum += sizeof(${name}${thisConfig.toBeInherited ? "Spec" : ""});
+                  ${indent(properties.map(p => resolveSizeOfForProperty(p, "this->" + p.cppSafeName, "accum")).filter(p => p).join("\n"))}
                   return accum;
                 }
 

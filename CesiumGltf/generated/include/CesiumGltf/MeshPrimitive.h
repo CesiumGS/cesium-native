@@ -73,20 +73,13 @@ struct CESIUMGLTF_API MeshPrimitive final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(MeshPrimitive);
     for (auto& [k, v] : this->attributes) {
       accum += k.size();
-      accum += sizeof(v);
+      accum += sizeof(int32_t);
     }
-    accum += sizeof(this->indices);
-    accum += sizeof(this->material);
-    accum += sizeof(this->mode);
-    for (const std::unordered_map<std::string, int32_t>& value :
-         this->targets) {
-      for (auto& [k, v] : value) {
-        accum += k.size();
-        accum += sizeof(v);
-      }
-    }
+    accum += sizeof(std::unordered_map<std::string, int32_t>) *
+             this->targets.capacity();
     return accum;
   }
 };

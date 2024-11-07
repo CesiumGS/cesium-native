@@ -25,9 +25,11 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeatures final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionExtInstanceFeatures);
     for (const CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& value :
          this->featureIds) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() -
+               sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId);
     }
     return accum;
   }

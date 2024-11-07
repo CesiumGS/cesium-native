@@ -53,9 +53,8 @@ struct CESIUMGLTF_API AnimationSampler final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->input);
-    accum += sizeof(this->interpolation);
-    accum += sizeof(this->output);
+    accum += sizeof(AnimationSampler);
+
     return accum;
   }
 };

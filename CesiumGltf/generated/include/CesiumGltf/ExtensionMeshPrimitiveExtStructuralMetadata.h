@@ -33,12 +33,9 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    for (const int32_t& value : this->propertyTextures) {
-      accum += sizeof(value);
-    }
-    for (const int32_t& value : this->propertyAttributes) {
-      accum += sizeof(value);
-    }
+    accum += sizeof(ExtensionMeshPrimitiveExtStructuralMetadata);
+    accum += sizeof(int32_t) * this->propertyTextures.capacity();
+    accum += sizeof(int32_t) * this->propertyAttributes.capacity();
     return accum;
   }
 };

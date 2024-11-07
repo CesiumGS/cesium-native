@@ -31,10 +31,14 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariants final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionMeshPrimitiveKhrMaterialsVariants);
     for (const CesiumGltf::
              ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue& value :
          this->mappings) {
-      accum += value.getSizeBytes();
+      accum +=
+          value.getSizeBytes() -
+          sizeof(CesiumGltf::
+                     ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue);
     }
     return accum;
   }

@@ -34,9 +34,10 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionExtMeshGpuInstancing);
     for (auto& [k, v] : this->attributes) {
       accum += k.size();
-      accum += sizeof(v);
+      accum += sizeof(int32_t);
     }
     return accum;
   }

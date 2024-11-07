@@ -34,8 +34,8 @@ struct CESIUMGLTF_API AccessorSparseValues final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->bufferView);
-    accum += sizeof(this->byteOffset);
+    accum += sizeof(AccessorSparseValues);
+
     return accum;
   }
 };

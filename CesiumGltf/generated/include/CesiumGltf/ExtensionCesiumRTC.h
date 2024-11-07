@@ -24,9 +24,8 @@ struct CESIUMGLTF_API ExtensionCesiumRTC final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    for (const double& value : this->center) {
-      accum += sizeof(value);
-    }
+    accum += sizeof(ExtensionCesiumRTC);
+    accum += sizeof(double) * this->center.capacity();
     return accum;
   }
 };

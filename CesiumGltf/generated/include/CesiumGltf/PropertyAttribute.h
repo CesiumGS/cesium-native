@@ -42,12 +42,14 @@ struct CESIUMGLTF_API PropertyAttribute final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum +=
-        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
+    accum += sizeof(PropertyAttribute);
+    if (this->name) {
+      accum += this->name->size();
+    }
     accum += this->classProperty.size();
     for (auto& [k, v] : this->properties) {
       accum += k.size();
-      accum += v.getSizeBytes();
+      accum += v.getSizeBytes() - sizeof(CesiumGltf::PropertyAttributeProperty);
     }
     return accum;
   }

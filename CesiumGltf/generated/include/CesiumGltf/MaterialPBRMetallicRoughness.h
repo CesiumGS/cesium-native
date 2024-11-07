@@ -70,19 +70,16 @@ struct CESIUMGLTF_API MaterialPBRMetallicRoughness final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    for (const double& value : this->baseColorFactor) {
-      accum += sizeof(value);
+    accum += sizeof(MaterialPBRMetallicRoughness);
+    accum += sizeof(double) * this->baseColorFactor.capacity();
+    if (this->baseColorTexture) {
+      accum += this->baseColorTexture->getSizeBytes() -
+               sizeof(CesiumGltf::TextureInfo);
     }
-    accum += sizeof(this->baseColorTexture) +
-             (this->baseColorTexture.has_value()
-                  ? this->baseColorTexture->getSizeBytes()
-                  : 0);
-    accum += sizeof(this->metallicFactor);
-    accum += sizeof(this->roughnessFactor);
-    accum += sizeof(this->metallicRoughnessTexture) +
-             (this->metallicRoughnessTexture.has_value()
-                  ? this->metallicRoughnessTexture->getSizeBytes()
-                  : 0);
+    if (this->metallicRoughnessTexture) {
+      accum += this->metallicRoughnessTexture->getSizeBytes() -
+               sizeof(CesiumGltf::TextureInfo);
+    }
     return accum;
   }
 };

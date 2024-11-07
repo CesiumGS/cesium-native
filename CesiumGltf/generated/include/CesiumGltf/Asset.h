@@ -42,13 +42,17 @@ struct CESIUMGLTF_API Asset final : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->copyright) +
-             (this->copyright.has_value() ? this->copyright->size() : 0);
-    accum += sizeof(this->generator) +
-             (this->generator.has_value() ? this->generator->size() : 0);
+    accum += sizeof(Asset);
+    if (this->copyright) {
+      accum += this->copyright->size();
+    }
+    if (this->generator) {
+      accum += this->generator->size();
+    }
     accum += this->version.size();
-    accum += sizeof(this->minVersion) +
-             (this->minVersion.has_value() ? this->minVersion->size() : 0);
+    if (this->minVersion) {
+      accum += this->minVersion->size();
+    }
     return accum;
   }
 };

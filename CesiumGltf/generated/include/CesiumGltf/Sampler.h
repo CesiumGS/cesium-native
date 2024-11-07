@@ -98,10 +98,8 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->magFilter);
-    accum += sizeof(this->minFilter);
-    accum += sizeof(this->wrapS);
-    accum += sizeof(this->wrapT);
+    accum += sizeof(Sampler);
+
     return accum;
   }
 };

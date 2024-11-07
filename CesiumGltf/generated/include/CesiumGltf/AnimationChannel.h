@@ -34,8 +34,9 @@ struct CESIUMGLTF_API AnimationChannel final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->sampler);
-    accum += this->target.getSizeBytes();
+    accum += sizeof(AnimationChannel);
+    accum += this->target.getSizeBytes() -
+             sizeof(CesiumGltf::AnimationChannelTarget);
     return accum;
   }
 };

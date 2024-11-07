@@ -22,9 +22,8 @@ struct CESIUMGLTF_API Scene final : public CesiumGltf::NamedObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    for (const int32_t& value : this->nodes) {
-      accum += sizeof(value);
-    }
+    accum += sizeof(Scene);
+    accum += sizeof(int32_t) * this->nodes.capacity();
     return accum;
   }
 };

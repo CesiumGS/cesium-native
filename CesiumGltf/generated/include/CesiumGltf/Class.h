@@ -37,13 +37,16 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum +=
-        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
-    accum += sizeof(this->description) +
-             (this->description.has_value() ? this->description->size() : 0);
+    accum += sizeof(Class);
+    if (this->name) {
+      accum += this->name->size();
+    }
+    if (this->description) {
+      accum += this->description->size();
+    }
     for (auto& [k, v] : this->properties) {
       accum += k.size();
-      accum += v.getSizeBytes();
+      accum += v.getSizeBytes() - sizeof(CesiumGltf::ClassProperty);
     }
     return accum;
   }

@@ -52,9 +52,8 @@ struct CESIUMGLTF_API AccessorSparseIndices final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->bufferView);
-    accum += sizeof(this->byteOffset);
-    accum += sizeof(this->componentType);
+    accum += sizeof(AccessorSparseIndices);
+
     return accum;
   }
 };

@@ -139,52 +139,48 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    for (const std::string& value : this->extensionsUsed) {
-      accum += value.size();
-    }
-    for (const std::string& value : this->extensionsRequired) {
-      accum += value.size();
-    }
+    accum += sizeof(ModelSpec);
+    accum += sizeof(std::string) * this->extensionsUsed.capacity();
+    accum += sizeof(std::string) * this->extensionsRequired.capacity();
     for (const CesiumGltf::Accessor& value : this->accessors) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Accessor);
     }
     for (const CesiumGltf::Animation& value : this->animations) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Animation);
     }
-    accum += this->asset.getSizeBytes();
+    accum += this->asset.getSizeBytes() - sizeof(CesiumGltf::Asset);
     for (const CesiumGltf::Buffer& value : this->buffers) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Buffer);
     }
     for (const CesiumGltf::BufferView& value : this->bufferViews) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::BufferView);
     }
     for (const CesiumGltf::Camera& value : this->cameras) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Camera);
     }
     for (const CesiumGltf::Image& value : this->images) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Image);
     }
     for (const CesiumGltf::Material& value : this->materials) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Material);
     }
     for (const CesiumGltf::Mesh& value : this->meshes) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Mesh);
     }
     for (const CesiumGltf::Node& value : this->nodes) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Node);
     }
     for (const CesiumGltf::Sampler& value : this->samplers) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Sampler);
     }
-    accum += sizeof(this->scene);
     for (const CesiumGltf::Scene& value : this->scenes) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Scene);
     }
     for (const CesiumGltf::Skin& value : this->skins) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Skin);
     }
     for (const CesiumGltf::Texture& value : this->textures) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::Texture);
     }
     return accum;
   }

@@ -25,6 +25,7 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionModelKhrMaterialsVariantsValue);
     accum += this->name.size();
     return accum;
   }

@@ -56,20 +56,24 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(Schema);
     accum += this->id.size();
-    accum +=
-        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
-    accum += sizeof(this->description) +
-             (this->description.has_value() ? this->description->size() : 0);
-    accum += sizeof(this->version) +
-             (this->version.has_value() ? this->version->size() : 0);
+    if (this->name) {
+      accum += this->name->size();
+    }
+    if (this->description) {
+      accum += this->description->size();
+    }
+    if (this->version) {
+      accum += this->version->size();
+    }
     for (auto& [k, v] : this->classes) {
       accum += k.size();
-      accum += v.getSizeBytes();
+      accum += v.getSizeBytes() - sizeof(CesiumGltf::Class);
     }
     for (auto& [k, v] : this->enums) {
       accum += k.size();
-      accum += v.getSizeBytes();
+      accum += v.getSizeBytes() - sizeof(CesiumGltf::Enum);
     }
     return accum;
   }

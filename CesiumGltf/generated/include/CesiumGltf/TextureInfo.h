@@ -34,8 +34,8 @@ struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->index);
-    accum += sizeof(this->texCoord);
+    accum += sizeof(TextureInfo);
+
     return accum;
   }
 };

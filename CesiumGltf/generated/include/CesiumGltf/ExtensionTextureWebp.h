@@ -24,7 +24,8 @@ struct CESIUMGLTF_API ExtensionTextureWebp final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->source);
+    accum += sizeof(ExtensionTextureWebp);
+
     return accum;
   }
 };

@@ -25,7 +25,8 @@ struct CESIUMGLTF_API MaterialNormalTextureInfo final : public TextureInfo {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->scale);
+    accum += sizeof(MaterialNormalTextureInfo);
+
     return accum;
   }
 };

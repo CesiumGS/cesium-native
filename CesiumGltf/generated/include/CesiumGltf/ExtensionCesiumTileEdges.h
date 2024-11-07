@@ -43,10 +43,8 @@ struct CESIUMGLTF_API ExtensionCesiumTileEdges final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->left);
-    accum += sizeof(this->bottom);
-    accum += sizeof(this->right);
-    accum += sizeof(this->top);
+    accum += sizeof(ExtensionCesiumTileEdges);
+
     return accum;
   }
 };

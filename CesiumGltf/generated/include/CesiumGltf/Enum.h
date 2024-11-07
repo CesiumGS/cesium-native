@@ -65,13 +65,15 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum +=
-        sizeof(this->name) + (this->name.has_value() ? this->name->size() : 0);
-    accum += sizeof(this->description) +
-             (this->description.has_value() ? this->description->size() : 0);
-    accum += sizeof(this->valueType);
+    accum += sizeof(Enum);
+    if (this->name) {
+      accum += this->name->size();
+    }
+    if (this->description) {
+      accum += this->description->size();
+    }
     for (const CesiumGltf::EnumValue& value : this->values) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::EnumValue);
     }
     return accum;
   }

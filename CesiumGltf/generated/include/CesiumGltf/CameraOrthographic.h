@@ -40,10 +40,8 @@ struct CESIUMGLTF_API CameraOrthographic final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->xmag);
-    accum += sizeof(this->ymag);
-    accum += sizeof(this->zfar);
-    accum += sizeof(this->znear);
+    accum += sizeof(CameraOrthographic);
+
     return accum;
   }
 };

@@ -45,14 +45,9 @@ struct CESIUMGLTF_API ExtensionKhrTextureTransform final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    for (const double& value : this->offset) {
-      accum += sizeof(value);
-    }
-    accum += sizeof(this->rotation);
-    for (const double& value : this->scale) {
-      accum += sizeof(value);
-    }
-    accum += sizeof(this->texCoord);
+    accum += sizeof(ExtensionKhrTextureTransform);
+    accum += sizeof(double) * this->offset.capacity();
+    accum += sizeof(double) * this->scale.capacity();
     return accum;
   }
 };

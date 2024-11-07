@@ -26,7 +26,8 @@ struct CESIUMGLTF_API ExtensionKhrTextureBasisu final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->source);
+    accum += sizeof(ExtensionKhrTextureBasisu);
+
     return accum;
   }
 };

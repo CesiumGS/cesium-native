@@ -55,15 +55,8 @@ struct CESIUMGLTF_API PropertyAttributeProperty final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(PropertyAttributeProperty);
     accum += this->attribute.size();
-    accum += sizeof(this->offset) +
-             (this->offset.has_value() ? this->offset->getSizeBytes() : 0);
-    accum += sizeof(this->scale) +
-             (this->scale.has_value() ? this->scale->getSizeBytes() : 0);
-    accum += sizeof(this->max) +
-             (this->max.has_value() ? this->max->getSizeBytes() : 0);
-    accum += sizeof(this->min) +
-             (this->min.has_value() ? this->min->getSizeBytes() : 0);
     return accum;
   }
 };

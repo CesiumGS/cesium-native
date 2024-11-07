@@ -32,11 +32,12 @@ struct CESIUMGLTF_API Animation final : public CesiumGltf::NamedObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(Animation);
     for (const CesiumGltf::AnimationChannel& value : this->channels) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::AnimationChannel);
     }
     for (const CesiumGltf::AnimationSampler& value : this->samplers) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::AnimationSampler);
     }
     return accum;
   }

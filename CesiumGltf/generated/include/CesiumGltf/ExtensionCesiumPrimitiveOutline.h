@@ -28,7 +28,8 @@ struct CESIUMGLTF_API ExtensionCesiumPrimitiveOutline final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->indices);
+    accum += sizeof(ExtensionCesiumPrimitiveOutline);
+
     return accum;
   }
 };

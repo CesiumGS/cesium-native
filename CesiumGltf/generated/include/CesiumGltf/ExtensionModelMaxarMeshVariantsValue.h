@@ -23,6 +23,7 @@ struct CESIUMGLTF_API ExtensionModelMaxarMeshVariantsValue final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionModelMaxarMeshVariantsValue);
     accum += this->name.size();
     return accum;
   }

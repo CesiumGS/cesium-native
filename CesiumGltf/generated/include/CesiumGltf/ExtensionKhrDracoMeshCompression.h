@@ -33,10 +33,10 @@ struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->bufferView);
+    accum += sizeof(ExtensionKhrDracoMeshCompression);
     for (auto& [k, v] : this->attributes) {
       accum += k.size();
-      accum += sizeof(v);
+      accum += sizeof(int32_t);
     }
     return accum;
   }

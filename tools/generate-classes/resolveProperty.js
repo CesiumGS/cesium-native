@@ -17,12 +17,16 @@ function resolveSizeOfForProperty(
   // If the property has schemas, a definition for its getSizeBytes method is already
   // being generated.
   if (property.schemas && property.schemas.length > 0) {
-    return property.isOptional ?
-      `${accumName} += sizeof(${propertyName}) + (${propertyName}.has_value() ? ${propertyName}->getSizeBytes() : 0);` :
-      `${accumName} += ${propertyName}.getSizeBytes();`;
+    if (property.isOptional) {
+      return `if(${propertyName}) {
+        ${accumName} += ${propertyName}->getSizeBytes() - sizeof(${property.originalType});
+      }`;
+    }
+
+    return `${accumName} += ${propertyName}.getSizeBytes() - sizeof(${property.type});`;
   }
 
-  return `${accumName} += sizeof(${propertyName});`;
+  return null;
 }
 
 function resolveProperty(
@@ -86,7 +90,8 @@ function resolveProperty(
       readerHeaders: [`<CesiumJsonReader/IntegerJsonHandler.h>`],
       readerType: "CesiumJsonReader::IntegerJsonHandler<int64_t>",
       needsInitialization: !makeOptional,
-      isOptional: makeOptional
+      isOptional: makeOptional,
+      originalType: "int64_t"
     };
   } else if (propertyDetails.type == "number") {
     return {
@@ -97,6 +102,7 @@ function resolveProperty(
       readerType: "CesiumJsonReader::DoubleJsonHandler",
       needsInitialization: !makeOptional,
       isOptional: makeOptional,
+      originalType: "double"
     };
   } else if (propertyDetails.type == "boolean") {
     return {
@@ -107,6 +113,7 @@ function resolveProperty(
       readerType: "CesiumJsonReader::BoolJsonHandler",
       needsInitialization: ~makeOptional,
       isOptional: makeOptional,
+      originalType: "bool"
     };
   } else if (propertyDetails.type == "string") {
     return {
@@ -116,14 +123,18 @@ function resolveProperty(
       readerHeaders: [`<CesiumJsonReader/StringJsonHandler.h>`],
       readerType: "CesiumJsonReader::StringJsonHandler",
       isOptional: makeOptional,
+      originalType: "std::string",
       defaultValue:
         propertyDetails.default !== undefined
           ? `"${propertyDetails.default.toString()}"`
           : undefined,
       sizeOfFormatter: (propertyName, accumName) => {
-        return makeOptional ?
-          `${accumName} += sizeof(${propertyName}) + (${propertyName}.has_value() ? ${propertyName}->size() : 0);`
-          : `${accumName} += ${propertyName}.size();`;
+        if (makeOptional) {
+          return `if(${propertyName}) {
+            ${accumName} += ${propertyName}->size();
+          }`;
+        }
+        return `${accumName} += ${propertyName}.size();`;
       },
     };
   } else if (propertyDetails.type === "object" && propertyDetails.properties) {
@@ -135,11 +146,12 @@ function resolveProperty(
       sourcePath: parentSchema.sourcePath,
     };
     const type = getNameFromTitle(config, schema.title);
+    const typeName = NameFormatters.getName(type, namespace);
     return {
       ...propertyDefaults(propertyName, cppSafeName, propertyDetails),
       type: makeOptional
-        ? `std::optional<${NameFormatters.getName(type, namespace)}>`
-        : `${NameFormatters.getName(type, namespace)}`,
+        ? `std::optional<${typeName}>`
+        : `${typeName}`,
       headers: [
         NameFormatters.getIncludeFromName(type, namespace),
         ...(makeOptional ? ["<optional>"] : []),
@@ -150,6 +162,7 @@ function resolveProperty(
       ],
       schemas: [schema],
       isOptional: makeOptional,
+      originalType: typeName
     };
   } else if (
     propertyDetails.type === "object" &&
@@ -222,6 +235,7 @@ function resolveProperty(
         let propertyType = NameFormatters.getName(type, namespace);
         let sizeOfFormatter = undefined;
         let headers = [NameFormatters.getIncludeFromName(type, namespace)];
+        let originalType = propertyType;
         if (config.classes[itemSchema.title] && config.classes[itemSchema.title].isAsset) {
           propertyType = `CesiumUtility::IntrusivePointer<${propertyType}>`;
           // An optional IntrusivePointer will just be a nullptr.
@@ -247,7 +261,8 @@ function resolveProperty(
           ],
           schemas: [itemSchema],
           isOptional: makeOptional,
-          sizeOfFormatter
+          sizeOfFormatter,
+          originalType
         };
       }
     }
@@ -301,11 +316,7 @@ function makeJsonValueProperty(
     readerType: `CesiumJsonReader::JsonObjectJsonHandler`,
     readerHeaders: [`<CesiumJsonReader/JsonObjectJsonHandler.h>`],
     isOptional: makeOptional,
-    sizeOfFormatter: (propertyName, accumName) => {
-      return makeOptional ?
-        `${accumName} += sizeof(${propertyName}) + (${propertyName}.has_value() ? ${propertyName}->getSizeBytes() : 0);` :
-        `${accumName} += ${propertyName}.getSizeBytes();`;
-    }
+    originalType: "CesiumUtility::JsonValue"
   };
 }
 
@@ -398,6 +409,10 @@ function resolveArray(
     ],
     readerType: `CesiumJsonReader::ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
     sizeOfFormatter: (propertyName, accumName) => {
+      if (!itemProperty.schemas || itemProperty.schemas.length == 0) {
+        return `${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();`;
+      }
+
       return `for(const ${itemProperty.type}& value : ${propertyName}) {
         ${resolveSizeOfForProperty(itemProperty, "value", accumName)}
       }`;
@@ -451,7 +466,7 @@ function resolveDictionary(
     sizeOfFormatter: (propertyName, accumName) => {
       return `for(auto& [k, v] : ${propertyName}) {
         ${accumName} += k.size();
-        ${resolveSizeOfForProperty(additional, "v", accumName)}
+        ${resolveSizeOfForProperty(additional, "v", accumName) || `${accumName} += sizeof(${additional.type});`}
       }`;
     }
   };
@@ -598,6 +613,7 @@ function resolveEnum(
       `),
     ],
     type: makeOptional ? `std::optional<${enumRuntimeType}>` : enumRuntimeType,
+    originalType: enumRuntimeType,
     headers: makeOptional ? ["<optional>"] : [],
     defaultValue: makeOptional ? undefined : enumDefaultValue,
     defaultValueWriter: makeOptional ? undefined : enumDefaultValueWriter,

@@ -56,14 +56,14 @@ struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->featureCount);
-    accum += sizeof(this->nullFeatureId);
-    accum += sizeof(this->label) +
-             (this->label.has_value() ? this->label->size() : 0);
-    accum += sizeof(this->attribute);
-    accum += sizeof(this->texture) +
-             (this->texture.has_value() ? this->texture->getSizeBytes() : 0);
-    accum += sizeof(this->propertyTable);
+    accum += sizeof(FeatureId);
+    if (this->label) {
+      accum += this->label->size();
+    }
+    if (this->texture) {
+      accum +=
+          this->texture->getSizeBytes() - sizeof(CesiumGltf::FeatureIdTexture);
+    }
     return accum;
   }
 };

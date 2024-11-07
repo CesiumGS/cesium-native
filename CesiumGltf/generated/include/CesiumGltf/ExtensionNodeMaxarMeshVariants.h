@@ -26,9 +26,11 @@ struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(ExtensionNodeMaxarMeshVariants);
     for (const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& value :
          this->mappings) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() -
+               sizeof(CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue);
     }
     return accum;
   }

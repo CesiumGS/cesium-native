@@ -34,10 +34,11 @@ struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(EnumValue);
     accum += this->name.size();
-    accum += sizeof(this->description) +
-             (this->description.has_value() ? this->description->size() : 0);
-    accum += sizeof(this->value);
+    if (this->description) {
+      accum += this->description->size();
+    }
     return accum;
   }
 };

@@ -24,7 +24,8 @@ struct CESIUMGLTF_API MaterialOcclusionTextureInfo final : public TextureInfo {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->strength);
+    accum += sizeof(MaterialOcclusionTextureInfo);
+
     return accum;
   }
 };

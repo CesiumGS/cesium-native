@@ -52,12 +52,10 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeaturesFeatureId final
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->featureCount);
-    accum += sizeof(this->nullFeatureId);
-    accum += sizeof(this->label) +
-             (this->label.has_value() ? this->label->size() : 0);
-    accum += sizeof(this->attribute);
-    accum += sizeof(this->propertyTable);
+    accum += sizeof(ExtensionExtInstanceFeaturesFeatureId);
+    if (this->label) {
+      accum += this->label->size();
+    }
     return accum;
   }
 };

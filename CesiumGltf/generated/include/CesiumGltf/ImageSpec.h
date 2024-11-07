@@ -53,10 +53,10 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum +=
-        sizeof(this->uri) + (this->uri.has_value() ? this->uri->size() : 0);
-    accum += sizeof(this->mimeType);
-    accum += sizeof(this->bufferView);
+    accum += sizeof(ImageSpec);
+    if (this->uri) {
+      accum += this->uri->size();
+    }
     return accum;
   }
 

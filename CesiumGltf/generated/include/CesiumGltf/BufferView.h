@@ -60,11 +60,8 @@ struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(this->buffer);
-    accum += sizeof(this->byteOffset);
-    accum += sizeof(this->byteLength);
-    accum += sizeof(this->byteStride);
-    accum += sizeof(this->target);
+    accum += sizeof(BufferView);
+
     return accum;
   }
 };

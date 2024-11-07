@@ -29,12 +29,11 @@ struct CESIUMGLTF_API Mesh final : public CesiumGltf::NamedObject {
 
   int64_t getSizeBytes() const {
     int64_t accum = 0;
+    accum += sizeof(Mesh);
     for (const CesiumGltf::MeshPrimitive& value : this->primitives) {
-      accum += value.getSizeBytes();
+      accum += value.getSizeBytes() - sizeof(CesiumGltf::MeshPrimitive);
     }
-    for (const double& value : this->weights) {
-      accum += sizeof(value);
-    }
+    accum += sizeof(double) * this->weights.capacity();
     return accum;
   }
 };
