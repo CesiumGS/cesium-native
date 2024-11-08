@@ -1,5 +1,12 @@
 # Change Log
 
+### Not Released Yet
+
+##### Additions :tada:
+
+- Added support for `EXT_accessor_additional_types` in `AccessorView`.
+- Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
+
 ### v0.41.0 - 2024-11-01
 
 ##### Breaking Changes :mega:
