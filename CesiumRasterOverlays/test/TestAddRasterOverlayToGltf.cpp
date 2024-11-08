@@ -142,7 +142,8 @@ TEST_CASE("Add raster overlay to glTF") {
                     geometricError,
                     16.0, // the Max SSE used to render the geometry
                     details->rasterOverlayProjections[0],
-                    details->rasterOverlayRectangles[0]);
+                    details->rasterOverlayRectangles[0],
+                    Ellipsoid::WGS84);
 
             // Get a raster overlay texture of the proper dimensions.
             IntrusivePointer<RasterOverlayTile> pRasterTile =
@@ -186,7 +187,7 @@ TEST_CASE("Add raster overlay to glTF") {
             // PNG-encode the raster overlay image and store it in the main
             // buffer.
             ImageManipulation::savePng(
-                loadResult.pTile->getImage(),
+                *loadResult.pTile->getImage(),
                 buffer.cesium.data);
 
             BufferView& bufferView = gltf.bufferViews.emplace_back();
@@ -266,7 +267,8 @@ TEST_CASE("Add raster overlay to glTF") {
   const Model& gltfBack = *resultBack.model;
 
   REQUIRE(gltfBack.images.size() == 1);
-  CHECK(!gltfBack.images[0].cesium.pixelData.empty());
+  REQUIRE(gltfBack.images[0].pAsset != nullptr);
+  CHECK(!gltfBack.images[0].pAsset->pixelData.empty());
 
   REQUIRE(!gltfBack.meshes.empty());
   REQUIRE(!gltfBack.meshes[0].primitives.empty());
