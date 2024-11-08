@@ -17,11 +17,12 @@ EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
           CesiumGeospatial::GeographicProjection(),
           CesiumGeometry::Rectangle()) {}
 
-CesiumAsync::Future<CesiumRasterOverlays::LoadedRasterOverlayImage>
+CesiumAsync::Future<CesiumUtility::ResultPointer<
+    CesiumRasterOverlays::LoadedRasterOverlayImage>>
 EmptyRasterOverlayTileProvider::loadTileImage(
     CesiumRasterOverlays::RasterOverlayTile& /*overlayTile*/) {
-  return this->getAsyncSystem()
-      .createResolvedFuture<CesiumRasterOverlays::LoadedRasterOverlayImage>({});
+  return this->getAsyncSystem().createResolvedFuture(
+      CesiumUtility::ResultPointer<LoadedRasterOverlayImage>{nullptr});
 }
 
 } // namespace Cesium3DTilesSelection

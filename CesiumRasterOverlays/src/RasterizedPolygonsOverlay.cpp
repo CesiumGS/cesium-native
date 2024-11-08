@@ -187,7 +187,7 @@ public:
         _polygons(polygons),
         _invertSelection(invertSelection) {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<ResultPointer<LoadedRasterOverlayImage>>
   loadTileImage(RasterOverlayTile& overlayTile) override {
     // Choose the texture size according to the geometry screen size and raster
     // SSE, but no larger than the maximum texture size.
@@ -201,21 +201,22 @@ public:
          invertSelection = this->_invertSelection,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
-         textureSize]() -> LoadedRasterOverlayImage {
+         textureSize]() -> ResultPointer<LoadedRasterOverlayImage> {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
-          LoadedRasterOverlayImage result;
-          result.rectangle = rectangle;
+          IntrusivePointer<LoadedRasterOverlayImage> result;
+          result.emplace();
+          result->rectangle = rectangle;
 
           rasterizePolygons(
-              result,
+              *result,
               tileRectangle,
               textureSize,
               polygons,
               invertSelection);
 
-          return result;
+          return ResultPointer<LoadedRasterOverlayImage>(result);
         });
   }
 };

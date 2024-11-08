@@ -4,6 +4,7 @@
 
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumUtility/Result.h>
 
 #include <catch2/catch.hpp>
 
@@ -52,28 +53,33 @@ public:
   // The tiles that will return an error from loadQuadtreeTileImage.
   std::vector<QuadtreeTileID> errorTiles;
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::SharedFuture<ResultPointer<LoadedRasterOverlayImage>>
   loadQuadtreeTileImage(const QuadtreeTileID& tileID) const {
-    LoadedRasterOverlayImage result;
-    result.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    ErrorList errors;
+    IntrusivePointer<LoadedRasterOverlayImage> result;
+    result.emplace();
+    result->rectangle = this->getTilingScheme().tileToRectangle(tileID);
 
     if (std::find(errorTiles.begin(), errorTiles.end(), tileID) !=
         errorTiles.end()) {
-      result.errorList.emplaceError("Tile errored.");
+      errors.emplaceError("Tile errored.");
     } else {
       // Return an image where every component of every pixel is equal to the
       // tile level.
-      result.pImage.emplace();
-      result.pImage->width = int32_t(this->getWidth());
-      result.pImage->height = int32_t(this->getHeight());
-      result.pImage->bytesPerChannel = 1;
-      result.pImage->channels = 4;
-      result.pImage->pixelData.resize(
+      result->pImage.emplace();
+      result->pImage->width = int32_t(this->getWidth());
+      result->pImage->height = int32_t(this->getHeight());
+      result->pImage->bytesPerChannel = 1;
+      result->pImage->channels = 4;
+      result->pImage->pixelData.resize(
           this->getWidth() * this->getHeight() * 4,
           std::byte(tileID.level));
     }
 
-    return this->getAsyncSystem().createResolvedFuture(std::move(result));
+    return this->getAsyncSystem().createResolvedFuture(
+        ResultPointer<LoadedRasterOverlayImage>{
+            std::move(result),
+            std::move(errors)}).share();
   }
 };
 

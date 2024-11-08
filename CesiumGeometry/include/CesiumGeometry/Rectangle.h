@@ -202,6 +202,21 @@ struct CESIUMGEOMETRY_API Rectangle final {
    * @return The union rectangle, which fully contains both rectangles.
    */
   Rectangle computeUnion(const Rectangle& other) const noexcept;
+
+  /**
+   * Compares this rectangle against another rectangle and returns true if the
+   * two rectangles are exactly the same.
+   */
+  bool operator==(const Rectangle& rhs) const noexcept {
+    return this->minimumX == rhs.minimumX && this->maximumX == rhs.maximumX &&
+           this->minimumY == rhs.minimumY && this->maximumY == rhs.maximumY;
+  }
 };
 
 } // namespace CesiumGeometry
+
+template <>
+struct std::hash<CesiumGeometry::Rectangle> {
+  std::size_t operator()(const CesiumGeometry::Rectangle& key)
+      const noexcept;
+};

@@ -97,3 +97,9 @@ const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
   return _creditsToShowThisFrame;
 }
 } // namespace CesiumUtility
+
+std::size_t std::hash<CesiumUtility::Credit>::operator()(
+    const CesiumUtility::Credit& key) const noexcept {
+  std::hash<size_t> idHash{};
+  return idHash(key.id);
+}

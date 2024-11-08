@@ -104,19 +104,20 @@ protected:
    * @return A Future that resolves to the loaded image data or error
    * information.
    */
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::SharedFuture<
+      CesiumUtility::ResultPointer<LoadedRasterOverlayImage>>
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<CesiumUtility::ResultPointer<LoadedRasterOverlayImage>>
   loadTileImage(RasterOverlayTile& overlayTile) override final;
 
   struct LoadedQuadtreeImage {
-    std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
+    CesiumUtility::ResultPointer<LoadedRasterOverlayImage> pLoaded = nullptr;
     std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
   };
 
-  CesiumAsync::SharedFuture<LoadedQuadtreeImage>
+  CesiumAsync::Future<LoadedQuadtreeImage>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**
@@ -129,12 +130,11 @@ private:
    * data that is required to cover the rectangle with the given geometric
    * error.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+  std::vector<CesiumAsync::Future<
+      QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       const glm::dvec2 targetScreenPixels);
-
-  void unloadCachedTiles();
 
   struct CombinedImageMeasurements {
     CesiumGeometry::Rectangle rectangle;
@@ -148,7 +148,7 @@ private:
       const CesiumGeometry::Rectangle& targetRectangle,
       const std::vector<LoadedQuadtreeImage>& images);
 
-  static LoadedRasterOverlayImage combineImages(
+  static CesiumUtility::ResultPointer<LoadedRasterOverlayImage> combineImages(
       const CesiumGeometry::Rectangle& targetRectangle,
       const CesiumGeospatial::Projection& projection,
       std::vector<LoadedQuadtreeImage>&& images);
@@ -158,23 +158,5 @@ private:
   uint32_t _imageWidth;
   uint32_t _imageHeight;
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
-
-  struct CacheEntry {
-    CesiumGeometry::QuadtreeTileID tileID;
-    CesiumAsync::SharedFuture<LoadedQuadtreeImage> future;
-  };
-
-  // Tiles at the beginning of this list are the least recently used (oldest),
-  // while the tiles at the end are most recently used (newest).
-  using TileLeastRecentlyUsedList = std::list<CacheEntry>;
-  TileLeastRecentlyUsedList _tilesOldToRecent;
-
-  // Allows a Future to be looked up by quadtree tile ID.
-  std::unordered_map<
-      CesiumGeometry::QuadtreeTileID,
-      TileLeastRecentlyUsedList::iterator>
-      _tileLookup;
-
-  std::atomic<int64_t> _cachedBytes;
 };
 } // namespace CesiumRasterOverlays

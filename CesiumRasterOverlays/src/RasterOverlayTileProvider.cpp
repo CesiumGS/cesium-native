@@ -1,6 +1,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
+#include <CesiumRasterOverlays/NetworkRasterOverlayImageAssetDescriptor.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
@@ -15,6 +16,18 @@ using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
+
+namespace {
+
+Future<ResultPointer<CesiumRasterOverlays::LoadedRasterOverlayImage>>
+rasterOverlayImageFactory(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const CesiumRasterOverlays::NetworkRasterOverlayImageAssetDescriptor& key) {
+  return key.load(asyncSystem, pAssetAccessor);
+}
+
+} // namespace
 
 namespace CesiumRasterOverlays {
 
@@ -37,6 +50,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0) {
   this->_pPlaceholder = new RasterOverlayTile(*this);
+  this->_pRasterOverlayImageDepot.emplace(rasterOverlayImageFactory);
 }
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
@@ -60,7 +74,9 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {}
+      _throttledTilesCurrentlyLoading(0) {
+  this->_pRasterOverlayImageDepot.emplace(rasterOverlayImageFactory);
+}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
@@ -118,92 +134,21 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
   return true;
 }
 
-CesiumAsync::Future<LoadedRasterOverlayImage>
+CesiumAsync::SharedFuture<ResultPointer<LoadedRasterOverlayImage>>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers,
     LoadTileImageFromUrlOptions&& options) const {
 
-  return this->getAssetAccessor()
-      ->get(this->getAsyncSystem(), url, headers)
-      .thenInWorkerThread(
-          [options = std::move(options),
-           Ktx2TranscodeTargets =
-               this->getOwner().getOptions().ktx2TranscodeTargets](
-              std::shared_ptr<IAssetRequest>&& pRequest) mutable {
-            CESIUM_TRACE("load image");
-            const IAssetResponse* pResponse = pRequest->response();
-            if (pResponse == nullptr) {
-              ErrorList errors;
-              errors.emplaceError(
-                  fmt::format("Image request for {} failed.", pRequest->url()));
-              return LoadedRasterOverlayImage{
-                  nullptr,
-                  options.rectangle,
-                  std::move(options.credits),
-                  std::move(errors),
-                  options.moreDetailAvailable};
-            }
+  NetworkRasterOverlayImageAssetDescriptor descriptor{url, headers};
+  descriptor.loadTileOptions = std::move(options);
+  descriptor.ktx2TranscodeTargets =
+      this->getOwner().getOptions().ktx2TranscodeTargets;
 
-            if (pResponse->statusCode() != 0 &&
-                (pResponse->statusCode() < 200 ||
-                 pResponse->statusCode() >= 300)) {
-              ErrorList errors;
-              errors.emplaceError(fmt::format(
-                  "Received response code {} for image {}.",
-                  pResponse->statusCode(),
-                  pRequest->url()));
-              return LoadedRasterOverlayImage{
-                  nullptr,
-                  options.rectangle,
-                  std::move(options.credits),
-                  std::move(errors),
-                  options.moreDetailAvailable};
-            }
-
-            if (pResponse->data().empty()) {
-              if (options.allowEmptyImages) {
-                return LoadedRasterOverlayImage{
-                    new CesiumGltf::ImageAsset(),
-                    options.rectangle,
-                    std::move(options.credits),
-                    {},
-                    options.moreDetailAvailable};
-              }
-
-              ErrorList errors;
-              errors.emplaceError(fmt::format(
-                  "Image response for {} is empty.",
-                  pRequest->url()));
-              return LoadedRasterOverlayImage{
-                  nullptr,
-                  options.rectangle,
-                  std::move(options.credits),
-                  std::move(errors),
-                  options.moreDetailAvailable};
-            }
-
-            const gsl::span<const std::byte> data = pResponse->data();
-
-            CesiumGltfReader::ImageReaderResult loadedImage =
-                ImageDecoder::readImage(data, Ktx2TranscodeTargets);
-
-            if (!loadedImage.errors.empty()) {
-              loadedImage.errors.push_back("Image url: " + pRequest->url());
-            }
-            if (!loadedImage.warnings.empty()) {
-              loadedImage.warnings.push_back("Image url: " + pRequest->url());
-            }
-
-            return LoadedRasterOverlayImage{
-                loadedImage.pImage,
-                options.rectangle,
-                std::move(options.credits),
-                ErrorList{
-                    std::move(loadedImage.errors),
-                    std::move(loadedImage.warnings)},
-                options.moreDetailAvailable};
-          });
+  return this->_pRasterOverlayImageDepot->getOrCreate(
+      this->_asyncSystem,
+      this->_pAssetAccessor,
+      descriptor);
 }
 
 namespace {
@@ -242,28 +187,26 @@ static LoadResult createLoadResultFromLoadedImage(
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    LoadedRasterOverlayImage&& loadedImage,
+    ResultPointer<LoadedRasterOverlayImage>&& loadedImage,
     const std::any& rendererOptions) {
-  if (!loadedImage.pImage) {
-    loadedImage.errorList.logError(pLogger, "Failed to load image for tile");
+  if (!loadedImage.pValue || !loadedImage.pValue->pImage) {
+    loadedImage.errors.logError(pLogger, "Failed to load image for tile");
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Failed;
     return result;
   }
 
-  if (loadedImage.errorList.hasErrors()) {
-    loadedImage.errorList.logError(
-        pLogger,
-        "Errors while loading image for tile");
+  if (loadedImage.errors.hasErrors()) {
+    loadedImage.errors.logError(pLogger, "Errors while loading image for tile");
   }
 
-  if (!loadedImage.errorList.warnings.empty()) {
-    loadedImage.errorList.logWarning(
+  if (!loadedImage.errors.warnings.empty()) {
+    loadedImage.errors.logWarning(
         pLogger,
         "Warnings while loading image for tile");
   }
 
-  CesiumGltf::ImageAsset& image = *loadedImage.pImage;
+  CesiumGltf::ImageAsset& image = *loadedImage.pValue->pImage;
 
   const int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
   const int64_t requiredBytes =
@@ -284,11 +227,11 @@ static LoadResult createLoadResultFromLoadedImage(
 
     LoadResult result;
     result.state = RasterOverlayTile::LoadState::Loaded;
-    result.pImage = loadedImage.pImage;
-    result.rectangle = loadedImage.rectangle;
-    result.credits = std::move(loadedImage.credits);
+    result.pImage = loadedImage.pValue->pImage;
+    result.rectangle = loadedImage.pValue->rectangle;
+    result.credits = std::move(loadedImage.pValue->credits);
     result.pRendererResources = pRendererResources;
-    result.moreDetailAvailable = loadedImage.moreDetailAvailable;
+    result.moreDetailAvailable = loadedImage.pValue->moreDetailAvailable;
     return result;
   }
   LoadResult result;
@@ -326,7 +269,7 @@ CesiumAsync::Future<TileProviderAndTile> RasterOverlayTileProvider::doLoad(
           [pPrepareRendererResources = this->getPrepareRendererResources(),
            pLogger = this->getLogger(),
            rendererOptions = this->_pOwner->getOptions().rendererOptions](
-              LoadedRasterOverlayImage&& loadedImage) {
+              ResultPointer<LoadedRasterOverlayImage>&& loadedImage) {
             return createLoadResultFromLoadedImage(
                 pPrepareRendererResources,
                 pLogger,

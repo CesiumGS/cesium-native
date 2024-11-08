@@ -29,6 +29,7 @@ private:
   Credit(size_t id_) noexcept { id = id_; }
 
   friend class CreditSystem;
+  friend class std::hash<CesiumUtility::Credit>;
 };
 
 /**
@@ -112,3 +113,9 @@ private:
   std::vector<Credit> _creditsToNoLongerShowThisFrame;
 };
 } // namespace CesiumUtility
+
+template <>
+struct std::hash<CesiumUtility::Credit> {
+  std::size_t operator()(const CesiumUtility::Credit& key)
+      const noexcept;
+};

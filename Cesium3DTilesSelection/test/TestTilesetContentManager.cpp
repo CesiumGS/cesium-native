@@ -1296,7 +1296,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
                 projection,
                 coverageRectangle) {}
 
-      CesiumAsync::Future<LoadedRasterOverlayImage>
+      CesiumAsync::Future<ResultPointer<LoadedRasterOverlayImage>>
       loadTileImage(RasterOverlayTile& overlayTile) override {
         CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
         CesiumGltf::ImageAsset& image = pImage.emplace();
@@ -1306,13 +1306,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         image.bytesPerChannel = 1;
         image.pixelData.resize(1, std::byte(255));
 
+        CesiumUtility::IntrusivePointer<LoadedRasterOverlayImage> pResult;
+        pResult.emplace();
+        pResult->pImage = std::move(pImage);
+        pResult->rectangle = overlayTile.getRectangle();
+        pResult->moreDetailAvailable = true;
+
         return this->getAsyncSystem().createResolvedFuture(
-            LoadedRasterOverlayImage{
-                std::move(pImage),
-                overlayTile.getRectangle(),
-                {},
-                {},
-                true});
+            ResultPointer<LoadedRasterOverlayImage>{pResult});
       }
     };
 

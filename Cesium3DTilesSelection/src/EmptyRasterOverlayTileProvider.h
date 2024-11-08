@@ -1,6 +1,8 @@
 #pragma once
 
+#include <CesiumAsync/Future.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Result.h>
 
 namespace Cesium3DTilesSelection {
 
@@ -13,7 +15,8 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem) noexcept;
 
 protected:
-  virtual CesiumAsync::Future<CesiumRasterOverlays::LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<CesiumUtility::ResultPointer<
+      CesiumRasterOverlays::LoadedRasterOverlayImage>>
   loadTileImage(CesiumRasterOverlays::RasterOverlayTile& overlayTile) override;
 };
 

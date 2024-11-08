@@ -23,10 +23,11 @@ public:
             pAssetAccessor,
             ellipsoid) {}
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<ResultPointer<LoadedRasterOverlayImage>>
   loadTileImage(RasterOverlayTile& /* overlayTile */) override {
     return this->getAsyncSystem()
-        .createResolvedFuture<LoadedRasterOverlayImage>({});
+        .createResolvedFuture<ResultPointer<LoadedRasterOverlayImage>>(
+            {nullptr, {}});
   }
 };
 } // namespace

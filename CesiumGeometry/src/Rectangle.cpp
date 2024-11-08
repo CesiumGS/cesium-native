@@ -1,4 +1,5 @@
 #include "CesiumGeometry/Rectangle.h"
+#include "CesiumUtility/Hash.h"
 
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
@@ -66,3 +67,14 @@ Rectangle Rectangle::computeUnion(const Rectangle& other) const noexcept {
 }
 
 } // namespace CesiumGeometry
+
+std::size_t std::hash<CesiumGeometry::Rectangle>::operator()(
+    const CesiumGeometry::Rectangle& key) const noexcept {
+  std::hash<double> baseHash{};
+
+  size_t result = baseHash(key.minimumX);
+  result = CesiumUtility::Hash::combine(result, baseHash(key.maximumX));
+  result = CesiumUtility::Hash::combine(result, baseHash(key.minimumY));
+  result = CesiumUtility::Hash::combine(result, baseHash(key.maximumY));
+  return result;
+}

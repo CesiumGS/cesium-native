@@ -32,17 +32,18 @@ public:
             GeographicProjection::computeMaximumProjectedRectangle(ellipsoid)) {
   }
 
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<ResultPointer<LoadedRasterOverlayImage>>
   loadTileImage(RasterOverlayTile& overlayTile) override {
-    LoadedRasterOverlayImage result;
+    CesiumUtility::IntrusivePointer<LoadedRasterOverlayImage> result;
+    result.emplace();
 
     // Indicate that there is no more detail available so that tiles won't get
     // refined on our behalf.
-    result.moreDetailAvailable = false;
+    result->moreDetailAvailable = false;
 
-    result.rectangle = overlayTile.getRectangle();
+    result->rectangle = overlayTile.getRectangle();
 
-    ImageAsset& image = result.pImage.emplace();
+    ImageAsset& image = result->pImage.emplace();
     image.width = 1;
     image.height = 1;
     image.channels = 4;
@@ -59,7 +60,8 @@ public:
     color += uint32_t(blue);
     pixels[0] = color;
 
-    return this->getAsyncSystem().createResolvedFuture(std::move(result));
+    return this->getAsyncSystem().createResolvedFuture(
+        ResultPointer<LoadedRasterOverlayImage>{std::move(result)});
   }
 };
 

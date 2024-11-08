@@ -73,7 +73,8 @@ public:
   virtual ~WebMapTileServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+  virtual CesiumAsync::SharedFuture<ResultPointer<LoadedRasterOverlayImage>>
+  loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
 
     LoadTileImageFromUrlOptions options;

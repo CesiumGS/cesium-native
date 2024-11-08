@@ -3,6 +3,7 @@
 #include "Library.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
@@ -10,10 +11,13 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
+#include <CesiumUtility/Result.h>
+#include <CesiumUtility/SharedAsset.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <spdlog/fwd.h>
 
+#include <memory>
 #include <optional>
 
 namespace CesiumRasterOverlays {
@@ -21,16 +25,15 @@ namespace CesiumRasterOverlays {
 class RasterOverlay;
 class RasterOverlayTile;
 class IPrepareRasterOverlayRendererResources;
+class NetworkRasterOverlayImageAssetDescriptor;
 
 /**
  * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
  */
-struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
+struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage
+    : public CesiumUtility::SharedAsset<LoadedRasterOverlayImage> {
   /**
    * @brief The loaded image.
-   *
-   * This will be an empty optional if the loading failed. In this case,
-   * the `errors` vector will contain the corresponding error messages.
    */
   CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage{nullptr};
 
@@ -47,20 +50,24 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    * are required when using the image.
    */
   std::vector<CesiumUtility::Credit> credits{};
-
-  /**
-   * @brief Errors and warnings from loading the image.
-   *
-   * If the image was loaded successfully, there should not be any errors (but
-   * there may be warnings).
-   */
-  CesiumUtility::ErrorList errorList{};
-
   /**
    * @brief Whether more detailed data, beyond this image, is available within
    * the bounds of this image.
    */
   bool moreDetailAvailable = false;
+
+  /**
+   * @brief Returns the size of this `LoadedRasterOverlayImage` in bytes.
+   */
+  size_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(LoadedRasterOverlayImage);
+    accum += this->credits.capacity() * sizeof(CesiumUtility::Credit);
+    if (this->pImage) {
+      accum += this->pImage->getSizeBytes();
+    }
+    return accum;
+  }
 };
 
 /**
@@ -105,6 +112,12 @@ struct LoadTileImageFromUrlOptions {
    * not available.
    */
   bool allowEmptyImages = false;
+
+  bool operator==(const LoadTileImageFromUrlOptions& rhs) const noexcept {
+    return this->rectangle == rhs.rectangle && this->credits == rhs.credits &&
+           this->moreDetailAvailable == rhs.moreDetailAvailable &&
+           this->allowEmptyImages == rhs.allowEmptyImages;
+  }
 };
 
 class RasterOverlayTileProvider;
@@ -356,7 +369,8 @@ protected:
    * @param overlayTile The overlay tile for which to load the image.
    * @return A future that resolves to the image or error information.
    */
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  virtual CesiumAsync::Future<
+      CesiumUtility::ResultPointer<LoadedRasterOverlayImage>>
   loadTileImage(RasterOverlayTile& overlayTile) = 0;
 
   /**
@@ -369,7 +383,9 @@ protected:
    * @param options Additional options for the load process.
    * @return A future that resolves to the image or error information.
    */
-  CesiumAsync::Future<LoadedRasterOverlayImage> loadTileImageFromUrl(
+  CesiumAsync::SharedFuture<
+      CesiumUtility::ResultPointer<LoadedRasterOverlayImage>>
+  loadTileImageFromUrl(
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
       LoadTileImageFromUrlOptions&& options = {}) const;
@@ -414,5 +430,9 @@ private:
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot");
+  CesiumUtility::IntrusivePointer<CesiumAsync::SharedAssetDepot<
+      LoadedRasterOverlayImage,
+      NetworkRasterOverlayImageAssetDescriptor>>
+      _pRasterOverlayImageDepot;
 };
 } // namespace CesiumRasterOverlays

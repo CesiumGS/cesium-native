@@ -70,7 +70,8 @@ public:
   virtual ~TileMapServiceTileProvider() {}
 
 protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+  virtual CesiumAsync::SharedFuture<ResultPointer<LoadedRasterOverlayImage>>
+  loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
 
     LoadTileImageFromUrlOptions options;
@@ -94,12 +95,9 @@ protected:
       ErrorList errors;
       errors.emplaceError("Failed to load image from TMS.");
       return this->getAsyncSystem()
-          .createResolvedFuture<LoadedRasterOverlayImage>(
-              {nullptr,
-               options.rectangle,
-               {},
-               std::move(errors),
-               options.moreDetailAvailable});
+          .createResolvedFuture<ResultPointer<LoadedRasterOverlayImage>>(
+              {nullptr, std::move(errors)})
+          .share();
     }
   }
 
