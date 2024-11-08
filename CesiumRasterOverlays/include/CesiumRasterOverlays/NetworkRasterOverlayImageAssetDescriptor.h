@@ -23,10 +23,9 @@ struct LoadedQuadtreeImage {
 };
 
 /**
- * @brief A description of an image asset that can be loaded from the network
- * using an {@link IAssetAccessor}. This includes a URL, any headers to be
- * included in the request, and the set of supported GPU texture formats for
- * KTX2 decoding.
+ * @brief A description of an image that is part of a raster overlay that can be
+ * loaded from the network and stored in a `SharedAssetDepot`. It contains the
+ * URL, headers, KTX2 transcode targets, and any options specified.
  */
 struct NetworkRasterOverlayImageAssetDescriptor
     : public CesiumAsync::NetworkAssetDescriptor {
@@ -35,6 +34,10 @@ struct NetworkRasterOverlayImageAssetDescriptor
    */
   CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets{};
 
+  /**
+   * @brief Options such as the rectangle of this raster overlay image and any
+   * credits to attach.
+   */
   CesiumRasterOverlays::LoadTileImageFromUrlOptions loadTileOptions;
 
   /**
@@ -64,8 +67,7 @@ template <>
 struct std::hash<
     CesiumRasterOverlays::NetworkRasterOverlayImageAssetDescriptor> {
   std::size_t operator()(
-      const CesiumRasterOverlays::NetworkRasterOverlayImageAssetDescriptor&
-          key)
+      const CesiumRasterOverlays::NetworkRasterOverlayImageAssetDescriptor& key)
       const noexcept;
 };
 

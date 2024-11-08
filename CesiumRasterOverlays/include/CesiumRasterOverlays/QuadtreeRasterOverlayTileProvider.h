@@ -101,7 +101,7 @@ protected:
    * @brief Asynchronously loads a tile in the quadtree.
    *
    * @param tileID The ID of the quadtree tile to load.
-   * @return A Future that resolves to the loaded image data or error
+   * @return A Future that resolves to the loaded image data and error
    * information.
    */
   virtual CesiumAsync::SharedFuture<
@@ -109,7 +109,8 @@ protected:
   loadQuadtreeTileImage(const CesiumGeometry::QuadtreeTileID& tileID) const = 0;
 
 private:
-  virtual CesiumAsync::Future<CesiumUtility::ResultPointer<LoadedRasterOverlayImage>>
+  virtual CesiumAsync::Future<
+      CesiumUtility::ResultPointer<LoadedRasterOverlayImage>>
   loadTileImage(RasterOverlayTile& overlayTile) override final;
 
   struct LoadedQuadtreeImage {
