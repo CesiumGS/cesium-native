@@ -29,7 +29,7 @@ private:
   Credit(size_t id_) noexcept { id = id_; }
 
   friend class CreditSystem;
-  friend class std::hash<CesiumUtility::Credit>;
+  friend struct std::hash<CesiumUtility::Credit>;
 };
 
 /**
