@@ -215,8 +215,6 @@ struct CESIUMGEOMETRY_API Rectangle final {
 
 } // namespace CesiumGeometry
 
-template <>
-struct std::hash<CesiumGeometry::Rectangle> {
-  std::size_t operator()(const CesiumGeometry::Rectangle& key)
-      const noexcept;
+template <> struct std::hash<CesiumGeometry::Rectangle> {
+  std::size_t operator()(const CesiumGeometry::Rectangle& key) const noexcept;
 };

@@ -114,8 +114,6 @@ private:
 };
 } // namespace CesiumUtility
 
-template <>
-struct std::hash<CesiumUtility::Credit> {
-  std::size_t operator()(const CesiumUtility::Credit& key)
-      const noexcept;
+template <> struct std::hash<CesiumUtility::Credit> {
+  std::size_t operator()(const CesiumUtility::Credit& key) const noexcept;
 };

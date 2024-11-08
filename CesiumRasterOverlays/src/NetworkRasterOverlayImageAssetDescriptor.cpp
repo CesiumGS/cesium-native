@@ -1,6 +1,7 @@
 #include "CesiumRasterOverlays/NetworkRasterOverlayImageAssetDescriptor.h"
-#include "CesiumGltfReader/ImageDecoder.h"
+
 #include "CesiumGltf/Ktx2TranscodeTargets.h"
+#include "CesiumGltfReader/ImageDecoder.h"
 #include "CesiumUtility/Hash.h"
 
 using namespace CesiumRasterOverlays;

@@ -76,10 +76,11 @@ public:
           std::byte(tileID.level));
     }
 
-    return this->getAsyncSystem().createResolvedFuture(
-        ResultPointer<LoadedRasterOverlayImage>{
+    return this->getAsyncSystem()
+        .createResolvedFuture(ResultPointer<LoadedRasterOverlayImage>{
             std::move(result),
-            std::move(errors)}).share();
+            std::move(errors)})
+        .share();
   }
 };
 

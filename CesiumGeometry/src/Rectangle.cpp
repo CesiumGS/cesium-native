@@ -1,4 +1,5 @@
 #include "CesiumGeometry/Rectangle.h"
+
 #include "CesiumUtility/Hash.h"
 
 #include <glm/common.hpp>
