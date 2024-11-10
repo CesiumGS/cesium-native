@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTransformations.h"
@@ -290,7 +290,7 @@ public:
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageCesium} used by the property.
+   * @param image The {@link ImageAsset} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
    * @param options The options for constructing the view.
    */
@@ -298,7 +298,7 @@ public:
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image,
+      const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         TextureView(
@@ -523,7 +523,7 @@ public:
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageCesium} used by the property.
+   * @param image The {@link ImageAsset} used by the property.
    * @param channels The value of {@link PropertyTextureProperty::channels}.
    * @param options The options for constructing the view.
    */
@@ -531,7 +531,7 @@ public:
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image,
+      const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         TextureView(

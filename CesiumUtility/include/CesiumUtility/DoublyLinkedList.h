@@ -36,9 +36,10 @@ public:
 
 private:
   template <
-      class TElement,
-      DoublyLinkedListPointers<TElement>(TElement::*Pointers)>
-  friend class DoublyLinkedList;
+      typename TElement,
+      typename TElementBase,
+      DoublyLinkedListPointers<TElement>(TElementBase::*Pointers)>
+  friend class DoublyLinkedListAdvanced;
 
   T* pNext;
   T* pPrevious;
@@ -54,8 +55,11 @@ private:
  * @tparam (T::*Pointers) A member pointer to the field that holds the links to
  * the previous and next nodes.
  */
-template <class T, DoublyLinkedListPointers<T>(T::*Pointers)>
-class DoublyLinkedList final {
+template <
+    typename T,
+    typename TPointerBase,
+    DoublyLinkedListPointers<T>(TPointerBase::*Pointers)>
+class DoublyLinkedListAdvanced final {
 public:
   /**
    * @brief Removes the given node from this list.
@@ -238,10 +242,29 @@ public:
     return pNode ? this->previous(*pNode) : this->_pTail;
   }
 
+  /**
+   * @brief Determines if this list contains a given node in constant time. In
+   * order to avoid a full list scan, this method assumes that if the node has
+   * any next or previous node, then it is contained in this list. Do not use
+   * this method to determine which of multiple lists contain this node.
+   *
+   * @param node The node to check.
+   * @return True if this node is the head of the list, or if the node has next
+   * or previous nodes. False if the node does not have next or previous nodes
+   * and it is not the head of this list.
+   */
+  bool contains(const T& node) const {
+    return this->next(node) != nullptr || this->previous(node) != nullptr ||
+           this->_pHead == &node;
+  }
+
 private:
   size_t _size = 0;
   T* _pHead = nullptr;
   T* _pTail = nullptr;
 };
+
+template <typename T, DoublyLinkedListPointers<T>(T::*Pointers)>
+using DoublyLinkedList = DoublyLinkedListAdvanced<T, T, Pointers>;
 
 } // namespace CesiumUtility

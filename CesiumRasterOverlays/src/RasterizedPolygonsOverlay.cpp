@@ -24,7 +24,7 @@ void rasterizePolygons(
     const std::vector<CartographicPolygon>& cartographicPolygons,
     bool invertSelection) {
 
-  CesiumGltf::ImageCesium& image = loaded.image.emplace();
+  CesiumGltf::ImageAsset& image = loaded.pImage.emplace();
 
   std::byte insideColor;
   std::byte outsideColor;
