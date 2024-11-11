@@ -54,11 +54,18 @@ struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
    */
   int32_t propertyTable = -1;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(FeatureId);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     if (this->label) {
-      accum += this->label->size();
+      accum += this->label->capacity() * sizeof(char);
     }
     if (this->texture) {
       accum +=

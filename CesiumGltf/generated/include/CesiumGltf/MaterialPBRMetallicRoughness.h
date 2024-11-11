@@ -68,9 +68,16 @@ struct CESIUMGLTF_API MaterialPBRMetallicRoughness final
    */
   std::optional<CesiumGltf::TextureInfo> metallicRoughnessTexture;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(MaterialPBRMetallicRoughness);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     accum += sizeof(double) * this->baseColorFactor.capacity();
     if (this->baseColorTexture) {
       accum += this->baseColorTexture->getSizeBytes() -

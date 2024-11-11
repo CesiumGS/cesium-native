@@ -131,10 +131,10 @@ function resolveProperty(
       sizeOfFormatter: (propertyName, accumName) => {
         if (makeOptional) {
           return `if(${propertyName}) {
-            ${accumName} += ${propertyName}->size();
+            ${accumName} += ${propertyName}->capacity() * sizeof(char);
           }`;
         }
-        return `${accumName} += ${propertyName}.size();`;
+        return `${accumName} += ${propertyName}.capacity() * sizeof(char);`;
       },
     };
   } else if (propertyDetails.type === "object" && propertyDetails.properties) {
@@ -413,7 +413,9 @@ function resolveArray(
         return `${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();`;
       }
 
-      return `for(const ${itemProperty.type}& value : ${propertyName}) {
+      return `
+      ${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();
+      for(const ${itemProperty.type}& value : ${propertyName}) {
         ${resolveSizeOfForProperty(itemProperty, "value", accumName)}
       }`;
     }
@@ -464,8 +466,10 @@ function resolveDictionary(
     ],
     readerType: `CesiumJsonReader::DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
     sizeOfFormatter: (propertyName, accumName) => {
-      return `for(auto& [k, v] : ${propertyName}) {
-        ${accumName} += k.size();
+      return `
+      ${accumName} += ${propertyName}.bucket_count() * (sizeof(std::string) + sizeof(${additional.type}));
+      for(auto& [k, v] : ${propertyName}) {
+        ${accumName} += k.capacity() * sizeof(char) - sizeof(std::string);
         ${resolveSizeOfForProperty(additional, "v", accumName) || `${accumName} += sizeof(${additional.type});`}
       }`;
     }

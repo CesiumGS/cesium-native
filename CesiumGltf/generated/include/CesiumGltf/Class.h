@@ -35,17 +35,27 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
    */
   std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(Class);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     if (this->name) {
-      accum += this->name->size();
+      accum += this->name->capacity() * sizeof(char);
     }
     if (this->description) {
-      accum += this->description->size();
+      accum += this->description->capacity() * sizeof(char);
     }
+
+    accum += this->properties.bucket_count() *
+             (sizeof(std::string) + sizeof(CesiumGltf::ClassProperty));
     for (auto& [k, v] : this->properties) {
-      accum += k.size();
+      accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::ClassProperty);
     }
     return accum;

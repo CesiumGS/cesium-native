@@ -32,9 +32,16 @@ struct CESIUMGLTF_API AnimationChannel final
    */
   CesiumGltf::AnimationChannelTarget target;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(AnimationChannel);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     accum += this->target.getSizeBytes() -
              sizeof(CesiumGltf::AnimationChannelTarget);
     return accum;

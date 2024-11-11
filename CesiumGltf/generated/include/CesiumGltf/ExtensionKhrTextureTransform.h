@@ -43,9 +43,16 @@ struct CESIUMGLTF_API ExtensionKhrTextureTransform final
    */
   std::optional<int64_t> texCoord;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(ExtensionKhrTextureTransform);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     accum += sizeof(double) * this->offset.capacity();
     accum += sizeof(double) * this->scale.capacity();
     return accum;

@@ -40,18 +40,25 @@ struct CESIUMGLTF_API Asset final : public CesiumUtility::ExtensibleObject {
    */
   std::optional<std::string> minVersion;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(Asset);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     if (this->copyright) {
-      accum += this->copyright->size();
+      accum += this->copyright->capacity() * sizeof(char);
     }
     if (this->generator) {
-      accum += this->generator->size();
+      accum += this->generator->capacity() * sizeof(char);
     }
-    accum += this->version.size();
+    accum += this->version.capacity() * sizeof(char);
     if (this->minVersion) {
-      accum += this->minVersion->size();
+      accum += this->minVersion->capacity() * sizeof(char);
     }
     return accum;
   }

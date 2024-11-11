@@ -54,25 +54,38 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
    */
   std::unordered_map<std::string, CesiumGltf::Enum> enums;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(Schema);
-    accum += this->id.size();
+    accum += CesiumUtility::SharedAsset<Schema>::getSizeBytes() -
+             sizeof(CesiumUtility::SharedAsset<Schema>);
+    accum += this->id.capacity() * sizeof(char);
     if (this->name) {
-      accum += this->name->size();
+      accum += this->name->capacity() * sizeof(char);
     }
     if (this->description) {
-      accum += this->description->size();
+      accum += this->description->capacity() * sizeof(char);
     }
     if (this->version) {
-      accum += this->version->size();
+      accum += this->version->capacity() * sizeof(char);
     }
+
+    accum += this->classes.bucket_count() *
+             (sizeof(std::string) + sizeof(CesiumGltf::Class));
     for (auto& [k, v] : this->classes) {
-      accum += k.size();
+      accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::Class);
     }
+
+    accum += this->enums.bucket_count() *
+             (sizeof(std::string) + sizeof(CesiumGltf::Enum));
     for (auto& [k, v] : this->enums) {
-      accum += k.size();
+      accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::Enum);
     }
     return accum;

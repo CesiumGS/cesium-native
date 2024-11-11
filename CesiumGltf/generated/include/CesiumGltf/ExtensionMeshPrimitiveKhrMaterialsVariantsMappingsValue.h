@@ -43,12 +43,19 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue
    */
   std::optional<std::string> name;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     accum += sizeof(int32_t) * this->variants.capacity();
     if (this->name) {
-      accum += this->name->size();
+      accum += this->name->capacity() * sizeof(char);
     }
     return accum;
   }

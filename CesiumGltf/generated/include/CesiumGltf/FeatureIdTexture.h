@@ -23,9 +23,15 @@ struct CESIUMGLTF_API FeatureIdTexture final : public TextureInfo {
    */
   std::vector<int64_t> channels = {0};
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(FeatureIdTexture);
+    accum += TextureInfo::getSizeBytes() - sizeof(TextureInfo);
     accum += sizeof(int64_t) * this->channels.capacity();
     return accum;
   }

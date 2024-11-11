@@ -54,19 +54,35 @@ struct CESIUMGLTF_API ExtensionModelExtStructuralMetadata final
    */
   std::vector<CesiumGltf::PropertyAttribute> propertyAttributes;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(ExtensionModelExtStructuralMetadata);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     accum += this->schema->getSizeBytes();
     if (this->schemaUri) {
-      accum += this->schemaUri->size();
+      accum += this->schemaUri->capacity() * sizeof(char);
     }
+
+    accum +=
+        sizeof(CesiumGltf::PropertyTable) * this->propertyTables.capacity();
     for (const CesiumGltf::PropertyTable& value : this->propertyTables) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyTable);
     }
+
+    accum +=
+        sizeof(CesiumGltf::PropertyTexture) * this->propertyTextures.capacity();
     for (const CesiumGltf::PropertyTexture& value : this->propertyTextures) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyTexture);
     }
+
+    accum += sizeof(CesiumGltf::PropertyAttribute) *
+             this->propertyAttributes.capacity();
     for (const CesiumGltf::PropertyAttribute& value :
          this->propertyAttributes) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyAttribute);

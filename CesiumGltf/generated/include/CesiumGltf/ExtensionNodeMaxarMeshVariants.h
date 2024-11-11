@@ -24,9 +24,19 @@ struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
    */
   std::vector<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue> mappings;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(ExtensionNodeMaxarMeshVariants);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+
+    accum += sizeof(CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue) *
+             this->mappings.capacity();
     for (const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& value :
          this->mappings) {
       accum += value.getSizeBytes() -

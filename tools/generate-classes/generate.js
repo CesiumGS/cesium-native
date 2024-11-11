@@ -110,9 +110,14 @@ function generate(options, schema, writers) {
     16
   )}
 
+                /**
+                 * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+                 * Calling this method may be slow as it requires traversing the object's entire structure.
+                 */
                 int64_t getSizeBytes() const {
                   int64_t accum = 0;
                   accum += sizeof(${name}${thisConfig.toBeInherited ? "Spec" : ""});
+                  accum += ${base}::getSizeBytes() - sizeof(${base});
                   ${indent(properties.map(p => resolveSizeOfForProperty(p, "this->" + p.cppSafeName, "accum")).filter(p => p).join("\n"))}
                   return accum;
                 }

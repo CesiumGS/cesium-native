@@ -63,15 +63,24 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
    */
   std::vector<CesiumGltf::EnumValue> values;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(Enum);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
     if (this->name) {
-      accum += this->name->size();
+      accum += this->name->capacity() * sizeof(char);
     }
     if (this->description) {
-      accum += this->description->size();
+      accum += this->description->capacity() * sizeof(char);
     }
+
+    accum += sizeof(CesiumGltf::EnumValue) * this->values.capacity();
     for (const CesiumGltf::EnumValue& value : this->values) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::EnumValue);
     }

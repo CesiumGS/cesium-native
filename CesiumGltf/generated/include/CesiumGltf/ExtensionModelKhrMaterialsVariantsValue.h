@@ -23,10 +23,17 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
    */
   std::string name;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(ExtensionModelKhrMaterialsVariantsValue);
-    accum += this->name.size();
+    accum += CesiumGltf::NamedObject::getSizeBytes() -
+             sizeof(CesiumGltf::NamedObject);
+    accum += this->name.capacity() * sizeof(char);
     return accum;
   }
 };

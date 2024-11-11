@@ -32,12 +32,19 @@ struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
    */
   int64_t value = int64_t();
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(EnumValue);
-    accum += this->name.size();
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += this->name.capacity() * sizeof(char);
     if (this->description) {
-      accum += this->description->size();
+      accum += this->description->capacity() * sizeof(char);
     }
     return accum;
   }
