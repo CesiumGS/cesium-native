@@ -64,12 +64,13 @@ public:
   void KeyPrimitive(std::string_view keyName, std::nullptr_t value) override;
 
   // Array / Objects
-  void KeyArray(std::string_view keyName, std::function<void(void)> insideArray)
-      override;
+  void KeyArray(
+      std::string_view keyName,
+      const std::function<void(void)>& insideArray) override;
 
   void KeyObject(
       std::string_view keyName,
-      std::function<void(void)> insideObject) override;
+      const std::function<void(void)>& insideObject) override;
 
   std::string toString() override;
   std::string_view toStringView() override;

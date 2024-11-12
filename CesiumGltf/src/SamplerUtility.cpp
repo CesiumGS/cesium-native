@@ -5,7 +5,7 @@
 #include <glm/common.hpp>
 
 namespace CesiumGltf {
-double applySamplerWrapS(const double u, const int32_t wrapS) {
+double applySamplerWrapS(const double u, const int32_t wrapS) noexcept {
   if (wrapS == Sampler::WrapS::REPEAT) {
     double integral = 0;
     double fraction = std::modf(u, &integral);
@@ -23,7 +23,7 @@ double applySamplerWrapS(const double u, const int32_t wrapS) {
   return glm::clamp(u, 0.0, 1.0);
 }
 
-double applySamplerWrapT(const double v, const int32_t wrapT) {
+double applySamplerWrapT(const double v, const int32_t wrapT) noexcept {
   if (wrapT == Sampler::WrapT::REPEAT) {
     double integral = 0;
     double fraction = std::modf(v, &integral);

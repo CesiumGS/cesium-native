@@ -36,7 +36,7 @@ void processTextureInfo(
     Model& model,
     MeshPrimitive& primitive,
     std::optional<T>& maybeTextureInfo) {
-  static_assert(std::is_base_of<TextureInfo, T>::value);
+  static_assert(std::is_base_of_v<TextureInfo, T>);
   if (!maybeTextureInfo) {
     return;
   }
@@ -103,7 +103,7 @@ void applyKhrTextureTransform(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       Material* material = Model::getSafe(&model.materials, primitive.material);
-      if (material) {
+      if (material && material->pbrMetallicRoughness) {
         processTextureInfo(
             model,
             primitive,

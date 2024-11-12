@@ -14,7 +14,7 @@ QuadtreeRectangleAvailability::QuadtreeRectangleAvailability(
     : _tilingScheme(tilingScheme),
       _maximumLevel(maximumLevel),
       _rootNodes(
-          this->_tilingScheme.getRootTilesX() *
+          static_cast<size_t>(this->_tilingScheme.getRootTilesX()) *
           this->_tilingScheme.getRootTilesY()) {
   for (uint32_t j = 0; j < this->_tilingScheme.getRootTilesY(); ++j) {
     const uint32_t rowStart = j * this->_tilingScheme.getRootTilesX();

@@ -10,7 +10,7 @@
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API JsonHandler : public IJsonHandler {
 public:
-  JsonHandler() noexcept;
+  JsonHandler() noexcept = default;
   virtual IJsonHandler* readNull() override;
   virtual IJsonHandler* readBool(bool b) override;
   virtual IJsonHandler* readInt32(int32_t i) override;

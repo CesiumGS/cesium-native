@@ -60,11 +60,13 @@ public:
   virtual void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
 
   // Array / Objects
-  virtual void
-  KeyArray(std::string_view keyName, std::function<void(void)> insideArray);
+  virtual void KeyArray(
+      std::string_view keyName,
+      const std::function<void(void)>& insideArray);
 
-  virtual void
-  KeyObject(std::string_view keyName, std::function<void(void)> insideObject);
+  virtual void KeyObject(
+      std::string_view keyName,
+      const std::function<void(void)>& insideObject);
 
   virtual std::string toString();
   virtual std::string_view toStringView();

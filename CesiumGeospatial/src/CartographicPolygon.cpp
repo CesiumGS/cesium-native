@@ -115,22 +115,20 @@ CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
     const CesiumGeospatial::GlobeRectangle& rectangle,
     const std::vector<CartographicPolygon>& cartographicPolygons) noexcept {
 
-  glm::dvec2 rectangleCorners[] = {
+  std::array<glm::dvec2, 4> rectangleCorners = {
       glm::dvec2(rectangle.getWest(), rectangle.getSouth()),
       glm::dvec2(rectangle.getWest(), rectangle.getNorth()),
       glm::dvec2(rectangle.getEast(), rectangle.getNorth()),
       glm::dvec2(rectangle.getEast(), rectangle.getSouth())};
 
-  glm::dvec2 rectangleEdges[] = {
+  std::array<glm::dvec2, 4> rectangleEdges = {
       rectangleCorners[1] - rectangleCorners[0],
       rectangleCorners[2] - rectangleCorners[1],
       rectangleCorners[3] - rectangleCorners[2],
       rectangleCorners[0] - rectangleCorners[3]};
 
   // Iterate through all polygons.
-  for (size_t i = 0; i < cartographicPolygons.size(); ++i) {
-    const CartographicPolygon& selection = cartographicPolygons[i];
-
+  for (const CartographicPolygon& selection : cartographicPolygons) {
     const std::optional<CesiumGeospatial::GlobeRectangle>&
         polygonBoundingRectangle = selection.getBoundingRectangle();
     if (!polygonBoundingRectangle ||
@@ -207,22 +205,20 @@ CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
     const std::vector<CesiumGeospatial::CartographicPolygon>&
         cartographicPolygons) noexcept {
 
-  glm::dvec2 rectangleCorners[] = {
+  std::array<glm::dvec2, 4> rectangleCorners = {
       glm::dvec2(rectangle.getWest(), rectangle.getSouth()),
       glm::dvec2(rectangle.getWest(), rectangle.getNorth()),
       glm::dvec2(rectangle.getEast(), rectangle.getNorth()),
       glm::dvec2(rectangle.getEast(), rectangle.getSouth())};
 
-  glm::dvec2 rectangleEdges[] = {
+  std::array<glm::dvec2, 4> rectangleEdges = {
       rectangleCorners[1] - rectangleCorners[0],
       rectangleCorners[2] - rectangleCorners[1],
       rectangleCorners[3] - rectangleCorners[2],
       rectangleCorners[0] - rectangleCorners[3]};
 
   // Iterate through all polygons.
-  for (size_t i = 0; i < cartographicPolygons.size(); ++i) {
-    const CartographicPolygon& selection = cartographicPolygons[i];
-
+  for (const CartographicPolygon& selection : cartographicPolygons) {
     const std::optional<CesiumGeospatial::GlobeRectangle>&
         polygonBoundingRectangle = selection.getBoundingRectangle();
     if (!polygonBoundingRectangle ||

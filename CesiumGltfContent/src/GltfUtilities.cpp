@@ -424,7 +424,7 @@ void findClosestRayHit(
 
   // Need at least 3 positions to form a triangle
   if (positionView.size() < 3) {
-    warnings.push_back("Skipping mesh with less than 3 vertex positions");
+    warnings.emplace_back("Skipping mesh with less than 3 vertex positions");
     return;
   }
 
@@ -561,7 +561,7 @@ void findClosestIndexedRayHit(
 
   // Need at least 3 vertices to form a triangle
   if (indicesView.size() < 3) {
-    warnings.push_back("Skipping indexed mesh with less than 3 indices");
+    warnings.emplace_back("Skipping indexed mesh with less than 3 indices");
     return;
   }
 
@@ -575,9 +575,12 @@ void findClosestIndexedRayHit(
   if (primitive.mode == MeshPrimitive::Mode::TRIANGLES) {
     // Iterate through all complete triangles
     for (int64_t i = 2; i < indicesView.size(); i += 3) {
-      int64_t vert0Index = static_cast<int64_t>(indicesView[i - 2].value[0]);
-      int64_t vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
-      int64_t vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
+      int64_t vert0Index = static_cast<int64_t>(
+          static_cast<unsigned char>(indicesView[i - 2].value[0]));
+      int64_t vert1Index = static_cast<int64_t>(
+          static_cast<unsigned char>(indicesView[i - 1].value[0]));
+      int64_t vert2Index = static_cast<int64_t>(
+          static_cast<unsigned char>(indicesView[i].value[0]));
 
       // Ignore triangle if any index is bogus
       bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
@@ -620,15 +623,20 @@ void findClosestIndexedRayHit(
     }
   } else if (primitive.mode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
     for (int64_t i = 2; i < indicesView.size(); ++i) {
-      int64_t vert0Index = static_cast<int64_t>(indicesView[i - 2].value[0]);
+      int64_t vert0Index = static_cast<int64_t>(
+          static_cast<unsigned char>(indicesView[i - 2].value[0]));
       int64_t vert1Index;
       int64_t vert2Index;
       if (i % 2) {
-        vert1Index = static_cast<int64_t>(indicesView[i].value[0]);
-        vert2Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
+        vert1Index = static_cast<int64_t>(
+            static_cast<unsigned char>(indicesView[i].value[0]));
+        vert2Index = static_cast<int64_t>(
+            static_cast<unsigned char>(indicesView[i - 1].value[0]));
       } else {
-        vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
-        vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
+        vert1Index = static_cast<int64_t>(
+            static_cast<unsigned char>(indicesView[i - 1].value[0]));
+        vert2Index = static_cast<int64_t>(
+            static_cast<unsigned char>(indicesView[i].value[0]));
       }
 
       bool validIndices = vert0Index >= 0 && vert0Index < positionsCount &&
@@ -670,7 +678,8 @@ void findClosestIndexedRayHit(
   } else {
     assert(primitive.mode == MeshPrimitive::Mode::TRIANGLE_FAN);
 
-    int64_t vert0Index = static_cast<int64_t>(indicesView[0].value[0]);
+    int64_t vert0Index = static_cast<int64_t>(
+        static_cast<unsigned char>(indicesView[0].value[0]));
 
     if (vert0Index < 0 || vert0Index >= positionsCount) {
       foundInvalidIndex = true;
@@ -682,8 +691,10 @@ void findClosestIndexedRayHit(
           static_cast<double>(viewVert0.value[2]));
 
       for (int64_t i = 2; i < indicesView.size(); ++i) {
-        int64_t vert1Index = static_cast<int64_t>(indicesView[i - 1].value[0]);
-        int64_t vert2Index = static_cast<int64_t>(indicesView[i].value[0]);
+        int64_t vert1Index = static_cast<int64_t>(
+            static_cast<unsigned char>(indicesView[i - 1].value[0]));
+        int64_t vert2Index = static_cast<int64_t>(
+            static_cast<unsigned char>(indicesView[i].value[0]));
 
         bool validIndices = vert1Index >= 0 && vert1Index < positionsCount &&
                             vert2Index >= 0 && vert2Index < positionsCount;
@@ -719,7 +730,7 @@ void findClosestIndexedRayHit(
   }
 
   if (foundInvalidIndex)
-    warnings.push_back(
+    warnings.emplace_back(
         "Found one or more invalid index values for indexed mesh");
 
   tMinOut = tClosest;
@@ -787,8 +798,8 @@ std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
   indexMap.reserve(usedIndices.size());
 
   int32_t nextIndex = 0;
-  for (size_t i = 0; i < usedIndices.size(); ++i) {
-    if (usedIndices[i]) {
+  for (bool usedIndice : usedIndices) {
+    if (usedIndice) {
       indexMap.push_back(nextIndex);
       ++nextIndex;
     } else {
@@ -1301,7 +1312,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
        &warnings](const auto& positionView) {
         // Bail on invalid view
         if (positionView.status() != AccessorViewStatus::Valid) {
-          warnings.push_back(
+          warnings.emplace_back(
               "Skipping mesh with an invalid position component type");
           return;
         }
@@ -1312,7 +1323,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               Model::getSafe(&model.accessors, primitive.indices);
 
           if (!indexAccessor) {
-            warnings.push_back(
+            warnings.emplace_back(
                 "Skipping mesh with an invalid index accessor id");
             return;
           }
@@ -1321,7 +1332,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
           // From the glTF spec...
           // "Indices MUST be non-negative integer numbers."
           if (indexAccessor->componentType == Accessor::ComponentType::FLOAT) {
-            warnings.push_back(
+            warnings.emplace_back(
                 "Skipping mesh with an invalid index component type");
             return;
           }
@@ -1337,7 +1348,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
                &warnings](const auto& indexView) {
                 // Bail on invalid view
                 if (indexView.status() != AccessorViewStatus::Valid) {
-                  warnings.push_back(
+                  warnings.emplace_back(
                       "Could not create accessor view for mesh indices");
                   return;
                 }
@@ -1373,7 +1384,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
   return transformedRay.pointFromDistance(tClosest);
 }
 
-std::string intersectGltfUnsupportedExtensions[] = {
+std::array<std::string, 4> intersectGltfUnsupportedExtensions = {
     ExtensionKhrDracoMeshCompression::ExtensionName,
     ExtensionBufferViewExtMeshoptCompression::ExtensionName,
     ExtensionExtMeshGpuInstancing::ExtensionName,
@@ -1423,7 +1434,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // Skip primitives that can't access positions
         auto positionAccessorIt = primitive.attributes.find("POSITION");
         if (positionAccessorIt == primitive.attributes.end()) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh without a position attribute");
           return;
         }
@@ -1431,7 +1442,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         const Accessor* pPositionAccessor =
             Model::getSafe(&model.accessors, positionAccessorID);
         if (!pPositionAccessor) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh with an invalid position accessor id");
           return;
         }
@@ -1439,7 +1450,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // From the glTF spec, the POSITION accessor must use VEC3
         // But we should still protect against malformed gltfs
         if (pPositionAccessor->type != AccessorSpec::Type::VEC3) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh with a non-vec3 position accessor");
           return;
         }
@@ -1488,9 +1499,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         if (!result.hit.has_value()) {
           result.hit = RayGltfHit{
-              std::move(*primitiveHitPoint),
-              std::move(primitiveToWorld),
-              std::move(worldPoint),
+              *primitiveHitPoint,
+              primitiveToWorld,
+              worldPoint,
               rayToWorldPointDistanceSq,
               meshId,
               primitiveId};
@@ -1499,9 +1510,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         // Use in result if it's closer
         if (rayToWorldPointDistanceSq < result.hit->rayToWorldPointDistanceSq) {
-          result.hit->primitivePoint = std::move(*primitiveHitPoint);
-          result.hit->primitiveToWorld = std::move(primitiveToWorld);
-          result.hit->worldPoint = std::move(worldPoint);
+          result.hit->primitivePoint = *primitiveHitPoint;
+          result.hit->primitiveToWorld = primitiveToWorld;
+          result.hit->worldPoint = worldPoint;
           result.hit->rayToWorldPointDistanceSq = rayToWorldPointDistanceSq;
           result.hit->meshId = meshId;
           result.hit->primitiveId = primitiveId;

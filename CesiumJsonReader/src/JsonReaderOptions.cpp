@@ -10,7 +10,7 @@ class AnyExtensionJsonHandler : public JsonObjectJsonHandler,
 public:
   AnyExtensionJsonHandler() noexcept : JsonObjectJsonHandler() {}
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override {
@@ -25,7 +25,7 @@ public:
         &std::any_cast<CesiumUtility::JsonValue&>(value));
   }
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 };
 
 ExtensionState

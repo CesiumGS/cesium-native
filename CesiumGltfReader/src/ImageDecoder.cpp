@@ -52,10 +52,10 @@ bool isKtx(const gsl::span<const std::byte>& data) {
     return false;
   }
 
-  const uint8_t ktxMagic[ktxMagicByteLength] =
+  const std::array<uint8_t, ktxMagicByteLength> ktxMagic =
       {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
 
-  return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
+  return memcmp(data.data(), ktxMagic.data(), ktxMagicByteLength) == 0;
 }
 
 bool isWebP(const gsl::span<const std::byte>& data) {
@@ -278,7 +278,7 @@ ImageReaderResult ImageDecoder::readImage(
             &image.height)) {
       image.channels = 4;
       image.bytesPerChannel = 1;
-      uint8_t* pImage = NULL;
+      uint8_t* pImage = nullptr;
       const auto bufferSize = image.width * image.height * image.channels;
       image.pixelData.resize(static_cast<std::size_t>(bufferSize));
       pImage = WebPDecodeRGBAInto(

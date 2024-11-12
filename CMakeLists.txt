@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.15)
 
-if (NOT VCPKG_LIBRARY_LINKAGE)
+if(NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
 if(NOT VCPKG_MANIFEST_MODE)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
 
-if (NOT VCPKG_TRIPLET)
-    if (DEFINED ENV{VCPKG_TRIPLET})
+if(NOT VCPKG_TRIPLET)
+    if(DEFINED ENV{VCPKG_TRIPLET})
         set(VCPKG_TRIPLET "$ENV{VCPKG_TRIPLET}")
     elseif(DETECTED_VCPKG_TRIPLET_ERROR)
         message(FATAL_ERROR "${DETECTED_VCPKG_TRIPLET_ERROR}")
@@ -25,16 +25,16 @@ endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 
-if (NOT VCPKG_OVERLAY_PORTS)
-    if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
+if(NOT VCPKG_OVERLAY_PORTS)
+    if(DEFINED ENV{VCPKG_OVERLAY_PORTS})
         set(VCPKG_OVERLAY_PORTS "$ENV{VCPKG_OVERLAY_PORTS}")
     endif()
 endif()
 
 message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
 
-if (NOT VCPKG_OVERLAY_TRIPLETS)
-    if (DEFINED ENV{VCPKG_OVERLAY_TRIPLETS})
+if(NOT VCPKG_OVERLAY_TRIPLETS)
+    if(DEFINED ENV{VCPKG_OVERLAY_TRIPLETS})
         set(VCPKG_OVERLAY_TRIPLETS "$ENV{VCPKG_OVERLAY_TRIPLETS}")
     endif()
 endif()
@@ -46,6 +46,7 @@ message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
 set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
+
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
@@ -66,16 +67,19 @@ if(NOT VCPKG_MANIFEST_MODE)
     ezvcpkg_fetch(
         COMMIT 2024.07.12
         PACKAGES ${PACKAGES_ALL}
+
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
+
         # Update the cmake toolchain so it can find the above packages
         UPDATE_TOOLCHAIN
+
         # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
         SERIALIZE
     )
 endif()
 
-if (NOT CMAKE_TOOLCHAIN_FILE)
+if(NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Specify the VCPKG toolchain on the command line as '-DCMAKE_TOOLCHAIN_FILE=<VCPKG_ROOT>/scripts/buildsystems/vcpkg.cmake'")
 else()
     message(STATUS "CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE}")
@@ -107,11 +111,11 @@ option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-nat
 option(CESIUM_ENABLE_LINTERS "Enable clang-tidy for static code analysis" ON)
 
 cmake_dependent_option(
-  CESIUM_ENABLE_LINTERS_ON_BUILD
-  "Check linting during build - only available if CESIUM_ENABLE_LINTERS is ON"
-  ON
-  CESIUM_ENABLE_LINTERS
-  OFF
+    CESIUM_ENABLE_LINTERS_ON_BUILD
+    "Check linting during build - only available if CESIUM_ENABLE_LINTERS is ON"
+    ON
+    CESIUM_ENABLE_LINTERS
+    OFF
 )
 
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
@@ -127,7 +131,7 @@ if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
             )
         endif()
 
-        if (CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
+        if(CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
                 DIRECTORY $<IF:$<CONFIG:Debug>,${PACKAGE_DIR}/debug/lib/,${PACKAGE_DIR}/lib/>
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -140,7 +144,8 @@ if(CESIUM_INSTALL_STATIC_LIBS)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
-        if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
+
+        if(NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
                 DIRECTORY $<IF:$<CONFIG:Debug>,${PACKAGE_DIR}/debug/lib/,${PACKAGE_DIR}/lib/>
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -152,7 +157,8 @@ endif()
 if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
     find_program(CCACHE_FOUND ccache)
     find_program(SCCACHE_FOUND sccache)
-    if (SCCACHE_FOUND)
+
+    if(SCCACHE_FOUND)
         message("setting SCCACHE to ${SCCACHE_FOUND}")
         set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_FOUND})
         set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_FOUND})
@@ -164,7 +170,7 @@ if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUN
 endif()
 
 # ccache/sccache only works with /Z7, not /Zi, so tweak the Debug and RelWithDebInfo build flags in the presence of a compiler cache
-if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER))
+if(MSVC AND(DEFINED CMAKE_C_COMPILER_LAUNCHER))
     message(DEBUG "Setting MSVC flags to /Z7 for ccache compatibility.  Current flags: ${CMAKE_CXX_FLAGS_DEBUG}")
     string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
     string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
@@ -180,34 +186,39 @@ option(CESIUM_GLM_STRICT_ENABLED "Whether to force strict GLM compile definition
 option(CESIUM_DISABLE_DEFAULT_ELLIPSOID "Whether to disable the WGS84 default value for ellipsoid parameters across cesium-native." OFF)
 option(CESIUM_MSVC_STATIC_RUNTIME_ENABLED "Whether to enable static linking for MSVC runtimes" OFF)
 
-if (CESIUM_MSVC_STATIC_RUNTIME_ENABLED)
+if(CESIUM_MSVC_STATIC_RUNTIME_ENABLED)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-if (CESIUM_TRACING_ENABLED)
+if(CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
 endif()
+
+# Math constants like M_PI used in the s2 library aren't standard.
+# MSVC seems to handle them fine while building, but clang-tidy will complain if they're not available.
+add_compile_definitions(_USE_MATH_DEFINES)
 
 # Set defaults that need to be set AFTER compiler / IDE detection
 include("cmake/compiler.cmake")
 
 if(CESIUM_ENABLE_LINTERS)
-  # Generate compile_commands.json for clang-tidy
-  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    # Generate compile_commands.json for clang-tidy
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-  setup_linters(
-    PROJECT_BUILD_DIRECTORY
-    "${PROJECT_BINARY_DIR}"
-    PROJECT_SOURCE_DIRECTORIES
-    "${PROJECT_SOURCE_DIR}"
-    ENABLE_LINTERS_ON_BUILD
-    ${CESIUM_ENABLE_LINTERS_ON_BUILD}
-  )
+    setup_linters(
+        PROJECT_BUILD_DIRECTORY
+        "${PROJECT_BINARY_DIR}"
+        PROJECT_SOURCE_DIRECTORIES
+        "${PROJECT_SOURCE_DIR}"
+        ENABLE_LINTERS_ON_BUILD
+        ${CESIUM_ENABLE_LINTERS_ON_BUILD}
+    )
 endif()
 
 # Add Modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
-if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
+
+if(CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
     append_coverage_compiler_flags()
     setup_target_for_coverage_gcovr_html(
@@ -218,7 +229,7 @@ if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     )
 endif()
 
-if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
+if(NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
         "Controls if cesium-native targets should use configure_depends or not for globbing their sources"
     )
@@ -226,7 +237,6 @@ endif()
 
 # On the CI builds, I have to do this explicitly for some reason or it fails to find the vcpkg packages.
 # The toolchain is supposed to manage this, but I haven't figured out why it isn't yet.
-
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share/s2")
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share")
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
@@ -258,7 +268,6 @@ find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(uriparser CONFIG REQUIRED char wchar_t)
 find_package(WebP CONFIG REQUIRED)
 
-
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
@@ -283,12 +292,11 @@ add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 
 # Private Targets
-if (CESIUM_TESTS_ENABLED)
+if(CESIUM_TESTS_ENABLED)
     # enable_testing() MUST be called before add_subdirectory or no tests
     # will be found by ctest
     enable_testing()
     add_subdirectory(CesiumNativeTests)
 endif()
-
 
 add_subdirectory(doc)

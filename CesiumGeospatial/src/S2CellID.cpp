@@ -2,10 +2,12 @@
 #pragma warning(push)
 #pragma warning(disable : 4100 4127 4309 4996)
 
-#define _CHAR_UNSIGNED
+#define CHAR_UNSIGNED
 #define NOMINMAX
-#define _USE_MATH_DEFINES
+#define USE_MATH_DEFINES
 #endif
+
+#include <cmath>
 
 // #include <s2/s2cell.h>
 #include <s2/s1interval.h>
