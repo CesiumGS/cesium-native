@@ -1,5 +1,12 @@
 # Change Log
 
+### Not released yet
+
+##### Breaking Changes :mega:
+
+- Cesium Native now requires C++20.
+- Switched from `gsl::span` to `std::span` throughout the library and API. The GSL library has been removed.
+
 ### v0.41.0 - 2024-11-01
 
 ##### Breaking Changes :mega:
