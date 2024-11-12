@@ -1,11 +1,20 @@
 # Change Log
 
-### Not released yet
+### Not Released Yet
 
 ##### Breaking Changes :mega:
 
 - Cesium Native now requires C++20.
 - Switched from `gsl::span` to `std::span` throughout the library and API. The GSL library has been removed.
+
+##### Additions :tada:
+
+- Added support for `EXT_accessor_additional_types` in `AccessorView`.
+- Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
+
+##### Fixes :wrench:
+
+- Updated the CMake install process to install the vcpkg-built Debug binaries in Debug builds. Previously the Release binaries were installed instead.
 
 ### v0.41.0 - 2024-11-01
 
