@@ -1,0 +1,4 @@
+---
+Checks: "-*,bugprone-*,performance-*,modernize-*,-modernize-use-trailing-return-type,-modernize-pass-by-value,-modernize-use-auto,-bugprone-easily-swappable-parameters,-modernize-return-braced-init-list"
+WarningsAsErrors: "*"
+FormatStyle: none

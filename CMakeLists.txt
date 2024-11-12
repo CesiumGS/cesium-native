@@ -102,9 +102,17 @@ endif()
 message(STATUS "PACKAGE_BASE_DIR ${PACKAGE_BASE_DIR}")
 message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
 
-
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
+option(CESIUM_ENABLE_LINTERS "Enable clang-tidy for static code analysis" ON)
+
+cmake_dependent_option(
+  CESIUM_ENABLE_LINTERS_ON_BUILD
+  "Check linting during build - only available if CESIUM_ENABLE_LINTERS is ON"
+  ON
+  CESIUM_ENABLE_LINTERS
+  OFF
+)
 
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
@@ -182,6 +190,20 @@ endif()
 
 # Set defaults that need to be set AFTER compiler / IDE detection
 include("cmake/compiler.cmake")
+
+if(CESIUM_ENABLE_LINTERS)
+  # Generate compile_commands.json for clang-tidy
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+  setup_linters(
+    PROJECT_BUILD_DIRECTORY
+    "${PROJECT_BINARY_DIR}"
+    PROJECT_SOURCE_DIRECTORIES
+    "${PROJECT_SOURCE_DIR}"
+    ENABLE_LINTERS_ON_BUILD
+    ${CESIUM_ENABLE_LINTERS_ON_BUILD}
+  )
+endif()
 
 # Add Modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
