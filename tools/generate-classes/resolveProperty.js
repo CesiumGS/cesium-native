@@ -468,7 +468,7 @@ function resolveDictionary(
     sizeOfFormatter: (propertyName, accumName) => {
       return `
       ${accumName} += ${propertyName}.bucket_count() * (sizeof(std::string) + sizeof(${additional.type}));
-      for(auto& [k, v] : ${propertyName}) {
+      for(const auto& [k, v] : ${propertyName}) {
         ${accumName} += k.capacity() * sizeof(char) - sizeof(std::string);
         ${resolveSizeOfForProperty(additional, "v", accumName) || `${accumName} += sizeof(${additional.type});`}
       }`;

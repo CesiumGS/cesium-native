@@ -34,7 +34,8 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. Calling this method may be slow
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
    * as it requires traversing the object's entire structure.
    */
   int64_t getSizeBytes() const {
@@ -45,7 +46,7 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
 
     accum += this->attributes.bucket_count() *
              (sizeof(std::string) + sizeof(int32_t));
-    for (auto& [k, v] : this->attributes) {
+    for (const auto& [k, v] : this->attributes) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += sizeof(int32_t);
     }

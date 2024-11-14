@@ -42,7 +42,8 @@ struct CESIUMGLTF_API PropertyAttribute final
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. Calling this method may be slow
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
    * as it requires traversing the object's entire structure.
    */
   int64_t getSizeBytes() const {
@@ -58,7 +59,7 @@ struct CESIUMGLTF_API PropertyAttribute final
     accum +=
         this->properties.bucket_count() *
         (sizeof(std::string) + sizeof(CesiumGltf::PropertyAttributeProperty));
-    for (auto& [k, v] : this->properties) {
+    for (const auto& [k, v] : this->properties) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::PropertyAttributeProperty);
     }

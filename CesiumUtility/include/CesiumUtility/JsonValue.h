@@ -640,7 +640,7 @@ public:
       int64_t operator()(const Object& value) {
         int64_t accum = 0;
         accum += value.size() * (sizeof(std::string) + sizeof(JsonValue));
-        for (auto& [k, v] : value) {
+        for (const auto& [k, v] : value) {
           accum += k.capacity() * sizeof(char) - sizeof(std::string);
           accum += v.getSizeBytes() - sizeof(JsonValue);
         }

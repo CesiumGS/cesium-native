@@ -56,7 +56,8 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. Calling this method may be slow
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
    * as it requires traversing the object's entire structure.
    */
   int64_t getSizeBytes() const {
@@ -77,14 +78,14 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
 
     accum += this->classes.bucket_count() *
              (sizeof(std::string) + sizeof(CesiumGltf::Class));
-    for (auto& [k, v] : this->classes) {
+    for (const auto& [k, v] : this->classes) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::Class);
     }
 
     accum += this->enums.bucket_count() *
              (sizeof(std::string) + sizeof(CesiumGltf::Enum));
-    for (auto& [k, v] : this->enums) {
+    for (const auto& [k, v] : this->enums) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::Enum);
     }
