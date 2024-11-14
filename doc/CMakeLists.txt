@@ -65,6 +65,8 @@ if(DOXYGEN_FOUND)
     doxygen_add_docs(
         cesium-native-docs
         "../README.md"
+        "./style-guide.md"
+        "./thread-safety.md"
         ${LIB_DIRS}
     )
 endif()

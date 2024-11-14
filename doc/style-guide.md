@@ -1,4 +1,4 @@
-# C++ Style Guide
+# C++ Style Guide         {#style-guide}
 
 This is a guide to writing C++ code for cesium-native. These guidelines are intended to help us write better C++ code by:
 
