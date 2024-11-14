@@ -62,7 +62,7 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    */
   bool moreDetailAvailable = false;
 
-   /**
+  /**
    * @brief Returns the size of this `LoadedRasterOverlayImage` in bytes.
    */
   size_t getSizeBytes() const {
