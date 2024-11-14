@@ -6,9 +6,12 @@
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/Result.h>
+#include <CesiumUtility/SharedAsset.h>
 
 #include <list>
 #include <memory>
@@ -111,12 +114,26 @@ private:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override final;
 
-  struct LoadedQuadtreeImage {
+  struct LoadedQuadtreeImage
+      : public CesiumUtility::SharedAsset<LoadedQuadtreeImage> {
+    LoadedQuadtreeImage(
+        std::shared_ptr<LoadedRasterOverlayImage> _pLoaded,
+        std::optional<CesiumGeometry::Rectangle> _subset)
+        : pLoaded(_pLoaded), subset(_subset) {}
     std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
     std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
+
+    int64_t getSizeBytes() const {
+      int64_t accum = 0;
+      accum += sizeof(LoadedQuadtreeImage);
+      if (pLoaded) {
+        accum += pLoaded->getSizeBytes();
+      }
+      return accum;
+    }
   };
 
-  CesiumAsync::SharedFuture<LoadedQuadtreeImage>
+  CesiumAsync::SharedFuture<CesiumUtility::ResultPointer<LoadedQuadtreeImage>>
   getQuadtreeTile(const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**
@@ -129,12 +146,11 @@ private:
    * data that is required to cover the rectangle with the given geometric
    * error.
    */
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>>
+  std::vector<CesiumAsync::SharedFuture<
+      CesiumUtility::ResultPointer<LoadedQuadtreeImage>>>
   mapRasterTilesToGeometryTile(
       const CesiumGeometry::Rectangle& geometryRectangle,
       const glm::dvec2 targetScreenPixels);
-
-  void unloadCachedTiles();
 
   struct CombinedImageMeasurements {
     CesiumGeometry::Rectangle rectangle;
@@ -146,12 +162,13 @@ private:
 
   static CombinedImageMeasurements measureCombinedImage(
       const CesiumGeometry::Rectangle& targetRectangle,
-      const std::vector<LoadedQuadtreeImage>& images);
+      const std::vector<CesiumUtility::ResultPointer<LoadedQuadtreeImage>>&
+          images);
 
   static LoadedRasterOverlayImage combineImages(
       const CesiumGeometry::Rectangle& targetRectangle,
       const CesiumGeospatial::Projection& projection,
-      std::vector<LoadedQuadtreeImage>&& images);
+      std::vector<CesiumUtility::ResultPointer<LoadedQuadtreeImage>>&& images);
 
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;
@@ -159,22 +176,9 @@ private:
   uint32_t _imageHeight;
   CesiumGeometry::QuadtreeTilingScheme _tilingScheme;
 
-  struct CacheEntry {
-    CesiumGeometry::QuadtreeTileID tileID;
-    CesiumAsync::SharedFuture<LoadedQuadtreeImage> future;
-  };
-
-  // Tiles at the beginning of this list are the least recently used (oldest),
-  // while the tiles at the end are most recently used (newest).
-  using TileLeastRecentlyUsedList = std::list<CacheEntry>;
-  TileLeastRecentlyUsedList _tilesOldToRecent;
-
-  // Allows a Future to be looked up by quadtree tile ID.
-  std::unordered_map<
-      CesiumGeometry::QuadtreeTileID,
-      TileLeastRecentlyUsedList::iterator>
-      _tileLookup;
-
-  std::atomic<int64_t> _cachedBytes;
+  CesiumUtility::IntrusivePointer<CesiumAsync::SharedAssetDepot<
+      LoadedQuadtreeImage,
+      CesiumGeometry::QuadtreeTileID>>
+      _tileDepot;
 };
 } // namespace CesiumRasterOverlays
