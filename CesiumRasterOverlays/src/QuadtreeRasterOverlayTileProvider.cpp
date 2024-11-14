@@ -53,25 +53,25 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageWidth(imageWidth),
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {
-  IntrusivePointer<QuadtreeRasterOverlayTileProvider> thisPtr{this};
+  IntrusivePointer<QuadtreeRasterOverlayTileProvider> pThis{this};
   _tileDepot.emplace(std::function(
-      [thisPtr](
+      [pThis](
           const AsyncSystem& asyncSystem,
           [[maybe_unused]] const std::shared_ptr<IAssetAccessor>&
               pAssetAccessor,
           const QuadtreeTileID& key)
           -> Future<ResultPointer<LoadedQuadtreeImage>> {
-        return thisPtr->loadQuadtreeTileImage(key)
+        return pThis->loadQuadtreeTileImage(key)
             .catchImmediately([](std::exception&& e) {
               // Turn an exception into an error.
               LoadedRasterOverlayImage result;
               result.errorList.emplaceError(e.what());
               return result;
             })
-            .thenImmediately([thisPtr,
+            .thenImmediately([pThis,
                               key,
                               currentLevel = key.level,
-                              minimumLevel = thisPtr->getMinimumLevel(),
+                              minimumLevel = pThis->getMinimumLevel(),
                               asyncSystem](LoadedRasterOverlayImage&& loaded) {
               if (loaded.pImage && !loaded.errorList.hasErrors() &&
                   loaded.pImage->width > 0 && loaded.pImage->height > 0) {
@@ -103,12 +103,12 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
               // though.
               if (currentLevel > minimumLevel) {
                 const Rectangle rectangle =
-                    thisPtr->getTilingScheme().tileToRectangle(key);
+                    pThis->getTilingScheme().tileToRectangle(key);
                 const QuadtreeTileID parentID(
                     key.level - 1,
                     key.x >> 1,
                     key.y >> 1);
-                return thisPtr->getQuadtreeTile(parentID).thenImmediately(
+                return pThis->getQuadtreeTile(parentID).thenImmediately(
                     [rectangle](
                         const ResultPointer<LoadedQuadtreeImage>& loaded) {
                       if (loaded.pValue) {
