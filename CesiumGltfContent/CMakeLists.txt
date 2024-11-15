@@ -49,7 +49,6 @@ target_include_directories(
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
 )
 
 target_link_libraries(CesiumGltfContent
