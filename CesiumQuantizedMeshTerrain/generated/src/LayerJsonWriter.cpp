@@ -130,7 +130,7 @@ void writeExtensibleObject(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-  if (!obj.extensions.empty()) {
+  if (hasWritableExtensions(obj, jsonWriter, context)) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
   }

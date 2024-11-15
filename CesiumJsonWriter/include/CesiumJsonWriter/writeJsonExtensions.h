@@ -20,19 +20,38 @@ void writeJsonExtensions(
         item.first,
         item.second,
         TExtended::TypeName);
-    if (!handler) {
-      if (context.getExtensionState(item.first) != ExtensionState::Disabled) {
-        jsonWriter.emplaceWarning(fmt::format(
-            "Encountered unregistered extension {}. This extension will be "
-            "ignored. To silence this warning, disable the extension with "
-            "ExtensionWriterContext::setExtensionState.",
-            item.first));
-      }
-      continue;
+    if (handler) {
+      jsonWriter.Key(item.first);
+      handler(item.second, jsonWriter, context);
     }
-    jsonWriter.Key(item.first);
-    handler(item.second, jsonWriter, context);
   }
   jsonWriter.EndObject();
+}
+
+template <typename TExtended>
+bool hasWritableExtensions(
+    const TExtended& obj,
+    JsonWriter& jsonWriter,
+    const ExtensionWriterContext& context) {
+  bool hasWritableExtensions = false;
+
+  for (const auto& item : obj.extensions) {
+    auto handler = context.createExtensionHandler(
+        item.first,
+        item.second,
+        TExtended::TypeName);
+    if (handler) {
+      hasWritableExtensions = true;
+    } else if (
+        context.getExtensionState(item.first) != ExtensionState::Disabled) {
+      jsonWriter.emplaceWarning(fmt::format(
+          "Encountered unregistered extension {}. This extension will be "
+          "ignored. To silence this warning, disable the extension with "
+          "ExtensionWriterContext::setExtensionState.",
+          item.first));
+    }
+  }
+
+  return hasWritableExtensions;
 }
 } // namespace CesiumJsonWriter
