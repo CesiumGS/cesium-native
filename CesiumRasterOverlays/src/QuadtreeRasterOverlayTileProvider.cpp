@@ -53,9 +53,8 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageWidth(imageWidth),
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {
-  IntrusivePointer<QuadtreeRasterOverlayTileProvider> pThis{this};
-  _tileDepot.emplace(std::function(
-      [pThis](
+  this->_pTileDepot.emplace(std::function(
+      [pThis = this](
           const AsyncSystem& asyncSystem,
           [[maybe_unused]] const std::shared_ptr<IAssetAccessor>&
               pAssetAccessor,
@@ -68,11 +67,11 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
               result.errorList.emplaceError(e.what());
               return result;
             })
-            .thenImmediately([pThis,
-                              key,
-                              currentLevel = key.level,
-                              minimumLevel = pThis->getMinimumLevel(),
-                              asyncSystem](LoadedRasterOverlayImage&& loaded) {
+            .thenInMainThread([pThis,
+                               key,
+                               currentLevel = key.level,
+                               minimumLevel = pThis->getMinimumLevel(),
+                               asyncSystem](LoadedRasterOverlayImage&& loaded) {
               if (loaded.pImage && !loaded.errorList.hasErrors() &&
                   loaded.pImage->width > 0 && loaded.pImage->height > 0) {
 #if SHOW_TILE_BOUNDARIES
@@ -358,7 +357,7 @@ CesiumAsync::SharedFuture<
     ResultPointer<QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID) {
-  return this->_tileDepot->getOrCreate(
+  return this->_pTileDepot->getOrCreate(
       this->getAsyncSystem(),
       this->getAssetAccessor(),
       tileID);

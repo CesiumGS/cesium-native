@@ -117,9 +117,9 @@ private:
   struct LoadedQuadtreeImage
       : public CesiumUtility::SharedAsset<LoadedQuadtreeImage> {
     LoadedQuadtreeImage(
-        std::shared_ptr<LoadedRasterOverlayImage> _pLoaded,
-        std::optional<CesiumGeometry::Rectangle> _subset)
-        : pLoaded(_pLoaded), subset(_subset) {}
+        const std::shared_ptr<LoadedRasterOverlayImage>& pLoaded_,
+        const std::optional<CesiumGeometry::Rectangle>& subset_)
+        : pLoaded(pLoaded_), subset(subset_) {}
     std::shared_ptr<LoadedRasterOverlayImage> pLoaded = nullptr;
     std::optional<CesiumGeometry::Rectangle> subset = std::nullopt;
 
@@ -179,6 +179,6 @@ private:
   CesiumUtility::IntrusivePointer<CesiumAsync::SharedAssetDepot<
       LoadedQuadtreeImage,
       CesiumGeometry::QuadtreeTileID>>
-      _tileDepot;
+      _pTileDepot;
 };
 } // namespace CesiumRasterOverlays
