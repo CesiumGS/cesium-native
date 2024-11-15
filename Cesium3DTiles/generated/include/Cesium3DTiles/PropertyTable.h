@@ -45,5 +45,30 @@ struct CESIUM3DTILES_API PropertyTable final
    */
   std::unordered_map<std::string, Cesium3DTiles::PropertyTableProperty>
       properties;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(PropertyTable);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    if (this->name) {
+      accum += this->name->capacity() * sizeof(char);
+    }
+    accum += this->classProperty.capacity() * sizeof(char);
+    accum +=
+        this->properties.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::PropertyTableProperty));
+    for (const auto& [k, v] : this->properties) {
+      accum += k.capacity() * sizeof(char) - sizeof(std::string);
+      accum += v.getSizeBytes() - sizeof(Cesium3DTiles::PropertyTableProperty);
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

@@ -53,6 +53,7 @@ function generateCombinedWriter(options) {
         #include "${name}JsonWriter.h"
         
         #include <CesiumUtility/JsonValue.h>
+        #include <CesiumUtility/IntrusivePointer.h>
         #include <CesiumJsonWriter/ExtensionWriterContext.h>
         #include <CesiumJsonWriter/writeJsonExtensions.h>
         #include <CesiumJsonWriter/JsonObjectWriter.h>

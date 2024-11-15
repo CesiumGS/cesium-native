@@ -43,7 +43,6 @@ struct CESIUMGLTF_API ExtensionModelMaxarMeshVariants final
     accum += sizeof(ExtensionModelMaxarMeshVariants);
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              sizeof(CesiumUtility::ExtensibleObject);
-
     accum += sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue) *
              this->variants.capacity();
     for (const CesiumGltf::ExtensionModelMaxarMeshVariantsValue& value :

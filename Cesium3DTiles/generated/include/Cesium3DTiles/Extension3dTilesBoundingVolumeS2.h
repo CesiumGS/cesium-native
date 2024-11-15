@@ -37,5 +37,20 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
    * the WGS84 ellipsoid.
    */
   double maximumHeight = double();
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(Extension3dTilesBoundingVolumeS2);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += this->token.capacity() * sizeof(char);
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

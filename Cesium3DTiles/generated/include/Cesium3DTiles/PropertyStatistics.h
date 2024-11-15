@@ -81,5 +81,25 @@ struct CESIUM3DTILES_API PropertyStatistics final
    * component-wise occurrences.
    */
   std::unordered_map<std::string, CesiumUtility::JsonValue> occurrences;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(PropertyStatistics);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += this->occurrences.bucket_count() *
+             (sizeof(std::string) + sizeof(CesiumUtility::JsonValue));
+    for (const auto& [k, v] : this->occurrences) {
+      accum += k.capacity() * sizeof(char) - sizeof(std::string);
+      accum += sizeof(CesiumUtility::JsonValue);
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

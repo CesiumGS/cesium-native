@@ -99,5 +99,46 @@ struct CESIUM3DTILES_API Subtree final
    * @brief Subtree metadata encoded in JSON.
    */
   std::optional<Cesium3DTiles::MetadataEntity> subtreeMetadata;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(Subtree);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += sizeof(Cesium3DTiles::Buffer) * this->buffers.capacity();
+    for (const Cesium3DTiles::Buffer& value : this->buffers) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::Buffer);
+    }
+    accum += sizeof(Cesium3DTiles::BufferView) * this->bufferViews.capacity();
+    for (const Cesium3DTiles::BufferView& value : this->bufferViews) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::BufferView);
+    }
+    accum +=
+        sizeof(Cesium3DTiles::PropertyTable) * this->propertyTables.capacity();
+    for (const Cesium3DTiles::PropertyTable& value : this->propertyTables) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::PropertyTable);
+    }
+    accum += this->tileAvailability.getSizeBytes() -
+             sizeof(Cesium3DTiles::Availability);
+    accum += sizeof(Cesium3DTiles::Availability) *
+             this->contentAvailability.capacity();
+    for (const Cesium3DTiles::Availability& value : this->contentAvailability) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::Availability);
+    }
+    accum += this->childSubtreeAvailability.getSizeBytes() -
+             sizeof(Cesium3DTiles::Availability);
+    accum += sizeof(int64_t) * this->contentMetadata.capacity();
+    if (this->subtreeMetadata) {
+      accum += this->subtreeMetadata->getSizeBytes() -
+               sizeof(Cesium3DTiles::MetadataEntity);
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

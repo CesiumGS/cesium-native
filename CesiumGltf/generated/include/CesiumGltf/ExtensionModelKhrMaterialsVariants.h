@@ -35,7 +35,6 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariants final
     accum += sizeof(ExtensionModelKhrMaterialsVariants);
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              sizeof(CesiumUtility::ExtensibleObject);
-
     accum += sizeof(CesiumGltf::ExtensionModelKhrMaterialsVariantsValue) *
              this->variants.capacity();
     for (const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& value :

@@ -34,7 +34,6 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeatures final
     accum += sizeof(ExtensionExtInstanceFeatures);
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              sizeof(CesiumUtility::ExtensibleObject);
-
     accum += sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId) *
              this->featureIds.capacity();
     for (const CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& value :

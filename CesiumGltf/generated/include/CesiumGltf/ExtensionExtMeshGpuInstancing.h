@@ -43,7 +43,6 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
     accum += sizeof(ExtensionExtMeshGpuInstancing);
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              sizeof(CesiumUtility::ExtensibleObject);
-
     accum += this->attributes.bucket_count() *
              (sizeof(std::string) + sizeof(int32_t));
     for (const auto& [k, v] : this->attributes) {

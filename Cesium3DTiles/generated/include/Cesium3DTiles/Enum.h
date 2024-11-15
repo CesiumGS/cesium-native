@@ -62,5 +62,29 @@ struct CESIUM3DTILES_API Enum final : public CesiumUtility::ExtensibleObject {
    * are not allowed.
    */
   std::vector<Cesium3DTiles::EnumValue> values;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(Enum);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    if (this->name) {
+      accum += this->name->capacity() * sizeof(char);
+    }
+    if (this->description) {
+      accum += this->description->capacity() * sizeof(char);
+    }
+    accum += sizeof(Cesium3DTiles::EnumValue) * this->values.capacity();
+    for (const Cesium3DTiles::EnumValue& value : this->values) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::EnumValue);
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

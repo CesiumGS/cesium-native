@@ -107,5 +107,45 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * tiles, there are no children, and this property may not be defined.
    */
   std::vector<Cesium3DTiles::Tile> children;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(Tile);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += this->boundingVolume.getSizeBytes() -
+             sizeof(Cesium3DTiles::BoundingVolume);
+    if (this->viewerRequestVolume) {
+      accum += this->viewerRequestVolume->getSizeBytes() -
+               sizeof(Cesium3DTiles::BoundingVolume);
+    }
+    accum += sizeof(double) * this->transform.capacity();
+    if (this->content) {
+      accum += this->content->getSizeBytes() - sizeof(Cesium3DTiles::Content);
+    }
+    accum += sizeof(Cesium3DTiles::Content) * this->contents.capacity();
+    for (const Cesium3DTiles::Content& value : this->contents) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::Content);
+    }
+    if (this->metadata) {
+      accum += this->metadata->getSizeBytes() -
+               sizeof(Cesium3DTiles::MetadataEntity);
+    }
+    if (this->implicitTiling) {
+      accum += this->implicitTiling->getSizeBytes() -
+               sizeof(Cesium3DTiles::ImplicitTiling);
+    }
+    accum += sizeof(Cesium3DTiles::Tile) * this->children.capacity();
+    for (const Cesium3DTiles::Tile& value : this->children) {
+      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::Tile);
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

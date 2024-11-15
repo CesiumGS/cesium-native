@@ -55,7 +55,6 @@ struct CESIUMGLTF_API PropertyAttribute final
       accum += this->name->capacity() * sizeof(char);
     }
     accum += this->classProperty.capacity() * sizeof(char);
-
     accum +=
         this->properties.bucket_count() *
         (sizeof(std::string) + sizeof(CesiumGltf::PropertyAttributeProperty));

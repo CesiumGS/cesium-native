@@ -69,19 +69,16 @@ struct CESIUMGLTF_API ExtensionModelExtStructuralMetadata final
     if (this->schemaUri) {
       accum += this->schemaUri->capacity() * sizeof(char);
     }
-
     accum +=
         sizeof(CesiumGltf::PropertyTable) * this->propertyTables.capacity();
     for (const CesiumGltf::PropertyTable& value : this->propertyTables) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyTable);
     }
-
     accum +=
         sizeof(CesiumGltf::PropertyTexture) * this->propertyTextures.capacity();
     for (const CesiumGltf::PropertyTexture& value : this->propertyTextures) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyTexture);
     }
-
     accum += sizeof(CesiumGltf::PropertyAttribute) *
              this->propertyAttributes.capacity();
     for (const CesiumGltf::PropertyAttribute& value :

@@ -413,10 +413,17 @@ function resolveArray(
         return `${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();`;
       }
 
-      return `
-      ${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();
-      for(const ${itemProperty.type}& value : ${propertyName}) {
-        ${resolveSizeOfForProperty(itemProperty, "value", accumName)}
+      // We need to change the name of the variable we're iterating with if the contents are also a vector, 
+      // as it will otherwise also generate code with `value` and cause a "hides previous local declaration" error.
+      // TODO: support more than two nested loops
+      let iterName = "value";
+      if (itemProperty.type.indexOf("std::vector") == 0) {
+        iterName = "valueOuter";
+      }
+
+      return `${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();
+      for(const ${itemProperty.type}& ${iterName} : ${propertyName}) {
+        ${resolveSizeOfForProperty(itemProperty, iterName, accumName)}
       }`;
     }
   };
@@ -466,8 +473,7 @@ function resolveDictionary(
     ],
     readerType: `CesiumJsonReader::DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
     sizeOfFormatter: (propertyName, accumName) => {
-      return `
-      ${accumName} += ${propertyName}.bucket_count() * (sizeof(std::string) + sizeof(${additional.type}));
+      return `${accumName} += ${propertyName}.bucket_count() * (sizeof(std::string) + sizeof(${additional.type}));
       for(const auto& [k, v] : ${propertyName}) {
         ${accumName} += k.capacity() * sizeof(char) - sizeof(std::string);
         ${resolveSizeOfForProperty(additional, "v", accumName) || `${accumName} += sizeof(${additional.type});`}

@@ -24,5 +24,25 @@ struct CESIUM3DTILES_API Statistics final
    * statistics about entities that conform to the class.
    */
   std::unordered_map<std::string, Cesium3DTiles::ClassStatistics> classes;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(Statistics);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += this->classes.bucket_count() *
+             (sizeof(std::string) + sizeof(Cesium3DTiles::ClassStatistics));
+    for (const auto& [k, v] : this->classes) {
+      accum += k.capacity() * sizeof(char) - sizeof(std::string);
+      accum += v.getSizeBytes() - sizeof(Cesium3DTiles::ClassStatistics);
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

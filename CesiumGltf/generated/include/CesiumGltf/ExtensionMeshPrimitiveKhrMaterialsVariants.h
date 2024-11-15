@@ -40,7 +40,6 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariants final
     accum += sizeof(ExtensionMeshPrimitiveKhrMaterialsVariants);
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              sizeof(CesiumUtility::ExtensibleObject);
-
     accum +=
         sizeof(CesiumGltf::
                    ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue) *

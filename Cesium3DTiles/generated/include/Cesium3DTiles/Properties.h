@@ -25,5 +25,20 @@ struct CESIUM3DTILES_API Properties final
    * tileset. The maximum value shall not be smaller than the minimum value.
    */
   double minimum = double();
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(Properties);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

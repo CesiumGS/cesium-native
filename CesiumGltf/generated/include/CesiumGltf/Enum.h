@@ -80,7 +80,6 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
     if (this->description) {
       accum += this->description->capacity() * sizeof(char);
     }
-
     accum += sizeof(CesiumGltf::EnumValue) * this->values.capacity();
     for (const CesiumGltf::EnumValue& value : this->values) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::EnumValue);

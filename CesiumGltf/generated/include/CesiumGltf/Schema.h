@@ -75,14 +75,12 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
     if (this->version) {
       accum += this->version->capacity() * sizeof(char);
     }
-
     accum += this->classes.bucket_count() *
              (sizeof(std::string) + sizeof(CesiumGltf::Class));
     for (const auto& [k, v] : this->classes) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
       accum += v.getSizeBytes() - sizeof(CesiumGltf::Class);
     }
-
     accum += this->enums.bucket_count() *
              (sizeof(std::string) + sizeof(CesiumGltf::Enum));
     for (const auto& [k, v] : this->enums) {

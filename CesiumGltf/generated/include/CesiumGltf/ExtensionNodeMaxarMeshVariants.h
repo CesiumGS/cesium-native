@@ -35,7 +35,6 @@ struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
     accum += sizeof(ExtensionNodeMaxarMeshVariants);
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              sizeof(CesiumUtility::ExtensibleObject);
-
     accum += sizeof(CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue) *
              this->mappings.capacity();
     for (const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& value :

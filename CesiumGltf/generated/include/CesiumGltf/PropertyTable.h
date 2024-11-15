@@ -60,7 +60,6 @@ struct CESIUMGLTF_API PropertyTable final
       accum += this->name->capacity() * sizeof(char);
     }
     accum += this->classProperty.capacity() * sizeof(char);
-
     accum += this->properties.bucket_count() *
              (sizeof(std::string) + sizeof(CesiumGltf::PropertyTableProperty));
     for (const auto& [k, v] : this->properties) {

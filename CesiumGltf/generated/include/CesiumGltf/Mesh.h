@@ -38,7 +38,6 @@ struct CESIUMGLTF_API Mesh final : public CesiumGltf::NamedObject {
     accum += sizeof(Mesh);
     accum += CesiumGltf::NamedObject::getSizeBytes() -
              sizeof(CesiumGltf::NamedObject);
-
     accum += sizeof(CesiumGltf::MeshPrimitive) * this->primitives.capacity();
     for (const CesiumGltf::MeshPrimitive& value : this->primitives) {
       accum += value.getSizeBytes() - sizeof(CesiumGltf::MeshPrimitive);

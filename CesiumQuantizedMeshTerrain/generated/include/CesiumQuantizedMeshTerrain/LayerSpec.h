@@ -102,6 +102,46 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
    */
   std::string version = "1.0.0";
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += sizeof(LayerSpec);
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             sizeof(CesiumUtility::ExtensibleObject);
+    accum += this->attribution.capacity() * sizeof(char);
+    accum +=
+        sizeof(std::vector<CesiumQuantizedMeshTerrain::AvailabilityRectangle>) *
+        this->available.capacity();
+    for (const std::vector<CesiumQuantizedMeshTerrain::AvailabilityRectangle>&
+             valueOuter : this->available) {
+      accum += sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle) *
+               valueOuter.capacity();
+      for (const CesiumQuantizedMeshTerrain::AvailabilityRectangle& value :
+           valueOuter) {
+        accum += value.getSizeBytes() -
+                 sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle);
+      }
+    }
+    accum += sizeof(double) * this->bounds.capacity();
+    accum += this->description.capacity() * sizeof(char);
+    accum += sizeof(std::string) * this->extensionsProperty.capacity();
+    accum += this->format.capacity() * sizeof(char);
+    accum += this->name.capacity() * sizeof(char);
+    if (this->parentUrl) {
+      accum += this->parentUrl->capacity() * sizeof(char);
+    }
+    accum += this->projection.capacity() * sizeof(char);
+    accum += this->scheme.capacity() * sizeof(char);
+    accum += sizeof(std::string) * this->tiles.capacity();
+    accum += this->version.capacity() * sizeof(char);
+    return accum;
+  }
+
 private:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Layer} instead.
