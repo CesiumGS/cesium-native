@@ -118,7 +118,7 @@ PropertyTableView::PropertyTableView(
     return;
   }
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   if (!schema) {
     _status = PropertyTableViewStatus::ErrorMissingSchema;
     return;

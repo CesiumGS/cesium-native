@@ -154,6 +154,26 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    */
   std::optional<CesiumGltf::AccessorSparse> sparse;
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(AccessorSpec));
+    accum += CesiumGltf::NamedObject::getSizeBytes() -
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    accum += int64_t(sizeof(double) * this->max.capacity());
+    accum += int64_t(sizeof(double) * this->min.capacity());
+    if (this->sparse) {
+      accum += this->sparse->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::AccessorSparse));
+    }
+    return accum;
+  }
+
 private:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Accessor} instead.

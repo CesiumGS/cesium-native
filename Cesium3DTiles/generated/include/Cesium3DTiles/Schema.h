@@ -53,5 +53,43 @@ struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, Cesium3DTiles::Enum> enums;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Schema));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->id.capacity() * sizeof(char));
+    if (this->name) {
+      accum += int64_t(this->name->capacity() * sizeof(char));
+    }
+    if (this->description) {
+      accum += int64_t(this->description->capacity() * sizeof(char));
+    }
+    if (this->version) {
+      accum += int64_t(this->version->capacity() * sizeof(char));
+    }
+    accum += int64_t(
+        this->classes.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::Class)));
+    for (const auto& [k, v] : this->classes) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Class));
+    }
+    accum += int64_t(
+        this->enums.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::Enum)));
+    for (const auto& [k, v] : this->enums) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Enum));
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

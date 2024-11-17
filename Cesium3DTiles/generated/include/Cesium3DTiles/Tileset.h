@@ -87,5 +87,51 @@ struct CESIUM3DTILES_API Tileset final
    * Each element of this array shall also be contained in `extensionsUsed`.
    */
   std::vector<std::string> extensionsRequired;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Tileset));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += this->asset.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Asset));
+    accum += int64_t(
+        this->properties.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::Properties)));
+    for (const auto& [k, v] : this->properties) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Properties));
+    }
+    if (this->schema) {
+      accum +=
+          this->schema->getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Schema));
+    }
+    if (this->schemaUri) {
+      accum += int64_t(this->schemaUri->capacity() * sizeof(char));
+    }
+    if (this->statistics) {
+      accum += this->statistics->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::Statistics));
+    }
+    accum +=
+        int64_t(sizeof(Cesium3DTiles::GroupMetadata) * this->groups.capacity());
+    for (const Cesium3DTiles::GroupMetadata& value : this->groups) {
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::GroupMetadata));
+    }
+    if (this->metadata) {
+      accum += this->metadata->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::MetadataEntity));
+    }
+    accum += this->root.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Tile));
+    accum += int64_t(sizeof(std::string) * this->extensionsUsed.capacity());
+    accum += int64_t(sizeof(std::string) * this->extensionsRequired.capacity());
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

@@ -29,6 +29,23 @@ struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
    */
   int64_t byteLength = int64_t();
 
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(BufferSpec));
+    accum += CesiumGltf::NamedObject::getSizeBytes() -
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    if (this->uri) {
+      accum += int64_t(this->uri->capacity() * sizeof(char));
+    }
+    return accum;
+  }
+
 private:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
