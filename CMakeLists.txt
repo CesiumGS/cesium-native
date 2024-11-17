@@ -301,10 +301,19 @@ endif()
 
 add_subdirectory(doc)
 
+include(CMakePackageConfigHelpers)
+
 install(EXPORT CesiumExports
   FILE cesium-nativeTargets.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native)
 
-install(FILES cesium-nativeConfig.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native)
+install(FILES
+  "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native")
 
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native")
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native)
