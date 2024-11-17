@@ -40,15 +40,17 @@ struct CESIUMGLTF_API ExtensionModelMaxarMeshVariants final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionModelMaxarMeshVariants);
+    accum += int64_t(sizeof(ExtensionModelMaxarMeshVariants));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue) *
-             this->variants.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue) *
+        this->variants.capacity());
     for (const CesiumGltf::ExtensionModelMaxarMeshVariantsValue& value :
          this->variants) {
-      accum += value.getSizeBytes() -
-               sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue);
+      accum +=
+          value.getSizeBytes() -
+          int64_t(sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue));
     }
     return accum;
   }

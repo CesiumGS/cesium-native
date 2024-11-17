@@ -40,9 +40,9 @@ struct CESIUMGLTF_API AccessorSparseValues final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(AccessorSparseValues);
+    accum += int64_t(sizeof(AccessorSparseValues));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

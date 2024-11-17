@@ -32,15 +32,17 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariants final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionModelKhrMaterialsVariants);
+    accum += int64_t(sizeof(ExtensionModelKhrMaterialsVariants));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(CesiumGltf::ExtensionModelKhrMaterialsVariantsValue) *
-             this->variants.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        sizeof(CesiumGltf::ExtensionModelKhrMaterialsVariantsValue) *
+        this->variants.capacity());
     for (const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& value :
          this->variants) {
-      accum += value.getSizeBytes() -
-               sizeof(CesiumGltf::ExtensionModelKhrMaterialsVariantsValue);
+      accum +=
+          value.getSizeBytes() -
+          int64_t(sizeof(CesiumGltf::ExtensionModelKhrMaterialsVariantsValue));
     }
     return accum;
   }

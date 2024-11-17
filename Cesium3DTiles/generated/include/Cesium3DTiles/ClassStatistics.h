@@ -40,14 +40,16 @@ struct CESIUM3DTILES_API ClassStatistics final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ClassStatistics);
+    accum += int64_t(sizeof(ClassStatistics));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->properties.bucket_count() *
-             (sizeof(std::string) + sizeof(Cesium3DTiles::PropertyStatistics));
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        this->properties.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::PropertyStatistics)));
     for (const auto& [k, v] : this->properties) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(Cesium3DTiles::PropertyStatistics);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum +=
+          v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::PropertyStatistics));
     }
     return accum;
   }

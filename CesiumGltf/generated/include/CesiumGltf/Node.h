@@ -85,15 +85,15 @@ struct CESIUMGLTF_API Node final : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Node);
+    accum += int64_t(sizeof(Node));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
-    accum += sizeof(int32_t) * this->children.capacity();
-    accum += sizeof(double) * this->matrix.capacity();
-    accum += sizeof(double) * this->rotation.capacity();
-    accum += sizeof(double) * this->scale.capacity();
-    accum += sizeof(double) * this->translation.capacity();
-    accum += sizeof(double) * this->weights.capacity();
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    accum += int64_t(sizeof(int32_t) * this->children.capacity());
+    accum += int64_t(sizeof(double) * this->matrix.capacity());
+    accum += int64_t(sizeof(double) * this->rotation.capacity());
+    accum += int64_t(sizeof(double) * this->scale.capacity());
+    accum += int64_t(sizeof(double) * this->translation.capacity());
+    accum += int64_t(sizeof(double) * this->weights.capacity());
     return accum;
   }
 };

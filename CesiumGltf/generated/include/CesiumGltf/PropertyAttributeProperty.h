@@ -61,10 +61,10 @@ struct CESIUMGLTF_API PropertyAttributeProperty final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(PropertyAttributeProperty);
+    accum += int64_t(sizeof(PropertyAttributeProperty));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->attribute.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->attribute.capacity() * sizeof(char));
     return accum;
   }
 };

@@ -63,10 +63,11 @@ struct CESIUM3DTILES_API ImplicitTiling final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ImplicitTiling);
+    accum += int64_t(sizeof(ImplicitTiling));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->subtrees.getSizeBytes() - sizeof(Cesium3DTiles::Subtrees);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += this->subtrees.getSizeBytes() -
+             int64_t(sizeof(Cesium3DTiles::Subtrees));
     return accum;
   }
 };

@@ -92,9 +92,9 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionBufferViewExtMeshoptCompression);
+    accum += int64_t(sizeof(ExtensionBufferViewExtMeshoptCompression));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

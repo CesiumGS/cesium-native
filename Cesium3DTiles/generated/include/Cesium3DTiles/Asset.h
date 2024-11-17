@@ -36,12 +36,12 @@ struct CESIUM3DTILES_API Asset final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Asset);
+    accum += int64_t(sizeof(Asset));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->version.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->version.capacity() * sizeof(char));
     if (this->tilesetVersion) {
-      accum += this->tilesetVersion->capacity() * sizeof(char);
+      accum += int64_t(this->tilesetVersion->capacity() * sizeof(char));
     }
     return accum;
   }

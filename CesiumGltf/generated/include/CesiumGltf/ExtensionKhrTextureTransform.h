@@ -51,11 +51,11 @@ struct CESIUMGLTF_API ExtensionKhrTextureTransform final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionKhrTextureTransform);
+    accum += int64_t(sizeof(ExtensionKhrTextureTransform));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(double) * this->offset.capacity();
-    accum += sizeof(double) * this->scale.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(double) * this->offset.capacity());
+    accum += int64_t(sizeof(double) * this->scale.capacity());
     return accum;
   }
 };

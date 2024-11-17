@@ -48,19 +48,20 @@ struct CESIUMGLTF_API PropertyTexture final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(PropertyTexture);
+    accum += int64_t(sizeof(PropertyTexture));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
-    accum += this->classProperty.capacity() * sizeof(char);
-    accum +=
+    accum += int64_t(this->classProperty.capacity() * sizeof(char));
+    accum += int64_t(
         this->properties.bucket_count() *
-        (sizeof(std::string) + sizeof(CesiumGltf::PropertyTextureProperty));
+        (sizeof(std::string) + sizeof(CesiumGltf::PropertyTextureProperty)));
     for (const auto& [k, v] : this->properties) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(CesiumGltf::PropertyTextureProperty);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::PropertyTextureProperty));
     }
     return accum;
   }

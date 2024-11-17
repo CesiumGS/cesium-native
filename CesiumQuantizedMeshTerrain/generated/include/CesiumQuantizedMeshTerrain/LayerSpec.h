@@ -110,35 +110,37 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(LayerSpec);
+    accum += int64_t(sizeof(LayerSpec));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->attribution.capacity() * sizeof(char);
-    accum +=
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->attribution.capacity() * sizeof(char));
+    accum += int64_t(
         sizeof(std::vector<CesiumQuantizedMeshTerrain::AvailabilityRectangle>) *
-        this->available.capacity();
+        this->available.capacity());
     for (const std::vector<CesiumQuantizedMeshTerrain::AvailabilityRectangle>&
              valueOuter : this->available) {
-      accum += sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle) *
-               valueOuter.capacity();
+      accum += int64_t(
+          sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle) *
+          valueOuter.capacity());
       for (const CesiumQuantizedMeshTerrain::AvailabilityRectangle& value :
            valueOuter) {
-        accum += value.getSizeBytes() -
-                 sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle);
+        accum +=
+            value.getSizeBytes() -
+            int64_t(sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle));
       }
     }
-    accum += sizeof(double) * this->bounds.capacity();
-    accum += this->description.capacity() * sizeof(char);
-    accum += sizeof(std::string) * this->extensionsProperty.capacity();
-    accum += this->format.capacity() * sizeof(char);
-    accum += this->name.capacity() * sizeof(char);
+    accum += int64_t(sizeof(double) * this->bounds.capacity());
+    accum += int64_t(this->description.capacity() * sizeof(char));
+    accum += int64_t(sizeof(std::string) * this->extensionsProperty.capacity());
+    accum += int64_t(this->format.capacity() * sizeof(char));
+    accum += int64_t(this->name.capacity() * sizeof(char));
     if (this->parentUrl) {
-      accum += this->parentUrl->capacity() * sizeof(char);
+      accum += int64_t(this->parentUrl->capacity() * sizeof(char));
     }
-    accum += this->projection.capacity() * sizeof(char);
-    accum += this->scheme.capacity() * sizeof(char);
-    accum += sizeof(std::string) * this->tiles.capacity();
-    accum += this->version.capacity() * sizeof(char);
+    accum += int64_t(this->projection.capacity() * sizeof(char));
+    accum += int64_t(this->scheme.capacity() * sizeof(char));
+    accum += int64_t(sizeof(std::string) * this->tiles.capacity());
+    accum += int64_t(this->version.capacity() * sizeof(char));
     return accum;
   }
 

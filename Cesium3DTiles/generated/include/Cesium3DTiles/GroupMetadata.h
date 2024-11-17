@@ -20,8 +20,8 @@ struct CESIUM3DTILES_API GroupMetadata final : public MetadataEntity {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(GroupMetadata);
-    accum += MetadataEntity::getSizeBytes() - sizeof(MetadataEntity);
+    accum += int64_t(sizeof(GroupMetadata));
+    accum += MetadataEntity::getSizeBytes() - int64_t(sizeof(MetadataEntity));
 
     return accum;
   }

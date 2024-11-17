@@ -30,9 +30,9 @@ struct CESIUMGLTF_API ExtensionTextureWebp final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionTextureWebp);
+    accum += int64_t(sizeof(ExtensionTextureWebp));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

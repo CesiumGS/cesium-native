@@ -90,14 +90,15 @@ struct CESIUM3DTILES_API PropertyStatistics final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(PropertyStatistics);
+    accum += int64_t(sizeof(PropertyStatistics));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->occurrences.bucket_count() *
-             (sizeof(std::string) + sizeof(CesiumUtility::JsonValue));
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        this->occurrences.bucket_count() *
+        (sizeof(std::string) + sizeof(CesiumUtility::JsonValue)));
     for (const auto& [k, v] : this->occurrences) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += sizeof(CesiumUtility::JsonValue);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += int64_t(sizeof(CesiumUtility::JsonValue));
     }
     return accum;
   }

@@ -40,12 +40,12 @@ struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(EnumValue);
+    accum += int64_t(sizeof(EnumValue));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->name.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->name.capacity() * sizeof(char));
     if (this->description) {
-      accum += this->description->capacity() * sizeof(char);
+      accum += int64_t(this->description->capacity() * sizeof(char));
     }
     return accum;
   }

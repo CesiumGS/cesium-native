@@ -46,10 +46,10 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Extension3dTilesBoundingVolumeS2);
+    accum += int64_t(sizeof(Extension3dTilesBoundingVolumeS2));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->token.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->token.capacity() * sizeof(char));
     return accum;
   }
 };

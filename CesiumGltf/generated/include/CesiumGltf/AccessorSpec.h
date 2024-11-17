@@ -162,14 +162,14 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(AccessorSpec);
+    accum += int64_t(sizeof(AccessorSpec));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
-    accum += sizeof(double) * this->max.capacity();
-    accum += sizeof(double) * this->min.capacity();
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    accum += int64_t(sizeof(double) * this->max.capacity());
+    accum += int64_t(sizeof(double) * this->min.capacity());
     if (this->sparse) {
-      accum +=
-          this->sparse->getSizeBytes() - sizeof(CesiumGltf::AccessorSparse);
+      accum += this->sparse->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::AccessorSparse));
     }
     return accum;
   }

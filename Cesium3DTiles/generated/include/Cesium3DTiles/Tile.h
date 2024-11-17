@@ -116,34 +116,36 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Tile);
+    accum += int64_t(sizeof(Tile));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += this->boundingVolume.getSizeBytes() -
-             sizeof(Cesium3DTiles::BoundingVolume);
+             int64_t(sizeof(Cesium3DTiles::BoundingVolume));
     if (this->viewerRequestVolume) {
       accum += this->viewerRequestVolume->getSizeBytes() -
-               sizeof(Cesium3DTiles::BoundingVolume);
+               int64_t(sizeof(Cesium3DTiles::BoundingVolume));
     }
-    accum += sizeof(double) * this->transform.capacity();
+    accum += int64_t(sizeof(double) * this->transform.capacity());
     if (this->content) {
-      accum += this->content->getSizeBytes() - sizeof(Cesium3DTiles::Content);
+      accum += this->content->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::Content));
     }
-    accum += sizeof(Cesium3DTiles::Content) * this->contents.capacity();
+    accum +=
+        int64_t(sizeof(Cesium3DTiles::Content) * this->contents.capacity());
     for (const Cesium3DTiles::Content& value : this->contents) {
-      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::Content);
+      accum += value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Content));
     }
     if (this->metadata) {
       accum += this->metadata->getSizeBytes() -
-               sizeof(Cesium3DTiles::MetadataEntity);
+               int64_t(sizeof(Cesium3DTiles::MetadataEntity));
     }
     if (this->implicitTiling) {
       accum += this->implicitTiling->getSizeBytes() -
-               sizeof(Cesium3DTiles::ImplicitTiling);
+               int64_t(sizeof(Cesium3DTiles::ImplicitTiling));
     }
-    accum += sizeof(Cesium3DTiles::Tile) * this->children.capacity();
+    accum += int64_t(sizeof(Cesium3DTiles::Tile) * this->children.capacity());
     for (const Cesium3DTiles::Tile& value : this->children) {
-      accum += value.getSizeBytes() - sizeof(Cesium3DTiles::Tile);
+      accum += value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Tile));
     }
     return accum;
   }

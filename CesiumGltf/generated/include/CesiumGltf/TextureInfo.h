@@ -40,9 +40,9 @@ struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(TextureInfo);
+    accum += int64_t(sizeof(TextureInfo));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

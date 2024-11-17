@@ -19,11 +19,11 @@ function resolveSizeOfForProperty(
   if (property.schemas && property.schemas.length > 0) {
     if (property.isOptional) {
       return `if(${propertyName}) {
-        ${accumName} += ${propertyName}->getSizeBytes() - sizeof(${property.originalType});
+        ${accumName} += ${propertyName}->getSizeBytes() - int64_t(sizeof(${property.originalType}));
       }`;
     }
 
-    return `${accumName} += ${propertyName}.getSizeBytes() - sizeof(${property.type});`;
+    return `${accumName} += ${propertyName}.getSizeBytes() - int64_t(sizeof(${property.type}));`;
   }
 
   return null;
@@ -131,10 +131,10 @@ function resolveProperty(
       sizeOfFormatter: (propertyName, accumName) => {
         if (makeOptional) {
           return `if(${propertyName}) {
-            ${accumName} += ${propertyName}->capacity() * sizeof(char);
+            ${accumName} += int64_t(${propertyName}->capacity() * sizeof(char));
           }`;
         }
-        return `${accumName} += ${propertyName}.capacity() * sizeof(char);`;
+        return `${accumName} += int64_t(${propertyName}.capacity() * sizeof(char));`;
       },
     };
   } else if (propertyDetails.type === "object" && propertyDetails.properties) {
@@ -410,10 +410,10 @@ function resolveArray(
     readerType: `CesiumJsonReader::ArrayJsonHandler<${itemProperty.type}, ${itemProperty.readerType}>`,
     sizeOfFormatter: (propertyName, accumName) => {
       if (!itemProperty.schemas || itemProperty.schemas.length == 0) {
-        return `${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();`;
+        return `${accumName} += int64_t(sizeof(${itemProperty.type}) * ${propertyName}.capacity());`;
       }
 
-      // We need to change the name of the variable we're iterating with if the contents are also a vector, 
+      // We need to change the name of the variable we're iterating with if the contents are also a vector,
       // as it will otherwise also generate code with `value` and cause a "hides previous local declaration" error.
       // TODO: support more than two nested loops
       let iterName = "value";
@@ -421,7 +421,7 @@ function resolveArray(
         iterName = "valueOuter";
       }
 
-      return `${accumName} += sizeof(${itemProperty.type}) * ${propertyName}.capacity();
+      return `${accumName} += int64_t(sizeof(${itemProperty.type}) * ${propertyName}.capacity());
       for(const ${itemProperty.type}& ${iterName} : ${propertyName}) {
         ${resolveSizeOfForProperty(itemProperty, iterName, accumName)}
       }`;
@@ -473,10 +473,10 @@ function resolveDictionary(
     ],
     readerType: `CesiumJsonReader::DictionaryJsonHandler<${additional.type}, ${additional.readerType}>`,
     sizeOfFormatter: (propertyName, accumName) => {
-      return `${accumName} += ${propertyName}.bucket_count() * (sizeof(std::string) + sizeof(${additional.type}));
+      return `${accumName} += int64_t(${propertyName}.bucket_count() * (sizeof(std::string) + sizeof(${additional.type})));
       for(const auto& [k, v] : ${propertyName}) {
-        ${accumName} += k.capacity() * sizeof(char) - sizeof(std::string);
-        ${resolveSizeOfForProperty(additional, "v", accumName) || `${accumName} += sizeof(${additional.type});`}
+        ${accumName} += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+        ${resolveSizeOfForProperty(additional, "v", accumName) || `${accumName} += int64_t(sizeof(${additional.type}));`}
       }`;
     }
   };

@@ -58,9 +58,9 @@ struct CESIUM3DTILES_API Availability final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Availability);
+    accum += int64_t(sizeof(Availability));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

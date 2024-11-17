@@ -58,11 +58,11 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeaturesFeatureId final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionExtInstanceFeaturesFeatureId);
+    accum += int64_t(sizeof(ExtensionExtInstanceFeaturesFeatureId));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->label) {
-      accum += this->label->capacity() * sizeof(char);
+      accum += int64_t(this->label->capacity() * sizeof(char));
     }
     return accum;
   }

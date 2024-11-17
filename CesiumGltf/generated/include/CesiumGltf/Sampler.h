@@ -104,9 +104,9 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Sampler);
+    accum += int64_t(sizeof(Sampler));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
+             int64_t(sizeof(CesiumGltf::NamedObject));
 
     return accum;
   }

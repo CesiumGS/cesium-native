@@ -117,8 +117,8 @@ function generate(options, schema, writers) {
                  */
                 int64_t getSizeBytes() const {
                   int64_t accum = 0;
-                  accum += sizeof(${name}${thisConfig.toBeInherited ? "Spec" : ""});
-                  accum += ${base}::getSizeBytes() - sizeof(${base});
+                  accum += int64_t(sizeof(${name}${thisConfig.toBeInherited ? "Spec" : ""}));
+                  accum += ${base}::getSizeBytes() - int64_t(sizeof(${base}));
                   ${indent(properties.map(p => resolveSizeOfForProperty(p, "this->" + p.cppSafeName, "accum")).filter(p => p).join("\n"))}
                   return accum;
                 }

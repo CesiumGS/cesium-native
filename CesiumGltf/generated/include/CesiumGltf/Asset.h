@@ -48,18 +48,18 @@ struct CESIUMGLTF_API Asset final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Asset);
+    accum += int64_t(sizeof(Asset));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->copyright) {
-      accum += this->copyright->capacity() * sizeof(char);
+      accum += int64_t(this->copyright->capacity() * sizeof(char));
     }
     if (this->generator) {
-      accum += this->generator->capacity() * sizeof(char);
+      accum += int64_t(this->generator->capacity() * sizeof(char));
     }
-    accum += this->version.capacity() * sizeof(char);
+    accum += int64_t(this->version.capacity() * sizeof(char));
     if (this->minVersion) {
-      accum += this->minVersion->capacity() * sizeof(char);
+      accum += int64_t(this->minVersion->capacity() * sizeof(char));
     }
     return accum;
   }

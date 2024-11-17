@@ -56,12 +56,12 @@ struct CESIUM3DTILES_API BoundingVolume final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(BoundingVolume);
+    accum += int64_t(sizeof(BoundingVolume));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(double) * this->box.capacity();
-    accum += sizeof(double) * this->region.capacity();
-    accum += sizeof(double) * this->sphere.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(double) * this->box.capacity());
+    accum += int64_t(sizeof(double) * this->region.capacity());
+    accum += int64_t(sizeof(double) * this->sphere.capacity());
     return accum;
   }
 };

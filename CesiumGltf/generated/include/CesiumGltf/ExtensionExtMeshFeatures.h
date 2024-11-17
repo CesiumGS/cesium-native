@@ -31,12 +31,13 @@ struct CESIUMGLTF_API ExtensionExtMeshFeatures final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionExtMeshFeatures);
+    accum += int64_t(sizeof(ExtensionExtMeshFeatures));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(CesiumGltf::FeatureId) * this->featureIds.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum +=
+        int64_t(sizeof(CesiumGltf::FeatureId) * this->featureIds.capacity());
     for (const CesiumGltf::FeatureId& value : this->featureIds) {
-      accum += value.getSizeBytes() - sizeof(CesiumGltf::FeatureId);
+      accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::FeatureId));
     }
     return accum;
   }

@@ -31,9 +31,9 @@ struct CESIUMGLTF_API FeatureIdTexture final : public TextureInfo {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(FeatureIdTexture);
-    accum += TextureInfo::getSizeBytes() - sizeof(TextureInfo);
-    accum += sizeof(int64_t) * this->channels.capacity();
+    accum += int64_t(sizeof(FeatureIdTexture));
+    accum += TextureInfo::getSizeBytes() - int64_t(sizeof(TextureInfo));
+    accum += int64_t(sizeof(int64_t) * this->channels.capacity());
     return accum;
   }
 };

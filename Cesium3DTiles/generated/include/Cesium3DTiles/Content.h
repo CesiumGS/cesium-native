@@ -53,17 +53,17 @@ struct CESIUM3DTILES_API Content final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Content);
+    accum += int64_t(sizeof(Content));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->boundingVolume) {
       accum += this->boundingVolume->getSizeBytes() -
-               sizeof(Cesium3DTiles::BoundingVolume);
+               int64_t(sizeof(Cesium3DTiles::BoundingVolume));
     }
-    accum += this->uri.capacity() * sizeof(char);
+    accum += int64_t(this->uri.capacity() * sizeof(char));
     if (this->metadata) {
       accum += this->metadata->getSizeBytes() -
-               sizeof(Cesium3DTiles::MetadataEntity);
+               int64_t(sizeof(Cesium3DTiles::MetadataEntity));
     }
     return accum;
   }

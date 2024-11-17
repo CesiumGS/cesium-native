@@ -64,9 +64,9 @@ struct CESIUMGLTF_API PropertyTextureProperty final : public TextureInfo {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(PropertyTextureProperty);
-    accum += TextureInfo::getSizeBytes() - sizeof(TextureInfo);
-    accum += sizeof(int64_t) * this->channels.capacity();
+    accum += int64_t(sizeof(PropertyTextureProperty));
+    accum += TextureInfo::getSizeBytes() - int64_t(sizeof(TextureInfo));
+    accum += int64_t(sizeof(int64_t) * this->channels.capacity());
     return accum;
   }
 };

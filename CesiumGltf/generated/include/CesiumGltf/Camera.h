@@ -62,16 +62,16 @@ struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Camera);
+    accum += int64_t(sizeof(Camera));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
+             int64_t(sizeof(CesiumGltf::NamedObject));
     if (this->orthographic) {
       accum += this->orthographic->getSizeBytes() -
-               sizeof(CesiumGltf::CameraOrthographic);
+               int64_t(sizeof(CesiumGltf::CameraOrthographic));
     }
     if (this->perspective) {
       accum += this->perspective->getSizeBytes() -
-               sizeof(CesiumGltf::CameraPerspective);
+               int64_t(sizeof(CesiumGltf::CameraPerspective));
     }
     return accum;
   }

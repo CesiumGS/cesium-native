@@ -31,15 +31,17 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeatures final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionExtInstanceFeatures);
+    accum += int64_t(sizeof(ExtensionExtInstanceFeatures));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId) *
-             this->featureIds.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId) *
+        this->featureIds.capacity());
     for (const CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& value :
          this->featureIds) {
-      accum += value.getSizeBytes() -
-               sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId);
+      accum +=
+          value.getSizeBytes() -
+          int64_t(sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId));
     }
     return accum;
   }

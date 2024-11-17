@@ -45,15 +45,16 @@ struct CESIUM3DTILES_API MetadataEntity
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(MetadataEntity);
+    accum += int64_t(sizeof(MetadataEntity));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->classProperty.capacity() * sizeof(char);
-    accum += this->properties.bucket_count() *
-             (sizeof(std::string) + sizeof(CesiumUtility::JsonValue));
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->classProperty.capacity() * sizeof(char));
+    accum += int64_t(
+        this->properties.bucket_count() *
+        (sizeof(std::string) + sizeof(CesiumUtility::JsonValue)));
     for (const auto& [k, v] : this->properties) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += sizeof(CesiumUtility::JsonValue);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += int64_t(sizeof(CesiumUtility::JsonValue));
     }
     return accum;
   }

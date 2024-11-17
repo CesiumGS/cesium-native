@@ -39,11 +39,11 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionMeshPrimitiveExtStructuralMetadata);
+    accum += int64_t(sizeof(ExtensionMeshPrimitiveExtStructuralMetadata));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(int32_t) * this->propertyTextures.capacity();
-    accum += sizeof(int32_t) * this->propertyAttributes.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(int32_t) * this->propertyTextures.capacity());
+    accum += int64_t(sizeof(int32_t) * this->propertyAttributes.capacity());
     return accum;
   }
 };

@@ -43,20 +43,21 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Class);
+    accum += int64_t(sizeof(Class));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
     if (this->description) {
-      accum += this->description->capacity() * sizeof(char);
+      accum += int64_t(this->description->capacity() * sizeof(char));
     }
-    accum += this->properties.bucket_count() *
-             (sizeof(std::string) + sizeof(CesiumGltf::ClassProperty));
+    accum += int64_t(
+        this->properties.bucket_count() *
+        (sizeof(std::string) + sizeof(CesiumGltf::ClassProperty)));
     for (const auto& [k, v] : this->properties) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(CesiumGltf::ClassProperty);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::ClassProperty));
     }
     return accum;
   }

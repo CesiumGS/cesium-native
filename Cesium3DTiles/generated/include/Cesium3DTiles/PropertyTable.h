@@ -54,19 +54,20 @@ struct CESIUM3DTILES_API PropertyTable final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(PropertyTable);
+    accum += int64_t(sizeof(PropertyTable));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
-    accum += this->classProperty.capacity() * sizeof(char);
-    accum +=
+    accum += int64_t(this->classProperty.capacity() * sizeof(char));
+    accum += int64_t(
         this->properties.bucket_count() *
-        (sizeof(std::string) + sizeof(Cesium3DTiles::PropertyTableProperty));
+        (sizeof(std::string) + sizeof(Cesium3DTiles::PropertyTableProperty)));
     for (const auto& [k, v] : this->properties) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(Cesium3DTiles::PropertyTableProperty);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::PropertyTableProperty));
     }
     return accum;
   }

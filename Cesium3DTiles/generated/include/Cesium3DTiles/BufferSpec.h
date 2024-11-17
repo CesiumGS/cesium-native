@@ -45,14 +45,14 @@ struct CESIUM3DTILES_API BufferSpec : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(BufferSpec);
+    accum += int64_t(sizeof(BufferSpec));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->uri) {
-      accum += this->uri->capacity() * sizeof(char);
+      accum += int64_t(this->uri->capacity() * sizeof(char));
     }
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
     return accum;
   }

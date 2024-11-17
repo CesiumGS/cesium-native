@@ -62,30 +62,32 @@ struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Schema);
+    accum += int64_t(sizeof(Schema));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->id.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->id.capacity() * sizeof(char));
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
     if (this->description) {
-      accum += this->description->capacity() * sizeof(char);
+      accum += int64_t(this->description->capacity() * sizeof(char));
     }
     if (this->version) {
-      accum += this->version->capacity() * sizeof(char);
+      accum += int64_t(this->version->capacity() * sizeof(char));
     }
-    accum += this->classes.bucket_count() *
-             (sizeof(std::string) + sizeof(Cesium3DTiles::Class));
+    accum += int64_t(
+        this->classes.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::Class)));
     for (const auto& [k, v] : this->classes) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(Cesium3DTiles::Class);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Class));
     }
-    accum += this->enums.bucket_count() *
-             (sizeof(std::string) + sizeof(Cesium3DTiles::Enum));
+    accum += int64_t(
+        this->enums.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::Enum)));
     for (const auto& [k, v] : this->enums) {
-      accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(Cesium3DTiles::Enum);
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Enum));
     }
     return accum;
   }

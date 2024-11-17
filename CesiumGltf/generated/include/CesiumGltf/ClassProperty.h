@@ -196,20 +196,20 @@ struct CESIUMGLTF_API ClassProperty final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ClassProperty);
+    accum += int64_t(sizeof(ClassProperty));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
     if (this->description) {
-      accum += this->description->capacity() * sizeof(char);
+      accum += int64_t(this->description->capacity() * sizeof(char));
     }
     if (this->enumType) {
-      accum += this->enumType->capacity() * sizeof(char);
+      accum += int64_t(this->enumType->capacity() * sizeof(char));
     }
     if (this->semantic) {
-      accum += this->semantic->capacity() * sizeof(char);
+      accum += int64_t(this->semantic->capacity() * sizeof(char));
     }
     return accum;
   }

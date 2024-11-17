@@ -122,26 +122,26 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Material);
+    accum += int64_t(sizeof(Material));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
+             int64_t(sizeof(CesiumGltf::NamedObject));
     if (this->pbrMetallicRoughness) {
       accum += this->pbrMetallicRoughness->getSizeBytes() -
-               sizeof(CesiumGltf::MaterialPBRMetallicRoughness);
+               int64_t(sizeof(CesiumGltf::MaterialPBRMetallicRoughness));
     }
     if (this->normalTexture) {
       accum += this->normalTexture->getSizeBytes() -
-               sizeof(CesiumGltf::MaterialNormalTextureInfo);
+               int64_t(sizeof(CesiumGltf::MaterialNormalTextureInfo));
     }
     if (this->occlusionTexture) {
       accum += this->occlusionTexture->getSizeBytes() -
-               sizeof(CesiumGltf::MaterialOcclusionTextureInfo);
+               int64_t(sizeof(CesiumGltf::MaterialOcclusionTextureInfo));
     }
     if (this->emissiveTexture) {
       accum += this->emissiveTexture->getSizeBytes() -
-               sizeof(CesiumGltf::TextureInfo);
+               int64_t(sizeof(CesiumGltf::TextureInfo));
     }
-    accum += sizeof(double) * this->emissiveFactor.capacity();
+    accum += int64_t(sizeof(double) * this->emissiveFactor.capacity());
     return accum;
   }
 };

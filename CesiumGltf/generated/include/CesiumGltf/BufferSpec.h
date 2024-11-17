@@ -37,11 +37,11 @@ struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(BufferSpec);
+    accum += int64_t(sizeof(BufferSpec));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
+             int64_t(sizeof(CesiumGltf::NamedObject));
     if (this->uri) {
-      accum += this->uri->capacity() * sizeof(char);
+      accum += int64_t(this->uri->capacity() * sizeof(char));
     }
     return accum;
   }

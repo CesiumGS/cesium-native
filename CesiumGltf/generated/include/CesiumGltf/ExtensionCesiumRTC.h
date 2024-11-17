@@ -30,10 +30,10 @@ struct CESIUMGLTF_API ExtensionCesiumRTC final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionCesiumRTC);
+    accum += int64_t(sizeof(ExtensionCesiumRTC));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(double) * this->center.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(double) * this->center.capacity());
     return accum;
   }
 };

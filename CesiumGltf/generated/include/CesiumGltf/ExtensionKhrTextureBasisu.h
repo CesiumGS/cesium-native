@@ -32,9 +32,9 @@ struct CESIUMGLTF_API ExtensionKhrTextureBasisu final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionKhrTextureBasisu);
+    accum += int64_t(sizeof(ExtensionKhrTextureBasisu));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

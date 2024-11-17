@@ -76,17 +76,17 @@ struct CESIUMGLTF_API MaterialPBRMetallicRoughness final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(MaterialPBRMetallicRoughness);
+    accum += int64_t(sizeof(MaterialPBRMetallicRoughness));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += sizeof(double) * this->baseColorFactor.capacity();
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(double) * this->baseColorFactor.capacity());
     if (this->baseColorTexture) {
       accum += this->baseColorTexture->getSizeBytes() -
-               sizeof(CesiumGltf::TextureInfo);
+               int64_t(sizeof(CesiumGltf::TextureInfo));
     }
     if (this->metallicRoughnessTexture) {
       accum += this->metallicRoughnessTexture->getSizeBytes() -
-               sizeof(CesiumGltf::TextureInfo);
+               int64_t(sizeof(CesiumGltf::TextureInfo));
     }
     return accum;
   }

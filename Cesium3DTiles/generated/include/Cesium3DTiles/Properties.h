@@ -34,9 +34,9 @@ struct CESIUM3DTILES_API Properties final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Properties);
+    accum += int64_t(sizeof(Properties));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

@@ -46,9 +46,9 @@ struct CESIUMGLTF_API CameraOrthographic final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(CameraOrthographic);
+    accum += int64_t(sizeof(CameraOrthographic));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
     return accum;
   }

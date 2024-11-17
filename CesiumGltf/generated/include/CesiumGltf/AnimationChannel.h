@@ -40,11 +40,11 @@ struct CESIUMGLTF_API AnimationChannel final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(AnimationChannel);
+    accum += int64_t(sizeof(AnimationChannel));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += this->target.getSizeBytes() -
-             sizeof(CesiumGltf::AnimationChannelTarget);
+             int64_t(sizeof(CesiumGltf::AnimationChannelTarget));
     return accum;
   }
 };

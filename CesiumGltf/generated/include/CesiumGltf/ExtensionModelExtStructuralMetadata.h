@@ -62,28 +62,33 @@ struct CESIUMGLTF_API ExtensionModelExtStructuralMetadata final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionModelExtStructuralMetadata);
+    accum += int64_t(sizeof(ExtensionModelExtStructuralMetadata));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += this->schema->getSizeBytes();
     if (this->schemaUri) {
-      accum += this->schemaUri->capacity() * sizeof(char);
+      accum += int64_t(this->schemaUri->capacity() * sizeof(char));
     }
-    accum +=
-        sizeof(CesiumGltf::PropertyTable) * this->propertyTables.capacity();
+    accum += int64_t(
+        sizeof(CesiumGltf::PropertyTable) * this->propertyTables.capacity());
     for (const CesiumGltf::PropertyTable& value : this->propertyTables) {
-      accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyTable);
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(CesiumGltf::PropertyTable));
     }
-    accum +=
-        sizeof(CesiumGltf::PropertyTexture) * this->propertyTextures.capacity();
+    accum += int64_t(
+        sizeof(CesiumGltf::PropertyTexture) *
+        this->propertyTextures.capacity());
     for (const CesiumGltf::PropertyTexture& value : this->propertyTextures) {
-      accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyTexture);
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(CesiumGltf::PropertyTexture));
     }
-    accum += sizeof(CesiumGltf::PropertyAttribute) *
-             this->propertyAttributes.capacity();
+    accum += int64_t(
+        sizeof(CesiumGltf::PropertyAttribute) *
+        this->propertyAttributes.capacity());
     for (const CesiumGltf::PropertyAttribute& value :
          this->propertyAttributes) {
-      accum += value.getSizeBytes() - sizeof(CesiumGltf::PropertyAttribute);
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(CesiumGltf::PropertyAttribute));
     }
     return accum;
   }

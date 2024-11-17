@@ -29,10 +29,10 @@ struct CESIUM3DTILES_API Subtrees final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Subtrees);
+    accum += int64_t(sizeof(Subtrees));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
-    accum += this->uri.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->uri.capacity() * sizeof(char));
     return accum;
   }
 };

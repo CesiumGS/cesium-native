@@ -46,10 +46,10 @@ struct CESIUMGLTF_API Skin final : public CesiumGltf::NamedObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Skin);
+    accum += int64_t(sizeof(Skin));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
-    accum += sizeof(int32_t) * this->joints.capacity();
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    accum += int64_t(sizeof(int32_t) * this->joints.capacity());
     return accum;
   }
 };

@@ -31,10 +31,10 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensionModelKhrMaterialsVariantsValue);
+    accum += int64_t(sizeof(ExtensionModelKhrMaterialsVariantsValue));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
-             sizeof(CesiumGltf::NamedObject);
-    accum += this->name.capacity() * sizeof(char);
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    accum += int64_t(this->name.capacity() * sizeof(char));
     return accum;
   }
 };

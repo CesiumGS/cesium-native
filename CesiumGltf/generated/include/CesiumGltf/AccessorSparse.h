@@ -45,13 +45,13 @@ struct CESIUMGLTF_API AccessorSparse final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(AccessorSparse);
+    accum += int64_t(sizeof(AccessorSparse));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += this->indices.getSizeBytes() -
-             sizeof(CesiumGltf::AccessorSparseIndices);
-    accum +=
-        this->values.getSizeBytes() - sizeof(CesiumGltf::AccessorSparseValues);
+             int64_t(sizeof(CesiumGltf::AccessorSparseIndices));
+    accum += this->values.getSizeBytes() -
+             int64_t(sizeof(CesiumGltf::AccessorSparseValues));
     return accum;
   }
 };

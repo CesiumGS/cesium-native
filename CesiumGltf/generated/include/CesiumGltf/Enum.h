@@ -71,18 +71,18 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(Enum);
+    accum += int64_t(sizeof(Enum));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             sizeof(CesiumUtility::ExtensibleObject);
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->name) {
-      accum += this->name->capacity() * sizeof(char);
+      accum += int64_t(this->name->capacity() * sizeof(char));
     }
     if (this->description) {
-      accum += this->description->capacity() * sizeof(char);
+      accum += int64_t(this->description->capacity() * sizeof(char));
     }
-    accum += sizeof(CesiumGltf::EnumValue) * this->values.capacity();
+    accum += int64_t(sizeof(CesiumGltf::EnumValue) * this->values.capacity());
     for (const CesiumGltf::EnumValue& value : this->values) {
-      accum += value.getSizeBytes() - sizeof(CesiumGltf::EnumValue);
+      accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::EnumValue));
     }
     return accum;
   }
