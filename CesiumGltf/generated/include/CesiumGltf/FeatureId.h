@@ -53,5 +53,26 @@ struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
    * values. Only applicable when using the `EXT_structural_metadata` extension.
    */
   int32_t propertyTable = -1;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(FeatureId));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    if (this->label) {
+      accum += int64_t(this->label->capacity() * sizeof(char));
+    }
+    if (this->texture) {
+      accum += this->texture->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::FeatureIdTexture));
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf
