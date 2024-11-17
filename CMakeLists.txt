@@ -205,6 +205,7 @@ if(CESIUM_ENABLE_CLANG_TIDY)
 endif()
 
 # Add Modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
@@ -238,6 +239,13 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # However, for some of the vcpkg built libraries where they don't provide a prope cmake config file, we have to declare
 # and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
 # these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
+#
+# XXX Above comment should be obsoleted by these first calls to
+# find_package, which resolve to our own modules that provide
+# targets. If needed, they can be installed with CMake config files
+# etc.
+find_package(zlib-ng REQUIRED)
+
 find_package(Async++ CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
