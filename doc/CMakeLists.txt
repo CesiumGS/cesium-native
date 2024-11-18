@@ -66,7 +66,9 @@ if(DOXYGEN_FOUND)
         cesium-native-docs
         "../README.md"
         "./style-guide.md"
-        "./thread-safety.md"
+        "./multithreading.md"
+        "./thread-safety-rules.md"
+        "./async-system.md"
         ${LIB_DIRS}
     )
 endif()
