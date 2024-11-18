@@ -247,6 +247,7 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # targets. If needed, they can be installed with CMake config files
 # etc.
 find_package(zlib-ng REQUIRED)
+find_package(modp_b64 REQUIRED)
 
 find_package(Async++ CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
@@ -309,6 +310,7 @@ install(EXPORT CesiumExports
 
 install(FILES
   "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
+  "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake" 
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/cesium-native")
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config/Config.cmake.in

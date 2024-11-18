@@ -36,7 +36,6 @@ if(zlib-ng_FOUND AND NOT TARGET zlib-ng::zlib-ng)
   add_library(zlib-ng::zlib-ng UNKNOWN IMPORTED)
   set_target_properties(zlib-ng::zlib-ng PROPERTIES
     IMPORTED_LOCATION "${zlib-ng_LIBRARIES}"
-    IMPORTED_LOCATION_DEBUG "${zlib-ng_DEBUG_LIBRARIES}"
     INTERFACE_INCLUDE_DIRECTORIES "${zlib-ng_INCLUDE_DIRS}"
     )
   if(zlib-ng_DEBUG_LIBRARIES)

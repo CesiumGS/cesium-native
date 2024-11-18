@@ -15,20 +15,6 @@ add_library(earcut INTERFACE)
 find_path(EARCUT_HPP_INCLUDE_DIRS "mapbox/earcut.hpp")
 target_include_directories(earcut INTERFACE "${EARCUT_HPP_INCLUDE_DIRS}")
 
-
-
-# Allow the catch2 cmake include to be found
-list(APPEND CMAKE_MODULE_PATH "${PACKAGE_BUILD_DIR}/share/Catch2")
-# Modp_b64 doesn't contain a CMake config, so we construct a fake import library here
-add_library(modp_b64::modp_b64 STATIC IMPORTED GLOBAL)
-set_target_properties(modp_b64::modp_b64 PROPERTIES
-    INCLUDE_DIRECTORIES "${PACKAGE_BUILD_DIR}/include"
-    # Yes, on non-windows platforms the name of the library really is liblibmodpbase64.a
-    # Don't ask me, I didn't do it.
-    IMPORTED_LOCATION "${PACKAGE_BUILD_DIR}/lib/${EXTERN_LIB_PREFIX}libmodpbase64.${EXTERN_LIB_SUFFIX}"
-    IMPORTED_LOCATION_DEBUG "${PACKAGE_BUILD_DIR}/debug/lib/${EXTERN_LIB_PREFIX}libmodpbase64.${EXTERN_LIB_SUFFIX}"
-)
-
 # picosha2 also doesn't contain a CMake config, so we construct a fake header-only import library here
 add_library(picosha2::picosha2 IMPORTED INTERFACE GLOBAL)
 set_target_properties(picosha2::picosha2 PROPERTIES
