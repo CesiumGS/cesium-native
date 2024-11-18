@@ -189,5 +189,31 @@ struct CESIUM3DTILES_API ClassProperty final
    * interpreted. The semantic cannot be used by other properties in the class.
    */
   std::optional<std::string> semantic;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ClassProperty));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    if (this->name) {
+      accum += int64_t(this->name->capacity() * sizeof(char));
+    }
+    if (this->description) {
+      accum += int64_t(this->description->capacity() * sizeof(char));
+    }
+    if (this->enumType) {
+      accum += int64_t(this->enumType->capacity() * sizeof(char));
+    }
+    if (this->semantic) {
+      accum += int64_t(this->semantic->capacity() * sizeof(char));
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

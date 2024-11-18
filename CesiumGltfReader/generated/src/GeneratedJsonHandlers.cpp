@@ -3151,7 +3151,7 @@ namespace CesiumGltfReader {
 
 SchemaJsonHandler::SchemaJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+    : CesiumJsonReader::SharedAssetJsonHandler(options),
       _id(),
       _name(),
       _description(),
@@ -3162,7 +3162,7 @@ SchemaJsonHandler::SchemaJsonHandler(
 void SchemaJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
     CesiumGltf::Schema* pObject) {
-  CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
+  CesiumJsonReader::SharedAssetJsonHandler::reset(pParentHandler, pObject);
   this->_pObject = pObject;
 }
 
@@ -3194,7 +3194,7 @@ CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKeySchema(
   if ("enums"s == str)
     return property("enums", this->_enums, o.enums);
 
-  return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
+  return this->readObjectKeySharedAsset(objectType, str, *this->_pObject);
 }
 
 SchemaReader::SchemaReader() { registerReaderExtensions(this->_options); }

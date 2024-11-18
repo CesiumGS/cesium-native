@@ -11,6 +11,7 @@
 
 - Added support for `EXT_accessor_additional_types` in `AccessorView`.
 - Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
+- The `schemaUri` property in the `EXT_structural_metadata` glTF extension is now supported, allowing structural metadata schemas to be loaded from URIs rather than being embedded in the glTF itself.
 
 ##### Fixes :wrench:
 
