@@ -86,3 +86,68 @@ The continuation lambda returns an instance of type `ProcessedContent`. Because 
 
 We can attach a further continuation to this new `Future`, which we do in the example by calling `thenInMainThread`. This second continuation will be invoked in the main thread once the `ProcessedContent` is asynchronously created. It calls `updateApplicationWithProcessedContent`, which we can imagine updates the user interface based on the downloaded and processed content.
 
+With just a few lines of code, we've created a process that:
+
+1. Asynchronously downloads a resource from the internet.
+2. Does some CPU-intensive processing on that resource in a background thread.
+3. Updates the user interface, which can usually only be done in the main thread.
+
+We've done this:
+
+1. Without ever blocking any threads.
+2. Without writing any complicated thread synchronization code, such as with `std::mutex`.
+
+## Catch
+
+The `then...` family of functions register continuations that are invoked when a `Future` resolves (completes successfully). What if the `Future` rejects (completes with an exception) instead?
+
+We can register continuations for the rejection case by calling the `catchInMainThread` and `catchImmediately` methods instead.
+
+> [!note]
+> Cesium Native does not currently have a `catchInWorkerThread` or `catchInThreadPool` method.
+
+Unlike the `then...` family continuations, which receive the value of the successful asynchronous operation, the `catch...` family continuations receive a `std::exception`. A common pattern is to turn a catch exception into a valid value that indicates something went wrong:
+
+\snippet ExamplesAsyncSystem.cpp catch
+
+In this example, we call `startOperationThatMightFail`, and it returns a `Future<ProcessedContent>`. We then call `catchImmediately` on it in order to register a continuation that will be invoked if the operation fails with an exception. Notice that this continuation returns a `ProcessedContent` too, in this case created from the failure error message. This is a common pattern - a `catch` continuation turning the error into a result value that encapsulates the error.
+
+The `catchImmediately` returns a new `Future`, just like a `then...` method does. The value type of the `Future` will be the same as the original `Future` that we called `catchImmediately` on, and it is for this reason that the continuation function given to `catch...` _must_ return a value of the same type that `startOperationThatMightFail` would have produced on success. The only other option is to throw an exception, at which point execution will continue at the continuation provided to the _next_ `catch...` in the chain.
+
+Note that a `catch...` continuation can handle an exception or rejected `Future` that reaches it from _any_ prior point in the `Future` chain. When a `catch...` continuation is invoked, it is not necessarily the `Future` to which it is directly attached that experienced the error.
+
+As the name implies, `catch...` continuations are very similar to exception handlers in normal synchronous code. They're generally only used to handle truly exceptional situations, and are best avoided for normal control flow.
+
+## Future Unwrapping {#future-unwrapping}
+
+In our examples above, both `then...` and `catch...` continuations always returned a value of some type `T`. A continuation may instead return a `Future<T>`! When this happens, the `AsyncSystem` "unwraps" the returned `Future`. That means that the `Future` returned by the `then...` or `catch...` will not itself resolve or reject until the `Future` returned by the continuation resolves or rejects. An example will make this clearer.
+
+Imaging that we're downloading a web page from the internet, as we were in previous examples. In this case, though, the web page references some other internet resource, such as an image. We want to download that too, once we know what it is, and aren't done until both the original web page and the image are downloaded. We can do this by taking advantage of future unwrapping, like so:
+
+\snippet ExamplesAsyncSystem.cpp unwrapping
+
+In this example, our first continuation calls `findReferenceImageUrl` to determine the URL of an image referenced by the page. We then call `get` to download that image. Notice that we've captured `asyncSystem` and `pAssetAccessor` in the lambda in order to make this possible. The `get` call returns a `Future`, and we return that `Future` from our continuation. The returned `Future` is unwrapped by the `AsyncSystem`, and as a result, the second continuation, the one passed to `thenInMainThread`, will not be invoked until this second request `Future` resolves.
+
+You may have noticed that our second continuation, the one passed to `thenInMainThread`, only has access to the image's `IAssetRequest`. What if we also need to use the page `IAssetRequest`? Or some other data derived from it? While it's possible to do this manually with extra continuations and lambda captures, the `thenPassThrough` method makes it easy.
+
+## thenPassThrough
+
+The `thenPassThrough` method makes it easy to pass through some extra data to a continuation. This is especially useful in combination with `Future` unwrapping. It looks like this:
+
+\snippet ExamplesAsyncSystem.cpp then-pass-through
+
+Like the example in the previous section, we're finding a referenced image URL and then initiating a second HTTP request to go download it. This time, though, we call `thenPassThrough` on the `Future` returned by the `get`, and pass it the `ProcessedContent`. As a result, the next continuation in the chain receives _both_ the `ProcessedContent` and the image `IAssetRequest` in the form of a `std::tuple`.
+
+## AsyncSystem::all
+
+In the previous examples, we downloaded a web page, found the URL of an image within it, and then downloaded that image, too. But what if the page contains multiple images? That's where the `all` method on `AsyncSystem` comes in. Given a `std::vector<Future<T>>`, `AsyncSystem::all` returns a `Future<std::vector<T>>`. In other words, it turns a list of `Futures` into a single `Future` that resolves to a list of values. We can use it like this:
+
+\snippet ExamplesAsyncSystem.cpp all
+
+The `Future` returned by `all` resolves when all of the `Futures` it is given resolve. It rejects when _any_ of the `Futures` it is given reject.
+
+## Promises
+
+## Lambda Captures and Thread Safety
+
+## SharedFuture
