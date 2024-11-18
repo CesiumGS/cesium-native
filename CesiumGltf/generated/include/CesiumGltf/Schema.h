@@ -6,7 +6,7 @@
 #include "CesiumGltf/Enum.h"
 #include "CesiumGltf/Library.h"
 
-#include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/SharedAsset.h>
 
 #include <optional>
 #include <string>
@@ -16,7 +16,7 @@ namespace CesiumGltf {
 /**
  * @brief An object defining classes and enums.
  */
-struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
   static inline constexpr const char* TypeName = "Schema";
 
   /**
@@ -53,5 +53,43 @@ struct CESIUMGLTF_API Schema final : public CesiumUtility::ExtensibleObject {
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, CesiumGltf::Enum> enums;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Schema));
+    accum += CesiumUtility::SharedAsset<Schema>::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::SharedAsset<Schema>));
+    accum += int64_t(this->id.capacity() * sizeof(char));
+    if (this->name) {
+      accum += int64_t(this->name->capacity() * sizeof(char));
+    }
+    if (this->description) {
+      accum += int64_t(this->description->capacity() * sizeof(char));
+    }
+    if (this->version) {
+      accum += int64_t(this->version->capacity() * sizeof(char));
+    }
+    accum += int64_t(
+        this->classes.bucket_count() *
+        (sizeof(std::string) + sizeof(CesiumGltf::Class)));
+    for (const auto& [k, v] : this->classes) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::Class));
+    }
+    accum += int64_t(
+        this->enums.bucket_count() *
+        (sizeof(std::string) + sizeof(CesiumGltf::Enum)));
+    for (const auto& [k, v] : this->enums) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::Enum));
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

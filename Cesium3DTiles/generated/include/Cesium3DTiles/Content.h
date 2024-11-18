@@ -44,5 +44,28 @@ struct CESIUM3DTILES_API Content final
    * array of `groups` that is defined for the containing tileset.
    */
   std::optional<int64_t> group;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Content));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    if (this->boundingVolume) {
+      accum += this->boundingVolume->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::BoundingVolume));
+    }
+    accum += int64_t(this->uri.capacity() * sizeof(char));
+    if (this->metadata) {
+      accum += this->metadata->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::MetadataEntity));
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles
