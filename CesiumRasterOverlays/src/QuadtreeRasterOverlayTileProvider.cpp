@@ -53,25 +53,38 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _imageWidth(imageWidth),
       _imageHeight(imageHeight),
       _tilingScheme(tilingScheme) {
+  auto loadParentTile = [this](const QuadtreeTileID& key)
+      -> Future<ResultPointer<LoadedQuadtreeImage>> {
+    const Rectangle rectangle = this->getTilingScheme().tileToRectangle(key);
+    const QuadtreeTileID parentID(key.level - 1, key.x >> 1, key.y >> 1);
+    return this->getQuadtreeTile(parentID).thenImmediately(
+        [rectangle](const ResultPointer<LoadedQuadtreeImage>& loaded) {
+          if (loaded.pValue) {
+            loaded.pValue->subset = rectangle;
+          }
+          return loaded;
+        });
+  };
+
   this->_pTileDepot.emplace(std::function(
-      [pThis = this](
+      [this, loadParentTile](
           const AsyncSystem& asyncSystem,
           [[maybe_unused]] const std::shared_ptr<IAssetAccessor>&
               pAssetAccessor,
           const QuadtreeTileID& key)
           -> Future<ResultPointer<LoadedQuadtreeImage>> {
-        return pThis->loadQuadtreeTileImage(key)
+        return this->loadQuadtreeTileImage(key)
             .catchImmediately([](std::exception&& e) {
               // Turn an exception into an error.
               LoadedRasterOverlayImage result;
               result.errorList.emplaceError(e.what());
               return result;
             })
-            .thenInMainThread([pThis,
-                               key,
-                               currentLevel = key.level,
-                               minimumLevel = pThis->getMinimumLevel(),
-                               asyncSystem](LoadedRasterOverlayImage&& loaded) {
+            .thenImmediately([loadParentTile,
+                              key,
+                              currentLevel = key.level,
+                              minimumLevel = this->getMinimumLevel(),
+                              asyncSystem](LoadedRasterOverlayImage&& loaded) {
               if (loaded.pImage && !loaded.errorList.hasErrors() &&
                   loaded.pImage->width > 0 && loaded.pImage->height > 0) {
 #if SHOW_TILE_BOUNDARIES
@@ -101,20 +114,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
               // We can only initiate a new tile request from the main thread,
               // though.
               if (currentLevel > minimumLevel) {
-                const Rectangle rectangle =
-                    pThis->getTilingScheme().tileToRectangle(key);
-                const QuadtreeTileID parentID(
-                    key.level - 1,
-                    key.x >> 1,
-                    key.y >> 1);
-                return pThis->getQuadtreeTile(parentID).thenImmediately(
-                    [rectangle](
-                        const ResultPointer<LoadedQuadtreeImage>& loaded) {
-                      if (loaded.pValue) {
-                        loaded.pValue->subset = rectangle;
-                      }
-                      return loaded;
-                    });
+                return asyncSystem.runInMainThread(loadParentTile(key));
               } else {
                 // No parent available, so return the original failed result.
                 IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
