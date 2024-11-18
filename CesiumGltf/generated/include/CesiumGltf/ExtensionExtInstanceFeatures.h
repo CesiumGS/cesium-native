@@ -22,5 +22,28 @@ struct CESIUMGLTF_API ExtensionExtInstanceFeatures final
    * @brief An array of feature ID sets.
    */
   std::vector<CesiumGltf::ExtensionExtInstanceFeaturesFeatureId> featureIds;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ExtensionExtInstanceFeatures));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId) *
+        this->featureIds.capacity());
+    for (const CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& value :
+         this->featureIds) {
+      accum +=
+          value.getSizeBytes() -
+          int64_t(sizeof(CesiumGltf::ExtensionExtInstanceFeaturesFeatureId));
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

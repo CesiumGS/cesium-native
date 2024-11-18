@@ -107,5 +107,47 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * tiles, there are no children, and this property may not be defined.
    */
   std::vector<Cesium3DTiles::Tile> children;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Tile));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += this->boundingVolume.getSizeBytes() -
+             int64_t(sizeof(Cesium3DTiles::BoundingVolume));
+    if (this->viewerRequestVolume) {
+      accum += this->viewerRequestVolume->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::BoundingVolume));
+    }
+    accum += int64_t(sizeof(double) * this->transform.capacity());
+    if (this->content) {
+      accum += this->content->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::Content));
+    }
+    accum +=
+        int64_t(sizeof(Cesium3DTiles::Content) * this->contents.capacity());
+    for (const Cesium3DTiles::Content& value : this->contents) {
+      accum += value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Content));
+    }
+    if (this->metadata) {
+      accum += this->metadata->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::MetadataEntity));
+    }
+    if (this->implicitTiling) {
+      accum += this->implicitTiling->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::ImplicitTiling));
+    }
+    accum += int64_t(sizeof(Cesium3DTiles::Tile) * this->children.capacity());
+    for (const Cesium3DTiles::Tile& value : this->children) {
+      accum += value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Tile));
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

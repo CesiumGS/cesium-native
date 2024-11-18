@@ -113,5 +113,36 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
    * equation is evaluated.
    */
   bool doubleSided = false;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Material));
+    accum += CesiumGltf::NamedObject::getSizeBytes() -
+             int64_t(sizeof(CesiumGltf::NamedObject));
+    if (this->pbrMetallicRoughness) {
+      accum += this->pbrMetallicRoughness->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::MaterialPBRMetallicRoughness));
+    }
+    if (this->normalTexture) {
+      accum += this->normalTexture->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::MaterialNormalTextureInfo));
+    }
+    if (this->occlusionTexture) {
+      accum += this->occlusionTexture->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::MaterialOcclusionTextureInfo));
+    }
+    if (this->emissiveTexture) {
+      accum += this->emissiveTexture->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::TextureInfo));
+    }
+    accum += int64_t(sizeof(double) * this->emissiveFactor.capacity());
+    return accum;
+  }
 };
 } // namespace CesiumGltf

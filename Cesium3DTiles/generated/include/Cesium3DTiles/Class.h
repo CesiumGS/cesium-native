@@ -34,5 +34,32 @@ struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
    * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
    */
   std::unordered_map<std::string, Cesium3DTiles::ClassProperty> properties;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Class));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    if (this->name) {
+      accum += int64_t(this->name->capacity() * sizeof(char));
+    }
+    if (this->description) {
+      accum += int64_t(this->description->capacity() * sizeof(char));
+    }
+    accum += int64_t(
+        this->properties.bucket_count() *
+        (sizeof(std::string) + sizeof(Cesium3DTiles::ClassProperty)));
+    for (const auto& [k, v] : this->properties) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::ClassProperty));
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles
