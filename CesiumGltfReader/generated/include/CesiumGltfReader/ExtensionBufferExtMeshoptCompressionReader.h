@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionBufferExtMeshoptCompression;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

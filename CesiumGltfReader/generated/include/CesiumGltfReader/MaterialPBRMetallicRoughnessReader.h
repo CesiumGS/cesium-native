@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct MaterialPBRMetallicRoughness;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

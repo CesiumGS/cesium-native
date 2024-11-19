@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionKhrDracoMeshCompression;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

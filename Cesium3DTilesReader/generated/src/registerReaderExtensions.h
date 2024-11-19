@@ -8,4 +8,4 @@ class JsonReaderOptions;
 
 namespace Cesium3DTilesReader {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options);
-}
+} // namespace Cesium3DTilesReader

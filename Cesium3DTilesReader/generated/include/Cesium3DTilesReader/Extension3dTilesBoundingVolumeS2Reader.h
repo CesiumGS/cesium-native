@@ -14,7 +14,7 @@
 
 namespace Cesium3DTiles {
 struct Extension3dTilesBoundingVolumeS2;
-}
+} // namespace Cesium3DTiles
 
 namespace Cesium3DTilesReader {
 

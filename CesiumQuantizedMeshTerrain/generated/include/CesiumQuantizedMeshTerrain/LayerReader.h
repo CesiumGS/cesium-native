@@ -14,7 +14,7 @@
 
 namespace CesiumQuantizedMeshTerrain {
 struct Layer;
-}
+} // namespace CesiumQuantizedMeshTerrain
 
 namespace CesiumQuantizedMeshTerrain {
 

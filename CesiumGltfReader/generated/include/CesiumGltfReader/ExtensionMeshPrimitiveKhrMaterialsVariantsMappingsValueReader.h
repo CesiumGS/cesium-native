@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

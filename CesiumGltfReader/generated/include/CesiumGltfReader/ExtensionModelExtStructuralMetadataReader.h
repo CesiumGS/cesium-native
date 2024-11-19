@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionModelExtStructuralMetadata;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

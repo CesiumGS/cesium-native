@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionCesiumRTC;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

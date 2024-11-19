@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionCesiumPrimitiveOutline;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

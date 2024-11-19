@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionExtMeshFeatures;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

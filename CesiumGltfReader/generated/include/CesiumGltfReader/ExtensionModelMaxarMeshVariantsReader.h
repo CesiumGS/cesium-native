@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionModelMaxarMeshVariants;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

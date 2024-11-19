@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionTextureWebp;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
