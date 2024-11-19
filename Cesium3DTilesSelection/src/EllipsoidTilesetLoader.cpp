@@ -69,7 +69,9 @@ TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
   const QuadtreeTileID* pParentID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
 
-  if (pParentID) {
+  // Due to the use of uint32_t for QuadtreeTileID X and Y, we can only support
+  // through level 30.
+  if (pParentID && pParentID->level < 30) {
     std::vector<Tile> children;
     QuadtreeChildren childIDs =
         ImplicitTilingUtilities::getChildren(*pParentID);
