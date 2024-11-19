@@ -200,6 +200,7 @@ void TilesetHeightQuery::findCandidateTiles(
 }
 
 /*static*/ void TilesetHeightRequest::processHeightRequests(
+    const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
     Tile::LoadedLinkedList& loadedTiles,
@@ -214,6 +215,7 @@ void TilesetHeightQuery::findCandidateTiles(
   for (auto it = heightRequests.begin(); it != heightRequests.end();) {
     TilesetHeightRequest& request = *it;
     if (!request.tryCompleteHeightRequest(
+            asyncSystem,
             contentManager,
             options,
             loadedTiles,
@@ -249,10 +251,35 @@ void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
 }
 
 bool TilesetHeightRequest::tryCompleteHeightRequest(
+    const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
     Tile::LoadedLinkedList& loadedTiles,
     std::set<Tile*>& tileLoadSet) {
+  // If this TilesetContentLoader supports direct height queries, use that
+  // instead of downloading tiles.
+  if (contentManager.getRootTile() &&
+      contentManager.getRootTile()->getLoader()) {
+    ITilesetHeightQuery* pQuery =
+        contentManager.getRootTile()->getLoader()->getHeightQuery();
+    if (pQuery) {
+      std::vector<Cartographic> positions;
+      positions.reserve(this->queries.size());
+      for (TilesetHeightQuery& query : this->queries) {
+        positions.emplace_back(query.inputPosition);
+      }
+
+      pQuery->queryHeights(asyncSystem, std::move(positions))
+          .thenImmediately(
+              [promise = this->promise](SampleHeightResult&& result) {
+                promise.resolve(std::move(result));
+              });
+
+      return true;
+    }
+  }
+
+  // No direct height query possible, so download and sample tiles.
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
   for (TilesetHeightQuery& query : this->queries) {

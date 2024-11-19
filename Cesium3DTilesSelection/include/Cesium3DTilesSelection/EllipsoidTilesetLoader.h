@@ -8,7 +8,8 @@ namespace Cesium3DTilesSelection {
  * @brief A loader that will generate a tileset by tesselating the surface of an
  * ellipsoid, producing a simple globe tileset without any terrain features.
  */
-class EllipsoidTilesetLoader : public TilesetContentLoader {
+class EllipsoidTilesetLoader : public TilesetContentLoader,
+                               public ITilesetHeightQuery {
 public:
   /**
    * @brief Constructs a new instance.
@@ -34,6 +35,12 @@ public:
       const Tile& tile,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) override;
+
+  ITilesetHeightQuery* getHeightQuery() override;
+
+  CesiumAsync::Future<SampleHeightResult> queryHeights(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      std::vector<CesiumGeospatial::Cartographic>&& positions) override;
 
 private:
   struct Geometry {
