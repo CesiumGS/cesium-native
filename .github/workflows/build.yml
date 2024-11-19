@@ -115,9 +115,13 @@ jobs:
         run: |
           echo "CC=clang-12" >> "$GITHUB_ENV"
           echo "CXX=clang++-12" >> "$GITHUB_ENV"
+      - name: Set macOS cmake options
+        if: ${{ matrix.platform == 'macos-15' }}
+        run: |
+          echo "EXTRA_CMAKE_OPTIONS=-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=arm64" >> "$GITHUB_ENV"
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}}
+          cmake -B build -S . -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} $EXTRA_CMAKE_OPTIONS
           cmake --build build --parallel
       - name: Test ${{matrix.build_type}} Configuration
         run: |
