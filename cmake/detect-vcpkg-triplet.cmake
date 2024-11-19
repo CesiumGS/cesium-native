@@ -33,5 +33,11 @@ elseif(LINUX)
     # Assuming x64 here isn't necessarily correct, but it's the only platform we officially support.
     set(DETECTED_VCPKG_TRIPLET "x64-linux")
 else()
-    set(DETECTED_VCPKG_TRIPLET_ERROR "Cannot guess an appropriate value for VCPKG_TRIPLET because the operating system is unknown. Please set it manually.")
+    # Check if we're on WSL
+    execute_process(COMMAND uname -r OUTPUT_VARIABLE uname)
+    if(${uname} MATCHES "-microsoft-standard-WSL2")
+        set(DETECTED_VCPKG_TRIPLET "x64-linux")
+    else()
+        set(DETECTED_VCPKG_TRIPLET_ERROR "Cannot guess an appropriate value for VCPKG_TRIPLET because the operating system is unknown. Please set it manually.")
+    endif()
 endif()
