@@ -1,4 +1,5 @@
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumNativeTests/FileAccessor.h>
@@ -229,5 +230,39 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.sampleSuccess.size() == 1);
     CHECK(!results.sampleSuccess[0]);
     CHECK(results.warnings[0].find("failed to load") != std::string::npos);
+  }
+
+  SECTION("ellipsoid tileset") {
+    std::unique_ptr<Tileset> pTileset =
+        EllipsoidTilesetLoader::createTileset(externals);
+
+    Future<SampleHeightResult> future = pTileset->sampleHeightMostDetailed(
+        {Cartographic::fromDegrees(-75.612559, 40.042183, 1.0)});
+
+    while (!future.isReady()) {
+      pTileset->updateView({});
+    }
+
+    SampleHeightResult results = future.waitInMainThread();
+
+    REQUIRE(results.warnings.size() == 0);
+    REQUIRE(results.positions.size() == 1);
+    REQUIRE(results.sampleSuccess.size() == 1);
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].longitude,
+        Math::degreesToRadians(-75.612559),
+        0.0,
+        Math::Epsilon4));
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].latitude,
+        Math::degreesToRadians(40.042183),
+        0.0,
+        Math::Epsilon4));
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        0.0,
+        0.0,
+        Math::Epsilon4));
   }
 }
