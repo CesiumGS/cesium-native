@@ -266,13 +266,18 @@ namespace {
  * @param pResource The JSON value for the resource
  * @param pCreditSystem The `CreditSystem` that will create one credit for
  * each attribution
- * @return The `CreditAndCoverageAreas` objects that have been parsed
+ * @return The `CreditAndCoverageAreas` objects that have been parsed, or an
+ * empty vector if pCreditSystem is nulpltr.
  */
 std::vector<CreditAndCoverageAreas> collectCredits(
     const rapidjson::Value* pResource,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     bool showCreditsOnScreen) {
   std::vector<CreditAndCoverageAreas> credits;
+  if (!pCreditSystem) {
+    return credits;
+  }
+
   const auto attributionsIt = pResource->FindMember("imageryProviders");
   if (attributionsIt != pResource->MemberEnd() &&
       attributionsIt->value.IsArray()) {
