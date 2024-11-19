@@ -76,13 +76,13 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-22.04, ubuntu-20.04, macos-12 ]
+        platform: [ ubuntu-22.04, ubuntu-20.04, macos-15 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-22.04	
+            platform: ubuntu-22.04
           - compiler: gcc
-            platform: macos-12
+            platform: macos-15
           - compiler: gcc
             platform: ubuntu-20.04
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
@@ -111,7 +111,7 @@ jobs:
             vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
             vcpkg-${{ env.CACHE_KEY }}
       - name: Set CC and CXX
-        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-12'}}
+        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-15'}}
         run: |
           echo "CC=clang-12" >> "$GITHUB_ENV"
           echo "CXX=clang++-12" >> "$GITHUB_ENV"
