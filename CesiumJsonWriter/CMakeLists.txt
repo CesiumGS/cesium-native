@@ -37,9 +37,10 @@ target_sources(
         ${CESIUM_JSON_WRITER_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumJsonWriter
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumJsonWriter
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src

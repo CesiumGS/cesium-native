@@ -1,5 +1,3 @@
-include("${CMAKE_CURRENT_LIST_DIR}/get_compiler_tool_with_correct_version.cmake")
-
 # Additional steps to perform clang-tidy
 function(setup_clang_tidy)
     cmake_parse_arguments(

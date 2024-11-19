@@ -193,8 +193,6 @@ endif()
 include("cmake/compiler.cmake")
 
 if(CESIUM_ENABLE_CLANG_TIDY)
-    include("cmake/macros/setup_clang_tidy.cmake")
-
     setup_clang_tidy(
         PROJECT_BUILD_DIRECTORY
         "${PROJECT_BINARY_DIR}"

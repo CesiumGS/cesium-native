@@ -41,9 +41,10 @@ target_sources(
         ${CESIUM_3DTILES_WRITER_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    Cesium3DTilesWriter
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        Cesium3DTilesWriter
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
