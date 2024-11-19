@@ -32,7 +32,6 @@ jobs:
           echo "CC=clang-18" >> "$GITHUB_ENV"
           echo "CXX=clang++-18" >> "$GITHUB_ENV"
       - name: Make more swap space available
-        if: ${{ matrix.platform != 'macos-15'}}
         run: |
           sudo swapoff -a
           sudo fallocate -l 10G /mnt/swapfile
