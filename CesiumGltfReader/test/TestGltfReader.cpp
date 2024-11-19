@@ -10,6 +10,7 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
@@ -689,7 +690,8 @@ TEST_CASE("GltfReader::loadGltf") {
         "application/binary",
         CesiumAsync::HttpHeaders{},
         readFile(entry.path()));
-    std::string url = "file:///" + entry.path().generic_u8string();
+    std::string url = "file:///" + StringHelpers::toStringUtf8(
+                                       entry.path().generic_u8string());
     auto pRequest = std::make_unique<SimpleAssetRequest>(
         "GET",
         url,
@@ -702,10 +704,11 @@ TEST_CASE("GltfReader::loadGltf") {
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
   std::string uri =
-      "file:///" + std::filesystem::directory_entry(
-                       dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
-                       .path()
-                       .generic_u8string();
+      "file:///" + StringHelpers::toStringUtf8(
+                       std::filesystem::directory_entry(
+                           dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
+                           .path()
+                           .generic_u8string());
 
   SECTION("loads glTF") {
     GltfReader reader{};

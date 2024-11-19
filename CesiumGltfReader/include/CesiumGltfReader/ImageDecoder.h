@@ -68,6 +68,33 @@ public:
    */
   static std::optional<std::string>
   generateMipMaps(CesiumGltf::ImageAsset& image);
+
+  /**
+   * @brief Resize an image, without validating the provided pointers or ranges.
+   *
+   * @param inputPixels The input image.
+   * @param inputWidth The width of the input image, in pixels.
+   * @param inputHeight The height of the input image, in pixels.
+   * @param inputStrideBytes The stride of the input image, in bytes. Stride is
+   * the number of bytes between successive rows.
+   * @param outputPixels The buffer into which to write the output image.
+   * @param outputWidth The width of the output image, in pixels.
+   * @param outputHeight The height of the otuput image, in pixels.
+   * @param outputStrideBytes The stride of the output image, in bytes. Stride
+   * is the number of bytes between successive rows.
+   * @param channels The number of channels in both the input and output images.
+   * @return True if the resize succeeded, false if it failed.
+   */
+  static bool unsafeResize(
+      const std::byte* pInputPixels,
+      int32_t inputWidth,
+      int32_t inputHeight,
+      int32_t inputStrideBytes,
+      std::byte* pOutputPixels,
+      int32_t outputWidth,
+      int32_t outputHeight,
+      int32_t outputStrideBytes,
+      int32_t channels);
 };
 
 } // namespace CesiumGltfReader

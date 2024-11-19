@@ -123,7 +123,7 @@ function generate(options, schema, writers) {
                   return accum;
                 }
 
-                ${thisConfig.toBeInherited ? privateSpecConstructor(name) : ""}
+                ${thisConfig.toBeInherited ? protectedSpecConstructor(name) : ""}
             };
         } // namespace ${namespace}
     `;
@@ -665,9 +665,9 @@ function formatWriterPropertyImpl(property) {
   return result;
 }
 
-function privateSpecConstructor(name) {
+function protectedSpecConstructor(name) {
   return `
-    private:
+    protected:
       /**
        * @brief This class is not meant to be instantiated directly. Use {@link ${name}} instead.
        */

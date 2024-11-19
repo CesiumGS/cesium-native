@@ -207,7 +207,7 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
     return accum;
   }
 
-private:
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Model} instead.
    */
