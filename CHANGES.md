@@ -2,6 +2,11 @@
 
 ### Not Released Yet
 
+##### Breaking Changes :mega:
+
+- Cesium Native now requires C++20.
+- Switched from `gsl::span` to `std::span` throughout the library and API. The GSL library has been removed.
+
 ##### Additions :tada:
 
 - Added support for `EXT_accessor_additional_types` in `AccessorView`.

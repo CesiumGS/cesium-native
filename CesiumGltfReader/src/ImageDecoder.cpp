@@ -18,11 +18,12 @@
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
-#include <gsl/span>
 #include <ktx.h>
 #include <rapidjson/reader.h>
 #include <turbojpeg.h>
 #include <webp/decode.h>
+
+#include <span>
 
 #define STBI_FAILURE_USERMSG
 
@@ -42,7 +43,7 @@ using namespace CesiumGltf;
 
 namespace {
 
-bool isKtx(const gsl::span<const std::byte>& data) {
+bool isKtx(const std::span<const std::byte>& data) {
   const size_t ktxMagicByteLength = 12;
   if (data.size() < ktxMagicByteLength) {
     return false;
@@ -54,7 +55,7 @@ bool isKtx(const gsl::span<const std::byte>& data) {
   return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
 }
 
-bool isWebP(const gsl::span<const std::byte>& data) {
+bool isWebP(const std::span<const std::byte>& data) {
   if (data.size() < 12) {
     return false;
   }
@@ -67,7 +68,7 @@ bool isWebP(const gsl::span<const std::byte>& data) {
 
 /*static*/
 ImageReaderResult ImageDecoder::readImage(
-    const gsl::span<const std::byte>& data,
+    const std::span<const std::byte>& data,
     const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
   CESIUM_TRACE("CesiumGltfReader::readImage");
 

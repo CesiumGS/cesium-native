@@ -49,7 +49,7 @@ std::string createEndpointResource(
 std::optional<std::string> getNewAccessToken(
     const CesiumAsync::IAssetResponse* pIonResponse,
     const std::shared_ptr<spdlog::logger>& pLogger) {
-  const gsl::span<const std::byte> data = pIonResponse->data();
+  const std::span<const std::byte> data = pIonResponse->data();
   rapidjson::Document ionResponse;
   ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
   if (ionResponse.HasParseError()) {
@@ -242,7 +242,7 @@ mainThreadHandleEndpointResponse(
     return externals.asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  const gsl::span<const std::byte> data = pResponse->data();
+  const std::span<const std::byte> data = pResponse->data();
 
   rapidjson::Document ionResponse;
   ionResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());

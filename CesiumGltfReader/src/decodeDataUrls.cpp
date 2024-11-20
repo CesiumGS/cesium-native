@@ -13,7 +13,7 @@ namespace CesiumGltfReader {
 
 namespace {
 
-std::vector<std::byte> decodeBase64(gsl::span<const std::byte> data) {
+std::vector<std::byte> decodeBase64(std::span<const std::byte> data) {
   CESIUM_TRACE("CesiumGltfReader::decodeBase64");
   std::vector<std::byte> result(modp_b64_decode_len(data.size()));
 
@@ -68,7 +68,7 @@ std::optional<DecodeResult> tryDecode(const std::string& uri) {
         result.mimeType.size() - base64IndicatorLength);
   }
 
-  const gsl::span<const std::byte> data(
+  const std::span<const std::byte> data(
       reinterpret_cast<const std::byte*>(uri.data()) + dataDelimeter + 1,
       uri.size() - dataDelimeter - 1);
 

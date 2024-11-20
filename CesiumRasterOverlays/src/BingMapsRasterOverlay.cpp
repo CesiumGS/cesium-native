@@ -364,7 +364,7 @@ BingMapsRasterOverlay::createTileProvider(
        baseUrl = this->_url,
        culture = this->_culture](
           const std::shared_ptr<IAssetRequest>& pRequest,
-          const gsl::span<const std::byte>& data) -> CreateTileProviderResult {
+          const std::span<const std::byte>& data) -> CreateTileProviderResult {
     rapidjson::Document response;
     response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
@@ -447,7 +447,7 @@ BingMapsRasterOverlay::createTileProvider(
   auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
     return asyncSystem.createResolvedFuture(
-        handleResponse(nullptr, gsl::span<std::byte>(cacheResultIt->second)));
+        handleResponse(nullptr, std::span<std::byte>(cacheResultIt->second)));
   }
 
   return pAssetAccessor->get(asyncSystem, metadataUrl)

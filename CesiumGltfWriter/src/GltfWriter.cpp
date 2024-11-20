@@ -22,8 +22,8 @@ getPadding(size_t byteCount, size_t byteAlignment) noexcept {
 
 void writeGlbBuffer(
     GltfWriterResult& result,
-    const gsl::span<const std::byte>& jsonData,
-    const gsl::span<const std::byte>& bufferData,
+    const std::span<const std::byte>& jsonData,
+    const std::span<const std::byte>& bufferData,
     size_t binaryChunkByteAlignment) {
   CESIUM_ASSERT(
       binaryChunkByteAlignment > 0 && binaryChunkByteAlignment % 4 == 0);
@@ -152,7 +152,7 @@ GltfWriterResult GltfWriter::writeGltf(
 
 GltfWriterResult GltfWriter::writeGlb(
     const CesiumGltf::Model& model,
-    const gsl::span<const std::byte>& bufferData,
+    const std::span<const std::byte>& bufferData,
     const GltfWriterOptions& options) const {
   CESIUM_TRACE("GltfWriter::writeGlb");
 
@@ -173,7 +173,7 @@ GltfWriterResult GltfWriter::writeGlb(
 
   writeGlbBuffer(
       result,
-      gsl::span(jsonData),
+      std::span(jsonData),
       bufferData,
       options.binaryChunkByteAlignment);
 

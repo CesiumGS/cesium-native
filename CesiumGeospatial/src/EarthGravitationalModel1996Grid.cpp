@@ -28,7 +28,7 @@ constexpr size_t TOTAL_BYTES = TOTAL_VALUES * sizeof(int16_t);
 
 std::optional<EarthGravitationalModel1996Grid>
 CesiumGeospatial::EarthGravitationalModel1996Grid::fromBuffer(
-    const gsl::span<const std::byte>& buffer) {
+    const std::span<const std::byte>& buffer) {
   if (buffer.size_bytes() < TOTAL_BYTES) {
     // Not enough data - is this a valid WW15MGH.DAC?
     return std::nullopt;

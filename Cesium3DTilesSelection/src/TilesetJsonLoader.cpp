@@ -791,7 +791,7 @@ TilesetJsonLoader::createLoader(
           return asyncSystem.createResolvedFuture(std::move(result));
         }
 
-        gsl::span<const std::byte> data = pResponse->data();
+        std::span<const std::byte> data = pResponse->data();
 
         rapidjson::Document tilesetJson;
         tilesetJson.Parse(

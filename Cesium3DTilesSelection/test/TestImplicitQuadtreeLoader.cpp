@@ -204,7 +204,7 @@ TEST_CASE("Test implicit quadtree loader") {
 namespace {
 
 const Tile&
-findTile(const gsl::span<const Tile>& children, const QuadtreeTileID& tileID) {
+findTile(const std::span<const Tile>& children, const QuadtreeTileID& tileID) {
   auto it = std::find_if(
       children.begin(),
       children.end(),
@@ -221,7 +221,7 @@ findTile(const gsl::span<const Tile>& children, const QuadtreeTileID& tileID) {
 
 const Tile&
 findTile(const std::vector<Tile>& children, const QuadtreeTileID& tileID) {
-  return findTile(gsl::span<const Tile>(children), tileID);
+  return findTile(std::span<const Tile>(children), tileID);
 }
 
 } // namespace

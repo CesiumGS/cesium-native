@@ -10,9 +10,8 @@
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 
-#include <gsl/span>
-
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace Cesium3DTilesSelection {

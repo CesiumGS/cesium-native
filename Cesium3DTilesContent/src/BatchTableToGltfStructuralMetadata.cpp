@@ -1708,7 +1708,7 @@ void updateExtensionWithBatchTableHierarchy(
 
 void convertBatchTableToGltfStructuralMetadataExtension(
     const rapidjson::Document& batchTableJson,
-    const gsl::span<const std::byte>& batchTableBinaryData,
+    const std::span<const std::byte>& batchTableBinaryData,
     CesiumGltf::Model& gltf,
     const int64_t featureCount,
     ErrorList& result) {
@@ -1820,7 +1820,7 @@ void convertBatchTableToGltfStructuralMetadataExtension(
 ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
-    const gsl::span<const std::byte>& batchTableBinaryData,
+    const std::span<const std::byte>& batchTableBinaryData,
     CesiumGltf::Model& gltf) {
   // Check to make sure a char of rapidjson is 1 byte
   static_assert(
@@ -1899,7 +1899,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromB3dm(
 ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     const rapidjson::Document& featureTableJson,
     const rapidjson::Document& batchTableJson,
-    const gsl::span<const std::byte>& batchTableBinaryData,
+    const std::span<const std::byte>& batchTableBinaryData,
     CesiumGltf::Model& gltf) {
   // Check to make sure a char of rapidjson is 1 byte
   static_assert(

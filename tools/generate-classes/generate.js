@@ -235,7 +235,7 @@ function generate(options, schema, writers) {
     #include <CesiumJsonReader/JsonReader.h>
     #include <CesiumJsonReader/JsonReaderOptions.h>
     #include <${namespace}/${name}.h>
-    #include <gsl/span>
+    #include <span>
     #include <rapidjson/fwd.h>
     #include <vector>
 
@@ -271,7 +271,7 @@ function generate(options, schema, writers) {
        * @param data The buffer from which to read the instance.
        * @return The result of reading the instance.
        */
-      CesiumJsonReader::ReadJsonResult<${namespace}::${name}> readFromJson(const gsl::span<const std::byte>& data) const;
+      CesiumJsonReader::ReadJsonResult<${namespace}::${name}> readFromJson(const std::span<const std::byte>& data) const;
 
       /**
        * @brief Reads an instance of ${name} from a rapidJson::Value.
@@ -406,7 +406,7 @@ function generate(options, schema, writers) {
           return this->_options;
         }
 
-        CesiumJsonReader::ReadJsonResult<${namespace}::${name}> ${name}Reader::readFromJson(const gsl::span<const std::byte>& data) const {
+        CesiumJsonReader::ReadJsonResult<${namespace}::${name}> ${name}Reader::readFromJson(const std::span<const std::byte>& data) const {
           ${name}JsonHandler handler(this->_options);
           return CesiumJsonReader::JsonReader::readJson(data, handler);
         }
