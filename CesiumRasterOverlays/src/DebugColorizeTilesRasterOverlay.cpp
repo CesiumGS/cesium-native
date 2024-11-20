@@ -48,8 +48,8 @@ public:
     image.channels = 4;
     image.bytesPerChannel = 1;
     image.pixelData.resize(4);
-    gsl::span<uint32_t> pixels =
-        reintepretCastSpan<uint32_t>(gsl::span(image.pixelData));
+    std::span<uint32_t> pixels =
+        reintepretCastSpan<uint32_t>(std::span(image.pixelData));
     int red = rand() % 255;
     int green = rand() % 255;
     int blue = rand() % 255;

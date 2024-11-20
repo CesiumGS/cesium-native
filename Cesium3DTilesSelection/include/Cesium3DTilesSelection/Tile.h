@@ -11,12 +11,12 @@
 #include <CesiumUtility/DoublyLinkedList.h>
 
 #include <glm/common.hpp>
-#include <gsl/span>
 
 #include <atomic>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -178,13 +178,13 @@ public:
    *
    * @return The children of this tile.
    */
-  gsl::span<Tile> getChildren() noexcept {
-    return gsl::span<Tile>(this->_children);
+  std::span<Tile> getChildren() noexcept {
+    return std::span<Tile>(this->_children);
   }
 
   /** @copydoc Tile::getChildren() */
-  gsl::span<const Tile> getChildren() const noexcept {
-    return gsl::span<const Tile>(this->_children);
+  std::span<const Tile> getChildren() const noexcept {
+    return std::span<const Tile>(this->_children);
   }
 
   /**

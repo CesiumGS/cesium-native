@@ -7,9 +7,9 @@
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 
 #include <glm/vec2.hpp>
-#include <gsl/span>
 
 #include <any>
+#include <span>
 
 namespace CesiumAsync {
 class AsyncSystem;

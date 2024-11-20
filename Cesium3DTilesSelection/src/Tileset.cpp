@@ -1457,7 +1457,7 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   TraversalDetails traversalDetails;
 
   // TODO: actually visit near-to-far, rather than in order of occurrence.
-  gsl::span<Tile> children = tile.getChildren();
+  std::span<Tile> children = tile.getChildren();
   for (Tile& child : children) {
     const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,

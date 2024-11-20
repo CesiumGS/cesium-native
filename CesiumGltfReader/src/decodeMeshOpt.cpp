@@ -51,7 +51,7 @@ void decodeFilter(
 template <typename T>
 int decodeIndices(
     T* data,
-    const gsl::span<const std::byte>& buffer,
+    const std::span<const std::byte>& buffer,
     const ExtensionBufferViewExtMeshoptCompression& meshOpt) {
   if (meshOpt.mode ==
       ExtensionBufferViewExtMeshoptCompression::Mode::TRIANGLES) {
@@ -73,7 +73,7 @@ int decodeIndices(
 
 int decodeBufferView(
     void* data,
-    const gsl::span<const std::byte>& buffer,
+    const std::span<const std::byte>& buffer,
     const ExtensionBufferViewExtMeshoptCompression& meshOpt) {
   if (meshOpt.mode ==
       ExtensionBufferViewExtMeshoptCompression::Mode::ATTRIBUTES) {
@@ -133,7 +133,7 @@ void decodeMeshOpt(Model& model, CesiumGltfReader::GltfReaderResult& readGltf) {
       data.resize(static_cast<size_t>(byteLength));
       if (decodeBufferView(
               data.data(),
-              gsl::span<const std::byte>(
+              std::span<const std::byte>(
                   pBuffer->cesium.data.data() + pMeshOpt->byteOffset,
                   static_cast<size_t>(pMeshOpt->byteLength)),
               *pMeshOpt) != 0) {

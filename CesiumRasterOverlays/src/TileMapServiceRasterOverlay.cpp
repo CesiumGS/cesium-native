@@ -183,7 +183,7 @@ Future<GetXmlDocumentResult> getXmlDocument(
                       "No response received from Tile Map Service."}));
             }
 
-            const gsl::span<const std::byte> data = pResponse->data();
+            const std::span<const std::byte> data = pResponse->data();
 
             std::unique_ptr<tinyxml2::XMLDocument> pDoc =
                 std::make_unique<tinyxml2::XMLDocument>(

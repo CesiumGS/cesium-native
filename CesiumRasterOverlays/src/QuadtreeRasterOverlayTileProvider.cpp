@@ -335,7 +335,7 @@ QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
 
 #if SHOW_TILE_BOUNDARIES
               // Highlight the edges in red to show tile boundaries.
-              gsl::span<uint32_t> pixels =
+              std::span<uint32_t> pixels =
                   reintepretCastSpan<uint32_t, std::byte>(
                       loaded.image->pixelData);
               for (int32_t j = 0; j < loaded.pImage->height; ++j) {
@@ -729,7 +729,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
   // Highlight the edges in yellow to show tile boundaries.
 #if SHOW_TILE_BOUNDARIES
-  gsl::span<uint32_t> pixels =
+  std::span<uint32_t> pixels =
       reintepretCastSpan<uint32_t, std::byte>(result.pImage->pixelData);
   for (int32_t j = 0; j < result.pImage->height; ++j) {
     for (int32_t i = 0; i < result.pImage->width; ++i) {
