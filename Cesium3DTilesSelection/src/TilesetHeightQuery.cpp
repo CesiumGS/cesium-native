@@ -3,6 +3,7 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -260,16 +261,16 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
   // instead of downloading tiles.
   if (contentManager.getRootTile() &&
       contentManager.getRootTile()->getLoader()) {
-    ITilesetHeightQuery* pQuery =
-        contentManager.getRootTile()->getLoader()->getHeightQuery();
-    if (pQuery) {
+    ITilesetHeightSampler* pSampler =
+        contentManager.getRootTile()->getLoader()->getHeightSampler();
+    if (pSampler) {
       std::vector<Cartographic> positions;
       positions.reserve(this->queries.size());
       for (TilesetHeightQuery& query : this->queries) {
         positions.emplace_back(query.inputPosition);
       }
 
-      pQuery->queryHeights(asyncSystem, std::move(positions))
+      pSampler->sampleHeights(asyncSystem, std::move(positions))
           .thenImmediately(
               [promise = this->promise](SampleHeightResult&& result) {
                 promise.resolve(std::move(result));

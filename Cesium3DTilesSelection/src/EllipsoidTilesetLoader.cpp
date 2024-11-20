@@ -89,9 +89,11 @@ TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
   return TileChildrenResult{{}, TileLoadResultState::Failed};
 }
 
-ITilesetHeightQuery* EllipsoidTilesetLoader::getHeightQuery() { return this; }
+ITilesetHeightSampler* EllipsoidTilesetLoader::getHeightSampler() {
+  return this;
+}
 
-CesiumAsync::Future<SampleHeightResult> EllipsoidTilesetLoader::queryHeights(
+CesiumAsync::Future<SampleHeightResult> EllipsoidTilesetLoader::sampleHeights(
     const CesiumAsync::AsyncSystem& asyncSystem,
     std::vector<CesiumGeospatial::Cartographic>&& positions) {
   SampleHeightResult result;

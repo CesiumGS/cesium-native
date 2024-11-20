@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ITilesetHeightSampler.h"
+
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 
@@ -9,7 +11,7 @@ namespace Cesium3DTilesSelection {
  * ellipsoid, producing a simple globe tileset without any terrain features.
  */
 class EllipsoidTilesetLoader : public TilesetContentLoader,
-                               public ITilesetHeightQuery {
+                               public ITilesetHeightSampler {
 public:
   /**
    * @brief Constructs a new instance.
@@ -36,9 +38,9 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) override;
 
-  ITilesetHeightQuery* getHeightQuery() override;
+  ITilesetHeightSampler* getHeightSampler() override;
 
-  CesiumAsync::Future<SampleHeightResult> queryHeights(
+  CesiumAsync::Future<SampleHeightResult> sampleHeights(
       const CesiumAsync::AsyncSystem& asyncSystem,
       std::vector<CesiumGeospatial::Cartographic>&& positions) override;
 

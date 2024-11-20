@@ -24,6 +24,7 @@
 
 namespace Cesium3DTilesSelection {
 class Tile;
+class ITilesetHeightSampler;
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -110,25 +111,6 @@ struct CESIUM3DTILESSELECTION_API TileChildrenResult {
 };
 
 /**
- * @brief An interface to query heights from a tileset that can do so
- * efficiently without necessarily downloading individual tiles.
- */
-class CESIUM3DTILESSELECTION_API ITilesetHeightQuery {
-public:
-  /**
-   * @brief Queries the heights at a list of locations.
-   *
-   * @param asyncSystem The async system used to do work in threads.
-   * @param positions The positions at which to query heights. The height field
-   * of each {@link Cartographic} is ignored.
-   * @return A future that will be resolved when the heights have been queried.
-   */
-  virtual CesiumAsync::Future<SampleHeightResult> queryHeights(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      std::vector<CesiumGeospatial::Cartographic>&& positions) = 0;
-};
-
-/**
  * @brief The loader interface to load the tile content
  */
 class CESIUM3DTILESSELECTION_API TilesetContentLoader {
@@ -183,6 +165,6 @@ public:
    * The returned instance must have a lifetime that is at least as long as the
    * loader itself.
    */
-  virtual ITilesetHeightQuery* getHeightQuery() { return nullptr; }
+  virtual ITilesetHeightSampler* getHeightSampler() { return nullptr; }
 };
 } // namespace Cesium3DTilesSelection
