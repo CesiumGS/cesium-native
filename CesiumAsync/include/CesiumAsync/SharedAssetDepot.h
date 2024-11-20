@@ -182,6 +182,7 @@ public:
 
     pEntry->maybePendingAsset = sharedFuture;
 
+    [[maybe_unused]]
     bool added = this->_assets.emplace(assetKey, pEntry).second;
 
     // Should always be added successfully, because we checked above that the

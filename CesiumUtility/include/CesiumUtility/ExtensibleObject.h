@@ -126,7 +126,7 @@ struct CESIUMUTILITY_API ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(ExtensibleObject);
+    accum += int64_t(sizeof(ExtensibleObject));
 
     accum += int64_t(
         this->extras.size() * (sizeof(std::string) + sizeof(JsonValue)));
