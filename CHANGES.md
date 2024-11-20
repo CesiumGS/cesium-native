@@ -2,6 +2,12 @@
 
 ### Not Released Yet
 
+##### Breaking Changes :mega:
+
+- The `BingMapsRasterOverlay` constructor no longer takes an `ellipsoid` parameter. Instead, it uses the ellipsoid specified in `RasterOverlayOptions`.
+- The `ellipsoid` field in `RasterOverlayOptions` is no longer a `std::optional`. Instead, it defaults to WGS84 directly.
+- Removed the `ellipsoid` field from `TileMapServiceRasterOverlayOptions`, `WebMapServiceRasterOverlayOptions`, and `WebMapTileServiceRasterOverlayOptions`. These overlays now use the ellipsoid in `RasterOverlayOptions` instead.
+
 ##### Additions :tada:
 
 - Added support for `EXT_accessor_additional_types` in `AccessorView`.
@@ -11,6 +17,7 @@
 ##### Fixes :wrench:
 
 - Updated the CMake install process to install the vcpkg-built Debug binaries in Debug builds. Previously the Release binaries were installed instead.
+- `IonRasterOverlay` now passes its `RasterOverlayOptions` to the `BingMapsRasterOverlay` or `TileMapServiceRasterOverlay` that it creates internally.
 
 ### v0.41.0 - 2024-11-01
 
