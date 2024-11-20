@@ -375,7 +375,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     CHECK(pRootTile);
     CHECK(pRootTile->getRefine() == TileRefine::Replace);
 
-    const gsl::span<const Tile> children = pRootTile->getChildren();
+    const std::span<const Tile> children = pRootTile->getChildren();
     CHECK(
         std::get<QuadtreeTileID>(children[0].getTileID()) ==
         QuadtreeTileID(0, 0, 0));

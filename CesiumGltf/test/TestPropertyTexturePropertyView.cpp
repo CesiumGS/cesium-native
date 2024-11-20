@@ -3,10 +3,10 @@
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
-#include <gsl/span>
 
 #include <climits>
 #include <cstddef>
+#include <span>
 #include <vector>
 
 using namespace CesiumGltf;

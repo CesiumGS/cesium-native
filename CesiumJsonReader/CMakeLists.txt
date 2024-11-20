@@ -39,6 +39,5 @@ target_include_directories(
 
 target_link_libraries(CesiumJsonReader
     PUBLIC
-        Microsoft.GSL::GSL
         CesiumUtility
 )

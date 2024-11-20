@@ -5,9 +5,8 @@
 
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <gsl/span>
-
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -54,7 +53,7 @@ public:
    * @return The result of reading the image.
    */
   static ImageReaderResult readImage(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
