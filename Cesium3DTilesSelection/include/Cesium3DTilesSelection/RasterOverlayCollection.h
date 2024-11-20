@@ -211,7 +211,7 @@ private:
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;
-  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot");
+  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot")
 };
 
 } // namespace Cesium3DTilesSelection

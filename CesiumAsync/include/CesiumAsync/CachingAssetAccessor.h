@@ -67,6 +67,6 @@ private:
   std::shared_ptr<IAssetAccessor> _pAssetAccessor;
   std::shared_ptr<ICacheDatabase> _pCacheDatabase;
   ThreadPool _cacheThreadPool;
-  CESIUM_TRACE_DECLARE_TRACK_SET(_pruneSlots, "Prune cache database");
+  CESIUM_TRACE_DECLARE_TRACK_SET(_pruneSlots, "Prune cache database")
 };
 } // namespace CesiumAsync

@@ -131,14 +131,14 @@ struct CESIUMUTILITY_API ExtensibleObject {
     accum += this->extras.size() * (sizeof(std::string) + sizeof(JsonValue));
     for (const auto& [k, v] : this->extras) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(JsonValue);
+      accum += v.getSizeBytes() - static_cast<int64_t>(sizeof(JsonValue));
     }
 
     accum += this->unknownProperties.size() *
              (sizeof(std::string) + sizeof(JsonValue));
     for (const auto& [k, v] : this->unknownProperties) {
       accum += k.capacity() * sizeof(char) - sizeof(std::string);
-      accum += v.getSizeBytes() - sizeof(JsonValue);
+      accum += v.getSizeBytes() - static_cast<int64_t>(sizeof(JsonValue));
     }
 
     return accum;

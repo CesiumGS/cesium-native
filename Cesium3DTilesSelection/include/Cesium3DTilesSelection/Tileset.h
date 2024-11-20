@@ -27,7 +27,7 @@ namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 class TilesetMetadata;
 class TilesetHeightQuery;
-class TilesetHeightRequest;
+struct TilesetHeightRequest;
 class TilesetSharedAssetSystem;
 
 /**

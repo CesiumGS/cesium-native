@@ -286,7 +286,7 @@ public:
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
     CESIUM_ASSERT(this->_totalTilesCurrentlyLoading > -1);
-    return this->_totalTilesCurrentlyLoading;
+    return static_cast<uint32_t>(this->_totalTilesCurrentlyLoading);
   }
 
   /**
@@ -413,6 +413,6 @@ private:
   int32_t _throttledTilesCurrentlyLoading;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
-      "Raster Overlay Tile Loading Slot");
+      "Raster Overlay Tile Loading Slot")
 };
 } // namespace CesiumRasterOverlays
