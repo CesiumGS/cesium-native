@@ -5,7 +5,7 @@
 #include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
 
 namespace CesiumGltf {
-class Schema;
+struct Schema;
 }
 
 namespace CesiumGltfReader {
