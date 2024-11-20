@@ -627,12 +627,8 @@ public:
     struct Operation {
       int64_t operator()([[maybe_unused]] const Null& v) { return 0; }
       int64_t operator()([[maybe_unused]] const double& v) { return 0; }
-      int64_t operator()([[maybe_unused]] const std::uint64_t& v) {
-        return 0;
-      }
-      int64_t operator()([[maybe_unused]] const std::int64_t& v) {
-        return 0;
-      }
+      int64_t operator()([[maybe_unused]] const std::uint64_t& v) { return 0; }
+      int64_t operator()([[maybe_unused]] const std::int64_t& v) { return 0; }
       int64_t operator()([[maybe_unused]] const Bool& v) { return 0; }
       int64_t operator()(const String& v) {
         return static_cast<int64_t>(v.capacity() * sizeof(char));
@@ -657,7 +653,8 @@ public:
       }
     };
 
-    return static_cast<int64_t>(sizeof(JsonValue)) + std::visit(Operation{}, this->value);
+    return static_cast<int64_t>(sizeof(JsonValue)) +
+           std::visit(Operation{}, this->value);
   }
 
   /**
