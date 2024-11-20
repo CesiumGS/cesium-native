@@ -222,9 +222,8 @@ WebMapTileServiceRasterOverlay::createTileProvider(
     useKVP = false;
   }
 
-  CesiumGeospatial::Projection projection =
-      _options.projection.value_or(CesiumGeospatial::WebMercatorProjection(
-          _options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84)));
+  CesiumGeospatial::Projection projection = _options.projection.value_or(
+      CesiumGeospatial::WebMercatorProjection(pOwner->getOptions().ellipsoid));
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
   uint32_t rootTilesX = 1;

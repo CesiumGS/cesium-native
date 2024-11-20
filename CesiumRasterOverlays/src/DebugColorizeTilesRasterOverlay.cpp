@@ -68,8 +68,7 @@ public:
 DebugColorizeTilesRasterOverlay::DebugColorizeTilesRasterOverlay(
     const std::string& name,
     const RasterOverlayOptions& overlayOptions)
-    : RasterOverlay(name, overlayOptions),
-      _ellipsoid(overlayOptions.ellipsoid.value_or(Ellipsoid::WGS84)) {}
+    : RasterOverlay(name, overlayOptions) {}
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 DebugColorizeTilesRasterOverlay::createTileProvider(
@@ -89,5 +88,5 @@ DebugColorizeTilesRasterOverlay::createTileProvider(
           pAssetAccessor,
           pPrepareRendererResources,
           pLogger,
-          this->_ellipsoid)));
+          this->getOptions().ellipsoid)));
 }

@@ -326,8 +326,7 @@ WebMapServiceRasterOverlay::createTileProvider(
                   validationError});
             }
 
-            const Ellipsoid& ellipsoid =
-                options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+            const Ellipsoid& ellipsoid = pOwner->getOptions().ellipsoid;
 
             const auto projection =
                 CesiumGeospatial::GeographicProjection(ellipsoid);

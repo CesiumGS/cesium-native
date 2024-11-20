@@ -343,7 +343,7 @@ TileMapServiceRasterOverlay::createTileProvider(
             }
 
             const CesiumGeospatial::Ellipsoid& ellipsoid =
-                options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+                pOwner->getOptions().ellipsoid;
 
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;

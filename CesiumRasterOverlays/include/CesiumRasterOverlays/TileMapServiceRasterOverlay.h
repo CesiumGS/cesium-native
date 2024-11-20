@@ -63,15 +63,6 @@ struct TileMapServiceRasterOverlayOptions {
   std::optional<CesiumGeometry::QuadtreeTilingScheme> tilingScheme;
 
   /**
-   * @brief The {@link CesiumGeospatial::Ellipsoid}.
-   *
-   * If the `tilingScheme` is specified, this parameter is ignored and
-   * the tiling scheme's ellipsoid is used instead. If neither parameter
-   * is specified, the {@link CesiumGeospatial::Ellipsoid::WGS84} is used.
-   */
-  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid;
-
-  /**
    * @brief Pixel width of image tiles.
    */
   std::optional<uint32_t> tileWidth;
