@@ -40,10 +40,9 @@ target_sources(
         ${CESIUM_GLTF_PUBLIC_HEADERS}
 )
 
-cesium_target_include_directories(
-    TARGET 
-        CesiumGltf
-    PUBLIC
+target_include_directories(
+    CesiumGltf
+    SYSTEM PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include/
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE

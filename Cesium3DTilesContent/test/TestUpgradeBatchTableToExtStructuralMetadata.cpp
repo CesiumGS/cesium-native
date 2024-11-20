@@ -48,7 +48,7 @@ static void checkNonArrayProperty(
   REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
   REQUIRE(propertyView.size() == propertyTable.count);
   REQUIRE(propertyView.size() == static_cast<int64_t>(expectedTotalInstances));
-  for (size_t i = 0; i < propertyView.size(); ++i) {
+  for (int64_t i = 0; i < propertyView.size(); ++i) {
     if constexpr (std::is_same_v<PropertyViewType, glm::vec3>) {
       REQUIRE(Math::equalsEpsilon(
           static_cast<glm::dvec3>(propertyView.getRaw(i)),
@@ -110,9 +110,9 @@ static void checkArrayProperty(
       if constexpr (
           std::is_same_v<ExpectedType, float> ||
           std::is_same_v<ExpectedType, double>) {
-        REQUIRE(value[j] == Approx(expected[i][j]));
+        REQUIRE(value[int64_t(j)] == Approx(expected[i][j]));
       } else {
-        REQUIRE(value[j] == expected[i][j]);
+        REQUIRE(value[int64_t(j)] == expected[i][j]);
       }
     }
   }
@@ -1275,7 +1275,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
 
   {
     std::vector<std::string> expected;
-    for (size_t i = 0; i < propertyTable.count; ++i) {
+    for (size_t i = 0; i < size_t(propertyTable.count); ++i) {
       std::string v = std::string("{\"name\":\"building") + std::to_string(i) +
                       "\",\"year\":" + std::to_string(i) + "}";
       expected.push_back(v);
@@ -1293,7 +1293,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
 
   {
     std::vector<std::vector<std::string>> expected;
-    for (size_t i = 0; i < propertyTable.count; ++i) {
+    for (int64_t i = 0; i < propertyTable.count; ++i) {
       std::vector<std::string> expectedVal;
       expectedVal.emplace_back("room" + std::to_string(i) + "_a");
       expectedVal.emplace_back("room" + std::to_string(i) + "_b");
@@ -1982,7 +1982,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() == propertyTable.count);
     REQUIRE(propertyView.size() == static_cast<int64_t>(expected.size()));
-    for (size_t i = 0; i < propertyView.size(); ++i) {
+    for (int64_t i = 0; i < propertyView.size(); ++i) {
       auto expectedValue = expected[static_cast<size_t>(i)];
       if (expectedValue) {
         std::string asString = std::to_string(*expectedValue);
@@ -2068,7 +2068,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
     REQUIRE(propertyView.status() == PropertyTablePropertyViewStatus::Valid);
     REQUIRE(propertyView.size() == propertyTable.count);
     REQUIRE(propertyView.size() == static_cast<int64_t>(expected.size()));
-    for (size_t i = 0; i < propertyView.size(); ++i) {
+    for (int64_t i = 0; i < propertyView.size(); ++i) {
       auto expectedValue = expected[static_cast<size_t>(i)];
       if (expectedValue) {
         std::string asString = std::to_string(*expectedValue);
