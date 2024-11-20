@@ -29,11 +29,11 @@ void writeJsonExtensions(
 }
 
 template <typename TExtended>
-bool hasWritableExtensions(
+bool hasRegisteredExtensions(
     const TExtended& obj,
     JsonWriter& jsonWriter,
     const ExtensionWriterContext& context) {
-  bool hasWritableExtensions = false;
+  bool hasRegisteredExtensions = false;
 
   for (const auto& item : obj.extensions) {
     auto handler = context.createExtensionHandler(
@@ -41,7 +41,7 @@ bool hasWritableExtensions(
         item.second,
         TExtended::TypeName);
     if (handler) {
-      hasWritableExtensions = true;
+      hasRegisteredExtensions = true;
     } else if (
         context.getExtensionState(item.first) != ExtensionState::Disabled) {
       jsonWriter.emplaceWarning(fmt::format(
@@ -52,6 +52,6 @@ bool hasWritableExtensions(
     }
   }
 
-  return hasWritableExtensions;
+  return hasRegisteredExtensions;
 }
 } // namespace CesiumJsonWriter

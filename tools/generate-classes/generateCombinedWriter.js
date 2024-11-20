@@ -179,7 +179,7 @@ function generateCombinedWriter(options) {
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-          if (hasWritableExtensions(obj, jsonWriter, context)) {
+          if (hasRegisteredExtensions(obj, jsonWriter, context)) {
             jsonWriter.Key("extensions");
             writeJsonExtensions(obj, jsonWriter, context);
           }
