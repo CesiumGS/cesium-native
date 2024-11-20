@@ -182,7 +182,7 @@ public:
 
     pEntry->maybePendingAsset = sharedFuture;
 
-    auto [it, added] = this->_assets.emplace(assetKey, pEntry);
+    bool added = this->_assets.emplace(assetKey, pEntry).second;
 
     // Should always be added successfully, because we checked above that the
     // asset key doesn't exist in the map yet.

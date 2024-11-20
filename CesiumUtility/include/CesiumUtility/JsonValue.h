@@ -635,17 +635,18 @@ public:
       }
       int64_t operator()(const Object& inside) {
         int64_t accum = 0;
-        accum += inside.size() * (sizeof(std::string) + sizeof(JsonValue));
+        accum +=
+            int64_t(inside.size() * (sizeof(std::string) + sizeof(JsonValue)));
         for (const auto& [k, v] : inside) {
-          accum += k.capacity() * sizeof(char) - sizeof(std::string);
-          accum += v.getSizeBytes() - static_cast<int64_t>(sizeof(JsonValue));
+          accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+          accum += v.getSizeBytes() - int64_t(sizeof(JsonValue));
         }
 
         return accum;
       }
       int64_t operator()(const Array& inside) {
         int64_t accum = 0;
-        accum += sizeof(JsonValue) * inside.capacity();
+        accum += int64_t(sizeof(JsonValue) * inside.capacity());
         for (const JsonValue& v : inside) {
           accum += v.getSizeBytes() - int64_t(sizeof(JsonValue));
         }
