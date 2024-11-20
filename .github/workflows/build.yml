@@ -27,6 +27,18 @@ jobs:
         uses: seanmiddleditch/gha-setup-ninja@master
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.ezvcpkg
+          key:  vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-${{ env.CACHE_KEY }}
       - name: Set CC and CXX
         run: |
           echo "CC=clang-18" >> "$GITHUB_ENV"
