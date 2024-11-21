@@ -6,6 +6,7 @@
 #include "TileLoadResult.h"
 #include "TilesetOptions.h"
 
+#include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -23,6 +24,7 @@
 
 namespace Cesium3DTilesSelection {
 class Tile;
+class ITilesetHeightSampler;
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -145,5 +147,24 @@ public:
       const Tile& tile,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) = 0;
+
+  /**
+   * @brief Gets an interface that can be used to efficiently query heights from
+   * this tileset.
+   *
+   * Some loaders may be able to query heights very efficiently by using a web
+   * service or by using an analytical model, e.g., when the "terrain" is a
+   * simple ellipsoid.
+   *
+   * For loaders that have no particular way to query heights, this method will
+   * return `nullptr`, signaling that heights should be computed by downloading
+   * and sampling individual tiles.
+   *
+   * @return The interface that can be used to efficiently query heights from
+   * this loader, or `nullptr` if this loader has no particular way to do that.
+   * The returned instance must have a lifetime that is at least as long as the
+   * loader itself.
+   */
+  virtual ITilesetHeightSampler* getHeightSampler() { return nullptr; }
 };
 } // namespace Cesium3DTilesSelection
