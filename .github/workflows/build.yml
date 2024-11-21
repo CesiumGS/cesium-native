@@ -30,15 +30,15 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
-          key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
+          key: ccache-ubuntu-22.04-clang-clang-tidy
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
           path: ~/.ezvcpkg
-          key:  vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
+          key:  vcpkg-ubuntu-22.04-clang-${{ hashFiles('CMakeLists.txt') }}
           restore-keys: |
-            vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
-            vcpkg-${{ env.CACHE_KEY }}
+            vcpkg-ubuntu-22.04-clang-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-ubuntu-22.04-clang
       - name: Set CC and CXX
         run: |
           echo "CC=clang-18" >> "$GITHUB_ENV"
