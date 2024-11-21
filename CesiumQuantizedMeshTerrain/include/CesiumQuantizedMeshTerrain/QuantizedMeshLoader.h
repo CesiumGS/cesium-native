@@ -9,12 +9,12 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/ErrorList.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace CesiumAsync {
@@ -81,7 +81,7 @@ public:
       const CesiumGeometry::QuadtreeTileID& tileID,
       const CesiumGeospatial::BoundingRegion& tileBoundingVolume,
       const std::string& url,
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       bool enableWaterMask,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
@@ -94,7 +94,7 @@ public:
    * @return The parsed metadata.
    */
   static QuantizedMeshMetadataResult loadMetadata(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**

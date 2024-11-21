@@ -8,6 +8,8 @@
 namespace CesiumGltf {
 /** @copydoc ImageSpec */
 struct CESIUMGLTF_API Image final : public ImageSpec {
+  Image() = default;
+
   /**
    * @brief The loaded image asset. When an image is loaded from a URL, multiple
    * `Image` instances may all point to the same `ImageAsset` instance.

@@ -1,0 +1,29 @@
+name: prod
+on:
+  push:
+    branches:
+      - 'cesium.com'
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-22.04
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_REGION: us-east-1
+    steps:
+      - name: Install Doxygen
+        run: |
+          sudo apt install -y doxygen
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Generate Documentation
+        run: |
+          npm install
+          cmake -B build -S .
+          cmake --build build --target cesium-native-docs
+      - name: Deploy to cesium.com
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' }}
+        run: |
+          aws s3 sync build/doc/html/ s3://cesium-website/cesium-native/ref-doc/ --cache-control "public, max-age=1800" --delete

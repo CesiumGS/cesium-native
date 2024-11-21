@@ -5,6 +5,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <catch2/catch.hpp>
 
@@ -31,7 +32,8 @@ TEST_CASE("TileMapServiceRasterOverlay") {
         "application/binary",
         CesiumAsync::HttpHeaders{},
         readFile(entry.path()));
-    std::string url = "file:///" + entry.path().generic_u8string();
+    std::string url = "file:///" + StringHelpers::toStringUtf8(
+                                       entry.path().generic_u8string());
     auto pRequest = std::make_unique<SimpleAssetRequest>(
         "GET",
         url,
@@ -44,10 +46,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
   std::string tmr =
-      "file:///" + std::filesystem::directory_entry(
-                       dataDir / "Cesium_Logo_Color" / "tilemapresource.xml")
-                       .path()
-                       .generic_u8string();
+      "file:///" +
+      StringHelpers::toStringUtf8(
+          std::filesystem::directory_entry(
+              dataDir / "Cesium_Logo_Color" / "tilemapresource.xml")
+              .path()
+              .generic_u8string());
   IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlay =
       new TileMapServiceRasterOverlay("test", tmr);
 
@@ -81,10 +85,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
   SECTION("appends tilemapresource.xml to URL if not already present and "
           "direct request fails") {
-    std::string url = "file:///" + std::filesystem::directory_entry(
-                                       dataDir / "Cesium_Logo_Color")
-                                       .path()
-                                       .generic_u8string();
+    std::string url =
+        "file:///" +
+        StringHelpers::toStringUtf8(
+            std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
+                .path()
+                .generic_u8string());
     pMockAssetAccessor->mockCompletedRequests[url] =
         std::make_shared<SimpleAssetRequest>(
             "GET",
@@ -150,9 +156,10 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     // The initial URL does not include tilemapresource.xml and will fail
     std::string url =
         "file:///" +
-        std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
-            .path()
-            .generic_u8string() +
+        StringHelpers::toStringUtf8(
+            std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
+                .path()
+                .generic_u8string()) +
         "?some=parameter";
 
     pMockAssetAccessor->mockCompletedRequests[url] =
@@ -197,5 +204,57 @@ TEST_CASE("TileMapServiceRasterOverlay") {
             nullptr));
 
     REQUIRE(result);
+  }
+
+  SECTION("loads with credit") {
+    TileMapServiceRasterOverlayOptions options;
+    options.credit = "test credit";
+    IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlayWithCredit =
+        new TileMapServiceRasterOverlay("test", tmr, {}, options);
+
+    std::shared_ptr<CreditSystem> pCreditSystem =
+        std::make_shared<CreditSystem>();
+
+    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+        asyncSystem,
+        pRasterOverlayWithCredit->createTileProvider(
+            asyncSystem,
+            pMockAssetAccessor,
+            pCreditSystem,
+            nullptr,
+            spdlog::default_logger(),
+            nullptr));
+
+    REQUIRE(result);
+
+    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
+        *result;
+    std::optional<Credit> maybeCredit = pTileProvider->getCredit();
+
+    REQUIRE(maybeCredit);
+    CHECK(pCreditSystem->getHtml(*maybeCredit) == "test credit");
+  }
+
+  SECTION("loads with credit and null credit system") {
+    TileMapServiceRasterOverlayOptions options;
+    options.credit = "test credit";
+    IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlayWithCredit =
+        new TileMapServiceRasterOverlay("test", tmr, {}, options);
+
+    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+        asyncSystem,
+        pRasterOverlayWithCredit->createTileProvider(
+            asyncSystem,
+            pMockAssetAccessor,
+            nullptr,
+            nullptr,
+            spdlog::default_logger(),
+            nullptr));
+
+    REQUIRE(result);
+
+    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
+        *result;
+    CHECK(!pTileProvider->getCredit());
   }
 }

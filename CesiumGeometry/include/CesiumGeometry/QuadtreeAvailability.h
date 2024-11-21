@@ -5,10 +5,9 @@
 #include "QuadtreeTileID.h"
 #include "TileAvailabilityFlags.h"
 
-#include <gsl/span>
-
 #include <cstddef>
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace CesiumGeometry {

@@ -4,6 +4,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumUtility/StringHelpers.h>
 #include <CesiumUtility/Uri.h>
 
 #include <catch2/catch.hpp>
@@ -41,8 +42,9 @@ TEST_CASE("Tileset height queries") {
 
   SECTION("Additive-refined tileset") {
     std::string url =
-        "file://" + Uri::nativePathToUriPath(
-                        (testDataPath / "Tileset" / "tileset.json").u8string());
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "Tileset" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -80,8 +82,8 @@ TEST_CASE("Tileset height queries") {
   SECTION("Replace-refined tileset") {
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(
-            (testDataPath / "ReplaceTileset" / "tileset.json").u8string());
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "ReplaceTileset" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -114,8 +116,8 @@ TEST_CASE("Tileset height queries") {
   SECTION("External tileset") {
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(
-            (testDataPath / "AddTileset" / "tileset.json").u8string());
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "AddTileset" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -152,9 +154,9 @@ TEST_CASE("Tileset height queries") {
 
   SECTION("Implicit tileset") {
     std::string url =
-        "file://" +
-        Uri::nativePathToUriPath(
-            (testDataPath / "ImplicitTileset" / "tileset_1.1.json").u8string());
+        "file://" + Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+                        (testDataPath / "ImplicitTileset" / "tileset_1.1.json")
+                            .u8string()));
 
     Tileset tileset(externals, url);
 
@@ -192,9 +194,9 @@ TEST_CASE("Tileset height queries") {
   SECTION("Instanced model is not yet supported") {
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
             (testDataPath / "i3dm" / "InstancedWithBatchTable" / "tileset.json")
-                .u8string());
+                .u8string()));
 
     Tileset tileset(externals, url);
 

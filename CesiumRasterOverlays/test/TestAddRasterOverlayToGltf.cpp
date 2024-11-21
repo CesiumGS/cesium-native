@@ -17,6 +17,7 @@
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <catch2/catch.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -80,7 +81,8 @@ TEST_CASE("Add raster overlay to glTF") {
         "application/binary",
         CesiumAsync::HttpHeaders{},
         readFile(entry.path()));
-    std::string url = "file:///" + entry.path().generic_u8string();
+    std::string url = "file:///" + StringHelpers::toStringUtf8(
+                                       entry.path().generic_u8string());
     auto pRequest = std::make_unique<SimpleAssetRequest>(
         "GET",
         url,
@@ -94,10 +96,12 @@ TEST_CASE("Add raster overlay to glTF") {
 
   // Create the raster overlay to drape over the glTF.
   std::string tmr =
-      "file:///" + std::filesystem::directory_entry(
-                       dataDir / "Cesium_Logo_Color" / "tilemapresource.xml")
-                       .path()
-                       .generic_u8string();
+      "file:///" +
+      StringHelpers::toStringUtf8(
+          std::filesystem::directory_entry(
+              dataDir / "Cesium_Logo_Color" / "tilemapresource.xml")
+              .path()
+              .generic_u8string());
   IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlay =
       new TileMapServiceRasterOverlay("test", tmr);
 
