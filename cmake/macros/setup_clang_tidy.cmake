@@ -44,7 +44,8 @@ function(setup_clang_tidy)
     endif()
 
     if(NOT CLANG_TIDY_PATH)
-        message(FATAL_ERROR "Could not find clang-tidy in your path.")
+        message(WARNING "Could not find clang-tidy in your path. clang-tidy targets will not be created")
+        return()
     endif()
 
     # CMake has built-in support for running clang-tidy during the build
