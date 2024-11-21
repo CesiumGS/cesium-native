@@ -205,4 +205,56 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
     REQUIRE(result);
   }
+
+  SECTION("loads with credit") {
+    TileMapServiceRasterOverlayOptions options;
+    options.credit = "test credit";
+    IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlayWithCredit =
+        new TileMapServiceRasterOverlay("test", tmr, {}, options);
+
+    std::shared_ptr<CreditSystem> pCreditSystem =
+        std::make_shared<CreditSystem>();
+
+    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+        asyncSystem,
+        pRasterOverlayWithCredit->createTileProvider(
+            asyncSystem,
+            pMockAssetAccessor,
+            pCreditSystem,
+            nullptr,
+            spdlog::default_logger(),
+            nullptr));
+
+    REQUIRE(result);
+
+    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
+        *result;
+    std::optional<Credit> maybeCredit = pTileProvider->getCredit();
+
+    REQUIRE(maybeCredit);
+    CHECK(pCreditSystem->getHtml(*maybeCredit) == "test credit");
+  }
+
+  SECTION("loads with credit and null credit system") {
+    TileMapServiceRasterOverlayOptions options;
+    options.credit = "test credit";
+    IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlayWithCredit =
+        new TileMapServiceRasterOverlay("test", tmr, {}, options);
+
+    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+        asyncSystem,
+        pRasterOverlayWithCredit->createTileProvider(
+            asyncSystem,
+            pMockAssetAccessor,
+            nullptr,
+            nullptr,
+            spdlog::default_logger(),
+            nullptr));
+
+    REQUIRE(result);
+
+    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
+        *result;
+    CHECK(!pTileProvider->getCredit());
+  }
 }
