@@ -71,7 +71,7 @@ TEST_CASE(
   CesiumGltfReader::GltfReaderOptions options;
   CesiumGltfReader::GltfReader reader;
   CesiumGltfReader::GltfReaderResult readerResult = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   REQUIRE(readerResult.errors.empty());

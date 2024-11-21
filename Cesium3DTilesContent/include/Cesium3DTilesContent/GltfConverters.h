@@ -8,9 +8,8 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltfReader/GltfReader.h>
 
-#include <gsl/span>
-
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -72,7 +71,7 @@ public:
    * tile binary content.
    */
   using ConverterFunction = CesiumAsync::Future<GltfConverterResult> (*)(
-      const gsl::span<const std::byte>& content,
+      const std::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
       const AssetFetcher& subprocessor);
 
@@ -132,7 +131,7 @@ public:
    * @return The {@link ConverterFunction} that is registered with the magic header.
    */
   static ConverterFunction
-  getConverterByMagic(const gsl::span<const std::byte>& content);
+  getConverterByMagic(const std::span<const std::byte>& content);
 
   /**
    * @brief Creates the {@link GltfConverterResult} from the given
@@ -164,7 +163,7 @@ public:
    */
   static CesiumAsync::Future<GltfConverterResult> convert(
       const std::string& filePath,
-      const gsl::span<const std::byte>& content,
+      const std::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
       const AssetFetcher& assetFetcher);
 
@@ -191,7 +190,7 @@ public:
    * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
    */
   static CesiumAsync::Future<GltfConverterResult> convert(
-      const gsl::span<const std::byte>& content,
+      const std::span<const std::byte>& content,
       const CesiumGltfReader::GltfReaderOptions& options,
       const AssetFetcher& assetFetcher);
 
@@ -205,7 +204,7 @@ private:
       std::string& fileExtension);
 
   static ConverterFunction getConverterByMagic(
-      const gsl::span<const std::byte>& content,
+      const std::span<const std::byte>& content,
       std::string& magic);
 
   static std::unordered_map<std::string, ConverterFunction> _loadersByMagic;
