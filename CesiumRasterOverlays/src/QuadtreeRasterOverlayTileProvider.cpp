@@ -59,10 +59,12 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     const QuadtreeTileID parentID(key.level - 1, key.x >> 1, key.y >> 1);
     return this->getQuadtreeTile(parentID).thenImmediately(
         [rectangle](const ResultPointer<LoadedQuadtreeImage>& loaded) {
+          ResultPointer<LoadedQuadtreeImage> result(loaded.errors);
           if (loaded.pValue) {
-            loaded.pValue->subset = rectangle;
+            result.pValue.emplace(*loaded.pValue);
+            result.pValue->subset = rectangle;
           }
-          return loaded;
+          return result;
         });
   };
 
