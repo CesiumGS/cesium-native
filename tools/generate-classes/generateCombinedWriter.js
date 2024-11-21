@@ -59,10 +59,10 @@ function generateCombinedWriter(options) {
         #include <CesiumJsonWriter/JsonWriter.h>
 
         ${writers
-      .map((writer) => {
-        return writer.writeInclude;
-      })
-      .join("\n")}
+          .map((writer) => {
+            return writer.writeInclude;
+          })
+          .join("\n")}
 
         // NOLINTNEXTLINE(misc-include-cleaner)
         #include <CesiumJsonWriter/writeJsonExtensions.h>
@@ -78,10 +78,10 @@ function generateCombinedWriter(options) {
         namespace {
 
         ${writers
-      .map((writer) => {
-        return writer.writeJsonDeclaration;
-      })
-      .join("\n")}
+          .map((writer) => {
+            return writer.writeJsonDeclaration;
+          })
+          .join("\n")}
 
         // Forward declaration to avoid circular dependency since some properties
         // are vector of unordered_map and others are unordered_map of vector
@@ -96,7 +96,7 @@ function generateCombinedWriter(options) {
           const CesiumUtility::IntrusivePointer<T>& ptr,
           CesiumJsonWriter::JsonWriter& jsonWriter,
           const CesiumJsonWriter::ExtensionWriterContext& context) {
-          writeJson(*ptr, jsonWriter, context);  
+          writeJson(*ptr, jsonWriter, context);
         }
 
         [[maybe_unused]] void writeJson(
@@ -196,7 +196,7 @@ function generateCombinedWriter(options) {
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-          if (!obj.extensions.empty()) {
+          if (hasRegisteredExtensions(obj, jsonWriter, context)) {
             jsonWriter.Key("extensions");
             writeJsonExtensions(obj, jsonWriter, context);
           }
@@ -246,10 +246,10 @@ function generateCombinedWriter(options) {
         } // namespace
 
         ${writers
-      .map((writer) => {
-        return writer.writeDefinition;
-      })
-      .join("\n")}
+          .map((writer) => {
+            return writer.writeDefinition;
+          })
+          .join("\n")}
 
         } // namespace ${writerNamespace}
   `;
