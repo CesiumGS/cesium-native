@@ -298,7 +298,7 @@ WebMapServiceRasterOverlay::createTileProvider(
                   "No response received from web map service."});
             }
 
-            const gsl::span<const std::byte> data = pResponse->data();
+            const std::span<const std::byte> data = pResponse->data();
 
             tinyxml2::XMLDocument doc;
             const tinyxml2::XMLError error = doc.Parse(

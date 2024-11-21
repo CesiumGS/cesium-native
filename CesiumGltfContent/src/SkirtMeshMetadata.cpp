@@ -67,26 +67,28 @@ SkirtMeshMetadata::parseFromGltfExtras(const JsonValue::Object& extras) {
       (*pMeshCenter)[1].getSafeNumberOrDefault<double>(0.0),
       (*pMeshCenter)[2].getSafeNumberOrDefault<double>(0.0));
 
-  double westHeight, southHeight, eastHeight, northHeight;
-  try {
-    westHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
-        "skirtWestHeight");
-    southHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
-        "skirtSouthHeight");
-    eastHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
-        "skirtEastHeight");
-    northHeight = gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
-        "skirtNorthHeight");
-  } catch (const JsonValueMissingKey&) {
-    return std::nullopt;
-  } catch (const JsonValueNotRealValue&) {
+  std::optional<double> maybeWestHeight =
+      gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+          "skirtWestHeight");
+  std::optional<double> maybeSouthHeight =
+      gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+          "skirtSouthHeight");
+  std::optional<double> maybeEastHeight =
+      gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+          "skirtEastHeight");
+  std::optional<double> maybeNorthHeight =
+      gltfSkirtMeshMetadata.getSafeNumericalValueForKey<double>(
+          "skirtNorthHeight");
+
+  if (!maybeWestHeight || !maybeSouthHeight || !maybeEastHeight ||
+      !maybeNorthHeight) {
     return std::nullopt;
   }
 
-  skirtMeshMetadata.skirtWestHeight = westHeight;
-  skirtMeshMetadata.skirtSouthHeight = southHeight;
-  skirtMeshMetadata.skirtEastHeight = eastHeight;
-  skirtMeshMetadata.skirtNorthHeight = northHeight;
+  skirtMeshMetadata.skirtWestHeight = *maybeWestHeight;
+  skirtMeshMetadata.skirtSouthHeight = *maybeSouthHeight;
+  skirtMeshMetadata.skirtEastHeight = *maybeEastHeight;
+  skirtMeshMetadata.skirtNorthHeight = *maybeNorthHeight;
 
   return skirtMeshMetadata;
 }

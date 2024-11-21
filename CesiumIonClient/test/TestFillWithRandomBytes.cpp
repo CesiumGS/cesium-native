@@ -11,7 +11,7 @@ TEST_CASE("fillWithRandomBytes") {
 
     // Allocate an extra byte to make sure we don't overflow the buffer
     std::vector<uint8_t> buffer(size + 1);
-    gsl::span<uint8_t> bufferSpan(buffer.data(), size);
+    std::span<uint8_t> bufferSpan(buffer.data(), size);
 
     fillWithRandomBytes(bufferSpan);
 

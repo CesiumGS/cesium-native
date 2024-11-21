@@ -169,7 +169,7 @@ static void createTestForNonArrayJson(
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
@@ -245,7 +245,7 @@ static void createTestForNonArrayJson(
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
@@ -325,7 +325,7 @@ static void createTestForArrayJson(
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
@@ -1343,7 +1343,7 @@ TEST_CASE("Upgrade JSON booleans to binary") {
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
@@ -1945,7 +1945,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
     auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
         featureTableJson,
         batchTableJson,
-        gsl::span<const std::byte>(),
+        std::span<const std::byte>(),
         model);
 
     const ExtensionModelExtStructuralMetadata* pMetadata =
@@ -2031,7 +2031,7 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
     auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
         featureTableJson,
         batchTableJson,
-        gsl::span<const std::byte>(),
+        std::span<const std::byte>(),
         model);
 
     const ExtensionModelExtStructuralMetadata* pMetadata =
@@ -2279,7 +2279,7 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   ExtensionModelExtStructuralMetadata* pExtension =
@@ -2427,7 +2427,7 @@ TEST_CASE("Omits value-less properties when converting "
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   ExtensionModelExtStructuralMetadata* pExtension =
@@ -2524,7 +2524,7 @@ TEST_CASE(
   BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   ExtensionModelExtStructuralMetadata* pExtension =
@@ -2724,7 +2724,7 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts is okay if all "
   BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   // There should not be any log messages about parentCounts, since they're
@@ -2816,7 +2816,7 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts values != 1 is "
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   // There should be a log message about parentCounts, and no properties.
