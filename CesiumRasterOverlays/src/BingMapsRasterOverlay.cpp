@@ -267,7 +267,7 @@ namespace {
  * @param pCreditSystem The `CreditSystem` that will create one credit for
  * each attribution
  * @return The `CreditAndCoverageAreas` objects that have been parsed, or an
- * empty vector if pCreditSystem is nulpltr.
+ * empty vector if pCreditSystem is nullptr.
  */
 std::vector<CreditAndCoverageAreas> collectCredits(
     const rapidjson::Value* pResource,
