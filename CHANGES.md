@@ -17,6 +17,7 @@
 
 - Updated the CMake install process to install the vcpkg-built Debug binaries in Debug builds. Previously the Release binaries were installed instead.
 - Fixed a crash that would occur for raster overlays attempting to dereference a null `CreditSystem`.
+- Fixed a bug where an empty `extensions` object would get written if an `ExtensibleObject` only had unregistered extensions.
 
 ### v0.41.0 - 2024-11-01
 

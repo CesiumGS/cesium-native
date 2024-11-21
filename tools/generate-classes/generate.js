@@ -293,7 +293,8 @@ function generate(options, schema, writers) {
       CesiumJsonReader::JsonReaderOptions _options;
     };
 
-    } // namespace ${readerNamespace}`;
+    } // namespace ${readerNamespace}
+    `;
 
   const readerHeaderOutputDir = path.join(
     readerOutputDir,

@@ -144,7 +144,7 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
     return accum;
   }
 
-private:
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Layer} instead.
    */
