@@ -13,11 +13,11 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -124,11 +124,11 @@ ExtensionCesiumRTCReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -249,11 +249,11 @@ ExtensionCesiumTileEdgesReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -367,11 +367,11 @@ ExtensionExtInstanceFeaturesReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -484,11 +484,11 @@ ExtensionExtMeshFeaturesReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -601,11 +601,11 @@ ExtensionExtMeshGpuInstancingReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -723,11 +723,11 @@ ExtensionBufferExtMeshoptCompressionReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -865,11 +865,11 @@ ExtensionBufferViewExtMeshoptCompressionReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1008,11 +1008,11 @@ ExtensionModelExtStructuralMetadataReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1143,11 +1143,11 @@ ExtensionMeshPrimitiveExtStructuralMetadataReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1265,11 +1265,11 @@ ExtensionKhrDracoMeshCompressionReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1379,11 +1379,11 @@ ExtensionKhrMaterialsUnlitReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1499,11 +1499,11 @@ ExtensionModelKhrMaterialsVariantsReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1624,11 +1624,11 @@ ExtensionMeshPrimitiveKhrMaterialsVariantsReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1740,11 +1740,11 @@ ExtensionKhrTextureBasisuReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1861,11 +1861,11 @@ ExtensionModelMaxarMeshVariantsReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1979,11 +1979,11 @@ ExtensionNodeMaxarMeshVariantsReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2105,11 +2105,11 @@ ExtensionKhrTextureTransformReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2216,11 +2216,11 @@ ExtensionTextureWebpReader::readArrayFromJson(
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <any>
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2332,10 +2332,10 @@ ExtensionCesiumPrimitiveOutlineReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2446,10 +2446,10 @@ ExtensionNodeMaxarMeshVariantsMappingsValueReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2552,10 +2552,10 @@ ExtensionModelMaxarMeshVariantsValueReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2671,10 +2671,10 @@ ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueReader::
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2777,10 +2777,10 @@ ExtensionModelKhrMaterialsVariantsValueReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2881,10 +2881,10 @@ PropertyAttributeReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -2994,10 +2994,10 @@ PropertyAttributePropertyReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3096,10 +3096,10 @@ PropertyTextureReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3208,10 +3208,10 @@ PropertyTexturePropertyReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3305,10 +3305,10 @@ TextureInfoReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3410,10 +3410,10 @@ PropertyTableReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3537,10 +3537,10 @@ PropertyTablePropertyReader::readArrayFromJson(
 #include <CesiumJsonReader/SharedAssetJsonHandler.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3643,10 +3643,10 @@ SchemaReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3742,10 +3742,10 @@ EnumReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3838,10 +3838,10 @@ EnumValueReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -3934,10 +3934,10 @@ ClassReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4074,10 +4074,10 @@ ClassPropertyReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4180,10 +4180,10 @@ FeatureIdReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4276,10 +4276,10 @@ FeatureIdTextureReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4394,10 +4394,10 @@ ExtensionExtInstanceFeaturesFeatureIdReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4548,10 +4548,10 @@ ModelReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4640,10 +4640,10 @@ TextureReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4738,10 +4738,10 @@ SkinReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4827,10 +4827,10 @@ SceneReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -4925,10 +4925,10 @@ SamplerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5038,10 +5038,10 @@ NodeReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5130,10 +5130,10 @@ MeshReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5237,10 +5237,10 @@ MeshPrimitiveReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5360,10 +5360,10 @@ MaterialReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5462,10 +5462,10 @@ MaterialOcclusionTextureInfoReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5563,10 +5563,10 @@ MaterialNormalTextureInfoReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5691,10 +5691,10 @@ MaterialPBRMetallicRoughnessReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5786,10 +5786,10 @@ ImageReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5883,10 +5883,10 @@ CameraReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5989,10 +5989,10 @@ CameraPerspectiveReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6095,10 +6095,10 @@ CameraOrthographicReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6200,10 +6200,10 @@ BufferViewReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6292,10 +6292,10 @@ BufferReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6390,10 +6390,10 @@ AssetReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6485,10 +6485,10 @@ AnimationReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6587,10 +6587,10 @@ AnimationSamplerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6687,10 +6687,10 @@ AnimationChannelReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6790,10 +6790,10 @@ AnimationChannelTargetReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -6903,10 +6903,10 @@ AccessorReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -7006,10 +7006,10 @@ AccessorSparseReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -7106,10 +7106,10 @@ AccessorSparseValuesReader::readArrayFromJson(
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>

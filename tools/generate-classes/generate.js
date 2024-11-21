@@ -350,7 +350,7 @@ function generate(options, schema, writers) {
         #include <CesiumUtility/Assert.h>
         #include <rapidjson/document.h>
         #include "registerReaderExtensions.h"
-        #include <gsl/span>
+        #include <span>
         #include <cstddef>
         #include <string>
         #include <string_view>
@@ -435,9 +435,9 @@ function generate(options, schema, writers) {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName
-            ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-            : ""
-          }
+      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+      : ""
+    }
 
           static void write(
               const ${namespace}::${name}& obj,

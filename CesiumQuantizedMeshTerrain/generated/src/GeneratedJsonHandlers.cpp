@@ -12,10 +12,10 @@
 #include <CesiumQuantizedMeshTerrain/LayerReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -151,10 +151,10 @@ LayerReader::readArrayFromJson(const rapidjson::Value& value) const {
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangleReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
