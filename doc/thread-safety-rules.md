@@ -44,7 +44,7 @@ This rule is usually satisfied without any particular effort from the implemente
 
 2. _Const casts_: Casting away const with a `const_cast` is always a potentially dangerous thing to do. However, according to these rules, it can also introduce thread safety concerns.
 
-3. _Pointers and references_: Maybe people are surprised to learn that `const` is not transitive through pointers and references. For example, in a type like this:
+3. _Pointers and references_: Many people are surprised to learn that `const` is not transitive through pointers and references. For example, in a type like this:
 
 ```cpp
 struct Target {
