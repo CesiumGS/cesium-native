@@ -26,7 +26,7 @@ TEST_CASE("S2CellBoundingVolume") {
       "Case I - distanceToCamera works when camera is facing only one plane") {
     const double testDistance = 100.0;
 
-    gsl::span<const Plane> bvPlanes = tileS2Cell.getBoundingPlanes();
+    std::span<const Plane> bvPlanes = tileS2Cell.getBoundingPlanes();
 
     // Test against the top plane.
     Plane topPlane(
@@ -45,7 +45,7 @@ TEST_CASE("S2CellBoundingVolume") {
         bvPlanes[2].getNormal(),
         bvPlanes[2].getDistance() - testDistance);
 
-    gsl::span<const glm::dvec3> vertices = tileS2Cell.getVertices();
+    std::span<const glm::dvec3> vertices = tileS2Cell.getVertices();
     glm::dvec3 faceCenter = ((vertices[0] + vertices[1]) * 0.5 +
                              (vertices[4] + vertices[5]) * 0.5) *
                             0.5;

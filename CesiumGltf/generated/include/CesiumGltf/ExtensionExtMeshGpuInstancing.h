@@ -31,5 +31,26 @@ struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
    * y, and z axes.
    */
   std::unordered_map<std::string, int32_t> attributes;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ExtensionExtMeshGpuInstancing));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        this->attributes.bucket_count() *
+        (sizeof(std::string) + sizeof(int32_t)));
+    for (const auto& [k, v] : this->attributes) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += int64_t(sizeof(int32_t));
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

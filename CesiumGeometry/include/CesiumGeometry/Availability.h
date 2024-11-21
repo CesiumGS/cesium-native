@@ -2,11 +2,10 @@
 
 #include "Library.h"
 
-#include <gsl/span>
-
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <span>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -15,7 +14,7 @@ namespace CesiumGeometry {
 
 namespace AvailabilityUtilities {
 uint8_t countOnesInByte(uint8_t _byte);
-uint32_t countOnesInBuffer(gsl::span<const std::byte> buffer);
+uint32_t countOnesInBuffer(std::span<const std::byte> buffer);
 } // namespace AvailabilityUtilities
 
 struct CESIUMGEOMETRY_API ConstantAvailability {
@@ -96,7 +95,7 @@ public:
   /**
    * @brief Unsafe is isBufferView is false.
    */
-  const gsl::span<const std::byte>& getBufferAccessor() const {
+  const std::span<const std::byte>& getBufferAccessor() const {
     return *bufferAccessor;
   }
 
@@ -115,6 +114,6 @@ public:
 private:
   const SubtreeBufferView* pBufferView;
   const ConstantAvailability* pConstant;
-  std::optional<gsl::span<const std::byte>> bufferAccessor;
+  std::optional<std::span<const std::byte>> bufferAccessor;
 };
 } // namespace CesiumGeometry

@@ -55,5 +55,4 @@ target_link_libraries(Cesium3DTilesWriter
     PUBLIC
         Cesium3DTiles
         CesiumJsonWriter
-        Microsoft.GSL::GSL
 )

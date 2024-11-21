@@ -10,15 +10,16 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <catch2/catch.hpp>
 #include <glm/vec3.hpp>
-#include <gsl/span>
 #include <rapidjson/reader.h>
 
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <span>
 #include <string>
 
 using namespace CesiumAsync;
@@ -74,7 +75,7 @@ TEST_CASE("CesiumGltfReader::GltfReader") {
 
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
   CHECK(result.errors.empty());
   REQUIRE(result.model.has_value());
 
@@ -271,7 +272,7 @@ TEST_CASE("Nested extras deserializes properly") {
 
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()));
 
   REQUIRE(result.errors.empty());
   REQUIRE(result.model.has_value());
@@ -323,7 +324,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   REQUIRE(result.errors.empty());
@@ -351,7 +352,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       CesiumJsonReader::ExtensionState::JsonOnly);
 
   GltfReaderResult result2 = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   REQUIRE(result2.errors.empty());
@@ -386,7 +387,7 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
       CesiumJsonReader::ExtensionState::Disabled);
 
   GltfReaderResult result3 = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   REQUIRE(result3.errors.empty());
@@ -423,7 +424,7 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult withCustomExtModel = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   REQUIRE(withCustomExtModel.errors.empty());
@@ -454,7 +455,7 @@ TEST_CASE("Extensions deserialize to JsonVaue iff "
       CesiumJsonReader::ExtensionState::Disabled);
 
   GltfReaderResult withoutCustomExt = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   auto& zeroExtensions = withoutCustomExt.model->extensions;
@@ -478,7 +479,7 @@ TEST_CASE("Unknown MIME types are handled") {
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   // Note: The result.errors will not be empty,
@@ -501,7 +502,7 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
 
   CHECK(result.warnings.empty());
@@ -521,7 +522,7 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
     }
   )";
   result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   CHECK(!result.warnings.empty());
 }
@@ -552,7 +553,7 @@ TEST_CASE("Can apply RTC CENTER if model uses Cesium RTC extension") {
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   REQUIRE(result.model.has_value());
   Model& model = result.model.value();
@@ -579,7 +580,7 @@ TEST_CASE("Can read unknown properties from a glTF") {
   reader.getOptions().setCaptureUnknownProperties(true);
 
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   REQUIRE(result.model.has_value());
 
@@ -609,7 +610,7 @@ TEST_CASE("Ignores unknown properties if requested") {
   reader.getOptions().setCaptureUnknownProperties(false);
 
   GltfReaderResult result = reader.readGltf(
-      gsl::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   REQUIRE(result.model.has_value());
   CHECK(result.model->unknownProperties.empty());
@@ -657,7 +658,7 @@ TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
       "\"byteLength\": 1");
 
   GltfReader reader;
-  GltfReaderResult result = reader.readGltf(gsl::span<const std::byte>(
+  GltfReaderResult result = reader.readGltf(std::span<const std::byte>(
       reinterpret_cast<const std::byte*>(gltfString.data()),
       gltfString.size()));
 
@@ -689,7 +690,8 @@ TEST_CASE("GltfReader::loadGltf") {
         "application/binary",
         CesiumAsync::HttpHeaders{},
         readFile(entry.path()));
-    std::string url = "file:///" + entry.path().generic_u8string();
+    std::string url = "file:///" + StringHelpers::toStringUtf8(
+                                       entry.path().generic_u8string());
     auto pRequest = std::make_unique<SimpleAssetRequest>(
         "GET",
         url,
@@ -702,10 +704,11 @@ TEST_CASE("GltfReader::loadGltf") {
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
   std::string uri =
-      "file:///" + std::filesystem::directory_entry(
-                       dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
-                       .path()
-                       .generic_u8string();
+      "file:///" + StringHelpers::toStringUtf8(
+                       std::filesystem::directory_entry(
+                           dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
+                           .path()
+                           .generic_u8string());
 
   SECTION("loads glTF") {
     GltfReader reader{};

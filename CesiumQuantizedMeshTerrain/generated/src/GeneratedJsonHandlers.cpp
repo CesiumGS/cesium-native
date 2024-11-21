@@ -105,7 +105,7 @@ const CesiumJsonReader::JsonReaderOptions& LayerReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<CesiumQuantizedMeshTerrain::Layer>
-LayerReader::readFromJson(const gsl::span<const std::byte>& data) const {
+LayerReader::readFromJson(const std::span<const std::byte>& data) const {
   LayerJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -199,7 +199,7 @@ AvailabilityRectangleReader::getOptions() const {
 CesiumJsonReader::ReadJsonResult<
     CesiumQuantizedMeshTerrain::AvailabilityRectangle>
 AvailabilityRectangleReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   AvailabilityRectangleJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }

@@ -12,6 +12,8 @@ namespace CesiumGltf {
 
 /** @copydoc ModelSpec */
 struct CESIUMGLTF_API Model : public ModelSpec {
+  Model() = default;
+
   /**
    * @brief Merges another model into this one.
    *

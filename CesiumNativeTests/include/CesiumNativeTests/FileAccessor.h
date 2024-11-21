@@ -18,7 +18,7 @@ public:
       const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers,
-      const gsl::span<const std::byte>&) override;
+      const std::span<const std::byte>&) override;
 
   void tick() noexcept override {}
 };

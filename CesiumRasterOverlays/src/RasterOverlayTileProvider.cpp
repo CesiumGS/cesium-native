@@ -183,7 +183,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                   options.moreDetailAvailable};
             }
 
-            const gsl::span<const std::byte> data = pResponse->data();
+            const std::span<const std::byte> data = pResponse->data();
 
             CesiumGltfReader::ImageReaderResult loadedImage =
                 ImageDecoder::readImage(data, Ktx2TranscodeTargets);

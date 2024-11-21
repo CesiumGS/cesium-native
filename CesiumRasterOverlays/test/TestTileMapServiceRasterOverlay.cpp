@@ -5,6 +5,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <catch2/catch.hpp>
 
@@ -31,7 +32,8 @@ TEST_CASE("TileMapServiceRasterOverlay") {
         "application/binary",
         CesiumAsync::HttpHeaders{},
         readFile(entry.path()));
-    std::string url = "file:///" + entry.path().generic_u8string();
+    std::string url = "file:///" + StringHelpers::toStringUtf8(
+                                       entry.path().generic_u8string());
     auto pRequest = std::make_unique<SimpleAssetRequest>(
         "GET",
         url,
@@ -44,10 +46,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
   std::string tmr =
-      "file:///" + std::filesystem::directory_entry(
-                       dataDir / "Cesium_Logo_Color" / "tilemapresource.xml")
-                       .path()
-                       .generic_u8string();
+      "file:///" +
+      StringHelpers::toStringUtf8(
+          std::filesystem::directory_entry(
+              dataDir / "Cesium_Logo_Color" / "tilemapresource.xml")
+              .path()
+              .generic_u8string());
   IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlay =
       new TileMapServiceRasterOverlay("test", tmr);
 
@@ -81,10 +85,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
   SECTION("appends tilemapresource.xml to URL if not already present and "
           "direct request fails") {
-    std::string url = "file:///" + std::filesystem::directory_entry(
-                                       dataDir / "Cesium_Logo_Color")
-                                       .path()
-                                       .generic_u8string();
+    std::string url =
+        "file:///" +
+        StringHelpers::toStringUtf8(
+            std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
+                .path()
+                .generic_u8string());
     pMockAssetAccessor->mockCompletedRequests[url] =
         std::make_shared<SimpleAssetRequest>(
             "GET",
@@ -150,9 +156,10 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     // The initial URL does not include tilemapresource.xml and will fail
     std::string url =
         "file:///" +
-        std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
-            .path()
-            .generic_u8string() +
+        StringHelpers::toStringUtf8(
+            std::filesystem::directory_entry(dataDir / "Cesium_Logo_Color")
+                .path()
+                .generic_u8string()) +
         "?some=parameter";
 
     pMockAssetAccessor->mockCompletedRequests[url] =

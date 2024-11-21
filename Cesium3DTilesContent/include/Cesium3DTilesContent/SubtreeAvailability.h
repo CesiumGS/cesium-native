@@ -114,7 +114,7 @@ public:
     /**
      * @brief The buffer from which to read and write availability information.
      */
-    gsl::span<std::byte> view;
+    std::span<std::byte> view;
   };
 
   /**

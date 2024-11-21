@@ -23,7 +23,7 @@ static_assert(sizeof(InnerHeader) == 12);
 } // namespace
 
 CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
-    const gsl::span<const std::byte>& cmptBinary,
+    const std::span<const std::byte>& cmptBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
     const AssetFetcher& assetFetcher) {
   GltfConverterResult result;
@@ -73,7 +73,7 @@ CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
       break;
     }
 
-    const gsl::span<const std::byte> innerData(
+    const std::span<const std::byte> innerData(
         cmptBinary.data() + pos,
         pInner->byteLength);
 

@@ -3,6 +3,8 @@
 #include "JsonHandler.h"
 #include "Library.h"
 
+#include <CesiumUtility/IntrusivePointer.h>
+
 #include <optional>
 
 namespace CesiumJsonReader {
@@ -25,6 +27,9 @@ protected:
     if constexpr (isOptional<TProperty>::value) {
       value.emplace();
       accessor.reset(this, &value.value());
+    } else if constexpr (isIntrusivePointer<TProperty>::value) {
+      value.emplace();
+      accessor.reset(this, value.get());
     } else {
       accessor.reset(this, &value);
     }
@@ -47,6 +52,15 @@ private:
   };
 
   template <typename T> struct isOptional<std::optional<T>> {
+    static constexpr bool value = true;
+  };
+
+  template <typename T> struct isIntrusivePointer {
+    static constexpr bool value = false;
+  };
+
+  template <typename T>
+  struct isIntrusivePointer<CesiumUtility::IntrusivePointer<T>> {
     static constexpr bool value = true;
   };
 

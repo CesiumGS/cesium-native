@@ -6,6 +6,7 @@
 
 #include <glm/common.hpp>
 
+#include <array>
 #include <variant>
 
 namespace CesiumGltf {

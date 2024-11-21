@@ -14,11 +14,10 @@
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-#include <gsl/span>
-
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -116,6 +115,12 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    */
   CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssetSystem =
       GltfSharedAssetSystem::getDefault();
+
+  /**
+   * @brief Whether the `schemaUri` property of `EXT_structural_metadata` will
+   * be properly resolved. If false, any external schemas will be ignored.
+   */
+  bool resolveExternalStructuralMetadata = true;
 };
 
 /**
@@ -146,7 +151,7 @@ public:
    * @return The result of reading the glTF.
    */
   GltfReaderResult readGltf(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
@@ -204,7 +209,7 @@ public:
   [[deprecated(
       "Use ImageDecoder::readImage instead.")]] static ImageReaderResult
   readImage(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**

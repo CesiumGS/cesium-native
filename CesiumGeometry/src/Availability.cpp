@@ -19,7 +19,7 @@ static const uint8_t ones_in_byte[] = {
 
 uint8_t countOnesInByte(uint8_t _byte) { return ones_in_byte[_byte]; }
 
-uint32_t countOnesInBuffer(gsl::span<const std::byte> buffer) {
+uint32_t countOnesInBuffer(std::span<const std::byte> buffer) {
   uint32_t count = 0;
   for (const std::byte& byte : buffer) {
     count += countOnesInByte((uint8_t)byte);
@@ -67,7 +67,7 @@ AvailabilityAccessor::AvailabilityAccessor(
           subtree.buffers[this->pBufferView->buffer];
       if (this->pBufferView->byteOffset + this->pBufferView->byteLength <=
           buffer.size()) {
-        this->bufferAccessor = gsl::span<const std::byte>(
+        this->bufferAccessor = std::span<const std::byte>(
             reinterpret_cast<const std::byte*>(buffer.data()) +
                 this->pBufferView->byteOffset,
             this->pBufferView->byteLength);

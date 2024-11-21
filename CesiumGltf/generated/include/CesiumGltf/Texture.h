@@ -26,5 +26,20 @@ struct CESIUMGLTF_API Texture final : public CesiumGltf::NamedObject {
    * otherwise behavior is undefined.
    */
   int32_t source = -1;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Texture));
+    accum += CesiumGltf::NamedObject::getSizeBytes() -
+             int64_t(sizeof(CesiumGltf::NamedObject));
+
+    return accum;
+  }
 };
 } // namespace CesiumGltf

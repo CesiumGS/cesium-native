@@ -2,10 +2,9 @@
 
 #include "Library.h"
 
-#include <gsl/span>
-
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -34,7 +33,7 @@ public:
    * buffer cannot be interpreted as an EGM96 grid.
    */
   static std::optional<EarthGravitationalModel1996Grid>
-  fromBuffer(const gsl::span<const std::byte>& buffer);
+  fromBuffer(const std::span<const std::byte>& buffer);
 
   /**
    * @brief Samples the height at the given position.
