@@ -435,9 +435,9 @@ function generate(options, schema, writers) {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName
-      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-      : ""
-    }
+            ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+            : ""
+          }
 
           static void write(
               const ${namespace}::${name}& obj,
