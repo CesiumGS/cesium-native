@@ -67,8 +67,8 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(LoadedRasterOverlayImage);
-    accum += this->credits.capacity() * sizeof(CesiumUtility::Credit);
+    accum += int64_t(sizeof(LoadedRasterOverlayImage));
+    accum += int64_t(this->credits.capacity() * sizeof(CesiumUtility::Credit));
     if (this->pImage) {
       accum += this->pImage->getSizeBytes();
     }
