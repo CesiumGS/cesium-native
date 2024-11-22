@@ -103,16 +103,16 @@ static void checkArrayProperty(
     PropertyArrayView<PropertyViewType> value =
         propertyView.getRaw(static_cast<int64_t>(i));
     if (expectedCount > 0) {
-      REQUIRE(static_cast<int64_t>(value.size()) == expectedCount);
+      REQUIRE(value.size() == expectedCount);
     }
 
     for (size_t j = 0; j < expected[i].size(); ++j) {
       if constexpr (
           std::is_same_v<ExpectedType, float> ||
           std::is_same_v<ExpectedType, double>) {
-        REQUIRE(value[int64_t(j)] == Approx(expected[i][j]));
+        REQUIRE(value[static_cast<int64_t>(j)] == Approx(expected[i][j]));
       } else {
-        REQUIRE(value[int64_t(j)] == expected[i][j]);
+        REQUIRE(value[static_cast<int64_t>(j)] == expected[i][j]);
       }
     }
   }
@@ -1275,7 +1275,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
 
   {
     std::vector<std::string> expected;
-    for (size_t i = 0; i < size_t(propertyTable.count); ++i) {
+    for (int64_t i = 0; i < propertyTable.count; ++i) {
       std::string v = std::string("{\"name\":\"building") + std::to_string(i) +
                       "\",\"year\":" + std::to_string(i) + "}";
       expected.push_back(v);
