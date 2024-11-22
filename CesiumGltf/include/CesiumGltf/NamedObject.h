@@ -29,8 +29,8 @@ struct CESIUMGLTF_API NamedObject : public CesiumUtility::ExtensibleObject {
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(NamedObject);
-    accum += ExtensibleObject::getSizeBytes() -
-             static_cast<int64_t>(sizeof(ExtensibleObject));
+    accum +=
+        ExtensibleObject::getSizeBytes() - int64_t(sizeof(ExtensibleObject));
     accum += this->name.capacity() * sizeof(char);
     return accum;
   }

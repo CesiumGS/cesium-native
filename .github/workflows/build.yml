@@ -13,16 +13,10 @@ jobs:
           npm run format -- --dry-run -Werror
   Linting:
     name: "Linting"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install clang-tidy
-        run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main'
-          sudo apt update
-          sudo apt install -y clang-18 clang-tidy-18
       - name: Install ninja
         uses: seanmiddleditch/gha-setup-ninja@master
       - name: Install nasm
