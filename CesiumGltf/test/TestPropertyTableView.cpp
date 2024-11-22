@@ -1,7 +1,7 @@
 #include "CesiumGltf/PropertyTablePropertyView.h"
 #include "CesiumGltf/PropertyTableView.h"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <cstring>
 
@@ -5255,7 +5255,8 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
           PropertyArrayView<std::string_view> v1 = propertyValue.getRaw(1);
           REQUIRE(v1.size() == 2);
           REQUIRE(
-              v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
+              v1[0] ==
+              "But they still abduct my cows! Those milk thiefs! 👽 🐮");
           REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
           PropertyArrayView<std::string_view> v2 = propertyValue.getRaw(2);

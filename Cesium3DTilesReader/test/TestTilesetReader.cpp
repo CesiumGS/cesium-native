@@ -3,7 +3,7 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumNativeTests/readFile.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/vec3.hpp>
 #include <rapidjson/reader.h>
 

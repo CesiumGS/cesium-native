@@ -4,7 +4,7 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumUtility/Math.h"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <climits>
 #include <cstddef>

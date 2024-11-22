@@ -1,7 +1,7 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/Math.h"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;

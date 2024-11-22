@@ -2,7 +2,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 using namespace Cesium3DTiles;
 using namespace Cesium3DTilesContent;

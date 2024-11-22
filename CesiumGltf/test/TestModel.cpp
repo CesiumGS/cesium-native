@@ -11,7 +11,7 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/common.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/mat4x4.hpp>

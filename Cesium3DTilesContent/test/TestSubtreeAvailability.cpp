@@ -7,7 +7,7 @@
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumNativeTests/waitForFuture.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>

@@ -21,7 +21,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/glm.hpp>
 
 #include <filesystem>
