@@ -82,7 +82,7 @@ void repositionInstances(DecodedInstances& decodedInstances) {
 }
 
 void parseI3dmHeader(
-    const gsl::span<const std::byte>& instancesBinary,
+    const std::span<const std::byte>& instancesBinary,
     I3dmHeader& header,
     uint32_t& headerLength,
     GltfConverterResult& result) {
@@ -189,7 +189,7 @@ struct ConvertedI3dm {
 */
 
 std::optional<I3dmContent> parseI3dmJson(
-    const gsl::span<const std::byte> featureTableJsonData,
+    const std::span<const std::byte> featureTableJsonData,
     CesiumUtility::ErrorList& errors) {
   rapidjson::Document featureTableJson;
   featureTableJson.Parse(
@@ -301,7 +301,7 @@ std::optional<I3dmContent> parseI3dmJson(
 }
 
 CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
-    const gsl::span<const std::byte>& instancesBinary,
+    const std::span<const std::byte>& instancesBinary,
     const I3dmHeader& header,
     uint32_t headerLength,
     const CesiumGltfReader::GltfReaderOptions& options,
@@ -341,13 +341,13 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   const uint32_t numInstances = parsedContent.instancesLength;
   decodedInstances.positions.resize(numInstances, glm::vec3(0.0f, 0.0f, 0.0f));
   if (parsedContent.position.has_value()) {
-    gsl::span<const glm::vec3> rawPositions(
+    std::span<const glm::vec3> rawPositions(
         reinterpret_cast<const glm::vec3*>(
             pBinaryData + *parsedContent.position),
         numInstances);
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
   } else {
-    gsl::span<const uint16_t[3]> rawQuantizedPositions(
+    std::span<const uint16_t[3]> rawQuantizedPositions(
         reinterpret_cast<const uint16_t(*)[3]>(
             pBinaryData + *parsedContent.positionQuantized),
         numInstances);
@@ -371,11 +371,11 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
       glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
   if (parsedContent.normalUp.has_value() &&
       parsedContent.normalRight.has_value()) {
-    gsl::span<const glm::vec3> rawUp(
+    std::span<const glm::vec3> rawUp(
         reinterpret_cast<const glm::vec3*>(
             pBinaryData + *parsedContent.normalUp),
         numInstances);
-    gsl::span<const glm::vec3> rawRight(
+    std::span<const glm::vec3> rawRight(
         reinterpret_cast<const glm::vec3*>(
             pBinaryData + *parsedContent.normalRight),
         numInstances);
@@ -390,11 +390,11 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
       parsedContent.normalUpOct32p.has_value() &&
       parsedContent.normalRightOct32p.has_value()) {
 
-    gsl::span<const uint16_t[2]> rawUpOct(
+    std::span<const uint16_t[2]> rawUpOct(
         reinterpret_cast<const uint16_t(*)[2]>(
             pBinaryData + *parsedContent.normalUpOct32p),
         numInstances);
-    gsl::span<const uint16_t[2]> rawRightOct(
+    std::span<const uint16_t[2]> rawRightOct(
         reinterpret_cast<const uint16_t(*)[2]>(
             pBinaryData + *parsedContent.normalRightOct32p),
         numInstances);
@@ -434,7 +434,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   }
   decodedInstances.scales.resize(numInstances, glm::vec3(1.0, 1.0, 1.0));
   if (parsedContent.scale.has_value()) {
-    gsl::span<const float> rawScales(
+    std::span<const float> rawScales(
         reinterpret_cast<const float*>(pBinaryData + *parsedContent.scale),
         numInstances);
     std::transform(
@@ -444,7 +444,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         [](float scaleVal) { return glm::vec3(scaleVal); });
   }
   if (parsedContent.scaleNonUniform.has_value()) {
-    gsl::span<const glm::vec3> rawScalesNonUniform(
+    std::span<const glm::vec3> rawScalesNonUniform(
         reinterpret_cast<const glm::vec3*>(
             pBinaryData + *parsedContent.scaleNonUniform),
         numInstances);
@@ -819,7 +819,7 @@ void instantiateGltfInstances(
 } // namespace
 
 CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
-    const gsl::span<const std::byte>& instancesBinary,
+    const std::span<const std::byte>& instancesBinary,
     const CesiumGltfReader::GltfReaderOptions& options,
     const AssetFetcher& assetFetcher) {
   ConvertedI3dm convertedI3dm;

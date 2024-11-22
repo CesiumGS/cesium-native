@@ -270,10 +270,12 @@ WebMapServiceRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const std::optional<Credit> credit =
-      this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
-                                  this->_options.credit.value()))
-                            : std::nullopt;
+  std::optional<Credit> credit = std::nullopt;
+  if (pCreditSystem && this->_options.credit) {
+    credit = pCreditSystem->createCredit(
+        *this->_options.credit,
+        pOwner->getOptions().showCreditsOnScreen);
+  }
 
   return pAssetAccessor->get(asyncSystem, xmlUrlGetcapabilities, this->_headers)
       .thenInMainThread(
@@ -296,7 +298,7 @@ WebMapServiceRasterOverlay::createTileProvider(
                   "No response received from web map service."});
             }
 
-            const gsl::span<const std::byte> data = pResponse->data();
+            const std::span<const std::byte> data = pResponse->data();
 
             tinyxml2::XMLDocument doc;
             const tinyxml2::XMLError error = doc.Parse(

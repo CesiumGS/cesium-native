@@ -72,6 +72,7 @@
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/writeJsonExtensions.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonValue.h>
 
 namespace CesiumGltfWriter {
@@ -412,6 +413,14 @@ template <typename T>
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
+template <typename T>
+[[maybe_unused]] void writeJson(
+    const CesiumUtility::IntrusivePointer<T>& ptr,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(*ptr, jsonWriter, context);
+}
+
 [[maybe_unused]] void writeJson(
     const std::string& str,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -509,7 +518,7 @@ void writeExtensibleObject(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-  if (!obj.extensions.empty()) {
+  if (hasRegisteredExtensions(obj, jsonWriter, context)) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
   }
@@ -518,6 +527,14 @@ void writeExtensibleObject(
     jsonWriter.Key("extras");
     writeJson(obj.extras, jsonWriter, context);
   }
+}
+
+template <typename T>
+void writeSharedAsset(
+    const T& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeExtensibleObject(obj, jsonWriter, context);
 }
 
 template <typename T>
@@ -709,10 +726,8 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.schema.has_value()) {
-    jsonWriter.Key("schema");
-    writeJson(obj.schema, jsonWriter, context);
-  }
+  jsonWriter.Key("schema");
+  writeJson(obj.schema, jsonWriter, context);
 
   if (obj.schemaUri.has_value()) {
     jsonWriter.Key("schemaUri");
@@ -1272,7 +1287,7 @@ void writeJson(
     writeJson(obj.enums, jsonWriter, context);
   }
 
-  writeExtensibleObject(obj, jsonWriter, context);
+  writeSharedAsset(obj, jsonWriter, context);
 
   jsonWriter.EndObject();
 }

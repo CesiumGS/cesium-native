@@ -38,5 +38,25 @@ struct CESIUM3DTILES_API ExtensionContent3dTilesContentVoxels final
    * class ID declared in the `classes` dictionary.
    */
   std::string classProperty;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ExtensionContent3dTilesContentVoxels));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(int64_t) * this->dimensions.capacity());
+    if (this->padding) {
+      accum += this->padding->getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::Padding));
+    }
+    accum += int64_t(this->classProperty.capacity() * sizeof(char));
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

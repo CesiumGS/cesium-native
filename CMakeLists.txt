@@ -45,7 +45,7 @@ message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
+set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb uriparser)
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
@@ -64,7 +64,7 @@ if(NOT VCPKG_MANIFEST_MODE)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2024.07.12
+        COMMIT 2024.11.16
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -121,7 +121,7 @@ if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
 
         if (CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
-                DIRECTORY ${PACKAGE_DIR}/lib/
+                DIRECTORY $<IF:$<CONFIG:Debug>,${PACKAGE_DIR}/debug/lib/,${PACKAGE_DIR}/lib/>
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
             )
         endif()
@@ -134,7 +134,7 @@ if(CESIUM_INSTALL_STATIC_LIBS)
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
         if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
-                DIRECTORY ${PACKAGE_DIR}/lib/
+                DIRECTORY $<IF:$<CONFIG:Debug>,${PACKAGE_DIR}/debug/lib/,${PACKAGE_DIR}/lib/>
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
             )
         endif()
@@ -223,7 +223,6 @@ find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(meshoptimizer CONFIG REQUIRED)
-find_package(Microsoft.GSL REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)

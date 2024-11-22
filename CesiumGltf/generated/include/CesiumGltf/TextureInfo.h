@@ -31,5 +31,20 @@ struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
    * coordinate attributes for the material to be applicable to it.
    */
   int64_t texCoord = 0;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(TextureInfo));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+
+    return accum;
+  }
 };
 } // namespace CesiumGltf

@@ -39,5 +39,37 @@ struct CESIUM3DTILES_API VoxelContent final
    * @brief Index of the property table containing voxel data.
    */
   int64_t voxelTable = int64_t();
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(VoxelContent));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum +=
+        int64_t(sizeof(Cesium3DTiles::VoxelBuffer) * this->buffers.capacity());
+    for (const Cesium3DTiles::VoxelBuffer& value : this->buffers) {
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::VoxelBuffer));
+    }
+    accum += int64_t(
+        sizeof(Cesium3DTiles::VoxelBufferView) * this->bufferViews.capacity());
+    for (const Cesium3DTiles::VoxelBufferView& value : this->bufferViews) {
+      accum += value.getSizeBytes() -
+               int64_t(sizeof(Cesium3DTiles::VoxelBufferView));
+    }
+    accum += int64_t(
+        sizeof(Cesium3DTiles::PropertyTable) * this->propertyTables.capacity());
+    for (const Cesium3DTiles::PropertyTable& value : this->propertyTables) {
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::PropertyTable));
+    }
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

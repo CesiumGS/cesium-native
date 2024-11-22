@@ -67,5 +67,28 @@ struct CESIUMGLTF_API MaterialPBRMetallicRoughness final
    * the texture **MUST** be sampled as having `1.0` in G and B components.
    */
   std::optional<CesiumGltf::TextureInfo> metallicRoughnessTexture;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(MaterialPBRMetallicRoughness));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(double) * this->baseColorFactor.capacity());
+    if (this->baseColorTexture) {
+      accum += this->baseColorTexture->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::TextureInfo));
+    }
+    if (this->metallicRoughnessTexture) {
+      accum += this->metallicRoughnessTexture->getSizeBytes() -
+               int64_t(sizeof(CesiumGltf::TextureInfo));
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

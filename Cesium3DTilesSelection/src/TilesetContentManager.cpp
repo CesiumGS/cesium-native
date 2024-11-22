@@ -223,7 +223,7 @@ void createQuadtreeSubdividedChildren(
   parent.createChildTiles(std::move(children));
 
   // populate children metadata
-  gsl::span<Tile> childrenView = parent.getChildren();
+  std::span<Tile> childrenView = parent.getChildren();
   Tile& sw = childrenView[0];
   Tile& se = childrenView[1];
   Tile& nw = childrenView[2];
@@ -744,7 +744,7 @@ TilesetContentManager::TilesetContentManager(
               }
 
               // Parse Json response
-              gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
+              std::span<const std::byte> tilesetJsonBinary = pResponse->data();
               rapidjson::Document tilesetJson;
               tilesetJson.Parse(
                   reinterpret_cast<const char*>(tilesetJsonBinary.data()),

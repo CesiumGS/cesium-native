@@ -37,6 +37,7 @@
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/writeJsonExtensions.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonValue.h>
 
 namespace Cesium3DTilesWriter {
@@ -201,6 +202,14 @@ template <typename T>
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
+template <typename T>
+[[maybe_unused]] void writeJson(
+    const CesiumUtility::IntrusivePointer<T>& ptr,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(*ptr, jsonWriter, context);
+}
+
 [[maybe_unused]] void writeJson(
     const std::string& str,
     CesiumJsonWriter::JsonWriter& jsonWriter,
@@ -298,7 +307,7 @@ void writeExtensibleObject(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-  if (!obj.extensions.empty()) {
+  if (hasRegisteredExtensions(obj, jsonWriter, context)) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
   }
@@ -307,6 +316,14 @@ void writeExtensibleObject(
     jsonWriter.Key("extras");
     writeJson(obj.extras, jsonWriter, context);
   }
+}
+
+template <typename T>
+void writeSharedAsset(
+    const T& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeExtensibleObject(obj, jsonWriter, context);
 }
 
 template <typename T>

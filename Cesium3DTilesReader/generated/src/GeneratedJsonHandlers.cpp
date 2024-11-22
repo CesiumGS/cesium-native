@@ -87,7 +87,7 @@ Extension3dTilesBoundingVolumeS2Reader::getOptions() const {
 CesiumJsonReader::ReadJsonResult<
     Cesium3DTiles::Extension3dTilesBoundingVolumeS2>
 Extension3dTilesBoundingVolumeS2Reader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   Extension3dTilesBoundingVolumeS2JsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -204,7 +204,7 @@ ExtensionContent3dTilesContentVoxelsReader::getOptions() const {
 CesiumJsonReader::ReadJsonResult<
     Cesium3DTiles::ExtensionContent3dTilesContentVoxels>
 ExtensionContent3dTilesContentVoxelsReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   ExtensionContent3dTilesContentVoxelsJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -291,7 +291,7 @@ const CesiumJsonReader::JsonReaderOptions& PaddingReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Padding>
-PaddingReader::readFromJson(const gsl::span<const std::byte>& data) const {
+PaddingReader::readFromJson(const std::span<const std::byte>& data) const {
   PaddingJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -382,7 +382,7 @@ VoxelContentReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::VoxelContent>
-VoxelContentReader::readFromJson(const gsl::span<const std::byte>& data) const {
+VoxelContentReader::readFromJson(const std::span<const std::byte>& data) const {
   VoxelContentJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -475,7 +475,7 @@ PropertyTableReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::PropertyTable>
 PropertyTableReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   PropertyTableJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -589,7 +589,7 @@ PropertyTablePropertyReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::PropertyTableProperty>
 PropertyTablePropertyReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   PropertyTablePropertyJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -685,7 +685,7 @@ VoxelBufferViewReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::VoxelBufferView>
 VoxelBufferViewReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   VoxelBufferViewJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -775,7 +775,7 @@ VoxelBufferReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::VoxelBuffer>
-VoxelBufferReader::readFromJson(const gsl::span<const std::byte>& data) const {
+VoxelBufferReader::readFromJson(const std::span<const std::byte>& data) const {
   VoxelBufferJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -857,7 +857,7 @@ StatisticsReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Statistics>
-StatisticsReader::readFromJson(const gsl::span<const std::byte>& data) const {
+StatisticsReader::readFromJson(const std::span<const std::byte>& data) const {
   StatisticsJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -944,7 +944,7 @@ ClassStatisticsReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::ClassStatistics>
 ClassStatisticsReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   ClassStatisticsJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1053,7 +1053,7 @@ PropertyStatisticsReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::PropertyStatistics>
 PropertyStatisticsReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   PropertyStatisticsJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1149,7 +1149,7 @@ const CesiumJsonReader::JsonReaderOptions& SchemaReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Schema>
-SchemaReader::readFromJson(const gsl::span<const std::byte>& data) const {
+SchemaReader::readFromJson(const std::span<const std::byte>& data) const {
   SchemaJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1236,7 +1236,7 @@ const CesiumJsonReader::JsonReaderOptions& EnumReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Enum>
-EnumReader::readFromJson(const gsl::span<const std::byte>& data) const {
+EnumReader::readFromJson(const std::span<const std::byte>& data) const {
   EnumJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1320,7 +1320,7 @@ const CesiumJsonReader::JsonReaderOptions& EnumValueReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::EnumValue>
-EnumValueReader::readFromJson(const gsl::span<const std::byte>& data) const {
+EnumValueReader::readFromJson(const std::span<const std::byte>& data) const {
   EnumValueJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1405,7 +1405,7 @@ const CesiumJsonReader::JsonReaderOptions& ClassReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Class>
-ClassReader::readFromJson(const gsl::span<const std::byte>& data) const {
+ClassReader::readFromJson(const std::span<const std::byte>& data) const {
   ClassJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1533,7 +1533,7 @@ ClassPropertyReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::ClassProperty>
 ClassPropertyReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   ClassPropertyJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1651,7 +1651,7 @@ const CesiumJsonReader::JsonReaderOptions& SubtreeReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>
-SubtreeReader::readFromJson(const gsl::span<const std::byte>& data) const {
+SubtreeReader::readFromJson(const std::span<const std::byte>& data) const {
   SubtreeJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1737,7 +1737,7 @@ MetadataEntityReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::MetadataEntity>
 MetadataEntityReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   MetadataEntityJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1826,7 +1826,7 @@ AvailabilityReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Availability>
-AvailabilityReader::readFromJson(const gsl::span<const std::byte>& data) const {
+AvailabilityReader::readFromJson(const std::span<const std::byte>& data) const {
   AvailabilityJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -1917,7 +1917,7 @@ BufferViewReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::BufferView>
-BufferViewReader::readFromJson(const gsl::span<const std::byte>& data) const {
+BufferViewReader::readFromJson(const std::span<const std::byte>& data) const {
   BufferViewJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2002,7 +2002,7 @@ const CesiumJsonReader::JsonReaderOptions& BufferReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Buffer>
-BufferReader::readFromJson(const gsl::span<const std::byte>& data) const {
+BufferReader::readFromJson(const std::span<const std::byte>& data) const {
   BufferJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2113,7 +2113,7 @@ const CesiumJsonReader::JsonReaderOptions& TilesetReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Tileset>
-TilesetReader::readFromJson(const gsl::span<const std::byte>& data) const {
+TilesetReader::readFromJson(const std::span<const std::byte>& data) const {
   TilesetJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2221,7 +2221,7 @@ const CesiumJsonReader::JsonReaderOptions& TileReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Tile>
-TileReader::readFromJson(const gsl::span<const std::byte>& data) const {
+TileReader::readFromJson(const std::span<const std::byte>& data) const {
   TileJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2319,7 +2319,7 @@ ImplicitTilingReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::ImplicitTiling>
 ImplicitTilingReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   ImplicitTilingJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2397,7 +2397,7 @@ const CesiumJsonReader::JsonReaderOptions& SubtreesReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtrees>
-SubtreesReader::readFromJson(const gsl::span<const std::byte>& data) const {
+SubtreesReader::readFromJson(const std::span<const std::byte>& data) const {
   SubtreesJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2485,7 +2485,7 @@ const CesiumJsonReader::JsonReaderOptions& ContentReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Content>
-ContentReader::readFromJson(const gsl::span<const std::byte>& data) const {
+ContentReader::readFromJson(const std::span<const std::byte>& data) const {
   ContentJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2574,7 +2574,7 @@ BoundingVolumeReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::BoundingVolume>
 BoundingVolumeReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   BoundingVolumeJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2656,7 +2656,7 @@ GroupMetadataReader::getOptions() const {
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::GroupMetadata>
 GroupMetadataReader::readFromJson(
-    const gsl::span<const std::byte>& data) const {
+    const std::span<const std::byte>& data) const {
   GroupMetadataJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2741,7 +2741,7 @@ PropertiesReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Properties>
-PropertiesReader::readFromJson(const gsl::span<const std::byte>& data) const {
+PropertiesReader::readFromJson(const std::span<const std::byte>& data) const {
   PropertiesJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }
@@ -2823,7 +2823,7 @@ const CesiumJsonReader::JsonReaderOptions& AssetReader::getOptions() const {
 }
 
 CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Asset>
-AssetReader::readFromJson(const gsl::span<const std::byte>& data) const {
+AssetReader::readFromJson(const std::span<const std::byte>& data) const {
   AssetJsonHandler handler(this->_options);
   return CesiumJsonReader::JsonReader::readJson(data, handler);
 }

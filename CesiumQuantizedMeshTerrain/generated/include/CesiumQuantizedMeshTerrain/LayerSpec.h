@@ -102,7 +102,49 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
    */
   std::string version = "1.0.0";
 
-private:
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(LayerSpec));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(this->attribution.capacity() * sizeof(char));
+    accum += int64_t(
+        sizeof(std::vector<CesiumQuantizedMeshTerrain::AvailabilityRectangle>) *
+        this->available.capacity());
+    for (const std::vector<CesiumQuantizedMeshTerrain::AvailabilityRectangle>&
+             valueOuter : this->available) {
+      accum += int64_t(
+          sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle) *
+          valueOuter.capacity());
+      for (const CesiumQuantizedMeshTerrain::AvailabilityRectangle& value :
+           valueOuter) {
+        accum +=
+            value.getSizeBytes() -
+            int64_t(sizeof(CesiumQuantizedMeshTerrain::AvailabilityRectangle));
+      }
+    }
+    accum += int64_t(sizeof(double) * this->bounds.capacity());
+    accum += int64_t(this->description.capacity() * sizeof(char));
+    accum += int64_t(sizeof(std::string) * this->extensionsProperty.capacity());
+    accum += int64_t(this->format.capacity() * sizeof(char));
+    accum += int64_t(this->name.capacity() * sizeof(char));
+    if (this->parentUrl) {
+      accum += int64_t(this->parentUrl->capacity() * sizeof(char));
+    }
+    accum += int64_t(this->projection.capacity() * sizeof(char));
+    accum += int64_t(this->scheme.capacity() * sizeof(char));
+    accum += int64_t(sizeof(std::string) * this->tiles.capacity());
+    accum += int64_t(this->version.capacity() * sizeof(char));
+    return accum;
+  }
+
+protected:
   /**
    * @brief This class is not meant to be instantiated directly. Use {@link Layer} instead.
    */

@@ -7,9 +7,9 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-#include <gsl/span>
 #include <rapidjson/fwd.h>
 
+#include <span>
 #include <vector>
 
 namespace Cesium3DTiles {
@@ -47,7 +47,7 @@ public:
    */
   CesiumJsonReader::ReadJsonResult<
       Cesium3DTiles::ExtensionContent3dTilesContentVoxels>
-  readFromJson(const gsl::span<const std::byte>& data) const;
+  readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of ExtensionContent3dTilesContentVoxels from a

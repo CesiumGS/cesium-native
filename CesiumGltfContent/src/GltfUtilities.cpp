@@ -24,6 +24,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <unordered_set>
 #include <vector>
@@ -1264,22 +1265,25 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
   glm::dmat4x4 worldToPrimitive = glm::inverse(primitiveToWorld);
   CesiumGeometry::Ray transformedRay = ray.transform(worldToPrimitive);
 
-  // Ignore primitive if ray doesn't intersect bounding box
+  // Ignore primitive if we have an AABB from the accessor min/max and the ray
+  // doesn't intersect it.
   const std::vector<double>& min = positionAccessor.min;
   const std::vector<double>& max = positionAccessor.max;
 
-  std::optional<double> boxT =
-      CesiumGeometry::IntersectionTests::rayAABBParametric(
-          transformedRay,
-          CesiumGeometry::AxisAlignedBox(
-              min[0],
-              min[1],
-              min[2],
-              max[0],
-              max[1],
-              max[2]));
-  if (!boxT)
-    return std::optional<glm::dvec3>();
+  if (min.size() >= 3 && max.size() >= 3) {
+    std::optional<double> boxT =
+        CesiumGeometry::IntersectionTests::rayAABBParametric(
+            transformedRay,
+            CesiumGeometry::AxisAlignedBox(
+                min[0],
+                min[1],
+                min[2],
+                max[0],
+                max[1],
+                max[2]));
+    if (!boxT)
+      return std::optional<glm::dvec3>();
+  }
 
   double tClosest = -1.0;
 

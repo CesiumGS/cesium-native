@@ -31,5 +31,28 @@ struct CESIUMGLTF_API ExtensionModelMaxarMeshVariants final
    * @brief variants
    */
   std::vector<CesiumGltf::ExtensionModelMaxarMeshVariantsValue> variants;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ExtensionModelMaxarMeshVariants));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue) *
+        this->variants.capacity());
+    for (const CesiumGltf::ExtensionModelMaxarMeshVariantsValue& value :
+         this->variants) {
+      accum +=
+          value.getSizeBytes() -
+          int64_t(sizeof(CesiumGltf::ExtensionModelMaxarMeshVariantsValue));
+    }
+    return accum;
+  }
 };
 } // namespace CesiumGltf

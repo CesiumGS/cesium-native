@@ -52,10 +52,89 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
       _maximumLevel(maximumLevel),
       _imageWidth(imageWidth),
       _imageHeight(imageHeight),
-      _tilingScheme(tilingScheme),
-      _tilesOldToRecent(),
-      _tileLookup(),
-      _cachedBytes(0) {}
+      _tilingScheme(tilingScheme) {
+  auto loadParentTile = [this](const QuadtreeTileID& key)
+      -> Future<ResultPointer<LoadedQuadtreeImage>> {
+    const Rectangle rectangle = this->getTilingScheme().tileToRectangle(key);
+    const QuadtreeTileID parentID(key.level - 1, key.x >> 1, key.y >> 1);
+    return this->getQuadtreeTile(parentID).thenImmediately(
+        [rectangle](const ResultPointer<LoadedQuadtreeImage>& loaded) {
+          ResultPointer<LoadedQuadtreeImage> result(loaded.errors);
+          if (loaded.pValue) {
+            result.pValue.emplace(*loaded.pValue);
+            result.pValue->subset = rectangle;
+          }
+          return result;
+        });
+  };
+
+  this->_pTileDepot.emplace(std::function(
+      [pThis = this, loadParentTile](
+          const AsyncSystem& asyncSystem,
+          [[maybe_unused]] const std::shared_ptr<IAssetAccessor>&
+              pAssetAccessor,
+          const QuadtreeTileID& key)
+          -> Future<ResultPointer<LoadedQuadtreeImage>> {
+        return pThis->loadQuadtreeTileImage(key)
+            .catchImmediately([](std::exception&& e) {
+              // Turn an exception into an error.
+              LoadedRasterOverlayImage result;
+              result.errorList.emplaceError(e.what());
+              return result;
+            })
+            .thenImmediately(
+                [loadParentTile,
+                 key,
+                 currentLevel = key.level,
+                 minimumLevel = pThis->getMinimumLevel(),
+                 asyncSystem](LoadedRasterOverlayImage&& loaded)
+                    -> Future<ResultPointer<LoadedQuadtreeImage>> {
+                  if (loaded.pImage && !loaded.errorList.hasErrors() &&
+                      loaded.pImage->width > 0 && loaded.pImage->height > 0) {
+#if SHOW_TILE_BOUNDARIES
+                    // Highlight the edges in red to show tile boundaries.
+                    std::span<uint32_t> pixels =
+                        reintepretCastSpan<uint32_t, std::byte>(
+                            loaded.image->pixelData);
+                    for (int32_t j = 0; j < loaded.pImage->height; ++j) {
+                      for (int32_t i = 0; i < loaded.pImage->width; ++i) {
+                        if (i == 0 || j == 0 || i == loaded.pImage->width - 1 ||
+                            j == loaded.pImage->height - 1) {
+                          pixels[j * loaded.pImage->width + i] = 0xFF0000FF;
+                        }
+                      }
+                    }
+#endif
+                    IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
+                    pLoadedImage.emplace(
+                        std::make_shared<LoadedRasterOverlayImage>(
+                            std::move(loaded)),
+                        std::nullopt);
+                    return asyncSystem.createResolvedFuture(
+                        ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
+                  }
+
+                  // Tile failed to load, try loading the parent tile instead.
+                  // We can only initiate a new tile request from the main
+                  // thread, though.
+                  if (currentLevel > minimumLevel) {
+                    return asyncSystem.runInMainThread([key, loadParentTile]() {
+                      return loadParentTile(key);
+                    });
+                  } else {
+                    // No parent available, so return the original failed
+                    // result.
+                    IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
+                    pLoadedImage.emplace(
+                        std::make_shared<LoadedRasterOverlayImage>(
+                            std::move(loaded)),
+                        std::nullopt);
+                    return asyncSystem.createResolvedFuture(
+                        ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
+                  }
+                });
+      }));
+}
 
 uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
     const CesiumGeometry::Rectangle& rectangle,
@@ -97,11 +176,12 @@ uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
 }
 
 std::vector<CesiumAsync::SharedFuture<
-    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
+    ResultPointer<QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>>
 QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
     const CesiumGeometry::Rectangle& geometryRectangle,
     const glm::dvec2 targetScreenPixels) {
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> result;
+  std::vector<CesiumAsync::SharedFuture<ResultPointer<LoadedQuadtreeImage>>>
+      result;
 
   const QuadtreeTilingScheme& imageryTilingScheme = this->getTilingScheme();
 
@@ -271,7 +351,7 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
         continue;
       }
 
-      CesiumAsync::SharedFuture<LoadedQuadtreeImage> pTile =
+      CesiumAsync::SharedFuture<ResultPointer<LoadedQuadtreeImage>> pTile =
           this->getQuadtreeTile(QuadtreeTileID(level, i, j));
       result.emplace_back(std::move(pTile));
     }
@@ -281,101 +361,13 @@ QuadtreeRasterOverlayTileProvider::mapRasterTilesToGeometryTile(
 }
 
 CesiumAsync::SharedFuture<
-    QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>
+    ResultPointer<QuadtreeRasterOverlayTileProvider::LoadedQuadtreeImage>>
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID) {
-  auto lookupIt = this->_tileLookup.find(tileID);
-  if (lookupIt != this->_tileLookup.end()) {
-    auto& cacheIt = lookupIt->second;
-
-    // Move this entry to the end, indicating it's most recently used.
-    this->_tilesOldToRecent.splice(
-        this->_tilesOldToRecent.end(),
-        this->_tilesOldToRecent,
-        cacheIt);
-
-    return cacheIt->future;
-  }
-
-  // We create this lambda here instead of where it's used below so that we
-  // don't need to pass `this` through a thenImmediately lambda, which would
-  // create the possibility of accidentally using this pointer to a
-  // non-thread-safe object from another thread and creating a (potentially very
-  // subtle) race condition.
-  auto loadParentTile = [tileID, this]() {
-    const Rectangle rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    const QuadtreeTileID parentID(
-        tileID.level - 1,
-        tileID.x >> 1,
-        tileID.y >> 1);
-    return this->getQuadtreeTile(parentID).thenImmediately(
-        [rectangle](const LoadedQuadtreeImage& loaded) {
-          return LoadedQuadtreeImage{loaded.pLoaded, rectangle};
-        });
-  };
-
-  Future<LoadedQuadtreeImage> future =
-      this->loadQuadtreeTileImage(tileID)
-          .catchImmediately([](std::exception&& e) {
-            // Turn an exception into an error.
-            LoadedRasterOverlayImage result;
-            result.errorList.emplaceError(e.what());
-            return result;
-          })
-          .thenImmediately([&cachedBytes = this->_cachedBytes,
-                            currentLevel = tileID.level,
-                            minimumLevel = this->getMinimumLevel(),
-                            asyncSystem = this->getAsyncSystem(),
-                            loadParentTile = std::move(loadParentTile)](
-                               LoadedRasterOverlayImage&& loaded) {
-            if (loaded.pImage && !loaded.errorList.hasErrors() &&
-                loaded.pImage->width > 0 && loaded.pImage->height > 0) {
-              // Successfully loaded, continue.
-              cachedBytes += int64_t(loaded.pImage->pixelData.size());
-
-#if SHOW_TILE_BOUNDARIES
-              // Highlight the edges in red to show tile boundaries.
-              gsl::span<uint32_t> pixels =
-                  reintepretCastSpan<uint32_t, std::byte>(
-                      loaded.image->pixelData);
-              for (int32_t j = 0; j < loaded.pImage->height; ++j) {
-                for (int32_t i = 0; i < loaded.pImage->width; ++i) {
-                  if (i == 0 || j == 0 || i == loaded.pImage->width - 1 ||
-                      j == loaded.pImage->height - 1) {
-                    pixels[j * loaded.pImage->width + i] = 0xFF0000FF;
-                  }
-                }
-              }
-#endif
-
-              return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
-                  std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
-                  std::nullopt});
-            }
-
-            // Tile failed to load, try loading the parent tile instead.
-            // We can only initiate a new tile request from the main thread,
-            // though.
-            if (currentLevel > minimumLevel) {
-              return asyncSystem.runInMainThread(loadParentTile);
-            } else {
-              // No parent available, so return the original failed result.
-              return asyncSystem.createResolvedFuture(LoadedQuadtreeImage{
-                  std::make_shared<LoadedRasterOverlayImage>(std::move(loaded)),
-                  std::nullopt});
-            }
-          });
-
-  auto newIt = this->_tilesOldToRecent.emplace(
-      this->_tilesOldToRecent.end(),
-      CacheEntry{tileID, std::move(future).share()});
-  this->_tileLookup[tileID] = newIt;
-
-  SharedFuture<LoadedQuadtreeImage> result = newIt->future;
-
-  this->unloadCachedTiles();
-
-  return result;
+  return this->_pTileDepot->getOrCreate(
+      this->getAsyncSystem(),
+      this->getAssetAccessor(),
+      tileID);
 }
 
 namespace {
@@ -445,95 +437,60 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
     RasterOverlayTile& overlayTile) {
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
-  std::vector<CesiumAsync::SharedFuture<LoadedQuadtreeImage>> tiles =
-      this->mapRasterTilesToGeometryTile(
+  std::vector<CesiumAsync::SharedFuture<ResultPointer<LoadedQuadtreeImage>>>
+      tiles = this->mapRasterTilesToGeometryTile(
           overlayTile.getRectangle(),
           overlayTile.getTargetScreenPixels());
 
   return this->getAsyncSystem()
       .all(std::move(tiles))
-      .thenInWorkerThread([projection = this->getProjection(),
-                           rectangle = overlayTile.getRectangle()](
-                              std::vector<LoadedQuadtreeImage>&& images) {
-        // This set of images is only "useful" if at least one actually has
-        // image data, and that image data is _not_ from an ancestor. We can
-        // identify ancestor images because they have a `subset`.
-        const bool haveAnyUsefulImageData = std::any_of(
-            images.begin(),
-            images.end(),
-            [](const LoadedQuadtreeImage& image) {
-              return image.pLoaded->pImage && !image.subset.has_value();
-            });
+      .thenInWorkerThread(
+          [projection = this->getProjection(),
+           rectangle = overlayTile.getRectangle()](
+              std::vector<ResultPointer<LoadedQuadtreeImage>>&& images) {
+            // This set of images is only "useful" if at least one actually has
+            // image data, and that image data is _not_ from an ancestor. We can
+            // identify ancestor images because they have a `subset`.
+            const bool haveAnyUsefulImageData = std::any_of(
+                images.begin(),
+                images.end(),
+                [](const ResultPointer<LoadedQuadtreeImage>& image) {
+                  return image.pValue && image.pValue->pLoaded->pImage &&
+                         !image.pValue->subset.has_value();
+                });
 
-        if (!haveAnyUsefulImageData) {
-          // For non-useful sets of images, just return an empty image,
-          // signalling that the parent tile should be used instead.
-          // See https://github.com/CesiumGS/cesium-native/issues/316 for an
-          // edge case that is not yet handled. Be sure to pass through any
-          // errors and warnings.
-          ErrorList errors;
-          for (LoadedQuadtreeImage& image : images) {
-            if (image.pLoaded) {
-              errors.merge(image.pLoaded->errorList);
+            if (!haveAnyUsefulImageData) {
+              // For non-useful sets of images, just return an empty image,
+              // signalling that the parent tile should be used instead.
+              // See https://github.com/CesiumGS/cesium-native/issues/316 for an
+              // edge case that is not yet handled. Be sure to pass through any
+              // errors and warnings.
+              ErrorList errors;
+              for (ResultPointer<LoadedQuadtreeImage>& image : images) {
+                if (image.pValue->pLoaded) {
+                  errors.merge(image.pValue->pLoaded->errorList);
+                }
+                errors.merge(image.errors);
+              }
+              return LoadedRasterOverlayImage{
+                  new ImageAsset(),
+                  Rectangle(),
+                  {},
+                  std::move(errors),
+                  false};
             }
-          }
-          return LoadedRasterOverlayImage{
-              new ImageAsset(),
-              Rectangle(),
-              {},
-              std::move(errors),
-              false};
-        }
 
-        return QuadtreeRasterOverlayTileProvider::combineImages(
-            rectangle,
-            projection,
-            std::move(images));
-      });
-}
-
-void QuadtreeRasterOverlayTileProvider::unloadCachedTiles() {
-  CESIUM_TRACE("QuadtreeRasterOverlayTileProvider::unloadCachedTiles");
-
-  const int64_t maxCacheBytes = this->getOwner().getOptions().subTileCacheBytes;
-  if (this->_cachedBytes <= maxCacheBytes) {
-    return;
-  }
-
-  auto it = this->_tilesOldToRecent.begin();
-
-  while (it != this->_tilesOldToRecent.end() &&
-         this->_cachedBytes > maxCacheBytes) {
-    const SharedFuture<LoadedQuadtreeImage>& future = it->future;
-    if (!future.isReady()) {
-      // Don't unload tiles that are still loading.
-      ++it;
-      continue;
-    }
-
-    // Guaranteed not to block because isReady returned true.
-    const LoadedQuadtreeImage& image = future.wait();
-
-    std::shared_ptr<LoadedRasterOverlayImage> pImage = image.pLoaded;
-
-    this->_tileLookup.erase(it->tileID);
-    it = this->_tilesOldToRecent.erase(it);
-
-    // If this is the last use of this data, it will be freed when the shared
-    // pointer goes out of scope, so reduce the cachedBytes accordingly.
-    if (pImage.use_count() == 1) {
-      if (pImage->pImage) {
-        this->_cachedBytes -= int64_t(pImage->pImage->pixelData.size());
-        CESIUM_ASSERT(this->_cachedBytes >= 0);
-      }
-    }
-  }
+            return QuadtreeRasterOverlayTileProvider::combineImages(
+                rectangle,
+                projection,
+                std::move(images));
+          });
 }
 
 /*static*/ QuadtreeRasterOverlayTileProvider::CombinedImageMeasurements
 QuadtreeRasterOverlayTileProvider::measureCombinedImage(
     const Rectangle& targetRectangle,
-    const std::vector<LoadedQuadtreeImage>& images) {
+    const std::vector<ResultPointer<LoadedQuadtreeImage>>& images) {
   // Find the image with the densest pixels, and use that to select the
   // resolution of the target image.
 
@@ -547,8 +504,11 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
   double projectedHeightPerPixel = std::numeric_limits<double>::max();
   int32_t channels = -1;
   int32_t bytesPerChannel = -1;
-  for (const LoadedQuadtreeImage& image : images) {
-    const LoadedRasterOverlayImage& loaded = *image.pLoaded;
+  for (const ResultPointer<LoadedQuadtreeImage>& image : images) {
+    if (!image.pValue) {
+      continue;
+    }
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage || loaded.pImage->width <= 0 ||
         loaded.pImage->height <= 0) {
       continue;
@@ -567,15 +527,19 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
 
   std::optional<Rectangle> combinedRectangle;
 
-  for (const LoadedQuadtreeImage& image : images) {
-    const LoadedRasterOverlayImage& loaded = *image.pLoaded;
+  for (const ResultPointer<LoadedQuadtreeImage>& image : images) {
+    if (!image.pValue) {
+      continue;
+    }
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage || loaded.pImage->width <= 0 ||
         loaded.pImage->height <= 0) {
       continue;
     }
 
     // The portion of the source that we actually need to copy.
-    const Rectangle sourceSubset = image.subset.value_or(loaded.rectangle);
+    const Rectangle sourceSubset =
+        image.pValue->subset.value_or(loaded.rectangle);
 
     // Find the bounds of the combined image.
     // Intersect the loaded image's rectangle with the target rectangle.
@@ -649,12 +613,13 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
 QuadtreeRasterOverlayTileProvider::combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
-    std::vector<LoadedQuadtreeImage>&& images) {
+    std::vector<ResultPointer<LoadedQuadtreeImage>>&& images) {
   ErrorList errors;
-  for (LoadedQuadtreeImage& image : images) {
-    if (image.pLoaded) {
-      errors.merge(std::move(image.pLoaded->errorList));
+  for (ResultPointer<LoadedQuadtreeImage>& image : images) {
+    if (image.pValue && image.pValue->pLoaded) {
+      errors.merge(std::move(image.pValue->pLoaded->errorList));
     }
+    errors.merge(image.errors);
   }
 
   const CombinedImageMeasurements measurements =
@@ -690,7 +655,10 @@ QuadtreeRasterOverlayTileProvider::combineImages(
       target.width * target.height * target.channels * target.bytesPerChannel));
 
   for (auto it = images.begin(); it != images.end(); ++it) {
-    const LoadedRasterOverlayImage& loaded = *it->pLoaded;
+    if (!it->pValue) {
+      continue;
+    }
+    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
@@ -702,12 +670,15 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         result.rectangle,
         *loaded.pImage,
         loaded.rectangle,
-        it->subset);
+        it->pValue->subset);
   }
 
   size_t combinedCreditsCount = 0;
   for (auto it = images.begin(); it != images.end(); ++it) {
-    const LoadedRasterOverlayImage& loaded = *it->pLoaded;
+    if (!it->pValue) {
+      continue;
+    }
+    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
@@ -717,7 +688,10 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
   result.credits.reserve(combinedCreditsCount);
   for (auto it = images.begin(); it != images.end(); ++it) {
-    const LoadedRasterOverlayImage& loaded = *it->pLoaded;
+    if (!it->pValue) {
+      continue;
+    }
+    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
@@ -729,7 +703,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
   // Highlight the edges in yellow to show tile boundaries.
 #if SHOW_TILE_BOUNDARIES
-  gsl::span<uint32_t> pixels =
+  std::span<uint32_t> pixels =
       reintepretCastSpan<uint32_t, std::byte>(result.pImage->pixelData);
   for (int32_t j = 0; j < result.pImage->height; ++j) {
     for (int32_t i = 0; i < result.pImage->width; ++i) {

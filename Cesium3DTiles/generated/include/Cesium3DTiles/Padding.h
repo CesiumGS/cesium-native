@@ -27,5 +27,21 @@ struct CESIUM3DTILES_API Padding final
    * @brief after
    */
   std::vector<int64_t> after;
+
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(Padding));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(sizeof(int64_t) * this->before.capacity());
+    accum += int64_t(sizeof(int64_t) * this->after.capacity());
+    return accum;
+  }
 };
 } // namespace Cesium3DTiles

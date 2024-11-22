@@ -7,7 +7,10 @@
 #define NDEBUG
 
 namespace CesiumUtility {
-void forceAssertFailure() { assert(0 && "Assertion failed"); }
+std::int32_t forceAssertFailure() {
+  assert(0 && "Assertion failed");
+  return 1;
+}
 }; // namespace CesiumUtility
 
 #endif

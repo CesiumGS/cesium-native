@@ -1,11 +1,10 @@
 #pragma once
 
-#include <gsl/span>
-
 #include <cstdint>
+#include <span>
 
 namespace CesiumIonClient {
 
-void fillWithRandomBytes(const gsl::span<uint8_t>& buffer);
+void fillWithRandomBytes(const std::span<uint8_t>& buffer);
 
 }

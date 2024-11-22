@@ -31,7 +31,6 @@ target_sources(
 target_include_directories(
     CesiumAsync
     SYSTEM PUBLIC
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/
@@ -40,7 +39,6 @@ target_include_directories(
 target_link_libraries(CesiumAsync
     PUBLIC
         CesiumUtility
-        Microsoft.GSL::GSL
         spdlog::spdlog spdlog::spdlog_header_only
         Async++
     PRIVATE
