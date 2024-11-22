@@ -383,16 +383,15 @@ function generate(options, schema, writers) {
         ` : ""}
 
         CesiumJsonReader::IJsonHandler* ${name}JsonHandler::readObjectKey${name}(const std::string& objectType, const std::string_view& str, ${namespace}::${name}& o) {
-          // NOLINTNEXTLINE(misc-include-cleaner)
-          using std::string_literals::operator""s;
+          using namespace std::string_literals;
 
           ${properties.length > 0 ? `
           ${indent(
-    properties
-      .map((property) => formatReaderPropertyImpl(property))
-      .join("\n"),
-    10
-  )}` : `(void)o;`}
+            properties
+              .map((property) => formatReaderPropertyImpl(property))
+              .join("\n"),
+            10
+          )}` : `(void)o;`}
 
           return this->readObjectKey${NameFormatters.removeNamespace(base)}(objectType, str, *this->_pObject);
         }
@@ -435,9 +434,9 @@ function generate(options, schema, writers) {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName
-            ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-            : ""
-          }
+      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+      : ""
+    }
 
           static void write(
               const ${namespace}::${name}& obj,

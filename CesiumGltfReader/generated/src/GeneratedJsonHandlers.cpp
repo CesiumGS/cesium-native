@@ -62,8 +62,7 @@ ExtensionCesiumRTCJsonHandler::readObjectKeyExtensionCesiumRTC(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ExtensionCesiumRTC& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("center"s == str) {
     return property("center", this->_center, o.center);
@@ -175,8 +174,7 @@ ExtensionCesiumTileEdgesJsonHandler::readObjectKeyExtensionCesiumTileEdges(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ExtensionCesiumTileEdges& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("left"s == str) {
     return property("left", this->_left, o.left);
@@ -302,8 +300,7 @@ CesiumJsonReader::IJsonHandler* ExtensionExtInstanceFeaturesJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionExtInstanceFeatures& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("featureIds"s == str) {
     return property("featureIds", this->_featureIds, o.featureIds);
@@ -419,8 +416,7 @@ ExtensionExtMeshFeaturesJsonHandler::readObjectKeyExtensionExtMeshFeatures(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ExtensionExtMeshFeatures& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("featureIds"s == str) {
     return property("featureIds", this->_featureIds, o.featureIds);
@@ -536,8 +532,7 @@ CesiumJsonReader::IJsonHandler* ExtensionExtMeshGpuInstancingJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionExtMeshGpuInstancing& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("attributes"s == str) {
     return property("attributes", this->_attributes, o.attributes);
@@ -655,8 +650,7 @@ ExtensionBufferExtMeshoptCompressionJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionBufferExtMeshoptCompression& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("fallback"s == str) {
     return property("fallback", this->_fallback, o.fallback);
@@ -779,8 +773,7 @@ ExtensionBufferViewExtMeshoptCompressionJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionBufferViewExtMeshoptCompression& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("buffer"s == str) {
     return property("buffer", this->_buffer, o.buffer);
@@ -922,8 +915,7 @@ CesiumJsonReader::IJsonHandler* ExtensionModelExtStructuralMetadataJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionModelExtStructuralMetadata& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("schema"s == str) {
     return property("schema", this->_schema, o.schema);
@@ -1064,8 +1056,7 @@ ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("propertyTextures"s == str) {
     return property(
@@ -1196,8 +1187,7 @@ CesiumJsonReader::IJsonHandler* ExtensionKhrDracoMeshCompressionJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionKhrDracoMeshCompression& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("bufferView"s == str) {
     return property("bufferView", this->_bufferView, o.bufferView);
@@ -1316,8 +1306,7 @@ ExtensionKhrMaterialsUnlitJsonHandler::readObjectKeyExtensionKhrMaterialsUnlit(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ExtensionKhrMaterialsUnlit& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   (void)o;
 
@@ -1433,8 +1422,7 @@ CesiumJsonReader::IJsonHandler* ExtensionModelKhrMaterialsVariantsJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionModelKhrMaterialsVariants& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("variants"s == str) {
     return property("variants", this->_variants, o.variants);
@@ -1556,8 +1544,7 @@ ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("mappings"s == str) {
     return property("mappings", this->_mappings, o.mappings);
@@ -1675,8 +1662,7 @@ ExtensionKhrTextureBasisuJsonHandler::readObjectKeyExtensionKhrTextureBasisu(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ExtensionKhrTextureBasisu& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("source"s == str) {
     return property("source", this->_source, o.source);
@@ -1793,8 +1779,7 @@ CesiumJsonReader::IJsonHandler* ExtensionModelMaxarMeshVariantsJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionModelMaxarMeshVariants& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("default"s == str) {
     return property("default", this->_defaultProperty, o.defaultProperty);
@@ -1914,8 +1899,7 @@ CesiumJsonReader::IJsonHandler* ExtensionNodeMaxarMeshVariantsJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionNodeMaxarMeshVariants& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("mappings"s == str) {
     return property("mappings", this->_mappings, o.mappings);
@@ -2031,8 +2015,7 @@ CesiumJsonReader::IJsonHandler* ExtensionKhrTextureTransformJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionKhrTextureTransform& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("offset"s == str) {
     return property("offset", this->_offset, o.offset);
@@ -2154,8 +2137,7 @@ ExtensionTextureWebpJsonHandler::readObjectKeyExtensionTextureWebp(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ExtensionTextureWebp& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("source"s == str) {
     return property("source", this->_source, o.source);
@@ -2268,8 +2250,7 @@ CesiumJsonReader::IJsonHandler* ExtensionCesiumPrimitiveOutlineJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionCesiumPrimitiveOutline& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("indices"s == str) {
     return property("indices", this->_indices, o.indices);
@@ -2371,8 +2352,7 @@ ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("variants"s == str) {
     return property("variants", this->_variants, o.variants);
@@ -2485,8 +2465,7 @@ ExtensionModelMaxarMeshVariantsValueJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionModelMaxarMeshVariantsValue& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -2595,8 +2574,7 @@ ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler::
         const std::string_view& str,
         CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
             o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("variants"s == str) {
     return property("variants", this->_variants, o.variants);
@@ -2710,8 +2688,7 @@ ExtensionModelKhrMaterialsVariantsValueJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -2814,8 +2791,7 @@ PropertyAttributeJsonHandler::readObjectKeyPropertyAttribute(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::PropertyAttribute& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -2918,8 +2894,7 @@ PropertyAttributePropertyJsonHandler::readObjectKeyPropertyAttributeProperty(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::PropertyAttributeProperty& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("attribute"s == str) {
     return property("attribute", this->_attribute, o.attribute);
@@ -3031,8 +3006,7 @@ PropertyTextureJsonHandler::readObjectKeyPropertyTexture(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::PropertyTexture& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -3132,8 +3106,7 @@ PropertyTexturePropertyJsonHandler::readObjectKeyPropertyTextureProperty(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::PropertyTextureProperty& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("channels"s == str) {
     return property("channels", this->_channels, o.channels);
@@ -3244,8 +3217,7 @@ TextureInfoJsonHandler::readObjectKeyTextureInfo(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::TextureInfo& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("index"s == str) {
     return property("index", this->_index, o.index);
@@ -3342,8 +3314,7 @@ PropertyTableJsonHandler::readObjectKeyPropertyTable(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::PropertyTable& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -3446,8 +3417,7 @@ PropertyTablePropertyJsonHandler::readObjectKeyPropertyTableProperty(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::PropertyTableProperty& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("values"s == str) {
     return property("values", this->_values, o.values);
@@ -3574,8 +3544,7 @@ CesiumJsonReader::IJsonHandler* SchemaJsonHandler::readObjectKeySchema(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Schema& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("id"s == str) {
     return property("id", this->_id, o.id);
@@ -3679,8 +3648,7 @@ CesiumJsonReader::IJsonHandler* EnumJsonHandler::readObjectKeyEnum(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Enum& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -3777,8 +3745,7 @@ CesiumJsonReader::IJsonHandler* EnumValueJsonHandler::readObjectKeyEnumValue(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::EnumValue& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -3874,8 +3841,7 @@ CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Class& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -3970,8 +3936,7 @@ ClassPropertyJsonHandler::readObjectKeyClassProperty(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::ClassProperty& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("name"s == str) {
     return property("name", this->_name, o.name);
@@ -4110,8 +4075,7 @@ CesiumJsonReader::IJsonHandler* FeatureIdJsonHandler::readObjectKeyFeatureId(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::FeatureId& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("featureCount"s == str) {
     return property("featureCount", this->_featureCount, o.featureCount);
@@ -4216,8 +4180,7 @@ FeatureIdTextureJsonHandler::readObjectKeyFeatureIdTexture(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::FeatureIdTexture& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("channels"s == str) {
     return property("channels", this->_channels, o.channels);
@@ -4315,8 +4278,7 @@ ExtensionExtInstanceFeaturesFeatureIdJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::ExtensionExtInstanceFeaturesFeatureId& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("featureCount"s == str) {
     return property("featureCount", this->_featureCount, o.featureCount);
@@ -4443,8 +4405,7 @@ CesiumJsonReader::IJsonHandler* ModelJsonHandler::readObjectKeyModel(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Model& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("extensionsUsed"s == str) {
     return property("extensionsUsed", this->_extensionsUsed, o.extensionsUsed);
@@ -4583,8 +4544,7 @@ CesiumJsonReader::IJsonHandler* TextureJsonHandler::readObjectKeyTexture(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Texture& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("sampler"s == str) {
     return property("sampler", this->_sampler, o.sampler);
@@ -4675,8 +4635,7 @@ CesiumJsonReader::IJsonHandler* SkinJsonHandler::readObjectKeySkin(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Skin& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("inverseBindMatrices"s == str) {
     return property(
@@ -4773,8 +4732,7 @@ CesiumJsonReader::IJsonHandler* SceneJsonHandler::readObjectKeyScene(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Scene& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("nodes"s == str) {
     return property("nodes", this->_nodes, o.nodes);
@@ -4862,8 +4820,7 @@ CesiumJsonReader::IJsonHandler* SamplerJsonHandler::readObjectKeySampler(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Sampler& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("magFilter"s == str) {
     return property("magFilter", this->_magFilter, o.magFilter);
@@ -4960,8 +4917,7 @@ CesiumJsonReader::IJsonHandler* NodeJsonHandler::readObjectKeyNode(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Node& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("camera"s == str) {
     return property("camera", this->_camera, o.camera);
@@ -5073,8 +5029,7 @@ CesiumJsonReader::IJsonHandler* MeshJsonHandler::readObjectKeyMesh(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Mesh& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("primitives"s == str) {
     return property("primitives", this->_primitives, o.primitives);
@@ -5166,8 +5121,7 @@ MeshPrimitiveJsonHandler::readObjectKeyMeshPrimitive(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::MeshPrimitive& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("attributes"s == str) {
     return property("attributes", this->_attributes, o.attributes);
@@ -5276,8 +5230,7 @@ CesiumJsonReader::IJsonHandler* MaterialJsonHandler::readObjectKeyMaterial(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Material& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("pbrMetallicRoughness"s == str) {
     return property(
@@ -5398,8 +5351,7 @@ CesiumJsonReader::IJsonHandler* MaterialOcclusionTextureInfoJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::MaterialOcclusionTextureInfo& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("strength"s == str) {
     return property("strength", this->_strength, o.strength);
@@ -5499,8 +5451,7 @@ MaterialNormalTextureInfoJsonHandler::readObjectKeyMaterialNormalTextureInfo(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::MaterialNormalTextureInfo& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("scale"s == str) {
     return property("scale", this->_scale, o.scale);
@@ -5603,8 +5554,7 @@ CesiumJsonReader::IJsonHandler* MaterialPBRMetallicRoughnessJsonHandler::
         const std::string& objectType,
         const std::string_view& str,
         CesiumGltf::MaterialPBRMetallicRoughness& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("baseColorFactor"s == str) {
     return property(
@@ -5726,8 +5676,7 @@ CesiumJsonReader::IJsonHandler* ImageJsonHandler::readObjectKeyImage(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Image& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("uri"s == str) {
     return property("uri", this->_uri, o.uri);
@@ -5823,8 +5772,7 @@ CesiumJsonReader::IJsonHandler* CameraJsonHandler::readObjectKeyCamera(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Camera& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("orthographic"s == str) {
     return property("orthographic", this->_orthographic, o.orthographic);
@@ -5919,8 +5867,7 @@ CameraPerspectiveJsonHandler::readObjectKeyCameraPerspective(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::CameraPerspective& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("aspectRatio"s == str) {
     return property("aspectRatio", this->_aspectRatio, o.aspectRatio);
@@ -6025,8 +5972,7 @@ CameraOrthographicJsonHandler::readObjectKeyCameraOrthographic(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::CameraOrthographic& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("xmag"s == str) {
     return property("xmag", this->_xmag, o.xmag);
@@ -6130,8 +6076,7 @@ CesiumJsonReader::IJsonHandler* BufferViewJsonHandler::readObjectKeyBufferView(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::BufferView& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("buffer"s == str) {
     return property("buffer", this->_buffer, o.buffer);
@@ -6235,8 +6180,7 @@ CesiumJsonReader::IJsonHandler* BufferJsonHandler::readObjectKeyBuffer(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Buffer& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("uri"s == str) {
     return property("uri", this->_uri, o.uri);
@@ -6327,8 +6271,7 @@ CesiumJsonReader::IJsonHandler* AssetJsonHandler::readObjectKeyAsset(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Asset& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("copyright"s == str) {
     return property("copyright", this->_copyright, o.copyright);
@@ -6427,8 +6370,7 @@ CesiumJsonReader::IJsonHandler* AnimationJsonHandler::readObjectKeyAnimation(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Animation& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("channels"s == str) {
     return property("channels", this->_channels, o.channels);
@@ -6521,8 +6463,7 @@ AnimationSamplerJsonHandler::readObjectKeyAnimationSampler(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::AnimationSampler& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("input"s == str) {
     return property("input", this->_input, o.input);
@@ -6624,8 +6565,7 @@ AnimationChannelJsonHandler::readObjectKeyAnimationChannel(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::AnimationChannel& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("sampler"s == str) {
     return property("sampler", this->_sampler, o.sampler);
@@ -6723,8 +6663,7 @@ AnimationChannelTargetJsonHandler::readObjectKeyAnimationChannelTarget(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::AnimationChannelTarget& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("node"s == str) {
     return property("node", this->_node, o.node);
@@ -6825,8 +6764,7 @@ CesiumJsonReader::IJsonHandler* AccessorJsonHandler::readObjectKeyAccessor(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::Accessor& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("bufferView"s == str) {
     return property("bufferView", this->_bufferView, o.bufferView);
@@ -6941,8 +6879,7 @@ AccessorSparseJsonHandler::readObjectKeyAccessorSparse(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::AccessorSparse& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("count"s == str) {
     return property("count", this->_count, o.count);
@@ -7042,8 +6979,7 @@ AccessorSparseValuesJsonHandler::readObjectKeyAccessorSparseValues(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::AccessorSparseValues& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("bufferView"s == str) {
     return property("bufferView", this->_bufferView, o.bufferView);
@@ -7142,8 +7078,7 @@ AccessorSparseIndicesJsonHandler::readObjectKeyAccessorSparseIndices(
     const std::string& objectType,
     const std::string_view& str,
     CesiumGltf::AccessorSparseIndices& o) {
-  // NOLINTNEXTLINE(misc-include-cleaner)
-  using std::string_literals::operator""s;
+  using namespace std::string_literals;
 
   if ("bufferView"s == str) {
     return property("bufferView", this->_bufferView, o.bufferView);
