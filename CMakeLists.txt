@@ -90,6 +90,7 @@ project(cesium-native
 )
 
 include(GNUInstallDirs)
+include(CMakeDependentOption)
 
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
 set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
