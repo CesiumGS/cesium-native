@@ -621,6 +621,13 @@ public:
   }
 
   /**
+   * @brief Returns `true` if two values are equal.
+   */
+  inline bool operator==(const JsonValue& rhs) const noexcept {
+    return this->value == rhs.value;
+  };
+
+  /**
    * @brief The actual value.
    *
    * The type of the value may be queried with the `isNull`, `isDouble`,
