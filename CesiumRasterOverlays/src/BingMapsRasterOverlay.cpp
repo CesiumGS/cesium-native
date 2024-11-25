@@ -229,14 +229,12 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
     const std::string& key,
     const std::string& mapStyle,
     const std::string& culture,
-    const Ellipsoid& ellipsoid,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _url(url),
       _key(key),
       _mapStyle(mapStyle),
-      _culture(culture),
-      _ellipsoid(ellipsoid) {}
+      _culture(culture) {}
 
 BingMapsRasterOverlay::~BingMapsRasterOverlay() {}
 
@@ -356,7 +354,7 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid = this->_ellipsoid;
+  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getOptions().ellipsoid;
 
   auto handleResponse =
       [pOwner,
