@@ -134,6 +134,8 @@ jobs:
         run: |
           echo "CC=${{ matrix.compiler-cc }}" >> "$GITHUB_ENV"
           echo "CXX=${{ matrix.compiler-cxx }}" >> "$GITHUB_ENV"
+          ${CC} --version
+          ${CXX} --version
       - name: Make more swap space available
         if: ${{ matrix.platform != 'macos-15'}}
         run: |
