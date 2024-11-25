@@ -615,6 +615,13 @@ public:
   }
 
   /**
+   * @brief Returns `true` if two values are equal.
+   */
+  inline bool operator==(const JsonValue& rhs) const noexcept {
+    return this->value == rhs.value;
+  };
+
+  /**
    * @brief Returns the size in bytes of this `JsonValue`.
    */
   int64_t getSizeBytes() const noexcept {
