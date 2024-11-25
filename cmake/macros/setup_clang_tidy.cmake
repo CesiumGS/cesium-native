@@ -35,7 +35,7 @@ function(setup_clang_tidy)
     # Try to use vswhere to find Visual Studio's installed copy of clang-tidy
     # vswhere should always be in the same location as of Visual Studio 2017 15.2
     set(VSWHERE_PATH "$ENV{ProgramFiles\(x86\)}\\Microsoft Visual Studio\\Installer\\vswhere.exe")
-    if(NOT CLANG_TIDY_PATH AND WIN32 AND EXISTS VSWHERE_PATH)
+    if(NOT CLANG_TIDY_PATH AND MSVC AND EXISTS ${VSWHERE_PATH})
         execute_process(
             COMMAND
             ${VSWHERE_PATH} -latest -requires Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset -find VC\\Tools\\Llvm\\bin\\clang-tidy.exe
@@ -48,27 +48,27 @@ function(setup_clang_tidy)
         return()
     endif()
 
-    # CMake has built-in support for running clang-tidy during the build
-    if(_ENABLE_CLANG_TIDY_ON_BUILD)
-        if(MSVC)
-            # We need to manually tell clang-tidy that exceptions are enabled,
-            # as per https://gitlab.kitware.com/cmake/cmake/-/issues/20512#note_722771
-            set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=/EHsc)
-        else()
-            set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH})
-        endif()
-        set(CMAKE_CXX_CLANG_TIDY
-            ${CMAKE_CXX_CLANG_TIDY}
-            PARENT_SCOPE)
-    endif()
+    message(STATUS "Found clang-tidy: ${CLANG_TIDY_PATH}")
 
     # Generate compile_commands.json for clang-tidy to use.
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
     
-    # CMAKE_CXX_CLANG_TIDY works on MSVC, but MSVC won't generate compile_commands.json unless MSBuild is manually called with /t:ClangTidy
-    # Doing so runs clang-tidy without the ability to specify any options on the command line, and outputs separate compile_commands.json files for each target.
-    # We could concat these together and use those to run clang-tidy directly, but that seems like a bit much when CMAKE_CXX_CLANG_TIDY works fine.
-    if(NOT MSVC)
+    # compile_commands.json, which clang-tidy requires, is only generated on when CMAKE_GENERATOR is Ninja or Unix Makefiles.
+    if(CMAKE_GENERATOR MATCHES "Ninja" OR CMAKE_GENERATOR MATCHES "Unix Makefiles")
+        # CMake has built-in support for running clang-tidy during the build
+        if(_ENABLE_CLANG_TIDY_ON_BUILD)
+            if(MSVC)
+                # We need to manually tell clang-tidy that exceptions are enabled,
+                # as per https://gitlab.kitware.com/cmake/cmake/-/issues/20512#note_722771
+                set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=/EHsc)
+            else()
+                set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH})
+            endif()
+            set(CMAKE_CXX_CLANG_TIDY
+                ${CMAKE_CXX_CLANG_TIDY}
+                PARENT_SCOPE)
+        endif()
+
         # Generate a CMake target that runs clang-tidy by itself
         # `run-clang-tidy` is a python script that comes with llvm that runs clang-tidy in parallel over a compile_commands.json
         # See: https://clang.llvm.org/extra/doxygen/run-clang-tidy_8py_source.html
