@@ -103,12 +103,12 @@ function generate(options, schema, writers) {
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
-                  properties
-                    .map((property) => formatProperty(property))
-                    .filter(propertyText => propertyText !== undefined)
-                    .join("\n\n"),
-                  16
-                )}
+    properties
+      .map((property) => formatProperty(property))
+      .filter(propertyText => propertyText !== undefined)
+      .join("\n\n"),
+    16
+  )}
 
                 /**
                  * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
@@ -329,7 +329,7 @@ function generate(options, schema, writers) {
   function generateJsonHandlerOptionsInitializerList(properties, varName) {
     const initializerList = properties
       .filter((p) => p.readerType.toLowerCase().indexOf("jsonhandler") != -1)
-      .map((p) => `_${p.cppSafeName}(${varName})`)
+      .map((p) => `_${p.cppSafeName}(${p.schemas && p.schemas.length > 0 ? varName : ""})`)
       .join(", ");
     return initializerList == "" ? "" : ", " + initializerList;
   }
@@ -386,11 +386,11 @@ function generate(options, schema, writers) {
 
           ${properties.length > 0 ? `
           ${indent(
-            properties
-              .map((property) => formatReaderPropertyImpl(property))
-              .join("\n"),
-            10
-          )}` : `(void)o;`}
+    properties
+      .map((property) => formatReaderPropertyImpl(property))
+      .join("\n"),
+    10
+  )}` : `(void)o;`}
 
           return this->readObjectKey${NameFormatters.removeNamespace(base)}(objectType, str, *this->_pObject);
         }
@@ -433,9 +433,9 @@ function generate(options, schema, writers) {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName
-            ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-            : ""
-          }
+      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+      : ""
+    }
 
           static void write(
               const ${namespace}::${name}& obj,
@@ -472,11 +472,11 @@ function generate(options, schema, writers) {
             const CesiumJsonWriter::ExtensionWriterContext& context) {
 
           ${indent(
-            properties
-              .map((property) => formatWriterPropertyImpl(property))
-              .join("\n\n"),
-            10
-          )}
+      properties
+        .map((property) => formatWriterPropertyImpl(property))
+        .join("\n\n"),
+      10
+    )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
         }
@@ -503,11 +503,11 @@ function generate(options, schema, writers) {
           jsonWriter.StartObject();
 
           ${indent(
-            properties
-              .map((property) => formatWriterPropertyImpl(property))
-              .join("\n\n"),
-            10
-          )}
+      properties
+        .map((property) => formatWriterPropertyImpl(property))
+        .join("\n\n"),
+      10
+    )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
 
