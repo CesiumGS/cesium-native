@@ -4,7 +4,7 @@
 
 An example will help to illustrate why we need `AsyncSystem` at all.
 
-<!-- Add simple diagram from here, probably turned horizontal: https://docs.google.com/presentation/d/12gxJrXKe4dolyZHhu-LSkHhBb_FsNP1LkVB_cRALWO8/edit#slide=id.g2e680c17110_0_0 -->
+@mermaid{async-system-load-example}
 
 Let's say we're trying to load a tile in a [3D Tiles](https://github.com/CesiumGS/3d-tiles) tileset. First, we need to start a network request to download the tile's content. We'll do an HTTP GET for a particular URL, and some time tens to hundreds to even thousands of milliseconds later, the tile content at that URL will be downloaded and ready for us to use.
 
