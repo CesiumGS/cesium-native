@@ -13,6 +13,7 @@
 - Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
 - The `schemaUri` property in the `EXT_structural_metadata` glTF extension is now supported, allowing structural metadata schemas to be loaded from URIs rather than being embedded in the glTF itself.
 - Added `getHeightSampler` method to `TilesetContentLoader`, allowing loaders to optionally provide a custom, more efficient means of querying heights using the `ITilesetHeightSampler` interface.
+- Added equality operator for `JsonValue`.
 
 ##### Fixes :wrench:
 

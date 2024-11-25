@@ -86,3 +86,17 @@ TEST_CASE("JsonValue::getSafeNumberOrDefault() returns default if narrowing "
     REQUIRE(value.getSafeNumberOrDefault<std::uint16_t>(365) == 365);
   }
 }
+
+TEST_CASE("JsonValue Equality operator") {
+  JsonValue emptyValue;
+  JsonValue integerValue(1);
+  JsonValue booleanValueTrue(true);
+  JsonValue booleanValueTrue2(true);
+  JsonValue booleanValueFalse(false);
+
+  CHECK(emptyValue != booleanValueTrue);
+  CHECK(integerValue != booleanValueTrue);
+  CHECK(booleanValueFalse != booleanValueTrue);
+
+  CHECK(booleanValueTrue2 == booleanValueTrue);
+}
