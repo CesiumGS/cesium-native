@@ -1,6 +1,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/ITaskProcessor.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 
 #include <catch2/catch.hpp>
@@ -103,7 +104,9 @@ void useLoadedImage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
 void usePage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
 
 struct SlowValue {};
-void computeSomethingSlowly(std::function<void(const SlowValue&)> f) {}
+void computeSomethingSlowly(std::function<void(const SlowValue&)> f) {
+  f(SlowValue());
+}
 
 template <typename T> void doSomething(const T&) {}
 
@@ -130,6 +133,10 @@ myComputeSomethingSlowlyWrapper2(const CesiumAsync::AsyncSystem& asyncSystem) {
       });
 }
 //! [compute-something-slowly-wrapper-handle-exception]
+
+CesiumGltf::Model getModelFromSomewhere() { return {}; }
+
+void giveBackModel(CesiumGltf::Model&&) {}
 
 } // namespace
 
@@ -392,5 +399,24 @@ TEST_CASE("AsyncSystem Examples") {
           doSomething(value);
         });
     //! [compute-something-slowly-async-system]
+
+    future.waitInMainThread();
+  }
+
+  SECTION("lambda-move") {
+    //! [lambda-move]
+    CesiumGltf::Model model = getModelFromSomewhere();
+    CesiumAsync::Future<void> future =
+        asyncSystem
+            .runInWorkerThread([model = std::move(model)]() mutable {
+              doSomething(model);
+              return std::move(model);
+            })
+            .thenInMainThread([](CesiumGltf::Model&& model) {
+              giveBackModel(std::move(model));
+            });
+    //! [lambda-move]
+
+    future.waitInMainThread();
   }
 }

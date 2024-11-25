@@ -146,6 +146,8 @@ In the previous examples, we downloaded a web page, found the URL of an image wi
 
 The `Future` returned by `all` resolves when all of the `Futures` it is given resolve. It rejects when _any_ of the `Futures` it is given reject.
 
+TODO: getting rejection information from individual futures.
+
 ## Creating Futures
 
 So far, the initial `Future<T>` instances we have used nave been created by others. For example, we've used `IAssetAccessor::get` to create a `Future<T>` representing a web resource once the asynchronous download is complete. How do those `Future<T>` instances actually get created?
@@ -188,6 +190,22 @@ The `createFuture` method takes a function as its only parameter, and it _immedi
 
 The important difference, however, is that if `computeSomethingSlowly` throws an exception, `createFuture` will automatically catch that exception and turn it into a rejection of the `Future<T>`.
 
+## SharedFuture<T>
+
+A `Future<T>` may have at most one continuation. It's not possible to arrange for two continuation functions to be called when a given `Future<T>` resolves. This policy makes `Future<T>` more efficient by minimizing bookkeeping. In the majority of cases, this is sufficient. But not always.
+
+In those cases where we do want to be able to attach multiple continuations, we can convert a `Future<T>` into a `SharedFuture<T>` by calling the `share` method on it. The returned `SharedFuture<T>` instance works a bit like a smart pointer. It's safe to copy, and all copies are logically identical to the original. Just like `Future<T>`, we can call `then...` and `catch...` methods to attach continuations. The difference is that we can do this multiple times, and all attached continuations will be invoked when the future completes.
+
+It may initially be surprising to learn that calling `then...` or `catch...` on a `SharedFuture<T>` returns a `Future<T>`, not another `SharedFuture<T>`. This is again for efficiency. Just because multiple continuations are needed for one point in a continuation chain does not necessarily mean later parts of the chain will also need multiple continuations. If they do, however, it's just a matter of calling `share` again.
+
 ## Lambda Captures and Thread Safety
 
-## SharedFuture
+`AsyncSystem` is a powerful abstraction for writing safe and easy-to-understand multithreaded code. Even if so, `AsyncSystem` does not completely prevent you from creating data races. In particular, it's essential to use care and good judgement when choosing what to capture in continuation lambdas. Here are some tips:
+
+* DO NOT capture by reference or pointer, unless you're certain that the object referenced will still be around when the continuation is invoked. This can be difficult to achieve in practice!
+* DO think in terms of transferring ownership of an object to the promise chain, and transferring ownership back out at the end. This requires use of `std::move` and a `mutable` lambda (so that the captured value is not `const`). It looks like this:
+
+\snippet ExamplesAsyncSystem.cpp lambda-move
+
+* DO be aware of _when_ and _in what thread_ lambda captures are destroyed. Continuation lambda captures are destroyed immediately after the continuation runs, in whatever thread ran the continuation. If a `catch...` continuation is skipped because the `Future` to which it's attached resolved instead of rejecting, the continuation's captures are destroyed in whatever thread did the resolving. Similarly, if a `then...` continuation is skipped because the `Future` to which it's attached rejected, the continuation's captures are destroyed in whatever thread did the rejecting.
+* DO NOT capture an `IntrusivePointer` to a non-thread-safe object (such as one derived from `ReferenceCountedNonThreadSafe`) except in a continuation that runs in the thread that owns it. For example, in the usual case that an object is owned by the "main thread", a pointer to that object should only be captured in a lambda given to `runInMainThread`, `thenInMainThread`, or `catchInMainThread`. Furthermore, as a corollary to the item above, ensure that these `IntrusivePointer`-capturing continuations cannot be skipped by the Future is either resolved or rejected, because this could result in the `IntrusivePointer` being destroyed in the wrong thread. Failure to follow this rule can lead to corruption of the object's reference count, leading to some difficult to debug problems. In Debug builds, assertions will help to detect this sort of problem.
