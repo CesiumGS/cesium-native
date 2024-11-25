@@ -94,12 +94,12 @@ jobs:
             compiler-cxx: g++
           - platform: ubuntu-24.04
             build_type: Debug
-            compiler-cc: gcc
-            compiler-cxx: g++
+            compiler-cc: gcc-13
+            compiler-cxx: g++-13
           - platform: ubuntu-24.04
             build_type: RelWithDebInfo
-            compiler-cc: gcc
-            compiler-cxx: g++
+            compiler-cc: gcc-13
+            compiler-cxx: g++-13
           - platform: macos-15
             build_type: Debug
           - platform: macos-15
