@@ -62,7 +62,9 @@ function(setup_clang_tidy)
                 # as per https://gitlab.kitware.com/cmake/cmake/-/issues/20512#note_722771
                 set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=/EHsc)
             else()
-                set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH})
+                # If not set, when building for GCC clang-tidy will pass any warning flags to its underlying clang,
+                # causing an error if GCC has a flag that clang does not.
+                set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=-Wno-unknown-warning-option)
             endif()
             set(CMAKE_CXX_CLANG_TIDY
                 ${CMAKE_CXX_CLANG_TIDY}
