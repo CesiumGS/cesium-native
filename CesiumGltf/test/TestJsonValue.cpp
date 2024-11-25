@@ -87,7 +87,7 @@ TEST_CASE("JsonValue::getSafeNumberOrDefault() returns default if narrowing "
   }
 }
 
-TEST_CASE("Equality operator") {
+TEST_CASE("JsonValue Equality operator") {
   JsonValue emptyValue;
   JsonValue integerValue(1);
   JsonValue booleanValueTrue(true);
