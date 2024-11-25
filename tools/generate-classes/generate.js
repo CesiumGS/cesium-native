@@ -329,7 +329,6 @@ function generate(options, schema, writers) {
   function generateJsonHandlerOptionsInitializerList(properties, varName) {
     const initializerList = properties
       .filter((p) => p.readerType.toLowerCase().indexOf("jsonhandler") != -1)
-      .filter((p) => p.schemas && p.schemas.length > 0)
       .map((p) => `_${p.cppSafeName}(${varName})`)
       .join(", ");
     return initializerList == "" ? "" : ", " + initializerList;

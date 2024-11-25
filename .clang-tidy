@@ -86,6 +86,7 @@ Checks:
   - "bugprone-unused-return-value"
   - "bugprone-use-after-move"
   - "bugprone-virtual-near-miss"
+  - "-readability-redundant-member-init"
 
 #WarningsAsErrors: "*"
 WarningsAsErrors: ""

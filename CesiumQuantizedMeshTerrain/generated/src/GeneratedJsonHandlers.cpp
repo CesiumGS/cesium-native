@@ -26,7 +26,21 @@ namespace CesiumQuantizedMeshTerrain {
 LayerJsonHandler::LayerJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
-      _available(options) {}
+      _attribution(options),
+      _available(options),
+      _bounds(options),
+      _description(options),
+      _extensionsProperty(options),
+      _format(options),
+      _maxzoom(options),
+      _minzoom(options),
+      _metadataAvailability(options),
+      _name(options),
+      _parentUrl(options),
+      _projection(options),
+      _scheme(options),
+      _tiles(options),
+      _version(options) {}
 
 void LayerJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -163,7 +177,11 @@ namespace CesiumQuantizedMeshTerrain {
 
 AvailabilityRectangleJsonHandler::AvailabilityRectangleJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _startX(options),
+      _startY(options),
+      _endX(options),
+      _endY(options) {}
 
 void AvailabilityRectangleJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,

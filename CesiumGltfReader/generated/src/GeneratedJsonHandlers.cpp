@@ -27,7 +27,8 @@ namespace CesiumGltfReader {
 
 ExtensionCesiumRTCJsonHandler::ExtensionCesiumRTCJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _center(options) {}
 
 void ExtensionCesiumRTCJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -137,7 +138,11 @@ namespace CesiumGltfReader {
 
 ExtensionCesiumTileEdgesJsonHandler::ExtensionCesiumTileEdgesJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _left(options),
+      _bottom(options),
+      _right(options),
+      _top(options) {}
 
 void ExtensionCesiumTileEdgesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -495,7 +500,8 @@ namespace CesiumGltfReader {
 ExtensionExtMeshGpuInstancingJsonHandler::
     ExtensionExtMeshGpuInstancingJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _attributes(options) {}
 
 void ExtensionExtMeshGpuInstancingJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -611,7 +617,8 @@ namespace CesiumGltfReader {
 ExtensionBufferExtMeshoptCompressionJsonHandler::
     ExtensionBufferExtMeshoptCompressionJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _fallback(options) {}
 
 void ExtensionBufferExtMeshoptCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -732,7 +739,14 @@ namespace CesiumGltfReader {
 ExtensionBufferViewExtMeshoptCompressionJsonHandler::
     ExtensionBufferViewExtMeshoptCompressionJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _buffer(options),
+      _byteOffset(options),
+      _byteLength(options),
+      _byteStride(options),
+      _count(options),
+      _mode(options),
+      _filter(options) {}
 
 void ExtensionBufferViewExtMeshoptCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -875,6 +889,7 @@ ExtensionModelExtStructuralMetadataJsonHandler::
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _schema(options),
+      _schemaUri(options),
       _propertyTables(options),
       _propertyTextures(options),
       _propertyAttributes(options) {}
@@ -1015,7 +1030,9 @@ namespace CesiumGltfReader {
 ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::
     ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _propertyTextures(options),
+      _propertyAttributes(options) {}
 
 void ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1149,7 +1166,9 @@ namespace CesiumGltfReader {
 ExtensionKhrDracoMeshCompressionJsonHandler::
     ExtensionKhrDracoMeshCompressionJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _bufferView(options),
+      _attributes(options) {}
 
 void ExtensionKhrDracoMeshCompressionJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1625,7 +1644,8 @@ namespace CesiumGltfReader {
 
 ExtensionKhrTextureBasisuJsonHandler::ExtensionKhrTextureBasisuJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _source(options) {}
 
 void ExtensionKhrTextureBasisuJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -1742,6 +1762,7 @@ ExtensionModelMaxarMeshVariantsJsonHandler::
     ExtensionModelMaxarMeshVariantsJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _defaultProperty(options),
       _variants(options) {}
 
 void ExtensionModelMaxarMeshVariantsJsonHandler::reset(
@@ -1978,7 +1999,11 @@ namespace CesiumGltfReader {
 ExtensionKhrTextureTransformJsonHandler::
     ExtensionKhrTextureTransformJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _offset(options),
+      _rotation(options),
+      _scale(options),
+      _texCoord(options) {}
 
 void ExtensionKhrTextureTransformJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2102,7 +2127,8 @@ namespace CesiumGltfReader {
 
 ExtensionTextureWebpJsonHandler::ExtensionTextureWebpJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _source(options) {}
 
 void ExtensionTextureWebpJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2213,7 +2239,8 @@ namespace CesiumGltfReader {
 ExtensionCesiumPrimitiveOutlineJsonHandler::
     ExtensionCesiumPrimitiveOutlineJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _indices(options) {}
 
 void ExtensionCesiumPrimitiveOutlineJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2327,7 +2354,10 @@ namespace CesiumGltfReader {
 ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler::
     ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _variants(options),
+      _mesh(options),
+      _name(options) {}
 
 void ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2440,7 +2470,7 @@ namespace CesiumGltfReader {
 ExtensionModelMaxarMeshVariantsValueJsonHandler::
     ExtensionModelMaxarMeshVariantsValueJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options), _name(options) {}
 
 void ExtensionModelMaxarMeshVariantsValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2545,7 +2575,10 @@ namespace CesiumGltfReader {
 ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler::
     ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _variants(options),
+      _material(options),
+      _name(options) {}
 
 void ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2663,7 +2696,7 @@ namespace CesiumGltfReader {
 ExtensionModelKhrMaterialsVariantsValueJsonHandler::
     ExtensionModelKhrMaterialsVariantsValueJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options), _name(options) {}
 
 void ExtensionModelKhrMaterialsVariantsValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2768,6 +2801,8 @@ namespace CesiumGltfReader {
 PropertyAttributeJsonHandler::PropertyAttributeJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _classProperty(options),
       _properties(options) {}
 
 void PropertyAttributeJsonHandler::reset(
@@ -2870,7 +2905,12 @@ namespace CesiumGltfReader {
 
 PropertyAttributePropertyJsonHandler::PropertyAttributePropertyJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _attribute(options),
+      _offset(options),
+      _scale(options),
+      _max(options),
+      _min(options) {}
 
 void PropertyAttributePropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2983,6 +3023,8 @@ namespace CesiumGltfReader {
 PropertyTextureJsonHandler::PropertyTextureJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _classProperty(options),
       _properties(options) {}
 
 void PropertyTextureJsonHandler::reset(
@@ -3083,7 +3125,12 @@ namespace CesiumGltfReader {
 
 PropertyTexturePropertyJsonHandler::PropertyTexturePropertyJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : TextureInfoJsonHandler(options) {}
+    : TextureInfoJsonHandler(options),
+      _channels(options),
+      _offset(options),
+      _scale(options),
+      _max(options),
+      _min(options) {}
 
 void PropertyTexturePropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -3194,7 +3241,9 @@ namespace CesiumGltfReader {
 
 TextureInfoJsonHandler::TextureInfoJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _index(options),
+      _texCoord(options) {}
 
 void TextureInfoJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -3291,6 +3340,9 @@ namespace CesiumGltfReader {
 PropertyTableJsonHandler::PropertyTableJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _classProperty(options),
+      _count(options),
       _properties(options) {}
 
 void PropertyTableJsonHandler::reset(
@@ -3394,7 +3446,16 @@ namespace CesiumGltfReader {
 
 PropertyTablePropertyJsonHandler::PropertyTablePropertyJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _values(options),
+      _arrayOffsets(options),
+      _stringOffsets(options),
+      _arrayOffsetType(options),
+      _stringOffsetType(options),
+      _offset(options),
+      _scale(options),
+      _max(options),
+      _min(options) {}
 
 void PropertyTablePropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -3521,6 +3582,10 @@ namespace CesiumGltfReader {
 SchemaJsonHandler::SchemaJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::SharedAssetJsonHandler(options),
+      _id(options),
+      _name(options),
+      _description(options),
+      _version(options),
       _classes(options),
       _enums(options) {}
 
@@ -3626,6 +3691,9 @@ namespace CesiumGltfReader {
 EnumJsonHandler::EnumJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _description(options),
+      _valueType(options),
       _values(options) {}
 
 void EnumJsonHandler::reset(
@@ -3723,7 +3791,10 @@ namespace CesiumGltfReader {
 
 EnumValueJsonHandler::EnumValueJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _description(options),
+      _value(options) {}
 
 void EnumValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -3819,6 +3890,8 @@ namespace CesiumGltfReader {
 ClassJsonHandler::ClassJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _description(options),
       _properties(options) {}
 
 void ClassJsonHandler::reset(
@@ -3913,7 +3986,23 @@ namespace CesiumGltfReader {
 
 ClassPropertyJsonHandler::ClassPropertyJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _name(options),
+      _description(options),
+      _type(options),
+      _componentType(options),
+      _enumType(options),
+      _array(options),
+      _count(options),
+      _normalized(options),
+      _offset(options),
+      _scale(options),
+      _max(options),
+      _min(options),
+      _required(options),
+      _noData(options),
+      _defaultProperty(options),
+      _semantic(options) {}
 
 void ClassPropertyJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4053,7 +4142,12 @@ namespace CesiumGltfReader {
 FeatureIdJsonHandler::FeatureIdJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
-      _texture(options) {}
+      _featureCount(options),
+      _nullFeatureId(options),
+      _label(options),
+      _attribute(options),
+      _texture(options),
+      _propertyTable(options) {}
 
 void FeatureIdJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4157,7 +4251,7 @@ namespace CesiumGltfReader {
 
 FeatureIdTextureJsonHandler::FeatureIdTextureJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : TextureInfoJsonHandler(options) {}
+    : TextureInfoJsonHandler(options), _channels(options) {}
 
 void FeatureIdTextureJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4253,7 +4347,12 @@ namespace CesiumGltfReader {
 ExtensionExtInstanceFeaturesFeatureIdJsonHandler::
     ExtensionExtInstanceFeaturesFeatureIdJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _featureCount(options),
+      _nullFeatureId(options),
+      _label(options),
+      _attribute(options),
+      _propertyTable(options) {}
 
 void ExtensionExtInstanceFeaturesFeatureIdJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4370,6 +4469,8 @@ namespace CesiumGltfReader {
 ModelJsonHandler::ModelJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _extensionsUsed(options),
+      _extensionsRequired(options),
       _accessors(options),
       _animations(options),
       _asset(options),
@@ -4381,6 +4482,7 @@ ModelJsonHandler::ModelJsonHandler(
       _meshes(options),
       _nodes(options),
       _samplers(options),
+      _scene(options),
       _scenes(options),
       _skins(options),
       _textures(options) {}
@@ -4522,7 +4624,9 @@ namespace CesiumGltfReader {
 
 TextureJsonHandler::TextureJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _sampler(options),
+      _source(options) {}
 
 void TextureJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4613,7 +4717,10 @@ namespace CesiumGltfReader {
 
 SkinJsonHandler::SkinJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _inverseBindMatrices(options),
+      _skeleton(options),
+      _joints(options) {}
 
 void SkinJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4710,7 +4817,7 @@ namespace CesiumGltfReader {
 
 SceneJsonHandler::SceneJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options), _nodes(options) {}
 
 void SceneJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4798,7 +4905,11 @@ namespace CesiumGltfReader {
 
 SamplerJsonHandler::SamplerJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _magFilter(options),
+      _minFilter(options),
+      _wrapS(options),
+      _wrapT(options) {}
 
 void SamplerJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -4895,7 +5006,16 @@ namespace CesiumGltfReader {
 
 NodeJsonHandler::NodeJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _camera(options),
+      _children(options),
+      _skin(options),
+      _matrix(options),
+      _mesh(options),
+      _rotation(options),
+      _scale(options),
+      _translation(options),
+      _weights(options) {}
 
 void NodeJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5007,7 +5127,9 @@ namespace CesiumGltfReader {
 
 MeshJsonHandler::MeshJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options), _primitives(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _primitives(options),
+      _weights(options) {}
 
 void MeshJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5098,7 +5220,12 @@ namespace CesiumGltfReader {
 
 MeshPrimitiveJsonHandler::MeshPrimitiveJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _attributes(options),
+      _indices(options),
+      _material(options),
+      _mode(options),
+      _targets(options) {}
 
 void MeshPrimitiveJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5208,7 +5335,11 @@ MaterialJsonHandler::MaterialJsonHandler(
       _pbrMetallicRoughness(options),
       _normalTexture(options),
       _occlusionTexture(options),
-      _emissiveTexture(options) {}
+      _emissiveTexture(options),
+      _emissiveFactor(options),
+      _alphaMode(options),
+      _alphaCutoff(options),
+      _doubleSided(options) {}
 
 void MaterialJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5327,7 +5458,7 @@ namespace CesiumGltfReader {
 MaterialOcclusionTextureInfoJsonHandler::
     MaterialOcclusionTextureInfoJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : TextureInfoJsonHandler(options) {}
+    : TextureInfoJsonHandler(options), _strength(options) {}
 
 void MaterialOcclusionTextureInfoJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5427,7 +5558,7 @@ namespace CesiumGltfReader {
 
 MaterialNormalTextureInfoJsonHandler::MaterialNormalTextureInfoJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : TextureInfoJsonHandler(options) {}
+    : TextureInfoJsonHandler(options), _scale(options) {}
 
 void MaterialNormalTextureInfoJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5529,7 +5660,10 @@ MaterialPBRMetallicRoughnessJsonHandler::
     MaterialPBRMetallicRoughnessJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _baseColorFactor(options),
       _baseColorTexture(options),
+      _metallicFactor(options),
+      _roughnessFactor(options),
       _metallicRoughnessTexture(options) {}
 
 void MaterialPBRMetallicRoughnessJsonHandler::reset(
@@ -5654,7 +5788,10 @@ namespace CesiumGltfReader {
 
 ImageJsonHandler::ImageJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _uri(options),
+      _mimeType(options),
+      _bufferView(options) {}
 
 void ImageJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5750,7 +5887,8 @@ CameraJsonHandler::CameraJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumGltfReader::NamedObjectJsonHandler(options),
       _orthographic(options),
-      _perspective(options) {}
+      _perspective(options),
+      _type(options) {}
 
 void CameraJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5844,7 +5982,11 @@ namespace CesiumGltfReader {
 
 CameraPerspectiveJsonHandler::CameraPerspectiveJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _aspectRatio(options),
+      _yfov(options),
+      _zfar(options),
+      _znear(options) {}
 
 void CameraPerspectiveJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5949,7 +6091,11 @@ namespace CesiumGltfReader {
 
 CameraOrthographicJsonHandler::CameraOrthographicJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _xmag(options),
+      _ymag(options),
+      _zfar(options),
+      _znear(options) {}
 
 void CameraOrthographicJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6054,7 +6200,12 @@ namespace CesiumGltfReader {
 
 BufferViewJsonHandler::BufferViewJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _buffer(options),
+      _byteOffset(options),
+      _byteLength(options),
+      _byteStride(options),
+      _target(options) {}
 
 void BufferViewJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6158,7 +6309,9 @@ namespace CesiumGltfReader {
 
 BufferJsonHandler::BufferJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _uri(options),
+      _byteLength(options) {}
 
 void BufferJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6249,7 +6402,11 @@ namespace CesiumGltfReader {
 
 AssetJsonHandler::AssetJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _copyright(options),
+      _generator(options),
+      _version(options),
+      _minVersion(options) {}
 
 void AssetJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6440,7 +6597,10 @@ namespace CesiumGltfReader {
 
 AnimationSamplerJsonHandler::AnimationSamplerJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _input(options),
+      _interpolation(options),
+      _output(options) {}
 
 void AnimationSamplerJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6542,6 +6702,7 @@ namespace CesiumGltfReader {
 AnimationChannelJsonHandler::AnimationChannelJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _sampler(options),
       _target(options) {}
 
 void AnimationChannelJsonHandler::reset(
@@ -6640,7 +6801,9 @@ namespace CesiumGltfReader {
 
 AnimationChannelTargetJsonHandler::AnimationChannelTargetJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _node(options),
+      _path(options) {}
 
 void AnimationChannelTargetJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6742,7 +6905,16 @@ namespace CesiumGltfReader {
 
 AccessorJsonHandler::AccessorJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumGltfReader::NamedObjectJsonHandler(options), _sparse(options) {}
+    : CesiumGltfReader::NamedObjectJsonHandler(options),
+      _bufferView(options),
+      _byteOffset(options),
+      _componentType(options),
+      _normalized(options),
+      _count(options),
+      _type(options),
+      _max(options),
+      _min(options),
+      _sparse(options) {}
 
 void AccessorJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -6855,6 +7027,7 @@ namespace CesiumGltfReader {
 AccessorSparseJsonHandler::AccessorSparseJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _count(options),
       _indices(options),
       _values(options) {}
 
@@ -6956,7 +7129,9 @@ namespace CesiumGltfReader {
 
 AccessorSparseValuesJsonHandler::AccessorSparseValuesJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _bufferView(options),
+      _byteOffset(options) {}
 
 void AccessorSparseValuesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -7055,7 +7230,10 @@ namespace CesiumGltfReader {
 
 AccessorSparseIndicesJsonHandler::AccessorSparseIndicesJsonHandler(
     const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options) {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _bufferView(options),
+      _byteOffset(options),
+      _componentType(options) {}
 
 void AccessorSparseIndicesJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
