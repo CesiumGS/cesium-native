@@ -56,5 +56,4 @@ target_link_libraries(Cesium3DTilesReader
         Cesium3DTiles
         CesiumAsync
         CesiumJsonReader
-        Microsoft.GSL::GSL
 )

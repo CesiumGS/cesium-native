@@ -149,7 +149,7 @@ glm::dvec3 S2CellBoundingVolume::getCenter() const noexcept {
   return this->_center;
 }
 
-gsl::span<const glm::dvec3> S2CellBoundingVolume::getVertices() const noexcept {
+std::span<const glm::dvec3> S2CellBoundingVolume::getVertices() const noexcept {
   return this->_vertices;
 }
 
@@ -419,7 +419,7 @@ double S2CellBoundingVolume::computeDistanceSquaredToPosition(
       this->_vertices[4 + ((selectedPlaneIndices[1] - 2 + skip) % 4)]);
 }
 
-gsl::span<const CesiumGeometry::Plane>
+std::span<const CesiumGeometry::Plane>
 S2CellBoundingVolume::getBoundingPlanes() const noexcept {
   return this->_boundingPlanes;
 }

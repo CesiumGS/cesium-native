@@ -35,8 +35,8 @@ public:
     return this->_pCacheItem->cacheResponse.headers;
   }
 
-  virtual gsl::span<const std::byte> data() const noexcept override {
-    return gsl::span<const std::byte>(
+  virtual std::span<const std::byte> data() const noexcept override {
+    return std::span<const std::byte>(
         this->_pCacheItem->cacheResponse.data.data(),
         this->_pCacheItem->cacheResponse.data.size());
   }
@@ -258,7 +258,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::request(
     const std::string& verb,
     const std::string& url,
     const std::vector<THeader>& headers,
-    const gsl::span<const std::byte>& contentPayload) {
+    const std::span<const std::byte>& contentPayload) {
   return this->_pAssetAccessor
       ->request(asyncSystem, verb, url, headers, contentPayload);
 }

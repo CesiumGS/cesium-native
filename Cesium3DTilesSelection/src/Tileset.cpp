@@ -391,6 +391,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   }
 
   TilesetHeightRequest::processHeightRequests(
+      this->getAsyncSystem(),
       *this->_pTilesetContentManager,
       this->_options,
       this->_loadedTiles,
@@ -1457,7 +1458,7 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   TraversalDetails traversalDetails;
 
   // TODO: actually visit near-to-far, rather than in order of occurrence.
-  gsl::span<Tile> children = tile.getChildren();
+  std::span<Tile> children = tile.getChildren();
   for (Tile& child : children) {
     const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,

@@ -2,15 +2,25 @@
 
 ### Not Released Yet
 
+##### Breaking Changes :mega:
+
+- Cesium Native now requires C++20.
+- Switched from `gsl::span` to `std::span` throughout the library and API. The GSL library has been removed.
+
 ##### Additions :tada:
 
 - Added support for `EXT_accessor_additional_types` in `AccessorView`.
 - Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
 - The `schemaUri` property in the `EXT_structural_metadata` glTF extension is now supported, allowing structural metadata schemas to be loaded from URIs rather than being embedded in the glTF itself.
+- Added `getHeightSampler` method to `TilesetContentLoader`, allowing loaders to optionally provide a custom, more efficient means of querying heights using the `ITilesetHeightSampler` interface.
 
 ##### Fixes :wrench:
 
 - Updated the CMake install process to install the vcpkg-built Debug binaries in Debug builds. Previously the Release binaries were installed instead.
+- Fixed a crash that would occur for raster overlays attempting to dereference a null `CreditSystem`.
+- Fixed a bug where an empty `extensions` object would get written if an `ExtensibleObject` only had unregistered extensions.
+- Tightened the tolerance of `IntersectionTests::rayTriangleParametric`, allowing it to find intersections with smaller triangles.
+- Fixed a bug that could cause `GltfUtilities::intersectRayGltfModel` to crash when the model contains a primitive whose position accessor does not have min/max values.
 
 ### v0.41.0 - 2024-11-01
 

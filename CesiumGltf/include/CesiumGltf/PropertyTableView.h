@@ -1111,7 +1111,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
-    gsl::span<const std::byte> values;
+    std::span<const std::byte> values;
     const auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
       return PropertyTablePropertyView<T, Normalized>(status);
@@ -1182,7 +1182,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
-    gsl::span<const std::byte> values;
+    std::span<const std::byte> values;
     auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
@@ -1236,7 +1236,7 @@ private:
     }
 
     constexpr bool checkBitsSize = false;
-    gsl::span<const std::byte> arrayOffsets;
+    std::span<const std::byte> arrayOffsets;
     status = getArrayOffsetsBufferSafe(
         propertyTableProperty.arrayOffsets,
         arrayOffsetType,
@@ -1264,7 +1264,7 @@ private:
           _pPropertyTable->count,
           values,
           arrayOffsets,
-          gsl::span<const std::byte>(),
+          std::span<const std::byte>(),
           arrayOffsetType,
           PropertyComponentType::None);
     }
@@ -1277,7 +1277,7 @@ private:
 
   PropertyViewStatusType getBufferSafe(
       int32_t bufferView,
-      gsl::span<const std::byte>& buffer) const noexcept;
+      std::span<const std::byte>& buffer) const noexcept;
 
   PropertyViewStatusType getArrayOffsetsBufferSafe(
       int32_t arrayOffsetsBufferView,
@@ -1285,14 +1285,14 @@ private:
       size_t valuesBufferSize,
       size_t propertyTableCount,
       bool checkBitsSize,
-      gsl::span<const std::byte>& arrayOffsetsBuffer) const noexcept;
+      std::span<const std::byte>& arrayOffsetsBuffer) const noexcept;
 
   PropertyViewStatusType getStringOffsetsBufferSafe(
       int32_t stringOffsetsBufferView,
       PropertyComponentType stringOffsetType,
       size_t valuesBufferSize,
       size_t propertyTableCount,
-      gsl::span<const std::byte>& stringOffsetsBuffer) const noexcept;
+      std::span<const std::byte>& stringOffsetsBuffer) const noexcept;
 
   const Model* _pModel;
   const PropertyTable* _pPropertyTable;

@@ -51,7 +51,7 @@ public:
       const HttpHeaders& requestHeaders,
       uint16_t statusCode,
       const HttpHeaders& responseHeaders,
-      const gsl::span<const std::byte>& responseData) override {
+      const std::span<const std::byte>& responseData) override {
     this->storeRequestParam = StoreRequestParameters{
         key,
         expiryTime,

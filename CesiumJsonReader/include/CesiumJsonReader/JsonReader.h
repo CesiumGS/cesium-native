@@ -3,11 +3,11 @@
 #include "JsonHandler.h"
 #include "Library.h"
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -57,7 +57,7 @@ public:
    */
   template <typename T>
   static ReadJsonResult<typename T::ValueType>
-  readJson(const gsl::span<const std::byte>& data, T& handler) {
+  readJson(const std::span<const std::byte>& data, T& handler) {
     ReadJsonResult<typename T::ValueType> result;
 
     result.value.emplace();
@@ -131,7 +131,7 @@ private:
   };
 
   static void internalRead(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       IJsonHandler& handler,
       FinalJsonHandler& finalHandler,
       std::vector<std::string>& errors,

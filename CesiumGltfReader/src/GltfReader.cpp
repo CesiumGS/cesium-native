@@ -50,7 +50,7 @@ struct ChunkHeader {
 };
 #pragma pack(pop)
 
-bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
+bool isBinaryGltf(const std::span<const std::byte>& data) noexcept {
   if (data.size() < sizeof(GlbHeader)) {
     return false;
   }
@@ -60,7 +60,7 @@ bool isBinaryGltf(const gsl::span<const std::byte>& data) noexcept {
 
 GltfReaderResult readJsonGltf(
     const CesiumJsonReader::JsonReaderOptions& context,
-    const gsl::span<const std::byte>& data) {
+    const std::span<const std::byte>& data) {
 
   CESIUM_TRACE("CesiumGltfReader::GltfReader::readJsonGltf");
 
@@ -96,7 +96,7 @@ std::string toMagicString(uint32_t i) {
 
 GltfReaderResult readBinaryGltf(
     const CesiumJsonReader::JsonReaderOptions& context,
-    const gsl::span<const std::byte>& data) {
+    const std::span<const std::byte>& data) {
   CESIUM_TRACE("CesiumGltfReader::GltfReader::readBinaryGltf");
 
   if (data.size() < sizeof(GlbHeader) + sizeof(ChunkHeader)) {
@@ -129,7 +129,7 @@ GltfReaderResult readBinaryGltf(
         {}};
   }
 
-  const gsl::span<const std::byte> glbData = data.subspan(0, pHeader->length);
+  const std::span<const std::byte> glbData = data.subspan(0, pHeader->length);
 
   const ChunkHeader* pJsonChunkHeader =
       reinterpret_cast<const ChunkHeader*>(glbData.data() + sizeof(GlbHeader));
@@ -153,9 +153,9 @@ GltfReaderResult readBinaryGltf(
         {}};
   }
 
-  const gsl::span<const std::byte> jsonChunk =
+  const std::span<const std::byte> jsonChunk =
       glbData.subspan(jsonStart, pJsonChunkHeader->chunkLength);
-  gsl::span<const std::byte> binaryChunk;
+  std::span<const std::byte> binaryChunk;
 
   if (jsonEnd + sizeof(ChunkHeader) <= data.size()) {
     const ChunkHeader* pBinaryChunkHeader =
@@ -279,8 +279,8 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
         continue;
       }
 
-      const gsl::span<const std::byte> bufferSpan(buffer.cesium.data);
-      const gsl::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
+      const std::span<const std::byte> bufferSpan(buffer.cesium.data);
+      const std::span<const std::byte> bufferViewSpan = bufferSpan.subspan(
           static_cast<size_t>(bufferView.byteOffset),
           static_cast<size_t>(bufferView.byteLength));
       ImageReaderResult imageResult =
@@ -367,7 +367,7 @@ const CesiumJsonReader::JsonReaderOptions& GltfReader::getExtensions() const {
 }
 
 GltfReaderResult GltfReader::readGltf(
-    const gsl::span<const std::byte>& data,
+    const std::span<const std::byte>& data,
     const GltfReaderOptions& options) const {
 
   const CesiumJsonReader::JsonReaderOptions& context = this->getExtensions();
@@ -686,7 +686,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 }
 
 /*static*/ ImageReaderResult GltfReader::readImage(
-    const gsl::span<const std::byte>& data,
+    const std::span<const std::byte>& data,
     const Ktx2TranscodeTargets& ktx2TranscodeTargets) {
   return ImageDecoder::readImage(data, ktx2TranscodeTargets);
 }
