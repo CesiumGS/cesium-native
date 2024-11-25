@@ -146,7 +146,47 @@ In the previous examples, we downloaded a web page, found the URL of an image wi
 
 The `Future` returned by `all` resolves when all of the `Futures` it is given resolve. It rejects when _any_ of the `Futures` it is given reject.
 
+## Creating Futures
+
+So far, the initial `Future<T>` instances we have used nave been created by others. For example, we've used `IAssetAccessor::get` to create a `Future<T>` representing a web resource once the asynchronous download is complete. How do those `Future<T>` instances actually get created?
+
+The simplest way to create a `Future<T>` is by calling `createResolvedFuture` on the `AsyncSystem`. Given a value, it creates an already-resolved `Future<T>` to hold that value. This is most useful when combined with [Future Unwrapping](#future-unwrapping). Because all return statements in a given continuation must return either a value or a `Future<T>` (we can't do both within a single continuation), `createResolvedFuture` is useful when some branches within our continuation are ready to return a value directly, while others need to start a new asynchronous operation. For example:
+
+\snippet ExamplesAsyncSystem.cpp create-resolved-future
+
+In this example, if the initial web page doesn't contain a referenced image, we immediately return a `nullptr` image request using `createResolvedFuture`. If it does, we call `get` to download it.
+
+Another way to create a `Future<T>` is by calling `runInMainThread`, `runInWorkerThread`, or `runInThreadPool` on `AsyncSystem`. These are similar to the equivalent `then...` methods in that they take a function - usually a lambda - that is invoked in the appropriate threading context. Unlike the `then...` methods, which _continue_ after some other asynchronous operation, these methods start a brand new asynchronous operation. Just like the `then...` methods, though, the `runIn...` methods future a `Future<T>`, allowing additional asynchronous work to continue - perhaps in a different thread - after the initial function returns. This makes `runInWorkerThread` a very convenient way to do some work in the background and retrieve its value when it completes.
+
+The most powerful way to create a `Future<T>`, though, is to use a `Promise<T>`.
+
 ## Promises
+
+As previously described, a `Future<T>` represents a value that will become available sometime in the future. A `Promise<T>` is how we actually _provide_ that value when it becomes available. It is most useful when interfacing with  libraries that use other patterns for asynchronous work, and allow us to bring their results into the `AsyncSystem`.
+
+Imagine that we're using a third-party library that does asynchronous work with a simple callback-based API. The library's function called `doSomethingSlowly` does some work in the background and then calls the callback that we pass to it:
+
+\snippet ExamplesAsyncSystem.cpp compute-something-slowly
+
+We'd like to be able to use the `AsyncSystem` to do further work after this completes. Here's how that can be done:
+
+\snippet ExamplesAsyncSystem.cpp compute-something-slowly-async-system
+
+The trick is to create a `Promise<T>`, and then capture it in the callback lambda given to the library's `doSomethingSlowly`. When the callback is invoked, we call `resolve` on the `Promise<T>`, which resolves the assocated `Future<T>` that was previously obtained with `getFuture`. We can then chain continuations off that `Future<T>` in the normal way. Instead of calling `resolve` on the `Promise<T>`, we can also call `reject`.
+
+One problem with this `createPromise` approach is that it does not behave as well as it should in the face of exceptions. Imagine that we're wrapping all of this functionality up in our own function, like this:
+
+\snippet ExamplesAsyncSystem.cpp compute-something-slowly-wrapper
+
+Now what happens if that third-party library function, `doSomethingSlowly`, throws an exception? Our `myComputeSomethingSlowlyWrapper` doesn't catch it, so the exception will be propagated out of our function and the caller will have to deal with it. This is poor form in a function that returns a `Future<T>`, because it forces callers to handle two different error mechanisms. The function might throw an exception, or the function might reject the `Future<SlowValue>` that it returns. Handling both would be a hassle, and it's unfair to ask our users to do so.
+
+We could change `myComputeSomethingSlowlyWrapper` to catch the possible exception and turn it into a call to `reject` on the `Promise<T>`, and that would work fine. But there's an easier way. We can use the `AsyncSystem::getFuture` method:
+
+\snippet ExamplesAsyncSystem.cpp compute-something-slowly-wrapper-handle-exception
+
+The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function. The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
+
+The important difference, however, is that if `computeSomethingSlowly` throws an exception, `createFuture` will automatically catch that exception and turn it into a rejection of the `Future<T>`.
 
 ## Lambda Captures and Thread Safety
 

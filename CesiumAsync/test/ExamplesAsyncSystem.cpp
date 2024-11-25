@@ -71,10 +71,10 @@ struct ProcessedContent {
 };
 
 ProcessedContent
-processDownloadedContent(const gsl::span<const std::byte>& /*bytes*/) {
+processDownloadedContent(const std::span<const std::byte>& /*bytes*/) {
   return ProcessedContent();
 }
-void useDownloadedContent(const gsl::span<const std::byte>& /*bytes*/) {}
+void useDownloadedContent(const std::span<const std::byte>& /*bytes*/) {}
 void updateApplicationWithProcessedContent(
     const ProcessedContent& /*content*/) {}
 
@@ -86,7 +86,7 @@ startOperationThatMightFail(const CesiumAsync::AsyncSystem& asyncSystem) {
 void showError(const std::string& /*message*/) {}
 
 std::string
-findReferencedImageUrl(const gsl::span<const std::byte>& /*bytes*/) {
+findReferencedImageUrl(const std::span<const std::byte>& /*bytes*/) {
   return "http://example.com/image.png";
 }
 
@@ -101,6 +101,35 @@ findReferencedImageUrls(const ProcessedContent& /*processed*/) {
 
 void useLoadedImage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
 void usePage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
+
+struct SlowValue {};
+void computeSomethingSlowly(std::function<void(const SlowValue&)> f) {}
+
+template <typename T> void doSomething(const T&) {}
+
+//! [compute-something-slowly-wrapper]
+CesiumAsync::Future<SlowValue>
+myComputeSomethingSlowlyWrapper(const CesiumAsync::AsyncSystem& asyncSystem) {
+  CesiumAsync::Promise<SlowValue> promise =
+      asyncSystem.createPromise<SlowValue>();
+
+  computeSomethingSlowly(
+      [promise](const SlowValue& value) { promise.resolve(value); });
+
+  return promise.getFuture();
+}
+//! [compute-something-slowly-wrapper]
+
+//! [compute-something-slowly-wrapper-handle-exception]
+CesiumAsync::Future<SlowValue>
+myComputeSomethingSlowlyWrapper2(const CesiumAsync::AsyncSystem& asyncSystem) {
+  return asyncSystem.createFuture<SlowValue>(
+      [](const CesiumAsync::Promise<SlowValue>& promise) {
+        computeSomethingSlowly(
+            [promise](const SlowValue& value) { promise.resolve(value); });
+      });
+}
+//! [compute-something-slowly-wrapper-handle-exception]
 
 } // namespace
 
@@ -306,5 +335,62 @@ TEST_CASE("AsyncSystem Examples") {
     //! [all]
 
     std::move(future).waitInMainThread();
+  }
+
+  SECTION("create-resolved-future") {
+    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
+        getAssetAccessor();
+
+    //! [create-resolved-future]
+    CesiumAsync::Future<void> future =
+        pAssetAccessor->get(asyncSystem, "https://example.com")
+            .thenInWorkerThread(
+                [pAssetAccessor, asyncSystem](
+                    std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+                  const CesiumAsync::IAssetResponse* pResponse =
+                      pRequest->response();
+
+                  // handling of an error response ommitted
+
+                  ProcessedContent processed =
+                      processDownloadedContent(pResponse->data());
+                  std::optional<std::string> maybeUrl =
+                      findReferencedImageUrl(processed);
+                  if (maybeUrl) {
+                    return asyncSystem.createResolvedFuture<
+                        std::shared_ptr<CesiumAsync::IAssetRequest>>(nullptr);
+                  } else {
+                    return pAssetAccessor->get(asyncSystem, *maybeUrl);
+                  }
+                })
+            .thenInMainThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                     pImageRequest) {
+              if (pImageRequest) {
+                useLoadedImage(pImageRequest);
+              }
+            });
+    //! [create-resolved-future]
+
+    std::move(future).waitInMainThread();
+  }
+
+  SECTION("promise") {
+    //! [compute-something-slowly]
+    computeSomethingSlowly([](const SlowValue& value) { doSomething(value); });
+    //! [compute-something-slowly]
+
+    //! [compute-something-slowly-async-system]
+    CesiumAsync::Promise<SlowValue> promise =
+        asyncSystem.createPromise<SlowValue>();
+
+    computeSomethingSlowly(
+        [promise](const SlowValue& value) { promise.resolve(value); });
+
+    CesiumAsync::Future<void> future =
+        promise.getFuture().thenInMainThread([](SlowValue&& value) {
+          // Continue working with the slowly-computed value in the main thread.
+          doSomething(value);
+        });
+    //! [compute-something-slowly-async-system]
   }
 }
