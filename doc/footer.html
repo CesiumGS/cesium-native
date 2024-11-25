@@ -1,4 +1,5 @@
 <script type="text/javascript" src="$relpath^mermaid.min.js"></script>
+<script type="text/javascript" src="$relpath^mingcute.json.js"></script>
 <script type="text/javascript">
   mermaid.initialize({
     startOnLoad: true
@@ -6,7 +7,7 @@
   mermaid.registerIconPacks([
     {
       name: "mingcute",
-      loader: () => fetch("$relpath^mingcute.json").then(res => res.json())
+      loader: () => window.mingcute
     }
   ]);
 </script>

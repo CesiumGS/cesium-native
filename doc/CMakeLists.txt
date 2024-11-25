@@ -64,10 +64,10 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_IMAGE_PATH "./")
 
     # Add support for Mermaid charts using the @mermaid command.
-    set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json")
+    set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")
     set(DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
-    set(DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
+    list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
 
     doxygen_add_docs(
         cesium-native-docs
