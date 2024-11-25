@@ -134,6 +134,9 @@ jobs:
         run: |
           echo "CC=${{ matrix.compiler-cc }}" >> "$GITHUB_ENV"
           echo "CXX=${{ matrix.compiler-cxx }}" >> "$GITHUB_ENV"
+      - name: Ceck compiler version
+        if: ${{ matrix.compiler-cc }}
+        run: |
           ${CC} --version
           ${CXX} --version
       - name: Make more swap space available
