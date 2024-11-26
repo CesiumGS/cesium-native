@@ -1,5 +1,7 @@
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
 #include "CesiumGltf/PropertyTablePropertyView.h"
 
@@ -3714,4 +3716,6 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
   }
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
