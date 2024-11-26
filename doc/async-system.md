@@ -21,7 +21,7 @@ Unfortunately, there is inevitably at least a little bit of tile loading work th
 
 `AsyncSystem` gives us an elegant way to express this kind of sequential process involving a series of asynchronous steps.
 
-## Creating an AsyncSystem
+## Creating an AsyncSystem {#creating-an-asyncsystem}
 
 Most applications have a single `AsyncSystem` that is used throughout. It is constructed from an `ITaskProcessor` instance, which is a simple interface used to perform some work in a background thread. The simplest possible implementation looks like this:
 
@@ -41,7 +41,7 @@ However, it is essential that the last `AsyncSystem` instance be destroyed only 
 
 \snippet ExamplesAsyncSystem.cpp async-system-singleton
 
-## Future<T>
+## Future<T> {#future}
 
 `Future<T>` represents an asynchronous operation that will eventually complete and produce a value of type `T`. If you're familiar with a JavaScript [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), the concept is very much the same. We commonly see `Future<T>` as the return value of a method that starts an asynchronous operation. For example, we can use `IAssetAccessor` to asynchronously download the content of a web URL:
 
@@ -63,7 +63,7 @@ If we want to block the current thread and wait for the request to complete, we 
 
 In practice, though, we almost never call `waitInMainThread`. After all, what good is it to start an asynchronous operation if we're just going to block the calling thread waiting for it? Instead, we register a _continuation function_ with the `Future`.
 
-## Continuations
+## Continuation Functions {#continuation-functions}
 
 A continuation function is a callback - usually a lambda - that is invoked when the `Future` resolves. The name comes from the idea that the execution "continues" with that function after the async operation. Continuations are registered with the `then...` methods on the `Future`. Different `then` functions are used to control _in what thread_ the callback is invoked:
 
@@ -97,7 +97,7 @@ We've done this:
 1. Without ever blocking any threads.
 2. Without writing any complicated thread synchronization code, such as with `std::mutex`.
 
-## Catch
+## Catch {#catch}
 
 The `then...` family of functions register continuations that are invoked when a `Future` resolves (completes successfully). What if the `Future` rejects (completes with an exception) instead?
 
@@ -130,7 +130,7 @@ In this example, our first continuation calls `findReferenceImageUrl` to determi
 
 You may have noticed that our second continuation, the one passed to `thenInMainThread`, only has access to the image's `IAssetRequest`. What if we also need to use the page `IAssetRequest`? Or some other data derived from it? While it's possible to do this manually with extra continuations and lambda captures, the `thenPassThrough` method makes it easy.
 
-## thenPassThrough
+## thenPassThrough {#then-pass-through}
 
 The `thenPassThrough` method makes it easy to pass through some extra data to a continuation. This is especially useful in combination with `Future` unwrapping. It looks like this:
 
@@ -138,7 +138,7 @@ The `thenPassThrough` method makes it easy to pass through some extra data to a 
 
 Like the example in the previous section, we're finding a referenced image URL and then initiating a second HTTP request to go download it. This time, though, we call `thenPassThrough` on the `Future` returned by the `get`, and pass it the `ProcessedContent`. As a result, the next continuation in the chain receives _both_ the `ProcessedContent` and the image `IAssetRequest` in the form of a `std::tuple`.
 
-## AsyncSystem::all
+## AsyncSystem::all {#all}
 
 In the previous examples, we downloaded a web page, found the URL of an image within it, and then downloaded that image, too. But what if the page contains multiple images? That's where the `all` method on `AsyncSystem` comes in. Given a `std::vector<Future<T>>`, `AsyncSystem::all` returns a `Future<std::vector<T>>`. In other words, it turns a list of `Futures` into a single `Future` that resolves to a list of values. We can use it like this:
 
@@ -148,7 +148,7 @@ The `Future` returned by `all` resolves when all of the `Futures` it is given re
 
 TODO: getting rejection information from individual futures.
 
-## Creating Futures
+## Creating Futures {#creating-futures}
 
 So far, the initial `Future<T>` instances we have used nave been created by others. For example, we've used `IAssetAccessor::get` to create a `Future<T>` representing a web resource once the asynchronous download is complete. How do those `Future<T>` instances actually get created?
 
@@ -162,7 +162,7 @@ Another way to create a `Future<T>` is by calling `runInMainThread`, `runInWorke
 
 The most powerful way to create a `Future<T>`, though, is to use a `Promise<T>`.
 
-## Promises
+## Promise<T> {#promise}
 
 As previously described, a `Future<T>` represents a value that will become available sometime in the future. A `Promise<T>` is how we actually _provide_ that value when it becomes available. It is most useful when interfacing with  libraries that use other patterns for asynchronous work, and allow us to bring their results into the `AsyncSystem`.
 
@@ -190,7 +190,7 @@ The `createFuture` method takes a function as its only parameter, and it _immedi
 
 The important difference, however, is that if `computeSomethingSlowly` throws an exception, `createFuture` will automatically catch that exception and turn it into a rejection of the `Future<T>`.
 
-## SharedFuture<T>
+## SharedFuture<T> {#shared-future}
 
 A `Future<T>` may have at most one continuation. It's not possible to arrange for two continuation functions to be called when a given `Future<T>` resolves. This policy makes `Future<T>` more efficient by minimizing bookkeeping. In the majority of cases, this is sufficient. But not always.
 
@@ -198,7 +198,7 @@ In those cases where we do want to be able to attach multiple continuations, we 
 
 It may initially be surprising to learn that calling `then...` or `catch...` on a `SharedFuture<T>` returns a `Future<T>`, not another `SharedFuture<T>`. This is again for efficiency. Just because multiple continuations are needed for one point in a continuation chain does not necessarily mean later parts of the chain will also need multiple continuations. If they do, however, it's just a matter of calling `share` again.
 
-## Lambda Captures and Thread Safety
+## Lambda Captures and Thread Safety {#lambda-captures-and-thread-safety}
 
 `AsyncSystem` is a powerful abstraction for writing safe and easy-to-understand multithreaded code. Even if so, `AsyncSystem` does not completely prevent you from creating data races. In particular, it's essential to use care and good judgement when choosing what to capture in continuation lambdas. Here are some tips:
 
