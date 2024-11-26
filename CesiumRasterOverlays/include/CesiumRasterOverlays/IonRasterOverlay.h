@@ -27,6 +27,8 @@ public:
    * @param ionAssetID The asset ID.
    * @param ionAccessToken The access token.
    * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param ionAssetEndpointUrl The URL of the ion endpoint to make our requests
+   * to.
    */
   IonRasterOverlay(
       const std::string& name,

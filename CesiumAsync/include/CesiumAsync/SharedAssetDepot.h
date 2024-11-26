@@ -24,10 +24,10 @@ template <typename T> class SharedAsset;
 namespace CesiumAsync {
 
 /**
- * @brief A depot for {@link SharedAsset} instances, which are potentially shared between multiple objects.
+ * @brief A depot for {@link CesiumUtility::SharedAsset} instances, which are potentially shared between multiple objects.
  *
  * @tparam TAssetType The type of asset stored in this depot. This should
- * be derived from {@link SharedAsset}.
+ * be derived from {@link CesiumUtility::SharedAsset}.
  */
 template <typename TAssetType, typename TAssetKey>
 class CESIUMASYNC_API SharedAssetDepot

@@ -38,7 +38,7 @@ struct CESIUM3DTILES_API FoundMetadataProperty {
 
   /**
    * @brief A reference to the {@link ClassProperty} describing the found
-   * property within the {@lnik Schema}.
+   * property within the {@link Schema}.
    */
   const ClassProperty& propertyDefinition;
 

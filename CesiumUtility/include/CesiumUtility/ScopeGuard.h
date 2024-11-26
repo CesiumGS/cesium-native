@@ -16,7 +16,7 @@ public:
   /**
    * @brief Constructor.
    *
-   * @param ExitFunctionArg The function type to be called when the guard is out
+   * @param exitFunc The function type to be called when the guard is out
    * of scope
    */
   template <
