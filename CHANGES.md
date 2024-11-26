@@ -26,6 +26,7 @@
 - Tightened the tolerance of `IntersectionTests::rayTriangleParametric`, allowing it to find intersections with smaller triangles.
 - Fixed a bug that could cause `GltfUtilities::intersectRayGltfModel` to crash when the model contains a primitive whose position accessor does not have min/max values.
 - `IonRasterOverlay` now passes its `RasterOverlayOptions` to the `BingMapsRasterOverlay` or `TileMapServiceRasterOverlay` that it creates internally.
+- Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
 
 ### v0.41.0 - 2024-11-01
 
