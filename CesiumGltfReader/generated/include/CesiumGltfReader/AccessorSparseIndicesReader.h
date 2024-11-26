@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct AccessorSparseIndices;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

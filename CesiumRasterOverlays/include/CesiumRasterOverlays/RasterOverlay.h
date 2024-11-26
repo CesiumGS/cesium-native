@@ -112,7 +112,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
   /**
    * @brief The ellipsoid used for this raster overlay.
    */
-  std::optional<CesiumGeospatial::Ellipsoid> ellipsoid = std::nullopt;
+  CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
 };
 
 /**

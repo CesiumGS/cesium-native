@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionExtInstanceFeaturesFeatureId;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

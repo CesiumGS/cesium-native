@@ -6,6 +6,9 @@
 
 - Cesium Native now requires C++20.
 - Switched from `gsl::span` to `std::span` throughout the library and API. The GSL library has been removed.
+- The `BingMapsRasterOverlay` constructor no longer takes an `ellipsoid` parameter. Instead, it uses the ellipsoid specified in `RasterOverlayOptions`.
+- The `ellipsoid` field in `RasterOverlayOptions` is no longer a `std::optional`. Instead, it defaults to WGS84 directly.
+- Removed the `ellipsoid` field from `TileMapServiceRasterOverlayOptions`, `WebMapServiceRasterOverlayOptions`, and `WebMapTileServiceRasterOverlayOptions`. These overlays now use the ellipsoid in `RasterOverlayOptions` instead.
 
 ##### Additions :tada:
 
@@ -22,6 +25,7 @@
 - Fixed a bug where an empty `extensions` object would get written if an `ExtensibleObject` only had unregistered extensions.
 - Tightened the tolerance of `IntersectionTests::rayTriangleParametric`, allowing it to find intersections with smaller triangles.
 - Fixed a bug that could cause `GltfUtilities::intersectRayGltfModel` to crash when the model contains a primitive whose position accessor does not have min/max values.
+- `IonRasterOverlay` now passes its `RasterOverlayOptions` to the `BingMapsRasterOverlay` or `TileMapServiceRasterOverlay` that it creates internally.
 
 ### v0.41.0 - 2024-11-01
 

@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct PropertyTextureProperty;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

@@ -11,7 +11,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class ClassPropertyJsonHandler
@@ -19,12 +19,12 @@ class ClassPropertyJsonHandler
 public:
   using ValueType = Cesium3DTiles::ClassProperty;
 
-  ClassPropertyJsonHandler(
+  explicit ClassPropertyJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, Cesium3DTiles::ClassProperty* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyClassProperty(

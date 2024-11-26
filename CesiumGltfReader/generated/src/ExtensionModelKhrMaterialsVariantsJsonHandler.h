@@ -10,7 +10,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionModelKhrMaterialsVariantsJsonHandler
@@ -19,22 +19,22 @@ class ExtensionModelKhrMaterialsVariantsJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionModelKhrMaterialsVariants;
 
-  static inline constexpr const char* ExtensionName = "KHR_materials_variants";
+  static constexpr const char* ExtensionName = "KHR_materials_variants";
 
-  ExtensionModelKhrMaterialsVariantsJsonHandler(
+  explicit ExtensionModelKhrMaterialsVariantsJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionModelKhrMaterialsVariants* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionModelKhrMaterialsVariants(

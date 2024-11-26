@@ -65,10 +65,10 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   /**
    * @brief Returns the size of this `LoadedRasterOverlayImage` in bytes.
    */
-  size_t getSizeBytes() const {
+  int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += sizeof(LoadedRasterOverlayImage);
-    accum += this->credits.capacity() * sizeof(CesiumUtility::Credit);
+    accum += int64_t(sizeof(LoadedRasterOverlayImage));
+    accum += int64_t(this->credits.capacity() * sizeof(CesiumUtility::Credit));
     if (this->pImage) {
       accum += this->pImage->getSizeBytes();
     }
@@ -299,7 +299,7 @@ public:
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
     CESIUM_ASSERT(this->_totalTilesCurrentlyLoading > -1);
-    return this->_totalTilesCurrentlyLoading;
+    return static_cast<uint32_t>(this->_totalTilesCurrentlyLoading);
   }
 
   /**
@@ -426,6 +426,6 @@ private:
   int32_t _throttledTilesCurrentlyLoading;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
-      "Raster Overlay Tile Loading Slot");
+      "Raster Overlay Tile Loading Slot")
 };
 } // namespace CesiumRasterOverlays

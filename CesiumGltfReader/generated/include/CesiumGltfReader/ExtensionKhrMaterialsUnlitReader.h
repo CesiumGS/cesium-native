@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionKhrMaterialsUnlit;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

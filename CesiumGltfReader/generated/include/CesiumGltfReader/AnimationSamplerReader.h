@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct AnimationSampler;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
