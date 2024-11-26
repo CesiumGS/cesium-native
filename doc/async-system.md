@@ -184,7 +184,7 @@ We could change `myComputeSomethingSlowlyWrapper` to catch the possible exceptio
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp compute-something-slowly-wrapper-handle-exception
 
-The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function. The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
+The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function (that's why it's safe to capture everything by reference `&` in this case). The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
 
 The important difference, however, is that if `computeSomethingSlowly` throws an exception, `createFuture` will automatically catch that exception and turn it into a rejection of the `Future<T>`.
 
@@ -200,7 +200,7 @@ It may initially be surprising to learn that calling `then...` or `catch...` on 
 
 `AsyncSystem` is a powerful abstraction for writing safe and easy-to-understand multithreaded code. Even if so, `AsyncSystem` does not completely prevent you from creating data races. In particular, it's essential to use care and good judgement when choosing what to capture in continuation lambdas. Here are some tips:
 
-* DO NOT capture by reference or pointer, unless you're certain that the object referenced will still be around when the continuation is invoked. This can be difficult to achieve in practice!
+* DO NOT capture by reference or pointer, unless you're certain that the object referenced is thread-safe and will still be around when the continuation is invoked. This can be difficult to achieve in practice!
 * DO think in terms of transferring ownership of an object to the promise chain, and transferring ownership back out at the end. This requires use of `std::move` and a `mutable` lambda (so that the captured value is not `const`). It looks like this:
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp lambda-move
