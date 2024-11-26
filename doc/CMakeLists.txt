@@ -6,6 +6,7 @@ if(DOXYGEN_FOUND)
         ../Cesium3DTiles/include
         ../Cesium3DTiles/generated/include
         ../Cesium3DTilesReader/include
+        ../Cesium3DTilesReader/generated/include
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
@@ -15,11 +16,13 @@ if(DOXYGEN_FOUND)
         ../CesiumGltf/generated/include
         ../CesiumGltfContent/include
         ../CesiumGltfReader/include
+        ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
         ../CesiumIonClient/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include
+        ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
         ../CesiumUtility/include
     )
@@ -52,14 +55,14 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_ENABLE_PREPROCESSING YES)
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
-    set(DOXYGEN_PREDEFINED 
+    set(DOXYGEN_PREDEFINED
         "CESIUM3DTILES_API"
         "CESIUM3DTILESCONTENT_API"
         "CESIUM3DTILESREADER_API"
-        "CESIUM3DTILESSELECTION_API" 
+        "CESIUM3DTILESSELECTION_API"
         "CESIUM3DTILESWRITER_API"
         "CESIUMASYNC_API"
-        "CESIUMGEOMETRY_API" 
+        "CESIUMGEOMETRY_API"
         "CESIUMGEOSPATIAL_API"
         "CESIUMGLTF_API"
         "CESIUMGLTFCONTENT_API"
