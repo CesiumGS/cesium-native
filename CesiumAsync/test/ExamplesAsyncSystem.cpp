@@ -104,7 +104,9 @@ void useLoadedImage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
 void usePage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
 
 struct SlowValue {};
-void computeSomethingSlowly(std::function<void(const SlowValue&)> f) {
+void computeSomethingSlowly(
+    const std::string& /*parameter*/,
+    std::function<void(const SlowValue&)> f) {
   f(SlowValue());
 }
 
@@ -383,15 +385,18 @@ TEST_CASE("AsyncSystem Examples") {
 
   SECTION("promise") {
     //! [compute-something-slowly]
-    computeSomethingSlowly([](const SlowValue& value) { doSomething(value); });
+    computeSomethingSlowly("some parameter", [](const SlowValue& value) {
+      doSomething(value);
+    });
     //! [compute-something-slowly]
 
     //! [compute-something-slowly-async-system]
     CesiumAsync::Promise<SlowValue> promise =
         asyncSystem.createPromise<SlowValue>();
 
-    computeSomethingSlowly(
-        [promise](const SlowValue& value) { promise.resolve(value); });
+    computeSomethingSlowly("some parameter", [promise](const SlowValue& value) {
+      promise.resolve(value);
+    });
 
     CesiumAsync::Future<void> future =
         promise.getFuture().thenInMainThread([](SlowValue&& value) {
