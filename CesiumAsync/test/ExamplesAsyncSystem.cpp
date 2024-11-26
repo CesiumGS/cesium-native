@@ -113,24 +113,28 @@ void computeSomethingSlowly(
 template <typename T> void doSomething(const T&) {}
 
 //! [compute-something-slowly-wrapper]
-CesiumAsync::Future<SlowValue>
-myComputeSomethingSlowlyWrapper(const CesiumAsync::AsyncSystem& asyncSystem) {
+CesiumAsync::Future<SlowValue> myComputeSomethingSlowlyWrapper(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::string& someParameter) {
   CesiumAsync::Promise<SlowValue> promise =
       asyncSystem.createPromise<SlowValue>();
 
-  computeSomethingSlowly(
-      [promise](const SlowValue& value) { promise.resolve(value); });
+  computeSomethingSlowly(someParameter, [promise](const SlowValue& value) {
+    promise.resolve(value);
+  });
 
   return promise.getFuture();
 }
 //! [compute-something-slowly-wrapper]
 
 //! [compute-something-slowly-wrapper-handle-exception]
-CesiumAsync::Future<SlowValue>
-myComputeSomethingSlowlyWrapper2(const CesiumAsync::AsyncSystem& asyncSystem) {
+CesiumAsync::Future<SlowValue> myComputeSomethingSlowlyWrapper2(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::string& someParameter) {
   return asyncSystem.createFuture<SlowValue>(
-      [](const CesiumAsync::Promise<SlowValue>& promise) {
+      [&](const CesiumAsync::Promise<SlowValue>& promise) {
         computeSomethingSlowly(
+            someParameter,
             [promise](const SlowValue& value) { promise.resolve(value); });
       });
 }
