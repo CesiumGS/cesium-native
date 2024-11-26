@@ -23,6 +23,7 @@ public:
 };
 //! [simplest-task-processor]
 
+[[maybe_unused]]
 //! [async-system-singleton]
 CesiumAsync::AsyncSystem& getAsyncSystem() {
   static CesiumAsync::AsyncSystem asyncSystem(
@@ -112,6 +113,7 @@ void computeSomethingSlowly(
 
 template <typename T> void doSomething(const T&) {}
 
+[[maybe_unused]]
 //! [compute-something-slowly-wrapper]
 CesiumAsync::Future<SlowValue> myComputeSomethingSlowlyWrapper(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -127,6 +129,7 @@ CesiumAsync::Future<SlowValue> myComputeSomethingSlowlyWrapper(
 }
 //! [compute-something-slowly-wrapper]
 
+[[maybe_unused]]
 //! [compute-something-slowly-wrapper-handle-exception]
 CesiumAsync::Future<SlowValue> myComputeSomethingSlowlyWrapper2(
     const CesiumAsync::AsyncSystem& asyncSystem,
