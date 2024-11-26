@@ -51,7 +51,7 @@ function generateRegisterExtensions(options) {
 
         namespace ${readerNamespace} {
         void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options);
-        }
+        } // namespace ${readerNamespace}
   `;
 
   const readerImplementation = `
@@ -98,7 +98,7 @@ function generateRegisterExtensions(options) {
 
         namespace ${writerNamespace} {
         void registerWriterExtensions(CesiumJsonWriter::ExtensionWriterContext& context);
-        }
+        } // namespace ${writerNamespace}
   `;
 
   const writerImplementation = `
@@ -117,11 +117,21 @@ function generateRegisterExtensions(options) {
           })
           .join("\n")}
 
+        ${
+          extensionClassNames.length > 0
+            ? "// NOLINTBEGIN(misc-include-cleaner)"
+            : ""
+        }
         ${extensionClassNames
           .map((extensionClassName) => {
             return `#include <${namespace}/${extensionClassName}.h>`;
           })
           .join("\n")}
+        ${
+          extensionClassNames.length > 0
+            ? "// NOLINTEND(misc-include-cleaner)"
+            : ""
+        }
 
         namespace ${writerNamespace} {
 

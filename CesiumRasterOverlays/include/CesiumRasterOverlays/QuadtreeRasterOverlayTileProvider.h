@@ -125,7 +125,7 @@ private:
 
     int64_t getSizeBytes() const {
       int64_t accum = 0;
-      accum += sizeof(LoadedQuadtreeImage);
+      accum += int64_t(sizeof(LoadedQuadtreeImage));
       if (pLoaded) {
         accum += pLoaded->getSizeBytes();
       }

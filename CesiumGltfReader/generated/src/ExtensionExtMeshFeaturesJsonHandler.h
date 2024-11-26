@@ -10,7 +10,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionExtMeshFeaturesJsonHandler
@@ -19,22 +19,22 @@ class ExtensionExtMeshFeaturesJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionExtMeshFeatures;
 
-  static inline constexpr const char* ExtensionName = "EXT_mesh_features";
+  static constexpr const char* ExtensionName = "EXT_mesh_features";
 
-  ExtensionExtMeshFeaturesJsonHandler(
+  explicit ExtensionExtMeshFeaturesJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionExtMeshFeatures* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionExtMeshFeatures(

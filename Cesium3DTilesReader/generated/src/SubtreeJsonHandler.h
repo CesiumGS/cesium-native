@@ -15,7 +15,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class SubtreeJsonHandler
@@ -23,11 +23,11 @@ class SubtreeJsonHandler
 public:
   using ValueType = Cesium3DTiles::Subtree;
 
-  SubtreeJsonHandler(
+  explicit SubtreeJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Subtree* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeySubtree(

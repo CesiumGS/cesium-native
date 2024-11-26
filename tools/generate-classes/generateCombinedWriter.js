@@ -55,7 +55,6 @@ function generateCombinedWriter(options) {
         #include <CesiumUtility/JsonValue.h>
         #include <CesiumUtility/IntrusivePointer.h>
         #include <CesiumJsonWriter/ExtensionWriterContext.h>
-        #include <CesiumJsonWriter/writeJsonExtensions.h>
         #include <CesiumJsonWriter/JsonObjectWriter.h>
         #include <CesiumJsonWriter/JsonWriter.h>
 
@@ -64,6 +63,15 @@ function generateCombinedWriter(options) {
             return writer.writeInclude;
           })
           .join("\n")}
+
+        // NOLINTNEXTLINE(misc-include-cleaner)
+        #include <CesiumJsonWriter/writeJsonExtensions.h>
+
+        #include <vector>
+        #include <string>
+        #include <cstdint>
+        #include <unordered_map>
+        #include <optional>
 
         namespace ${writerNamespace} {
 
@@ -175,7 +183,7 @@ function generateCombinedWriter(options) {
             const std::optional<T>& val,
             CesiumJsonWriter::JsonWriter& jsonWriter,
             const CesiumJsonWriter::ExtensionWriterContext& context) {
-          if (val.has_value()) {
+          if (val) {
             writeJson(*val, jsonWriter, context);
           } else {
             jsonWriter.Null();
@@ -223,7 +231,9 @@ function generateCombinedWriter(options) {
 
         ${writers
       .map((writer) => {
-        return writer.writeBaseJsonDefinition ? writer.writeBaseJsonDefinition : "";
+        return writer.writeBaseJsonDefinition
+          ? writer.writeBaseJsonDefinition
+          : "";
       })
       .join("\n")}
 
@@ -233,7 +243,7 @@ function generateCombinedWriter(options) {
       })
       .join("\n")}
 
-        } // namespace ${writerNamespace}
+        } // namespace
 
         ${writers
           .map((writer) => {

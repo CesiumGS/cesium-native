@@ -8,7 +8,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionCesiumTileEdgesJsonHandler
@@ -17,22 +17,22 @@ class ExtensionCesiumTileEdgesJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionCesiumTileEdges;
 
-  static inline constexpr const char* ExtensionName = "CESIUM_tile_edges";
+  static constexpr const char* ExtensionName = "CESIUM_tile_edges";
 
-  ExtensionCesiumTileEdgesJsonHandler(
+  explicit ExtensionCesiumTileEdgesJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionCesiumTileEdges* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionCesiumTileEdges(
