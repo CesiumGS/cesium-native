@@ -102,7 +102,6 @@ findReferencedImageUrls(const ProcessedContent& /*processed*/) {
 }
 
 void useLoadedImage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
-void usePage(const std::shared_ptr<CesiumAsync::IAssetRequest>&) {}
 
 struct SlowValue {};
 void computeSomethingSlowly(
