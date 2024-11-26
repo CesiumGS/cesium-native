@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <stdexcept>
 
-
 namespace CesiumGltf {
 
 /**
