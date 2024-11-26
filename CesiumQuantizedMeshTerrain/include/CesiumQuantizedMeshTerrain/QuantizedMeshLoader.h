@@ -72,9 +72,12 @@ public:
    * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
    *
    * @param tileID The tile ID.
-   * @param tileBoundingVoume The tile bounding volume.
+   * @param tileBoundingVolume The tile bounding volume.
    * @param url The URL from which the data was loaded.
    * @param data The actual tile data.
+   * @param enableWaterMask If true, will attempt to load a water mask from the
+   * quantized mesh data.
+   * @param ellipsoid The ellipsoid to use for this quantized mesh.
    * @return The {@link QuantizedMeshLoadResult}
    */
   static QuantizedMeshLoadResult load(

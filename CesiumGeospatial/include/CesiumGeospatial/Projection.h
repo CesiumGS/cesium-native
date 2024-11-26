@@ -87,7 +87,7 @@ GlobeRectangle unprojectRectangleSimple(
  * necessarily true for other projections.
  *
  * @param projection The projection.
- * @param boundingRegion The bounding region to be projected.
+ * @param region The bounding region to be projected.
  * @return The projected box.
  */
 CesiumGeometry::AxisAlignedBox

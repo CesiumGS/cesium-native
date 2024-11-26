@@ -106,7 +106,7 @@ public:
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTexturePropertyView. Likewise, if the value of
-   * Normalized does not match the value of {@ClassProperty::normalized} for that
+   * Normalized does not match the value of {@link ClassProperty::normalized} for that
    * class property, this returns an invalid property view. Only types with
    * integer components may be normalized.
    *

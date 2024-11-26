@@ -80,7 +80,7 @@ enum class TileLoadState {
  * The actual hierarchy is represented with the {@link Tile::getParent}
  * and {@link Tile::getChildren} functions.
  *
- * The renderable content is provided as a {@link TileContentLoadResult}
+ * The renderable content is provided as a {@link TileContent}
  * from the {@link Tile::getContent} function.
  * The {@link Tile::getGeometricError} function returns the geometric
  * error of the representation of the renderable content of a tile.
@@ -274,14 +274,14 @@ public:
   /**
    * @brief Gets the tile's geometric error as if by calling
    * {@link getGeometricError}, except that if the error is smaller than
-   * {@link Math::Epsilon5} the returned geometric error is instead computed as
+   * {@link CesiumUtility::Math::Epsilon5} the returned geometric error is instead computed as
    * half of the parent tile's (non-zero) geometric error.
    *
    * This is useful for determining when to refine what would ordinarily be a
    * leaf tile, for example to attach more detailed raster overlays to it.
    *
    * If this tile and all of its ancestors have a geometric error less than
-   * {@link Math::Epsilon5}, returns {@link Math::Epsilon5}.
+   * {@link CesiumUtility::Math::Epsilon5}, returns {@link CesiumUtility::Math::Epsilon5}.
    *
    * @return The non-zero geometric error.
    */
@@ -447,11 +447,11 @@ public:
   }
 
   /**
-   * @brief get the content of the tile.
+   * @brief Get the content of the tile.
    */
   const TileContent& getContent() const noexcept { return _content; }
 
-  /** @copydoc Tile::getContent() */
+  /** @copydoc Tile::getContent() const */
   TileContent& getContent() noexcept { return _content; }
 
   /**

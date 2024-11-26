@@ -73,7 +73,7 @@ estimateGlobeRectangle(
 
 /**
  * @brief Returns the bounding region if the bounding volume is a
- * {@link BoundingRegion} or a {@link BoundingRegionWithLooseFittingHeights}.
+ * {@link CesiumGeospatial::BoundingRegion} or a {@link CesiumGeospatial::BoundingRegionWithLooseFittingHeights}.
  *
  * @param boundingVolume The bounding volume.
  * @return A pointer to the bounding region, or nullptr is the bounding volume

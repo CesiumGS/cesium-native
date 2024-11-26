@@ -11,7 +11,7 @@ namespace Cesium3DTilesReader {
 /**
  * @brief Reads 3D Tiles subtrees from a binary or JSON subtree file.
  *
- * While {@link SubtreeReader} can parse a {@link Subtree} from a binary buffer
+ * While {@link SubtreeReader} can parse a {@link Cesium3DTiles::Subtree} from a binary buffer
  * as well, `SubtreeFileReader` additionally supports:
  *
  * 1. Loading binary subtree files.

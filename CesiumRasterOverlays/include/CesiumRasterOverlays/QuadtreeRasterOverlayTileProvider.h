@@ -30,7 +30,7 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
-   * @param credit The {@link Credit} for this tile provider, if it exists.
+   * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
    * @param pPrepareRendererResources The interface used to prepare raster
    * images for rendering.
    * @param pLogger The logger to which to send messages about the tile provider

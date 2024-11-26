@@ -298,6 +298,8 @@ public:
    *
    * @tparam To The expected type of the value.
    * @param key The key for which to retrieve the value from this object.
+   * @param defaultValue The value that will be returned if a numerical value
+   * can't be obtained.
    * @return The converted value.
    * @throws If unable to convert the converted value for one of the
    * aforementioned reasons.

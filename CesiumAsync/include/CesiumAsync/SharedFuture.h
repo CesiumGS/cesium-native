@@ -195,7 +195,7 @@ public:
    * values, followed by the result of the current Future.
    *
    * @tparam TPassThrough The types to pass through to the next continuation.
-   * @param value The values to pass through to the next continuation.
+   * @param values The values to pass through to the next continuation.
    * @return A new Future that resolves to a tuple with the pass-through values,
    * followed by the result of the last Future.
    */

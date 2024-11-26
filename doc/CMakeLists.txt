@@ -13,6 +13,7 @@ if(DOXYGEN_FOUND)
         ../CesiumGeospatial/include
         ../CesiumGltf/include
         ../CesiumGltf/generated/include
+        ../CesiumGltfContent/include
         ../CesiumGltfReader/include
         ../CesiumGltfWriter/include
         ../CesiumIonClient/include
@@ -34,6 +35,7 @@ if(DOXYGEN_FOUND)
         ../CesiumGeometry/test
         ../CesiumGeospatial/test
         ../CesiumGltf/test
+        ../CesiumGltfContent/test
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
         ../CesiumIonClient/test
@@ -50,7 +52,26 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_ENABLE_PREPROCESSING YES)
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
-    set(DOXYGEN_PREDEFINED "CESIUM3DTILESSELECTION_API" "CESIUMGEOMETRY_API" "CESIUMUTILITY_API" "CESIUMGEOSPATIAL_API")
+    set(DOXYGEN_PREDEFINED 
+        "CESIUM3DTILES_API"
+        "CESIUM3DTILESCONTENT_API"
+        "CESIUM3DTILESREADER_API"
+        "CESIUM3DTILESSELECTION_API" 
+        "CESIUM3DTILESWRITER_API"
+        "CESIUMASYNC_API"
+        "CESIUMGEOMETRY_API" 
+        "CESIUMGEOSPATIAL_API"
+        "CESIUMGLTF_API"
+        "CESIUMGLTFCONTENT_API"
+        "CESIUMGLTFREADER_API"
+        "CESIUMGLTFWRITER_API"
+        "CESIUMIONCLIENT_API"
+        "CESIUMJSONREADER_API"
+        "CESIUMJSONWRITER_API"
+        "CESIUMQUANTIZEDMESHTERRAIN_API"
+        "CESIUMRASTEROVERLAYS_API"
+        "CESIUMUTILITY_API"
+        "CESIUM_DEFAULT_ELLIPSOID=\=CesiumGeospatial::Ellipsoid::WGS84")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/../node_modules/doxygen-awesome-css/doxygen-awesome.css")
     set(DOXYGEN_HTML_FOOTER "${CMAKE_CURRENT_LIST_DIR}/footer.html")
     set(DOXYGEN_GENERATE_TREEVIEW YES)
@@ -66,8 +87,9 @@ if(DOXYGEN_FOUND)
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")
     set(DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
-    set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
+
+    set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES DOXYGEN_EXCLUDE_SYMBOLS)
 
     doxygen_add_docs(
         cesium-native-docs

@@ -238,7 +238,7 @@ public:
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -590,7 +590,7 @@ public:
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -614,7 +614,7 @@ public:
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
-   * @param offsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,

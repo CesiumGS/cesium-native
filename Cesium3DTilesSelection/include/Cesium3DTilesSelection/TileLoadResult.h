@@ -42,8 +42,8 @@ using TileContentKind = std::variant<
     CesiumGltf::Model>;
 
 /**
- * @brief Indicate the status of {@link TilesetContentLoader::loadTileContent} and
- * {@link TilesetContentLoader::createTileChildren} operations
+ * @brief Indicate the status of {@link Cesium3DTilesSelection::TilesetContentLoader::loadTileContent} and
+ * {@link Cesium3DTilesSelection::TilesetContentLoader::createTileChildren} operations
  */
 enum class TileLoadResultState {
   /**

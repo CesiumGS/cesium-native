@@ -110,7 +110,7 @@ public:
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyAttributePropertyView. Likewise, if the value of
-   * Normalized does not match the value of {@ClassProperty::normalized} for that
+   * Normalized does not match the value of {@link ClassProperty::normalized} for that
    * class property, this returns an invalid property view. Only types with
    * integer components may be normalized.
    *
@@ -299,9 +299,10 @@ public:
    * error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
-   * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts property id and
+   * @param primitive The id of the property to retrieve data from
+   * @param callback A callback function that accepts property id and
    * {@link PropertyAttributePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void
