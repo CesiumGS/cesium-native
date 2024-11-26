@@ -137,6 +137,7 @@ public:
    * method returns.
    *
    * @tparam Func The type of the function.
+   * @param threadPool The thread pool where this function will be invoked.
    * @param f The function.
    * @return A future that resolves after the supplied function completes.
    */

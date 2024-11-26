@@ -168,8 +168,9 @@ public:
    * view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property id and a
    * {@link PropertyTablePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void

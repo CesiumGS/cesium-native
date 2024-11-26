@@ -109,6 +109,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    *
    * @param gltf The model.
    * @param transform The transform from model coordinates to ECEF coordinates.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return The computed bounding region.
    */
   static CesiumGeospatial::BoundingRegion computeBoundingRegion(

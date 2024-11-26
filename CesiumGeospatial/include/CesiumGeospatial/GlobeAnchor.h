@@ -84,6 +84,7 @@ public:
    * the globe changes. This parameter should usually be true, but it may be
    * useful to set it to false it when the caller already accounts for globe
    * curvature itself, because in that case anchor would be over-rotated.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   void setAnchorToFixedTransform(
       const glm::dmat4& newAnchorToFixed,
@@ -121,6 +122,7 @@ public:
    * the globe changes. This parameter should usually be true, but it may be
    * useful to set it to false it when the caller already accounts for globe
    * curvature itself, because in that case anchor would be over-rotated.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   void setAnchorToLocalTransform(
       const LocalHorizontalCoordinateSystem& localCoordinateSystem,

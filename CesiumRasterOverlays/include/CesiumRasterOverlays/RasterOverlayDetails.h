@@ -52,6 +52,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
    *
    * @param other The other instance of RasterOverlayDetails that will be merged
    * with this.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   void merge(
       const RasterOverlayDetails& other,

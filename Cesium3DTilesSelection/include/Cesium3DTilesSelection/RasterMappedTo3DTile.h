@@ -153,7 +153,7 @@ public:
   /**
    * @brief Update this tile during the update of its owner.
    *
-   * This is only supposed to be called by {@link Cesium3DTilesSelection::Tile::update}. It
+   * This is only supposed to be called by {@link Cesium3DTilesSelection::TilesetContentManager::updateDoneState}. It
    * will return whether there is a more detailed version of the
    * raster data available.
    *
@@ -214,6 +214,7 @@ public:
    * be added to this collection if the Tile does not yet have texture
    * coordinates for the Projection and the Projection is not already in the
    * collection.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return A pointer the created mapping, which may be to a placeholder, or
    * nullptr if no mapping was created at all because the Tile does not overlap
    * the raster overlay.

@@ -16,7 +16,7 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param ellipsoid The {@link Ellipsoid}.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   EllipsoidTilesetLoader(
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);

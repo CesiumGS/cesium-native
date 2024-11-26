@@ -155,9 +155,10 @@ public:
    * property view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property id and a
    * {@link PropertyTexturePropertyView<T>}
    * @param propertyOptions The options to apply to the property.
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void getPropertyView(
@@ -281,10 +282,11 @@ public:
    * error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
-   * @tparam callback A callback function that accepts property id and
+   * @param callback A callback function that accepts property id and
    * {@link PropertyTexturePropertyView<T>}
    * @param propertyOptions The options to apply to each property in the
    * property texture.
+   * @tparam Callback The type of the callback function.
    */
 
   template <typename Callback>

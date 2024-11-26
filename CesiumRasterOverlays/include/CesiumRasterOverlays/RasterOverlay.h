@@ -193,6 +193,7 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to download assets like overlay
    * metadata and tiles.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return The placeholder.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> createPlaceholder(

@@ -23,7 +23,7 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param overlay The overlay definining the polygons.
+   * @param pOverlay The overlay definining the polygons.
    */
   RasterizedPolygonsTileExcluder(
       const CesiumUtility::IntrusivePointer<

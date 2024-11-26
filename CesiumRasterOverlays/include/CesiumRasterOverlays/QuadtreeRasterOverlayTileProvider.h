@@ -36,6 +36,7 @@ public:
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param tilingScheme The tiling scheme to be used by this {@link QuadtreeRasterOverlayTileProvider}.
    * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
    * @param minimumLevel The minimum quadtree tile level.
    * @param maximumLevel The maximum quadtree tile level.

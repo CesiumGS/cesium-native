@@ -103,6 +103,7 @@ projectRegionSimple(const Projection& projection, const BoundingRegion& region);
  *
  * @param projection The projection.
  * @param box The box to be unprojected.
+ * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
  * @return The unprojected bounding region.
  */
 BoundingRegion unprojectRegionSimple(

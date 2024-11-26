@@ -166,8 +166,9 @@ public:
    *
    * @param primitive The target primitive
    * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property id and a
    * {@link PropertyAttributePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void getPropertyView(

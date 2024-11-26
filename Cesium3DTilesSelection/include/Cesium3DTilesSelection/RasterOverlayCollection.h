@@ -36,6 +36,7 @@ public:
    * this list, so the list needs to be kept alive as long as the collection's
    * lifetime
    * @param externals A collection of loading system to load a raster overlay
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayCollection(
       Tile::LoadedLinkedList& loadedTiles,

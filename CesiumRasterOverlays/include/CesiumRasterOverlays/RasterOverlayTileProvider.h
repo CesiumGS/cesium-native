@@ -152,6 +152,7 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,

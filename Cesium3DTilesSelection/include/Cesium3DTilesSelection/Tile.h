@@ -111,6 +111,7 @@ public:
    * with this constructor.
    *
    * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   * @param externalContent External content that is associated with this tile.
    */
   Tile(
       TilesetContentLoader* pLoader,
@@ -122,6 +123,7 @@ public:
    * with this constructor.
    *
    * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   * @param emptyContent A content tag indicating that the tile has no content.
    */
   Tile(TilesetContentLoader* pLoader, TileEmptyContent emptyContent) noexcept;
 
