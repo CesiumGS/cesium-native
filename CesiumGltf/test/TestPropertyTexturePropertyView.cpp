@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumUtility/Math.h"
@@ -2050,3 +2053,5 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
     REQUIRE(view.get(uv[0], uv[1]) == static_cast<double>(data[i]) / 255.0);
   }
 }
+
+#pragma GCC diagnostic pop

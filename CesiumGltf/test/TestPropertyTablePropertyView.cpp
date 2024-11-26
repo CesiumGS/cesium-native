@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #include "CesiumGltf/PropertyTablePropertyView.h"
 
 #include <catch2/catch.hpp>
@@ -1277,7 +1280,7 @@ TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
 }
 
 TEST_CASE("Check boolean PropertyTablePropertyView") {
-  std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
+  std::bitset<sizeof(unsigned long) * CHAR_BIT> bits = 0b11110101;
   unsigned long val = bits.to_ulong();
   std::vector<std::byte> data(sizeof(val));
   std::memcpy(data.data(), &val, sizeof(val));
@@ -3710,3 +3713,5 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
     }
   }
 }
+
+#pragma GCC diagnostic pop
