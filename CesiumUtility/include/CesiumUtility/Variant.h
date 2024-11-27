@@ -31,7 +31,7 @@ template <typename... T> struct VariantSpecializer<false, T...> {
 };
 
 template <typename... T>
-using Variant = VariantSpecializer<isSimpleVariant<T...>, T...>::Type;
+using Variant = typename VariantSpecializer<isSimpleVariant<T...>, T...>::Type;
 
 // template <typename... TTypesInVariant>
 // using EnableIfVariantsAreDifferent = std::enable_if_t<
