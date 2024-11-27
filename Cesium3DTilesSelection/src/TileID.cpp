@@ -37,7 +37,7 @@ TileIdUtilities::createTileIdString(const TileID& tileId) {
              std::to_string(upsampledQuadtreeNode.tileID.y);
     }
   };
-  return std::visit(Operation{}, tileId);
+  return visit(Operation{}, tileId);
 }
 
 } // namespace Cesium3DTilesSelection

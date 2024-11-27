@@ -3,6 +3,7 @@
 #include <Cesium3DTiles/Subtree.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumUtility/Variant.h>
 
 #include <optional>
 
@@ -121,8 +122,8 @@ public:
    * @brief A mechanism for accessing availability information. It may be a
    * constant value, or it may be read from a bitstream.
    */
-  using AvailabilityView =
-      std::variant<SubtreeConstantAvailability, SubtreeBufferViewAvailability>;
+  using AvailabilityView = CesiumUtility::
+      Variant<SubtreeConstantAvailability, SubtreeBufferViewAvailability>;
 
   /**
    * @brief Constructs a new instance.

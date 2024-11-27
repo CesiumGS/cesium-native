@@ -7,9 +7,9 @@
 #include "GeographicProjection.h"
 #include "WebMercatorProjection.h"
 
-#include <glm/vec2.hpp>
+#include <CesiumUtility/Variant.h>
 
-#include <variant>
+#include <glm/vec2.hpp>
 
 namespace CesiumGeospatial {
 
@@ -22,7 +22,8 @@ namespace CesiumGeospatial {
  * @see GeographicProjection
  * @see WebMercatorProjection
  */
-typedef std::variant<GeographicProjection, WebMercatorProjection> Projection;
+typedef CesiumUtility::Variant<GeographicProjection, WebMercatorProjection>
+    Projection;
 
 /**
  * @brief Projects a position on the globe using the given {@link Projection}.

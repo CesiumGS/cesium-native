@@ -3,6 +3,7 @@
 #include "AccessorView.h"
 
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumUtility/Variant.h>
 
 #include <glm/common.hpp>
 
@@ -66,7 +67,7 @@ getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
 /**
  * Type definition for all kinds of feature ID attribute accessors.
  */
-typedef std::variant<
+typedef CesiumUtility::SimpleVariant<
     AccessorView<int8_t>,
     AccessorView<uint8_t>,
     AccessorView<int16_t>,
@@ -127,7 +128,7 @@ struct FeatureIdFromAccessor {
  * indicates a nonexistent accessor, which can happen (and is valid) if the
  * primitive vertices are defined without an index buffer.
  */
-typedef std::variant<
+typedef CesiumUtility::SimpleVariant<
     std::monostate,
     AccessorView<uint8_t>,
     AccessorView<uint16_t>,
@@ -267,7 +268,7 @@ struct IndexFromAccessor {
 /**
  * Type definition for all kinds of texture coordinate (TEXCOORD_n) accessors.
  */
-typedef std::variant<
+typedef CesiumUtility::Variant<
     AccessorView<AccessorTypes::VEC2<uint8_t>>,
     AccessorView<AccessorTypes::VEC2<uint16_t>>,
     AccessorView<AccessorTypes::VEC2<float>>>
@@ -324,7 +325,7 @@ struct TexCoordFromAccessor {
  * Type definition for quaternion accessors, as used in ExtMeshGpuInstancing
  * rotations and animation samplers.
  */
-typedef std::variant<
+typedef CesiumUtility::SimpleVariant<
     AccessorView<AccessorTypes::VEC4<uint8_t>>,
     AccessorView<AccessorTypes::VEC4<int8_t>>,
     AccessorView<AccessorTypes::VEC4<uint16_t>>,

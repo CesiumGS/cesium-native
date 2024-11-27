@@ -611,7 +611,7 @@ void copyVertexAttributes(
     }
   };
 
-  std::visit(Operation{vertexAttributes, output, skipMinMaxUpdate}, vertex);
+  visit(Operation{vertexAttributes, output, skipMinMaxUpdate}, vertex);
 }
 
 void copyVertexAttributes(
@@ -687,7 +687,7 @@ void copyVertexAttributes(
     }
   };
 
-  std::visit(
+  visit(
       Operation{
           vertexAttributes,
           complements,
@@ -712,7 +712,7 @@ T getVertexValue(
     }
   };
 
-  return std::visit(Operation{accessor}, vertex);
+  return visit(Operation{accessor}, vertex);
 }
 
 template <class T>
@@ -760,7 +760,7 @@ T getVertexValue(
     }
   };
 
-  return std::visit(Operation{accessor, complements}, vertex);
+  return visit(Operation{accessor, complements}, vertex);
 }
 
 template <class TIndex>
@@ -1181,7 +1181,7 @@ uint32_t getOrCreateVertex(
     std::vector<uint32_t>& vertexMap,
     const std::vector<CesiumGeometry::TriangleClipVertex>& complements,
     const CesiumGeometry::TriangleClipVertex& clipVertex) {
-  const int* pIndex = std::get_if<int>(&clipVertex);
+  const int* pIndex = get_if<int>(&clipVertex);
   if (pIndex) {
     if (*pIndex < 0) {
       return getOrCreateVertex(

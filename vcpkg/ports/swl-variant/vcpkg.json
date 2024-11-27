@@ -1,0 +1,19 @@
+{
+  "name": "swl-variant",
+  "version-string": "f99acd71c9d9227de517b40684bd94544f2f8179",
+  "description": [
+    "A minimal compile-time overhead, C++20 implementation of std::variant. Fully standard conforming with a couple of documented differences."
+  ],
+  "homepage": "https://github.com/groundswellaudio/swl-variant",
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

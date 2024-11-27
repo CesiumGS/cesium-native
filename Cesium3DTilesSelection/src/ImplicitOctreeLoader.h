@@ -5,15 +5,15 @@
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumUtility/Variant.h>
 
 #include <cmath>
 #include <string>
 #include <unordered_map>
-#include <variant>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-using ImplicitOctreeBoundingVolume = std::variant<
+using ImplicitOctreeBoundingVolume = CesiumUtility::Variant<
     CesiumGeospatial::BoundingRegion,
     CesiumGeometry::OrientedBoundingBox>;
 

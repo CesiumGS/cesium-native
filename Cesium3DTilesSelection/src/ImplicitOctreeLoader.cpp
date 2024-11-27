@@ -37,7 +37,7 @@ BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::OctreeTileID& tileID,
     const ImplicitOctreeBoundingVolume& rootBoundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  return std::visit(
+  return visit(
       BoundingVolumeSubdivision{tileID, ellipsoid},
       rootBoundingVolume);
 }
@@ -50,7 +50,7 @@ std::vector<Tile> populateSubtree(
     ImplicitOctreeLoader& loader,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::OctreeTileID& octreeID =
-      std::get<CesiumGeometry::OctreeTileID>(tile.getTileID());
+      get<CesiumGeometry::OctreeTileID>(tile.getTileID());
 
   uint32_t relativeTileLevel = octreeID.level - subtreeRootID.level;
   if (relativeTileLevel >= subtreeLevels) {
@@ -216,7 +216,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // make sure the tile is a octree tile
   const CesiumGeometry::OctreeTileID* pOctreeID =
-      std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
+      get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
   if (!pOctreeID) {
     return asyncSystem.createResolvedFuture(
         TileLoadResult::createFailedResult(nullptr));
@@ -303,7 +303,7 @@ TileChildrenResult ImplicitOctreeLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::OctreeTileID* pOctreeID =
-      std::get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
+      get_if<CesiumGeometry::OctreeTileID>(&tile.getTileID());
   CESIUM_ASSERT(pOctreeID != nullptr && "This loader only serves octree tile");
 
   // find the subtree ID

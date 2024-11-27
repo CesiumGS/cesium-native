@@ -23,7 +23,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   const CesiumGeometry::UpsampledQuadtreeNode* pTileID =
-      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
+      get_if<CesiumGeometry::UpsampledQuadtreeNode>(
           &loadInput.tile.getTileID());
   if (pTileID == nullptr) {
     // this tile is not marked to be upsampled, so just fail it

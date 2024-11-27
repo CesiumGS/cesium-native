@@ -616,7 +616,7 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
   }
   if (rotations) {
     auto quatAccessorView = getQuaternionAccessorView(model, rotations);
-    std::visit(
+    visit(
         [&](auto&& arg) {
           for (unsigned i = 0; i < count; ++i) {
             auto quat = toGlmQuat<glm::dquat>(arg[i]);

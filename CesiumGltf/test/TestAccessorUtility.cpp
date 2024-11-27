@@ -35,26 +35,26 @@ TEST_CASE("Test CountFromAccessor") {
     TexCoordAccessorType texcoordAccessor =
         AccessorView<AccessorTypes::VEC2<uint8_t>>(model, accessor);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texcoordAccessor) !=
+        visit(StatusFromAccessor{}, texcoordAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, texcoordAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, texcoordAccessor) == 0);
 
     // Wrong component type
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<int16_t>(model, accessor);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIdAccessor) !=
+        visit(StatusFromAccessor{}, featureIdAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIdAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIdAccessor) == 0);
   }
 
   SECTION("Retrieves from valid accessor") {
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<uint8_t>(model, accessor);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIdAccessor) ==
+        visit(StatusFromAccessor{}, featureIdAccessor) ==
         AccessorViewStatus::Valid);
-    int64_t count = std::visit(CountFromAccessor{}, featureIdAccessor);
+    int64_t count = visit(CountFromAccessor{}, featureIdAccessor);
     REQUIRE(count == static_cast<int64_t>(featureIds.size()));
   }
 }
@@ -237,9 +237,9 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, primitive, 2);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
   }
 
   SECTION("Handles invalid accessor type") {
@@ -248,9 +248,9 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, primitive, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
 
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
@@ -261,9 +261,9 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, primitive, 1);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
 
     model.accessors[1].normalized = false;
   }
@@ -272,18 +272,18 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, primitive, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) ==
+        visit(StatusFromAccessor{}, featureIDAccessor) ==
         AccessorViewStatus::Valid);
     REQUIRE(
-        std::visit(CountFromAccessor{}, featureIDAccessor) ==
+        visit(CountFromAccessor{}, featureIDAccessor) ==
         static_cast<int64_t>(featureIds0.size()));
 
     featureIDAccessor = getFeatureIdAccessorView(model, primitive, 1);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) ==
+        visit(StatusFromAccessor{}, featureIDAccessor) ==
         AccessorViewStatus::Valid);
     REQUIRE(
-        std::visit(CountFromAccessor{}, featureIDAccessor) ==
+        visit(CountFromAccessor{}, featureIDAccessor) ==
         static_cast<int64_t>(featureIds1.size()));
   }
 }
@@ -321,9 +321,9 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, temporaryNode, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
 
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
@@ -332,9 +332,9 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, node, 2);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
   }
 
   SECTION("Handles invalid accessor type") {
@@ -343,9 +343,9 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, node, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
 
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
@@ -356,9 +356,9 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, node, 1);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, featureIDAccessor) !=
+        visit(StatusFromAccessor{}, featureIDAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, featureIDAccessor) == 0);
 
     model.accessors[0].normalized = false;
   }
@@ -367,7 +367,7 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     FeatureIdAccessorType featureIdAccessor =
         getFeatureIdAccessorView(model, node, 0);
     for (size_t i = 0; i < featureIds.size(); i++) {
-      int64_t featureID = std::visit(
+      int64_t featureID = visit(
           FeatureIdFromAccessor{static_cast<int64_t>(i)},
           featureIdAccessor);
       REQUIRE(featureID == featureIds[i]);
@@ -401,14 +401,14 @@ TEST_CASE("FeatureIdFromAccessor") {
     // Wrong component type
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<int16_t>(model, accessor);
-    REQUIRE(std::visit(FeatureIdFromAccessor{0}, featureIdAccessor) == -1);
+    REQUIRE(visit(FeatureIdFromAccessor{0}, featureIdAccessor) == -1);
   }
 
   SECTION("Retrieves from valid accessor") {
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<int8_t>(model, accessor);
     for (size_t i = 0; i < featureIds.size(); i++) {
-      int64_t featureID = std::visit(
+      int64_t featureID = visit(
           FeatureIdFromAccessor{static_cast<int64_t>(i)},
           featureIdAccessor);
       REQUIRE(featureID == featureIds[i]);
@@ -449,9 +449,9 @@ TEST_CASE("Test getIndexAccessorView") {
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, indexAccessor) !=
+        visit(StatusFromAccessor{}, indexAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, indexAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, indexAccessor) == 0);
 
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
@@ -461,9 +461,9 @@ TEST_CASE("Test getIndexAccessorView") {
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, indexAccessor) !=
+        visit(StatusFromAccessor{}, indexAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, indexAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, indexAccessor) == 0);
 
     model.accessors[0].componentType = Accessor::ComponentType::UNSIGNED_BYTE;
   }
@@ -473,9 +473,9 @@ TEST_CASE("Test getIndexAccessorView") {
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, indexAccessor) !=
+        visit(StatusFromAccessor{}, indexAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, indexAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, indexAccessor) == 0);
 
     model.accessors[0].normalized = false;
   }
@@ -483,10 +483,10 @@ TEST_CASE("Test getIndexAccessorView") {
   SECTION("Creates from valid accessor") {
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, indexAccessor) ==
+        visit(StatusFromAccessor{}, indexAccessor) ==
         AccessorViewStatus::Valid);
     REQUIRE(
-        std::visit(CountFromAccessor{}, indexAccessor) ==
+        visit(CountFromAccessor{}, indexAccessor) ==
         static_cast<int64_t>(indices.size()));
   }
 
@@ -494,7 +494,7 @@ TEST_CASE("Test getIndexAccessorView") {
     primitive.indices = -1;
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
-    REQUIRE(std::get_if<std::monostate>(&indexAccessor));
+    REQUIRE(get_if<std::monostate>(&indexAccessor));
   }
 }
 
@@ -554,7 +554,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     // Wrong component type
     IndexAccessorType indexAccessor =
         AccessorView<uint8_t>(model, model.accessors[0]);
-    auto indicesForFace = std::visit(
+    auto indicesForFace = visit(
         IndicesForFaceFromAccessor{
             0,
             vertexCount,
@@ -569,7 +569,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
-    auto indicesForFace = std::visit(
+    auto indicesForFace = visit(
         IndicesForFaceFromAccessor{
             -1,
             vertexCount,
@@ -579,7 +579,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
       REQUIRE(index == -1);
     }
 
-    indicesForFace = std::visit(
+    indicesForFace = visit(
         IndicesForFaceFromAccessor{
             10,
             vertexCount,
@@ -594,7 +594,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
-    auto indicesForFace = std::visit(
+    auto indicesForFace = visit(
         IndicesForFaceFromAccessor{
             -1,
             vertexCount,
@@ -604,14 +604,14 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
       REQUIRE(index == -1);
     }
 
-    indicesForFace = std::visit(
+    indicesForFace = visit(
         IndicesForFaceFromAccessor{10, vertexCount, MeshPrimitive::Mode::LINES},
         indexAccessor);
     for (int64_t index : indicesForFace) {
       REQUIRE(index == -1);
     }
 
-    indicesForFace = std::visit(
+    indicesForFace = visit(
         IndicesForFaceFromAccessor{
             10,
             vertexCount,
@@ -627,10 +627,10 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
     const size_t numFaces =
-        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) / 3);
+        static_cast<size_t>(visit(CountFromAccessor{}, indexAccessor) / 3);
 
     for (size_t i = 0; i < numFaces; i++) {
-      auto indicesForFace = std::visit(
+      auto indicesForFace = visit(
           IndicesForFaceFromAccessor{
               static_cast<int64_t>(i),
               vertexCount,
@@ -649,9 +649,9 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[1]);
     const size_t numFaces =
-        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) - 2);
+        static_cast<size_t>(visit(CountFromAccessor{}, indexAccessor) - 2);
     for (size_t i = 0; i < numFaces; i++) {
-      auto indicesForFace = std::visit(
+      auto indicesForFace = visit(
           IndicesForFaceFromAccessor{
               static_cast<int64_t>(i),
               vertexCount,
@@ -670,9 +670,9 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[1]);
     const size_t numFaces =
-        static_cast<size_t>(std::visit(CountFromAccessor{}, indexAccessor) - 2);
+        static_cast<size_t>(visit(CountFromAccessor{}, indexAccessor) - 2);
     for (size_t i = 0; i < numFaces; i++) {
-      auto indicesForFace = std::visit(
+      auto indicesForFace = visit(
           IndicesForFaceFromAccessor{
               static_cast<int64_t>(i),
               vertexCount,
@@ -687,7 +687,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
 
   SECTION("Handles invalid face index for nonexistent accessor") {
     IndexAccessorType indexAccessor;
-    auto indicesForFace = std::visit(
+    auto indicesForFace = visit(
         IndicesForFaceFromAccessor{
             -1,
             vertexCount,
@@ -697,7 +697,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
       REQUIRE(index == -1);
     }
 
-    indicesForFace = std::visit(
+    indicesForFace = visit(
         IndicesForFaceFromAccessor{
             10,
             vertexCount,
@@ -714,7 +714,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     const int64_t numFaces = vertexCount / 3;
 
     for (int64_t i = 0; i < numFaces; i++) {
-      auto indicesForFace = std::visit(
+      auto indicesForFace = visit(
           IndicesForFaceFromAccessor{
               i,
               vertexCount,
@@ -734,7 +734,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     const int64_t numFaces = vertexCount - 2;
 
     for (int64_t i = 0; i < numFaces; i++) {
-      auto indicesForFace = std::visit(
+      auto indicesForFace = visit(
           IndicesForFaceFromAccessor{
               i,
               vertexCount,
@@ -754,7 +754,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     const int64_t numFaces = vertexCount - 2;
 
     for (int64_t i = 0; i < numFaces; i++) {
-      auto indicesForFace = std::visit(
+      auto indicesForFace = visit(
           IndicesForFaceFromAccessor{
               i,
               vertexCount,
@@ -798,7 +798,7 @@ TEST_CASE("Test IndexFromAccessor") {
     // Wrong component type
     IndexAccessorType indexAccessor =
         AccessorView<uint8_t>(model, model.accessors[0]);
-    auto index = std::visit(IndexFromAccessor{0}, indexAccessor);
+    auto index = visit(IndexFromAccessor{0}, indexAccessor);
     REQUIRE(index == -1);
   }
 
@@ -806,10 +806,10 @@ TEST_CASE("Test IndexFromAccessor") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
-    auto index = std::visit(IndexFromAccessor{-1}, indexAccessor);
+    auto index = visit(IndexFromAccessor{-1}, indexAccessor);
     REQUIRE(index == -1);
 
-    index = std::visit(
+    index = visit(
         IndexFromAccessor{static_cast<int64_t>(indices.size())},
         indexAccessor);
     REQUIRE(index == -1);
@@ -822,7 +822,7 @@ TEST_CASE("Test IndexFromAccessor") {
 
     for (size_t i = 0; i < indices.size(); i++) {
       auto index =
-          std::visit(IndexFromAccessor{static_cast<int64_t>(i)}, indexAccessor);
+          visit(IndexFromAccessor{static_cast<int64_t>(i)}, indexAccessor);
       REQUIRE(index == indices[i]);
     }
   }
@@ -897,9 +897,9 @@ TEST_CASE("Test getTexCoordAccessorView") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texCoordAccessor) !=
+        visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, texCoordAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, texCoordAccessor) == 0);
   }
 
   SECTION("Handles invalid accessor type") {
@@ -908,9 +908,9 @@ TEST_CASE("Test getTexCoordAccessorView") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texCoordAccessor) !=
+        visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, texCoordAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, texCoordAccessor) == 0);
 
     model.accessors[0].type = Accessor::Type::VEC2;
   }
@@ -921,9 +921,9 @@ TEST_CASE("Test getTexCoordAccessorView") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texCoordAccessor) !=
+        visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, texCoordAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, texCoordAccessor) == 0);
 
     model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
   }
@@ -934,9 +934,9 @@ TEST_CASE("Test getTexCoordAccessorView") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texCoordAccessor) !=
+        visit(StatusFromAccessor{}, texCoordAccessor) !=
         AccessorViewStatus::Valid);
-    REQUIRE(std::visit(CountFromAccessor{}, texCoordAccessor) == 0);
+    REQUIRE(visit(CountFromAccessor{}, texCoordAccessor) == 0);
 
     model.accessors[1].normalized = true;
   }
@@ -945,18 +945,18 @@ TEST_CASE("Test getTexCoordAccessorView") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texCoordAccessor) ==
+        visit(StatusFromAccessor{}, texCoordAccessor) ==
         AccessorViewStatus::Valid);
     REQUIRE(
-        std::visit(CountFromAccessor{}, texCoordAccessor) ==
+        visit(CountFromAccessor{}, texCoordAccessor) ==
         static_cast<int64_t>(texCoords0.size()));
 
     texCoordAccessor = getTexCoordAccessorView(model, primitive, 1);
     REQUIRE(
-        std::visit(StatusFromAccessor{}, texCoordAccessor) ==
+        visit(StatusFromAccessor{}, texCoordAccessor) ==
         AccessorViewStatus::Valid);
     REQUIRE(
-        std::visit(CountFromAccessor{}, texCoordAccessor) ==
+        visit(CountFromAccessor{}, texCoordAccessor) ==
         static_cast<int64_t>(texCoords1.size()));
   }
 }
@@ -1029,21 +1029,21 @@ TEST_CASE("Test TexCoordFromAccessor") {
   SECTION("Handles invalid accessor") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 2);
-    REQUIRE(!std::visit(TexCoordFromAccessor{0}, texCoordAccessor));
+    REQUIRE(!visit(TexCoordFromAccessor{0}, texCoordAccessor));
   }
 
   SECTION("Handles invalid index") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
-    REQUIRE(!std::visit(TexCoordFromAccessor{-1}, texCoordAccessor));
-    REQUIRE(!std::visit(TexCoordFromAccessor{10}, texCoordAccessor));
+    REQUIRE(!visit(TexCoordFromAccessor{-1}, texCoordAccessor));
+    REQUIRE(!visit(TexCoordFromAccessor{10}, texCoordAccessor));
   }
 
   SECTION("Retrieves from valid accessor and index") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     for (size_t i = 0; i < texCoords0.size(); i++) {
-      auto maybeTexCoord = std::visit(
+      auto maybeTexCoord = visit(
           TexCoordFromAccessor{static_cast<int64_t>(i)},
           texCoordAccessor);
       REQUIRE(maybeTexCoord);
@@ -1056,7 +1056,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 1);
     for (size_t i = 0; i < texCoords1.size(); i++) {
-      auto maybeTexCoord = std::visit(
+      auto maybeTexCoord = visit(
           TexCoordFromAccessor{static_cast<int64_t>(i)},
           texCoordAccessor);
       REQUIRE(maybeTexCoord);

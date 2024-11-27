@@ -45,7 +45,7 @@ message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb uriparser)
+set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb swl-variant uriparser)
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
@@ -62,6 +62,9 @@ if(NOT VCPKG_MANIFEST_MODE)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
     list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
+
+    set(ENV{VCPKG_OVERLAY_PORTS} "${CMAKE_CURRENT_LIST_DIR}/vcpkg/ports")
+    set(ENV{VCPKG_OVERLAY_TRIPLETS} "${CMAKE_CURRENT_LIST_DIR}/vcpkg/triplets")
 
     ezvcpkg_fetch(
         COMMIT 2024.11.16
@@ -251,6 +254,7 @@ find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(swl-variant CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(uriparser CONFIG REQUIRED char wchar_t)

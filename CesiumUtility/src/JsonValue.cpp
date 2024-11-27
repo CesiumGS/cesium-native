@@ -5,7 +5,7 @@
 namespace CesiumUtility {
 
 const JsonValue* JsonValue::getValuePtrForKey(const std::string& key) const {
-  const Object* pObject = std::get_if<Object>(&this->value);
+  const Object* pObject = get_if<Object>(&this->value);
   if (!pObject) {
     return nullptr;
   }
@@ -19,7 +19,7 @@ const JsonValue* JsonValue::getValuePtrForKey(const std::string& key) const {
 }
 
 JsonValue* JsonValue::getValuePtrForKey(const std::string& key) {
-  Object* pObject = std::get_if<Object>(&this->value);
+  Object* pObject = get_if<Object>(&this->value);
   if (!pObject) {
     return nullptr;
   }

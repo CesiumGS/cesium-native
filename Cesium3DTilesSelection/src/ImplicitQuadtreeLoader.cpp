@@ -49,7 +49,7 @@ BoundingVolume subdivideBoundingVolume(
     const CesiumGeometry::QuadtreeTileID& tileID,
     const ImplicitQuadtreeBoundingVolume& rootBoundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  return std::visit(
+  return visit(
       BoundingVolumeSubdivision{tileID, ellipsoid},
       rootBoundingVolume);
 }
@@ -62,7 +62,7 @@ std::vector<Tile> populateSubtree(
     ImplicitQuadtreeLoader& loader,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::QuadtreeTileID& quadtreeID =
-      std::get<CesiumGeometry::QuadtreeTileID>(tile.getTileID());
+      get<CesiumGeometry::QuadtreeTileID>(tile.getTileID());
 
   uint32_t relativeTileLevel = quadtreeID.level - subtreeRootID.level;
   if (relativeTileLevel >= subtreeLevels) {
@@ -246,7 +246,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // make sure the tile is a quadtree tile
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+      get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createFailedResult(nullptr));
@@ -344,7 +344,7 @@ TileChildrenResult ImplicitQuadtreeLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+      get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   CESIUM_ASSERT(
       pQuadtreeID != nullptr && "This loader only serves quadtree tile");
 

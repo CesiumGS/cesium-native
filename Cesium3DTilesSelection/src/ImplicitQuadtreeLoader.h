@@ -6,15 +6,15 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumUtility/Variant.h>
 
 #include <cmath>
 #include <string>
 #include <unordered_map>
-#include <variant>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-using ImplicitQuadtreeBoundingVolume = std::variant<
+using ImplicitQuadtreeBoundingVolume = CesiumUtility::Variant<
     CesiumGeospatial::BoundingRegion,
     CesiumGeospatial::S2CellBoundingVolume,
     CesiumGeometry::OrientedBoundingBox>;

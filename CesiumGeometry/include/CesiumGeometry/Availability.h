@@ -2,12 +2,13 @@
 
 #include "Library.h"
 
+#include <CesiumUtility/Variant.h>
+
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <span>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace CesiumGeometry {
@@ -27,7 +28,8 @@ struct CESIUMGEOMETRY_API SubtreeBufferView {
   uint8_t buffer;
 };
 
-typedef std::variant<ConstantAvailability, SubtreeBufferView> AvailabilityView;
+typedef CesiumUtility::Variant<ConstantAvailability, SubtreeBufferView>
+    AvailabilityView;
 
 struct CESIUMGEOMETRY_API AvailabilitySubtree {
   AvailabilityView tileAvailability;

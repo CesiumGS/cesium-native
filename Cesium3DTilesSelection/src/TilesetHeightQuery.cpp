@@ -54,7 +54,7 @@ bool boundingVolumeContainsCoordinate(
     }
   };
 
-  return std::visit(Operation{ray, coordinate, ellipsoid}, boundingVolume);
+  return visit(Operation{ray, coordinate, ellipsoid}, boundingVolume);
 }
 
 // The ray for height queries starts at this fraction of the ellipsoid max

@@ -345,7 +345,7 @@ void SubtreeAvailability::setContentAvailable(
 bool SubtreeAvailability::isSubtreeAvailable(
     uint64_t relativeSubtreeMortonId) const noexcept {
   const SubtreeConstantAvailability* constantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
+      get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
   if (constantAvailability) {
     return constantAvailability->constant;
   }
@@ -380,7 +380,7 @@ void convertConstantAvailabilityToBitstream(
     SubtreeAvailability::AvailabilityView& availabilityView) {
   const SubtreeAvailability::SubtreeConstantAvailability*
       pConstantAvailability =
-          std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
+          get_if<SubtreeAvailability::SubtreeConstantAvailability>(
               &availabilityView);
   if (!pConstantAvailability)
     return;
@@ -427,7 +427,7 @@ void SubtreeAvailability::setSubtreeAvailable(
     uint64_t relativeSubtreeMortonId,
     bool isAvailable) noexcept {
   const SubtreeConstantAvailability* pConstantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
+      get_if<SubtreeConstantAvailability>(&this->_subtreeAvailability);
   if (pConstantAvailability) {
     if (pConstantAvailability->constant == isAvailable) {
       // New state matches the constant, so there is nothing to do.
@@ -483,7 +483,7 @@ bool SubtreeAvailability::isAvailable(
   }
 
   const SubtreeConstantAvailability* constantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&availabilityView);
+      get_if<SubtreeConstantAvailability>(&availabilityView);
   if (constantAvailability) {
     return constantAvailability->constant;
   }
@@ -503,7 +503,7 @@ void SubtreeAvailability::setAvailable(
     AvailabilityView& availabilityView,
     bool isAvailable) noexcept {
   const SubtreeConstantAvailability* pConstantAvailability =
-      std::get_if<SubtreeConstantAvailability>(&availabilityView);
+      get_if<SubtreeConstantAvailability>(&availabilityView);
   if (pConstantAvailability) {
     if (pConstantAvailability->constant == isAvailable) {
       // New state matches the constant, so there is nothing to do.
@@ -549,7 +549,7 @@ bool SubtreeAvailability::isAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel + relativeTileMortonId;
 
   const SubtreeBufferViewAvailability* bufferViewAvailability =
-      std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
+      get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
   const uint64_t byteIndex = availabilityBitIndex / 8;
   if (byteIndex >= bufferViewAvailability->view.size()) {
@@ -572,7 +572,7 @@ void SubtreeAvailability::setAvailableUsingBufferView(
       numOfTilesFromRootToParentLevel + relativeTileMortonId;
 
   const SubtreeBufferViewAvailability* pBufferViewAvailability =
-      std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
+      get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
   const uint64_t byteIndex = availabilityBitIndex / 8;
   if (byteIndex >= pBufferViewAvailability->view.size()) {

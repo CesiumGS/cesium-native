@@ -43,7 +43,7 @@ std::optional<CesiumGeometry::QuadtreeTilingScheme> Layer::getTilingScheme(
     }
   };
 
-  return std::visit(Operation(), *maybeProjection);
+  return visit(Operation(), *maybeProjection);
 }
 
 std::optional<CesiumGeospatial::BoundingRegion> Layer::getRootBoundingRegion(
@@ -62,7 +62,7 @@ std::optional<CesiumGeospatial::BoundingRegion> Layer::getRootBoundingRegion(
     }
   };
 
-  GlobeRectangle rectangle = std::visit(Operation(), *maybeProjection);
+  GlobeRectangle rectangle = visit(Operation(), *maybeProjection);
 
   // These heights encompass all Earth terrain, but not all Earth bathymetry.
   const double defaultMinimumHeight = -1000.0;

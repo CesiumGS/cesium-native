@@ -1,0 +1,30 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c91ca1c..4957758 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -13,6 +13,25 @@ target_include_directories(swl-variant INTERFACE
+ 
+ target_compile_features(swl-variant INTERFACE cxx_std_20)
+ 
++include(GNUInstallDirs)
++include(CMakePackageConfigHelpers)
++
++install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/swl" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++
++set(export_name "swl-variantConfig")
++set(namespace "swl-variant::")
++set(cmake_files_install_dir ${CMAKE_INSTALL_DATADIR}/swl-variant)
++
++install(TARGETS swl-variant EXPORT ${export_name} INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++install(EXPORT ${export_name} NAMESPACE ${namespace} DESTINATION ${cmake_files_install_dir})
++export(TARGETS swl-variant NAMESPACE ${namespace} FILE ${export_name}.cmake)
++
++set(swl_variant_config_version "${CMAKE_CURRENT_BINARY_DIR}/swl-variantConfigVersion.cmake")
++
++write_basic_package_version_file(${swl_variant_config_version} COMPATIBILITY SameMajorVersion ARCH_INDEPENDENT)
++
++install(FILES ${swl_variant_config_version} DESTINATION ${cmake_files_install_dir})
++
+ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+ 	
+ 	include(CTest)

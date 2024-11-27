@@ -93,7 +93,7 @@ TEST_CASE("Test implicit quadtree loader") {
     asyncSystem.dispatchMainThreadTasks();
 
     auto tileLoadResult = tileLoadResultFuture.wait();
-    CHECK(std::holds_alternative<TileEmptyContent>(tileLoadResult.contentKind));
+    CHECK(holds_alternative<TileEmptyContent>(tileLoadResult.contentKind));
     CHECK(!tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -146,7 +146,7 @@ TEST_CASE("Test implicit quadtree loader") {
 
     auto tileLoadResult = tileLoadResultFuture.wait();
     CHECK(
-        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+        holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(!tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -210,8 +210,7 @@ findTile(const std::span<const Tile>& children, const QuadtreeTileID& tileID) {
       children.begin(),
       children.end(),
       [tileID](const Tile& tile) {
-        const QuadtreeTileID* pID =
-            std::get_if<QuadtreeTileID>(&tile.getTileID());
+        const QuadtreeTileID* pID = get_if<QuadtreeTileID>(&tile.getTileID());
         if (!pID)
           return false;
         return *pID == tileID;
@@ -270,7 +269,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_0_0 = findTile(tileChildren, QuadtreeTileID(1, 0, 0));
       const auto& box_1_0_0 =
-          std::get<OrientedBoundingBox>(tile_1_0_0.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_1_0_0.getBoundingVolume());
       CHECK(box_1_0_0.getCenter() == glm::dvec3(-10.0, -10.0, 0.0));
       CHECK(box_1_0_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
       CHECK(box_1_0_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
@@ -278,7 +277,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_1_0 = findTile(tileChildren, QuadtreeTileID(1, 1, 0));
       const auto& box_1_1_0 =
-          std::get<OrientedBoundingBox>(tile_1_1_0.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_1_1_0.getBoundingVolume());
       CHECK(box_1_1_0.getCenter() == glm::dvec3(10.0, -10.0, 0.0));
       CHECK(box_1_1_0.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
       CHECK(box_1_1_0.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
@@ -286,7 +285,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_0_1 = findTile(tileChildren, QuadtreeTileID(1, 0, 1));
       const auto& box_1_0_1 =
-          std::get<OrientedBoundingBox>(tile_1_0_1.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_1_0_1.getBoundingVolume());
       CHECK(box_1_0_1.getCenter() == glm::dvec3(-10.0, 10.0, 0.0));
       CHECK(box_1_0_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
       CHECK(box_1_0_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
@@ -294,7 +293,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_1_1 = findTile(tileChildren, QuadtreeTileID(1, 1, 1));
       const auto& box_1_1_1 =
-          std::get<OrientedBoundingBox>(tile_1_1_1.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_1_1_1.getBoundingVolume());
       CHECK(box_1_1_1.getCenter() == glm::dvec3(10.0, 10.0, 0.0));
       CHECK(box_1_1_1.getHalfAxes()[0] == glm::dvec3(10.0, 0.0, 0.0));
       CHECK(box_1_1_1.getHalfAxes()[1] == glm::dvec3(0.0, 10.0, 0.0));
@@ -314,7 +313,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_2_0 = findTile(tileChildren, QuadtreeTileID(2, 2, 0));
       const auto& box_2_2_0 =
-          std::get<OrientedBoundingBox>(tile_2_2_0.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_2_2_0.getBoundingVolume());
       CHECK(box_2_2_0.getCenter() == glm::dvec3(5.0, -15.0, 0.0));
       CHECK(box_2_2_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
       CHECK(box_2_2_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
@@ -322,7 +321,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_3_0 = findTile(tileChildren, QuadtreeTileID(2, 3, 0));
       const auto& box_2_3_0 =
-          std::get<OrientedBoundingBox>(tile_2_3_0.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_2_3_0.getBoundingVolume());
       CHECK(box_2_3_0.getCenter() == glm::dvec3(15.0, -15.0, 0.0));
       CHECK(box_2_3_0.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
       CHECK(box_2_3_0.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
@@ -330,7 +329,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_2_1 = findTile(tileChildren, QuadtreeTileID(2, 2, 1));
       const auto& box_2_2_1 =
-          std::get<OrientedBoundingBox>(tile_2_2_1.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_2_2_1.getBoundingVolume());
       CHECK(box_2_2_1.getCenter() == glm::dvec3(5.0, -5.0, 0.0));
       CHECK(box_2_2_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
       CHECK(box_2_2_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
@@ -338,7 +337,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_3_1 = findTile(tileChildren, QuadtreeTileID(2, 3, 1));
       const auto& box_2_3_1 =
-          std::get<OrientedBoundingBox>(tile_2_3_1.getBoundingVolume());
+          get<OrientedBoundingBox>(tile_2_3_1.getBoundingVolume());
       CHECK(box_2_3_1.getCenter() == glm::dvec3(15.0, -5.0, 0.0));
       CHECK(box_2_3_1.getHalfAxes()[0] == glm::dvec3(5.0, 0.0, 0.0));
       CHECK(box_2_3_1.getHalfAxes()[1] == glm::dvec3(0.0, 5.0, 0.0));
@@ -389,7 +388,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_0_0 = findTile(tileChildren, QuadtreeTileID(1, 0, 0));
       const auto& region_1_0_0 =
-          std::get<BoundingRegion>(tile_1_0_0.getBoundingVolume());
+          get<BoundingRegion>(tile_1_0_0.getBoundingVolume());
       CHECK(region_1_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
       CHECK(region_1_0_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
       CHECK(region_1_0_0.getRectangle().getEast() == Approx(0.0));
@@ -399,7 +398,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_1_0 = findTile(tileChildren, QuadtreeTileID(1, 1, 0));
       const auto& region_1_1_0 =
-          std::get<BoundingRegion>(tile_1_1_0.getBoundingVolume());
+          get<BoundingRegion>(tile_1_1_0.getBoundingVolume());
       CHECK(region_1_1_0.getRectangle().getWest() == Approx(0.0));
       CHECK(region_1_1_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
       CHECK(region_1_1_0.getRectangle().getEast() == Approx(Math::OnePi));
@@ -409,7 +408,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_0_1 = findTile(tileChildren, QuadtreeTileID(1, 0, 1));
       const auto& region_1_0_1 =
-          std::get<BoundingRegion>(tile_1_0_1.getBoundingVolume());
+          get<BoundingRegion>(tile_1_0_1.getBoundingVolume());
       CHECK(region_1_0_1.getRectangle().getWest() == Approx(-Math::OnePi));
       CHECK(region_1_0_1.getRectangle().getSouth() == Approx(0.0));
       CHECK(region_1_0_1.getRectangle().getEast() == Approx(0.0));
@@ -419,7 +418,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_1_1_1 = findTile(tileChildren, QuadtreeTileID(1, 1, 1));
       const auto& region_1_1_1 =
-          std::get<BoundingRegion>(tile_1_1_1.getBoundingVolume());
+          get<BoundingRegion>(tile_1_1_1.getBoundingVolume());
       CHECK(region_1_1_1.getRectangle().getWest() == Approx(0.0));
       CHECK(region_1_1_1.getRectangle().getSouth() == Approx(0.0));
       CHECK(region_1_1_1.getRectangle().getEast() == Approx(Math::OnePi));
@@ -441,7 +440,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_2_0 = findTile(tileChildren, QuadtreeTileID(2, 2, 0));
       const auto& region_2_2_0 =
-          std::get<BoundingRegion>(tile_2_2_0.getBoundingVolume());
+          get<BoundingRegion>(tile_2_2_0.getBoundingVolume());
       CHECK(region_2_2_0.getRectangle().getWest() == Approx(0.0));
       CHECK(region_2_2_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
       CHECK(region_2_2_0.getRectangle().getEast() == Approx(Math::PiOverTwo));
@@ -452,7 +451,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_3_0 = findTile(tileChildren, QuadtreeTileID(2, 3, 0));
       const auto& region_2_3_0 =
-          std::get<BoundingRegion>(tile_2_3_0.getBoundingVolume());
+          get<BoundingRegion>(tile_2_3_0.getBoundingVolume());
       CHECK(region_2_3_0.getRectangle().getWest() == Approx(Math::PiOverTwo));
       CHECK(region_2_3_0.getRectangle().getSouth() == Approx(-Math::PiOverTwo));
       CHECK(region_2_3_0.getRectangle().getEast() == Approx(Math::OnePi));
@@ -463,7 +462,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_2_1 = findTile(tileChildren, QuadtreeTileID(2, 2, 1));
       const auto& region_2_2_1 =
-          std::get<BoundingRegion>(tile_2_2_1.getBoundingVolume());
+          get<BoundingRegion>(tile_2_2_1.getBoundingVolume());
       CHECK(region_2_2_1.getRectangle().getWest() == Approx(0.0));
       CHECK(
           region_2_2_1.getRectangle().getSouth() == Approx(-Math::OnePi / 4.0));
@@ -474,7 +473,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
       const auto& tile_2_3_1 = findTile(tileChildren, QuadtreeTileID(2, 3, 1));
       const auto& region_2_3_1 =
-          std::get<BoundingRegion>(tile_2_3_1.getBoundingVolume());
+          get<BoundingRegion>(tile_2_3_1.getBoundingVolume());
       CHECK(region_2_3_1.getRectangle().getWest() == Approx(Math::PiOverTwo));
       CHECK(
           region_2_3_1.getRectangle().getSouth() == Approx(-Math::OnePi / 4.0));
@@ -526,23 +525,23 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
     const auto& tile_1_0_0 = findTile(tileChildren, QuadtreeTileID(1, 0, 0));
     const auto& box_1_0_0 =
-        std::get<S2CellBoundingVolume>(tile_1_0_0.getBoundingVolume());
+        get<S2CellBoundingVolume>(tile_1_0_0.getBoundingVolume());
     CHECK(box_1_0_0.getCellID().toToken() == "04");
 
     const auto& tile_1_1_0 = findTile(tileChildren, QuadtreeTileID(1, 1, 0));
     const auto& box_1_1_0 =
-        std::get<S2CellBoundingVolume>(tile_1_1_0.getBoundingVolume());
+        get<S2CellBoundingVolume>(tile_1_1_0.getBoundingVolume());
     CHECK(box_1_1_0.getCellID().toToken() == "1c");
 
     const auto& tile_1_0_1 = findTile(tileChildren, QuadtreeTileID(1, 0, 1));
     ;
     const auto& box_1_0_1 =
-        std::get<S2CellBoundingVolume>(tile_1_0_1.getBoundingVolume());
+        get<S2CellBoundingVolume>(tile_1_0_1.getBoundingVolume());
     CHECK(box_1_0_1.getCellID().toToken() == "0c");
 
     const auto& tile_1_1_1 = findTile(tileChildren, QuadtreeTileID(1, 1, 1));
     const auto& box_1_1_1 =
-        std::get<S2CellBoundingVolume>(tile_1_1_1.getBoundingVolume());
+        get<S2CellBoundingVolume>(tile_1_1_1.getBoundingVolume());
     CHECK(box_1_1_1.getCellID().toToken() == "14");
   }
 }

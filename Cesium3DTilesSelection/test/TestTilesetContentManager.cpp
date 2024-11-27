@@ -343,7 +343,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     REQUIRE(pTilesetJson);
     REQUIRE(pTilesetJson->getChildren().size() == 1);
     const Tile* pRootTile = &pTilesetJson->getChildren()[0];
-    CHECK(std::get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
+    CHECK(get<std::string>(pRootTile->getTileID()) == "parent.b3dm");
     CHECK(pRootTile->getGeometricError() == 70.0);
     CHECK(pRootTile->getRefine() == TileRefine::Add);
   }
@@ -378,10 +378,10 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     const std::span<const Tile> children = pRootTile->getChildren();
     CHECK(
-        std::get<QuadtreeTileID>(children[0].getTileID()) ==
+        get<QuadtreeTileID>(children[0].getTileID()) ==
         QuadtreeTileID(0, 0, 0));
     CHECK(
-        std::get<QuadtreeTileID>(children[1].getTileID()) ==
+        get<QuadtreeTileID>(children[1].getTileID()) ==
         QuadtreeTileID(0, 1, 0));
   }
 
@@ -1186,7 +1186,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       // check the tile whole region which will be more fitted
       const BoundingRegion& tileRegion =
-          std::get<BoundingRegion>(tile.getBoundingVolume());
+          get<BoundingRegion>(tile.getBoundingVolume());
       CHECK(
           tileRegion.getRectangle().getWest() == Approx(beginCarto.longitude));
       CHECK(
@@ -1256,7 +1256,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       // check the tile whole region which will be more fitted
       const BoundingRegion& tileRegion =
-          std::get<BoundingRegion>(tile.getBoundingVolume());
+          get<BoundingRegion>(tile.getBoundingVolume());
       CHECK(
           tileRegion.getRectangle().getWest() == Approx(beginCarto.longitude));
       CHECK(
@@ -1430,16 +1430,16 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       // Load the southeast child
       REQUIRE(tile.getChildren().size() == 4);
       Tile& se = tile.getChildren()[1];
-      REQUIRE(std::get_if<UpsampledQuadtreeNode>(&se.getTileID()) != nullptr);
+      REQUIRE(get_if<UpsampledQuadtreeNode>(&se.getTileID()) != nullptr);
       REQUIRE(
-          std::get<UpsampledQuadtreeNode>(se.getTileID()).tileID ==
+          get<UpsampledQuadtreeNode>(se.getTileID()).tileID ==
           QuadtreeTileID(1, 1, 0));
 
       loadUntilChildrenExist(se);
 
       // Verify the bounding volume is sensible
       const BoundingRegion* pRegion =
-          std::get_if<BoundingRegion>(&se.getBoundingVolume());
+          get_if<BoundingRegion>(&se.getBoundingVolume());
       REQUIRE(pRegion != nullptr);
       CHECK(
           pRegion->getRectangle().getEast() >
@@ -1490,15 +1490,15 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       // Load the southeast child's southwest child
       REQUIRE(se.getChildren().size() == 4);
       Tile& sw = se.getChildren()[0];
-      REQUIRE(std::get_if<UpsampledQuadtreeNode>(&sw.getTileID()) != nullptr);
+      REQUIRE(get_if<UpsampledQuadtreeNode>(&sw.getTileID()) != nullptr);
       REQUIRE(
-          std::get<UpsampledQuadtreeNode>(sw.getTileID()).tileID ==
+          get<UpsampledQuadtreeNode>(sw.getTileID()).tileID ==
           QuadtreeTileID(2, 2, 0));
 
       loadUntilChildrenExist(sw);
 
       // Verify the bounding volume is sensible
-      pRegion = std::get_if<BoundingRegion>(&sw.getBoundingVolume());
+      pRegion = get_if<BoundingRegion>(&sw.getBoundingVolume());
       REQUIRE(pRegion != nullptr);
       CHECK(
           pRegion->getRectangle().getEast() >

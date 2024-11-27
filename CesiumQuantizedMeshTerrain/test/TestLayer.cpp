@@ -17,12 +17,12 @@ TEST_CASE("LayerJsonUtilities") {
     layer.projection = "EPSG:4326";
     maybeProjection = layer.getProjection(Ellipsoid::WGS84);
     REQUIRE(maybeProjection);
-    CHECK(std::get_if<GeographicProjection>(&*maybeProjection) != nullptr);
+    CHECK(get_if<GeographicProjection>(&*maybeProjection) != nullptr);
 
     layer.projection = "EPSG:3857";
     maybeProjection = layer.getProjection(Ellipsoid::WGS84);
     REQUIRE(maybeProjection);
-    CHECK(std::get_if<WebMercatorProjection>(&*maybeProjection) != nullptr);
+    CHECK(get_if<WebMercatorProjection>(&*maybeProjection) != nullptr);
 
     layer.projection = "foo";
     maybeProjection = layer.getProjection(Ellipsoid::WGS84);

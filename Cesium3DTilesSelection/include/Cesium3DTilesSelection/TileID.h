@@ -4,9 +4,9 @@
 
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumUtility/Variant.h>
 
 #include <string>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 
@@ -32,7 +32,7 @@ namespace Cesium3DTilesSelection {
  *   have any content, but content for it can be created by subdividing
  *   the parent tile's content.
  */
-typedef std::variant<
+typedef CesiumUtility::Variant<
     std::string,
     CesiumGeometry::QuadtreeTileID,
     CesiumGeometry::OctreeTileID,

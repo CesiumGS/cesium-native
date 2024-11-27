@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstring>
 #include <span>
-#include <variant>
 #include <vector>
 
 namespace CesiumGltf {

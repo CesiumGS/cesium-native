@@ -9,9 +9,9 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumUtility/Variant.h>
 
 #include <optional>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 
@@ -26,7 +26,7 @@ namespace Cesium3DTilesSelection {
  * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
  * @see CesiumGeospatial::S2CellBoundingVolume
  */
-typedef std::variant<
+typedef CesiumUtility::Variant<
     CesiumGeometry::BoundingSphere,
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeospatial::BoundingRegion,

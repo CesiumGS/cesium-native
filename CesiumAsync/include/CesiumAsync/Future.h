@@ -9,8 +9,6 @@
 
 #include <CesiumUtility/Tracing.h>
 
-#include <variant>
-
 namespace CesiumAsync {
 
 namespace CesiumImpl {

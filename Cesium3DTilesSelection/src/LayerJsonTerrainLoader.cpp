@@ -209,13 +209,12 @@ void generateRasterOverlayUVs(
   const BoundingRegion* pParentRegion = nullptr;
   if (result.updatedBoundingVolume) {
     pParentRegion =
-        std::get_if<BoundingRegion>(&result.updatedBoundingVolume.value());
+        get_if<BoundingRegion>(&result.updatedBoundingVolume.value());
   } else {
-    pParentRegion = std::get_if<BoundingRegion>(&tileBoundingVolume);
+    pParentRegion = get_if<BoundingRegion>(&tileBoundingVolume);
   }
 
-  CesiumGltf::Model* pModel =
-      std::get_if<CesiumGltf::Model>(&result.contentKind);
+  CesiumGltf::Model* pModel = get_if<CesiumGltf::Model>(&result.contentKind);
   if (pModel) {
     result.rasterOverlayDetails =
         RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
@@ -750,11 +749,11 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   CESIUM_ASSERT(tile.getLoader() == this);
 
   const QuadtreeTileID* pQuadtreeTileID =
-      std::get_if<QuadtreeTileID>(&tile.getTileID());
+      get_if<QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeTileID) {
     // check if we need to upsample this tile
     const UpsampledQuadtreeNode* pUpsampleTileID =
-        std::get_if<UpsampledQuadtreeNode>(&tile.getTileID());
+        get_if<UpsampledQuadtreeNode>(&tile.getTileID());
     if (!pUpsampleTileID) {
       // This loader only handles QuadtreeTileIDs and UpsampledQuadtreeNode.
       return asyncSystem.createResolvedFuture(
@@ -861,7 +860,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
                               QuantizedMeshLoadResult&& loadResult) {
           if (shouldCurrLayerLoadAvailability) {
             const QuadtreeTileID& tileID =
-                std::get<QuadtreeTileID>(tile.getTileID());
+                get<QuadtreeTileID>(tile.getTileID());
             addRectangleAvailabilityToLayer(
                 currentLayer,
                 tileID,
@@ -925,7 +924,7 @@ TileChildrenResult LayerJsonTerrainLoader::createTileChildren(
     const Tile& tile,
     [[maybe_unused]] const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const CesiumGeometry::QuadtreeTileID* pQuadtreeID =
-      std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
+      get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (pQuadtreeID) {
     // For the tile that is in the middle of subtree, it is safe to create the
     // children. However for tile that is at the availability level, we have
@@ -971,7 +970,7 @@ bool LayerJsonTerrainLoader::tileHasUpsampledChild(const Tile& tile) const {
   const auto& tileChildren = tile.getChildren();
   if (tileChildren.empty()) {
     const QuadtreeTileID* pQuadtreeTileID =
-        std::get_if<QuadtreeTileID>(&tile.getTileID());
+        get_if<QuadtreeTileID>(&tile.getTileID());
 
     const QuadtreeTileID swID(
         pQuadtreeTileID->level + 1,
@@ -989,7 +988,7 @@ bool LayerJsonTerrainLoader::tileHasUpsampledChild(const Tile& tile) const {
     return totalChildren > 0 && totalChildren < 4;
   } else {
     for (const auto& child : tileChildren) {
-      if (std::holds_alternative<UpsampledQuadtreeNode>(child.getTileID())) {
+      if (holds_alternative<UpsampledQuadtreeNode>(child.getTileID())) {
         return true;
       }
     }
@@ -1001,7 +1000,7 @@ bool LayerJsonTerrainLoader::tileHasUpsampledChild(const Tile& tile) const {
 std::vector<Tile>
 LayerJsonTerrainLoader::createTileChildrenImpl(const Tile& tile) {
   const QuadtreeTileID* pQuadtreeTileID =
-      std::get_if<QuadtreeTileID>(&tile.getTileID());
+      get_if<QuadtreeTileID>(&tile.getTileID());
 
   // Now that all our availability is sorted out, create this tile's
   // children.
@@ -1100,10 +1099,9 @@ void LayerJsonTerrainLoader::createChildTile(
   child.setGeometricError(parent.getGeometricError() * 0.5);
 
   const BoundingVolume& parentBoundingVolume = parent.getBoundingVolume();
-  const BoundingRegion* pRegion =
-      std::get_if<BoundingRegion>(&parentBoundingVolume);
+  const BoundingRegion* pRegion = get_if<BoundingRegion>(&parentBoundingVolume);
   const BoundingRegionWithLooseFittingHeights* pLooseRegion =
-      std::get_if<BoundingRegionWithLooseFittingHeights>(&parentBoundingVolume);
+      get_if<BoundingRegionWithLooseFittingHeights>(&parentBoundingVolume);
 
   double minHeight = -1000.0;
   double maxHeight = 9000.0;
@@ -1140,7 +1138,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
   }
 
   const UpsampledQuadtreeNode* pUpsampledTileID =
-      std::get_if<UpsampledQuadtreeNode>(&tile.getTileID());
+      get_if<UpsampledQuadtreeNode>(&tile.getTileID());
 
   int32_t index = -1;
   const std::vector<CesiumGeospatial::Projection>& parentProjections =

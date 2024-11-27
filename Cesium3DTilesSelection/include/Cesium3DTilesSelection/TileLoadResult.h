@@ -8,11 +8,11 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumUtility/Variant.h>
 
 #include <functional>
 #include <memory>
 #include <optional>
-#include <variant>
 
 namespace Cesium3DTilesSelection {
 
@@ -35,7 +35,7 @@ class Tile;
  *
  * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model
  */
-using TileContentKind = std::variant<
+using TileContentKind = CesiumUtility::Variant<
     TileUnknownContent,
     TileEmptyContent,
     TileExternalContent,

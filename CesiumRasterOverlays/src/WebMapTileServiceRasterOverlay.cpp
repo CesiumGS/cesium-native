@@ -228,7 +228,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
   uint32_t rootTilesX = 1;
-  if (std::get_if<CesiumGeospatial::GeographicProjection>(&projection)) {
+  if (get_if<CesiumGeospatial::GeographicProjection>(&projection)) {
     tilingSchemeRectangle =
         CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
     rootTilesX = 2;

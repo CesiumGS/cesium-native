@@ -10,6 +10,7 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Log.h>
+#include <CesiumUtility/Variant.h>
 
 #include <glm/glm.hpp>
 #include <rapidjson/writer.h>
@@ -43,7 +44,7 @@ struct MaskedType {
   bool isFloat64;
   bool isBool;
 
-  MaskedType() : MaskedType(true){};
+  MaskedType() : MaskedType(true) {};
 
   MaskedType(bool defaultValue)
       : isInt8(defaultValue),
@@ -99,12 +100,12 @@ struct MaskedArrayType {
   uint32_t minArrayCount;
   uint32_t maxArrayCount;
 
-  MaskedArrayType() : MaskedArrayType(true){};
+  MaskedArrayType() : MaskedArrayType(true) {};
 
   MaskedArrayType(bool defaultValue)
       : elementType(defaultValue),
         minArrayCount(std::numeric_limits<uint32_t>::max()),
-        maxArrayCount(std::numeric_limits<uint32_t>::min()){};
+        maxArrayCount(std::numeric_limits<uint32_t>::min()) {};
 
   MaskedArrayType(
       MaskedType inElementType,
@@ -142,7 +143,7 @@ private:
    * MaskedType or MaskedArrayType, they are considered incompatible with the
    * other type.
    */
-  std::variant<std::monostate, MaskedType, MaskedArrayType> _type;
+  CesiumUtility::Variant<std::monostate, MaskedType, MaskedArrayType> _type;
 
   /**
    * Whether the property has encountered a null value. A
@@ -173,10 +174,10 @@ private:
   bool _canUseNullStringSentinel = true;
 
 public:
-  CompatibleTypes() : _type(){};
-  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
+  CompatibleTypes() : _type() {};
+  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType) {};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : _type(maskedArrayType){};
+      : _type(maskedArrayType) {};
 
   /**
    * Whether this is exclusively compatible with array types. This indicates an
@@ -184,7 +185,7 @@ public:
    * "compatible" with everything.
    */
   bool isExclusivelyArray() const noexcept {
-    return std::holds_alternative<MaskedArrayType>(_type);
+    return holds_alternative<MaskedArrayType>(_type);
   }
 
   /**
@@ -192,15 +193,15 @@ public:
    * count arrays.
    */
   bool isCompatibleWithUnsignedInteger() const noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
+    if (holds_alternative<MaskedArrayType>(_type)) {
       return false;
     }
 
-    if (std::holds_alternative<std::monostate>(_type)) {
+    if (holds_alternative<std::monostate>(_type)) {
       return true;
     }
 
-    MaskedType type = std::get<MaskedType>(_type);
+    MaskedType type = get<MaskedType>(_type);
     return type.isUint8 || type.isUint16 || type.isUint32 || type.isUint64;
   }
 
@@ -209,15 +210,15 @@ public:
    * Does not count arrays.
    */
   bool isCompatibleWithSignedInteger() const noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
+    if (holds_alternative<MaskedArrayType>(_type)) {
       return false;
     }
 
-    if (std::holds_alternative<std::monostate>(_type)) {
+    if (holds_alternative<std::monostate>(_type)) {
       return true;
     }
 
-    MaskedType type = std::get<MaskedType>(_type);
+    MaskedType type = get<MaskedType>(_type);
     return type.isInt8 || type.isInt16 || type.isInt32 || type.isInt64;
   }
 
@@ -226,7 +227,7 @@ public:
    * happens when a CompatibleTypes is initialized and never modified.
    */
   bool isFullyCompatible() const noexcept {
-    return std::holds_alternative<std::monostate>(_type);
+    return holds_alternative<std::monostate>(_type);
   }
 
   /**
@@ -234,12 +235,12 @@ public:
    * Fully-incompatible properties will be treated as string properties.
    */
   bool isIncompatible() const noexcept {
-    if (std::holds_alternative<MaskedType>(_type)) {
-      return std::get<MaskedType>(_type).isIncompatible();
+    if (holds_alternative<MaskedType>(_type)) {
+      return get<MaskedType>(_type).isIncompatible();
     }
 
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
-      return std::get<MaskedArrayType>(_type).isIncompatible();
+    if (holds_alternative<MaskedArrayType>(_type)) {
+      return get<MaskedArrayType>(_type).isIncompatible();
     }
 
     // std::monostate means compatibility with all types.
@@ -256,13 +257,13 @@ public:
    * Merges a MaskedType into this BatchTableProperty.
    */
   void operator&=(const MaskedType& inMaskedType) noexcept {
-    if (std::holds_alternative<MaskedType>(_type)) {
-      MaskedType& maskedType = std::get<MaskedType>(_type);
+    if (holds_alternative<MaskedType>(_type)) {
+      MaskedType& maskedType = get<MaskedType>(_type);
       maskedType &= inMaskedType;
       return;
     }
 
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
+    if (holds_alternative<MaskedArrayType>(_type)) {
       makeIncompatible();
       return;
     }
@@ -274,13 +275,13 @@ public:
    * Merges a MaskedArrayType into this CompatibleTypes.
    */
   void operator&=(const MaskedArrayType& inArrayType) noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
-      MaskedArrayType& arrayType = std::get<MaskedArrayType>(_type);
+    if (holds_alternative<MaskedArrayType>(_type)) {
+      MaskedArrayType& arrayType = get<MaskedArrayType>(_type);
       arrayType &= inArrayType;
       return;
     }
 
-    if (std::holds_alternative<MaskedType>(_type)) {
+    if (holds_alternative<MaskedType>(_type)) {
       makeIncompatible();
       return;
     }
@@ -292,17 +293,16 @@ public:
    * Merges another CompatibleTypes into this one.
    */
   void operator&=(const CompatibleTypes& inTypes) noexcept {
-    if (std::holds_alternative<std::monostate>(inTypes._type)) {
+    if (holds_alternative<std::monostate>(inTypes._type)) {
       // The other CompatibleTypes is compatible with everything, so it does not
       // change this one.
     } else
 
-        if (std::holds_alternative<MaskedArrayType>(inTypes._type)) {
-      const MaskedArrayType& arrayType =
-          std::get<MaskedArrayType>(inTypes._type);
+        if (holds_alternative<MaskedArrayType>(inTypes._type)) {
+      const MaskedArrayType& arrayType = get<MaskedArrayType>(inTypes._type);
       operator&=(arrayType);
     } else {
-      const MaskedType& maskedType = std::get<MaskedType>(inTypes._type);
+      const MaskedType& maskedType = get<MaskedType>(inTypes._type);
       operator&=(maskedType);
     }
 
@@ -318,11 +318,11 @@ public:
    * MaskedType.
    */
   MaskedType toMaskedType() const noexcept {
-    if (std::holds_alternative<MaskedType>(_type)) {
-      return std::get<MaskedType>(_type);
+    if (holds_alternative<MaskedType>(_type)) {
+      return get<MaskedType>(_type);
     }
 
-    bool isArray = std::holds_alternative<MaskedArrayType>(_type);
+    bool isArray = holds_alternative<MaskedArrayType>(_type);
     return MaskedType(!isArray);
   }
 
@@ -332,11 +332,11 @@ public:
    * MaskedArrayType.
    */
   MaskedArrayType toMaskedArrayType() const noexcept {
-    if (std::holds_alternative<MaskedArrayType>(_type)) {
-      return std::get<MaskedArrayType>(_type);
+    if (holds_alternative<MaskedArrayType>(_type)) {
+      return get<MaskedArrayType>(_type);
     }
 
-    bool isNonArray = std::holds_alternative<MaskedType>(_type);
+    bool isNonArray = holds_alternative<MaskedType>(_type);
     return MaskedArrayType(!isNonArray);
   }
 

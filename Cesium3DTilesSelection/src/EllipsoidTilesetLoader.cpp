@@ -67,7 +67,7 @@ TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& /*ellipsoid*/) {
   const QuadtreeTileID* pParentID =
-      std::get_if<QuadtreeTileID>(&tile.getTileID());
+      get_if<QuadtreeTileID>(&tile.getTileID());
 
   // Due to the use of uint32_t for QuadtreeTileID X and Y, we can only support
   // through level 30.
@@ -149,7 +149,7 @@ EllipsoidTilesetLoader::createGeometry(const Tile& tile) const {
 
   const Ellipsoid& ellipsoid = _projection.getEllipsoid();
   const GlobeRectangle& rectangle =
-      std::get<BoundingRegion>(tile.getBoundingVolume()).getRectangle();
+      get<BoundingRegion>(tile.getBoundingVolume()).getRectangle();
 
   double west = rectangle.getWest();
   double east = rectangle.getEast();
