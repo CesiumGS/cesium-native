@@ -145,8 +145,7 @@ TEST_CASE("Test implicit quadtree loader") {
     asyncSystem.dispatchMainThreadTasks();
 
     auto tileLoadResult = tileLoadResultFuture.wait();
-    CHECK(
-        holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+    CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(!tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);

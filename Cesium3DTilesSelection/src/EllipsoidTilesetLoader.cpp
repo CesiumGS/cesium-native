@@ -66,8 +66,7 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
 TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& /*ellipsoid*/) {
-  const QuadtreeTileID* pParentID =
-      get_if<QuadtreeTileID>(&tile.getTileID());
+  const QuadtreeTileID* pParentID = get_if<QuadtreeTileID>(&tile.getTileID());
 
   // Due to the use of uint32_t for QuadtreeTileID X and Y, we can only support
   // through level 30.

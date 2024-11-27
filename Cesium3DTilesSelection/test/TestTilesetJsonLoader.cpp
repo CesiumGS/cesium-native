@@ -215,8 +215,7 @@ TEST_CASE("Test creating tileset json loader") {
 
     const Tile& rootTile = loaderResult.pRootTile->getChildren()[0];
     const CesiumGeometry::OrientedBoundingBox& box =
-        get<CesiumGeometry::OrientedBoundingBox>(
-            rootTile.getBoundingVolume());
+        get<CesiumGeometry::OrientedBoundingBox>(rootTile.getBoundingVolume());
     const glm::dmat3& halfAxis = box.getHalfAxes();
     CHECK(halfAxis[0] == glm::dvec3(100.0, 0.0, 0.0));
     CHECK(halfAxis[1] == glm::dvec3(0.0, 100.0, 0.0));
@@ -399,8 +398,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
         testDataPath / "ReplaceTileset" / tileID,
         *loaderResult.pLoader,
         *pRootTile);
-    CHECK(
-        holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+    CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
@@ -426,8 +424,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
         *pRootTile);
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
-    CHECK(holds_alternative<TileExternalContent>(
-        tileLoadResult.contentKind));
+    CHECK(holds_alternative<TileExternalContent>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
     CHECK(tileLoadResult.tileInitializer);
 

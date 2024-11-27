@@ -20,16 +20,13 @@ template <typename... T>
 constexpr bool isSimpleVariant =
     std::conjunction_v<std::is_trivially_destructible<T>...>;
 
-template <bool isSimple, typename... T>
-struct VariantSpecializer;
+template <bool isSimple, typename... T> struct VariantSpecializer;
 
-template <typename... T>
-struct VariantSpecializer<true, T...> {
+template <typename... T> struct VariantSpecializer<true, T...> {
   using Type = SimpleVariant<T...>;
 };
 
-template <typename... T>
-struct VariantSpecializer<false, T...> {
+template <typename... T> struct VariantSpecializer<false, T...> {
   using Type = FullVariant<T...>;
 };
 

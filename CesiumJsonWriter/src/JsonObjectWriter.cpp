@@ -73,9 +73,7 @@ void recursiveObjectWriter(
   for (const auto& [key, item] : object) {
     j.Key(key);
     if (item.isArray()) {
-      recursiveArrayWriter(
-          get<CesiumUtility::JsonValue::Array>(item.value),
-          j);
+      recursiveArrayWriter(get<CesiumUtility::JsonValue::Array>(item.value), j);
     }
 
     if (item.isObject()) {

@@ -125,9 +125,8 @@ TEST_CASE("Test create layer json terrain loader") {
 
     // check root tile
     const Tile& rootTile = *loaderResult.pRootTile;
-    const auto& rootLooseRegion =
-        get<BoundingRegionWithLooseFittingHeights>(
-            rootTile.getBoundingVolume());
+    const auto& rootLooseRegion = get<BoundingRegionWithLooseFittingHeights>(
+        rootTile.getBoundingVolume());
     const auto& rootRegion = rootLooseRegion.getBoundingRegion();
     CHECK(rootTile.isEmptyContent());
     CHECK(rootTile.getUnconditionallyRefine());
@@ -144,13 +143,11 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(tileChildren.size() == 2);
 
     const Tile& tile_0_0_0 = tileChildren[0];
-    const auto& looseRegion_0_0_0 =
-        get<BoundingRegionWithLooseFittingHeights>(
-            tile_0_0_0.getBoundingVolume());
+    const auto& looseRegion_0_0_0 = get<BoundingRegionWithLooseFittingHeights>(
+        tile_0_0_0.getBoundingVolume());
     const auto& region_0_0_0 = looseRegion_0_0_0.getBoundingRegion();
     CHECK(
-        get<QuadtreeTileID>(tile_0_0_0.getTileID()) ==
-        QuadtreeTileID(0, 0, 0));
+        get<QuadtreeTileID>(tile_0_0_0.getTileID()) == QuadtreeTileID(0, 0, 0));
     CHECK(tile_0_0_0.getGeometricError() == Approx(616538.71824));
     CHECK(region_0_0_0.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_0_0_0.getRectangle().getEast() == Approx(0.0));
@@ -160,13 +157,11 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(region_0_0_0.getMaximumHeight() == 9000.0);
 
     const Tile& tile_0_1_0 = tileChildren[1];
-    const auto& looseRegion_0_1_0 =
-        get<BoundingRegionWithLooseFittingHeights>(
-            tile_0_1_0.getBoundingVolume());
+    const auto& looseRegion_0_1_0 = get<BoundingRegionWithLooseFittingHeights>(
+        tile_0_1_0.getBoundingVolume());
     const auto& region_0_1_0 = looseRegion_0_1_0.getBoundingRegion();
     CHECK(
-        get<QuadtreeTileID>(tile_0_1_0.getTileID()) ==
-        QuadtreeTileID(0, 1, 0));
+        get<QuadtreeTileID>(tile_0_1_0.getTileID()) == QuadtreeTileID(0, 1, 0));
     CHECK(tile_0_1_0.getGeometricError() == Approx(616538.71824));
     CHECK(region_0_1_0.getRectangle().getWest() == Approx(0.0));
     CHECK(region_0_1_0.getRectangle().getEast() == Approx(Math::OnePi));
@@ -450,8 +445,7 @@ TEST_CASE("Test load layer json tile content") {
         asyncSystem,
         pMockedAssetAccessor);
     auto tileLoadResult = tileLoadResultFuture.wait();
-    CHECK(
-        holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+    CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -502,8 +496,7 @@ TEST_CASE("Test load layer json tile content") {
 
     // check the load result
     auto tileLoadResult = tileLoadResultFuture.wait();
-    CHECK(
-        holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+    CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
     CHECK(tileLoadResult.updatedBoundingVolume);
     CHECK(!tileLoadResult.updatedContentBoundingVolume);
     CHECK(!tileLoadResult.tileInitializer);
@@ -568,8 +561,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -588,8 +580,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -645,8 +636,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -675,8 +665,7 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -849,13 +838,11 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(tileChildren.size() == 4);
 
     const auto& tile_2_0_2 = tileChildren[0];
-    const auto& looseRegion_2_0_2 =
-        get<BoundingRegionWithLooseFittingHeights>(
-            tile_2_0_2.getBoundingVolume());
+    const auto& looseRegion_2_0_2 = get<BoundingRegionWithLooseFittingHeights>(
+        tile_2_0_2.getBoundingVolume());
     const auto& region_2_0_2 = looseRegion_2_0_2.getBoundingRegion();
     CHECK(
-        get<QuadtreeTileID>(tile_2_0_2.getTileID()) ==
-        QuadtreeTileID(2, 0, 2));
+        get<QuadtreeTileID>(tile_2_0_2.getTileID()) == QuadtreeTileID(2, 0, 2));
     CHECK(region_2_0_2.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_2_0_2.getRectangle().getSouth() == 0.0);
     CHECK(
@@ -864,13 +851,11 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(region_2_0_2.getRectangle().getNorth() == Approx(Math::OnePi / 4.0));
 
     const auto& tile_2_1_2 = tileChildren[1];
-    const auto& looseRegion_2_1_2 =
-        get<BoundingRegionWithLooseFittingHeights>(
-            tile_2_1_2.getBoundingVolume());
+    const auto& looseRegion_2_1_2 = get<BoundingRegionWithLooseFittingHeights>(
+        tile_2_1_2.getBoundingVolume());
     const auto& region_2_1_2 = looseRegion_2_1_2.getBoundingRegion();
     CHECK(
-        get<QuadtreeTileID>(tile_2_1_2.getTileID()) ==
-        QuadtreeTileID(2, 1, 2));
+        get<QuadtreeTileID>(tile_2_1_2.getTileID()) == QuadtreeTileID(2, 1, 2));
     CHECK(
         region_2_1_2.getRectangle().getWest() ==
         Approx(-Math::OnePi * 3.0 / 4));
@@ -879,13 +864,11 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(region_2_1_2.getRectangle().getNorth() == Approx(Math::OnePi / 4.0));
 
     const auto& tile_2_0_3 = tileChildren[2];
-    const auto& looseRegion_2_0_3 =
-        get<BoundingRegionWithLooseFittingHeights>(
-            tile_2_0_3.getBoundingVolume());
+    const auto& looseRegion_2_0_3 = get<BoundingRegionWithLooseFittingHeights>(
+        tile_2_0_3.getBoundingVolume());
     const auto& region_2_0_3 = looseRegion_2_0_3.getBoundingRegion();
     CHECK(
-        get<QuadtreeTileID>(tile_2_0_3.getTileID()) ==
-        QuadtreeTileID(2, 0, 3));
+        get<QuadtreeTileID>(tile_2_0_3.getTileID()) == QuadtreeTileID(2, 0, 3));
     CHECK(region_2_0_3.getRectangle().getWest() == Approx(-Math::OnePi));
     CHECK(region_2_0_3.getRectangle().getSouth() == Approx(Math::OnePi / 4.0));
     CHECK(
@@ -894,13 +877,11 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(region_2_0_3.getRectangle().getNorth() == Approx(Math::PiOverTwo));
 
     const auto& tile_2_1_3 = tileChildren[3];
-    const auto& looseRegion_2_1_3 =
-        get<BoundingRegionWithLooseFittingHeights>(
-            tile_2_1_3.getBoundingVolume());
+    const auto& looseRegion_2_1_3 = get<BoundingRegionWithLooseFittingHeights>(
+        tile_2_1_3.getBoundingVolume());
     const auto& region_2_1_3 = looseRegion_2_1_3.getBoundingRegion();
     CHECK(
-        get<QuadtreeTileID>(tile_2_1_3.getTileID()) ==
-        QuadtreeTileID(2, 1, 3));
+        get<QuadtreeTileID>(tile_2_1_3.getTileID()) == QuadtreeTileID(2, 1, 3));
     CHECK(
         region_2_1_3.getRectangle().getWest() ==
         Approx(-Math::OnePi * 3.0 / 4));
@@ -925,8 +906,7 @@ TEST_CASE("Test creating tile children for layer json") {
 
     const auto& tile_2_2_0 = tileChildren[0];
     CHECK(
-        get<QuadtreeTileID>(tile_2_2_0.getTileID()) ==
-        QuadtreeTileID(2, 2, 0));
+        get<QuadtreeTileID>(tile_2_2_0.getTileID()) == QuadtreeTileID(2, 2, 0));
 
     const auto& tile_2_3_0 = tileChildren[1];
     const auto& upsampleID_2_3_0 =
