@@ -9,7 +9,6 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <type_traits>
-#include <variant>
 
 namespace CesiumAsync {
 
