@@ -48,3 +48,5 @@ target_link_libraries(
         glm::glm
         uriparser::uriparser
 )
+
+target_compile_definitions(CesiumUtility PUBLIC SWL_VARIANT_NO_CONSTEXPR_EMPLACE)
