@@ -20,18 +20,28 @@ template <typename... T>
 constexpr bool isSimpleVariant =
     std::conjunction_v<std::is_trivially_destructible<T>...>;
 
-template <typename... T>
-using Variant = std::conditional_t<
-    isSimpleVariant<T...>,
-    SimpleVariant<T...>,
-    FullVariant<T...>>;
+template <bool isSimple, typename... T>
+struct VariantSpecializer;
 
-template <typename... TTypesInVariant>
-using EnableIfVariantsAreDifferent = std::enable_if_t<
-    !std::is_same_v<
-        SimpleVariant<TTypesInVariant...>,
-        FullVariant<TTypesInVariant...>>,
-    bool>;
+template <typename... T>
+struct VariantSpecializer<true, T...> {
+  using Type = SimpleVariant<T...>;
+};
+
+template <typename... T>
+struct VariantSpecializer<false, T...> {
+  using Type = FullVariant<T...>;
+};
+
+template <typename... T>
+using Variant = VariantSpecializer<isSimpleVariant<T...>, T...>::Type;
+
+// template <typename... TTypesInVariant>
+// using EnableIfVariantsAreDifferent = std::enable_if_t<
+//     !std::is_same_v<
+//         SimpleVariant<TTypesInVariant...>,
+//         FullVariant<TTypesInVariant...>>,
+//     bool>;
 
 // visit
 // template <typename TVisitor, typename TVariant>
