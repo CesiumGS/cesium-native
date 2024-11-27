@@ -1,0 +1,15 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4957758..97dc6da 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -32,7 +32,9 @@ write_basic_package_version_file(${swl_variant_config_version} COMPATIBILITY Sam
+ 
+ install(FILES ${swl_variant_config_version} DESTINATION ${cmake_files_install_dir})
+ 
+-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
++option(SWL_VARIANT_BUILD_TESTS "Build the tests" ON)
++
++if(SWL_VARIANT_BUILD_TESTS AND CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+ 	
+ 	include(CTest)
+ 	

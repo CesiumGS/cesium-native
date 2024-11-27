@@ -10,10 +10,13 @@ vcpkg_from_github(
     HEAD_REF main
     PATCHES
       "add-install.patch"
+      "option-disable-tests.patch"
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DSWL_VARIANT_BUILD_TESTS=OFF
 )
 
 vcpkg_cmake_install()
