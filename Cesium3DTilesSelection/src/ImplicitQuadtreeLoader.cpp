@@ -148,7 +148,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
         auto fail = [&]() {
           return asyncSystem.createResolvedFuture(
               TileLoadResult::createFailedResult(
-                  std::move(pAssetAccessor),
+                  pAssetAccessor,
                   std::move(pCompletedRequest)));
         };
         const std::string& tileUrl = pCompletedRequest->url();

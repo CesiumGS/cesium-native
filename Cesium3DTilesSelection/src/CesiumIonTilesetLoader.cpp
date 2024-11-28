@@ -95,10 +95,6 @@ public:
   void notifyLoaderIsBeingDestroyed() { this->_pTilesetLoader = nullptr; }
 
 private:
-  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  handleTokenRefresh(
-      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>) {}
-
   CesiumIonTilesetLoader* _pTilesetLoader;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAggregatedAccessor;
 };
