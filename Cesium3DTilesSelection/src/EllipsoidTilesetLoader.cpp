@@ -59,6 +59,7 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
       std::nullopt,
       std::nullopt,
       nullptr,
+      nullptr,
       {},
       TileLoadResultState::Success});
 }

@@ -195,10 +195,10 @@ public:
    * @param result The result of the synchronous readGltf invocation.
    */
   static CesiumAsync::Future<GltfReaderResult> resolveExternalData(
-      CesiumAsync::AsyncSystem asyncSystem,
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
-      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const GltfReaderOptions& options,
       GltfReaderResult&& result);
 

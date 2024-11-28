@@ -18,8 +18,9 @@
 #include <vector>
 
 namespace CesiumAsync {
+class IAssetAccessor;
 class IAssetRequest;
-}
+} // namespace CesiumAsync
 
 namespace CesiumQuantizedMeshTerrain {
 
@@ -47,6 +48,13 @@ struct QuantizedMeshLoadResult {
    */
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange>
       availableTileRectangles{};
+
+  /**
+   * @brief The asset accessor that was used to retrieve this quantized mesh
+   * tile, and that should be used to retrieve further resources referenced by
+   * the tile.
+   */
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
   /**
    * @brief The request that was used to download the tile content, if any.

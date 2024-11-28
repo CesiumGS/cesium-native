@@ -52,7 +52,9 @@ TileLoadResult convertToTileLoadResult(
     QuantizedMeshLoadResult&& loadResult,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (loadResult.errors || !loadResult.model) {
-    return TileLoadResult::createFailedResult(loadResult.pRequest);
+    return TileLoadResult::createFailedResult(
+        std::move(loadResult.pAssetAccessor),
+        std::move(loadResult.pRequest));
   }
 
   return TileLoadResult{
@@ -61,6 +63,7 @@ TileLoadResult convertToTileLoadResult(
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
+      std::move(loadResult.pAssetAccessor),
       nullptr,
       {},
       TileLoadResultState::Success,
@@ -758,7 +761,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     if (!pUpsampleTileID) {
       // This loader only handles QuadtreeTileIDs and UpsampledQuadtreeNode.
       return asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult(pAssetAccessor, nullptr));
     }
 
     // now do upsampling
@@ -777,7 +780,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (firstAvailableIt == this->_layers.end()) {
     // No layer has this tile available.
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult(pAssetAccessor, nullptr));
   }
 
   // Also load the same tile in any underlying layers for which this tile
@@ -812,7 +815,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   if (!pRegion) {
     // This tile does not have the required bounding volume type.
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult(pAssetAccessor, nullptr));
   }
 
   // Start the actual content request.
@@ -1136,7 +1139,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
       parentContent.getRenderContent();
   if (!pParentRenderContent) {
     return asyncSystem.createResolvedFuture(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult(nullptr, nullptr));
   }
 
   const UpsampledQuadtreeNode* pUpsampledTileID =
@@ -1180,7 +1183,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             textureCoordinateIndex,
             ellipsoid);
         if (!model) {
-          return TileLoadResult::createFailedResult(nullptr);
+          return TileLoadResult::createFailedResult(nullptr, nullptr);
         }
 
         return TileLoadResult{
@@ -1189,6 +1192,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             std::nullopt,
             std::nullopt,
             std::nullopt,
+            nullptr,
             nullptr,
             {},
             TileLoadResultState::Success,

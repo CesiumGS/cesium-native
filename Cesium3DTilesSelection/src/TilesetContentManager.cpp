@@ -571,7 +571,7 @@ postProcessContentInWorkerThread(
   }
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
-  auto pAssetAccessor = tileLoadInfo.pAssetAccessor;
+  auto pAssetAccessor = result.pAssetAccessor;
   return CesiumGltfReader::GltfReader::resolveExternalData(
              asyncSystem,
              baseUrl,
@@ -618,7 +618,9 @@ postProcessContentInWorkerThread(
         if (!gltfResult.model) {
           return tileLoadInfo.asyncSystem.createResolvedFuture(
               TileLoadResultAndRenderResources{
-                  TileLoadResult::createFailedResult(nullptr),
+                  TileLoadResult::createFailedResult(
+                      tileLoadInfo.pAssetAccessor,
+                      nullptr),
                   nullptr});
         }
 

@@ -103,6 +103,12 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
       rasterOverlayDetails;
 
   /**
+   * @brief The asset accessor that was used to retrieve this tile, and that
+   * should be used to retrieve further resources referenced by the tile.
+   */
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+
+  /**
    * @brief The request that is created to download the tile content.
    */
   std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest;
@@ -136,6 +142,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * @param pCompletedRequest The failed request
    */
   static TileLoadResult createFailedResult(
+      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
       std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
 
   /**
@@ -144,6 +151,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * @param pCompletedRequest The failed request
    */
   static TileLoadResult createRetryLaterResult(
+      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
       std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest);
 };
 

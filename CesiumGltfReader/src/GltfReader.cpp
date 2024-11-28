@@ -445,10 +445,10 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 }
 
 /*static*/ Future<GltfReaderResult> GltfReader::resolveExternalData(
-    AsyncSystem asyncSystem,
+    const AsyncSystem& asyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,
-    std::shared_ptr<IAssetAccessor> pAssetAccessor,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const GltfReaderOptions& options,
     GltfReaderResult&& result) {
 
