@@ -13,6 +13,8 @@
 
 namespace Cesium3DTilesSelection {
 
+// This is an IAssetAccessor decorator that handles token refresh for any asset
+// that returns a 401 error.
 class CesiumIonAssetAccessor
     : public std::enable_shared_from_this<CesiumIonAssetAccessor>,
       public CesiumAsync::IAssetAccessor {
@@ -27,35 +29,46 @@ public:
   get(const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers = {}) override {
-    auto refreshToken = [pThis = this->shared_from_this()](
-                            const CesiumAsync::AsyncSystem& asyncSystem,
-                            std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                pRequest) {
-      if (!pThis->_pTilesetLoader) {
-        return asyncSystem.createResolvedFuture(std::move(pRequest));
-      }
+    // If token refresh is needed, this lambda will be called in the main thread
+    // so that it can safely use the tileset loader.
+    auto refreshToken =
+        [pThis = this->shared_from_this()](
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+          if (!pThis->_pTilesetLoader) {
+            // The tileset loader has been destroyed, so just return the
+            // original (failed) request.
+            return asyncSystem.createResolvedFuture(std::move(pRequest));
+          }
 
-      const CesiumAsync::HttpHeaders& headers = pRequest->headers();
-      auto authIt = headers.find("authorization");
-      std::string currentAuthorizationHeader =
-          authIt != headers.end() ? authIt->second : std::string();
+          const CesiumAsync::HttpHeaders& headers = pRequest->headers();
+          auto authIt = headers.find("authorization");
+          std::string currentAuthorizationHeaderValue =
+              authIt != headers.end() ? authIt->second : std::string();
 
-      return pThis->_pTilesetLoader
-          ->refreshTokenInMainThread(asyncSystem, currentAuthorizationHeader)
-          .thenInMainThread(
-              [pThis, asyncSystem, pRequest = std::move(pRequest)](
-                  const std::string& newAuthorizationHeader) mutable {
-                if (newAuthorizationHeader.empty()) {
-                  // Could not refresh the token.
-                  return asyncSystem.createResolvedFuture(std::move(pRequest));
-                }
+          return pThis->_pTilesetLoader
+              ->refreshTokenInMainThread(
+                  asyncSystem,
+                  currentAuthorizationHeaderValue)
+              .thenImmediately(
+                  [pThis, asyncSystem, pRequest = std::move(pRequest)](
+                      const std::string& newAuthorizationHeader) mutable {
+                    if (newAuthorizationHeader.empty()) {
+                      // Could not refresh the token, so just return the
+                      // original (failed) request.
+                      return asyncSystem.createResolvedFuture(
+                          std::move(pRequest));
+                    }
 
-                CesiumAsync::HttpHeaders headers = pRequest->headers();
-                headers["Authorization"] = newAuthorizationHeader;
-                std::vector<THeader> vecHeaders(headers.begin(), headers.end());
-                return pThis->get(asyncSystem, pRequest->url(), vecHeaders);
-              });
-    };
+                    // Repeat the request using the new token.
+                    CesiumAsync::HttpHeaders headers = pRequest->headers();
+                    headers["Authorization"] = newAuthorizationHeader;
+                    std::vector<THeader> vecHeaders(
+                        std::make_move_iterator(headers.begin()),
+                        std::make_move_iterator(headers.end()));
+                    return pThis->get(asyncSystem, pRequest->url(), vecHeaders);
+                  });
+        };
 
     return this->_pAggregatedAccessor->get(asyncSystem, url, headers)
         .thenImmediately([asyncSystem, refreshToken = std::move(refreshToken)](
@@ -508,10 +521,11 @@ TileChildrenResult CesiumIonTilesetLoader::createTileChildren(
 CesiumAsync::SharedFuture<std::string>
 CesiumIonTilesetLoader::refreshTokenInMainThread(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::string& currentAuthorizationHeader) {
+    const std::string& currentAuthorizationHeaderValue) {
   if (this->_tokenRefreshInProgress) {
     if (!this->_tokenRefreshInProgress->isReady() ||
-        this->_tokenRefreshInProgress->wait() != currentAuthorizationHeader) {
+        this->_tokenRefreshInProgress->wait() !=
+            currentAuthorizationHeaderValue) {
       // Only use this refreshed token if it's different from the one we're
       // currently using. Otherwise, fall through and get a new token.
       return *this->_tokenRefreshInProgress;
