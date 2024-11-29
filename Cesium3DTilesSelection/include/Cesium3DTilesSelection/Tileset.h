@@ -119,6 +119,20 @@ public:
   void setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept;
 
   /**
+   * @brief Gets the {@link TilesetExternals} that summarize the external
+   * interfaces used by this tileset.
+   */
+  TilesetExternals& getExternals() noexcept { return this->_externals; }
+
+  /**
+   * @brief Gets the {@link TilesetExternals} that summarize the external
+   * interfaces used by this tileset.
+   */
+  const TilesetExternals& getExternals() const noexcept {
+    return this->_externals;
+  }
+
+  /**
    * @brief Returns the {@link CesiumAsync::AsyncSystem} that is used for
    * dispatching asynchronous tasks.
    */
