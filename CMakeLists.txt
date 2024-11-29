@@ -4,13 +4,37 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" OFF)
+# Don't use ezvcpkg if it appears that this configuration is using
+# vcpkg already, either by building cesium-native directly,
+# or via a higher level project that has added cesium-native as a
+# subdirectory and using vcpkg to statisfy its dependencies,
+# presumably in manifest mode.
+
+set(CESIUM_USE_EZVCPKG_DEFAULT ON)
+if (VCPKG_MANIFEST_MODE)
+    set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
+elseif (CMAKE_TOOLCHAIN_FILE)
+    get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
+    if(toolchainFile STREQUAL "vcpkg.cmake")
+        set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
+    endif()
+endif()
+
+option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 
 if(CESIUM_USE_EZVCPKG)
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
+
+# Note: VCPKG_TRIPLET is not used by vcpkg! The relevant variables are
+# VCPKG_TARGET_TRIPLET and VCPKG_HOST_TRIPLET. ezvcpkg and our custom
+# installation code use VCPKG_TRIPLET, so we initialize it.
+
+if (VCPKG_TARGET_TRIPLET)
+    set(VCPKG_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+endif()
 
 if (NOT VCPKG_TRIPLET)
     if (DEFINED ENV{VCPKG_TRIPLET})
@@ -23,9 +47,13 @@ if (NOT VCPKG_TRIPLET)
     else()
         set(VCPKG_TRIPLET "${DETECTED_VCPKG_TRIPLET}")
     endif()
+    if (NOT CESIUM_USE_EZVCPKG)
+        set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
+    endif()
 endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
+message(STATUS "VCPKG_TARGET_TRIPLET ${VCPKG_TARGET_TRIPLET}")
 
 if (NOT VCPKG_OVERLAY_PORTS)
     if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
