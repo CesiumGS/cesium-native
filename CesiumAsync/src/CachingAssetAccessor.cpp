@@ -16,50 +16,56 @@
 namespace CesiumAsync {
 class CacheAssetResponse : public IAssetResponse {
 public:
-  CacheAssetResponse(const CacheItem* pCacheItem) noexcept
-      : _pCacheItem{pCacheItem} {}
+  CacheAssetResponse(CacheResponse&& cacheResponse) noexcept
+      : _cacheResponse(std::move(cacheResponse)) {}
 
   virtual uint16_t statusCode() const noexcept override {
-    return this->_pCacheItem->cacheResponse.statusCode;
+    return this->_cacheResponse.statusCode;
   }
 
   virtual std::string contentType() const override {
-    auto it = this->_pCacheItem->cacheResponse.headers.find("Content-Type");
-    if (it == this->_pCacheItem->cacheResponse.headers.end()) {
+    auto it = this->_cacheResponse.headers.find("Content-Type");
+    if (it == this->_cacheResponse.headers.end()) {
       return std::string();
     }
     return it->second;
   }
 
   virtual const HttpHeaders& headers() const noexcept override {
-    return this->_pCacheItem->cacheResponse.headers;
+    return this->_cacheResponse.headers;
   }
 
   virtual std::span<const std::byte> data() const noexcept override {
     return std::span<const std::byte>(
-        this->_pCacheItem->cacheResponse.data.data(),
-        this->_pCacheItem->cacheResponse.data.size());
+        this->_cacheResponse.data.data(),
+        this->_cacheResponse.data.size());
   }
 
 private:
-  const CacheItem* _pCacheItem;
+  CacheResponse _cacheResponse;
 };
 
 class CacheAssetRequest : public IAssetRequest {
 public:
-  CacheAssetRequest(CacheItem&& cacheItem)
-      : _cacheItem(std::move(cacheItem)), _response(&this->_cacheItem) {}
+  CacheAssetRequest(
+      std::string&& url,
+      HttpHeaders&& headers,
+      CacheItem&& cacheItem)
+      : _method(std::move(cacheItem.cacheRequest.method)),
+        _url(std::move(url)),
+        _headers(std::move(headers)),
+        _response(std::move(cacheItem.cacheResponse)) {}
 
   virtual const std::string& method() const noexcept override {
-    return this->_cacheItem.cacheRequest.method;
+    return this->_method;
   }
 
   virtual const std::string& url() const noexcept override {
-    return this->_cacheItem.cacheRequest.url;
+    return this->_url;
   }
 
   virtual const HttpHeaders& headers() const noexcept override {
-    return this->_cacheItem.cacheRequest.headers;
+    return this->_headers;
   }
 
   virtual const IAssetResponse* response() const noexcept override {
@@ -67,7 +73,9 @@ public:
   }
 
 private:
-  CacheItem _cacheItem;
+  std::string _method;
+  std::string _url;
+  HttpHeaders _headers;
   CacheAssetResponse _response;
 };
 
@@ -131,9 +139,9 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
            pAssetAccessor = this->_pAssetAccessor,
            pCacheDatabase = this->_pCacheDatabase,
            pLogger = this->_pLogger,
-           url,
-           headers,
-           threadPool]() -> Future<std::shared_ptr<IAssetRequest>> {
+           =url,
+           =headers= headers,
+           threadPool]() mutable -> Future<std::shared_ptr<IAssetRequest>> {
             std::optional<CacheItem> cacheLookup =
                 pCacheDatabase->getEntry(url);
             if (!cacheLookup) {
@@ -244,7 +252,10 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
             // Good cache item that doesn't need to be revalidated, just return
             // it.
             std::shared_ptr<IAssetRequest> pRequest =
-                std::make_shared<CacheAssetRequest>(std::move(cacheItem));
+                std::make_shared<CacheAssetRequest>(
+                    std::move(url),
+                    HttpHeaders(headers.begin(), headers.end()),
+                    std::move(cacheItem));
             return asyncSystem.createResolvedFuture(std::move(pRequest));
           })
       .thenImmediately([](std::shared_ptr<IAssetRequest>&& pRequest) noexcept {
@@ -410,7 +421,10 @@ updateCacheItem(CacheItem&& cacheItem, const IAssetRequest& request) {
     }
   }
 
-  return std::make_unique<CacheAssetRequest>(std::move(cacheItem));
+  return std::make_unique<CacheAssetRequest>(
+      std::string(request.url()),
+      HttpHeaders(request.headers()),
+      std::move(cacheItem));
 }
 
 std::time_t convertHttpDateToTime(const std::string& httpDate) {
