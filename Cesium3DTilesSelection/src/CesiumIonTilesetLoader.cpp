@@ -142,16 +142,26 @@ std::optional<std::string> getNewAccessToken(
   if (ionResponse.HasParseError()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
-        "Error when parsing Cesium ion response while refresh token, error "
-        "code {} at byte offset {}",
+        "A JSON parsing error occurred while attempting to refresh the Cesium "
+        "ion token. Error code {} at byte offset {}.",
         ionResponse.GetParseError(),
         ionResponse.GetErrorOffset());
     return std::nullopt;
   }
-  return CesiumUtility::JsonHelpers::getStringOrDefault(
+
+  std::string accessToken = CesiumUtility::JsonHelpers::getStringOrDefault(
       ionResponse,
       "accessToken",
       "");
+  if (accessToken.empty()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Could not refresh Cesium ion token because the `accessToken` field in "
+        "the JSON response is missing or blank.");
+    return std::nullopt;
+  }
+
+  return accessToken;
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
@@ -508,6 +518,12 @@ CesiumIonTilesetLoader::refreshTokenInMainThread(
     }
   }
 
+  SPDLOG_LOGGER_INFO(
+      this->_pLogger,
+      "Refreshing Cesium ion token for asset ID {} from {}.",
+      this->_ionAssetID,
+      this->_ionAssetEndpointUrl);
+
   std::string url = createEndpointResource(
       this->_ionAssetID,
       this->_ionAccessToken,
@@ -522,6 +538,10 @@ CesiumIonTilesetLoader::refreshTokenInMainThread(
 
                 if (!pIonResponse) {
                   // Token refresh failed.
+                  SPDLOG_LOGGER_ERROR(
+                      this->_pLogger,
+                      "Request failed while attempting to refresh the Cesium "
+                      "ion token.");
                   return std::string();
                 }
 
@@ -541,12 +561,27 @@ CesiumIonTilesetLoader::refreshTokenInMainThread(
                       cacheIt->second.accessToken = accessToken.value();
                     }
 
-                    return authorizationHeader;
-                  }
-                }
+                    SPDLOG_LOGGER_INFO(
+                        this->_pLogger,
+                        "Successfuly refreshed Cesium ion token for asset ID "
+                        "{} from {}.",
+                        this->_ionAssetID,
+                        this->_ionAssetEndpointUrl);
 
-                // Token refresh failed.
-                return std::string();
+                    return authorizationHeader;
+                  } else {
+                    // This error is logged from within `getNewAccessToken`.
+                    return std::string();
+                  }
+                } else {
+                  // Token refresh failed.
+                  SPDLOG_LOGGER_ERROR(
+                      this->_pLogger,
+                      "Request failed with status code {} while attempting to "
+                      "refresh the Cesium ion token.",
+                      statusCode);
+                  return std::string();
+                }
               })
           .share();
 

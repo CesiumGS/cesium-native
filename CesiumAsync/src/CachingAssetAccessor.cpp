@@ -139,8 +139,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
            pAssetAccessor = this->_pAssetAccessor,
            pCacheDatabase = this->_pCacheDatabase,
            pLogger = this->_pLogger,
-           =url,
-           =headers= headers,
+           url = url,
+           headers = headers,
            threadPool]() mutable -> Future<std::shared_ptr<IAssetRequest>> {
             std::optional<CacheItem> cacheLookup =
                 pCacheDatabase->getEntry(url);
