@@ -95,8 +95,11 @@ static std::time_t calculateExpiryTime(
     const IAssetRequest& request,
     const std::optional<ResponseCacheControl>& cacheControl);
 
-static std::unique_ptr<IAssetRequest>
-updateCacheItem(CacheItem&& cacheItem, const IAssetRequest& request);
+static std::shared_ptr<IAssetRequest> updateCacheItem(
+    std::string&& url,
+    std::vector<IAssetAccessor::THeader>&& headers,
+    CacheItem&& cacheItem,
+    const IAssetRequest& request);
 
 CachingAssetAccessor::CachingAssetAccessor(
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -206,8 +209,11 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                       threadPool,
                       [cacheItem = std::move(cacheItem),
                        pCacheDatabase,
-                       pLogger](std::shared_ptr<IAssetRequest>&&
-                                    pCompletedRequest) mutable {
+                       pLogger,
+                       url = std::move(url),
+                       headers =
+                           std::move(headers)](std::shared_ptr<IAssetRequest>&&
+                                                   pCompletedRequest) mutable {
                         if (!pCompletedRequest) {
                           return std::move(pCompletedRequest);
                         }
@@ -216,6 +222,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                         if (pCompletedRequest->response()->statusCode() ==
                             304) { // status Not-Modified
                           pRequestToStore = updateCacheItem(
+                              std::move(url),
+                              std::move(headers),
                               std::move(cacheItem),
                               *pCompletedRequest);
                         } else {
@@ -406,24 +414,26 @@ std::time_t calculateExpiryTime(
   }
 }
 
-std::unique_ptr<IAssetRequest>
-updateCacheItem(CacheItem&& cacheItem, const IAssetRequest& request) {
-  for (const std::pair<const std::string, std::string>& header :
-       request.headers()) {
-    cacheItem.cacheRequest.headers[header.first] = header.second;
-  }
-
+std::shared_ptr<IAssetRequest> updateCacheItem(
+    std::string&& url,
+    std::vector<IAssetAccessor::THeader>&& headers,
+    CacheItem&& cacheItem,
+    const IAssetRequest& request) {
   const IAssetResponse* pResponse = request.response();
   if (pResponse) {
-    for (const std::pair<const std::string, std::string>& header :
-         pResponse->headers()) {
-      cacheItem.cacheResponse.headers[header.first] = header.second;
+    // Copy the response headers from the new request into the cacheItem so that
+    // they're included in the new response. This is particularly important for
+    // Expires headers and the like.
+    for (const auto& pair : pResponse->headers()) {
+      cacheItem.cacheResponse.headers[pair.first] = pair.second;
     }
   }
 
-  return std::make_unique<CacheAssetRequest>(
-      std::string(request.url()),
-      HttpHeaders(request.headers()),
+  return std::make_shared<CacheAssetRequest>(
+      std::move(url),
+      HttpHeaders(
+          std::make_move_iterator(headers.begin()),
+          std::make_move_iterator(headers.end())),
       std::move(cacheItem));
 }
 
