@@ -692,15 +692,22 @@ TEST_CASE("Test serving cache item") {
     // test that the response is from the cache
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
+        ->get(
+            asyncSystem,
+            "test.com",
+            std::vector<IAssetAccessor::THeader>{
+                {"Some-Request-Header", "The Value"}})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
-              REQUIRE(completedRequest->url() == "cache.com");
+              REQUIRE(completedRequest->method() == "GET");
+
+              // URL and Headers should match the original request, even if
+              // that's different from what's in the cache.
+              REQUIRE(completedRequest->url() == "test.com");
               REQUIRE(
                   completedRequest->headers() ==
-                  HttpHeaders{{"Cache-Request-Header", "Cache-Request-Value"}});
-              REQUIRE(completedRequest->method() == "GET");
+                  HttpHeaders{{"Some-Request-Header", "The Value"}});
 
               const IAssetResponse* response = completedRequest->response();
               REQUIRE(response != nullptr);
@@ -783,15 +790,22 @@ TEST_CASE("Test serving cache item") {
     // and cache control coming from the validation response
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
+        ->get(
+            asyncSystem,
+            "test.com",
+            std::vector<IAssetAccessor::THeader>{
+                {"Some-Request-Header", "The Value"}})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
-              REQUIRE(completedRequest->url() == "cache.com");
+              REQUIRE(completedRequest->method() == "GET");
+
+              // URL and Headers should match the original request, even if
+              // that's different from what's in the cache.
+              REQUIRE(completedRequest->url() == "test.com");
               REQUIRE(
                   completedRequest->headers() ==
-                  HttpHeaders{{"Cache-Request-Header", "Cache-Request-Value"}});
-              REQUIRE(completedRequest->method() == "GET");
+                  HttpHeaders{{"Some-Request-Header", "The Value"}});
 
               // check response header is updated
               const IAssetResponse* response = completedRequest->response();

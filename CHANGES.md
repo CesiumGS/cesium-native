@@ -17,6 +17,7 @@
 - The `schemaUri` property in the `EXT_structural_metadata` glTF extension is now supported, allowing structural metadata schemas to be loaded from URIs rather than being embedded in the glTF itself.
 - Added `getHeightSampler` method to `TilesetContentLoader`, allowing loaders to optionally provide a custom, more efficient means of querying heights using the `ITilesetHeightSampler` interface.
 - Added equality operator for `JsonValue`.
+- `TileLoadResult` now includes a `pAssetAccessor` that was used to retrieve the tile content and that should be used to retrieve any additional resources associated with the tile, such as external images.
 
 ##### Fixes :wrench:
 
@@ -26,6 +27,10 @@
 - Tightened the tolerance of `IntersectionTests::rayTriangleParametric`, allowing it to find intersections with smaller triangles.
 - Fixed a bug that could cause `GltfUtilities::intersectRayGltfModel` to crash when the model contains a primitive whose position accessor does not have min/max values.
 - `IonRasterOverlay` now passes its `RasterOverlayOptions` to the `BingMapsRasterOverlay` or `TileMapServiceRasterOverlay` that it creates internally.
+- Fixed a bug in `CachingAssetAccessor` that caused it to return cached request headers on a cache hit, rather than the headers included in the new request.
+- External resources (such as images) referenced from 3D Tiles content will no longer fail if a Cesium ion token refresh is necessary.
+- The Cesium ion token will now only be refreshed once when it expires. Previously, multiple refresh requests could be initiated at about the same time.
+- Fixed a bug in `SharedAssetDepot` that could lead to a crash with assets that fail to load.
 
 ### v0.41.0 - 2024-11-01
 

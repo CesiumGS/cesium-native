@@ -405,9 +405,12 @@ private:
       // mutex. So we must take care not to lock it again, which could happen if
       // the asset is currently unreferenced and we naively create an
       // IntrusivePointer for it.
-      pAsset->addReference(true);
-      CesiumUtility::IntrusivePointer<TAssetType> p = pAsset.get();
-      pAsset->releaseReference(true);
+      CesiumUtility::IntrusivePointer<TAssetType> p = nullptr;
+      if (pAsset) {
+        pAsset->addReference(true);
+        p = pAsset.get();
+        pAsset->releaseReference(true);
+      }
       return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
     }
   };
