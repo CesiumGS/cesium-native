@@ -262,7 +262,9 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
             std::shared_ptr<IAssetRequest> pRequest =
                 std::make_shared<CacheAssetRequest>(
                     std::move(url),
-                    HttpHeaders(headers.begin(), headers.end()),
+                    HttpHeaders(
+                        std::make_move_iterator(headers.begin()),
+                        std::make_move_iterator(headers.end())),
                     std::move(cacheItem));
             return asyncSystem.createResolvedFuture(std::move(pRequest));
           })

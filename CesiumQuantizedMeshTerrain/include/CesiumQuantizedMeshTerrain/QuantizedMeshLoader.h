@@ -18,9 +18,8 @@
 #include <vector>
 
 namespace CesiumAsync {
-class IAssetAccessor;
 class IAssetRequest;
-} // namespace CesiumAsync
+}
 
 namespace CesiumQuantizedMeshTerrain {
 

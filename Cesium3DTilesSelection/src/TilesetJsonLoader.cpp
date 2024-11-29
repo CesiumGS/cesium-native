@@ -905,8 +905,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            ellipsoid,
            upAxis = _upAxis,
            externalContentInitializer = std::move(externalContentInitializer),
-           pAssetAccessor,
-           &asyncSystem,
+           pAssetAccessor = pAssetAccessor,
+           asyncSystem,
            requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
@@ -918,7 +918,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   tileUrl);
               return asyncSystem.createResolvedFuture(
                   TileLoadResult::createFailedResult(
-                      pAssetAccessor,
+                      std::move(pAssetAccessor),
                       std::move(pCompletedRequest)));
             }
 
@@ -931,7 +931,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   tileUrl);
               return asyncSystem.createResolvedFuture(
                   TileLoadResult::createFailedResult(
-                      pAssetAccessor,
+                      std::move(pAssetAccessor),
                       std::move(pCompletedRequest)));
             }
 
@@ -962,12 +962,12 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                        pLogger,
                        upAxis,
                        tileUrl,
-                       pAssetAccessor,
+                       pAssetAccessor = std::move(pAssetAccessor),
                        pCompletedRequest](GltfConverterResult&& result) {
                         logTileLoadResult(pLogger, tileUrl, result.errors);
                         if (result.errors) {
                           return TileLoadResult::createFailedResult(
-                              pAssetAccessor,
+                              std::move(pAssetAccessor),
                               std::move(pCompletedRequest));
                         }
                         return TileLoadResult{
@@ -976,7 +976,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                             std::nullopt,
                             std::nullopt,
                             std::nullopt,
-                            pAssetAccessor,
+                            std::move(pAssetAccessor),
                             std::move(pCompletedRequest),
                             {},
                             TileLoadResultState::Success,
@@ -990,7 +990,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       upAxis,
                       tileRefine,
                       pLogger,
-                      pAssetAccessor,
+                      std::move(pAssetAccessor),
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
                       ellipsoid));

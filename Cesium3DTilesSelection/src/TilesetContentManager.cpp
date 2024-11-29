@@ -619,7 +619,7 @@ postProcessContentInWorkerThread(
           return tileLoadInfo.asyncSystem.createResolvedFuture(
               TileLoadResultAndRenderResources{
                   TileLoadResult::createFailedResult(
-                      tileLoadInfo.pAssetAccessor,
+                      result.pAssetAccessor,
                       nullptr),
                   nullptr});
         }
