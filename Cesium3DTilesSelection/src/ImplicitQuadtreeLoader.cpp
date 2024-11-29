@@ -300,7 +300,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                pLogger,
                subtreeUrl,
                requestHeaders)
-        .thenInMainThread([this, pAssetAccessor, subtreeID](
+        .thenInMainThread([this, pAssetAccessor = pAssetAccessor, subtreeID](
                               std::optional<SubtreeAvailability>&&
                                   subtreeAvailability) mutable {
           if (subtreeAvailability) {

@@ -126,7 +126,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
            ktx2TranscodeTargets,
            applyTextureTransform,
            &asyncSystem,
-           pAssetAccessor,
+           pAssetAccessor = pAssetAccessor,
            tileTransform,
            requestHeaders,
            ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
@@ -136,7 +136,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
             auto fail = [&]() {
               return asyncSystem.createResolvedFuture(
                   TileLoadResult::createFailedResult(
-                      pAssetAccessor,
+                      std::move(pAssetAccessor),
                       std::move(pCompletedRequest)));
             };
             const std::string& tileUrl = pCompletedRequest->url();
@@ -180,7 +180,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                   CesiumGeometry::Axis::Y};
               return converter(responseData, gltfOptions, assetFetcher)
                   .thenImmediately(
-                      [pAssetAccessor,
+                      [pAssetAccessor = std::move(pAssetAccessor),
                        pLogger,
                        tileUrl,
                        pCompletedRequest,

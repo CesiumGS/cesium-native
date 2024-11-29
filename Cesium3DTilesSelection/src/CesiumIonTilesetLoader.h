@@ -13,8 +13,6 @@ namespace Cesium3DTilesSelection {
 class CesiumIonAssetAccessor;
 
 class CesiumIonTilesetLoader : public TilesetContentLoader {
-  enum class TokenRefreshState { None, Loading, Done, Failed };
-
 public:
   using AuthorizationHeaderChangeListener = std::function<
       void(const std::string& header, const std::string& headerValue)>;
