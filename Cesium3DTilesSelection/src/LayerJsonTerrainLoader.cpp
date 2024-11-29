@@ -49,11 +49,12 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 }
 
 TileLoadResult convertToTileLoadResult(
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     QuantizedMeshLoadResult&& loadResult,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (loadResult.errors || !loadResult.model) {
     return TileLoadResult::createFailedResult(
-        std::move(loadResult.pAssetAccessor),
+        pAssetAccessor,
         std::move(loadResult.pRequest));
   }
 
@@ -63,7 +64,7 @@ TileLoadResult convertToTileLoadResult(
       loadResult.updatedBoundingVolume,
       std::nullopt,
       std::nullopt,
-      std::move(loadResult.pAssetAccessor),
+      pAssetAccessor,
       nullptr,
       {},
       TileLoadResultState::Success,
@@ -857,11 +858,12 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
     return std::move(finalFuture)
         .thenInMainThread([this,
                            asyncSystem,
+                           pAssetAccessor,
                            ellipsoid,
                            &currentLayer,
                            &tile,
                            shouldCurrLayerLoadAvailability](
-                              QuantizedMeshLoadResult&& loadResult) {
+                              QuantizedMeshLoadResult&& loadResult) mutable {
           if (shouldCurrLayerLoadAvailability) {
             const QuadtreeTileID& tileID =
                 std::get<QuadtreeTileID>(tile.getTileID());
@@ -875,8 +877,10 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
           // will need to generate the tile raster overlay UVs in the worker
           // thread based on the projection of the loader since the upsampler
           // needs this UV to do the upsampling
-          auto finalResult =
-              convertToTileLoadResult(std::move(loadResult), ellipsoid);
+          auto finalResult = convertToTileLoadResult(
+              std::move(pAssetAccessor),
+              std::move(loadResult),
+              ellipsoid);
           bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
           if (doesTileHaveUpsampledChild &&
               finalResult.state == TileLoadResultState::Success) {
@@ -900,28 +904,32 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
   return std::move(futureQuantizedMesh)
-      .thenImmediately([doesTileHaveUpsampledChild,
-                        projection = this->_projection,
-                        tileTransform = tile.getTransform(),
-                        tileBoundingVolume = tile.getBoundingVolume(),
-                        ellipsoid](
-                           QuantizedMeshLoadResult&& loadResult) mutable {
-        // if this tile has one of the children needs to be upsampled, we will
-        // need to generate its raster overlay UVs in the worker thread based
-        // on the projection of the loader since the upsampler needs this UV
-        // to do the upsampling
-        auto result = convertToTileLoadResult(std::move(loadResult), ellipsoid);
-        if (doesTileHaveUpsampledChild &&
-            result.state == TileLoadResultState::Success) {
-          generateRasterOverlayUVs(
-              tileBoundingVolume,
-              tileTransform,
-              projection,
-              result);
-        }
+      .thenImmediately(
+          [pAssetAccessor,
+           doesTileHaveUpsampledChild,
+           projection = this->_projection,
+           tileTransform = tile.getTransform(),
+           tileBoundingVolume = tile.getBoundingVolume(),
+           ellipsoid](QuantizedMeshLoadResult&& loadResult) mutable {
+            // if this tile has one of the children needs to be upsampled, we
+            // will need to generate its raster overlay UVs in the worker thread
+            // based on the projection of the loader since the upsampler needs
+            // this UV to do the upsampling
+            auto result = convertToTileLoadResult(
+                std::move(pAssetAccessor),
+                std::move(loadResult),
+                ellipsoid);
+            if (doesTileHaveUpsampledChild &&
+                result.state == TileLoadResultState::Success) {
+              generateRasterOverlayUVs(
+                  tileBoundingVolume,
+                  tileTransform,
+                  projection,
+                  result);
+            }
 
-        return result;
-      });
+            return result;
+          });
 }
 
 TileChildrenResult LayerJsonTerrainLoader::createTileChildren(

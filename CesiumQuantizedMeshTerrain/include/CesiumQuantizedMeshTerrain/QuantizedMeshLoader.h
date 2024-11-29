@@ -50,13 +50,6 @@ struct QuantizedMeshLoadResult {
       availableTileRectangles{};
 
   /**
-   * @brief The asset accessor that was used to retrieve this quantized mesh
-   * tile, and that should be used to retrieve further resources referenced by
-   * the tile.
-   */
-  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
-
-  /**
    * @brief The request that was used to download the tile content, if any.
    *
    * This field is only populated when there are request-related errors.
