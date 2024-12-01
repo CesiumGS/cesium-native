@@ -64,6 +64,12 @@ enum class AccessorViewStatus {
    * @brief The {@link Accessor::componentType} is invalid.
    */
   InvalidComponentType,
+
+  /**
+   * @brief The {@link BufferView::byteStride} is negative, which is invalid.
+   *
+   */
+  InvalidByteStride,
 };
 
 /**
@@ -242,6 +248,11 @@ private:
     }
 
     const int64_t accessorByteStride = accessor.computeByteStride(model);
+    if (accessorByteStride < 0) {
+      this->_status = AccessorViewStatus::InvalidByteStride;
+      return;
+    }
+
     const int64_t accessorComponentElements =
         accessor.computeNumberOfComponents();
     const int64_t accessorComponentBytes =
