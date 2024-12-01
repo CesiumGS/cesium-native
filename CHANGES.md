@@ -1,20 +1,21 @@
 # Change Log
 
-### Not Released Yet
+### v0.42.0 - 2024-12-02
 
 ##### Breaking Changes :mega:
 
-- Cesium Native now requires C++20.
+- Cesium Native now requires C++20 and uses vcpkg `2024.11.16`.
 - Switched from `gsl::span` to `std::span` throughout the library and API. The GSL library has been removed.
 - The `BingMapsRasterOverlay` constructor no longer takes an `ellipsoid` parameter. Instead, it uses the ellipsoid specified in `RasterOverlayOptions`.
 - The `ellipsoid` field in `RasterOverlayOptions` is no longer a `std::optional`. Instead, it defaults to WGS84 directly.
 - Removed the `ellipsoid` field from `TileMapServiceRasterOverlayOptions`, `WebMapServiceRasterOverlayOptions`, and `WebMapTileServiceRasterOverlayOptions`. These overlays now use the ellipsoid in `RasterOverlayOptions` instead.
+- The `schema` property of `ExtensionModelExtStructuralMetadata` is now an `IntrusivePointer` instead of a `std::optional`.
 
 ##### Additions :tada:
 
 - Added support for `EXT_accessor_additional_types` in `AccessorView`.
-- Added `EllipsoidTilesetLoader` that will generate a tileset by tesselating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
-- The `schemaUri` property in the `EXT_structural_metadata` glTF extension is now supported, allowing structural metadata schemas to be loaded from URIs rather than being embedded in the glTF itself.
+- Added `EllipsoidTilesetLoader` that will generate a tileset by tessellating the surface of an ellipsoid, producing a simple globe tileset without any terrain features.
+- External schemas referenced by the `schemaUri` property in the `EXT_structural_metadata` glTF extension are now loaded automatically. Two models that reference the same external schema will share a single copy of it.
 - Added `getHeightSampler` method to `TilesetContentLoader`, allowing loaders to optionally provide a custom, more efficient means of querying heights using the `ITilesetHeightSampler` interface.
 - Added equality operator for `JsonValue`.
 - `TileLoadResult` now includes a `pAssetAccessor` that was used to retrieve the tile content and that should be used to retrieve any additional resources associated with the tile, such as external images.
