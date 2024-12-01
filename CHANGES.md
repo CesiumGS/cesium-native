@@ -31,6 +31,7 @@
 - External resources (such as images) referenced from 3D Tiles content will no longer fail if a Cesium ion token refresh is necessary.
 - The Cesium ion token will now only be refreshed once when it expires. Previously, multiple refresh requests could be initiated at about the same time.
 - Fixed a bug in `SharedAssetDepot` that could lead to a crash with assets that fail to load.
+- Fixed a bug in `AccessorView` that could cause it to report the view as valid even when its `BufferView` had a negative `byteStride`.
 
 ### v0.41.0 - 2024-11-01
 
