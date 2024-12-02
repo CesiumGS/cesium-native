@@ -1,10 +1,15 @@
 #include "CesiumIonClient/Connection.h"
 
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumIonClient/Geocoder.h"
 #include "fillWithRandomBytes.h"
 #include "parseLinkHeader.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/SpanHelper.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
@@ -13,6 +18,7 @@
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/pointer.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <uriparser/Uri.h>
@@ -580,6 +586,84 @@ Defaults defaultsFromJson(const rapidjson::Document& json) {
   }
 
   return defaults;
+}
+
+GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
+  GeocoderResult result;
+
+  auto featuresMemberIt = json.FindMember("features");
+  if (featuresMemberIt != json.MemberEnd() &&
+      featuresMemberIt->value.IsArray()) {
+    auto featuresIt = featuresMemberIt->value.GetArray();
+    for (auto& feature : featuresIt) {
+      const rapidjson::Value* pLabel =
+          rapidjson::Pointer("/properties/label").Get(feature);
+      if (!pLabel) {
+        SPDLOG_WARN("Missing label for geocoder feature");
+        continue;
+      }
+
+      std::string label(pLabel->GetString());
+      auto bboxMemberIt = feature.FindMember("bbox");
+      if (bboxMemberIt == feature.MemberEnd() ||
+          !bboxMemberIt->value.IsArray()) {
+        // Could be a point value.
+        const rapidjson::Value* pCoordinates =
+            rapidjson::Pointer("/geometry/coordinates").Get(feature);
+        if (!pCoordinates) {
+          SPDLOG_WARN(
+              "Missing bbox and geometry.coordinates for geocoder feature");
+          continue;
+        }
+
+        if (!pCoordinates->IsArray() || pCoordinates->Size() != 2) {
+          SPDLOG_WARN("geometry.coordinates must be an array of size 2");
+          continue;
+        }
+
+        auto coordinatesArray = pCoordinates->GetArray();
+
+        CesiumGeospatial::Cartographic point =
+            CesiumGeospatial::Cartographic::fromDegrees(
+                JsonHelpers::getDoubleOrDefault(coordinatesArray[0], 0),
+                JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
+
+        result.features.emplace_back(label, point);
+      } else {
+        auto bboxIt = bboxMemberIt->value.GetArray();
+        if (bboxIt.Size() != 4) {
+          SPDLOG_WARN("bbox property should have exactly four values");
+          continue;
+        }
+
+        CesiumGeospatial::GlobeRectangle rect =
+            CesiumGeospatial::GlobeRectangle::fromDegrees(
+                JsonHelpers::getDoubleOrDefault(bboxIt[0], 0),
+                JsonHelpers::getDoubleOrDefault(bboxIt[1], 0),
+                JsonHelpers::getDoubleOrDefault(bboxIt[2], 0),
+                JsonHelpers::getDoubleOrDefault(bboxIt[3], 0));
+
+        result.features.emplace_back(label, rect);
+      }
+    }
+  }
+
+  auto attributionMemberIt = json.FindMember("attributions");
+  if (attributionMemberIt != json.MemberEnd() &&
+      attributionMemberIt->value.IsArray()) {
+    const auto& valueJson = attributionMemberIt->value;
+
+    result.attributions.reserve(valueJson.Size());
+
+    for (rapidjson::SizeType i = 0; i < valueJson.Size(); ++i) {
+      const auto& element = valueJson[i];
+      result.attributions.emplace_back(
+          JsonHelpers::getStringOrDefault(element, "html", ""),
+          !JsonHelpers::getBoolOrDefault(element, "collapsible", false));
+    }
+  }
+
+  return result;
 }
 
 } // namespace
@@ -1177,5 +1261,66 @@ Connection::tokens(const std::string& url) const {
             }
 
             return Response<TokenList>(pRequest, tokenListFromJson(d));
+          });
+}
+
+CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
+    const GeocoderProviderType& provider,
+    const GeocoderRequestType& type,
+    const std::string& query) {
+  const std::string endpointUrl = type == GeocoderRequestType::Autocomplete
+                                      ? "v1/geocode/autocomplete"
+                                      : "v1/geocode/search";
+  std::string requestUrl =
+      CesiumUtility::Uri::resolve(this->_apiUrl, endpointUrl);
+  requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "text", query);
+
+  // Add provider type to url
+  switch (provider) {
+  case GeocoderProviderType::Bing:
+    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "BING");
+    break;
+  case GeocoderProviderType::Google:
+    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "GOOGLE");
+    break;
+  case GeocoderProviderType::Default:
+    requestUrl =
+        CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "DEFAULT");
+    break;
+  }
+
+  return this->_pAssetAccessor
+      ->get(
+          this->_asyncSystem,
+          requestUrl,
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return createEmptyResponse<GeocoderResult>();
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<GeocoderResult>(pResponse);
+            }
+
+            rapidjson::Document d;
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<GeocoderResult>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<GeocoderResult>(
+                  pResponse,
+                  "object");
+            }
+
+            return Response<GeocoderResult>(
+                geocoderResultFromJson(d),
+                pResponse->statusCode(),
+                std::string(),
+                std::string());
           });
 }

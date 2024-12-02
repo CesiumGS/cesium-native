@@ -3,6 +3,7 @@
 #include "CesiumIonClient/ApplicationData.h"
 #include "CesiumIonClient/Assets.h"
 #include "CesiumIonClient/Defaults.h"
+#include "CesiumIonClient/Geocoder.h"
 #include "CesiumIonClient/Profile.h"
 #include "CesiumIonClient/TokenList.h"
 #include "parseLinkHeader.h"
@@ -79,5 +80,6 @@ template struct Response<Profile>;
 template struct Response<Token>;
 template struct Response<TokenList>;
 template struct Response<ApplicationData>;
+template struct Response<GeocoderResult>;
 
 } // namespace CesiumIonClient
