@@ -93,9 +93,15 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
 
+    cesium_glob_files(
+      CESIUM_DOC_TOPICS
+      ${CMAKE_CURRENT_LIST_DIR}/topics/*.md
+    )
+
     doxygen_add_docs(
         cesium-native-docs
         "../README.md"
+        ${CESIUM_DOC_TOPICS}
         ${LIB_DIRS}
     )
 endif()

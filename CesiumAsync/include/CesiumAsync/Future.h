@@ -215,7 +215,7 @@ public:
    * followed by the result of the last Future.
    */
   template <typename... TPassThrough>
-  Future<std::tuple<TPassThrough..., T>>
+  Future<std::tuple<std::remove_cvref_t<TPassThrough>..., T>>
   thenPassThrough(TPassThrough&&... values) && {
     return std::move(*this).thenImmediately(
         [values = std::tuple(std::forward<TPassThrough>(values)...)](

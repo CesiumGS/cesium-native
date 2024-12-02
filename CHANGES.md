@@ -1,5 +1,10 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+- Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
+
 ### v0.42.0 - 2024-12-02
 
 ##### Breaking Changes :mega:
