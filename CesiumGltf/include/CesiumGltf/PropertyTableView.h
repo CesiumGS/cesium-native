@@ -122,7 +122,7 @@ public:
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTablePropertyView. Likewise, if the value of
    * Normalized
-   * does not match the value of {@ClassProperty::normalized} for that class property,
+   * does not match the value of {@link ClassProperty::normalized} for that class property,
    * this returns an invalid property view. Only types with integer components
    * may be normalized.
    *
@@ -168,8 +168,9 @@ public:
    * view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property id and a
    * {@link PropertyTablePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void
@@ -321,9 +322,9 @@ public:
    * an error status code will be passed to the callback. Otherwise, a valid
    * property view will be passed to the callback.
    *
-   * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts property id and
+   * @param callback A callback function that accepts property id and
    * {@link PropertyTablePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {

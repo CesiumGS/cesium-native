@@ -1,3 +1,8 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include "CesiumGltf/PropertyTablePropertyView.h"
 
 #include <catch2/catch.hpp>
@@ -58,10 +63,10 @@ template <typename T>
 static void checkNumeric(
     const std::vector<T>& values,
     const std::vector<std::optional<T>>& expected,
-    const std::optional<JsonValue> offset = std::nullopt,
-    const std::optional<JsonValue> scale = std::nullopt,
-    const std::optional<JsonValue> noData = std::nullopt,
-    const std::optional<JsonValue> defaultValue = std::nullopt) {
+    const std::optional<JsonValue>& offset = std::nullopt,
+    const std::optional<JsonValue>& scale = std::nullopt,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(T));
   std::memcpy(data.data(), values.data(), data.size());
@@ -103,10 +108,10 @@ template <typename T, typename D = typename TypeToNormalizedType<T>::type>
 static void checkNormalizedNumeric(
     const std::vector<T>& values,
     const std::vector<std::optional<D>>& expected,
-    const std::optional<JsonValue> offset = std::nullopt,
-    const std::optional<JsonValue> scale = std::nullopt,
-    const std::optional<JsonValue> noData = std::nullopt,
-    const std::optional<JsonValue> defaultValue = std::nullopt) {
+    const std::optional<JsonValue>& offset = std::nullopt,
+    const std::optional<JsonValue>& scale = std::nullopt,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt) {
   std::vector<std::byte> data;
   data.resize(values.size() * sizeof(T));
   std::memcpy(data.data(), values.data(), data.size());
@@ -211,8 +216,8 @@ static void checkVariableLengthArray(
     PropertyComponentType offsetType,
     int64_t instanceCount,
     const std::vector<std::optional<std::vector<DataType>>>& expected,
-    const std::optional<JsonValue::Array> noData = std::nullopt,
-    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array>& noData = std::nullopt,
+    const std::optional<JsonValue::Array>& defaultValue = std::nullopt) {
   // copy data to buffer
   std::vector<std::byte> buffer;
   buffer.resize(data.size() * sizeof(DataType));
@@ -292,8 +297,8 @@ static void checkNormalizedVariableLengthArray(
     PropertyComponentType offsetType,
     int64_t instanceCount,
     const std::vector<std::optional<std::vector<NormalizedType>>>& expected,
-    const std::optional<JsonValue::Array> noData = std::nullopt,
-    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array>& noData = std::nullopt,
+    const std::optional<JsonValue::Array>& defaultValue = std::nullopt) {
   // copy data to buffer
   std::vector<std::byte> buffer;
   buffer.resize(data.size() * sizeof(DataType));
@@ -421,10 +426,10 @@ static void checkFixedLengthArray(
     const std::vector<T>& data,
     int64_t fixedLengthArrayCount,
     const std::vector<std::optional<std::vector<T>>>& expected,
-    const std::optional<JsonValue::Array> offset = std::nullopt,
-    const std::optional<JsonValue::Array> scale = std::nullopt,
-    const std::optional<JsonValue::Array> noData = std::nullopt,
-    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array>& offset = std::nullopt,
+    const std::optional<JsonValue::Array>& scale = std::nullopt,
+    const std::optional<JsonValue::Array>& noData = std::nullopt,
+    const std::optional<JsonValue::Array>& defaultValue = std::nullopt) {
   int64_t instanceCount =
       static_cast<int64_t>(data.size()) / fixedLengthArrayCount;
 
@@ -496,10 +501,10 @@ static void checkNormalizedFixedLengthArray(
     const std::vector<T>& data,
     int64_t fixedLengthArrayCount,
     const std::vector<std::optional<std::vector<D>>>& expected,
-    const std::optional<JsonValue::Array> offset = std::nullopt,
-    const std::optional<JsonValue::Array> scale = std::nullopt,
-    const std::optional<JsonValue::Array> noData = std::nullopt,
-    const std::optional<JsonValue::Array> defaultValue = std::nullopt) {
+    const std::optional<JsonValue::Array>& offset = std::nullopt,
+    const std::optional<JsonValue::Array>& scale = std::nullopt,
+    const std::optional<JsonValue::Array>& noData = std::nullopt,
+    const std::optional<JsonValue::Array>& defaultValue = std::nullopt) {
   int64_t instanceCount =
       static_cast<int64_t>(data.size()) / fixedLengthArrayCount;
 
@@ -3711,3 +3716,7 @@ TEST_CASE("Check variable-length boolean array PropertyTablePropertyView") {
     }
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

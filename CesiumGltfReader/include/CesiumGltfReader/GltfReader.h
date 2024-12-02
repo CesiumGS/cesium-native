@@ -63,10 +63,10 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool clearDecodedDataUrls = true;
 
   /**
-   * @brief Whether embedded images in {@link Model::buffers} should be
+   * @brief Whether embedded images in {@link CesiumGltf::Model::buffers} should be
    * automatically decoded as part of the load process.
    *
-   * The {@link ImageSpec::mimeType} property is ignored, and instead the
+   * The {@link CesiumGltf::ImageSpec::mimeType} property is ignored, and instead the
    * [stb_image](https://github.com/nothings/stb) library is used to decode
    * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
    */
@@ -195,10 +195,10 @@ public:
    * @param result The result of the synchronous readGltf invocation.
    */
   static CesiumAsync::Future<GltfReaderResult> resolveExternalData(
-      CesiumAsync::AsyncSystem asyncSystem,
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
-      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const GltfReaderOptions& options,
       GltfReaderResult&& result);
 

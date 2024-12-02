@@ -445,10 +445,10 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 }
 
 /*static*/ Future<GltfReaderResult> GltfReader::resolveExternalData(
-    AsyncSystem asyncSystem,
+    const AsyncSystem& asyncSystem,
     const std::string& baseUrl,
     const HttpHeaders& headers,
-    std::shared_ptr<IAssetAccessor> pAssetAccessor,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const GltfReaderOptions& options,
     GltfReaderResult&& result) {
 
@@ -514,7 +514,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               .thenInWorkerThread([pBuffer =
                                        &buffer](std::shared_ptr<IAssetRequest>&&
                                                     pRequest) {
-                std::string bufferUri = *pBuffer->uri;
+                std::string bufferUri = pRequest->url();
 
                 const IAssetResponse* pResponse = pRequest->response();
                 if (!pResponse) {
@@ -576,22 +576,16 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
             getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
         resolvedBuffers.push_back(future.thenInWorkerThread(
-            [pImage = &image](const ResultPointer<ImageAsset>& loadedImage) {
-              std::string imageUri = *pImage->uri;
+            [pImage = &image,
+             uri](const ResultPointer<ImageAsset>& loadedImage) {
               pImage->uri = std::nullopt;
 
               if (loadedImage.pValue) {
                 pImage->pAsset = loadedImage.pValue;
-                return ExternalBufferLoadResult{
-                    true,
-                    imageUri,
-                    loadedImage.errors};
+                return ExternalBufferLoadResult{true, uri, loadedImage.errors};
               }
 
-              return ExternalBufferLoadResult{
-                  false,
-                  imageUri,
-                  loadedImage.errors};
+              return ExternalBufferLoadResult{false, uri, loadedImage.errors};
             }));
       }
     }
@@ -612,7 +606,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       NetworkSchemaAssetDescriptor assetKey{{uri, headers}};
 
       if (options.pSharedAssetSystem == nullptr ||
-          options.pSharedAssetSystem->pImage == nullptr) {
+          options.pSharedAssetSystem->pExternalMetadataSchema == nullptr) {
         // We don't have a depot, so fetch this asset directly.
         return assetKey.load(asyncSystem, pAssetAccessor).share();
       } else {
@@ -624,30 +618,22 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       }
     };
 
-    SharedFuture<ResultPointer<Schema>> future = getAsset(
-        asyncSystem,
-        pAssetAccessor,
-        *pStructuralMetadata->schemaUri,
-        tHeaders);
+    std::string uri = Uri::resolve(baseUrl, *pStructuralMetadata->schemaUri);
+
+    SharedFuture<ResultPointer<Schema>> future =
+        getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
 
     resolvedBuffers.push_back(future.thenInWorkerThread(
-        [pStructuralMetadata = pStructuralMetadata](
-            const ResultPointer<CesiumGltf::Schema>& loadedSchema) {
-          std::string schemaUri = *pStructuralMetadata->schemaUri;
+        [pStructuralMetadata = pStructuralMetadata,
+         uri](const ResultPointer<CesiumGltf::Schema>& loadedSchema) {
           pStructuralMetadata->schemaUri = std::nullopt;
 
           if (loadedSchema.pValue) {
             pStructuralMetadata->schema = loadedSchema.pValue;
-            return ExternalBufferLoadResult{
-                true,
-                schemaUri,
-                loadedSchema.errors};
+            return ExternalBufferLoadResult{true, uri, loadedSchema.errors};
           }
 
-          return ExternalBufferLoadResult{
-              false,
-              schemaUri,
-              loadedSchema.errors};
+          return ExternalBufferLoadResult{false, uri, loadedSchema.errors};
         }));
   }
 

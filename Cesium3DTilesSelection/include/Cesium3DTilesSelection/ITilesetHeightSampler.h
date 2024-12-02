@@ -25,7 +25,7 @@ public:
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param positions The positions at which to query heights. The height field
-   * of each {@link Cartographic} is ignored.
+   * of each {@link CesiumGeospatial::Cartographic} is ignored.
    * @return A future that will be resolved when the heights have been queried.
    */
   virtual CesiumAsync::Future<SampleHeightResult> sampleHeights(

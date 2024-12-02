@@ -6,6 +6,7 @@ if(DOXYGEN_FOUND)
         ../Cesium3DTiles/include
         ../Cesium3DTiles/generated/include
         ../Cesium3DTilesReader/include
+        ../Cesium3DTilesReader/generated/include
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
@@ -13,12 +14,15 @@ if(DOXYGEN_FOUND)
         ../CesiumGeospatial/include
         ../CesiumGltf/include
         ../CesiumGltf/generated/include
+        ../CesiumGltfContent/include
         ../CesiumGltfReader/include
+        ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
         ../CesiumIonClient/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include
+        ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
         ../CesiumUtility/include
     )
@@ -34,6 +38,7 @@ if(DOXYGEN_FOUND)
         ../CesiumGeometry/test
         ../CesiumGeospatial/test
         ../CesiumGltf/test
+        ../CesiumGltfContent/test
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
         ../CesiumIonClient/test
@@ -50,7 +55,26 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_ENABLE_PREPROCESSING YES)
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
-    set(DOXYGEN_PREDEFINED "CESIUM3DTILESSELECTION_API" "CESIUMGEOMETRY_API" "CESIUMUTILITY_API" "CESIUMGEOSPATIAL_API")
+    set(DOXYGEN_PREDEFINED
+        "CESIUM3DTILES_API"
+        "CESIUM3DTILESCONTENT_API"
+        "CESIUM3DTILESREADER_API"
+        "CESIUM3DTILESSELECTION_API"
+        "CESIUM3DTILESWRITER_API"
+        "CESIUMASYNC_API"
+        "CESIUMGEOMETRY_API"
+        "CESIUMGEOSPATIAL_API"
+        "CESIUMGLTF_API"
+        "CESIUMGLTFCONTENT_API"
+        "CESIUMGLTFREADER_API"
+        "CESIUMGLTFWRITER_API"
+        "CESIUMIONCLIENT_API"
+        "CESIUMJSONREADER_API"
+        "CESIUMJSONWRITER_API"
+        "CESIUMQUANTIZEDMESHTERRAIN_API"
+        "CESIUMRASTEROVERLAYS_API"
+        "CESIUMUTILITY_API"
+        "CESIUM_DEFAULT_ELLIPSOID=\=CesiumGeospatial::Ellipsoid::WGS84")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/../node_modules/doxygen-awesome-css/doxygen-awesome.css")
     set(DOXYGEN_HTML_FOOTER "${CMAKE_CURRENT_LIST_DIR}/footer.html")
     set(DOXYGEN_GENERATE_TREEVIEW YES)

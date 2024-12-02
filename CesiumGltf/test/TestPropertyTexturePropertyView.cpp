@@ -1,3 +1,8 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumUtility/Math.h"
@@ -2051,3 +2056,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
     REQUIRE(view.get(uv[0], uv[1]) == static_cast<double>(data[i]) / 255.0);
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

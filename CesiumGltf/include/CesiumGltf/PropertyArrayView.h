@@ -70,7 +70,7 @@ public:
   /**
    * @brief Constructs an array view from a buffer.
    *
-   * @param buffer The buffer containing the values.
+   * @param values The buffer containing the values.
    */
   PropertyArrayCopy(const std::vector<ElementType>& values) noexcept
       : _storage(), _view() {
