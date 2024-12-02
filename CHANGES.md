@@ -1,5 +1,10 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+- Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
+
 ### v0.42.0 - 2024-12-02
 
 ##### Breaking Changes :mega:
