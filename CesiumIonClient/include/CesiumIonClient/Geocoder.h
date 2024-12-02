@@ -66,6 +66,15 @@ struct GeocoderFeature {
   std::variant<CesiumGeospatial::GlobeRectangle, CesiumGeospatial::Cartographic>
       destination;
 
+  GeocoderFeature(
+      std::string& displayName_,
+      CesiumGeospatial::GlobeRectangle& destination_)
+      : displayName(displayName_), destination(destination_) {}
+  GeocoderFeature(
+      std::string& displayName_,
+      CesiumGeospatial::Cartographic& destination_)
+      : displayName(displayName_), destination(destination_) {}
+
   /**
    * @brief Returns a {@link CesiumGeospatial::GlobeRectangle} representing this feature.
    *
@@ -99,6 +108,9 @@ struct GeocoderAttribution {
    * Otherwise, it can appear in a popover.
    */
   bool showOnScreen;
+
+  GeocoderAttribution(std::string& html_, bool showOnScreen_)
+      : html(html_), showOnScreen(showOnScreen_) {}
 };
 
 /**
