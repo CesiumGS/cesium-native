@@ -657,9 +657,10 @@ GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
 
     for (rapidjson::SizeType i = 0; i < valueJson.Size(); ++i) {
       const auto& element = valueJson[i];
-      result.attributions.emplace_back(
-          JsonHelpers::getStringOrDefault(element, "html", ""),
-          !JsonHelpers::getBoolOrDefault(element, "collapsible", false));
+      std::string html = JsonHelpers::getStringOrDefault(element, "html", "");
+      bool showOnScreen =
+          !JsonHelpers::getBoolOrDefault(element, "collapsible", false);
+      result.attributions.emplace_back(html, showOnScreen);
     }
   }
 
