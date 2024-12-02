@@ -1,3 +1,8 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include "CesiumGltf/PropertyAttributePropertyView.h"
 
 #include <CesiumUtility/Assert.h>
@@ -823,3 +828,7 @@ TEST_CASE("Check that PropertyAttributeProperty values override class property "
     REQUIRE(view.get(i) == expected[static_cast<size_t>(i)]);
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

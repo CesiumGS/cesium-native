@@ -291,7 +291,6 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageAsset} used by the property.
-   * @param channels The value of {@link PropertyTextureProperty::channels}.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
@@ -524,7 +523,6 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
    * @param image The {@link ImageAsset} used by the property.
-   * @param channels The value of {@link PropertyTextureProperty::channels}.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(

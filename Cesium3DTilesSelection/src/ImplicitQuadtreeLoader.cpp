@@ -147,7 +147,9 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
             pCompletedRequest->response();
         auto fail = [&]() {
           return asyncSystem.createResolvedFuture(
-              TileLoadResult::createFailedResult(std::move(pCompletedRequest)));
+              TileLoadResult::createFailedResult(
+                  pAssetAccessor,
+                  std::move(pCompletedRequest)));
         };
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
@@ -189,26 +191,32 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               requestHeaders,
               CesiumGeometry::Axis::Y};
           return converter(responseData, gltfOptions, assetFetcher)
-              .thenImmediately([ellipsoid, pLogger, tileUrl, pCompletedRequest](
-                                   GltfConverterResult&& result) {
-                // Report any errors if there are any
-                logTileLoadResult(pLogger, tileUrl, result.errors);
-                if (result.errors || !result.model) {
-                  return TileLoadResult::createFailedResult(
-                      std::move(pCompletedRequest));
-                }
+              .thenImmediately(
+                  [ellipsoid,
+                   pLogger,
+                   tileUrl,
+                   pAssetAccessor,
+                   pCompletedRequest](GltfConverterResult&& result) mutable {
+                    // Report any errors if there are any
+                    logTileLoadResult(pLogger, tileUrl, result.errors);
+                    if (result.errors || !result.model) {
+                      return TileLoadResult::createFailedResult(
+                          std::move(pAssetAccessor),
+                          std::move(pCompletedRequest));
+                    }
 
-                return TileLoadResult{
-                    std::move(*result.model),
-                    CesiumGeometry::Axis::Y,
-                    std::nullopt,
-                    std::nullopt,
-                    std::nullopt,
-                    std::move(pCompletedRequest),
-                    {},
-                    TileLoadResultState::Success,
-                    ellipsoid};
-              });
+                    return TileLoadResult{
+                        std::move(*result.model),
+                        CesiumGeometry::Axis::Y,
+                        std::nullopt,
+                        std::nullopt,
+                        std::nullopt,
+                        std::move(pAssetAccessor),
+                        std::move(pCompletedRequest),
+                        {},
+                        TileLoadResultState::Success,
+                        ellipsoid};
+                  });
         }
         // content type is not supported
         return fail();
@@ -249,7 +257,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       std::get_if<CesiumGeometry::QuadtreeTileID>(&tile.getTileID());
   if (!pQuadtreeID) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult(pAssetAccessor, nullptr));
   }
 
   // find the subtree ID
@@ -260,7 +268,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   uint32_t subtreeLevelIdx = subtreeID.level / this->_subtreeLevels;
   if (subtreeLevelIdx >= _loadedSubtrees.size()) {
     return asyncSystem.createResolvedFuture<TileLoadResult>(
-        TileLoadResult::createFailedResult(nullptr));
+        TileLoadResult::createFailedResult(pAssetAccessor, nullptr));
   }
 
   // the below morton index hash to the subtree assumes that tileID's components
@@ -292,18 +300,23 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                pLogger,
                subtreeUrl,
                requestHeaders)
-        .thenInMainThread([this, subtreeID](std::optional<SubtreeAvailability>&&
-                                                subtreeAvailability) mutable {
+        .thenInMainThread([this, pAssetAccessor = pAssetAccessor, subtreeID](
+                              std::optional<SubtreeAvailability>&&
+                                  subtreeAvailability) mutable {
           if (subtreeAvailability) {
             this->addSubtreeAvailability(
                 subtreeID,
                 std::move(*subtreeAvailability));
 
             // tell client to retry later
-            return TileLoadResult::createRetryLaterResult(nullptr);
+            return TileLoadResult::createRetryLaterResult(
+                std::move(pAssetAccessor),
+                nullptr);
           } else {
             // Subtree load failed, so this tile fails, too.
-            return TileLoadResult::createFailedResult(nullptr);
+            return TileLoadResult::createFailedResult(
+                std::move(pAssetAccessor),
+                nullptr);
           }
         });
   }
@@ -318,6 +331,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        pAssetAccessor,
         nullptr,
         {},
         TileLoadResultState::Success,

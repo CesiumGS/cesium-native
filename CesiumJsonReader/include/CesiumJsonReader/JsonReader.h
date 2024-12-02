@@ -18,7 +18,7 @@ struct MemoryStream;
 namespace CesiumJsonReader {
 
 /**
- * @brief The result of {@link Reader::readJson}.
+ * @brief The result of {@link JsonReader::readJson}.
  */
 template <typename T> struct ReadJsonResult {
   /**
@@ -82,7 +82,7 @@ public:
   /**
    * @brief Reads JSON from a `rapidjson::Value` into a statically-typed class.
    *
-   * @param data The `rapidjson::Value` from which to read JSON.
+   * @param jsonValue The `rapidjson::Value` from which to read JSON.
    * @param handler The handler to receive the top-level JSON object. This
    * instance must:
    *   - Implement {@link IJsonHandler}.

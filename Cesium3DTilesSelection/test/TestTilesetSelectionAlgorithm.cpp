@@ -1529,7 +1529,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       }
 
       return input.asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult(input.pAssetAccessor, nullptr));
     }
 
     virtual TileChildrenResult createTileChildren(

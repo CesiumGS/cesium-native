@@ -48,7 +48,7 @@ public:
   CesiumAsync::AsyncSystem asyncSystem;
 
   /**
-   * @brief An external {@link CreditSystem} that can be used to manage credit
+   * @brief An external {@link CesiumUtility::CreditSystem} that can be used to manage credit
    * strings and track which which credits to show and remove from the screen
    * each frame.
    */
