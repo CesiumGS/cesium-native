@@ -122,7 +122,7 @@ public:
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTablePropertyView. Likewise, if the value of
    * Normalized
-   * does not match the value of {@ClassProperty::normalized} for that class property,
+   * does not match the value of {@link ClassProperty::normalized} for that class property,
    * this returns an invalid property view. Only types with integer components
    * may be normalized.
    *
@@ -168,8 +168,9 @@ public:
    * view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property id and a
    * {@link PropertyTablePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void
@@ -321,9 +322,9 @@ public:
    * an error status code will be passed to the callback. Otherwise, a valid
    * property view will be passed to the callback.
    *
-   * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts property id and
+   * @param callback A callback function that accepts property id and
    * {@link PropertyTablePropertyView<T>}
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {
@@ -1111,7 +1112,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
-    gsl::span<const std::byte> values;
+    std::span<const std::byte> values;
     const auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
       return PropertyTablePropertyView<T, Normalized>(status);
@@ -1182,7 +1183,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
 
-    gsl::span<const std::byte> values;
+    std::span<const std::byte> values;
     auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
@@ -1236,7 +1237,7 @@ private:
     }
 
     constexpr bool checkBitsSize = false;
-    gsl::span<const std::byte> arrayOffsets;
+    std::span<const std::byte> arrayOffsets;
     status = getArrayOffsetsBufferSafe(
         propertyTableProperty.arrayOffsets,
         arrayOffsetType,
@@ -1264,7 +1265,7 @@ private:
           _pPropertyTable->count,
           values,
           arrayOffsets,
-          gsl::span<const std::byte>(),
+          std::span<const std::byte>(),
           arrayOffsetType,
           PropertyComponentType::None);
     }
@@ -1277,7 +1278,7 @@ private:
 
   PropertyViewStatusType getBufferSafe(
       int32_t bufferView,
-      gsl::span<const std::byte>& buffer) const noexcept;
+      std::span<const std::byte>& buffer) const noexcept;
 
   PropertyViewStatusType getArrayOffsetsBufferSafe(
       int32_t arrayOffsetsBufferView,
@@ -1285,14 +1286,14 @@ private:
       size_t valuesBufferSize,
       size_t propertyTableCount,
       bool checkBitsSize,
-      gsl::span<const std::byte>& arrayOffsetsBuffer) const noexcept;
+      std::span<const std::byte>& arrayOffsetsBuffer) const noexcept;
 
   PropertyViewStatusType getStringOffsetsBufferSafe(
       int32_t stringOffsetsBufferView,
       PropertyComponentType stringOffsetType,
       size_t valuesBufferSize,
       size_t propertyTableCount,
-      gsl::span<const std::byte>& stringOffsetsBuffer) const noexcept;
+      std::span<const std::byte>& stringOffsetsBuffer) const noexcept;
 
   const Model* _pModel;
   const PropertyTable* _pPropertyTable;

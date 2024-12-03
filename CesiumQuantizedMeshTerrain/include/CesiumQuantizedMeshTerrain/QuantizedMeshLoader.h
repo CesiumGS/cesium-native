@@ -9,12 +9,12 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/ErrorList.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace CesiumAsync {
@@ -72,16 +72,19 @@ public:
    * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
    *
    * @param tileID The tile ID.
-   * @param tileBoundingVoume The tile bounding volume.
+   * @param tileBoundingVolume The tile bounding volume.
    * @param url The URL from which the data was loaded.
    * @param data The actual tile data.
+   * @param enableWaterMask If true, will attempt to load a water mask from the
+   * quantized mesh data.
+   * @param ellipsoid The ellipsoid to use for this quantized mesh.
    * @return The {@link QuantizedMeshLoadResult}
    */
   static QuantizedMeshLoadResult load(
       const CesiumGeometry::QuadtreeTileID& tileID,
       const CesiumGeospatial::BoundingRegion& tileBoundingVolume,
       const std::string& url,
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       bool enableWaterMask,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
@@ -94,7 +97,7 @@ public:
    * @return The parsed metadata.
    */
   static QuantizedMeshMetadataResult loadMetadata(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const CesiumGeometry::QuadtreeTileID& tileID);
 
   /**

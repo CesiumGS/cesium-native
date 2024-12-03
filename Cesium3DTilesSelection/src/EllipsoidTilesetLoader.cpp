@@ -58,6 +58,7 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
       std::nullopt,
       std::nullopt,
       std::nullopt,
+      input.pAssetAccessor,
       nullptr,
       {},
       TileLoadResultState::Success});
@@ -69,7 +70,9 @@ TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
   const QuadtreeTileID* pParentID =
       std::get_if<QuadtreeTileID>(&tile.getTileID());
 
-  if (pParentID) {
+  // Due to the use of uint32_t for QuadtreeTileID X and Y, we can only support
+  // through level 30.
+  if (pParentID && pParentID->level < 30) {
     std::vector<Tile> children;
     QuadtreeChildren childIDs =
         ImplicitTilingUtilities::getChildren(*pParentID);
@@ -85,6 +88,25 @@ TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
   }
 
   return TileChildrenResult{{}, TileLoadResultState::Failed};
+}
+
+ITilesetHeightSampler* EllipsoidTilesetLoader::getHeightSampler() {
+  return this;
+}
+
+CesiumAsync::Future<SampleHeightResult> EllipsoidTilesetLoader::sampleHeights(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    std::vector<CesiumGeospatial::Cartographic>&& positions) {
+  SampleHeightResult result;
+
+  result.positions = std::move(positions);
+  result.sampleSuccess.resize(result.positions.size(), true);
+
+  for (Cartographic& position : result.positions) {
+    position.height = 0.0;
+  }
+
+  return asyncSystem.createResolvedFuture(std::move(result));
 }
 
 void EllipsoidTilesetLoader::createChildTile(
@@ -120,7 +142,9 @@ EllipsoidTilesetLoader::Geometry
 EllipsoidTilesetLoader::createGeometry(const Tile& tile) const {
   static constexpr uint16_t resolution = 24;
 
-  std::vector<uint16_t> indices(6 * (resolution - 1) * (resolution - 1));
+  std::vector<uint16_t> indices;
+  indices.reserve(6 * (resolution - 1) * (resolution - 1));
+
   std::vector<glm::vec3> vertices(resolution * resolution);
   std::vector<glm::vec3> normals(vertices.size());
 

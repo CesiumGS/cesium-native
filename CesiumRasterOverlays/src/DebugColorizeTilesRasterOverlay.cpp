@@ -48,8 +48,8 @@ public:
     image.channels = 4;
     image.bytesPerChannel = 1;
     image.pixelData.resize(4);
-    gsl::span<uint32_t> pixels =
-        reintepretCastSpan<uint32_t>(gsl::span(image.pixelData));
+    std::span<uint32_t> pixels =
+        reintepretCastSpan<uint32_t>(std::span(image.pixelData));
     int red = rand() % 255;
     int green = rand() % 255;
     int blue = rand() % 255;
@@ -68,8 +68,7 @@ public:
 DebugColorizeTilesRasterOverlay::DebugColorizeTilesRasterOverlay(
     const std::string& name,
     const RasterOverlayOptions& overlayOptions)
-    : RasterOverlay(name, overlayOptions),
-      _ellipsoid(overlayOptions.ellipsoid.value_or(Ellipsoid::WGS84)) {}
+    : RasterOverlay(name, overlayOptions) {}
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 DebugColorizeTilesRasterOverlay::createTileProvider(
@@ -89,5 +88,5 @@ DebugColorizeTilesRasterOverlay::createTileProvider(
           pAssetAccessor,
           pPrepareRendererResources,
           pLogger,
-          this->_ellipsoid)));
+          this->getOptions().ellipsoid)));
 }

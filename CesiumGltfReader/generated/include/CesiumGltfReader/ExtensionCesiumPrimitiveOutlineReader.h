@@ -7,14 +7,14 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-#include <gsl/span>
 #include <rapidjson/fwd.h>
 
+#include <span>
 #include <vector>
 
 namespace CesiumGltf {
 struct ExtensionCesiumPrimitiveOutline;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
@@ -46,7 +46,7 @@ public:
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionCesiumPrimitiveOutline>
-  readFromJson(const gsl::span<const std::byte>& data) const;
+  readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of ExtensionCesiumPrimitiveOutline from a

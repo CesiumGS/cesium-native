@@ -22,6 +22,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/glm.hpp>
 
 #include <filesystem>
@@ -375,7 +376,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     CHECK(pRootTile);
     CHECK(pRootTile->getRefine() == TileRefine::Replace);
 
-    const gsl::span<const Tile> children = pRootTile->getChildren();
+    const std::span<const Tile> children = pRootTile->getChildren();
     CHECK(
         std::get<QuadtreeTileID>(children[0].getTileID()) ==
         QuadtreeTileID(0, 0, 0));
@@ -439,6 +440,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
@@ -545,6 +547,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::RetryLater,
         Ellipsoid::WGS84};
@@ -620,6 +623,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Failed,
@@ -714,6 +718,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -786,6 +791,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
@@ -876,6 +882,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        pMockedAssetAccessor,
         nullptr,
         {},
         TileLoadResultState::Success,
@@ -948,6 +955,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         {},
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -1016,6 +1024,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         {},
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -1066,6 +1075,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         {},
         TileLoadResultState::Success,
@@ -1360,6 +1370,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         {},
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -1581,6 +1592,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::move(rasterOverlayDetails),
+        nullptr,
         nullptr,
         {},
         TileLoadResultState::Success,

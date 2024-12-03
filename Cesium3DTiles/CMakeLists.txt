@@ -40,9 +40,10 @@ target_sources(
         ${CESIUM_3DTILES_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    Cesium3DTiles
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        Cesium3DTiles
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
@@ -53,5 +54,4 @@ target_include_directories(
 target_link_libraries(Cesium3DTiles
     PUBLIC
         CesiumUtility
-        Microsoft.GSL::GSL
 )

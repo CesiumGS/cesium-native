@@ -40,9 +40,10 @@ target_sources(
         ${CESIUM_GLTF_WRITER_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumGltfWriter
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumGltfWriter
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE

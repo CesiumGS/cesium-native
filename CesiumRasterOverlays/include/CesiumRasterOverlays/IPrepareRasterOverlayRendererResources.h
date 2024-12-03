@@ -36,14 +36,14 @@ public:
    *
    * This is called after {@link prepareRasterInLoadThread}, and unlike that
    * method, this one is called from the same thread that called
-   * {@link Tileset::updateView}.
+   * {@link Cesium3DTilesSelection::Tileset::updateView}.
    *
    * @param rasterTile The raster tile to prepare.
    * @param pLoadThreadResult The value returned from
    * {@link prepareRasterInLoadThread}.
    * @returns Arbitrary data representing the result of the load process. Note
    * that the value returned by {@link prepareRasterInLoadThread} will _not_ be
-   * automatically preserved and passed to {@link free}. If you need to free
+   * automatically preserved and passed to {@link freeRaster}. If you need to free
    * that value, do it in this method before returning. If you need that value
    * later, add it to the object returned from this method.
    */
@@ -56,7 +56,7 @@ public:
    *
    * This method is always called from the thread that destroyed the
    * {@link RasterOverlayTile}. When raster overlays are used with tilesets,
-   * this is the thread that called {@link Tileset::updateView} or deleted the
+   * this is the thread that called {@link Cesium3DTilesSelection::Tileset::updateView} or deleted the
    * tileset.
    *
    * @param rasterTile The tile for which to free renderer resources.

@@ -2,6 +2,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 using namespace CesiumGltfContent;
 using namespace CesiumUtility;
@@ -42,31 +43,35 @@ TEST_CASE("Test converting skirt mesh metadata to gltf extras") {
       skirtMeshMetadata.meshCenter.z,
       Math::Epsilon7));
 
-  const auto pSkirtWestHeight =
+  const std::optional<double> maybeSkirtWestHeight =
       gltfSkirt.getSafeNumericalValueForKey<double>("skirtWestHeight");
+  REQUIRE(maybeSkirtWestHeight);
   REQUIRE(Math::equalsEpsilon(
-      pSkirtWestHeight,
+      *maybeSkirtWestHeight,
       skirtMeshMetadata.skirtWestHeight,
       Math::Epsilon7));
 
-  const auto pSkirtSouthHeight =
+  const std::optional<double> maybeSkirtSouthHeight =
       gltfSkirt.getSafeNumericalValueForKey<double>("skirtSouthHeight");
+  REQUIRE(maybeSkirtSouthHeight);
   REQUIRE(Math::equalsEpsilon(
-      pSkirtSouthHeight,
+      *maybeSkirtSouthHeight,
       skirtMeshMetadata.skirtSouthHeight,
       Math::Epsilon7));
 
-  const auto pSkirtEastHeight =
+  const std::optional<double> maybeSkirtEastHeight =
       gltfSkirt.getSafeNumericalValueForKey<double>("skirtEastHeight");
+  REQUIRE(maybeSkirtEastHeight);
   REQUIRE(Math::equalsEpsilon(
-      pSkirtEastHeight,
+      *maybeSkirtEastHeight,
       skirtMeshMetadata.skirtEastHeight,
       Math::Epsilon7));
 
-  const auto pSkirtNorthHeight =
+  const std::optional<double> maybeSkirtNorthHeight =
       gltfSkirt.getSafeNumericalValueForKey<double>("skirtNorthHeight");
+  REQUIRE(maybeSkirtNorthHeight);
   REQUIRE(Math::equalsEpsilon(
-      pSkirtNorthHeight,
+      *maybeSkirtNorthHeight,
       skirtMeshMetadata.skirtNorthHeight,
       Math::Epsilon7));
 }

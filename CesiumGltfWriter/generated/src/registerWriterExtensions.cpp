@@ -7,6 +7,20 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialNormalTextureInfo.h>
+#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltf/TextureInfo.h>
+#include <CesiumJsonWriter/ExtensionWriterContext.h>
+
+// NOLINTBEGIN(misc-include-cleaner)
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
@@ -28,18 +42,7 @@
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionPropertyTableExtStructuralMetadataHierarchy.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumGltf/FeatureIdTexture.h>
-#include <CesiumGltf/Material.h>
-#include <CesiumGltf/MaterialNormalTextureInfo.h>
-#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
-#include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Model.h>
-#include <CesiumGltf/Node.h>
-#include <CesiumGltf/PropertyTable.h>
-#include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureInfo.h>
-#include <CesiumJsonWriter/ExtensionWriterContext.h>
+// NOLINTEND(misc-include-cleaner)
 
 namespace CesiumGltfWriter {
 

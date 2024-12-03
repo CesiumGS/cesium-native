@@ -45,7 +45,7 @@ message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and uriparser aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm ms-gsl rapidjson spdlog stb uriparser)
+set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb uriparser)
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
@@ -64,7 +64,7 @@ if(NOT VCPKG_MANIFEST_MODE)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2024.07.12
+        COMMIT 2024.11.16
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -85,11 +85,12 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.41.0
+    VERSION 0.42.0
     LANGUAGES CXX C
 )
 
 include(GNUInstallDirs)
+include(CMakeDependentOption)
 
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
 set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
@@ -105,6 +106,15 @@ message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
 
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
+option(CESIUM_ENABLE_CLANG_TIDY "Enable clang-tidy targets for static code analysis." ON)
+
+cmake_dependent_option(
+    CESIUM_ENABLE_CLANG_TIDY_ON_BUILD
+    "Run clang-tidy while building. Will slow down the build process. Available only if CESIUM_ENABLE_CLANG_TIDY is ON."
+    OFF
+    CESIUM_ENABLE_CLANG_TIDY
+    OFF
+)
 
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
@@ -183,6 +193,17 @@ endif()
 # Set defaults that need to be set AFTER compiler / IDE detection
 include("cmake/compiler.cmake")
 
+if(CESIUM_ENABLE_CLANG_TIDY)
+    setup_clang_tidy(
+        PROJECT_BUILD_DIRECTORY
+        "${PROJECT_BINARY_DIR}"
+        PROJECT_SOURCE_DIRECTORIES
+        "${PROJECT_SOURCE_DIR}"
+        ENABLE_CLANG_TIDY_ON_BUILD
+        ${CESIUM_ENABLE_CLANG_TIDY_ON_BUILD}
+    )
+endif()
+
 # Add Modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
@@ -223,7 +244,6 @@ find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(meshoptimizer CONFIG REQUIRED)
-find_package(Microsoft.GSL REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)

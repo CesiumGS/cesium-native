@@ -7,9 +7,12 @@
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Content.h>
+#include <CesiumJsonWriter/ExtensionWriterContext.h>
+
+// NOLINTBEGIN(misc-include-cleaner)
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <CesiumJsonWriter/ExtensionWriterContext.h>
+// NOLINTEND(misc-include-cleaner)
 
 namespace Cesium3DTilesWriter {
 

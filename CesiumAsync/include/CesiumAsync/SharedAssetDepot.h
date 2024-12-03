@@ -24,10 +24,10 @@ template <typename T> class SharedAsset;
 namespace CesiumAsync {
 
 /**
- * @brief A depot for {@link SharedAsset} instances, which are potentially shared between multiple objects.
+ * @brief A depot for {@link CesiumUtility::SharedAsset} instances, which are potentially shared between multiple objects.
  *
  * @tparam TAssetType The type of asset stored in this depot. This should
- * be derived from {@link SharedAsset}.
+ * be derived from {@link CesiumUtility::SharedAsset}.
  */
 template <typename TAssetType, typename TAssetKey>
 class CESIUMASYNC_API SharedAssetDepot
@@ -182,7 +182,8 @@ public:
 
     pEntry->maybePendingAsset = sharedFuture;
 
-    auto [it, added] = this->_assets.emplace(assetKey, pEntry);
+    [[maybe_unused]] bool added =
+        this->_assets.emplace(assetKey, pEntry).second;
 
     // Should always be added successfully, because we checked above that the
     // asset key doesn't exist in the map yet.
@@ -404,9 +405,12 @@ private:
       // mutex. So we must take care not to lock it again, which could happen if
       // the asset is currently unreferenced and we naively create an
       // IntrusivePointer for it.
-      pAsset->addReference(true);
-      CesiumUtility::IntrusivePointer<TAssetType> p = pAsset.get();
-      pAsset->releaseReference(true);
+      CesiumUtility::IntrusivePointer<TAssetType> p = nullptr;
+      if (pAsset) {
+        pAsset->addReference(true);
+        p = pAsset.get();
+        pAsset->releaseReference(true);
+      }
       return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
     }
   };

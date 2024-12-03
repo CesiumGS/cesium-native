@@ -29,9 +29,10 @@ target_sources(
         ${CESIUM_UTILITY_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumUtility
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumUtility
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
@@ -46,5 +47,4 @@ target_link_libraries(
         spdlog::spdlog
         glm::glm
         uriparser::uriparser
-        Microsoft.GSL::GSL
 )

@@ -10,22 +10,21 @@
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 
-#include <gsl/span>
-
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief A collection of {@link RasterOverlay} instances that are associated
+ * @brief A collection of {@link CesiumRasterOverlays::RasterOverlay} instances that are associated
  * with a {@link Tileset}.
  *
  * The raster overlay instances may be added to the raster overlay collection
  * of a tileset that is returned with {@link Tileset::getOverlays}. When the
- * tileset is loaded, one {@link RasterOverlayTileProvider} will be created
+ * tileset is loaded, one {@link CesiumRasterOverlays::RasterOverlayTileProvider} will be created
  * for each raster overlay that had been added. The raster overlay tile provider
- * instances will be passed to the {@link RasterOverlayTile} instances that
+ * instances will be passed to the {@link CesiumRasterOverlays::RasterOverlayTile} instances that
  * they create when the tiles are updated.
  */
 class CESIUM3DTILESSELECTION_API RasterOverlayCollection final {
@@ -37,6 +36,7 @@ public:
    * this list, so the list needs to be kept alive as long as the collection's
    * lifetime
    * @param externals A collection of loading system to load a raster overlay
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayCollection(
       Tile::LoadedLinkedList& loadedTiles,
@@ -77,7 +77,7 @@ public:
   ~RasterOverlayCollection() noexcept;
 
   /**
-   * @brief Adds the given {@link RasterOverlay} to this collection.
+   * @brief Adds the given {@link CesiumRasterOverlays::RasterOverlay} to this collection.
    *
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
@@ -85,7 +85,7 @@ public:
            CesiumRasterOverlays::RasterOverlay>& pOverlay);
 
   /**
-   * @brief Remove the given {@link RasterOverlay} from this collection.
+   * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from this collection.
    */
   void remove(const CesiumUtility::IntrusivePointer<
               CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
@@ -123,7 +123,7 @@ public:
    *
    * If the overlay's real tile provider hasn't finished being
    * created yet, a placeholder will be returned. That is, its
-   * {@link RasterOverlayTileProvider::isPlaceholder} method will return true.
+   * {@link CesiumRasterOverlays::RasterOverlayTileProvider::isPlaceholder} method will return true.
    *
    * @param overlay The overlay for which to obtain the tile provider.
    * @return The tile provider, if any, corresponding to the raster overlay.
@@ -164,7 +164,7 @@ public:
       const CesiumRasterOverlays::RasterOverlay& overlay) const noexcept;
 
   /**
-   * @brief A constant iterator for {@link RasterOverlay} instances.
+   * @brief A constant iterator for {@link CesiumRasterOverlays::RasterOverlay} instances.
    */
   typedef std::vector<CesiumUtility::IntrusivePointer<
       CesiumRasterOverlays::RasterOverlay>>::const_iterator const_iterator;
@@ -211,7 +211,7 @@ private:
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;
-  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot");
+  CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot")
 };
 
 } // namespace Cesium3DTilesSelection

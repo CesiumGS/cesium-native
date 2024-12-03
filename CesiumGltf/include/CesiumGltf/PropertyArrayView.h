@@ -5,10 +5,9 @@
 
 #include <CesiumUtility/SpanHelper.h>
 
-#include <gsl/span>
-
 #include <cstddef>
 #include <cstring>
+#include <span>
 #include <variant>
 #include <vector>
 
@@ -33,7 +32,7 @@ public:
    *
    * @param buffer The buffer containing the values.
    */
-  PropertyArrayView(const gsl::span<const std::byte>& buffer) noexcept
+  PropertyArrayView(const std::span<const std::byte>& buffer) noexcept
       : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
   const ElementType& operator[](int64_t index) const noexcept {
@@ -48,7 +47,7 @@ public:
   auto end() const { return this->_values.end(); }
 
 private:
-  gsl::span<const ElementType> _values;
+  std::span<const ElementType> _values;
 };
 
 /**
@@ -71,7 +70,7 @@ public:
   /**
    * @brief Constructs an array view from a buffer.
    *
-   * @param buffer The buffer containing the values.
+   * @param values The buffer containing the values.
    */
   PropertyArrayCopy(const std::vector<ElementType>& values) noexcept
       : _storage(), _view() {
@@ -142,7 +141,7 @@ public:
    * @param size The number of values in the array.
    */
   PropertyArrayView(
-      const gsl::span<const std::byte>& buffer,
+      const std::span<const std::byte>& buffer,
       int64_t bitOffset,
       int64_t size) noexcept
       : _values{buffer}, _bitOffset{bitOffset}, _size{size} {}
@@ -158,7 +157,7 @@ public:
   int64_t size() const noexcept { return _size; }
 
 private:
-  gsl::span<const std::byte> _values;
+  std::span<const std::byte> _values;
   int64_t _bitOffset;
   int64_t _size;
 };
@@ -183,8 +182,8 @@ public:
    * @param size The number of values in the array.
    */
   PropertyArrayView(
-      const gsl::span<const std::byte>& values,
-      const gsl::span<const std::byte>& stringOffsets,
+      const std::span<const std::byte>& values,
+      const std::span<const std::byte>& stringOffsets,
       PropertyComponentType stringOffsetType,
       int64_t size) noexcept
       : _values{values},
@@ -207,8 +206,8 @@ public:
   int64_t size() const noexcept { return _size; }
 
 private:
-  gsl::span<const std::byte> _values;
-  gsl::span<const std::byte> _stringOffsets;
+  std::span<const std::byte> _values;
+  std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _size;
 };

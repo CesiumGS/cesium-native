@@ -4,6 +4,7 @@
 #include <Cesium3DTilesReader/TilesetReader.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <rapidjson/document.h>
 
 #include <cctype>
@@ -11,7 +12,7 @@
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {
   Cesium3DTilesReader::TilesetReader reader;
-  auto readResult = reader.readFromJson(gsl::span(
+  auto readResult = reader.readFromJson(std::span(
       reinterpret_cast<const std::byte*>(input.c_str()),
       input.size()));
   REQUIRE(readResult.errors.empty());

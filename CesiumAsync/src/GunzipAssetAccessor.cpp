@@ -29,7 +29,7 @@ public:
     return this->_pAssetResponse->headers();
   }
 
-  virtual gsl::span<const std::byte> data() const noexcept override {
+  virtual std::span<const std::byte> data() const noexcept override {
     return this->_dataValid ? this->_gunzippedData
                             : this->_pAssetResponse->data();
   }
@@ -44,7 +44,7 @@ class GunzippedAssetRequest : public IAssetRequest {
 public:
   GunzippedAssetRequest(std::shared_ptr<IAssetRequest>&& pOther)
       : _pAssetRequest(std::move(pOther)),
-        _AssetResponse(_pAssetRequest->response()) {};
+        _AssetResponse(_pAssetRequest->response()){};
   virtual const std::string& method() const noexcept override {
     return this->_pAssetRequest->method();
   }
@@ -105,7 +105,7 @@ Future<std::shared_ptr<IAssetRequest>> GunzipAssetAccessor::request(
     const std::string& verb,
     const std::string& url,
     const std::vector<THeader>& headers,
-    const gsl::span<const std::byte>& contentPayload) {
+    const std::span<const std::byte>& contentPayload) {
   return this->_pAssetAccessor
       ->request(asyncSystem, verb, url, headers, contentPayload)
       .thenImmediately(

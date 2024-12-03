@@ -3,11 +3,11 @@
 #include "JsonHandler.h"
 #include "Library.h"
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -18,7 +18,7 @@ struct MemoryStream;
 namespace CesiumJsonReader {
 
 /**
- * @brief The result of {@link Reader::readJson}.
+ * @brief The result of {@link JsonReader::readJson}.
  */
 template <typename T> struct ReadJsonResult {
   /**
@@ -57,7 +57,7 @@ public:
    */
   template <typename T>
   static ReadJsonResult<typename T::ValueType>
-  readJson(const gsl::span<const std::byte>& data, T& handler) {
+  readJson(const std::span<const std::byte>& data, T& handler) {
     ReadJsonResult<typename T::ValueType> result;
 
     result.value.emplace();
@@ -82,7 +82,7 @@ public:
   /**
    * @brief Reads JSON from a `rapidjson::Value` into a statically-typed class.
    *
-   * @param data The `rapidjson::Value` from which to read JSON.
+   * @param jsonValue The `rapidjson::Value` from which to read JSON.
    * @param handler The handler to receive the top-level JSON object. This
    * instance must:
    *   - Implement {@link IJsonHandler}.
@@ -131,7 +131,7 @@ private:
   };
 
   static void internalRead(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       IJsonHandler& handler,
       FinalJsonHandler& finalHandler,
       std::vector<std::string>& errors,
