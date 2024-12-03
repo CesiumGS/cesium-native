@@ -1,6 +1,7 @@
 #include <CesiumUtility/JsonValue.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <cstdint>
 #include <limits>
@@ -85,4 +86,18 @@ TEST_CASE("JsonValue::getSafeNumberOrDefault() returns default if narrowing "
     auto value = JsonValue(1.5);
     REQUIRE(value.getSafeNumberOrDefault<std::uint16_t>(365) == 365);
   }
+}
+
+TEST_CASE("JsonValue Equality operator") {
+  JsonValue emptyValue;
+  JsonValue integerValue(1);
+  JsonValue booleanValueTrue(true);
+  JsonValue booleanValueTrue2(true);
+  JsonValue booleanValueFalse(false);
+
+  CHECK(emptyValue != booleanValueTrue);
+  CHECK(integerValue != booleanValueTrue);
+  CHECK(booleanValueFalse != booleanValueTrue);
+
+  CHECK(booleanValueTrue2 == booleanValueTrue);
 }

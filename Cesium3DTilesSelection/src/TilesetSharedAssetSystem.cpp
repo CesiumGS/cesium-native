@@ -14,6 +14,7 @@ CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> createDefault() {
       GltfSharedAssetSystem::getDefault();
 
   p->pImage = pGltf->pImage;
+  p->pExternalMetadataSchema = pGltf->pExternalMetadataSchema;
 
   return p;
 }

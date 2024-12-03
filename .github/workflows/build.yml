@@ -11,16 +11,71 @@ jobs:
         run: |
           npm install
           npm run format -- --dry-run -Werror
+  Linting:
+    name: "Linting"
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Install ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install nasm
+        uses: ilammy/setup-nasm@v1
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ccache-ubuntu-24.04-clang-clang-tidy
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.ezvcpkg
+          key:  vcpkg-ubuntu-24.04-clang-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            vcpkg-ubuntu-24.04-clang-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-ubuntu-24.04-clang
+      - name: Set CC and CXX
+        run: |
+          echo "CC=clang-18" >> "$GITHUB_ENV"
+          echo "CXX=clang++-18" >> "$GITHUB_ENV"
+      - name: Make more swap space available
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 10G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          sudo swapon --show
+      - name: Run clang-tidy
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --target clang-tidy
   Documentation:
     runs-on: ubuntu-22.04
     steps:
       - name: Install Doxygen
         run: |
-          sudo apt install -y doxygen
+          cd ~
+          wget https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.linux.bin.tar.gz
+          tar xzf doxygen-1.12.0.linux.bin.tar.gz
+          export PATH=$PWD/doxygen-1.12.0/bin:$PATH
+          echo "PATH=$PATH" >> "$GITHUB_ENV"
+          doxygen --version
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ccache-ubuntu-22.04-doxygen
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.ezvcpkg
+          key:  vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-ubuntu-22.04-doxygen
       - name: Generate Documentation
         run: |
           npm install

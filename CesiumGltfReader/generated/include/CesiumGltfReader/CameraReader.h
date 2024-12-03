@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct Camera;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

@@ -17,7 +17,7 @@ namespace CesiumGltfReader {
 
 /**
  * @brief A description of an image asset that can be loaded from the network
- * using an {@link IAssetAccessor}. This includes a URL, any headers to be
+ * using an {@link CesiumAsync::IAssetAccessor}. This includes a URL, any headers to be
  * included in the request, and the set of supported GPU texture formats for
  * KTX2 decoding.
  */
@@ -35,7 +35,7 @@ struct NetworkImageAssetDescriptor
 
   /**
    * @brief Request this asset from the network using the provided asset
-   * accessor and return the loaded {@link ImageAsset}.
+   * accessor and return the loaded {@link CesiumGltf::ImageAsset}.
    *
    * @param asyncSystem The async system.
    * @param pAssetAccessor The asset accessor.

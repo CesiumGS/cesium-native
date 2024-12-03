@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct Skin;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

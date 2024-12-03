@@ -30,12 +30,13 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
-   * @param credit The {@link Credit} for this tile provider, if it exists.
+   * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
    * @param pPrepareRendererResources The interface used to prepare raster
    * images for rendering.
    * @param pLogger The logger to which to send messages about the tile provider
    * and tiles.
    * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param tilingScheme The tiling scheme to be used by this {@link QuadtreeRasterOverlayTileProvider}.
    * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
    * @param minimumLevel The minimum quadtree tile level.
    * @param maximumLevel The maximum quadtree tile level.
@@ -125,7 +126,7 @@ private:
 
     int64_t getSizeBytes() const {
       int64_t accum = 0;
-      accum += sizeof(LoadedQuadtreeImage);
+      accum += int64_t(sizeof(LoadedQuadtreeImage));
       if (pLoaded) {
         accum += pLoaded->getSizeBytes();
       }

@@ -49,7 +49,7 @@ class CESIUMJSONREADER_API JsonReaderOptions {
 public:
   /**
    * @brief Gets a value indicating whether the values of unknown properties are
-   * captured in the {@link ExtensibleObject::unknownProperties} field.
+   * captured in the {@link CesiumUtility::ExtensibleObject::unknownProperties} field.
    *
    * If this is false, unknown properties are completely ignored.
    */
@@ -59,7 +59,7 @@ public:
 
   /**
    * @brief Sets a value indicating whether the values of unknown properties are
-   * captured in the {@link ExtensibleObject::unknownProperties} field.
+   * captured in the {@link CesiumUtility::ExtensibleObject::unknownProperties} field.
    *
    * If this is false, unknown properties are completely ignored.
    */

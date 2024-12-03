@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class PaddingJsonHandler
@@ -17,11 +17,11 @@ class PaddingJsonHandler
 public:
   using ValueType = Cesium3DTiles::Padding;
 
-  PaddingJsonHandler(
+  explicit PaddingJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::Padding* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyPadding(

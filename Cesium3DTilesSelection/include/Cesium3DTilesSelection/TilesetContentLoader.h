@@ -40,6 +40,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @param pLogger The logger that will be used
    * @param requestHeaders The request headers that will be attached to the
    * request.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   TileLoadInput(
       const Tile& tile,
@@ -141,6 +142,7 @@ public:
    * children.
    *
    * @param tile The tile to create children for.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return The {@link TileChildrenResult} that stores the tile's children
    */
   virtual TileChildrenResult createTileChildren(

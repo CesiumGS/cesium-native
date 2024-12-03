@@ -2,6 +2,7 @@
 #include <CesiumGeospatial/S2CellID.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/geometric.hpp>
 
 using namespace CesiumGeometry;

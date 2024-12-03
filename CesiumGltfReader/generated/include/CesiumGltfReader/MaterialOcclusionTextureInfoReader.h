@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct MaterialOcclusionTextureInfo;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct Enum;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

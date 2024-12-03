@@ -404,7 +404,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       static_cast<int32_t>(this->_mainThreadLoadQueue.size());
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      this->getExternals().pTileOcclusionProxyPool;
+      this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
@@ -1171,7 +1171,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 TileOcclusionState
 Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      this->getExternals().pTileOcclusionProxyPool;
+      this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
     // First check if this tile's bounding volume has occlusion info and is
     // known to be occluded.

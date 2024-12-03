@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct Mesh;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

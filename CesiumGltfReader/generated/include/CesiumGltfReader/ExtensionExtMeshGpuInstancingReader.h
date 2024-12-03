@@ -14,7 +14,7 @@
 
 namespace CesiumGltf {
 struct ExtensionExtMeshGpuInstancing;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 

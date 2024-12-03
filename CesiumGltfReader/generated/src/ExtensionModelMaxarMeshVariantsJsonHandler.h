@@ -11,7 +11,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionModelMaxarMeshVariantsJsonHandler
@@ -20,22 +20,22 @@ class ExtensionModelMaxarMeshVariantsJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionModelMaxarMeshVariants;
 
-  static inline constexpr const char* ExtensionName = "MAXAR_mesh_variants";
+  static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 
-  ExtensionModelMaxarMeshVariantsJsonHandler(
+  explicit ExtensionModelMaxarMeshVariantsJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionModelMaxarMeshVariants* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionModelMaxarMeshVariants(

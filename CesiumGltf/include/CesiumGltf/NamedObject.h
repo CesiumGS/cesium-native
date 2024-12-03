@@ -10,7 +10,7 @@ namespace CesiumGltf {
 /**
  * @brief The base class for objects in a glTF that have a name.
  *
- * A named object is also an {@link ExtensibleObject}.
+ * A named object is also an {@link CesiumUtility::ExtensibleObject}.
  */
 struct CESIUMGLTF_API NamedObject : public CesiumUtility::ExtensibleObject {
   /**
@@ -29,7 +29,8 @@ struct CESIUMGLTF_API NamedObject : public CesiumUtility::ExtensibleObject {
   int64_t getSizeBytes() const {
     int64_t accum = 0;
     accum += sizeof(NamedObject);
-    accum += ExtensibleObject::getSizeBytes() - sizeof(ExtensibleObject);
+    accum +=
+        ExtensibleObject::getSizeBytes() - int64_t(sizeof(ExtensibleObject));
     accum += this->name.capacity() * sizeof(char);
     return accum;
   }

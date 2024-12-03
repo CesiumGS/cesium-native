@@ -14,7 +14,7 @@
 
 namespace CesiumQuantizedMeshTerrain {
 struct AvailabilityRectangle;
-}
+} // namespace CesiumQuantizedMeshTerrain
 
 namespace CesiumQuantizedMeshTerrain {
 

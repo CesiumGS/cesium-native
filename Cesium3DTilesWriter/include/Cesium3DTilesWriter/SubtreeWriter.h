@@ -13,7 +13,7 @@ namespace Cesium3DTilesWriter {
 
 /**
  * @brief The result of writing a subtree with
- * {@link SubtreeWriterWriter::writeSubtree}.
+ * {@link SubtreeWriter::writeSubtree}.
  */
 struct CESIUM3DTILESWRITER_API SubtreeWriterResult {
   /**

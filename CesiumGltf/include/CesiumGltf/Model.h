@@ -20,7 +20,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * After this method returns, this `Model` contains all of the
    * elements that were originally in it _plus_ all of the elements
    * that were in `rhs`. Element indices are updated accordingly.
-   * However, element indices in {@link ExtensibleObject::extras}, if any,
+   * However, element indices in {@link CesiumUtility::ExtensibleObject::extras}, if any,
    * are _not_ updated.
    *
    * @param rhs The model to merge into this one.
@@ -62,7 +62,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       int32_t sceneID,
       std::function<ForEachRootNodeInSceneCallback>&& callback);
 
-  /** @copydoc Gltf::forEachRootNodeInScene() */
+  /** @copydoc Model::forEachRootNodeInScene */
   void forEachRootNodeInScene(
       int32_t sceneID,
       std::function<ForEachRootNodeInSceneConstCallback>&& callback) const;
@@ -107,7 +107,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       const Node& node,
       const glm::dmat4& transform);
 
-  /** @copydoc Gltf::forEachNodeInScene() */
+  /** @copydoc Model::forEachNodeInScene */
   void forEachNodeInScene(
       int32_t sceneID,
       std::function<ForEachNodeInSceneConstCallback>&& callback) const;
@@ -157,7 +157,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       const MeshPrimitive& primitive,
       const glm::dmat4& transform);
 
-  /** @copydoc Gltf::forEachPrimitiveInScene() */
+  /** @copydoc Model::forEachPrimitiveInScene */
   void forEachPrimitiveInScene(
       int32_t sceneID,
       std::function<ForEachPrimitiveInSceneConstCallback>&& callback) const;

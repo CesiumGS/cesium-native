@@ -14,7 +14,7 @@
 
 namespace Cesium3DTiles {
 struct Class;
-}
+} // namespace Cesium3DTiles
 
 namespace Cesium3DTilesReader {
 
