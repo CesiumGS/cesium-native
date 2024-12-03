@@ -3,7 +3,9 @@
 ### ? - ?
 
 ##### Fixes :wrench:
+
 - Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
+- Fixed a raster overlay bug that could cause unnecessary upsampling with failed or missing overlay tiles.
 
 ### v0.42.0 - 2024-12-02
 
