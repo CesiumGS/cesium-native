@@ -6,7 +6,8 @@
 namespace CesiumGltf {
 
 /**
- * @brief The standard glTF vertex attribute semantics from the specification.
+ * @brief The standard glTF vertex attribute semantics from the specification
+ * plus additional vertex attribute semantics from extensions.
  */
 struct VertexAttributeSemantics {
   /**
@@ -46,6 +47,11 @@ struct VertexAttributeSemantics {
    * @brief The weights indicating how strongly the joint influences the vertex.
    */
   static const std::array<std::string, 8> WEIGHTS_n;
+
+  /**
+   * @brief Feature IDs used in `EXT_mesh_features`.
+   */
+  static const std::array<std::string, 8> FEATURE_ID_n;
 };
 
 } // namespace CesiumGltf
