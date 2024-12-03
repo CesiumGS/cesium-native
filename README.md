@@ -19,19 +19,23 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | Library | Description |
 | -- | -- |
 | **Cesium3DTiles** | Lightweight 3D Tiles classes. |
+| **Cesium3DTilesContent** | Classes that support loading and converting 3D Tiles tile content. |
 | **Cesium3DTilesReader** | 3D Tiles deserialization, including 3D Tiles extension support. |
 | **Cesium3DTilesWriter** | 3D Tiles serialization, including 3D Tiles extension support. |
-| **Cesium3DTilesSelection** | Runtime streaming, decoding, level of detail selection, culling, cache management, and decoding of 3D Tiles. |
+| **Cesium3DTilesSelection** | Runtime streaming, level of detail selection, culling, cache management, and decoding of 3D Tiles. |
 | **CesiumAsync** | Classes for multi-threaded asynchronous tasks. |
 | **CesiumGeometry** | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms. |
 | **CesiumGeospatial** | 3D geospatial math types and functions for ellipsoids, transforms, projections. |
 | **CesiumGltf** | Lightweight glTF processing and optimization functions. |
+| **CesiumGltfContent** | Classes that support manipulating the content of a glTF. |
 | **CesiumGltfReader** | glTF deserialization / decoding, including glTF extension support (`KHR_draco_mesh_compression` etc). |
 | **CesiumGltfWriter** | glTF serialization / encoding, including glTF extension support. |
 | **CesiumIonClient** | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
 | **CesiumJsonReader** | Reads JSON from a buffer into statically-typed classes. |
 | **CesiumJsonWriter** | Writes JSON from statically-typed classes into a buffer. |
-| **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
+| **CesiumQuantizedMesh** | Classes for accessing terrain in the [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) format. |
+| **CesiumRasterOverlays** | Classes for raster overlays, which allow draping massive 2D textures over a model. |
+| **CesiumUtility** | Utility functions for JSON parsing, URI processing, credits, etc. |
 
 
 ### 📗License
@@ -101,12 +105,13 @@ Unit tests can also be run from this solution, under the cesium-native-tests pro
 #### Generate Documentation
 
 * Install [Doxygen](https://www.doxygen.nl/).
+* Run: `npm install`
 * Run: `cmake --build build --target cesium-native-docs`
 * Open `build/doc/html/index.html`
 
 #### Regenerate glTF and 3D Tiles classes
 
-Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, and `Cesium3DTilesReader` is generated from the standards' JSON Schema specifications. To regenerate the code:
+Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, `Cesium3DTilesReader`, and `CesiumQuantizedMeshTerrain` is generated from the standards' JSON Schema specifications. To regenerate the code:
 
 * Make sure you have a relatively recent version of Node.js installed.
 * Install dependencies by running:
