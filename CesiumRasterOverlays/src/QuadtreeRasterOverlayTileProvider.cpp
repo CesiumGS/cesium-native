@@ -665,7 +665,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
     // Tiles with a subset inherently have no more detail available (otherwise
     // we wouldn't need the subset).
-    if (!it->subset) {
+    if (!it->pValue->subset) {
       result.moreDetailAvailable |= loaded.moreDetailAvailable;
     }
 
