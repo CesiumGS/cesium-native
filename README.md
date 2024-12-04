@@ -9,21 +9,22 @@
   <tbody>
     <tr>
       <td>
-        <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex">
+
+![Googleplex](doc/img/screenshot-googleplex.jpg)
         <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
       </td>
       <td>
-        <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York">
+        ![New York](doc/img/screenshot-ny-metadata.jpg)
         <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
       </td>
     </tr>
     <tr>
       <td>
-        <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater">
+        ![Copernicus Crater](doc/img/screenshot-copernicus-crater.jpg)
         <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.</sub></p>
       </td>
       <td>
-        <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco">
+        ![San Francisco](doc/img/screenshot-san-francisco.jpg)
         <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA.</sub></p>
       </td>
     </tr>
