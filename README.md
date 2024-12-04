@@ -5,25 +5,35 @@
 [![Build Status](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml/badge.svg)](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/tag/CesiumGS/cesium-native?label=release)](https://github.com/CesiumGS/cesium-native/tags)
 
-<div width="100%" style="display:flex;line-height:1em">
-  <div style="padding-right:10px">
-    <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex">
-    <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
-  </div>
-  <div style="padding-left: 10px;">
-    <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York">
-    <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
-  </div>
-</div>
+<table>
+  <tbody>
+    <tr>
+      <td>
+        <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex">
+        <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
+      </td>
+      <td>
+        <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York">
+        <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater">
+        <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.</sub></p>
+      </td>
+      <td>
+        <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco">
+        <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA.</sub></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 <div width="100%" style="display:flex">
   <div style="padding-right:10px">
-    <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater">
-    <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.</sub></p>
   </div>
   <div style="padding-left: 10px;">
-    <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco">
-    <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA.</sub></p>
   </div>
 </div>
   
@@ -64,9 +74,9 @@ Cesium Native is a set of C++ libraries for 3D geospatial, including:
 
 Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https://github.com/CesiumGS/cesium-unreal), [Cesium for Unity](https://github.com/CesiumGS/cesium-unity), [Cesium for Omniverse](https://github.com/CesiumGS/cesium-omniverse), and [Cesium for O3DE](https://github.com/CesiumGS/cesium-o3de). Cesium Native is the foundational layer for any 3D geospatial software, especially those that want to stream 3D Tiles. See [Projects Using Cesium Native](#projects-using-cesium-native) for a list of projects currently integrating with Cesium Native.
 
-![Cesium Platform and Ecosystem](./doc/integration-ecosystem-diagram.jpg)
+![Cesium Platform and Ecosystem](./doc/img/integration-ecosystem-diagram.png)
 
-<p align="center">*A high-level Cesium platform architecture with the runtime integrations powered by Cesium Native and streaming content from Cesium ion.*</p>
+<p align="center"><em>A high-level Cesium platform architecture with the runtime integrations powered by Cesium Native and streaming content from Cesium ion.</em></p>
 
 Cesium Native is a collaborative project that welcomes issue reports and pull requests. See the [Contributing](#contributing) section below for more information!
 
