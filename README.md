@@ -56,11 +56,11 @@
     - [Regenerate glTF and 3D Tiles classes](#regenerate-gltf-and-3d-tiles-classes)
     - [Regenerate Dependency Graphs](#regenerate-dependency-graphs)
 - [🤝Contributing](#contributing)
-  - [Submitting an Issue](#submitting-an-issue)
-  - [Opening a Pull Request](#opening-a-pull-request)
+  - [📬Submitting an Issue](#submitting-an-issue)
+  - [📝Opening a Pull Request](#opening-a-pull-request)
     - [Contributor License Agreement (CLA)](#contributor-license-agreement-cla)
     - [Pull Request Guidelines](#pull-request-guidelines)
-  - [Code of Conduct](#code-of-conduct)
+  - [⚖️Code of Conduct](#️code-of-conduct)
 
 
 ## 📖About
@@ -240,7 +240,7 @@ Community involvement in Cesium Native has been and continues to be a key part o
 
 More details about writing issues and pull requests is detailed below. For any other guidance you need, don't hesitate to ask on the [Cesium community forum](https://community.cesium.com/)!
 
-### Submitting an Issue
+### 📬Submitting an Issue
 
 If you have a question, please do not submit an issue; instead, search the [Cesium community forum](https://community.cesium.com/). The forum is very active and there are years of informative archives, often with answers from the core Cesium team. If you do not find an answer to your question, start a new thread and you'll likely get a quick response!
 
@@ -255,7 +255,7 @@ If a related issue does not exist, submit a new one. Please be concise and inclu
 - The version of Cesium Native. Did this work in a previous version?
 - Ideas for how to fix or workaround the issue. Also mention if you are willing to help fix it. If so, the Cesium team can often provide guidance and the issue may get fixed more quickly with your help.
 
-### Opening a Pull Request
+### 📝Opening a Pull Request
 
 Pull requests are a huge help in the development of Cesium Native. Following the tips in this guide will help your pull request get merged quickly.
 
@@ -286,6 +286,6 @@ Our code is our lifeblood so maintaining Cesium Native's high code quality is im
   - Update [CHANGES.md](CHANGES.md) with a brief description of your changes.
   - If you plan to add a third-party library, start a [GitHub issue](https://github.com/CesiumGS/cesium/issues/new) discussing it first.
 
-### Code of Conduct
+### ⚖️Code of Conduct
 
 To ensure an inclusive community, contributors and users in the Cesium community should follow the [code of conduct](https://github.com/CesiumGS/cesium/blob/main/CODE_OF_CONDUCT.md).
