@@ -5,13 +5,28 @@
 [![Build Status](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml/badge.svg)](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/tag/CesiumGS/cesium-native?label=release)](https://github.com/CesiumGS/cesium-native/tags)
 
+<div width="100%" style="display:flex;line-height:1em">
+  <div style="padding-right:10px">
+    <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex">
+    <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
+  </div>
+  <div style="padding-left: 10px;">
+    <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York">
+    <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
+  </div>
+</div>
 
-| ![Googleplex](doc/img/screenshot-googleplex.jpg)                                                                                     | ![New York](doc/img/screenshot-ny-metadata.jpg)                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| <p align="center">The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</p> | <p align="center">Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</p> |
-| ![Copernicus Crater](doc/img/screenshot-copernicus-crater.jpg)                                                                       | ![San Francisco](doc/img/screenshot-san-francisco.jpg)                                                                 |
-| <p align="center">The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.</p>                               | <p align="center">Cesium for Omniverse scene set in San Francisco, California, USA.</p>                                |
-
+<div width="100%" style="display:flex">
+  <div style="padding-right:10px">
+    <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater">
+    <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.</sub></p>
+  </div>
+  <div style="padding-left: 10px;">
+    <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco">
+    <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA.</sub></p>
+  </div>
+</div>
+  
 <!-- omit in toc -->
 ## Table of Contents
 

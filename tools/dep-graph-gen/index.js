@@ -59,7 +59,7 @@ function formatLibraryNameAsId(libraryName) {
 
 const includedRegex = new RegExp(argv.targets);
 
-function generateChart(includedSet, title) {
+function generateChart(includedSet, colorLinks, title) {
   let output = `---
 config:
   layout: elk
@@ -106,13 +106,15 @@ graph TD
     }
   });
 
-  // Use a palette for link colors to assist in readability
-  const linkColors = palette("mpn65", Object.keys(nodeLinks).length);
-  let linkColorIndex = 0;
+  if (colorLinks) {
+    // Use a palette for link colors to assist in readability
+    const linkColors = palette("mpn65", Object.keys(nodeLinks).length);
+    let linkColorIndex = 0;
 
-  Object.keys(nodeLinks).forEach(l => {
-    output += `  linkStyle ${nodeLinks[l].join(",")} stroke:#${linkColors[linkColorIndex++]},stroke-width:4px\n`;
-  });
+    Object.keys(nodeLinks).forEach(l => {
+      output += `  linkStyle ${nodeLinks[l].join(",")} stroke:#${linkColors[linkColorIndex++]},stroke-width:4px\n`;
+    });
+  }
 
   return output;
 }
@@ -124,11 +126,11 @@ Object.keys(dependencyLinks).filter(d => includedRegex.test(d)).forEach(d => {
   includedNodes[d] = true;
 });
 
-fs.writeFileSync(path.join(argv.output, "all.mmd"), generateChart(includedNodes));
+fs.writeFileSync(path.join(argv.output, "all.mmd"), generateChart(includedNodes, true));
 // Per-target graphs
 Object.keys(includedNodes).forEach(n => {
   const filename = formatLibraryNameAsId(n) + ".mmd";
-  fs.writeFileSync(path.join(argv.output, filename), generateChart({ [n]: true }, `${n} Dependency Graph`));
+  fs.writeFileSync(path.join(argv.output, filename), generateChart({ [n]: true }, false, `${n} Dependency Graph`));
 });
 
 console.log(`Wrote generated Mermaid graphs to ${argv.output}`);
