@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for working with Cesium ion clients
+ *
+ * @mermaid{dependencies/CesiumIonClient}
  */
 namespace CesiumIonClient {}
 

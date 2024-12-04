@@ -1,0 +1,11 @@
+---
+config:
+  layout: elk
+title: CesiumGltf Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  CesiumGltf[CesiumGltf] --> CesiumUtility[CesiumUtility]
+  class CesiumUtility,CesiumGltf libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px

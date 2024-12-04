@@ -5,6 +5,7 @@ if(DOXYGEN_FOUND)
         LIB_DIRS
         ../Cesium3DTiles/include
         ../Cesium3DTiles/generated/include
+        ../Cesium3DTilesContent/include
         ../Cesium3DTilesReader/include
         ../Cesium3DTilesReader/generated/include
         ../Cesium3DTilesWriter/include
@@ -31,6 +32,7 @@ if(DOXYGEN_FOUND)
     set(
         DOXYGEN_EXAMPLE_PATH
         ../Cesium3DTiles/test
+        ../Cesium3DTilesContent/test
         ../Cesium3DTilesReader/test
         ../Cesium3DTilesWriter/test
         ../Cesium3DTilesSelection/test
@@ -86,6 +88,9 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
     set(DOXYGEN_IMAGE_PATH "./")
+    set(DOXYGEN_MARKDOWN_ID_STYLE GITHUB)
+    set(DOXYGEN_DOT_IMAGE_FORMAT svg)
+    set(DOXYGEN_INTERACTIVE_SVG YES)
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")

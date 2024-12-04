@@ -1,0 +1,15 @@
+---
+config:
+  layout: elk
+title: Cesium3DTilesReader Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  Cesium3DTilesReader[Cesium3DTilesReader] --> Cesium3DTiles[Cesium3DTiles]
+  Cesium3DTilesReader[Cesium3DTilesReader] --> CesiumAsync[CesiumAsync]
+  Cesium3DTilesReader[Cesium3DTilesReader] --> CesiumJsonReader[CesiumJsonReader]
+  class Cesium3DTiles,CesiumAsync,CesiumJsonReader,Cesium3DTilesReader libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px
+  linkStyle 1 stroke:#377eb8,stroke-width:4px
+  linkStyle 2 stroke:#66a61e,stroke-width:4px

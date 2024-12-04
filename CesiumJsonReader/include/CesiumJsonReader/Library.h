@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for reading JSON.
+ *
+ * @mermaid{dependencies/CesiumJsonReader}
  */
 namespace CesiumJsonReader {}
 

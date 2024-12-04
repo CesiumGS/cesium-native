@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for geospatial computations in Cesium
+ *
+ * @mermaid{dependencies/CesiumGeospatial}
  */
 namespace CesiumGeospatial {}
 

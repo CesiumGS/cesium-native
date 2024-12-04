@@ -9,6 +9,7 @@
   "scripts": {
     "format": "clang-format -i \"--glob=@(Cesium*)/**/*.@(cpp|h|hpp)\"",
     "check-format": "check-clang-format",
+    "dependency-graph": "cmake -B build -S . --graphviz=dependency-graph.dot && dot -Tpng -o doc/img/dependency-graph.png dependency-graph.dot && rm dependency-graph.dot",
     "generate-gltf": "cd tools/generate-classes && npm run generate-gltf && cd ../.. && npm run format",
     "generate-3d-tiles": "cd tools/generate-classes && npm run generate-3d-tiles && cd ../.. && npm run format",
     "generate-quantized-mesh-terrain": "cd tools/generate-classes && npm run generate-quantized-mesh-terrain && cd ../.. && npm run format"

@@ -1,0 +1,28 @@
+---
+config:
+  layout: elk
+title: CesiumRasterOverlays Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumAsync[CesiumAsync]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGeometry[CesiumGeometry]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGeospatial[CesiumGeospatial]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGltf[CesiumGltf]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGltfContent[CesiumGltfContent]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGltfReader[CesiumGltfReader]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumUtility[CesiumUtility]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> nonstd_expected-lite{{nonstd::expected-lite}}
+  CesiumRasterOverlays[CesiumRasterOverlays] --> tinyxml2_tinyxml2{{tinyxml2::tinyxml2}}
+  class nonstd_expected-lite,tinyxml2_tinyxml2 dependencyNode
+  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,CesiumUtility,CesiumRasterOverlays libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px
+  linkStyle 1 stroke:#377eb8,stroke-width:4px
+  linkStyle 2 stroke:#66a61e,stroke-width:4px
+  linkStyle 3 stroke:#984ea3,stroke-width:4px
+  linkStyle 4 stroke:#00d2d5,stroke-width:4px
+  linkStyle 5 stroke:#ff7f00,stroke-width:4px
+  linkStyle 6 stroke:#af8d00,stroke-width:4px
+  linkStyle 7 stroke:#7f80cd,stroke-width:4px
+  linkStyle 8 stroke:#b3e900,stroke-width:4px

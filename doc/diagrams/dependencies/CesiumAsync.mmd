@@ -1,0 +1,20 @@
+---
+config:
+  layout: elk
+title: CesiumAsync Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  CesiumAsync[CesiumAsync] --> Async_{{Async++}}
+  CesiumAsync[CesiumAsync] --> CesiumUtility[CesiumUtility]
+  CesiumAsync[CesiumAsync] --> spdlog_spdlog{{spdlog::spdlog}}
+  CesiumAsync[CesiumAsync] --> spdlog_spdlog_header_only{{spdlog::spdlog_header_only}}
+  CesiumAsync[CesiumAsync] --> unofficial_sqlite3_sqlite3{{unofficial::sqlite3::sqlite3}}
+  class Async_,spdlog_spdlog,spdlog_spdlog_header_only,unofficial_sqlite3_sqlite3 dependencyNode
+  class CesiumUtility,CesiumAsync libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px
+  linkStyle 1 stroke:#377eb8,stroke-width:4px
+  linkStyle 2 stroke:#66a61e,stroke-width:4px
+  linkStyle 3 stroke:#984ea3,stroke-width:4px
+  linkStyle 4 stroke:#00d2d5,stroke-width:4px

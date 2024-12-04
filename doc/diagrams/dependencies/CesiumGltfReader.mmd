@@ -1,0 +1,30 @@
+---
+config:
+  layout: elk
+title: CesiumGltfReader Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  CesiumGltfReader[CesiumGltfReader] --> CesiumAsync[CesiumAsync]
+  CesiumGltfReader[CesiumGltfReader] --> CesiumGltf[CesiumGltf]
+  CesiumGltfReader[CesiumGltfReader] --> CesiumJsonReader[CesiumJsonReader]
+  CesiumGltfReader[CesiumGltfReader] --> KTX_ktx{{KTX::ktx}}
+  CesiumGltfReader[CesiumGltfReader] --> WebP_webp{{WebP::webp}}
+  CesiumGltfReader[CesiumGltfReader] --> WebP_webpdecoder{{WebP::webpdecoder}}
+  CesiumGltfReader[CesiumGltfReader] --> draco_draco{{draco::draco}}
+  CesiumGltfReader[CesiumGltfReader] --> libjpeg-turbo_turbojpeg-static{{libjpeg-turbo::turbojpeg-static}}
+  CesiumGltfReader[CesiumGltfReader] --> meshoptimizer_meshoptimizer{{meshoptimizer::meshoptimizer}}
+  CesiumGltfReader[CesiumGltfReader] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
+  class KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64 dependencyNode
+  class CesiumAsync,CesiumGltf,CesiumJsonReader,CesiumGltfReader libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px
+  linkStyle 1 stroke:#377eb8,stroke-width:4px
+  linkStyle 2 stroke:#66a61e,stroke-width:4px
+  linkStyle 3 stroke:#984ea3,stroke-width:4px
+  linkStyle 4 stroke:#00d2d5,stroke-width:4px
+  linkStyle 5 stroke:#ff7f00,stroke-width:4px
+  linkStyle 6 stroke:#af8d00,stroke-width:4px
+  linkStyle 7 stroke:#7f80cd,stroke-width:4px
+  linkStyle 8 stroke:#b3e900,stroke-width:4px
+  linkStyle 9 stroke:#c42e60,stroke-width:4px

@@ -1,0 +1,18 @@
+---
+config:
+  layout: elk
+title: CesiumUtility Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  CesiumUtility[CesiumUtility] --> glm_glm{{glm::glm}}
+  CesiumUtility[CesiumUtility] --> spdlog_spdlog{{spdlog::spdlog}}
+  CesiumUtility[CesiumUtility] --> uriparser_uriparser{{uriparser::uriparser}}
+  CesiumUtility[CesiumUtility] --> zlib-ng_zlib-ng{{zlib-ng::zlib-ng}}
+  class glm_glm,spdlog_spdlog,uriparser_uriparser,zlib-ng_zlib-ng dependencyNode
+  class CesiumUtility libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px
+  linkStyle 1 stroke:#377eb8,stroke-width:4px
+  linkStyle 2 stroke:#66a61e,stroke-width:4px
+  linkStyle 3 stroke:#984ea3,stroke-width:4px

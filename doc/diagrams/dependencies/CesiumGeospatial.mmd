@@ -1,0 +1,20 @@
+---
+config:
+  layout: elk
+title: CesiumGeospatial Dependency Graph
+---
+graph TD
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
+  classDef libraryNode fill:#9f9
+  CesiumGeospatial[CesiumGeospatial] --> CesiumGeometry[CesiumGeometry]
+  CesiumGeospatial[CesiumGeospatial] --> CesiumUtility[CesiumUtility]
+  CesiumGeospatial[CesiumGeospatial] --> absl_string_view{{absl::string_view}}
+  CesiumGeospatial[CesiumGeospatial] --> earcut{{earcut}}
+  CesiumGeospatial[CesiumGeospatial] --> s2_s2{{s2::s2}}
+  class absl_string_view,earcut,s2_s2 dependencyNode
+  class CesiumGeometry,CesiumUtility,CesiumGeospatial libraryNode
+  linkStyle 0 stroke:#ff0029,stroke-width:4px
+  linkStyle 1 stroke:#377eb8,stroke-width:4px
+  linkStyle 2 stroke:#66a61e,stroke-width:4px
+  linkStyle 3 stroke:#984ea3,stroke-width:4px
+  linkStyle 4 stroke:#00d2d5,stroke-width:4px

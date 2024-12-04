@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes that support manipulating the content of a glTF.
+ *
+ * @mermaid{dependencies/CesiumGltfContent}
  */
 namespace CesiumGltfContent {}
 
