@@ -29,9 +29,10 @@ target_sources(
         ${CESIUM_GEOSPATIAL_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumGeospatial
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumGeospatial
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 

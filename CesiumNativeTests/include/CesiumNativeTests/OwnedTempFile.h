@@ -1,9 +1,8 @@
 #pragma once
 
-#include <gsl/span>
-
 #include <filesystem>
 #include <ios>
+#include <span>
 
 /**
  * Creates and holds on to a path for a temporary file on disk.
@@ -12,13 +11,13 @@
 class OwnedTempFile {
 public:
   OwnedTempFile();
-  OwnedTempFile(const gsl::span<const std::byte>& buffer);
+  OwnedTempFile(const std::span<const std::byte>& buffer);
   ~OwnedTempFile();
 
   const std::filesystem::path& getPath() const;
 
   void write(
-      const gsl::span<const std::byte>& buffer,
+      const std::span<const std::byte>& buffer,
       std::ios::openmode flags = std::ios::out | std::ios::binary |
                                  std::ios::trunc);
 

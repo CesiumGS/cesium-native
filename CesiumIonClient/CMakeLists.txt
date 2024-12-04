@@ -29,9 +29,10 @@ target_sources(
         ${CESIUM_ION_CLIENT_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumIonClient
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumIonClient
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 

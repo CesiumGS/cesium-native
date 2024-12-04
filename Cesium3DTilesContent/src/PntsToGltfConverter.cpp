@@ -43,7 +43,7 @@ struct PntsHeader {
 };
 
 void parsePntsHeader(
-    const gsl::span<const std::byte>& pntsBinary,
+    const std::span<const std::byte>& pntsBinary,
     PntsHeader& header,
     uint32_t& headerLength,
     GltfConverterResult& result) {
@@ -608,7 +608,7 @@ void parseDracoExtensionFromFeatureTableJson(
 }
 
 rapidjson::Document parseFeatureTableJson(
-    const gsl::span<const std::byte>& featureTableJsonData,
+    const std::span<const std::byte>& featureTableJsonData,
     PntsContent& parsedContent) {
   rapidjson::Document document;
   document.Parse(
@@ -773,7 +773,7 @@ void parseDracoExtensionFromBatchTableJson(
 }
 
 rapidjson::Document parseBatchTableJson(
-    const gsl::span<const std::byte>& batchTableJsonData,
+    const std::span<const std::byte>& batchTableJsonData,
     PntsContent& parsedContent) {
   rapidjson::Document document;
   document.Parse(
@@ -835,7 +835,7 @@ void getDracoData(
 
   const uint8_t* pSource = decodedBuffer->data() + decodedByteOffset;
   if (dataElementSize != static_cast<size_t>(decodedByteStride)) {
-    gsl::span<T> outData(reinterpret_cast<T*>(data.data()), pointsLength);
+    std::span<T> outData(reinterpret_cast<T*>(data.data()), pointsLength);
     for (uint32_t i = 0; i < pointsLength; ++i) {
       outData[i] = *reinterpret_cast<const T*>(pSource + decodedByteStride * i);
     }
@@ -907,9 +907,9 @@ void decodeDracoMetadata(
 }
 
 void decodeDraco(
-    const gsl::span<const std::byte>& featureTableBinaryData,
+    const std::span<const std::byte>& featureTableBinaryData,
     rapidjson::Document& batchTableJson,
-    const gsl::span<const std::byte>& batchTableBinaryData,
+    const std::span<const std::byte>& batchTableBinaryData,
     PntsContent& parsedContent) {
   if (!parsedContent.dracoByteOffset || !parsedContent.dracoByteLength) {
     return;
@@ -946,7 +946,7 @@ void decodeDraco(
     std::vector<std::byte>& positionData = parsedContent.position.data;
     positionData.resize(pointsLength * sizeof(glm::vec3));
 
-    gsl::span<glm::vec3> outPositions(
+    std::span<glm::vec3> outPositions(
         reinterpret_cast<glm::vec3*>(positionData.data()),
         pointsLength);
 
@@ -974,7 +974,7 @@ void decodeDraco(
           validateDracoAttribute(pColorAttribute, draco::DT_UINT8, 4)) {
         colorData.resize(pointsLength * sizeof(glm::vec4));
 
-        gsl::span<glm::vec4> outColors(
+        std::span<glm::vec4> outColors(
             reinterpret_cast<glm::vec4*>(colorData.data()),
             pointsLength);
 
@@ -993,7 +993,7 @@ void decodeDraco(
           validateDracoAttribute(pColorAttribute, draco::DT_UINT8, 3)) {
         colorData.resize(pointsLength * sizeof(glm::vec3));
 
-        gsl::span<glm::vec3> outColors(
+        std::span<glm::vec3> outColors(
             reinterpret_cast<glm::vec3*>(colorData.data()),
             pointsLength);
 
@@ -1085,7 +1085,7 @@ void decodeDraco(
 }
 
 void parsePositionsFromFeatureTableBinary(
-    const gsl::span<const std::byte>& featureTableBinaryData,
+    const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
   std::vector<std::byte>& positionData = parsedContent.position.data;
   if (positionData.size() > 0) {
@@ -1098,7 +1098,7 @@ void parsePositionsFromFeatureTableBinary(
   const size_t positionsByteLength = pointsLength * positionsByteStride;
   positionData.resize(positionsByteLength);
 
-  gsl::span<glm::vec3> outPositions(
+  std::span<glm::vec3> outPositions(
       reinterpret_cast<glm::vec3*>(positionData.data()),
       pointsLength);
 
@@ -1106,7 +1106,7 @@ void parsePositionsFromFeatureTableBinary(
     // PERFORMANCE_IDEA: In the future, it might be more performant to detect
     // if the recipient engine can handle dequantization itself, and if so, use
     // the KHR_mesh_quantization extension to avoid dequantizing here.
-    const gsl::span<const glm::u16vec3> quantizedPositions(
+    const std::span<const glm::u16vec3> quantizedPositions(
         reinterpret_cast<const glm::u16vec3*>(
             featureTableBinaryData.data() + parsedContent.position.byteOffset),
         pointsLength);
@@ -1135,7 +1135,7 @@ void parsePositionsFromFeatureTableBinary(
   } else {
     // The position accessor min / max is required by the glTF spec, so
     // use a for loop instead of std::memcpy.
-    const gsl::span<const glm::vec3> positions(
+    const std::span<const glm::vec3> positions(
         reinterpret_cast<const glm::vec3*>(
             featureTableBinaryData.data() + parsedContent.position.byteOffset),
         pointsLength);
@@ -1149,7 +1149,7 @@ void parsePositionsFromFeatureTableBinary(
 }
 
 void parseColorsFromFeatureTableBinary(
-    const gsl::span<const std::byte>& featureTableBinaryData,
+    const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
   PntsSemantic& color = parsedContent.color.value();
   std::vector<std::byte>& colorData = color.data;
@@ -1166,11 +1166,11 @@ void parseColorsFromFeatureTableBinary(
   colorData.resize(colorsByteLength);
 
   if (parsedContent.colorType == PntsColorType::RGBA) {
-    const gsl::span<const glm::u8vec4> rgbaColors(
+    const std::span<const glm::u8vec4> rgbaColors(
         reinterpret_cast<const glm::u8vec4*>(
             featureTableBinaryData.data() + color.byteOffset),
         pointsLength);
-    gsl::span<glm::vec4> outColors(
+    std::span<glm::vec4> outColors(
         reinterpret_cast<glm::vec4*>(colorData.data()),
         pointsLength);
 
@@ -1179,11 +1179,11 @@ void parseColorsFromFeatureTableBinary(
       outColors[i] = srgbToLinear(normalizedColor);
     }
   } else if (parsedContent.colorType == PntsColorType::RGB) {
-    const gsl::span<const glm::u8vec3> rgbColors(
+    const std::span<const glm::u8vec3> rgbColors(
         reinterpret_cast<const glm::u8vec3*>(
             featureTableBinaryData.data() + color.byteOffset),
         pointsLength);
-    gsl::span<glm::vec3> outColors(
+    std::span<glm::vec3> outColors(
         reinterpret_cast<glm::vec3*>(colorData.data()),
         pointsLength);
 
@@ -1193,11 +1193,11 @@ void parseColorsFromFeatureTableBinary(
     }
   } else if (parsedContent.colorType == PntsColorType::RGB565) {
 
-    const gsl::span<const uint16_t> compressedColors(
+    const std::span<const uint16_t> compressedColors(
         reinterpret_cast<const uint16_t*>(
             featureTableBinaryData.data() + color.byteOffset),
         pointsLength);
-    gsl::span<glm::vec3> outColors(
+    std::span<glm::vec3> outColors(
         reinterpret_cast<glm::vec3*>(colorData.data()),
         pointsLength);
 
@@ -1211,7 +1211,7 @@ void parseColorsFromFeatureTableBinary(
 }
 
 void parseNormalsFromFeatureTableBinary(
-    const gsl::span<const std::byte>& featureTableBinaryData,
+    const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
   PntsSemantic& normal = parsedContent.normal.value();
   std::vector<std::byte>& normalData = normal.data;
@@ -1226,12 +1226,12 @@ void parseNormalsFromFeatureTableBinary(
   normalData.resize(normalsByteLength);
 
   if (parsedContent.normalOctEncoded) {
-    const gsl::span<const glm::u8vec2> encodedNormals(
+    const std::span<const glm::u8vec2> encodedNormals(
         reinterpret_cast<const glm::u8vec2*>(
             featureTableBinaryData.data() + normal.byteOffset),
         pointsLength);
 
-    gsl::span<glm::vec3> outNormals(
+    std::span<glm::vec3> outNormals(
         reinterpret_cast<glm::vec3*>(normalData.data()),
         pointsLength);
 
@@ -1250,7 +1250,7 @@ void parseNormalsFromFeatureTableBinary(
 }
 
 void parseBatchIdsFromFeatureTableBinary(
-    const gsl::span<const std::byte>& featureTableBinaryData,
+    const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
   PntsSemantic& batchId = parsedContent.batchId.value();
   std::vector<std::byte>& batchIdData = batchId.data;
@@ -1275,9 +1275,9 @@ void parseBatchIdsFromFeatureTableBinary(
 }
 
 void parseFeatureTableBinary(
-    const gsl::span<const std::byte>& featureTableBinaryData,
+    const std::span<const std::byte>& featureTableBinaryData,
     rapidjson::Document& batchTableJson,
-    const gsl::span<const std::byte>& batchTableBinaryData,
+    const std::span<const std::byte>& batchTableBinaryData,
     PntsContent& parsedContent) {
   decodeDraco(
       featureTableBinaryData,
@@ -1548,7 +1548,7 @@ void createGltfFromParsedContent(
 }
 
 void convertPntsContentToGltf(
-    const gsl::span<const std::byte>& pntsBinary,
+    const std::span<const std::byte>& pntsBinary,
     const PntsHeader& header,
     uint32_t headerLength,
     GltfConverterResult& result) {
@@ -1556,7 +1556,7 @@ void convertPntsContentToGltf(
       header.featureTableBinaryByteLength > 0) {
     PntsContent parsedContent;
 
-    const gsl::span<const std::byte> featureTableJsonData =
+    const std::span<const std::byte> featureTableJsonData =
         pntsBinary.subspan(headerLength, header.featureTableJsonByteLength);
     rapidjson::Document featureTableJson =
         parseFeatureTableJson(featureTableJsonData, parsedContent);
@@ -1574,19 +1574,19 @@ void convertPntsContentToGltf(
                                     header.featureTableBinaryByteLength;
     rapidjson::Document batchTableJson;
     if (header.batchTableJsonByteLength > 0) {
-      const gsl::span<const std::byte> batchTableJsonData = pntsBinary.subspan(
+      const std::span<const std::byte> batchTableJsonData = pntsBinary.subspan(
           static_cast<size_t>(batchTableStart),
           header.batchTableJsonByteLength);
       batchTableJson = parseBatchTableJson(batchTableJsonData, parsedContent);
     }
 
-    const gsl::span<const std::byte> featureTableBinaryData =
+    const std::span<const std::byte> featureTableBinaryData =
         pntsBinary.subspan(
             static_cast<size_t>(
                 headerLength + header.featureTableJsonByteLength),
             header.featureTableBinaryByteLength);
 
-    gsl::span<const std::byte> batchTableBinaryData;
+    std::span<const std::byte> batchTableBinaryData;
     if (header.batchTableBinaryByteLength > 0) {
       batchTableBinaryData = pntsBinary.subspan(
           static_cast<size_t>(
@@ -1618,7 +1618,7 @@ void convertPntsContentToGltf(
       // values, then dracoBatchTableBinary will contain both the original
       // batch table binary and the Draco decoded values.
       batchTableBinaryData =
-          gsl::span<const std::byte>(parsedContent.dracoBatchTableBinary);
+          std::span<const std::byte>(parsedContent.dracoBatchTableBinary);
     }
 
     result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromPnts(
@@ -1631,7 +1631,7 @@ void convertPntsContentToGltf(
 } // namespace
 
 CesiumAsync::Future<GltfConverterResult> PntsToGltfConverter::convert(
-    const gsl::span<const std::byte>& pntsBinary,
+    const std::span<const std::byte>& pntsBinary,
     const CesiumGltfReader::GltfReaderOptions& /*options*/,
     const AssetFetcher& assetFetcher) {
   GltfConverterResult result;

@@ -11,7 +11,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class MaterialPBRMetallicRoughnessJsonHandler
@@ -19,13 +19,13 @@ class MaterialPBRMetallicRoughnessJsonHandler
 public:
   using ValueType = CesiumGltf::MaterialPBRMetallicRoughness;
 
-  MaterialPBRMetallicRoughnessJsonHandler(
+  explicit MaterialPBRMetallicRoughnessJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::MaterialPBRMetallicRoughness* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyMaterialPBRMetallicRoughness(

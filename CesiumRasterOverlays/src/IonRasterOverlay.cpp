@@ -48,13 +48,16 @@ IonRasterOverlay::createTileProvider(
         endpoint.url,
         endpoint.key,
         endpoint.mapStyle,
-        endpoint.culture);
+        endpoint.culture,
+        this->getOptions());
   } else {
     pOverlay = new TileMapServiceRasterOverlay(
         this->getName(),
         endpoint.url,
         std::vector<CesiumAsync::IAssetAccessor::THeader>{
-            std::make_pair("Authorization", "Bearer " + endpoint.accessToken)});
+            std::make_pair("Authorization", "Bearer " + endpoint.accessToken)},
+        TileMapServiceRasterOverlayOptions(),
+        this->getOptions());
   }
 
   if (pCreditSystem) {

@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionModelMaxarMeshVariantsValueJsonHandler
@@ -17,13 +17,13 @@ class ExtensionModelMaxarMeshVariantsValueJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionModelMaxarMeshVariantsValue;
 
-  ExtensionModelMaxarMeshVariantsValueJsonHandler(
+  explicit ExtensionModelMaxarMeshVariantsValueJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionModelMaxarMeshVariantsValue* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyExtensionModelMaxarMeshVariantsValue(

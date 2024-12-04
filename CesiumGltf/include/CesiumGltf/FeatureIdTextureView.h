@@ -97,8 +97,7 @@ public:
    *
    * @param model The glTF in which to look for the feature ID texture's data.
    * @param featureIdTexture The feature ID texture to create a view for.
-   * @param applyKhrTextureTransformExtension Whether to automatically apply the
-   * `KHR_texture_transform` extension to the feature ID texture, if it exists.
+   * @param options The set of options to use for this `FeatureIdTextureView`.
    */
   FeatureIdTextureView(
       const Model& model,

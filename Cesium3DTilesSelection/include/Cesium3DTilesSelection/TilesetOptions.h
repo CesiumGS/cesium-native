@@ -259,7 +259,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * @brief Whether to keep tiles loaded during a transition period when
    * switching to a different LOD tile.
    *
-   * For each tile, TileContentLoadResult::lodTransitionFadePercentage will
+   * For each tile, {@link TileRenderContent::getLodTransitionFadePercentage} will
    * indicate to the client how faded to render the tile throughout the
    * transition. Tile fades can be used to mask LOD transitions and make them
    * appear less abrupt and jarring.
@@ -313,7 +313,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   TilesetContentOptions contentOptions;
 
   /**
-   * @brief Arbitrary data that will be passed to {@link prepareInLoadThread}.
+   * @brief Arbitrary data that will be passed to {@link IPrepareRendererResources::prepareInLoadThread}.
    *
    * This object is copied and given to tile preparation threads,
    * so it must be inexpensive to copy.

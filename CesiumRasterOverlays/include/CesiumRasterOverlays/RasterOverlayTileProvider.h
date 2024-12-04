@@ -43,7 +43,7 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   CesiumGeometry::Rectangle rectangle{};
 
   /**
-   * @brief The {@link Credit} objects that decribe the attributions that
+   * @brief The {@link CesiumUtility::Credit} objects that decribe the attributions that
    * are required when using the image.
    */
   std::vector<CesiumUtility::Credit> credits{};
@@ -61,6 +61,19 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    * the bounds of this image.
    */
   bool moreDetailAvailable = false;
+
+  /**
+   * @brief Returns the size of this `LoadedRasterOverlayImage` in bytes.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(LoadedRasterOverlayImage));
+    accum += int64_t(this->credits.capacity() * sizeof(CesiumUtility::Credit));
+    if (this->pImage) {
+      accum += this->pImage->getSizeBytes();
+    }
+    return accum;
+  }
 };
 
 /**
@@ -139,6 +152,7 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
@@ -154,7 +168,7 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
-   * @param credit The {@link Credit} for this tile provider, if it exists.
+   * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
    * @param pPrepareRendererResources The interface used to prepare raster
    * images for rendering.
    * @param pLogger The logger to which to send messages about the tile provider
@@ -188,8 +202,8 @@ public:
    * So until that real `RasterOverlayTileProvider` becomes available, we use
    * a placeholder. When {@link RasterOverlayTileProvider::getTile} is invoked
    * on a placeholder, it returns a {@link RasterOverlayTile} that is also
-   * a placeholder. And whenever we see a placeholder `RasterOverTile` in
-   * {@link Tile::update}, we check if the corresponding `RasterOverlay` is
+   * a placeholder. And whenever we see a placeholder `RasterOverlayTile` in
+   * {@link Cesium3DTilesSelection::RasterMappedTo3DTile::update}, we check if the corresponding `RasterOverlay` is
    * ready yet. Once it's ready, we remove the placeholder tile and replace
    * it with the real tiles.
    *
@@ -286,7 +300,7 @@ public:
    */
   uint32_t getNumberOfTilesLoading() const noexcept {
     CESIUM_ASSERT(this->_totalTilesCurrentlyLoading > -1);
-    return this->_totalTilesCurrentlyLoading;
+    return static_cast<uint32_t>(this->_totalTilesCurrentlyLoading);
   }
 
   /**
@@ -302,7 +316,7 @@ public:
   void removeTile(RasterOverlayTile* pTile) noexcept;
 
   /**
-   * @brief Get the per-TileProvider {@link Credit} if one exists.
+   * @brief Get the per-TileProvider {@link CesiumUtility::Credit} if one exists.
    */
   const std::optional<CesiumUtility::Credit>& getCredit() const noexcept {
     return _credit;
@@ -413,6 +427,6 @@ private:
   int32_t _throttledTilesCurrentlyLoading;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
-      "Raster Overlay Tile Loading Slot");
+      "Raster Overlay Tile Loading Slot")
 };
 } // namespace CesiumRasterOverlays

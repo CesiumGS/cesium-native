@@ -13,6 +13,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/mat4x4.hpp>
 
 #include <algorithm>
@@ -1528,7 +1529,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       }
 
       return input.asyncSystem.createResolvedFuture(
-          TileLoadResult::createFailedResult(nullptr));
+          TileLoadResult::createFailedResult(input.pAssetAccessor, nullptr));
     }
 
     virtual TileChildrenResult createTileChildren(

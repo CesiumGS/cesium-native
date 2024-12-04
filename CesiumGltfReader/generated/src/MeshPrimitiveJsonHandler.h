@@ -10,7 +10,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class MeshPrimitiveJsonHandler
@@ -18,11 +18,11 @@ class MeshPrimitiveJsonHandler
 public:
   using ValueType = CesiumGltf::MeshPrimitive;
 
-  MeshPrimitiveJsonHandler(
+  explicit MeshPrimitiveJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::MeshPrimitive* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyMeshPrimitive(

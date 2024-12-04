@@ -11,11 +11,11 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
 
-#include <gsl/span>
 #include <spdlog/fwd.h>
 
 #include <cstddef>
 #include <memory>
+#include <span>
 
 namespace Cesium3DTilesSelection {
 struct TileContentLoadInfo {

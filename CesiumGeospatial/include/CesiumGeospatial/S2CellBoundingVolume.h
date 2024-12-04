@@ -8,9 +8,9 @@
 #include <CesiumGeometry/Plane.h>
 
 #include <glm/vec3.hpp>
-#include <gsl/span>
 
 #include <array>
+#include <span>
 #include <string_view>
 
 namespace CesiumGeospatial {
@@ -60,7 +60,7 @@ public:
    *
    * @return An array of positions with a `size()` of 8.
    */
-  gsl::span<const glm::dvec3> getVertices() const noexcept;
+  std::span<const glm::dvec3> getVertices() const noexcept;
 
   /**
    * @brief Determines on which side of a plane the bounding volume is located.
@@ -93,7 +93,7 @@ public:
    *
    * @return An array of planes with a `size()` of 6.
    */
-  gsl::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
+  std::span<const CesiumGeometry::Plane> getBoundingPlanes() const noexcept;
 
   /**
    * @brief Computes the bounding begion that best fits this S2 cell volume.

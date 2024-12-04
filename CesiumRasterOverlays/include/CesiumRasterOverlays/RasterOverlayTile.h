@@ -25,9 +25,9 @@ class RasterOverlayTileProvider;
  * an associated image, which us used as an imagery overlay
  * for tile geometry. The connection between the imagery data
  * and the actual tile geometry is established via the
- * {@link RasterMappedTo3DTile} class, which combines a
+ * {@link Cesium3DTilesSelection::RasterMappedTo3DTile} class, which combines a
  * raster overlay tile with texture coordinates, to map the
- * image on the geometry of a {@link Tile}.
+ * image on the geometry of a {@link Cesium3DTilesSelection::Tile}.
  */
 class RasterOverlayTile final
     : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlayTile> {
@@ -71,10 +71,10 @@ public:
    * @brief Tile availability states.
    *
    * Values of this enumeration are returned by
-   * {@link RasterOverlayTile::update}, which in turn is called by
-   * {@link Tile::update}. These values are used to determine whether a leaf
-   * tile has been reached, but the associated raster tiles are not yet the
-   * most detailed ones that are available.
+   * {@link Cesium3DTilesSelection::RasterMappedTo3DTile::update}, which in turn is called by
+   * {@link Cesium3DTilesSelection::TilesetContentManager::updateDoneState}. These values are
+   * used to determine whether a leaf tile has been reached, but the associated
+   * raster tiles are not yet the most detailed ones that are available.
    */
   enum class MoreDetailAvailable {
 
@@ -178,7 +178,8 @@ public:
   LoadState getState() const noexcept { return this->_state; }
 
   /**
-   * @brief Returns the list of {@link Credit}s needed for this tile.
+   * @brief Returns the list of \ref CesiumUtility::Credit "Credit"s needed for
+   * this tile.
    */
   const std::vector<CesiumUtility::Credit>& getCredits() const noexcept {
     return this->_tileCredits;

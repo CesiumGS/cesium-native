@@ -1,3 +1,4 @@
+#include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
 
 using namespace CesiumAsync;
@@ -16,6 +17,14 @@ CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> createDefault() {
          const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
          const NetworkImageAssetDescriptor& key)
           -> Future<ResultPointer<ImageAsset>> {
+        return key.load(asyncSystem, pAssetAccessor);
+      }));
+
+  p->pExternalMetadataSchema.emplace(std::function(
+      [](const AsyncSystem& asyncSystem,
+         const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+         const NetworkSchemaAssetDescriptor& key)
+          -> Future<ResultPointer<Schema>> {
         return key.load(asyncSystem, pAssetAccessor);
       }));
 

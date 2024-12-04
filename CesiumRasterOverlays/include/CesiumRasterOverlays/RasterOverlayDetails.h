@@ -10,7 +10,7 @@
 
 namespace CesiumRasterOverlays {
 /**
- * @brief Holds details of the {@link TileRenderContent} that are useful
+ * @brief Holds details of the {@link Cesium3DTilesSelection::TileRenderContent} that are useful
  * for raster overlays.
  */
 struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
@@ -52,6 +52,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
    *
    * @param other The other instance of RasterOverlayDetails that will be merged
    * with this.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   void merge(
       const RasterOverlayDetails& other,

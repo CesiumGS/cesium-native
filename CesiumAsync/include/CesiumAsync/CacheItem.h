@@ -3,12 +3,11 @@
 #include "HttpHeaders.h"
 #include "Library.h"
 
-#include <gsl/span>
-
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <map>
+#include <span>
 #include <vector>
 
 namespace CesiumAsync {

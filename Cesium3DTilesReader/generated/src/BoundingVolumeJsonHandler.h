@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class BoundingVolumeJsonHandler
@@ -17,12 +17,12 @@ class BoundingVolumeJsonHandler
 public:
   using ValueType = Cesium3DTiles::BoundingVolume;
 
-  BoundingVolumeJsonHandler(
+  explicit BoundingVolumeJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, Cesium3DTiles::BoundingVolume* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyBoundingVolume(

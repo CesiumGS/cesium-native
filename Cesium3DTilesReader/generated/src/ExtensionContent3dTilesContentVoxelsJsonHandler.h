@@ -12,7 +12,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class ExtensionContent3dTilesContentVoxelsJsonHandler
@@ -21,22 +21,22 @@ class ExtensionContent3dTilesContentVoxelsJsonHandler
 public:
   using ValueType = Cesium3DTiles::ExtensionContent3dTilesContentVoxels;
 
-  static inline constexpr const char* ExtensionName = "3DTILES_content_voxels";
+  static constexpr const char* ExtensionName = "3DTILES_content_voxels";
 
-  ExtensionContent3dTilesContentVoxelsJsonHandler(
+  explicit ExtensionContent3dTilesContentVoxelsJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       Cesium3DTiles::ExtensionContent3dTilesContentVoxels* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionContent3dTilesContentVoxels(

@@ -141,7 +141,7 @@ std::optional<double> IntersectionTests::rayTriangleParametric(
   glm::dvec3 p = glm::cross(direction, edge1);
   double det = glm::dot(edge0, p);
   if (cullBackFaces) {
-    if (det < Math::Epsilon6)
+    if (det < Math::Epsilon8)
       return std::nullopt;
 
     glm::dvec3 tvec = origin - p0;
@@ -158,7 +158,7 @@ std::optional<double> IntersectionTests::rayTriangleParametric(
 
   } else {
 
-    if (glm::abs(det) < Math::Epsilon6)
+    if (glm::abs(det) < Math::Epsilon8)
       return std::nullopt;
 
     double invDet = 1.0 / det;

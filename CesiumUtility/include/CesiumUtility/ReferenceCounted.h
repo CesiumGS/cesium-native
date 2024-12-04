@@ -30,7 +30,7 @@ template <> class ThreadIdHolder<true> {};
  * {@link IntrusivePointer}.
  *
  * Consider using {@link ReferenceCountedThreadSafe} or
- * {@link ReferenceCountedNoThreadSafe} instead of using this class directly.
+ * {@link ReferenceCountedNonThreadSafe} instead of using this class directly.
  *
  * @tparam T The type that is _deriving_ from this class. For example, you
  * should declare your class as

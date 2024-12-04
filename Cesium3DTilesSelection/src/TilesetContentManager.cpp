@@ -223,7 +223,7 @@ void createQuadtreeSubdividedChildren(
   parent.createChildTiles(std::move(children));
 
   // populate children metadata
-  gsl::span<Tile> childrenView = parent.getChildren();
+  std::span<Tile> childrenView = parent.getChildren();
   Tile& sw = childrenView[0];
   Tile& se = childrenView[1];
   Tile& nw = childrenView[2];
@@ -571,7 +571,7 @@ postProcessContentInWorkerThread(
   }
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
-  auto pAssetAccessor = tileLoadInfo.pAssetAccessor;
+  auto pAssetAccessor = result.pAssetAccessor;
   return CesiumGltfReader::GltfReader::resolveExternalData(
              asyncSystem,
              baseUrl,
@@ -618,7 +618,9 @@ postProcessContentInWorkerThread(
         if (!gltfResult.model) {
           return tileLoadInfo.asyncSystem.createResolvedFuture(
               TileLoadResultAndRenderResources{
-                  TileLoadResult::createFailedResult(nullptr),
+                  TileLoadResult::createFailedResult(
+                      result.pAssetAccessor,
+                      nullptr),
                   nullptr});
         }
 
@@ -744,7 +746,7 @@ TilesetContentManager::TilesetContentManager(
               }
 
               // Parse Json response
-              gsl::span<const std::byte> tilesetJsonBinary = pResponse->data();
+              std::span<const std::byte> tilesetJsonBinary = pResponse->data();
               rapidjson::Document tilesetJson;
               tilesetJson.Parse(
                   reinterpret_cast<const char*>(tilesetJsonBinary.data()),

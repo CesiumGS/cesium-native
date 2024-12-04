@@ -7,10 +7,9 @@
 
 #include <CesiumUtility/Assert.h>
 
-#include <gsl/span>
-
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <string_view>
 #include <type_traits>
 
@@ -239,13 +238,13 @@ public:
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
-      gsl::span<const std::byte> values) noexcept
+      std::span<const std::byte> values) noexcept
       : PropertyView<ElementType>(classProperty, property),
         _values{values},
         _size{
@@ -273,9 +272,9 @@ public:
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
-      gsl::span<const std::byte> values,
-      gsl::span<const std::byte> arrayOffsets,
-      gsl::span<const std::byte> stringOffsets,
+      std::span<const std::byte> values,
+      std::span<const std::byte> arrayOffsets,
+      std::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
       PropertyComponentType stringOffsetType) noexcept
       : PropertyView<ElementType>(classProperty, property),
@@ -412,7 +411,7 @@ private:
     // Handle fixed-length arrays
     if (count > 0) {
       size_t arraySize = count * sizeof(T);
-      const gsl::span<const std::byte> values(
+      const std::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
       return PropertyArrayView<T>{values};
@@ -426,7 +425,7 @@ private:
     const size_t nextOffset =
         getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
         sizeof(T);
-    const gsl::span<const std::byte> values(
+    const std::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
     return PropertyArrayView<T>{values};
@@ -439,7 +438,7 @@ private:
     if (count > 0) {
       // Copy the corresponding string offsets to pass to the PropertyArrayView.
       const size_t arraySize = count * _stringOffsetTypeSize;
-      const gsl::span<const std::byte> stringOffsetValues(
+      const std::span<const std::byte> stringOffsetValues(
           _stringOffsets.data() + index * arraySize,
           arraySize + _stringOffsetTypeSize);
       return PropertyArrayView<std::string_view>(
@@ -455,7 +454,7 @@ private:
     const size_t nextArrayOffset =
         getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
     const size_t arraySize = nextArrayOffset - currentArrayOffset;
-    const gsl::span<const std::byte> stringOffsetValues(
+    const std::span<const std::byte> stringOffsetValues(
         _stringOffsets.data() + currentArrayOffset,
         arraySize + _arrayOffsetTypeSize);
     return PropertyArrayView<std::string_view>(
@@ -471,7 +470,7 @@ private:
     if (count > 0) {
       const size_t offsetBits = count * index;
       const size_t nextOffsetBits = count * (index + 1);
-      const gsl::span<const std::byte> buffer(
+      const std::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
       return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
@@ -483,20 +482,20 @@ private:
     const size_t nextOffset =
         getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
     const size_t totalBits = nextOffset - currentOffset;
-    const gsl::span<const std::byte> buffer(
+    const std::span<const std::byte> buffer(
         _values.data() + currentOffset / 8,
         (nextOffset / 8 - currentOffset / 8 + 1));
     return PropertyArrayView<bool>(buffer, currentOffset % 8, totalBits);
   }
 
-  gsl::span<const std::byte> _values;
+  std::span<const std::byte> _values;
   int64_t _size;
 
-  gsl::span<const std::byte> _arrayOffsets;
+  std::span<const std::byte> _arrayOffsets;
   PropertyComponentType _arrayOffsetType;
   int64_t _arrayOffsetTypeSize;
 
-  gsl::span<const std::byte> _stringOffsets;
+  std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
 };
@@ -591,13 +590,13 @@ public:
    * @param property The {@link PropertyTableProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param value The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
-      gsl::span<const std::byte> values) noexcept
+      std::span<const std::byte> values) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         _values{values},
         _size{
@@ -615,14 +614,14 @@ public:
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
-   * @param offsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
-      gsl::span<const std::byte> values,
-      gsl::span<const std::byte> arrayOffsets,
+      std::span<const std::byte> values,
+      std::span<const std::byte> arrayOffsets,
       PropertyComponentType arrayOffsetType) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         _values{values},
@@ -758,7 +757,7 @@ private:
     // Handle fixed-length arrays
     if (count > 0) {
       size_t arraySize = count * sizeof(T);
-      const gsl::span<const std::byte> values(
+      const std::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
       return PropertyArrayView<T>{values};
@@ -772,16 +771,16 @@ private:
     const size_t nextOffset =
         getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
         sizeof(T);
-    const gsl::span<const std::byte> values(
+    const std::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
     return PropertyArrayView<T>{values};
   }
 
-  gsl::span<const std::byte> _values;
+  std::span<const std::byte> _values;
   int64_t _size;
 
-  gsl::span<const std::byte> _arrayOffsets;
+  std::span<const std::byte> _arrayOffsets;
   PropertyComponentType _arrayOffsetType;
   int64_t _arrayOffsetTypeSize;
 };

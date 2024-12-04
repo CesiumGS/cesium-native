@@ -5,14 +5,13 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/SpanHelper.h>
 
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
 
 namespace CesiumGltf {
 static size_t getOffsetFromOffsetsBuffer(
     size_t index,
-    const gsl::span<const std::byte>& offsetBuffer,
+    const std::span<const std::byte>& offsetBuffer,
     PropertyComponentType offsetType) noexcept {
   switch (offsetType) {
   case PropertyComponentType::Uint8: {

@@ -36,12 +36,6 @@
     "license": ["MIT"]
   },
   {
-    "name": "GSL",
-    "url": "https://github.com/microsoft/GSL",
-    "version": "4.0.0",
-    "license": ["MIT"]
-  },
-  {
     "name": "KTX-Software",
     "url": "https://github.com/CesiumGS/KTX-Software",
     "version": "94764c270d43d90e4e4cedee6248753296f874b3",

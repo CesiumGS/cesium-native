@@ -168,13 +168,7 @@ validateArrayPropertyType(const ClassProperty& classProperty) {
 
 template <typename T>
 static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
-  try {
-    return jsonValue.getSafeNumber<T>();
-  } catch (const CesiumUtility::JsonValueNotRealValue& /*error*/) {
-    return std::nullopt;
-  } catch (const gsl::narrowing_error& /*error*/) {
-    return std::nullopt;
-  }
+  return jsonValue.getSafeNumber<T>();
 }
 
 template <typename VecType>
@@ -1482,7 +1476,7 @@ public:
     }
 
     return PropertyArrayView<ElementType>(
-        gsl::span<const std::byte>(_offset->data(), _offset->size()));
+        std::span<const std::byte>(_offset->data(), _offset->size()));
   }
 
   /**
@@ -1494,7 +1488,7 @@ public:
     }
 
     return PropertyArrayView<ElementType>(
-        gsl::span<const std::byte>(_scale->data(), _scale->size()));
+        std::span<const std::byte>(_scale->data(), _scale->size()));
   }
 
   /**
@@ -1506,7 +1500,7 @@ public:
     }
 
     return PropertyArrayView<ElementType>(
-        gsl::span<const std::byte>(_max->data(), _max->size()));
+        std::span<const std::byte>(_max->data(), _max->size()));
   }
 
   /**
@@ -1518,7 +1512,7 @@ public:
     }
 
     return PropertyArrayView<ElementType>(
-        gsl::span<const std::byte>(_min->data(), _min->size()));
+        std::span<const std::byte>(_min->data(), _min->size()));
   }
 
   /**
@@ -1535,7 +1529,7 @@ public:
     }
 
     return PropertyArrayView<ElementType>(
-        gsl::span<const std::byte>(_noData->data(), _noData->size()));
+        std::span<const std::byte>(_noData->data(), _noData->size()));
   }
 
   /**
@@ -1546,7 +1540,7 @@ public:
       return std::nullopt;
     }
 
-    return PropertyArrayView<ElementType>(gsl::span<const std::byte>(
+    return PropertyArrayView<ElementType>(std::span<const std::byte>(
         _defaultValue->data(),
         _defaultValue->size()));
   }
@@ -1878,7 +1872,7 @@ public:
     }
 
     return PropertyArrayView<NormalizedType>(
-        gsl::span<const std::byte>(_offset->data(), _offset->size()));
+        std::span<const std::byte>(_offset->data(), _offset->size()));
   }
 
   /**
@@ -1890,7 +1884,7 @@ public:
     }
 
     return PropertyArrayView<NormalizedType>(
-        gsl::span<const std::byte>(_scale->data(), _scale->size()));
+        std::span<const std::byte>(_scale->data(), _scale->size()));
   }
 
   /**
@@ -1902,7 +1896,7 @@ public:
     }
 
     return PropertyArrayView<NormalizedType>(
-        gsl::span<const std::byte>(_max->data(), _max->size()));
+        std::span<const std::byte>(_max->data(), _max->size()));
   }
 
   /**
@@ -1914,7 +1908,7 @@ public:
     }
 
     return PropertyArrayView<NormalizedType>(
-        gsl::span<const std::byte>(_min->data(), _min->size()));
+        std::span<const std::byte>(_min->data(), _min->size()));
   }
 
   /**
@@ -1931,7 +1925,7 @@ public:
     }
 
     return PropertyArrayView<ElementType>(
-        gsl::span<const std::byte>(_noData->data(), _noData->size()));
+        std::span<const std::byte>(_noData->data(), _noData->size()));
   }
 
   /**
@@ -1943,7 +1937,7 @@ public:
       return std::nullopt;
     }
 
-    return PropertyArrayView<NormalizedType>(gsl::span<const std::byte>(
+    return PropertyArrayView<NormalizedType>(std::span<const std::byte>(
         _defaultValue->data(),
         _defaultValue->size()));
   }
@@ -2225,7 +2219,7 @@ public:
   std::optional<PropertyArrayView<bool>> defaultValue() const noexcept {
     if (_size > 0) {
       return PropertyArrayView<bool>(
-          gsl::span<const std::byte>(
+          std::span<const std::byte>(
               _defaultValue.data(),
               _defaultValue.size()),
           /* bitOffset = */ 0,
@@ -2449,8 +2443,8 @@ public:
   std::optional<PropertyArrayView<std::string_view>> noData() const noexcept {
     if (_noData.size > 0) {
       return PropertyArrayView<std::string_view>(
-          gsl::span<const std::byte>(_noData.data.data(), _noData.data.size()),
-          gsl::span<const std::byte>(
+          std::span<const std::byte>(_noData.data.data(), _noData.data.size()),
+          std::span<const std::byte>(
               _noData.offsets.data(),
               _noData.offsets.size()),
           _noData.offsetType,
@@ -2467,10 +2461,10 @@ public:
   defaultValue() const noexcept {
     if (_defaultValue.size > 0) {
       return PropertyArrayView<std::string_view>(
-          gsl::span<const std::byte>(
+          std::span<const std::byte>(
               _defaultValue.data.data(),
               _defaultValue.data.size()),
-          gsl::span<const std::byte>(
+          std::span<const std::byte>(
               _defaultValue.offsets.data(),
               _defaultValue.offsets.size()),
           _defaultValue.offsetType,

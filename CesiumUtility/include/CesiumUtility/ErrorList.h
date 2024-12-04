@@ -59,7 +59,7 @@ struct CESIUMUTILITY_API ErrorList {
   /**
    * @brief Add a warning message
    *
-   * @param error The warning message to be added.
+   * @param warning The warning message to be added.
    */
   template <typename WarningStr> void emplaceWarning(WarningStr&& warning) {
     warnings.emplace_back(std::forward<WarningStr>(warning));

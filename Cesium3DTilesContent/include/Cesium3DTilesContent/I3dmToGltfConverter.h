@@ -5,16 +5,15 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 
-#include <gsl/span>
-
 #include <optional>
+#include <span>
 
 namespace Cesium3DTilesContent {
 struct AssetFetcher;
 
 struct I3dmToGltfConverter {
   static CesiumAsync::Future<GltfConverterResult> convert(
-      const gsl::span<const std::byte>& instancesBinary,
+      const std::span<const std::byte>& instancesBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
       const AssetFetcher& assetFetcher);
 };

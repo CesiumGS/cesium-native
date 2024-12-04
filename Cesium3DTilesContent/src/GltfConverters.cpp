@@ -34,14 +34,14 @@ GltfConverters::getConverterByFileExtension(const std::string& filePath) {
 }
 
 GltfConverters::ConverterFunction
-GltfConverters::getConverterByMagic(const gsl::span<const std::byte>& content) {
+GltfConverters::getConverterByMagic(const std::span<const std::byte>& content) {
   std::string magic;
   return getConverterByMagic(content, magic);
 }
 
 CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
     const std::string& filePath,
-    const gsl::span<const std::byte>& content,
+    const std::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options,
     const AssetFetcher& assetFetcher) {
   std::string magic;
@@ -68,7 +68,7 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
 }
 
 CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
-    const gsl::span<const std::byte>& content,
+    const std::span<const std::byte>& content,
     const CesiumGltfReader::GltfReaderOptions& options,
     const AssetFetcher& assetFetcher) {
   std::string magic;
@@ -122,7 +122,7 @@ GltfConverters::ConverterFunction GltfConverters::getConverterByFileExtension(
 }
 
 GltfConverters::ConverterFunction GltfConverters::getConverterByMagic(
-    const gsl::span<const std::byte>& content,
+    const std::span<const std::byte>& content,
     std::string& magic) {
   if (content.size() >= 4) {
     magic = std::string(reinterpret_cast<const char*>(content.data()), 4);
@@ -162,7 +162,7 @@ AssetFetcher::get(const std::string& relativeUrl) const {
               return asyncSystem.createResolvedFuture(
                   std::move(assetFetcherResult));
             }
-            gsl::span<const std::byte> asset = pResponse->data();
+            std::span<const std::byte> asset = pResponse->data();
             std::copy(
                 asset.begin(),
                 asset.end(),

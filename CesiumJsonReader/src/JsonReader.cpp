@@ -121,7 +121,7 @@ void JsonReader::FinalJsonHandler::setInputStream(
 }
 
 /*static*/ void JsonReader::internalRead(
-    const gsl::span<const std::byte>& data,
+    const std::span<const std::byte>& data,
     IJsonHandler& handler,
     FinalJsonHandler& finalHandler,
     std::vector<std::string>& errors,

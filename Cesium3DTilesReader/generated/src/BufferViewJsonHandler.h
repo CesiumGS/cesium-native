@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class BufferViewJsonHandler
@@ -17,11 +17,11 @@ class BufferViewJsonHandler
 public:
   using ValueType = Cesium3DTiles::BufferView;
 
-  BufferViewJsonHandler(
+  explicit BufferViewJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, Cesium3DTiles::BufferView* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyBufferView(

@@ -183,7 +183,7 @@ Future<GetXmlDocumentResult> getXmlDocument(
                       "No response received from Tile Map Service."}));
             }
 
-            const gsl::span<const std::byte> data = pResponse->data();
+            const std::span<const std::byte> data = pResponse->data();
 
             std::unique_ptr<tinyxml2::XMLDocument> pDoc =
                 std::make_unique<tinyxml2::XMLDocument>(
@@ -280,11 +280,12 @@ TileMapServiceRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const std::optional<Credit> credit =
-      this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
-                                  this->_options.credit.value(),
-                                  pOwner->getOptions().showCreditsOnScreen))
-                            : std::nullopt;
+  std::optional<Credit> credit = std::nullopt;
+  if (pCreditSystem && this->_options.credit) {
+    credit = pCreditSystem->createCredit(
+        *this->_options.credit,
+        pOwner->getOptions().showCreditsOnScreen);
+  }
 
   return getXmlDocument(asyncSystem, pAssetAccessor, xmlUrl, this->_headers)
       .thenInMainThread(
@@ -343,7 +344,7 @@ TileMapServiceRasterOverlay::createTileProvider(
             }
 
             const CesiumGeospatial::Ellipsoid& ellipsoid =
-                options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84);
+                pOwner->getOptions().ellipsoid;
 
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;

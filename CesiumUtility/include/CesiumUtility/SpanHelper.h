@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gsl/span>
+#include <span>
 
 namespace CesiumUtility {
 /**
@@ -10,8 +10,8 @@ namespace CesiumUtility {
  * carefully
  */
 template <typename To, typename From>
-gsl::span<To> reintepretCastSpan(const gsl::span<From>& from) noexcept {
-  return gsl::span<To>(
+std::span<To> reintepretCastSpan(const std::span<From>& from) noexcept {
+  return std::span<To>(
       reinterpret_cast<To*>(from.data()),
       from.size() * sizeof(From) / sizeof(To));
 }

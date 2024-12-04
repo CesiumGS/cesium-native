@@ -8,6 +8,7 @@
 #include <CesiumNativeTests/waitForFuture.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -44,7 +45,7 @@ uint64_t calculateTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels) {
 
 void markTileAvailableForQuadtree(
     const CesiumGeometry::QuadtreeTileID& tileID,
-    gsl::span<std::byte> available) {
+    std::span<std::byte> available) {
   // This function assumes that subtree tile ID is (0, 0, 0).
   // TileID must be within the subtree
   uint64_t numOfTilesFromRootToParentLevel =
@@ -59,7 +60,7 @@ void markTileAvailableForQuadtree(
 
 void markSubtreeAvailableForQuadtree(
     const CesiumGeometry::QuadtreeTileID& tileID,
-    gsl::span<std::byte> available) {
+    std::span<std::byte> available) {
   uint64_t availabilityBitIndex =
       libmorton::morton2D_64_encode(tileID.x, tileID.y);
   const uint64_t byteIndex = availabilityBitIndex / 8;
@@ -80,13 +81,13 @@ SubtreeBuffers createSubtreeBuffers(
   std::vector<std::byte> availabilityBuffer(
       bufferSize + bufferSize + subtreeBufferSize);
 
-  gsl::span<std::byte> contentAvailabilityBuffer(
+  std::span<std::byte> contentAvailabilityBuffer(
       availabilityBuffer.data(),
       bufferSize);
-  gsl::span<std::byte> tileAvailabilityBuffer(
+  std::span<std::byte> tileAvailabilityBuffer(
       availabilityBuffer.data() + bufferSize,
       bufferSize);
-  gsl::span<std::byte> subtreeAvailabilityBuffer(
+  std::span<std::byte> subtreeAvailabilityBuffer(
       availabilityBuffer.data() + bufferSize + bufferSize,
       subtreeBufferSize);
   for (const auto& tileID : tileAvailabilities) {

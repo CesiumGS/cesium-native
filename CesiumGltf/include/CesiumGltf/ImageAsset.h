@@ -125,7 +125,8 @@ struct CESIUMGLTF_API ImageAsset final
    * Otherwise, the size of the {@link pixelData} array is returned.
    */
   int64_t getSizeBytes() const {
-    return this->sizeBytes >= 0 ? this->sizeBytes : this->pixelData.size();
+    return this->sizeBytes >= 0 ? this->sizeBytes
+                                : static_cast<int64_t>(this->pixelData.size());
   }
 };
 } // namespace CesiumGltf

@@ -7,9 +7,9 @@
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 
 #include <glm/vec2.hpp>
-#include <gsl/span>
 
 #include <any>
+#include <span>
 
 namespace CesiumAsync {
 class AsyncSystem;
@@ -45,8 +45,7 @@ struct TileLoadResultAndRenderResources {
  * data of a {@link Tile} so that it can be used for rendering.
  *
  * Instances of this class are associated with a {@link Tileset}, in the
- * {@link TilesetExternals} structure that can be obtained
- * via {@link Tileset::getExternals}.
+ * {@link TilesetExternals} structure that is passed to the constructor.
  */
 class CESIUM3DTILESSELECTION_API IPrepareRendererResources
     : public CesiumRasterOverlays::IPrepareRasterOverlayRendererResources {

@@ -10,7 +10,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class MetadataEntityJsonHandler
@@ -18,12 +18,12 @@ class MetadataEntityJsonHandler
 public:
   using ValueType = Cesium3DTiles::MetadataEntity;
 
-  MetadataEntityJsonHandler(
+  explicit MetadataEntityJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, Cesium3DTiles::MetadataEntity* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyMetadataEntity(

@@ -10,7 +10,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler
@@ -18,13 +18,13 @@ class ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue;
 
-  ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler(
+  explicit ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyExtensionNodeMaxarMeshVariantsMappingsValue(

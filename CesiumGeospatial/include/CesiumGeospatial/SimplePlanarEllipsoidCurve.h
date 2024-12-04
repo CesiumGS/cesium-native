@@ -33,7 +33,7 @@ public:
    * @returns An optional type containing a {@link SimplePlanarEllipsoidCurve}
    * object representing the generated path, if possible. If it wasn't possible
    * to scale the input coordinates to geodetic surface coordinates on a WGS84
-   * ellipsoid, this will return {@link std::nullopt} instead.
+   * ellipsoid, this will return `std::nullopt` instead.
    */
   static std::optional<SimplePlanarEllipsoidCurve>
   fromEarthCenteredEarthFixedCoordinates(
@@ -48,15 +48,15 @@ public:
    *
    * @param ellipsoid The ellipsoid that these cartographic coordinates are
    * from.
-   * @param sourceLlh The position that the path will begin at in Longitude,
+   * @param source The position that the path will begin at in Longitude,
    * Latitude, and Height.
-   * @param destinationLlh The position that the path will end at in Longitude,
+   * @param destination The position that the path will end at in Longitude,
    * Latitude, and Height.
    *
    * @returns An optional type containing a {@link SimplePlanarEllipsoidCurve}
    * object representing the generated path, if possible. If it wasn't possible
    * to scale the input coordinates to geodetic surface coordinates on a WGS84
-   * ellipsoid, this will return {@link std::nullopt} instead.
+   * ellipsoid, this will return std::nullopt instead.
    */
   static std::optional<SimplePlanarEllipsoidCurve> fromLongitudeLatitudeHeight(
       const Ellipsoid& ellipsoid,

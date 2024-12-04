@@ -70,7 +70,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const gsl::span<const std::byte>& data) const noexcept {
+    const std::span<const std::byte>& data) const noexcept {
   if (data.size() < 4) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
     result.errors.emplace_back(fmt::format(
@@ -113,7 +113,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const gsl::span<const std::byte>& data) const noexcept {
+    const std::span<const std::byte>& data) const noexcept {
   if (data.size() < sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
     result.errors.emplace_back(fmt::format(
@@ -148,7 +148,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
       data.subspan(sizeof(SubtreeHeader), header->jsonByteLength));
 
   if (result.value) {
-    gsl::span<const std::byte> binaryChunk = data.subspan(
+    std::span<const std::byte> binaryChunk = data.subspan(
         sizeof(SubtreeHeader) + header->jsonByteLength,
         header->binaryByteLength);
 
@@ -200,7 +200,7 @@ CesiumAsync::Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadJson(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const std::string& url,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    const gsl::span<const std::byte>& data) const noexcept {
+    const std::span<const std::byte>& data) const noexcept {
   ReadJsonResult<Subtree> result = this->_reader.readFromJson(data);
   return postprocess(
       asyncSystem,
@@ -238,7 +238,7 @@ CesiumAsync::Future<RequestedSubtreeBuffer> requestBuffer(
               return RequestedSubtreeBuffer{bufferIdx, {}};
             }
 
-            const gsl::span<const std::byte>& data = pResponse->data();
+            const std::span<const std::byte>& data = pResponse->data();
             return RequestedSubtreeBuffer{
                 bufferIdx,
                 std::vector<std::byte>(data.begin(), data.end())};

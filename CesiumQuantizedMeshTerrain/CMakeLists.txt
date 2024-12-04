@@ -47,7 +47,6 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )

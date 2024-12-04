@@ -1,20 +1,14 @@
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltfContent/ImageManipulation.h>
+#include <CesiumGltfReader/ImageDecoder.h>
 
 #include <cstring>
-
-namespace Cesium {
-// Use STB resize in our own namespace to avoid conflicts from other libs
-#define STBIRDEF
-#include <stb_image_resize.h>
-#undef STBIRDEF
-} // namespace Cesium
-
-using namespace Cesium;
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
+
+using namespace CesiumGltfReader;
 
 namespace CesiumGltfContent {
 
@@ -108,12 +102,12 @@ bool ImageManipulation::blitImage(
     }
 
     // Use STB to do the copy / scale
-    stbir_resize_uint8(
-        reinterpret_cast<const unsigned char*>(pSource),
+    ImageDecoder::unsafeResize(
+        pSource,
         sourcePixels.width,
         sourcePixels.height,
         int(bytesPerSourceRow),
-        reinterpret_cast<unsigned char*>(pTarget),
+        pTarget,
         targetPixels.width,
         targetPixels.height,
         int(bytesPerTargetRow),

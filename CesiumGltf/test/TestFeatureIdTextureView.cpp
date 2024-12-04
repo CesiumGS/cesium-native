@@ -5,11 +5,12 @@
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
-#include <gsl/span>
+#include <catch2/catch_test_macros.hpp>
 
 #include <climits>
 #include <cstddef>
 #include <cstring>
+#include <span>
 #include <vector>
 
 using namespace CesiumGltf;

@@ -28,8 +28,8 @@ public:
     return this->mockHeaders;
   }
 
-  virtual gsl::span<const std::byte> data() const override {
-    return gsl::span<const std::byte>(mockData.data(), mockData.size());
+  virtual std::span<const std::byte> data() const override {
+    return std::span<const std::byte>(mockData.data(), mockData.size());
   }
 
   uint16_t mockStatusCode;

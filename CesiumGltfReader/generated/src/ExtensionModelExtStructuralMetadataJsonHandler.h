@@ -14,7 +14,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionModelExtStructuralMetadataJsonHandler
@@ -23,22 +23,22 @@ class ExtensionModelExtStructuralMetadataJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
 
-  static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
+  static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
-  ExtensionModelExtStructuralMetadataJsonHandler(
+  explicit ExtensionModelExtStructuralMetadataJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionModelExtStructuralMetadata* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionModelExtStructuralMetadata(

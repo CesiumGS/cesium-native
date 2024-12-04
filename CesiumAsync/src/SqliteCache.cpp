@@ -462,7 +462,7 @@ bool SqliteCache::storeEntry(
     const HttpHeaders& requestHeaders,
     uint16_t statusCode,
     const HttpHeaders& responseHeaders,
-    const gsl::span<const std::byte>& responseData) {
+    const std::span<const std::byte>& responseData) {
   CESIUM_TRACE("SqliteCache::storeEntry");
   std::lock_guard<std::mutex> guard(this->_pImpl->_mutex);
 

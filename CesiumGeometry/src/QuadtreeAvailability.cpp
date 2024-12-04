@@ -149,7 +149,7 @@ uint8_t QuadtreeAvailability::computeAvailability(
       uint8_t bitIndex = static_cast<uint8_t>(childSubtreeMortonIndex & 7);
       uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
-      gsl::span<const std::byte> clippedSubtreeAvailability =
+      std::span<const std::byte> clippedSubtreeAvailability =
           subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
       uint8_t availabilityByte =
           (uint8_t)subtreeAvailabilityAccessor[byteIndex];
@@ -255,7 +255,7 @@ bool QuadtreeAvailability::addSubtree(
       uint8_t bitIndex = static_cast<uint8_t>(childSubtreeMortonIndex & 7);
       uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
-      gsl::span<const std::byte> clippedSubtreeAvailability =
+      std::span<const std::byte> clippedSubtreeAvailability =
           subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
       uint8_t availabilityByte =
           (uint8_t)subtreeAvailabilityAccessor[byteIndex];
@@ -429,7 +429,7 @@ AvailabilityNode* QuadtreeAvailability::addNode(
     uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
     uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
-    gsl::span<const std::byte> clippedSubtreeAvailability =
+    std::span<const std::byte> clippedSubtreeAvailability =
         subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
     uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
 
@@ -499,7 +499,7 @@ std::optional<uint32_t> QuadtreeAvailability::findChildNodeIndex(
     uint8_t bitIndex = static_cast<uint8_t>(mortonIndex & 7);
     uint8_t bitMask = static_cast<uint8_t>(1 << bitIndex);
 
-    gsl::span<const std::byte> clippedSubtreeAvailability =
+    std::span<const std::byte> clippedSubtreeAvailability =
         subtreeAvailabilityAccessor.getBufferAccessor().subspan(0, byteIndex);
     uint8_t availabilityByte = (uint8_t)subtreeAvailabilityAccessor[byteIndex];
 
