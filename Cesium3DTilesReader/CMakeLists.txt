@@ -41,9 +41,10 @@ target_sources(
         ${CESIUM_3DTILES_READER_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    Cesium3DTilesReader
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        Cesium3DTilesReader
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
@@ -56,5 +57,4 @@ target_link_libraries(Cesium3DTilesReader
         Cesium3DTiles
         CesiumAsync
         CesiumJsonReader
-        Microsoft.GSL::GSL
 )

@@ -11,7 +11,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionExtPrimitiveVoxelsJsonHandler
@@ -20,22 +20,22 @@ class ExtensionExtPrimitiveVoxelsJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionExtPrimitiveVoxels;
 
-  static inline constexpr const char* ExtensionName = "EXT_primitive_voxels";
+  static constexpr const char* ExtensionName = "EXT_primitive_voxels";
 
-  ExtensionExtPrimitiveVoxelsJsonHandler(
+  explicit ExtensionExtPrimitiveVoxelsJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionExtPrimitiveVoxels* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionExtPrimitiveVoxels(

@@ -9,10 +9,11 @@
 #include "CesiumGeometry/TileAvailabilityFlags.h"
 
 #include <catch2/catch.hpp>
-#include <gsl/span>
+#include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
 #include <memory>
+#include <span>
 #include <vector>
 
 using namespace CesiumGeometry;
@@ -36,7 +37,7 @@ TEST_CASE("Test AvailabilityUtilities") {
     // Each byte is 0xFC which has 6 ones.
     // This means there are 6 x 64 = 384 ones total in the buffer.
     uint32_t onesInBuffer = AvailabilityUtilities::countOnesInBuffer(
-        gsl::span<std::byte>(&buffer[0], 64));
+        std::span<std::byte>(&buffer[0], 64));
     REQUIRE(onesInBuffer == 384U);
   }
 }

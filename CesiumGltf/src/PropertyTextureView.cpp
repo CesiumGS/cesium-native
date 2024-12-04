@@ -80,14 +80,14 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
     return PropertyTexturePropertyViewStatus::ErrorInvalidImage;
   }
 
-  const ImageCesium& image =
-      _pModel->images[static_cast<size_t>(imageIndex)].cesium;
+  const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
+      _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
 
-  if (image.width < 1 || image.height < 1) {
+  if (!pImage || pImage->width < 1 || pImage->height < 1) {
     return PropertyTexturePropertyViewStatus::ErrorEmptyImage;
   }
 
-  if (image.bytesPerChannel > 1) {
+  if (pImage->bytesPerChannel > 1) {
     return PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
   }
 
@@ -96,7 +96,7 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
 
 PropertyViewStatusType PropertyTextureView::checkChannels(
     const std::vector<int64_t>& channels,
-    const ImageCesium& image) const noexcept {
+    const ImageAsset& image) const noexcept {
   if (channels.size() <= 0 || channels.size() > 4) {
     return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
   }

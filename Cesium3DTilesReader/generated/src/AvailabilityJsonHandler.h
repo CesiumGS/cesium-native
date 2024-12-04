@@ -8,7 +8,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class AvailabilityJsonHandler
@@ -16,12 +16,12 @@ class AvailabilityJsonHandler
 public:
   using ValueType = Cesium3DTiles::Availability;
 
-  AvailabilityJsonHandler(
+  explicit AvailabilityJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, Cesium3DTiles::Availability* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyAvailability(

@@ -94,6 +94,8 @@ public:
    * @param triangleVertA The first vertex of the triangle.
    * @param triangleVertB The second vertex of the triangle.
    * @param triangleVertC The third vertex of the triangle.
+   * @param barycentricCoordinates The barycentric coordinates for the point, if
+   * the point is inside the triangle.
    * @return Whether the point is within the triangle.
    */
   static bool pointInTriangle(

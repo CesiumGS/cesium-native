@@ -17,10 +17,11 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/vec3.hpp>
-#include <gsl/span>
 
 #include <algorithm>
+#include <array>
 #include <charconv>
+#include <span>
 
 using namespace CesiumUtility;
 
@@ -634,7 +635,7 @@ void Model::forEachPrimitiveInScene(
 namespace {
 template <typename TIndex>
 void addTriangleNormalToVertexNormals(
-    const gsl::span<glm::vec3>& normals,
+    const std::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     TIndex tIndex0,
     TIndex tIndex1,
@@ -663,7 +664,7 @@ void addTriangleNormalToVertexNormals(
 template <typename TIndex, typename GetIndex>
 bool accumulateNormals(
     int32_t meshPrimitiveMode,
-    const gsl::span<glm::vec3>& normals,
+    const std::span<glm::vec3>& normals,
     const AccessorView<glm::vec3>& positionView,
     int64_t numIndices,
     GetIndex getIndex) {
@@ -749,7 +750,7 @@ void generateSmoothNormals(
   const size_t normalBufferSize = count * normalBufferStride;
 
   std::vector<std::byte> normalByteBuffer(normalBufferSize);
-  gsl::span<glm::vec3> normals(
+  std::span<glm::vec3> normals(
       reinterpret_cast<glm::vec3*>(normalByteBuffer.data()),
       count);
 

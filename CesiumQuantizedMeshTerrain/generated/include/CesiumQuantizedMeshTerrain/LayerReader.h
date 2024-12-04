@@ -7,14 +7,14 @@
 #include <CesiumQuantizedMeshTerrain/Layer.h>
 #include <CesiumQuantizedMeshTerrain/Library.h>
 
-#include <gsl/span>
 #include <rapidjson/fwd.h>
 
+#include <span>
 #include <vector>
 
 namespace CesiumQuantizedMeshTerrain {
 struct Layer;
-}
+} // namespace CesiumQuantizedMeshTerrain
 
 namespace CesiumQuantizedMeshTerrain {
 
@@ -45,7 +45,7 @@ public:
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumQuantizedMeshTerrain::Layer>
-  readFromJson(const gsl::span<const std::byte>& data) const;
+  readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of Layer from a rapidJson::Value.

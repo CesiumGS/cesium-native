@@ -11,6 +11,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/sinks/ringbuffer_sink.h>
 #include <spdlog/spdlog.h>
@@ -169,14 +170,14 @@ static void createTestForNonArrayJson(
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema> schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -245,14 +246,14 @@ static void createTestForNonArrayJson(
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema> schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -325,14 +326,14 @@ static void createTestForArrayJson(
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
   REQUIRE(schema->classes.find("default") != schema->classes.end());
 
@@ -591,7 +592,7 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(metadata);
 
-  std::optional<Schema> schema = metadata->schema;
+  CesiumUtility::IntrusivePointer<Schema> schema = metadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -1258,7 +1259,7 @@ TEST_CASE("Upgrade nested JSON metadata to string") {
       result.model->getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -1343,14 +1344,14 @@ TEST_CASE("Upgrade JSON booleans to binary") {
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableJson,
       batchTableJson,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       model);
 
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   REQUIRE(pMetadata);
 
-  const std::optional<Schema>& schema = pMetadata->schema;
+  const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   REQUIRE(schema);
 
   const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -1945,14 +1946,14 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
     auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
         featureTableJson,
         batchTableJson,
-        gsl::span<const std::byte>(),
+        std::span<const std::byte>(),
         model);
 
     const ExtensionModelExtStructuralMetadata* pMetadata =
         model.getExtension<ExtensionModelExtStructuralMetadata>();
     REQUIRE(pMetadata);
 
-    const std::optional<Schema> schema = pMetadata->schema;
+    const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
     REQUIRE(schema);
 
     const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -2031,14 +2032,14 @@ TEST_CASE("Defaults to string if no sentinel values are available") {
     auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
         featureTableJson,
         batchTableJson,
-        gsl::span<const std::byte>(),
+        std::span<const std::byte>(),
         model);
 
     const ExtensionModelExtStructuralMetadata* pMetadata =
         model.getExtension<ExtensionModelExtStructuralMetadata>();
     REQUIRE(pMetadata);
 
-    const std::optional<Schema> schema = pMetadata->schema;
+    const CesiumUtility::IntrusivePointer<Schema> schema = pMetadata->schema;
     REQUIRE(schema);
 
     const std::unordered_map<std::string, Class>& classes = schema->classes;
@@ -2279,7 +2280,7 @@ TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   ExtensionModelExtStructuralMetadata* pExtension =
@@ -2427,7 +2428,7 @@ TEST_CASE("Omits value-less properties when converting "
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   ExtensionModelExtStructuralMetadata* pExtension =
@@ -2524,7 +2525,7 @@ TEST_CASE(
   BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   ExtensionModelExtStructuralMetadata* pExtension =
@@ -2724,7 +2725,7 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts is okay if all "
   BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   // There should not be any log messages about parentCounts, since they're
@@ -2816,7 +2817,7 @@ TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts values != 1 is "
   auto errors = BatchTableToGltfStructuralMetadata::convertFromB3dm(
       featureTableParsed,
       batchTableParsed,
-      gsl::span<const std::byte>(),
+      std::span<const std::byte>(),
       gltf);
 
   // There should be a log message about parentCounts, and no properties.

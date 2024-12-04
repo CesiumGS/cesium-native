@@ -898,7 +898,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
 
   writer.EndObject();
 
-  const gsl::span<const std::byte> tokenBytes(
+  const std::span<const std::byte> tokenBytes(
       reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
       tokenBuffer.GetSize());
   return this->_pAssetAccessor
@@ -987,7 +987,7 @@ Future<Response<NoValue>> Connection::modifyToken(
 
   writer.EndObject();
 
-  const gsl::span<const std::byte> tokenBytes(
+  const std::span<const std::byte> tokenBytes(
       reinterpret_cast<const std::byte*>(tokenBuffer.GetString()),
       tokenBuffer.GetSize());
 
@@ -1097,7 +1097,7 @@ Connection::getIdFromToken(const std::string& token) {
   writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
   writer.EndObject();
 
-  const gsl::span<const std::byte> payload(
+  const std::span<const std::byte> payload(
       reinterpret_cast<const std::byte*>(postBuffer.GetString()),
       postBuffer.GetSize());
 

@@ -13,6 +13,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
 
@@ -204,7 +205,7 @@ TEST_CASE("Test implicit octree loader") {
 namespace {
 
 const Tile&
-findTile(const gsl::span<const Tile>& children, const OctreeTileID& tileID) {
+findTile(const std::span<const Tile>& children, const OctreeTileID& tileID) {
   auto it = std::find_if(
       children.begin(),
       children.end(),
@@ -220,7 +221,7 @@ findTile(const gsl::span<const Tile>& children, const OctreeTileID& tileID) {
 
 const Tile&
 findTile(const std::vector<Tile>& children, const OctreeTileID& tileID) {
-  return findTile(gsl::span<const Tile>(children), tileID);
+  return findTile(std::span<const Tile>(children), tileID);
 }
 
 } // namespace

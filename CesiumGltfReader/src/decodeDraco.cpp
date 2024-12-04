@@ -58,7 +58,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     return nullptr;
   }
 
-  const gsl::span<const std::byte> data(
+  const std::span<const std::byte> data(
       buffer.cesium.data.data() + bufferView.byteOffset,
       static_cast<uint64_t>(bufferView.byteLength));
 

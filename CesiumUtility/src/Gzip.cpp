@@ -12,14 +12,14 @@ namespace {
 constexpr unsigned int ChunkSize = 65536;
 }
 
-bool isGzip(const gsl::span<const std::byte>& data) {
+bool isGzip(const std::span<const std::byte>& data) {
   if (data.size() < 3) {
     return false;
   }
   return data[0] == std::byte{31} && data[1] == std::byte{139};
 }
 
-bool gzip(const gsl::span<const std::byte>& data, std::vector<std::byte>& out) {
+bool gzip(const std::span<const std::byte>& data, std::vector<std::byte>& out) {
   int ret;
   unsigned int index = 0;
   zng_stream strm;
@@ -63,7 +63,7 @@ bool gzip(const gsl::span<const std::byte>& data, std::vector<std::byte>& out) {
 }
 
 bool gunzip(
-    const gsl::span<const std::byte>& data,
+    const std::span<const std::byte>& data,
     std::vector<std::byte>& out) {
   int ret;
   unsigned int index = 0;

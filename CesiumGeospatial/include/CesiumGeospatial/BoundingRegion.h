@@ -124,6 +124,7 @@ public:
    * @brief Computes the union of this bounding region with another.
    *
    * @param other The other bounding region.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return The union.
    */
   BoundingRegion computeUnion(

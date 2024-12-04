@@ -96,8 +96,6 @@ public:
    * all cultures are supported. See
    * http://msdn.microsoft.com/en-us/library/hh441729.aspx for information on
    * the supported cultures.
-   * @param ellipsoid The ellipsoid. Default value:
-   * {@link CesiumGeospatial::Ellipsoid::WGS84}.
    * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */
   BingMapsRasterOverlay(
@@ -106,8 +104,6 @@ public:
       const std::string& key,
       const std::string& mapStyle = BingMapsStyle::AERIAL,
       const std::string& culture = "",
-      const CesiumGeospatial::Ellipsoid& ellipsoid =
-          CesiumGeospatial::Ellipsoid::WGS84,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~BingMapsRasterOverlay() override;
 
@@ -128,7 +124,6 @@ private:
   std::string _key;
   std::string _mapStyle;
   std::string _culture;
-  CesiumGeospatial::Ellipsoid _ellipsoid;
 };
 
 } // namespace CesiumRasterOverlays

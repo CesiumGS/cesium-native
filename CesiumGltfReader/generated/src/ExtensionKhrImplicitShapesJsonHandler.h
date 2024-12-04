@@ -10,7 +10,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionKhrImplicitShapesJsonHandler
@@ -19,22 +19,22 @@ class ExtensionKhrImplicitShapesJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionKhrImplicitShapes;
 
-  static inline constexpr const char* ExtensionName = "KHR_implicit_shapes";
+  static constexpr const char* ExtensionName = "KHR_implicit_shapes";
 
-  ExtensionKhrImplicitShapesJsonHandler(
+  explicit ExtensionKhrImplicitShapesJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionKhrImplicitShapes* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionKhrImplicitShapes(

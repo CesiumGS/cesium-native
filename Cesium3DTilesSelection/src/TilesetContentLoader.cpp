@@ -19,6 +19,7 @@ TileLoadInput::TileLoadInput(
       ellipsoid(ellipsoid_) {}
 
 TileLoadResult TileLoadResult::createFailedResult(
+    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
   return TileLoadResult{
       TileUnknownContent{},
@@ -26,6 +27,7 @@ TileLoadResult TileLoadResult::createFailedResult(
       std::nullopt,
       std::nullopt,
       std::nullopt,
+      std::move(pAssetAccessor),
       std::move(pCompletedRequest),
       {},
       TileLoadResultState::Failed,
@@ -33,6 +35,7 @@ TileLoadResult TileLoadResult::createFailedResult(
 }
 
 TileLoadResult TileLoadResult::createRetryLaterResult(
+    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {
   return TileLoadResult{
       TileUnknownContent{},
@@ -40,6 +43,7 @@ TileLoadResult TileLoadResult::createRetryLaterResult(
       std::nullopt,
       std::nullopt,
       std::nullopt,
+      std::move(pAssetAccessor),
       std::move(pCompletedRequest),
       {},
       TileLoadResultState::RetryLater,

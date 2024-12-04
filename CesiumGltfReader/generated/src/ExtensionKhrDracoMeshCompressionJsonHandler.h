@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionKhrDracoMeshCompressionJsonHandler
@@ -18,23 +18,22 @@ class ExtensionKhrDracoMeshCompressionJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionKhrDracoMeshCompression;
 
-  static inline constexpr const char* ExtensionName =
-      "KHR_draco_mesh_compression";
+  static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
 
-  ExtensionKhrDracoMeshCompressionJsonHandler(
+  explicit ExtensionKhrDracoMeshCompressionJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionKhrDracoMeshCompression* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionKhrDracoMeshCompression(

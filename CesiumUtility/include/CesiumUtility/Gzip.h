@@ -1,6 +1,5 @@
 #pragma once
-#include <gsl/span>
-
+#include <span>
 #include <vector>
 
 namespace CesiumUtility {
@@ -12,7 +11,7 @@ namespace CesiumUtility {
  *
  * @returns Whether the data is gzipped
  */
-bool isGzip(const gsl::span<const std::byte>& data);
+bool isGzip(const std::span<const std::byte>& data);
 
 /**
  * @brief Gzips data.
@@ -25,7 +24,7 @@ bool isGzip(const gsl::span<const std::byte>& data);
  *
  * @returns True if successful, false otherwise.
  */
-bool gzip(const gsl::span<const std::byte>& data, std::vector<std::byte>& out);
+bool gzip(const std::span<const std::byte>& data, std::vector<std::byte>& out);
 
 /**
  * @brief Gunzips data.
@@ -39,7 +38,7 @@ bool gzip(const gsl::span<const std::byte>& data, std::vector<std::byte>& out);
  * @returns True if successful, false otherwise.
  */
 bool gunzip(
-    const gsl::span<const std::byte>& data,
+    const std::span<const std::byte>& data,
     std::vector<std::byte>& out);
 
 } // namespace CesiumUtility

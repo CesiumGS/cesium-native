@@ -11,7 +11,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class AccessorSparseJsonHandler
@@ -19,11 +19,11 @@ class AccessorSparseJsonHandler
 public:
   using ValueType = CesiumGltf::AccessorSparse;
 
-  AccessorSparseJsonHandler(
+  explicit AccessorSparseJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::AccessorSparse* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyAccessorSparse(

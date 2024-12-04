@@ -193,11 +193,12 @@ WebMapTileServiceRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const std::optional<Credit> credit =
-      this->_options.credit ? std::make_optional(pCreditSystem->createCredit(
-                                  this->_options.credit.value(),
-                                  pOwner->getOptions().showCreditsOnScreen))
-                            : std::nullopt;
+  std::optional<Credit> credit = std::nullopt;
+  if (pCreditSystem && this->_options.credit) {
+    credit = pCreditSystem->createCredit(
+        *this->_options.credit,
+        pOwner->getOptions().showCreditsOnScreen);
+  }
 
   bool hasError = false;
   std::string errorMessage;
@@ -222,9 +223,8 @@ WebMapTileServiceRasterOverlay::createTileProvider(
     useKVP = false;
   }
 
-  CesiumGeospatial::Projection projection =
-      _options.projection.value_or(CesiumGeospatial::WebMercatorProjection(
-          _options.ellipsoid.value_or(CesiumGeospatial::Ellipsoid::WGS84)));
+  CesiumGeospatial::Projection projection = _options.projection.value_or(
+      CesiumGeospatial::WebMercatorProjection(pOwner->getOptions().ellipsoid));
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
   uint32_t rootTilesX = 1;

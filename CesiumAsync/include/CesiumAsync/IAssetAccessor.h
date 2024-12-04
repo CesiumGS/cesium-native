@@ -1,17 +1,17 @@
 #pragma once
 
-#include "AsyncSystem.h"
+#include "Future.h"
 #include "IAssetRequest.h"
 #include "Library.h"
 
-#include <gsl/span>
-
 #include <cstddef>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
 namespace CesiumAsync {
+
 class AsyncSystem;
 
 /**
@@ -59,7 +59,7 @@ public:
       const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers = std::vector<THeader>(),
-      const gsl::span<const std::byte>& contentPayload = {}) = 0;
+      const std::span<const std::byte>& contentPayload = {}) = 0;
 
   /**
    * @brief Ticks the asset accessor system while the main thread is blocked.

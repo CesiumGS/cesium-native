@@ -5,6 +5,7 @@
 #include "CesiumRasterOverlays/RasterOverlayTile.h"
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <atomic>
 
@@ -68,7 +69,7 @@ public:
   }
 
   virtual void* prepareRasterInLoadThread(
-      CesiumGltf::ImageCesium& /*image*/,
+      CesiumGltf::ImageAsset& /*image*/,
       const std::any& /*rendererOptions*/) override {
     return new AllocationResult{totalAllocation};
   }

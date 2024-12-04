@@ -251,7 +251,6 @@ struct MetadataConversions<
    * This returns std::nullopt if no number is parsed from the string.
    *
    * @param from The std::string to parse from.
-   * @param defaultValue The default value to be returned if conversion fails.
    */
   static std::optional<TTo> convert(const std::string& from) {
     if (from.size() == 0) {
@@ -599,7 +598,6 @@ struct MetadataConversions<
    * @brief Converts a scalar to a std::string.
    *
    * @param from The scalar to be converted.
-   * @param defaultValue The default value to be returned if conversion fails.
    */
   static std::optional<std::string> convert(TFrom from) {
     return std::to_string(from);

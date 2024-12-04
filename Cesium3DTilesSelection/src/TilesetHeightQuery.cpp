@@ -3,6 +3,7 @@
 #include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -18,10 +19,12 @@ namespace {
 bool boundingVolumeContainsCoordinate(
     const BoundingVolume& boundingVolume,
     const Ray& ray,
-    const Cartographic& coordinate) {
+    const Cartographic& coordinate,
+    const Ellipsoid& ellipsoid) {
   struct Operation {
     const Ray& ray;
     const Cartographic& coordinate;
+    const Ellipsoid& ellipsoid;
 
     bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
       std::optional<double> t =
@@ -46,11 +49,12 @@ bool boundingVolumeContainsCoordinate(
     }
 
     bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
-      return s2Cell.computeBoundingRegion().getRectangle().contains(coordinate);
+      return s2Cell.computeBoundingRegion(ellipsoid).getRectangle().contains(
+          coordinate);
     }
   };
 
-  return std::visit(Operation{ray, coordinate}, boundingVolume);
+  return std::visit(Operation{ray, coordinate, ellipsoid}, boundingVolume);
 }
 
 // The ray for height queries starts at this fraction of the ellipsoid max
@@ -76,9 +80,10 @@ Ray createRay(const Cartographic& position, const Ellipsoid& ellipsoid) {
 
 TilesetHeightQuery::TilesetHeightQuery(
     const Cartographic& position,
-    const Ellipsoid& ellipsoid)
+    const Ellipsoid& ellipsoid_)
     : inputPosition(position),
-      ray(createRay(position, ellipsoid)),
+      ray(createRay(position, ellipsoid_)),
+      ellipsoid(ellipsoid_),
       intersection(),
       additiveCandidateTiles(),
       candidateTiles(),
@@ -155,7 +160,8 @@ void TilesetHeightQuery::findCandidateTiles(
       if (boundingVolumeContainsCoordinate(
               *contentBoundingVolume,
               this->ray,
-              this->inputPosition))
+              this->inputPosition,
+              this->ellipsoid))
         this->candidateTiles.push_back(pTile);
     } else {
       this->candidateTiles.push_back(pTile);
@@ -170,7 +176,8 @@ void TilesetHeightQuery::findCandidateTiles(
         if (boundingVolumeContainsCoordinate(
                 *contentBoundingVolume,
                 this->ray,
-                this->inputPosition))
+                this->inputPosition,
+                this->ellipsoid))
           this->additiveCandidateTiles.push_back(pTile);
       } else {
         this->additiveCandidateTiles.push_back(pTile);
@@ -183,7 +190,8 @@ void TilesetHeightQuery::findCandidateTiles(
       if (!boundingVolumeContainsCoordinate(
               child.getBoundingVolume(),
               this->ray,
-              this->inputPosition))
+              this->inputPosition,
+              this->ellipsoid))
         continue;
 
       // Child is a candidate, traverse it and its children
@@ -193,6 +201,7 @@ void TilesetHeightQuery::findCandidateTiles(
 }
 
 /*static*/ void TilesetHeightRequest::processHeightRequests(
+    const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
     Tile::LoadedLinkedList& loadedTiles,
@@ -207,6 +216,7 @@ void TilesetHeightQuery::findCandidateTiles(
   for (auto it = heightRequests.begin(); it != heightRequests.end();) {
     TilesetHeightRequest& request = *it;
     if (!request.tryCompleteHeightRequest(
+            asyncSystem,
             contentManager,
             options,
             loadedTiles,
@@ -242,10 +252,35 @@ void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
 }
 
 bool TilesetHeightRequest::tryCompleteHeightRequest(
+    const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
     Tile::LoadedLinkedList& loadedTiles,
     std::set<Tile*>& tileLoadSet) {
+  // If this TilesetContentLoader supports direct height queries, use that
+  // instead of downloading tiles.
+  if (contentManager.getRootTile() &&
+      contentManager.getRootTile()->getLoader()) {
+    ITilesetHeightSampler* pSampler =
+        contentManager.getRootTile()->getLoader()->getHeightSampler();
+    if (pSampler) {
+      std::vector<Cartographic> positions;
+      positions.reserve(this->queries.size());
+      for (TilesetHeightQuery& query : this->queries) {
+        positions.emplace_back(query.inputPosition);
+      }
+
+      pSampler->sampleHeights(asyncSystem, std::move(positions))
+          .thenImmediately(
+              [promise = this->promise](SampleHeightResult&& result) {
+                promise.resolve(std::move(result));
+              });
+
+      return true;
+    }
+  }
+
+  // No direct height query possible, so download and sample tiles.
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
   for (TilesetHeightQuery& query : this->queries) {

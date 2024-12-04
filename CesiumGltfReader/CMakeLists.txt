@@ -41,15 +41,13 @@ target_sources(
         ${CESIUM_GLTF_READER_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumGltfReader
-    SYSTEM PUBLIC
-        # Necessary for `draco/draco_features.h`
-        ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
+cesium_target_include_directories(
+    TARGET
+        CesiumGltfReader
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )

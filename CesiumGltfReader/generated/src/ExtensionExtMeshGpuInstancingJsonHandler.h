@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionExtMeshGpuInstancingJsonHandler
@@ -18,22 +18,22 @@ class ExtensionExtMeshGpuInstancingJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionExtMeshGpuInstancing;
 
-  static inline constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
+  static constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
 
-  ExtensionExtMeshGpuInstancingJsonHandler(
+  explicit ExtensionExtMeshGpuInstancingJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionExtMeshGpuInstancing* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionExtMeshGpuInstancing(

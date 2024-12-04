@@ -1,6 +1,6 @@
 {
   "name": "cesium-native",
-  "version": "0.40.1",
+  "version": "0.42.0",
   "description": "Cesium 3D Geospatial for C++",
   "main": "index.js",
   "directories": {
@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/CesiumGS/cesium-native#readme",
   "devDependencies": {
-    "clang-format": "^1.5.0"
+    "clang-format": "^1.5.0",
+    "doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4"
   }
 }

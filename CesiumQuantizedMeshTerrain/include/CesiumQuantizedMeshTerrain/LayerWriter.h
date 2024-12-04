@@ -4,7 +4,7 @@
 
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
-#include <gsl/span>
+#include <span>
 
 // forward declarations
 namespace CesiumQuantizedMeshTerrain {

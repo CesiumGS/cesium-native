@@ -34,6 +34,8 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    */
   static int8_t computeByteSizeOfComponent(int32_t componentType) noexcept;
 
+  Accessor() = default;
+
   /**
    * @brief Computes the number of components for this accessor.
    *

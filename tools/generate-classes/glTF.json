@@ -97,7 +97,8 @@
       "overrideName": "PropertyTexture"
     },
     "Schema in EXT_structural_metadata": {
-      "overrideName": "Schema"
+      "overrideName": "Schema",
+      "isAsset": true
     },
     "Any Value": {
       "overrideName": "CesiumUtility::JsonValue"

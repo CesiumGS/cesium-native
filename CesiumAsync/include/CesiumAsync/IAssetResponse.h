@@ -3,11 +3,10 @@
 #include "HttpHeaders.h"
 #include "Library.h"
 
-#include <gsl/span>
-
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <span>
 #include <string>
 
 namespace CesiumAsync {
@@ -40,7 +39,7 @@ public:
   /**
    * @brief Returns the data of this response
    */
-  virtual gsl::span<const std::byte> data() const = 0;
+  virtual std::span<const std::byte> data() const = 0;
 };
 
 } // namespace CesiumAsync

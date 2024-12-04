@@ -8,7 +8,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class CylinderJsonHandler
@@ -16,11 +16,11 @@ class CylinderJsonHandler
 public:
   using ValueType = CesiumGltf::Cylinder;
 
-  CylinderJsonHandler(
+  explicit CylinderJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Cylinder* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyCylinder(

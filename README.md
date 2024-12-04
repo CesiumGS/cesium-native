@@ -14,7 +14,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 ![Cesium Platform and Ecosystem](./doc/integration-ecosystem-diagram.jpg)
 *<p align="center">A high-level Cesium platform architecture with the runtime integrations powered by Cesium Native and streaming content from Cesium ion.</p>*
 
-### :card_file_box:Libraries Overview
+### 🗃️Libraries Overview
 
 | Library | Description |
 | -- | -- |
@@ -34,7 +34,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumUtility** | Utility functions for JSON parsing, URI processing, etc. |
 
 
-### :green_book:License
+### 📗License
 
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Cesium Native is free for both commercial and non-commercial use.
 
@@ -46,7 +46,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 * CMake 3.15+
 * For best JPEG-decoding performance, you must have [nasm](https://www.nasm.us/) installed so that CMake can find it. Everything will work fine without it, just slower.
 
-### :rocket:Getting Started
+### 🚀Getting Started
 
 #### Clone the repo
 

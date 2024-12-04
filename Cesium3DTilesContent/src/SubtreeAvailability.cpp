@@ -10,11 +10,11 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Uri.h>
 
-#include <gsl/span>
 #include <rapidjson/document.h>
 
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <string>
 
 using namespace Cesium3DTiles;
@@ -63,7 +63,7 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
       if (bufferView.byteLength >= 0 &&
           bufferView.byteOffset + bufferView.byteLength <= bufferSize) {
         return SubtreeAvailability::SubtreeBufferViewAvailability{
-            gsl::span<std::byte>(
+            std::span<std::byte>(
                 data.data() + bufferView.byteOffset,
                 size_t(bufferView.byteLength))};
       }
@@ -415,7 +415,7 @@ void convertConstantAvailabilityToBitstream(
       size_t(buffer.byteLength),
       oldValue ? std::byte(0xFF) : std::byte(0x00));
 
-  gsl::span<std::byte> view(
+  std::span<std::byte> view(
       buffer.cesium.data.data() + start,
       buffer.cesium.data.data() + end);
   availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};

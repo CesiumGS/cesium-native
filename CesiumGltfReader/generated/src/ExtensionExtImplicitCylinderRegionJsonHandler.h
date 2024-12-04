@@ -8,7 +8,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionExtImplicitCylinderRegionJsonHandler
@@ -17,23 +17,22 @@ class ExtensionExtImplicitCylinderRegionJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionExtImplicitCylinderRegion;
 
-  static inline constexpr const char* ExtensionName =
-      "EXT_implicit_cylinder_region";
+  static constexpr const char* ExtensionName = "EXT_implicit_cylinder_region";
 
-  ExtensionExtImplicitCylinderRegionJsonHandler(
+  explicit ExtensionExtImplicitCylinderRegionJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionExtImplicitCylinderRegion* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionExtImplicitCylinderRegion(

@@ -1,22 +1,23 @@
 #pragma once
 
+#include "CesiumGltfReader/ImageDecoder.h"
 #include "CesiumGltfReader/Library.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfSharedAssetSystem.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
-
-#include <gsl/span>
 
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -44,30 +45,6 @@ struct CESIUMGLTFREADER_API GltfReaderResult {
 };
 
 /**
- * @brief The result of reading an image with
- * {@link GltfReader::readImage}.
- */
-struct CESIUMGLTFREADER_API ImageReaderResult {
-
-  /**
-   * @brief The {@link ImageCesium} that was read.
-   *
-   * This will be `std::nullopt` if the image could not be read.
-   */
-  std::optional<CesiumGltf::ImageCesium> image;
-
-  /**
-   * @brief Error messages that occurred while trying to read the image.
-   */
-  std::vector<std::string> errors;
-
-  /**
-   * @brief Warning messages that occurred while reading the image.
-   */
-  std::vector<std::string> warnings;
-};
-
-/**
  * @brief Options for how to read a glTF.
  */
 struct CESIUMGLTFREADER_API GltfReaderOptions {
@@ -86,10 +63,10 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool clearDecodedDataUrls = true;
 
   /**
-   * @brief Whether embedded images in {@link Model::buffers} should be
+   * @brief Whether embedded images in {@link CesiumGltf::Model::buffers} should be
    * automatically decoded as part of the load process.
    *
-   * The {@link ImageSpec::mimeType} property is ignored, and instead the
+   * The {@link CesiumGltf::ImageSpec::mimeType} property is ignored, and instead the
    * [stb_image](https://github.com/nothings/stb) library is used to decode
    * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
    */
@@ -131,6 +108,19 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * the ideal target gpu-compressed pixel format to transcode to.
    */
   CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+
+  /**
+   * The shared asset system that will be used to store all of the shared assets
+   * that might appear in this glTF.
+   */
+  CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> pSharedAssetSystem =
+      GltfSharedAssetSystem::getDefault();
+
+  /**
+   * @brief Whether the `schemaUri` property of `EXT_structural_metadata` will
+   * be properly resolved. If false, any external schemas will be ignored.
+   */
+  bool resolveExternalStructuralMetadata = true;
 };
 
 /**
@@ -161,7 +151,7 @@ public:
    * @return The result of reading the glTF.
    */
   GltfReaderResult readGltf(
-      const gsl::span<const std::byte>& data,
+      const std::span<const std::byte>& data,
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
@@ -205,40 +195,30 @@ public:
    * @param result The result of the synchronous readGltf invocation.
    */
   static CesiumAsync::Future<GltfReaderResult> resolveExternalData(
-      CesiumAsync::AsyncSystem asyncSystem,
+      const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& baseUrl,
       const CesiumAsync::HttpHeaders& headers,
-      std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const GltfReaderOptions& options,
       GltfReaderResult&& result);
 
   /**
-   * @brief Reads an image from a buffer.
-   *
-   * The [stb_image](https://github.com/nothings/stb) library is used to decode
-   * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
-   *
-   * @param data The buffer from which to read the image.
-   * @param ktx2TranscodeTargetFormat The compression format to transcode
-   * KTX v2 textures into. If this is std::nullopt, KTX v2 textures will be
-   * fully decompressed into raw pixels.
-   * @return The result of reading the image.
+   * @brief Reads an Image from a buffer.
+   * @deprecated Use {@link ImageDecoder::readImage} instead.
    */
-  static ImageReaderResult readImage(
-      const gsl::span<const std::byte>& data,
+  [[deprecated(
+      "Use ImageDecoder::readImage instead.")]] static ImageReaderResult
+  readImage(
+      const std::span<const std::byte>& data,
       const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
    * @brief Generate mipmaps for this image.
-   *
-   * Does nothing if mipmaps already exist or the compressedPixelFormat is not
-   * GpuCompressedPixelFormat::NONE.
-   *
-   * @param image The image to generate mipmaps for.   *
-   * @return A string describing the error, if unable to generate mipmaps.
+   * @deprecated Use {@link ImageDecoder::generateMipMaps} instead.
    */
-  static std::optional<std::string>
-  generateMipMaps(CesiumGltf::ImageCesium& image);
+  [[deprecated("Use ImageDecoder::generateMipMaps instead.")]] static std::
+      optional<std::string>
+      generateMipMaps(CesiumGltf::ImageAsset& image);
 
 private:
   CesiumJsonReader::JsonReaderOptions _context;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 //
 // Define our own assertion, so that users can forcebly turn them on if needed
 //
@@ -7,7 +9,7 @@
 // Asserts are defined in cassert and normally compiled out when NDEBUG is
 // defined. Redirect to our own assertion that can't be compiled out
 namespace CesiumUtility {
-void forceAssertFailure();
+std::int32_t forceAssertFailure();
 };
 #define CESIUM_ASSERT(expression)                                              \
   ((expression) ? 0 : CesiumUtility::forceAssertFailure())

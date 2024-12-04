@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 
 #include <memory>
@@ -26,7 +27,7 @@ public:
       const std::string& /* verb */,
       const std::string& /* url */,
       const std::vector<THeader>& /* headers */,
-      const gsl::span<const std::byte>& /* contentPayload */
+      const std::span<const std::byte>& /* contentPayload */
       ) override {
     return asyncSystem.createResolvedFuture(
         std::shared_ptr<CesiumAsync::IAssetRequest>(testRequest));

@@ -9,6 +9,8 @@ TileContentLoadInfo::TileContentLoadInfo(
     const std::shared_ptr<IPrepareRendererResources>&
         pPrepareRendererResources_,
     const std::shared_ptr<spdlog::logger>& pLogger_,
+    const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
+        pSharedAssetSystem_,
     const TilesetContentOptions& contentOptions_,
     const Tile& tile)
     : asyncSystem(asyncSystem_),
@@ -18,6 +20,7 @@ TileContentLoadInfo::TileContentLoadInfo(
       tileID(tile.getTileID()),
       tileBoundingVolume(tile.getBoundingVolume()),
       tileContentBoundingVolume(tile.getContentBoundingVolume()),
+      pSharedAssetSystem{pSharedAssetSystem_},
       tileRefine(tile.getRefine()),
       tileGeometricError(tile.getGeometricError()),
       tileTransform(tile.getTransform()),

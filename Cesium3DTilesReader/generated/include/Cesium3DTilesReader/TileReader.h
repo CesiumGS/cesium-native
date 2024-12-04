@@ -7,14 +7,14 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-#include <gsl/span>
 #include <rapidjson/fwd.h>
 
+#include <span>
 #include <vector>
 
 namespace Cesium3DTiles {
 struct Tile;
-}
+} // namespace Cesium3DTiles
 
 namespace Cesium3DTilesReader {
 
@@ -45,7 +45,7 @@ public:
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Tile>
-  readFromJson(const gsl::span<const std::byte>& data) const;
+  readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of Tile from a rapidJson::Value.

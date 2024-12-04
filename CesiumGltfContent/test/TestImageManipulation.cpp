@@ -1,7 +1,8 @@
-#include <CesiumGltf/ImageCesium.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
 
@@ -128,7 +129,7 @@ TEST_CASE("ImageManipulation::unsafeBlitImage subset of source") {
 }
 
 TEST_CASE("ImageManipulation::blitImage") {
-  ImageCesium target;
+  ImageAsset target;
   target.bytesPerChannel = 2;
   target.channels = 4;
   target.width = 15;
@@ -139,7 +140,7 @@ TEST_CASE("ImageManipulation::blitImage") {
           target.bytesPerChannel),
       std::byte(1));
 
-  ImageCesium source;
+  ImageAsset source;
   source.bytesPerChannel = 2;
   source.channels = 4;
   source.width = 10;

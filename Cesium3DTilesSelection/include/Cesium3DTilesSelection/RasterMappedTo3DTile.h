@@ -14,10 +14,10 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 /**
- * @brief The result of applying a {@link RasterOverlayTile} to geometry.
+ * @brief The result of applying a {@link CesiumRasterOverlays::RasterOverlayTile} to geometry.
  *
  * Instances of this class are used by a {@link Tile} in order to map
- * imagery data that is given as {@link RasterOverlayTile} instances
+ * imagery data that is given as {@link CesiumRasterOverlays::RasterOverlayTile} instances
  * to the 2D region that is covered by the tile geometry.
  */
 class RasterMappedTo3DTile final {
@@ -47,7 +47,7 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param pRasterTile The {@link RasterOverlayTile} that is mapped to the
+   * @param pRasterTile The {@link CesiumRasterOverlays::RasterOverlayTile} that is mapped to the
    * geometry.
    * @param textureCoordinateIndex The index of the texture coordinates to use
    * with this mapped raster overlay.
@@ -58,7 +58,7 @@ public:
       int32_t textureCoordinateIndex);
 
   /**
-   * @brief Returns a {@link RasterOverlayTile} that is currently loading.
+   * @brief Returns a {@link CesiumRasterOverlays::RasterOverlayTile} that is currently loading.
    *
    * The caller has to check the exact state of this tile, using
    * {@link Tile::getState}.
@@ -76,7 +76,7 @@ public:
   }
 
   /**
-   * @brief Returns the {@link RasterOverlayTile} that represents the imagery
+   * @brief Returns the {@link CesiumRasterOverlays::RasterOverlayTile} that represents the imagery
    * data that is ready to render.
    *
    * This will be `nullptr` when the tile data has not yet been loaded.
@@ -153,14 +153,14 @@ public:
   /**
    * @brief Update this tile during the update of its owner.
    *
-   * This is only supposed to be called by {@link Tile::update}. It
+   * This is only supposed to be called by {@link Cesium3DTilesSelection::TilesetContentManager::updateDoneState}. It
    * will return whether there is a more detailed version of the
    * raster data available.
    *
-   * @param prepareRendererResources The IPrepareRendererResources used to
+   * @param prepareRendererResources The {@link IPrepareRendererResources} used to
    * create render resources for raster overlay
    * @param tile The owner tile.
-   * @return The {@link MoreDetailAvailable} state.
+   * @return The {@link CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable} state.
    */
   CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable
   update(IPrepareRendererResources& prepareRendererResources, Tile& tile);
@@ -178,7 +178,7 @@ public:
       Tile& tile) noexcept;
 
   /**
-   * @brief Does a throttled load of the mapped {@link RasterOverlayTile}.
+   * @brief Does a throttled load of the mapped {@link CesiumRasterOverlays::RasterOverlayTile}.
    *
    * @return If the mapped tile is already in the process of loading or it has
    * already finished loading, this method does nothing and returns true. If too
@@ -189,9 +189,9 @@ public:
   bool loadThrottled() noexcept;
 
   /**
-   * @brief Creates a maping between a {@link RasterOverlay} and a {@link Tile}.
+   * @brief Creates a maping between a {@link CesiumRasterOverlays::RasterOverlay} and a {@link Tile}.
    *
-   * The returned mapping will be to a placeholder {@link RasterOverlayTile} if
+   * The returned mapping will be to a placeholder {@link CesiumRasterOverlays::RasterOverlayTile} if
    * the overlay's tile provider is not yet ready (i.e. it's still a
    * placeholder) or if the overlap between the tile and the raster overlay
    * cannot yet be determined because the projected rectangle of the tile is not
@@ -214,6 +214,7 @@ public:
    * be added to this collection if the Tile does not yet have texture
    * coordinates for the Projection and the Projection is not already in the
    * collection.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return A pointer the created mapping, which may be to a placeholder, or
    * nullptr if no mapping was created at all because the Tile does not overlap
    * the raster overlay.

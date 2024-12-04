@@ -8,4 +8,4 @@ class JsonReaderOptions;
 
 namespace CesiumGltfReader {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options);
-}
+} // namespace CesiumGltfReader

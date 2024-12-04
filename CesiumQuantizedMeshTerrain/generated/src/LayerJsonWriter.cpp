@@ -6,10 +6,19 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
-#include <CesiumJsonWriter/writeJsonExtensions.h>
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangle.h>
 #include <CesiumQuantizedMeshTerrain/Layer.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonValue.h>
+
+// NOLINTNEXTLINE(misc-include-cleaner)
+#include <CesiumJsonWriter/writeJsonExtensions.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace CesiumQuantizedMeshTerrain {
 
@@ -32,6 +41,14 @@ template <typename T>
     const std::vector<T>& list,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
+
+template <typename T>
+[[maybe_unused]] void writeJson(
+    const CesiumUtility::IntrusivePointer<T>& ptr,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(*ptr, jsonWriter, context);
+}
 
 [[maybe_unused]] void writeJson(
     const std::string& str,
@@ -117,7 +134,7 @@ template <typename T>
     const std::optional<T>& val,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
-  if (val.has_value()) {
+  if (val) {
     writeJson(*val, jsonWriter, context);
   } else {
     jsonWriter.Null();
@@ -130,7 +147,7 @@ void writeExtensibleObject(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
 
-  if (!obj.extensions.empty()) {
+  if (hasRegisteredExtensions(obj, jsonWriter, context)) {
     jsonWriter.Key("extensions");
     writeJsonExtensions(obj, jsonWriter, context);
   }
@@ -139,6 +156,14 @@ void writeExtensibleObject(
     jsonWriter.Key("extras");
     writeJson(obj.extras, jsonWriter, context);
   }
+}
+
+template <typename T>
+void writeSharedAsset(
+    const T& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeExtensibleObject(obj, jsonWriter, context);
 }
 
 template <typename T>
@@ -161,7 +186,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.attribution != "") {
+  if (!obj.attribution.empty()) {
     jsonWriter.Key("attribution");
     writeJson(obj.attribution, jsonWriter, context);
   }
@@ -177,7 +202,7 @@ void writeJson(
     writeJson(obj.bounds, jsonWriter, context);
   }
 
-  if (obj.description != "") {
+  if (!obj.description.empty()) {
     jsonWriter.Key("description");
     writeJson(obj.description, jsonWriter, context);
   }
@@ -200,7 +225,7 @@ void writeJson(
     writeJson(obj.minzoom, jsonWriter, context);
   }
 
-  if (obj.metadataAvailability.has_value()) {
+  if (obj.metadataAvailability) {
     jsonWriter.Key("metadataAvailability");
     writeJson(obj.metadataAvailability, jsonWriter, context);
   }
@@ -210,7 +235,7 @@ void writeJson(
     writeJson(obj.name, jsonWriter, context);
   }
 
-  if (obj.parentUrl.has_value()) {
+  if (obj.parentUrl) {
     jsonWriter.Key("parentUrl");
     writeJson(obj.parentUrl, jsonWriter, context);
   }

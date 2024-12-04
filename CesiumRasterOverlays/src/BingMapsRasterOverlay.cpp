@@ -229,14 +229,12 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
     const std::string& key,
     const std::string& mapStyle,
     const std::string& culture,
-    const Ellipsoid& ellipsoid,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _url(url),
       _key(key),
       _mapStyle(mapStyle),
-      _culture(culture),
-      _ellipsoid(ellipsoid) {}
+      _culture(culture) {}
 
 BingMapsRasterOverlay::~BingMapsRasterOverlay() {}
 
@@ -266,13 +264,18 @@ namespace {
  * @param pResource The JSON value for the resource
  * @param pCreditSystem The `CreditSystem` that will create one credit for
  * each attribution
- * @return The `CreditAndCoverageAreas` objects that have been parsed
+ * @return The `CreditAndCoverageAreas` objects that have been parsed, or an
+ * empty vector if pCreditSystem is nullptr.
  */
 std::vector<CreditAndCoverageAreas> collectCredits(
     const rapidjson::Value* pResource,
     const std::shared_ptr<CreditSystem>& pCreditSystem,
     bool showCreditsOnScreen) {
   std::vector<CreditAndCoverageAreas> credits;
+  if (!pCreditSystem) {
+    return credits;
+  }
+
   const auto attributionsIt = pResource->FindMember("imageryProviders");
   if (attributionsIt != pResource->MemberEnd() &&
       attributionsIt->value.IsArray()) {
@@ -351,7 +354,7 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid = this->_ellipsoid;
+  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getOptions().ellipsoid;
 
   auto handleResponse =
       [pOwner,
@@ -364,7 +367,7 @@ BingMapsRasterOverlay::createTileProvider(
        baseUrl = this->_url,
        culture = this->_culture](
           const std::shared_ptr<IAssetRequest>& pRequest,
-          const gsl::span<const std::byte>& data) -> CreateTileProviderResult {
+          const std::span<const std::byte>& data) -> CreateTileProviderResult {
     rapidjson::Document response;
     response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
@@ -447,7 +450,7 @@ BingMapsRasterOverlay::createTileProvider(
   auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
     return asyncSystem.createResolvedFuture(
-        handleResponse(nullptr, gsl::span<std::byte>(cacheResultIt->second)));
+        handleResponse(nullptr, std::span<std::byte>(cacheResultIt->second)));
   }
 
   return pAssetAccessor->get(asyncSystem, metadataUrl)

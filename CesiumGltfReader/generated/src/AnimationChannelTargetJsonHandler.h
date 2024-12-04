@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class AnimationChannelTargetJsonHandler
@@ -17,13 +17,13 @@ class AnimationChannelTargetJsonHandler
 public:
   using ValueType = CesiumGltf::AnimationChannelTarget;
 
-  AnimationChannelTargetJsonHandler(
+  explicit AnimationChannelTargetJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::AnimationChannelTarget* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyAnimationChannelTarget(

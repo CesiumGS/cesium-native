@@ -4,9 +4,8 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumGltfReader/GltfReader.h>
 
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
 
 namespace Cesium3DTilesContent {
 struct AssetFetcher;
@@ -14,13 +13,13 @@ struct AssetFetcher;
 struct BinaryToGltfConverter {
 public:
   static CesiumAsync::Future<GltfConverterResult> convert(
-      const gsl::span<const std::byte>& gltfBinary,
+      const std::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
       const AssetFetcher& assetFetcher);
 
 private:
   static GltfConverterResult convertImmediate(
-      const gsl::span<const std::byte>& gltfBinary,
+      const std::span<const std::byte>& gltfBinary,
       const CesiumGltfReader::GltfReaderOptions& options,
       const AssetFetcher& assetFetcher);
   static CesiumGltfReader::GltfReader _gltfReader;

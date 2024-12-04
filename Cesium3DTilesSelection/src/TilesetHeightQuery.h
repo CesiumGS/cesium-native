@@ -43,6 +43,11 @@ public:
   CesiumGeometry::Ray ray;
 
   /**
+   * @brief The ellipsoid on which the input position is defined.
+   */
+  CesiumGeospatial::Ellipsoid ellipsoid;
+
+  /**
    * @brief The current intersection of the ray with the tileset. If there are
    * multiple intersections, this will be the one closest to the origin of the
    * ray.
@@ -121,6 +126,7 @@ struct TilesetHeightRequest {
    * @brief Process a given list of height requests. This is called by the {@link Tileset}
    * in every call to {@link Tileset::updateView}.
    *
+   * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
    * @param loadedTiles The linked list of loaded tiles, used to ensure that
@@ -132,6 +138,7 @@ struct TilesetHeightRequest {
    * height requests can complete are added to this vector.
    */
   static void processHeightRequests(
+      const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
       Tile::LoadedLinkedList& loadedTiles,
@@ -155,6 +162,7 @@ struct TilesetHeightRequest {
    * @brief Tries to complete this height request. Returns false if further data
    * still needs to be loaded and thus the request cannot yet complete.
    *
+   * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
    * @param loadedTiles The linked list of loaded tiles, used to ensure that
@@ -164,6 +172,7 @@ struct TilesetHeightRequest {
    * can complete.
    */
   bool tryCompleteHeightRequest(
+      const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
       Tile::LoadedLinkedList& loadedTiles,

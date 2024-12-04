@@ -931,7 +931,7 @@ bool upsamplePrimitiveForRasterOverlays(
       std::numeric_limits<uint32_t>::max());
 
   // std::vector<unsigned char> newVertexBuffer(vertexSizeFloats *
-  // sizeof(float)); gsl::span<float>
+  // sizeof(float)); std::span<float>
   // newVertexFloats(reinterpret_cast<float*>(newVertexBuffer.data()),
   // newVertexBuffer.size() / sizeof(float));
   std::vector<float> newVertexFloats;

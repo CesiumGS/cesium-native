@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltf/Accessor.h"
 #include "CesiumGltf/Model.h"
 
 #include <cstddef>
@@ -63,6 +64,12 @@ enum class AccessorViewStatus {
    * @brief The {@link Accessor::componentType} is invalid.
    */
   InvalidComponentType,
+
+  /**
+   * @brief The {@link BufferView::byteStride} is negative, which is invalid.
+   *
+   */
+  InvalidByteStride,
 };
 
 /**
@@ -241,6 +248,11 @@ private:
     }
 
     const int64_t accessorByteStride = accessor.computeByteStride(model);
+    if (accessorByteStride < 0) {
+      this->_status = AccessorViewStatus::InvalidByteStride;
+      return;
+    }
+
     const int64_t accessorComponentElements =
         accessor.computeNumberOfComponents();
     const int64_t accessorComponentBytes =
@@ -449,13 +461,33 @@ createAccessorView(
         model,
         accessor,
         std::forward<TCallback>(callback));
+  case Accessor::ComponentType::INT:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, int32_t>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
   case Accessor::ComponentType::UNSIGNED_INT:
     return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint32_t>(
         model,
         accessor,
         std::forward<TCallback>(callback));
+  case Accessor::ComponentType::INT64:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, int64_t>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
+  case Accessor::ComponentType::UNSIGNED_INT64:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, uint64_t>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
   case Accessor::ComponentType::FLOAT:
     return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, float>(
+        model,
+        accessor,
+        std::forward<TCallback>(callback));
+  case Accessor::ComponentType::DOUBLE:
+    return ::CesiumGltf::CesiumImpl::createAccessorView<TCallback, double>(
         model,
         accessor,
         std::forward<TCallback>(callback));

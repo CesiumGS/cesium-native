@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/ImageCesium.h"
+#include "CesiumGltf/ImageAsset.h"
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTextureProperty.h"
 #include "CesiumGltf/PropertyTransformations.h"
@@ -84,7 +84,7 @@ public:
 };
 
 template <typename ElementType>
-ElementType assembleScalarValue(const gsl::span<uint8_t> bytes) noexcept {
+ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
     CESIUM_ASSERT(
         bytes.size() == sizeof(float) &&
@@ -111,7 +111,7 @@ ElementType assembleScalarValue(const gsl::span<uint8_t> bytes) noexcept {
 }
 
 template <typename ElementType>
-ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
+ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
 
   const glm::length_t N =
@@ -159,7 +159,7 @@ ElementType assembleVecNValue(const gsl::span<uint8_t> bytes) noexcept {
 
 template <typename T>
 PropertyArrayCopy<T>
-assembleArrayValue(const gsl::span<uint8_t> bytes) noexcept {
+assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   std::vector<T> result(bytes.size() / sizeof(T));
 
   if constexpr (sizeof(T) == 2) {
@@ -180,7 +180,7 @@ assembleArrayValue(const gsl::span<uint8_t> bytes) noexcept {
 
 template <typename ElementType>
 PropertyValueViewToCopy<ElementType>
-assembleValueFromChannels(const gsl::span<uint8_t> bytes) noexcept {
+assembleValueFromChannels(const std::span<uint8_t> bytes) noexcept {
   CESIUM_ASSERT(
       bytes.size() > 0 && "Channel input must have at least one value.");
 
@@ -290,15 +290,14 @@ public:
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageCesium} used by the property.
-   * @param channels The value of {@link PropertyTextureProperty::channels}.
+   * @param image The {@link ImageAsset} used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image,
+      const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         TextureView(
@@ -423,7 +422,7 @@ public:
         this->sampleNearestPixel(u, v, this->_channels);
 
     return assembleValueFromChannels<ElementType>(
-        gsl::span(sample.data(), this->_channels.size()));
+        std::span(sample.data(), this->_channels.size()));
   }
 
   /**
@@ -523,15 +522,14 @@ public:
    * @param property The {@link PropertyTextureProperty}
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageCesium} used by the property.
-   * @param channels The value of {@link PropertyTextureProperty::channels}.
+   * @param image The {@link ImageAsset} used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageCesium& image,
+      const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         TextureView(
@@ -675,7 +673,7 @@ public:
         this->sampleNearestPixel(u, v, this->_channels);
 
     return assembleValueFromChannels<ElementType>(
-        gsl::span(sample.data(), this->_channels.size()));
+        std::span(sample.data(), this->_channels.size()));
   }
 
   /**

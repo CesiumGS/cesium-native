@@ -8,7 +8,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionCesiumPrimitiveOutlineJsonHandler
@@ -17,23 +17,22 @@ class ExtensionCesiumPrimitiveOutlineJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionCesiumPrimitiveOutline;
 
-  static inline constexpr const char* ExtensionName =
-      "CESIUM_primitive_outline";
+  static constexpr const char* ExtensionName = "CESIUM_primitive_outline";
 
-  ExtensionCesiumPrimitiveOutlineJsonHandler(
+  explicit ExtensionCesiumPrimitiveOutlineJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionCesiumPrimitiveOutline* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionCesiumPrimitiveOutline(

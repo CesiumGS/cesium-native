@@ -108,6 +108,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * use. For example, if `textureCoordinateAttributeBaseName` is
    * `_CESIUMOVERLAY_` and this parameter is 0 (the defaults), then the texture
    * coordinates are read from a vertex attribute named `_CESIUMOVERLAY_0`.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return The upsampled model.
    */
   static std::optional<CesiumGltf::Model> upsampleGltfForRasterOverlays(
