@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace Cesium3DTilesReader {
 class Extension3dTilesBoundingVolumeCylinderJsonHandler
@@ -18,23 +18,23 @@ class Extension3dTilesBoundingVolumeCylinderJsonHandler
 public:
   using ValueType = Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder;
 
-  static inline constexpr const char* ExtensionName =
+  static constexpr const char* ExtensionName =
       "3DTILES_bounding_volume_cylinder";
 
-  Extension3dTilesBoundingVolumeCylinderJsonHandler(
+  explicit Extension3dTilesBoundingVolumeCylinderJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtension3dTilesBoundingVolumeCylinder(

@@ -56,7 +56,7 @@ struct Extension3dTilesBoundingVolumeS2JsonWriter {
 struct Extension3dTilesBoundingVolumeCylinderJsonWriter {
   using ValueType = Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder;
 
-  static inline constexpr const char* ExtensionName =
+  static constexpr const char* ExtensionName =
       "3DTILES_bounding_volume_cylinder";
 
   static void write(
@@ -68,7 +68,7 @@ struct Extension3dTilesBoundingVolumeCylinderJsonWriter {
 struct ExtensionContent3dTilesContentVoxelsJsonWriter {
   using ValueType = Cesium3DTiles::ExtensionContent3dTilesContentVoxels;
 
-  static inline constexpr const char* ExtensionName = "3DTILES_content_voxels";
+  static constexpr const char* ExtensionName = "3DTILES_content_voxels";
 
   static void write(
       const Cesium3DTiles::ExtensionContent3dTilesContentVoxels& obj,

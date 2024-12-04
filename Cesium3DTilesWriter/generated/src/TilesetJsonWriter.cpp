@@ -400,7 +400,7 @@ void writeJson(
     writeJson(obj.dimensions, jsonWriter, context);
   }
 
-  if (obj.padding.has_value()) {
+  if (obj.padding) {
     jsonWriter.Key("padding");
     writeJson(obj.padding, jsonWriter, context);
   }
