@@ -3,7 +3,12 @@
 ### ? - ?
 
 ##### Additions :tada:
+
 - Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
 
 ### v0.42.0 - 2024-12-02
 
