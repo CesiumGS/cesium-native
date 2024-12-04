@@ -7,7 +7,7 @@ This is a guide to writing C++ code for cesium-native. These guidelines are inte
 
 In all cases these are _guidelines_. There are sometimes good reasons to violate the advice given here. In particular, when writing code that is meant to integrate into another system, it is rarely a good idea to fight that other system's conventions.
 
-**cesium-native uses ISO Standard C++17.**
+**cesium-native uses ISO Standard C++20.**
 
 We follow the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines), with a few exceptions. We suggest proceeding as follows:
 
