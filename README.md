@@ -5,6 +5,13 @@
 [![Build Status](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml/badge.svg)](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/tag/CesiumGS/cesium-native?label=release)](https://github.com/CesiumGS/cesium-native/tags)
 
+|                                                                                                                                                 |                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| ![Googleplex](doc/img/screenshot-googleplex.jpg)                                                                                                | ![New York](doc/img/screenshot-ny-metadata.jpg)                                                                                   |
+| <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</sub></p> | <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p> |
+| ![Copernicus Crater](doc/img/screenshot-copernicus-crater.jpg)                                                                                  | ![San Francisco](doc/img/screenshot-san-francisco.jpg)                                                                            |
+| <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.</sub></p>                               | <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA.</sub></p>                                |
+
 <!-- omit in toc -->
 ## Table of Contents
 
@@ -238,7 +245,7 @@ Before we can review a pull request, we require a signed Contributor License Agr
 
 This only needs to be completed once, and enables contributions to all of the projects under the [CesiumGS](https://github.com/CesiumGS) organization, including Cesium Native. The CLA ensures you retain copyright to your contributions, and provides us the right to use, modify, and redistribute your contributions using the [Apache 2.0 License](LICENSE.md).
 
-If you have any questions, feel free to reach out to [hello@cesium.com](mailto:hello@cesium)!
+If you have any questions, feel free to reach out to hello@cesium.com!
 
 #### Pull Request Guidelines
 
