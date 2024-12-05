@@ -89,8 +89,6 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
     set(DOXYGEN_IMAGE_PATH "./")
     set(DOXYGEN_MARKDOWN_ID_STYLE GITHUB)
-    set(DOXYGEN_DOT_IMAGE_FORMAT svg)
-    set(DOXYGEN_INTERACTIVE_SVG YES)
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")

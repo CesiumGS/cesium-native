@@ -11,7 +11,7 @@
       <td>
 
 ![Googleplex](doc/img/screenshot-googleplex.jpg)
-        <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
+        <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Google Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
       </td>
       <td>
         ![New York](doc/img/screenshot-ny-metadata.jpg)
@@ -126,7 +126,7 @@ If you have a project that integrates with Cesium Native that isn't on this list
 
 ### 📦Dependencies
 
-Cesium Native relies on various third-party packages to accomplish tasks like image decoding, URI parsing, and math operations. These dependencies are automatically obtained and built using [vcpkg](https://vcpkg.io/en/) when building through CMake. Below is a graph of all the Cesium Native libraries and their dependencies on third party packages and each other.
+Cesium Native relies on various third-party packages to accomplish tasks like image decoding, URI parsing, and math operations. These dependencies are automatically obtained and built using [vcpkg](https://vcpkg.io/) when building through CMake. Below is a graph of all the Cesium Native libraries and their dependencies on third party packages and each other.
 
 ![](doc/img/dependency-graph.svg)
 
@@ -198,7 +198,7 @@ Unit tests can also be run from this solution, under the cesium-native-tests pro
 
 #### Regenerate glTF and 3D Tiles classes
 
-Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, `Cesium3DTilesReader`, and `CesiumQuantizedMeshTerrain` is generated from the standards' JSON Schema specifications. To regenerate the code:
+Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, `CesiumGltfWriter`, `Cesium3DTilesReader`, `Cesium3DTilesWriter`, and `CesiumQuantizedMeshTerrain` is generated from the standards' JSON Schema specifications. To regenerate the code:
 
 * Make sure you have a relatively recent version of Node.js installed.
 * Install dependencies by running:

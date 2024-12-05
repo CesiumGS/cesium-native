@@ -6,8 +6,8 @@
   "scripts": {
     "generate-dep-graph": "cd ../.. && cmake -B build -S . --graphviz=dependency-graph.dot && cd tools/dep-graph-gen && node index.js --input ../../dependency-graph.dot --output ../../doc/diagrams/dependencies --targets Cesium* && mmdc -i ../../doc/diagrams/dependencies/all.mmd -o ../../doc/img/dependency-graph.svg -b transparent && rm ../../dependency-graph.dot"
   },
-  "author": "CesiumGS, Inc.",
-  "license": "UNLICENSED",
+  "author": "CesiumGS, Inc. and Contributors",
+  "license": "Apache-2.0",
   "dependencies": {
     "@mermaid-js/mermaid-cli": "^11.4.2",
     "dotparser": "^1.1.1",

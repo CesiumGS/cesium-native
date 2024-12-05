@@ -43,7 +43,6 @@ PUBLIC
     earcut
 PRIVATE
     s2::s2
-    absl::string_view
 )
 
 target_compile_definitions(CesiumGeospatial PRIVATE GLM_ENABLE_EXPERIMENTAL)
