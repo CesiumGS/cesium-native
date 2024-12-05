@@ -1,6 +1,4 @@
-
-
-# Developer Setup Guide <!-- omit in toc -->
+# Developer Setup Guide {#developer-setup}
 
 This guide contains the basic setup information for developers looking to work with Cesium Native. **To follow this guide, you will need the following prerequisites:**
 
@@ -9,7 +7,8 @@ This guide contains the basic setup information for developers looking to work w
 * CMake 3.15+
 * For best JPEG-decoding performance, you must have [nasm](https://www.nasm.us/) installed so that CMake can find it. Everything will work fine without it, just slower.
 
-## Table of Contents <!-- omit in toc -->
+<!-- omit in toc -->
+## Table of Contents
 
 - [Clone the Repo](#clone-the-repo)
 - [Compiling Cesium Native](#compiling-cesium-native)

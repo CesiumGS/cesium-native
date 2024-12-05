@@ -44,7 +44,6 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
         ../CesiumIonClient/test
-        ../CesiumJsonReader/test
         ../CesiumJsonWriter/test
         ../CesiumQuantizedMeshTerrain/test
         ../CesiumRasterOverlays/test
@@ -87,8 +86,11 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
-    set(DOXYGEN_IMAGE_PATH "./")
+    set(DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")
     set(DOXYGEN_MARKDOWN_ID_STYLE GITHUB)
+    # Tag files can be used by other Doxygen projects to link to our docs
+    # For example, Cesium for Unreal can use it to link to the Cesium Native docs without duplicating them.
+    set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/html/cesium-native.tag")
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")

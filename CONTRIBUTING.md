@@ -1,6 +1,7 @@
-# Contribution Guide <!-- omit in toc -->
+# Contribution Guide {#contributing}
 
-## Table of Contents <!-- omit in toc -->
+<!-- omit in toc -->
+## Table of Contents
 
 - [📬Submitting an Issue](#submitting-an-issue)
 - [📝Opening a Pull Request](#opening-a-pull-request)

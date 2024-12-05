@@ -4,7 +4,9 @@
 [![Build Status](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml/badge.svg)](https://github.com/CesiumGS/cesium-native/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/tag/CesiumGS/cesium-native?label=release)](https://github.com/CesiumGS/cesium-native/tags)
 
-<a href="https://cesium.com/learn/cesium-native/ref-doc/">📚Documentation</a> - <a href="CHANGES.md">📒Change Log</a> - <a href="https://community.cesium.com/">💬Community Forums</a>
+📚<a href="https://cesium.com/learn/cesium-native/ref-doc/">Documentation</a> - 📒<a href="CHANGES.md">Change Log</a> - 💬<a href="https://community.cesium.com/">Community Forums</a>
+
+## 📖About
 
 Cesium Native is a set of C++ libraries for 3D geospatial, including:
 
@@ -25,21 +27,33 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
   <tbody>
     <tr>
       <td>
+        <!--! \if DOXYGEN_EXCLUDE -->
         <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex" />
+        <!--! \endif -->
+        <!--! \image html screenshot-googleplex.jpg -->
         <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Google Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
       </td>
       <td>
+        <!--! \if DOXYGEN_EXCLUDE -->
         <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York" />
+        <!--! \endif -->
+        <!--! \image html screenshot-ny-metadata.jpg -->
         <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
       </td>
     </tr>
     <tr>
       <td>
+        <!--! \if DOXYGEN_EXCLUDE -->
         <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater" />
+        <!--! \endif -->
+        <!--! \image html screenshot-copernicus-crater.jpg -->
         <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.<br/>&nbsp;<!-- fake third line to align the two images and captions --></sub></p>
       </td>
       <td>
+        <!--! \if DOXYGEN_EXCLUDE -->
         <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco" />
+        <!--! \endif -->
+        <!--! \image html screenshot-san-francisco.jpg -->
         <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA. Data courtesy Aerometrex.</sub></p>
       </td>
     </tr>
@@ -68,7 +82,6 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumQuantizedMeshTerrain** | Classes for accessing terrain in the [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) format.   |
 | **CesiumRasterOverlays**       | Classes for raster overlays, which allow draping massive 2D textures over a model.                              |
 | **CesiumUtility**              | Utility functions for JSON parsing, URI processing, credits, etc.                                               |
-
 
 ## 📗License
 
