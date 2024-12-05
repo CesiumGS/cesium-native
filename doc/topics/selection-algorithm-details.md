@@ -9,3 +9,15 @@ At a high level, `updateView` works by traversing the 3D Tiles tileset's boundin
 For tiles that _do_ need to be traversed, `_visitTileIfNeeded` calls `_visitTile`.
 
 The most important job of `_visitTile` is to decide whether the current tile - which has already been deemed visible - should be _rendered_ or _refined_.
+
+## Screen-Space Error
+
+## Culling
+
+## Load Priority
+
+## Kicking
+
+## Forbid Holes
+
+## Occlusion Culling
