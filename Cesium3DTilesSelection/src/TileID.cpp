@@ -15,8 +15,8 @@ TileIdUtilities::createTileIdString(const TileID& tileId) {
     std::string
     operator()(const CesiumGeometry::QuadtreeTileID& quadtreeTileId) {
       // Strings of the form "L10-X23-Y144"
-      return std::string("L") + std::to_string(quadtreeTileId.level) + "-" + "X" +
-             std::to_string(quadtreeTileId.x) + "-" + "Y" +
+      return std::string("L") + std::to_string(quadtreeTileId.level) + "-" +
+             "X" + std::to_string(quadtreeTileId.x) + "-" + "Y" +
              std::to_string(quadtreeTileId.y);
     }
 
