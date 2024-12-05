@@ -188,7 +188,7 @@ We could change `myComputeSomethingSlowlyWrapper` to catch the possible exceptio
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp compute-something-slowly-wrapper-handle-exception
 
-The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function (that's why it's safe to capture everything by reference `&` in this case). The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
+The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function in the current thread (that's why it's safe to capture everything by reference `&` in this case). The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
 
 The important difference, however, is that if `computeSomethingSlowly` throws an exception, `createFuture` will automatically catch that exception and turn it into a rejection of the `Future<T>`.
 
