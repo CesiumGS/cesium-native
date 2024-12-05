@@ -88,6 +88,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
     set(DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")
     set(DOXYGEN_MARKDOWN_ID_STYLE GITHUB)
+    set(DOXYGEN_INTERACTIVE_SVG YES)
     # Tag files can be used by other Doxygen projects to link to our docs
     # For example, Cesium for Unreal can use it to link to the Cesium Native docs without duplicating them.
     set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/html/cesium-native.tag")
@@ -107,6 +108,7 @@ if(DOXYGEN_FOUND)
         cesium-native-docs
         "../CONTRIBUTING.md"
         "../README.md"
+        "../CHANGES.md"
         ${CESIUM_DOC_TOPICS}
         ${LIB_DIRS}
     )

@@ -6,6 +6,9 @@ This guide contains the basic setup information for developers looking to work w
   * Other compilers are likely to work but are not regularly tested.
 * CMake 3.15+
 * For best JPEG-decoding performance, you must have [nasm](https://www.nasm.us/) installed so that CMake can find it. Everything will work fine without it, just slower.
+<!--! [TOC] -->
+
+<!--! \cond DOXYGEN_EXCLUDE !-->
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -18,6 +21,8 @@ This guide contains the basic setup information for developers looking to work w
 - [Generate Documentation](#generate-documentation)
 - [Regenerate glTF and 3D Tiles classes](#regenerate-gltf-and-3d-tiles-classes)
 - [Regenerate Dependency Graphs](#regenerate-dependency-graphs)
+
+<!--! \endcond -->
 
 ## Clone the Repo
 

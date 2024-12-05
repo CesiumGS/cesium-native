@@ -20,6 +20,7 @@ We want to do as much of this kind of work as we possibly can in a background th
 Unfortunately, there is inevitably at least a little bit of tile loading work that can't be done in a background thread, though. Game engines, for example, usually have strict rules against creating game objects anywhere other than the main thread. We can't get anything onto the screen without creating game objects, so after the background work is complete, we then need to continue processing this tile in the main thread in order to do the final preparation to render it.
 
 `AsyncSystem` gives us an elegant way to express this kind of sequential process involving a series of asynchronous steps.
+<!--! [TOC] -->
 
 ## Creating an AsyncSystem {#creating-an-asyncsystem}
 

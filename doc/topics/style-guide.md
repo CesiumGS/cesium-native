@@ -14,6 +14,7 @@ We follow the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/C
 * Skim the sections below, which call out where (and why) our practices differ from the C++ Core Guidelines.
 * Skim the C++ Core Guidelines. Read sections that seem interesting or surprising.
 * Read the sections below more thoroughly.
+<!--! [TOC] -->
 
 ## 💄 Source Code Formatting
 

@@ -1,6 +1,7 @@
 # Contribution Guide {#contributing}
 
-<!-- omit in toc -->
+<!--! \cond DOXYGEN_EXCLUDE !-->
+
 ## Table of Contents
 
 - [📬Submitting an Issue](#submitting-an-issue)
@@ -8,8 +9,11 @@
   - [Contributor License Agreement (CLA)](#contributor-license-agreement-cla)
   - [Pull Request Guidelines](#pull-request-guidelines)
 - [⚖️Code of Conduct](#️code-of-conduct)
+  
+<!--! \endcond -->
 
 Community involvement in Cesium Native has been and continues to be a key part of its development. Contributing to Cesium Native can take many forms:
+<!--! [TOC] -->
 
 - Making a pull request to add features or fix issues.
 - Submitting an issue to report a bug.
@@ -57,7 +61,7 @@ If you have any questions, feel free to reach out to hello@cesium.com!
 Our code is our lifeblood so maintaining Cesium Native's high code quality is important to us.
 - For an overview of our workflow see [github pull request workflows](https://cesium.com/blog/2013/10/08/github-pull-request-workflows/).
 - Pull request tips
-  - If your pull request fixes an existing issue, include a link to the issue in the description (like this: "Fixes [#1](https://github.com/CesiumGS/cesium-native/issues/1)"). Likewise, if your pull request fixes an issue reported on the Cesium forum, include a link to the thread.
+  - If your pull request fixes an existing issue, include a link to the issue in the description (like this: &quot;Fixes [#1](https://github.com/CesiumGS/cesium-native/issues/1)&quot;). Likewise, if your pull request fixes an issue reported on the Cesium forum, include a link to the thread.
   - If your pull request needs additional work, include a [task list](https://github.com/blog/1375%0A-task-lists-in-gfm-issues-pulls-comments).
   - Once you are done making new commits to address feedback, add a comment to the pull request such as `"this is ready"` since GitHub doesn't notify us about commits.
 - Code and tests
