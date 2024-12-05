@@ -103,6 +103,7 @@ if(DOXYGEN_FOUND)
 
     doxygen_add_docs(
         cesium-native-docs
+        "../CONTRIBUTING.md"
         "../README.md"
         ${CESIUM_DOC_TOPICS}
         ${LIB_DIRS}

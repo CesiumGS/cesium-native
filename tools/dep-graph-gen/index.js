@@ -67,8 +67,8 @@ config:
 ${title ? `title: ${title}` : ``}
 ---
 graph TD
-  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
-  classDef libraryNode fill:#9f9\n`;
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
+  classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px\n`;
 
   // Keep track of which nodes are in which class, so we can style them appropriately
   const classes = {
@@ -113,7 +113,7 @@ graph TD
     let linkColorIndex = 0;
 
     Object.keys(nodeLinks).forEach(l => {
-      output += `  linkStyle ${nodeLinks[l].join(",")} stroke:#${linkColors[linkColorIndex++]},stroke-width:4px\n`;
+      output += `  linkStyle ${nodeLinks[l].join(",")} stroke:#${linkColors[linkColorIndex++]},stroke-width:8px\n`;
     });
   }
 

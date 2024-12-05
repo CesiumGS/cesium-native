@@ -5,8 +5,8 @@ config:
 
 ---
 graph TD
-  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
-  classDef libraryNode fill:#9f9
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
+  classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
   CesiumUtility[CesiumUtility] --> glm_glm{{glm::glm}}
   CesiumUtility[CesiumUtility] --> spdlog_spdlog{{spdlog::spdlog}}
   CesiumUtility[CesiumUtility] --> uriparser_uriparser{{uriparser::uriparser}}
@@ -34,7 +34,6 @@ graph TD
   CesiumGeometry[CesiumGeometry] --> CesiumUtility[CesiumUtility]
   CesiumGeospatial[CesiumGeospatial] --> CesiumGeometry[CesiumGeometry]
   CesiumGeospatial[CesiumGeospatial] --> CesiumUtility[CesiumUtility]
-  CesiumGeospatial[CesiumGeospatial] --> absl_string_view{{absl::string_view}}
   CesiumGeospatial[CesiumGeospatial] --> earcut{{earcut}}
   CesiumGeospatial[CesiumGeospatial] --> s2_s2{{s2::s2}}
   CesiumGltf[CesiumGltf] --> CesiumUtility[CesiumUtility]
@@ -100,42 +99,41 @@ graph TD
   CesiumIonClient[CesiumIonClient] --> httplib_httplib{{httplib::httplib}}
   CesiumIonClient[CesiumIonClient] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
   CesiumIonClient[CesiumIonClient] --> picosha2_picosha2{{picosha2::picosha2}}
-  class glm_glm,spdlog_spdlog,uriparser_uriparser,zlib-ng_zlib-ng,libmorton_libmorton,Async_,spdlog_spdlog_header_only,unofficial_sqlite3_sqlite3,absl_string_view,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,nonstd_expected-lite,tinyxml2_tinyxml2,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2 dependencyNode
+  class glm_glm,spdlog_spdlog,uriparser_uriparser,zlib-ng_zlib-ng,libmorton_libmorton,Async_,spdlog_spdlog_header_only,unofficial_sqlite3_sqlite3,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,nonstd_expected-lite,tinyxml2_tinyxml2,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2 dependencyNode
   class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumGltfWriter,CesiumIonClient libraryNode
-  linkStyle 0 stroke:#ff0029,stroke-width:4px
-  linkStyle 1,20,61 stroke:#377eb8,stroke-width:4px
-  linkStyle 2,64 stroke:#66a61e,stroke-width:4px
-  linkStyle 3 stroke:#984ea3,stroke-width:4px
-  linkStyle 4,13,19,23,24,26,30,36,57,71,72,79,88 stroke:#00d2d5,stroke-width:4px
-  linkStyle 5,15,47,82 stroke:#ff7f00,stroke-width:4px
-  linkStyle 6,49 stroke:#af8d00,stroke-width:4px
-  linkStyle 7,16,31,37,50,65,73,87 stroke:#7f80cd,stroke-width:4px
-  linkStyle 8,25,32,51,74 stroke:#b3e900,stroke-width:4px
-  linkStyle 9,33,52,66,75 stroke:#c42e60,stroke-width:4px
-  linkStyle 10,34,38,53,67,76,84 stroke:#a65628,stroke-width:4px
-  linkStyle 11,68,77 stroke:#f781bf,stroke-width:4px
-  linkStyle 12,35,54,78 stroke:#8dd3c7,stroke-width:4px
-  linkStyle 14,59 stroke:#bebada,stroke-width:4px
-  linkStyle 17,39,69 stroke:#fb8072,stroke-width:4px
-  linkStyle 18 stroke:#80b1d3,stroke-width:4px
-  linkStyle 21,62 stroke:#fdb462,stroke-width:4px
-  linkStyle 22 stroke:#fccde5,stroke-width:4px
-  linkStyle 27 stroke:#bc80bd,stroke-width:4px
-  linkStyle 28 stroke:#ffed6f,stroke-width:4px
-  linkStyle 29 stroke:#c4eaff,stroke-width:4px
-  linkStyle 40 stroke:#cf8c00,stroke-width:4px
-  linkStyle 41 stroke:#1b9e77,stroke-width:4px
-  linkStyle 42 stroke:#d95f02,stroke-width:4px
-  linkStyle 43,58 stroke:#e7298a,stroke-width:4px
-  linkStyle 44 stroke:#e6ab02,stroke-width:4px
-  linkStyle 45 stroke:#a6761d,stroke-width:4px
-  linkStyle 46,86,91 stroke:#0097ff,stroke-width:4px
-  linkStyle 48 stroke:#00d067,stroke-width:4px
-  linkStyle 55 stroke:#000000,stroke-width:4px
-  linkStyle 56 stroke:#252525,stroke-width:4px
-  linkStyle 60,80 stroke:#525252,stroke-width:4px
-  linkStyle 63,81 stroke:#737373,stroke-width:4px
-  linkStyle 70,83,85 stroke:#969696,stroke-width:4px
-  linkStyle 89 stroke:#bdbdbd,stroke-width:4px
-  linkStyle 90 stroke:#f43600,stroke-width:4px
-  linkStyle 92 stroke:#4ba93b,stroke-width:4px
+  linkStyle 0 stroke:#ff0029,stroke-width:8px
+  linkStyle 1,20,60 stroke:#377eb8,stroke-width:8px
+  linkStyle 2,63 stroke:#66a61e,stroke-width:8px
+  linkStyle 3 stroke:#984ea3,stroke-width:8px
+  linkStyle 4,13,19,23,24,26,29,35,56,70,71,78,87 stroke:#00d2d5,stroke-width:8px
+  linkStyle 5,15,46,81 stroke:#ff7f00,stroke-width:8px
+  linkStyle 6,48 stroke:#af8d00,stroke-width:8px
+  linkStyle 7,16,30,36,49,64,72,86 stroke:#7f80cd,stroke-width:8px
+  linkStyle 8,25,31,50,73 stroke:#b3e900,stroke-width:8px
+  linkStyle 9,32,51,65,74 stroke:#c42e60,stroke-width:8px
+  linkStyle 10,33,37,52,66,75,83 stroke:#a65628,stroke-width:8px
+  linkStyle 11,67,76 stroke:#f781bf,stroke-width:8px
+  linkStyle 12,34,53,77 stroke:#8dd3c7,stroke-width:8px
+  linkStyle 14,58 stroke:#bebada,stroke-width:8px
+  linkStyle 17,38,68 stroke:#fb8072,stroke-width:8px
+  linkStyle 18 stroke:#80b1d3,stroke-width:8px
+  linkStyle 21,61 stroke:#fdb462,stroke-width:8px
+  linkStyle 22 stroke:#fccde5,stroke-width:8px
+  linkStyle 27 stroke:#bc80bd,stroke-width:8px
+  linkStyle 28 stroke:#ffed6f,stroke-width:8px
+  linkStyle 39 stroke:#c4eaff,stroke-width:8px
+  linkStyle 40 stroke:#cf8c00,stroke-width:8px
+  linkStyle 41 stroke:#1b9e77,stroke-width:8px
+  linkStyle 42,57 stroke:#d95f02,stroke-width:8px
+  linkStyle 43 stroke:#e7298a,stroke-width:8px
+  linkStyle 44 stroke:#e6ab02,stroke-width:8px
+  linkStyle 45,85,90 stroke:#a6761d,stroke-width:8px
+  linkStyle 47 stroke:#0097ff,stroke-width:8px
+  linkStyle 54 stroke:#00d067,stroke-width:8px
+  linkStyle 55 stroke:#000000,stroke-width:8px
+  linkStyle 59,79 stroke:#252525,stroke-width:8px
+  linkStyle 62,80 stroke:#525252,stroke-width:8px
+  linkStyle 69,82,84 stroke:#737373,stroke-width:8px
+  linkStyle 88 stroke:#969696,stroke-width:8px
+  linkStyle 89 stroke:#bdbdbd,stroke-width:8px
+  linkStyle 91 stroke:#f43600,stroke-width:8px

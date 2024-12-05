@@ -5,12 +5,11 @@ config:
 title: CesiumGeospatial Dependency Graph
 ---
 graph TD
-  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
-  classDef libraryNode fill:#9f9
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
+  classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
   CesiumGeospatial[CesiumGeospatial] --> CesiumGeometry[CesiumGeometry]
   CesiumGeospatial[CesiumGeospatial] --> CesiumUtility[CesiumUtility]
-  CesiumGeospatial[CesiumGeospatial] --> absl_string_view{{absl::string_view}}
   CesiumGeospatial[CesiumGeospatial] --> earcut{{earcut}}
   CesiumGeospatial[CesiumGeospatial] --> s2_s2{{s2::s2}}
-  class absl_string_view,earcut,s2_s2 dependencyNode
+  class earcut,s2_s2 dependencyNode
   class CesiumGeometry,CesiumUtility,CesiumGeospatial libraryNode

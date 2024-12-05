@@ -5,8 +5,8 @@ config:
 title: CesiumGltfWriter Dependency Graph
 ---
 graph TD
-  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
-  classDef libraryNode fill:#9f9
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
+  classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
   CesiumGltfWriter[CesiumGltfWriter] --> CesiumGltf[CesiumGltf]
   CesiumGltfWriter[CesiumGltfWriter] --> CesiumJsonWriter[CesiumJsonWriter]
   CesiumGltfWriter[CesiumGltfWriter] --> modp_b64_modp_b64{{modp_b64::modp_b64}}

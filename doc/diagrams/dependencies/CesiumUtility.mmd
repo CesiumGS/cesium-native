@@ -5,8 +5,8 @@ config:
 title: CesiumUtility Dependency Graph
 ---
 graph TD
-  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666
-  classDef libraryNode fill:#9f9
+  classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
+  classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
   CesiumUtility[CesiumUtility] --> glm_glm{{glm::glm}}
   CesiumUtility[CesiumUtility] --> spdlog_spdlog{{spdlog::spdlog}}
   CesiumUtility[CesiumUtility] --> uriparser_uriparser{{uriparser::uriparser}}
