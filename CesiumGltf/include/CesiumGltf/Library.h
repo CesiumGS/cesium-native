@@ -3,7 +3,7 @@
 /**
  * @brief Classes for working with [glTF](https://www.khronos.org/gltf/) models.
  *
- * @mermaid{dependencies/CesiumGltf}
+ * @mermaid-interactive{dependencies/CesiumGltf}
  */
 namespace CesiumGltf {}
 

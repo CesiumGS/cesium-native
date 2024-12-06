@@ -3,7 +3,7 @@
 /**
  * @brief Classes for working with Cesium ion clients
  *
- * @mermaid{dependencies/CesiumIonClient}
+ * @mermaid-interactive{dependencies/CesiumIonClient}
  */
 namespace CesiumIonClient {}
 

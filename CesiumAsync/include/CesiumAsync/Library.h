@@ -3,7 +3,7 @@
 /**
  * @brief Classes that support asynchronous operations.
  *
- * @mermaid{dependencies/CesiumAsync}
+ * @mermaid-interactive{dependencies/CesiumAsync}
  */
 namespace CesiumAsync {}
 

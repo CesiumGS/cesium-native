@@ -3,7 +3,7 @@
 /**
  * @brief Utility classes for Cesium
  *
- * @mermaid{dependencies/CesiumUtility}
+ * @mermaid-interactive{dependencies/CesiumUtility}
  */
 namespace CesiumUtility {}
 

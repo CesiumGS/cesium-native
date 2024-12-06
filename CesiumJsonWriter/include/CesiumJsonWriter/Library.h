@@ -3,7 +3,7 @@
 /**
  * @brief Classes for writing JSON.
  *
- * @mermaid{dependencies/CesiumJsonWriter}
+ * @mermaid-interactive{dependencies/CesiumJsonWriter}
  */
 namespace CesiumJsonWriter {}
 

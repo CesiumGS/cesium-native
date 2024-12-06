@@ -3,7 +3,7 @@
 /**
  * @brief Classes for geospatial computations in Cesium
  *
- * @mermaid{dependencies/CesiumGeospatial}
+ * @mermaid-interactive{dependencies/CesiumGeospatial}
  */
 namespace CesiumGeospatial {}
 

@@ -3,7 +3,7 @@
 /**
  * @brief Classes for reading JSON.
  *
- * @mermaid{dependencies/CesiumJsonReader}
+ * @mermaid-interactive{dependencies/CesiumJsonReader}
  */
 namespace CesiumJsonReader {}
 

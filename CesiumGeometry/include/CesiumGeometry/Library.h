@@ -3,7 +3,7 @@
 /**
  * @brief Basic geometry classes for Cesium
  *
- * @mermaid{dependencies/CesiumGeometry}
+ * @mermaid-interactive{dependencies/CesiumGeometry}
  */
 namespace CesiumGeometry {}
 
