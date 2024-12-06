@@ -188,7 +188,6 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
       buffer.cesium.data = std::vector<std::byte>(
           binaryChunk.begin(),
           binaryChunk.begin() + buffer.byteLength);
-    } else {
     }
   }
 
