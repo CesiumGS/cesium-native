@@ -152,39 +152,44 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
         sizeof(SubtreeHeader) + header->jsonByteLength,
         header->binaryByteLength);
 
-    if (result.value->buffers.empty()) {
-      result.errors.emplace_back("Subtree has a binary chunk but the JSON does "
-                                 "not define any buffers.");
-      return asyncSystem.createResolvedFuture(std::move(result));
+    if (binaryChunk.size() > 0) {
+      if (result.value->buffers.empty()) {
+        result.errors.emplace_back(
+            "Subtree has a binary chunk but the JSON does "
+            "not define any buffers.");
+        return asyncSystem.createResolvedFuture(std::move(result));
+      }
+
+      Buffer& buffer = result.value->buffers[0];
+      if (buffer.uri) {
+        result.errors.emplace_back(
+            "Subtree has a binary chunk but the first buffer "
+            "in the JSON chunk also has a 'uri'.");
+        return asyncSystem.createResolvedFuture(std::move(result));
+      }
+
+      const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
+
+      // We allow - but don't require - 8-byte padding.
+      int64_t maxPaddingBytes = 0;
+      int64_t paddingRemainder = buffer.byteLength % 8;
+      if (paddingRemainder > 0) {
+        maxPaddingBytes = 8 - paddingRemainder;
+      }
+
+      if (buffer.byteLength > binaryChunkSize ||
+          buffer.byteLength + maxPaddingBytes < binaryChunkSize) {
+        result.errors.emplace_back(
+            "Subtree binary chunk size does not match the "
+            "size of the first buffer in the JSON chunk.");
+        return asyncSystem.createResolvedFuture(std::move(result));
+      }
+
+      buffer.cesium.data = std::vector<std::byte>(
+          binaryChunk.begin(),
+          binaryChunk.begin() + buffer.byteLength);
+    } else {
     }
-
-    Buffer& buffer = result.value->buffers[0];
-    if (buffer.uri) {
-      result.errors.emplace_back(
-          "Subtree has a binary chunk but the first buffer "
-          "in the JSON chunk also has a 'uri'.");
-      return asyncSystem.createResolvedFuture(std::move(result));
-    }
-
-    const int64_t binaryChunkSize = static_cast<int64_t>(binaryChunk.size());
-
-    // We allow - but don't require - 8-byte padding.
-    int64_t maxPaddingBytes = 0;
-    int64_t paddingRemainder = buffer.byteLength % 8;
-    if (paddingRemainder > 0) {
-      maxPaddingBytes = 8 - paddingRemainder;
-    }
-
-    if (buffer.byteLength > binaryChunkSize ||
-        buffer.byteLength + maxPaddingBytes < binaryChunkSize) {
-      result.errors.emplace_back("Subtree binary chunk size does not match the "
-                                 "size of the first buffer in the JSON chunk.");
-      return asyncSystem.createResolvedFuture(std::move(result));
-    }
-
-    buffer.cesium.data = std::vector<std::byte>(
-        binaryChunk.begin(),
-        binaryChunk.begin() + buffer.byteLength);
   }
 
   return postprocess(
