@@ -69,16 +69,63 @@ void markSubtreeAvailableForQuadtree(
   available[byteIndex] |= std::byte(1 << bitIndex);
 }
 
+using SubtreeContentInput =
+    std::variant<bool, std::vector<CesiumGeometry::QuadtreeTileID>>;
+
+struct NeedsAvailabilityBuffer {
+  bool operator()(bool) { return false; }
+  bool operator()(const std::vector<CesiumGeometry::QuadtreeTileID>&) {
+    return true;
+  }
+};
+
+struct GetAvailabilityView {
+  std::span<std::byte> buffer;
+  bool isSubtreeBuffer;
+
+  SubtreeAvailability::AvailabilityView operator()(bool constant) {
+    return SubtreeAvailability::SubtreeConstantAvailability{constant};
+  }
+
+  SubtreeAvailability::AvailabilityView
+  operator()(const std::vector<CesiumGeometry::QuadtreeTileID>& availableIDs) {
+    if (isSubtreeBuffer) {
+      for (const auto& subtreeID : availableIDs) {
+        markSubtreeAvailableForQuadtree(subtreeID, buffer);
+      }
+    } else {
+      for (const auto& tileID : availableIDs) {
+        markTileAvailableForQuadtree(tileID, buffer);
+      }
+    }
+
+    return SubtreeAvailability::SubtreeBufferViewAvailability{buffer};
+  }
+};
+
 SubtreeContent createSubtreeContent(
     uint32_t maxSubtreeLevels,
-    const std::vector<CesiumGeometry::QuadtreeTileID>& tileAvailabilities,
-    const std::vector<CesiumGeometry::QuadtreeTileID>& subtreeAvailabilities) {
+    const SubtreeContentInput& tileAvailabilities,
+    const SubtreeContentInput& subtreeAvailabilities) {
+  bool needsTileAvailabilityBuffer =
+      std::visit(NeedsAvailabilityBuffer{}, tileAvailabilities);
+  bool needsSubtreeAvailabilityBuffer =
+      std::visit(NeedsAvailabilityBuffer{}, subtreeAvailabilities);
+
+  // Create and populate the availability buffers.
   uint64_t numTiles = calculateTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
   uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
-  uint64_t bufferSize =
-      static_cast<uint64_t>(std::ceil(static_cast<double>(numTiles) / 8.0));
-  uint64_t subtreeBufferSize = static_cast<uint64_t>(
-      std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
+
+  uint64_t bufferSize = needsTileAvailabilityBuffer
+                            ? static_cast<uint64_t>(std::ceil(
+                                  static_cast<double>(numTiles) / 8.0))
+                            : 0;
+  uint64_t subtreeBufferSize =
+      needsSubtreeAvailabilityBuffer
+          ? static_cast<uint64_t>(
+                std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0))
+          : 0;
+
   std::vector<std::byte> availabilityBuffer(
       bufferSize + bufferSize + subtreeBufferSize);
 
@@ -91,21 +138,16 @@ SubtreeContent createSubtreeContent(
   std::span<std::byte> subtreeAvailabilityBuffer(
       availabilityBuffer.data() + bufferSize + bufferSize,
       subtreeBufferSize);
-  for (const auto& tileID : tileAvailabilities) {
-    markTileAvailableForQuadtree(tileID, tileAvailabilityBuffer);
-    markTileAvailableForQuadtree(tileID, contentAvailabilityBuffer);
-  }
 
-  for (const auto& subtreeID : subtreeAvailabilities) {
-    markSubtreeAvailableForQuadtree(subtreeID, subtreeAvailabilityBuffer);
-  }
-
-  SubtreeAvailability::SubtreeBufferViewAvailability tileAvailability{
-      tileAvailabilityBuffer};
-  SubtreeAvailability::SubtreeBufferViewAvailability subtreeAvailability{
-      subtreeAvailabilityBuffer};
-  SubtreeAvailability::SubtreeBufferViewAvailability contentAvailability{
-      contentAvailabilityBuffer};
+  SubtreeAvailability::AvailabilityView tileAvailability = std::visit(
+      GetAvailabilityView{tileAvailabilityBuffer, false},
+      tileAvailabilities);
+  SubtreeAvailability::AvailabilityView contentAvailability = std::visit(
+      GetAvailabilityView{contentAvailabilityBuffer, false},
+      tileAvailabilities);
+  SubtreeAvailability::AvailabilityView subtreeAvailability = std::visit(
+      GetAvailabilityView{subtreeAvailabilityBuffer, true},
+      subtreeAvailabilities);
 
   return {
       std::move(availabilityBuffer),
