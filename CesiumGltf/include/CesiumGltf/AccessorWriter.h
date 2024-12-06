@@ -42,14 +42,17 @@ public:
   /** @copydoc AccessorView::size */
   int64_t size() const noexcept { return this->_accessor.size(); }
 
-  /**
-   * @brief Gets the status of this accessor writer.
-   *
-   * Indicates whether the writer accurately reflects the accessor's data, or
-   * whether an error occurred.
-   */
+  /** @copydoc AccessorView::status */
   AccessorViewStatus status() const noexcept {
     return this->_accessor.status();
+  }
+
+  /** @copydoc AccessorView::stride */
+  int64_t stride() const noexcept { return this->_accessor.stride(); }
+
+  /** @copydoc AccessorView::data */
+  std::byte* data() noexcept {
+    return const_cast<std::byte*>(this->_accessor.data());
   }
 };
 
