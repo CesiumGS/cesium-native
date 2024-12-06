@@ -1,0 +1,22 @@
+flowchart LR
+  VisitTileIfNeeded[_visitTileIfNeeded]
+  ShouldVisit{Should Visit?}
+  VisitTile[_visitTile]
+  MeetsSSE{Meets SSE?}
+  Done
+  Render
+  Refine
+  VisitVisibleChildrenNearToFar[_visitVisibleChildrenNearToFar]
+  Recurse[Recurse on Children]
+
+  VisitTileIfNeeded-->ShouldVisit
+  ShouldVisit-->|Yes|VisitTile
+  ShouldVisit-->|No|Done
+  VisitTile-->MeetsSSE
+  MeetsSSE-->|Yes|Render
+  MeetsSSE-->|No|Refine
+  Refine-->VisitVisibleChildrenNearToFar
+  VisitVisibleChildrenNearToFar-->Recurse
+  Recurse-->|Child Tile 1|VisitTileIfNeeded
+  Recurse-->|Child Tile ...|VisitTileIfNeeded
+  Recurse-->|Child Tile n|VisitTileIfNeeded
