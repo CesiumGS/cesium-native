@@ -50,6 +50,9 @@ public:
   /** @copydoc AccessorView::stride */
   int64_t stride() const noexcept { return this->_accessor.stride(); }
 
+  /** @copydoc AccessorView::offset */
+  int64_t offset() const noexcept { return this->_accessor.offset(); }
+
   /** @copydoc AccessorView::data */
   std::byte* data() noexcept {
     return const_cast<std::byte*>(this->_accessor.data());
