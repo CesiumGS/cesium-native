@@ -7,14 +7,14 @@
 #include <CesiumQuantizedMeshTerrain/AvailabilityRectangle.h>
 #include <CesiumQuantizedMeshTerrain/Library.h>
 
-#include <gsl/span>
 #include <rapidjson/fwd.h>
 
+#include <span>
 #include <vector>
 
 namespace CesiumQuantizedMeshTerrain {
 struct AvailabilityRectangle;
-}
+} // namespace CesiumQuantizedMeshTerrain
 
 namespace CesiumQuantizedMeshTerrain {
 
@@ -46,7 +46,7 @@ public:
    */
   CesiumJsonReader::ReadJsonResult<
       CesiumQuantizedMeshTerrain::AvailabilityRectangle>
-  readFromJson(const gsl::span<const std::byte>& data) const;
+  readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of AvailabilityRectangle from a rapidJson::Value.

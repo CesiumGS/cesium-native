@@ -1,6 +1,7 @@
 #include "CesiumUtility/SpanHelper.h"
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <vector>
 
@@ -15,8 +16,8 @@ TEST_CASE("reintepretCastSpan") {
   value[5] = 1.0f;
   value[6] = 2.9f;
 
-  gsl::span<std::byte> byteView(data.data(), data.size());
-  gsl::span<float> floatView =
+  std::span<std::byte> byteView(data.data(), data.size());
+  std::span<float> floatView =
       CesiumUtility::reintepretCastSpan<float>(byteView);
   REQUIRE(floatView.size() == 7);
   REQUIRE(floatView[0] == 0.0f);
@@ -28,8 +29,8 @@ TEST_CASE("reintepretCastSpan") {
   REQUIRE(floatView[6] == 2.9f);
 
   std::vector<int32_t> intData{1, -1};
-  gsl::span<int32_t> intSpan = intData;
-  gsl::span<uint32_t> uintSpan =
+  std::span<int32_t> intSpan = intData;
+  std::span<uint32_t> uintSpan =
       CesiumUtility::reintepretCastSpan<uint32_t>(intSpan);
   REQUIRE(uintSpan.size() == 2);
   REQUIRE(uintSpan[0] == 1);

@@ -11,8 +11,8 @@ namespace Cesium3DTilesReader {
 /**
  * @brief Reads 3D Tiles subtrees from a binary or JSON subtree file.
  *
- * While {@link SubtreeReader} can parse a {@link Subtree} from a binary buffer
- * as well, `SubtreeFileReader` additionally supports:
+ * While {@link SubtreeReader} can parse a {@link Cesium3DTiles::Subtree} from
+ * a binary buffer as well, `SubtreeFileReader` additionally supports:
  *
  * 1. Loading binary subtree files.
  * 2. Loading external buffers asynchronously.
@@ -75,7 +75,7 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      const gsl::span<const std::byte>& data) const noexcept;
+      const std::span<const std::byte>& data) const noexcept;
 
 private:
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
@@ -84,14 +84,14 @@ private:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      const gsl::span<const std::byte>& data) const noexcept;
+      const std::span<const std::byte>& data) const noexcept;
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   loadJson(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-      const gsl::span<const std::byte>& data) const noexcept;
+      const std::span<const std::byte>& data) const noexcept;
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   postprocess(
       const CesiumAsync::AsyncSystem& asyncSystem,

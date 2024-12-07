@@ -4,7 +4,7 @@ const indent = require("./indent");
 const lodash = require("lodash");
 const NameFormatters = require("./NameFormatters");
 const path = require("path");
-const resolveProperty = require("./resolveProperty");
+const { resolveProperty, resolveSizeOfForProperty } = require("./resolveProperty");
 const unindent = require("./unindent");
 
 function generate(options, schema, writers) {
@@ -37,7 +37,12 @@ function generate(options, schema, writers) {
   }
 
   let base = "CesiumUtility::ExtensibleObject";
-  if (baseSchema !== undefined) {
+  if (config.classes[schema.title] && config.classes[schema.title].isAsset) {
+    if (baseSchema !== undefined && baseSchema.title !== 'glTF Property') {
+      throw new Error("An asset must inherit from ExtensibleObject.");
+    }
+    base = `CesiumUtility::SharedAsset<${baseName}>`;
+  } else if (baseSchema !== undefined) {
     base = getNameFromTitle(config, baseSchema.title);
   }
 
@@ -67,14 +72,14 @@ function generate(options, schema, writers) {
   schemaCache.popContext();
 
   let headers = lodash.uniq([
-    `"${namespace}/Library.h"`,
+    `<${namespace}/Library.h>`,
     NameFormatters.getIncludeFromName(base, namespace),
     ...lodash.flatten(properties.map((property) => property.headers)),
   ]);
 
   // Prevent header from including itself for recursive types like Tile
   headers = headers.filter((header) => {
-    return header !== `"${namespace}/${name}.h"`;
+    return header !== `<${namespace}/${name}.h>`;
   });
 
   headers.sort();
@@ -92,21 +97,35 @@ function generate(options, schema, writers) {
              * @brief ${schema.description ? schema.description : schema.title}
              */
             struct ${namespace.toUpperCase()}_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
-                static inline constexpr const char* TypeName = "${name}";
-                ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+                static constexpr const char* TypeName = "${name}";
+                ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
-                  properties
-                    .map((property) => formatProperty(property))
-                    .filter(propertyText => propertyText !== undefined)
-                    .join("\n\n"),
-                  16
-                )}
-                ${thisConfig.toBeInherited ? privateSpecConstructor(name) : ""}
+    properties
+      .map((property) => formatProperty(property))
+      .filter(propertyText => propertyText !== undefined)
+      .join("\n\n"),
+    16
+  )}
+
+                /**
+                 * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+                 * This will NOT include the size of any extensions attached to the object.
+                 * Calling this method may be slow as it requires traversing the object's entire structure.
+                 */
+                int64_t getSizeBytes() const {
+                  int64_t accum = 0;
+                  accum += int64_t(sizeof(${name}${thisConfig.toBeInherited ? "Spec" : ""}));
+                  accum += ${base}::getSizeBytes() - int64_t(sizeof(${base}));
+                  ${indent(properties.map(p => resolveSizeOfForProperty(p, "this->" + p.cppSafeName, "accum")).filter(p => p).join("\n"))}
+                  return accum;
+                }
+
+                ${thisConfig.toBeInherited ? protectedSpecConstructor(name) : ""}
             };
-        }
+        } // namespace ${namespace}
     `;
 
   const headerOutputDir = path.join(
@@ -154,24 +173,24 @@ function generate(options, schema, writers) {
 
         namespace CesiumJsonReader {
           class JsonReaderOptions;
-        }
+        } // namespace CesiumJsonReader
 
         namespace ${readerNamespace} {
           class ${name}JsonHandler : public ${baseJsonHandler}${thisConfig.extensionName ? `, public CesiumJsonReader::IExtensionJsonHandler` : ""} {
           public:
             using ValueType = ${namespace}::${name};
 
-            ${thisConfig.extensionName ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+            ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
-            ${name}JsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+            explicit ${name}JsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
             void reset(IJsonHandler* pParentHandler, ${namespace}::${name}* pObject);
 
-            virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+            IJsonHandler* readObjectKey(const std::string_view& str) override;
 
             ${thisConfig.extensionName ? `
-            virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
+            void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-            virtual IJsonHandler& getHandler() override { return *this; }
+            IJsonHandler& getHandler() override { return *this; }
             ` : ""}
 
           protected:
@@ -181,13 +200,13 @@ function generate(options, schema, writers) {
             ${indent(readerLocalTypes.join("\n\n"), 12)}
             ${namespace}::${name}* _pObject = nullptr;
             ${indent(
-              properties
-                .map((property) => formatReaderProperty(property))
-                .join("\n"),
-              12
-            )}
+    properties
+      .map((property) => formatReaderProperty(property))
+      .join("\n"),
+    12
+  )}
           };
-        }
+        }  // namespace ${readerNamespace}
   `;
 
   const jsonHandlerHeaderOutputDir = path.join(
@@ -216,13 +235,13 @@ function generate(options, schema, writers) {
     #include <CesiumJsonReader/JsonReader.h>
     #include <CesiumJsonReader/JsonReaderOptions.h>
     #include <${namespace}/${name}.h>
-    #include <gsl/span>
+    #include <span>
     #include <rapidjson/fwd.h>
     #include <vector>
 
     namespace ${namespace} {
       struct ${name};
-    }
+    } // namespace ${namespace}
 
     namespace ${readerNamespace} {
 
@@ -252,7 +271,7 @@ function generate(options, schema, writers) {
        * @param data The buffer from which to read the instance.
        * @return The result of reading the instance.
        */
-      CesiumJsonReader::ReadJsonResult<${namespace}::${name}> readFromJson(const gsl::span<const std::byte>& data) const;
+      CesiumJsonReader::ReadJsonResult<${namespace}::${name}> readFromJson(const std::span<const std::byte>& data) const;
 
       /**
        * @brief Reads an instance of ${name} from a rapidJson::Value.
@@ -274,7 +293,8 @@ function generate(options, schema, writers) {
       CesiumJsonReader::JsonReaderOptions _options;
     };
 
-    } // namespace ${readerNamespace}`;
+    } // namespace ${readerNamespace}
+    `;
 
   const readerHeaderOutputDir = path.join(
     readerOutputDir,
@@ -295,19 +315,21 @@ function generate(options, schema, writers) {
   );
 
   const jsonHandlerHeadersImpl = lodash.uniq([
+    NameFormatters.getJsonHandlerIncludeFromName(base, readerNamespace),
     ...lodash.flatten(properties.map((property) => property.readerHeadersImpl)),
   ]);
+
+  if (thisConfig.extensionName) {
+    jsonHandlerHeadersImpl.push("<CesiumUtility/ExtensibleObject.h>");
+    jsonHandlerHeadersImpl.push("<any>");
+  }
+
   jsonHandlerHeadersImpl.sort();
 
   function generateJsonHandlerOptionsInitializerList(properties, varName) {
     const initializerList = properties
       .filter((p) => p.readerType.toLowerCase().indexOf("jsonhandler") != -1)
-      .map(
-        (p) =>
-          `_${p.cppSafeName}(${
-            p.schemas && p.schemas.length > 0 ? varName : ""
-          })`
-      )
+      .map((p) => `_${p.cppSafeName}(${p.schemas && p.schemas.length > 0 ? varName : ""})`)
       .join(", ");
     return initializerList == "" ? "" : ", " + initializerList;
   }
@@ -315,6 +337,7 @@ function generate(options, schema, writers) {
   const jsonHandlerImpl = `
         // This file was generated by generate-classes.
         // DO NOT EDIT THIS FILE!
+        // NOLINTBEGIN(readability-duplicate-include)
         #include "${name}JsonHandler.h"
 
         #include <${namespace}/${name}.h>
@@ -322,9 +345,16 @@ function generate(options, schema, writers) {
         #include <${readerNamespace}/${name}Reader.h>
         #include <CesiumJsonReader/JsonReader.h>
         #include <CesiumJsonReader/ArrayJsonHandler.h>
+        #include <CesiumJsonReader/IJsonHandler.h>
         #include <CesiumUtility/Assert.h>
+        #include <rapidjson/document.h>
         #include "registerReaderExtensions.h"
+        #include <span>
+        #include <cstddef>
         #include <string>
+        #include <string_view>
+        #include <vector>
+        // NOLINTEND(readability-duplicate-include)
 
         namespace ${readerNamespace} {
 
@@ -356,11 +386,11 @@ function generate(options, schema, writers) {
 
           ${properties.length > 0 ? `
           ${indent(
-            properties
-              .map((property) => formatReaderPropertyImpl(property))
-              .join("\n"),
-            10
-          )}` : `(void)o;`}
+    properties
+      .map((property) => formatReaderPropertyImpl(property))
+      .join("\n"),
+    10
+  )}` : `(void)o;`}
 
           return this->readObjectKey${NameFormatters.removeNamespace(base)}(objectType, str, *this->_pObject);
         }
@@ -375,7 +405,7 @@ function generate(options, schema, writers) {
           return this->_options;
         }
 
-        CesiumJsonReader::ReadJsonResult<${namespace}::${name}> ${name}Reader::readFromJson(const gsl::span<const std::byte>& data) const {
+        CesiumJsonReader::ReadJsonResult<${namespace}::${name}> ${name}Reader::readFromJson(const std::span<const std::byte>& data) const {
           ${name}JsonHandler handler(this->_options);
           return CesiumJsonReader::JsonReader::readJson(data, handler);
         }
@@ -402,11 +432,10 @@ function generate(options, schema, writers) {
         struct ${name}JsonWriter {
           using ValueType = ${namespace}::${name};
 
-          ${
-            thisConfig.extensionName
-              ? `static inline constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-              : ""
-          }
+          ${thisConfig.extensionName
+      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+      : ""
+    }
 
           static void write(
               const ${namespace}::${name}& obj,
@@ -443,11 +472,11 @@ function generate(options, schema, writers) {
             const CesiumJsonWriter::ExtensionWriterContext& context) {
 
           ${indent(
-            properties
-              .map((property) => formatWriterPropertyImpl(property))
-              .join("\n\n"),
-            10
-          )}
+      properties
+        .map((property) => formatWriterPropertyImpl(property))
+        .join("\n\n"),
+      10
+    )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
         }
@@ -474,11 +503,11 @@ function generate(options, schema, writers) {
           jsonWriter.StartObject();
 
           ${indent(
-            properties
-              .map((property) => formatWriterPropertyImpl(property))
-              .join("\n\n"),
-            10
-          )}
+      properties
+        .map((property) => formatWriterPropertyImpl(property))
+        .join("\n\n"),
+      10
+    )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
 
@@ -488,15 +517,14 @@ function generate(options, schema, writers) {
   }
 
   const writeExtensionsRegistration = `
-        ${
-          extensions[schema.title]
-            ? extensions[schema.title]
-                .map((extension) => {
-                  return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
-                })
-                .join("\n")
-            : ""
-        }
+        ${extensions[schema.title]
+      ? extensions[schema.title]
+        .map((extension) => {
+          return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
+        })
+        .join("\n")
+      : ""
+    }
   `;
 
   writers.push({
@@ -558,7 +586,7 @@ function formatProperty(property) {
 
   result += `${property.type} ${property.cppSafeName}`;
 
-  if (property.defaultValue !== undefined) {
+  if (property.defaultValue !== undefined && property.defaultValue != '""') {
     result += " = " + property.defaultValue;
   } else if (property.needsInitialization) {
     result += " = " + property.type + "()";
@@ -574,7 +602,7 @@ function formatReaderProperty(property) {
 }
 
 function formatReaderPropertyImpl(property) {
-  return `if ("${property.name}"s == str) return property("${property.name}", this->_${property.cppSafeName}, o.${property.cppSafeName});`;
+  return `if ("${property.name}"s == str) { return property("${property.name}", this->_${property.cppSafeName}, o.${property.cppSafeName}); }`;
 }
 
 function formatWriterPropertyImpl(property) {
@@ -605,13 +633,23 @@ function formatWriterPropertyImpl(property) {
     result += `static const ${type} ${property.cppSafeName}Default = ${defaultValue};\n`;
     result += `if (obj.${property.cppSafeName} != ${property.cppSafeName}Default) {\n`;
   } else if (hasDefaultValueGuard) {
-    result += `if (obj.${property.cppSafeName} != ${defaultValue}) {\n`;
+    if (type === "bool") {
+      if (defaultValue === "false") {
+        result += `if (obj.${property.cppSafeName}) {\n`;
+      } else if (defaultValue === "true") {
+        result += `if (!obj.${property.cppSafeName}) {\n`;
+      }
+    } else if (type === "std::string" && defaultValue == '""') {
+      result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
+    } else {
+      result += `if (obj.${property.cppSafeName} != ${defaultValue}) {\n`;
+    }
   } else if (hasEmptyGuard) {
     result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
   } else if (hasNegativeIndexGuard) {
     result += `if (obj.${property.cppSafeName} > -1) {\n`;
   } else if (hasOptionalGuard) {
-    result += `if (obj.${property.cppSafeName}.has_value()) {\n`;
+    result += `if (obj.${property.cppSafeName}) {\n`;
   }
 
   result += `jsonWriter.Key("${property.name}");\n`;
@@ -624,9 +662,9 @@ function formatWriterPropertyImpl(property) {
   return result;
 }
 
-function privateSpecConstructor(name) {
+function protectedSpecConstructor(name) {
   return `
-    private:
+    protected:
       /**
        * @brief This class is not meant to be instantiated directly. Use {@link ${name}} instead.
        */

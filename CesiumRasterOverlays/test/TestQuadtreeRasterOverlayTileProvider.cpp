@@ -6,6 +6,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -63,12 +64,12 @@ public:
     } else {
       // Return an image where every component of every pixel is equal to the
       // tile level.
-      result.image.emplace();
-      result.image->width = int32_t(this->getWidth());
-      result.image->height = int32_t(this->getHeight());
-      result.image->bytesPerChannel = 1;
-      result.image->channels = 4;
-      result.image->pixelData.resize(
+      result.pImage.emplace();
+      result.pImage->width = int32_t(this->getWidth());
+      result.pImage->height = int32_t(this->getHeight());
+      result.pImage->bytesPerChannel = 1;
+      result.pImage->channels = 4;
+      result.pImage->pixelData.resize(
           this->getWidth() * this->getHeight() * 4,
           std::byte(tileID.level));
     }
@@ -170,7 +171,9 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
 
-    const ImageCesium& image = pTile->getImage();
+    REQUIRE(pTile->getImage());
+
+    const ImageAsset& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);
@@ -224,7 +227,9 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
 
     CHECK(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
 
-    const ImageCesium& image = pTile->getImage();
+    REQUIRE(pTile->getImage());
+
+    const ImageAsset& image = *pTile->getImage();
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);

@@ -40,19 +40,13 @@ target_sources(
         ${CESIUM_GLTF_WRITER_PUBLIC_HEADERS}
 )
 
-target_compile_definitions(
-    CesiumGltfWriter
-    PRIVATE
-        ${CESIUM_NATIVE_RAPIDJSON_DEFINES}
-)
-
-target_include_directories(
-    CesiumGltfWriter
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumGltfWriter
+    PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
-        ${CESIUM_NATIVE_STB_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )

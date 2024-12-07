@@ -149,6 +149,14 @@ const RasterOverlayCollection& Tileset::getOverlays() const noexcept {
   return this->_pTilesetContentManager->getRasterOverlayCollection();
 }
 
+TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() noexcept {
+  return *this->_pTilesetContentManager->getSharedAssetSystem();
+}
+
+const TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() const noexcept {
+  return *this->_pTilesetContentManager->getSharedAssetSystem();
+}
+
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
   return fogDensity.cameraHeight < height;
@@ -383,6 +391,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   }
 
   TilesetHeightRequest::processHeightRequests(
+      this->getAsyncSystem(),
       *this->_pTilesetContentManager,
       this->_options,
       this->_loadedTiles,
@@ -395,7 +404,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       static_cast<int32_t>(this->_mainThreadLoadQueue.size());
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      this->getExternals().pTileOcclusionProxyPool;
+      this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
@@ -1162,7 +1171,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 TileOcclusionState
 Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      this->getExternals().pTileOcclusionProxyPool;
+      this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
     // First check if this tile's bounding volume has occlusion info and is
     // known to be occluded.
@@ -1449,7 +1458,7 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   TraversalDetails traversalDetails;
 
   // TODO: actually visit near-to-far, rather than in order of occurrence.
-  gsl::span<Tile> children = tile.getChildren();
+  std::span<Tile> children = tile.getChildren();
   for (Tile& child : children) {
     const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,

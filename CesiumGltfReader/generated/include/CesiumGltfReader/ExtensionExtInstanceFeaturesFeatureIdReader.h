@@ -7,14 +7,14 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
-#include <gsl/span>
 #include <rapidjson/fwd.h>
 
+#include <span>
 #include <vector>
 
 namespace CesiumGltf {
 struct ExtensionExtInstanceFeaturesFeatureId;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
@@ -47,7 +47,7 @@ public:
    */
   CesiumJsonReader::ReadJsonResult<
       CesiumGltf::ExtensionExtInstanceFeaturesFeatureId>
-  readFromJson(const gsl::span<const std::byte>& data) const;
+  readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of ExtensionExtInstanceFeaturesFeatureId from a

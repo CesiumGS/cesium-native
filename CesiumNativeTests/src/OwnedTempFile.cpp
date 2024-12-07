@@ -1,6 +1,7 @@
 #include <CesiumNativeTests/OwnedTempFile.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <fstream>
 #include <random>
@@ -28,7 +29,7 @@ static std::string getTempFilename() {
 
 OwnedTempFile::OwnedTempFile() : _filePath(getTempFilename()) {}
 
-OwnedTempFile::OwnedTempFile(const gsl::span<const std::byte>& buffer)
+OwnedTempFile::OwnedTempFile(const std::span<const std::byte>& buffer)
     : OwnedTempFile() {
   write(buffer);
 }
@@ -40,7 +41,7 @@ const std::filesystem::path& OwnedTempFile::getPath() const {
 }
 
 void OwnedTempFile::write(
-    const gsl::span<const std::byte>& buffer,
+    const std::span<const std::byte>& buffer,
     std::ios::openmode flags) {
   std::fstream stream(_filePath.string(), flags);
   REQUIRE(stream.good());

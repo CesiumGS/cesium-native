@@ -106,7 +106,7 @@ public:
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTexturePropertyView. Likewise, if the value of
-   * Normalized does not match the value of {@ClassProperty::normalized} for that
+   * Normalized does not match the value of {@link ClassProperty::normalized} for that
    * class property, this returns an invalid property view. Only types with
    * integer components may be normalized.
    *
@@ -155,9 +155,10 @@ public:
    * property view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
-   * @tparam callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property id and a
    * {@link PropertyTexturePropertyView<T>}
    * @param propertyOptions The options to apply to the property.
+   * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void getPropertyView(
@@ -281,10 +282,11 @@ public:
    * error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
-   * @tparam callback A callback function that accepts property id and
+   * @param callback A callback function that accepts property id and
    * {@link PropertyTexturePropertyView<T>}
    * @param propertyOptions The options to apply to each property in the
    * property texture.
+   * @tparam Callback The type of the callback function.
    */
 
   template <typename Callback>
@@ -748,15 +750,16 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    const ImageCesium& image = _pModel->images[imageIndex].cesium;
+    const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
+        _pModel->images[imageIndex].pAsset;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
-    status = checkChannels(channels, image);
+    status = checkChannels(channels, *pImage);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    if (channels.size() * image.bytesPerChannel != elementSize) {
+    if (channels.size() * pImage->bytesPerChannel != elementSize) {
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
@@ -764,7 +767,7 @@ private:
         propertyTextureProperty,
         classProperty,
         _pModel->samplers[samplerIndex],
-        image,
+        *pImage,
         propertyOptions);
   }
 
@@ -780,7 +783,7 @@ private:
 
   PropertyViewStatusType checkChannels(
       const std::vector<int64_t>& channels,
-      const ImageCesium& image) const noexcept;
+      const ImageAsset& image) const noexcept;
 
   const Model* _pModel;
   const PropertyTexture* _pPropertyTexture;

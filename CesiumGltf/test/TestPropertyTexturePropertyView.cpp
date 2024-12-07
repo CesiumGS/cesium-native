@@ -1,12 +1,18 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumUtility/Math.h"
 
 #include <catch2/catch.hpp>
-#include <gsl/span>
+#include <catch2/catch_test_macros.hpp>
 
 #include <climits>
 #include <cstddef>
+#include <span>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -27,7 +33,7 @@ void checkTextureValues(
       convertPropertyComponentTypeToString(componentType);
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = static_cast<int32_t>(sizeof(T));
@@ -99,7 +105,7 @@ void checkTextureValues(
   classProperty.defaultProperty = defaultValue;
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = static_cast<int32_t>(sizeof(T));
@@ -173,7 +179,7 @@ void checkNormalizedTextureValues(
   classProperty.defaultProperty = defaultValue;
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = static_cast<int32_t>(sizeof(T));
@@ -243,7 +249,7 @@ void checkTextureArrayValues(
   classProperty.count = count;
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels =
@@ -329,7 +335,7 @@ void checkTextureArrayValues(
   classProperty.defaultProperty = defaultValue;
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels =
@@ -429,7 +435,7 @@ void checkNormalizedTextureArrayValues(
   classProperty.defaultProperty = defaultValue;
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels =
@@ -1397,7 +1403,7 @@ TEST_CASE("Check that PropertyTextureProperty values override class property "
   classProperty.max = 10.0f;
 
   Sampler sampler;
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = 4;
@@ -1474,7 +1480,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
 
     Sampler sampler;
-    ImageCesium image;
+    ImageAsset image;
     image.width = 2;
     image.height = 2;
     image.channels = 4;
@@ -1516,7 +1522,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     classProperty.componentType = ClassProperty::ComponentType::UINT16;
 
     Sampler sampler;
-    ImageCesium image;
+    ImageAsset image;
     image.width = 2;
     image.height = 2;
     image.channels = 4;
@@ -1557,7 +1563,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     classProperty.componentType = ClassProperty::ComponentType::UINT8;
 
     Sampler sampler;
-    ImageCesium image;
+    ImageAsset image;
     image.width = 2;
     image.height = 2;
     image.channels = 4;
@@ -1603,7 +1609,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     classProperty.array = true;
 
     Sampler sampler;
-    ImageCesium image;
+    ImageAsset image;
     image.width = 2;
     image.height = 2;
     image.channels = 4;
@@ -1660,7 +1666,7 @@ TEST_CASE("Check sampling with different sampler values") {
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = ClassProperty::ComponentType::UINT8;
 
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = 1;
@@ -1793,7 +1799,7 @@ TEST_CASE("Test PropertyTextureProperty constructs with "
   sampler.wrapS = Sampler::WrapS::REPEAT;
   sampler.wrapT = Sampler::WrapT::REPEAT;
 
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = 1;
@@ -1866,7 +1872,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
   sampler.wrapS = Sampler::WrapS::REPEAT;
   sampler.wrapT = Sampler::WrapT::REPEAT;
 
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = 1;
@@ -1940,7 +1946,7 @@ TEST_CASE("Test PropertyTextureProperty constructs with "
   sampler.wrapS = Sampler::WrapS::REPEAT;
   sampler.wrapT = Sampler::WrapT::REPEAT;
 
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = 1;
@@ -1963,7 +1969,7 @@ TEST_CASE("Test PropertyTextureProperty constructs with "
   std::vector<std::byte> emptyData;
   image.pixelData.swap(emptyData);
 
-  const ImageCesium* pImage = view.getImage();
+  const ImageAsset* pImage = view.getImage();
   REQUIRE(pImage);
   REQUIRE(pImage->width == image.width);
   REQUIRE(pImage->height == image.height);
@@ -2007,7 +2013,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
   sampler.wrapS = Sampler::WrapS::REPEAT;
   sampler.wrapT = Sampler::WrapT::REPEAT;
 
-  ImageCesium image;
+  ImageAsset image;
   image.width = 2;
   image.height = 2;
   image.channels = 1;
@@ -2030,7 +2036,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
   std::vector<std::byte> emptyData;
   image.pixelData.swap(emptyData);
 
-  const ImageCesium* pImage = view.getImage();
+  const ImageAsset* pImage = view.getImage();
   REQUIRE(pImage);
   REQUIRE(pImage->width == image.width);
   REQUIRE(pImage->height == image.height);
@@ -2050,3 +2056,7 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
     REQUIRE(view.get(uv[0], uv[1]) == static_cast<double>(data[i]) / 255.0);
   }
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

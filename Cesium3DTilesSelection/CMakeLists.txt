@@ -29,12 +29,10 @@ target_sources(
         ${CESIUM_3DTILES_SELECTION_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    Cesium3DTilesSelection
-    SYSTEM PUBLIC
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
-        ${CESIUM_NATIVE_DRACO_INCLUDE_DIR}
-        ${CESIUM_NATIVE_LIBMORTON_INCUDE_DIR}
+cesium_target_include_directories(
+    TARGET 
+        Cesium3DTilesSelection
+    PUBLIC
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE

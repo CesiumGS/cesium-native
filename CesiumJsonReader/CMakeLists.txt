@@ -28,9 +28,10 @@ target_sources(
         ${CESIUM_JSON_READER_PUBLIC_HEADERS}
 )
 
-target_include_directories(
-    CesiumJsonReader
-    SYSTEM PUBLIC
+cesium_target_include_directories(
+    TARGET
+        CesiumJsonReader
+    PUBLIC
         ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
     PRIVATE
@@ -39,6 +40,5 @@ target_include_directories(
 
 target_link_libraries(CesiumJsonReader
     PUBLIC
-        Microsoft.GSL::GSL
         CesiumUtility
 )

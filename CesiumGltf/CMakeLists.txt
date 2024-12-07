@@ -46,7 +46,6 @@ target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/include/
         ${CMAKE_CURRENT_LIST_DIR}/generated/include
     PRIVATE
-        ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/generated/src
 )
@@ -54,7 +53,6 @@ target_include_directories(
 target_link_libraries(CesiumGltf
     PUBLIC
         CesiumUtility
-        Microsoft.GSL::GSL
 )
 
 target_compile_definitions(CesiumGltf PRIVATE GLM_ENABLE_EXPERIMENTAL)

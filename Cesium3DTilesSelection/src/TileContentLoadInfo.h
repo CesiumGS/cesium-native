@@ -6,15 +6,16 @@
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
 
-#include <gsl/span>
 #include <spdlog/fwd.h>
 
 #include <cstddef>
 #include <memory>
+#include <span>
 
 namespace Cesium3DTilesSelection {
 struct TileContentLoadInfo {
@@ -24,6 +25,8 @@ struct TileContentLoadInfo {
       const std::shared_ptr<IPrepareRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
+          pSharedAssetSystem,
       const TilesetContentOptions& contentOptions,
       const Tile& tile);
 
@@ -40,6 +43,7 @@ struct TileContentLoadInfo {
   BoundingVolume tileBoundingVolume;
 
   std::optional<BoundingVolume> tileContentBoundingVolume;
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> pSharedAssetSystem;
 
   TileRefine tileRefine;
 

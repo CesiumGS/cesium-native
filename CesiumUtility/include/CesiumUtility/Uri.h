@@ -137,7 +137,7 @@ public:
    * the URI are left unmodified, including any path parameters.
    *
    * @param uri The URI for which to set the path.
-   * @param The new path portion of the URI.
+   * @param newPath The new path portion of the URI.
    * @returns The new URI after setting the path. If the original URI cannot be
    * parsed, it is returned unmodified.
    */

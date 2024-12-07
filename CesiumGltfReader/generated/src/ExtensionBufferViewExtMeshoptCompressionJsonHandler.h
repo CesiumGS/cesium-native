@@ -9,7 +9,7 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class ExtensionBufferViewExtMeshoptCompressionJsonHandler
@@ -18,22 +18,22 @@ class ExtensionBufferViewExtMeshoptCompressionJsonHandler
 public:
   using ValueType = CesiumGltf::ExtensionBufferViewExtMeshoptCompression;
 
-  static inline constexpr const char* ExtensionName = "EXT_meshopt_compression";
+  static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
-  ExtensionBufferViewExtMeshoptCompressionJsonHandler(
+  explicit ExtensionBufferViewExtMeshoptCompressionJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(
       IJsonHandler* pParentHandler,
       CesiumGltf::ExtensionBufferViewExtMeshoptCompression* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
+  void reset(
       IJsonHandler* pParentHandler,
       CesiumUtility::ExtensibleObject& o,
       const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
 protected:
   IJsonHandler* readObjectKeyExtensionBufferViewExtMeshoptCompression(

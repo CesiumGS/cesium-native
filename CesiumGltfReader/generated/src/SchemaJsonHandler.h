@@ -7,23 +7,23 @@
 
 #include <CesiumGltf/Schema.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
-#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/SharedAssetJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class SchemaJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+class SchemaJsonHandler : public CesiumJsonReader::SharedAssetJsonHandler {
 public:
   using ValueType = CesiumGltf::Schema;
 
-  SchemaJsonHandler(
+  explicit SchemaJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void reset(IJsonHandler* pParentHandler, CesiumGltf::Schema* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeySchema(

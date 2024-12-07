@@ -8,4 +8,4 @@ class JsonReaderOptions;
 
 namespace CesiumQuantizedMeshTerrain {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options);
-}
+} // namespace CesiumQuantizedMeshTerrain

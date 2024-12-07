@@ -1,5 +1,7 @@
 #include "SimplePrepareRendererResource.h"
+#include "TestTilesetJsonLoader.h"
 #include "TilesetContentManager.h"
+#include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -20,6 +22,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/glm.hpp>
 
 #include <filesystem>
@@ -373,7 +376,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     CHECK(pRootTile);
     CHECK(pRootTile->getRefine() == TileRefine::Replace);
 
-    const gsl::span<const Tile> children = pRootTile->getChildren();
+    const std::span<const Tile> children = pRootTile->getChildren();
     CHECK(
         std::get<QuadtreeTileID>(children[0].getTileID()) ==
         QuadtreeTileID(0, 0, 0));
@@ -437,6 +440,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
@@ -543,6 +547,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::RetryLater,
         Ellipsoid::WGS84};
@@ -618,6 +623,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Failed,
@@ -712,6 +718,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -784,6 +791,7 @@ TEST_CASE("Test tile state machine") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
@@ -874,6 +882,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        pMockedAssetAccessor,
         nullptr,
         {},
         TileLoadResultState::Success,
@@ -946,6 +955,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         {},
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -1014,6 +1024,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         nullptr,
+        nullptr,
         {},
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -1064,6 +1075,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         {},
         TileLoadResultState::Success,
@@ -1296,7 +1308,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       CesiumAsync::Future<LoadedRasterOverlayImage>
       loadTileImage(RasterOverlayTile& overlayTile) override {
-        CesiumGltf::ImageCesium image{};
+        CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
+        CesiumGltf::ImageAsset& image = pImage.emplace();
         image.width = 1;
         image.height = 1;
         image.channels = 1;
@@ -1305,7 +1318,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
         return this->getAsyncSystem().createResolvedFuture(
             LoadedRasterOverlayImage{
-                std::move(image),
+                std::move(pImage),
                 overlayTile.getRectangle(),
                 {},
                 {},
@@ -1356,6 +1369,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::nullopt,
         std::nullopt,
+        nullptr,
         nullptr,
         {},
         TileLoadResultState::Success,
@@ -1579,6 +1593,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         std::nullopt,
         std::move(rasterOverlayDetails),
         nullptr,
+        nullptr,
         {},
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
@@ -1624,5 +1639,83 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     }
 
     pManager->unloadTileContent(tile);
+  }
+
+  SECTION("Resolve external images, with deduplication") {
+    std::filesystem::path dirPath(testDataPath / "SharedImages");
+
+    // mock the requests for all files
+    for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+      pMockedAssetAccessor->mockCompletedRequests.insert(
+          {entry.path().filename().string(), createMockRequest(entry.path())});
+    }
+
+    std::filesystem::path tilesetPath(dirPath / "tileset.json");
+    auto pExternals = createMockJsonTilesetExternals(
+        tilesetPath.string(),
+        pMockedAssetAccessor);
+
+    auto pJsonLoaderFuture =
+        TilesetJsonLoader::createLoader(pExternals, tilesetPath.string(), {});
+
+    externals.asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = pJsonLoaderFuture.wait();
+
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto& rootTile = *loaderResult.pRootTile;
+    auto& containerTile = rootTile.getChildren()[0];
+
+    REQUIRE(containerTile.getChildren().size() == 100);
+
+    // create manager
+    Tile::LoadedLinkedList loadedTiles;
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            {},
+            RasterOverlayCollection{loadedTiles, externals},
+            {},
+            std::move(loaderResult.pLoader),
+            std::move(loaderResult.pRootTile)};
+
+    for (auto& child : containerTile.getChildren()) {
+      pManager->loadTileContent(child, {});
+      externals.asyncSystem.dispatchMainThreadTasks();
+      pManager->waitUntilIdle();
+
+      CHECK(child.getState() == TileLoadState::ContentLoaded);
+      CHECK(child.isRenderContent());
+
+      const auto& renderContent = child.getContent().getRenderContent();
+      const auto& images = renderContent->getModel().images;
+      CHECK(images.size() == 1);
+    }
+
+    CHECK(
+        pManager->getSharedAssetSystem()
+            ->pImage->getInactiveAssetTotalSizeBytes() == 0);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getAssetCount() == 2);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getActiveAssetCount() == 2);
+    CHECK(
+        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() == 0);
+
+    // unload the tile content
+    for (auto& child : containerTile.getChildren()) {
+      pManager->unloadTileContent(child);
+    }
+
+    // Both of the assets will become inactive, and one of them will be
+    // destroyed, in order to bring the total under the limit.
+    CHECK(
+        pManager->getSharedAssetSystem()
+            ->pImage->getInactiveAssetTotalSizeBytes() <=
+        pManager->getSharedAssetSystem()->pImage->inactiveAssetSizeLimitBytes);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getAssetCount() == 1);
+    CHECK(pManager->getSharedAssetSystem()->pImage->getActiveAssetCount() == 0);
+    CHECK(
+        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() == 1);
   }
 }

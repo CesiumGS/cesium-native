@@ -7,7 +7,7 @@
 
 // Forward declarations
 namespace CesiumGltf {
-struct ImageCesium;
+struct ImageAsset;
 }
 
 namespace CesiumGltfContent {
@@ -91,9 +91,9 @@ public:
    * incompatible formats.
    */
   static bool blitImage(
-      CesiumGltf::ImageCesium& target,
+      CesiumGltf::ImageAsset& target,
       const PixelRectangle& targetPixels,
-      const CesiumGltf::ImageCesium& source,
+      const CesiumGltf::ImageAsset& source,
       const PixelRectangle& sourcePixels);
 
   /**
@@ -103,7 +103,7 @@ public:
    * @return The byte buffer containing the image. If the buffer is empty, the
    * image could not be written.
    */
-  static std::vector<std::byte> savePng(const CesiumGltf::ImageCesium& image);
+  static std::vector<std::byte> savePng(const CesiumGltf::ImageAsset& image);
 
   /**
    * @brief Saves an image to an existing byte buffer in PNG format.
@@ -114,7 +114,7 @@ public:
    * could not be written.
    */
   static void
-  savePng(const CesiumGltf::ImageCesium& image, std::vector<std::byte>& output);
+  savePng(const CesiumGltf::ImageAsset& image, std::vector<std::byte>& output);
 };
 
 } // namespace CesiumGltfContent

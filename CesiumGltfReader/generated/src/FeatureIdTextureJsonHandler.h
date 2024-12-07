@@ -10,19 +10,19 @@
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
 class FeatureIdTextureJsonHandler : public TextureInfoJsonHandler {
 public:
   using ValueType = CesiumGltf::FeatureIdTexture;
 
-  FeatureIdTextureJsonHandler(
+  explicit FeatureIdTextureJsonHandler(
       const CesiumJsonReader::JsonReaderOptions& options) noexcept;
   void
   reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureIdTexture* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
 protected:
   IJsonHandler* readObjectKeyFeatureIdTexture(

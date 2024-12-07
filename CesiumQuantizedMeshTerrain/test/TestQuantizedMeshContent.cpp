@@ -8,6 +8,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -779,7 +780,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     // convert to gltf
     std::vector<std::byte> quantizedMeshBin =
         convertQuantizedMeshToBinary(quantizedMesh);
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     QuantizedMeshLoadResult loadResult =
@@ -853,7 +854,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     // convert to gltf
     std::vector<std::byte> quantizedMeshBin =
         convertQuantizedMeshToBinary(quantizedMesh);
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -927,7 +928,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     // convert to gltf
     std::vector<std::byte> quantizedMeshBin =
         convertQuantizedMeshToBinary(quantizedMesh);
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1018,7 +1019,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     // convert to gltf
     std::vector<std::byte> quantizedMeshBin =
         convertQuantizedMeshToBinary(quantizedMesh);
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1104,7 +1105,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
 
   SECTION("Quantized mesh with ill-formed header") {
     std::vector<std::byte> quantizedMeshBin(32);
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1139,7 +1140,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
         quantizedMesh.vertexData.u.data(),
         length);
 
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1202,7 +1203,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     length = sizeof(triangleCount);
     std::memcpy(quantizedMeshBin.data() + offset, &triangleCount, length);
 
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1282,7 +1283,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     length = sizeof(westCount);
     std::memcpy(quantizedMeshBin.data() + offset, &westCount, length);
 
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1378,7 +1379,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     length = sizeof(westCount);
     std::memcpy(quantizedMeshBin.data() + offset, &southCount, length);
 
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1490,7 +1491,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     length = sizeof(eastCount);
     std::memcpy(quantizedMeshBin.data() + offset, &eastCount, length);
 
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =
@@ -1618,7 +1619,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     length = sizeof(northCount);
     std::memcpy(quantizedMeshBin.data() + offset, &northCount, length);
 
-    gsl::span<const std::byte> data(
+    std::span<const std::byte> data(
         quantizedMeshBin.data(),
         quantizedMeshBin.size());
     auto loadResult =

@@ -70,9 +70,14 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * @tparam T The type of the extension to add.
    * @return The added extension.
    */
-  template <typename T> T& addExtension() {
+  template <typename T, typename... ConstructorArgumentTypes>
+  T& addExtension(ConstructorArgumentTypes&&... constructorArguments) {
     std::any& extension =
-        extensions.try_emplace(T::ExtensionName, std::make_any<T>())
+        extensions
+            .try_emplace(
+                T::ExtensionName,
+                std::make_any<T>(std::forward<ConstructorArgumentTypes>(
+                    constructorArguments)...))
             .first->second;
     return std::any_cast<T&>(extension);
   }
@@ -113,5 +118,32 @@ struct CESIUMUTILITY_API ExtensibleObject {
    * experimental, or next-version properties.
    */
   JsonValue::Object unknownProperties;
+
+  /**
+   * @brief Calculates the size in bytes of this ExtensibleObject, including all
+   * of its extras but NOT including its extensions. Calling this method may be
+   * slow as it requires traversing the entire object.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ExtensibleObject));
+
+    accum += int64_t(
+        this->extras.size() * (sizeof(std::string) + sizeof(JsonValue)));
+    for (const auto& [k, v] : this->extras) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(JsonValue));
+    }
+
+    accum += int64_t(
+        this->unknownProperties.size() *
+        (sizeof(std::string) + sizeof(JsonValue)));
+    for (const auto& [k, v] : this->unknownProperties) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += v.getSizeBytes() - int64_t(sizeof(JsonValue));
+    }
+
+    return accum;
+  }
 };
 } // namespace CesiumUtility
