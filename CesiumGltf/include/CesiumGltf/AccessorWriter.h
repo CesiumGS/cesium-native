@@ -12,6 +12,11 @@ private:
   AccessorView<T> _accessor;
 
 public:
+  /**
+   * @brief The type of the elements in the accessor.
+   */
+  typedef T value_type;
+
   AccessorWriter() : _accessor() {}
 
   /**
