@@ -3,6 +3,7 @@
 #include "ApplicationData.h"
 #include "Assets.h"
 #include "Defaults.h"
+#include "Geocoder.h"
 #include "Profile.h"
 #include "Response.h"
 #include "Token.h"
@@ -290,6 +291,21 @@ public:
       const std::optional<std::vector<int64_t>>& newAssetIDs,
       const std::vector<std::string>& newScopes,
       const std::optional<std::vector<std::string>>& newAllowedUrls) const;
+
+  /**
+   * @brief Makes a request to the ion geocoding service.
+   *
+   * A geocoding service is used to make a plain text query (like an address,
+   * city name, or landmark) and obtain information about where it's located.
+   *
+   * @param provider The ion geocoding provider to use.
+   * @param type The type of request to make. See {@link GeocoderRequestType} for more information.
+   * @param query The query to make.
+   */
+  CesiumAsync::Future<Response<GeocoderResult>> geocode(
+      const GeocoderProviderType& provider,
+      const GeocoderRequestType& type,
+      const std::string& query);
 
   /**
    * @brief Decodes a token ID from a token.

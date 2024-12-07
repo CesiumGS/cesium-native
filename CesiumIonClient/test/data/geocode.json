@@ -1,0 +1,62 @@
+{
+    "attributions": [
+        {
+            "html": "<span><a href=\"https://cesium.com\" target=\"_blank\"><img alt=\"Cesium ion\" src=\"https://assets.ion.cesium.com/ion-credit.png\"></a></span>",
+            "collapsible": false
+        },
+        {
+            "html": "<img src=\"https://dev.virtualearth.net/Branding/logo_powered_by.png\" alt=\"Microsoft Bing\">",
+            "collapsible": true
+        }
+    ],
+    "features": [
+        {
+            "properties": {
+                "label": "Antarctica"
+            },
+            "bbox": [
+                -180,
+                -90,
+                180,
+                -60.57127380371094
+            ]
+        },
+        {
+            "properties": {
+                "label": "Antarctica, FL"
+            },
+            "bbox": [
+                -81.46535855304613,
+                28.407937666950808,
+                -81.45364779461012,
+                28.41566310209216
+            ]
+        },
+        {
+            "properties": {
+                "label": "Point Value"
+            },
+            "geometry": {
+                "coordinates": [
+                    -180,
+                    -90
+                ]
+            }
+        },
+        {
+            "properties": {},
+            "bbox": [
+                -180,
+                -90,
+                180,
+                -60.57127380371094
+            ]
+        },
+        {
+            "properties": {
+                "label": "Missing bbox test"
+            },
+            "bbox": []
+        }
+    ]
+}
