@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Updates generated classes for `EXT_structural_metadata`. See https://github.com/CesiumGS/glTF/pull/71.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
