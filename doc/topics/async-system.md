@@ -23,7 +23,20 @@ Unfortunately, there is inevitably at least a little bit of tile loading work th
 
 ## The AsyncSystem Class
 
-An `AsyncSystem` object manages the other objects we use to schedule work and wait for its completion. During initialization, the host system [constructs an `AsyncSystem` object](#creating-an-asyncsystem) and passes it to Cesium Native, which in turn uses it in all operations that might complete asynchronously. `AsyncSystem` instances can be safely and efficiently stored and copied by value; this makes it easy to make them available wherever they're needed, including in lambda captures. On the other hand, using a reference to an `AsyncSystem` object is very bug-prone in asynchronous code, because the lifetime of the reference holder is often quite different from the code that uses it. 
+An `AsyncSystem` object manages the other objects we use to schedule work and wait for its completion. During initialization, an application [constructs an AsyncSystem object](#creating-an-asyncsystem) and passes it to Cesium Native, which in turn uses it in all operations that might complete asynchronously. `AsyncSystem` instances can be safely and efficiently stored and copied by value; this makes it easy to make them available wherever they're needed, including in lambda captures. On the other hand, holding a reference to an `AsyncSystem` object is very bug-prone in asynchronous code; the lifetime of the reference holder can be quite different from the code that uses it and hard to reason about. It is idiomatic to pass a `const` reference to an `AsyncSystem` object as a parameter to a function, but that reference must be copied to a value if it will be used outside of the lifetime of the function. For example, in the following code, the `asyncSystem` function parameter is copied to a constant value member in the inner lambda:
+
+    Future<ReadJsonResult<Cesium3DTiles::Subtree>> SubtreeFileReader::load(
+        const AsyncSystem& asyncSystem,
+        const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+        const std::string& url,
+        const std::vector<IAssetAccessor::THeader>& headers) const noexcept {
+      return pAssetAccessor->get(asyncSystem, url, headers)
+          .thenInWorkerThread([asyncSystem, pAssetAccessor, this](
+                                  std::shared_ptr<IAssetRequest>&& pRequest) {
+            return this->load(asyncSystem, pAssetAccessor, pRequest);
+          });
+    }
+
 
 ## Future<T> {#future}
 
@@ -198,22 +211,24 @@ It may initially be surprising to learn that calling `then...` or `catch...` on 
 
 ### Creating an AsyncSystem {#creating-an-asyncsystem}
 
-[AsyncSystem](@ref CesiumAsync::AsyncSystem) is not an abstract interface class, but it is implemented using an object that is a subclass of the [ITaskProcessor](@ref CesiumAsync::ITaskProcessor) interface class.
-Most applications construct a single `AsyncSystem` object that is copied and is used throughout. `ITaskProcessor` specifies a simple interface used to perform some work in a background thread. The simplest possible implementation looks like this:
+[AsyncSystem](@ref CesiumAsync::AsyncSystem) is implemented using a subclass of the [ITaskProcessor](@ref CesiumAsync::ITaskProcessor) interface class via [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection).
+`ITaskProcessor` specifies a simple interface used to perform some work in a background thread. The simplest possible implementation looks like this:
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp simplest-task-processor
 
-This implementation will work, but it isn't very efficient because a brand new thread is created for each task. Most applications will implement this interface using a thread pool, task graph, or similar functionality that their application already contains.
+This implementation will work, but it isn't very efficient because a brand new thread is created for each task. Most applications will implement this interface using a thread pool, task graph, or similar functionality that their application already contains. 
 
-The `AsyncSystem` can be created as follows:
+The `AsyncSystem` could be created as follows:
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp create-async-system
 
-`AsyncSystem` instances have copy semantics, so it is easy to make them available wherever they're needed, including in lambda captures. In this example, `asyncSystem` is captured by value for use in the lambda.
+However, Cesium Native does not contain any calls like this, other than in test code. Except under unusual circumstances, applications should construct a single `AsyncSystem` object that is copied and is used throughout. Two `AsyncSystem` objects that are created with this constructor, even if they share the same `ITaskProcessor`, will have different work queues and different notions of the main thread and, if they are used together, disaster can result. 
+
+On the other hand, `AsyncSystem` instances have copy semantics, so it is easy to make them available wherever they're needed, including in lambda captures. In this example, `asyncSystem` is captured by value for use in the lambda.
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp capture-by-value
 
-You can think of an instance of `AsyncSystem` as a reference (perhaps a "smart reference") to an underlying implementation. When we create an `AsyncSystem` using its constructor, we're creating a brand new underlying implementation. If we then copy that `AsyncSystem` (using its copy constructor or assignment operator), we're not really copying that underlying implementation, we're just creating another reference to the same one with its `ITaskProcessor` object. Only when the last `AsyncSystem` instance referencing a particular underlying implementation is destroyed is that _underlying implementation_ destroyed.
+You can think of an instance of `AsyncSystem` as a reference (perhaps a "smart reference") to an underlying implementation which includes an `ITaskProcessor` and all the supporting data structures for implementing futures, promises, and other `AsyncSystem` abstractions. When we create an `AsyncSystem` using its constructor, we're creating a brand new underlying implementation. If we then copy that `AsyncSystem` (using its copy constructor or assignment operator), we're not really copying that underlying implementation, we're just creating another reference to the same one with its `ITaskProcessor` object. Only when the last `AsyncSystem` instance referencing a particular underlying implementation is destroyed is that _underlying implementation_ destroyed.
 
 You can copy and destroy `AsyncSystem` instances at will, but you must take care that the _last_ instance referencing a given underlying implementation is destroyed only after all of that underlying implementation's `Futures` are complete. So a common pattern is to create and store an `AsyncSystem` as a static local in an accessor function:
 
