@@ -215,6 +215,14 @@ public:
   int64_t stride() const noexcept { return this->_stride; }
 
   /**
+   * @brief Returns the offset of this accessor, which is the number of bytes
+   * from the start of the buffer to the first element.
+   *
+   * @returns The offset.
+   */
+  int64_t offset() const noexcept { return this->_offset; }
+
+  /**
    * @brief Returns a pointer to the first byte of this accessor view's data.
    * The elements are stored contiguously, so the next one starts {@link stride} bytes later.
    *

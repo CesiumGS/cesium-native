@@ -2,6 +2,12 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `offset` getter to `AccessorView`.
+- Added `stride`, `offset`, and `data` getters to `AccessorWriter`.
+- Added `value_type` typedef to `AccessorWriter`.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
