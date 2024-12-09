@@ -240,7 +240,8 @@ public:
    *
    * @param callback The function to invoke.
    */
-  void forEachLoadedTile(const std::function<void(const Tile& tile)>& callback) const;
+  void forEachLoadedTile(
+      const std::function<void(const Tile& tile)>& callback) const;
 
   /**
    * @brief Gets the total number of bytes of tile and raster overlay data that
