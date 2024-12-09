@@ -2,6 +2,11 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `InstanceAttributeSemantics` to `CesiumGltf`.
+- Added `VertexAttributeSemantics::FEATURE_ID_n`.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
