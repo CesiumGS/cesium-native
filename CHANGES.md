@@ -7,6 +7,8 @@
 - Added `offset` getter to `AccessorView`.
 - Added `stride`, `offset`, and `data` getters to `AccessorWriter`.
 - Added `value_type` typedef to `AccessorWriter`.
+- Added `InstanceAttributeSemantics` to `CesiumGltf`.
+- Added `VertexAttributeSemantics::FEATURE_ID_n`.
 
 ##### Fixes :wrench:
 
