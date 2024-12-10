@@ -12,12 +12,18 @@
 #include <vector>
 
 namespace CesiumJsonWriter {
+/**
+ * @brief Wrapper around `rapidjson::Writer` for writing objects to JSON.
+ */
 class JsonWriter {
 public:
   JsonWriter();
   virtual ~JsonWriter() {}
 
-  // rapidjson methods
+  /**
+   * @name RapidJSON methods
+   */
+  /**@{*/
   virtual bool Null();
   virtual bool Bool(bool b);
   virtual bool Int(int i);
@@ -32,8 +38,12 @@ public:
   virtual bool EndObject();
   virtual bool StartArray();
   virtual bool EndArray();
+  /**@}*/
 
-  // Primitive overloads
+  /**
+   * @name Primitive overloads
+   */
+  /**@{*/
   virtual void Primitive(std::int32_t value);
   virtual void Primitive(std::uint32_t value);
   virtual void Primitive(std::int64_t value);
@@ -42,29 +52,48 @@ public:
   virtual void Primitive(double value);
   virtual void Primitive(std::nullptr_t value);
   virtual void Primitive(std::string_view string);
+  /**@}*/
 
-  // Integral
+  /**
+   * @name Integral
+   */
+  /**@{*/
   virtual void KeyPrimitive(std::string_view keyName, std::int32_t value);
   virtual void KeyPrimitive(std::string_view keyName, std::uint32_t value);
   virtual void KeyPrimitive(std::string_view keyName, std::int64_t value);
   virtual void KeyPrimitive(std::string_view keyName, std::uint64_t value);
+  /**@}*/
 
-  // String
+  /**
+   * @brief String
+   */
   virtual void KeyPrimitive(std::string_view keyName, std::string_view value);
 
-  // Floating Point
+  /**
+   * @brief Floating point
+   */
+  /**@{*/
   virtual void KeyPrimitive(std::string_view keyName, float value);
   virtual void KeyPrimitive(std::string_view keyName, double value);
+  /**@}*/
 
-  // Null
+  /**
+   * @brief Null
+   */
+  /**@{*/
   virtual void KeyPrimitive(std::string_view keyName, std::nullptr_t value);
+  /**@}*/
 
-  // Array / Objects
+  /**
+   * @name Array / Objects
+   */
+  /**@{*/
   virtual void
   KeyArray(std::string_view keyName, std::function<void(void)> insideArray);
 
   virtual void
   KeyObject(std::string_view keyName, std::function<void(void)> insideObject);
+  /**@}*/
 
   virtual std::string toString();
   virtual std::string_view toStringView();

@@ -19,6 +19,10 @@ struct Model;
 
 namespace CesiumRasterOverlays {
 
+/**
+ * @brief A collection of utilities useful for operations involving raster
+ * overlay tiles.
+ */
 struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
   static constexpr std::string_view DEFAULT_TEXTURE_COORDINATE_BASE_NAME =
       "_CESIUMOVERLAY_";

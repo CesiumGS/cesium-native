@@ -35,15 +35,29 @@ public:
   PropertyArrayView(const std::span<const std::byte>& buffer) noexcept
       : _values{CesiumUtility::reintepretCastSpan<const ElementType>(buffer)} {}
 
+  /**
+   * @brief Accesses the element of this array at the given index.
+   */
   const ElementType& operator[](int64_t index) const noexcept {
     return this->_values[index];
   }
 
+  /**
+   * @brief The number of elements in this array.
+   */
   int64_t size() const noexcept { return this->_values.size(); }
 
+  /**
+   * @brief The `begin` iterator.
+   */
   auto begin() { return this->_values.begin(); }
+  /**
+   * @brief The `end` iterator.
+   */
   auto end() { return this->_values.end(); }
+  /** @copydoc begin */
   auto begin() const { return this->_values.begin(); }
+  /** @copydoc end */
   auto end() const { return this->_values.end(); }
 
 private:
@@ -125,6 +139,13 @@ private:
   PropertyArrayView<ElementType> _view;
 };
 
+/**
+ * @brief A view on a bool array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
+ *
+ * Provides utility to retrieve the data stored in the array of
+ * elements via the array index operator.
+ */
 template <> class PropertyArrayView<bool> {
 public:
   /**
@@ -146,6 +167,9 @@ public:
       int64_t size) noexcept
       : _values{buffer}, _bitOffset{bitOffset}, _size{size} {}
 
+  /**
+   * @brief Obtains the element in the array at the given index.
+   */
   bool operator[](int64_t index) const noexcept {
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
@@ -154,6 +178,9 @@ public:
     return bitValue == 1;
   }
 
+  /**
+   * @brief The number of entries in the array.
+   */
   int64_t size() const noexcept { return _size; }
 
 private:
@@ -162,6 +189,13 @@ private:
   int64_t _size;
 };
 
+/**
+ * @brief A view on a string array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
+ *
+ * Provides utility to retrieve the data stored in the array of
+ * elements via the array index operator.
+ */
 template <> class PropertyArrayView<std::string_view> {
 public:
   /**
@@ -191,6 +225,9 @@ public:
         _stringOffsetType{stringOffsetType},
         _size{size} {}
 
+  /**
+   * @brief Obtains an `std::string_view` for the element at the given index.
+   */
   std::string_view operator[](int64_t index) const noexcept {
     const size_t currentOffset =
         getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
@@ -203,6 +240,9 @@ public:
         (nextOffset - currentOffset));
   }
 
+  /**
+   * @brief The number of elements in this array.
+   */
   int64_t size() const noexcept { return _size; }
 
 private:

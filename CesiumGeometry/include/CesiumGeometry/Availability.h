@@ -47,6 +47,15 @@ struct CESIUMGEOMETRY_API SubtreeBufferView {
   uint8_t buffer;
 };
 
+/**
+ * @brief A view into availability information for part of the availability
+ * tree. This could be either a constant boolean value or a descriptor pointing
+ * to a buffer in an \ref AvailabilitySubtree where the information will be
+ * looked up.
+ *
+ * Instead of using this type directly, \ref AvailabilityAccessor can be used to
+ * work with it safely.
+ */
 typedef std::variant<ConstantAvailability, SubtreeBufferView> AvailabilityView;
 
 /**

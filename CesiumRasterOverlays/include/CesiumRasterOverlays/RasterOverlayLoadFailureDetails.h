@@ -33,6 +33,9 @@ enum class RasterOverlayLoadType {
   TileProvider
 };
 
+/**
+ * @brief Details on a failure while attempting to load a raster overlay tile.
+ */
 class RasterOverlayLoadFailureDetails {
 public:
   /**

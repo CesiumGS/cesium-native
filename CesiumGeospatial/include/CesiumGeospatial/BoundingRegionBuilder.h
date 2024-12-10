@@ -6,6 +6,10 @@
 
 namespace CesiumGeospatial {
 
+/**
+ * @brief Helper class for creating a \ref BoundingRegion or \ref GlobeRectangle
+ * from a set of points.
+ */
 class CESIUMGEOSPATIAL_API BoundingRegionBuilder {
 public:
   /**

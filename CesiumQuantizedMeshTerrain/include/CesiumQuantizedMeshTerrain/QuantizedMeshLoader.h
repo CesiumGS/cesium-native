@@ -23,6 +23,12 @@ class IAssetRequest;
 
 namespace CesiumQuantizedMeshTerrain {
 
+/**
+ * @brief The results of a \ref QuantizedMeshLoader::load operation, containing
+ * either the loaded model, an improved bounding region for the tile, and
+ * available quadtree tiles discovered, if the load succeeded - or the request
+ * made and the errors that were returned, if the load failed.
+ */
 struct QuantizedMeshLoadResult {
   /**
    * @brief The glTF model to be rendered for this tile.
@@ -55,11 +61,25 @@ struct QuantizedMeshLoadResult {
    */
   std::shared_ptr<CesiumAsync::IAssetRequest> pRequest;
 
+  /**
+   * @brief The errors and warnings reported while loading this tile.
+   */
   CesiumUtility::ErrorList errors;
 };
 
+/**
+ * @brief The metadata of a Quantized Mesh tile, returned by \ref
+ * QuantizedMeshLoader::loadMetadata.
+ */
 struct QuantizedMeshMetadataResult {
+  /**
+   * @brief Information about the availability of child tiles.
+   */
   std::vector<CesiumGeometry::QuadtreeTileRectangularRange> availability;
+
+  /**
+   * @brief The errors and warnings reported while loading this tile, if any.
+   */
   CesiumUtility::ErrorList errors;
 };
 
