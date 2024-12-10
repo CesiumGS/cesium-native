@@ -42,6 +42,11 @@ function(configure_cesium_library targetName)
                 ${capitalizedTargetName}_BUILDING
         )
 
+        install(TARGETS ${targetName}
+            EXPORT CesiumExports
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        )
+
         if(CESIUM_INSTALL_HEADERS)
             install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include
                 DESTINATION ${CMAKE_INSTALL_PREFIX}
