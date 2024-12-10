@@ -12,6 +12,9 @@ namespace CesiumGltf {
  * @brief Texture sampler properties for filtering and wrapping modes.
  */
 struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Sampler";
 
   /**

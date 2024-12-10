@@ -38,8 +38,25 @@ enum class PropertyAttributeViewStatus {
   ErrorClassNotFound
 };
 
+/**
+ * @brief Attempts to obtain a \ref PropertyType from the \ref Accessor::type
+ * "type" field of the accessor.
+ *
+ * @param accessor The accessor whose type will be obtained.
+ * @returns A \ref PropertyType equivalent to the accessor's \ref
+ * Accessor::Type, or \ref PropertyType::Invalid if no conversion could be made.
+ */
 PropertyType getAccessorTypeAsPropertyType(const Accessor& accessor);
 
+/**
+ * @brief Attempts to obtain a \ref PropertyComponentType from the \ref
+ * Accessor::componentType "componentType" field of the accessor.
+ *
+ * @param accessor The accessor whose componentType will be obtained.
+ * @returns A \ref PropertyComponentType equivalent to the accessor's \ref
+ * Accessor::ComponentType, or \ref PropertyComponentType::None if no conversion
+ * could be made.
+ */
 PropertyComponentType
 getAccessorComponentTypeAsPropertyComponentType(const Accessor& accessor);
 

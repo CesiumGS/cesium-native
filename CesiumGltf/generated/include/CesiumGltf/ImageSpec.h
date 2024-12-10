@@ -15,6 +15,9 @@ namespace CesiumGltf {
  * URI (or IRI) or a buffer view index.
  */
 struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Image";
 
   /**

@@ -14,6 +14,9 @@ namespace CesiumGltf {
  * by a node that references it.
  */
 struct CESIUMGLTF_API Mesh final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Mesh";
 
   /**

@@ -12,6 +12,9 @@ namespace CesiumGltf {
  * @brief A texture and its sampler.
  */
 struct CESIUMGLTF_API Texture final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Texture";
 
   /**

@@ -11,6 +11,9 @@
 
 namespace CesiumGltf {
 
+/**
+ * @brief The type used for fields of \ref PropertyViewStatus.
+ */
 typedef int32_t PropertyViewStatusType;
 
 /**

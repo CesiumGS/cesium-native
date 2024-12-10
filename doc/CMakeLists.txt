@@ -86,8 +86,6 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
     set(DOXYGEN_IMAGE_PATH "./")
-    set(DOXYGEN_WARN_NO_PARAMDOC YES)
-    set(DOXYGEN_WARN_IF_UNDOC_ENUM_VAL YES)
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")

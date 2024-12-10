@@ -14,6 +14,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariants final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionModelKhrMaterialsVariants";
   static constexpr const char* ExtensionName = "KHR_materials_variants";
 

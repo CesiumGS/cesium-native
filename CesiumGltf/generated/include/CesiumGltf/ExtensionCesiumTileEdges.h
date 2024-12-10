@@ -13,6 +13,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionCesiumTileEdges final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionCesiumTileEdges";
   static constexpr const char* ExtensionName = "CESIUM_tile_edges";
 

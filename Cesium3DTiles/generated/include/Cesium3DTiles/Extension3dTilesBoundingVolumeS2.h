@@ -13,6 +13,9 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Extension3dTilesBoundingVolumeS2";
   static constexpr const char* ExtensionName = "3DTILES_bounding_volume_S2";
 

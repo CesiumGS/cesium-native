@@ -14,6 +14,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionNodeMaxarMeshVariants";
   static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 

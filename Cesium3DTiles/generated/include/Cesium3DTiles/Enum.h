@@ -15,6 +15,9 @@ namespace Cesium3DTiles {
  * @brief An object defining the values of an enum.
  */
 struct CESIUM3DTILES_API Enum final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Enum";
 
   /**

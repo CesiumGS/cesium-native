@@ -97,6 +97,9 @@ function generate(options, schema, writers) {
              * @brief ${schema.description ? schema.description : schema.title}
              */
             struct ${namespace.toUpperCase()}_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
+                /**
+                 * @brief The original name of this type.
+                 */
                 static constexpr const char* TypeName = "${name}";
                 ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 

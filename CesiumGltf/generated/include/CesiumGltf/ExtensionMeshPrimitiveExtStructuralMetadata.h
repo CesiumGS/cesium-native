@@ -14,6 +14,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName =
       "ExtensionMeshPrimitiveExtStructuralMetadata";
   static constexpr const char* ExtensionName = "EXT_structural_metadata";

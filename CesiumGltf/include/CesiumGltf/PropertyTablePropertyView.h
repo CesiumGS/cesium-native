@@ -197,8 +197,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView::get} is called. However,
-   * {@link PropertyTablePropertyView::getRaw} cannot be used.
+   * when {@link PropertyTablePropertyView<ElementType, false>::get} is called. However,
+   * {@link PropertyTablePropertyView<ElementType, false>::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
@@ -552,8 +552,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView::get} is called. However,
-   * {@link PropertyTablePropertyView::getRaw} cannot be used.
+   * when {@link PropertyTablePropertyView<ElementType, true>::get} is called. However,
+   * {@link PropertyTablePropertyView<ElementType, true>::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}

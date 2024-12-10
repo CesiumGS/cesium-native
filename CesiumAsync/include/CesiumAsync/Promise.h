@@ -79,13 +79,22 @@ private:
  */
 template <> class Promise<void> {
 public:
+  /**
+   * @brief Will be called when the task completed successfully.
+   */
   void resolve() const { this->_pEvent->set(); }
   template <typename TException> void reject(TException error) const {
     this->_pEvent->set_exception(std::make_exception_ptr(error));
   }
+  /**
+   * @brief Will be called when the task failed.
+   */
   void reject(const std::exception_ptr& error) const {
     this->_pEvent->set_exception(error);
   }
+  /**
+   * @copydoc Promise::getFuture
+   */
   Future<void> getFuture() const {
     return Future<void>(this->_pSchedulers, this->_pEvent->get_task());
   }

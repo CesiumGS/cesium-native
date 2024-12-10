@@ -16,6 +16,9 @@ namespace CesiumGltf {
  * transform to place the camera in the scene.
  */
 struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Camera";
 
   /**

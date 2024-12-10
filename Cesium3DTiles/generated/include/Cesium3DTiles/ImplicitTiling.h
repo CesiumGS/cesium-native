@@ -17,6 +17,9 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API ImplicitTiling final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ImplicitTiling";
 
   /**

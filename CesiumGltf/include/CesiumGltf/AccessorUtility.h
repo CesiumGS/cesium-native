@@ -332,9 +332,30 @@ typedef std::variant<
     AccessorView<AccessorTypes::VEC4<float>>>
     QuaternionAccessorType;
 
+/**
+ * @brief Obtains a \ref QuaternionAccessorType from the given \ref Accessor on
+ * the given \ref Model.
+ *
+ * @param model The model containing the quaternion.
+ * @param accessor An accessor from which the quaternion will be obtained.
+ * @returns A quaternion from the data in `accessor`. If no quaternion could be
+ * obtained, the default value for \ref QuaternionAccessType will be returned
+ * instead.
+ */
 QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, const Accessor* accessor);
 
+/**
+ * @brief Obtains a \ref QuaternionAccessorType from the given \ref Accessor on
+ * the given \ref Model.
+ *
+ * @param model The model containing the quaternion.
+ * @param accessorIndex An index to the accessor from which the quaternion will
+ * be obtained.
+ * @returns A quaternion from the data in the accessor at `accessorIndex`. If no
+ * quaternion could be obtained, the default value for \ref QuaternionAccessType
+ * will be returned instead.
+ */
 QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, int32_t accessorIndex);
 } // namespace CesiumGltf

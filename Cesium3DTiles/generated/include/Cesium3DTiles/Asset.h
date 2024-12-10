@@ -13,6 +13,9 @@ namespace Cesium3DTiles {
  * @brief Metadata about the entire tileset.
  */
 struct CESIUM3DTILES_API Asset final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Asset";
 
   /**

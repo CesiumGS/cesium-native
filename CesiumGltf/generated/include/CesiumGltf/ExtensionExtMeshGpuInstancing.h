@@ -15,6 +15,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionExtMeshGpuInstancing final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionExtMeshGpuInstancing";
   static constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
 

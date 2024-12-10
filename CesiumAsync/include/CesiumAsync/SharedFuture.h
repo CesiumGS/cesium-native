@@ -231,6 +231,7 @@ public:
     return this->_task.get();
   }
 
+  /** @copydoc wait */
   template <
       typename U = T,
       std::enable_if_t<std::is_same_v<U, T>, int> = 0,

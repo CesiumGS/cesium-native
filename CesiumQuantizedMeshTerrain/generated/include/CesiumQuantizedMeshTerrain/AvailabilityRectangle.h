@@ -13,6 +13,9 @@ namespace CesiumQuantizedMeshTerrain {
  */
 struct CESIUMQUANTIZEDMESHTERRAIN_API AvailabilityRectangle final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "AvailabilityRectangle";
 
   /**

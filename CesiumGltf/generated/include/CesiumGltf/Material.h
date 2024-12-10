@@ -18,6 +18,9 @@ namespace CesiumGltf {
  * @brief The material appearance of a primitive.
  */
 struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Material";
 
   /**
