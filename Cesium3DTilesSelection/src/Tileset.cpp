@@ -1017,8 +1017,8 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
 namespace {
 
 /**
- * @brief Determines if we must continue rendering the deeper descendant tiles
- * of this tile.
+ * @brief Determines if we must refine this tile so that we can continue
+ * rendering the deeper descendant tiles of this tile.
  *
  * If this tile was refined last frame, and is not yet renderable, then we
  * should REFINE past this tile in order to continue rendering the deeper tiles
@@ -1033,7 +1033,7 @@ namespace {
  * @return True if this tile must be refined instead of rendered, so that we can
  * continue rendering deeper tiles.
  */
-bool mustContinueRenderingDeeperTiles(
+bool mustContinueRefiningToDeeperTiles(
     const Tile& tile,
     const TileSelectionState& lastFrameSelectionState,
     int32_t lastFrameNumber) noexcept {
@@ -1271,6 +1271,12 @@ Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
   return TileOcclusionState::NotOccluded;
 }
 
+namespace {
+
+enum class VisitTileAction { Render, Refine };
+
+}
+
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * The tile has previously been determined to be visible.
 //   * Its parent tile does _not_ meet the SSE (unless ancestorMeetsSse=true,
@@ -1296,7 +1302,14 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
 
-  bool wantToRefine = unconditionallyRefine || (!meetsSse && !ancestorMeetsSse);
+  // Determine whether to REFINE or RENDER. Note that even if this tile is
+  // initially marked for RENDER here, it may later switch to REFINE as a
+  // result of `mustContinueRefiningToDeeperTiles`.
+  VisitTileAction action = VisitTileAction::Render;
+  if (unconditionallyRefine)
+    action = VisitTileAction::Refine;
+  else if (!meetsSse && !ancestorMeetsSse)
+    action = VisitTileAction::Refine;
 
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
@@ -1325,14 +1338,15 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // If this tile and a child were both refined last frame, this tile does not
   // need occlusion results.
   bool shouldCheckOcclusion = this->_options.enableOcclusionCulling &&
-                              wantToRefine && !unconditionallyRefine &&
+                              action == VisitTileAction::Refine &&
+                              !unconditionallyRefine &&
                               (!tileLastRefined || !childLastRefined);
 
   if (shouldCheckOcclusion) {
     TileOcclusionState occlusion = this->_checkOcclusion(tile, frameState);
     if (occlusion == TileOcclusionState::Occluded) {
       ++result.tilesOccluded;
-      wantToRefine = false;
+      action = VisitTileAction::Render;
       meetsSse = true;
     } else if (
         occlusion == TileOcclusionState::OcclusionUnavailable &&
@@ -1341,21 +1355,24 @@ Tileset::TraversalDetails Tileset::_visitTile(
             frameState.lastFrameNumber) !=
             TileSelectionState::Result::Refined) {
       ++result.tilesWaitingForOcclusionResults;
-      wantToRefine = false;
+      action = VisitTileAction::Render;
       meetsSse = true;
     }
   }
 
   bool queuedForLoad = false;
 
-  if (!wantToRefine) {
+  if (action == VisitTileAction::Render) {
     // This tile meets the screen-space error requirement, so we'd like to
     // render it, if we can.
-    bool mustRefine = mustContinueRenderingDeeperTiles(
+    bool mustRefine = mustContinueRefiningToDeeperTiles(
         tile,
         lastFrameSelectionState,
         frameState.lastFrameNumber);
     if (mustRefine) {
+      // // We must refine even though this tile meets the SSE.
+      action = VisitTileAction::Refine;
+
       // Loading this tile is very important, because a number of deeper,
       // higher-detail tiles are being rendered in its stead, so we want to load
       // it with high priority. However, if `ancestorMeetsSse` is set, then our
@@ -1368,8 +1385,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
         queuedForLoad = true;
       }
 
-      // We must refine even though this tile meets the SSE, so set the flag and
-      // fall through.
+      // Fall through to REFINE, but mark this tile as already meeting the
+      // required SSE.
       ancestorMeetsSse = true;
     } else {
       // Render this tile and return without visiting children.
