@@ -74,7 +74,9 @@ private:
   friend class AsyncSystem;
 };
 
-// Specialization for promises that resolve to no value.
+/**
+ * @brief Specialization for promises that resolve to no value.
+ */
 template <> class Promise<void> {
 public:
   void resolve() const { this->_pEvent->set(); }

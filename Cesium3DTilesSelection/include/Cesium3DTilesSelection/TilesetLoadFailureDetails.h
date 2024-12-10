@@ -31,6 +31,9 @@ enum class TilesetLoadType {
   TilesetJson
 };
 
+/**
+ * Information on a tileset that failed to load.
+ */
 class TilesetLoadFailureDetails {
 public:
   /**

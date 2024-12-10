@@ -31,6 +31,11 @@ namespace Cesium3DTilesSelection {
 
 class Tile;
 
+/**
+ * The data of a loaded tile together with a pointer to "render resources" data
+ * representing the result of \ref
+ * IPrepareRendererResources::prepareInLoadThread "prepareInLoadThread".
+ */
 struct TileLoadResultAndRenderResources {
   TileLoadResult result;
   void* pRenderResources{nullptr};
