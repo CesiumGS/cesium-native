@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for using [3D Tiles](https://github.com/CesiumGS/3d-tiles).
+ *
+ * @mermaid-interactive{dependencies/Cesium3DTiles}
  */
 namespace Cesium3DTiles {}
 

@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for reading [glTF](https://www.khronos.org/gltf/) models.
+ *
+ * @mermaid-interactive{dependencies/CesiumGltfReader}
  */
 namespace CesiumGltfReader {}
 

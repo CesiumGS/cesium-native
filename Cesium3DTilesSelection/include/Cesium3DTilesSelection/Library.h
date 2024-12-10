@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes that implement the 3D Tiles standard
+ *
+ * @mermaid-interactive{dependencies/Cesium3DTilesSelection}
  */
 namespace Cesium3DTilesSelection {}
 
