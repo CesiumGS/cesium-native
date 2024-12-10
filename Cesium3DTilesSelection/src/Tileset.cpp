@@ -506,6 +506,16 @@ void Tileset::forEachLoadedTile(
   }
 }
 
+void Tileset::forEachLoadedTile(
+    const std::function<void(const Tile& tile)>& callback) const {
+  const Tile* pCurrent = this->_loadedTiles.head();
+  while (pCurrent) {
+    const Tile* pNext = this->_loadedTiles.next(pCurrent);
+    callback(*pCurrent);
+    pCurrent = pNext;
+  }
+}
+
 int64_t Tileset::getTotalDataBytes() const noexcept {
   return this->_pTilesetContentManager->getTotalDataUsed();
 }
@@ -1647,10 +1657,30 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   TileSelectionState::Result lastFrameResult =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber);
   bool isRenderable = tile.isRenderable();
+
   bool wasRenderedLastFrame =
-      lastFrameResult == TileSelectionState::Result::Rendered ||
-      (tile.getRefine() == TileRefine::Add &&
-       lastFrameResult == TileSelectionState::Result::Refined);
+      lastFrameResult == TileSelectionState::Result::Rendered;
+  if (!wasRenderedLastFrame &&
+      lastFrameResult == TileSelectionState::Result::Refined) {
+    if (tile.getRefine() == TileRefine::Add) {
+      // An additive-refined tile that was refine was also rendered.
+      wasRenderedLastFrame = true;
+    } else {
+      // With replace-refinement, if any of this refined tile's children were
+      // rendered last frame, but are no longer rendered because this tile is
+      // loaded and has sufficient detail, we must treat this tile as rendered
+      // last frame, too. This is necessary to prevent this tile from being
+      // kicked just because _it_ wasn't rendered last frame (which could cause
+      // a new hole to appear).
+      for (const Tile& child : tile.getChildren()) {
+        TraversalDetails childDetails = createTraversalDetailsForSingleTile(
+            frameState,
+            child,
+            child.getLastSelectionState());
+        wasRenderedLastFrame |= childDetails.anyWereRenderedLastFrame;
+      }
+    }
+  }
 
   TraversalDetails traversalDetails;
   traversalDetails.allAreRenderable = isRenderable;
