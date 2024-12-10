@@ -1,4 +1,5 @@
 flowchart LR
+  Start@{ shape: sm-circ, label: "Start" }
   VisitTileIfNeeded[_visitTileIfNeeded]
   ShouldVisit{Should Visit?}
   VisitTile[_visitTile]
@@ -9,6 +10,7 @@ flowchart LR
   VisitVisibleChildrenNearToFar[_visitVisibleChildrenNearToFar]
   Recurse[Recurse on Children]
 
+  Start-->|Root Tile|VisitTileIfNeeded
   VisitTileIfNeeded-->ShouldVisit
   ShouldVisit-->|Yes|VisitTile
   ShouldVisit-->|No|Done

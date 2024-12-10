@@ -6,7 +6,7 @@ In [Rendering 3D Tiles](#rendering-3d-tiles), we described how Cesium Native's s
 
 @mermaid{tileset-traversal-flowchart}
 
-At a high level, `updateView` works by traversing the 3D Tiles tileset's bounding-volume hierarchy (BVH) in depth-first order. This is done using recursion, starting with a call to the private `_visitTileIfNeeded` method and passing it the root tile in the BVH. `_visitTileIfNeeded` checks to see if the tile needs to be [visited](#should-visit). The most important reason a tile would not need to be visited is if it's outside the view frustum of _all_ of the [ViewStates](@ref Cesium3DTilesSelection::ViewState) given to `updateView`. Such a tile is not visible, so we do not need to consider it further and traversal of this branch of the BVH stops here.
+At a high level, `updateView` works by traversing the 3D Tiles tileset's bounding-volume hierarchy (BVH) in depth-first order. This is done using recursion, starting with a call to the private `_visitTileIfNeeded` method and passing it the root tile in the BVH. `_visitTileIfNeeded` checks to see if the tile needs to be [visited](#culling). The most important reason a tile would not need to be visited is if it's outside the view frustum of _all_ of the [ViewStates](@ref Cesium3DTilesSelection::ViewState) given to `updateView`. Such a tile is not visible, so we do not need to consider it further and traversal of this branch of the BVH stops here.
 
 For tiles that _do_ need to be visited, `_visitTileIfNeeded` calls `_visitTile`.
 
@@ -18,7 +18,7 @@ If the current tile does not provide sufficient detail for the current view(s), 
 
 At a high level, this is all there is to the Cesium Native tile selection algorithm. As we look closer, though, a lot of important details come into focus. The details are covered in the sections below.
 
-## Should this Tile be Visited? {#should-visit}
+## Culling {#culling}
 
 In the [High-Level Overview](#high-level-overview), we mentioned that `_visitTileIfNeeded` determines whether a tile should be visited before calling `_visitTile`. How does it decide this?
 
@@ -28,11 +28,9 @@ In general, a tile should be visited if it cannot be culled. A tile can be culle
 2. It is so far away relative to the camera height that it can be considered "obscured by fog", in all views.
 3. It is explicitly excluded by the application via the [ITileExcluder](@ref Cesium3DTilesSelection::ITileExcluder) interface.
 
-A tile that is culled via (3) will never be visited, as you might expect.
+A tile that is culled via (3) will never be visited. For cases (1) and (2), a culled tile may still be visited if `TilesetOptions` [enableFrustumCulling](@ref Cesium3DTilesSelection::TilesetOptions::enableFrustumCulling) or [enableFogCulling](@ref Cesium3DTilesSelection::TilesetOptions::enableFogCulling), respectively, are set to `false`.
 
-For cases (1) and (2), a culled tile may still be visited if [enableFrustumCulling](@ref Cesium3DTilesSelection::TilesetOptions::enableFrustumCulling) or [enableFogCulling](@ref Cesium3DTilesSelection::TilesetOptions::enableFogCulling), respectively, in `TilesetOptions` is set to `false`.
-
-When both of these options are disabled, tiles covering the entire model will be selected; there won't be any pieces of it missing once loading completes. Some parts will still be at a lower level-of-detail than other parts, however.
+When both of these options are `false`, `_visitTile` will be called for all tiles that aren't explicitly excluded, so tiles covering the entire model will be selected. There will not be any pieces of the model missing once loading completes. Some parts may still be at a lower level-of-detail than other parts, however.
 
 <!-- Mention unconditional refinement and forbid holes corner cases here? Or in their own sections? -->
 
@@ -50,13 +48,31 @@ Once we know the largest SSE of this tile as viewed from any `ViewState`, we can
 
 This basic process always works as described, but the maximum SSE that the tile SSE is compared against can vary for culled tiles.
 
-Normally, as described in [Should this Tile be Visited?](#should-visit), tiles that are culled by the view-frustum or by fog are not visited at all. However, if either `enableFrustumCulling` or `enableFogCulling` is set to `false`, then these tiles will be visited and selected. And in that case, the question becomes: what level-of-detail should they be rendered at?
+Normally, as described in [Culling](#culling), tiles that are culled by the view-frustum or by fog are not visited at all. However, if either `enableFrustumCulling` or `enableFogCulling` is set to `false`, then these tiles will be visited and selected. And in that case, the question becomes: what level-of-detail should they be rendered at?
 
 The answer is that refinement decisions for these tiles work the same way as for regular tiles, but are based on the value of the [culledScreenSpaceError](@ref Cesium3DTilesSelection::TilesetOptions::culledScreenSpaceError) property instead of `maximumScreenSpaceError`. This allows us to use a lower LOD (larger maximum SSE value) for tiles outside the view frustum or far off in the foggy distance. At an extreme, we can set the [enforceCulledScreenSpaceError](@ref Cesium3DTilesSelection::TilesetOptions::enforceCulledScreenSpaceError) property to `false` if we want to _never_ refine these tiles. This is equivalent to setting `culledScreenSpaceError` to a very large value. The non-visible tiles are selected, so all parts of the model will be represented at some level-of-detail, but the non-visible parts will use the lowest LOD that they can without having a hole in the model.
 
-## Ancestor Meets SSE
+## Selecting Loaded Tiles {#selecting-loaded-tiles}
 
-The selection algorithm will sometimes _REFINE_ a tile even though its SSE is less than the maximum, which would normally trigger a _RENDER_ instead. This is probably surprising, but it happens for a good reason.
+3D Tiles are usually streamed over the network. The entire tileset is rarely located on the local computer, and almost never loaded entirely into memory. Thus, it's inevitable that we will sometimes want to render tiles that haven't been loaded yet.
+
+A critical goal of the tile selection algorithm is to prevent visible detail from disappearing with camera movements. When the camera moves, a new section of the model might be exposed that wasn't previously visible. If the tiles for this new section are not loaded yet, then we have no choice but to leave that section of the model blank. This is a case of detail not _appearing_ right away when we move the camera. While it's not ideal, and we try to avoid it when we can, detail _disappearing_ is much worse.
+
+> [!note]
+> See [Forbid Holes](#forbid-holes) for details of an optional mode that will ensure that "the tiles for this new section are not loaded yet" can never happen, at the cost of additional loading time.
+
+Detail would disappear very frequently if the tile selection algorithm were as simple as described so far. Imagine we're looking at a model, and everything is loaded and looking great. Now imagine that the user:
+
+* _Zooms Out_: We suddenly want to render less detailed tiles in the same location. A simple selection algorithm would hide the detailed tiles immediately, before the less-detailed tiles are loaded. This would cause a part of the model that used to be visible to suddenly vanish, only to reappear a moment later after the new tiles were loaded. This would be extremely distracting for our users. Fortunately, this does not happen because of the [Ancestor Meets SSE](#ancestor-meets-sse) mechanism.
+* _Zooms In_: More detailed tiles would suddenly be required in the same location. Once again, a simple selection algorithm would immediately hide the less detailed tiles, only to show the more detailed ones a moment later after they load. Fortunately, this does not happen because of the [Kicking](#kicking) mechanism.
+
+There is a simple solution to both of these problems, but Cesium Native doesn't use it. The simple solution is to arrange the selection algorithm so that a tile can only be _REFINED_ if all of its child tiles are already loaded. This is easy, and avoids the problems described in this section. The reason that Cesium Native doesn't use it is because it makes for drastically slower loading.
+
+Imagine a tileset organized as a quadtree, so each tile has four children. We're zoomed in close so that four tiles from level 15 of the quadtree would ideally be rendered. If we load those four tiles, we can render the scene from the current camera view, and it will look great. However, if we enforce the "a tile can only be REFINED if its children are all loaded" rule, then we would have to not only load those four tiles at level 15, we would also have to load at least four tiles at level 14, at least four more tiles at level 13, and so on all the way to the root of the tileset. Rather than loading four tiles to render this scene, we would need to load more like 60 tiles! The scenario just described is a worst-case scenario, but on average, a _lot_ more tiles would need to be loaded.
+
+## Ancestor Meets SSE {#ancestor-meets-sse}
+
+The "Ancestor Meets SSE" mechanism is a feature of the tile selection algorithm that ensures detail does not disappear when the user moves away from the model. It does this by sometimes choosing to _REFINE_ a tile even though its SSE is less than the maximum, which would normally trigger a _RENDER_ instead.
 
 The "depth" of a tile is the number of tiles we have to traverse to get to a particular tile, starting with the root tile. This concept isn't really used anywhere in the code, which is based on geometric error instead, but it's useful in the discussion that follows.
 
@@ -69,13 +85,28 @@ It might be tempting to do one of the following:
 
 Both of these options are not ideal because they result in detail that the user can see suddenly disappearing from the scene.
 
-## Kicking
+Instead, Cesium Native will continue to render the level 15 tiles until the less detailed tiles are loaded, and then it will switch to those. The mechanism that accomplishes this is a flag passed to `_visitTile` called `ancestorMeetsSse`.
+
+<table>
+  <tr>
+    <th>Zooming out without the benefit of "Ancestor Meets SSE"</th>
+    <th>"Ancestor Meets SSE" preserves current detail</th>
+  </tr>
+  <tr>
+    <td>![Zooming out without the benefit of "Ancestor Meets SSE"](without-ancestor-meets-sse.gif)</td>
+    <td>!["Ancestor Meets SSE" preserves current detail until lower detail is loaded](with-ancestor-meets-sse.gif)</td>
+  </tr>
+</table>
+
+
+
+## Kicking {#kicking}
 
 
 ## Load Priority
 
 
-## Forbid Holes
+## Forbid Holes {#forbid-holes}
 
 ## Unconditionally-Refined Tiles
 
