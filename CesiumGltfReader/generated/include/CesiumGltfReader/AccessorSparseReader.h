@@ -19,7 +19,8 @@ struct AccessorSparse;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link AccessorSparse} instances from JSON.
+ * @brief Reads \ref CesiumGltf::AccessorSparse "AccessorSparse" instances from
+ * JSON.
  */
 class CESIUMGLTFREADER_API AccessorSparseReader {
 public:

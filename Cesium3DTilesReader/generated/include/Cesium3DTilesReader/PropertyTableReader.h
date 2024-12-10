@@ -19,7 +19,8 @@ struct PropertyTable;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link PropertyTable} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::PropertyTable "PropertyTable" instances from
+ * JSON.
  */
 class CESIUM3DTILESREADER_API PropertyTableReader {
 public:

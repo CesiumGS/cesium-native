@@ -19,7 +19,7 @@ struct Subtree;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Subtree} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Subtree "Subtree" instances from JSON.
  */
 class CESIUM3DTILESREADER_API SubtreeReader {
 public:

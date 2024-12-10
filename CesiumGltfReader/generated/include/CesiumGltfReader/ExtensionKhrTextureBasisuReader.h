@@ -19,7 +19,8 @@ struct ExtensionKhrTextureBasisu;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionKhrTextureBasisu} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionKhrTextureBasisu
+ * "ExtensionKhrTextureBasisu" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionKhrTextureBasisuReader {
 public:

@@ -19,7 +19,8 @@ struct AnimationChannel;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link AnimationChannel} instances from JSON.
+ * @brief Reads \ref CesiumGltf::AnimationChannel "AnimationChannel" instances
+ * from JSON.
  */
 class CESIUMGLTFREADER_API AnimationChannelReader {
 public:

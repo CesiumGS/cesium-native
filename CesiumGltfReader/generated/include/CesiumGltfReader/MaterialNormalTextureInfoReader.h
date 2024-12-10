@@ -19,7 +19,8 @@ struct MaterialNormalTextureInfo;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link MaterialNormalTextureInfo} instances from JSON.
+ * @brief Reads \ref CesiumGltf::MaterialNormalTextureInfo
+ * "MaterialNormalTextureInfo" instances from JSON.
  */
 class CESIUMGLTFREADER_API MaterialNormalTextureInfoReader {
 public:

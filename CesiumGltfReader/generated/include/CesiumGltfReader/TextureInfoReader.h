@@ -19,7 +19,7 @@ struct TextureInfo;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link TextureInfo} instances from JSON.
+ * @brief Reads \ref CesiumGltf::TextureInfo "TextureInfo" instances from JSON.
  */
 class CESIUMGLTFREADER_API TextureInfoReader {
 public:

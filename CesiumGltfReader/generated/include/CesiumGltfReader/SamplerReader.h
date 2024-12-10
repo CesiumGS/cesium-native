@@ -19,7 +19,7 @@ struct Sampler;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Sampler} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Sampler "Sampler" instances from JSON.
  */
 class CESIUMGLTFREADER_API SamplerReader {
 public:

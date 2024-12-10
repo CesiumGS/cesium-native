@@ -19,7 +19,8 @@ struct MaterialOcclusionTextureInfo;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link MaterialOcclusionTextureInfo} instances from JSON.
+ * @brief Reads \ref CesiumGltf::MaterialOcclusionTextureInfo
+ * "MaterialOcclusionTextureInfo" instances from JSON.
  */
 class CESIUMGLTFREADER_API MaterialOcclusionTextureInfoReader {
 public:

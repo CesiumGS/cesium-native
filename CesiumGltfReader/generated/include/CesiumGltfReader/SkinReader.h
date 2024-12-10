@@ -19,7 +19,7 @@ struct Skin;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Skin} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Skin "Skin" instances from JSON.
  */
 class CESIUMGLTFREADER_API SkinReader {
 public:

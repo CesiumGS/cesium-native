@@ -19,7 +19,7 @@ struct Class;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Class} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Class "Class" instances from JSON.
  */
 class CESIUM3DTILESREADER_API ClassReader {
 public:

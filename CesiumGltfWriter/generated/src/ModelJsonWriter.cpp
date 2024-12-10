@@ -19,6 +19,7 @@
 #include <CesiumGltf/CameraPerspective.h>
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/EXT_structural_metadataGlTFDocumentExtension.h>
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
@@ -37,7 +38,6 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
-#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariantsValue.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
@@ -123,7 +123,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+    const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -729,7 +729,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+    const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2419,8 +2419,8 @@ void ExtensionBufferViewExtMeshoptCompressionJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionModelExtStructuralMetadataJsonWriter::write(
-    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+void EXT_structural_metadataGlTFDocumentExtensionJsonWriter::write(
+    const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

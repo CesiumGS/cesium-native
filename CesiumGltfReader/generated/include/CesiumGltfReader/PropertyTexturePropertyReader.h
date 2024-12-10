@@ -19,7 +19,8 @@ struct PropertyTextureProperty;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link PropertyTextureProperty} instances from JSON.
+ * @brief Reads \ref CesiumGltf::PropertyTextureProperty
+ * "PropertyTextureProperty" instances from JSON.
  */
 class CESIUMGLTFREADER_API PropertyTexturePropertyReader {
 public:

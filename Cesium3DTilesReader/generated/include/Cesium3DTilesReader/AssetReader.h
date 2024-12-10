@@ -19,7 +19,7 @@ struct Asset;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Asset} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Asset "Asset" instances from JSON.
  */
 class CESIUM3DTILESREADER_API AssetReader {
 public:

@@ -19,7 +19,8 @@ struct ExtensionMeshPrimitiveExtStructuralMetadata;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionMeshPrimitiveExtStructuralMetadata} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata
+ * "ExtensionMeshPrimitiveExtStructuralMetadata" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionMeshPrimitiveExtStructuralMetadataReader {
 public:

@@ -19,7 +19,7 @@ struct Camera;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Camera} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Camera "Camera" instances from JSON.
  */
 class CESIUMGLTFREADER_API CameraReader {
 public:

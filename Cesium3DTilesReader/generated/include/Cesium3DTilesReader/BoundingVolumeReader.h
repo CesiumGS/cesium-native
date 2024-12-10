@@ -19,7 +19,8 @@ struct BoundingVolume;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link BoundingVolume} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::BoundingVolume "BoundingVolume" instances
+ * from JSON.
  */
 class CESIUM3DTILESREADER_API BoundingVolumeReader {
 public:

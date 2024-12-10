@@ -19,7 +19,7 @@ struct Asset;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Asset} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Asset "Asset" instances from JSON.
  */
 class CESIUMGLTFREADER_API AssetReader {
 public:

@@ -19,7 +19,8 @@ struct PropertyAttribute;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link PropertyAttribute} instances from JSON.
+ * @brief Reads \ref CesiumGltf::PropertyAttribute "PropertyAttribute" instances
+ * from JSON.
  */
 class CESIUMGLTFREADER_API PropertyAttributeReader {
 public:

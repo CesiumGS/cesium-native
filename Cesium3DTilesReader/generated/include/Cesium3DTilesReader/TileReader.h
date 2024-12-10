@@ -19,7 +19,7 @@ struct Tile;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Tile} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Tile "Tile" instances from JSON.
  */
 class CESIUM3DTILESREADER_API TileReader {
 public:

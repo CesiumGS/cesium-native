@@ -19,7 +19,8 @@ struct ExtensionCesiumPrimitiveOutline;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionCesiumPrimitiveOutline} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionCesiumPrimitiveOutline
+ * "ExtensionCesiumPrimitiveOutline" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionCesiumPrimitiveOutlineReader {
 public:

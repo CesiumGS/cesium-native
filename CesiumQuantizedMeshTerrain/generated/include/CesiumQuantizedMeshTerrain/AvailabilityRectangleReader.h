@@ -19,7 +19,8 @@ struct AvailabilityRectangle;
 namespace CesiumQuantizedMeshTerrain {
 
 /**
- * @brief Reads {@link AvailabilityRectangle} instances from JSON.
+ * @brief Reads \ref CesiumQuantizedMeshTerrain::AvailabilityRectangle
+ * "AvailabilityRectangle" instances from JSON.
  */
 class CESIUMQUANTIZEDMESHTERRAIN_API AvailabilityRectangleReader {
 public:

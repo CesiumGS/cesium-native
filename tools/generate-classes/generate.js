@@ -246,7 +246,7 @@ function generate(options, schema, writers) {
     namespace ${readerNamespace} {
 
     /**
-     * @brief Reads {@link ${name}} instances from JSON.
+     * @brief Reads \\ref ${namespace}::${name} "${name}" instances from JSON.
      */
     class ${readerNamespace.toUpperCase()}_API ${name}Reader {
     public:

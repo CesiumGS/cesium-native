@@ -19,7 +19,7 @@ struct Tileset;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Tileset} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Tileset "Tileset" instances from JSON.
  */
 class CESIUM3DTILESREADER_API TilesetReader {
 public:

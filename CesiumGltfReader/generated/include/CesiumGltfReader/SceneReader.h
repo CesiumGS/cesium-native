@@ -19,7 +19,7 @@ struct Scene;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Scene} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Scene "Scene" instances from JSON.
  */
 class CESIUMGLTFREADER_API SceneReader {
 public:

@@ -19,7 +19,8 @@ struct ClassProperty;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ClassProperty} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ClassProperty "ClassProperty" instances from
+ * JSON.
  */
 class CESIUMGLTFREADER_API ClassPropertyReader {
 public:

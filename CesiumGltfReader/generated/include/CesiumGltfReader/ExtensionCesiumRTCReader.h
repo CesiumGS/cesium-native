@@ -19,7 +19,8 @@ struct ExtensionCesiumRTC;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionCesiumRTC} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionCesiumRTC "ExtensionCesiumRTC"
+ * instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionCesiumRTCReader {
 public:

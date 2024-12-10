@@ -19,7 +19,7 @@ struct Buffer;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Buffer} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Buffer "Buffer" instances from JSON.
  */
 class CESIUM3DTILESREADER_API BufferReader {
 public:

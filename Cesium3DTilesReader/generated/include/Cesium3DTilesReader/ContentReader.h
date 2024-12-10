@@ -19,7 +19,7 @@ struct Content;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Content} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Content "Content" instances from JSON.
  */
 class CESIUM3DTILESREADER_API ContentReader {
 public:

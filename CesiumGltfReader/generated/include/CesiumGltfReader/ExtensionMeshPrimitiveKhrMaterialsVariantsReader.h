@@ -19,7 +19,8 @@ struct ExtensionMeshPrimitiveKhrMaterialsVariants;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionMeshPrimitiveKhrMaterialsVariants} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants
+ * "ExtensionMeshPrimitiveKhrMaterialsVariants" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionMeshPrimitiveKhrMaterialsVariantsReader {
 public:

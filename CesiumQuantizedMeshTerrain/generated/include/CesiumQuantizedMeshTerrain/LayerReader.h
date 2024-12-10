@@ -19,7 +19,8 @@ struct Layer;
 namespace CesiumQuantizedMeshTerrain {
 
 /**
- * @brief Reads {@link Layer} instances from JSON.
+ * @brief Reads \ref CesiumQuantizedMeshTerrain::Layer "Layer" instances from
+ * JSON.
  */
 class CESIUMQUANTIZEDMESHTERRAIN_API LayerReader {
 public:

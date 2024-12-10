@@ -19,7 +19,8 @@ struct GroupMetadata;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link GroupMetadata} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::GroupMetadata "GroupMetadata" instances from
+ * JSON.
  */
 class CESIUM3DTILESREADER_API GroupMetadataReader {
 public:

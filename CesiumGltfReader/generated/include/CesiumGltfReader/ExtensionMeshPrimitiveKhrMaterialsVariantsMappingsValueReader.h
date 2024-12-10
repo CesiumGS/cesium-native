@@ -19,7 +19,10 @@ struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue} instances from JSON.
+ * @brief Reads \ref
+ * CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue
+ * "ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue" instances from
+ * JSON.
  */
 class CESIUMGLTFREADER_API
     ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueReader {

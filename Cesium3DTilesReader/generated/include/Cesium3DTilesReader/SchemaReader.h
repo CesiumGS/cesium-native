@@ -19,7 +19,7 @@ struct Schema;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Schema} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Schema "Schema" instances from JSON.
  */
 class CESIUM3DTILESREADER_API SchemaReader {
 public:

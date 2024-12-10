@@ -19,7 +19,7 @@ struct Schema;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Schema} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Schema "Schema" instances from JSON.
  */
 class CESIUMGLTFREADER_API SchemaReader {
 public:

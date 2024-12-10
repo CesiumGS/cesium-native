@@ -19,7 +19,8 @@ struct CameraOrthographic;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link CameraOrthographic} instances from JSON.
+ * @brief Reads \ref CesiumGltf::CameraOrthographic "CameraOrthographic"
+ * instances from JSON.
  */
 class CESIUMGLTFREADER_API CameraOrthographicReader {
 public:

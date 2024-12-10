@@ -19,7 +19,8 @@ struct ExtensionKhrDracoMeshCompression;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionKhrDracoMeshCompression} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionKhrDracoMeshCompression
+ * "ExtensionKhrDracoMeshCompression" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionKhrDracoMeshCompressionReader {
 public:

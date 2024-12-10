@@ -19,7 +19,8 @@ struct ExtensionKhrMaterialsUnlit;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionKhrMaterialsUnlit} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionKhrMaterialsUnlit
+ * "ExtensionKhrMaterialsUnlit" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionKhrMaterialsUnlitReader {
 public:

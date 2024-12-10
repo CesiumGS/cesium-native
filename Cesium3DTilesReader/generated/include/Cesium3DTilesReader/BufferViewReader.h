@@ -19,7 +19,7 @@ struct BufferView;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link BufferView} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::BufferView "BufferView" instances from JSON.
  */
 class CESIUM3DTILESREADER_API BufferViewReader {
 public:

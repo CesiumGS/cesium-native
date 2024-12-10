@@ -19,7 +19,8 @@ struct CameraPerspective;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link CameraPerspective} instances from JSON.
+ * @brief Reads \ref CesiumGltf::CameraPerspective "CameraPerspective" instances
+ * from JSON.
  */
 class CESIUMGLTFREADER_API CameraPerspectiveReader {
 public:

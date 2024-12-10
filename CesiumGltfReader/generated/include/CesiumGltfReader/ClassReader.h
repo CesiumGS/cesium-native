@@ -19,7 +19,7 @@ struct Class;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Class} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Class "Class" instances from JSON.
  */
 class CESIUMGLTFREADER_API ClassReader {
 public:

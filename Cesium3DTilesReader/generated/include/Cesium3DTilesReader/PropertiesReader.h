@@ -19,7 +19,7 @@ struct Properties;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Properties} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Properties "Properties" instances from JSON.
  */
 class CESIUM3DTILESREADER_API PropertiesReader {
 public:

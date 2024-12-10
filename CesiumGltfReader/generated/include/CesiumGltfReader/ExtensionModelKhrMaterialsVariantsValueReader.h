@@ -19,7 +19,8 @@ struct ExtensionModelKhrMaterialsVariantsValue;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionModelKhrMaterialsVariantsValue} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionModelKhrMaterialsVariantsValue
+ * "ExtensionModelKhrMaterialsVariantsValue" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionModelKhrMaterialsVariantsValueReader {
 public:

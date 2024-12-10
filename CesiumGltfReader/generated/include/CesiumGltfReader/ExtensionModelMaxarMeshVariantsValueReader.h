@@ -19,7 +19,8 @@ struct ExtensionModelMaxarMeshVariantsValue;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionModelMaxarMeshVariantsValue} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionModelMaxarMeshVariantsValue
+ * "ExtensionModelMaxarMeshVariantsValue" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionModelMaxarMeshVariantsValueReader {
 public:

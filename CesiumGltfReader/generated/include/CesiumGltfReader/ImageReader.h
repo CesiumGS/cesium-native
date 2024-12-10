@@ -19,7 +19,7 @@ struct Image;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Image} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Image "Image" instances from JSON.
  */
 class CESIUMGLTFREADER_API ImageReader {
 public:
