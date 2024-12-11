@@ -3,7 +3,6 @@
 
 #include "registerReaderExtensions.h"
 
-#include "EXT_structural_metadataGlTFDocumentExtensionJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
@@ -12,12 +11,14 @@
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
 #include "ExtensionExtMeshFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
+#include "ExtensionExtStructuralMetadataJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionKhrTextureTransformJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
+#include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
@@ -44,7 +45,7 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
-      EXT_structural_metadataGlTFDocumentExtensionJsonHandler>();
+      ExtensionModelExtStructuralMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
       ExtensionModelKhrMaterialsVariantsJsonHandler>();
@@ -77,6 +78,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       ExtensionExtMeshGpuInstancingJsonHandler>();
   options.registerExtension<
       CesiumGltf::Node,
+      ExtensionExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonHandler>();
   options.registerExtension<
       CesiumGltf::Buffer,
@@ -84,6 +88,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Material,
+      ExtensionExtStructuralMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonHandler>();

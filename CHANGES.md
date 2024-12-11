@@ -7,6 +7,7 @@
 - Added `offset` getter to `AccessorView`.
 - Added `stride`, `offset`, and `data` getters to `AccessorWriter`.
 - Added `value_type` typedef to `AccessorWriter`.
+- Updates generated classes for `EXT_structural_metadata`. See https://github.com/CesiumGS/glTF/pull/71.
 
 ##### Fixes :wrench:
 

@@ -17,7 +17,8 @@ struct ExtensionExtMeshFeatures;
 struct ExtensionExtMeshGpuInstancing;
 struct ExtensionBufferExtMeshoptCompression;
 struct ExtensionBufferViewExtMeshoptCompression;
-struct EXT_structural_metadataGlTFDocumentExtension;
+struct ExtensionExtStructuralMetadata;
+struct ExtensionModelExtStructuralMetadata;
 struct ExtensionMeshPrimitiveExtStructuralMetadata;
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
@@ -170,15 +171,28 @@ struct ExtensionBufferViewExtMeshoptCompressionJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct EXT_structural_metadataGlTFDocumentExtensionJsonWriter {
-  using ValueType = CesiumGltf::EXT_structural_metadataGlTFDocumentExtension;
+struct ExtensionExtStructuralMetadataJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtStructuralMetadata;
 
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
   static void write(
-      const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
+      const CesiumGltf::ExtensionExtStructuralMetadata& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModelExtStructuralMetadataJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_structural_metadata";
+
+  static void write(
+      const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

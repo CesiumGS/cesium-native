@@ -20,7 +20,6 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
-#include <CesiumGltf/EXT_structural_metadataGlTFDocumentExtension.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
@@ -29,12 +28,14 @@
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
@@ -49,7 +50,7 @@ void registerWriterExtensions(
   context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
   context.registerExtension<
       CesiumGltf::Model,
-      EXT_structural_metadataGlTFDocumentExtensionJsonWriter>();
+      ExtensionModelExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelKhrMaterialsVariantsJsonWriter>();
@@ -82,6 +83,9 @@ void registerWriterExtensions(
       ExtensionExtMeshGpuInstancingJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
+      ExtensionExtStructuralMetadataJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
@@ -89,6 +93,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Material,
+      ExtensionExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonWriter>();
