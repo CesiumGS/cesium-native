@@ -1,0 +1,12 @@
+sequenceDiagram
+  actor Application
+  participant Tileset
+  actor IAssetAccessor
+  actor IPrepareRendererResources
+
+  Note over Application,Tileset: Frame 2
+  Application->>Tileset: updateView
+  IAssetAccessor--)Tileset: Resolve: get (Tile A)
+  Tileset->>Tileset: Select Tiles A, B
+  Tileset-)IPrepareRendererResources: Start: prepareInLoadThread (Tile A)
+  Tileset-->>Application: Tiles to Render This Frame (None)
