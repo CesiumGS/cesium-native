@@ -18,6 +18,8 @@ struct CESIUMGLTF_API ExtensionExtMeshFeatures final
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName = "ExtensionExtMeshFeatures";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_mesh_features";
 
   /**

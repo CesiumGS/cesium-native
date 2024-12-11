@@ -70,7 +70,7 @@ public:
   virtual void KeyPrimitive(std::string_view keyName, std::string_view value);
 
   /**
-   * @brief Floating point
+   * @name Floating point
    */
   /**@{*/
   virtual void KeyPrimitive(std::string_view keyName, float value);

@@ -12,6 +12,10 @@ class Cartographic;
 
 namespace CesiumGeospatial {
 
+/**
+ * @brief A local direction, consisting of the four cardinal directions (North,
+ * South, East, West) combined with Up and Down.
+ */
 enum class LocalDirection { East, North, West, South, Up, Down };
 
 /**

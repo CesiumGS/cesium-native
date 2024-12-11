@@ -21,7 +21,10 @@ public:
   PrettyJsonWriter() noexcept;
   ~PrettyJsonWriter() {}
 
-  // rapidjson methods
+  /**
+   * @name RapidJSON methods
+   */
+  /**@{*/
   bool Null() override;
   bool Bool(bool b) override;
   bool Int(int i) override;
@@ -36,8 +39,12 @@ public:
   bool EndObject() override;
   bool StartArray() override;
   bool EndArray() override;
+  /**@}*/
 
-  // Primitive overloads
+  /**
+   * @name Primitive overloads
+   */
+  /**@{*/
   void Primitive(std::int32_t value) override;
   void Primitive(std::uint32_t value) override;
   void Primitive(std::int64_t value) override;
@@ -46,30 +53,47 @@ public:
   void Primitive(double value) override;
   void Primitive(std::nullptr_t value) override;
   void Primitive(std::string_view string) override;
+  /**@}*/
 
-  // Integral
+  /**
+   * @name Integral
+   */
+  /**@{*/
   void KeyPrimitive(std::string_view keyName, std::int32_t value) override;
   void KeyPrimitive(std::string_view keyName, std::uint32_t value) override;
   void KeyPrimitive(std::string_view keyName, std::int64_t value) override;
   void KeyPrimitive(std::string_view keyName, std::uint64_t value) override;
+  /**@}*/
 
-  // String
+  /**
+   * @brief String
+   */
   void KeyPrimitive(std::string_view keyName, std::string_view value) override;
 
-  // Floating Point
+  /**
+   * @name Floating Point
+   */
+  /**@{*/
   void KeyPrimitive(std::string_view keyName, float value) override;
   void KeyPrimitive(std::string_view keyName, double value) override;
+  /**@}*/
 
-  // Null
+  /**
+   * @brief Null
+   */
   void KeyPrimitive(std::string_view keyName, std::nullptr_t value) override;
 
-  // Array / Objects
+  /**
+   * @name Array / Objects
+   */
+  /**@{*/
   void KeyArray(std::string_view keyName, std::function<void(void)> insideArray)
       override;
 
   void KeyObject(
       std::string_view keyName,
       std::function<void(void)> insideObject) override;
+  /**@}*/
 
   std::string toString() override;
   std::string_view toStringView() override;

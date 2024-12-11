@@ -56,12 +56,12 @@ enum class AccessorViewStatus {
   WrongSizeT,
 
   /**
-   * @brief The {@link Accessor:type} is invalid.
+   * @brief The {@link AccessorSpec:type} is invalid.
    */
   InvalidType,
 
   /**
-   * @brief The {@link Accessor::componentType} is invalid.
+   * @brief The {@link AccessorSpec::componentType} is invalid.
    */
   InvalidComponentType,
 

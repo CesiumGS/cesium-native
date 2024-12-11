@@ -210,8 +210,17 @@ public:
   JsonValue(std::initializer_list<std::pair<const std::string, JsonValue>> v)
       : value(std::map<std::string, JsonValue>(v)) {}
 
+  /**
+   * @brief Attempts to obtain a pointer to a \ref JsonValue for the given key
+   * on this object.
+   *
+   * @param key The key to lookup.
+   * @returns A pointer to the \ref JsonValue for the provided key, or
+   * `nullptr`.
+   */
   [[nodiscard]] const JsonValue*
   getValuePtrForKey(const std::string& key) const;
+  /** @copydoc getValuePtrForKey */
   [[nodiscard]] JsonValue* getValuePtrForKey(const std::string& key);
 
   /**

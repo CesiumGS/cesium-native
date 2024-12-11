@@ -54,7 +54,7 @@ public:
    * @brief Reads an instance of ExtensionNodeMaxarMeshVariantsMappingsValue
    * from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<
@@ -65,7 +65,7 @@ public:
    * @brief Reads an array of instances of
    * ExtensionNodeMaxarMeshVariantsMappingsValue from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

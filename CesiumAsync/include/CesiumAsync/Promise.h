@@ -83,11 +83,21 @@ public:
    * @brief Will be called when the task completed successfully.
    */
   void resolve() const { this->_pEvent->set(); }
+
+  /**
+   * @brief Will be called when the task failed.
+   *
+   * @param error The error that caused the task to fail.
+   */
   template <typename TException> void reject(TException error) const {
     this->_pEvent->set_exception(std::make_exception_ptr(error));
   }
+
   /**
    * @brief Will be called when the task failed.
+   *
+   * @param error The error, captured with `std::current_exception`, that
+   * caused the task to fail.
    */
   void reject(const std::exception_ptr& error) const {
     this->_pEvent->set_exception(error);

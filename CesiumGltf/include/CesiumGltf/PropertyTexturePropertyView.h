@@ -117,6 +117,13 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
   }
 }
 
+/**
+ * @brief Attempts to obtain a vector value from the given span of bytes.
+ *
+ * @tparam ElementType The vector value type to read from `bytes`.
+ * @param bytes A span of bytes to convert into a vector value.
+ * @returns A value of `ElementType`.
+ */
 template <typename ElementType>
 ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
@@ -164,6 +171,13 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   return result;
 }
 
+/**
+ * @brief Attempts to obtain an array value from the given span of bytes.
+ *
+ * @tparam T The element type to read from `bytes`.
+ * @param bytes A span of bytes to convert into an array value.
+ * @returns A \ref PropertyArrayCopy containing the elements read.
+ */
 template <typename T>
 PropertyArrayCopy<T>
 assembleArrayValue(const std::span<uint8_t> bytes) noexcept {

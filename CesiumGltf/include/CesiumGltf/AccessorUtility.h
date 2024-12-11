@@ -321,8 +321,8 @@ struct TexCoordFromAccessor {
 };
 
 /**
- * Type definition for quaternion accessors, as used in ExtMeshGpuInstancing
- * rotations and animation samplers.
+ * @brief Type definition for quaternion accessors, as used in
+ * ExtMeshGpuInstancing rotations and animation samplers.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC4<uint8_t>>,

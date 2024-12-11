@@ -17,6 +17,8 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeS2 final
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName = "Extension3dTilesBoundingVolumeS2";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "3DTILES_bounding_volume_S2";
 
   /**

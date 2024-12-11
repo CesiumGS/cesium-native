@@ -219,6 +219,12 @@ private:
   template <typename U> friend class IntrusivePointer;
 };
 
+/**
+ * @brief Casts a `const` \ref IntrusivePointer to its non-const equivalent.
+ *
+ * @param p The `const` \ref IntrusivePointer.
+ * @returns A non-const \ref IntrusivePointer with the same underlying pointer.
+ */
 template <typename T, typename U>
 IntrusivePointer<T>
 const_intrusive_cast(const IntrusivePointer<U>& p) noexcept {

@@ -133,6 +133,10 @@ public:
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
 };
 
+/**
+ * @brief Returns the size in bytes of a \ref PropertyComponentType used as the
+ * `arrayOffsetType` in the constructor of \ref PropertyTablePropertyView.
+ */
 int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
 
 /**
@@ -148,7 +152,7 @@ class PropertyTablePropertyView;
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
+ * instance can be accessed through the {@link PropertyTablePropertyView<ElementType, false>::get} method.
  *
  * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
  * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
@@ -506,7 +510,7 @@ private:
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
+ * instance can be accessed through the {@link PropertyTablePropertyView<ElementType, false>::get} method.
  *
  * @param ElementType must be one of the following: an integer scalar (uint8_t,
  * int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t), a glm vecN

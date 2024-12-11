@@ -37,7 +37,20 @@ class Tile;
  * IPrepareRendererResources::prepareInLoadThread "prepareInLoadThread".
  */
 struct TileLoadResultAndRenderResources {
+  /**
+   * @brief The \ref TileLoadResult passed to \ref
+   * IPrepareRendererResources::prepareInLoadThread "prepareInLoadThread" in the
+   * first place.
+   */
   TileLoadResult result;
+  /**
+   * @brief A pointer to the render resources for this tile.
+
+   * Cesium Native doesn't know what this pointer means, and doesn't need to
+   * know what it means. This pointer is stored in a tile's content as a \ref
+   * TileRenderContent only so that it can be returned to the implementing
+   * application as needed and used for rendering there.
+   */
   void* pRenderResources{nullptr};
 };
 

@@ -17,6 +17,8 @@ struct CESIUMGLTF_API ExtensionCesiumRTC final
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName = "ExtensionCesiumRTC";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "CESIUM_RTC";
 
   /**

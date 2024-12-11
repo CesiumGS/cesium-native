@@ -158,27 +158,98 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       CesiumGltf::Buffer& destination,
       CesiumGltf::Buffer& source);
 
+  /**
+   * @brief Removes unused textures from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused textures from.
+   * @param extraUsedTextureIndices Indices of textures that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedTextures(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedTextureIndices = {});
+
+  /**
+   * @brief Removes unused samplers from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused samplers from.
+   * @param extraUsedSamplerIndices Indices of samplers that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedSamplers(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedSamplerIndices = {});
+
+  /**
+   * @brief Removes unused images from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused images from.
+   * @param extraUsedImageIndices Indices of images that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedImages(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedImageIndices = {});
+
+  /**
+   * @brief Removes unused accessors from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused accessors from.
+   * @param extraUsedAccessorIndices Indices of accessors that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedAccessors(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedAccessorIndices = {});
+
+  /**
+   * @brief Removes unused buffer views from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused buffer views from.
+   * @param extraUsedBufferViewIndices Indices of buffer views that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedBufferViews(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedBufferViewIndices = {});
+
+  /**
+   * @brief Removes unused buffers from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused buffers from.
+   * @param extraUsedBufferIndices Indices of buffers that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedBuffers(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedBufferIndices = {});
+
+  /**
+   * @brief Removes unused meshes from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused meshes from.
+   * @param extraUsedMeshIndices Indices of meshes that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedMeshes(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedMeshIndices = {});
+
+  /**
+   * @brief Removes unused materials from the given glTF model.
+   *
+   * @param gltf The glTF to remove unused materials from.
+   * @param extraUsedMaterialIndices Indices of materials that should be
+   * considered "used" even if they're not referenced by anything else in the
+   * glTF.
+   */
   static void removeUnusedMaterials(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedMaterialIndices = {});

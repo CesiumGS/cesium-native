@@ -61,16 +61,49 @@ enum class PropertyType {
  * @brief The possible types of a property component.
  */
 enum class PropertyComponentType {
+  /**
+   * @brief No type.
+   */
   None,
+  /**
+   * @brief A property component equivalent to an `int8_t`.
+   */
   Int8,
+  /**
+   * @brief A property component equivalent to a `uint8_t`.
+   */
   Uint8,
+  /**
+   * @brief A property component equivalent to an `int16_t`.
+   */
   Int16,
+  /**
+   * @brief A property component equivalent to a `uint16_t`.
+   */
   Uint16,
+  /**
+   * @brief A property component equivalent to an `int32_t`.
+   */
   Int32,
+  /**
+   * @brief A property component equivalent to a `uint32_t`.
+   */
   Uint32,
+  /**
+   * @brief A property component equivalent to an `int64_t`.
+   */
   Int64,
+  /**
+   * @brief A property component equivalent to a `uint32_t`.
+   */
   Uint64,
+  /**
+   * @brief A property component equivalent to a `float`.
+   */
   Float32,
+  /**
+   * @brief A property component equivalent to a `double`.
+   */
   Float64,
 };
 
@@ -100,7 +133,7 @@ PropertyType convertStringToPropertyType(const std::string& str);
  *
  * For example, \ref PropertyComponentType::Uint8 will become `"UINT8"`.
  *
- * @param type The type to convert to a string.
+ * @param componentType The type to convert to a string.
  * @returns The type as a string, or `"NONE"` if no conversion is possible.
  */
 std::string

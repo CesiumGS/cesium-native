@@ -19,6 +19,8 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
    */
   static constexpr const char* TypeName =
       "ExtensionBufferViewExtMeshoptCompression";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
   /**

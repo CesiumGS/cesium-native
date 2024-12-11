@@ -19,6 +19,8 @@ struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName = "ExtensionKhrDracoMeshCompression";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
 
   /**

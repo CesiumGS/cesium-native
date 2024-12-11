@@ -40,11 +40,11 @@ public:
   /**
    * @brief Asynchronously loads a subtree from a URL.
    *
-   * Please note that the `SubtreeFileReader` instance must remain valid until
-   * the returned future resolves or rejects. Destroying it earlier will result
-   * in undefined behavior. One easy way to achieve this is to construct the
-   * reader with `std::make_shared` and capture the `std::shared_ptr` in the
-   * continuation lambda.
+   * \attention Please note that the `SubtreeFileReader` instance must remain
+   * valid until the returned future resolves or rejects. Destroying it earlier
+   * will result in undefined behavior. One easy way to achieve this is to
+   * construct the reader with `std::make_shared` and capture the
+   * `std::shared_ptr` in the continuation lambda.
    *
    * @param asyncSystem The AsyncSystem used to do asynchronous work.
    * @param pAssetAccessor The accessor used to retrieve the URL and any other
@@ -62,6 +62,21 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {})
       const noexcept;
 
+  /**
+   * @brief Asynchronously loads a subtree from a request.
+   *
+   * \attention Please note that the `SubtreeFileReader` instance must remain
+   * valid until the returned future resolves or rejects. Destroying it earlier
+   * will result in undefined behavior. One easy way to achieve this is to
+   * construct the reader with `std::make_shared` and capture the
+   * `std::shared_ptr` in the continuation lambda.
+   *
+   * @param asyncSystem The AsyncSystem used to do asynchronous work.
+   * @param pAssetAccessor The accessor used to retrieve the URL and any other
+   * required resources.
+   * @param pRequest The request to get the subtree file.
+   * @return A future that resolves to the result of loading the subtree.
+   */
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   load(
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -69,6 +84,25 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest)
       const noexcept;
 
+  /**
+   * @brief Asynchronously loads loads a subtree from data obtained from a URL.
+   *
+   * \attention Please note that the `SubtreeFileReader` instance must remain
+   * valid until the returned future resolves or rejects. Destroying it earlier
+   * will result in undefined behavior. One easy way to achieve this is to
+   * construct the reader with `std::make_shared` and capture the
+   * `std::shared_ptr` in the continuation lambda.
+   *
+   * @param asyncSystem The AsyncSystem used to do asynchronous work.
+   * @param pAssetAccessor The accessor used to retrieve the URL and any other
+   * required resources.
+   * @param url The URL from which the subtree file was obtained.
+   * @param requestHeaders Headers that were included in the request for the
+   * initial subtree file and should be included for any additional resources
+   * that are required.
+   * @param data The subtree file data that was obtained.
+   * @return A future that resolves to the result of loading the subtree.
+   */
   CesiumAsync::Future<CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Subtree>>
   load(
       const CesiumAsync::AsyncSystem& asyncSystem,

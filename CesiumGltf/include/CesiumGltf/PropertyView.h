@@ -110,6 +110,12 @@ public:
   static const PropertyViewStatusType ErrorInvalidDefaultValue = 13;
 };
 
+/**
+ * @brief Validates a \ref ClassProperty, checking for any type mismatches.
+ *
+ * @returns A \ref PropertyViewStatus value representing the error found while
+ * validating, or \ref PropertyViewStatus::Valid if no errors were found.
+ */
 template <typename T>
 PropertyViewStatusType
 validatePropertyType(const ClassProperty& classProperty) {
@@ -139,6 +145,13 @@ validatePropertyType(const ClassProperty& classProperty) {
   return PropertyViewStatus::Valid;
 }
 
+/**
+ * @brief Validates a \ref ClassProperty representing an array, checking for any
+ * type mismatches.
+ *
+ * @returns A \ref PropertyViewStatus value representing the error found while
+ * validating, or \ref PropertyViewStatus::Valid if no errors were found.
+ */
 template <typename T>
 PropertyViewStatusType
 validateArrayPropertyType(const ClassProperty& classProperty) {
@@ -169,11 +182,27 @@ validateArrayPropertyType(const ClassProperty& classProperty) {
   return PropertyViewStatus::Valid;
 }
 
+/**
+ * @brief Attempts to get a scalar value from the provided \ref
+ * CesiumUtility::JsonValue "JsonValue".
+ *
+ * @param jsonValue The value to attempt to get as a scalar.
+ * @returns A scalar of type `T` if successful, or `std::nullopt` if not.
+ */
 template <typename T>
 static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
   return jsonValue.getSafeNumber<T>();
 }
 
+/**
+ * @brief Attempts to obtain a vector of type `VecType` from the provided \ref
+ * CesiumUtility::JsonValue "JsonValue".
+ *
+ * @param jsonValue The value to attempt to get as a vector. To be successful,
+ * this \ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
+ * number of elements as `VecType`.
+ * @returns A vector of type `VecType` if successful, or `std::nullopt` if not.
+ */
 template <typename VecType>
 static std::optional<VecType>
 getVecN(const CesiumUtility::JsonValue& jsonValue) {
@@ -202,6 +231,16 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
   return result;
 }
 
+/**
+ * @brief Attempts to obtain a matrix of type `MatType` from the provided \ref
+ * CesiumUtility::JsonValue "JsonValue".
+ *
+ * @param jsonValue The value to attempt to get as a matrix. To be successful,
+ * this \ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
+ * number of elements as `MatType`. For example, to read a 4x4 matrix, the \ref
+ * CesiumUtility::JsonValue "JsonValue" must be an array with 16 elements.
+ * @returns A matrix of type `MatType` if successful, or `std::nullopt` if not.
+ */
 template <typename MatType>
 static std::optional<MatType>
 getMatN(const CesiumUtility::JsonValue& jsonValue) {
@@ -233,6 +272,15 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
   return result;
 }
 
+/**
+ * @brief Obtains the number of values of type `ElementType` that could fit in
+ * the buffer.
+ *
+ * @param buffer The buffer whose size will be used for this calculation.
+ * @returns The number of values of type `ElementType` that could fit in
+ * `buffer`. This value will be equivalent to `floor(buffer->size() /
+ * sizeof(ElementType))`.
+ */
 template <typename ElementType>
 int64_t getCount(std::optional<std::vector<std::byte>>& buffer) {
   if (!buffer) {
@@ -518,6 +566,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -856,6 +905,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1087,6 +1137,7 @@ public:
   std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1274,6 +1325,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1549,6 +1601,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1946,6 +1999,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -2233,6 +2287,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -2478,6 +2533,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
