@@ -48,6 +48,7 @@ public:
    * {@link Cesium3DTiles::BoundingVolume}, if any.
    *
    * @param boundingVolume The bounding volume from which to get the region.
+   * @param ellipsoid The ellipsoid on which the region should be defined.
    * @return The region, or `std::nullopt` if the bounding volume does not
    * define a region. The region is defined in geographic coordinates.
    */
@@ -99,6 +100,7 @@ public:
    *
    * @param boundingVolume The bounding volume from which to get the S2 cell
    * bounding volume.
+   * @param ellipsoid The ellipsoid on which the S2 cell should be defined.
    * @return The S2 cell bounding volume, or `std::nullopt` if the bounding
    * volume does not define an S2 cell bounding volume. The S2 cell bounding
    * volume is defined in geographic coordinates.
