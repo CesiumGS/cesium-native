@@ -47,7 +47,7 @@ With Tile A selected and its loading complete, the `Tileset` will return it from
 
 @mermaid{tileset-sequence-diagram-frame4}
 
-In Frame 4, the `prepareInLoadThread` initiated for Tile B in Frame 3 resolves. When `Tileset` runs the selection algorith, it learns that, because a view has moved, only Tile B is selected now. It calls `prepareInMainThread` on Tile B to prepare it for rendering.
+In Frame 4, the `prepareInLoadThread` initiated for Tile B in Frame 3 resolves. When `Tileset` runs the selection algorithm, it learns that, because a view has moved, only Tile B is selected now. It calls `prepareInMainThread` on Tile B to prepare it for rendering.
 
 `Tileset` also calls [free](@ref Cesium3DTilesSelection::IPrepareRendererResources::free) to release the renderer resources that were created for Tile A in `prepareInLoadThread` and `prepareInMainThread`. Once the renderer resources are freed, the `Tileset` will release the glTF tile content as well. In practice, this `free` may or may not actually happen this frame. Cesium Native keeps some tiles around, up to a [maximumCachedBytes](@ref Cesium3DTilesSelection::TilesetOptions::maximumCachedBytes) specified in [TilesetOptions](@ref Cesium3DTilesSelection::TilesetOptions), in case they are needed again soon. Cesium Native will ensure that the tiles it calls `free` on are not currently visible in the scene.
 
