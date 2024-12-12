@@ -36,10 +36,14 @@ jobs:
           restore-keys: |
             vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
             vcpkg-ubuntu-22.04-doxygen
+      - name: Mark documentation official
+        if: ${{ github.ref_name == 'cesium.com' }}
+        run: |
+          echo "EXTRA_CONFIGURE_ARGS=-DCESIUM_PRODUCTION_DOCS" >> "$GITHUB_ENV"
       - name: Generate Documentation
         run: |
           npm install
-          cmake -B build -S .
+          cmake -B build -S . $EXTRA_CONFIGURE_ARGS
           cmake --build build --target cesium-native-docs
       - name: Deploy to cesium.com
         if: ${{ github.ref_name == 'cesium.com' }}
