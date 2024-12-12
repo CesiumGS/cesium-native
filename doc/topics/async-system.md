@@ -34,11 +34,13 @@ The `AsyncSystem` can then be created as follows:
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp create-async-system
 
-`AsyncSystem` instances can be safely and efficiently stored and copied by value. This makes it easy to make them available wherever they're needed, including in lambda captures. You can think of an `AsyncSystem` instance as acting a bit like a smart pointer.
+`AsyncSystem` instances can be safely and efficiently stored and copied by value. This makes it easy to make them available wherever they're needed, including in lambda captures.
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp capture-by-value
 
-However, it is essential that the last `AsyncSystem` instance be destroyed only after everything is done using it. So a common pattern is to create and store it as a static local in an accessor function:
+You can think of an instance of `AsyncSystem` as a reference (perhaps a "smart reference") to an underlying implementation. When we create an `AsyncSystem` using its constructor taking an `ITaskProcessor`, we're creating a brand new underlying implementation. If we then copy that `AsyncSystem` (using its copy constructor or assignment operator), we're not really copying that underlying implementation, we're just creating another reference to the same one. Only when the last `AsyncSystem` instance referencing a particular underlying implementation is destroyed is that _underlying implementation_ destroyed.
+
+You can copy and destroy `AsyncSystem` instances at will, but you must take care that the _last_ instance referencing a given underlying implementation is destroyed only after all of that underlying implementation's `Futures` are complete. So a common pattern is to create and store an `AsyncSystem` as a static local in an accessor function:
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp async-system-singleton
 
@@ -53,16 +55,18 @@ This [get](@ref CesiumAsync::IAssetAccessor::get) function will start the HTTP r
 * _Resolved_: The operation has completed successfully and the result value is available.
 * _Rejected_: The operation failed, and an exception describing the error is available.
 
-If we want to block the current thread and wait for the request to complete, we can call [waitInMainThread](@ref CesiumAsync::Future::waitInMainThread):
+If we want to block the current thread and wait for the request to complete, we can call [wait](@ref CesiumAsync::Future::wait):
 
-\snippet{trimleft} ExamplesAsyncSystem.cpp wait-in-main-thread
+\snippet{trimleft} ExamplesAsyncSystem.cpp wait
 
-`waitInMainThread` blocks until the `Future` completes. If it is resolved, `waitInMainThread` returns its value. If it is rejected, `waitInMainThread` throws an exception representing the error.
+`wait` blocks until the `Future` completes. If it is resolved, `wait` returns its value. If it is rejected, `wait` throws an exception representing the error.
 
 > [!note]
 > The `std::move` is needed because `Future<T>` is meant to be consumed just once. This allows for best efficiency because the value resulting from the asynchronous operation can be provided to the caller without ever making a copy of it.
 
-In practice, though, we almost never call `waitInMainThread`. After all, what good is it to start an asynchronous operation if we're just going to block the calling thread waiting for it? Instead, we register a _continuation function_ with the `Future`.
+`wait` should never be called in the "main thread" (defined in the next section), because doing so can cause a deadlock. To block the main thread waiting for a `Future`, call [waitInMainThread](@ref CesiumAsync::Future::waitInMainThread) instead.
+
+In practice, though, we almost never call `wait` or `waitInMainThread`. After all, what good is it to start an asynchronous operation if we're just going to block the calling thread waiting for it? Instead, we register a _continuation function_ with the `Future`.
 
 ## Continuation Functions {#continuation-functions}
 
@@ -70,7 +74,7 @@ A continuation function is a callback - usually a lambda - that is invoked when 
 
 * [thenInMainThread](@ref CesiumAsync::Future::thenInMainThread): The continuation function is invoked in the "main" thread. Many applications have a clear idea of which thread they consider the main one, but in Cesium Native, "main thread" very specifically means the thread that called `waitInMainThread` or [dispatchMainThreadTasks](@ref CesiumAsync::AsyncSystem::dispatchMainThreadTasks) on the `AsyncSystem`. This need not be the same as the thread your application considers to be the main one.
 * [thenInWorkerThread](@ref CesiumAsync::Future::thenInWorkerThread): The continuation function is invoked in a background worker thread by calling [startTask](@ref CesiumAsync::ITaskProcessor::startTask) on the `ITaskProcessor` instance with which the `AsyncSystem` was constructed.
-* [thenInThreadPool](@ref CesiumAsync::Future::thenInThreadPool): The continuation function is invoked in a specified [ThreadPool](@ref CesiumAsync::ThreadPool).
+* [thenInThreadPool](@ref CesiumAsync::Future::thenInThreadPool): The continuation function is invoked in a specified [ThreadPool](@ref CesiumAsync::ThreadPool). This is most commonly used with a `ThreadPool` containing just a single thread, in order to delegate certain tasks (such as database access) to a dedicated thread. In other cases, `thenInWorkerThread` is probably a better choice.
 * [thenImmediately](@ref CesiumAsync::Future::thenImmediately): The continuation function is invoked immediately in whatever thread happened to resolve the `Future`. This is only appropriate for work that completes very quickly and is safe to run in any thread.
 
 Continuing with our web request example above, we can register a continuation that receives the completed request and does something with the downloaded data in the main thread:
@@ -185,7 +189,7 @@ We could change `myComputeSomethingSlowlyWrapper` to catch the possible exceptio
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp compute-something-slowly-wrapper-handle-exception
 
-The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function (that's why it's safe to capture everything by reference `&` in this case). The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
+The `createFuture` method takes a function as its only parameter, and it _immediately_ invokes that function in the current thread (that's why it's safe to capture everything by reference `&` in this case). The function receives a parameter of type `Promise<T>`, which is identical to the one that would be created by `createPromise`. Just like before, we call the library function that we're wrapping and resolve the `Promise<T>` when its callback is invoked.
 
 The important difference, however, is that if `computeSomethingSlowly` throws an exception, `createFuture` will automatically catch that exception and turn it into a rejection of the `Future<T>`.
 
@@ -193,7 +197,7 @@ The important difference, however, is that if `computeSomethingSlowly` throws an
 
 A `Future<T>` may have at most one continuation. It's not possible to arrange for two continuation functions to be called when a given `Future<T>` resolves. This policy makes `Future<T>` more efficient by minimizing bookkeeping. In the majority of cases, this is sufficient. But not always.
 
-In those cases where we do want to be able to attach multiple continuations, we can convert a `Future<T>` into a [SharedFuture<T>](@ref CesiumAsync::SharedFuture) by calling the [share](@ref CesiumAsync::Future::share) method on it. The returned `SharedFuture<T>` instance works a bit like a smart pointer. It's safe to copy, and all copies are logically identical to the original. Just like `Future<T>`, we can call `then...` and `catch...` methods to attach continuations. The difference is that we can do this multiple times, and all attached continuations will be invoked when the future completes.
+In those cases where we do want to be able to attach multiple continuations, we can convert a `Future<T>` into a [SharedFuture<T>](@ref CesiumAsync::SharedFuture) by calling the [share](@ref CesiumAsync::Future::share) method on it. The returned `SharedFuture<T>` instance works a bit like a smart pointer. It's safe to copy, and all copies are logically identical to the original. Just like `Future<T>`, we can call `then...` and `catch...` methods to attach continuations. The difference is that we can do this multiple times, even on a single `SharedFuture<T>` instance, and all attached continuations will be invoked when the future completes.
 
 It may initially be surprising to learn that calling `then...` or `catch...` on a `SharedFuture<T>` returns a `Future<T>`, not another `SharedFuture<T>`. This is again for efficiency. Just because multiple continuations are needed for one point in a continuation chain does not necessarily mean later parts of the chain will also need multiple continuations. If they do, however, it's just a matter of calling `share` again.
 
