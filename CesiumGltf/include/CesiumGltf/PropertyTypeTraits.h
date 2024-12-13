@@ -426,91 +426,121 @@ template <typename T> struct TypeToNormalizedType;
 
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<int8_t> {
+  /** @brief The representation of an `int8_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<uint8_t> {
+  /** @brief The representation of a `uint8_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<int16_t> {
+  /** @brief The representation of an `int16_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<uint16_t> {
+  /** @brief The representation of a `uint16_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<int32_t> {
+  /** @brief The representation of an `int32_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<uint32_t> {
+  /** @brief The representation of a `uint32_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<int64_t> {
+  /** @brief The representation of an `int64_t` as a double type. */
   using type = double;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<uint64_t> {
+  /** @brief The representation of a `uint64_t` as a double type. */
   using type = double;
 };
 
 /** @copydoc TypeToNormalizedType */
 template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<glm::vec<N, T, Q>> {
+  /** @brief The representation of a `glm::vec<N, T, Q>` as a double type. */
   using type = glm::vec<N, double, Q>;
 };
 
 /** @copydoc TypeToNormalizedType */
 template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<glm::mat<N, N, T, Q>> {
+  /** @brief The representation of a `glm::mat<N, N, T, Q>` as a double type. */
   using type = glm::mat<N, N, double, Q>;
 };
 
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<int8_t>> {
+  /** @brief The representation of an array of `int8_t` types as an array of its
+   * double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<uint8_t>> {
+  /** @brief The representation of an array of `uint8_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<int16_t>> {
+  /** @brief The representation of an array of `int16_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<uint16_t>> {
+  /** @brief The representation of an array of `uint16_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<int32_t>> {
+  /** @brief The representation of an array of `int32_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<uint32_t>> {
+  /** @brief The representation of an array of `uint32_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<int64_t>> {
+  /** @brief The representation of an array of `int64_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 /** @copydoc TypeToNormalizedType */
 template <> struct TypeToNormalizedType<PropertyArrayView<uint64_t>> {
+  /** @brief The representation of an array of `uint64_t` types as an array of
+   * its double type equivalents. */
   using type = PropertyArrayView<double>;
 };
 
 /** @copydoc TypeToNormalizedType */
 template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<PropertyArrayView<glm::vec<N, T, Q>>> {
+  /** @brief The representation of an array of `glm::vec<N, T, Q>` types as an
+   * array of its double type equivalents. */
   using type = PropertyArrayView<glm::vec<N, double, Q>>;
 };
 
 /** @copydoc TypeToNormalizedType */
 template <glm::length_t N, typename T, glm::qualifier Q>
 struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
+  /** @brief The representation of an array of `glm::mat<N, N, T, Q>` types as
+   * an array of its double type equivalents. */
   using type = PropertyArrayView<glm::mat<N, N, double, Q>>;
 };
 

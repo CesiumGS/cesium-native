@@ -11,8 +11,8 @@ class CESIUMJSONREADER_API BoolJsonHandler : public JsonHandler {
 public:
   BoolJsonHandler() noexcept;
   /**
-   * @brief Resets the parent \ref IJsonHandler of this handler, and its bool
-   * value.
+   * @brief Resets the parent \ref IJsonHandler of this handler, and the pointer
+   * to its destination bool value.
    */
   void reset(IJsonHandler* pParent, bool* pBool);
 

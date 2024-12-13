@@ -12,9 +12,16 @@
 #include <vector>
 
 namespace CesiumJsonReader {
+/**
+ * @brief \ref IJsonHandler for reading a JSON array into an `std::vector`.
+ *
+ * @tparam T The element type of the destination vector.
+ * @tparam THandler The \ref IJsonHandler to handle each element.
+ */
 template <typename T, typename THandler>
 class CESIUMJSONREADER_API ArrayJsonHandler : public JsonHandler {
 public:
+  /** @brief The destination type. */
   using ValueType = std::vector<T>;
 
   template <typename... Ts>

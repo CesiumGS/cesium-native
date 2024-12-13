@@ -11,8 +11,8 @@ class CESIUMJSONREADER_API DoubleJsonHandler : public JsonHandler {
 public:
   DoubleJsonHandler() noexcept;
   /**
-   * @brief Resets the parent \ref IJsonHandler of this handler, and its double
-   * value.
+   * @brief Resets the parent \ref IJsonHandler of this handler, and the pointer
+   * to its destination double value.
    */
   void reset(IJsonHandler* pParent, double* pDouble);
 

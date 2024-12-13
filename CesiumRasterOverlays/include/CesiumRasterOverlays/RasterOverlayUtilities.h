@@ -24,6 +24,11 @@ namespace CesiumRasterOverlays {
  * overlay tiles.
  */
 struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
+  /**
+   * @brief Texture coordinates will be stored in the glTF under the following
+   * name, appended with a number. See \ref
+   * createRasterOverlayTextureCoordinates.
+   */
   static constexpr std::string_view DEFAULT_TEXTURE_COORDINATE_BASE_NAME =
       "_CESIUMOVERLAY_";
 

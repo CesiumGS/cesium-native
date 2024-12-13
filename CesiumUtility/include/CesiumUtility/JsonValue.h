@@ -16,11 +16,17 @@
 
 namespace CesiumUtility {
 
+/**
+ * @deprecated JSON parsing no longer throws this exception.
+ */
 struct JsonValueMissingKey : public std::runtime_error {
   JsonValueMissingKey(const std::string& key)
       : std::runtime_error(key + " is not present in Object") {}
 };
 
+/**
+ * @deprecated JSON parsing no longer throws this exception.
+ */
 struct JsonValueNotRealValue : public std::runtime_error {
   JsonValueNotRealValue()
       : std::runtime_error("this->value was not double, uint64_t or int64_t") {}

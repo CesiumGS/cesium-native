@@ -5,8 +5,8 @@
 namespace CesiumIonClient {
 
 /**
- *  @brief An enumeration representing the values of \ref
- * ApplicationData::authenticationMode.
+ *  @brief An enumeration representing the values of the `authenticationMode`
+ * property in the `appData` response.
  */
 enum AuthenticationMode {
   /**
