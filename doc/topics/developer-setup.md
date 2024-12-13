@@ -44,7 +44,7 @@ git submodule update --init --recursive
 
 ```bash
 ## Windows compilation using Visual Studio
-cmake -B build -S . -G "Visual Studio 15 2017 Win64"
+cmake -B build -S . -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Debug
 cmake --build build --config Release
 
