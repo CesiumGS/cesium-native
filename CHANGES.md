@@ -10,7 +10,7 @@
 - Added `InstanceAttributeSemantics` to `CesiumGltf`.
 - Added `VertexAttributeSemantics::FEATURE_ID_n`.
 - Added a `const` version of `Tileset::forEachLoadedTile`.
-- Added `DebugTileStateDatabase` class.
+- Added `DebugTileStateDatabase`, which provides tools for debugging the tile selection algorithm using SQLite.
 - Added `CesiumAsync::SqliteHelper`, containing functions for working with SQLite.
 
 ##### Fixes :wrench:
