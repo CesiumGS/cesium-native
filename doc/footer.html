@@ -15,15 +15,16 @@
     }
   ]);
   window.addEventListener("load", (ev) => {
-    document.querySelectorAll(".interactive svg").forEach(svg => {
+    document.querySelectorAll(".mermaid.interactive svg").forEach(svg => {
       svg.parentElement.style.overflow = "hidden";
       svg.parentElement.classList.add("pan-zoom-viewport");
       panzoom(svg);
     });
-    document.querySelectorAll("object[type='image/svg+xml']").forEach(svg => {
+    document.querySelectorAll(".svg.interactive object[type='image/svg+xml']").forEach(svg => {
       // Make parent element the viewport
       svg.parentElement.style.overflow = "hidden";
       svg.parentElement.classList.add("pan-zoom-viewport");
+      svg.parentElement.style.minHeight = svg.parentElement.parentElement.style.minHeight;
       panzoom(svg);
     });
   });

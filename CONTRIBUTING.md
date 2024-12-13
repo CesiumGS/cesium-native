@@ -63,7 +63,7 @@ Our code is our lifeblood so maintaining Cesium Native's high code quality is im
 - Pull request tips
   - If your pull request fixes an existing issue, include a link to the issue in the description (like this: &quot;Fixes [#1](https://github.com/CesiumGS/cesium-native/issues/1)&quot;). Likewise, if your pull request fixes an issue reported on the Cesium forum, include a link to the thread.
   - If your pull request needs additional work, include a [task list](https://github.com/blog/1375%0A-task-lists-in-gfm-issues-pulls-comments).
-  - Once you are done making new commits to address feedback, add a comment to the pull request such as `"this is ready"` since GitHub doesn't notify us about commits.
+  - Once you are done making new commits to address feedback, add a comment to the pull request such as `"this is ready"`.
 - Code and tests
   - Review the [C++ Style Guide](doc/topics/style-guide.md). These guidelines help us write consistent, performant, less buggy code and improve our productivity by standardizing the decisions we make across the codebase.
   - Verify that all tests pass, and write new tests with excellent code coverage for new code. Tests can be built and run using the `cesium-native-tests` target.

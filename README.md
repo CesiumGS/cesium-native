@@ -5,7 +5,6 @@
 [![Release](https://img.shields.io/github/v/tag/CesiumGS/cesium-native?label=release)](https://github.com/CesiumGS/cesium-native/tags)
 
 📚<a href="https://cesium.com/learn/cesium-native/ref-doc/">Documentation</a> - 📒<a href="CHANGES.md">Change Log</a> - 💬<a href="https://community.cesium.com/">Community Forums</a>
-<!--! [TOC] -->
 
 ## 📖About
 
