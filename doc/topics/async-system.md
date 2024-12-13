@@ -79,7 +79,7 @@ So far, this all looks like a glorified callback system. The real power of `Asyn
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp chaining
 
-In this example, we call `get` to start a network request, as before. We immediately call `thenInWorkerThread` on the returned `Future` in order to register a continuation for when the request completes. This continuation runs in a background thread and calls a made-up function for this example, `processDownloadedContent`. We can imagine that it's doing some intensive processing, and we wouldn't want to block the main thread while it's doing it.
+In this example, we call `get` to start a network request, as before. We immediately call `thenInWorkerThread` on the returned `Future` in order to register a continuation for when the request completes. This continuation runs in a background thread and calls `processDownloadedContent`. We can imagine that it's doing some intensive processing, and we wouldn't want to block the main thread while it's doing it.
 
 The continuation lambda returns an instance of example type `ProcessedContent`. Because the lambda function we pass to it returns `ProcessedContent`, the `thenInWorkerThread` call returns `Future<ProcessedContent>`. This new `Future` will resolve when the request completes _and then_ the `processDownloadedContent` also completes.
 
@@ -109,7 +109,7 @@ Unlike the `then...` family continuations, which receive the value of the succes
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp catch
 
-In this example, we call a made-up function `startOperationThatMightFail`, and it returns a `Future<ProcessedContent>`. We then call `catchImmediately` on it in order to register a continuation that will be invoked if the operation fails with an exception. Notice that this continuation returns a `ProcessedContent` too, in this case created from the failure error message. This is a common pattern - a `catch` continuation turning the error into a result value that encapsulates the error.
+In this example, we call `startOperationThatMightFail`, and it returns a `Future<ProcessedContent>`. We then call `catchImmediately` on it in order to register a continuation that will be invoked if the operation fails with an exception. Notice that this continuation returns a `ProcessedContent` too, in this case created from the failure error message. This is a common pattern - a `catch` continuation turning the error into a result value that encapsulates the error.
 
 The `catchImmediately` returns a new `Future`, just like a `then...` method does. The value type `T` of the `Future<T>` will be the same as the original `Future` that we called `catchImmediately` on, and it is for this reason that the continuation function given to `catch...` _must_ return a value of the same type that `startOperationThatMightFail` would have produced on success. The only other option is to throw an exception, at which point execution will continue at the continuation provided to the _next_ `catch...` in the chain.
 
@@ -125,7 +125,7 @@ Imagine that we're downloading a web page from the internet, as we were in previ
 
 \snippet{trimleft} ExamplesAsyncSystem.cpp unwrapping
 
-In this example, our first continuation calls a made-up function `findReferenceImageUrl` to determine the URL of an image referenced by the page. We then call `get` to download that image. Notice that we've captured `asyncSystem` and `pAssetAccessor` in the lambda in order to make this possible. The `get` call returns a `Future`, and we return that `Future` from our continuation. The returned `Future` is unwrapped by the `AsyncSystem`, and as a result, the second continuation, the one passed to `thenInMainThread`, will not be invoked until this second request `Future` resolves.
+In this example, our first continuation calls `findReferenceImageUrl` to determine the URL of an image referenced by the page. We then call `get` to download that image. Notice that we've captured `asyncSystem` and `pAssetAccessor` in the lambda in order to make this possible. The `get` call returns a `Future`, and we return that `Future` from our continuation. The returned `Future` is unwrapped by the `AsyncSystem`, and as a result, the second continuation, the one passed to `thenInMainThread`, will not be invoked until this second request `Future` resolves.
 
 You may have noticed that our second continuation, the one passed to `thenInMainThread`, only has access to the image's `IAssetRequest`. What if we also need to use the page `IAssetRequest`? Or some other data derived from it? While it's possible to do this manually with extra continuations and lambda captures, the `thenPassThrough` method makes the process simpler.
 

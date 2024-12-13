@@ -2,8 +2,19 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `offset` getter to `AccessorView`.
+- Added `stride`, `offset`, and `data` getters to `AccessorWriter`.
+- Added `value_type` typedef to `AccessorWriter`.
+- Added `InstanceAttributeSemantics` to `CesiumGltf`.
+- Added `VertexAttributeSemantics::FEATURE_ID_n`.
+- Updates generated classes for `EXT_structural_metadata`. See https://github.com/CesiumGS/glTF/pull/71.
+
 ##### Fixes :wrench:
+
 - Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
+- Fixed a bug in  `SubtreeFileReader::loadBinary` that prevented valid subtrees from loading if they did not contain binary data.
 
 ### v0.42.0 - 2024-12-02
 

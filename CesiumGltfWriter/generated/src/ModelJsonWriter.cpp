@@ -30,6 +30,7 @@
 #include <CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
@@ -119,6 +120,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionBufferViewExtMeshoptCompression& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtStructuralMetadata& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -721,6 +727,27 @@ void writeJson(
       CesiumGltf::ExtensionBufferViewExtMeshoptCompression::Filter::NONE) {
     jsonWriter.Key("filter");
     writeJson(obj.filter, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtStructuralMetadata& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.classProperty) {
+    jsonWriter.Key("class");
+    writeJson(obj.classProperty, jsonWriter, context);
+  }
+
+  if (!obj.properties.empty()) {
+    jsonWriter.Key("properties");
+    writeJson(obj.properties, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2414,6 +2441,13 @@ void ExtensionBufferExtMeshoptCompressionJsonWriter::write(
 
 void ExtensionBufferViewExtMeshoptCompressionJsonWriter::write(
     const CesiumGltf::ExtensionBufferViewExtMeshoptCompression& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtStructuralMetadataJsonWriter::write(
+    const CesiumGltf::ExtensionExtStructuralMetadata& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
