@@ -23,8 +23,10 @@ struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
    * to use with this buffer view.
    */
   struct Target {
+    /** @brief The ARRAY_BUFFER value. */
     static constexpr int32_t ARRAY_BUFFER = 34962;
 
+    /** @brief The ELEMENT_ARRAY_BUFFER value. */
     static constexpr int32_t ELEMENT_ARRAY_BUFFER = 34963;
   };
 

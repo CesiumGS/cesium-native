@@ -723,14 +723,13 @@ function createEnum(enumDetails) {
     return undefined;
   }
 
+  const identifier = createEnumIdentifier(enumDetails);
+  const comment = `/** @brief The ${identifier} value. */\n`;
+
   if (enumDetails.type === "integer") {
-    return `static constexpr int32_t ${createEnumIdentifier(
-      enumDetails
-    )} = ${enumValue}`;
+    return comment + `static constexpr int32_t ${identifier} = ${enumValue}`;
   } else {
-    return `inline static const std::string ${createEnumIdentifier(
-      enumDetails
-    )} = \"${enumValue}\"`;
+    return comment + `inline static const std::string ${identifier} = \"${enumValue}\"`;
   }
 }
 

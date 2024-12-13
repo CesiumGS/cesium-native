@@ -27,10 +27,13 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
    * @brief Known values for The alpha rendering mode of the material.
    */
   struct AlphaMode {
+    /** @brief The OPAQUE value. */
     inline static const std::string OPAQUE = "OPAQUE";
 
+    /** @brief The MASK value. */
     inline static const std::string MASK = "MASK";
 
+    /** @brief The BLEND value. */
     inline static const std::string BLEND = "BLEND";
   };
 

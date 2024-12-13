@@ -25,24 +25,34 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    * @brief Known values for The datatype of the accessor's components.
    */
   struct ComponentType {
+    /** @brief The BYTE value. */
     static constexpr int32_t BYTE = 5120;
 
+    /** @brief The UNSIGNED_BYTE value. */
     static constexpr int32_t UNSIGNED_BYTE = 5121;
 
+    /** @brief The SHORT value. */
     static constexpr int32_t SHORT = 5122;
 
+    /** @brief The UNSIGNED_SHORT value. */
     static constexpr int32_t UNSIGNED_SHORT = 5123;
 
+    /** @brief The INT value. */
     static constexpr int32_t INT = 5124;
 
+    /** @brief The UNSIGNED_INT value. */
     static constexpr int32_t UNSIGNED_INT = 5125;
 
+    /** @brief The INT64 value. */
     static constexpr int32_t INT64 = 5134;
 
+    /** @brief The UNSIGNED_INT64 value. */
     static constexpr int32_t UNSIGNED_INT64 = 5135;
 
+    /** @brief The FLOAT value. */
     static constexpr int32_t FLOAT = 5126;
 
+    /** @brief The DOUBLE value. */
     static constexpr int32_t DOUBLE = 5130;
   };
 
@@ -51,18 +61,25 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    * vectors, or matrices.
    */
   struct Type {
+    /** @brief The SCALAR value. */
     inline static const std::string SCALAR = "SCALAR";
 
+    /** @brief The VEC2 value. */
     inline static const std::string VEC2 = "VEC2";
 
+    /** @brief The VEC3 value. */
     inline static const std::string VEC3 = "VEC3";
 
+    /** @brief The VEC4 value. */
     inline static const std::string VEC4 = "VEC4";
 
+    /** @brief The MAT2 value. */
     inline static const std::string MAT2 = "MAT2";
 
+    /** @brief The MAT3 value. */
     inline static const std::string MAT3 = "MAT3";
 
+    /** @brief The MAT4 value. */
     inline static const std::string MAT4 = "MAT4";
   };
 

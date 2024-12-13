@@ -73,7 +73,7 @@ public:
    */
   uint32_t tilesWaitingForOcclusionResults = 0;
   /**
-   * @brief The number of tiles kicked from the load queue this frame.
+   * @brief The number of tiles kicked from the render list this frame.
    */
   uint32_t tilesKicked = 0;
   /**

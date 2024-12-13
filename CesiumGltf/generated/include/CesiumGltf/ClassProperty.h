@@ -25,24 +25,34 @@ struct CESIUMGLTF_API ClassProperty final
    * @brief Known values for The element type.
    */
   struct Type {
+    /** @brief The SCALAR value. */
     inline static const std::string SCALAR = "SCALAR";
 
+    /** @brief The VEC2 value. */
     inline static const std::string VEC2 = "VEC2";
 
+    /** @brief The VEC3 value. */
     inline static const std::string VEC3 = "VEC3";
 
+    /** @brief The VEC4 value. */
     inline static const std::string VEC4 = "VEC4";
 
+    /** @brief The MAT2 value. */
     inline static const std::string MAT2 = "MAT2";
 
+    /** @brief The MAT3 value. */
     inline static const std::string MAT3 = "MAT3";
 
+    /** @brief The MAT4 value. */
     inline static const std::string MAT4 = "MAT4";
 
+    /** @brief The STRING value. */
     inline static const std::string STRING = "STRING";
 
+    /** @brief The BOOLEAN value. */
     inline static const std::string BOOLEAN = "BOOLEAN";
 
+    /** @brief The ENUM value. */
     inline static const std::string ENUM = "ENUM";
   };
 
@@ -51,24 +61,34 @@ struct CESIUMGLTF_API ClassProperty final
    * applicable to `SCALAR`, `VECN`, and `MATN` types.
    */
   struct ComponentType {
+    /** @brief The INT8 value. */
     inline static const std::string INT8 = "INT8";
 
+    /** @brief The UINT8 value. */
     inline static const std::string UINT8 = "UINT8";
 
+    /** @brief The INT16 value. */
     inline static const std::string INT16 = "INT16";
 
+    /** @brief The UINT16 value. */
     inline static const std::string UINT16 = "UINT16";
 
+    /** @brief The INT32 value. */
     inline static const std::string INT32 = "INT32";
 
+    /** @brief The UINT32 value. */
     inline static const std::string UINT32 = "UINT32";
 
+    /** @brief The INT64 value. */
     inline static const std::string INT64 = "INT64";
 
+    /** @brief The UINT64 value. */
     inline static const std::string UINT64 = "UINT64";
 
+    /** @brief The FLOAT32 value. */
     inline static const std::string FLOAT32 = "FLOAT32";
 
+    /** @brief The FLOAT64 value. */
     inline static const std::string FLOAT64 = "FLOAT64";
   };
 

@@ -26,8 +26,10 @@ struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
    * orthographic projection.
    */
   struct Type {
+    /** @brief The perspective value. */
     inline static const std::string perspective = "perspective";
 
+    /** @brief The orthographic value. */
     inline static const std::string orthographic = "orthographic";
   };
 

@@ -21,8 +21,10 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for Magnification filter.
    */
   struct MagFilter {
+    /** @brief The NEAREST value. */
     static constexpr int32_t NEAREST = 9728;
 
+    /** @brief The LINEAR value. */
     static constexpr int32_t LINEAR = 9729;
   };
 
@@ -30,16 +32,22 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for Minification filter.
    */
   struct MinFilter {
+    /** @brief The NEAREST value. */
     static constexpr int32_t NEAREST = 9728;
 
+    /** @brief The LINEAR value. */
     static constexpr int32_t LINEAR = 9729;
 
+    /** @brief The NEAREST_MIPMAP_NEAREST value. */
     static constexpr int32_t NEAREST_MIPMAP_NEAREST = 9984;
 
+    /** @brief The LINEAR_MIPMAP_NEAREST value. */
     static constexpr int32_t LINEAR_MIPMAP_NEAREST = 9985;
 
+    /** @brief The NEAREST_MIPMAP_LINEAR value. */
     static constexpr int32_t NEAREST_MIPMAP_LINEAR = 9986;
 
+    /** @brief The LINEAR_MIPMAP_LINEAR value. */
     static constexpr int32_t LINEAR_MIPMAP_LINEAR = 9987;
   };
 
@@ -47,10 +55,13 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for S (U) wrapping mode.
    */
   struct WrapS {
+    /** @brief The CLAMP_TO_EDGE value. */
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
+    /** @brief The MIRRORED_REPEAT value. */
     static constexpr int32_t MIRRORED_REPEAT = 33648;
 
+    /** @brief The REPEAT value. */
     static constexpr int32_t REPEAT = 10497;
   };
 
@@ -58,10 +69,13 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for T (V) wrapping mode.
    */
   struct WrapT {
+    /** @brief The CLAMP_TO_EDGE value. */
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
+    /** @brief The MIRRORED_REPEAT value. */
     static constexpr int32_t MIRRORED_REPEAT = 33648;
 
+    /** @brief The REPEAT value. */
     static constexpr int32_t REPEAT = 10497;
   };
 

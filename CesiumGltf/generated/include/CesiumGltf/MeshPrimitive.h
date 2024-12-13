@@ -25,18 +25,25 @@ struct CESIUMGLTF_API MeshPrimitive final
    * @brief Known values for The topology type of primitives to render.
    */
   struct Mode {
+    /** @brief The POINTS value. */
     static constexpr int32_t POINTS = 0;
 
+    /** @brief The LINES value. */
     static constexpr int32_t LINES = 1;
 
+    /** @brief The LINE_LOOP value. */
     static constexpr int32_t LINE_LOOP = 2;
 
+    /** @brief The LINE_STRIP value. */
     static constexpr int32_t LINE_STRIP = 3;
 
+    /** @brief The TRIANGLES value. */
     static constexpr int32_t TRIANGLES = 4;
 
+    /** @brief The TRIANGLE_STRIP value. */
     static constexpr int32_t TRIANGLE_STRIP = 5;
 
+    /** @brief The TRIANGLE_FAN value. */
     static constexpr int32_t TRIANGLE_FAN = 6;
   };
 

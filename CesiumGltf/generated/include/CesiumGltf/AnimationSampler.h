@@ -24,10 +24,13 @@ struct CESIUMGLTF_API AnimationSampler final
    * @brief Known values for Interpolation algorithm.
    */
   struct Interpolation {
+    /** @brief The LINEAR value. */
     inline static const std::string LINEAR = "LINEAR";
 
+    /** @brief The STEP value. */
     inline static const std::string STEP = "STEP";
 
+    /** @brief The CUBICSPLINE value. */
     inline static const std::string CUBICSPLINE = "CUBICSPLINE";
   };
 

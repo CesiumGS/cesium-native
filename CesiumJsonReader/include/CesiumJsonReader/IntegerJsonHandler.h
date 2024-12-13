@@ -7,6 +7,9 @@
 #include <cmath>
 
 namespace CesiumJsonReader {
+/**
+ * @brief \ref IJsonHandler for reading integer values.
+ */
 template <typename T>
 class CESIUMJSONREADER_API IntegerJsonHandler : public JsonHandler {
 public:

@@ -24,8 +24,10 @@ struct CESIUM3DTILES_API Availability final
    * available (1) or all are unavailable (0).
    */
   struct Constant {
+    /** @brief The UNAVAILABLE value. */
     static constexpr int32_t UNAVAILABLE = 0;
 
+    /** @brief The AVAILABLE value. */
     static constexpr int32_t AVAILABLE = 1;
   };
 
