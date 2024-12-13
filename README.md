@@ -123,3 +123,21 @@ cd ../..
   * `npm run generate-3d-tiles`
   * `npm run generate-quantized-mesh-terrain`
 * On Windows, the line endings of the generated files will be different than those checked into the repo. Just `git add` them and git will fix the line endings (no need to commit).
+
+#### `vcpkg` Manifest Mode
+
+Experimental support for the
+[vcpkg](https://github.com/microsoft/vcpkg) package manager is
+included. The easiest way to use is it is via one of the CMake presets
+in `CMakePresets.json`. For example:
+
+```bash
+cmake --preset vcpkg
+cmake --build build
+```
+
+While a `vcpkg` build of Cesium Native itself is cool, it is more
+interesting to include it in another project using `vcpkg`. For an
+example, see the
+[vcpkg-build](https://github.com/timoore/vsgCs/tree/vcpkg-build)
+branch of the vsgCs project.
