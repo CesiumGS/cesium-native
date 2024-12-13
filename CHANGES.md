@@ -18,6 +18,7 @@
 - Fixed a bug in `thenPassThrough` that caused a compiler error when given a value by r-value refrence.
 - Fixed a bug in  `SubtreeFileReader::loadBinary` that prevented valid subtrees from loading if they did not contain binary data.
 - Fixed a bug in the `Tileset` selection algorithm that could cause detail to disappear during load in some cases.
+- Improved the tileset selection's "kick" criteria to allow holes in a `Tileset`, when they do occur, to be filled with loaded tiles more incrementally.
 
 ### v0.42.0 - 2024-12-02
 
