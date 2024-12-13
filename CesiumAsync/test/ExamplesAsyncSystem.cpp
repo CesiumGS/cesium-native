@@ -157,7 +157,7 @@ TEST_CASE("AsyncSystem Examples") {
   };
   //! [capture-by-value]
 
-  SECTION("waitInMainThread") {
+  SECTION("wait") {
     //! [create-request-future]
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
@@ -166,10 +166,10 @@ TEST_CASE("AsyncSystem Examples") {
         pAssetAccessor->get(asyncSystem, "https://example.com");
     //! [create-request-future]
 
-    //! [wait-in-main-thread]
+    //! [wait]
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest =
-        std::move(future).waitInMainThread();
-    //! [wait-in-main-thread]
+        std::move(future).wait();
+    //! [wait]
   }
 
   SECTION("thenInMainThread") {
