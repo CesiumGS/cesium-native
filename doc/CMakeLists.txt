@@ -47,6 +47,7 @@ if(DOXYGEN_FOUND)
         ../CesiumQuantizedMeshTerrain/test
         ../CesiumRasterOverlays/test
         ../CesiumUtility/test
+        ../ # For examples drawn from the actual code
     )
 
     # These macro definitions confuse doxygen, causing it
