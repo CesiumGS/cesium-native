@@ -1,5 +1,6 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
 
+#include "CesiumGeometry/BoundingCylinder.h"
 #include "CesiumGeometry/Plane.h"
 
 #include <CesiumUtility/Math.h>
@@ -131,6 +132,10 @@ BoundingSphere OrientedBoundingBox::toSphere() const noexcept {
   return BoundingSphere(this->_center, sphereRadius);
 }
 
+BoundingCylinder OrientedBoundingBox::toCylinder() const noexcept {
+  return BoundingCylinder(this->_center, this->_halfAxes);
+}
+
 /*static*/ OrientedBoundingBox OrientedBoundingBox::fromAxisAligned(
     const AxisAlignedBox& axisAligned) noexcept {
   return OrientedBoundingBox(
@@ -145,6 +150,13 @@ BoundingSphere OrientedBoundingBox::toSphere() const noexcept {
 OrientedBoundingBox::fromSphere(const BoundingSphere& sphere) noexcept {
   glm::dvec3 center = sphere.getCenter();
   glm::dmat3 halfAxes = glm::dmat3(sphere.getRadius());
+  return OrientedBoundingBox(center, halfAxes);
+}
+
+/*static*/ OrientedBoundingBox
+OrientedBoundingBox::fromCylinder(const BoundingCylinder& cylinder) noexcept {
+  glm::dvec3 center = cylinder.getCenter();
+  glm::dmat3 halfAxes = cylinder.getHalfAxes();
   return OrientedBoundingBox(center, halfAxes);
 }
 

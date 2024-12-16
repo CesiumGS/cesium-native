@@ -40,6 +40,11 @@ BoundingVolume transformBoundingVolume(
       // S2 Cells are not transformed.
       return s2CellBoundingVolume;
     }
+
+    BoundingVolume
+    operator()(const BoundingCylinder& boundingCylinder) noexcept {
+      return boundingCylinder.transform(transform);
+    }
   };
 
   return std::visit(Operation{transform}, boundingVolume);
@@ -66,6 +71,10 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
 
     glm::dvec3 operator()(const S2CellBoundingVolume& s2Cell) noexcept {
       return s2Cell.getCenter();
+    }
+
+    glm::dvec3 operator()(const BoundingCylinder& boundingCylinder) noexcept {
+      return boundingCylinder.getCenter();
     }
   };
 
@@ -190,6 +199,11 @@ std::optional<GlobeRectangle> estimateGlobeRectangle(
     operator()(const S2CellBoundingVolume& s2Cell) {
       return s2Cell.getCellID().computeBoundingRectangle();
     }
+
+    std::optional<GlobeRectangle>
+    operator()(const BoundingCylinder& boundingCylinder) {
+      return operator()(OrientedBoundingBox::fromCylinder(boundingCylinder));
+    }
   };
 
   return std::visit(Operation{ellipsoid}, boundingVolume);
@@ -237,6 +251,11 @@ OrientedBoundingBox getOrientedBoundingBoxFromBoundingVolume(
     OrientedBoundingBox
     operator()(const CesiumGeospatial::S2CellBoundingVolume& s2) const {
       return s2.computeBoundingRegion(ellipsoid).getBoundingBox();
+    }
+
+    OrientedBoundingBox
+    operator()(const CesiumGeometry::BoundingCylinder& cylinder) const {
+      return OrientedBoundingBox::fromCylinder(cylinder);
     }
   };
 

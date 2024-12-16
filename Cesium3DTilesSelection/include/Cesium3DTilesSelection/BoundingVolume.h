@@ -2,6 +2,7 @@
 
 #include "Library.h"
 
+#include <CesiumGeometry/BoundingCylinder.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -25,13 +26,15 @@ namespace Cesium3DTilesSelection {
  * @see CesiumGeospatial::BoundingRegion
  * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
  * @see CesiumGeospatial::S2CellBoundingVolume
+ * @see CesiumGeometry::BoundingCylinder
  */
 typedef std::variant<
     CesiumGeometry::BoundingSphere,
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeospatial::BoundingRegion,
     CesiumGeospatial::BoundingRegionWithLooseFittingHeights,
-    CesiumGeospatial::S2CellBoundingVolume>
+    CesiumGeospatial::S2CellBoundingVolume,
+    CesiumGeometry::BoundingCylinder>
     BoundingVolume;
 
 /**
