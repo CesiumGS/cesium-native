@@ -663,7 +663,11 @@ QuadtreeRasterOverlayTileProvider::combineImages(
       continue;
     }
 
-    result.moreDetailAvailable |= loaded.moreDetailAvailable;
+    // Tiles with a subset inherently have no more detail available (otherwise
+    // we wouldn't need the subset).
+    if (!it->pValue->subset) {
+      result.moreDetailAvailable |= loaded.moreDetailAvailable;
+    }
 
     blitImage(
         target,
