@@ -17,31 +17,15 @@ Once it's downloaded, we need to process that tile content that we just download
 
 We want to do as much of this kind of work as we possibly can in a background thread, because CPUs have multiple cores these days and the main thread is usually busy doing other important work.
 
-Unfortunately, there is inevitably at least a little bit of tile loading work that can't be done in a background thread, though. Game engines, for example, usually have strict rules against creating game objects anywhere other than the main thread. We can't get anything onto the screen without creating game objects, so after the background work is complete, we then need to continue processing this tile in the main thread in order to do the final preparation to render it.
+Unfortunately, there is inevitably at least a little bit of tile loading work that can't be done in a background thread. Game engines, for example, usually have strict rules against creating game objects anywhere other than the main thread. We can't get anything onto the screen without creating game objects, so after the background work is complete, we then need to continue processing this tile in the main thread in order to do the final preparation to render it.
 
 `AsyncSystem` gives us an elegant way to express this kind of sequential process involving a series of asynchronous steps.
 
-## Creating an AsyncSystem {#creating-an-asyncsystem}
+## The AsyncSystem Class {#asyncsystem-class}
 
-Most applications have a single `AsyncSystem` that is used throughout. It is constructed from an [ITaskProcessor](@ref CesiumAsync::ITaskProcessor) instance, which is a simple interface used to perform some work in a background thread. The simplest possible implementation looks like this:
+An `AsyncSystem` object manages the other objects we use to schedule work and wait for its completion. During initialization, an application [constructs an AsyncSystem object](#creating-an-asyncsystem) and passes it to Cesium Native, which in turn uses it in all operations that might complete asynchronously. `AsyncSystem` instances can be safely and efficiently stored and copied by value; this makes it easy to make them available wherever they're needed, including in lambda captures. On the other hand, holding a reference to an `AsyncSystem` object is very bug-prone in asynchronous code; the lifetime of the reference holder can be quite different from the code that uses it and hard to reason about. It is idiomatic to pass a `const` reference to an `AsyncSystem` object as a parameter to a function, but that reference must be copied to a value if it will be used outside of the lifetime of the function. For example, in the following code, the `asyncSystem` function parameter is copied to a constant value member in the inner lambda:
 
-\snippet{trimleft} ExamplesAsyncSystem.cpp simplest-task-processor
-
-This implementation will work well, but it isn't very efficient because a brand new thread is created for each task. Most applications will implement this interface using a thread pool, task graph, or similar functionality that their application already contains.
-
-The `AsyncSystem` can then be created as follows:
-
-\snippet{trimleft} ExamplesAsyncSystem.cpp create-async-system
-
-`AsyncSystem` instances can be safely and efficiently stored and copied by value. This makes it easy to make them available wherever they're needed, including in lambda captures.
-
-\snippet{trimleft} ExamplesAsyncSystem.cpp capture-by-value
-
-You can think of an instance of `AsyncSystem` as a reference (perhaps a "smart reference") to an underlying implementation. When we create an `AsyncSystem` using its constructor taking an `ITaskProcessor`, we're creating a brand new underlying implementation. If we then copy that `AsyncSystem` (using its copy constructor or assignment operator), we're not really copying that underlying implementation, we're just creating another reference to the same one. Only when the last `AsyncSystem` instance referencing a particular underlying implementation is destroyed is that _underlying implementation_ destroyed.
-
-You can copy and destroy `AsyncSystem` instances at will, but you must take care that the _last_ instance referencing a given underlying implementation is destroyed only after all of that underlying implementation's `Futures` are complete. So a common pattern is to create and store an `AsyncSystem` as a static local in an accessor function:
-
-\snippet{trimleft} ExamplesAsyncSystem.cpp async-system-singleton
+\snippet{trimleft} Cesium3DTilesReader/src/SubtreeFileReader.cpp async-system-store-in-lambda
 
 ## Future<T> {#future}
 
@@ -176,7 +160,7 @@ We'd like to be able to use the `AsyncSystem` to do further work after this comp
 
 \snippet{trimleft,strip} ExamplesAsyncSystem.cpp compute-something-slowly-async-system
 
-The trick is to call [createPromise](@ref CesiumAsync::AsyncSystem::createPromise) to create a `Promise<T>`, and then capture it in the callback lambda given to the library's `computeSomethingSlowly`. When the callback is invoked, we call [resolve](@ref CesiumAsync::Promise::resolve) on the `Promise<T>`, which resolves the assocated `Future<T>` that was previously obtained with [getFuture](@ref CesiumAsync::Promise::getFuture). We can then chain continuations off that `Future<T>` in the normal way. Instead of calling `resolve` on the `Promise<T>`, we can also call [reject](@ref CesiumAsync::Promise::reject).
+The trick is to call [createPromise](@ref CesiumAsync::AsyncSystem::createPromise) to create a `Promise<T>`, and then capture it in the callback lambda given to the library's `computeSomethingSlowly`. When the callback is invoked, we call [resolve](@ref CesiumAsync::Promise::resolve) on the `Promise<T>`, which resolves the associated `Future<T>` that was previously obtained with [getFuture](@ref CesiumAsync::Promise::getFuture). We can then chain continuations off that `Future<T>` in the normal way. Instead of calling `resolve` on the `Promise<T>`, we can also call [reject](@ref CesiumAsync::Promise::reject).
 
 One problem with this `createPromise` approach is that it does not behave as well as it should in the face of exceptions. Imagine that we're wrapping all of this functionality up in our own function, like this:
 
@@ -202,7 +186,7 @@ It may initially be surprising to learn that calling `then...` or `catch...` on 
 
 ## Lambda Captures and Thread Safety {#lambda-captures-and-thread-safety}
 
-`AsyncSystem` is a powerful abstraction for writing safe and easy-to-understand multithreaded code. Even if so, `AsyncSystem` does not completely prevent you from creating data races. In particular, it's essential to use care and good judgement when choosing what to capture in continuation lambdas. Here are some tips:
+`AsyncSystem` is a powerful abstraction for writing safe and easy-to-understand multithreaded code. Even if so, `AsyncSystem` does not completely prevent you from creating data races. In particular, it's essential to use care and good judgment when choosing what to capture in continuation lambdas. Here are some tips:
 
 * DO NOT capture by reference or pointer, unless you're certain that the object referenced is thread-safe and will still be around when the continuation is invoked. This can be difficult to achieve in practice!
 * DO think in terms of transferring ownership of an object to the promise chain, and transferring ownership back out at the end. This requires use of `std::move` and a `mutable` lambda (so that the captured value is not `const`). It looks like this:
@@ -211,3 +195,31 @@ It may initially be surprising to learn that calling `then...` or `catch...` on 
 
 * DO be aware of _when_ and _in what thread_ lambda captures are destroyed. Continuation lambda captures are destroyed immediately after the continuation runs, in whatever thread ran the continuation. If a `catch...` continuation is skipped because the `Future` to which it's attached resolved instead of rejecting, the continuation's captures are destroyed in whatever thread did the resolving. Similarly, if a `then...` continuation is skipped because the `Future` to which it's attached rejected, the continuation's captures are destroyed in whatever thread did the rejecting.
 * DO NOT capture an [IntrusivePointer](@ref CesiumUtility::IntrusivePointer) to a non-thread-safe object (such as one derived from `ReferenceCountedNonThreadSafe`) except in a continuation that runs in the thread that owns it. For example, in the usual case that an object is owned by the "main thread", a pointer to that object should only be captured in a lambda given to `runInMainThread`, `thenInMainThread`, or `catchInMainThread`. Furthermore, as a corollary to the item above, ensure that these `IntrusivePointer`-capturing continuations cannot be skipped when the Future is either resolved or rejected, because this could result in the `IntrusivePointer` being destroyed in the wrong thread. Failure to follow this rule can lead to corruption of the object's reference count, leading to some difficult to debug problems. In Debug builds, assertions will help to detect this sort of problem.
+
+## AsyncSystem and ITaskProcessor Implementation {#async-system-implementation}
+
+### Creating an AsyncSystem {#creating-an-asyncsystem}
+
+[AsyncSystem](@ref CesiumAsync::AsyncSystem) is implemented using a subclass of the [ITaskProcessor](@ref CesiumAsync::ITaskProcessor) interface class via [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection).
+`ITaskProcessor` specifies a simple interface used to perform some work in a background thread. The simplest possible implementation looks like this:
+
+\snippet{trimleft} ExamplesAsyncSystem.cpp simplest-task-processor
+
+This implementation will work, but it isn't very efficient because a brand new thread is created for each task. Most applications will implement this interface using a thread pool, task graph, or similar functionality that their application already contains. 
+
+The `AsyncSystem` could be created as follows:
+
+\snippet{trimleft} ExamplesAsyncSystem.cpp create-async-system
+
+However, Cesium Native does not contain any calls like this, other than in test code. Except under unusual circumstances, applications should construct a single `AsyncSystem` object that is copied and is used throughout. Two `AsyncSystem` objects that are created with this constructor, even if they share the same `ITaskProcessor`, will have different work queues and different notions of the main thread and, if they are used together, disaster can result. 
+
+On the other hand, `AsyncSystem` instances have copy semantics, so it is easy to make them available wherever they're needed, including in lambda captures. In this example, `asyncSystem` is captured by value for use in the lambda.
+
+\snippet{trimleft} ExamplesAsyncSystem.cpp capture-by-value
+
+You can think of an instance of `AsyncSystem` as a reference (perhaps a "smart reference") to an underlying implementation which includes an `ITaskProcessor` and all the supporting data structures for implementing futures, promises, and other `AsyncSystem` abstractions. When we create an `AsyncSystem` using its constructor, we're creating a brand new underlying implementation. If we then copy that `AsyncSystem` (using its copy constructor or assignment operator), we're not really copying that underlying implementation, we're just creating another reference to the same one with its `ITaskProcessor` object. Only when the last `AsyncSystem` instance referencing a particular underlying implementation is destroyed is that _underlying implementation_ destroyed.
+
+You can copy and destroy `AsyncSystem` instances at will, but you must take care that the _last_ instance referencing a given underlying implementation is destroyed only after all of that underlying implementation's `Futures` are complete. So a common pattern is to create and store an `AsyncSystem` as a static local in an accessor function:
+
+\snippet{trimleft} ExamplesAsyncSystem.cpp async-system-singleton
+
