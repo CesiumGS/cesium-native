@@ -1,0 +1,21 @@
+flowchart LR
+  Start@{ shape: sm-circ, label: "Start" }
+  ITileExcluder{Excluded by any ITileExcluder?}
+  CullAgainstViews[Cull Against Views]
+  FrustumCull{Is Inside View Frustum or Frustum Culling Disabled?}
+  FogCull{Is Visible in Fog or Fog Culling Disabled?}
+  MoreViews{More Views?}
+  Visit[Visit]
+  NoVisit[Do Not Visit]
+
+  Start-->ITileExcluder
+  ITileExcluder-->|Yes|NoVisit
+  ITileExcluder-->|No|CullAgainstViews
+  CullAgainstViews-->|First View|FrustumCull
+
+  FrustumCull-->|Yes|FogCull
+  FrustumCull-->|No|MoreViews
+  MoreViews-->|Yes - Next View|FrustumCull
+  MoreViews-->|No|NoVisit
+  FogCull-->|No|MoreViews
+  FogCull-->|Yes|Visit

@@ -14,6 +14,7 @@
 #include "ExtensionExtMeshFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionExtPrimitiveVoxelsJsonHandler.h"
+#include "ExtensionExtStructuralMetadataJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionKhrImplicitShapesJsonHandler.h"
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
@@ -88,6 +89,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       ExtensionExtMeshGpuInstancingJsonHandler>();
   options.registerExtension<
       CesiumGltf::Node,
+      ExtensionExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonHandler>();
   options.registerExtension<
       CesiumGltf::Buffer,
@@ -95,6 +99,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Material,
+      ExtensionExtStructuralMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonHandler>();

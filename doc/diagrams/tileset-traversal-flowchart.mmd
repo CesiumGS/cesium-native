@@ -1,0 +1,24 @@
+flowchart LR
+  Start@{ shape: sm-circ, label: "Start" }
+  VisitTileIfNeeded[_visitTileIfNeeded]
+  ShouldVisit{Should Visit?}
+  VisitTile[_visitTile]
+  MeetsSSE{Meets SSE?}
+  Done
+  Render
+  Refine
+  VisitVisibleChildrenNearToFar[_visitVisibleChildrenNearToFar]
+  Recurse[Recurse on Children]
+
+  Start-->|Root Tile|VisitTileIfNeeded
+  VisitTileIfNeeded-->ShouldVisit
+  ShouldVisit-->|Yes|VisitTile
+  ShouldVisit-->|No|Done
+  VisitTile-->MeetsSSE
+  MeetsSSE-->|Yes|Render
+  MeetsSSE-->|No|Refine
+  Refine-->VisitVisibleChildrenNearToFar
+  VisitVisibleChildrenNearToFar-->Recurse
+  Recurse-->|Child Tile 1|VisitTileIfNeeded
+  Recurse-->|Child Tile ...|VisitTileIfNeeded
+  Recurse-->|Child Tile n|VisitTileIfNeeded

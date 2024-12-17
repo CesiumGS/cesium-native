@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for reading [3D Tiles](https://github.com/CesiumGS/3d-tiles).
+ *
+ * @mermaid-interactive{dependencies/Cesium3DTilesReader}
  */
 namespace Cesium3DTilesReader {}
 

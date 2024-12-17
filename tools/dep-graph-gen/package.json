@@ -1,0 +1,17 @@
+{
+  "name": "dep-graph-gen",
+  "version": "1.0.0",
+  "description": "Parses and filters a CMake graphviz dependency graph",
+  "main": "index.js",
+  "scripts": {
+    "generate-dep-graph": "cd ../.. && cmake -B build -S . --graphviz=dependency-graph.dot && cd tools/dep-graph-gen && node index.js --input ../../dependency-graph.dot --output ../../doc/diagrams/dependencies --targets Cesium* && mmdc -i ../../doc/diagrams/dependencies/all.mmd -o ../../doc/img/dependency-graph.svg -b transparent && rm ../../dependency-graph.dot"
+  },
+  "author": "CesiumGS, Inc. and Contributors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.2",
+    "dotparser": "^1.1.1",
+    "google-palette": "^1.1.1",
+    "yargs": "^17.7.2"
+  }
+}

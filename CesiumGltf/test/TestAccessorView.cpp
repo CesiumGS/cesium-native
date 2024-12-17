@@ -5,21 +5,23 @@
 #include <catch2/catch_test_macros.hpp>
 #include <glm/vec3.hpp>
 
+using namespace CesiumGltf;
+
 TEST_CASE("AccessorView construct and read example") {
   auto anyOldFunctionToGetAModel = []() {
-    CesiumGltf::Model model;
+    Model model;
 
-    CesiumGltf::Accessor& accessor = model.accessors.emplace_back();
+    Accessor& accessor = model.accessors.emplace_back();
     accessor.bufferView = 0;
-    accessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-    accessor.type = CesiumGltf::Accessor::Type::VEC3;
+    accessor.componentType = Accessor::ComponentType::FLOAT;
+    accessor.type = Accessor::Type::VEC3;
     accessor.count = 1;
 
-    CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+    BufferView& bufferView = model.bufferViews.emplace_back();
     bufferView.buffer = 0;
     bufferView.byteLength = accessor.count * int64_t(sizeof(float)) * 3;
 
-    CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
+    Buffer& buffer = model.buffers.emplace_back();
     buffer.byteLength = bufferView.byteLength;
     buffer.cesium.data.resize(size_t(buffer.byteLength));
 
@@ -32,17 +34,21 @@ TEST_CASE("AccessorView construct and read example") {
   };
 
   //! [createFromAccessorAndRead]
-  CesiumGltf::Model model = anyOldFunctionToGetAModel();
-  CesiumGltf::AccessorView<glm::vec3> positions(model, 0);
+  Model model = anyOldFunctionToGetAModel();
+  AccessorView<glm::vec3> positions(model, 0);
   glm::vec3 firstPosition = positions[0];
   //! [createFromAccessorAndRead]
 
   CHECK(firstPosition == glm::vec3(1.0f, 2.0f, 3.0f));
+
+  CHECK(positions.size() == 1);
+  CHECK(positions.status() == AccessorViewStatus::Valid);
+  CHECK(positions.stride() == 12);
+  CHECK(positions.offset() == 0);
+  CHECK(positions.data() == model.buffers[0].cesium.data.data());
 }
 
 TEST_CASE("Create AccessorView of unknown type with lambda") {
-  using namespace CesiumGltf;
-
   Model model;
 
   Buffer& buffer = model.buffers.emplace_back();

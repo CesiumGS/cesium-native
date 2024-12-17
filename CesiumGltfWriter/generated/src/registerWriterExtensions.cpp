@@ -32,6 +32,7 @@
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
+#include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrImplicitShapes.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
@@ -93,6 +94,9 @@ void registerWriterExtensions(
       ExtensionExtMeshGpuInstancingJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
+      ExtensionExtStructuralMetadataJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
@@ -100,6 +104,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::BufferView,
       ExtensionBufferViewExtMeshoptCompressionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Material,
+      ExtensionExtStructuralMetadataJsonWriter>();
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonWriter>();

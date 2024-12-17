@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes for writing [3D Tiles](https://github.com/CesiumGS/3d-tiles).
+ *
+ * @mermaid-interactive{dependencies/Cesium3DTilesWriter}
  */
 namespace Cesium3DTilesWriter {}
 
