@@ -19,7 +19,7 @@ struct DeleteSqliteConnection {
 };
 
 /**
- * @brief A deleter that can be used with `std::unique_ptr` to property destroy
+ * @brief A deleter that can be used with `std::unique_ptr` to properly destroy
  * a SQLite prepared statement when it is no longer needed.
  */
 struct DeleteSqliteStatement {

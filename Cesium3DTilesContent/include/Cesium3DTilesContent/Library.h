@@ -2,6 +2,8 @@
 
 /**
  * @brief Classes that support loading and converting 3D Tiles tile content.
+ *
+ * @mermaid-interactive{dependencies/Cesium3DTilesContent}
  */
 namespace Cesium3DTilesContent {}
 

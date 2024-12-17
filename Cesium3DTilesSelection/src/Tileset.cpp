@@ -1670,7 +1670,7 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   if (!wasRenderedLastFrame &&
       lastFrameResult == TileSelectionState::Result::Refined) {
     if (tile.getRefine() == TileRefine::Add) {
-      // An additive-refined tile that was refine was also rendered.
+      // An additive-refined tile that was refined was also rendered.
       wasRenderedLastFrame = true;
     } else {
       // With replace-refinement, if any of this refined tile's children were
