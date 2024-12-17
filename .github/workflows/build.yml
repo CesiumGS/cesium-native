@@ -131,13 +131,13 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-22.04, ubuntu-20.04, macos-15 ]
+        platform: [ ubuntu-22.04, ubuntu-20.04, macos-13 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
             platform: ubuntu-22.04
           - compiler: gcc
-            platform: macos-15
+            platform: macos-13
           - compiler: gcc
             platform: ubuntu-20.04
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
@@ -166,12 +166,12 @@ jobs:
             vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
             vcpkg-${{ env.CACHE_KEY }}
       - name: Set CC and CXX
-        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-15'}}
+        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-13'}}
         run: |
           echo "CC=clang-12" >> "$GITHUB_ENV"
           echo "CXX=clang++-12" >> "$GITHUB_ENV"
       - name: Make more swap space available
-        if: ${{ matrix.platform != 'macos-15'}}
+        if: ${{ matrix.platform != 'macos-13'}}
         run: |
           sudo swapoff -a
           sudo fallocate -l 10G /mnt/swapfile
@@ -180,9 +180,20 @@ jobs:
           sudo swapon /mnt/swapfile
           sudo swapon --show
       - name: Set macOS cmake options
-        if: ${{ matrix.platform == 'macos-15' }}
+        if: ${{ matrix.platform == 'macos-13' }}
         run: |
-          echo "EXTRA_CMAKE_OPTIONS=-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=x86_64" >> "$GITHUB_ENV"
+          # Use a custom triplet to target macOS 10.15.
+          mkdir -p vcpkg/triplets
+          echo "
+            set(VCPKG_CMAKE_SYSTEM_NAME Darwin)
+            set(VCPKG_CRT_LINKAGE dynamic)
+            set(VCPKG_LIBRARY_LINKAGE static)
+            set(VCPKG_OSX_DEPLOYMENT_TARGET 10.15)
+            set(VCPKG_TARGET_ARCHITECTURE x64)
+            set(VCPKG_OSX_ARCHITECTURES x86_64)
+          " > vcpkg/triplets/x64-macos-10-15.cmake
+          # Specify the overlay triplet, and also tell cesium-native to build with the same settings.
+          echo "EXTRA_CMAKE_OPTIONS=-DVCPKG_OVERLAY_TRIPLETS=$PWD/vcpkg/triplets -DVCPKG_TRIPLET=x64-macos-10-15 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=x86_64" >> "$GITHUB_ENV"
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} $EXTRA_CMAKE_OPTIONS
