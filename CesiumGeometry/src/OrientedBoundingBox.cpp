@@ -11,7 +11,6 @@
 #include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 
-
 namespace CesiumGeometry {
 CullingResult
 OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {

@@ -3,8 +3,6 @@
 
 #include "CesiumUtility/Tracing.h"
 
-
-
 #if CESIUM_TRACING_ENABLED
 
 namespace CesiumUtility {

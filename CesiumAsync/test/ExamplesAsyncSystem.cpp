@@ -27,7 +27,6 @@
 #include <utility>
 #include <vector>
 
-
 using namespace CesiumNativeTests;
 
 namespace {

@@ -60,7 +60,6 @@
 #include <utility>
 #include <vector>
 
-
 using namespace CesiumGltf;
 
 namespace CesiumGltfContent {

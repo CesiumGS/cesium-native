@@ -18,7 +18,6 @@
 #include <string>
 #include <utility>
 
-
 using namespace CesiumAsync;
 using namespace Cesium3DTilesReader;
 using namespace CesiumUtility;
