@@ -7,12 +7,10 @@
 #include <unordered_map>
 #include <vector>
 
+namespace Cesium3DTilesSelection {
+
 /**
  * @brief The occlusion state of a tile as reported by the renderer proxy.
- */
-namespace Cesium3DTilesSelection {
-/**
- * @brief The current occlusion state of a tile, used for occlusion culling.
  */
 enum class CESIUM3DTILESSELECTION_API TileOcclusionState {
   /**

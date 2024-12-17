@@ -19,6 +19,7 @@ SubtreeFileReader::getOptions() const {
   return this->_reader.getOptions();
 }
 
+//! [async-system-store-in-lambda]
 Future<ReadJsonResult<Cesium3DTiles::Subtree>> SubtreeFileReader::load(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
@@ -30,6 +31,7 @@ Future<ReadJsonResult<Cesium3DTiles::Subtree>> SubtreeFileReader::load(
         return this->load(asyncSystem, pAssetAccessor, pRequest);
       });
 }
+//! [async-system-store-in-lambda]
 
 Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     const AsyncSystem& asyncSystem,
