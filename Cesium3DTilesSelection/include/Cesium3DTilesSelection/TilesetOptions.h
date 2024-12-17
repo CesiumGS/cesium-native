@@ -5,6 +5,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -204,7 +205,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * unloaded until the total is under this number or until only required tiles
    * remain, whichever comes first.
    */
-  int64_t maximumCachedBytes = 512 * 1024 * 1024;
+  int64_t maximumCachedBytes = static_cast<int64_t>(512 * 1024 * 1024);
 
   /**
    * @brief A table that maps the camera height above the ellipsoid to a fog

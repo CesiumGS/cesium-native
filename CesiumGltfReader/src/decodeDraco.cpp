@@ -127,10 +127,10 @@ void copyDecodedIndices(
     return;
   }
 
-  if (pIndicesAccessor->count != pMesh->num_faces() * 3) {
+  if (pIndicesAccessor->count != static_cast<int64_t>(pMesh->num_faces() * 3)) {
     readGltf.warnings.emplace_back(
         "indices accessor doesn't match with decoded Draco indices");
-    pIndicesAccessor->count = pMesh->num_faces() * 3;
+    pIndicesAccessor->count = static_cast<int64_t>(pMesh->num_faces() * 3);
   }
 
   draco::PointIndex::ValueType numPoint = pMesh->num_points();
@@ -237,8 +237,8 @@ void copyDecodedAttribute(
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
 
   const int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
-  const int64_t stride =
-      numberOfComponents * pAccessor->computeByteSizeOfComponent();
+  const int64_t stride = static_cast<const int64_t>(
+      numberOfComponents * pAccessor->computeByteSizeOfComponent());
   const int64_t sizeBytes = pAccessor->count * stride;
 
   buffer.cesium.data.resize(static_cast<size_t>(sizeBytes));

@@ -1326,10 +1326,9 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // initially marked for RENDER here, it may later switch to REFINE as a
   // result of `mustContinueRefiningToDeeperTiles`.
   VisitTileAction action = VisitTileAction::Render;
-  if (unconditionallyRefine)
+  if (unconditionallyRefine || (!meetsSse && !ancestorMeetsSse)) {
     action = VisitTileAction::Refine;
-  else if (!meetsSse && !ancestorMeetsSse)
-    action = VisitTileAction::Refine;
+  }
 
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();

@@ -170,7 +170,8 @@ std::vector<uint8_t> TextureView::sampleNearestPixel(
       static_cast<int64_t>(image.height) - 1);
 
   int64_t pixelIndex =
-      image.bytesPerChannel * image.channels * (y * image.width + x);
+      static_cast<int64_t>(image.bytesPerChannel * image.channels) *
+      (y * image.width + x);
 
   // TODO: Currently stb only outputs uint8 pixel types. If that
   // changes this should account for additional pixel byte sizes.

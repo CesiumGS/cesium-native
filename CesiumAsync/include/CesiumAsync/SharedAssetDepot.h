@@ -47,7 +47,7 @@ public:
    *
    * Default is 16MiB.
    */
-  int64_t inactiveAssetSizeLimitBytes = 16 * 1024 * 1024;
+  int64_t inactiveAssetSizeLimitBytes = static_cast<int64_t>(16 * 1024 * 1024);
 
   /**
    * @brief Signature for the callback function that will be called to fetch and

@@ -22,9 +22,9 @@ QuadtreeRectangleAvailability::QuadtreeRectangleAvailability(
     uint32_t maximumLevel) noexcept
     : _tilingScheme(tilingScheme),
       _maximumLevel(maximumLevel),
-      _rootNodes(
+      _rootNodes(static_cast<size_type>(
           this->_tilingScheme.getRootTilesX() *
-          this->_tilingScheme.getRootTilesY()) {
+          this->_tilingScheme.getRootTilesY())) {
   for (uint32_t j = 0; j < this->_tilingScheme.getRootTilesY(); ++j) {
     const uint32_t rowStart = j * this->_tilingScheme.getRootTilesX();
     for (uint32_t i = 0; i < this->_tilingScheme.getRootTilesX(); ++i) {
