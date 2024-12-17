@@ -1,9 +1,16 @@
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GlobeTransforms.h>
-#include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
-#include <CesiumUtility/Math.h>
+#include "CesiumGeospatial/Cartographic.h"
 
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
+
+#include <glm/common.hpp>
+#include <glm/ext/quaternion_trigonometric.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#include <optional>
 
 namespace CesiumGeospatial {
 

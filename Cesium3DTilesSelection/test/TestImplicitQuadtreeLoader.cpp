@@ -1,3 +1,10 @@
+#include "Cesium3DTilesContent/SubtreeAvailability.h"
+#include "Cesium3DTilesSelection/TileContent.h"
+#include "Cesium3DTilesSelection/TileLoadResult.h"
+#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/S2CellID.h"
 #include "ImplicitQuadtreeLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
@@ -5,6 +12,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -14,8 +22,21 @@
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;

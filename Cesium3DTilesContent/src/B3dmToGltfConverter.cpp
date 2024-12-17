@@ -1,10 +1,20 @@
 #include "BatchTableToGltfStructuralMetadata.h"
+#include "Cesium3DTilesContent/GltfConverterResult.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumGltfReader/GltfReader.h"
 
 #include <Cesium3DTilesContent/B3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
-#include <CesiumUtility/Log.h>
+
+#include <fmt/format.h>
+#include <rapidjson/document.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <utility>
 
 namespace Cesium3DTilesContent {
 namespace {

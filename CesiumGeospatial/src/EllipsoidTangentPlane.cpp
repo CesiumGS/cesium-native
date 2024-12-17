@@ -1,13 +1,18 @@
 #include "CesiumGeospatial/EllipsoidTangentPlane.h"
 
+#include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeTransforms.h"
 
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeometry/Ray.h>
 
-#include <glm/mat4x4.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 
+#include <optional>
 #include <stdexcept>
 
 using namespace CesiumGeometry;

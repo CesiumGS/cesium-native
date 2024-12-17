@@ -1,11 +1,20 @@
 #include "CesiumIonClient/Connection.h"
 
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumIonClient/ApplicationData.h"
+#include "CesiumIonClient/Assets.h"
+#include "CesiumIonClient/Defaults.h"
+#include "CesiumIonClient/Profile.h"
+#include "CesiumIonClient/Response.h"
+#include "CesiumIonClient/Token.h"
+#include "CesiumIonClient/TokenList.h"
 #include "fillWithRandomBytes.h"
-#include "parseLinkHeader.h"
 
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/SpanHelper.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -13,11 +22,26 @@
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <uriparser/Uri.h>
+#include <uriparser/UriBase.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #ifdef _MSC_VER
 #pragma warning(push)

@@ -7,6 +7,8 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <memory>
+
 namespace CesiumQuantizedMeshTerrain {
 
 LayerWriter::LayerWriter() { registerWriterExtensions(this->_context); }

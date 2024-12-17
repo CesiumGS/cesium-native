@@ -1,5 +1,28 @@
 #include "CesiumGltf/PropertyTableView.h"
 
+#include "CesiumUtility/IntrusivePointer.h"
+
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Schema.h>
+
+#include <glm/common.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <string>
+#include <string_view>
+
 namespace CesiumGltf {
 template <typename T>
 static PropertyViewStatusType checkOffsetsBuffer(

@@ -1,8 +1,20 @@
+#include "Cesium3DTilesSelection/TileID.h"
+#include "Cesium3DTilesSelection/TileSelectionState.h"
+#include "CesiumAsync/cesium-sqlite3.h"
+
 #include <Cesium3DTilesSelection/DebugTileStateDatabase.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumAsync/SqliteHelper.h>
 
+#include <fmt/format.h>
 #include <sqlite3.h>
+
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 

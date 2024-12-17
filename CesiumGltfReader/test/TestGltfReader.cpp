@@ -1,10 +1,22 @@
 #include "CesiumGltfReader/GltfReader.h"
+#include "CesiumJsonReader/JsonReaderOptions.h"
+#include "CesiumNativeTests/SimpleAssetRequest.h"
+#include "CesiumNativeTests/SimpleAssetResponse.h"
+#include "CesiumUtility/JsonValue.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
@@ -12,16 +24,24 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/vec3.hpp>
-#include <rapidjson/reader.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <limits>
+#include <map>
+#include <memory>
 #include <span>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;

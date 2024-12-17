@@ -1,14 +1,32 @@
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/Promise.h"
+#include "CesiumNativeTests/SimpleAssetRequest.h"
+#include "CesiumNativeTests/SimpleAssetResponse.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <map>
+#include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <thread>
+#include <tuple>
+#include <utility>
+#include <vector>
+
 
 using namespace CesiumNativeTests;
 

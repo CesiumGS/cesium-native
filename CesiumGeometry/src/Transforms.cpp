@@ -1,8 +1,10 @@
 #include "CesiumGeometry/Transforms.h"
 
-#include <glm/gtc/matrix_transform.hpp>
+#include "CesiumGeometry/Axis.h"
+
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/mat4x4.hpp>
 
 namespace CesiumGeometry {
 

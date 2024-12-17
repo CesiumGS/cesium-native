@@ -1,7 +1,12 @@
 #include "ResponseCacheControl.h"
 
+#include "CesiumAsync/HttpHeaders.h"
+
+#include <cstddef>
 #include <map>
+#include <optional>
 #include <set>
+#include <string>
 
 namespace CesiumAsync {
 static std::string trimSpace(const std::string& str);

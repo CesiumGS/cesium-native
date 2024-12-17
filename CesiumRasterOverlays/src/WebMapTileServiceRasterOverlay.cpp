@@ -1,5 +1,15 @@
+#include "CesiumAsync/Future.h"
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumGeometry/Rectangle.h"
+#include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeospatial/WebMercatorProjection.h"
+#include "CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
+#include "CesiumUtility/IntrusivePointer.h"
+
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
@@ -9,8 +19,18 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Uri.h>
 
-#include <cstddef>
+#include <nonstd/expected.hpp>
+#include <spdlog/logger.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;

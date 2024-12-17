@@ -1,13 +1,21 @@
 #include "CesiumGltfWriter/GltfWriter.h"
+#include "CesiumJsonWriter/ExtensionWriterContext.h"
+#include "CesiumUtility/ExtensibleObject.h"
 
-#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/Buffer.h>
 #include <CesiumGltfReader/GltfReader.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <rapidjson/document.h>
 
+#include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <span>
+#include <string>
+#include <vector>
 
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {

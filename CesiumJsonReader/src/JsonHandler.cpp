@@ -1,5 +1,12 @@
 #include "CesiumJsonReader/JsonHandler.h"
 
+#include "CesiumJsonReader/IJsonHandler.h"
+
+#include <cstdint>
+#include <string_view>
+#include <utility>
+#include <vector>
+
 namespace CesiumJsonReader {
 JsonHandler::JsonHandler() noexcept {}
 

@@ -1,23 +1,47 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
+#include "CesiumUtility/ErrorList.h"
+#include "CesiumUtility/JsonValue.h"
 
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
+#include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Log.h>
 
-#include <glm/glm.hpp>
+#include <fmt/format.h>
+#include <glm/common.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <limits>
 #include <map>
+#include <optional>
+#include <span>
+#include <string>
 #include <type_traits>
 #include <unordered_set>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesContent::CesiumImpl;

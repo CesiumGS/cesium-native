@@ -1,9 +1,16 @@
 #include "CesiumGeospatial/Ellipsoid.h"
 
+#include "CesiumGeospatial/Cartographic.h"
+
 #include <CesiumUtility/Math.h>
 
+#include <glm/common.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
+
+#include <cmath>
+#include <optional>
 
 using namespace CesiumUtility;
 

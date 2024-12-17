@@ -1,3 +1,17 @@
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+
+#include <math.h>
+#include <s2/r2rect.h>
+#include <s2/s2coords.h>
+#include <s2/s2point.h>
+
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4100 4127 4309 4996)

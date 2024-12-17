@@ -1,4 +1,12 @@
+#include "CesiumUtility/CreditSystem.h"
+
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <CesiumGltf/Model.h>
+
+#include <memory>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;

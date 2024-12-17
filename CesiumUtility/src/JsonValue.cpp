@@ -1,6 +1,9 @@
 #include "CesiumUtility/JsonValue.h"
 
 #include <algorithm>
+#include <string>
+#include <variant>
+#include <vector>
 
 namespace CesiumUtility {
 

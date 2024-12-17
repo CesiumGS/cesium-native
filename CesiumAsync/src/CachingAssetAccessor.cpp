@@ -2,16 +2,28 @@
 
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/CacheItem.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
+#include "CesiumAsync/ICacheDatabase.h"
+#include "CesiumUtility/Tracing.h"
 #include "InternalTimegm.h"
 #include "ResponseCacheControl.h"
 
-#include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
 
-#include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <ctime>
 #include <iomanip>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <span>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumAsync {
 class CacheAssetResponse : public IAssetResponse {

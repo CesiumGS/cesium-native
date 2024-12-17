@@ -1,10 +1,14 @@
 #include <CesiumNativeTests/OwnedTempFile.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <random>
+#include <span>
+#include <string>
 
 constexpr size_t randFilenameLen = 8;
 constexpr size_t randFilenameNumChars = 63;

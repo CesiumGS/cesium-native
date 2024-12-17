@@ -1,7 +1,6 @@
 
 #include "CesiumGltf/Ktx2TranscodeTargets.h"
 
-#include <algorithm>
 
 using namespace CesiumGltf;
 

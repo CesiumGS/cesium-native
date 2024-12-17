@@ -1,10 +1,19 @@
 #include "CesiumGeometry/QuadtreeRectangleAvailability.h"
 
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/QuadtreeTileRectangularRange.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 namespace CesiumGeometry {
 

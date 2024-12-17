@@ -1,5 +1,10 @@
 #include "CesiumGltf/PropertyTablePropertyView.h"
 
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyView.h>
+
+#include <cstdint>
+
 namespace CesiumGltf {
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.

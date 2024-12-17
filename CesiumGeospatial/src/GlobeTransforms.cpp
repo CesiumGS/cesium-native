@@ -1,9 +1,12 @@
 #include "CesiumGeospatial/GlobeTransforms.h"
 
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <CesiumUtility/Math.h>
 
-#include <glm/gtc/epsilon.hpp>
-#include <glm/mat4x4.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 
 using namespace CesiumUtility;
 

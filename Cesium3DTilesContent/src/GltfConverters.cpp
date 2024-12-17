@@ -1,8 +1,27 @@
+#include "Cesium3DTilesContent/GltfConverterResult.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumGltfReader/GltfReader.h"
+#include "CesiumUtility/ErrorList.h"
+
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 
-#include <spdlog/spdlog.h>
+#include <fmt/format.h>
+
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
 
 using namespace CesiumUtility;
 

@@ -1,3 +1,30 @@
+#include "CesiumUtility/JsonValue.h"
+
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/TextureView.h>
+
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_int2_sized.hpp>
+#include <glm/ext/vector_int3_sized.hpp>
+#include <glm/ext/vector_int4_sized.hpp>
+#include <glm/ext/vector_uint2_sized.hpp>
+#include <glm/ext/vector_uint3_sized.hpp>
+#include <glm/ext/vector_uint4_sized.hpp>
+
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <optional>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -7,12 +34,10 @@
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumUtility/Math.h"
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <climits>
 #include <cstddef>
-#include <span>
 #include <vector>
 
 using namespace CesiumGltf;

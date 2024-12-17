@@ -3,12 +3,14 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <uriparser/Uri.h>
+#include <uriparser/UriBase.h>
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
+#include <functional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace CesiumUtility {

@@ -1,6 +1,19 @@
 #include "dequantizeMeshData.h"
 
-#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorSpec.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGltf;
 

@@ -1,15 +1,24 @@
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumUtility/JsonValue.h"
+
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Ray.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorSpec.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Animation.h>
+#include <CesiumGltf/AnimationSampler.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
-#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
@@ -17,17 +26,40 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTexture.h>
+#include <CesiumGltf/Skin.h>
+#include <CesiumGltf/Texture.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Assert.h>
 
-#include <glm/gtc/quaternion.hpp>
+#include <fmt/format.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/matrix.hpp>
 
 #include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstdint>
 #include <cstring>
-#include <unordered_set>
+#include <limits>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 #include <vector>
+
 
 using namespace CesiumGltf;
 

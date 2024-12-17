@@ -1,5 +1,14 @@
 #include "CesiumAsync/ThreadPool.h"
 
+#include "CesiumAsync/Impl/ImmediateScheduler.h"
+
+#include <async++.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
+
 using namespace CesiumAsync;
 
 // Each thread may be enrolled in a single scheduler scope.

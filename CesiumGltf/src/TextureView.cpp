@@ -3,7 +3,21 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumGltf/SamplerUtility.h"
 
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltf/TextureInfo.h>
 #include <CesiumUtility/Assert.h>
+
+#include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
+
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <vector>
 
 namespace CesiumGltf {
 

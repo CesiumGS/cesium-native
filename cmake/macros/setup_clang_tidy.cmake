@@ -83,11 +83,11 @@ function(setup_clang_tidy)
             CLANG_TIDY_RUNNER_PATH)
         if(CLANG_TIDY_RUNNER_PATH)
             add_custom_target(
-                clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} -clang-tidy-binary ${CLANG_TIDY_PATH} -p
+                clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} -extra-arg=-Wno-unknown-warning-option -j14 -clang-tidy-binary ${CLANG_TIDY_PATH} -p
                 ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
             )
             add_custom_target(
-                clang-tidy-fix COMMAND ${CLANG_TIDY_RUNNER_PATH} -fix -clang-tidy-binary ${CLANG_TIDY_PATH} -p
+                clang-tidy-fix COMMAND ${CLANG_TIDY_RUNNER_PATH} -fix -extra-arg=-Wno-unknown-warning-option -clang-tidy-binary ${CLANG_TIDY_PATH} -p
                 ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
             )
         else()

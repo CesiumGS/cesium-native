@@ -1,9 +1,16 @@
 #include "CesiumJsonWriter/JsonWriter.h"
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <algorithm>
-#include <iterator>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace CesiumJsonWriter {
 JsonWriter::JsonWriter()

@@ -1,11 +1,22 @@
 #include "CesiumGeospatial/CartographicPolygon.h"
 
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumUtility/Math.h"
+
 #include <CesiumGeometry/IntersectionTests.h>
 
-#include <glm/mat2x2.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double2x2.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGeometry;
 

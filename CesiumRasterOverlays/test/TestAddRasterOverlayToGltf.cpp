@@ -1,9 +1,22 @@
-#include <CesiumGeometry/Transforms.h>
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumNativeTests/SimpleAssetRequest.h"
+#include "CesiumNativeTests/SimpleAssetResponse.h"
+#include "CesiumRasterOverlays/RasterOverlayDetails.h"
+
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialPBRMetallicRoughness.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltf/TextureInfo.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumGltfReader/GltfReader.h>
@@ -19,12 +32,24 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <spdlog/spdlog.h>
 
-#include <fstream>
-#include <iostream>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;

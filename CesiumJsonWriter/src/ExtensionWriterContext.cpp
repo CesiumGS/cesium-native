@@ -5,6 +5,10 @@
 
 #include <CesiumUtility/JsonValue.h>
 
+#include <any>
+#include <string>
+#include <string_view>
+
 namespace CesiumJsonWriter {
 namespace {
 void objWriter(

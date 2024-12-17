@@ -1,29 +1,22 @@
 #include "CesiumGltfReader/ImageDecoder.h"
 
-#include "ModelJsonHandler.h"
-#include "applyKhrTextureTransform.h"
-#include "decodeDataUrls.h"
-#include "decodeDraco.h"
-#include "decodeMeshOpt.h"
-#include "dequantizeMeshData.h"
-#include "registerReaderExtensions.h"
+#include "CesiumUtility/Assert.h"
 
-#include <CesiumAsync/IAssetRequest.h>
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
-#include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumJsonReader/JsonHandler.h>
-#include <CesiumJsonReader/JsonReader.h>
-#include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/Tracing.h>
-#include <CesiumUtility/Uri.h>
 
 #include <ktx.h>
-#include <rapidjson/reader.h>
 #include <turbojpeg.h>
 #include <webp/decode.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <optional>
 #include <span>
+#include <string>
 
 #define STBI_FAILURE_USERMSG
 

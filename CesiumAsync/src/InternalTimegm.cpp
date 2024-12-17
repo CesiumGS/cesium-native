@@ -6,6 +6,7 @@
 #include "InternalTimegm.h"
 
 #include <cstdint>
+#include <ctime>
 
 namespace CesiumAsync {
 static int32_t isLeap(int32_t year);

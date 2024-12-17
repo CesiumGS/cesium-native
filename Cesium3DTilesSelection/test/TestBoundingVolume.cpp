@@ -1,7 +1,14 @@
+#include "CesiumGeometry/BoundingSphere.h"
+#include "CesiumGeometry/OrientedBoundingBox.h"
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/S2CellBoundingVolume.h"
+#include "CesiumGeospatial/S2CellID.h"
+
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 using namespace Cesium3DTilesSelection;

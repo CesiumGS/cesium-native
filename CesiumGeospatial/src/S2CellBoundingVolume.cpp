@@ -1,13 +1,24 @@
 #include "CesiumGeospatial/S2CellBoundingVolume.h"
 
-#include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Math.h>
+#include "CesiumGeometry/CullingResult.h"
+#include "CesiumGeometry/Plane.h"
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
 
+#include <CesiumUtility/Assert.h>
+
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/matrix.hpp>
 
 #include <array>
+#include <cstddef>
+#include <limits>
+#include <optional>
+#include <span>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

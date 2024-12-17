@@ -1,9 +1,17 @@
 #include "CesiumJsonWriter/PrettyJsonWriter.h"
 
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+
 #include <algorithm>
-#include <iterator>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace CesiumJsonWriter {
 PrettyJsonWriter::PrettyJsonWriter() noexcept {

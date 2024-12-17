@@ -1,5 +1,13 @@
 #include "CesiumGeometry/QuadtreeTilingScheme.h"
 
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/Rectangle.h"
+
+#include <glm/ext/vector_double2.hpp>
+
+#include <cstdint>
+#include <optional>
+
 namespace CesiumGeometry {
 
 QuadtreeTilingScheme::QuadtreeTilingScheme(

@@ -1,3 +1,7 @@
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/S2CellID.h"
+
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
@@ -8,7 +12,13 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumUtility/Uri.h>
 
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <libmorton/morton.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

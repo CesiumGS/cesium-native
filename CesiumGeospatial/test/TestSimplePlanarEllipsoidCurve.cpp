@@ -1,8 +1,15 @@
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumUtility/Math.h"
+
 #include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
+
+#include <optional>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;

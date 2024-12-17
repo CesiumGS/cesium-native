@@ -1,8 +1,12 @@
 #include "CesiumGeospatial/GeographicProjection.h"
 
+#include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 
-#include <CesiumUtility/Math.h>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 
 namespace CesiumGeospatial {
 

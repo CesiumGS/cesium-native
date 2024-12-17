@@ -1,9 +1,16 @@
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumUtility/Math.h"
+
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/GlobeAnchor.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/quaternion_trigonometric.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 using namespace CesiumGeometry;

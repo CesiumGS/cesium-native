@@ -1,6 +1,16 @@
 #include "CesiumGeometry/QuadtreeAvailability.h"
 
+#include "CesiumGeometry/Availability.h"
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/TileAvailabilityFlags.h"
 #include "CesiumUtility/Assert.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <span>
+#include <utility>
 
 namespace CesiumGeometry {
 

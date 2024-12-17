@@ -1,21 +1,33 @@
-#include <Cesium3DTiles/ImplicitTiling.h>
+#include "Cesium3DTiles/Availability.h"
+#include "Cesium3DTiles/Buffer.h"
+#include "Cesium3DTiles/BufferView.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumJsonReader/JsonReader.h"
+#include "CesiumUtility/joinToString.h"
+
 #include <Cesium3DTiles/Subtree.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesReader/SubtreeFileReader.h>
-#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/Uri.h>
 
-#include <rapidjson/document.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace Cesium3DTiles;
 using namespace Cesium3DTilesReader;

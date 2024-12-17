@@ -1,29 +1,53 @@
 // Heavily inspired by PntsToGltfConverter.cpp
 
+#include "Cesium3DTilesContent/GltfConverterResult.h"
+#include "Cesium3DTilesContent/GltfConverters.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/HttpHeaders.h"
+#include "CesiumGltfReader/GltfReader.h"
+
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
-#include <glm/gtc/matrix_transform.hpp>
+#include <fmt/format.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_common.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/matrix.hpp>
+#include <rapidjson/document.h>
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <numeric>
+#include <limits>
 #include <optional>
 #include <set>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 

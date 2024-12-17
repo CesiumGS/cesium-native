@@ -2,12 +2,27 @@
 
 #include "CesiumGltfReader/GltfReader.h"
 
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <draco/attributes/geometry_indices.h>
+#include <draco/attributes/point_attribute.h>
+#include <draco/core/status_or.h>
+#include <draco/mesh/mesh.h>
+
 #include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <span>
 #include <string>
+#include <utility>
 
 #ifdef _MSC_VER
 #pragma warning(push)

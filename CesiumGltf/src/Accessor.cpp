@@ -2,6 +2,11 @@
 
 #include "CesiumGltf/Model.h"
 
+#include <CesiumGltf/BufferView.h>
+
+#include <cstdint>
+#include <string>
+
 namespace CesiumGltf {
 /*static*/ int8_t
 Accessor::computeNumberOfComponents(const std::string& type) noexcept {

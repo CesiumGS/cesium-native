@@ -2,9 +2,9 @@
 
 #include <CesiumUtility/Math.h>
 
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
 
 #include <stdexcept>
 

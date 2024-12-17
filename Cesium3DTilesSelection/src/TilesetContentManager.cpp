@@ -1,13 +1,43 @@
 #include "TilesetContentManager.h"
 
+#include "Cesium3DTilesSelection/BoundingVolume.h"
+#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
+#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
+#include "Cesium3DTilesSelection/Tile.h"
+#include "Cesium3DTilesSelection/TileContent.h"
+#include "Cesium3DTilesSelection/TileLoadResult.h"
+#include "Cesium3DTilesSelection/TileRefine.h"
+#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+#include "Cesium3DTilesSelection/TilesetExternals.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
+#include "Cesium3DTilesSelection/TilesetOptions.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/HttpHeaders.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/SharedFuture.h"
+#include "CesiumGeometry/Axis.h"
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Projection.h"
 #include "CesiumIonTilesetLoader.h"
+#include "CesiumRasterOverlays/RasterOverlayDetails.h"
+#include "CesiumUtility/Assert.h"
+#include "CesiumUtility/Math.h"
+#include "CesiumUtility/Tracing.h"
 #include "LayerJsonTerrainLoader.h"
+#include "RasterOverlayUpsampler.h"
 #include "TileContentLoadInfo.h"
+#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -15,12 +45,30 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/Log.h>
 #include <CesiumUtility/joinToString.h>
 
+#include <fmt/format.h>
+#include <glm/ext/vector_double2.hpp>
 #include <rapidjson/document.h>
+#include <spdlog/spdlog.h>
 
-#include <chrono>
+#include <algorithm>
+#include <any>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltfContent;
 using namespace CesiumRasterOverlays;

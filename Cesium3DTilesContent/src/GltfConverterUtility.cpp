@@ -1,17 +1,26 @@
+#include "CesiumUtility/ErrorList.h"
+
 #include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumUtility/Uri.h>
 
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/matrix.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 
-#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
-#include <iterator>
+#include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace Cesium3DTilesContent {
 namespace GltfConverterUtility {

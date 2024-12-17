@@ -1,7 +1,21 @@
 #include "CesiumGeospatial/Projection.h"
 
+#include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/Rectangle.h"
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/WebMercatorProjection.h"
+
+#include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
+
+#include <variant>
 
 namespace CesiumGeospatial {
 

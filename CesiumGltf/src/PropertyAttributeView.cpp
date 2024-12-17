@@ -1,5 +1,14 @@
 #include "CesiumGltf/PropertyAttributeView.h"
 
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyAttribute.h>
+#include <CesiumGltf/PropertyType.h>
+
+#include <string>
+
 namespace CesiumGltf {
 PropertyType getAccessorTypeAsPropertyType(const Accessor& accessor) {
   if (accessor.type == Accessor::Type::SCALAR) {

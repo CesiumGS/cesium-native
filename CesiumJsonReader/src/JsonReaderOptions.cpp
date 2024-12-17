@@ -1,8 +1,15 @@
 #include "CesiumJsonReader/JsonReaderOptions.h"
 
 #include "CesiumJsonReader/IExtensionJsonHandler.h"
+#include "CesiumJsonReader/IJsonHandler.h"
 #include "CesiumJsonReader/JsonObjectJsonHandler.h"
-#include "CesiumJsonReader/JsonReader.h"
+#include "CesiumUtility/ExtensibleObject.h"
+#include "CesiumUtility/JsonValue.h"
+
+#include <any>
+#include <memory>
+#include <string>
+#include <string_view>
 
 namespace CesiumJsonReader {
 class AnyExtensionJsonHandler : public JsonObjectJsonHandler,

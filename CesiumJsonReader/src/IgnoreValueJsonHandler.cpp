@@ -1,6 +1,12 @@
 #include "CesiumJsonReader/IgnoreValueJsonHandler.h"
 
+#include "CesiumJsonReader/IJsonHandler.h"
+
+#include <cstdint>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace CesiumJsonReader {
 void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) noexcept {
