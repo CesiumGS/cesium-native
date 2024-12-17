@@ -87,7 +87,10 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
-    set(DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")
+
+    list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/")
+    list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")
+
     set(DOXYGEN_MARKDOWN_ID_STYLE GITHUB)
     set(DOXYGEN_INTERACTIVE_SVG YES)
     # Tag files can be used by other Doxygen projects to link to our docs
