@@ -283,7 +283,7 @@ public:
    * view will be passed to the callback.
    *
    * @param callback A callback function that accepts property id and
-   * {@link PropertyTexturePropertyView<T>}
+   * {@link PropertyTexturePropertyView}
    * @param propertyOptions The options to apply to each property in the
    * property texture.
    * @tparam Callback The type of the callback function.

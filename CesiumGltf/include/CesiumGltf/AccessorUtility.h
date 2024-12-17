@@ -15,8 +15,11 @@ namespace CesiumGltf {
  * type as an int64_t.
  */
 struct CountFromAccessor {
+  /** @brief Attempts to obtain an element count from an empty accessor variant,
+   * resulting in -1. */
   int64_t operator()(std::monostate) { return 0; }
 
+  /** @brief Attempts to obtain an element count from an \ref AccessorView. */
   template <typename T> int64_t operator()(const AccessorView<T>& value) {
     return value.size();
   }
@@ -27,10 +30,15 @@ struct CountFromAccessor {
  * invalid status for a std::monostate (interpreted as a nonexistent accessor).
  */
 struct StatusFromAccessor {
+  /** @brief Attempts to obtain an \ref AccessorViewStatus from an empty
+   * accessor variant, resulting in \ref
+   * AccessorViewStatus::InvalidAccessorIndex. */
   AccessorViewStatus operator()(std::monostate) {
     return AccessorViewStatus::InvalidAccessorIndex;
   }
 
+  /** @brief Attempts to obtain an \ref AccessorViewStatus from an \ref
+   * AccessorView. */
   template <typename T>
   AccessorViewStatus operator()(const AccessorView<T>& value) {
     return value.status();
@@ -105,6 +113,9 @@ FeatureIdAccessorType getFeatureIdAccessorView(
  * index was out-of-bounds.
  */
 struct FeatureIdFromAccessor {
+  /** @brief Attempts to obtain a feature ID from an \ref AccessorView over
+   * float values, returning the float value rounded to the nearest `int64_t`.
+   */
   int64_t operator()(const AccessorView<float>& value) {
     if (index < 0 || index >= value.size()) {
       return -1;
@@ -112,6 +123,7 @@ struct FeatureIdFromAccessor {
     return static_cast<int64_t>(glm::round(value[index]));
   }
 
+  /** @brief Attempts to obtain a feature ID from an \ref AccessorView. */
   template <typename T> int64_t operator()(const AccessorView<T>& value) {
     if (index < 0 || index >= value.size()) {
       return -1;
@@ -119,6 +131,7 @@ struct FeatureIdFromAccessor {
     return static_cast<int64_t>(value[index]);
   }
 
+  /** @brief The index of the vertex whose feature ID is being queried. */
   int64_t index;
 };
 
@@ -153,6 +166,8 @@ getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
  * index was out-of-bounds.
  */
 struct IndicesForFaceFromAccessor {
+  /** @brief Attempts to obtain the indices for the given face from an empty
+   * accessor variant, using the \ref vertexCount property. */
   std::array<int64_t, 3> operator()(std::monostate) {
     int64_t firstVertex = faceIndex;
     int64_t numFaces = 0;
@@ -194,6 +209,9 @@ struct IndicesForFaceFromAccessor {
     return result;
   }
 
+  /** @brief Attempts to obtain the indices for the given face from an \ref
+   * AccessorView, using the view's size and contents rather than the \ref
+   * vertexCount property. */
   template <typename T>
   std::array<int64_t, 3> operator()(const AccessorView<T>& value) {
     int64_t firstIndex = faceIndex;
@@ -236,8 +254,11 @@ struct IndicesForFaceFromAccessor {
     return result;
   }
 
+  /** @brief The index of the face to obtain indices for. */
   int64_t faceIndex;
+  /** @brief The total number of vertices in the data being accessed. */
   int64_t vertexCount;
+  /** @brief The \ref MeshPrimitive::Mode of the data being accessed. */
   int32_t primitiveMode;
 }; // namespace CesiumGltf
 
@@ -250,8 +271,12 @@ struct IndicesForFaceFromAccessor {
  * index was out-of-bounds.
  */
 struct IndexFromAccessor {
+  /** @brief Attempts to obtain a vertex index from an empty \ref
+   * IndexAccessorType, resulting in -1. */
   int64_t operator()(std::monostate) { return -1; }
 
+  /** @brief Attempts to obtain a vertex index from an \ref
+   * CesiumGltf::AccessorView. */
   template <typename T>
   int64_t operator()(const CesiumGltf::AccessorView<T>& value) {
     if (index < 0 || index >= value.size()) {
@@ -261,6 +286,7 @@ struct IndexFromAccessor {
     return value[index];
   }
 
+  /** @brief The index of the vertex index within the accessor itself. */
   int64_t index;
 };
 
@@ -291,6 +317,11 @@ TexCoordAccessorType getTexCoordAccessorView(
  * behavior, so we use std::nullopt to denote an erroneous value.
  */
 struct TexCoordFromAccessor {
+  /**
+   * @brief Attempts to obtain a `glm::dvec2` at the given index from an
+   * accessor over a vec2 of floats. If the index is invalid, `std::nullopt` is
+   * returned instead.
+   */
   std::optional<glm::dvec2>
   operator()(const AccessorView<AccessorTypes::VEC2<float>>& value) {
     if (index < 0 || index >= value.size()) {
@@ -300,6 +331,12 @@ struct TexCoordFromAccessor {
     return glm::dvec2(value[index].value[0], value[index].value[1]);
   }
 
+  /**
+   * @brief Attempts to obtain a `glm::dvec2` at the given index from an
+   * accessor over a vec2. The values will be cast to `double` and normalized
+   * based on `std::numeric_limits<T>::max()`. If the index is invalid,
+   * `std::nullopt` is returned instead.
+   */
   template <typename T>
   std::optional<glm::dvec2>
   operator()(const AccessorView<AccessorTypes::VEC2<T>>& value) {
@@ -317,6 +354,7 @@ struct TexCoordFromAccessor {
     return glm::dvec2(u, v);
   }
 
+  /** @brief The index of texcoords to obtain. */
   int64_t index;
 };
 
@@ -339,7 +377,7 @@ typedef std::variant<
  * @param model The model containing the quaternion.
  * @param accessor An accessor from which the quaternion will be obtained.
  * @returns A quaternion from the data in `accessor`. If no quaternion could be
- * obtained, the default value for \ref QuaternionAccessType will be returned
+ * obtained, the default value for \ref QuaternionAccessorType will be returned
  * instead.
  */
 QuaternionAccessorType
@@ -353,8 +391,8 @@ getQuaternionAccessorView(const Model& model, const Accessor* accessor);
  * @param accessorIndex An index to the accessor from which the quaternion will
  * be obtained.
  * @returns A quaternion from the data in the accessor at `accessorIndex`. If no
- * quaternion could be obtained, the default value for \ref QuaternionAccessType
- * will be returned instead.
+ * quaternion could be obtained, the default value for \ref
+ * QuaternionAccessorType will be returned instead.
  */
 QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, int32_t accessorIndex);

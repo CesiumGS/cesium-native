@@ -101,6 +101,9 @@ template <typename... T> struct IsMetadataNumeric;
  * @copydoc IsMetadataNumeric
  */
 template <typename T> struct IsMetadataNumeric<T> {
+  /**
+   * @brief Whether the given metadata type is a scalar, a vector, or a matrix.
+   */
   static constexpr bool value = IsMetadataScalar<T>::value ||
                                 IsMetadataVecN<T>::value ||
                                 IsMetadataMatN<T>::value;
@@ -146,10 +149,12 @@ template <typename... T> struct IsMetadataNumericArray;
 template <typename T> struct IsMetadataNumericArray<T> : std::false_type {};
 /** @copydoc IsMetadataNumericArray */
 template <typename T> struct IsMetadataNumericArray<PropertyArrayView<T>> {
+  /** @brief Whether the component of this \ref PropertyArrayView is numeric. */
   static constexpr bool value = IsMetadataNumeric<T>::value;
 };
 /** @copydoc IsMetadataNumericArray */
 template <typename T> struct IsMetadataNumericArray<PropertyArrayCopy<T>> {
+  /** @brief Whether the component of this \ref PropertyArrayCopy is numeric. */
   static constexpr bool value = IsMetadataNumeric<T>::value;
 };
 
@@ -180,16 +185,19 @@ struct IsMetadataStringArray<PropertyArrayView<std::string_view>>
  * @brief Retrieve the component type of a metadata array
  */
 template <typename T> struct MetadataArrayType {
+  /** @brief The component type of this metadata array. */
   using type = void;
 };
 /** @copydoc MetadataArrayType */
 template <typename T>
 struct MetadataArrayType<CesiumGltf::PropertyArrayView<T>> {
+  /** @brief The component type of this metadata array. */
   using type = T;
 };
 /** @copydoc MetadataArrayType */
 template <typename T>
 struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
+  /** @brief The component type of this metadata array. */
   using type = T;
 };
 
@@ -551,7 +559,7 @@ struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
  * transforms numeric `PropertyArrayView<T>` to `PropertyArrayCopy<T>` because a
  * `PropertyArrayView<T>` only has a pointer to the value it is viewing.
  *
- * See \ref propertyValueViewToCopy
+ * See `propertyValueViewToCopy`.
  *
  * @remarks This is the inverse of \ref PropertyValueCopyToView
  * @tparam T The type of the property value view.
@@ -568,7 +576,7 @@ using PropertyValueViewToCopy = std::conditional_t<
  * transformation, because most property types are held by value. However, it
  * transforms numeric `PropertyArrayCopy<T>` to `PropertyArrayView<T>`.
  *
- * See \ref propertyValueCopyToView
+ * See `propertyValueCopyToView`.
  *
  * @remarks This is the inverse of \ref PropertyValueViewToCopy
  * @tparam T The type of the property value copy.

@@ -296,8 +296,7 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyAttributePropertyView<ElementType, false>::get} is called. However,
-   * {@link PropertyAttributePropertyView<ElementType, false>::getRaw} cannot be used.
+   * when \ref get is called. However, \ref getRaw cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the primitive's POSITION accessor.

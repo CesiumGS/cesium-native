@@ -329,7 +329,7 @@ function toPascalCase(name) {
 }
 
 function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
-  const fullDoc =
+  let fullDoc =
     propertyDetails.gltf_detailedDescription &&
       propertyDetails.gltf_detailedDescription.indexOf(
         propertyDetails.description
@@ -338,6 +338,16 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
         .substr(propertyDetails.description.length)
         .trim()
       : propertyDetails.gltf_detailedDescription;
+  let briefDoc = propertyDetails.description;
+  // Removing the description from the detailed description can have some 
+  // unintended consequences, like if the difference between the two lines
+  // is as small as a single period. If it's that small, just append it to
+  // the brief.
+  if (fullDoc && fullDoc.length < 10) {
+    briefDoc += fullDoc;
+    fullDoc = null;
+  }
+
   return {
     name: propertyName,
     cppSafeName: cppSafeName,
@@ -354,7 +364,7 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
     localTypes: [],
     readerLocalTypes: [],
     readerLocalTypesImpl: [],
-    briefDoc: propertyDetails.description,
+    briefDoc: briefDoc,
     fullDoc: fullDoc,
   };
 }

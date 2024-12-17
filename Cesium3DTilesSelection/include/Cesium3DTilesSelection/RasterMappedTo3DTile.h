@@ -153,9 +153,8 @@ public:
   /**
    * @brief Update this tile during the update of its owner.
    *
-   * This is only supposed to be called by \ref
-   * Cesium3DTilesSelection::TilesetContentManager
-   * "TilesetContentManager::updateDoneState". It will return whether there is a
+   * This is only supposed to be called by
+   * `TilesetContentManager::updateDoneState`. It will return whether there is a
    * more detailed version of the raster data available.
    *
    * @param prepareRendererResources The {@link IPrepareRendererResources} used to

@@ -19,8 +19,7 @@ namespace CesiumGltf {
  *
  * The {@link PropertyTablePropertyView} constructor always completes successfully.
  * However, it may not always reflect the actual content of the
- * {@link PropertyTableProperty}, but instead indicate that its
- * {@link PropertyTablePropertyView::size} is 0.
+ * {@link PropertyTableProperty}, but instead indicate that its `size` is 0.
  * This enumeration provides the reason.
  */
 class PropertyTablePropertyViewStatus : public PropertyViewStatus {
@@ -510,7 +509,7 @@ private:
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView<ElementType, false>::get} method.
+ * instance can be accessed through the \ref get method.
  *
  * @param ElementType must be one of the following: an integer scalar (uint8_t,
  * int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t), a glm vecN

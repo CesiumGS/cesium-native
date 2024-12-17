@@ -18,7 +18,7 @@ double applySamplerWrapS(const double u, const int32_t wrapS);
  * coordinate.
  *
  * @param v The V coordinate to apply the sampler wrap value to.
- * @param wrapS The sampler's WrapT value, matching a member of \ref
+ * @param wrapT The sampler's WrapT value, matching a member of \ref
  * Sampler::WrapT, to apply.
  * @returns The V coordinate after applying the WrapT operation.
  */

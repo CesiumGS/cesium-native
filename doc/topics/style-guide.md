@@ -54,8 +54,8 @@ Use `#pragma once` at the top of header files rather than manual inclusion guard
 
 Not covered by C++ Core Guidelines.
 
-* Forward declare types in our own libraries whenever you can. Only #include when you must.
-* For third-party libraries, prefer to #include a fwd.h type of file if one is provided. #include the full implementation only when you must.
+* Forward declare types in our own libraries whenever you can. Only `#include` when you must.
+* For third-party libraries, prefer to `#include` a fwd.h type of file if one is provided. `#include` the full implementation only when you must.
 * If you find yourself writing complicated forward declarations for our own types or for third-party ones that don't include a fwd.h, consider making a fwd.h file for it.
 
 ## 🛑 Exceptions

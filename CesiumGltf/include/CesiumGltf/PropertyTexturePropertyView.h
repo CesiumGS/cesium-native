@@ -199,6 +199,15 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   return PropertyArrayCopy<T>(std::move(result));
 }
 
+/**
+ * @brief Assembles the given type from the provided channel values of sampling
+ * a texture.
+ *
+ * @tparam ElementType The type of element to assemble.
+ * @param bytes The byte values of the sampled channels of the texture.
+ * @returns The result of \ref assembleScalarValue, \ref assembleVecNValue, or
+ * \ref assembleArrayValue depending on `ElementType`.
+ */
 template <typename ElementType>
 PropertyValueViewToCopy<ElementType>
 assembleValueFromChannels(const std::span<uint8_t> bytes) noexcept {
@@ -277,8 +286,7 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView<ElementType, false>::get} is called. However,
-   * {@link PropertyTablePropertyView<ElementType, false>::getRaw} cannot be used.
+   * when \ref get is called. However, \ref getRaw cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    */
@@ -509,8 +517,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a
    * default value. Although this property has no data, it can return the
-   * default value when {@link PropertyTexturePropertyView::get} is called.
-   * However, {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   * default value when {@link PropertyTexturePropertyView<ElementType, true>::get} is called.
+   * However, {@link PropertyTexturePropertyView<ElementType, true>::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    */

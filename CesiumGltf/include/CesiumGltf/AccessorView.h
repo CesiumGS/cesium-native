@@ -56,7 +56,7 @@ enum class AccessorViewStatus {
   WrongSizeT,
 
   /**
-   * @brief The {@link AccessorSpec:type} is invalid.
+   * @brief The `AccessorSpec:type` is invalid.
    */
   InvalidType,
 

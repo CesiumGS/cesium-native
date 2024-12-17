@@ -42,7 +42,6 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
         ../CesiumIonClient/test
-        ../CesiumJsonReader/test
         ../CesiumJsonWriter/test
         ../CesiumQuantizedMeshTerrain/test
         ../CesiumRasterOverlays/test
@@ -86,6 +85,8 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
     set(DOXYGEN_IMAGE_PATH "./")
+    set(DOXYGEN_DOT_GRAPH_MAX_NODES 100)
+    set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS_PRINT)
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")

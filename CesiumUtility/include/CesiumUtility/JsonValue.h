@@ -20,6 +20,9 @@ namespace CesiumUtility {
  * @deprecated JSON parsing no longer throws this exception.
  */
 struct JsonValueMissingKey : public std::runtime_error {
+  /**
+   * @brief Creates a new \ref JsonValueMissingKey exception for the given key.
+   */
   JsonValueMissingKey(const std::string& key)
       : std::runtime_error(key + " is not present in Object") {}
 };
@@ -32,6 +35,15 @@ struct JsonValueNotRealValue : public std::runtime_error {
       : std::runtime_error("this->value was not double, uint64_t or int64_t") {}
 };
 
+/**
+ * @brief Attempts a narrowing conversion of `U` into `T` without losing
+ * information. If a lossless conversion can't be performed, `std::nullopt` is
+ * returned.
+ *
+ * @tparam U The type to convert from.
+ * @tparam T The type to convert to.
+ * @param u The value to perform the conversion on.
+ */
 template <typename T, typename U>
 constexpr std::optional<T> losslessNarrow(U u) noexcept {
   constexpr const bool is_different_signedness =
@@ -47,6 +59,17 @@ constexpr std::optional<T> losslessNarrow(U u) noexcept {
   return t;
 }
 
+/**
+ * @brief Attempts a narrowing conversion of `U` into `T` without losing
+ * information. If a lossless conversion can't be performed, `defaultValue` is
+ * returned.
+ *
+ * @tparam U The type to convert from.
+ * @tparam T The type to convert to.
+ * @param u The value to perform the conversion on.
+ * @param defaultValue The value that will be returned if a lossless conversion
+ * can't be performed.
+ */
 template <typename T, typename U>
 constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
   constexpr const bool is_different_signedness =

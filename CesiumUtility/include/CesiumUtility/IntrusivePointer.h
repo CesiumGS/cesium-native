@@ -106,6 +106,11 @@ public:
 
     return *this;
   }
+
+  /**
+   * @brief Assigns an \ref IntrusivePointer of another type to this \ref
+   * IntrusivePointer.
+   */
   template <class U>
   IntrusivePointer& operator=(const IntrusivePointer<U>& rhs) noexcept {
     if (this->_p != rhs._p) {
@@ -178,6 +183,8 @@ public:
   bool operator==(const IntrusivePointer<T>& rhs) const noexcept {
     return this->_p == rhs._p;
   }
+
+  /** @brief Returns `true` if two pointers are equal. */
   template <class U>
   bool operator==(const IntrusivePointer<U>& rhs) const noexcept {
     return this->_p == rhs._p;

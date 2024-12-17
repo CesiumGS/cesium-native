@@ -155,7 +155,7 @@ public:
   /**
    * @brief Writes the given primitive to the output. This is a convenience
    * function for \ref String.
-   * @param value The string value to write.
+   * @param string The string value to write.
    */
   virtual void Primitive(std::string_view string);
 

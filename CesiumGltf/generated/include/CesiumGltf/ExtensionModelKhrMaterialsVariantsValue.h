@@ -20,9 +20,7 @@ struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
       "ExtensionModelKhrMaterialsVariantsValue";
 
   /**
-   * @brief The name of the material variant
-   *
-   * .
+   * @brief The name of the material variant.
    */
   std::string name;
 

@@ -12,7 +12,7 @@ namespace Cesium3DTilesSelection {
 class Tileset;
 
 /**
- * @brief The type of load that failed in \ref TilesetLoadFailureDetails.
+ * @brief The type of load that failed in `TilesetLoadFailureDetails`.
  */
 enum class TilesetLoadType {
   /**
