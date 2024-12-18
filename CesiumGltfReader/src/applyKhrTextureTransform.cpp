@@ -121,14 +121,16 @@ void applyKhrTextureTransform(Model& model) {
     for (MeshPrimitive& primitive : mesh.primitives) {
       Material* material = Model::getSafe(&model.materials, primitive.material);
       if (material) {
-        processTextureInfo(
-            model,
-            primitive,
-            material->pbrMetallicRoughness->baseColorTexture);
-        processTextureInfo(
-            model,
-            primitive,
-            material->pbrMetallicRoughness->metallicRoughnessTexture);
+        if (material->pbrMetallicRoughness) {
+          processTextureInfo(
+              model,
+              primitive,
+              material->pbrMetallicRoughness->baseColorTexture);
+          processTextureInfo(
+              model,
+              primitive,
+              material->pbrMetallicRoughness->metallicRoughnessTexture);
+        }
         processTextureInfo(model, primitive, material->normalTexture);
         processTextureInfo(model, primitive, material->occlusionTexture);
         processTextureInfo(model, primitive, material->emissiveTexture);

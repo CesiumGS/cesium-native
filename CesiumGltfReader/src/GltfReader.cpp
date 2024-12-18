@@ -32,6 +32,7 @@
 #include <CesiumGltf/Texture.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
@@ -252,6 +253,7 @@ GltfReaderResult readBinaryGltf(
 }
 
 void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
+  CESIUM_ASSERT(readGltf.model.has_value());
   Model& model = readGltf.model.value();
 
   auto extFeatureMetadataIter = std::find(
@@ -526,6 +528,10 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
   constexpr std::string_view dataPrefix = "data:";
   constexpr size_t dataPrefixLength = dataPrefix.size();
 
+  // We already checked pResult->model at the top of the method, but clang-tidy
+  // doesn't understand this.
+  // NOLINTBEGIN(bugprone-unchecked-optional-access)
+
   for (Buffer& buffer : pResult->model->buffers) {
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
@@ -613,6 +619,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 
   ExtensionModelExtStructuralMetadata* pStructuralMetadata =
       pResult->model->getExtension<ExtensionModelExtStructuralMetadata>();
+  // NOLINTEND(bugprone-unchecked-optional-access)
 
   if (options.resolveExternalStructuralMetadata && pStructuralMetadata &&
       pStructuralMetadata->schemaUri.has_value()) {

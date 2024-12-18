@@ -732,7 +732,8 @@ void updateExtensionWithJsonStringProperty(
       // Because serialized string json will add double quotations in the
       // buffer which is not needed by us, we will manually add the string to
       // the buffer
-      const auto& rapidjsonStr = it->IsNull() ? *noDataValue : it->GetString();
+      const auto& rapidjsonStr =
+          it->IsNull() ? noDataValue.value_or("null") : it->GetString();
       rapidjsonStrBuffer.Reserve(it->GetStringLength());
       for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
         rapidjsonStrBuffer.PutUnsafe(rapidjsonStr[j]);
@@ -815,6 +816,7 @@ void updateExtensionWithJsonScalarProperty(
 
   for (int64_t i = 0; i < propertyTable.count; ++i, ++p, ++it) {
     if (it->IsNull()) {
+      CESIUM_ASSERT(noDataValue.has_value());
       *p = *noDataValue;
     } else {
       *p = static_cast<T>(it->template Get<TRapidJson>());

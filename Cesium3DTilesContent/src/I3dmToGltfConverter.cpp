@@ -5,6 +5,7 @@
 #include "CesiumAsync/Future.h"
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumGltfReader/GltfReader.h"
+#include "CesiumUtility/Assert.h"
 
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverterUtility.h>
@@ -371,6 +372,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         numInstances);
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
   } else {
+    CESIUM_ASSERT(parsedContent.positionQuantized.has_value());
     std::span<const uint16_t[3]> rawQuantizedPositions(
         reinterpret_cast<const uint16_t(*)[3]>(
             pBinaryData + *parsedContent.positionQuantized),

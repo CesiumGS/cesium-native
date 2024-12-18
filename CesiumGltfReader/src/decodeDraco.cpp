@@ -9,6 +9,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <draco/attributes/geometry_indices.h>
@@ -44,6 +45,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
     CesiumGltf::MeshPrimitive& /* primitive */,
     const CesiumGltf::ExtensionKhrDracoMeshCompression& draco) {
   CESIUM_TRACE("CesiumGltfReader::decodeBufferViewToDracoMesh");
+  CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
 
   CesiumGltf::BufferView* pBufferView =
@@ -114,6 +116,7 @@ void copyDecodedIndices(
     const CesiumGltf::MeshPrimitive& primitive,
     draco::Mesh* pMesh) {
   CESIUM_TRACE("CesiumGltfReader::copyDecodedIndices");
+  CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
 
   if (primitive.indices < 0) {
@@ -221,6 +224,7 @@ void copyDecodedAttribute(
     const draco::Mesh* pMesh,
     const draco::PointAttribute* pAttribute) {
   CESIUM_TRACE("CesiumGltfReader::copyDecodedAttribute");
+  CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
 
   if (pAccessor->count != pMesh->num_points()) {
@@ -289,6 +293,7 @@ void decodePrimitive(
     CesiumGltf::MeshPrimitive& primitive,
     CesiumGltf::ExtensionKhrDracoMeshCompression& draco) {
   CESIUM_TRACE("CesiumGltfReader::decodePrimitive");
+  CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
 
   std::unique_ptr<draco::Mesh> pMesh =

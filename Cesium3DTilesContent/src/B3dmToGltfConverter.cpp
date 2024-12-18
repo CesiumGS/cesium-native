@@ -7,6 +7,7 @@
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumUtility/Assert.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
@@ -168,6 +169,7 @@ rapidjson::Document parseFeatureTableJsonData(
   if (rtcIt != document.MemberEnd() && rtcIt->value.IsArray() &&
       rtcIt->value.Size() == 3 && rtcIt->value[0].IsNumber() &&
       rtcIt->value[1].IsNumber() && rtcIt->value[2].IsNumber()) {
+    CESIUM_ASSERT(result.model.has_value());
     // Add the RTC_CENTER value to the glTF as a CESIUM_RTC extension.
     rapidjson::Value& rtcValue = rtcIt->value;
     auto& cesiumRTC =

@@ -2,6 +2,7 @@
 #include "Cesium3DTilesContent/GltfConverterResult.h"
 #include "CesiumAsync/Future.h"
 #include "CesiumGltfReader/GltfReader.h"
+#include "CesiumUtility/Assert.h"
 
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
@@ -1148,8 +1149,10 @@ void parsePositionsFromFeatureTableBinary(
             featureTableBinaryData.data() + parsedContent.position.byteOffset),
         pointsLength);
 
+    CESIUM_ASSERT(parsedContent.quantizedVolumeScale.has_value());
     const glm::vec3 quantizedVolumeScale(
         parsedContent.quantizedVolumeScale.value());
+    CESIUM_ASSERT(parsedContent.quantizedVolumeOffset.has_value());
     const glm::vec3 quantizedVolumeOffset(
         parsedContent.quantizedVolumeOffset.value());
 
@@ -1188,6 +1191,7 @@ void parsePositionsFromFeatureTableBinary(
 void parseColorsFromFeatureTableBinary(
     const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
+  CESIUM_ASSERT(parsedContent.color.has_value());
   PntsSemantic& color = parsedContent.color.value();
   std::vector<std::byte>& colorData = color.data;
   if (colorData.size() > 0) {
@@ -1250,6 +1254,7 @@ void parseColorsFromFeatureTableBinary(
 void parseNormalsFromFeatureTableBinary(
     const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
+  CESIUM_ASSERT(parsedContent.normal.has_value());
   PntsSemantic& normal = parsedContent.normal.value();
   std::vector<std::byte>& normalData = normal.data;
   if (normalData.size() > 0) {
@@ -1289,6 +1294,7 @@ void parseNormalsFromFeatureTableBinary(
 void parseBatchIdsFromFeatureTableBinary(
     const std::span<const std::byte>& featureTableBinaryData,
     PntsContent& parsedContent) {
+  CESIUM_ASSERT(parsedContent.batchId.has_value());
   PntsSemantic& batchId = parsedContent.batchId.value();
   std::vector<std::byte>& batchIdData = batchId.data;
   if (batchIdData.size() > 0) {
@@ -1412,6 +1418,7 @@ void addPositionsToGltf(PntsContent& parsedContent, Model& gltf) {
 }
 
 void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
+  CESIUM_ASSERT(parsedContent.color.has_value());
   PntsSemantic& color = parsedContent.color.value();
 
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
@@ -1447,6 +1454,7 @@ void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
 }
 
 void addNormalsToGltf(PntsContent& parsedContent, Model& gltf) {
+  CESIUM_ASSERT(parsedContent.normal.has_value());
   PntsSemantic& normal = parsedContent.normal.value();
 
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
@@ -1468,6 +1476,7 @@ void addNormalsToGltf(PntsContent& parsedContent, Model& gltf) {
 }
 
 void addBatchIdsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
+  CESIUM_ASSERT(parsedContent.batchId.has_value());
   PntsSemantic& batchId = parsedContent.batchId.value();
 
   const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
@@ -1657,6 +1666,8 @@ void convertPntsContentToGltf(
       batchTableBinaryData =
           std::span<const std::byte>(parsedContent.dracoBatchTableBinary);
     }
+
+    CESIUM_ASSERT(result.model.has_value());
 
     result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromPnts(
         featureTableJson,

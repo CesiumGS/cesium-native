@@ -27,8 +27,9 @@ Checks:
   - "bugprone-incorrect-enable-if"
   - "bugprone-incorrect-roundings"
   - "bugprone-infinite-loop"
+  # not enabling: false positives on IntrusivePointer and DoublyLinkedListPointers
   #- "bugprone-unhandled-self-assignment"
-  #- "bugprone-unchecked-optional-access"
+  - "bugprone-unchecked-optional-access"
 
   #- "bugprone-integer-division"
   #- "bugprone-lambda-function-name"
