@@ -684,26 +684,56 @@ bool copyInstanceToBuffer(
   return result;
 }
 
-void instantiateGltfInstances(
+struct AccessorCreator {
+  Model& gltf;
+  const int32_t instanceBufferViewId;
+  const uint32_t numInstances;
+
+  int32_t create(
+      int32_t componentType,
+      const std::string& type,
+      uint32_t bufferOffset) {
+    int32_t accessorId = createAccessorInGltf(
+        gltf,
+        instanceBufferViewId,
+        componentType,
+        numInstances,
+        type);
+    gltf.accessors[static_cast<uint32_t>(accessorId)].byteOffset
+        = static_cast<int64_t>(bufferOffset);
+    return accessorId;
+  }
+
+  int32_t create(const std::string& type, uint32_t bufferOffset) {
+    return create(Accessor::ComponentType::FLOAT, type, bufferOffset);
+  }
+
+  void addAccessors(
+      ExtensionExtMeshGpuInstancing& gpuExt,
+      uint32_t dataBaseOffset) {
+    gpuExt.attributes["TRANSLATION"] =
+        create(Accessor::Type::VEC3, dataBaseOffset);
+    gpuExt.attributes["ROTATION"] =
+        create(Accessor::Type::VEC4, dataBaseOffset + rotOffset);
+    gpuExt.attributes["SCALE"] =
+        create(Accessor::Type::VEC3, dataBaseOffset + scaleOffset);
+  }
+};
+
+// Split out the very rare case of instancing a model that already has instances
+void instantiateWithExistingInstances(
     GltfConverterResult& result,
-    const DecodedInstances& decodedInstances) {
-  assert(result.model.has_value());
-  std::set<CesiumGltf::Node*> meshNodes;
-  int32_t instanceBufferId = createBufferInGltf(*result.model);
+    const DecodedInstances& decodedInstances,
+    int32_t instanceBufferId,
+    int32_t instanceBufferViewId) {
   auto& instanceBuffer =
       result.model->buffers[static_cast<uint32_t>(instanceBufferId)];
-  int32_t instanceBufferViewId = createBufferViewInGltf(
-      *result.model,
-      instanceBufferId,
-      0,
-      static_cast<int64_t>(totalStride));
-  auto& instanceBufferView =
-      result.model->bufferViews[static_cast<uint32_t>(instanceBufferViewId)];
-  const auto numInstances =
+  const auto numI3dmInstances =
       static_cast<uint32_t>(decodedInstances.positions.size());
   auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
       *result.model,
       glm::dmat4x4(1.0));
+    std::set<CesiumGltf::Node*> meshNodes;
   result.model->forEachPrimitiveInScene(
       -1,
       [&](Model& gltf,
@@ -715,30 +745,25 @@ void instantiateGltfInstances(
         if (!inserted) {
           return;
         }
-        std::vector<glm::dmat4> modelInstanceTransforms{glm::dmat4(1.0)};
+        std::vector<glm::dmat4> modelInstanceTransforms;
         auto& gpuExt = node.addExtension<ExtensionExtMeshGpuInstancing>();
-        gltf.addExtensionRequired(ExtensionExtMeshGpuInstancing::ExtensionName);
-        if (!gpuExt.attributes.empty()) {
-          // The model already has instances! We will need to create the outer
-          // product of these instances and those coming from i3dm.
-          modelInstanceTransforms = getMeshGpuInstancingTransforms(
-              *result.model,
-              gpuExt,
-              result.errors);
-          if (numInstances * modelInstanceTransforms.size() >
-              std::numeric_limits<uint32_t>::max()) {
-            result.errors.emplaceError(fmt::format(
-                "Too many instances: {} from i3dm and {} from glb",
-                numInstances,
-                modelInstanceTransforms.size()));
-            return;
-          }
-        }
-        if (result.errors.hasErrors()) {
+        modelInstanceTransforms = getMeshGpuInstancingTransforms(
+            *result.model,
+            gpuExt,
+            result.errors);
+        if (numI3dmInstances * modelInstanceTransforms.size() >
+            std::numeric_limits<uint32_t>::max()) {
+          result.errors.emplaceError(fmt::format(
+                                         "Too many instances: {} from i3dm and {} from glb",
+                                         numI3dmInstances,
+                                         modelInstanceTransforms.size()));
           return;
         }
+        if (modelInstanceTransforms.empty()) {
+          modelInstanceTransforms.push_back(glm::dmat4(1.0));
+        }
         const uint32_t numNewInstances = static_cast<uint32_t>(
-            numInstances * modelInstanceTransforms.size());
+            numI3dmInstances * modelInstanceTransforms.size());
         const size_t instanceDataSize = totalStride * numNewInstances;
         auto dataBaseOffset =
             static_cast<uint32_t>(instanceBuffer.cesium.data.size());
@@ -747,7 +772,7 @@ void instantiateGltfInstances(
         const glm::dmat4 toTile = upToZ * transform;
         const glm::dmat4 toTileInv = inverse(toTile);
         size_t destInstanceIndx = 0;
-        for (unsigned i = 0; i < numInstances; ++i) {
+        for (unsigned i = 0; i < numI3dmInstances; ++i) {
           const glm::dmat4 instanceTransform =
               toTileInv * composeInstanceTransform(i, decodedInstances) *
               toTile;
@@ -764,45 +789,81 @@ void instantiateGltfInstances(
             }
           }
         }
-        auto posAccessorId = createAccessorInGltf(
-            gltf,
-            instanceBufferViewId,
-            Accessor::ComponentType::FLOAT,
-            numNewInstances,
-            Accessor::Type::VEC3);
-        auto& posAccessor =
-            gltf.accessors[static_cast<uint32_t>(posAccessorId)];
-        posAccessor.byteOffset = dataBaseOffset;
-        gpuExt.attributes["TRANSLATION"] = posAccessorId;
-        auto rotAccessorId = createAccessorInGltf(
-            gltf,
-            instanceBufferViewId,
-            Accessor::ComponentType::FLOAT,
-            numInstances,
-            Accessor::Type::VEC4);
-        auto& rotAccessor =
-            gltf.accessors[static_cast<uint32_t>(rotAccessorId)];
-        rotAccessor.byteOffset =
-            static_cast<int64_t>(dataBaseOffset + rotOffset);
-        gpuExt.attributes["ROTATION"] = rotAccessorId;
-        auto scaleAccessorId = createAccessorInGltf(
-            gltf,
-            instanceBufferViewId,
-            Accessor::ComponentType::FLOAT,
-            numInstances,
-            Accessor::Type::VEC3);
-        auto& scaleAccessor =
-            gltf.accessors[static_cast<uint32_t>(scaleAccessorId)];
-        scaleAccessor.byteOffset =
-            static_cast<int64_t>(dataBaseOffset + scaleOffset);
-        gpuExt.attributes["SCALE"] = scaleAccessorId;
+        AccessorCreator accessorCreator{gltf, instanceBufferViewId, numNewInstances};
+        accessorCreator.addAccessors(gpuExt, dataBaseOffset);
       });
+}
+
+void instantiateGltfInstances(
+    GltfConverterResult& result,
+    const DecodedInstances& decodedInstances) {
+  assert(result.model.has_value());
+  std::set<CesiumGltf::Node*> meshNodes;
+  int32_t instanceBufferId = createBufferInGltf(*result.model);
+  auto& instanceBuffer =
+      result.model->buffers[static_cast<uint32_t>(instanceBufferId)];
+  int32_t instanceBufferViewId = createBufferViewInGltf(
+      *result.model,
+      instanceBufferId,
+      0,
+      static_cast<int64_t>(totalStride));
+  const auto numInstances =
+      static_cast<uint32_t>(decodedInstances.positions.size());
+  auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
+      *result.model,
+      glm::dmat4x4(1.0));
+  if (result.model->isExtensionUsed(ExtensionExtMeshGpuInstancing::ExtensionName)) {
+    instantiateWithExistingInstances(
+        result,
+        decodedInstances,
+        instanceBufferId,
+        instanceBufferViewId);
+  } else {
+    result.model->forEachPrimitiveInScene(
+        -1,
+        [&](Model& gltf,
+            Node& node,
+            Mesh&,
+            MeshPrimitive&,
+            const glm::dmat4& transform) {
+          auto [nodeItr, inserted] = meshNodes.insert(&node);
+          if (!inserted) {
+            return;
+          }
+          auto& gpuExt = node.addExtension<ExtensionExtMeshGpuInstancing>();
+          gltf.addExtensionRequired(ExtensionExtMeshGpuInstancing::ExtensionName);
+          const size_t instanceDataSize = totalStride * numInstances;
+          auto dataBaseOffset =
+              static_cast<uint32_t>(instanceBuffer.cesium.data.size());
+          instanceBuffer.cesium.data.resize(dataBaseOffset + instanceDataSize);
+          // Transform instance transform into local glTF coordinate system.
+          const glm::dmat4 toTile = upToZ * transform;
+          const glm::dmat4 toTileInv = inverse(toTile);
+          size_t destInstanceIndx = 0;
+          for (unsigned i = 0; i < numInstances; ++i) {
+            const glm::dmat4 instanceTransform =
+                toTileInv * composeInstanceTransform(i, decodedInstances) *
+                toTile;
+            if (!copyInstanceToBuffer(
+                    instanceTransform,
+                    &instanceBuffer.cesium.data[dataBaseOffset],
+                    destInstanceIndx++)) {
+              result.errors.emplaceWarning(
+                  "Matrix decompose failed. Default identity values copied to "
+                  "instance buffer.");
+            }
+          }
+          AccessorCreator accessorCreator{gltf, instanceBufferViewId, numInstances};
+          accessorCreator.addAccessors(gpuExt, dataBaseOffset);
+        });
+  }
   if (decodedInstances.rtcCenter) {
     applyRtcToNodes(*result.model, *decodedInstances.rtcCenter);
   }
   instanceBuffer.byteLength =
       static_cast<int64_t>(instanceBuffer.cesium.data.size());
-  instanceBufferView.byteLength = instanceBuffer.byteLength;
+  result.model->bufferViews[instanceBufferViewId].byteLength =
+      instanceBuffer.byteLength;
 }
 } // namespace
 
