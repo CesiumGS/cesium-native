@@ -1560,7 +1560,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       pRawLoader->createRootTile(),
       options);
 
-  // On the first update, we should refine right to the grandchild tile, even
+  // On the first update, we should refine down to the grandchild tile, even
   // though no tiles are loaded yet.
   initializeTileset(tileset);
   const Tile& child = tileset.getRootTile()->getChildren()[0];
