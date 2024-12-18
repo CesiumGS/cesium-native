@@ -27,7 +27,7 @@ jobs:
           key: ccache-ubuntu-24.04-clang-clang-tidy
       - name: Install latest clang and clang-tidy
         run: |
-          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
