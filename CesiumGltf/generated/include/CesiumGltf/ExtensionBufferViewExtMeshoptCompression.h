@@ -27,13 +27,13 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
    * @brief Known values for The compression mode.
    */
   struct Mode {
-    /** @brief The ATTRIBUTES value. */
+    /** @brief `ATTRIBUTES` */
     inline static const std::string ATTRIBUTES = "ATTRIBUTES";
 
-    /** @brief The TRIANGLES value. */
+    /** @brief `TRIANGLES` */
     inline static const std::string TRIANGLES = "TRIANGLES";
 
-    /** @brief The INDICES value. */
+    /** @brief `INDICES` */
     inline static const std::string INDICES = "INDICES";
   };
 
@@ -41,16 +41,16 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
    * @brief Known values for The compression filter.
    */
   struct Filter {
-    /** @brief The NONE value. */
+    /** @brief `NONE` */
     inline static const std::string NONE = "NONE";
 
-    /** @brief The OCTAHEDRAL value. */
+    /** @brief `OCTAHEDRAL` */
     inline static const std::string OCTAHEDRAL = "OCTAHEDRAL";
 
-    /** @brief The QUATERNION value. */
+    /** @brief `QUATERNION` */
     inline static const std::string QUATERNION = "QUATERNION";
 
-    /** @brief The EXPONENTIAL value. */
+    /** @brief `EXPONENTIAL` */
     inline static const std::string EXPONENTIAL = "EXPONENTIAL";
   };
 

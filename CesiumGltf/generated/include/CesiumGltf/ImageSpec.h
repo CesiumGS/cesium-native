@@ -25,10 +25,10 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
    * defined when `bufferView` is defined.
    */
   struct MimeType {
-    /** @brief The image_jpeg value. */
+    /** @brief `image/jpeg` */
     inline static const std::string image_jpeg = "image/jpeg";
 
-    /** @brief The image_png value. */
+    /** @brief `image/png` */
     inline static const std::string image_png = "image/png";
   };
 

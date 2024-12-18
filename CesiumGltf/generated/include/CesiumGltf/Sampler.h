@@ -21,10 +21,10 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for Magnification filter.
    */
   struct MagFilter {
-    /** @brief The NEAREST value. */
+    /** @brief NEAREST (`9728`) */
     static constexpr int32_t NEAREST = 9728;
 
-    /** @brief The LINEAR value. */
+    /** @brief LINEAR (`9729`) */
     static constexpr int32_t LINEAR = 9729;
   };
 
@@ -32,22 +32,22 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for Minification filter.
    */
   struct MinFilter {
-    /** @brief The NEAREST value. */
+    /** @brief NEAREST (`9728`) */
     static constexpr int32_t NEAREST = 9728;
 
-    /** @brief The LINEAR value. */
+    /** @brief LINEAR (`9729`) */
     static constexpr int32_t LINEAR = 9729;
 
-    /** @brief The NEAREST_MIPMAP_NEAREST value. */
+    /** @brief NEAREST_MIPMAP_NEAREST (`9984`) */
     static constexpr int32_t NEAREST_MIPMAP_NEAREST = 9984;
 
-    /** @brief The LINEAR_MIPMAP_NEAREST value. */
+    /** @brief LINEAR_MIPMAP_NEAREST (`9985`) */
     static constexpr int32_t LINEAR_MIPMAP_NEAREST = 9985;
 
-    /** @brief The NEAREST_MIPMAP_LINEAR value. */
+    /** @brief NEAREST_MIPMAP_LINEAR (`9986`) */
     static constexpr int32_t NEAREST_MIPMAP_LINEAR = 9986;
 
-    /** @brief The LINEAR_MIPMAP_LINEAR value. */
+    /** @brief LINEAR_MIPMAP_LINEAR (`9987`) */
     static constexpr int32_t LINEAR_MIPMAP_LINEAR = 9987;
   };
 
@@ -55,13 +55,13 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for S (U) wrapping mode.
    */
   struct WrapS {
-    /** @brief The CLAMP_TO_EDGE value. */
+    /** @brief CLAMP_TO_EDGE (`33071`) */
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
-    /** @brief The MIRRORED_REPEAT value. */
+    /** @brief MIRRORED_REPEAT (`33648`) */
     static constexpr int32_t MIRRORED_REPEAT = 33648;
 
-    /** @brief The REPEAT value. */
+    /** @brief REPEAT (`10497`) */
     static constexpr int32_t REPEAT = 10497;
   };
 
@@ -69,13 +69,13 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for T (V) wrapping mode.
    */
   struct WrapT {
-    /** @brief The CLAMP_TO_EDGE value. */
+    /** @brief CLAMP_TO_EDGE (`33071`) */
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
-    /** @brief The MIRRORED_REPEAT value. */
+    /** @brief MIRRORED_REPEAT (`33648`) */
     static constexpr int32_t MIRRORED_REPEAT = 33648;
 
-    /** @brief The REPEAT value. */
+    /** @brief REPEAT (`10497`) */
     static constexpr int32_t REPEAT = 10497;
   };
 

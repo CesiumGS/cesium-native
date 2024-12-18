@@ -339,7 +339,7 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
         .trim()
       : propertyDetails.gltf_detailedDescription;
   let briefDoc = propertyDetails.description;
-  // Removing the description from the detailed description can have some 
+  // Removing the description from the detailed description can have some
   // unintended consequences, like if the difference between the two lines
   // is as small as a single period. If it's that small, just append it to
   // the brief.
@@ -734,7 +734,20 @@ function createEnum(enumDetails) {
   }
 
   const identifier = createEnumIdentifier(enumDetails);
-  const comment = `/** @brief The ${identifier} value. */\n`;
+
+  const valueMatchesIdentifier = enumValue === identifier;
+  const valueMatchesDescription = !enumDetails.description || enumValue === enumDetails.description;
+
+  let description;
+  if (valueMatchesDescription) {
+    description = `\`${enumValue}\``;
+  } else if (valueMatchesIdentifier) {
+    description = enumDetails.description ?? `\`${identifier}\``;
+  } else {
+    description = `${enumDetails.description ?? identifier} (\`${enumValue}\`)`;
+  }
+
+  const comment = `/** @brief ${description} */\n`;
 
   if (enumDetails.type === "integer") {
     return comment + `static constexpr int32_t ${identifier} = ${enumValue}`;
