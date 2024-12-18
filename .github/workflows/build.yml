@@ -13,7 +13,7 @@ jobs:
           npm run format -- --dry-run -Werror
   Linting:
     name: "Linting"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -38,8 +38,8 @@ jobs:
             vcpkg-ubuntu-24.04-clang
       - name: Set CC and CXX
         run: |
-          echo "CC=clang-19" >> "$GITHUB_ENV"
-          echo "CXX=clang++-19" >> "$GITHUB_ENV"
+          echo "CC=/usr/bin/clang-19" >> "$GITHUB_ENV"
+          echo "CXX=/usr/bin/clang++-19" >> "$GITHUB_ENV"
       - name: Make more swap space available
         run: |
           sudo swapoff -a
@@ -50,6 +50,7 @@ jobs:
           sudo swapon --show
       - name: Run clang-tidy
         run: |
+          echo `$CC --version | head -n 1`, `cmake --version | head -n 1`
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --target clang-tidy
   Documentation:
