@@ -17,17 +17,16 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install latest ninja and cmake
+        uses: lukka/get-cmake@latest
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ccache-ubuntu-24.04-clang-clang-tidy
       - name: Install latest clang and clang-tidy
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 19
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "19.1.6"
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
