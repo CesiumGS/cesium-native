@@ -49,12 +49,33 @@ public:
    */
   int64_t inactiveAssetSizeLimitBytes = 16 * 1024 * 1024;
 
+  /**
+   * @brief Signature for the callback function that will be called to fetch and
+   * create a new instance of `TAssetType` if one with the given key doesn't
+   * already exist in the depot.
+   *
+   * @param asyncSystem The \ref AsyncSystem used by this \ref SharedAssetDepot.
+   * @param pAssetAccessor The \ref IAssetAccessor used by this \ref
+   * SharedAssetDepot. Use this to fetch the asset.
+   * @param key The `TAssetKey` for the asset that should be loaded by this
+   * factory.
+   * @returns A \ref CesiumAsync::Future "Future" that resolves to a \ref
+   * CesiumUtility::ResultPointer "ResultPointer" containing the loaded asset,
+   * or any error information if the asset failed to load.
+   */
   using FactorySignature =
       CesiumAsync::Future<CesiumUtility::ResultPointer<TAssetType>>(
           const AsyncSystem& asyncSystem,
           const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
           const TAssetKey& key);
 
+  /**
+   * @brief Creates a new `SharedAssetDepot` using the given factory callback to
+   * load new assets.
+   *
+   * @param factory The factory to use to fetch and create assets that don't
+   * already exist in the depot. See \ref FactorySignature.
+   */
   SharedAssetDepot(std::function<FactorySignature> factory)
       : _assets(),
         _assetsByPointer(),

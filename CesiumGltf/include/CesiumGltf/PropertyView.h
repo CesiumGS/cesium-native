@@ -11,6 +11,9 @@
 
 namespace CesiumGltf {
 
+/**
+ * @brief The type used for fields of \ref PropertyViewStatus.
+ */
 typedef int32_t PropertyViewStatusType;
 
 /**
@@ -107,6 +110,12 @@ public:
   static const PropertyViewStatusType ErrorInvalidDefaultValue = 13;
 };
 
+/**
+ * @brief Validates a \ref ClassProperty, checking for any type mismatches.
+ *
+ * @returns A \ref PropertyViewStatus value representing the error found while
+ * validating, or \ref PropertyViewStatus::Valid if no errors were found.
+ */
 template <typename T>
 PropertyViewStatusType
 validatePropertyType(const ClassProperty& classProperty) {
@@ -136,6 +145,13 @@ validatePropertyType(const ClassProperty& classProperty) {
   return PropertyViewStatus::Valid;
 }
 
+/**
+ * @brief Validates a \ref ClassProperty representing an array, checking for any
+ * type mismatches.
+ *
+ * @returns A \ref PropertyViewStatus value representing the error found while
+ * validating, or \ref PropertyViewStatus::Valid if no errors were found.
+ */
 template <typename T>
 PropertyViewStatusType
 validateArrayPropertyType(const ClassProperty& classProperty) {
@@ -166,11 +182,27 @@ validateArrayPropertyType(const ClassProperty& classProperty) {
   return PropertyViewStatus::Valid;
 }
 
+/**
+ * @brief Attempts to get a scalar value from the provided \ref
+ * CesiumUtility::JsonValue "JsonValue".
+ *
+ * @param jsonValue The value to attempt to get as a scalar.
+ * @returns A scalar of type `T` if successful, or `std::nullopt` if not.
+ */
 template <typename T>
 static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
   return jsonValue.getSafeNumber<T>();
 }
 
+/**
+ * @brief Attempts to obtain a vector of type `VecType` from the provided \ref
+ * CesiumUtility::JsonValue "JsonValue".
+ *
+ * @param jsonValue The value to attempt to get as a vector. To be successful,
+ * this \ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
+ * number of elements as `VecType`.
+ * @returns A vector of type `VecType` if successful, or `std::nullopt` if not.
+ */
 template <typename VecType>
 static std::optional<VecType>
 getVecN(const CesiumUtility::JsonValue& jsonValue) {
@@ -199,6 +231,16 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
   return result;
 }
 
+/**
+ * @brief Attempts to obtain a matrix of type `MatType` from the provided \ref
+ * CesiumUtility::JsonValue "JsonValue".
+ *
+ * @param jsonValue The value to attempt to get as a matrix. To be successful,
+ * this \ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
+ * number of elements as `MatType`. For example, to read a 4x4 matrix, the \ref
+ * CesiumUtility::JsonValue "JsonValue" must be an array with 16 elements.
+ * @returns A matrix of type `MatType` if successful, or `std::nullopt` if not.
+ */
 template <typename MatType>
 static std::optional<MatType>
 getMatN(const CesiumUtility::JsonValue& jsonValue) {
@@ -230,6 +272,15 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
   return result;
 }
 
+/**
+ * @brief Obtains the number of values of type `ElementType` that could fit in
+ * the buffer.
+ *
+ * @param buffer The buffer whose size will be used for this calculation.
+ * @returns The number of values of type `ElementType` that could fit in
+ * `buffer`. This value will be equivalent to `floor(buffer->size() /
+ * sizeof(ElementType))`.
+ */
 template <typename ElementType>
 int64_t getCount(std::optional<std::vector<std::byte>>& buffer) {
   if (!buffer) {
@@ -515,6 +566,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -782,77 +834,78 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return 0; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return true; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<NormalizedType> offset() const noexcept { return _offset; }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<NormalizedType> scale() const noexcept { return _scale; }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<NormalizedType> max() const noexcept { return _max; }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<NormalizedType> min() const noexcept { return _min; }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<ElementType> noData() const noexcept { return _noData; }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<NormalizedType> defaultValue() const noexcept {
     return _defaultValue;
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1015,75 +1068,76 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return 0; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return false; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<bool> offset() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<bool> scale() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<bool> max() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<bool> min() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<bool> noData() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1188,70 +1242,70 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return 0; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return false; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<std::string_view> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<std::string_view> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<std::string_view> max() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<std::string_view> min() const noexcept { return std::nullopt; }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<std::string_view> noData() const noexcept {
     if (_noData)
@@ -1261,7 +1315,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<std::string_view> defaultValue() const noexcept {
     if (_defaultValue)
@@ -1271,6 +1325,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1434,41 +1489,41 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return _count; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return false; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<PropertyArrayView<ElementType>> offset() const noexcept {
     if (!_offset) {
@@ -1480,7 +1535,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<PropertyArrayView<ElementType>> scale() const noexcept {
     if (!_scale) {
@@ -1492,7 +1547,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<PropertyArrayView<ElementType>> max() const noexcept {
     if (!_max) {
@@ -1504,7 +1559,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<PropertyArrayView<ElementType>> min() const noexcept {
     if (!_min) {
@@ -1516,12 +1571,12 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<PropertyArrayView<ElementType>> noData() const noexcept {
     if (!_noData) {
@@ -1533,7 +1588,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<PropertyArrayView<ElementType>> defaultValue() const noexcept {
     if (!_defaultValue) {
@@ -1546,6 +1601,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -1830,41 +1886,41 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return _count; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return true; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<PropertyArrayView<NormalizedType>> offset() const noexcept {
     if (!_offset) {
@@ -1876,7 +1932,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<PropertyArrayView<NormalizedType>> scale() const noexcept {
     if (!_scale) {
@@ -1888,7 +1944,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<PropertyArrayView<NormalizedType>> max() const noexcept {
     if (!_max) {
@@ -1900,7 +1956,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<PropertyArrayView<NormalizedType>> min() const noexcept {
     if (!_min) {
@@ -1912,12 +1968,12 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<PropertyArrayView<ElementType>> noData() const noexcept {
     if (!_noData) {
@@ -1929,7 +1985,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<PropertyArrayView<NormalizedType>>
   defaultValue() const noexcept {
@@ -1943,6 +1999,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -2140,81 +2197,81 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return _count; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return false; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<PropertyArrayView<bool>> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<PropertyArrayView<bool>> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<PropertyArrayView<bool>> max() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<PropertyArrayView<bool>> min() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<PropertyArrayView<bool>> noData() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<PropertyArrayView<bool>> defaultValue() const noexcept {
     if (_size > 0) {
@@ -2230,6 +2287,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:
@@ -2371,74 +2429,74 @@ protected:
 
 public:
   /**
-   * @copydoc PropertyView::status
+   * @copydoc PropertyView<ElementType, false>::status
    */
   PropertyViewStatusType status() const noexcept { return _status; }
 
   /**
-   * @copydoc PropertyView::name
+   * @copydoc PropertyView<ElementType, false>::name
    */
   const std::optional<std::string>& name() const noexcept { return _name; }
 
   /**
-   * @copydoc PropertyView::semantic
+   * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
     return _semantic;
   }
 
   /**
-   * @copydoc PropertyView::description
+   * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
     return _description;
   }
 
   /**
-   * @copydoc PropertyView::arrayCount
+   * @copydoc PropertyView<ElementType, false>::arrayCount
    */
   int64_t arrayCount() const noexcept { return _count; }
 
   /**
-   * @copydoc PropertyView::normalized
+   * @copydoc PropertyView<ElementType, false>::normalized
    */
   bool normalized() const noexcept { return false; }
 
   /**
-   * @copydoc PropertyView::offset
+   * @copydoc PropertyView<ElementType, false>::offset
    */
   std::optional<PropertyArrayView<std::string_view>> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::scale
+   * @copydoc PropertyView<ElementType, false>::scale
    */
   std::optional<PropertyArrayView<std::string_view>> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::max
+   * @copydoc PropertyView<ElementType, false>::max
    */
   std::optional<PropertyArrayView<std::string_view>> max() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::min
+   * @copydoc PropertyView<ElementType, false>::min
    */
   std::optional<PropertyArrayView<std::string_view>> min() const noexcept {
     return std::nullopt;
   }
 
   /**
-   * @copydoc PropertyView::required
+   * @copydoc PropertyView<ElementType, false>::required
    */
   bool required() const noexcept { return _required; }
 
   /**
-   * @copydoc PropertyView::noData
+   * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<PropertyArrayView<std::string_view>> noData() const noexcept {
     if (_noData.size > 0) {
@@ -2455,7 +2513,7 @@ public:
   }
 
   /**
-   * @copydoc PropertyView::defaultValue
+   * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<PropertyArrayView<std::string_view>>
   defaultValue() const noexcept {
@@ -2475,6 +2533,7 @@ public:
   }
 
 protected:
+  /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
 private:

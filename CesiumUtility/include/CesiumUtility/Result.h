@@ -14,11 +14,29 @@ namespace CesiumUtility {
  * @tparam T The type of value included in the result.
  */
 template <typename T> struct Result {
+  /**
+   * @brief Creates a `Result` with the given value and an empty \ref ErrorList.
+   *
+   * @param value_ The value that will be contained in this `Result`.
+   */
   Result(T value_) noexcept : value(std::move(value_)), errors() {}
 
+  /**
+   * @brief Creates a `Result` with the given value and \ref ErrorList.
+   *
+   * @param value_ The value that will be contained in this `Result`.
+   * @param errors_ The \ref ErrorList containing errors and warnings related to
+   * this `Result`.
+   */
   Result(T value_, ErrorList errors_) noexcept
       : value(std::move(value_)), errors(std::move(errors_)) {}
 
+  /**
+   * @brief Creates a `Result` with an empty value and the given \ref ErrorList.
+   *
+   * @param errors_ The \ref ErrorList containing errors and warnings related to
+   * this `Result`.
+   */
   Result(ErrorList errors_) noexcept : value(), errors(std::move(errors_)) {}
 
   /**
@@ -47,12 +65,32 @@ template <typename T> struct Result {
  * @tparam T The type of value included in the result.
  */
 template <typename T> struct Result<CesiumUtility::IntrusivePointer<T>> {
+  /**
+   * @brief Creates a `Result` with the given value and an empty \ref ErrorList.
+   *
+   * @param pValue_ An intrusive pointer to the value that will be contained in
+   * this `Result`.
+   */
   Result(CesiumUtility::IntrusivePointer<T> pValue_) noexcept
       : pValue(std::move(pValue_)), errors() {}
 
+  /**
+   * @brief Creates a `Result` with the given value and \ref ErrorList.
+   *
+   * @param pValue_ An intrusive pointer to the value that will be contained in
+   * this `Result`.
+   * @param errors_ The \ref ErrorList containing errors and warnings related to
+   * this `Result`.
+   */
   Result(CesiumUtility::IntrusivePointer<T> pValue_, ErrorList errors_) noexcept
       : pValue(std::move(pValue_)), errors(std::move(errors_)) {}
 
+  /**
+   * @brief Creates a `Result` with an empty value and the given \ref ErrorList.
+   *
+   * @param errors_ The \ref ErrorList containing errors and warnings related to
+   * this `Result`.
+   */
   Result(ErrorList errors_) noexcept
       : pValue(nullptr), errors(std::move(errors_)) {}
 

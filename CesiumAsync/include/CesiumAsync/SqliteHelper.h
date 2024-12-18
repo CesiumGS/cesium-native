@@ -15,6 +15,7 @@ namespace CesiumAsync {
  * a SQLite connection when it is no longer needed.
  */
 struct DeleteSqliteConnection {
+  /** @brief Closes the provided sqlite connection when called. */
   void operator()(CESIUM_SQLITE(sqlite3*) pConnection) noexcept;
 };
 
@@ -23,6 +24,7 @@ struct DeleteSqliteConnection {
  * a SQLite prepared statement when it is no longer needed.
  */
 struct DeleteSqliteStatement {
+  /** @brief Finalizes the provided sqlite statement when called. */
   void operator()(CESIUM_SQLITE(sqlite3_stmt*) pStatement) noexcept;
 };
 

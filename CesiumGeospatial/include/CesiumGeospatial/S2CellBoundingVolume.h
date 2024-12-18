@@ -19,14 +19,16 @@ namespace CesiumGeospatial {
  * A tile bounding volume specified as an S2 cell token with minimum and maximum
  * heights. The bounding volume is a k DOP. A k-DOP is the Boolean intersection
  * of extents along k directions.
- *
- * @param cellID The S2 cell ID.
- * @param minimumHeight The minimum height of the bounding volume.
- * @param maximumHeight The maximum height of the bounding volume.
- * @param ellipsoid The ellipsoid.
  */
 class CESIUMGEOSPATIAL_API S2CellBoundingVolume final {
 public:
+  /** @brief Creates a new \ref S2CellBoundingVolume.
+   *
+   * @param cellID The S2 cell ID.
+   * @param minimumHeight The minimum height of the bounding volume.
+   * @param maximumHeight The maximum height of the bounding volume.
+   * @param ellipsoid The ellipsoid.
+   */
   S2CellBoundingVolume(
       const S2CellID& cellID,
       double minimumHeight,

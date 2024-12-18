@@ -144,7 +144,7 @@ Once the current tile finishes loading and is rendered, only then will the tiles
 Here are some additional selection algorithm topics that are not yet covered here, but should be in the future:
 
 * Load prioritization
-* Forbid Holes {#forbid-holes}
+* Forbid Holes <!--! \anchor forbid-holes !-->
 * Unconditionally-Refined Tiles
 * Occlusion Culling
 * External Tilesets and Implicit Tiles

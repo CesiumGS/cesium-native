@@ -42,6 +42,8 @@ namespace Cesium3DTilesWriter {
 struct Extension3dTilesBoundingVolumeS2JsonWriter {
   using ValueType = Cesium3DTiles::Extension3dTilesBoundingVolumeS2;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "3DTILES_bounding_volume_S2";
 
   static void write(

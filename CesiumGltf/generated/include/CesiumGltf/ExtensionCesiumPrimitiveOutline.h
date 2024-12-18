@@ -14,7 +14,12 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionCesiumPrimitiveOutline final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionCesiumPrimitiveOutline";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "CESIUM_primitive_outline";
 
   /**
