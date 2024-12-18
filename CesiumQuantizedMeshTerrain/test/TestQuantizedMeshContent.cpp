@@ -419,7 +419,7 @@ void checkGridMesh(
   int32_t v = 0;
 
   std::vector<glm::dvec2> uvs;
-  uvs.reserve(static_cast<size_type>(verticesWidth * verticesHeight));
+  uvs.reserve(static_cast<size_t>(verticesWidth * verticesHeight));
   uint32_t positionIdx = 0;
   uint32_t idx = 0;
   for (uint32_t y = 0; y < verticesHeight; ++y) {
@@ -596,7 +596,7 @@ static void checkGeneratedGridNormal(
     uint32_t verticesHeight) {
   uint32_t totalGridIndices = (verticesWidth - 1) * (verticesHeight - 1) * 6;
   std::vector<glm::vec3> expectedNormals(
-      static_cast<size_type>(verticesWidth * verticesHeight));
+      static_cast<size_t>(verticesWidth * verticesHeight));
   for (uint32_t i = 0; i < totalGridIndices; i += 3) {
     I id0 = indices[i];
     I id1 = indices[i + 1];
@@ -1031,7 +1031,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     uint8_t x = 0, y = 0;
     octEncode(normal, x, y);
     std::vector<std::byte> octNormals(
-        static_cast<size_type>(verticesWidth * verticesHeight * 2));
+        static_cast<size_t>(verticesWidth * verticesHeight * 2));
     for (size_t i = 0; i < octNormals.size(); i += 2) {
       octNormals[i] = std::byte(x);
       octNormals[i + 1] = std::byte(y);
@@ -1073,7 +1073,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
 
     REQUIRE(
         static_cast<size_t>(normals.size()) ==
-        (static_cast<size_t>(verticesWidth * verticesHeight + totalSkirtVerticesCount));
+        (static_cast<size_t>(verticesWidth * verticesHeight) +
+         totalSkirtVerticesCount));
     for (int64_t i = 0; i < normals.size(); ++i) {
       REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::Epsilon2));
       REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::Epsilon2));
@@ -1119,7 +1120,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
   uint8_t x = 0, y = 0;
   octEncode(normal, x, y);
   std::vector<std::byte> octNormals(
-      static_cast<size_type>(verticesWidth * verticesHeight * 2));
+      static_cast<size_t>(verticesWidth * verticesHeight * 2));
   for (size_t i = 0; i < octNormals.size(); i += 2) {
     octNormals[i] = std::byte(x);
     octNormals[i + 1] = std::byte(y);

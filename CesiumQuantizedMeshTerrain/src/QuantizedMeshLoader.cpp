@@ -340,7 +340,7 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
 
       meshView.octEncodedNormalBuffer = std::span<const std::byte>(
           data.data() + readIndex,
-          static_cast<size_type>(vertexCount * 2));
+          static_cast<size_t>(vertexCount * 2));
     } else if (enableWaterMask && extensionID == 2) {
       // Water Mask
       if (extensionLength == 1) {
@@ -735,7 +735,7 @@ static std::vector<std::byte> generateNormals(
       sizeof(float));
   std::span<float> outputPositions(
       reinterpret_cast<float*>(outputPositionsBuffer.data()),
-      static_cast<size_type>((vertexCount + skirtVertexCount) * 3));
+      static_cast<size_t>((vertexCount + skirtVertexCount) * 3));
   size_t positionOutputIndex = 0;
 
   const glm::dvec3 center(

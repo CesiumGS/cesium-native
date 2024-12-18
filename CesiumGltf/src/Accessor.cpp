@@ -4,7 +4,6 @@
 
 #include <CesiumGltf/BufferView.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <string>
 

@@ -96,7 +96,7 @@ public:
       result.pImage->bytesPerChannel = 1;
       result.pImage->channels = 4;
       result.pImage->pixelData.resize(
-          static_cast<size_type>(this->getWidth() * this->getHeight() * 4),
+          static_cast<size_t>(this->getWidth() * this->getHeight() * 4),
           std::byte(tileID.level));
     }
 
