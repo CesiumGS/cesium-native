@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Removed unused types `JsonValueMissingKey` and `JsonValueNotRealValue` from `CesiumUtility`.
+
 ##### Additions :tada:
 
 - Added `offset` getter to `AccessorView`.

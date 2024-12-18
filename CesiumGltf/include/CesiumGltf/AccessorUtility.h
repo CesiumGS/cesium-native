@@ -16,7 +16,7 @@ namespace CesiumGltf {
  */
 struct CountFromAccessor {
   /** @brief Attempts to obtain an element count from an empty accessor variant,
-   * resulting in -1. */
+   * resulting in 0. */
   int64_t operator()(std::monostate) { return 0; }
 
   /** @brief Attempts to obtain an element count from an \ref AccessorView. */
