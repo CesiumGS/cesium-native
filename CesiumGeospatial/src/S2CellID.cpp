@@ -28,6 +28,8 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Assert.h>
 
+#include <math.h>
+
 #include <array>
 #include <cfloat>
 #include <cmath>

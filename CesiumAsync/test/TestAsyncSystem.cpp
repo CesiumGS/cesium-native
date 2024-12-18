@@ -3,7 +3,6 @@
 #include "CesiumAsync/SharedFuture.h"
 #include "CesiumAsync/ThreadPool.h"
 
-#include <bits/chrono.h>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 

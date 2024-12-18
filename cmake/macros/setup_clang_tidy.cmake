@@ -81,14 +81,17 @@ function(setup_clang_tidy)
             "Clang"
             RESULT_TOOL_PATH
             CLANG_TIDY_RUNNER_PATH)
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -extra-arg=-Wno-unknown-warning-option)
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -j14)
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -clang-tidy-binary ${CLANG_TIDY_PATH})
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -p ${_PROJECT_BUILD_DIRECTORY}) # path that contains a compile_commands.json
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS "\".*(src\/|include\/).*\"")
         if(CLANG_TIDY_RUNNER_PATH)
             add_custom_target(
-                clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} -extra-arg=-Wno-unknown-warning-option -j14 -clang-tidy-binary ${CLANG_TIDY_PATH} -p
-                ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
+                clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} ${CLANG_TIDY_RUNNER_PARAMS}
             )
             add_custom_target(
-                clang-tidy-fix COMMAND ${CLANG_TIDY_RUNNER_PATH} -fix -extra-arg=-Wno-unknown-warning-option -j14 -clang-tidy-binary ${CLANG_TIDY_PATH} -p
-                ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
+                clang-tidy-fix COMMAND ${CLANG_TIDY_RUNNER_PATH} -fix ${CLANG_TIDY_RUNNER_PARAMS}
             )
         else()
             # run-clang-tidy was not found, so call clang-tidy directly.

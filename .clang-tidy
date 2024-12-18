@@ -25,8 +25,8 @@ Checks:
   - "bugprone-inaccurate-erase"
   - "bugprone-inc-dec-in-conditions"
   - "bugprone-incorrect-enable-if"
-  #- "bugprone-incorrect-roundings"
-  #- "bugprone-infinite-loop"
+  - "bugprone-incorrect-roundings"
+  - "bugprone-infinite-loop"
   #- "bugprone-unhandled-self-assignment"
   #- "bugprone-unchecked-optional-access"
 
