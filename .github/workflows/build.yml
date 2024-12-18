@@ -28,7 +28,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 19
-          sudo mv /usr/bin/clang-tidy-19 /usr/bin/clang-tidy
+          sudo apt-get install clang-tidy
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
