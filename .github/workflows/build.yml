@@ -25,6 +25,9 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ccache-ubuntu-24.04-clang-clang-tidy
+      - name: Install latest clang and clang-tidy
+        run: |
+          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
@@ -35,8 +38,8 @@ jobs:
             vcpkg-ubuntu-24.04-clang
       - name: Set CC and CXX
         run: |
-          echo "CC=clang-18" >> "$GITHUB_ENV"
-          echo "CXX=clang++-18" >> "$GITHUB_ENV"
+          echo "CC=clang-19" >> "$GITHUB_ENV"
+          echo "CXX=clang++-19" >> "$GITHUB_ENV"
       - name: Make more swap space available
         run: |
           sudo swapoff -a
