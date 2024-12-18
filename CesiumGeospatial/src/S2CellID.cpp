@@ -1,17 +1,3 @@
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-
-#include <math.h>
-#include <s2/r2rect.h>
-#include <s2/s2coords.h>
-#include <s2/s2point.h>
-
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <string>
-#include <string_view>
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4100 4127 4309 4996)
@@ -22,22 +8,33 @@
 #endif
 
 // #include <s2/s2cell.h>
+#include <s2/r2rect.h>
 #include <s2/s1interval.h>
 #include <s2/s2cell_id.h>
+#include <s2/s2coords.h>
 #include <s2/s2latlng.h>
+#include <s2/s2point.h>
 // #include <s2/s2latlng_rect.h>
 
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/S2CellID.h"
 #include "HilbertOrder.h"
 
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Assert.h>
 
+#include <array>
 #include <cfloat>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
