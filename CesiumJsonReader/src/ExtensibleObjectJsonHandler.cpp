@@ -6,8 +6,6 @@
 #include "CesiumJsonReader/ObjectJsonHandler.h"
 #include "CesiumUtility/ExtensibleObject.h"
 
-#include <bits/basic_string.h>
-
 #include <string>
 #include <string_view>
 

@@ -10,8 +10,6 @@
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
 
-#include <bits/basic_string.h>
-
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>

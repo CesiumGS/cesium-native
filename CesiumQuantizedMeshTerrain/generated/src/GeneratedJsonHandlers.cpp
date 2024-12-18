@@ -12,7 +12,6 @@
 #include <CesiumQuantizedMeshTerrain/LayerReader.h>
 #include <CesiumUtility/Assert.h>
 
-#include <bits/basic_string.h>
 #include <rapidjson/document.h>
 
 #include <cstddef>

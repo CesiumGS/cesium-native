@@ -13,7 +13,6 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <bits/basic_string.h>
 #include <rapidjson/document.h>
 
 #include <any>
