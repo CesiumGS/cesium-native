@@ -747,12 +747,12 @@ function createEnum(enumDetails) {
     description = `${enumDetails.description ?? identifier} (\`${enumValue}\`)`;
   }
 
-  const comment = `/** @brief ${description} */\n`;
+  const comment = `/** @brief ${description} */`;
 
   if (enumDetails.type === "integer") {
-    return comment + `static constexpr int32_t ${identifier} = ${enumValue}`;
+    return `${comment}\nstatic constexpr int32_t ${identifier} = ${enumValue}`;
   } else {
-    return comment + `inline static const std::string ${identifier} = \"${enumValue}\"`;
+    return `${comment}\ninline static const std::string ${identifier} = \"${enumValue}\"`;
   }
 }
 
