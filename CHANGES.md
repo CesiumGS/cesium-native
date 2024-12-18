@@ -24,6 +24,7 @@
 - Fixed a raster overlay bug that could cause unnecessary upsampling with failed or missing overlay tiles.
 - Fixed a bug in  `SubtreeFileReader::loadBinary` that prevented valid subtrees from loading if they did not contain binary data.
 - Fixed a bug in the `Tileset` selection algorithm that could cause detail to disappear during load in some cases.
+- Improved the "kicking" mechanism in the tileset selection algorithm. The new criteria allows holes in a `Tileset`, when they do occur, to be filled with loaded tiles more incrementally.
 
 ### v0.42.0 - 2024-12-02
 
