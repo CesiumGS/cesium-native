@@ -237,7 +237,7 @@ void copyDecodedAttribute(
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
 
   const int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
-  const int64_t stride = static_cast<const int64_t>(
+  const int64_t stride = static_cast<int64_t>(
       numberOfComponents * pAccessor->computeByteSizeOfComponent());
   const int64_t sizeBytes = pAccessor->count * stride;
 
