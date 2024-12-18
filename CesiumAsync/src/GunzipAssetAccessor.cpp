@@ -55,7 +55,7 @@ class GunzippedAssetRequest : public IAssetRequest {
 public:
   GunzippedAssetRequest(std::shared_ptr<IAssetRequest>&& pOther)
       : _pAssetRequest(std::move(pOther)),
-        _AssetResponse(_pAssetRequest->response()){};
+        _assetResponse(_pAssetRequest->response()){};
   virtual const std::string& method() const noexcept override {
     return this->_pAssetRequest->method();
   }
@@ -69,12 +69,12 @@ public:
   }
 
   virtual const IAssetResponse* response() const noexcept override {
-    return &this->_AssetResponse;
+    return &this->_assetResponse;
   }
 
 private:
   std::shared_ptr<IAssetRequest> _pAssetRequest;
-  GunzippedAssetResponse _AssetResponse;
+  GunzippedAssetResponse _assetResponse;
 };
 
 Future<std::shared_ptr<IAssetRequest>> gunzipIfNeeded(

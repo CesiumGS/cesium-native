@@ -528,7 +528,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                            GltfConverterResult&& converterResult) {
         if (converterResult.model.has_value()) {
           CesiumGltfReader::GltfReaderResult readerResult{
-              std::move(*converterResult.model),
+              std::move(converterResult.model),
               {},
               {}};
           CesiumAsync::HttpHeaders externalRequestHeaders(

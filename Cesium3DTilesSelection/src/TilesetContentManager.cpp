@@ -395,6 +395,11 @@ std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
   return projections;
 }
 
+// Really, these two methods are risky and could easily result in bugs, but
+// they're private methods used only in this class, so it's easier to just tell
+// clang-tidy to ignore them.
+
+// NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
 const BoundingVolume& getEffectiveBoundingVolume(
     const BoundingVolume& tileBoundingVolume,
     const std::optional<BoundingVolume>& updatedTileBoundingVolume,
@@ -435,6 +440,7 @@ const BoundingVolume& getEffectiveContentBoundingVolume(
   // And finally the regular tile bounding volume.
   return tileBoundingVolume;
 }
+// NOLINTEND(bugprone-return-const-ref-from-parameter)
 
 void calcRasterOverlayDetailsInWorkerThread(
     TileLoadResult& result,
@@ -1385,7 +1391,7 @@ void TilesetContentManager::setTileContent(
     }
 
     if (result.updatedContentBoundingVolume) {
-      tile.setContentBoundingVolume(*result.updatedContentBoundingVolume);
+      tile.setContentBoundingVolume(result.updatedContentBoundingVolume);
     }
 
     auto& content = tile.getContent();
