@@ -89,6 +89,9 @@ if(DOXYGEN_FOUND)
 
     if(NOT CESIUM_PRODUCTION_DOCS)
       set(DOXYGEN_PROJECT_BRIEF "PRE-RELEASE")
+      set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header-noindex.html")
+    else()
+      set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header.html")
     endif()
 
     # Add support for Mermaid charts using the @mermaid command.
