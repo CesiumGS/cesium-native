@@ -24,9 +24,10 @@ jobs:
         with:
           key: ccache-ubuntu-24.04-clang-clang-tidy
       - name: Install latest clang and clang-tidy
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "19.1.6"
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
