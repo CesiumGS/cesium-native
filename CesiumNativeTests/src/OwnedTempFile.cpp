@@ -1,17 +1,22 @@
 #include <CesiumNativeTests/OwnedTempFile.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <random>
+#include <span>
+#include <string>
 
 constexpr size_t randFilenameLen = 8;
 constexpr size_t randFilenameNumChars = 63;
 static const char randFilenameChars[randFilenameNumChars] =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-static std::string getTempFilename() {
+namespace {
+std::string getTempFilename() {
   std::string str = "CesiumTest_";
   str.reserve(str.length() + randFilenameLen);
 
@@ -26,6 +31,7 @@ static std::string getTempFilename() {
   auto path = std::filesystem::temp_directory_path() / str;
   return path.string();
 }
+} // namespace
 
 OwnedTempFile::OwnedTempFile() : _filePath(getTempFilename()) {}
 

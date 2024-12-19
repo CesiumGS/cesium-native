@@ -3,8 +3,9 @@
 #include "CesiumGltf/PropertyTableProperty.h"
 #include "CesiumGltf/PropertyType.h"
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <cstdint>
 
 using namespace CesiumGltf;
 

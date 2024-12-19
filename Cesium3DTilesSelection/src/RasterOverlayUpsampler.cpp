@@ -1,5 +1,12 @@
 #include "RasterOverlayUpsampler.h"
 
+#include "Cesium3DTilesSelection/TileContent.h"
+#include "Cesium3DTilesSelection/TileLoadResult.h"
+#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumGeometry/Axis.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -9,7 +16,13 @@
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <utility>
 #include <variant>
+#include <vector>
 
 using namespace CesiumRasterOverlays;
 

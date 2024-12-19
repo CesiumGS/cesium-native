@@ -1,9 +1,23 @@
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 
+#include "CesiumGeometry/BoundingSphere.h"
+#include "CesiumGeometry/OrientedBoundingBox.h"
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumGeospatial/GlobeTransforms.h"
+#include "CesiumGeospatial/S2CellBoundingVolume.h"
 
-#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+
+#include <cstdint>
+#include <optional>
+#include <variant>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

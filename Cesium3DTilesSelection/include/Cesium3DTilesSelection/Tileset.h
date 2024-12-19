@@ -313,6 +313,9 @@ public:
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
+  Tileset(const Tileset& rhs) = delete;
+  Tileset& operator=(const Tileset& rhs) = delete;
+
 private:
   /**
    * @brief The result of traversing one branch of the tile hierarchy.
@@ -564,9 +567,6 @@ private:
       const FrameState& frameState,
       const Tile& tile,
       const TileSelectionState& lastFrameSelectionState);
-
-  Tileset(const Tileset& rhs) = delete;
-  Tileset& operator=(const Tileset& rhs) = delete;
 };
 
 } // namespace Cesium3DTilesSelection

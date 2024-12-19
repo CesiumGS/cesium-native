@@ -1,10 +1,14 @@
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumUtility/Assert.h>
 
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <glm/mat3x3.hpp>
 
 using namespace CesiumGeospatial;
 

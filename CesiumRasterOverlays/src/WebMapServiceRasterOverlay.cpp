@@ -1,8 +1,19 @@
+#include "CesiumAsync/Future.h"
+#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumGeometry/QuadtreeTilingScheme.h"
+#include "CesiumGeometry/Rectangle.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
+#include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumUtility/Math.h"
+
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -10,10 +21,23 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Uri.h>
 
+#include <fmt/format.h>
+#include <nonstd/expected.hpp>
+#include <spdlog/logger.h>
 #include <tinyxml2.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <memory>
+#include <optional>
+#include <span>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -22,126 +46,8 @@ using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
 
-class WebMapServiceTileProvider final
-    : public QuadtreeRasterOverlayTileProvider {
-public:
-  WebMapServiceTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection,
-      const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
-      const CesiumGeometry::Rectangle& coverageRectangle,
-      const std::string& url,
-      const std::vector<IAssetAccessor::THeader>& headers,
-      const std::string& version,
-      const std::string& layers,
-      const std::string& format,
-      uint32_t width,
-      uint32_t height,
-      uint32_t minimumLevel,
-      uint32_t maximumLevel)
-      : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
-            projection,
-            tilingScheme,
-            coverageRectangle,
-            minimumLevel,
-            maximumLevel,
-            width,
-            height),
-        _url(url),
-        _headers(headers),
-        _version(version),
-        _layers(layers),
-        _format(format) {}
-
-  virtual ~WebMapServiceTileProvider() {}
-
-protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
-
-    LoadTileImageFromUrlOptions options;
-    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-
-    const CesiumGeospatial::GlobeRectangle tileRectangle =
-        CesiumGeospatial::unprojectRectangleSimple(
-            this->getProjection(),
-            options.rectangle);
-
-    std::string queryString = "?";
-
-    if (this->_url.find(queryString) != std::string::npos)
-      queryString = "&";
-
-    const std::string urlTemplate =
-        this->_url + queryString +
-        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
-        "WMS&"
-        "format={format}&styles="
-        "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
-        "&layers={layers}&crs=EPSG:4326";
-
-    const auto radiansToDegrees = [](double rad) {
-      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
-    };
-
-    const std::map<std::string, std::string> urlTemplateMap = {
-        {"baseUrl", this->_url},
-        {"version", this->_version},
-        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
-        {"maxy", radiansToDegrees(tileRectangle.getEast())},
-        {"minx", radiansToDegrees(tileRectangle.getSouth())},
-        {"miny", radiansToDegrees(tileRectangle.getWest())},
-        {"layers", this->_layers},
-        {"format", this->_format},
-        {"width", std::to_string(this->getWidth())},
-        {"height", std::to_string(this->getHeight())}};
-
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-        urlTemplate,
-        [&map = urlTemplateMap](const std::string& placeholder) {
-          auto it = map.find(placeholder);
-          return it == map.end() ? "{" + placeholder + "}"
-                                 : Uri::escape(it->second);
-        });
-
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
-  }
-
-private:
-  std::string _url;
-  std::vector<IAssetAccessor::THeader> _headers;
-  std::string _version;
-  std::string _layers;
-  std::string _format;
-};
-
-WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
-    const std::string& name,
-    const std::string& url,
-    const std::vector<IAssetAccessor::THeader>& headers,
-    const WebMapServiceRasterOverlayOptions& wmsOptions,
-    const RasterOverlayOptions& overlayOptions)
-    : RasterOverlay(name, overlayOptions),
-      _baseUrl(url),
-      _headers(headers),
-      _options(wmsOptions) {}
-
-WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() {}
-
-static bool validateCapabilities(
+namespace {
+bool validateCapabilities(
     tinyxml2::XMLElement* pRoot,
     const WebMapServiceRasterOverlayOptions& options,
     std::string& error) {
@@ -238,6 +144,126 @@ static bool validateCapabilities(
 
   return true;
 }
+} // namespace
+
+class WebMapServiceTileProvider final
+    : public QuadtreeRasterOverlayTileProvider {
+public:
+  WebMapServiceTileProvider(
+      const IntrusivePointer<const RasterOverlay>& pOwner,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      std::optional<Credit> credit,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+      const CesiumGeometry::Rectangle& coverageRectangle,
+      const std::string& url,
+      const std::vector<IAssetAccessor::THeader>& headers,
+      const std::string& version,
+      const std::string& layers,
+      const std::string& format,
+      uint32_t width,
+      uint32_t height,
+      uint32_t minimumLevel,
+      uint32_t maximumLevel)
+      : QuadtreeRasterOverlayTileProvider(
+            pOwner,
+            asyncSystem,
+            pAssetAccessor,
+            credit,
+            pPrepareRendererResources,
+            pLogger,
+            projection,
+            tilingScheme,
+            coverageRectangle,
+            minimumLevel,
+            maximumLevel,
+            width,
+            height),
+        _url(url),
+        _headers(headers),
+        _version(version),
+        _layers(layers),
+        _format(format) {}
+
+  virtual ~WebMapServiceTileProvider() = default;
+
+protected:
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override {
+
+    LoadTileImageFromUrlOptions options;
+    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+
+    const CesiumGeospatial::GlobeRectangle tileRectangle =
+        CesiumGeospatial::unprojectRectangleSimple(
+            this->getProjection(),
+            options.rectangle);
+
+    std::string queryString = "?";
+
+    if (this->_url.find(queryString) != std::string::npos)
+      queryString = "&";
+
+    const std::string urlTemplate =
+        this->_url + queryString +
+        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
+        "WMS&"
+        "format={format}&styles="
+        "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
+        "&layers={layers}&crs=EPSG:4326";
+
+    const auto radiansToDegrees = [](double rad) {
+      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
+    };
+
+    const std::map<std::string, std::string> urlTemplateMap = {
+        {"baseUrl", this->_url},
+        {"version", this->_version},
+        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
+        {"maxy", radiansToDegrees(tileRectangle.getEast())},
+        {"minx", radiansToDegrees(tileRectangle.getSouth())},
+        {"miny", radiansToDegrees(tileRectangle.getWest())},
+        {"layers", this->_layers},
+        {"format", this->_format},
+        {"width", std::to_string(this->getWidth())},
+        {"height", std::to_string(this->getHeight())}};
+
+    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
+        urlTemplate,
+        [&map = urlTemplateMap](const std::string& placeholder) {
+          auto it = map.find(placeholder);
+          return it == map.end() ? "{" + placeholder + "}"
+                                 : Uri::escape(it->second);
+        });
+
+    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
+  }
+
+private:
+  std::string _url;
+  std::vector<IAssetAccessor::THeader> _headers;
+  std::string _version;
+  std::string _layers;
+  std::string _format;
+};
+
+WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
+    const std::string& name,
+    const std::string& url,
+    const std::vector<IAssetAccessor::THeader>& headers,
+    const WebMapServiceRasterOverlayOptions& wmsOptions,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
+      _baseUrl(url),
+      _headers(headers),
+      _options(wmsOptions) {}
+
+WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(
@@ -294,7 +320,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (!pResponse) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   "No response received from web map service."});
             }
 
@@ -307,7 +333,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   "Could not parse web map service XML."});
             }
 
@@ -315,7 +341,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (!pRoot) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   "Web map service XML document does not have a root "
                   "element."});
             }
@@ -324,7 +350,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (!validateCapabilities(pRoot, options, validationError)) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   validationError});
             }
 

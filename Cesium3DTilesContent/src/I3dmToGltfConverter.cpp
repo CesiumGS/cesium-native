@@ -1,29 +1,54 @@
 // Heavily inspired by PntsToGltfConverter.cpp
 
+#include "Cesium3DTilesContent/GltfConverterResult.h"
+#include "Cesium3DTilesContent/GltfConverters.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/HttpHeaders.h"
+#include "CesiumGltfReader/GltfReader.h"
+#include "CesiumUtility/Assert.h"
+
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
-#include <glm/gtc/matrix_transform.hpp>
+#include <fmt/format.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_common.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/matrix.hpp>
+#include <rapidjson/document.h>
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <numeric>
+#include <limits>
 #include <optional>
 #include <set>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 
@@ -347,6 +372,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         numInstances);
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
   } else {
+    CESIUM_ASSERT(parsedContent.positionQuantized.has_value());
     std::span<const uint16_t[3]> rawQuantizedPositions(
         reinterpret_cast<const uint16_t(*)[3]>(
             pBinaryData + *parsedContent.positionQuantized),
@@ -405,8 +431,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         decodedInstances.rotations.begin(),
         [](auto&& upOct, auto&& rightOct) {
           return rotationFromUpRight(
-              decodeOct32P(upOct),
-              decodeOct32P(rightOct));
+              decodeOct32P(reinterpret_cast<const uint16_t*>(upOct)),
+              decodeOct32P(reinterpret_cast<const uint16_t*>(rightOct)));
         });
   } else if (decodedInstances.rotationENU) {
     glm::dmat4 worldTransform = assetFetcher.tileTransform;
@@ -502,7 +528,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                            GltfConverterResult&& converterResult) {
         if (converterResult.model.has_value()) {
           CesiumGltfReader::GltfReaderResult readerResult{
-              std::move(*converterResult.model),
+              std::move(converterResult.model),
               {},
               {}};
           CesiumAsync::HttpHeaders externalRequestHeaders(

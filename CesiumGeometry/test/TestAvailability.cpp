@@ -1,19 +1,18 @@
 
 #include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/AxisAlignedBox.h"
 #include "CesiumGeometry/OctreeAvailability.h"
 #include "CesiumGeometry/OctreeTileID.h"
 #include "CesiumGeometry/QuadtreeAvailability.h"
 #include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <algorithm>
-#include <memory>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <span>
+#include <utility>
 #include <vector>
 
 using namespace CesiumGeometry;

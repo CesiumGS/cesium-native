@@ -1,9 +1,13 @@
 #include "NamedObjectJsonHandler.h"
 
+#include "CesiumJsonReader/IJsonHandler.h"
+#include "CesiumJsonReader/JsonReaderOptions.h"
+
 #include <CesiumGltf/NamedObject.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 #include <string>
+#include <string_view>
 
 namespace CesiumGltfReader {
 NamedObjectJsonHandler::NamedObjectJsonHandler(

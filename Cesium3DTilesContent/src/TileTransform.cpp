@@ -1,7 +1,10 @@
 #include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTilesContent/TileTransform.h>
 
-#include <glm/mat4x4.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+
+#include <optional>
+#include <vector>
 
 namespace Cesium3DTilesContent {
 

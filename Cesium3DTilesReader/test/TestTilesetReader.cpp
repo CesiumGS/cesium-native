@@ -1,17 +1,20 @@
+#include "CesiumJsonReader/JsonReaderOptions.h"
+
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumNativeTests/readFile.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/vec3.hpp>
-#include <rapidjson/reader.h>
+#include <catch2/matchers/catch_matchers.hpp>
+#include <catch2/matchers/catch_matchers_vector.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <span>
 #include <string>
+#include <vector>
 
 TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;

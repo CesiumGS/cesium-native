@@ -2,6 +2,8 @@
 
 #include "CesiumUtility/Assert.h"
 
+#include <cstdint>
+
 using namespace CesiumGeospatial;
 
 namespace {

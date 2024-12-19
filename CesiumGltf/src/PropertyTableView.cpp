@@ -1,8 +1,33 @@
 #include "CesiumGltf/PropertyTableView.h"
 
+#include "CesiumUtility/IntrusivePointer.h"
+
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Schema.h>
+
+#include <glm/common.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <string>
+#include <string_view>
+
 namespace CesiumGltf {
+
+namespace {
 template <typename T>
-static PropertyViewStatusType checkOffsetsBuffer(
+PropertyViewStatusType checkOffsetsBuffer(
     const std::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
@@ -46,7 +71,7 @@ static PropertyViewStatusType checkOffsetsBuffer(
 }
 
 template <typename T>
-static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
+PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     const std::span<const std::byte>& arrayOffsets,
     const std::span<const std::byte>& stringOffsets,
     size_t valueBufferSize,
@@ -103,6 +128,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType;
   }
 }
+} // namespace
 
 PropertyTableView::PropertyTableView(
     const Model& model,

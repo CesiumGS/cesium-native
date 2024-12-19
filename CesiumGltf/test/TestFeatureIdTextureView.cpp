@@ -4,13 +4,23 @@
 #include "CesiumGltf/Model.h"
 #include "CesiumUtility/Math.h"
 
-#include <catch2/catch.hpp>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltf/TextureView.h>
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
-#include <span>
+#include <optional>
 #include <vector>
 
 using namespace CesiumGltf;

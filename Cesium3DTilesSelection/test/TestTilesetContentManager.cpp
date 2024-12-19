@@ -1,3 +1,21 @@
+#include "Cesium3DTilesSelection/TileLoadResult.h"
+#include "Cesium3DTilesSelection/TileRefine.h"
+#include "Cesium3DTilesSelection/TilesetExternals.h"
+#include "Cesium3DTilesSelection/TilesetOptions.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumGeometry/Axis.h"
+#include "CesiumGeometry/Rectangle.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GeographicProjection.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Projection.h"
+#include "CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumRasterOverlays/RasterOverlayDetails.h"
+#include "CesiumRasterOverlays/RasterOverlayTile.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
+#include "CesiumUtility/CreditSystem.h"
 #include "SimplePrepareRendererResource.h"
 #include "TestTilesetJsonLoader.h"
 #include "TilesetContentManager.h"
@@ -9,8 +27,17 @@
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/Scene.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
@@ -23,9 +50,25 @@
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/glm.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/trigonometric.hpp>
+#include <spdlog/logger.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <optional>
+#include <span>
+#include <type_traits>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace Cesium3DTilesSelection;
@@ -84,8 +127,8 @@ CesiumGltf::Model createGlobeGrid(
   glm::dvec3 max = min;
 
   std::vector<glm::dvec3> positions;
-  indices.reserve(6 * (width - 1) * (height - 1));
-  positions.reserve(width * height);
+  indices.reserve(static_cast<size_t>(6 * (width - 1) * (height - 1)));
+  positions.reserve(static_cast<size_t>(width * height));
   for (uint32_t y = 0; y < height; ++y) {
     for (uint32_t x = 0; x < width; ++x) {
       double longitude = beginPoint.longitude + x * dimension;

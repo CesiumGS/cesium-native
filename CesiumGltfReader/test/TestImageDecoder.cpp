@@ -1,10 +1,12 @@
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumNativeTests/readFile.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
 #include <filesystem>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;

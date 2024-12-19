@@ -1,6 +1,12 @@
 
 #include "CesiumGltf/KhrTextureTransform.h"
 
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+
+#include <glm/trigonometric.hpp>
+
+#include <optional>
+
 using namespace CesiumGltf;
 
 KhrTextureTransform::KhrTextureTransform() noexcept

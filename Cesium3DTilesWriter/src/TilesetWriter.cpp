@@ -7,6 +7,8 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <memory>
+
 namespace Cesium3DTilesWriter {
 
 TilesetWriter::TilesetWriter() { registerWriterExtensions(this->_context); }

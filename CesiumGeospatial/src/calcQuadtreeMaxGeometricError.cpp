@@ -1,4 +1,8 @@
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
+
+#include <cstdint>
 
 namespace CesiumGeospatial {
 double calcQuadtreeMaxGeometricError(

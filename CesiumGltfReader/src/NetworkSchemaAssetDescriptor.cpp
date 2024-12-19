@@ -1,7 +1,18 @@
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/NetworkAssetDescriptor.h"
+#include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumUtility/Result.h"
+
 #include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
 #include <CesiumGltfReader/SchemaReader.h>
 #include <CesiumJsonReader/JsonReader.h>
-#include <CesiumUtility/Hash.h>
+
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;

@@ -16,6 +16,12 @@ function(configure_cesium_library targetName)
         target_compile_options(${targetName} PRIVATE -Wno-dangling-reference)
     endif()
 
+    target_compile_definitions(
+        ${targetName}
+        PUBLIC
+            GLM_FORCE_CXX2A # Force GLM to use C++20 features, most importantly noexcept
+    )
+
     if (CESIUM_GLM_STRICT_ENABLED)
         target_compile_definitions(
             ${targetName}

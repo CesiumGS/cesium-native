@@ -7,6 +7,8 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <memory>
+
 namespace Cesium3DTilesWriter {
 
 SubtreeWriter::SubtreeWriter() { registerWriterExtensions(this->_context); }

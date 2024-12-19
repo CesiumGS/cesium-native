@@ -2,6 +2,11 @@
 
 #include "CesiumGltf/Model.h"
 
+#include <CesiumGltf/BufferView.h>
+
+#include <cstdint>
+#include <string>
+
 namespace CesiumGltf {
 /*static*/ int8_t
 Accessor::computeNumberOfComponents(const std::string& type) noexcept {
@@ -77,7 +82,8 @@ Accessor::computeByteStride(const CesiumGltf::Model& model) const noexcept {
   if (pBufferView->byteStride && pBufferView->byteStride.value() != 0) {
     return pBufferView->byteStride.value();
   }
-  return computeNumberOfComponents(this->type) *
-         computeByteSizeOfComponent(this->componentType);
+  return static_cast<int64_t>(
+      computeNumberOfComponents(this->type) *
+      computeByteSizeOfComponent(this->componentType));
 }
 } // namespace CesiumGltf

@@ -1,5 +1,6 @@
 #include "CesiumJsonReader/BoolJsonHandler.h"
 
+#include "CesiumJsonReader/IJsonHandler.h"
 #include "CesiumJsonReader/JsonHandler.h"
 #include "CesiumUtility/Assert.h"
 

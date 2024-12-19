@@ -1,5 +1,13 @@
 #include "CesiumGeometry/OctreeTilingScheme.h"
 
+#include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/OctreeTileID.h"
+
+#include <glm/ext/vector_double3.hpp>
+
+#include <cstdint>
+#include <optional>
+
 namespace CesiumGeometry {
 
 OctreeTilingScheme::OctreeTilingScheme(

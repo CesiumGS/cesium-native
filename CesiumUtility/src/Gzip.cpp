@@ -2,9 +2,13 @@
 
 #include "CesiumUtility/Assert.h"
 
+#include <zconf-ng.h>
 #include <zlib-ng.h>
 
+#include <cstddef>
 #include <cstring>
+#include <span>
+#include <vector>
 
 namespace CesiumUtility {
 

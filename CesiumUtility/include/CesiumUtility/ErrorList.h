@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Library.h"
+#include "Log.h" // NOLINT
 #include "joinToString.h"
 
 #include <spdlog/spdlog.h>

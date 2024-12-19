@@ -1,5 +1,18 @@
 #include "ImplicitQuadtreeLoader.h"
 
+#include "Cesium3DTilesContent/GltfConverterResult.h"
+#include "Cesium3DTilesContent/SubtreeAvailability.h"
+#include "Cesium3DTilesSelection/BoundingVolume.h"
+#include "Cesium3DTilesSelection/TileContent.h"
+#include "Cesium3DTilesSelection/TileLoadResult.h"
+#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumGeometry/Axis.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGltfReader/GltfReader.h"
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTilesContent/GltfConverters.h>
@@ -7,14 +20,21 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Uri.h>
 
+#include <glm/ext/matrix_double4x4.hpp>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesContent;
 
@@ -201,7 +221,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                     logTileLoadResult(pLogger, tileUrl, result.errors);
                     if (result.errors || !result.model) {
                       return TileLoadResult::createFailedResult(
-                          std::move(pAssetAccessor),
+                          pAssetAccessor,
                           std::move(pCompletedRequest));
                     }
 
@@ -211,7 +231,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                         std::nullopt,
                         std::nullopt,
                         std::nullopt,
-                        std::move(pAssetAccessor),
+                        pAssetAccessor,
                         std::move(pCompletedRequest),
                         {},
                         TileLoadResultState::Success,

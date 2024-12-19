@@ -1,13 +1,15 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
 
+#include "CesiumGeometry/AxisAlignedBox.h"
+#include "CesiumGeometry/BoundingSphere.h"
+#include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/Plane.h"
 
-#include <CesiumUtility/Math.h>
-
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
-
-#include <stdexcept>
 
 namespace CesiumGeometry {
 CullingResult

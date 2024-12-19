@@ -5,6 +5,7 @@
 
 #include <exception>
 #include <memory>
+#include <utility>
 
 namespace CesiumAsync {
 
@@ -37,7 +38,7 @@ public:
    * @param error The error that caused the task to fail.
    */
   template <typename TException> void reject(TException error) const {
-    this->_pEvent->set_exception(std::make_exception_ptr(error));
+    this->_pEvent->set_exception(std::make_exception_ptr(std::move(error)));
   }
 
   /**
@@ -90,7 +91,7 @@ public:
    * @param error The error that caused the task to fail.
    */
   template <typename TException> void reject(TException error) const {
-    this->_pEvent->set_exception(std::make_exception_ptr(error));
+    this->_pEvent->set_exception(std::make_exception_ptr(std::move(error)));
   }
 
   /**

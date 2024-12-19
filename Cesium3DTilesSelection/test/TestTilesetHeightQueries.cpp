@@ -1,3 +1,10 @@
+#include "Cesium3DTilesSelection/SampleHeightResult.h"
+#include "Cesium3DTilesSelection/TilesetExternals.h"
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumUtility/Math.h"
+
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/Tileset.h>
@@ -7,10 +14,11 @@
 #include <CesiumUtility/StringHelpers.h>
 #include <CesiumUtility/Uri.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
+#include <memory>
+#include <string>
 
 using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;

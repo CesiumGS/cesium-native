@@ -4,8 +4,6 @@
 
 #include <CesiumUtility/JsonValue.h>
 
-#include <functional>
-#include <stack>
 #include <utility>
 
 namespace CesiumJsonWriter {

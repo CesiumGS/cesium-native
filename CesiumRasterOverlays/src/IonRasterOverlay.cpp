@@ -1,3 +1,8 @@
+#include "CesiumAsync/Future.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumUtility/CreditSystem.h"
+#include "CesiumUtility/IntrusivePointer.h"
+
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
@@ -7,8 +12,19 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
+
+#include <fmt/format.h>
+#include <nonstd/expected.hpp>
+#include <rapidjson/document.h>
+#include <spdlog/logger.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -26,7 +42,7 @@ IonRasterOverlay::IonRasterOverlay(
       _ionAccessToken(ionAccessToken),
       _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
 
-IonRasterOverlay::~IonRasterOverlay() {}
+IonRasterOverlay::~IonRasterOverlay() = default;
 
 std::unordered_map<std::string, IonRasterOverlay::ExternalAssetEndpoint>
     IonRasterOverlay::endpointCache;
@@ -75,7 +91,7 @@ IonRasterOverlay::createTileProvider(
       pCreditSystem,
       pPrepareRendererResources,
       pLogger,
-      pOwner);
+      std::move(pOwner));
 }
 
 Future<RasterOverlay::CreateTileProviderResult>

@@ -1,7 +1,17 @@
+#include "Cesium3DTilesContent/GltfConverterResult.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumGltfReader/GltfReader.h"
+
 #include <Cesium3DTilesContent/CmptToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <utility>
+#include <vector>
 
 namespace Cesium3DTilesContent {
 namespace {

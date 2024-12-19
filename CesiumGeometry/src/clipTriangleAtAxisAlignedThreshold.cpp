@@ -1,5 +1,7 @@
 #include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
 
+#include <vector>
+
 namespace CesiumGeometry {
 void clipTriangleAtAxisAlignedThreshold(
     double

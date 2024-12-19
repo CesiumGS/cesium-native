@@ -1,13 +1,14 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
-#include <CesiumNativeTests/OwnedTempFile.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
 #include <filesystem>
+#include <optional>
+#include <vector>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;

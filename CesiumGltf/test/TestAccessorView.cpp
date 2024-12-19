@@ -1,9 +1,16 @@
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/Model.h"
 
-#include <catch2/catch.hpp>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+
 #include <catch2/catch_test_macros.hpp>
-#include <glm/vec3.hpp>
+#include <glm/ext/vector_float3.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
 
 using namespace CesiumGltf;
 

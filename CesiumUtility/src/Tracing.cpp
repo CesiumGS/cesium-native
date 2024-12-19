@@ -3,10 +3,6 @@
 
 #include "CesiumUtility/Tracing.h"
 
-#include <CesiumUtility/Assert.h>
-
-#include <algorithm>
-
 #if CESIUM_TRACING_ENABLED
 
 namespace CesiumUtility {

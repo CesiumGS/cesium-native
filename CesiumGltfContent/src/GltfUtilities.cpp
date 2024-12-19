@@ -1,15 +1,24 @@
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumUtility/JsonValue.h"
+
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Ray.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorSpec.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Animation.h>
+#include <CesiumGltf/AnimationSampler.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
-#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
@@ -17,16 +26,38 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTexture.h>
+#include <CesiumGltf/Skin.h>
+#include <CesiumGltf/Texture.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Assert.h>
 
-#include <glm/gtc/quaternion.hpp>
+#include <fmt/format.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/matrix.hpp>
 
 #include <algorithm>
 #include <array>
+#include <cassert>
+#include <cstdint>
 #include <cstring>
-#include <unordered_set>
+#include <limits>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace CesiumGltf;
@@ -425,7 +456,7 @@ void findClosestRayHit(
 
   // Need at least 3 positions to form a triangle
   if (positionView.size() < 3) {
-    warnings.push_back("Skipping mesh with less than 3 vertex positions");
+    warnings.emplace_back("Skipping mesh with less than 3 vertex positions");
     return;
   }
 
@@ -562,7 +593,7 @@ void findClosestIndexedRayHit(
 
   // Need at least 3 vertices to form a triangle
   if (indicesView.size() < 3) {
-    warnings.push_back("Skipping indexed mesh with less than 3 indices");
+    warnings.emplace_back("Skipping indexed mesh with less than 3 indices");
     return;
   }
 
@@ -720,7 +751,7 @@ void findClosestIndexedRayHit(
   }
 
   if (foundInvalidIndex)
-    warnings.push_back(
+    warnings.emplace_back(
         "Found one or more invalid index values for indexed mesh");
 
   tMinOut = tClosest;
@@ -788,8 +819,8 @@ std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
   indexMap.reserve(usedIndices.size());
 
   int32_t nextIndex = 0;
-  for (size_t i = 0; i < usedIndices.size(); ++i) {
-    if (usedIndices[i]) {
+  for (bool usedIndice : usedIndices) {
+    if (usedIndice) {
       indexMap.push_back(nextIndex);
       ++nextIndex;
     } else {
@@ -1305,7 +1336,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
        &warnings](const auto& positionView) {
         // Bail on invalid view
         if (positionView.status() != AccessorViewStatus::Valid) {
-          warnings.push_back(
+          warnings.emplace_back(
               "Skipping mesh with an invalid position component type");
           return;
         }
@@ -1316,7 +1347,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               Model::getSafe(&model.accessors, primitive.indices);
 
           if (!indexAccessor) {
-            warnings.push_back(
+            warnings.emplace_back(
                 "Skipping mesh with an invalid index accessor id");
             return;
           }
@@ -1325,7 +1356,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
           // From the glTF spec...
           // "Indices MUST be non-negative integer numbers."
           if (indexAccessor->componentType == Accessor::ComponentType::FLOAT) {
-            warnings.push_back(
+            warnings.emplace_back(
                 "Skipping mesh with an invalid index component type");
             return;
           }
@@ -1341,7 +1372,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
                &warnings](const auto& indexView) {
                 // Bail on invalid view
                 if (indexView.status() != AccessorViewStatus::Valid) {
-                  warnings.push_back(
+                  warnings.emplace_back(
                       "Could not create accessor view for mesh indices");
                   return;
                 }
@@ -1427,7 +1458,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // Skip primitives that can't access positions
         auto positionAccessorIt = primitive.attributes.find("POSITION");
         if (positionAccessorIt == primitive.attributes.end()) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh without a position attribute");
           return;
         }
@@ -1435,7 +1466,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         const Accessor* pPositionAccessor =
             Model::getSafe(&model.accessors, positionAccessorID);
         if (!pPositionAccessor) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh with an invalid position accessor id");
           return;
         }
@@ -1443,7 +1474,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // From the glTF spec, the POSITION accessor must use VEC3
         // But we should still protect against malformed gltfs
         if (pPositionAccessor->type != AccessorSpec::Type::VEC3) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh with a non-vec3 position accessor");
           return;
         }
@@ -1492,9 +1523,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         if (!result.hit.has_value()) {
           result.hit = RayGltfHit{
-              std::move(*primitiveHitPoint),
-              std::move(primitiveToWorld),
-              std::move(worldPoint),
+              *primitiveHitPoint,
+              primitiveToWorld,
+              worldPoint,
               rayToWorldPointDistanceSq,
               meshId,
               primitiveId};
@@ -1503,9 +1534,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         // Use in result if it's closer
         if (rayToWorldPointDistanceSq < result.hit->rayToWorldPointDistanceSq) {
-          result.hit->primitivePoint = std::move(*primitiveHitPoint);
-          result.hit->primitiveToWorld = std::move(primitiveToWorld);
-          result.hit->worldPoint = std::move(worldPoint);
+          result.hit->primitivePoint = *primitiveHitPoint;
+          result.hit->primitiveToWorld = primitiveToWorld;
+          result.hit->worldPoint = worldPoint;
           result.hit->rayToWorldPointDistanceSq = rayToWorldPointDistanceSq;
           result.hit->meshId = meshId;
           result.hit->primitiveId = primitiveId;

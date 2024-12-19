@@ -1,9 +1,12 @@
 #include "CesiumGeometry/BoundingSphere.h"
 
+#include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/Plane.h"
 
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
-#include <glm/mat4x4.hpp>
 
 namespace CesiumGeometry {
 

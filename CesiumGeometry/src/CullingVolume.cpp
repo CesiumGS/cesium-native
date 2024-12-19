@@ -1,8 +1,10 @@
 #include "CesiumGeometry/CullingVolume.h"
 
-#include <glm/glm.hpp>
+#include "CesiumGeometry/Plane.h"
+
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
-#include <glm/vec3.hpp>
 
 namespace Cesium3DTilesSelection {
 

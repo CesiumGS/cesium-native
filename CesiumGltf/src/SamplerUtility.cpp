@@ -4,6 +4,10 @@
 
 #include <glm/common.hpp>
 
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+
 namespace CesiumGltf {
 double applySamplerWrapS(const double u, const int32_t wrapS) {
   if (wrapS == Sampler::WrapS::REPEAT) {

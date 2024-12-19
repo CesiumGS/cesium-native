@@ -1,5 +1,10 @@
 #include "Cesium3DTilesSelection/TileOcclusionRendererProxy.h"
 
+#include "Cesium3DTilesSelection/Tile.h"
+
+#include <cstddef>
+#include <cstdint>
+
 namespace Cesium3DTilesSelection {
 
 TileOcclusionRendererProxyPool::TileOcclusionRendererProxyPool(
