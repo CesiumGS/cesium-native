@@ -271,7 +271,7 @@ ImageReaderResult ImageDecoder::readImage(
             &image.height)) {
       image.channels = 4;
       image.bytesPerChannel = 1;
-      uint8_t* pImage = NULL;
+      uint8_t* pImage = nullptr;
       const auto bufferSize = image.width * image.height * image.channels;
       image.pixelData.resize(static_cast<std::size_t>(bufferSize));
       pImage = WebPDecodeRGBAInto(
