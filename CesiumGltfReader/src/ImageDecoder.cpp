@@ -271,7 +271,7 @@ ImageReaderResult ImageDecoder::readImage(
             &image.height)) {
       image.channels = 4;
       image.bytesPerChannel = 1;
-      uint8_t* pImage = nullptr;
+      uint8_t* pImage = NULL;
       const auto bufferSize = image.width * image.height * image.channels;
       image.pixelData.resize(static_cast<std::size_t>(bufferSize));
       pImage = WebPDecodeRGBAInto(
@@ -294,7 +294,7 @@ ImageReaderResult ImageDecoder::readImage(
     if (!tjDecompressHeader3(
             tjInstance,
             reinterpret_cast<const unsigned char*>(data.data()),
-            static_cast<uint64_t>(data.size()),
+            static_cast<unsigned long>(data.size()), // NOLINT
             &image.width,
             &image.height,
             &inSubsamp,
@@ -308,7 +308,7 @@ ImageReaderResult ImageDecoder::readImage(
       if (tjDecompress2(
               tjInstance,
               reinterpret_cast<const unsigned char*>(data.data()),
-              static_cast<uint64_t>(data.size()),
+              static_cast<unsigned long>(data.size()), // NOLINT
               reinterpret_cast<unsigned char*>(image.pixelData.data()),
               image.width,
               0,
