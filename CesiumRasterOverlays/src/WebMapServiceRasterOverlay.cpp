@@ -46,6 +46,106 @@ using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
 
+namespace {
+bool validateCapabilities(
+    tinyxml2::XMLElement* pRoot,
+    const WebMapServiceRasterOverlayOptions& options,
+    std::string& error) {
+  tinyxml2::XMLElement* pService = pRoot->FirstChildElement("Service");
+  if (!pService) {
+    error = "Web map service XML document does not have a Service "
+            "element. ";
+    return false;
+  }
+
+  tinyxml2::XMLElement* pServiceName = pService->FirstChildElement("Name");
+  if (!pServiceName) {
+    error = "Invalid web map service XML document (Service > Name is "
+            "missing) ";
+    return false;
+  }
+
+  tinyxml2::XMLElement* pOptionalServiceMaxWidth =
+      pService->FirstChildElement("MaxWidth");
+  if (pOptionalServiceMaxWidth) {
+    const std::string maxWidthText = pOptionalServiceMaxWidth->GetText();
+    try {
+      const int maxWidth = std::stoi(maxWidthText);
+      const int optionalTileWidth = static_cast<int>(options.tileWidth);
+      if (optionalTileWidth > maxWidth) {
+        error = fmt::format(
+            "configured tile width ({}) exceeds "
+            "Service >> "
+            "MaxWidth defined in WMS document ({}).",
+            optionalTileWidth,
+            maxWidth);
+        return false;
+      }
+    } catch (std::invalid_argument&) {
+      error = "Invalid web map service XML document";
+      return false;
+    }
+  }
+
+  tinyxml2::XMLElement* pOptionalServiceMaxHeight =
+      pService->FirstChildElement("MaxHeight");
+  if (pOptionalServiceMaxHeight) {
+    const std::string maxHeightText = pOptionalServiceMaxHeight->GetText();
+    try {
+      const int maxHeight = std::stoi(maxHeightText);
+      const int optionalTileHeight = static_cast<int>(options.tileHeight);
+      if (optionalTileHeight > maxHeight) {
+        error = fmt::format(
+            "configured tile height ({}) exceeds "
+            "Service >> "
+            "MaxHeight defined in WMS document ({}).",
+            optionalTileHeight,
+            maxHeight);
+        return false;
+      }
+    } catch (std::invalid_argument&) {
+      error = "Invalid web map service XML document";
+      return false;
+    }
+  }
+
+  std::vector<std::string> configLayers{};
+  std::stringstream sstream(options.layers);
+  std::string layer;
+  const char delimiter = ',';
+  while (std::getline(sstream, layer, delimiter)) {
+    if (layer.size() > 0) {
+      configLayers.push_back(layer);
+    }
+  }
+
+  tinyxml2::XMLElement* pOptionalServiceLayerLimit =
+      pService->FirstChildElement("LayerLimit");
+  if (pOptionalServiceLayerLimit) {
+    try {
+      const int layerLimit = std::stoi(pOptionalServiceLayerLimit->GetText());
+      const int numLayers = static_cast<int>(configLayers.size());
+      if (numLayers > layerLimit) {
+        char buffer[512];
+        std::snprintf(
+            buffer,
+            512,
+            "the number of configured layers (%d) exceeds WMS LayerLimit %d",
+            numLayers,
+            layerLimit);
+        error = buffer;
+        return false;
+      }
+    } catch (std::invalid_argument const&) {
+      error = "Invalid web map service XML document";
+      return false;
+    }
+  }
+
+  return true;
+}
+} // namespace
+
 class WebMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
@@ -164,104 +264,6 @@ WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
       _options(wmsOptions) {}
 
 WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() {}
-
-static bool validateCapabilities(
-    tinyxml2::XMLElement* pRoot,
-    const WebMapServiceRasterOverlayOptions& options,
-    std::string& error) {
-  tinyxml2::XMLElement* pService = pRoot->FirstChildElement("Service");
-  if (!pService) {
-    error = "Web map service XML document does not have a Service "
-            "element. ";
-    return false;
-  }
-
-  tinyxml2::XMLElement* pServiceName = pService->FirstChildElement("Name");
-  if (!pServiceName) {
-    error = "Invalid web map service XML document (Service > Name is "
-            "missing) ";
-    return false;
-  }
-
-  tinyxml2::XMLElement* pOptionalServiceMaxWidth =
-      pService->FirstChildElement("MaxWidth");
-  if (pOptionalServiceMaxWidth) {
-    const std::string maxWidthText = pOptionalServiceMaxWidth->GetText();
-    try {
-      const int maxWidth = std::stoi(maxWidthText);
-      const int optionalTileWidth = static_cast<int>(options.tileWidth);
-      if (optionalTileWidth > maxWidth) {
-        error = fmt::format(
-            "configured tile width ({}) exceeds "
-            "Service >> "
-            "MaxWidth defined in WMS document ({}).",
-            optionalTileWidth,
-            maxWidth);
-        return false;
-      }
-    } catch (std::invalid_argument&) {
-      error = "Invalid web map service XML document";
-      return false;
-    }
-  }
-
-  tinyxml2::XMLElement* pOptionalServiceMaxHeight =
-      pService->FirstChildElement("MaxHeight");
-  if (pOptionalServiceMaxHeight) {
-    const std::string maxHeightText = pOptionalServiceMaxHeight->GetText();
-    try {
-      const int maxHeight = std::stoi(maxHeightText);
-      const int optionalTileHeight = static_cast<int>(options.tileHeight);
-      if (optionalTileHeight > maxHeight) {
-        error = fmt::format(
-            "configured tile height ({}) exceeds "
-            "Service >> "
-            "MaxHeight defined in WMS document ({}).",
-            optionalTileHeight,
-            maxHeight);
-        return false;
-      }
-    } catch (std::invalid_argument&) {
-      error = "Invalid web map service XML document";
-      return false;
-    }
-  }
-
-  std::vector<std::string> configLayers{};
-  std::stringstream sstream(options.layers);
-  std::string layer;
-  const char delimiter = ',';
-  while (std::getline(sstream, layer, delimiter)) {
-    if (layer.size() > 0) {
-      configLayers.push_back(layer);
-    }
-  }
-
-  tinyxml2::XMLElement* pOptionalServiceLayerLimit =
-      pService->FirstChildElement("LayerLimit");
-  if (pOptionalServiceLayerLimit) {
-    try {
-      const int layerLimit = std::stoi(pOptionalServiceLayerLimit->GetText());
-      const int numLayers = static_cast<int>(configLayers.size());
-      if (numLayers > layerLimit) {
-        char buffer[512];
-        std::snprintf(
-            buffer,
-            512,
-            "the number of configured layers (%d) exceeds WMS LayerLimit %d",
-            numLayers,
-            layerLimit);
-        error = buffer;
-        return false;
-      }
-    } catch (std::invalid_argument const&) {
-      error = "Invalid web map service XML document";
-      return false;
-    }
-  }
-
-  return true;
-}
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(

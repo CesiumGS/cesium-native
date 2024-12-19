@@ -55,6 +55,222 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static bool
+operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
+  return fogDensity.cameraHeight < height;
+}
+
+namespace {
+
+double computeFogDensity(
+    const std::vector<FogDensityAtHeight>& fogDensityTable,
+    const ViewState& viewState) {
+  const double height = viewState.getPositionCartographic()
+                            .value_or(Cartographic(0.0, 0.0, 0.0))
+                            .height;
+
+  // Find the entry that is for >= this camera height.
+  auto nextIt =
+      std::lower_bound(fogDensityTable.begin(), fogDensityTable.end(), height);
+
+  if (nextIt == fogDensityTable.end()) {
+    return fogDensityTable.back().fogDensity;
+  }
+  if (nextIt == fogDensityTable.begin()) {
+    return nextIt->fogDensity;
+  }
+
+  auto prevIt = nextIt - 1;
+
+  const double heightA = prevIt->cameraHeight;
+  const double densityA = prevIt->fogDensity;
+
+  const double heightB = nextIt->cameraHeight;
+  const double densityB = nextIt->fogDensity;
+
+  const double t =
+      glm::clamp((height - heightA) / (heightB - heightA), 0.0, 1.0);
+
+  const double density = glm::mix(densityA, densityB, t);
+
+  // CesiumJS will also fade out the fog based on the camera angle,
+  // so when we're looking straight down there's no fog. This is unfortunate
+  // because it prevents the fog culling from being used in place of horizon
+  // culling. Horizon culling is the only thing in CesiumJS that prevents
+  // tiles on the back side of the globe from being rendered.
+  // Since we're not actually _rendering_ the fog in cesium-native (that's on
+  // the renderer), we don't need to worry about the fog making the globe
+  // looked washed out in straight down views. So here we don't fade by
+  // angle at all.
+
+  return density;
+}
+
+void markTileNonRendered(
+    TileSelectionState::Result lastResult,
+    Tile& tile,
+    ViewUpdateResult& result) {
+  if (lastResult == TileSelectionState::Result::Rendered ||
+      (lastResult == TileSelectionState::Result::Refined &&
+       tile.getRefine() == TileRefine::Add)) {
+    result.tilesFadingOut.insert(&tile);
+    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
+    if (pRenderContent) {
+      pRenderContent->setLodTransitionFadePercentage(0.0f);
+    }
+  }
+}
+
+void markTileNonRendered(
+    int32_t lastFrameNumber,
+    Tile& tile,
+    ViewUpdateResult& result) {
+  const TileSelectionState::Result lastResult =
+      tile.getLastSelectionState().getResult(lastFrameNumber);
+  markTileNonRendered(lastResult, tile, result);
+}
+
+void markChildrenNonRendered(
+    int32_t lastFrameNumber,
+    TileSelectionState::Result lastResult,
+    Tile& tile,
+    ViewUpdateResult& result) {
+  if (lastResult == TileSelectionState::Result::Refined) {
+    for (Tile& child : tile.getChildren()) {
+      const TileSelectionState::Result childLastResult =
+          child.getLastSelectionState().getResult(lastFrameNumber);
+      markTileNonRendered(childLastResult, child, result);
+      markChildrenNonRendered(lastFrameNumber, childLastResult, child, result);
+    }
+  }
+}
+
+void markChildrenNonRendered(
+    int32_t lastFrameNumber,
+    Tile& tile,
+    ViewUpdateResult& result) {
+  const TileSelectionState::Result lastResult =
+      tile.getLastSelectionState().getResult(lastFrameNumber);
+  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
+}
+
+void markTileAndChildrenNonRendered(
+    int32_t lastFrameNumber,
+    Tile& tile,
+    ViewUpdateResult& result) {
+  const TileSelectionState::Result lastResult =
+      tile.getLastSelectionState().getResult(lastFrameNumber);
+  markTileNonRendered(lastResult, tile, result);
+  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
+}
+
+bool isLeaf(const Tile& tile) noexcept { return tile.getChildren().empty(); }
+
+double computeTilePriority(
+    const Tile& tile,
+    const std::vector<ViewState>& frustums,
+    const std::vector<double>& distances) {
+  double highestLoadPriority = std::numeric_limits<double>::max();
+  const glm::dvec3 boundingVolumeCenter =
+      getBoundingVolumeCenter(tile.getBoundingVolume());
+
+  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+    const ViewState& frustum = frustums[i];
+    const double distance = distances[i];
+
+    glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
+    const double magnitude = glm::length(tileDirection);
+
+    if (magnitude >= CesiumUtility::Math::Epsilon5) {
+      tileDirection /= magnitude;
+      const double loadPriority =
+          (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
+      if (loadPriority < highestLoadPriority) {
+        highestLoadPriority = loadPriority;
+      }
+    }
+  }
+
+  return highestLoadPriority;
+}
+
+void computeDistances(
+    const Tile& tile,
+    const std::vector<ViewState>& frustums,
+    std::vector<double>& distances) {
+  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
+
+  distances.clear();
+  distances.resize(frustums.size());
+
+  std::transform(
+      frustums.begin(),
+      frustums.end(),
+      distances.begin(),
+      [boundingVolume](const ViewState& frustum) -> double {
+        return glm::sqrt(glm::max(
+            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
+            0.0));
+      });
+}
+
+/**
+ * @brief Returns whether a tile with the given bounding volume is visible for
+ * the camera.
+ *
+ * @param viewState The {@link ViewState}
+ * @param boundingVolume The bounding volume of the tile
+ * @param forceRenderTilesUnderCamera Whether tiles under the camera should
+ * always be considered visible and rendered (see
+ * {@link Cesium3DTilesSelection::TilesetOptions}).
+ * @return Whether the tile is visible according to the current camera
+ * configuration
+ */
+bool isVisibleFromCamera(
+    const ViewState& viewState,
+    const BoundingVolume& boundingVolume,
+    const Ellipsoid& ellipsoid,
+    bool forceRenderTilesUnderCamera) {
+  if (viewState.isBoundingVolumeVisible(boundingVolume)) {
+    return true;
+  }
+  if (!forceRenderTilesUnderCamera) {
+    return false;
+  }
+
+  const std::optional<CesiumGeospatial::Cartographic>& position =
+      viewState.getPositionCartographic();
+
+  // TODO: it would be better to test a line pointing down (and up?) from the
+  // camera against the bounding volume itself, rather than transforming the
+  // bounding volume to a region.
+  std::optional<GlobeRectangle> maybeRectangle =
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
+  if (position && maybeRectangle) {
+    return maybeRectangle->contains(position.value());
+  }
+  return false;
+}
+
+/**
+ * @brief Returns whether a tile at the given distance is visible in the fog.
+ *
+ * @param distance The distance of the tile bounding volume to the camera
+ * @param fogDensity The fog density
+ * @return Whether the tile is visible in the fog
+ */
+bool isVisibleInFog(double distance, double fogDensity) noexcept {
+  if (fogDensity <= 0.0) {
+    return true;
+  }
+
+  const double fogScalar = distance * fogDensity;
+  return glm::exp(-(fogScalar * fogScalar)) > 0.0;
+}
+
+} // namespace
+
 Tileset::Tileset(
     const TilesetExternals& externals,
     std::unique_ptr<TilesetContentLoader>&& pCustomLoader,
@@ -175,55 +391,6 @@ TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() noexcept {
 
 const TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() const noexcept {
   return *this->_pTilesetContentManager->getSharedAssetSystem();
-}
-
-static bool
-operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {
-  return fogDensity.cameraHeight < height;
-}
-
-static double computeFogDensity(
-    const std::vector<FogDensityAtHeight>& fogDensityTable,
-    const ViewState& viewState) {
-  const double height = viewState.getPositionCartographic()
-                            .value_or(Cartographic(0.0, 0.0, 0.0))
-                            .height;
-
-  // Find the entry that is for >= this camera height.
-  auto nextIt =
-      std::lower_bound(fogDensityTable.begin(), fogDensityTable.end(), height);
-
-  if (nextIt == fogDensityTable.end()) {
-    return fogDensityTable.back().fogDensity;
-  }
-  if (nextIt == fogDensityTable.begin()) {
-    return nextIt->fogDensity;
-  }
-
-  auto prevIt = nextIt - 1;
-
-  const double heightA = prevIt->cameraHeight;
-  const double densityA = prevIt->fogDensity;
-
-  const double heightB = nextIt->cameraHeight;
-  const double densityB = nextIt->fogDensity;
-
-  const double t =
-      glm::clamp((height - heightA) / (heightB - heightA), 0.0, 1.0);
-
-  const double density = glm::mix(densityA, densityB, t);
-
-  // CesiumJS will also fade out the fog based on the camera angle,
-  // so when we're looking straight down there's no fog. This is unfortunate
-  // because it prevents the fog culling from being used in place of horizon
-  // culling. Horizon culling is the only thing in CesiumJS that prevents
-  // tiles on the back side of the globe from being rendered.
-  // Since we're not actually _rendering_ the fog in cesium-native (that's on
-  // the renderer), we don't need to worry about the fog making the globe
-  // looked washed out in straight down views. So here we don't fade by
-  // angle at all.
-
-  return density;
 }
 
 void Tileset::_updateLodTransitions(
@@ -616,118 +783,6 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   return promise.getFuture();
 }
 
-static void markTileNonRendered(
-    TileSelectionState::Result lastResult,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Rendered ||
-      (lastResult == TileSelectionState::Result::Refined &&
-       tile.getRefine() == TileRefine::Add)) {
-    result.tilesFadingOut.insert(&tile);
-    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
-    if (pRenderContent) {
-      pRenderContent->setLodTransitionFadePercentage(0.0f);
-    }
-  }
-}
-
-static void markTileNonRendered(
-    int32_t lastFrameNumber,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markTileNonRendered(lastResult, tile, result);
-}
-
-static void markChildrenNonRendered(
-    int32_t lastFrameNumber,
-    TileSelectionState::Result lastResult,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Refined) {
-    for (Tile& child : tile.getChildren()) {
-      const TileSelectionState::Result childLastResult =
-          child.getLastSelectionState().getResult(lastFrameNumber);
-      markTileNonRendered(childLastResult, child, result);
-      markChildrenNonRendered(lastFrameNumber, childLastResult, child, result);
-    }
-  }
-}
-
-static void markChildrenNonRendered(
-    int32_t lastFrameNumber,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
-}
-
-static void markTileAndChildrenNonRendered(
-    int32_t lastFrameNumber,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markTileNonRendered(lastResult, tile, result);
-  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
-}
-
-/**
- * @brief Returns whether a tile with the given bounding volume is visible for
- * the camera.
- *
- * @param viewState The {@link ViewState}
- * @param boundingVolume The bounding volume of the tile
- * @param forceRenderTilesUnderCamera Whether tiles under the camera should
- * always be considered visible and rendered (see
- * {@link Cesium3DTilesSelection::TilesetOptions}).
- * @return Whether the tile is visible according to the current camera
- * configuration
- */
-static bool isVisibleFromCamera(
-    const ViewState& viewState,
-    const BoundingVolume& boundingVolume,
-    const Ellipsoid& ellipsoid,
-    bool forceRenderTilesUnderCamera) {
-  if (viewState.isBoundingVolumeVisible(boundingVolume)) {
-    return true;
-  }
-  if (!forceRenderTilesUnderCamera) {
-    return false;
-  }
-
-  const std::optional<CesiumGeospatial::Cartographic>& position =
-      viewState.getPositionCartographic();
-
-  // TODO: it would be better to test a line pointing down (and up?) from the
-  // camera against the bounding volume itself, rather than transforming the
-  // bounding volume to a region.
-  std::optional<GlobeRectangle> maybeRectangle =
-      estimateGlobeRectangle(boundingVolume, ellipsoid);
-  if (position && maybeRectangle) {
-    return maybeRectangle->contains(position.value());
-  }
-  return false;
-}
-
-/**
- * @brief Returns whether a tile at the given distance is visible in the fog.
- *
- * @param distance The distance of the tile bounding volume to the camera
- * @param fogDensity The fog density
- * @return Whether the tile is visible in the fog
- */
-static bool isVisibleInFog(double distance, double fogDensity) noexcept {
-  if (fogDensity <= 0.0) {
-    return true;
-  }
-
-  const double fogScalar = distance * fogDensity;
-  return glm::exp(-(fogScalar * fogScalar)) > 0.0;
-}
-
 void Tileset::_frustumCull(
     const Tile& tile,
     const FrameState& frameState,
@@ -825,54 +880,6 @@ void Tileset::_fogCull(
       cullResult.shouldVisit = false;
     }
   }
-}
-
-static double computeTilePriority(
-    const Tile& tile,
-    const std::vector<ViewState>& frustums,
-    const std::vector<double>& distances) {
-  double highestLoadPriority = std::numeric_limits<double>::max();
-  const glm::dvec3 boundingVolumeCenter =
-      getBoundingVolumeCenter(tile.getBoundingVolume());
-
-  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
-    const ViewState& frustum = frustums[i];
-    const double distance = distances[i];
-
-    glm::dvec3 tileDirection = boundingVolumeCenter - frustum.getPosition();
-    const double magnitude = glm::length(tileDirection);
-
-    if (magnitude >= CesiumUtility::Math::Epsilon5) {
-      tileDirection /= magnitude;
-      const double loadPriority =
-          (1.0 - glm::dot(tileDirection, frustum.getDirection())) * distance;
-      if (loadPriority < highestLoadPriority) {
-        highestLoadPriority = loadPriority;
-      }
-    }
-  }
-
-  return highestLoadPriority;
-}
-
-void computeDistances(
-    const Tile& tile,
-    const std::vector<ViewState>& frustums,
-    std::vector<double>& distances) {
-  const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-
-  distances.clear();
-  distances.resize(frustums.size());
-
-  std::transform(
-      frustums.begin(),
-      frustums.end(),
-      distances.begin(),
-      [boundingVolume](const ViewState& frustum) -> double {
-        return glm::sqrt(glm::max(
-            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
-            0.0));
-      });
 }
 
 bool Tileset::_meetsSse(
@@ -1006,10 +1013,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       tile,
       tilePriority,
       result);
-}
-
-static bool isLeaf(const Tile& tile) noexcept {
-  return tile.getChildren().empty();
 }
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
@@ -1582,7 +1585,7 @@ void Tileset::_processMainThreadLoadQueue() {
 
   auto start = std::chrono::system_clock::now();
   auto end =
-      start + std::chrono::milliseconds(static_cast<long long>(timeBudget));
+      start + std::chrono::milliseconds(static_cast<int64_t>(timeBudget));
   for (TileLoadTask& task : this->_mainThreadLoadQueue) {
     // We double-check that the tile is still in the ContentLoaded state here,
     // in case something (such as a child that needs to upsample from this
@@ -1613,7 +1616,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   auto end = (timeBudget <= 0.0)
                  ? std::chrono::time_point<std::chrono::system_clock>::max()
                  : (start + std::chrono::milliseconds(
-                                static_cast<long long>(timeBudget)));
+                                static_cast<int64_t>(timeBudget)));
 
   while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {

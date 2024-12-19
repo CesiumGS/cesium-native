@@ -47,6 +47,41 @@ struct TileMapServiceTileset {
   std::string url;
   uint32_t level;
 };
+
+std::optional<std::string> getAttributeString(
+    const tinyxml2::XMLElement* pElement,
+    const char* attributeName) {
+  if (!pElement) {
+    return std::nullopt;
+  }
+
+  const char* pAttrValue = pElement->Attribute(attributeName);
+  if (!pAttrValue) {
+    return std::nullopt;
+  }
+
+  return std::string(pAttrValue);
+}
+
+std::optional<uint32_t> getAttributeUint32(
+    const tinyxml2::XMLElement* pElement,
+    const char* attributeName) {
+  std::optional<std::string> s = getAttributeString(pElement, attributeName);
+  if (s) {
+    return std::stoul(s.value());
+  }
+  return std::nullopt;
+}
+
+std::optional<double> getAttributeDouble(
+    const tinyxml2::XMLElement* pElement,
+    const char* attributeName) {
+  std::optional<std::string> s = getAttributeString(pElement, attributeName);
+  if (s) {
+    return std::stod(s.value());
+  }
+  return std::nullopt;
+}
 } // namespace
 
 class TileMapServiceTileProvider final
@@ -145,41 +180,6 @@ TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
       _options(tmsOptions) {}
 
 TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
-
-static std::optional<std::string> getAttributeString(
-    const tinyxml2::XMLElement* pElement,
-    const char* attributeName) {
-  if (!pElement) {
-    return std::nullopt;
-  }
-
-  const char* pAttrValue = pElement->Attribute(attributeName);
-  if (!pAttrValue) {
-    return std::nullopt;
-  }
-
-  return std::string(pAttrValue);
-}
-
-static std::optional<uint32_t> getAttributeUint32(
-    const tinyxml2::XMLElement* pElement,
-    const char* attributeName) {
-  std::optional<std::string> s = getAttributeString(pElement, attributeName);
-  if (s) {
-    return std::stoul(s.value());
-  }
-  return std::nullopt;
-}
-
-static std::optional<double> getAttributeDouble(
-    const tinyxml2::XMLElement* pElement,
-    const char* attributeName) {
-  std::optional<std::string> s = getAttributeString(pElement, attributeName);
-  if (s) {
-    return std::stod(s.value());
-  }
-  return std::nullopt;
-}
 
 namespace {
 

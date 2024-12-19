@@ -294,7 +294,7 @@ ImageReaderResult ImageDecoder::readImage(
     if (!tjDecompressHeader3(
             tjInstance,
             reinterpret_cast<const unsigned char*>(data.data()),
-            static_cast<unsigned long>(data.size()),
+            static_cast<uint64_t>(data.size()),
             &image.width,
             &image.height,
             &inSubsamp,
@@ -308,7 +308,7 @@ ImageReaderResult ImageDecoder::readImage(
       if (tjDecompress2(
               tjInstance,
               reinterpret_cast<const unsigned char*>(data.data()),
-              static_cast<unsigned long>(data.size()),
+              static_cast<uint64_t>(data.size()),
               reinterpret_cast<unsigned char*>(image.pixelData.data()),
               image.width,
               0,

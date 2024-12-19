@@ -226,23 +226,4 @@ const Ellipsoid& getProjectionEllipsoid(const Projection& projection) {
 
   return std::visit(Operation{}, projection);
 }
-
-double computeApproximateConversionFactorToMetersNearPosition(
-    const Projection& projection,
-    const glm::dvec2& position) {
-  struct Operation {
-    const glm::dvec2& position;
-
-    double operator()(const GeographicProjection& /*geographic*/) noexcept {
-      return 1.0;
-    }
-
-    double operator()(const WebMercatorProjection& webMercator) noexcept {
-      // TODO: is there a better estimate?
-      return glm::cos(webMercator.unproject(position).latitude);
-    }
-  };
-
-  return std::visit(Operation{position}, projection);
-}
 } // namespace CesiumGeospatial

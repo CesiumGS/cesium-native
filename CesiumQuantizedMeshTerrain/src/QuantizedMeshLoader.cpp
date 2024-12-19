@@ -48,8 +48,9 @@
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltfContent;
-using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
+
+namespace CesiumQuantizedMeshTerrain {
 
 struct QuantizedMeshHeader {
   // The center of the tile in Earth-centered Fixed coordinates.
@@ -137,6 +138,8 @@ struct QuantizedMeshView {
 constexpr size_t headerLength = 92;
 constexpr size_t extensionHeaderLength = 5;
 
+namespace {
+
 int32_t zigZagDecode(int32_t value) noexcept {
   return (value >> 1) ^ (-(value & 1));
 }
@@ -161,7 +164,7 @@ void decodeIndices(
 }
 
 template <class T>
-static T readValue(
+T readValue(
     const std::span<const std::byte>& data,
     size_t offset,
     T defaultValue) noexcept {
@@ -171,10 +174,7 @@ static T readValue(
   return defaultValue;
 }
 
-static QuantizedMeshMetadataResult
-processMetadata(const QuadtreeTileID& tileID, std::span<const char> json);
-
-static std::optional<QuantizedMeshView> parseQuantizedMesh(
+std::optional<QuantizedMeshView> parseQuantizedMesh(
     const std::span<const std::byte>& data,
     bool enableWaterMask) {
   if (data.size() < headerLength) {
@@ -382,7 +382,7 @@ static std::optional<QuantizedMeshView> parseQuantizedMesh(
   return meshView;
 }
 
-static double calculateSkirtHeight(
+double calculateSkirtHeight(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const CesiumGeospatial::GlobeRectangle& rectangle) noexcept {
   const double levelMaximumGeometricError =
@@ -391,7 +391,7 @@ static double calculateSkirtHeight(
 }
 
 template <class E, class I>
-static void addSkirt(
+void addSkirt(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const glm::dvec3& center,
     const CesiumGeospatial::GlobeRectangle& rectangle,
@@ -462,7 +462,7 @@ static void addSkirt(
 }
 
 template <class E, class I>
-static void addSkirts(
+void addSkirts(
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const glm::dvec3& center,
     const CesiumGeospatial::GlobeRectangle& rectangle,
@@ -650,7 +650,7 @@ static void decodeNormals(
 }
 
 template <class T>
-static std::vector<std::byte> generateNormals(
+std::vector<std::byte> generateNormals(
     const std::span<const float>& positions,
     const std::span<T>& indices,
     size_t currentNumOfIndex) {
@@ -700,6 +700,30 @@ static std::vector<std::byte> generateNormals(
   return normalsBuffer;
 }
 
+QuantizedMeshMetadataResult processMetadata(
+    const QuadtreeTileID& tileID,
+    std::span<const char> metadataString) {
+  rapidjson::Document metadata;
+  metadata.Parse(
+      reinterpret_cast<const char*>(metadataString.data()),
+      metadataString.size());
+
+  QuantizedMeshMetadataResult result;
+
+  if (metadata.HasParseError()) {
+    result.errors.emplaceError(fmt::format(
+        "Error when parsing metadata, error code {} at byte offset {}",
+        metadata.GetParseError(),
+        metadata.GetErrorOffset()));
+    return result;
+  }
+
+  return QuantizedMeshLoader::loadAvailabilityRectangles(
+      metadata,
+      tileID.level + 1);
+}
+} // namespace
+
 /*static*/ QuantizedMeshLoadResult QuantizedMeshLoader::load(
     const QuadtreeTileID& tileID,
     const BoundingRegion& tileBoundingVolume,
@@ -731,7 +755,7 @@ static std::vector<std::byte> generateNormals(
   // decode position without skirt, but preallocate position buffer to include
   // skirt as well
   std::vector<std::byte> outputPositionsBuffer(
-      static_cast<unsigned long>((vertexCount + skirtVertexCount) * 3) *
+      static_cast<uint64_t>((vertexCount + skirtVertexCount) * 3) *
       sizeof(float));
   std::span<float> outputPositions(
       reinterpret_cast<float*>(outputPositionsBuffer.data()),
@@ -1222,29 +1246,6 @@ struct TileRange {
   uint32_t maximumY;
 };
 
-static QuantizedMeshMetadataResult processMetadata(
-    const QuadtreeTileID& tileID,
-    std::span<const char> metadataString) {
-  rapidjson::Document metadata;
-  metadata.Parse(
-      reinterpret_cast<const char*>(metadataString.data()),
-      metadataString.size());
-
-  QuantizedMeshMetadataResult result;
-
-  if (metadata.HasParseError()) {
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing metadata, error code {} at byte offset {}",
-        metadata.GetParseError(),
-        metadata.GetErrorOffset()));
-    return result;
-  }
-
-  return QuantizedMeshLoader::loadAvailabilityRectangles(
-      metadata,
-      tileID.level + 1);
-}
-
 /*static*/ QuantizedMeshMetadataResult QuantizedMeshLoader::loadMetadata(
     const std::span<const std::byte>& data,
     const QuadtreeTileID& tileID) {
@@ -1254,3 +1255,5 @@ static QuantizedMeshMetadataResult processMetadata(
   }
   return processMetadata(tileID, meshView->metadataJsonBuffer);
 }
+
+} // namespace CesiumQuantizedMeshTerrain

@@ -25,6 +25,40 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
+namespace {
+
+template <class T>
+bool isBoundingVolumeVisible(
+    const T& boundingVolume,
+    const CullingVolume& cullingVolume) noexcept {
+  const CullingResult left =
+      boundingVolume.intersectPlane(cullingVolume.leftPlane);
+  if (left == CullingResult::Outside) {
+    return false;
+  }
+
+  const CullingResult right =
+      boundingVolume.intersectPlane(cullingVolume.rightPlane);
+  if (right == CullingResult::Outside) {
+    return false;
+  }
+
+  const CullingResult top =
+      boundingVolume.intersectPlane(cullingVolume.topPlane);
+  if (top == CullingResult::Outside) {
+    return false;
+  }
+
+  const CullingResult bottom =
+      boundingVolume.intersectPlane(cullingVolume.bottomPlane);
+  if (bottom == CullingResult::Outside) {
+    return false;
+  }
+
+  return true;
+}
+} // namespace
+
 /* static */ ViewState ViewState::create(
     const glm::dvec3& position,
     const glm::dvec3& direction,
@@ -68,37 +102,6 @@ ViewState::ViewState(
           up,
           horizontalFieldOfView,
           verticalFieldOfView)) {}
-
-template <class T>
-static bool isBoundingVolumeVisible(
-    const T& boundingVolume,
-    const CullingVolume& cullingVolume) noexcept {
-  const CullingResult left =
-      boundingVolume.intersectPlane(cullingVolume.leftPlane);
-  if (left == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult right =
-      boundingVolume.intersectPlane(cullingVolume.rightPlane);
-  if (right == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult top =
-      boundingVolume.intersectPlane(cullingVolume.topPlane);
-  if (top == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult bottom =
-      boundingVolume.intersectPlane(cullingVolume.bottomPlane);
-  if (bottom == CullingResult::Outside) {
-    return false;
-  }
-
-  return true;
-}
 
 bool ViewState::isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) const noexcept {

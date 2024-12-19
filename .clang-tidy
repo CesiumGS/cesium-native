@@ -97,6 +97,18 @@ Checks:
   - "cppcoreguidelines-pro-type-static-cast-downcast"
   - "cppcoreguidelines-pro-type-union-access"
   - "cppcoreguidelines-slicing"
+  - "google-runtime-int"
+  # We should enable this one at some point, but it produces a huge number of changes
+  # - "misc-const-correctness"
+  - "misc-misleading-bidrectional"
+  - "misc-misleading-identifier"
+  - "misc-misplaced-const"
+  - "misc-non-copyable-objects"
+  - "misc-redundant-expression"
+  - "misc-unused-parameters"
+  - "misc-unused-using-decls"
+  - "misc-use-anonymous-namespace"
+  - "misc-use-internal-linkage"
   - "-readability-redundant-member-init"
 
 WarningsAsErrors: "*"

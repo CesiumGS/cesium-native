@@ -22,7 +22,8 @@ using namespace CesiumGeometry;
 
 namespace CesiumGeospatial {
 
-static std::vector<uint32_t>
+namespace {
+std::vector<uint32_t>
 triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
   std::vector<uint32_t> indices;
   const size_t vertexCount = polygon.size();
@@ -62,7 +63,7 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
   return indices;
 }
 
-static std::optional<GlobeRectangle>
+std::optional<GlobeRectangle>
 computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
   const size_t vertexCount = polygon.size();
 
@@ -116,6 +117,7 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
 
   return CesiumGeospatial::GlobeRectangle(west, south, east, north);
 }
+} // namespace
 
 CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
     : _vertices(polygon),

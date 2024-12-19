@@ -46,7 +46,6 @@ bool transformBufferView(
 
   return true;
 }
-} // namespace
 
 template <typename T>
 void processTextureInfo(
@@ -115,6 +114,7 @@ void processTextureInfo(
   maybeTextureInfo->extensions.erase(
       ExtensionKhrTextureTransform::ExtensionName);
 }
+} // namespace
 
 void applyKhrTextureTransform(Model& model) {
   for (Mesh& mesh : model.meshes) {

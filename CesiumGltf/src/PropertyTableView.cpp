@@ -24,8 +24,10 @@
 #include <string_view>
 
 namespace CesiumGltf {
+
+namespace {
 template <typename T>
-static PropertyViewStatusType checkOffsetsBuffer(
+PropertyViewStatusType checkOffsetsBuffer(
     const std::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
@@ -69,7 +71,7 @@ static PropertyViewStatusType checkOffsetsBuffer(
 }
 
 template <typename T>
-static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
+PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     const std::span<const std::byte>& arrayOffsets,
     const std::span<const std::byte>& stringOffsets,
     size_t valueBufferSize,
@@ -126,6 +128,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType;
   }
 }
+} // namespace
 
 PropertyTableView::PropertyTableView(
     const Model& model,

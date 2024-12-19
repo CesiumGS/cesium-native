@@ -15,7 +15,8 @@ constexpr size_t randFilenameNumChars = 63;
 static const char randFilenameChars[randFilenameNumChars] =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-static std::string getTempFilename() {
+namespace {
+std::string getTempFilename() {
   std::string str = "CesiumTest_";
   str.reserve(str.length() + randFilenameLen);
 
@@ -30,6 +31,7 @@ static std::string getTempFilename() {
   auto path = std::filesystem::temp_directory_path() / str;
   return path.string();
 }
+} // namespace
 
 OwnedTempFile::OwnedTempFile() : _filePath(getTempFilename()) {}
 
