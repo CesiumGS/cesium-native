@@ -53,7 +53,6 @@ class ReferenceCounted
 #endif
 {
 public:
-  ReferenceCounted() noexcept = default;
   ~ReferenceCounted() noexcept { CESIUM_ASSERT(this->_referenceCount == 0); }
 
   /**
@@ -99,6 +98,9 @@ public:
   }
 
 private:
+  ReferenceCounted() noexcept = default;
+  friend T;
+
   using ThreadSafeCounter = std::atomic<std::int32_t>;
   using NonThreadSafeCounter = std::int32_t;
   using CounterType =

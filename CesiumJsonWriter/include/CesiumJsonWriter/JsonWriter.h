@@ -234,8 +234,9 @@ public:
    * @param insideArray The callback to run, after \ref StartArray but before
    * \ref EndArray.
    */
-  virtual void
-  KeyArray(std::string_view keyName, std::function<void(void)> insideArray);
+  virtual void KeyArray(
+      std::string_view keyName,
+      const std::function<void(void)>& insideArray);
   /**
    * @brief Writes an object to the output with the given key and calls the
    * provided callback to write values inside of the object. This is a
@@ -246,8 +247,9 @@ public:
    * @param insideObject The callback to run, after \ref StartObject but before
    * \ref EndObject.
    */
-  virtual void
-  KeyObject(std::string_view keyName, std::function<void(void)> insideObject);
+  virtual void KeyObject(
+      std::string_view keyName,
+      const std::function<void(void)>& insideObject);
 
   /**
    * @brief Obtains the written output as a string.
