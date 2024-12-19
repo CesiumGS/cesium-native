@@ -91,7 +91,7 @@ IonRasterOverlay::createTileProvider(
       pCreditSystem,
       pPrepareRendererResources,
       pLogger,
-      pOwner);
+      std::move(pOwner));
 }
 
 Future<RasterOverlay::CreateTileProviderResult>

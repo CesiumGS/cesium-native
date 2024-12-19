@@ -919,7 +919,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
           // thread based on the projection of the loader since the upsampler
           // needs this UV to do the upsampling
           auto finalResult = convertToTileLoadResult(
-              std::move(pAssetAccessor),
+              pAssetAccessor,
               std::move(loadResult),
               ellipsoid);
           bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
@@ -957,7 +957,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
             // based on the projection of the loader since the upsampler needs
             // this UV to do the upsampling
             auto result = convertToTileLoadResult(
-                std::move(pAssetAccessor),
+                pAssetAccessor,
                 std::move(loadResult),
                 ellipsoid);
             if (doesTileHaveUpsampledChild &&

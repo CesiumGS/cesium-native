@@ -126,6 +126,8 @@ Checks:
   - "modernize-use-starts-ends-with"
   - "modernize-use-std-numbers"
   #- "modernize-use-using"
+  - "performance-*"
+  - "-performance-enum-size"
   - "-readability-redundant-member-init"
 
 WarningsAsErrors: "*"

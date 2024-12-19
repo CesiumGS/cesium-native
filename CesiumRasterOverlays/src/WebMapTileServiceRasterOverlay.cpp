@@ -62,8 +62,8 @@ public:
       std::string layer,
       std::string style,
       std::string _tileMatrixSetID,
-      const std::optional<std::vector<std::string>> tileMatrixLabels,
-      const std::optional<std::map<std::string, std::string>> dimensions,
+      const std::optional<std::vector<std::string>>& tileMatrixLabels,
+      const std::optional<std::map<std::string, std::string>>& dimensions,
       const std::vector<std::string>& subdomains)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
@@ -83,9 +83,9 @@ public:
         _headers(headers),
         _useKVP(useKVP),
         _format(format),
-        _layer(layer),
-        _style(style),
-        _tileMatrixSetID(_tileMatrixSetID),
+        _layer(std::move(layer)),
+        _style(std::move(style)),
+        _tileMatrixSetID(std::move(_tileMatrixSetID)),
         _labels(tileMatrixLabels),
         _staticDimensions(dimensions),
         _subdomains(subdomains) {}

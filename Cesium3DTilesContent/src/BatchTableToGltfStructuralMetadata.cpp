@@ -411,7 +411,7 @@ public:
    * This is helpful for when a property contains a sentinel value as non-null
    * data; the sentinel value can then be removed from consideration.
    */
-  void removeSentinelValues(CesiumUtility::JsonValue value) noexcept {
+  void removeSentinelValues(const CesiumUtility::JsonValue& value) noexcept {
     if (value.isNumber()) {
       // Don't try to use string as sentinels for numbers.
       _canUseNullStringSentinel = false;
@@ -430,7 +430,7 @@ public:
       _canUseZeroSentinel = false;
       _canUseNegativeOneSentinel = false;
 
-      auto stringValue = value.getString();
+      const auto& stringValue = value.getString();
       if (stringValue == "null") {
         _canUseNullStringSentinel = false;
       }

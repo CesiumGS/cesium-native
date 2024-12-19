@@ -117,8 +117,8 @@ std::string GltfConverters::toLowerCase(const std::string_view& str) {
 }
 
 std::string GltfConverters::getFileExtension(const std::string_view& filePath) {
-  std::string_view urlWithoutQueries = filePath.substr(0, filePath.find("?"));
-  size_t extensionPos = urlWithoutQueries.rfind(".");
+  std::string_view urlWithoutQueries = filePath.substr(0, filePath.find('?'));
+  size_t extensionPos = urlWithoutQueries.rfind('.');
   if (extensionPos < urlWithoutQueries.size()) {
     std::string_view extension = urlWithoutQueries.substr(extensionPos);
     std::string lowerCaseExtension = toLowerCase(extension);

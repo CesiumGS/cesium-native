@@ -1044,12 +1044,12 @@ Future<Response<NoValue>> Connection::modifyToken(
 
 /*static*/ std::optional<std::string>
 Connection::getIdFromToken(const std::string& token) {
-  size_t startPos = token.find(".");
+  size_t startPos = token.find('.');
   if (startPos == std::string::npos || startPos == token.size() - 1) {
     return std::nullopt;
   }
 
-  size_t endPos = token.find(".", startPos + 1);
+  size_t endPos = token.find('.', startPos + 1);
   if (endPos == std::string::npos) {
     return std::nullopt;
   }

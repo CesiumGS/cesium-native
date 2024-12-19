@@ -172,7 +172,7 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
 void dequantizeMeshData(Model& model) {
   for (Mesh& mesh : model.meshes) {
     for (MeshPrimitive& primitive : mesh.primitives) {
-      for (std::pair<const std::string, int32_t> attribute :
+      for (const std::pair<const std::string, int32_t>& attribute :
            primitive.attributes) {
         Accessor* pAccessor =
             Model::getSafe(&model.accessors, attribute.second);
