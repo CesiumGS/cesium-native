@@ -956,7 +956,7 @@ void decodeDraco(
   draco::Decoder decoder;
   draco::DecoderBuffer buffer;
   buffer.Init(
-      (char*)featureTableBinaryData.data() +
+      reinterpret_cast<const char*>(featureTableBinaryData.data()) +
           parsedContent.dracoByteOffset.value(),
       parsedContent.dracoByteLength.value());
 

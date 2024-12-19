@@ -45,7 +45,10 @@ bool isKtx(const std::span<const std::byte>& data) {
   const uint8_t ktxMagic[ktxMagicByteLength] =
       {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
 
-  return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
+  return memcmp(
+             data.data(),
+             reinterpret_cast<const void*>(ktxMagic),
+             ktxMagicByteLength) == 0;
 }
 
 bool isWebP(const std::span<const std::byte>& data) {
