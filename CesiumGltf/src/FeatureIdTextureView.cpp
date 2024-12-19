@@ -53,8 +53,8 @@ FeatureIdTextureView::FeatureIdTextureView(
   }
 
   // Only channel values 0-3 are supported.
-  for (size_t i = 0; i < channels.size(); i++) {
-    if (channels[i] < 0 || channels[i] > 3) {
+  for (int64_t channel : channels) {
+    if (channel < 0 || channel > 3) {
       this->_status = FeatureIdTextureViewStatus::ErrorInvalidChannels;
       return;
     }

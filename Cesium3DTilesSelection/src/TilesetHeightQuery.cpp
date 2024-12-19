@@ -165,7 +165,7 @@ void TilesetHeightQuery::findCandidateTiles(
 
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
-    warnings.push_back("Tile load failed during query. Ignoring.");
+    warnings.emplace_back("Tile load failed during query. Ignoring.");
     return;
   }
 

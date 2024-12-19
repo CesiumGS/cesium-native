@@ -27,8 +27,7 @@
 
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumUtility/Assert.h>
-
-#include <math.h>
+#include <CesiumUtility/Math.h>
 
 #include <array>
 #include <cfloat>
@@ -140,7 +139,11 @@ GlobeRectangleFromLatLng(const R1Interval& lat_, const S1Interval& lng_) {
   return GlobeRectangle(lng_.lo(), lat_.lo(), lng_.hi(), lat_.hi());
 }
 
-R1Interval FullLat() { return R1Interval(-M_PI_2, M_PI_2); }
+R1Interval FullLat() {
+  return R1Interval(
+      -CesiumUtility::Math::PiOverTwo,
+      CesiumUtility::Math::PiOverTwo);
+}
 
 GlobeRectangle Expanded(
     const R1Interval& lat_,
@@ -233,27 +236,43 @@ GlobeRectangle S2CellID::computeBoundingRectangle() const {
   S1Interval lng;
   switch (face_) {
   case 0:
-    lat = R1Interval(-M_PI_4, M_PI_4);
-    lng = S1Interval(-M_PI_4, M_PI_4);
+    lat = R1Interval(
+        -CesiumUtility::Math::PiOverFour,
+        CesiumUtility::Math::PiOverFour);
+    lng = S1Interval(
+        -CesiumUtility::Math::PiOverFour,
+        CesiumUtility::Math::PiOverFour);
     break;
   case 1:
-    lat = R1Interval(-M_PI_4, M_PI_4);
-    lng = S1Interval(M_PI_4, 3 * M_PI_4);
+    lat = R1Interval(
+        -CesiumUtility::Math::PiOverFour,
+        CesiumUtility::Math::PiOverFour);
+    lng = S1Interval(
+        CesiumUtility::Math::PiOverFour,
+        3 * CesiumUtility::Math::PiOverFour);
     break;
   case 2:
-    lat = R1Interval(kPoleMinLat, M_PI_2);
+    lat = R1Interval(kPoleMinLat, CesiumUtility::Math::PiOverTwo);
     lng = S1Interval::Full();
     break;
   case 3:
-    lat = R1Interval(-M_PI_4, M_PI_4);
-    lng = S1Interval(3 * M_PI_4, -3 * M_PI_4);
+    lat = R1Interval(
+        -CesiumUtility::Math::PiOverFour,
+        CesiumUtility::Math::PiOverFour);
+    lng = S1Interval(
+        3 * CesiumUtility::Math::PiOverFour,
+        -3 * CesiumUtility::Math::PiOverFour);
     break;
   case 4:
-    lat = R1Interval(-M_PI_4, M_PI_4);
-    lng = S1Interval(-3 * M_PI_4, -M_PI_4);
+    lat = R1Interval(
+        -CesiumUtility::Math::PiOverFour,
+        CesiumUtility::Math::PiOverFour);
+    lng = S1Interval(
+        -3 * CesiumUtility::Math::PiOverFour,
+        -CesiumUtility::Math::PiOverFour);
     break;
   default:
-    lat = R1Interval(-M_PI_2, -kPoleMinLat);
+    lat = R1Interval(-CesiumUtility::Math::PiOverTwo, -kPoleMinLat);
     lng = S1Interval::Full();
     break;
   }

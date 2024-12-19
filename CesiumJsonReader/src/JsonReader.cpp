@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <span>
 #include <string>
 #include <utility>
@@ -115,8 +116,8 @@ void JsonReader::FinalJsonHandler::reportWarning(
     std::vector<std::string>&& context) {
   std::string fullWarning = warning;
   fullWarning += "\n  While parsing: ";
-  for (auto it = context.rbegin(); it != context.rend(); ++it) {
-    fullWarning += *it;
+  for (auto& it : std::ranges::reverse_view(context)) {
+    fullWarning += it;
   }
 
   fullWarning += "\n  From byte offset: ";

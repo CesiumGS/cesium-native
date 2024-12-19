@@ -24,9 +24,9 @@ MetadataQuery::findFirstPropertyWithSemantic(
 
   const Cesium3DTiles::Class& klass = classIt->second;
 
-  for (auto it = entity.properties.begin(); it != entity.properties.end();
-       ++it) {
-    const std::pair<std::string, CesiumUtility::JsonValue>& property = *it;
+  for (const auto& propertie : entity.properties) {
+    const std::pair<std::string, CesiumUtility::JsonValue>& property =
+        propertie;
     auto propertyIt = klass.properties.find(property.first);
     if (propertyIt == klass.properties.end())
       continue;
@@ -36,9 +36,9 @@ MetadataQuery::findFirstPropertyWithSemantic(
       return FoundMetadataProperty{
           classIt->first,
           classIt->second,
-          it->first,
+          propertie.first,
           propertyIt->second,
-          it->second};
+          propertie.second};
     }
   }
 

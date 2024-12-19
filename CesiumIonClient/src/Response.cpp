@@ -23,7 +23,7 @@ using namespace CesiumUtility;
 
 namespace CesiumIonClient {
 
-template <typename T> Response<T>::Response() {}
+template <typename T> Response<T>::Response() = default;
 
 template <typename T>
 Response<T>::Response(

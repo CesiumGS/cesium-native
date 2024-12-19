@@ -23,7 +23,7 @@ class PrettyJsonWriter : public JsonWriter {
 
 public:
   PrettyJsonWriter() noexcept;
-  ~PrettyJsonWriter() {}
+  ~PrettyJsonWriter() = default;
 
   bool Null() override;
   bool Bool(bool b) override;

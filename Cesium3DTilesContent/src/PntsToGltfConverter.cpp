@@ -893,17 +893,15 @@ void decodeDracoMetadata(
   std::vector<std::byte>& data = parsedContent.dracoBatchTableBinary;
 
   const auto& dracoMetadataSemantics = parsedContent.dracoMetadataSemantics;
-  for (auto dracoSemanticIt = dracoMetadataSemantics.begin();
-       dracoSemanticIt != dracoMetadataSemantics.end();
-       dracoSemanticIt++) {
-    DracoMetadataSemantic dracoSemantic = dracoSemanticIt->second;
+  for (const auto& dracoMetadataSemantic : dracoMetadataSemantics) {
+    DracoMetadataSemantic dracoSemantic = dracoMetadataSemantic.second;
     draco::PointAttribute* pAttribute =
         pPointCloud->attribute(dracoSemantic.dracoId);
     if (!validateDracoMetadataAttribute(pAttribute, dracoSemantic)) {
       parsedContent.errors.emplaceWarning(fmt::format(
           "Error decoding {} property in the 3DTILES_draco_compression "
           "extension. Skip parsing metadata.",
-          dracoSemanticIt->first));
+          dracoMetadataSemantic.first));
       parsedContent.dracoMetadataHasErrors = true;
       return;
     }
@@ -913,7 +911,7 @@ void decodeDracoMetadata(
     // These do not test for validity since the batch table and extension
     // were validated in parseDracoExtensionFromBatchTableJson.
     auto batchTableSemanticIt =
-        batchTableJson.FindMember(dracoSemanticIt->first.c_str());
+        batchTableJson.FindMember(dracoMetadataSemantic.first.c_str());
     rapidjson::Value& batchTableSemantic =
         batchTableSemanticIt->value.GetObject();
     auto byteOffsetIt = batchTableSemantic.FindMember("byteOffset");

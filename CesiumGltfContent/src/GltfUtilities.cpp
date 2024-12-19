@@ -456,7 +456,7 @@ void findClosestRayHit(
 
   // Need at least 3 positions to form a triangle
   if (positionView.size() < 3) {
-    warnings.push_back("Skipping mesh with less than 3 vertex positions");
+    warnings.emplace_back("Skipping mesh with less than 3 vertex positions");
     return;
   }
 
@@ -593,7 +593,7 @@ void findClosestIndexedRayHit(
 
   // Need at least 3 vertices to form a triangle
   if (indicesView.size() < 3) {
-    warnings.push_back("Skipping indexed mesh with less than 3 indices");
+    warnings.emplace_back("Skipping indexed mesh with less than 3 indices");
     return;
   }
 
@@ -751,7 +751,7 @@ void findClosestIndexedRayHit(
   }
 
   if (foundInvalidIndex)
-    warnings.push_back(
+    warnings.emplace_back(
         "Found one or more invalid index values for indexed mesh");
 
   tMinOut = tClosest;
@@ -819,8 +819,8 @@ std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
   indexMap.reserve(usedIndices.size());
 
   int32_t nextIndex = 0;
-  for (size_t i = 0; i < usedIndices.size(); ++i) {
-    if (usedIndices[i]) {
+  for (bool usedIndice : usedIndices) {
+    if (usedIndice) {
       indexMap.push_back(nextIndex);
       ++nextIndex;
     } else {
@@ -1336,7 +1336,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
        &warnings](const auto& positionView) {
         // Bail on invalid view
         if (positionView.status() != AccessorViewStatus::Valid) {
-          warnings.push_back(
+          warnings.emplace_back(
               "Skipping mesh with an invalid position component type");
           return;
         }
@@ -1347,7 +1347,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
               Model::getSafe(&model.accessors, primitive.indices);
 
           if (!indexAccessor) {
-            warnings.push_back(
+            warnings.emplace_back(
                 "Skipping mesh with an invalid index accessor id");
             return;
           }
@@ -1356,7 +1356,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
           // From the glTF spec...
           // "Indices MUST be non-negative integer numbers."
           if (indexAccessor->componentType == Accessor::ComponentType::FLOAT) {
-            warnings.push_back(
+            warnings.emplace_back(
                 "Skipping mesh with an invalid index component type");
             return;
           }
@@ -1372,7 +1372,7 @@ std::optional<glm::dvec3> intersectRayScenePrimitive(
                &warnings](const auto& indexView) {
                 // Bail on invalid view
                 if (indexView.status() != AccessorViewStatus::Valid) {
-                  warnings.push_back(
+                  warnings.emplace_back(
                       "Could not create accessor view for mesh indices");
                   return;
                 }
@@ -1458,7 +1458,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // Skip primitives that can't access positions
         auto positionAccessorIt = primitive.attributes.find("POSITION");
         if (positionAccessorIt == primitive.attributes.end()) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh without a position attribute");
           return;
         }
@@ -1466,7 +1466,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         const Accessor* pPositionAccessor =
             Model::getSafe(&model.accessors, positionAccessorID);
         if (!pPositionAccessor) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh with an invalid position accessor id");
           return;
         }
@@ -1474,7 +1474,7 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
         // From the glTF spec, the POSITION accessor must use VEC3
         // But we should still protect against malformed gltfs
         if (pPositionAccessor->type != AccessorSpec::Type::VEC3) {
-          result.warnings.push_back(
+          result.warnings.emplace_back(
               "Skipping mesh with a non-vec3 position accessor");
           return;
         }

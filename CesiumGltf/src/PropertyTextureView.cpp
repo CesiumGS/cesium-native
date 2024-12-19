@@ -118,8 +118,8 @@ PropertyViewStatusType PropertyTextureView::checkChannels(
   }
 
   int64_t imageChannelCount = static_cast<int64_t>(image.channels);
-  for (size_t i = 0; i < channels.size(); i++) {
-    if (channels[i] < 0 || channels[i] >= imageChannelCount) {
+  for (int64_t channel : channels) {
+    if (channel < 0 || channel >= imageChannelCount) {
       return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
     }
   }

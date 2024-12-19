@@ -155,7 +155,7 @@ public:
         });
   }
 
-  virtual ~BingMapsTileProvider() {}
+  virtual ~BingMapsTileProvider() = default;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -251,7 +251,7 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
       _mapStyle(mapStyle),
       _culture(culture) {}
 
-BingMapsRasterOverlay::~BingMapsRasterOverlay() {}
+BingMapsRasterOverlay::~BingMapsRasterOverlay() = default;
 
 namespace {
 

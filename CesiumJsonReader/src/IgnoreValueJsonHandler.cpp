@@ -75,7 +75,7 @@ IJsonHandler* IgnoreValueJsonHandler::readArrayEnd() {
 void IgnoreValueJsonHandler::reportWarning(
     const std::string& warning,
     std::vector<std::string>&& context) {
-  context.push_back("Ignoring a value");
+  context.emplace_back("Ignoring a value");
   this->parent()->reportWarning(warning, std::move(context));
 }
 

@@ -189,7 +189,7 @@ public:
         _layers(layers),
         _format(format) {}
 
-  virtual ~WebMapServiceTileProvider() {}
+  virtual ~WebMapServiceTileProvider() = default;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -263,7 +263,7 @@ WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
       _headers(headers),
       _options(wmsOptions) {}
 
-WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() {}
+WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(

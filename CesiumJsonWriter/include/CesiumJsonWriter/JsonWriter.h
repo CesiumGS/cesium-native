@@ -18,7 +18,7 @@ namespace CesiumJsonWriter {
 class JsonWriter {
 public:
   JsonWriter();
-  virtual ~JsonWriter() {}
+  virtual ~JsonWriter() = default;
 
   /**
    * @brief Writes a `null` value to the output.

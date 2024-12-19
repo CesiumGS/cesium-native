@@ -168,9 +168,9 @@ CesiumGeometry::CullingResult S2CellBoundingVolume::intersectPlane(
     const CesiumGeometry::Plane& plane) const noexcept {
   size_t plusCount = 0;
   size_t negCount = 0;
-  for (size_t i = 0; i < this->_vertices.size(); ++i) {
+  for (const auto& _vertice : this->_vertices) {
     double distanceToPlane =
-        glm::dot(plane.getNormal(), this->_vertices[i]) + plane.getDistance();
+        glm::dot(plane.getNormal(), _vertice) + plane.getDistance();
     if (distanceToPlane < 0.0) {
       ++negCount;
     } else {

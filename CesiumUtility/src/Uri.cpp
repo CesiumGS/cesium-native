@@ -345,9 +345,9 @@ std::string Uri::getPath(const std::string& uri) {
 
   UriPathSegmentA* pCurrent = parsedUri.pathHead;
   while (pCurrent != nullptr) {
-    parts.emplace_back(std::string(
+    parts.emplace_back(
         pCurrent->text.first,
-        size_t(pCurrent->text.afterLast - pCurrent->text.first)));
+        size_t(pCurrent->text.afterLast - pCurrent->text.first));
     pCurrent = pCurrent->next;
   }
 

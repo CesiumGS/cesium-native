@@ -53,7 +53,7 @@ class ReferenceCounted
 #endif
 {
 public:
-  ReferenceCounted() noexcept {}
+  ReferenceCounted() noexcept = default;
   ~ReferenceCounted() noexcept { CESIUM_ASSERT(this->_referenceCount == 0); }
 
   /**

@@ -375,13 +375,13 @@ Future<LoadLayersResult> loadLayersRecursive(
     creditString = attributionIt->value.GetString();
   }
 
-  loadLayersResult.layers.emplace_back(LayerJsonTerrainLoader::Layer{
+  loadLayersResult.layers.emplace_back(
       baseUrl,
       std::move(version),
       std::move(urls),
       std::move(availability),
       static_cast<uint32_t>(maxZoom),
-      availabilityLevels});
+      availabilityLevels);
 
   loadLayersResult.layerCredits.emplace_back(std::move(creditString));
 

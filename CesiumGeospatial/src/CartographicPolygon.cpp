@@ -141,9 +141,7 @@ CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
       rectangleCorners[0] - rectangleCorners[3]};
 
   // Iterate through all polygons.
-  for (size_t i = 0; i < cartographicPolygons.size(); ++i) {
-    const CartographicPolygon& selection = cartographicPolygons[i];
-
+  for (const auto& selection : cartographicPolygons) {
     const std::optional<CesiumGeospatial::GlobeRectangle>&
         polygonBoundingRectangle = selection.getBoundingRectangle();
     if (!polygonBoundingRectangle ||
@@ -233,9 +231,7 @@ CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
       rectangleCorners[0] - rectangleCorners[3]};
 
   // Iterate through all polygons.
-  for (size_t i = 0; i < cartographicPolygons.size(); ++i) {
-    const CartographicPolygon& selection = cartographicPolygons[i];
-
+  for (const auto& selection : cartographicPolygons) {
     const std::optional<CesiumGeospatial::GlobeRectangle>&
         polygonBoundingRectangle = selection.getBoundingRectangle();
     if (!polygonBoundingRectangle ||

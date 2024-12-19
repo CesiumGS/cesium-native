@@ -42,7 +42,7 @@ IonRasterOverlay::IonRasterOverlay(
       _ionAccessToken(ionAccessToken),
       _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
 
-IonRasterOverlay::~IonRasterOverlay() {}
+IonRasterOverlay::~IonRasterOverlay() = default;
 
 std::unordered_map<std::string, IonRasterOverlay::ExternalAssetEndpoint>
     IonRasterOverlay::endpointCache;

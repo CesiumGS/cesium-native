@@ -4,6 +4,8 @@
 
 #include <glm/gtc/epsilon.hpp>
 
+#include <numbers>
+
 namespace CesiumUtility {
 
 /**
@@ -75,19 +77,24 @@ public:
   static constexpr double Epsilon21 = 1e-21;
 
   /**
-   * @brief pi
+   * @brief Pi
    */
-  static constexpr double OnePi = 3.14159265358979323846;
+  static constexpr double OnePi = std::numbers::pi;
 
   /**
-   * @brief two times pi
+   * @brief Two times pi
    */
   static constexpr double TwoPi = OnePi * 2.0;
 
   /**
-   * @brief pi divded by two
+   * @brief Pi divided by two
    */
   static constexpr double PiOverTwo = OnePi / 2.0;
+
+  /**
+   * @brief Pi divided by four
+   */
+  static constexpr double PiOverFour = OnePi / 4.0;
 
   /**
    * @brief Converts a relative to an absolute epsilon, for the epsilon-equality

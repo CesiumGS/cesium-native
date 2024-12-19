@@ -266,7 +266,7 @@ CachingAssetAccessor::CachingAssetAccessor(
       _pCacheDatabase(pCacheDatabase),
       _cacheThreadPool(1) {}
 
-CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
+CachingAssetAccessor::~CachingAssetAccessor() noexcept = default;
 
 Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
     const AsyncSystem& asyncSystem,

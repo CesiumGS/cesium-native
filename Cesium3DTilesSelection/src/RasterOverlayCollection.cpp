@@ -1,3 +1,4 @@
+#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "CesiumAsync/Future.h"
@@ -115,9 +116,9 @@ void RasterOverlayCollection::add(
     if (tileState != TileLoadState::Unloaded &&
         tileState != TileLoadState::Unloading &&
         tileState != TileLoadState::Failed) {
-      tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
+      tile.getMappedRasterTiles().emplace_back(
           pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
-          -1));
+          -1);
     }
   });
 

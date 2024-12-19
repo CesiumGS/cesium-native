@@ -253,10 +253,10 @@ public:
     return this->_totalDeletionCandidateMemoryUsage;
   }
 
-private:
   // Disable copy
   void operator=(const SharedAssetDepot<TAssetType, TAssetKey>& other) = delete;
 
+private:
   /**
    * @brief Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}. May be called from any thread.

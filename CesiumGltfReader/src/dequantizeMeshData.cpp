@@ -184,7 +184,8 @@ void dequantizeMeshData(Model& model) {
         }
         const std::string& attributeName = attribute.first;
         if (attributeName == "POSITION" || attributeName == "NORMAL" ||
-            attributeName == "TANGENT" || attributeName.find("TEXCOORD") == 0) {
+            attributeName == "TANGENT" ||
+            attributeName.starts_with("TEXCOORD")) {
           dequantizeAccessor(model, *pAccessor);
         }
       }

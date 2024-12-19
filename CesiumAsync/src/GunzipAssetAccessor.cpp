@@ -98,7 +98,7 @@ GunzipAssetAccessor::GunzipAssetAccessor(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor)
     : _pAssetAccessor(pAssetAccessor) {}
 
-GunzipAssetAccessor::~GunzipAssetAccessor() noexcept {}
+GunzipAssetAccessor::~GunzipAssetAccessor() noexcept = default;
 
 Future<std::shared_ptr<IAssetRequest>> GunzipAssetAccessor::get(
     const AsyncSystem& asyncSystem,

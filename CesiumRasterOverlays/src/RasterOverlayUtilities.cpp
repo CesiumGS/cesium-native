@@ -842,7 +842,7 @@ bool upsamplePrimitiveForRasterOverlays(
       std::to_string(textureCoordinateIndex);
 
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
-    if (attribute.first.find(textureCoordinateAttributeBaseName) == 0) {
+    if (attribute.first.starts_with(textureCoordinateAttributeBaseName)) {
       if (uvAccessorIndex == -1) {
         if (attribute.first == textureCoordinateName) {
           uvAccessorIndex = attribute.second;

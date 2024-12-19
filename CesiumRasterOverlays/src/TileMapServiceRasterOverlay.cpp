@@ -125,7 +125,7 @@ public:
         _fileExtension(fileExtension),
         _tileSets(tileSets) {}
 
-  virtual ~TileMapServiceTileProvider() {}
+  virtual ~TileMapServiceTileProvider() = default;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -179,7 +179,7 @@ TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
       _headers(headers),
       _options(tmsOptions) {}
 
-TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
+TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() = default;
 
 namespace {
 
@@ -394,7 +394,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 // standard, which is 'global-mercator' and 'global-geodetic'
                 // profiles. In the gdal2Tiles case, X and Y are always in
                 // geodetic degrees.
-                isRectangleInDegrees = projectionName.find("global-") != 0;
+                isRectangleInDegrees = !projectionName.starts_with("global-");
               } else if (
                   projectionName == "geodetic" ||
                   projectionName == "global-geodetic") {

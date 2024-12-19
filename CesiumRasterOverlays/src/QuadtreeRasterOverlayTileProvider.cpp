@@ -681,18 +681,18 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   target.pixelData.resize(size_t(
       target.width * target.height * target.channels * target.bytesPerChannel));
 
-  for (auto it = images.begin(); it != images.end(); ++it) {
-    if (!it->pValue) {
+  for (auto& image : images) {
+    if (!image.pValue) {
       continue;
     }
-    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
 
     // Tiles with a subset inherently have no more detail available (otherwise
     // we wouldn't need the subset).
-    if (!it->pValue->subset) {
+    if (!image.pValue->subset) {
       result.moreDetailAvailable |= loaded.moreDetailAvailable;
     }
 
@@ -701,15 +701,15 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         result.rectangle,
         *loaded.pImage,
         loaded.rectangle,
-        it->pValue->subset);
+        image.pValue->subset);
   }
 
   size_t combinedCreditsCount = 0;
-  for (auto it = images.begin(); it != images.end(); ++it) {
-    if (!it->pValue) {
+  for (auto& image : images) {
+    if (!image.pValue) {
       continue;
     }
-    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
@@ -718,11 +718,11 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   }
 
   result.credits.reserve(combinedCreditsCount);
-  for (auto it = images.begin(); it != images.end(); ++it) {
-    if (!it->pValue) {
+  for (auto& image : images) {
+    if (!image.pValue) {
       continue;
     }
-    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }

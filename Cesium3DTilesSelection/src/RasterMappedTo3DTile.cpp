@@ -299,7 +299,8 @@ RasterMappedTo3DTile* addRealTile(
     return nullptr;
   } else {
     return &tile.getMappedRasterTiles().emplace_back(
-        RasterMappedTo3DTile(pTile, textureCoordinateIndex));
+        pTile,
+        textureCoordinateIndex);
   }
 }
 
@@ -315,7 +316,8 @@ RasterMappedTo3DTile* addRealTile(
   if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
-        RasterMappedTo3DTile(getPlaceholderTile(placeholder), -1));
+        getPlaceholderTile(placeholder),
+        -1);
   }
 
   const Projection& projection = tileProvider.getProjection();
@@ -348,9 +350,9 @@ RasterMappedTo3DTile* addRealTile(
           int32_t(overlayDetails.rasterOverlayProjections.size());
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
-      return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+      return &tile.getMappedRasterTiles().emplace_back(
           getPlaceholderTile(placeholder),
-          textureCoordinateIndex));
+          textureCoordinateIndex);
     }
   }
 
@@ -377,9 +379,9 @@ RasterMappedTo3DTile* addRealTile(
         textureCoordinateIndex);
   } else {
     // No precise rectangle yet, so return a placeholder for now.
-    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+    return &tile.getMappedRasterTiles().emplace_back(
         getPlaceholderTile(placeholder),
-        textureCoordinateIndex));
+        textureCoordinateIndex);
   }
 }
 
