@@ -4,6 +4,8 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
@@ -127,8 +129,8 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
   const auto extensionsIt = bvIt->value.FindMember("extensions");
   if (extensionsIt != bvIt->value.MemberEnd() &&
       extensionsIt->value.IsObject()) {
-    const auto s2It =
-        extensionsIt->value.FindMember("3DTILES_bounding_volume_S2");
+    const auto s2It = extensionsIt->value.FindMember(
+        Cesium3DTiles::Extension3dTilesBoundingVolumeS2::ExtensionName);
     if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
       std::string token = CesiumUtility::JsonHelpers::getStringOrDefault(
           s2It->value,
@@ -147,6 +149,31 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
           minimumHeight,
           maximumHeight,
           ellipsoid);
+    }
+
+    const auto cylinderIt = extensionsIt->value.FindMember(
+        Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder::ExtensionName);
+    if (cylinderIt != extensionsIt->value.MemberEnd() &&
+        cylinderIt->value.IsObject()) {
+      const auto& a = cylinderIt->value.GetArray();
+      for (rapidjson::SizeType i = 0; i < 12; ++i) {
+        if (!a[i].IsNumber()) {
+          return std::nullopt;
+        }
+      }
+
+      return CesiumGeometry::BoundingCylinder(
+          glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
+          glm::dmat3(
+              a[3].GetDouble(),
+              a[4].GetDouble(),
+              a[5].GetDouble(),
+              a[6].GetDouble(),
+              a[7].GetDouble(),
+              a[8].GetDouble(),
+              a[9].GetDouble(),
+              a[10].GetDouble(),
+              a[11].GetDouble()));
     }
   }
 
