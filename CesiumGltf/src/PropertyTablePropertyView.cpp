@@ -1,7 +1,6 @@
-#include "CesiumGltf/PropertyTablePropertyView.h"
-
-#include "CesiumGltf/PropertyType.h"
-#include "CesiumGltf/PropertyView.h"
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyView.h>
 
 #include <cstdint>
 

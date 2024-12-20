@@ -1,8 +1,7 @@
-#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
-
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 #include <glm/ext/vector_double3.hpp>
 

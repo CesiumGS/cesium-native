@@ -1,6 +1,5 @@
-#include "CesiumGltf/SamplerUtility.h"
-
-#include "CesiumGltf/Sampler.h"
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/SamplerUtility.h>
 
 #include <glm/common.hpp>
 

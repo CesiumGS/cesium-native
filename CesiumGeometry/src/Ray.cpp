@@ -1,5 +1,4 @@
-#include "CesiumGeometry/Ray.h"
-
+#include <CesiumGeometry/Ray.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/ext/matrix_double4x4.hpp>

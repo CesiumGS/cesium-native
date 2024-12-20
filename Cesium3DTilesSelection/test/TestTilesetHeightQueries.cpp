@@ -1,9 +1,8 @@
-#include "Cesium3DTilesSelection/EllipsoidTilesetLoader.h"
-#include "Cesium3DTilesSelection/SampleHeightResult.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
+#include <Cesium3DTilesSelection/SampleHeightResult.h>
+#include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>

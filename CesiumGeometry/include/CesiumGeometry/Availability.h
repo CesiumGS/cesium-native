@@ -1,7 +1,6 @@
 #pragma once
 
-#include "CesiumGeometry/Library.h"
-
+#include <CesiumGeometry/Library.h>
 #include <CesiumUtility/Assert.h>
 
 #include <cstdint>

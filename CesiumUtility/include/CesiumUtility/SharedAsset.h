@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumUtility/Assert.h"
-#include "CesiumUtility/ExtensibleObject.h"
-#include "CesiumUtility/IDepotOwningAsset.h"
-#include "CesiumUtility/Library.h"
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/IDepotOwningAsset.h>
+#include <CesiumUtility/Library.h>
 
 #include <atomic>
 

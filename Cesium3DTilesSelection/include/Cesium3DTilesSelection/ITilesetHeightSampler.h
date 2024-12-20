@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-#include "Cesium3DTilesSelection/SampleHeightResult.h"
-
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeospatial/Cartographic.h>
 

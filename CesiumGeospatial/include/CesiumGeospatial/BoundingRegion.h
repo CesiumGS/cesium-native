@@ -1,11 +1,10 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Library.h"
-
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Library.h>
 
 namespace CesiumGeometry {
 class Plane;

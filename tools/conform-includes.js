@@ -53,9 +53,9 @@ function conformFile(file, libName) {
     const pathFile = pathParts.base;
     // No directory part of the path name, or it's the current lib anyways
     if (!pathLib.trim() || pathLib == libName) {
-      // Points to a known header file of this lib, it's a local include 
+      // Points to a known header file of this lib
       if (libs[libName].headerFiles.indexOf(pathFile) != -1) {
-        return `#include "${libName}/${pathFile}"`;
+        return `#include <${libName}/${pathFile}>`;
       }
 
       // Private include in the source directory

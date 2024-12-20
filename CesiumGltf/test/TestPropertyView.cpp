@@ -1,7 +1,6 @@
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/PropertyArrayView.h"
-#include "CesiumGltf/PropertyView.h"
-
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyView.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <catch2/catch_test_macros.hpp>

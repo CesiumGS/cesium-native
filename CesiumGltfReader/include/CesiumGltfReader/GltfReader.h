@@ -1,9 +1,5 @@
 #pragma once
 
-#include "CesiumGltfReader/GltfSharedAssetSystem.h"
-#include "CesiumGltfReader/ImageDecoder.h"
-#include "CesiumGltfReader/Library.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
@@ -11,6 +7,9 @@
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfSharedAssetSystem.h>
+#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumGltfReader/Library.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 

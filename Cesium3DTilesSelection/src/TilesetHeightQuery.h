@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Tile.h"
-
+#include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumGeometry/Ray.h>

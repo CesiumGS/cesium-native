@@ -1,9 +1,7 @@
-#include "Cesium3DTilesSelection/Tile.h"
-
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "Cesium3DTilesSelection/TileContent.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>

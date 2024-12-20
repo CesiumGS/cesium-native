@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 
 namespace Cesium3DTilesSelection {
 class RasterOverlayUpsampler : public TilesetContentLoader {

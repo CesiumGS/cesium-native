@@ -1,14 +1,12 @@
-#include "CesiumGltf/PropertyTextureView.h"
-
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/PropertyTexture.h"
-#include "CesiumGltf/PropertyTexturePropertyView.h"
-#include "CesiumGltf/PropertyView.h"
-#include "CesiumGltf/Texture.h"
-
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTexture.h>
+#include <CesiumGltf/PropertyTexturePropertyView.h>
+#include <CesiumGltf/PropertyTextureView.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Texture.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <cstddef>

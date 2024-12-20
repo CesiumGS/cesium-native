@@ -1,13 +1,13 @@
-#include "CesiumGltf/Accessor.h"
-#include "CesiumGltf/AccessorUtility.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/Buffer.h"
-#include "CesiumGltf/BufferView.h"
-#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
-#include "CesiumGltf/Mesh.h"
-#include "CesiumGltf/MeshPrimitive.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/Node.h"
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorUtility.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/vector_float2.hpp>

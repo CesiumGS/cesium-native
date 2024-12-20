@@ -1,6 +1,5 @@
-#include "CesiumUtility/Gzip.h"
-
-#include "CesiumUtility/Assert.h"
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/Gzip.h>
 
 #include <zconf-ng.h>
 #include <zlib-ng.h>

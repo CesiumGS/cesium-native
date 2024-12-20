@@ -1,10 +1,8 @@
-#include "CesiumGltfReader/NetworkSchemaAssetDescriptor.h"
-
-#include "CesiumGltfReader/SchemaReader.h"
-
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
+#include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
+#include <CesiumGltfReader/SchemaReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>

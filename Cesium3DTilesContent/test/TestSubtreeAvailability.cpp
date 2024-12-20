@@ -1,6 +1,5 @@
-#include "Cesium3DTilesContent/SubtreeAvailability.h"
-
 #include <Cesium3DTiles/Subtree.h>
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>

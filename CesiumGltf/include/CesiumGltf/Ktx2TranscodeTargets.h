@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
+#include <CesiumGltf/Library.h>
 
 namespace CesiumGltf {
 

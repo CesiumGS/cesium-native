@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/ITileExcluder.h"
-#include "Cesium3DTilesSelection/Library.h"
-
+#include <Cesium3DTilesSelection/ITileExcluder.h>
+#include <Cesium3DTilesSelection/Library.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 namespace CesiumRasterOverlays {

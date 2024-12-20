@@ -1,7 +1,6 @@
-#include "CesiumGltfWriter/GltfWriter.h"
-
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltfWriter/GltfWriter.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 #include <CesiumUtility/ExtensibleObject.h>
 

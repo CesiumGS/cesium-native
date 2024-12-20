@@ -1,5 +1,5 @@
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeometry/Transforms.h"
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/Transforms.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/matrix_double4x4.hpp>

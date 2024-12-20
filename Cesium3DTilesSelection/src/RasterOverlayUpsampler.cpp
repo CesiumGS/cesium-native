@@ -1,11 +1,10 @@
 #include "RasterOverlayUpsampler.h"
 
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContent.h"
-#include "Cesium3DTilesSelection/TileLoadResult.h"
-#include "Cesium3DTilesSelection/TilesetContentLoader.h"
-
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/QuadtreeTileID.h>

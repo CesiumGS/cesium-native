@@ -1,12 +1,10 @@
-#include "CesiumGltfReader/NetworkImageAssetDescriptor.h"
-
-#include "CesiumGltfReader/ImageDecoder.h"
-
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
 #include <CesiumUtility/Hash.h>
 #include <CesiumUtility/Result.h>
 

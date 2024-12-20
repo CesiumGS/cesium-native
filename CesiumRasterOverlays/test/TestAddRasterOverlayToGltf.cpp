@@ -1,9 +1,3 @@
-#include "CesiumRasterOverlays/RasterOverlayDetails.h"
-#include "CesiumRasterOverlays/RasterOverlayTile.h"
-#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
-#include "CesiumRasterOverlays/RasterOverlayUtilities.h"
-#include "CesiumRasterOverlays/TileMapServiceRasterOverlay.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -29,6 +23,11 @@
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
+#include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/StringHelpers.h>
 

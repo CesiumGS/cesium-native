@@ -1,4 +1,4 @@
-#include "CesiumUtility/JsonHelpers.h"
+#include <CesiumUtility/JsonHelpers.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 #include <rapidjson/document.h>

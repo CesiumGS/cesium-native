@@ -1,10 +1,9 @@
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GeographicProjection.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Projection.h"
-
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

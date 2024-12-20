@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeometry/Library.h"
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/Library.h>
 
 #include <glm/fwd.hpp>
 

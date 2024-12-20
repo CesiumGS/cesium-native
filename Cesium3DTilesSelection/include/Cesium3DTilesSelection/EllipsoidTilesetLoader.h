@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/ITilesetHeightSampler.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-
+#include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
+#include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 
 namespace Cesium3DTilesSelection {

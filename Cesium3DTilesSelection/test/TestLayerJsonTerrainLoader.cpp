@@ -1,14 +1,14 @@
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileLoadResult.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "Cesium3DTilesSelection/TilesetContentLoader.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/TilesetOptions.h"
 #include "LayerJsonTerrainLoader.h"
 #include "MockTilesetContentManager.h"
 #include "SimplePrepareRendererResource.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>

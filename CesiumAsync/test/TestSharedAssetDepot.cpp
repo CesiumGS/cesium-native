@@ -1,7 +1,6 @@
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/SharedAssetDepot.h"
-
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>

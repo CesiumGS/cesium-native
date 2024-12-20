@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumJsonReader/IJsonHandler.h"
-#include "CesiumJsonReader/Library.h"
+#include <CesiumJsonReader/IJsonHandler.h>
+#include <CesiumJsonReader/Library.h>
 
 #include <cstdint>
 

@@ -1,7 +1,3 @@
-#include "CesiumGltfContent/GltfUtilities.h"
-
-#include "CesiumGltfContent/SkirtMeshMetadata.h"
-
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Ray.h>
@@ -36,6 +32,8 @@
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/Skin.h>
 #include <CesiumGltf/Texture.h>
+#include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
 

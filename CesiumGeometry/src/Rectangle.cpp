@@ -1,4 +1,4 @@
-#include "CesiumGeometry/Rectangle.h"
+#include <CesiumGeometry/Rectangle.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>

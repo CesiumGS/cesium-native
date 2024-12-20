@@ -1,6 +1,5 @@
-#include "CesiumUtility/Math.h"
-
 #include <CesiumNativeTests/RandomVector.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/vector_float3.hpp>

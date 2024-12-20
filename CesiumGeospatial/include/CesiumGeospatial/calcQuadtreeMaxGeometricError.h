@@ -1,8 +1,7 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
-
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 
 namespace CesiumGeospatial {
 /**

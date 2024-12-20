@@ -1,18 +1,16 @@
-#include "CesiumGltf/PropertyTableView.h"
-
-#include "CesiumGltf/Buffer.h"
-#include "CesiumGltf/BufferView.h"
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/PropertyArrayView.h"
-#include "CesiumGltf/PropertyTable.h"
-#include "CesiumGltf/PropertyTableProperty.h"
-#include "CesiumGltf/PropertyTablePropertyView.h"
-#include "CesiumGltf/PropertyType.h"
-#include "CesiumGltf/PropertyView.h"
-#include "CesiumGltf/Schema.h"
-
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyTableView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/common.hpp>

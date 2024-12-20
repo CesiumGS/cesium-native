@@ -1,7 +1,6 @@
-#include "CesiumGeometry/BoundingSphere.h"
-
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/Plane.h"
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Plane.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>

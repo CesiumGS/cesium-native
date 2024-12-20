@@ -1,13 +1,12 @@
 #pragma once
 
-#include "CesiumRasterOverlays/Library.h"
-#include "CesiumRasterOverlays/RasterOverlay.h"
-#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 
 #include <spdlog/fwd.h>
 

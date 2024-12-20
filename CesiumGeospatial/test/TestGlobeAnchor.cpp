@@ -1,8 +1,7 @@
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeAnchor.h"
-#include "CesiumGeospatial/LocalHorizontalCoordinateSystem.h"
-
 #include <CesiumGeometry/Transforms.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeAnchor.h>
+#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

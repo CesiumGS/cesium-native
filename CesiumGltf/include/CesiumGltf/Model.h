@@ -1,8 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
-#include "CesiumGltf/ModelSpec.h"
-
+#include <CesiumGltf/Library.h>
+#include <CesiumGltf/ModelSpec.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/mat4x4.hpp>

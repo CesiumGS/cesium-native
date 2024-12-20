@@ -1,5 +1,6 @@
-#include "CesiumAsync/HttpHeaders.h"
 #include "ResponseCacheControl.h"
+
+#include <CesiumAsync/HttpHeaders.h>
 
 #include <catch2/catch_test_macros.hpp>
 

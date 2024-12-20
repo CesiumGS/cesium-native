@@ -1,9 +1,8 @@
 #pragma once
 
-#include "CesiumGltfReader/NetworkImageAssetDescriptor.h"
-#include "CesiumGltfReader/NetworkSchemaAssetDescriptor.h"
-
 #include <CesiumAsync/SharedAssetDepot.h>
+#include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
+#include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
 
 namespace CesiumGltf {
 struct Schema;

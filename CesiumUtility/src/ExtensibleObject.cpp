@@ -1,6 +1,5 @@
-#include "CesiumUtility/ExtensibleObject.h"
-
-#include "CesiumUtility/JsonValue.h"
+#include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <any>
 #include <string>

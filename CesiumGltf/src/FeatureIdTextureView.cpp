@@ -1,8 +1,7 @@
-#include "CesiumGltf/FeatureIdTextureView.h"
-
-#include "CesiumGltf/FeatureIdTexture.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/TextureView.h"
+#include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/FeatureIdTextureView.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/TextureView.h>
 
 #include <cstddef>
 #include <cstdint>

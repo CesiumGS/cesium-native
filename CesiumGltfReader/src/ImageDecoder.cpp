@@ -1,7 +1,6 @@
-#include "CesiumGltfReader/ImageDecoder.h"
-
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 

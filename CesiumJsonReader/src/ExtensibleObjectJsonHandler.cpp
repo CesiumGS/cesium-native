@@ -1,10 +1,8 @@
-#include "CesiumJsonReader/ExtensibleObjectJsonHandler.h"
-
-#include "CesiumJsonReader/ExtensionsJsonHandler.h"
-#include "CesiumJsonReader/IJsonHandler.h"
-#include "CesiumJsonReader/JsonReaderOptions.h"
-#include "CesiumJsonReader/ObjectJsonHandler.h"
-
+#include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/ExtensionsJsonHandler.h>
+#include <CesiumJsonReader/IJsonHandler.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumJsonReader/ObjectJsonHandler.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <string>

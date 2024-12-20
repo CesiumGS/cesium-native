@@ -1,6 +1,6 @@
-#include "Cesium3DTilesContent/GltfConverterResult.h"
 #include "ConvertTileToGltf.h"
 
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>

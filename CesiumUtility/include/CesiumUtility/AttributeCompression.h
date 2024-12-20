@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumUtility/Library.h"
-#include "CesiumUtility/Math.h"
+#include <CesiumUtility/Library.h>
+#include <CesiumUtility/Math.h>
 
 #include <glm/glm.hpp>
 

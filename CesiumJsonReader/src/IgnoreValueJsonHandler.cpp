@@ -1,6 +1,5 @@
-#include "CesiumJsonReader/IgnoreValueJsonHandler.h"
-
-#include "CesiumJsonReader/IJsonHandler.h"
+#include <CesiumJsonReader/IJsonHandler.h>
+#include <CesiumJsonReader/IgnoreValueJsonHandler.h>
 
 #include <cstdint>
 #include <string>

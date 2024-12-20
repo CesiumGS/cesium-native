@@ -1,12 +1,11 @@
 #pragma once
 
-#include "CesiumRasterOverlays/Library.h"
-#include "CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 

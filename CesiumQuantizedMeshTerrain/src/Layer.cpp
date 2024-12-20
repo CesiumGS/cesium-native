@@ -1,5 +1,3 @@
-#include "CesiumQuantizedMeshTerrain/Layer.h"
-
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -7,6 +5,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumQuantizedMeshTerrain/Layer.h>
 
 #include <optional>
 #include <string>

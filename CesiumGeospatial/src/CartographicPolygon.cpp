@@ -1,8 +1,6 @@
-#include "CesiumGeospatial/CartographicPolygon.h"
-
-#include "CesiumGeospatial/GlobeRectangle.h"
-
 #include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>

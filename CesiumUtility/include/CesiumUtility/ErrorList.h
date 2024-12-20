@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumUtility/Library.h"
-#include "CesiumUtility/Log.h" // NOLINT
-#include "CesiumUtility/joinToString.h"
+#include <CesiumUtility/Library.h>
+#include <CesiumUtility/Log.h> // NOLINT
+#include <CesiumUtility/joinToString.h>
 
 #include <spdlog/spdlog.h>
 

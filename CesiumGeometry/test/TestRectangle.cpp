@@ -1,5 +1,4 @@
-#include "CesiumGeometry/Rectangle.h"
-
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

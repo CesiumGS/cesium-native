@@ -1,7 +1,7 @@
 
 #ifndef CESIUM_OVERRIDE_TRACING
 
-#include "CesiumUtility/Tracing.h"
+#include <CesiumUtility/Tracing.h>
 
 #if CESIUM_TRACING_ENABLED
 

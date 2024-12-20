@@ -1,10 +1,9 @@
 #include "ConvertTileToGltf.h"
 
-#include "Cesium3DTilesContent/B3dmToGltfConverter.h"
-#include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "Cesium3DTilesContent/I3dmToGltfConverter.h"
-#include "Cesium3DTilesContent/PntsToGltfConverter.h"
-
+#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <Cesium3DTilesContent/I3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>

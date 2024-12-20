@@ -1,17 +1,5 @@
 #include "TilesetContentManager.h"
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
-#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContent.h"
-#include "Cesium3DTilesSelection/TileLoadResult.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "Cesium3DTilesSelection/TilesetContentLoader.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
-#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
-#include "Cesium3DTilesSelection/TilesetOptions.h"
 #include "CesiumIonTilesetLoader.h"
 #include "LayerJsonTerrainLoader.h"
 #include "RasterOverlayUpsampler.h"
@@ -19,6 +7,18 @@
 #include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>

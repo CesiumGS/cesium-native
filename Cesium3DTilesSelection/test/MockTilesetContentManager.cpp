@@ -1,6 +1,6 @@
 #include "MockTilesetContentManager.h"
 
-#include "Cesium3DTilesSelection/Tile.h"
+#include <Cesium3DTilesSelection/Tile.h>
 
 namespace Cesium3DTilesSelection {
 void MockTilesetContentManagerTestFixture::setTileLoadState(

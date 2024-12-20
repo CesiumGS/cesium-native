@@ -1,8 +1,3 @@
-#include "CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h"
-#include "CesiumRasterOverlays/RasterOverlay.h"
-#include "CesiumRasterOverlays/RasterOverlayTile.h"
-#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -16,6 +11,10 @@
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <catch2/catch_test_macros.hpp>

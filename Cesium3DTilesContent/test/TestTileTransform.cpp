@@ -1,6 +1,5 @@
-#include "Cesium3DTilesContent/TileTransform.h"
-
 #include <Cesium3DTiles/Tile.h>
+#include <Cesium3DTilesContent/TileTransform.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

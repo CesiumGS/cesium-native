@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/Library.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Library.h>
 
 #include <glm/mat3x3.hpp>
 #include <glm/vec3.hpp>

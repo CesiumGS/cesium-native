@@ -1,9 +1,10 @@
-#include "CesiumAsync/GunzipAssetAccessor.h"
-#include "CesiumAsync/IAssetResponse.h"
 #include "MockAssetAccessor.h"
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
 #include "MockTaskProcessor.h"
+
+#include <CesiumAsync/GunzipAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
 
 #include <catch2/catch_test_macros.hpp>
 

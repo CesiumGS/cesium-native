@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGeospatial/Library.h"
+#include <CesiumGeospatial/Library.h>
 
 #include <cstdint>
 #include <optional>

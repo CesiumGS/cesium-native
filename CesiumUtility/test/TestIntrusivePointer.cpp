@@ -1,4 +1,4 @@
-#include "CesiumUtility/IntrusivePointer.h"
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <catch2/catch_test_macros.hpp>
 

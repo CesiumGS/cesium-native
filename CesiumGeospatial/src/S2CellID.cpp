@@ -20,12 +20,12 @@
 #pragma warning(pop)
 #endif
 
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/S2CellID.h"
 #include "HilbertOrder.h"
 
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellID.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Math.h>
 

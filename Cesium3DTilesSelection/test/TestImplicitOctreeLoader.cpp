@@ -1,11 +1,11 @@
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContent.h"
-#include "Cesium3DTilesSelection/TileLoadResult.h"
-#include "Cesium3DTilesSelection/TilesetContentLoader.h"
 #include "ImplicitOctreeLoader.h"
 
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>

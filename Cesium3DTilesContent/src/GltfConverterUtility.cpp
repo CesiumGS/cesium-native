@@ -1,5 +1,4 @@
-#include "Cesium3DTilesContent/GltfConverterUtility.h"
-
+#include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>

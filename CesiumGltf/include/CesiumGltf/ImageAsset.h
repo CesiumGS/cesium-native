@@ -1,8 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/Ktx2TranscodeTargets.h"
-#include "CesiumGltf/Library.h"
-
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltf/Library.h>
 #include <CesiumUtility/SharedAsset.h>
 
 #include <cstddef>

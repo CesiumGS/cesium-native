@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/Library.h"
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/Library.h>
 
 #include <glm/vec3.hpp>
 

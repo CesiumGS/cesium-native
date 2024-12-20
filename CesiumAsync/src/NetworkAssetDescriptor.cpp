@@ -1,10 +1,8 @@
-#include "CesiumAsync/NetworkAssetDescriptor.h"
-
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
-
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Hash.h>
 #include <CesiumUtility/Result.h>

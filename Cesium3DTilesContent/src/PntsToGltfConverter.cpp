@@ -1,9 +1,8 @@
-#include "Cesium3DTilesContent/PntsToGltfConverter.h"
-
 #include "BatchTableToGltfStructuralMetadata.h"
-#include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "Cesium3DTilesContent/GltfConverters.h"
 
+#include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/Accessor.h>

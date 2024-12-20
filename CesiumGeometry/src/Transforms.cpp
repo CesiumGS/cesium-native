@@ -1,6 +1,5 @@
-#include "CesiumGeometry/Transforms.h"
-
-#include "CesiumGeometry/Axis.h"
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/Transforms.h>
 
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>

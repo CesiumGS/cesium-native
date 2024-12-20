@@ -1,8 +1,6 @@
-#include "Cesium3DTilesContent/BinaryToGltfConverter.h"
-
-#include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "Cesium3DTilesContent/GltfConverters.h"
-
+#include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGltfReader/GltfReader.h>

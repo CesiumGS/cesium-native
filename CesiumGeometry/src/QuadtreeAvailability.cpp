@@ -1,9 +1,7 @@
-#include "CesiumGeometry/QuadtreeAvailability.h"
-
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
-
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/QuadtreeAvailability.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumUtility/Assert.h>
 
 #include <cstddef>

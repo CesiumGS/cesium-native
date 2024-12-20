@@ -1,10 +1,9 @@
-#include "CesiumGltfContent/GltfUtilities.h"
-
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/Library.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/Library.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 
 #include <cstddef>
 #include <memory>

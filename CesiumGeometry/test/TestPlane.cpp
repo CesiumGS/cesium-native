@@ -1,5 +1,4 @@
-#include "CesiumGeometry/Plane.h"
-
+#include <CesiumGeometry/Plane.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 

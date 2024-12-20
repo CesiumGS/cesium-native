@@ -1,16 +1,15 @@
 #pragma once
 
-#include "CesiumIonClient/ApplicationData.h"
-#include "CesiumIonClient/Assets.h"
-#include "CesiumIonClient/Defaults.h"
-#include "CesiumIonClient/Profile.h"
-#include "CesiumIonClient/Response.h"
-#include "CesiumIonClient/Token.h"
-#include "CesiumIonClient/TokenList.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Library.h>
+#include <CesiumIonClient/ApplicationData.h>
+#include <CesiumIonClient/Assets.h>
+#include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Profile.h>
+#include <CesiumIonClient/Response.h>
+#include <CesiumIonClient/Token.h>
+#include <CesiumIonClient/TokenList.h>
 
 #include <cstdint>
 

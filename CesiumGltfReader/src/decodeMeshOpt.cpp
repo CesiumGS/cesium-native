@@ -1,10 +1,9 @@
 #include "decodeMeshOpt.h"
 
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 #include <cstddef>
 #include <cstdint>

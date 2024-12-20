@@ -1,6 +1,5 @@
-#include "CesiumGltfContent/ImageManipulation.h"
-
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltfContent/ImageManipulation.h>
 
 #include <catch2/catch_test_macros.hpp>
 

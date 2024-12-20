@@ -1,7 +1,7 @@
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Promise.h"
-#include "CesiumAsync/SharedFuture.h"
-#include "CesiumAsync/ThreadPool.h"
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Promise.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumAsync/ThreadPool.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>

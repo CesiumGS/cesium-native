@@ -1,7 +1,6 @@
-#include "CesiumGltf/Accessor.h"
-
-#include "CesiumGltf/BufferView.h"
-#include "CesiumGltf/Model.h"
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Model.h>
 
 #include <cstdint>
 #include <string>

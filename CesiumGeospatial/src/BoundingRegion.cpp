@@ -1,13 +1,11 @@
-#include "CesiumGeospatial/BoundingRegion.h"
-
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/EllipsoidTangentPlane.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeometry/Ray.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/EllipsoidTangentPlane.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>

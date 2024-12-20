@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/Library.h"
-
+#include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 

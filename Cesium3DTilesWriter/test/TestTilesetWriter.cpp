@@ -1,6 +1,5 @@
-#include "Cesium3DTilesWriter/TilesetWriter.h"
-
 #include <Cesium3DTilesReader/TilesetReader.h>
+#include <Cesium3DTilesWriter/TilesetWriter.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <rapidjson/document.h>

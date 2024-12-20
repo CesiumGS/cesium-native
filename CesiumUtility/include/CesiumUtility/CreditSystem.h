@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumUtility/Library.h"
+#include <CesiumUtility/Library.h>
 
 #include <string>
 #include <unordered_map>

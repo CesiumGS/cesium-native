@@ -1,11 +1,10 @@
-#include "Cesium3DTilesContent/registerAllTileContentTypes.h"
-
-#include "Cesium3DTilesContent/B3dmToGltfConverter.h"
-#include "Cesium3DTilesContent/BinaryToGltfConverter.h"
-#include "Cesium3DTilesContent/CmptToGltfConverter.h"
-#include "Cesium3DTilesContent/GltfConverters.h"
-#include "Cesium3DTilesContent/I3dmToGltfConverter.h"
-#include "Cesium3DTilesContent/PntsToGltfConverter.h"
+#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/CmptToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/I3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/PntsToGltfConverter.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 
 namespace Cesium3DTilesContent {
 

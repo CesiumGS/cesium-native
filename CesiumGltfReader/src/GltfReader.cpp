@@ -1,8 +1,3 @@
-#include "CesiumGltfReader/GltfReader.h"
-
-#include "CesiumGltfReader/ImageDecoder.h"
-#include "CesiumGltfReader/NetworkImageAssetDescriptor.h"
-#include "CesiumGltfReader/NetworkSchemaAssetDescriptor.h"
 #include "ModelJsonHandler.h"
 #include "applyKhrTextureTransform.h"
 #include "decodeDataUrls.h"
@@ -27,6 +22,10 @@
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltf/Texture.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
+#include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumUtility/Assert.h>

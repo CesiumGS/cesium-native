@@ -1,7 +1,6 @@
-#include "Cesium3DTilesContent/TileBoundingVolumes.h"
-
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTilesContent/TileBoundingVolumes.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>

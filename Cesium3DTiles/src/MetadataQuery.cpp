@@ -1,9 +1,8 @@
-#include "Cesium3DTiles/MetadataQuery.h"
-
-#include "Cesium3DTiles/Class.h"
-#include "Cesium3DTiles/ClassProperty.h"
-#include "Cesium3DTiles/MetadataEntity.h"
-#include "Cesium3DTiles/Schema.h"
+#include <Cesium3DTiles/Class.h>
+#include <Cesium3DTiles/ClassProperty.h>
+#include <Cesium3DTiles/MetadataEntity.h>
+#include <Cesium3DTiles/MetadataQuery.h>
+#include <Cesium3DTiles/Schema.h>
 
 #include <optional>
 #include <string>

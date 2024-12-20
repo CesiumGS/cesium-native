@@ -1,9 +1,7 @@
-#include "Cesium3DTilesSelection/DebugTileStateDatabase.h"
-
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileSelectionState.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-
+#include <Cesium3DTilesSelection/DebugTileStateDatabase.h>
+#include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileSelectionState.h>
+#include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumAsync/SqliteHelper.h>
 #include <CesiumAsync/cesium-sqlite3.h>
 

@@ -1,5 +1,3 @@
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
@@ -13,6 +11,7 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>

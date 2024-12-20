@@ -1,5 +1,5 @@
-#include "CesiumGltf/MetadataConversions.h"
-#include "CesiumGltf/PropertyArrayView.h"
+#include <CesiumGltf/MetadataConversions.h>
+#include <CesiumGltf/PropertyArrayView.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/matrix_double2x2.hpp>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Library.h"
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Library.h>
 
 #include <glm/vec2.hpp>
 

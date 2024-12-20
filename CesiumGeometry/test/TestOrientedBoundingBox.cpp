@@ -1,9 +1,8 @@
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeometry/Plane.h"
-
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>

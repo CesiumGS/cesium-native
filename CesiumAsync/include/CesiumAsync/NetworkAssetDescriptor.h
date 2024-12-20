@@ -1,7 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/IAssetAccessor.h"
-
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumUtility/Result.h>
 
 #include <cstddef>

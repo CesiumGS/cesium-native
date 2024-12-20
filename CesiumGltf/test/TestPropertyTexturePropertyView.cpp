@@ -1,14 +1,13 @@
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/ExtensionKhrTextureTransform.h"
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltf/PropertyArrayView.h"
-#include "CesiumGltf/PropertyTextureProperty.h"
-#include "CesiumGltf/PropertyTransformations.h"
-#include "CesiumGltf/PropertyType.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/TextureView.h"
-
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/TextureView.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/vector_double2.hpp>
@@ -30,9 +29,8 @@
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include "CesiumGltf/KhrTextureTransform.h"
-#include "CesiumGltf/PropertyTexturePropertyView.h"
-
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/PropertyTexturePropertyView.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

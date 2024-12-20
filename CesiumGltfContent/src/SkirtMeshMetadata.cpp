@@ -1,5 +1,4 @@
-#include "CesiumGltfContent/SkirtMeshMetadata.h"
-
+#include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <cstdint>

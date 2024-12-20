@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/Library.h"
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Library.h>
 
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>

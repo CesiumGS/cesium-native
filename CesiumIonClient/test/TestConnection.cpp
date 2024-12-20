@@ -1,10 +1,9 @@
-#include "CesiumIonClient/ApplicationData.h"
-#include "CesiumIonClient/Connection.h"
-#include "CesiumIonClient/Defaults.h"
-#include "CesiumIonClient/Profile.h"
-#include "CesiumIonClient/Response.h"
-
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumIonClient/ApplicationData.h>
+#include <CesiumIonClient/Connection.h>
+#include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Profile.h>
+#include <CesiumIonClient/Response.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>

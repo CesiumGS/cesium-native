@@ -1,7 +1,3 @@
-#include "CesiumRasterOverlays/RasterOverlayUtilities.h"
-
-#include "CesiumRasterOverlays/RasterOverlayDetails.h"
-
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
@@ -22,6 +18,8 @@
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>

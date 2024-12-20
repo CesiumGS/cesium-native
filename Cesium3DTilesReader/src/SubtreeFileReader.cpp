@@ -1,7 +1,6 @@
-#include "Cesium3DTilesReader/SubtreeFileReader.h"
-
 #include <Cesium3DTiles/Buffer.h>
 #include <Cesium3DTiles/Subtree.h>
+#include <Cesium3DTilesReader/SubtreeFileReader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>

@@ -1,7 +1,5 @@
-#include "Cesium3DTilesContent/GltfConverters.h"
-
-#include "Cesium3DTilesContent/GltfConverterResult.h"
-
+#include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>

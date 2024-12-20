@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/Tile.h"
-
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 
 #include <catch2/catch.hpp>

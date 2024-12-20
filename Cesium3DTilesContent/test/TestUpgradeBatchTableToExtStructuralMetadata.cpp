@@ -1,7 +1,7 @@
 #include "BatchTableToGltfStructuralMetadata.h"
-#include "Cesium3DTilesContent/GltfConverterResult.h"
 #include "ConvertTileToGltf.h"
 
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>

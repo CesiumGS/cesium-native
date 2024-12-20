@@ -1,9 +1,7 @@
-#include "CesiumGeometry/OctreeAvailability.h"
-
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/OctreeTileID.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
-
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OctreeAvailability.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 #include <CesiumUtility/Assert.h>
 
 #include <cstddef>

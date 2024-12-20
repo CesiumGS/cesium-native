@@ -1,10 +1,9 @@
-#include "CesiumQuantizedMeshTerrain/LayerWriter.h"
-
 #include "LayerJsonWriter.h"
 #include "registerWriterExtensions.h"
 
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
+#include <CesiumQuantizedMeshTerrain/LayerWriter.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <memory>

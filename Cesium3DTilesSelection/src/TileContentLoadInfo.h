@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "Cesium3DTilesSelection/TilesetOptions.h"
-#include "Cesium3DTilesSelection/TilesetSharedAssetSystem.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>

@@ -1,7 +1,5 @@
 #include "decodeDraco.h"
 
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -9,6 +7,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltf/ImageSpec.h"
-#include "CesiumGltf/Library.h"
-
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/ImageSpec.h>
+#include <CesiumGltf/Library.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 namespace CesiumGltf {

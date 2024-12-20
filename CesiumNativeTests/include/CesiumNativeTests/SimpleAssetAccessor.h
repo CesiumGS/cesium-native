@@ -1,11 +1,10 @@
 #pragma once
 
-#include "CesiumNativeTests/SimpleAssetRequest.h"
-#include "CesiumNativeTests/SimpleAssetResponse.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>

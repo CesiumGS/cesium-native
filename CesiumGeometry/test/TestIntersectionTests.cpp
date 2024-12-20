@@ -1,9 +1,8 @@
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/IntersectionTests.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Ray.h"
-
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Ray.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 

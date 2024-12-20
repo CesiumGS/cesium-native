@@ -1,7 +1,6 @@
-#include "CesiumGeospatial/BoundingRegionBuilder.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-
+#include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

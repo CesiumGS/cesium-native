@@ -1,12 +1,10 @@
 // Heavily inspired by PntsToGltfConverter.cpp
 
-#include "Cesium3DTilesContent/I3dmToGltfConverter.h"
-
-#include "Cesium3DTilesContent/BinaryToGltfConverter.h"
-#include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "Cesium3DTilesContent/GltfConverterUtility.h"
-#include "Cesium3DTilesContent/GltfConverters.h"
-
+#include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <Cesium3DTilesContent/GltfConverterUtility.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>

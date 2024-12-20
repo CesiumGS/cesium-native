@@ -1,10 +1,10 @@
 
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/OctreeAvailability.h"
-#include "CesiumGeometry/OctreeTileID.h"
-#include "CesiumGeometry/QuadtreeAvailability.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OctreeAvailability.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/QuadtreeAvailability.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 
 #include <catch2/catch_test_macros.hpp>
 

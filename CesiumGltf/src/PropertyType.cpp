@@ -1,8 +1,7 @@
-#include "CesiumGltf/PropertyType.h"
-
-#include "CesiumGltf/AccessorSpec.h"
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/PropertyTableProperty.h"
+#include <CesiumGltf/AccessorSpec.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyType.h>
 
 #include <glm/detail/qualifier.hpp>
 

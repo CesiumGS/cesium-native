@@ -1,7 +1,5 @@
-#include "CesiumJsonWriter/JsonObjectWriter.h"
-
-#include "CesiumJsonWriter/JsonWriter.h"
-
+#include <CesiumJsonWriter/JsonObjectWriter.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <utility>

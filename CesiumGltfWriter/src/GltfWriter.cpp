@@ -1,8 +1,7 @@
-#include "CesiumGltfWriter/GltfWriter.h"
-
 #include "ModelJsonWriter.h"
 #include "registerWriterExtensions.h"
 
+#include <CesiumGltfWriter/GltfWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Assert.h>

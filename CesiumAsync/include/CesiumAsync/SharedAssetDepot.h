@@ -1,9 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumUtility/DoublyLinkedList.h>
 #include <CesiumUtility/IDepotOwningAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>

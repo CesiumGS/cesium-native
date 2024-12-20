@@ -1,11 +1,9 @@
-#include "Cesium3DTilesContent/SubtreeAvailability.h"
-
-#include "Cesium3DTilesContent/ImplicitTilingUtilities.h"
-
 #include <Cesium3DTiles/Availability.h>
 #include <Cesium3DTiles/Buffer.h>
 #include <Cesium3DTiles/BufferView.h>
 #include <Cesium3DTiles/Subtree.h>
+#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesReader/SubtreeFileReader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>

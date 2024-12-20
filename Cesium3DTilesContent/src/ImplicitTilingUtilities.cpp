@@ -1,8 +1,6 @@
-#include "Cesium3DTilesContent/ImplicitTilingUtilities.h"
-
-#include "Cesium3DTilesContent/TileBoundingVolumes.h"
-
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
+#include <Cesium3DTilesContent/TileBoundingVolumes.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>

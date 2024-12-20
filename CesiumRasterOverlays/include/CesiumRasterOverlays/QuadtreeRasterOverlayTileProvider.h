@@ -1,14 +1,13 @@
 #pragma once
 
-#include "CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h"
-#include "CesiumRasterOverlays/Library.h"
-#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
+#include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/SharedAsset.h>

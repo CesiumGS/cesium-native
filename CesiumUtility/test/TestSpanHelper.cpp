@@ -1,4 +1,4 @@
-#include "CesiumUtility/SpanHelper.h"
+#include <CesiumUtility/SpanHelper.h>
 
 #include <catch2/catch_test_macros.hpp>
 

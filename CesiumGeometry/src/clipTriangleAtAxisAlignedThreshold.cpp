@@ -1,4 +1,4 @@
-#include "CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h"
+#include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
 
 #include <vector>
 

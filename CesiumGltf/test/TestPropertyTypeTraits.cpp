@@ -1,6 +1,6 @@
-#include "CesiumGltf/PropertyArrayView.h"
-#include "CesiumGltf/PropertyType.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/matrix_double2x2.hpp>

@@ -1,6 +1,5 @@
-#include "CesiumGltfContent/ImageManipulation.h"
-
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 
 #include <cstddef>

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "CesiumRasterOverlays/RasterOverlay.h"
-
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
 
 namespace CesiumRasterOverlays {
 

@@ -1,13 +1,5 @@
 #include "TilesetJsonLoader.h"
 
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "Cesium3DTilesSelection/Tile.h"
-#include "Cesium3DTilesSelection/TileContent.h"
-#include "Cesium3DTilesSelection/TileID.h"
-#include "Cesium3DTilesSelection/TileLoadResult.h"
-#include "Cesium3DTilesSelection/TileRefine.h"
-#include "Cesium3DTilesSelection/TilesetContentLoader.h"
-#include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
 #include "TilesetContentLoaderResult.h"
@@ -18,6 +10,14 @@
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>

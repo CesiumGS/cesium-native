@@ -1,7 +1,6 @@
-#include "CesiumGeometry/OctreeTilingScheme.h"
-
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/OctreeTileID.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/OctreeTilingScheme.h>
 
 #include <glm/ext/vector_double3.hpp>
 

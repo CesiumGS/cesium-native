@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesContent/GltfConverters.h"
-
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGltf/AccessorView.h>
