@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumGltfContent/Library.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 // Forward declarations
 namespace CesiumGltf {

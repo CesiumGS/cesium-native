@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/Accessor.h"
-#include "CesiumGltf/Model.h"
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Model.h>
 
 #include <cstddef>
 #include <stdexcept>

@@ -47,7 +47,7 @@ public:
    *
    * Default is 16MiB.
    */
-  int64_t inactiveAssetSizeLimitBytes = 16 * 1024 * 1024;
+  int64_t inactiveAssetSizeLimitBytes = static_cast<int64_t>(16 * 1024 * 1024);
 
   /**
    * @brief Signature for the callback function that will be called to fetch and
@@ -253,10 +253,10 @@ public:
     return this->_totalDeletionCandidateMemoryUsage;
   }
 
-private:
   // Disable copy
   void operator=(const SharedAssetDepot<TAssetType, TAssetKey>& other) = delete;
 
+private:
   /**
    * @brief Marks the given asset as a candidate for deletion.
    * Should only be called by {@link SharedAsset}. May be called from any thread.

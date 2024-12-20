@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/Library.h"
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/Library.h>
+#include <CesiumUtility/Assert.h>
 
 #include <map>
 #include <optional>
@@ -91,7 +92,10 @@ public:
   /**
    * @brief Value of Max-Age directive that appears in the Cache-Control header.
    */
-  int maxAgeValue() const noexcept { return *_maxAge; }
+  int maxAgeValue() const noexcept {
+    CESIUM_ASSERT(_maxAge.has_value());
+    return *_maxAge;
+  }
 
   /**
    * @brief Existence of S-Maxage directive that appears in the Cache-Control
@@ -103,7 +107,10 @@ public:
    * @brief Value of S-Maxage directive that appears in the Cache-Control
    * header.
    */
-  int sharedMaxAgeValue() const noexcept { return *_sharedMaxAge; }
+  int sharedMaxAgeValue() const noexcept {
+    CESIUM_ASSERT(_sharedMaxAge.has_value());
+    return *_sharedMaxAge;
+  }
 
   /**
    * @brief Existence of Stale-While-Revalidate directive that appears in the
@@ -118,6 +125,7 @@ public:
    * Cache-Control header.
    */
   int staleWhileRevalidateValue() const noexcept {
+    CESIUM_ASSERT(_staleWhileRevalidate.has_value());
     return *_staleWhileRevalidate;
   }
 

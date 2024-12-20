@@ -1,10 +1,9 @@
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumUtility/joinToString.h>
+
+#include <memory>
 
 using namespace CesiumAsync;
 

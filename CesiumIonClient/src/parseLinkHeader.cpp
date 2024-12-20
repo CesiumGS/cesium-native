@@ -2,6 +2,9 @@
 
 #include <optional>
 #include <regex>
+#include <string>
+#include <utility>
+#include <vector>
 
 // This implementation is loosely based on the JavaScript implementation found
 // here:

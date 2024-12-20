@@ -1,7 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
-
+#include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <string>

@@ -1,5 +1,4 @@
-#include "CesiumGeometry/Plane.h"
-
+#include <CesiumGeometry/Plane.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/geometric.hpp>

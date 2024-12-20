@@ -1,5 +1,8 @@
 #include <CesiumGltf/InstanceAttributeSemantics.h>
 
+#include <array>
+#include <string>
+
 namespace CesiumGltf {
 
 /**

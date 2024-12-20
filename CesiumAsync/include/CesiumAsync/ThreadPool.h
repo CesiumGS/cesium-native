@@ -2,7 +2,8 @@
 
 #include "Impl/ImmediateScheduler.h"
 #include "Impl/cesium-async++.h"
-#include "Library.h"
+
+#include <CesiumAsync/Library.h>
 
 #include <memory>
 

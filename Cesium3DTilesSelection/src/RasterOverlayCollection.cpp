@@ -1,8 +1,28 @@
 #include "EmptyRasterOverlayTileProvider.h"
 
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
+#include <fmt/format.h>
+#include <glm/ext/vector_double2.hpp>
+#include <nonstd/expected.hpp>
+#include <spdlog/spdlog.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -96,9 +116,9 @@ void RasterOverlayCollection::add(
     if (tileState != TileLoadState::Unloaded &&
         tileState != TileLoadState::Unloading &&
         tileState != TileLoadState::Failed) {
-      tile.getMappedRasterTiles().push_back(RasterMappedTo3DTile(
+      tile.getMappedRasterTiles().emplace_back(
           pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
-          -1));
+          -1);
     }
   });
 

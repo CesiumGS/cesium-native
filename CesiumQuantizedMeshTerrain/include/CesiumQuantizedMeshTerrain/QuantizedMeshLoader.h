@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Library.h"
-
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumQuantizedMeshTerrain/Library.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <rapidjson/document.h>

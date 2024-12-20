@@ -1,6 +1,10 @@
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumUtility/Hash.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 
 namespace CesiumGeometry {
 

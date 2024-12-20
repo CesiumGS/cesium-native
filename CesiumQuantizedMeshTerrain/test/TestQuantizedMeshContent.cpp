@@ -1,16 +1,37 @@
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
-#include <CesiumGeospatial/Projection.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/glm.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 using namespace Cesium3DTilesContent;
@@ -397,7 +418,7 @@ void checkGridMesh(
   int32_t v = 0;
 
   std::vector<glm::dvec2> uvs;
-  uvs.reserve(verticesWidth * verticesHeight);
+  uvs.reserve(static_cast<size_t>(verticesWidth * verticesHeight));
   uint32_t positionIdx = 0;
   uint32_t idx = 0;
   for (uint32_t y = 0; y < verticesHeight; ++y) {
@@ -469,8 +490,10 @@ void checkGridMesh(
   size_t eastIndicesCount = quantizedMesh.vertexData.eastIndices.size();
   size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
 
-  size_t gridVerticesCount = verticesWidth * verticesHeight;
-  size_t gridIndicesCount = (verticesHeight - 1) * (verticesWidth - 1) * 6;
+  size_t gridVerticesCount =
+      static_cast<size_t>(verticesWidth * verticesHeight);
+  size_t gridIndicesCount =
+      static_cast<size_t>((verticesHeight - 1) * (verticesWidth - 1) * 6);
   size_t totalSkirtVertices = westIndicesCount + southIndicesCount +
                               eastIndicesCount + northIndicesCount;
   size_t totalSkirtIndices = (totalSkirtVertices - 4) * 6;
@@ -571,7 +594,8 @@ static void checkGeneratedGridNormal(
     uint32_t verticesWidth,
     uint32_t verticesHeight) {
   uint32_t totalGridIndices = (verticesWidth - 1) * (verticesHeight - 1) * 6;
-  std::vector<glm::vec3> expectedNormals(verticesWidth * verticesHeight);
+  std::vector<glm::vec3> expectedNormals(
+      static_cast<size_t>(verticesWidth * verticesHeight));
   for (uint32_t i = 0; i < totalGridIndices; i += 3) {
     I id0 = indices[i];
     I id1 = indices[i + 1];
@@ -617,7 +641,8 @@ static void checkGeneratedGridNormal(
   size_t eastIndicesCount = quantizedMesh.vertexData.eastIndices.size();
   size_t northIndicesCount = quantizedMesh.vertexData.northIndices.size();
 
-  size_t gridVerticesCount = verticesWidth * verticesHeight;
+  size_t gridVerticesCount =
+      static_cast<size_t>(verticesWidth * verticesHeight);
   size_t totalSkirtVertices = westIndicesCount + southIndicesCount +
                               eastIndicesCount + northIndicesCount;
 
@@ -1004,7 +1029,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
     glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
     uint8_t x = 0, y = 0;
     octEncode(normal, x, y);
-    std::vector<std::byte> octNormals(verticesWidth * verticesHeight * 2);
+    std::vector<std::byte> octNormals(
+        static_cast<size_t>(verticesWidth * verticesHeight * 2));
     for (size_t i = 0; i < octNormals.size(); i += 2) {
       octNormals[i] = std::byte(x);
       octNormals[i + 1] = std::byte(y);
@@ -1046,7 +1072,8 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
 
     REQUIRE(
         static_cast<size_t>(normals.size()) ==
-        (verticesWidth * verticesHeight + totalSkirtVerticesCount));
+        (static_cast<size_t>(verticesWidth * verticesHeight) +
+         totalSkirtVerticesCount));
     for (int64_t i = 0; i < normals.size(); ++i) {
       REQUIRE(Math::equalsEpsilon(normals[i].x, normal.x, Math::Epsilon2));
       REQUIRE(Math::equalsEpsilon(normals[i].y, normal.y, Math::Epsilon2));
@@ -1091,7 +1118,8 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
   glm::vec3 normal = glm::normalize(glm::vec3(0.2, 1.4, 0.3));
   uint8_t x = 0, y = 0;
   octEncode(normal, x, y);
-  std::vector<std::byte> octNormals(verticesWidth * verticesHeight * 2);
+  std::vector<std::byte> octNormals(
+      static_cast<size_t>(verticesWidth * verticesHeight * 2));
   for (size_t i = 0; i < octNormals.size(); i += 2) {
     octNormals[i] = std::byte(x);
     octNormals[i + 1] = std::byte(y);

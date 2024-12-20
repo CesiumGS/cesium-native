@@ -1,12 +1,23 @@
-#include "CesiumGeometry/QuadtreeAvailability.h"
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/QuadtreeAvailability.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
+#include <CesiumUtility/Assert.h>
 
-#include "CesiumUtility/Assert.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <span>
+#include <utility>
 
 namespace CesiumGeometry {
 
+namespace {
+
 // For reference:
 // https://graphics.stanford.edu/~seander/bithacks.html#Interleave64bitOps
-static uint16_t getMortonIndexForBytes(uint8_t a, uint8_t b) {
+uint16_t getMortonIndexForBytes(uint8_t a, uint8_t b) {
   return static_cast<uint16_t>(
       (((a * 0x0101010101010101ULL & 0x8040201008040201ULL) *
             0x0102040810204081ULL >>
@@ -18,7 +29,7 @@ static uint16_t getMortonIndexForBytes(uint8_t a, uint8_t b) {
        0xAAAA));
 }
 
-static uint32_t getMortonIndexForShorts(uint16_t a, uint16_t b) {
+uint32_t getMortonIndexForShorts(uint16_t a, uint16_t b) {
   uint8_t* pFirstByteA = reinterpret_cast<uint8_t*>(&a);
   uint8_t* pFirstByteB = reinterpret_cast<uint8_t*>(&b);
 
@@ -40,11 +51,13 @@ static uint32_t getMortonIndexForShorts(uint16_t a, uint16_t b) {
  * @param y The unsigned 16-bit integer to put in the even bit positions.
  * @return The 32-bit unsigned morton index.
  */
-static uint32_t getMortonIndex(uint32_t x, uint32_t y) {
+uint32_t getMortonIndex(uint32_t x, uint32_t y) {
   return getMortonIndexForShorts(
       static_cast<uint16_t>(x),
       static_cast<uint16_t>(y));
 }
+
+} // namespace
 
 QuadtreeAvailability::QuadtreeAvailability(
     uint32_t subtreeLevels,

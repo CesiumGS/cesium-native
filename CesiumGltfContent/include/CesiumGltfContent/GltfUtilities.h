@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Library.h"
-
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGltfContent/Library.h>
 
 #include <glm/fwd.hpp>
 

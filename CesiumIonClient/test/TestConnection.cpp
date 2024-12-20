@@ -1,13 +1,24 @@
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Connection.h>
+#include <CesiumIonClient/Defaults.h>
 #include <CesiumIonClient/Profile.h>
+#include <CesiumIonClient/Response.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <cstdint>
+#include <filesystem>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
 
 using namespace CesiumAsync;
 using namespace CesiumIonClient;

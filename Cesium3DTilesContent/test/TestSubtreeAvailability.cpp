@@ -3,18 +3,32 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumNativeTests/waitForFuture.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <spdlog/spdlog.h>
 
+#include <cassert>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <map>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace Cesium3DTiles;

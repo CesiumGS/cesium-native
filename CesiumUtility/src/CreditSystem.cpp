@@ -1,6 +1,11 @@
 #include <CesiumUtility/CreditSystem.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumUtility {
 

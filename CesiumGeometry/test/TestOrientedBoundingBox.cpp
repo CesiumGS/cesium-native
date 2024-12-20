@@ -1,18 +1,29 @@
-#include "CesiumGeometry/OrientedBoundingBox.h"
-
-#include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <catch2/generators/catch_generators.hpp>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <algorithm>
+#include <cmath>
 #include <optional>
+#include <string>
+#include <vector>
 
 using namespace CesiumGeometry;
-using namespace Cesium3DTilesSelection;
 using namespace CesiumUtility;
 
 TEST_CASE("OrientedBoundingBox::intersectPlane") {

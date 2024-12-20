@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumUtility/Assert.h"
-#include "JsonHandler.h"
-#include "Library.h"
+#include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumJsonReader/Library.h>
+#include <CesiumUtility/Assert.h>
 
 #include <cmath>
 
@@ -69,7 +69,7 @@ public:
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context) override {
-    context.push_back("(expecting an integer)");
+    context.emplace_back("(expecting an integer)");
     this->parent()->reportWarning(warning, std::move(context));
   }
 

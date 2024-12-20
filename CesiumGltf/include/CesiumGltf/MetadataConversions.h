@@ -1,7 +1,6 @@
 #pragma once
 
-#include "PropertyTypeTraits.h"
-
+#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/common.hpp>

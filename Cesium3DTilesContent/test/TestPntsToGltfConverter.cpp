@@ -1,21 +1,38 @@
 #include "ConvertTileToGltf.h"
 
-#include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/HttpHeaders.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialPBRMetallicRoughness.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <rapidjson/document.h>
-#include <spdlog/sinks/ringbuffer_sink.h>
-#include <spdlog/spdlog.h>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
+#include <glm/ext/vector_uint2_sized.hpp>
+#include <glm/ext/vector_uint3_sized.hpp>
+#include <glm/ext/vector_uint4_sized.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <set>
+#include <string>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesContent;

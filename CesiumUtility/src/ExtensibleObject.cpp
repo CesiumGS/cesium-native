@@ -1,4 +1,9 @@
-#include "CesiumUtility/ExtensibleObject.h"
+#include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/JsonValue.h>
+
+#include <any>
+#include <string>
+#include <utility>
 
 namespace CesiumUtility {
 JsonValue* ExtensibleObject::getGenericExtension(

@@ -1,8 +1,11 @@
-#include "CesiumGltf/SamplerUtility.h"
-
-#include "CesiumGltf/Sampler.h"
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/SamplerUtility.h>
 
 #include <glm/common.hpp>
+
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
 
 namespace CesiumGltf {
 double applySamplerWrapS(const double u, const int32_t wrapS) {

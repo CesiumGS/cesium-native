@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlayDetails.h"
-
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
 #include <glm/fwd.hpp>
 

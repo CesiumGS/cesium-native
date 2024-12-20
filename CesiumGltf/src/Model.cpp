@@ -1,27 +1,63 @@
-#include "CesiumGltf/Model.h"
-
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h"
-#include "CesiumGltf/ExtensionCesiumPrimitiveOutline.h"
-#include "CesiumGltf/ExtensionCesiumTileEdges.h"
-#include "CesiumGltf/ExtensionExtMeshFeatures.h"
-#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
-#include "CesiumGltf/ExtensionKhrDracoMeshCompression.h"
-#include "CesiumGltf/ExtensionKhrTextureBasisu.h"
-#include "CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h"
-#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/ExtensionTextureWebp.h"
-
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Animation.h>
+#include <CesiumGltf/AnimationChannel.h>
+#include <CesiumGltf/AnimationSampler.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Enum.h>
+#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
+#include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionTextureWebp.h>
+#include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialPBRMetallicRoughness.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyAttribute.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTexture.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/Scene.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumGltf/Skin.h>
+#include <CesiumGltf/Texture.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
 
-#include <glm/gtc/quaternion.hpp>
+#include <fmt/format.h>
+#include <glm/exponential.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/quaternion_double.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtx/norm.hpp>
-#include <glm/vec3.hpp>
 
 #include <algorithm>
 #include <array>
-#include <charconv>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <map>
+#include <optional>
 #include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumUtility;
 

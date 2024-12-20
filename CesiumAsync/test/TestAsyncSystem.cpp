@@ -1,11 +1,21 @@
-#include "CesiumAsync/AsyncSystem.h"
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Promise.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumAsync/ThreadPool.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 
-#include <chrono>
+#include <atomic>
+#include <cstdint>
+#include <exception>
+#include <functional>
 #include <memory>
+#include <stdexcept>
 #include <thread>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 

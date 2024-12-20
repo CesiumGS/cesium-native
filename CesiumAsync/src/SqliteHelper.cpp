@@ -1,8 +1,10 @@
 #include <CesiumAsync/SqliteHelper.h>
+#include <CesiumAsync/cesium-sqlite3.h>
 
 #include <sqlite3.h>
 
 #include <stdexcept>
+#include <string>
 
 namespace CesiumAsync {
 

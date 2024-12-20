@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumAsync/IAssetResponse.h"
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
 
+#include <memory>
 #include <string>
 
 class MockAssetRequest : public CesiumAsync::IAssetRequest {

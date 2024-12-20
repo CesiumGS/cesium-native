@@ -1,17 +1,30 @@
-#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/CacheItem.h>
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/SqliteCache.h>
 #include <CesiumAsync/SqliteHelper.h>
 #include <CesiumAsync/cesium-sqlite3.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <span>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 
@@ -758,7 +771,7 @@ void SqliteCache::destroyDatabase() {
   uint64_t maxItems = _pImpl->_maxItems;
   _pImpl.reset();
   _pImpl = std::make_unique<Impl>(pLogger, databaseName, maxItems);
-  if (remove(_pImpl->_databaseName.c_str()) != 0) {
+  if (std::remove(_pImpl->_databaseName.c_str()) != 0) {
     SPDLOG_LOGGER_ERROR(
         this->_pImpl->_pLogger,
         "Unable to delete database file.");

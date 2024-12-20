@@ -1,8 +1,9 @@
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;

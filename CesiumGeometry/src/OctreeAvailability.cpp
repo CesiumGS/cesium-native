@@ -1,16 +1,26 @@
-#include "CesiumGeometry/OctreeAvailability.h"
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OctreeAvailability.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
+#include <CesiumUtility/Assert.h>
 
-#include "CesiumUtility/Assert.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <span>
+#include <utility>
 
 namespace CesiumGeometry {
 
+namespace {
 /**
  * @brief Inserts two 0 bits of spacing between a number's bits.
  *
  * @param i A 10-bit unsigned int.
  * @return A 32-bit unsigned int.
  */
-static uint32_t spread3(uint32_t i) {
+uint32_t spread3(uint32_t i) {
   i = (i ^ (i << 16)) & 0x030000ff;
   i = (i ^ (i << 8)) & 0x0300f00f;
   i = (i ^ (i << 4)) & 0x030c30c3;
@@ -28,9 +38,10 @@ static uint32_t spread3(uint32_t i) {
  * @param z An unsigned 10-bit number to put in places 2, 5, 8, etc.
  * @return The 32-bit unsigned morton index.
  */
-static uint32_t getMortonIndex(uint32_t x, uint32_t y, uint32_t z) {
+uint32_t getMortonIndex(uint32_t x, uint32_t y, uint32_t z) {
   return spread3(z) << 2 | spread3(y) << 1 | spread3(x);
 }
+} // namespace
 
 OctreeAvailability::OctreeAvailability(
     uint32_t subtreeLevels,

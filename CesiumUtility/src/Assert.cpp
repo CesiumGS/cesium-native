@@ -1,4 +1,3 @@
-#include "CesiumUtility/Assert.h"
 
 #if defined CESIUM_FORCE_ASSERTIONS && defined NDEBUG
 

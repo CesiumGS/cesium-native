@@ -1,15 +1,26 @@
-#include "TileUtilities.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
-#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
-#include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Tracing.h>
+
+#include <glm/ext/vector_double4.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -287,7 +298,8 @@ RasterMappedTo3DTile* addRealTile(
     return nullptr;
   } else {
     return &tile.getMappedRasterTiles().emplace_back(
-        RasterMappedTo3DTile(pTile, textureCoordinateIndex));
+        pTile,
+        textureCoordinateIndex);
   }
 }
 
@@ -303,7 +315,8 @@ RasterMappedTo3DTile* addRealTile(
   if (tileProvider.isPlaceholder()) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
-        RasterMappedTo3DTile(getPlaceholderTile(placeholder), -1));
+        getPlaceholderTile(placeholder),
+        -1);
   }
 
   const Projection& projection = tileProvider.getProjection();
@@ -336,9 +349,9 @@ RasterMappedTo3DTile* addRealTile(
           int32_t(overlayDetails.rasterOverlayProjections.size());
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
-      return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+      return &tile.getMappedRasterTiles().emplace_back(
           getPlaceholderTile(placeholder),
-          textureCoordinateIndex));
+          textureCoordinateIndex);
     }
   }
 
@@ -365,9 +378,9 @@ RasterMappedTo3DTile* addRealTile(
         textureCoordinateIndex);
   } else {
     // No precise rectangle yet, so return a placeholder for now.
-    return &tile.getMappedRasterTiles().emplace_back(RasterMappedTo3DTile(
+    return &tile.getMappedRasterTiles().emplace_back(
         getPlaceholderTile(placeholder),
-        textureCoordinateIndex));
+        textureCoordinateIndex);
   }
 }
 

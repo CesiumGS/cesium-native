@@ -1,10 +1,37 @@
-#include "CesiumGltf/PropertyTablePropertyView.h"
-#include "CesiumGltf/PropertyTableView.h"
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyTableView.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/Schema.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double2x2.hpp>
+#include <glm/ext/matrix_float2x2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_int2.hpp>
+#include <glm/ext/vector_int3.hpp>
+#include <glm/ext/vector_int3_sized.hpp>
+#include <glm/ext/vector_uint2.hpp>
+#include <glm/ext/vector_uint3.hpp>
+#include <glm/ext/vector_uint3_sized.hpp>
+#include <glm/fwd.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <optional>
+#include <string_view>
+#include <vector>
 
 using namespace CesiumGltf;
 

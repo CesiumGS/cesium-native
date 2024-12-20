@@ -1,14 +1,13 @@
 #pragma once
 
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltf/KhrTextureTransform.h"
-#include "CesiumGltf/PropertyTextureProperty.h"
-#include "CesiumGltf/PropertyTransformations.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumGltf/PropertyView.h"
-#include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/TextureView.h"
-
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/TextureView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <array>

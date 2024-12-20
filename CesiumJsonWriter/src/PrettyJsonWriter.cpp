@@ -1,9 +1,17 @@
-#include "CesiumJsonWriter/PrettyJsonWriter.h"
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
+
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 #include <algorithm>
-#include <iterator>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace CesiumJsonWriter {
 PrettyJsonWriter::PrettyJsonWriter() noexcept {
@@ -132,7 +140,7 @@ void PrettyJsonWriter::KeyPrimitive(
 // Array / Objects
 void PrettyJsonWriter::KeyArray(
     std::string_view keyName,
-    std::function<void(void)> insideArray) {
+    const std::function<void(void)>& insideArray) {
   Key(keyName);
   pretty->StartArray();
   insideArray();
@@ -141,7 +149,7 @@ void PrettyJsonWriter::KeyArray(
 
 void PrettyJsonWriter::KeyObject(
     std::string_view keyName,
-    std::function<void(void)> insideObject) {
+    const std::function<void(void)>& insideObject) {
   Key(keyName);
   pretty->StartObject();
   insideObject();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/IAssetResponse.h"
+#include <CesiumAsync/IAssetResponse.h>
 
 #include <cstddef>
 #include <vector>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "JsonWriter.h"
+#include <CesiumJsonWriter/JsonWriter.h>
 
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
@@ -23,7 +23,7 @@ class PrettyJsonWriter : public JsonWriter {
 
 public:
   PrettyJsonWriter() noexcept;
-  ~PrettyJsonWriter() {}
+  ~PrettyJsonWriter() = default;
 
   bool Null() override;
   bool Bool(bool b) override;
@@ -58,11 +58,12 @@ public:
   void KeyPrimitive(std::string_view keyName, double value) override;
   void KeyPrimitive(std::string_view keyName, std::nullptr_t value) override;
 
-  void KeyArray(std::string_view keyName, std::function<void(void)> insideArray)
-      override;
+  void KeyArray(
+      std::string_view keyName,
+      const std::function<void(void)>& insideArray) override;
   void KeyObject(
       std::string_view keyName,
-      std::function<void(void)> insideObject) override;
+      const std::function<void(void)>& insideObject) override;
 
   std::string toString() override;
   std::string_view toStringView() override;

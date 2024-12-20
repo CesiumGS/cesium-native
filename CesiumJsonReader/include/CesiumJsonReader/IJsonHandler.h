@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumJsonReader/Library.h>
 
 #include <cstdint>
 #include <string>
@@ -17,7 +17,7 @@ namespace CesiumJsonReader {
  */
 class CESIUMJSONREADER_API IJsonHandler {
 public:
-  virtual ~IJsonHandler(){};
+  virtual ~IJsonHandler() = default;
   /**
    * @brief Called when the JSON parser encounters a `null`.
    * @returns A \ref IJsonHandler that will handle the next `read...` call.

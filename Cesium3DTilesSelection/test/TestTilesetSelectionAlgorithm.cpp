@@ -1,10 +1,25 @@
-#include "Cesium3DTilesContent/registerAllTileContentTypes.h"
-#include "Cesium3DTilesSelection/Tileset.h"
-#include "Cesium3DTilesSelection/ViewState.h"
 #include "SimplePrepareRendererResource.h"
 
+#include <Cesium3DTiles/GroupMetadata.h>
 #include <Cesium3DTiles/MetadataQuery.h>
+#include <Cesium3DTiles/Schema.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/ViewState.h>
+#include <Cesium3DTilesSelection/ViewUpdateResult.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/Promise.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -12,14 +27,25 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/mat4x4.hpp>
+#include <glm/exponential.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <exception>
 #include <filesystem>
-#include <fstream>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;

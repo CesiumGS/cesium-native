@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlayLoadFailureDetails.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
@@ -14,6 +13,7 @@
 #include <spdlog/fwd.h>
 
 #include <any>
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -50,7 +50,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    * in memory in case they're needed again soon. This property controls the
    * maximum size of that cache.
    */
-  int64_t subTileCacheBytes = 16 * 1024 * 1024;
+  int64_t subTileCacheBytes = static_cast<int64_t>(16 * 1024 * 1024);
 
   /**
    * @brief The maximum pixel size of raster overlay textures, in either

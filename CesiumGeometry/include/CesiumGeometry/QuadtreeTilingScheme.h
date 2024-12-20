@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Library.h"
-#include "QuadtreeTileID.h"
-#include "Rectangle.h"
+#include <CesiumGeometry/Library.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Rectangle.h>
 
 #include <glm/vec2.hpp>
 
