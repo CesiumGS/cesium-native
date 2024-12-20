@@ -319,7 +319,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (!pResponse) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   "No response received from web map service."});
             }
 
@@ -332,7 +332,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (error != tinyxml2::XMLError::XML_SUCCESS) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   "Could not parse web map service XML."});
             }
 
@@ -340,7 +340,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (!pRoot) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   "Web map service XML document does not have a root "
                   "element."});
             }
@@ -349,7 +349,7 @@ WebMapServiceRasterOverlay::createTileProvider(
             if (!validateCapabilities(pRoot, options, validationError)) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
-                  std::move(pRequest),
+                  pRequest,
                   validationError});
             }
 

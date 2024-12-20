@@ -1108,8 +1108,8 @@ bool upsamplePrimitiveForRasterOverlays(
     Accessor& accessor =
         model.accessors[static_cast<size_t>(attribute.accessorIndex)];
     accessor.count = numberOfVertices;
-    accessor.min = std::move(attribute.minimums);
-    accessor.max = std::move(attribute.maximums);
+    accessor.min = attribute.minimums;
+    accessor.max = attribute.maximums;
   }
 
   // Add an accessor for the indices

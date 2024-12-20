@@ -215,13 +215,13 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                   [ellipsoid,
                    pLogger,
                    tileUrl,
-                   pAssetAccessor = std::move(pAssetAccessor),
+                   pAssetAccessor,
                    pCompletedRequest](GltfConverterResult&& result) mutable {
                     // Report any errors if there are any
                     logTileLoadResult(pLogger, tileUrl, result.errors);
                     if (result.errors || !result.model) {
                       return TileLoadResult::createFailedResult(
-                          std::move(pAssetAccessor),
+                          pAssetAccessor,
                           std::move(pCompletedRequest));
                     }
 
@@ -231,7 +231,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                         std::nullopt,
                         std::nullopt,
                         std::nullopt,
-                        std::move(pAssetAccessor),
+                        pAssetAccessor,
                         std::move(pCompletedRequest),
                         {},
                         TileLoadResultState::Success,
