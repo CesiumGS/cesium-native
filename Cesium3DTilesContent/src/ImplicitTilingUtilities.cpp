@@ -170,15 +170,16 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
   }
 
   std::optional<BoundingCylinder> maybeCylinder =
-      TileBoundingVolumes::getBoundingCylinder(rootBoundingVolume, ellipsoid);
+      TileBoundingVolumes::getBoundingCylinder(rootBoundingVolume);
   if (maybeCylinder) {
     BoundingCylinder cylinder =
-        ImplicitTilingUtilities::computeBoundingVolume(*maybeCylinder tileID);
-    TileBoundingVolumes::setBoundingCylinder(result, maybeCylinder);
+        ImplicitTilingUtilities::computeBoundingVolume(*maybeCylinder, tileID);
+    TileBoundingVolumes::setBoundingCylinder(result, cylinder);
   }
 
   return result;
 }
+
 } // namespace
 
 Cesium3DTiles::BoundingVolume ImplicitTilingUtilities::computeBoundingVolume(

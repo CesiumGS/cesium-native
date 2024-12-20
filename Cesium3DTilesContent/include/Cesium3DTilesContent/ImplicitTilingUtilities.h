@@ -15,6 +15,7 @@ class S2CellBoundingVolume;
 
 namespace CesiumGeometry {
 class OrientedBoundingBox;
+class BoundingCylinder;
 }
 
 namespace Cesium3DTiles {
