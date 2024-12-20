@@ -1,5 +1,6 @@
+#include "CesiumUtility/Gzip.h"
+
 #include <CesiumNativeTests/readFile.h>
-#include <CesiumUtility/Gzip.h>
 
 #include <catch2/catch_test_macros.hpp>
 

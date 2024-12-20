@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "Cesium3DTilesSelection/Library.h"
 
 #include <Cesium3DTiles/GroupMetadata.h>
 #include <Cesium3DTiles/Schema.h>

@@ -1,7 +1,5 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 #include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "CesiumGltfReader/GltfReader.h"
-#include "CesiumUtility/IntrusivePointer.h"
 #include "ConvertTileToGltf.h"
 
 #include <CesiumGltf/Accessor.h>
@@ -19,6 +17,8 @@
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyTableView.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>

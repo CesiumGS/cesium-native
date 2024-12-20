@@ -1,14 +1,14 @@
 #include "ConvertTileToGltf.h"
 
+#include "Cesium3DTilesContent/B3dmToGltfConverter.h"
 #include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGltfReader/GltfReader.h"
+#include "Cesium3DTilesContent/I3dmToGltfConverter.h"
+#include "Cesium3DTilesContent/PntsToGltfConverter.h"
 
-#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
-#include <Cesium3DTilesContent/I3dmToGltfConverter.h>
-#include <Cesium3DTilesContent/PntsToGltfConverter.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>

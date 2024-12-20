@@ -1,9 +1,9 @@
 #include "CesiumGltfWriter/GltfWriter.h"
-#include "CesiumJsonWriter/ExtensionWriterContext.h"
-#include "CesiumUtility/ExtensibleObject.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumJsonWriter/ExtensionWriterContext.h>
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <rapidjson/document.h>

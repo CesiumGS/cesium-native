@@ -6,9 +6,10 @@
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
 #include "CesiumAsync/ICacheDatabase.h"
-#include "CesiumUtility/Tracing.h"
 #include "InternalTimegm.h"
 #include "ResponseCacheControl.h"
+
+#include <CesiumUtility/Tracing.h>
 
 #include <spdlog/logger.h>
 

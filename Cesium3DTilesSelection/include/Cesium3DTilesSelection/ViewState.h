@@ -1,7 +1,7 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "Library.h"
+#include "Cesium3DTilesSelection/BoundingVolume.h"
+#include "Cesium3DTilesSelection/Library.h"
 
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>

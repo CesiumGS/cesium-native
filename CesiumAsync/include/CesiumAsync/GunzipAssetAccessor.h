@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IAssetAccessor.h"
-#include "IAssetRequest.h"
+#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumAsync/IAssetRequest.h"
 
 namespace CesiumAsync {
 class AsyncSystem;

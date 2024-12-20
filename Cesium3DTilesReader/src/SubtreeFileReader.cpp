@@ -1,14 +1,14 @@
-#include "Cesium3DTiles/Buffer.h"
-#include "Cesium3DTiles/Subtree.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumJsonReader/JsonReader.h"
-#include "CesiumJsonReader/JsonReaderOptions.h"
+#include "Cesium3DTilesReader/SubtreeFileReader.h"
 
-#include <Cesium3DTilesReader/SubtreeFileReader.h>
+#include <Cesium3DTiles/Buffer.h>
+#include <Cesium3DTiles/Subtree.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumJsonReader/JsonReader.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>

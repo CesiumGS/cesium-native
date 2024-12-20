@@ -1,8 +1,8 @@
-#include "CesiumJsonReader/JsonReader.h"
+#include "CesiumQuantizedMeshTerrain/Layer.h"
+#include "CesiumQuantizedMeshTerrain/LayerReader.h"
+#include "CesiumQuantizedMeshTerrain/LayerWriter.h"
 
-#include <CesiumQuantizedMeshTerrain/Layer.h>
-#include <CesiumQuantizedMeshTerrain/LayerReader.h>
-#include <CesiumQuantizedMeshTerrain/LayerWriter.h>
+#include <CesiumJsonReader/JsonReader.h>
 
 #include <catch2/catch_test_macros.hpp>
 

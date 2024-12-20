@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CesiumUtility/Assert.h"
-#include "JsonHandler.h"
-#include "Library.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/Library.h"
+
+#include <CesiumUtility/Assert.h>
 
 #include <cmath>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumRasterOverlays/Library.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/BoundingRegion.h>

@@ -1,21 +1,21 @@
+#include "CesiumGltf/Class.h"
+#include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/ExtensionKhrTextureTransform.h"
+#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/Image.h"
+#include "CesiumGltf/Model.h"
+#include "CesiumGltf/PropertyArrayView.h"
+#include "CesiumGltf/PropertyTexture.h"
+#include "CesiumGltf/PropertyTextureProperty.h"
+#include "CesiumGltf/PropertyTexturePropertyView.h"
 #include "CesiumGltf/PropertyTextureView.h"
-#include "CesiumUtility/Math.h"
+#include "CesiumGltf/PropertyTransformations.h"
+#include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/Schema.h"
+#include "CesiumGltf/Texture.h"
+#include "CesiumGltf/TextureView.h"
 
-#include <CesiumGltf/Class.h>
-#include <CesiumGltf/ClassProperty.h>
-#include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltf/Image.h>
-#include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyArrayView.h>
-#include <CesiumGltf/PropertyTexture.h>
-#include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/PropertyTexturePropertyView.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/Sampler.h>
-#include <CesiumGltf/Schema.h>
-#include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/vector_int2_sized.hpp>

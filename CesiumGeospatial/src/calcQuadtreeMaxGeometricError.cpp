@@ -1,6 +1,6 @@
-#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/calcQuadtreeMaxGeometricError.h"
 
-#include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
+#include "CesiumGeospatial/Ellipsoid.h"
 
 #include <cstdint>
 

@@ -1,11 +1,11 @@
-#include "CesiumGeometry/IntersectionTests.h"
-#include "CesiumGeometry/Ray.h"
 #include "CesiumGltfContent/GltfUtilities.h"
-#include "CesiumGltfReader/GltfReader.h"
 
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/Ray.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 

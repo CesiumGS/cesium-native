@@ -3,7 +3,8 @@
 #include "CesiumGeometry/Availability.h"
 #include "CesiumGeometry/OctreeTileID.h"
 #include "CesiumGeometry/TileAvailabilityFlags.h"
-#include "CesiumUtility/Assert.h"
+
+#include <CesiumUtility/Assert.h>
 
 #include <cstddef>
 #include <cstdint>

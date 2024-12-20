@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Library.h"
-
-#include <CesiumGeospatial/Ellipsoid.h>
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/Library.h"
 
 #include <glm/mat4x4.hpp>
 

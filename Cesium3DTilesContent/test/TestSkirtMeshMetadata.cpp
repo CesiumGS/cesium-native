@@ -1,6 +1,5 @@
-#include "CesiumUtility/JsonValue.h"
-
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

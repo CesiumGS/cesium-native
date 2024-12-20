@@ -1,18 +1,18 @@
 #include "CesiumGltf/ExtensionExtMeshFeatures.h"
+#include "CesiumGltf/ExtensionKhrTextureTransform.h"
+#include "CesiumGltf/FeatureId.h"
+#include "CesiumGltf/FeatureIdTexture.h"
 #include "CesiumGltf/FeatureIdTextureView.h"
+#include "CesiumGltf/Image.h"
 #include "CesiumGltf/KhrTextureTransform.h"
+#include "CesiumGltf/Mesh.h"
+#include "CesiumGltf/MeshPrimitive.h"
 #include "CesiumGltf/Model.h"
-#include "CesiumUtility/Math.h"
+#include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/Texture.h"
+#include "CesiumGltf/TextureView.h"
 
-#include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/FeatureId.h>
-#include <CesiumGltf/FeatureIdTexture.h>
-#include <CesiumGltf/Image.h>
-#include <CesiumGltf/Mesh.h>
-#include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Sampler.h>
-#include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureView.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>
 

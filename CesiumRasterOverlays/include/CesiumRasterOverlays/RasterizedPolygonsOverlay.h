@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlay.h"
-#include "RasterOverlayTileProvider.h"
+#include "CesiumRasterOverlays/Library.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>

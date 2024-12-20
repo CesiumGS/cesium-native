@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Library.h"
-#include "TileOcclusionRendererProxy.h"
-#include "TilesetSharedAssetSystem.h"
-#include "spdlog-cesium.h"
+#include "Cesium3DTilesSelection/Library.h"
+#include "Cesium3DTilesSelection/TileOcclusionRendererProxy.h"
+#include "Cesium3DTilesSelection/TilesetSharedAssetSystem.h"
+#include "Cesium3DTilesSelection/spdlog-cesium.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 

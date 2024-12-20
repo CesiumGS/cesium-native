@@ -1,10 +1,10 @@
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/Plane.h"
 #include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumUtility/Math.h"
+#include "CesiumGeospatial/S2CellBoundingVolume.h"
+#include "CesiumGeospatial/S2CellID.h"
 
-#include <CesiumGeospatial/S2CellBoundingVolume.h>
-#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/exponential.hpp>

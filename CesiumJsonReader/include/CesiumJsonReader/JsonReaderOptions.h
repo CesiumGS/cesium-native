@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IExtensionJsonHandler.h"
-#include "Library.h"
+#include "CesiumJsonReader/IExtensionJsonHandler.h"
+#include "CesiumJsonReader/Library.h"
 
 #include <functional>
 #include <map>

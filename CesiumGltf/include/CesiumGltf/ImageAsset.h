@@ -2,7 +2,8 @@
 
 #include "CesiumGltf/Ktx2TranscodeTargets.h"
 #include "CesiumGltf/Library.h"
-#include "CesiumUtility/SharedAsset.h"
+
+#include <CesiumUtility/SharedAsset.h>
 
 #include <cstddef>
 #include <cstdint>

@@ -1,8 +1,8 @@
-#include "CesiumAsync/AsyncSystem.h"
 #include "CesiumGltfReader/GltfReader.h"
+#include "CesiumGltfReader/GltfSharedAssetSystem.h"
 
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltfReader/GltfSharedAssetSystem.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>

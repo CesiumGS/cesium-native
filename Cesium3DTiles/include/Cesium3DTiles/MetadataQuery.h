@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Cesium3DTiles/MetadataEntity.h>
-#include <Cesium3DTiles/Schema.h>
+#include "Cesium3DTiles/MetadataEntity.h"
+#include "Cesium3DTiles/Schema.h"
+
 #include <CesiumUtility/JsonValue.h>
 
 #include <string>

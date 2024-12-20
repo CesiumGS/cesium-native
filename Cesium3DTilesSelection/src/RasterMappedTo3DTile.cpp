@@ -1,19 +1,20 @@
-#include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumRasterOverlays/RasterOverlayDetails.h"
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumUtility/Tracing.h"
+#include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 
-#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
-#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
-#include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/TileContent.h>
-#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include "Cesium3DTilesSelection/BoundingVolume.h"
+#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
+#include "Cesium3DTilesSelection/Tile.h"
+#include "Cesium3DTilesSelection/TileContent.h"
+#include "Cesium3DTilesSelection/TilesetExternals.h"
+
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <glm/ext/vector_double4.hpp>
 

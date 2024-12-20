@@ -1,8 +1,6 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
-#include "CesiumUtility/ErrorList.h"
-#include "CesiumUtility/JsonValue.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -21,6 +19,8 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>

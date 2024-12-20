@@ -1,7 +1,7 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "TileContent.h"
+#include "Cesium3DTilesSelection/BoundingVolume.h"
+#include "Cesium3DTilesSelection/TileContent.h"
 
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>

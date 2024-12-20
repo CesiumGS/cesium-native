@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Library.h"
-#include "Tile.h"
+#include "Cesium3DTilesSelection/Library.h"
+#include "Cesium3DTilesSelection/Tile.h"
 
 #include <cstdint>
 #include <unordered_map>

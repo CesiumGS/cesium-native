@@ -3,12 +3,12 @@
 #include "Cesium3DTilesSelection/RasterMappedTo3DTile.h"
 #include "Cesium3DTilesSelection/TileContent.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
-#include "CesiumUtility/Math.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Math.h>
 
 #include <algorithm>
 #include <cstddef>

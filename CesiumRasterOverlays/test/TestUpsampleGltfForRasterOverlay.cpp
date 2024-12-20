@@ -1,5 +1,6 @@
-#include "CesiumGeometry/QuadtreeTileID.h"
+#include "CesiumRasterOverlays/RasterOverlayUtilities.h"
 
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Accessor.h>
@@ -11,7 +12,6 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
-#include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

@@ -1,8 +1,8 @@
-#include "CesiumJsonReader/JsonReaderOptions.h"
+#include "Cesium3DTilesReader/TilesetReader.h"
 
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
-#include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumNativeTests/readFile.h>
 
 #include <catch2/catch_test_macros.hpp>

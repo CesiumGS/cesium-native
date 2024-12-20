@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumRasterOverlays/Library.h"
 
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>

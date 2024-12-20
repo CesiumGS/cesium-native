@@ -1,9 +1,10 @@
 #pragma once
 
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/KhrTextureTransform.h>
-#include <CesiumGltf/Sampler.h>
-#include <CesiumGltf/TextureInfo.h>
+#include "CesiumGltf/ImageAsset.h"
+#include "CesiumGltf/KhrTextureTransform.h"
+#include "CesiumGltf/Sampler.h"
+#include "CesiumGltf/TextureInfo.h"
+
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <vector>

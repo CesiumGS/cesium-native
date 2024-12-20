@@ -1,8 +1,8 @@
-#include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeospatial/BoundingRegion.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 
+#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumUtility/Math.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/IntrusivePointer.h>
+#include "CesiumUtility/ErrorList.h"
+#include "CesiumUtility/IntrusivePointer.h"
 
 #include <optional>
 

@@ -1,11 +1,10 @@
+#include "Cesium3DTilesContent/PntsToGltfConverter.h"
+
 #include "BatchTableToGltfStructuralMetadata.h"
 #include "Cesium3DTilesContent/GltfConverterResult.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumGltfReader/GltfReader.h"
-#include "CesiumUtility/Assert.h"
+#include "Cesium3DTilesContent/GltfConverters.h"
 
-#include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/PntsToGltfConverter.h>
+#include <CesiumAsync/Future.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
@@ -19,6 +18,8 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/AttributeCompression.h>
 
 #include <draco/core/data_buffer.h>

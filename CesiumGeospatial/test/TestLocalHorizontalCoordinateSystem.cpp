@@ -1,4 +1,5 @@
-#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include "CesiumGeospatial/LocalHorizontalCoordinateSystem.h"
+
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

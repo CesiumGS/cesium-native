@@ -1,6 +1,6 @@
 #include "CesiumUtility/Uri.h"
 
-#include <CesiumUtility/joinToString.h>
+#include "CesiumUtility/joinToString.h"
 
 #include <uriparser/Uri.h>
 #include <uriparser/UriBase.h>

@@ -1,10 +1,11 @@
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
@@ -13,7 +14,6 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

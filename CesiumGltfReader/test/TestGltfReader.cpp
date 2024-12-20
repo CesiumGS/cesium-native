@@ -1,8 +1,4 @@
 #include "CesiumGltfReader/GltfReader.h"
-#include "CesiumJsonReader/JsonReaderOptions.h"
-#include "CesiumNativeTests/SimpleAssetRequest.h"
-#include "CesiumNativeTests/SimpleAssetResponse.h"
-#include "CesiumUtility/JsonValue.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/Accessor.h>
@@ -17,10 +13,14 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 

@@ -1,6 +1,6 @@
 #include "HilbertOrder.h"
 
-#include "CesiumUtility/Assert.h"
+#include <CesiumUtility/Assert.h>
 
 #include <cstdint>
 

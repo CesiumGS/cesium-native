@@ -1,20 +1,21 @@
-#include "CesiumAsync/Future.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumRasterOverlays/RasterOverlay.h"
-#include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumRasterOverlays/BingMapsRasterOverlay.h"
 
+#include "CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h"
+#include "CesiumRasterOverlays/RasterOverlayTile.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
+
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
-#include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
-#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
-#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
-#include <CesiumRasterOverlays/RasterOverlayTile.h>
-#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 

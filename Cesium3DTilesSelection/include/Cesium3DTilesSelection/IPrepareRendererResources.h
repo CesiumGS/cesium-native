@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Library.h"
-#include "TileLoadResult.h"
+#include "Cesium3DTilesSelection/Library.h"
+#include "Cesium3DTilesSelection/TileLoadResult.h"
 
 #include <CesiumAsync/Future.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>

@@ -1,6 +1,5 @@
 #include "CesiumIonClient/Response.h"
 
-#include "CesiumAsync/HttpHeaders.h"
 #include "CesiumIonClient/ApplicationData.h"
 #include "CesiumIonClient/Assets.h"
 #include "CesiumIonClient/Defaults.h"
@@ -9,6 +8,7 @@
 #include "CesiumIonClient/TokenList.h"
 #include "parseLinkHeader.h"
 
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/Uri.h>

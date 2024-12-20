@@ -1,6 +1,6 @@
 #include "CesiumGltf/PropertyTexturePropertyView.h"
 
-#include <CesiumGltf/PropertyView.h>
+#include "CesiumGltf/PropertyView.h"
 
 namespace CesiumGltf {
 

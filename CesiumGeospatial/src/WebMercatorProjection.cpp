@@ -1,10 +1,10 @@
 #include "CesiumGeospatial/WebMercatorProjection.h"
 
-#include "CesiumGeometry/Rectangle.h"
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/exponential.hpp>

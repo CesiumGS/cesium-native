@@ -3,9 +3,9 @@
 #include "CesiumGltf/Class.h"
 #include "CesiumGltf/ClassProperty.h"
 #include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
+#include "CesiumGltf/Model.h"
 #include "CesiumGltf/PropertyAttribute.h"
 #include "CesiumGltf/PropertyAttributePropertyView.h"
-#include "Model.h"
 
 namespace CesiumGltf {
 /**

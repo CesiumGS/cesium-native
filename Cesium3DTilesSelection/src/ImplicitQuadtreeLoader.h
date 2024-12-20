@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>

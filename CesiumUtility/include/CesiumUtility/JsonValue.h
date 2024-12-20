@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumUtility/Library.h"
 
 #include <cmath>
 #include <cstdint>

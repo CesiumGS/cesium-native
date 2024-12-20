@@ -1,5 +1,6 @@
+#include "Cesium3DTilesContent/TileTransform.h"
+
 #include <Cesium3DTiles/Tile.h>
-#include <Cesium3DTilesContent/TileTransform.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 

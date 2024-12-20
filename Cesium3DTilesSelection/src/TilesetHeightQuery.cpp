@@ -1,20 +1,20 @@
 #include "TilesetHeightQuery.h"
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
+#include "Cesium3DTilesSelection/ITilesetHeightSampler.h"
+#include "Cesium3DTilesSelection/SampleHeightResult.h"
 #include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/TileContent.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/S2CellBoundingVolume.h"
 #include "TilesetContentManager.h"
 
-#include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
-#include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 
 #include <glm/exponential.hpp>

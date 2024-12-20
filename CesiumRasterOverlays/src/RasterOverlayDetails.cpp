@@ -1,9 +1,9 @@
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Projection.h"
+#include "CesiumRasterOverlays/RasterOverlayDetails.h"
 
-#include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/Assert.h>
 
 #include <algorithm>

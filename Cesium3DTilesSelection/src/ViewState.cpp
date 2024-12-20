@@ -1,16 +1,16 @@
 #include "Cesium3DTilesSelection/ViewState.h"
 
 #include "Cesium3DTilesSelection/BoundingVolume.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/S2CellBoundingVolume.h"
 
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Cesium3DTiles/BufferCesium.h>
-#include <Cesium3DTiles/BufferSpec.h>
-#include <Cesium3DTiles/Library.h>
+#include "Cesium3DTiles/BufferCesium.h"
+#include "Cesium3DTiles/BufferSpec.h"
+#include "Cesium3DTiles/Library.h"
 
 namespace Cesium3DTiles {
 /** @copydoc BufferSpec */

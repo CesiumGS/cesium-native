@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CesiumUtility/Assert.h>
+#include "CesiumUtility/Assert.h"
 
 #include <atomic>
 #include <cstdint>

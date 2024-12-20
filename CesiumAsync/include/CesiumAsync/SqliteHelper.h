@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cesium-sqlite3.h"
+#include "CesiumAsync/cesium-sqlite3.h"
 
 #include <memory>
 #include <string>

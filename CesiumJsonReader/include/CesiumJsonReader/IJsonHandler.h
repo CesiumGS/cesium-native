@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumJsonReader/Library.h"
 
 #include <cstdint>
 #include <string>

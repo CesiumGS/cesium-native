@@ -1,10 +1,10 @@
 #include "CesiumAsync/AsyncSystem.h"
 #include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumUtility/Result.h"
+#include "CesiumAsync/SharedAssetDepot.h"
 
-#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/SharedAsset.h>
 
 #include <catch2/catch_test_macros.hpp>

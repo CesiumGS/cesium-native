@@ -1,9 +1,9 @@
 #include "CesiumGeospatial/BoundingRegionBuilder.h"
 
 #include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/Ellipsoid.h"
 
-#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>

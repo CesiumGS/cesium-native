@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IPrepareRasterOverlayRendererResources.h"
-#include "Library.h"
-#include "RasterOverlayTileProvider.h"
+#include "CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h"
+#include "CesiumRasterOverlays/Library.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>

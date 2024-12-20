@@ -1,14 +1,15 @@
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
+#include "CesiumGltfReader/GltfSharedAssetSystem.h"
+
 #include "CesiumGltfReader/NetworkImageAssetDescriptor.h"
 #include "CesiumGltfReader/NetworkSchemaAssetDescriptor.h"
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumUtility/Result.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Schema.h>
-#include <CesiumGltfReader/GltfSharedAssetSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 
 #include <functional>
 #include <memory>

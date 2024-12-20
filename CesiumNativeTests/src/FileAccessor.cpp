@@ -1,11 +1,12 @@
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
+#include "CesiumNativeTests/FileAccessor.h"
+
+#include "CesiumNativeTests/SimpleAssetRequest.h"
 #include "CesiumNativeTests/SimpleAssetResponse.h"
 
 #include <CesiumAsync/AsyncSystem.h>
-#include <CesiumNativeTests/FileAccessor.h>
-#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumUtility/Uri.h>
 
 #include <cstddef>

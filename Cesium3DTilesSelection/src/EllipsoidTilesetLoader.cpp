@@ -1,3 +1,5 @@
+#include "Cesium3DTilesSelection/EllipsoidTilesetLoader.h"
+
 #include "Cesium3DTilesSelection/ITilesetHeightSampler.h"
 #include "Cesium3DTilesSelection/SampleHeightResult.h"
 #include "Cesium3DTilesSelection/Tile.h"
@@ -8,20 +10,19 @@
 #include "Cesium3DTilesSelection/TilesetContentLoader.h"
 #include "Cesium3DTilesSelection/TilesetExternals.h"
 #include "Cesium3DTilesSelection/TilesetOptions.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/JsonValue.h"
 
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>

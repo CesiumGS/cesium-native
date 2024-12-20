@@ -1,8 +1,8 @@
+#include "CesiumGltf/ClassProperty.h"
+#include "CesiumGltf/PropertyArrayView.h"
 #include "CesiumGltf/PropertyView.h"
-#include "CesiumUtility/JsonValue.h"
 
-#include <CesiumGltf/ClassProperty.h>
-#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/matrix_double2x2.hpp>

@@ -1,6 +1,6 @@
-#include "CesiumAsync/cesium-sqlite3.h"
+#include "CesiumAsync/SqliteHelper.h"
 
-#include <CesiumAsync/SqliteHelper.h>
+#include "CesiumAsync/cesium-sqlite3.h"
 
 #include <sqlite3.h>
 

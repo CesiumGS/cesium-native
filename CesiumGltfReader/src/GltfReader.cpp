@@ -1,16 +1,8 @@
 #include "CesiumGltfReader/GltfReader.h"
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/HttpHeaders.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/SharedFuture.h"
 #include "CesiumGltfReader/ImageDecoder.h"
 #include "CesiumGltfReader/NetworkImageAssetDescriptor.h"
 #include "CesiumGltfReader/NetworkSchemaAssetDescriptor.h"
-#include "CesiumUtility/ErrorList.h"
-#include "CesiumUtility/Result.h"
-#include "CesiumUtility/joinToString.h"
 #include "ModelJsonHandler.h"
 #include "applyKhrTextureTransform.h"
 #include "decodeDataUrls.h"
@@ -19,8 +11,13 @@
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
@@ -33,8 +30,11 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
 

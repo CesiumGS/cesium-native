@@ -1,9 +1,10 @@
+#include "CesiumAsync/SqliteCache.h"
+
 #include "CesiumAsync/CacheItem.h"
 #include "CesiumAsync/HttpHeaders.h"
+#include "CesiumAsync/SqliteHelper.h"
+#include "CesiumAsync/cesium-sqlite3.h"
 
-#include <CesiumAsync/SqliteCache.h>
-#include <CesiumAsync/SqliteHelper.h>
-#include <CesiumAsync/cesium-sqlite3.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <rapidjson/document.h>

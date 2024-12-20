@@ -1,15 +1,15 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/RasterOverlayCollection.h"
+#include "Cesium3DTilesSelection/Tile.h"
+#include "Cesium3DTilesSelection/TileContent.h"
+#include "Cesium3DTilesSelection/TilesetContentLoader.h"
+#include "Cesium3DTilesSelection/TilesetExternals.h"
+#include "Cesium3DTilesSelection/TilesetLoadFailureDetails.h"
+#include "Cesium3DTilesSelection/TilesetOptions.h"
 #include "RasterOverlayUpsampler.h"
 #include "TilesetContentLoaderResult.h"
 
-#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
-#include <Cesium3DTilesSelection/Tile.h>
-#include <Cesium3DTilesSelection/TileContent.h>
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ReferenceCounted.h>

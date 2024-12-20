@@ -1,7 +1,7 @@
-#include "CesiumGltfReader/GltfSharedAssetSystem.h"
-#include "CesiumUtility/IntrusivePointer.h"
+#include "Cesium3DTilesSelection/TilesetSharedAssetSystem.h"
 
-#include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
+#include <CesiumGltfReader/GltfSharedAssetSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGltfReader;

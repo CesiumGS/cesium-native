@@ -1,11 +1,11 @@
-#include "CesiumUtility/ErrorList.h"
+#include "Cesium3DTilesContent/GltfConverterUtility.h"
 
-#include <Cesium3DTilesContent/GltfConverterUtility.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/ErrorList.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>

@@ -1,4 +1,4 @@
-#include <CesiumGltf/InstanceAttributeSemantics.h>
+#include "CesiumGltf/InstanceAttributeSemantics.h"
 
 #include <array>
 #include <string>

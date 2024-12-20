@@ -1,11 +1,11 @@
-#include "CesiumNativeTests/SimpleAssetRequest.h"
-#include "CesiumNativeTests/SimpleAssetResponse.h"
+#include "Cesium3DTilesContent/SubtreeAvailability.h"
 
 #include <Cesium3DTiles/Subtree.h>
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumNativeTests/waitForFuture.h>

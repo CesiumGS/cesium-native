@@ -11,7 +11,8 @@
     "check-format": "check-clang-format",
     "generate-gltf": "cd tools/generate-classes && npm run generate-gltf && cd ../.. && npm run format",
     "generate-3d-tiles": "cd tools/generate-classes && npm run generate-3d-tiles && cd ../.. && npm run format",
-    "generate-quantized-mesh-terrain": "cd tools/generate-classes && npm run generate-quantized-mesh-terrain && cd ../.. && npm run format"
+    "generate-quantized-mesh-terrain": "cd tools/generate-classes && npm run generate-quantized-mesh-terrain && cd ../.. && npm run format",
+    "conform-includes": "node tools/conform-includes.js"
   },
   "repository": {
     "type": "git",

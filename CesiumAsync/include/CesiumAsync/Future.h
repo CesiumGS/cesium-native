@@ -1,11 +1,11 @@
 #pragma once
 
+#include "CesiumAsync/SharedFuture.h"
+#include "CesiumAsync/ThreadPool.h"
 #include "Impl/AsyncSystemSchedulers.h"
 #include "Impl/CatchFunction.h"
 #include "Impl/ContinuationFutureType.h"
 #include "Impl/WithTracing.h"
-#include "SharedFuture.h"
-#include "ThreadPool.h"
 
 #include <CesiumUtility/Tracing.h>
 

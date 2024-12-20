@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumUtility/Assert.h"
-#include "Library.h"
+#include "CesiumGeometry/Library.h"
+
+#include <CesiumUtility/Assert.h>
 
 #include <cstdint>
 #include <memory>

@@ -1,7 +1,8 @@
 #include "CesiumGeometry/BoundingSphere.h"
 #include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/Plane.h"
-#include "CesiumUtility/Math.h"
+
+#include <CesiumUtility/Math.h>
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>

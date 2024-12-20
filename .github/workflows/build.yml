@@ -53,7 +53,11 @@ jobs:
         run: |
           echo `$CC --version | head -n 1`, `cmake --version | head -n 1`
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
-          cmake --build build --target clang-tidy
+          cmake --build build --target clang-tidy > output.log
+      - name: List clang-tidy warnings & errors
+        run: |
+          sed -n '/\(error\|warning\):/,/^$/p' output.log
+
   Documentation:
     runs-on: ubuntu-22.04
     steps:

@@ -1,8 +1,9 @@
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h"
 
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltf/Accessor.h>
@@ -19,7 +20,6 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
-#include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>

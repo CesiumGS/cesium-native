@@ -1,13 +1,13 @@
 #include "CesiumGltf/TextureView.h"
 
+#include "CesiumGltf/ExtensionKhrTextureTransform.h"
+#include "CesiumGltf/KhrTextureTransform.h"
 #include "CesiumGltf/Model.h"
+#include "CesiumGltf/Sampler.h"
 #include "CesiumGltf/SamplerUtility.h"
+#include "CesiumGltf/Texture.h"
+#include "CesiumGltf/TextureInfo.h"
 
-#include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/KhrTextureTransform.h>
-#include <CesiumGltf/Sampler.h>
-#include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureInfo.h>
 #include <CesiumUtility/Assert.h>
 
 #include <glm/common.hpp>

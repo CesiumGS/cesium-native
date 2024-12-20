@@ -1,14 +1,14 @@
-#include "CesiumGeometry/OctreeTileID.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/S2CellID.h"
+#include "Cesium3DTilesContent/ImplicitTilingUtilities.h"
+#include "Cesium3DTilesContent/TileBoundingVolumes.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesContent/TileBoundingVolumes.h>
+#include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
 
 #include <catch2/catch_test_macros.hpp>
 #include <glm/ext/matrix_double3x3.hpp>

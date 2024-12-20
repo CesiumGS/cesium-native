@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumGltfContent/Library.h"
 
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>

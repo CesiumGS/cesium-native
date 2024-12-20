@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumAsync/AsyncSystem.h>
-#include <CesiumAsync/IAssetAccessor.h>
+#include "CesiumAsync/AsyncSystem.h"
+#include "CesiumAsync/IAssetAccessor.h"
 
 #include <memory>
 #include <string>

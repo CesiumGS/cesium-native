@@ -1,12 +1,12 @@
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GeographicProjection.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumGeospatial/WebMercatorProjection.h"
+#include "CesiumQuantizedMeshTerrain/Layer.h"
 
-#include <CesiumQuantizedMeshTerrain/Layer.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
 
 #include <optional>
 #include <string>

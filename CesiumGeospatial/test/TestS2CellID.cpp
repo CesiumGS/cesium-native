@@ -1,8 +1,8 @@
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/S2CellID.h"
 
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeospatial/S2CellID.h>
 #include <CesiumUtility/Math.h>
 
 #include <catch2/catch_test_macros.hpp>

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Cesium3DTilesContent/GltfConverters.h>
+#include "Cesium3DTilesContent/GltfConverters.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumNativeTests/readFile.h>

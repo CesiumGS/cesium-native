@@ -1,8 +1,9 @@
-#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/LocalHorizontalCoordinateSystem.h"
 
-#include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/GlobeTransforms.h>
-#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GlobeTransforms.h"
+
 #include <CesiumUtility/Assert.h>
 
 #include <glm/ext/matrix_double3x3.hpp>

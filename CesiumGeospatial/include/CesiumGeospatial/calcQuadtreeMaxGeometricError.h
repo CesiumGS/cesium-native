@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Ellipsoid.h"
+#include "CesiumGeospatial/Ellipsoid.h"
 
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 

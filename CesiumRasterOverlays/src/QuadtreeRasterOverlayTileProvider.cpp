@@ -1,21 +1,22 @@
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/SharedFuture.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeospatial/Projection.h"
-#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
-#include "CesiumUtility/Assert.h"
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumUtility/Result.h"
+#include "CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h"
 
+#include "CesiumRasterOverlays/RasterOverlay.h"
+#include "CesiumRasterOverlays/RasterOverlayTile.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfContent/ImageManipulation.h>
-#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
-#include <CesiumRasterOverlays/RasterOverlay.h>
-#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/Result.h>
 
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>

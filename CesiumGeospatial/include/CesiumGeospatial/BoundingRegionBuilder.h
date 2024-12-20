@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BoundingRegion.h"
-#include "GlobeRectangle.h"
-#include "Library.h"
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumGeospatial/Library.h"
 
 namespace CesiumGeospatial {
 

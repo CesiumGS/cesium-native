@@ -1,9 +1,5 @@
 #include "CesiumIonClient/Connection.h"
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
 #include "CesiumIonClient/ApplicationData.h"
 #include "CesiumIonClient/Assets.h"
 #include "CesiumIonClient/Defaults.h"
@@ -13,6 +9,10 @@
 #include "CesiumIonClient/TokenList.h"
 #include "fillWithRandomBytes.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>

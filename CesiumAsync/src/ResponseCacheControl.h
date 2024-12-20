@@ -2,7 +2,8 @@
 
 #include "CesiumAsync/HttpHeaders.h"
 #include "CesiumAsync/Library.h"
-#include "CesiumUtility/Assert.h"
+
+#include <CesiumUtility/Assert.h>
 
 #include <map>
 #include <optional>

@@ -5,7 +5,8 @@
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumAsync/IAssetRequest.h"
 #include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Gzip.h"
+
+#include <CesiumUtility/Gzip.h>
 
 #include <cstddef>
 #include <cstdint>

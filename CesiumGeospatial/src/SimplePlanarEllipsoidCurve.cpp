@@ -1,7 +1,7 @@
-#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/SimplePlanarEllipsoidCurve.h"
 
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/Ellipsoid.h"
 
 #include <glm/common.hpp>
 #include <glm/ext/quaternion_trigonometric.hpp>

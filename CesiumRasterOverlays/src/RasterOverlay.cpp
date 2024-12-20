@@ -1,14 +1,15 @@
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/SharedFuture.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumRasterOverlays/RasterOverlay.h"
 
-#include <CesiumRasterOverlays/RasterOverlay.h>
-#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
-#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include "CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h"
+#include "CesiumRasterOverlays/RasterOverlayTileProvider.h"
+
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
 #include <string>

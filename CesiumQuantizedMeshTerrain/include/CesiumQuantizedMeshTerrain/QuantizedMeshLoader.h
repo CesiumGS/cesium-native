@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include "CesiumQuantizedMeshTerrain/Library.h"
 
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileRectangularRange.h>

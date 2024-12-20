@@ -1,7 +1,7 @@
 #pragma once
 
-#include "JsonHandler.h"
-#include "Library.h"
+#include "CesiumJsonReader/JsonHandler.h"
+#include "CesiumJsonReader/Library.h"
 
 #include <CesiumUtility/IntrusivePointer.h>
 

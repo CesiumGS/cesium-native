@@ -1,5 +1,7 @@
-#include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
+#include "CesiumGeospatial/EarthGravitationalModel1996Grid.h"
+
+#include "CesiumGeospatial/Cartographic.h"
+
 #include <CesiumUtility/Math.h>
 
 #include <cstddef>

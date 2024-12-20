@@ -1,30 +1,30 @@
 #include "TestTilesetJsonLoader.h"
 
-#include "Cesium3DTiles/Schema.h"
+#include "Cesium3DTilesSelection/Tile.h"
 #include "Cesium3DTilesSelection/TileContent.h"
 #include "Cesium3DTilesSelection/TileLoadResult.h"
 #include "Cesium3DTilesSelection/TileRefine.h"
 #include "Cesium3DTilesSelection/TilesetContentLoader.h"
 #include "Cesium3DTilesSelection/TilesetMetadata.h"
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumGeometry/Axis.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumUtility/CreditSystem.h"
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
 #include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
-#include <Cesium3DTilesSelection/Tile.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/CreditSystem.h>
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>

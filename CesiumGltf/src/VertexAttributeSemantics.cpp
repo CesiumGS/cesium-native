@@ -1,4 +1,4 @@
-#include <CesiumGltf/VertexAttributeSemantics.h>
+#include "CesiumGltf/VertexAttributeSemantics.h"
 
 #include <array>
 #include <string>

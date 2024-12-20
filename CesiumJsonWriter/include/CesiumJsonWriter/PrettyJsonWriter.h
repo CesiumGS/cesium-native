@@ -1,6 +1,6 @@
 #pragma once
 
-#include "JsonWriter.h"
+#include "CesiumJsonWriter/JsonWriter.h"
 
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>

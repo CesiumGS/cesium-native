@@ -1,7 +1,7 @@
-#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/GlobeAnchor.h"
 
-#include <CesiumGeospatial/GlobeAnchor.h>
-#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include "CesiumGeospatial/Ellipsoid.h"
+#include "CesiumGeospatial/LocalHorizontalCoordinateSystem.h"
 
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>

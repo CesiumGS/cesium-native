@@ -1,10 +1,9 @@
+#include "Cesium3DTiles/MetadataQuery.h"
+
 #include "Cesium3DTiles/Class.h"
 #include "Cesium3DTiles/ClassProperty.h"
 #include "Cesium3DTiles/MetadataEntity.h"
 #include "Cesium3DTiles/Schema.h"
-#include "CesiumUtility/JsonValue.h"
-
-#include <Cesium3DTiles/MetadataQuery.h>
 
 #include <optional>
 #include <string>

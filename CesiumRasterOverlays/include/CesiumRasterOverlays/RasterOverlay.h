@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlayLoadFailureDetails.h"
+#include "CesiumRasterOverlays/Library.h"
+#include "CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
