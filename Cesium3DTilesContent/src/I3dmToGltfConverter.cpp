@@ -17,7 +17,6 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
@@ -354,7 +353,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   if (!parsedJsonResult) {
     return finishEarly();
   }
-  const I3dmContent& parsedContent = *parsedJsonResult;
+  I3dmContent& parsedContent = *parsedJsonResult;
   decodedInstances.rtcCenter = parsedContent.rtcCenter;
   decodedInstances.rotationENU = parsedContent.eastNorthUp;
 
@@ -370,8 +369,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
             pBinaryData + *parsedContent.position),
         numInstances);
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
-  } else {
-    CESIUM_ASSERT(parsedContent.positionQuantized.has_value());
+  } else if (parsedContent.positionQuantized) {
     std::span<const uint16_t[3]> rawQuantizedPositions(
         reinterpret_cast<const uint16_t(*)[3]>(
             pBinaryData + *parsedContent.positionQuantized),
@@ -390,7 +388,11 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
           }
           return position;
         });
+  } else {
+    parsedContent.errors.emplaceError(
+        "Missing position or positionQuantized in parsed content");
   }
+
   decodedInstances.rotations.resize(
       numInstances,
       glm::quat(1.0f, 0.0f, 0.0f, 0.0f));

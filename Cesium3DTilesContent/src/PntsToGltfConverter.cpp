@@ -1138,7 +1138,8 @@ void parsePositionsFromFeatureTableBinary(
       reinterpret_cast<glm::vec3*>(positionData.data()),
       pointsLength);
 
-  if (parsedContent.positionQuantized) {
+  if (parsedContent.positionQuantized && parsedContent.quantizedVolumeScale &&
+      parsedContent.quantizedVolumeOffset) {
     // PERFORMANCE_IDEA: In the future, it might be more performant to detect
     // if the recipient engine can handle dequantization itself, and if so, use
     // the KHR_mesh_quantization extension to avoid dequantizing here.
@@ -1147,10 +1148,8 @@ void parsePositionsFromFeatureTableBinary(
             featureTableBinaryData.data() + parsedContent.position.byteOffset),
         pointsLength);
 
-    CESIUM_ASSERT(parsedContent.quantizedVolumeScale.has_value());
     const glm::vec3 quantizedVolumeScale(
         parsedContent.quantizedVolumeScale.value());
-    CESIUM_ASSERT(parsedContent.quantizedVolumeOffset.has_value());
     const glm::vec3 quantizedVolumeOffset(
         parsedContent.quantizedVolumeOffset.value());
 
@@ -1170,6 +1169,10 @@ void parsePositionsFromFeatureTableBinary(
       parsedContent.positionMax =
           glm::max(parsedContent.positionMax, dequantizedPosition);
     }
+  } else if (parsedContent.positionQuantized) {
+    parsedContent.errors.emplaceError(
+        "Missing quantizedVolumeScale or quantizedVolumeOffset in parsed "
+        "content");
   } else {
     // The position accessor min / max is required by the glTF spec, so
     // use a for loop instead of std::memcpy.
@@ -1665,13 +1668,13 @@ void convertPntsContentToGltf(
           std::span<const std::byte>(parsedContent.dracoBatchTableBinary);
     }
 
-    CESIUM_ASSERT(result.model.has_value());
-
-    result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromPnts(
-        featureTableJson,
-        batchTableJson,
-        batchTableBinaryData,
-        result.model.value()));
+    if (result.model) {
+      result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromPnts(
+          featureTableJson,
+          batchTableJson,
+          batchTableBinaryData,
+          result.model.value()));
+    }
   }
 }
 } // namespace

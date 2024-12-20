@@ -174,12 +174,12 @@ BoundingRegion EllipsoidTilesetLoader::createBoundingRegion(
 
 EllipsoidTilesetLoader::Geometry
 EllipsoidTilesetLoader::createGeometry(const Tile& tile) const {
-  static constexpr uint16_t resolution = 24;
+  static constexpr size_t resolution = 24;
 
   std::vector<uint16_t> indices;
-  indices.reserve(static_cast<size_t>(6 * (resolution - 1) * (resolution - 1)));
+  indices.reserve(6 * (resolution - 1) * (resolution - 1));
 
-  std::vector<glm::vec3> vertices(static_cast<size_t>(resolution * resolution));
+  std::vector<glm::vec3> vertices(resolution * resolution);
   std::vector<glm::vec3> normals(vertices.size());
 
   const Ellipsoid& ellipsoid = _projection.getEllipsoid();

@@ -996,7 +996,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                        upAxis,
                        tileUrl,
                        pAssetAccessor,
-                       pCompletedRequest = std::move(pCompletedRequest)](GltfConverterResult&& result) mutable {
+                       pCompletedRequest = std::move(pCompletedRequest)](
+                          GltfConverterResult&& result) mutable {
                         logTileLoadResult(pLogger, tileUrl, result.errors);
                         if (result.errors) {
                           return TileLoadResult::createFailedResult(
