@@ -1522,9 +1522,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         if (!result.hit.has_value()) {
           result.hit = RayGltfHit{
-              *primitiveHitPoint,
-              primitiveToWorld,
-              worldPoint,
+              std::move(*primitiveHitPoint),
+              std::move(primitiveToWorld),
+              std::move(worldPoint),
               rayToWorldPointDistanceSq,
               meshId,
               primitiveId};
@@ -1533,9 +1533,9 @@ GltfUtilities::IntersectResult GltfUtilities::intersectRayGltfModel(
 
         // Use in result if it's closer
         if (rayToWorldPointDistanceSq < result.hit->rayToWorldPointDistanceSq) {
-          result.hit->primitivePoint = *primitiveHitPoint;
-          result.hit->primitiveToWorld = primitiveToWorld;
-          result.hit->worldPoint = worldPoint;
+          result.hit->primitivePoint = std::move(*primitiveHitPoint);
+          result.hit->primitiveToWorld = std::move(primitiveToWorld);
+          result.hit->worldPoint = std::move(worldPoint);
           result.hit->rayToWorldPointDistanceSq = rayToWorldPointDistanceSq;
           result.hit->meshId = meshId;
           result.hit->primitiveId = primitiveId;

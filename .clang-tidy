@@ -141,6 +141,8 @@ CheckOptions:
     value: "true"
   - key: misc-include-cleaner.IgnoreHeaders
     value: ".*cesium-async\\+\\+\\.h;.*bits\/.*.h"
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: "false"
 HeaderFilterRegex: ".*"
 HeaderFileExtensions: ["h"]
 ExcludeHeaderFilterRegex: ".*\\.ezvcpkg\/.*"

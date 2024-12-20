@@ -894,7 +894,7 @@ void decodeDracoMetadata(
 
   const auto& dracoMetadataSemantics = parsedContent.dracoMetadataSemantics;
   for (const auto& dracoMetadataSemantic : dracoMetadataSemantics) {
-    DracoMetadataSemantic dracoSemantic = dracoMetadataSemantic.second;
+    const DracoMetadataSemantic& dracoSemantic = dracoMetadataSemantic.second;
     draco::PointAttribute* pAttribute =
         pPointCloud->attribute(dracoSemantic.dracoId);
     if (!validateDracoMetadataAttribute(pAttribute, dracoSemantic)) {

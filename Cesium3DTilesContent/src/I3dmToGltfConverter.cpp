@@ -430,8 +430,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         decodedInstances.rotations.begin(),
         [](auto&& upOct, auto&& rightOct) {
           return rotationFromUpRight(
-              decodeOct32P(reinterpret_cast<const uint16_t*>(upOct)),
-              decodeOct32P(reinterpret_cast<const uint16_t*>(rightOct)));
+              decodeOct32P(upOct),
+              decodeOct32P(rightOct));
         });
   } else if (decodedInstances.rotationENU) {
     glm::dmat4 worldTransform = assetFetcher.tileTransform;

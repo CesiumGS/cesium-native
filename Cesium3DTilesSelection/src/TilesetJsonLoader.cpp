@@ -996,12 +996,12 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                        upAxis,
                        tileUrl,
                        pAssetAccessor = std::move(pAssetAccessor),
-                       pCompletedRequest](GltfConverterResult&& result) {
+                       pCompletedRequest = std::move(pCompletedRequest)](GltfConverterResult&& result) {
                         logTileLoadResult(pLogger, tileUrl, result.errors);
                         if (result.errors) {
                           return TileLoadResult::createFailedResult(
-                              pAssetAccessor,
-                              pCompletedRequest);
+                              std::move(pAssetAccessor),
+                              std::move(pCompletedRequest));
                         }
                         return TileLoadResult{
                             std::move(*result.model),
@@ -1009,8 +1009,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                             std::nullopt,
                             std::nullopt,
                             std::nullopt,
-                            pAssetAccessor,
-                            pCompletedRequest,
+                            std::move(pAssetAccessor),
+                            std::move(pCompletedRequest),
                             {},
                             TileLoadResultState::Success,
                             ellipsoid};
@@ -1023,7 +1023,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       upAxis,
                       tileRefine,
                       pLogger,
-                      pAssetAccessor,
+                      std::move(pAssetAccessor),
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
                       ellipsoid));

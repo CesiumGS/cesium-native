@@ -119,7 +119,7 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
         subtree.buffers,
         subtree.bufferViews);
     if (maybeAvailability) {
-      contentAvailability.emplace_back(*maybeAvailability);
+      contentAvailability.emplace_back(std::move(*maybeAvailability));
     }
   }
 
