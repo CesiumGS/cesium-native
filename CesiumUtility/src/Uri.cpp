@@ -18,7 +18,7 @@ namespace {
 const char* const HTTPS_PREFIX = "https:";
 const char* const HTTP_PREFIX = "http:";
 
-static std::string cesiumConformUrl(const std::string& url, bool useHttps) {
+std::string cesiumConformUrl(const std::string& url, bool useHttps) {
   // Prepend protocol to protocol-relative URIs.
   if (url.length() > 2 && url.at(0) == '/' && url.at(1) == '/') {
     return std::string(useHttps ? HTTPS_PREFIX : HTTP_PREFIX).append(url);
