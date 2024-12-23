@@ -207,19 +207,7 @@ private:
      */
     CesiumUtility::DoublyLinkedListPointers<AssetEntry> deletionListPointers;
 
-    CesiumUtility::ResultPointer<TAssetType> toResultUnderLock() const {
-      // This method is called while the calling thread already owns the depot
-      // mutex. So we must take care not to lock it again, which could happen if
-      // the asset is currently unreferenced and we naively create an
-      // IntrusivePointer for it.
-      CesiumUtility::IntrusivePointer<TAssetType> p = nullptr;
-      if (pAsset) {
-        pAsset->addReference(true);
-        p = pAsset.get();
-        pAsset->releaseReference(true);
-      }
-      return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
-    }
+    CesiumUtility::ResultPointer<TAssetType> toResultUnderLock() const;
   };
 
   // Maps asset keys to AssetEntry instances. This collection owns the asset
@@ -508,6 +496,22 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
 
   // This depot is now managing at least one live asset, so keep it alive.
   this->_pKeepAlive = this;
+}
+
+template <typename TAssetType, typename TAssetKey>
+CesiumUtility::ResultPointer<TAssetType>
+SharedAssetDepot<TAssetType, TAssetKey>::AssetEntry::toResultUnderLock() const {
+  // This method is called while the calling thread already owns the depot
+  // mutex. So we must take care not to lock it again, which could happen if
+  // the asset is currently unreferenced and we naively create an
+  // IntrusivePointer for it.
+  CesiumUtility::IntrusivePointer<TAssetType> p = nullptr;
+  if (pAsset) {
+    pAsset->addReference(true);
+    p = pAsset.get();
+    pAsset->releaseReference(true);
+  }
+  return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
 }
 
 } // namespace CesiumAsync
