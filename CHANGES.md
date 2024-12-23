@@ -25,6 +25,7 @@
 - Fixed a bug in  `SubtreeFileReader::loadBinary` that prevented valid subtrees from loading if they did not contain binary data.
 - Fixed a bug in the `Tileset` selection algorithm that could cause detail to disappear during load in some cases.
 - Improved the "kicking" mechanism in the tileset selection algorithm. The new criteria allows holes in a `Tileset`, when they do occur, to be filled with loaded tiles more incrementally.
+- Fixed a bug in `SharedAssetDepot` that could lead to crashes and other undefined behavior when an asset in the depot outlived the depot itself.
 
 ### v0.42.0 - 2024-12-02
 

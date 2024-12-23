@@ -120,8 +120,17 @@ public:
   int64_t getInactiveAssetTotalSizeBytes() const;
 
 private:
+  struct LockHolder;
+
   // Disable copy
   void operator=(const SharedAssetDepot<TAssetType, TAssetKey>& other) = delete;
+
+  /**
+   * @brief Locks the shared asset depot for thread-safe access. It will remain
+   * locked until the returned object is destroyed or the `unlock` method is
+   * called on it.
+   */
+  LockHolder lock() const;
 
   /**
    * @brief Marks the given asset as a candidate for deletion.
@@ -210,6 +219,23 @@ private:
     CesiumUtility::ResultPointer<TAssetType> toResultUnderLock() const;
   };
 
+  // Manages the depot's mutex. Also ensures, via IntrusivePointer, that the
+  // depot won't be destroyed while the lock is held.
+  struct LockHolder {
+    LockHolder(
+        const CesiumUtility::IntrusivePointer<const SharedAssetDepot>& pDepot);
+    ~LockHolder();
+    void unlock();
+
+  private:
+    // These two fields _must_ be declared in this order to guarantee that the
+    // mutex is released before the depot pointer. Releasing the depot pointer
+    // could destroy the depot, and that will be disastrous if the lock is still
+    // held.
+    CesiumUtility::IntrusivePointer<const SharedAssetDepot> pDepot;
+    std::unique_lock<std::mutex> lock;
+  };
+
   // Maps asset keys to AssetEntry instances. This collection owns the asset
   // entries.
   std::unordered_map<TAssetKey, CesiumUtility::IntrusivePointer<AssetEntry>>
@@ -287,7 +313,7 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
     const TAssetKey& assetKey) {
   // We need to take care here to avoid two assets starting to load before the
   // first asset has added an entry and set its maybePendingAsset field.
-  std::unique_lock lock(this->_mutex);
+  LockHolder lock = this->lock();
 
   auto existingIt = this->_assets.find(assetKey);
   if (existingIt != this->_assets.end()) {
@@ -335,7 +361,7 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
               [pDepot,
                pEntry](CesiumUtility::Result<
                        CesiumUtility::IntrusivePointer<TAssetType>>&& result) {
-                std::lock_guard lock(pDepot->_mutex);
+                LockHolder lock = pDepot->lock();
 
                 if (result.pValue) {
                   result.pValue->_pDepot = pDepot.get();
@@ -377,19 +403,19 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
 
 template <typename TAssetType, typename TAssetKey>
 size_t SharedAssetDepot<TAssetType, TAssetKey>::getAssetCount() const {
-  std::lock_guard lock(this->_mutex);
+  LockHolder lock = this->lock();
   return this->_assets.size();
 }
 
 template <typename TAssetType, typename TAssetKey>
 size_t SharedAssetDepot<TAssetType, TAssetKey>::getActiveAssetCount() const {
-  std::lock_guard lock(this->_mutex);
+  LockHolder lock = this->lock();
   return this->_assets.size() - this->_deletionCandidates.size();
 }
 
 template <typename TAssetType, typename TAssetKey>
 size_t SharedAssetDepot<TAssetType, TAssetKey>::getInactiveAssetCount() const {
-  std::lock_guard lock(this->_mutex);
+  LockHolder lock = this->lock();
   return this->_deletionCandidates.size();
 }
 
@@ -397,8 +423,14 @@ template <typename TAssetType, typename TAssetKey>
 int64_t
 SharedAssetDepot<TAssetType, TAssetKey>::getInactiveAssetTotalSizeBytes()
     const {
-  std::lock_guard lock(this->_mutex);
+  LockHolder lock = this->lock();
   return this->_totalDeletionCandidateMemoryUsage;
+}
+
+template <typename TAssetType, typename TAssetKey>
+typename SharedAssetDepot<TAssetType, TAssetKey>::LockHolder
+SharedAssetDepot<TAssetType, TAssetKey>::lock() const {
+  return LockHolder{this};
 }
 
 template <typename TAssetType, typename TAssetKey>
@@ -408,7 +440,7 @@ void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidate(
   if (threadOwnsDepotLock) {
     this->markDeletionCandidateUnderLock(asset);
   } else {
-    std::lock_guard lock(this->_mutex);
+    LockHolder lock = this->lock();
     this->markDeletionCandidateUnderLock(asset);
   }
 }
@@ -468,7 +500,7 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidate(
   if (threadOwnsDepotLock) {
     this->unmarkDeletionCandidateUnderLock(asset);
   } else {
-    std::lock_guard lock(this->_mutex);
+    LockHolder lock = this->lock();
     this->unmarkDeletionCandidateUnderLock(asset);
   }
 }
@@ -512,6 +544,19 @@ SharedAssetDepot<TAssetType, TAssetKey>::AssetEntry::toResultUnderLock() const {
     pAsset->releaseReference(true);
   }
   return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
+}
+
+template <typename TAssetType, typename TAssetKey>
+SharedAssetDepot<TAssetType, TAssetKey>::LockHolder::LockHolder(
+    const CesiumUtility::IntrusivePointer<const SharedAssetDepot>& pDepot_)
+    : pDepot(pDepot_), lock(pDepot_->_mutex) {}
+
+template <typename TAssetType, typename TAssetKey>
+SharedAssetDepot<TAssetType, TAssetKey>::LockHolder::~LockHolder() = default;
+
+template <typename TAssetType, typename TAssetKey>
+void SharedAssetDepot<TAssetType, TAssetKey>::LockHolder::unlock() {
+  this->lock.unlock();
 }
 
 } // namespace CesiumAsync
