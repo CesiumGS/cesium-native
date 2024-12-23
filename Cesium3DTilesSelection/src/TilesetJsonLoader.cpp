@@ -151,10 +151,16 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
           ellipsoid);
     }
 
-    const auto cylinderIt = extensionsIt->value.FindMember(
+    const auto cylinderExtensionIt = extensionsIt->value.FindMember(
         Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder::ExtensionName);
-    if (cylinderIt != extensionsIt->value.MemberEnd() &&
-        cylinderIt->value.IsObject()) {
+    if (cylinderExtensionIt != extensionsIt->value.MemberEnd() &&
+        cylinderExtensionIt->value.IsObject()) {
+      const auto cylinderIt = cylinderExtensionIt->value.FindMember("cylinder");
+      if (cylinderIt == cylinderExtensionIt->value.MemberEnd() ||
+          !cylinderIt->value.IsArray()) {
+        return std::nullopt;
+      }
+
       const auto& a = cylinderIt->value.GetArray();
       for (rapidjson::SizeType i = 0; i < 12; ++i) {
         if (!a[i].IsNumber()) {
