@@ -428,7 +428,7 @@ SharedAssetDepot<TAssetType, TAssetKey>::getInactiveAssetTotalSizeBytes()
 }
 
 template <typename TAssetType, typename TAssetKey>
-SharedAssetDepot<TAssetType, TAssetKey>::LockHolder
+typename SharedAssetDepot<TAssetType, TAssetKey>::LockHolder
 SharedAssetDepot<TAssetType, TAssetKey>::lock() const {
   return LockHolder{this};
 }
