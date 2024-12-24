@@ -127,7 +127,11 @@ class RasterOverlayTileProvider;
  * value of {@link RasterOverlayTileProvider::loadTile}.
  */
 struct TileProviderAndTile {
+  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
+   * RasterOverlayTileProvider used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
+  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
+   * RasterOverlayTile used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 
   ~TileProviderAndTile() noexcept;

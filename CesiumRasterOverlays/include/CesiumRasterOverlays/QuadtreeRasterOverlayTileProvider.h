@@ -19,6 +19,16 @@
 
 namespace CesiumRasterOverlays {
 
+/**
+ * @brief A base class used for raster overlay providers that use a
+ * quadtree-based tiling scheme. This includes \ref TileMapServiceRasterOverlay,
+ * \ref BingMapsRasterOverlay, and \ref WebMapServiceRasterOverlay.
+ *
+ * To implement a new raster overlay provider based on
+ * QuadtreeRasterOverlayTileProvider, use this as the base class and override
+ * \ref QuadtreeRasterOverlayTileProvider::loadQuadtreeTileImage
+ * "loadQuadtreeTileImage" with code that makes requests to your service.
+ */
 class CESIUMRASTEROVERLAYS_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 

@@ -138,6 +138,14 @@ public:
   void
   setExtensionState(const std::string& extensionName, ExtensionState newState);
 
+  /**
+   * @brief Creates an extension handler for the given extension.
+   *
+   * @param extensionName The name of the extension to create a handler for.
+   * @param extendedObjectType The name of the type of the object that is being
+   * extended.
+   * @returns An \ref IExtensionJsonHandler to read the extension.
+   */
   std::unique_ptr<IExtensionJsonHandler> createExtensionHandler(
       const std::string_view& extensionName,
       const std::string& extendedObjectType) const;

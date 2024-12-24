@@ -12,6 +12,9 @@ namespace CesiumGltf {
  * @brief Reference to a texture.
  */
 struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "TextureInfo";
 
   /**

@@ -70,6 +70,10 @@ struct Asset {
   int8_t percentComplete = 0;
 };
 
+/**
+ * @brief A page of assets obtained from the Cesium ion `v1/assets` endpoint,
+ * including a link to obtain the next page, if one exists.
+ */
 struct Assets {
   /**
    * @brief An [RFC 5988](https://tools.ietf.org/html/rfc5988) formatted string

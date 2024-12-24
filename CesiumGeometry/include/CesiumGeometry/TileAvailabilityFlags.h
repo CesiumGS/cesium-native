@@ -6,6 +6,9 @@
 
 namespace CesiumGeometry {
 
+/**
+ * @brief A bitmask representing the availability state of a tile.
+ */
 enum CESIUMGEOMETRY_API TileAvailabilityFlags {
   /**
    * @brief The tile is known to be available.

@@ -79,6 +79,9 @@ private:
   ExitFunction _exitFunc;
 };
 
-template <typename ExistFunction>
-ScopeGuard(ExistFunction) -> ScopeGuard<ExistFunction>;
+/** @brief Template deduction guide for \ref ScopeGuard to help the compiler
+ * figure out that the type of `ExitFunction` should be the type of the
+ * function passed to the constructor. */
+template <typename ExitFunction>
+ScopeGuard(ExitFunction) -> ScopeGuard<ExitFunction>;
 } // namespace CesiumUtility

@@ -13,6 +13,9 @@ namespace CesiumGltf {
  * @brief A view into a buffer generally representing a subset of the buffer.
  */
 struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "BufferView";
 
   /**
@@ -20,8 +23,10 @@ struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
    * to use with this buffer view.
    */
   struct Target {
+    /** @brief ARRAY_BUFFER (`34962`) */
     static constexpr int32_t ARRAY_BUFFER = 34962;
 
+    /** @brief ELEMENT_ARRAY_BUFFER (`34963`) */
     static constexpr int32_t ELEMENT_ARRAY_BUFFER = 34963;
   };
 
