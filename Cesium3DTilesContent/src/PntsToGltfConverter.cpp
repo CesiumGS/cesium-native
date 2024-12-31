@@ -1,4 +1,5 @@
 #include "BatchTableToGltfStructuralMetadata.h"
+#include "MetadataProperty.h"
 
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
@@ -73,100 +74,6 @@ void parsePntsHeader(
     return;
   }
 }
-
-struct MetadataProperty {
-public:
-  enum ComponentType {
-    BYTE,
-    UNSIGNED_BYTE,
-    SHORT,
-    UNSIGNED_SHORT,
-    INT,
-    UNSIGNED_INT,
-    FLOAT,
-    DOUBLE
-  };
-
-  enum Type { SCALAR, VEC2, VEC3, VEC4 };
-
-  static std::optional<ComponentType>
-  getComponentTypeFromDracoDataType(const draco::DataType dataType) {
-    switch (dataType) {
-    case draco::DT_INT8:
-      return ComponentType::BYTE;
-    case draco::DT_UINT8:
-      return ComponentType::UNSIGNED_BYTE;
-    case draco::DT_INT16:
-      return ComponentType::SHORT;
-    case draco::DT_UINT16:
-      return ComponentType::UNSIGNED_SHORT;
-    case draco::DT_INT32:
-      return ComponentType::INT;
-    case draco::DT_UINT32:
-      return ComponentType::UNSIGNED_INT;
-    case draco::DT_FLOAT32:
-      return ComponentType::FLOAT;
-    case draco::DT_FLOAT64:
-      return ComponentType::DOUBLE;
-    default:
-      return std::nullopt;
-    }
-  }
-
-  static size_t getSizeOfComponentType(ComponentType componentType) {
-    switch (componentType) {
-    case ComponentType::BYTE:
-    case ComponentType::UNSIGNED_BYTE:
-      return sizeof(uint8_t);
-    case ComponentType::SHORT:
-    case ComponentType::UNSIGNED_SHORT:
-      return sizeof(uint16_t);
-    case ComponentType::INT:
-    case ComponentType::UNSIGNED_INT:
-      return sizeof(uint32_t);
-    case ComponentType::FLOAT:
-      return sizeof(float);
-    case ComponentType::DOUBLE:
-      return sizeof(double);
-    default:
-      return 0;
-    }
-  };
-
-  static std::optional<Type>
-  getTypeFromNumberOfComponents(int8_t numComponents) {
-    switch (numComponents) {
-    case 1:
-      return Type::SCALAR;
-    case 2:
-      return Type::VEC2;
-    case 3:
-      return Type::VEC3;
-    case 4:
-      return Type::VEC4;
-    default:
-      return std::nullopt;
-    }
-  }
-};
-
-const std::map<std::string, MetadataProperty::ComponentType>
-    stringToMetadataComponentType{
-        {"BYTE", MetadataProperty::ComponentType::BYTE},
-        {"UNSIGNED_BYTE", MetadataProperty::ComponentType::UNSIGNED_BYTE},
-        {"SHORT", MetadataProperty::ComponentType::SHORT},
-        {"UNSIGNED_SHORT", MetadataProperty::ComponentType::UNSIGNED_SHORT},
-        {"INT", MetadataProperty::ComponentType::INT},
-        {"UNSIGNED_INT", MetadataProperty::ComponentType::UNSIGNED_INT},
-        {"FLOAT", MetadataProperty::ComponentType::FLOAT},
-        {"DOUBLE", MetadataProperty::ComponentType::DOUBLE},
-    };
-
-const std::map<std::string, MetadataProperty::Type> stringToMetadataType{
-    {"SCALAR", MetadataProperty::Type::SCALAR},
-    {"VEC2", MetadataProperty::Type::VEC2},
-    {"VEC3", MetadataProperty::Type::VEC3},
-    {"VEC4", MetadataProperty::Type::VEC4}};
 
 struct PntsSemantic {
   uint32_t byteOffset = 0;
@@ -464,8 +371,9 @@ void parseBatchIdsFromFeatureTableJson(
   if (componentTypeIt != featureTableJson.MemberEnd() &&
       componentTypeIt->value.IsString()) {
     const std::string& componentTypeString = componentTypeIt->value.GetString();
-    if (stringToMetadataComponentType.find(componentTypeString) ==
-        stringToMetadataComponentType.end()) {
+    if (MetadataProperty::stringToMetadataComponentType.find(
+            componentTypeString) ==
+        MetadataProperty::stringToMetadataComponentType.end()) {
       parsedContent.errors.emplaceWarning(
           "Error parsing PNTS feature table, BATCH_ID does not have "
           "valid componentType. Skip parsing batch IDs.");
@@ -473,7 +381,7 @@ void parseBatchIdsFromFeatureTableJson(
     }
 
     MetadataProperty::ComponentType componentType =
-        stringToMetadataComponentType.at(componentTypeString);
+        MetadataProperty::stringToMetadataComponentType.at(componentTypeString);
     if (componentType != MetadataProperty::ComponentType::UNSIGNED_BYTE &&
         componentType != MetadataProperty::ComponentType::UNSIGNED_SHORT &&
         componentType != MetadataProperty::ComponentType::UNSIGNED_INT) {
@@ -741,8 +649,8 @@ void parseDracoExtensionFromBatchTableJson(
         componentTypeIt->value.IsString()) {
       componentType = componentTypeIt->value.GetString();
     }
-    if (stringToMetadataComponentType.find(componentType) ==
-        stringToMetadataComponentType.end()) {
+    if (MetadataProperty::stringToMetadataComponentType.find(componentType) ==
+        MetadataProperty::stringToMetadataComponentType.end()) {
       parsedContent.errors.emplaceWarning(fmt::format(
           "Skip decoding Draco-compressed property {}. The binary property "
           "doesn't have a valid componentType.",
@@ -755,7 +663,8 @@ void parseDracoExtensionFromBatchTableJson(
     if (typeIt != batchTableProperty.MemberEnd() && typeIt->value.IsString()) {
       type = typeIt->value.GetString();
     }
-    if (stringToMetadataType.find(type) == stringToMetadataType.end()) {
+    if (MetadataProperty::stringToMetadataType.find(type) ==
+        MetadataProperty::stringToMetadataType.end()) {
       parsedContent.errors.emplaceWarning(fmt::format(
           "Skip decoding Draco-compressed property {}. The binary property "
           "doesn't have a valid type.",
@@ -765,8 +674,9 @@ void parseDracoExtensionFromBatchTableJson(
 
     DracoMetadataSemantic semantic;
     semantic.dracoId = dracoPropertyIt->value.GetInt();
-    semantic.componentType = stringToMetadataComponentType.at(componentType);
-    semantic.type = stringToMetadataType.at(type);
+    semantic.componentType =
+        MetadataProperty::stringToMetadataComponentType.at(componentType);
+    semantic.type = MetadataProperty::stringToMetadataType.at(type);
 
     parsedContent.dracoMetadataSemantics.insert({name, semantic});
   }
@@ -802,6 +712,30 @@ bool validateDracoAttribute(
          pAttribute->num_components() == expectedNumComponents;
 }
 
+std::optional<MetadataProperty::ComponentType>
+getComponentTypeFromDracoDataType(const draco::DataType dataType) {
+  switch (dataType) {
+  case draco::DT_INT8:
+    return MetadataProperty::ComponentType::BYTE;
+  case draco::DT_UINT8:
+    return MetadataProperty::ComponentType::UNSIGNED_BYTE;
+  case draco::DT_INT16:
+    return MetadataProperty::ComponentType::SHORT;
+  case draco::DT_UINT16:
+    return MetadataProperty::ComponentType::UNSIGNED_SHORT;
+  case draco::DT_INT32:
+    return MetadataProperty::ComponentType::INT;
+  case draco::DT_UINT32:
+    return MetadataProperty::ComponentType::UNSIGNED_INT;
+  case draco::DT_FLOAT32:
+    return MetadataProperty::ComponentType::FLOAT;
+  case draco::DT_FLOAT64:
+    return MetadataProperty::ComponentType::DOUBLE;
+  default:
+    return std::nullopt;
+  }
+}
+
 bool validateDracoMetadataAttribute(
     const draco::PointAttribute* const pAttribute,
     const DracoMetadataSemantic semantic) {
@@ -809,8 +743,8 @@ bool validateDracoMetadataAttribute(
     return false;
   }
 
-  auto componentType = MetadataProperty::getComponentTypeFromDracoDataType(
-      pAttribute->data_type());
+  auto componentType =
+      getComponentTypeFromDracoDataType(pAttribute->data_type());
   if (!componentType || componentType.value() != semantic.componentType) {
     return false;
   }
