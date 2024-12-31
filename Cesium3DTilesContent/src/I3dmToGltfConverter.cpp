@@ -1,4 +1,5 @@
 // Heavily inspired by PntsToGltfConverter.cpp
+#include "BatchTableToGltfStructuralMetadata.h"
 
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverterUtility.h>
@@ -159,6 +160,22 @@ glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
 struct ConvertedI3dm {
   GltfConverterResult gltfResult;
   DecodedInstances decodedInstances;
+  // If there's a batch table, then its data need to be saved until the glTF
+  // model has been processed. The feature table json and binary data need to be
+  // saved too, in order to extract any batch IDs. A future optimization would
+  // be to save only those batch IDs and not the whole binary data blob, thus
+  // saving some transient memory use.
+  //
+  // It's painful to copy rapidjson::Document, and not necessary for our
+  // purposes, so we allocate them on the heap and keep shared pointers.
+  std::shared_ptr<rapidjson::Document> pFeatureTableJson;
+  std::shared_ptr<rapidjson::Document> pBatchTableJson;
+  std::vector<std::byte> featureTableBinaryData;
+  std::vector<std::byte> batchTableBinaryData;
+  ConvertedI3dm()
+      : pFeatureTableJson(std::make_shared<rapidjson::Document>()),
+        pBatchTableJson(std::make_shared<rapidjson::Document>()) {}
+  ConvertedI3dm(ConvertedI3dm&&) = default;
 };
 
 /* The approach:
@@ -173,24 +190,69 @@ struct ConvertedI3dm {
     table, hashed by mesh transform.
   + Add the instance transforms to the glTF buffers, buffer views, and
     accessors.
-  + Future work: Metadata / feature id?
 */
 
-std::optional<I3dmContent> parseI3dmJson(
-    const std::span<const std::byte> featureTableJsonData,
+void parseJsonAndBinaryData(
+    const std::span<const std::byte>& instancesBinary,
+    const I3dmHeader& header,
+    uint32_t headerLength,
+    ConvertedI3dm& convertedI3dm,
     CesiumUtility::ErrorList& errors) {
-  rapidjson::Document featureTableJson;
-  featureTableJson.Parse(
+  // Offset to the beginning of each section as it is parsed in turn.
+  size_t dataSectionOffset = headerLength;
+  auto featureTableJsonData = instancesBinary.subspan(
+      dataSectionOffset,
+      header.featureTableJsonByteLength);
+  convertedI3dm.pFeatureTableJson->Parse(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
       featureTableJsonData.size());
-  if (featureTableJson.HasParseError()) {
+  if (convertedI3dm.pFeatureTableJson->HasParseError()) {
     errors.emplaceError(fmt::format(
         "Error when parsing feature table JSON, error code {} at byte offset "
         "{}",
-        static_cast<uint64_t>(featureTableJson.GetParseError()),
-        featureTableJson.GetErrorOffset()));
-    return {};
+        static_cast<uint64_t>(convertedI3dm.pFeatureTableJson->GetParseError()),
+        convertedI3dm.pFeatureTableJson->GetErrorOffset()));
+    return;
   }
+  dataSectionOffset += header.featureTableJsonByteLength;
+  auto featureTableBinaryData = instancesBinary.subspan(
+      dataSectionOffset,
+      header.featureTableBinaryByteLength);
+  convertedI3dm.featureTableBinaryData.insert(
+      convertedI3dm.featureTableBinaryData.begin(),
+      featureTableBinaryData.begin(),
+      featureTableBinaryData.end());
+  if (header.batchTableJsonByteLength > 0) {
+    dataSectionOffset += header.featureTableBinaryByteLength;
+    auto batchTableJsonData = instancesBinary.subspan(
+        dataSectionOffset,
+        header.batchTableJsonByteLength);
+    convertedI3dm.pBatchTableJson->Parse(
+        reinterpret_cast<const char*>(batchTableJsonData.data()),
+        batchTableJsonData.size());
+    if (convertedI3dm.pBatchTableJson->HasParseError()) {
+      errors.emplaceError(fmt::format(
+          "Error when parsing batch table JSON, error code {} at byte offset "
+          "{}",
+          static_cast<uint64_t>(
+              convertedI3dm.pFeatureTableJson->GetParseError()),
+          convertedI3dm.pFeatureTableJson->GetErrorOffset()));
+      return;
+    }
+  }
+  dataSectionOffset += header.batchTableJsonByteLength;
+  auto batchTableBinaryData = instancesBinary.subspan(
+      dataSectionOffset,
+      header.batchTableBinaryByteLength);
+  convertedI3dm.batchTableBinaryData.insert(
+      convertedI3dm.batchTableBinaryData.begin(),
+      batchTableBinaryData.begin(),
+      batchTableBinaryData.end());
+}
+
+std::optional<I3dmContent> parseI3dmJson(
+    rapidjson::Document& featureTableJson,
+    CesiumUtility::ErrorList& errors) {
   I3dmContent parsedContent;
   // Global semantics
   if (std::optional<uint32_t> optInstancesLength =
@@ -310,14 +372,22 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                              header.batchTableBinaryByteLength;
   const uint32_t gltfEnd = header.byteLength;
   auto gltfData = instancesBinary.subspan(gltfStart, gltfEnd - gltfStart);
-  std::optional<CesiumAsync::Future<AssetFetcherResult>> assetFuture;
-  auto featureTableJsonData =
-      instancesBinary.subspan(headerLength, header.featureTableJsonByteLength);
-  std::optional<I3dmContent> parsedJsonResult =
-      parseI3dmJson(featureTableJsonData, convertedI3dm.gltfResult.errors);
-  if (!parsedJsonResult) {
+  parseJsonAndBinaryData(
+      instancesBinary,
+      header,
+      headerLength,
+      convertedI3dm,
+      convertedI3dm.gltfResult.errors);
+  if (convertedI3dm.gltfResult.errors.hasErrors()) {
+    finishEarly();
+  }
+  std::optional<I3dmContent> parsedJsonResult = parseI3dmJson(
+      *convertedI3dm.pFeatureTableJson,
+      convertedI3dm.gltfResult.errors);
+  if (!parsedJsonResult || convertedI3dm.gltfResult.errors.hasErrors()) {
     return finishEarly();
   }
+  std::optional<CesiumAsync::Future<AssetFetcherResult>> assetFuture;
   const I3dmContent& parsedContent = *parsedJsonResult;
   decodedInstances.rtcCenter = parsedContent.rtcCenter;
   decodedInstances.rotationENU = parsedContent.eastNorthUp;
@@ -519,7 +589,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                 std::move(readerResult.errors),
                 {}};
             convertedI3dm.gltfResult.errors.merge(resolvedExternalErrors);
-            return convertedI3dm;
+            return std::move(convertedI3dm);
           });
 }
 
@@ -634,7 +704,7 @@ const size_t scaleOffset = rotOffset + sizeof(glm::quat);
 const size_t totalStride =
     sizeof(glm::vec3) + sizeof(glm::quat) + sizeof(glm::vec3);
 
-void copyInstanceToBuffer(
+void copyInstanceTransformToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
@@ -647,20 +717,20 @@ void copyInstanceToBuffer(
   std::memcpy(pBufferLoc + scaleOffset, &fscale, sizeof(fscale));
 }
 
-void copyInstanceToBuffer(
+void copyInstanceTransformToBuffer(
     const glm::dvec3& position,
     const glm::dquat& rotation,
     const glm::dvec3& scale,
     std::byte* pBufferData,
     size_t i) {
-  copyInstanceToBuffer(
+  copyInstanceTransformToBuffer(
       position,
       rotation,
       scale,
       pBufferData + (i * totalStride));
 }
 
-bool copyInstanceToBuffer(
+bool copyInstanceTransformToBuffer(
     const glm::dmat4& instanceTransform,
     std::byte* pBufferData,
     size_t i) {
@@ -680,11 +750,11 @@ bool copyInstanceToBuffer(
     scale = glm::dvec3(1.0);
     result = false;
   }
-  copyInstanceToBuffer(position, rotation, scale, pBufferData, i);
+  copyInstanceTransformToBuffer(position, rotation, scale, pBufferData, i);
   return result;
 }
 
-struct AccessorCreator {
+struct GltfAccessorCreator {
   Model& gltf;
   const int32_t instanceBufferViewId;
   const uint32_t numInstances;
@@ -699,8 +769,8 @@ struct AccessorCreator {
         componentType,
         numInstances,
         type);
-    gltf.accessors[static_cast<uint32_t>(accessorId)].byteOffset
-        = static_cast<int64_t>(bufferOffset);
+    gltf.accessors[static_cast<uint32_t>(accessorId)].byteOffset =
+        static_cast<int64_t>(bufferOffset);
     return accessorId;
   }
 
@@ -708,9 +778,8 @@ struct AccessorCreator {
     return create(Accessor::ComponentType::FLOAT, type, bufferOffset);
   }
 
-  void addAccessors(
-      ExtensionExtMeshGpuInstancing& gpuExt,
-      uint32_t dataBaseOffset) {
+  void
+  addAccessors(ExtensionExtMeshGpuInstancing& gpuExt, uint32_t dataBaseOffset) {
     gpuExt.attributes["TRANSLATION"] =
         create(Accessor::Type::VEC3, dataBaseOffset);
     gpuExt.attributes["ROTATION"] =
@@ -733,7 +802,7 @@ void instantiateWithExistingInstances(
   auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
       *result.model,
       glm::dmat4x4(1.0));
-    std::set<CesiumGltf::Node*> meshNodes;
+  std::set<CesiumGltf::Node*> meshNodes;
   result.model->forEachPrimitiveInScene(
       -1,
       [&](Model& gltf,
@@ -754,9 +823,9 @@ void instantiateWithExistingInstances(
         if (numI3dmInstances * modelInstanceTransforms.size() >
             std::numeric_limits<uint32_t>::max()) {
           result.errors.emplaceError(fmt::format(
-                                         "Too many instances: {} from i3dm and {} from glb",
-                                         numI3dmInstances,
-                                         modelInstanceTransforms.size()));
+              "Too many instances: {} from i3dm and {} from glb",
+              numI3dmInstances,
+              modelInstanceTransforms.size()));
           return;
         }
         if (modelInstanceTransforms.empty()) {
@@ -779,7 +848,7 @@ void instantiateWithExistingInstances(
           for (const auto& modelInstanceTransform : modelInstanceTransforms) {
             glm::dmat4 finalTransform =
                 instanceTransform * modelInstanceTransform;
-            if (!copyInstanceToBuffer(
+            if (!copyInstanceTransformToBuffer(
                     finalTransform,
                     &instanceBuffer.cesium.data[dataBaseOffset],
                     destInstanceIndx++)) {
@@ -789,7 +858,10 @@ void instantiateWithExistingInstances(
             }
           }
         }
-        AccessorCreator accessorCreator{gltf, instanceBufferViewId, numNewInstances};
+        GltfAccessorCreator accessorCreator{
+            gltf,
+            instanceBufferViewId,
+            numNewInstances};
         accessorCreator.addAccessors(gpuExt, dataBaseOffset);
       });
 }
@@ -809,16 +881,17 @@ void instantiateGltfInstances(
       static_cast<int64_t>(totalStride));
   const auto numInstances =
       static_cast<uint32_t>(decodedInstances.positions.size());
-  auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
-      *result.model,
-      glm::dmat4x4(1.0));
-  if (result.model->isExtensionUsed(ExtensionExtMeshGpuInstancing::ExtensionName)) {
+  if (result.model->isExtensionUsed(
+          ExtensionExtMeshGpuInstancing::ExtensionName)) {
     instantiateWithExistingInstances(
         result,
         decodedInstances,
         instanceBufferId,
         instanceBufferViewId);
   } else {
+    auto upToZ = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
+        *result.model,
+        glm::dmat4x4(1.0));
     result.model->forEachPrimitiveInScene(
         -1,
         [&](Model& gltf,
@@ -831,7 +904,8 @@ void instantiateGltfInstances(
             return;
           }
           auto& gpuExt = node.addExtension<ExtensionExtMeshGpuInstancing>();
-          gltf.addExtensionRequired(ExtensionExtMeshGpuInstancing::ExtensionName);
+          gltf.addExtensionRequired(
+              ExtensionExtMeshGpuInstancing::ExtensionName);
           const size_t instanceDataSize = totalStride * numInstances;
           auto dataBaseOffset =
               static_cast<uint32_t>(instanceBuffer.cesium.data.size());
@@ -844,7 +918,7 @@ void instantiateGltfInstances(
             const glm::dmat4 instanceTransform =
                 toTileInv * composeInstanceTransform(i, decodedInstances) *
                 toTile;
-            if (!copyInstanceToBuffer(
+            if (!copyInstanceTransformToBuffer(
                     instanceTransform,
                     &instanceBuffer.cesium.data[dataBaseOffset],
                     destInstanceIndx++)) {
@@ -853,7 +927,10 @@ void instantiateGltfInstances(
                   "instance buffer.");
             }
           }
-          AccessorCreator accessorCreator{gltf, instanceBufferViewId, numInstances};
+          GltfAccessorCreator accessorCreator{
+              gltf,
+              instanceBufferViewId,
+              numInstances};
           accessorCreator.addAccessors(gpuExt, dataBaseOffset);
         });
   }
@@ -862,8 +939,8 @@ void instantiateGltfInstances(
   }
   instanceBuffer.byteLength =
       static_cast<int64_t>(instanceBuffer.cesium.data.size());
-  result.model->bufferViews[instanceBufferViewId].byteLength =
-      instanceBuffer.byteLength;
+  result.model->bufferViews[static_cast<uint32_t>(instanceBufferViewId)]
+      .byteLength = instanceBuffer.byteLength;
 }
 } // namespace
 
@@ -895,6 +972,18 @@ CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
           instantiateGltfInstances(
               convertedI3dm.gltfResult,
               convertedI3dm.decodedInstances);
+          if (!convertedI3dm.pBatchTableJson->IsObject() ||
+              convertedI3dm.pBatchTableJson->HasParseError()) {
+            return convertedI3dm.gltfResult;
+          }
+          CesiumUtility::ErrorList batchTableErrors =
+              BatchTableToGltfStructuralMetadata::convertFromI3dm(
+                  *convertedI3dm.pFeatureTableJson,
+                  *convertedI3dm.pBatchTableJson,
+                  convertedI3dm.featureTableBinaryData,
+                  convertedI3dm.batchTableBinaryData,
+                  *convertedI3dm.gltfResult.model);
+          convertedI3dm.gltfResult.errors.merge(batchTableErrors);
         }
         return convertedI3dm.gltfResult;
       });
