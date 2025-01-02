@@ -1,5 +1,8 @@
 #include "MetadataProperty.h"
 
+#include <map>
+#include <string>
+
 namespace Cesium3DTilesContent {
 const std::map<std::string, MetadataProperty::ComponentType>
     MetadataProperty::stringToMetadataComponentType{

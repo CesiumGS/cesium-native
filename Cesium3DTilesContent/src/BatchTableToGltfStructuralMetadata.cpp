@@ -10,6 +10,7 @@
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumUtility/Assert.h>
@@ -24,6 +25,7 @@
 #include <map>
 #include <type_traits>
 #include <unordered_set>
+#include <variant>
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesContent::CesiumImpl;
@@ -2143,6 +2145,10 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
       GltfConverterUtility::getValue<uint32_t>(
           featureTableJson,
           "INSTANCES_LENGTH");
+  if (!optInstancesLength) {
+    result.emplaceError("Required INSTANCES_LENGTH semantic is missing");
+    return result;
+  }
   if (batchIdIt == featureTableJson.MemberEnd()) {
     featureCount = *optInstancesLength;
   } else {
