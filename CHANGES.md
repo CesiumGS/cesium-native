@@ -17,6 +17,7 @@
 - Added `DebugTileStateDatabase`, which provides tools for debugging the tile selection algorithm using SQLite.
 - Added `CesiumAsync::SqliteHelper`, containing functions for working with SQLite.
 - Updates generated classes for `EXT_structural_metadata`. See https://github.com/CesiumGS/glTF/pull/71.
+- Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
 
 ##### Fixes :wrench:
 
