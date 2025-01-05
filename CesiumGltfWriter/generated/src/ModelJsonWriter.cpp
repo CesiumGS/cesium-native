@@ -767,8 +767,10 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("schema");
-  writeJson(obj.schema, jsonWriter, context);
+  if (obj.schema) {
+    jsonWriter.Key("schema");
+    writeJson(obj.schema, jsonWriter, context);
+  }
 
   if (obj.schemaUri) {
     jsonWriter.Key("schemaUri");

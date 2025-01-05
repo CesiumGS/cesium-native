@@ -433,9 +433,9 @@ function generate(options, schema, writers) {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName
-      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-      : ""
-    }
+              ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+              : ""
+          }
 
           static void write(
               const ${namespace}::${name}& obj,
@@ -472,11 +472,11 @@ function generate(options, schema, writers) {
             const CesiumJsonWriter::ExtensionWriterContext& context) {
 
           ${indent(
-      properties
-        .map((property) => formatWriterPropertyImpl(property))
-        .join("\n\n"),
-      10
-    )}
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
         }
@@ -503,11 +503,11 @@ function generate(options, schema, writers) {
           jsonWriter.StartObject();
 
           ${indent(
-      properties
-        .map((property) => formatWriterPropertyImpl(property))
-        .join("\n\n"),
-      10
-    )}
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
 
@@ -518,13 +518,13 @@ function generate(options, schema, writers) {
 
   const writeExtensionsRegistration = `
         ${extensions[schema.title]
-      ? extensions[schema.title]
-        .map((extension) => {
-          return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
-        })
-        .join("\n")
-      : ""
-    }
+            ? extensions[schema.title]
+                .map((extension) => {
+                  return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
+                })
+                .join("\n")
+            : ""
+        }
   `;
 
   writers.push({
@@ -616,17 +616,20 @@ function formatWriterPropertyImpl(property) {
   const isVector = type.startsWith("std::vector");
   const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
+  const isPointer = type.startsWith("CesiumUtility::IntrusivePointer");
 
   const hasDefaultValueGuard =
     !isId && !isRequiredEnum && defaultValue !== undefined;
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
+  const hasPointerGuard = isPointer;
   const hasNegativeIndexGuard = isId;
   const hasGuard =
     hasDefaultValueGuard ||
     hasEmptyGuard ||
     hasOptionalGuard ||
+    hasPointerGuard ||
     hasNegativeIndexGuard;
 
   if (hasDefaultVectorGuard) {
@@ -648,7 +651,7 @@ function formatWriterPropertyImpl(property) {
     result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
   } else if (hasNegativeIndexGuard) {
     result += `if (obj.${property.cppSafeName} > -1) {\n`;
-  } else if (hasOptionalGuard) {
+  } else if (hasOptionalGuard || hasPointerGuard) {
     result += `if (obj.${property.cppSafeName}) {\n`;
   }
 
