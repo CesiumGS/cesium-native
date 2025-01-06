@@ -732,8 +732,7 @@ void updateExtensionWithJsonStringProperty(
       // Because serialized string json will add double quotations in the
       // buffer which is not needed by us, we will manually add the string to
       // the buffer
-      const auto& rapidjsonStr =
-          it->IsNull() ? noDataValue.value_or("null") : it->GetString();
+      const auto& rapidjsonStr = it->GetString();
       rapidjsonStrBuffer.Reserve(it->GetStringLength());
       for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
         rapidjsonStrBuffer.PutUnsafe(rapidjsonStr[j]);

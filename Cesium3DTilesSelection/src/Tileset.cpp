@@ -1593,8 +1593,8 @@ void Tileset::_processMainThreadLoadQueue() {
   double timeBudget = this->_options.mainThreadLoadingTimeLimit;
 
   auto start = std::chrono::system_clock::now();
-  auto end =
-      start + std::chrono::milliseconds(static_cast<int64_t>(timeBudget));
+  auto end = start + std::chrono::microseconds(
+                         static_cast<int64_t>(1000.0 * timeBudget));
   for (TileLoadTask& task : this->_mainThreadLoadQueue) {
     // We double-check that the tile is still in the ContentLoaded state here,
     // in case something (such as a child that needs to upsample from this
@@ -1624,8 +1624,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   auto start = std::chrono::system_clock::now();
   auto end = (timeBudget <= 0.0)
                  ? std::chrono::time_point<std::chrono::system_clock>::max()
-                 : (start + std::chrono::milliseconds(
-                                static_cast<int64_t>(timeBudget)));
+                 : (start + std::chrono::microseconds(
+                                static_cast<int64_t>(1000.0 * timeBudget)));
 
   while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {
