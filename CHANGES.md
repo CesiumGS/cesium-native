@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.44.0 - 2025-02-03
+
+##### Fixes :wrench:
+
+- Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+
 ### v0.43.0 - 2025-01-02
 
 ##### Breaking Changes :mega:
