@@ -1,0 +1,25 @@
+{
+  "asset": {
+    "version": "1.0"
+  },
+  "geometricError": 1e+100,
+  "root": {
+    "boundingVolume": {
+      "box": [ 0, 0, 0, 7972671.25, 0, 0, 0, 7972671.25, 0, 0, 0, 7945940.39280646 ]
+    },
+    "geometricError": 1e+100,
+    "refine": "REPLACE",
+    "transform": [ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 ],
+    "children": [
+      {
+        "boundingVolume": {
+          "box": [ 0, 0, 0, 7972671.25, 0, 0, 0, 7972671.25, 0, 0, 0, 7945940.39280646 ]
+        },
+        "geometricError": 1e+100,
+        "content": {
+          "uri": "{url}"
+        }
+      }
+    ]
+  }
+}

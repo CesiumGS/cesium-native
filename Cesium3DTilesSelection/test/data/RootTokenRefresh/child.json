@@ -1,0 +1,20 @@
+{
+  "asset": {
+    "version": "1.0"
+  },
+  "geometricError": 1e+100,
+  "root": {
+    "boundingVolume": {
+      "box": [ 0, 0, 0, 7972671.25, 0, 0, 0, 7972671.25, 0, 0, 0, 7945940.39280646 ]
+    },
+    "geometricError": 0,
+    "refine": "REPLACE",
+    "content": {
+      "uri": "{url}"
+    },
+    "children": [],
+    "extras": {
+      "comment": "path = ''"
+    }
+  }
+}
