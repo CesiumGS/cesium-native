@@ -134,7 +134,7 @@ private:
 
   /**
    * @brief Marks the given asset as a candidate for deletion.
-   * Should only be called by {@link SharedAsset}. May be called from any thread.
+   * Should only be called by `SharedAsset`. May be called from any thread.
    *
    * @param asset The asset to mark for deletion.
    * @param threadOwnsDepotLock True if the calling thread already owns the
@@ -147,7 +147,7 @@ private:
 
   /**
    * @brief Unmarks the given asset as a candidate for deletion.
-   * Should only be called by {@link SharedAsset}. May be called from any thread.
+   * Should only be called by `SharedAsset`. May be called from any thread.
    *
    * @param asset The asset to unmark for deletion.
    * @param threadOwnsDepotLock True if the calling thread already owns the
