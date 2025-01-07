@@ -151,8 +151,8 @@ private:
    * @brief Map raster tiles to geometry tile.
    *
    * @param geometryRectangle The rectangle for which to load tiles.
-   * @param targetScreenPixels The target screen pixels controlling which quadtree
-   * level to use to cover the rectangle.
+   * @param targetScreenPixels The target screen pixels controlling which
+   * quadtree level to use to cover the rectangle.
    * @return A vector of shared futures, each of which will resolve to image
    * data that is required to cover the rectangle with the given geometric
    * error.

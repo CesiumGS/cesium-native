@@ -24,7 +24,8 @@ template <typename T> class SharedAsset;
 namespace CesiumAsync {
 
 /**
- * @brief A depot for `SharedAsset` instances, which are potentially shared between multiple objects.
+ * @brief A depot for `SharedAsset` instances, which are potentially shared
+ * between multiple objects.
  *
  * @tparam TAssetType The type of asset stored in this depot. This should
  * be derived from `SharedAsset`.

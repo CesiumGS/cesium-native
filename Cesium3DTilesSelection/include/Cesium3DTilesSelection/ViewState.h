@@ -154,7 +154,8 @@ private:
    * angle of the camera, in radians.
    * @param verticalFieldOfView The vertical field-of-view (opening)
    * angle of the camera, in radians.
-   * @param positionCartographic The cartographic position corresponding to `position`.
+   * @param positionCartographic The cartographic position corresponding to
+   * `position`.
    * @param ellipsoid The ellipsoid used for this view.
    */
   ViewState(
