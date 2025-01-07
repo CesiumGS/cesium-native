@@ -613,7 +613,7 @@ propertyValueViewToCopy(const std::optional<T>& view) {
 
 /**
  * @brief Creates an instance of a type that will own a property value from a
- * view on that value. See \ref PropertyValueViewToOwner.
+ * view on that value. See `PropertyValueViewToOwner`.
  *
  * @tparam T The type of the view to copy.
  * @param view A view on the value that will be copied.
