@@ -79,7 +79,7 @@ jobs:
       - name: Generate Documentation
         run: |
           npm install
-          cmake -B build -S .
+          cmake -B build -S . -DDOXYGEN_OUTPUT_XML=ON
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
@@ -87,6 +87,24 @@ jobs:
         with:
           name: ReferenceDocumentation
           path: build/doc/html
+      - name: Install coverxygen
+        run: |
+          sudo apt install python3-pip
+          sudo pip3 install coverxygen --break-system-packages
+          sudo apt install lcov
+      - name: Generate Coverage Report
+        run: |
+          python3 -m coverxygen --src-dir . --xml-dir build/doc/xml --output summary.out --format summary
+          python3 -m coverxygen --src-dir . --xml-dir build/doc/xml --output lcov.out --format lcov
+          mkdir lcov
+          genhtml --no-function-coverage --no-branch-coverage -o lcov --synthesize-missing --ignore-errors source lcov.out
+          cat summary.out
+      - name: Publish Coverage Artifact
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: DocumentationCoverage
+          path: lcov
   WindowsBuild:
     strategy:
       fail-fast: false
