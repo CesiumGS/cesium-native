@@ -50,7 +50,7 @@ jobs:
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --target clang-tidy
   Documentation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Install Doxygen
         run: |
@@ -67,15 +67,15 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
-          key: ccache-ubuntu-22.04-doxygen
+          key: ccache-ubuntu-24.04-doxygen
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
           path: ~/.ezvcpkg
-          key:  vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
+          key:  vcpkg-ubuntu-24.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
           restore-keys: |
-            vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
-            vcpkg-ubuntu-22.04-doxygen
+            vcpkg-ubuntu-24.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
+            vcpkg-ubuntu-24.04-doxygen
       - name: Generate Documentation
         run: |
           npm install
