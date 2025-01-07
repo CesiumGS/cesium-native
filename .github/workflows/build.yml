@@ -89,8 +89,7 @@ jobs:
           path: build/doc/html
       - name: Install coverxygen
         run: |
-          sudo apt install python3-pip
-          sudo pip3 install coverxygen --break-system-packages
+          sudo pip3 install coverxygen
           sudo apt install lcov
       - name: Generate Coverage Report
         run: |
