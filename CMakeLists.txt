@@ -107,6 +107,7 @@ message(STATUS "PACKAGE_BUILD_DIR ${PACKAGE_BUILD_DIR}")
 option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of cesium-native and its dependencies." ON)
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
 option(CESIUM_ENABLE_CLANG_TIDY "Enable clang-tidy targets for static code analysis." ON)
+option(DOXYGEN_OUTPUT_XML "Configures Doxygen to output XML output in addition to HTML." OFF)
 
 cmake_dependent_option(
     CESIUM_ENABLE_CLANG_TIDY_ON_BUILD
