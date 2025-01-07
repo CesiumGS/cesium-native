@@ -109,7 +109,7 @@ When these two conditions are met for a tile's descendants, then we should not r
 We decide whether a _Kick_ is necessary by first traversing the tile's children normally, as in a _REFINE_. Calling `_visitTileIfNeeded` on each child tile returns a `TraversalDetails` instance with three fields:
 
 * `allAreRenderable`: `true` if every selected tile is renderable. `false` if even one selected tile is not yet renderable.
-* `anyWereRenderedLastFrame`: `true` if any selected tile was rendered last frame. `false` is none of the selected tiles were rendered last frame.
+* `anyWereRenderedLastFrame`: `true` if any selected tile was rendered last frame. `false` if none of the selected tiles were rendered last frame.
 * `notYetRenderableCount`: The number of selected tiles for which `isRenderable` is false.
 
 The `TraversalDetails` for all children are combined in the intuitive way: `allAreRenderable` values are combined with a boolean AND, `anyWereRenderedLastFrame` values are combined with a boolean OR, and `notYetRenderableCount` values are combined by summing.
