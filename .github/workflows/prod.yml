@@ -39,7 +39,7 @@ jobs:
       - name: Mark documentation official
         if: ${{ github.ref_name == 'cesium.com' }}
         run: |
-          echo "EXTRA_CONFIGURE_ARGS=-DCESIUM_PRODUCTION_DOCS" >> "$GITHUB_ENV"
+          echo "EXTRA_CONFIGURE_ARGS=-DCESIUM_PRODUCTION_DOCS=TRUE" >> "$GITHUB_ENV"
       - name: Generate Documentation
         run: |
           npm install
