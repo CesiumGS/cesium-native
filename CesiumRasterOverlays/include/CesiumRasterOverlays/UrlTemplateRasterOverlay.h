@@ -49,12 +49,12 @@ struct UrlTemplateRasterOverlayOptions {
    * level is small, such as four or less. A larger number is likely to
    * result in rendering problems.
    */
-  int32_t minimumLevel = 0;
+  uint32_t minimumLevel = 0;
 
   /**
    * @brief The maximum level-of-detail supported by the imagery provider.
    */
-  int32_t maximumLevel = 25;
+  uint32_t maximumLevel = 25;
 
   /**
    * @brief Pixel width of image tiles.
