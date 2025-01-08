@@ -19,7 +19,8 @@ struct Extension3dTilesBoundingVolumeS2;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Extension3dTilesBoundingVolumeS2} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Extension3dTilesBoundingVolumeS2
+ * "Extension3dTilesBoundingVolumeS2" instances from JSON.
  */
 class CESIUM3DTILESREADER_API Extension3dTilesBoundingVolumeS2Reader {
 public:
@@ -53,7 +54,7 @@ public:
    * @brief Reads an instance of Extension3dTilesBoundingVolumeS2 from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<
@@ -64,7 +65,7 @@ public:
    * @brief Reads an array of instances of Extension3dTilesBoundingVolumeS2 from
    * a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

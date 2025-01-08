@@ -107,6 +107,10 @@ protected:
     return *this;
   }
 
+  /**
+   * Assignment does not affect the asset's relationship with the depot, but is
+   * useful to assign the data in derived classes.
+   */
   SharedAsset& operator=(SharedAsset&& rhs) {
     CesiumUtility::ExtensibleObject::operator=(std::move(rhs));
     return *this;

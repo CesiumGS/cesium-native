@@ -19,7 +19,8 @@ struct PropertyTexture;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link PropertyTexture} instances from JSON.
+ * @brief Reads \ref CesiumGltf::PropertyTexture "PropertyTexture" instances
+ * from JSON.
  */
 class CESIUMGLTFREADER_API PropertyTextureReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of PropertyTexture from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::PropertyTexture>
@@ -60,7 +61,7 @@ public:
    * @brief Reads an array of instances of PropertyTexture from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::PropertyTexture>>

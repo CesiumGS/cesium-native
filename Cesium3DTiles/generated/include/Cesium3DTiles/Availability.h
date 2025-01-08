@@ -14,6 +14,9 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API Availability final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Availability";
 
   /**
@@ -21,8 +24,10 @@ struct CESIUM3DTILES_API Availability final
    * available (1) or all are unavailable (0).
    */
   struct Constant {
+    /** @brief UNAVAILABLE (`0`) */
     static constexpr int32_t UNAVAILABLE = 0;
 
+    /** @brief AVAILABLE (`1`) */
     static constexpr int32_t AVAILABLE = 1;
   };
 

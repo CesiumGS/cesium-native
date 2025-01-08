@@ -4,22 +4,86 @@
 #include <string>
 
 namespace CesiumUtility {
+/**
+ * @brief A class for building and manipulating Uniform Resource Identifiers
+ * (URIs).
+ */
 class Uri final {
 public:
+  /**
+   * @brief Attempts to resolve a relative URI using a base URI.
+   *
+   * For example, a relative URI `/v1/example` together with the base URI
+   * `https://api.cesium.com` would resolve to
+   * `https://api.cesium.com/v1/example`.
+   *
+   * @param base The base URI that the relative URI is relative to.
+   * @param relative The relative URI to be resolved against the base URI.
+   * @param useBaseQuery If true, any query parameters of the base URI will be
+   * retained in the resolved URI.
+   * @param assumeHttpsDefault If true, protocol-relative URIs (such as
+   * `//api.cesium.com`) will be assumed to be `https`. If false, they will be
+   * assumed to be `http`.
+   * @returns The resolved URI.
+   */
   static std::string resolve(
       const std::string& base,
       const std::string& relative,
       bool useBaseQuery = false,
       bool assumeHttpsDefault = true);
+  /**
+   * @brief Adds the given key and value to the query string of a URI. For
+   * example, `addQuery("https://api.cesium.com/v1/example", "key", "value")`
+   * would produce the URL `https://api.cesium.com/v1/example?key=value`.
+   *
+   * @param uri The URI whose query string will be modified.
+   * @param key The key to be added to the query string.
+   * @param value The value to be added to the query string.
+   * @returns The modified URI including the new query string parameter.
+   */
   static std::string addQuery(
       const std::string& uri,
       const std::string& key,
       const std::string& value);
+  /**
+   * @brief Obtains the value of the given key from the query string of the URI,
+   * if possible.
+   *
+   * If the URI can't be parsed, or the key doesn't exist in the
+   * query string, an empty string will be returned.
+   *
+   * @param uri The URI with a query string to obtain a value from.
+   * @param key The key whose value will be obtained from the URI, if possible.
+   * @returns The value of the given key in the query string, or an empty string
+   * if not found.
+   */
   static std::string
   getQueryValue(const std::string& uri, const std::string& key);
 
+  /**
+   * @brief A callback to fill-in a placeholder value in a URL.
+   *
+   * @param placeholder The text of the placeholder. For example, if the
+   * placeholder was `{example}`, the value of `placeholder` will be `example`.
+   * @returns The value to use in place of the placeholder.
+   */
   typedef std::string
   SubstitutionCallbackSignature(const std::string& placeholder);
+
+  /**
+   * @brief Substitutes the placeholders in a templated URI with their
+   * appropriate values obtained using a specified callback function.
+   *
+   * A templated URI has placeholders in the form of `{name}`. For example,
+   * `https://example.com/{x}/{y}/{z}` has three placeholders, `x`, `y`, and `z`.
+   * The callback will be called for each placeholder and they will be replaced
+   * with the return value of this callback.
+   *
+   * @param templateUri The templated URI whose placeholders will be substituted
+   * by this method.
+   * @param substitutionCallback The callback that will be called for each
+   * placeholder in the provided URI. See \ref SubstitutionCallbackSignature.
+   */
   static std::string substituteTemplateParameters(
       const std::string& templateUri,
       const std::function<SubstitutionCallbackSignature>& substitutionCallback);

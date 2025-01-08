@@ -12,6 +12,10 @@
 
 namespace CesiumGeometry {
 
+/**
+ * @brief An availability tree for an octree, where availability can be stored
+ * and computed based on \ref OctreeTileID.
+ */
 class CESIUMGEOMETRY_API OctreeAvailability final {
 public:
   /**
@@ -136,6 +140,8 @@ public:
 
   /**
    * @brief Gets the number of levels in each subtree.
+   *
+   * @returns The number of levels in each subtree.
    */
   constexpr inline uint32_t getSubtreeLevels() const noexcept {
     return this->_subtreeLevels;
@@ -143,6 +149,8 @@ public:
 
   /**
    * @brief Gets the index of the maximum level in this implicit tileset.
+   *
+   * @returns The index of the maximum level.
    */
   constexpr inline uint32_t getMaximumLevel() const noexcept {
     return this->_maximumLevel;
@@ -150,6 +158,8 @@ public:
 
   /**
    * @brief Gets a pointer to the root subtree node of this implicit tileset.
+   *
+   * @returns The root node of the availability tree.
    */
   AvailabilityNode* getRootNode() noexcept { return this->_pRoot.get(); }
 

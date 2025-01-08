@@ -139,6 +139,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief Create a result with Failed state
    *
+   * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor "IAssetAccessor"
+   * used to load tiles.
    * @param pCompletedRequest The failed request
    */
   static TileLoadResult createFailedResult(
@@ -148,6 +150,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief Create a result with RetryLater state
    *
+   * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor "IAssetAccessor"
+   * used to load tiles.
    * @param pCompletedRequest The failed request
    */
   static TileLoadResult createRetryLaterResult(

@@ -19,7 +19,8 @@ struct Availability;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Availability} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Availability "Availability" instances from
+ * JSON.
  */
 class CESIUM3DTILESREADER_API AvailabilityReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of Availability from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Availability>
@@ -59,7 +60,7 @@ public:
   /**
    * @brief Reads an array of instances of Availability from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<Cesium3DTiles::Availability>>

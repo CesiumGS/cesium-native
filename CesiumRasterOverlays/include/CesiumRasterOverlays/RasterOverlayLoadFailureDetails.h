@@ -14,7 +14,7 @@ namespace CesiumRasterOverlays {
 class RasterOverlay;
 
 /**
- * @brief The type of load that failed in {@link RasterOverlayLoadFailureDetails}.
+ * @brief The type of load that failed in `RasterOverlayLoadFailureDetails`.
  */
 enum class RasterOverlayLoadType {
   /**
@@ -33,6 +33,9 @@ enum class RasterOverlayLoadType {
   TileProvider
 };
 
+/**
+ * @brief Details on a failure while attempting to load a raster overlay tile.
+ */
 class RasterOverlayLoadFailureDetails {
 public:
   /**

@@ -19,7 +19,7 @@ struct BufferView;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link BufferView} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::BufferView "BufferView" instances from JSON.
  */
 class CESIUM3DTILESREADER_API BufferViewReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of BufferView from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::BufferView>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of BufferView from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<Cesium3DTiles::BufferView>>

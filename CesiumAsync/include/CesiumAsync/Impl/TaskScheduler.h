@@ -8,6 +8,8 @@
 namespace CesiumAsync {
 namespace CesiumImpl {
 
+// Begin omitting doxygen warnings for Impl namespace
+//! @cond Doxygen_Suppress
 class TaskScheduler {
 public:
   TaskScheduler(const std::shared_ptr<ITaskProcessor>& pTaskProcessor);
@@ -18,6 +20,8 @@ public:
 private:
   std::shared_ptr<ITaskProcessor> _pTaskProcessor;
 };
+//! @endcond
+// End omitting doxygen warnings for Impl namespace
 
 } // namespace CesiumImpl
 } // namespace CesiumAsync

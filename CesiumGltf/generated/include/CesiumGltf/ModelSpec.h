@@ -28,6 +28,9 @@ namespace CesiumGltf {
  * @brief The root object for a glTF asset.
  */
 struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Model";
 
   /**

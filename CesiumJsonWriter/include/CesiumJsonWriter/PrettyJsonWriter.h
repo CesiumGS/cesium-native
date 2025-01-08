@@ -13,6 +13,10 @@
 
 namespace CesiumJsonWriter {
 
+/**
+ * @brief Implementation of \ref JsonWriter that "pretty-prints" JSON to the
+ * output, formatted with new lines and indentation.
+ */
 class PrettyJsonWriter : public JsonWriter {
   rapidjson::StringBuffer _prettyBuffer;
   std::unique_ptr<rapidjson::PrettyWriter<rapidjson::StringBuffer>> pretty;
@@ -21,7 +25,6 @@ public:
   PrettyJsonWriter() noexcept;
   ~PrettyJsonWriter() {}
 
-  // rapidjson methods
   bool Null() override;
   bool Bool(bool b) override;
   bool Int(int i) override;
@@ -37,7 +40,6 @@ public:
   bool StartArray() override;
   bool EndArray() override;
 
-  // Primitive overloads
   void Primitive(std::int32_t value) override;
   void Primitive(std::uint32_t value) override;
   void Primitive(std::int64_t value) override;
@@ -47,26 +49,17 @@ public:
   void Primitive(std::nullptr_t value) override;
   void Primitive(std::string_view string) override;
 
-  // Integral
   void KeyPrimitive(std::string_view keyName, std::int32_t value) override;
   void KeyPrimitive(std::string_view keyName, std::uint32_t value) override;
   void KeyPrimitive(std::string_view keyName, std::int64_t value) override;
   void KeyPrimitive(std::string_view keyName, std::uint64_t value) override;
-
-  // String
   void KeyPrimitive(std::string_view keyName, std::string_view value) override;
-
-  // Floating Point
   void KeyPrimitive(std::string_view keyName, float value) override;
   void KeyPrimitive(std::string_view keyName, double value) override;
-
-  // Null
   void KeyPrimitive(std::string_view keyName, std::nullptr_t value) override;
 
-  // Array / Objects
   void KeyArray(std::string_view keyName, std::function<void(void)> insideArray)
       override;
-
   void KeyObject(
       std::string_view keyName,
       std::function<void(void)> insideObject) override;

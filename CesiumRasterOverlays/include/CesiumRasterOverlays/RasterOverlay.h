@@ -202,6 +202,13 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) const;
 
+  /**
+   * @brief A result from a call to \ref createTileProvider. This is expected to
+   * be an \ref CesiumUtility::IntrusivePointer "IntrusivePointer" to a \ref
+   * RasterOverlayTileProvider, but may be a \ref
+   * RasterOverlayLoadFailureDetails if creating the tile provider wasn't
+   * successful.
+   */
   using CreateTileProviderResult = nonstd::expected<
       CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>,
       RasterOverlayLoadFailureDetails>;

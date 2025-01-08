@@ -19,7 +19,7 @@ struct FeatureId;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link FeatureId} instances from JSON.
+ * @brief Reads \ref CesiumGltf::FeatureId "FeatureId" instances from JSON.
  */
 class CESIUMGLTFREADER_API FeatureIdReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of FeatureId from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::FeatureId>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of FeatureId from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::FeatureId>>

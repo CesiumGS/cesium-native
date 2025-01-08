@@ -153,9 +153,9 @@ public:
   /**
    * @brief Update this tile during the update of its owner.
    *
-   * This is only supposed to be called by {@link Cesium3DTilesSelection::TilesetContentManager::updateDoneState}. It
-   * will return whether there is a more detailed version of the
-   * raster data available.
+   * This is only supposed to be called by
+   * `TilesetContentManager::updateDoneState`. It will return whether there is a
+   * more detailed version of the raster data available.
    *
    * @param prepareRendererResources The {@link IPrepareRendererResources} used to
    * create render resources for raster overlay
@@ -165,6 +165,9 @@ public:
   CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable
   update(IPrepareRendererResources& prepareRendererResources, Tile& tile);
 
+  /**
+   * @copydoc CesiumRasterOverlays::RasterOverlayTile::isMoreDetailAvailable
+   */
   bool isMoreDetailAvailable() const noexcept;
 
   /**

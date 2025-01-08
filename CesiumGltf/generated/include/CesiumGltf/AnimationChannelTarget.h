@@ -14,6 +14,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API AnimationChannelTarget final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "AnimationChannelTarget";
 
   /**
@@ -26,12 +29,16 @@ struct CESIUMGLTF_API AnimationChannelTarget final
    * along the X, Y, and Z axes.
    */
   struct Path {
+    /** @brief `translation` */
     inline static const std::string translation = "translation";
 
+    /** @brief `rotation` */
     inline static const std::string rotation = "rotation";
 
+    /** @brief `scale` */
     inline static const std::string scale = "scale";
 
+    /** @brief `weights` */
     inline static const std::string weights = "weights";
   };
 

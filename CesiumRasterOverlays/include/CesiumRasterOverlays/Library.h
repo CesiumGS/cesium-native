@@ -3,6 +3,8 @@
 /**
  * @brief Classes for raster overlays, which allow draping massive 2D textures
  * over a model.
+ *
+ * @mermaid-interactive{dependencies/CesiumRasterOverlays}
  */
 namespace CesiumRasterOverlays {}
 

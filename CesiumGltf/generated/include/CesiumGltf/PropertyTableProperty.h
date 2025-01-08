@@ -16,18 +16,25 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API PropertyTableProperty final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "PropertyTableProperty";
 
   /**
    * @brief Known values for The type of values in `arrayOffsets`.
    */
   struct ArrayOffsetType {
+    /** @brief `UINT8` */
     inline static const std::string UINT8 = "UINT8";
 
+    /** @brief `UINT16` */
     inline static const std::string UINT16 = "UINT16";
 
+    /** @brief `UINT32` */
     inline static const std::string UINT32 = "UINT32";
 
+    /** @brief `UINT64` */
     inline static const std::string UINT64 = "UINT64";
   };
 
@@ -35,12 +42,16 @@ struct CESIUMGLTF_API PropertyTableProperty final
    * @brief Known values for The type of values in `stringOffsets`.
    */
   struct StringOffsetType {
+    /** @brief `UINT8` */
     inline static const std::string UINT8 = "UINT8";
 
+    /** @brief `UINT16` */
     inline static const std::string UINT16 = "UINT16";
 
+    /** @brief `UINT32` */
     inline static const std::string UINT32 = "UINT32";
 
+    /** @brief `UINT64` */
     inline static const std::string UINT64 = "UINT64";
   };
 
