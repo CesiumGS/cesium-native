@@ -199,7 +199,7 @@ std::optional<double> IntersectionTests::rayAABBParametric(
   double tmin = greatestMin;
   double tmax = smallestMax;
 
-  for (uint32_t i = 0; i < 3; ++i) {
+  for (glm::length_t i = 0; i < 3; ++i) {
     if (glm::abs(dir[i]) < Math::Epsilon6) {
       continue;
     } else {
