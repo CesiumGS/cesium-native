@@ -145,6 +145,8 @@ It is important to understand the distinction between a [Tile](@ref Cesium3DTile
 
 Because _content_ is by far the largest part of a tile, and the most time-consuming to load, Cesium Native aims to only load it when when it is needed. The loading happens through a small state machine maintained in the `_loadState` property of each tile. The possible load states are captured in the [TileLoadState](@ref Cesium3DTilesSelection::TileLoadState) enumeration.
 
+@mermaid{tile-load-states}
+
 A `Tile` starts in the `Unloaded` state. A `Tile` in this state is added to the `_workerThreadLoadQueue` the first time it is visited during the selection algorithm. Any tiles that remain in this queue at the end of the selection (that is, that are not [kicked](#kicking)) are [prioritized](#load-prioritization) for loading.
 
 The number of tiles that may load simultaneously is controlled by the [TilesetOptions::maximumSimultaneousTileLoads](\ref Cesium3DTilesSelection::TilesetOptions::maximumSimultaneousTileLoads) property. We can picture tile loading as a swimming pool with `maximumSimultaneousTileLoads` swim lanes. The highest priority tiles jump in the pool, each in their own lane, and race for the other end. When a tile reaches the other side (finishes asynchronous loading), the next highest priority tile can jump in the pool in that now-unoccupied lane and start swimming.
