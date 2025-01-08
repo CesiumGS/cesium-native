@@ -2,6 +2,10 @@
 
 ### v0.44.0 - 2025-02-03
 
+##### Breaking Changes :mega:
+
+- cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
+
 ##### Fixes :wrench:
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
