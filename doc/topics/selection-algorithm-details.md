@@ -139,12 +139,52 @@ The `loadingDescendantLimit` works like a heuristic for deciding when intermedia
 
 Once the current tile finishes loading and is rendered, only then will the tiles deeper in the subtree be given an opportunity to load and render. This ensures that the user sees the model sooner, at the cost of loading more tiles. The idea is to strike a tunable balance between user feedback and loading efficiency.
 
+## Tile Content Loading
+
+It is important to understand the distinction between a [Tile](@ref Cesium3DTilesSelection::Tile) and its _content_. In the 3D Tiles specification, a [Tile](https://github.com/CesiumGS/3d-tiles/blob/main/specification/PropertiesReference_3dtiles.adoc#tile) is a node in the tileset's bounding-volume hierarchy (BVH), and has a bounding volume, a transform, a geometric error value, and more. Tiles are arranged in a tree, so every `Tile` has a parent `Tile` (except the root), and zero or more children. Tiles also have a `content.uri` property which points to the externally-stored _content_ for the tile. This external content is usually some sort of renderable object, such as a glTF model or a legacy container format like [b3dm](https://github.com/CesiumGS/3d-tiles/blob/main/specification/TileFormats/Batched3DModel/README.adoc#tileformats-batched3dmodel-batched-3d-model). It can also be a further subtree of the BVH rooted at this node, which is known as an [external tileset](https://github.com/CesiumGS/3d-tiles/tree/main/specification#core-external-tilesets).
+
+Because _content_ is by far the largest part of a tile, and the most time-consuming to load, Cesium Native aims to only load it when when it is needed. The loading happens through a small state machine maintained in the `_loadState` property of each tile. The possible load states are captured in the [TileLoadState](@ref Cesium3DTilesSelection::TileLoadState) enumeration.
+
+A `Tile` starts in the `Unloaded` state. A `Tile` in this state is added to the `_workerThreadLoadQueue` the first time it is visited during the selection algorithm. Any tiles that remain in this queue at the end of the selection (that is, that are not [kicked](#kicking)) are [prioritized](#load-prioritization) for loading.
+
+The number of tiles that may load simultaneously is controlled by the [TilesetOptions::maximumSimultaneousTileLoads](\ref Cesium3DTilesSelection::TilesetOptions::maximumSimultaneousTileLoads) property. We can picture tile loading as a swimming pool with `maximumSimultaneousTileLoads` swim lanes. The highest priority tiles jump in the pool, each in their own lane, and race for the other end. When a tile reaches the other side (finishes asynchronous loading), the next highest priority tile can jump in the pool in that now-unoccupied lane and start swimming.
+
+The swim across the pool includes all of the steps of the tile loading process that do not need to happen on the main thread, including:
+
+* Initiating an HTTP request for the tile content and receiving the response.
+* Parsing the content from the response, such as parsing the glTF or external tileset JSON.
+* Decoding compressed geometry and textures.
+* Generating extra data needed for rendering, such as normals and raster overlay texture coordinates.
+
+When a tile jumps in the pool, its `TileLoadState` is changed to `ContentLoading`. When it reaches the other end, the state is changed to `ContentLoaded`.
+
+The next time the selection algorithm runs, and it sees a tile in the `ContentLoaded` state, the tile is added to the `_mainThreadLoadQueue`. Just like with the `_workerThreadLoadQueue`, tiles may be kicked from this queue as the selection algorithm proceeds, and those that remain are prioritized as described in the next section. This time, though, the loading happens synchronously, on the same thread that is running the selection algorithm. To avoid monopolizing too much main thread time, which could have a severe impact on interactivity, the highest priority tiles from this queue are processed only until the [TilesetOptions::mainThreadLoadingTimeLimit](\ref Cesium3DTilesSelection::TilesetOptions::mainThreadLoadingTimeLimit) has elapsed. Additional tiles will need to wait until the next frame.
+
+The primary task that is completed during main thread loading is to call [IPrepareRendererResources::prepareInMainThread](\ref Cesium3DTilesSelection::IPrepareRendererResources::prepareInMainThread). See [Rendering 3D Tiles](#rendering-3d-tiles) for details.
+
+Once a tile has completed its main-thread loading, it enters the `Done` state and is ready to be rendered.
+
+## Load Prioritization {#load-prioritization}
+
+Tiles that need to be loaded are prioritized so that the most important tiles are loaded first. Load priority consists of a priority _group_ plus a priority value within that group. The group is chosen according to the reason that this tile is needed by the selection algorithm. The groups are as follows:
+
+* `Preload` - Low priority tiles that aren't needed right now, but are being preloaded for the future.
+* `Normal` - Medium priority tiles that are needed to render the current view at the appropriate level-of-detail.
+* `Urgent` - High priority tiles whose absence is are causing extra detail to be rendered in the scene, potentially creating a performance problem and aliasing artifacts.
+
+Within the group, a tile with a lower priority value will be loaded before a tile with a higher priority value. The priority value is computed as follows:
+
+```
+(1.0 - dot(tileDirection, cameraDirection)) * distance
+```
+
+Where `distance` is the distance from the camera to the closest point on the tile, `tileDirection` is the unit vector from the camera to the center of the tile's bounding volume, and `cameraDirection` is the look direction of of the camera. The idea is that tiles that are near the center of the screen and closer to the camera are loaded first.
+
 ## Additional Topics Not Yet Covered {#additional-topics}
 
 Here are some additional selection algorithm topics that are not yet covered here, but should be in the future:
 
-* Load prioritization
-* Forbid Holes <!--! \anchor forbid-holes !-->
+* Forbid Holes <!--! \anchor forbid-holes -->
 * Unconditionally-Refined Tiles
 * Occlusion Culling
 * External Tilesets and Implicit Tiles
