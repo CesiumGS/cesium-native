@@ -530,6 +530,7 @@ function generate(options, schema, writers) {
         .join("\n")
       : ""
     }
+  `;
 
   writers.push({
     writeInclude,
