@@ -49,7 +49,7 @@ struct VertexAttributeSemantics {
   static const std::array<std::string, 8> WEIGHTS_n;
 
   /**
-   * @brief Feature IDs used in `EXT_mesh_features`.
+   * @brief Feature IDs used by `EXT_mesh_features`.
    */
   static const std::array<std::string, 8> FEATURE_ID_n;
 };

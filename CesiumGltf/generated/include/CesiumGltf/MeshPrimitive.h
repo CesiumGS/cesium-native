@@ -16,24 +16,34 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API MeshPrimitive final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "MeshPrimitive";
 
   /**
    * @brief Known values for The topology type of primitives to render.
    */
   struct Mode {
+    /** @brief POINTS (`0`) */
     static constexpr int32_t POINTS = 0;
 
+    /** @brief LINES (`1`) */
     static constexpr int32_t LINES = 1;
 
+    /** @brief LINE_LOOP (`2`) */
     static constexpr int32_t LINE_LOOP = 2;
 
+    /** @brief LINE_STRIP (`3`) */
     static constexpr int32_t LINE_STRIP = 3;
 
+    /** @brief TRIANGLES (`4`) */
     static constexpr int32_t TRIANGLES = 4;
 
+    /** @brief TRIANGLE_STRIP (`5`) */
     static constexpr int32_t TRIANGLE_STRIP = 5;
 
+    /** @brief TRIANGLE_FAN (`6`) */
     static constexpr int32_t TRIANGLE_FAN = 6;
   };
 

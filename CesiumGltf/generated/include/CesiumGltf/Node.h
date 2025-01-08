@@ -21,6 +21,9 @@ namespace CesiumGltf {
  * animation.channel.target), `matrix` **MUST NOT** be present.
  */
 struct CESIUMGLTF_API Node final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Node";
 
   /**

@@ -2,6 +2,7 @@
 #include <rapidjson/document.h>
 #include <spdlog/fmt/fmt.h>
 
+/** @cond Doxygen_Exclude */
 template <>
 struct fmt::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
   // parse is inherited from formatter<string_view>.
@@ -69,3 +70,4 @@ struct fmt::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
     return formatter<string_view>::format(name, ctx);
   }
 };
+/** @endcond */

@@ -8,17 +8,41 @@
 #include <optional>
 
 namespace CesiumJsonReader {
+/**
+ * @brief \ref IJsonHandler for handling JSON objects.
+ */
 class CESIUMJSONREADER_API ObjectJsonHandler : public JsonHandler {
 public:
   ObjectJsonHandler() noexcept : JsonHandler() {}
 
+  /** @copydoc IJsonHandler::readObjectStart */
   virtual IJsonHandler* readObjectStart() override /* final */;
+  /** @copydoc IJsonHandler::readObjectEnd */
   virtual IJsonHandler* readObjectEnd() override /* final */;
 
 protected:
+  /**
+   * @brief Called when \ref readObjectStart is called when the depth of the
+   * \ref ObjectJsonHandler is greater than 0.
+   */
   virtual IJsonHandler* StartSubObject() noexcept;
+  /**
+   * @brief Called when \ref readObjectEnd is called when the depth of the
+   * \ref ObjectJsonHandler is greater than 0.
+   */
   virtual IJsonHandler* EndSubObject() noexcept;
 
+  /**
+   * @brief Called from \ref IJsonHandler::readObjectKey to read a property into
+   * an object.
+   *
+   * @param currentKey The key that's currently being read.
+   * @param accessor An \ref IJsonHandler that can read the type of this
+   * property.
+   * @param value A reference to the location to store the read value.
+   * @returns The `accessor` \ref IJsonHandler that will read the next token
+   * into `value`.
+   */
   template <typename TAccessor, typename TProperty>
   IJsonHandler*
   property(const char* currentKey, TAccessor& accessor, TProperty& value) {
@@ -37,13 +61,20 @@ protected:
     return &accessor;
   }
 
+  /**
+   * @brief Obtains the most recent key handled by this JsonHandler.
+   */
   const char* getCurrentKey() const noexcept;
 
+  /** @copydoc IJsonHandler::reportWarning */
   virtual void reportWarning(
       const std::string& warning,
       std::vector<std::string>&& context = std::vector<std::string>()) override;
 
 protected:
+  /**
+   * @brief Sets the most recent key handled by this JsonHandler.
+   */
   void setCurrentKey(const char* key) noexcept;
 
 private:

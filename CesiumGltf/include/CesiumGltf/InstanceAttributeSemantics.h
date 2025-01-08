@@ -27,7 +27,7 @@ struct InstanceAttributeSemantics {
   static const std::string SCALE;
 
   /**
-   * @brief Feature IDs used in `EXT_instance_features`.
+   * @brief Feature IDs used by `EXT_instance_features`.
    */
   static const std::array<std::string, 8> FEATURE_ID_n;
 };

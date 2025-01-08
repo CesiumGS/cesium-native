@@ -34,6 +34,10 @@ public:
    */
   KhrTextureTransform(const ExtensionKhrTextureTransform& extension) noexcept;
 
+  /**
+   * @brief The current \ref KhrTextureTransformStatus of the transform
+   * operation.
+   */
   KhrTextureTransformStatus status() const noexcept { return this->_status; }
 
   /**

@@ -7,6 +7,8 @@
 #include <spdlog/spdlog.h>
 
 namespace CesiumAsync {
+// Begin omitting doxygen warnings for Impl namespace
+//! @cond Doxygen_Suppress
 namespace CesiumImpl {
 
 template <typename TScheduler> class ImmediateScheduler {
@@ -88,6 +90,8 @@ private:
     return schedulersCurrentlyDispatching;
   }
 };
+//! @endcond
+// End omitting doxygen warnings for Impl namespace
 
 } // namespace CesiumImpl
 } // namespace CesiumAsync

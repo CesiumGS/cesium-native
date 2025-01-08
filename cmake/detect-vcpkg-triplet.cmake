@@ -24,10 +24,19 @@ elseif(APPLE)
         else()
             set(DETECTED_VCPKG_TRIPLET "${CMAKE_OSX_ARCHITECTURES}-osx")
         endif()
-    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-        set(DETECTED_VCPKG_TRIPLET "arm64-osx")
     else()
-        set(DETECTED_VCPKG_TRIPLET "x64-osx")
+        if(NOT CMAKE_SYSTEM_PROCESSOR)
+            execute_process(
+                COMMAND uname -m
+                OUTPUT_VARIABLE CMAKE_SYSTEM_PROCESSOR
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+        endif()
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+            set(DETECTED_VCPKG_TRIPLET "arm64-osx")
+        else()
+            set(DETECTED_VCPKG_TRIPLET "x64-osx")
+        endif()
     endif()
 elseif(LINUX)
     # Assuming x64 here isn't necessarily correct, but it's the only platform we officially support.

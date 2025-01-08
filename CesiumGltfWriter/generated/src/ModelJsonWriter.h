@@ -84,6 +84,8 @@ namespace CesiumGltfWriter {
 struct ExtensionCesiumRTCJsonWriter {
   using ValueType = CesiumGltf::ExtensionCesiumRTC;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "CESIUM_RTC";
 
   static void write(
@@ -95,6 +97,8 @@ struct ExtensionCesiumRTCJsonWriter {
 struct ExtensionCesiumTileEdgesJsonWriter {
   using ValueType = CesiumGltf::ExtensionCesiumTileEdges;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "CESIUM_tile_edges";
 
   static void write(
@@ -106,6 +110,8 @@ struct ExtensionCesiumTileEdgesJsonWriter {
 struct ExtensionExtInstanceFeaturesJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtInstanceFeatures;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_instance_features";
 
   static void write(
@@ -117,6 +123,8 @@ struct ExtensionExtInstanceFeaturesJsonWriter {
 struct ExtensionExtMeshFeaturesJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtMeshFeatures;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_mesh_features";
 
   static void write(
@@ -128,6 +136,8 @@ struct ExtensionExtMeshFeaturesJsonWriter {
 struct ExtensionExtMeshGpuInstancingJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtMeshGpuInstancing;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
 
   static void write(
@@ -139,6 +149,8 @@ struct ExtensionExtMeshGpuInstancingJsonWriter {
 struct ExtensionBufferExtMeshoptCompressionJsonWriter {
   using ValueType = CesiumGltf::ExtensionBufferExtMeshoptCompression;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
   static void write(
@@ -150,6 +162,8 @@ struct ExtensionBufferExtMeshoptCompressionJsonWriter {
 struct ExtensionBufferViewExtMeshoptCompressionJsonWriter {
   using ValueType = CesiumGltf::ExtensionBufferViewExtMeshoptCompression;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
   static void write(
@@ -161,6 +175,8 @@ struct ExtensionBufferViewExtMeshoptCompressionJsonWriter {
 struct ExtensionExtStructuralMetadataJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtStructuralMetadata;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
   static void write(
@@ -172,6 +188,8 @@ struct ExtensionExtStructuralMetadataJsonWriter {
 struct ExtensionModelExtStructuralMetadataJsonWriter {
   using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
   static void write(
@@ -183,6 +201,8 @@ struct ExtensionModelExtStructuralMetadataJsonWriter {
 struct ExtensionMeshPrimitiveExtStructuralMetadataJsonWriter {
   using ValueType = CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
   static void write(
@@ -195,6 +215,8 @@ struct ExtensionPropertyTableExtStructuralMetadataHierarchyJsonWriter {
   using ValueType =
       CesiumGltf::ExtensionPropertyTableExtStructuralMetadataHierarchy;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName =
       "EXT_structural_metadata_hierarchy";
 
@@ -208,6 +230,8 @@ struct ExtensionPropertyTableExtStructuralMetadataHierarchyJsonWriter {
 struct ExtensionKhrDracoMeshCompressionJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrDracoMeshCompression;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
 
   static void write(
@@ -219,6 +243,8 @@ struct ExtensionKhrDracoMeshCompressionJsonWriter {
 struct ExtensionKhrMaterialsUnlitJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrMaterialsUnlit;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_materials_unlit";
 
   static void write(
@@ -230,6 +256,8 @@ struct ExtensionKhrMaterialsUnlitJsonWriter {
 struct ExtensionModelKhrMaterialsVariantsJsonWriter {
   using ValueType = CesiumGltf::ExtensionModelKhrMaterialsVariants;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_materials_variants";
 
   static void write(
@@ -241,6 +269,8 @@ struct ExtensionModelKhrMaterialsVariantsJsonWriter {
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter {
   using ValueType = CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariants;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_materials_variants";
 
   static void write(
@@ -252,6 +282,8 @@ struct ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter {
 struct ExtensionKhrTextureBasisuJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrTextureBasisu;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_texture_basisu";
 
   static void write(
@@ -263,6 +295,8 @@ struct ExtensionKhrTextureBasisuJsonWriter {
 struct ExtensionModelMaxarMeshVariantsJsonWriter {
   using ValueType = CesiumGltf::ExtensionModelMaxarMeshVariants;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 
   static void write(
@@ -274,6 +308,8 @@ struct ExtensionModelMaxarMeshVariantsJsonWriter {
 struct ExtensionNodeMaxarMeshVariantsJsonWriter {
   using ValueType = CesiumGltf::ExtensionNodeMaxarMeshVariants;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 
   static void write(
@@ -285,6 +321,8 @@ struct ExtensionNodeMaxarMeshVariantsJsonWriter {
 struct ExtensionKhrTextureTransformJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrTextureTransform;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_texture_transform";
 
   static void write(
@@ -296,6 +334,8 @@ struct ExtensionKhrTextureTransformJsonWriter {
 struct ExtensionTextureWebpJsonWriter {
   using ValueType = CesiumGltf::ExtensionTextureWebp;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_texture_webp";
 
   static void write(
@@ -307,6 +347,8 @@ struct ExtensionTextureWebpJsonWriter {
 struct ExtensionCesiumPrimitiveOutlineJsonWriter {
   using ValueType = CesiumGltf::ExtensionCesiumPrimitiveOutline;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "CESIUM_primitive_outline";
 
   static void write(

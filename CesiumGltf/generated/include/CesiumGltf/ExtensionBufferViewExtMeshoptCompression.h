@@ -14,18 +14,26 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName =
       "ExtensionBufferViewExtMeshoptCompression";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
   /**
    * @brief Known values for The compression mode.
    */
   struct Mode {
+    /** @brief `ATTRIBUTES` */
     inline static const std::string ATTRIBUTES = "ATTRIBUTES";
 
+    /** @brief `TRIANGLES` */
     inline static const std::string TRIANGLES = "TRIANGLES";
 
+    /** @brief `INDICES` */
     inline static const std::string INDICES = "INDICES";
   };
 
@@ -33,12 +41,16 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
    * @brief Known values for The compression filter.
    */
   struct Filter {
+    /** @brief `NONE` */
     inline static const std::string NONE = "NONE";
 
+    /** @brief `OCTAHEDRAL` */
     inline static const std::string OCTAHEDRAL = "OCTAHEDRAL";
 
+    /** @brief `QUATERNION` */
     inline static const std::string QUATERNION = "QUATERNION";
 
+    /** @brief `EXPONENTIAL` */
     inline static const std::string EXPONENTIAL = "EXPONENTIAL";
   };
 

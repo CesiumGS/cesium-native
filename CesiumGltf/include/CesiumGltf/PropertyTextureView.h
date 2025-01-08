@@ -141,7 +141,7 @@ public:
 
   /**
    * @brief Gets a {@link PropertyTexturePropertyView} through a callback that accepts a
-   * property id and a {@link PropertyTexturePropertyView<T>} that views the data
+   * property id and a {@link PropertyTexturePropertyView} that views the data
    * of the property with the specified id.
    *
    * This method will validate the EXT_structural_metadata format to ensure
@@ -156,7 +156,7 @@ public:
    *
    * @param propertyId The id of the property to retrieve data from
    * @param callback A callback function that accepts a property id and a
-   * {@link PropertyTexturePropertyView<T>}
+   * {@link PropertyTexturePropertyView}
    * @param propertyOptions The options to apply to the property.
    * @tparam Callback The type of the callback function.
    */
@@ -269,7 +269,7 @@ public:
 
   /**
    * @brief Iterates over each property in the {@link PropertyTexture} with a callback
-   * that accepts a property id and a {@link PropertyTexturePropertyView<T>} to view
+   * that accepts a property id and a {@link PropertyTexturePropertyView} to view
    * the data stored in the {@link PropertyTextureProperty}.
    *
    * This method will validate the EXT_structural_metadata format to ensure
@@ -283,7 +283,7 @@ public:
    * view will be passed to the callback.
    *
    * @param callback A callback function that accepts property id and
-   * {@link PropertyTexturePropertyView<T>}
+   * {@link PropertyTexturePropertyView}
    * @param propertyOptions The options to apply to each property in the
    * property texture.
    * @tparam Callback The type of the callback function.

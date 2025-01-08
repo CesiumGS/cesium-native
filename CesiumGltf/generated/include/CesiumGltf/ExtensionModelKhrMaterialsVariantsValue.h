@@ -13,13 +13,14 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
     : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName =
       "ExtensionModelKhrMaterialsVariantsValue";
 
   /**
-   * @brief The name of the material variant
-   *
-   * .
+   * @brief The name of the material variant.
    */
   std::string name;
 

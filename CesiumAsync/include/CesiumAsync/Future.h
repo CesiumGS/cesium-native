@@ -35,6 +35,9 @@ public:
       : _pSchedulers(std::move(rhs._pSchedulers)),
         _task(std::move(rhs._task)) {}
 
+  /**
+   * @brief Move assignment operator.
+   */
   Future<T>& operator=(Future<T>&& rhs) noexcept {
     this->_pSchedulers = std::move(rhs._pSchedulers);
     this->_task = std::move(rhs._task);

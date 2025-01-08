@@ -8,8 +8,8 @@
     "generate-gltf": "node index.js --schemas https://raw.githubusercontent.com/CesiumGS/glTF/tilers-lilleyse/specification/2.0/schema/glTF.schema.json --output ../../CesiumGltf --readerOutput ../../CesiumGltfReader --writerOutput ../../CesiumGltfWriter --extensions https://raw.githubusercontent.com/CesiumGS/glTF/tilers-lilleyse/extensions/2.0/ --namespace CesiumGltf --readerNamespace CesiumGltfReader --writerNamespace CesiumGltfWriter --config glTF.json",
     "generate-quantized-mesh-terrain": "node index.js --schemas ../../CesiumQuantizedMeshTerrain/schema/layer.schema.json --output ../../CesiumQuantizedMeshTerrain --readerOutput ../../CesiumQuantizedMeshTerrain --writerOutput ../../CesiumQuantizedMeshTerrain --extensions ../../CesiumQuantizedMeshTerrain/schema/extensions --namespace CesiumQuantizedMeshTerrain --readerNamespace CesiumQuantizedMeshTerrain --writerNamespace CesiumQuantizedMeshTerrain --config QuantizedMeshTerrain.json"
   },
-  "author": "CesiumGS, Inc.",
-  "license": "UNLICENSED",
+  "author": "CesiumGS, Inc. and Contributors",
+  "license": "Apache-2.0",
   "dependencies": {
     "lodash": "^4.17.20",
     "sync-request": "^6.1.0",

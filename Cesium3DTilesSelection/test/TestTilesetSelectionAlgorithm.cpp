@@ -563,30 +563,31 @@ TEST_CASE("Test additive refinement") {
   SECTION("Load external tilesets") {
     ViewState viewState = zoomToTileset(tileset);
 
-    // 1st frame. Root will get rendered first and 5 of its children are loading
-    // since they meet sse
+    // 1st frame. Root, its child, and its four grandchildren will all be
+    // rendered because they meet SSE, even though they're not loaded yet.
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
-      // root is rendered first
+      const std::vector<Tile*>& ttr = result.tilesToRenderThisFrame;
+      REQUIRE(ttr.size() == 7);
+
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       REQUIRE(root->getChildren().size() == 1);
+      REQUIRE(std::find(ttr.begin(), ttr.end(), pTilesetJson) != ttr.end());
+      REQUIRE(std::find(ttr.begin(), ttr.end(), root) != ttr.end());
 
-      // root's children don't have content loading right now, so only root get
-      // rendered
       const Tile& parentB3DM = root->getChildren().front();
       REQUIRE(parentB3DM.getState() == TileLoadState::ContentLoading);
       REQUIRE(!doesTileMeetSSE(viewState, parentB3DM, tileset));
       REQUIRE(parentB3DM.getChildren().size() == 4);
+      REQUIRE(std::find(ttr.begin(), ttr.end(), &parentB3DM) != ttr.end());
 
       for (const Tile& child : parentB3DM.getChildren()) {
         REQUIRE(child.getState() == TileLoadState::ContentLoading);
         REQUIRE(doesTileMeetSSE(viewState, child, tileset));
+        REQUIRE(std::find(ttr.begin(), ttr.end(), &child) != ttr.end());
       }
-
-      REQUIRE(result.tilesToRenderThisFrame.size() == 1);
-      REQUIRE(result.tilesToRenderThisFrame.front() == pTilesetJson);
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
@@ -600,20 +601,26 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
-      // root is rendered first
+      const std::vector<Tile*>& ttr = result.tilesToRenderThisFrame;
+      REQUIRE(ttr.size() == 8);
+
+      // root is done loading and rendered.
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
       REQUIRE(root->getChildren().size() == 1);
+      REQUIRE(std::find(ttr.begin(), ttr.end(), root) != ttr.end());
 
-      // root's children don't have content loading right now, so only root get
-      // rendered
+      // root's child is done loading and rendered, too.
       const Tile& parentB3DM = root->getChildren().front();
       REQUIRE(parentB3DM.getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, parentB3DM, tileset));
       REQUIRE(parentB3DM.getChildren().size() == 4);
+      REQUIRE(std::find(ttr.begin(), ttr.end(), &parentB3DM) != ttr.end());
 
       for (const Tile& child : parentB3DM.getChildren()) {
+        // parentB3DM's children are all done loading and are rendered.
         REQUIRE(child.getState() == TileLoadState::Done);
+        REQUIRE(std::find(ttr.begin(), ttr.end(), &child) != ttr.end());
 
         if (*std::get_if<std::string>(&child.getTileID()) !=
             "tileset3/tileset3.json") {
@@ -622,20 +629,19 @@ TEST_CASE("Test additive refinement") {
           // external tilesets get unconditionally refined
           REQUIRE(root->getUnconditionallyRefine());
 
-          // expect the children to meet sse and begin loading the content
+          // expect the children to meet sse and begin loading the content,
+          // while also getting rendered.
           REQUIRE(child.getChildren().size() == 1);
           REQUIRE(
               doesTileMeetSSE(viewState, child.getChildren().front(), tileset));
           REQUIRE(
               child.getChildren().front().getState() ==
               TileLoadState::ContentLoading);
+          REQUIRE(
+              std::find(ttr.begin(), ttr.end(), &child.getChildren().front()) !=
+              ttr.end());
         }
       }
-
-      REQUIRE(result.tilesToRenderThisFrame.size() == 3);
-      REQUIRE(result.tilesToRenderThisFrame[0] == pTilesetJson);
-      REQUIRE(result.tilesToRenderThisFrame[1] == root);
-      REQUIRE(result.tilesToRenderThisFrame[2] == &parentB3DM);
 
       REQUIRE(result.tilesFadingOut.size() == 0);
 
@@ -1554,21 +1560,30 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       pRawLoader->createRootTile(),
       options);
 
-  // On the first update, we should render the root tile, even though nothing is
-  // loaded yet.
-  initializeTileset(tileset);
-  CHECK(
-      tileset.getRootTile()->getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
-      TileSelectionState::Result::Rendered);
-
-  // On the third update, the grandchild load will still be pending.
-  // But the child is unconditionally refined, so we should render the root
-  // instead of the child.
-  initializeTileset(tileset);
+  // On the first update, we should refine down to the grandchild tile, even
+  // though no tiles are loaded yet.
   initializeTileset(tileset);
   const Tile& child = tileset.getRootTile()->getChildren()[0];
   const Tile& grandchild = child.getChildren()[0];
+  CHECK(
+      tileset.getRootTile()->getLastSelectionState().getResult(
+          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      TileSelectionState::Result::Refined);
+  CHECK(
+      child.getLastSelectionState().getResult(
+          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      TileSelectionState::Result::Refined);
+  CHECK(
+      grandchild.getLastSelectionState().getResult(
+          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      TileSelectionState::Result::Rendered);
+
+  // After the third update, the root and child tiles have been loaded, while
+  // the grandchild has not. But the child is unconditionally refined, so we
+  // can't render that one. Therefore the root tile should be rendered, after
+  // the child and grandchild are kicked.
+  initializeTileset(tileset);
+  initializeTileset(tileset);
   CHECK(
       tileset.getRootTile()->getLastSelectionState().getResult(
           tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==

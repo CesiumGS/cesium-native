@@ -11,6 +11,7 @@
 
 namespace CesiumUtility {
 
+/** \cond Doxygen_Suppress */
 #ifndef NDEBUG
 template <bool isThreadSafe> class ThreadIdHolder;
 
@@ -24,6 +25,7 @@ template <> class ThreadIdHolder<false> {
 
 template <> class ThreadIdHolder<true> {};
 #endif
+/** \endcond */
 
 /**
  * @brief A reference-counted base class, meant to be used with

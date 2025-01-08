@@ -18,16 +18,28 @@ namespace CesiumGltf {
  * @brief The material appearance of a primitive.
  */
 struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Material";
 
   /**
    * @brief Known values for The alpha rendering mode of the material.
    */
   struct AlphaMode {
+    /** @brief The alpha value is ignored, and the rendered output is fully
+     * opaque. */
     inline static const std::string OPAQUE = "OPAQUE";
 
+    /** @brief The rendered output is either fully opaque or fully transparent
+     * depending on the alpha value and the specified `alphaCutoff` value; the
+     * exact appearance of the edges **MAY** be subject to
+     * implementation-specific techniques such as "`Alpha-to-Coverage`". */
     inline static const std::string MASK = "MASK";
 
+    /** @brief The alpha value is used to composite the source and destination
+     * areas. The rendered output is combined with the background using the
+     * normal painting operation (i.e. the Porter and Duff over operator). */
     inline static const std::string BLEND = "BLEND";
   };
 

@@ -19,7 +19,8 @@ struct GroupMetadata;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link GroupMetadata} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::GroupMetadata "GroupMetadata" instances from
+ * JSON.
  */
 class CESIUM3DTILESREADER_API GroupMetadataReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of GroupMetadata from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::GroupMetadata>
@@ -60,7 +61,7 @@ public:
    * @brief Reads an array of instances of GroupMetadata from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<Cesium3DTiles::GroupMetadata>>

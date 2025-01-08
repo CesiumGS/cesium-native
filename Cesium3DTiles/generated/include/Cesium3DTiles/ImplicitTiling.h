@@ -17,6 +17,9 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API ImplicitTiling final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ImplicitTiling";
 
   /**
@@ -24,8 +27,10 @@ struct CESIUM3DTILES_API ImplicitTiling final
    * within the tileset.
    */
   struct SubdivisionScheme {
+    /** @brief `QUADTREE` */
     inline static const std::string QUADTREE = "QUADTREE";
 
+    /** @brief `OCTREE` */
     inline static const std::string OCTREE = "OCTREE";
   };
 
