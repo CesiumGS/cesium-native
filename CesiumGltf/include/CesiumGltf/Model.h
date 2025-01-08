@@ -227,31 +227,6 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   }
 
   /**
-   * @brief Gets the index of a glTF object.
-   *
-   * @tparam T The type of object.
-   * @param objects The array.
-   * @param object The object.
-   *
-   * @returns The index, or `-1` if the object doesn't exist in the array.
-   */
-  template <typename T>
-  static int32_t
-  getIndex(const std::vector<T>& objects, const T& object) noexcept {
-    if (objects.empty()) {
-      return -1;
-    }
-
-    int64_t id = &object - &objects.front();
-
-    if (id < 0 || id >= static_cast<int64_t>(objects.size())) {
-      return -1;
-    }
-
-    return static_cast<int32_t>(id);
-  }
-
-  /**
    * @brief Adds an extension to the {@link ModelSpec::extensionsUsed}
    * property, if it is not already present.
    *

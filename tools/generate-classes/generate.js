@@ -523,14 +523,13 @@ function generate(options, schema, writers) {
 
   const writeExtensionsRegistration = `
         ${extensions[schema.title]
-            ? extensions[schema.title]
-                .map((extension) => {
-                  return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
-                })
-                .join("\n")
-            : ""
-        }
-  `;
+      ? extensions[schema.title]
+        .map((extension) => {
+          return `context.registerExtension<${namespace}::${name}, ${extension.className}JsonWriter>();`;
+        })
+        .join("\n")
+      : ""
+    }
 
   writers.push({
     writeInclude,

@@ -47,7 +47,12 @@ public:
   /** @copydoc AccessorView::size */
   int64_t size() const noexcept { return this->_accessor.size(); }
 
-  /** @copydoc AccessorView::status */
+  /**
+   * @brief Gets the status of this accessor writer.
+   *
+   * Indicates whether the writer accurately reflects the accessor's data, or
+   * whether an error occurred.
+   */
   AccessorViewStatus status() const noexcept {
     return this->_accessor.status();
   }
