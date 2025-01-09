@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
+
 ### v0.44.0 - 2025-02-03
 
 ##### Fixes :wrench:
