@@ -1,3 +1,5 @@
+#include "DebugText.h"
+
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
@@ -5,6 +7,8 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/SpanHelper.h>
+
+#include <format>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -105,6 +109,16 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                       }
                     }
 #endif
+
+#if SHOW_QUADTREE_RASTER_IDS
+                    blitString(
+                        *loaded.pImage,
+                        std::format("X{} Y{} Z{}", key.x, key.y, key.level),
+                        0,
+                        0,
+                        1);
+#endif
+
                     IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
                     pLoadedImage.emplace(
                         std::make_shared<LoadedRasterOverlayImage>(
