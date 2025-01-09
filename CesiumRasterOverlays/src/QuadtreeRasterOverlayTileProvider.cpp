@@ -1,5 +1,3 @@
-#include "DebugText.h"
-
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
@@ -8,7 +6,10 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/SpanHelper.h>
 
+#if SHOW_QUADTREE_RASTER_IDS
+#include "DebugText.h"
 #include <format>
+#endif
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
