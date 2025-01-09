@@ -8,6 +8,7 @@
 
 #if SHOW_QUADTREE_RASTER_IDS
 #include "DebugText.h"
+
 #include <format>
 #endif
 
