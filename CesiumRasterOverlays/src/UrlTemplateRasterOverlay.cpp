@@ -11,9 +11,10 @@ namespace CesiumRasterOverlays {
 
 namespace {
 static bool caseInsensitiveCompare(std::string_view lhs, std::string_view rhs) {
-  return std::ranges::equal(lhs, rhs, [](char a, char b) {
-    return std::tolower(a) == std::tolower(b);
-  });
+  return lhs.size() == rhs.size() &&
+         std::equal(lhs.begin(), lhs.end(), rhs.begin(), [](char a, char b) {
+           return std::tolower(a) == std::tolower(b);
+         });
 }
 } // namespace
 
