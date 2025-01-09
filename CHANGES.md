@@ -1,5 +1,10 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
+
 ### v0.44.0 - 2025-02-03
 
 ##### Fixes :wrench:
