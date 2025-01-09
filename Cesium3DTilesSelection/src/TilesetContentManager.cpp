@@ -685,7 +685,7 @@ TilesetContentManager::TilesetContentManager(
     RasterOverlayCollection&& overlayCollection,
     const std::string& url)
     : _externals{externals},
-      _requestHeaders{},
+      _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
       _pRootTile{},
       _userCredit(
@@ -837,7 +837,7 @@ TilesetContentManager::TilesetContentManager(
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
     : _externals{externals},
-      _requestHeaders{},
+      _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
       _pRootTile{},
       _userCredit(
