@@ -409,19 +409,24 @@ void copyMetadataTables(const Model& parentModel, Model& result);
  * the indices from an index accessor view, or generates new indices.
  */
 template <typename TIndex> struct IndicesViewOrGenerator {
-  IndicesViewOrGenerator(AccessorView<TIndex>&& accessorView_)
-      : accessorView(accessorView_), indicesCount(accessorView->size()) {}
-
-  IndicesViewOrGenerator(int64_t indicesCount_) : indicesCount(indicesCount_) {}
-
   IndicesViewOrGenerator(
       const Model& model,
+      const MeshPrimitive& primitive,
       int32_t primitiveIndices,
-      int64_t numVertices) {
+      int64_t numVertices)
+      : primitiveMode(primitive.mode) {
     AccessorView<TIndex> view(model, primitiveIndices);
     if (view.status() == AccessorViewStatus::Valid) {
       accessorView = std::move(view);
-      indicesCount = accessorView->size();
+      if (primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
+        indicesCount = accessorView->size();
+      } else if (
+          primitiveMode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
+          primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+        // With a triangle strip or fan, each additional vertex past the first
+        // three adds an additional triangle
+        indicesCount = (accessorView->size() - 2) * 3;
+      }
     } else {
       indicesCount = numVertices;
     }
@@ -442,8 +447,31 @@ template <typename TIndex> struct IndicesViewOrGenerator {
       throw std::range_error("index out of range");
     }
 
-    if (accessorView) {
+    if (accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
       return (*accessorView)[i];
+    } else if (
+        accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
+      // Indices 0, 1, 2 map normally, indices 3, 4, 5 map to 2, 1, 3,
+      // indices 6, 7, 8 map to 2, 3, 4, etc.
+      const int64_t startIndex = i / 3;
+      const int64_t triIndex = i % 3;
+      // For every other triangle we need to reverse the order of the first two
+      // indices to maintain proper winding.
+      if (startIndex % 2 == 1 && triIndex < 2) {
+        return triIndex == 0 ? (*accessorView)[startIndex + 1]
+                             : (*accessorView)[startIndex];
+      }
+      return (*accessorView)[startIndex + triIndex];
+    } else if (
+        accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+      // Indices 0, 1, 2 map normally, indices 3, 4, 5 map to 0, 2, 3,
+      // indices 6, 7, 8 map to 0, 3, 4, etc.
+      const int64_t startIndex = i / 3;
+      const int64_t triIndex = i % 3;
+      if (triIndex == 0) {
+        return (*accessorView)[0];
+      }
+      return (*accessorView)[startIndex + triIndex];
     }
 
     // The indices of a non-indexed primitive are simply 0, 1, 2, 3, 4...
@@ -453,6 +481,7 @@ template <typename TIndex> struct IndicesViewOrGenerator {
 private:
   std::optional<AccessorView<TIndex>> accessorView;
   int64_t indicesCount;
+  int32_t primitiveMode;
 };
 
 } // namespace
@@ -958,6 +987,7 @@ bool upsamplePrimitiveForRasterOverlays(
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
   const IndicesViewOrGenerator<TIndex> indicesView(
       parentModel,
+      primitive,
       primitive.indices,
       positionAttributeCount);
 
@@ -1624,7 +1654,9 @@ bool upsamplePrimitiveForRasterOverlays(
     const std::string_view& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES) {
+  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_FAN &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
     // Not triangles, so we don't know how to divide this primitive
     // (yet). So remove it.
     return false;
