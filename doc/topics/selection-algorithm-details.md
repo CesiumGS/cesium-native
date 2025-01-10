@@ -147,9 +147,9 @@ Because _content_ is by far the largest part of a tile, and the most time-consum
 
 @mermaid{tile-load-states}
 
-A `Tile` starts in the `Unloaded` state. A `Tile` in this state is added to the `_workerThreadLoadQueue` the first time it is visited during the selection algorithm. Any tiles that remain in this queue at the end of the selection (that is, that are not [kicked](#kicking)) are [prioritized](#load-prioritization) for loading.
+A `Tile` starts in the `Unloaded` state. A `Tile` in this state is added to the `_workerThreadLoadQueue` the first time it is visited during the selection algorithm. Any tiles that remain in this queue at the end of the selection (that is, that are not [kicked](#kicking)) are prioritized for loading as described in the [next section](#load-prioritization).
 
-The number of tiles that may load simultaneously is controlled by the [TilesetOptions::maximumSimultaneousTileLoads](\ref Cesium3DTilesSelection::TilesetOptions::maximumSimultaneousTileLoads) property. We can picture tile loading as a swimming pool with `maximumSimultaneousTileLoads` swim lanes. The highest priority tiles jump in the pool, each in their own lane, and race for the other end. When a tile reaches the other side (finishes asynchronous loading), the next highest priority tile can jump in the pool in that now-unoccupied lane and start swimming.
+The number of tiles that may load simultaneously is controlled by the [TilesetOptions::maximumSimultaneousTileLoads](\ref Cesium3DTilesSelection::TilesetOptions::maximumSimultaneousTileLoads) property. We can picture tile loading as a swimming pool with `maximumSimultaneousTileLoads` swim lanes. The highest priority tiles jump in the pool, each in their own lane, and race for the other end. When a tile reaches the other side (finishes asynchronous loading), the next highest priority tile can jump in the pool in that now-unoccupied lane and start swimming. Multiple tiles can never share a swim lane.
 
 The swim across the pool includes all of the steps of the tile loading process that do not need to happen on the main thread, including:
 
@@ -160,19 +160,23 @@ The swim across the pool includes all of the steps of the tile loading process t
 
 When a tile jumps in the pool, its `TileLoadState` is changed to `ContentLoading`. When it reaches the other end, the state is changed to `ContentLoaded`.
 
-The next time the selection algorithm runs, and it sees a tile in the `ContentLoaded` state, the tile is added to the `_mainThreadLoadQueue`. Just like with the `_workerThreadLoadQueue`, tiles may be kicked from this queue as the selection algorithm proceeds, and those that remain are prioritized as described in the next section. This time, though, the loading happens synchronously, on the same thread that is running the selection algorithm. To avoid monopolizing too much main thread time, which could have a severe impact on interactivity, the highest priority tiles from this queue are processed only until the [TilesetOptions::mainThreadLoadingTimeLimit](\ref Cesium3DTilesSelection::TilesetOptions::mainThreadLoadingTimeLimit) has elapsed. Additional tiles will need to wait until the next frame.
+The next time the selection algorithm runs, and it sees a tile in the `ContentLoaded` state, the tile is added to the `_mainThreadLoadQueue`. Just like with the `_workerThreadLoadQueue`, tiles may be kicked from this queue as the selection algorithm proceeds, and those that remain are ranked by priority. This time, though, the loading happens synchronously, on the same thread that is running the selection algorithm. To avoid monopolizing too much main thread time, which could have a severe impact on interactivity, the highest priority tiles from this queue are processed only until the [TilesetOptions::mainThreadLoadingTimeLimit](\ref Cesium3DTilesSelection::TilesetOptions::mainThreadLoadingTimeLimit) has elapsed. Additional tiles will need to wait until the next frame.
 
 The primary task that is completed during main thread loading is to call [IPrepareRendererResources::prepareInMainThread](\ref Cesium3DTilesSelection::IPrepareRendererResources::prepareInMainThread). See [Rendering 3D Tiles](#rendering-3d-tiles) for details.
 
 Once a tile has completed its main-thread loading, it enters the `Done` state and is ready to be rendered.
 
+If something goes wrong during the `ContentLoading` state, such as an HTTP error because the tile's content URL is invalid or the server is down, the tile enters the `Failed` state. Failed tiles will usualy show up as missing data or "holes" in the model. Content loads can also fail temporarily, such as when an access token expires and needs to be refreshed. Such tiles will transition to the `FailedTemporarily` state, and the async loading process will be restarted the next time the tile is needed.
+
+Finally, there is the `Unloading` state. When a tile is no longer needed, it usually transitions directly and synchronously from the `ContentLoaded` or `Done` state to the `Unloaded` state. However, if the tile being unloaded happens at the same time to be the source of an active raster overlay "upsampling" operation, then unloading its content would lead to undefined behavior. Instead, we only unload its renderer resources (by calling [IPrepareRendererResources::free](\ref Cesium3DTilesSelection::IPrepareRendererResources::free)) but do _not_ delete its content. We put it in the `Unloading` state to mark that this has been done, and transition it to the `Unloaded` state when it is safe to do so. For more details, see the [pull request](https://github.com/CesiumGS/cesium-native/pull/554) where this mechanism was added.
+
 ## Load Prioritization {#load-prioritization}
 
-Tiles that need to be loaded are prioritized so that the most important tiles are loaded first. Load priority consists of a priority _group_ plus a priority value within that group. The group is chosen according to the reason that this tile is needed by the selection algorithm. The groups are as follows:
+Tiles that need to be loaded are prioritized so that the most important tiles are loaded first. Load priority consists of a priority _group_ plus a priority _value_ within that group. The group is chosen according to the reason that this tile is needed by the selection algorithm. The groups are as follows:
 
 * `Preload` - Low priority tiles that aren't needed right now, but are being preloaded for the future.
 * `Normal` - Medium priority tiles that are needed to render the current view at the appropriate level-of-detail.
-* `Urgent` - High priority tiles whose absence is are causing extra detail to be rendered in the scene, potentially creating a performance problem and aliasing artifacts.
+* `Urgent` - High priority tiles whose absence is causing extra detail to be rendered in the scene, potentially creating a performance problem and aliasing artifacts.
 
 Within the group, a tile with a lower priority value will be loaded before a tile with a higher priority value. The priority value is computed as follows:
 
