@@ -1674,7 +1674,7 @@ bool upsamplePrimitiveForRasterOverlays(
 
     // No indices buffer - pick the smallest indices type that will fit all
     // vertices
-    const int64_t vertexCount = parentModel.accessors[positionIt->second].count;
+    const int64_t vertexCount = parentModel.accessors[static_cast<size_t>(positionIt->second)].count;
     if (vertexCount <= 0xff) {
       return upsamplePrimitiveForRasterOverlays<uint8_t>(
           parentModel,
