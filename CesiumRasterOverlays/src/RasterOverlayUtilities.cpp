@@ -408,8 +408,8 @@ void copyMetadataTables(const Model& parentModel, Model& result);
  * @brief Helper struct for working with non-indexed triangles. Returns either
  * the indices from an index accessor view, or generates new indices.
  */
-template <typename TIndex> struct IndicesViewOrGenerator {
-  IndicesViewOrGenerator(
+template <typename TIndex> struct IndicesViewRemapper {
+  IndicesViewRemapper(
       const Model& model,
       const MeshPrimitive& primitive,
       int32_t primitiveIndices,
@@ -985,7 +985,7 @@ bool upsamplePrimitiveForRasterOverlays(
   const bool keepAboveV = !isSouthChild(childID);
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
-  const IndicesViewOrGenerator<TIndex> indicesView(
+  const IndicesViewRemapper<TIndex> indicesView(
       parentModel,
       primitive,
       primitive.indices,
