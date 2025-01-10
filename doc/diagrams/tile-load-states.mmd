@@ -9,6 +9,10 @@ stateDiagram-v2
   [*] --> unloaded
   unloaded --> contentLoading: Start Async Loading
   contentLoading --> contentLoaded: Done Async Loading
+  contentLoading --> failed: Load Failed
+  contentLoading --> failedTemp: Retry Later
+  failedTemp --> contentLoading: Start Async Loading
   contentLoaded --> done: Main Thread Loading
   contentLoaded --> unloaded: Unload Tile Content
-  done --> unloaded: Unload Tile Content
+  done --> unloading: Start Unloading
+  unloading --> unloaded: Done Unloading
