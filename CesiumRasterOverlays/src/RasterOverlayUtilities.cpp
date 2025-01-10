@@ -414,7 +414,9 @@ template <typename TIndex> struct IndicesViewRemapper {
       const MeshPrimitive& primitive,
       int32_t primitiveIndices,
       int64_t numVertices)
-      : primitiveMode(primitive.mode) {
+      : accessorView(std::nullopt),
+        indicesCount(0),
+        primitiveMode(primitive.mode) {
     AccessorView<TIndex> view(model, primitiveIndices);
     if (view.status() == AccessorViewStatus::Valid) {
       accessorView = std::move(view);
