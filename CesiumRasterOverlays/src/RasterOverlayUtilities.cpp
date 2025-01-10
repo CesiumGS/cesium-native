@@ -403,6 +403,58 @@ bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
 
 void copyImages(const Model& parentModel, Model& result);
 void copyMetadataTables(const Model& parentModel, Model& result);
+
+/**
+ * @brief Helper struct for working with non-indexed triangles. Returns either
+ * the indices from an index accessor view, or generates new indices.
+ */
+template <typename TIndex> struct IndicesViewOrGenerator {
+  IndicesViewOrGenerator(AccessorView<TIndex>&& accessorView_)
+      : accessorView(accessorView_), indicesCount(accessorView->size()) {}
+
+  IndicesViewOrGenerator(int64_t indicesCount_) : indicesCount(indicesCount_) {}
+
+  IndicesViewOrGenerator(
+      const Model& model,
+      int32_t primitiveIndices,
+      int64_t numVertices) {
+    AccessorView<TIndex> view(model, primitiveIndices);
+    if (view.status() == AccessorViewStatus::Valid) {
+      accessorView = std::move(view);
+      indicesCount = accessorView->size();
+    } else {
+      indicesCount = numVertices;
+    }
+  }
+
+  int64_t size() const { return indicesCount; }
+
+  AccessorViewStatus status() const {
+    if (accessorView) {
+      return accessorView->status();
+    }
+
+    return AccessorViewStatus::Valid;
+  }
+
+  const TIndex operator[](int64_t i) const {
+    if (i < 0 || i >= indicesCount) {
+      throw std::range_error("index out of range");
+    }
+
+    if (accessorView) {
+      return (*accessorView)[i];
+    }
+
+    // The indices of a non-indexed primitive are simply 0, 1, 2, 3, 4...
+    return static_cast<TIndex>(i);
+  }
+
+private:
+  std::optional<AccessorView<TIndex>> accessorView;
+  int64_t indicesCount;
+};
+
 } // namespace
 
 /*static*/ std::optional<Model>
@@ -802,6 +854,7 @@ bool upsamplePrimitiveForRasterOverlays(
   indexBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   int64_t vertexSizeFloats = 0;
+  int64_t positionAttributeCount = 0;
   int32_t uvAccessorIndex = -1;
   int32_t positionAttributeIndex = -1;
 
@@ -886,6 +939,7 @@ bool upsamplePrimitiveForRasterOverlays(
     // get position to be used to create skirts later
     if (attribute.first == "POSITION") {
       positionAttributeIndex = int32_t(attributes.size() - 1);
+      positionAttributeCount = accessor.count;
     }
   }
 
@@ -902,7 +956,10 @@ bool upsamplePrimitiveForRasterOverlays(
   const bool keepAboveV = !isSouthChild(childID);
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
-  const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
+  const IndicesViewOrGenerator<TIndex> indicesView(
+      parentModel,
+      primitive.indices,
+      positionAttributeCount);
 
   if (uvView.status() != AccessorViewStatus::Valid ||
       indicesView.status() != AccessorViewStatus::Valid) {
@@ -1567,12 +1624,57 @@ bool upsamplePrimitiveForRasterOverlays(
     const std::string_view& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
-      primitive.indices < 0 ||
-      primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
-    // Not indexed triangles, so we don't know how to divide this primitive
+  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES) {
+    // Not triangles, so we don't know how to divide this primitive
     // (yet). So remove it.
     return false;
+  }
+
+  if (primitive.indices < 0 ||
+      primitive.indices > static_cast<int64_t>(parentModel.accessors.size())) {
+    const auto& positionIt = primitive.attributes.find("POSITION");
+    if (positionIt == primitive.attributes.end()) {
+      // No position buffer - nothing we can do here
+      return false;
+    }
+
+    // No indices buffer - pick the smallest indices type that will fit all
+    // vertices
+    const int64_t vertexCount = parentModel.accessors[positionIt->second].count;
+    if (vertexCount <= 0xff) {
+      return upsamplePrimitiveForRasterOverlays<uint8_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    } else if (vertexCount <= 0xffff) {
+      return upsamplePrimitiveForRasterOverlays<uint16_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    } else {
+      return upsamplePrimitiveForRasterOverlays<uint32_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    }
   }
 
   const Accessor& indicesAccessorGltf =
