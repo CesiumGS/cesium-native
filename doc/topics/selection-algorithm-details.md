@@ -186,11 +186,18 @@ Within the group, a tile with a lower priority value will be loaded before a til
 
 Where `distance` is the distance from the camera to the closest point on the tile, `tileDirection` is the unit vector from the camera to the center of the tile's bounding volume, and `cameraDirection` is the look direction of of the camera. The idea is that tiles that are near the center of the screen and closer to the camera are loaded first.
 
+## Forbid Holes {#forbid-holes}
+
+With the default settings, the tile selection algorithm prioritizes getting the needed detail to the screen as quickly as possible. The downside of this approach is that it can sometimes lead to "holes" - or parts of the model that are visibly missing - when the camera moves. This happens when the camera movement reveals a part of the model that wasn't previously visible, and the tiles necessary to show that part of the model are not yet loaded.
+
+This default behavior can be changed by setting [TilesetOptions::forbidHoles](\ref Cesium3DTilesSelection::TilesetOptions::forbidHoles) to `true`. When holes are forbidden, loading will take longer, because some extra tiles will need to be loaded in order to fill the potential holes, and camera movement may still reveal areas of lower detail, but it will never reveal a part of the model that is missing entirely. This may offer a better user experience for many applications.
+
+_Forbid Holes_ mode operates via a small change in `_visitTileIfNeeded`. Normally, when a tile is culled, we either don't load it at all, or we load with it with the lower `Preload` [priority](#load-prioritization). But when holes are forbidden, a culled tile is instead loaded with `Normal` priority, and it is also represented in the `TraversalDetails` returned from the method. This means that the subtree containing this tile will be [kicked](#kicking) if this tile is not yet loaded. This guarantees the subtree will not be rendered until this tile is loaded, which in turn guarantees that if the camera is moved, so that this tile suddenly becomes visible, it will be possible to render it immediately. There will not be a hole.
+
 ## Additional Topics Not Yet Covered {#additional-topics}
 
 Here are some additional selection algorithm topics that are not yet covered here, but should be in the future:
 
-* Forbid Holes <!--! \anchor forbid-holes -->
 * Unconditionally-Refined Tiles
 * Occlusion Culling
 * External Tilesets and Implicit Tiles
