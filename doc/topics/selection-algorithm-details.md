@@ -217,6 +217,21 @@ Also, when the children of an unconditionally-refined tile are kicked out of the
 
 Finally, when [Forbid Holes](#forbid-holes) is enabled, `_visitTileIfNeeded` will always visit unconditionally-refined tiles, even if they're culled. This is necessary because the non-renderable, unconditionally-refined tile would otherwise block renderable siblings from rendering, too. By visiting the unconditionally-refined tile, we allow its children to load, and thereby allow the subtree to become renderable.
 
+## TilesetContentLoader {#tileset-content-loader}
+
+The process of loading content and children for a tile is delegated to a pluggable interface called [TilesetContentLoader](\ref Cesium3DTilesSelection::TilesetContentLoader). This means that the Cesium Native 3D Tiles selection algorithm is not limited to 3D Tiles. Anything that can be portrayed in Cesium Native's 3D Tiles and glTF object model can be loaded, selected, and rendered by Cesium Native. Every `Tile` is associated with a loader, and that loader is used to load that `Tile`'s content. Child `Tiles` may use the same or a different loader.
+
+The following `TilesetContentLoader` types are currently provided:
+
+* `TilesetJsonLoader` - The standard loader for explicit 3D Tiles based on `tileset.json`. Individual tile content is loaded via [GltfConverters](\ref Cesium3DTilesContent::GltfConverters).
+* `CesiumIonTilesetLoader` - Loads a 3D Tiles asset or `layer.json` / `quantized-mesh-1.0` terrain asset from Cesium ion, by delegating to one of the other loaders as appropriate. Automatically handles refreshing the token when it expires.
+* `LayerJsonTerrainLoader` - Loads terrain described by a `layer.json` and individual terrain tiles in `quantized-mesh-1.0` format.
+* `ImplicitQuadtreeLoader` - Loads a 3D Tiles 1.1 implicit quadtree.
+* `ImplicitOctreeLoader` - Loads a 3D Tiles 1.1 implicit octree.
+* `EllipsoidTilesetLoader` - Generates tiles on-the-fly by tessellating an ellipsoid, such as the WGS84 ellipsoid. Does not load any data from the disk or network.
+
+Other loaders can be added by users of the library.
+
 ## Implicit Tilesets {#implicit-tilesets}
 
 The tile selection algorithm selects tiles from an explicit representation of the bounding-volume hierarchy. Every tile in the tileset is represented as a [Tile](\ref Cesium3DTilesSelection::Tile) instance. Starting with 3D Tiles 1.1, the bounding-volume hierarchy may instead be defined _implicitly_ using [Implicit Tiling](https://github.com/CesiumGS/3d-tiles/tree/main/specification#core-implicit-tiling). This is much more efficient representation when the bounding-volume hierarchy has a uniform subdivision structure.
@@ -224,9 +239,14 @@ The tile selection algorithm selects tiles from an explicit representation of th
 > [!note]
 > The older `layer.json` / [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) terrain format also uses a form of implicit tiling.
 
-Cesium Native supports implicit tiling by lazily transforming the implicit representation into an explicit one as individual tiles are needed. This happens in the `TilesetContentManager::createLatentChildrenIfNecessary` method, called for each tile near the top of `_visitTileIfNeeded`. This method attempts to create explicit tile instances for the implicitly-defined children of the current tile by invoking [TilesetContentLoader::createTileChildren](\ref Cesium3DTilesSelection::TilesetContentLoader::createTileChildren).
+Cesium Native supports implicit tiling by lazily transforming the implicit representation into an explicit one as individual tiles are needed. This happens in the `TilesetContentManager::createLatentChildrenIfNecessary` method, called for each tile near the top of `_visitTileIfNeeded`. This method attempts to create explicit tile instances for the implicitly-defined children of the current tile by invoking [TilesetContentLoader::createTileChildren](\ref Cesium3DTilesSelection::TilesetContentLoader::createTileChildren). Thus, the `TilesetContentLoader` interface is not only responsible for loading tile content, it is also responsible for creating additional `Tile` instances in the bounding-volume hierarchy as needed.
 
-Implicit loaders, such as `ImplicitQuadtreeLoader`, `ImplicitOctreeLoader`, and `LayerJsonTerrainLoader`, implement this method by determining in their own way whether this tile has any children, and creating them if it does. In some cases, extra asynchronous work, like downloading subtree availability files, may be necessary to determine if children exist. In that case, the `createTileChildren` will return [TileLoadResultState::RetryLater](\ref Cesium3DTilesSelection::TileLoadResultState::RetryLater) to signal that children may exist, but they can't be created yet. The selection algorithm will try again next frame if the tile's children are still needed.
+Implicit [loaders](#tileset-content-loader), such as `ImplicitQuadtreeLoader`, `ImplicitOctreeLoader`, and `LayerJsonTerrainLoader`, implement this method by determining in their own way whether this tile has any children, and creating them if it does. In some cases, extra asynchronous work, like downloading subtree availability files, may be necessary to determine if children exist. In that case, the `createTileChildren` will return [TileLoadResultState::RetryLater](\ref Cesium3DTilesSelection::TileLoadResultState::RetryLater) to signal that children may exist, but they can't be created yet. The selection algorithm will try again next frame if the tile's children are still needed.
+
+Currently, a `Tile` instance, once created, will not be destroyed until the entire [Tileset](\ref Cesium3DTilesSelection::Tileset) is destroyed. This is true for `Tile` instances created explicitly from `tileset.json` as well as `Tile` instances created lazily by the implicit loaders. This is convenient because we don't need to worry about a `Tile` instance vanishing unexpectedly, but it can cause a slow increase in memory usage over time.
+
+> [!note]
+> The above refers to `Tile` instances, _not_ their content. Content is unloaded when it is no longer needed. This is important because content is by far the largest portion of a tile.
 
 ## Additional Topics Not Yet Covered {#additional-topics}
 
