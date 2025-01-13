@@ -818,8 +818,8 @@ std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
   indexMap.reserve(usedIndices.size());
 
   int32_t nextIndex = 0;
-  for (bool usedIndice : usedIndices) {
-    if (usedIndice) {
+  for (bool usedIndex : usedIndices) {
+    if (usedIndex) {
       indexMap.push_back(nextIndex);
       ++nextIndex;
     } else {
