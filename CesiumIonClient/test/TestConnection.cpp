@@ -126,7 +126,7 @@ TEST_CASE("CesiumIonClient::Connection::geocode") {
           std::move(pResponse));
 
   pAssetAccessor->mockCompletedRequests.insert(
-      {"https://example.com/v1/geocode/search?text=antarctica&geocoder=BING",
+      {"https://example.com/v1/geocode/search?text=antarctica&geocoder=bing",
        std::move(pRequest)});
 
   AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
@@ -150,7 +150,7 @@ TEST_CASE("CesiumIonClient::Connection::geocode") {
   CHECK(geocode.value->attributions[0].showOnScreen);
   CHECK(!geocode.value->attributions[1].showOnScreen);
 
-  CHECK(geocode.value->features.size() == 3);
+  CHECK(geocode.value->features.size() == 5);
   CHECK(geocode.value->features[0].displayName == "Antarctica");
   CHECK(
       geocode.value->features[0].getGlobeRectangle().getNorth() ==

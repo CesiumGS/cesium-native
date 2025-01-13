@@ -303,8 +303,8 @@ public:
    * @param query The query to make.
    */
   CesiumAsync::Future<Response<GeocoderResult>> geocode(
-      const GeocoderProviderType& provider,
-      const GeocoderRequestType& type,
+      GeocoderProviderType provider,
+      GeocoderRequestType type,
       const std::string& query);
 
   /**

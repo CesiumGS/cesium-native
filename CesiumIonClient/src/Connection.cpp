@@ -1,9 +1,9 @@
-#include "CesiumIonClient/Connection.h"
+#include <CesiumIonClient/Connection.h>
 
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumIonClient/Geocoder.h"
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumIonClient/Geocoder.h>
 #include "fillWithRandomBytes.h"
 #include "parseLinkHeader.h"
 
@@ -591,57 +591,43 @@ Defaults defaultsFromJson(const rapidjson::Document& json) {
 GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
   GeocoderResult result;
 
-  auto featuresMemberIt = json.FindMember("features");
-  if (featuresMemberIt != json.MemberEnd() &&
-      featuresMemberIt->value.IsArray()) {
-    auto featuresIt = featuresMemberIt->value.GetArray();
+  const rapidjson::Pointer labelPointer = rapidjson::Pointer("/properties/label");
+  const rapidjson::Pointer coordinatesPointer = rapidjson::Pointer("/geometry/coordinates");
+
+  auto featuresMember = json.FindMember("features");
+  if (featuresMember != json.MemberEnd() &&
+      featuresMember->value.IsArray()) {
+    auto featuresIt = featuresMember->value.GetArray();
     for (auto& feature : featuresIt) {
       const rapidjson::Value* pLabel =
-          rapidjson::Pointer("/properties/label").Get(feature);
-      if (!pLabel) {
-        SPDLOG_WARN("Missing label for geocoder feature");
-        continue;
+          labelPointer.Get(feature);
+
+      std::string label;
+      if(pLabel) {
+        label = JsonHelpers::getStringOrDefault(*pLabel, "");
       }
 
-      std::string label(pLabel->GetString());
-      auto bboxMemberIt = feature.FindMember("bbox");
-      if (bboxMemberIt == feature.MemberEnd() ||
-          !bboxMemberIt->value.IsArray()) {
+      std::optional<std::vector<double>> bboxItems = JsonHelpers::getDoubles(feature, 4, "bbox");
+      if (!bboxItems) {
         // Could be a point value.
         const rapidjson::Value* pCoordinates =
-            rapidjson::Pointer("/geometry/coordinates").Get(feature);
-        if (!pCoordinates) {
-          SPDLOG_WARN(
-              "Missing bbox and geometry.coordinates for geocoder feature");
-          continue;
+            coordinatesPointer.Get(feature);
+
+        CesiumGeospatial::Cartographic point(0, 0);
+        if (pCoordinates && pCoordinates->IsArray() && pCoordinates->Size() == 2) {
+          auto coordinatesArray = pCoordinates->GetArray();
+
+          point =
+              CesiumGeospatial::Cartographic::fromDegrees(
+                  JsonHelpers::getDoubleOrDefault(coordinatesArray[0], 0),
+                  JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
         }
-
-        if (!pCoordinates->IsArray() || pCoordinates->Size() != 2) {
-          SPDLOG_WARN("geometry.coordinates must be an array of size 2");
-          continue;
-        }
-
-        auto coordinatesArray = pCoordinates->GetArray();
-
-        CesiumGeospatial::Cartographic point =
-            CesiumGeospatial::Cartographic::fromDegrees(
-                JsonHelpers::getDoubleOrDefault(coordinatesArray[0], 0),
-                JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
 
         result.features.emplace_back(label, point);
       } else {
-        auto bboxIt = bboxMemberIt->value.GetArray();
-        if (bboxIt.Size() != 4) {
-          SPDLOG_WARN("bbox property should have exactly four values");
-          continue;
-        }
-
+        std::vector<double>& values = bboxItems.value();
         CesiumGeospatial::GlobeRectangle rect =
-            CesiumGeospatial::GlobeRectangle::fromDegrees(
-                JsonHelpers::getDoubleOrDefault(bboxIt[0], 0),
-                JsonHelpers::getDoubleOrDefault(bboxIt[1], 0),
-                JsonHelpers::getDoubleOrDefault(bboxIt[2], 0),
-                JsonHelpers::getDoubleOrDefault(bboxIt[3], 0));
+            CesiumGeospatial::GlobeRectangle::fromDegrees(values[0], values[1], values[2], values[3]);
 
         result.features.emplace_back(label, rect);
       }
@@ -656,7 +642,7 @@ GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
     result.attributions.reserve(valueJson.Size());
 
     for (rapidjson::SizeType i = 0; i < valueJson.Size(); ++i) {
-      const auto& element = valueJson[i];
+      const rapidjson::Value& element = valueJson[i];
       std::string html = JsonHelpers::getStringOrDefault(element, "html", "");
       bool showOnScreen =
           !JsonHelpers::getBoolOrDefault(element, "collapsible", false);
@@ -1266,8 +1252,8 @@ Connection::tokens(const std::string& url) const {
 }
 
 CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
-    const GeocoderProviderType& provider,
-    const GeocoderRequestType& type,
+    GeocoderProviderType provider,
+    GeocoderRequestType type,
     const std::string& query) {
   const std::string endpointUrl = type == GeocoderRequestType::Autocomplete
                                       ? "v1/geocode/autocomplete"
@@ -1279,14 +1265,12 @@ CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
   // Add provider type to url
   switch (provider) {
   case GeocoderProviderType::Bing:
-    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "BING");
+    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "bing");
     break;
   case GeocoderProviderType::Google:
-    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "GOOGLE");
+    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "google");
     break;
   case GeocoderProviderType::Default:
-    requestUrl =
-        CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "DEFAULT");
     break;
   }
 
