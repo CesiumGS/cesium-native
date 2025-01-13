@@ -194,11 +194,35 @@ This default behavior can be changed by setting [TilesetOptions::forbidHoles](\r
 
 _Forbid Holes_ mode operates via a small change in `_visitTileIfNeeded`. Normally, when a tile is culled, we either don't load it at all, or we load with it with the lower `Preload` [priority](#load-prioritization). But when holes are forbidden, a culled tile is instead loaded with `Normal` priority, and it is also represented in the `TraversalDetails` returned from the method. This means that the subtree containing this tile will be [kicked](#kicking) if this tile is not yet loaded. This guarantees the subtree will not be rendered until this tile is loaded, which in turn guarantees that if the camera is moved, so that this tile suddenly becomes visible, it will be possible to render it immediately. There will not be a hole.
 
+## Unconditionally-Refined Tiles
+
+A tile that is "unconditionally refined" will always be _REFINED_, it will never be _RENDERED_. We can think of such a tile as having infinite geometric and screen-space error. Unconditionally-refined tiles are used in the following situations:
+
+1. The `_pRootTile` held by the `TilesetContentManager`. This is root tile of the entire bounding-volume hierarchy. For a standard 3D Tiles `tileset.json` tileset, the root tile defined in the `tileset.json` is the single child of this `_pRootTile`.
+2. Tiles whose "content" is an [external tileset](#external-tilesets-and-implicit-tilesets).
+3. Tiles that have a geometric error that is higher than their parent's.
+
+In all three cases, the tile flag is set with a call to [Tile::setUnconditionallyRefine](\ref Cesium3DTilesSelection::Tile::setUnconditionallyRefine).
+
+Consider a tileset which has a root tile with some renderable content, and four children. Three of the children have normal renderable content as well, but the forth is an external tileset. This means that it provides more nodes for the bounding-volume hierarchy, but it does not have any renderable content itself. Even once that fourth tile is done loading, we can't render it. If we did, we would end up creating a visible hole in the tileset that would not be filled until the children of the tile finished loading as well.
+
+Normally, a tile, no matter how large its screen-space error, can be rendered in some cases, such as when other tiles are not loaded yet. While we can conceptually think of unconditionally-refined tiles as simply having very large error, the handling of them within the selection algorithm goes a bit deeper, in order to ensure they are never rendered.
+
+To start, [Tile::isRenderable](\ref Cesium3DTilesSelection::Tile::isRenderable) will return false for an unconditionally-refined tile. This will ensure the tile is [Kicked](#kicking) and thus not rendered.
+
+> [!note]
+> There is one exception where `isRenderable` will return true for an unconditionally-refined tile: when that tile also does not have any children, and never will. It would be an unusual - perhaps buggy! - tileset that has such a situation, but when it does occur, we must allow the tile to render so that its sibilings, if any, may render.
+
+Also, when the children of an unconditionally-refined tile are kicked out of the render list, those tiles will _not_ also be kicked out of the load queue, even if the [Loading Descendant Limit](#loading-descendant-limit) is exceeded. Because the unconditionally-refined tile will never become renderable, failing to load its children would result in the entire subtree never becoming renderable.
+
+When [Forbid Holes](#forbid-holes) is enabled, `_visitTileIfNeeded` will always visit unconditionally-refined tiles, even if they're culled. This is necessary because the non-renderable, unconditionally-refined tile would otherwise block renderable siblings from rendering, too. By visiting the unconditionally-refined tile, we allow its children to load, and thereby allow the subtree to become renderable.
+
+## External Tilesets and Implicit Tiles {#external-tilesets-and-implicit-tilesets}
+
 ## Additional Topics Not Yet Covered {#additional-topics}
 
 Here are some additional selection algorithm topics that are not yet covered here, but should be in the future:
 
 * Unconditionally-Refined Tiles
 * Occlusion Culling
-* External Tilesets and Implicit Tiles
 * Additive Refinement
