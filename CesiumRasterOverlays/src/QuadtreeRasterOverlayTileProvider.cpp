@@ -680,7 +680,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   target.pixelData.resize(size_t(
       target.width * target.height * target.channels * target.bytesPerChannel));
 
-  for (auto& image : images) {
+  for (const auto& image : images) {
     if (!image.pValue) {
       continue;
     }
@@ -704,7 +704,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   }
 
   size_t combinedCreditsCount = 0;
-  for (auto& image : images) {
+  for (const auto& image : images) {
     if (!image.pValue) {
       continue;
     }
@@ -717,7 +717,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   }
 
   result.credits.reserve(combinedCreditsCount);
-  for (auto& image : images) {
+  for (const auto& image : images) {
     if (!image.pValue) {
       continue;
     }
