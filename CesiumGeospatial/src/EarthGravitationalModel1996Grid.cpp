@@ -2,9 +2,11 @@
 #include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
 #include <CesiumUtility/Math.h>
 
-#include <algorithm>
-#include <filesystem>
-#include <fstream>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <span>
+#include <utility>
 #include <vector>
 
 using namespace CesiumUtility;

@@ -1,6 +1,8 @@
-#include "CesiumAsync/HttpHeaders.h"
+#include <CesiumAsync/HttpHeaders.h>
 
 #include <algorithm>
+#include <cctype>
+#include <string>
 
 namespace CesiumAsync {
 struct NocaseCompare {
