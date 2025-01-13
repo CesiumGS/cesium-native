@@ -93,165 +93,28 @@ private:
 
 namespace {
 
-std::time_t convertHttpDateToTime(const std::string& httpDate) {
-  std::tm tm = {};
-  std::stringstream ss(httpDate);
-  ss >> std::get_time(&tm, "%a, %d %b %Y %H:%M:%S");
-  return internalTimegm(&tm);
-}
+std::time_t convertHttpDateToTime(const std::string& httpDate);
 
-bool isCacheStale(const CacheItem& cacheItem) noexcept {
-  const std::time_t currentTime = std::time(nullptr);
-  return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
-}
+bool shouldRevalidateCache(const CacheItem& cacheItem);
 
-bool shouldRevalidateCache(const CacheItem& cacheItem) {
-  std::optional<ResponseCacheControl> cacheControl =
-      ResponseCacheControl::parseFromResponseHeaders(
-          cacheItem.cacheResponse.headers);
-  if (cacheControl && cacheControl->noCache())
-    return true;
-
-  // Always revalidate if cache is stale. We always assume online scenarios.
-  // A must-revalidate directive doesn't change this logic.
-  return isCacheStale(cacheItem);
-}
+bool isCacheStale(const CacheItem& cacheItem) noexcept;
 
 bool shouldCacheRequest(
     const IAssetRequest& request,
-    const std::optional<ResponseCacheControl>& cacheControl) {
-  // no response then no cache
-  const IAssetResponse* pResponse = request.response();
-  if (!pResponse) {
-    return false;
-  }
+    const std::optional<ResponseCacheControl>& cacheControl);
 
-  // only cache GET method
-  if (request.method() != "GET") {
-    return false;
-  }
-
-  // check if response status code is cacheable
-  const uint16_t statusCode = pResponse->statusCode();
-  if (statusCode != 200 && // status OK
-      statusCode != 201 && // status Created
-      statusCode != 202 && // status Accepted
-      statusCode != 203 && // status Non-Authoritive Information
-      statusCode != 204 && // status No-Content
-      statusCode != 205 && // status Reset-Content
-      statusCode != 304)   // status Not-Modifed
-  {
-    return false;
-  }
-
-  const HttpHeaders& headers = pResponse->headers();
-  HttpHeaders::const_iterator expiresHeader = headers.find("Expires");
-  bool expiresExists = expiresHeader != headers.end();
-
-  //
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
-  //
-  // The no-store response directive indicates that any caches of any kind
-  // (private or shared) should not store this response.
-  if (cacheControl && cacheControl->noStore())
-    return false;
-
-  //
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
-  //
-  // If there is a Cache-Control header with the max-age or s-maxage directive
-  // in the response, the Expires header is ignored
-  bool preferCacheControl = false;
-
-  // If Cache-Control expiration is in the future, definitely cache. But we
-  // might be able to cache even if it's not.
-  if (cacheControl) {
-    if (cacheControl->maxAgeExists()) {
-      preferCacheControl = true;
-      if (cacheControl->maxAgeValue() > 0)
-        return true;
-    } else if (cacheControl->sharedMaxAgeExists()) {
-      preferCacheControl = true;
-      if (cacheControl->sharedMaxAgeValue() > 0)
-        return true;
-    }
-  }
-
-  // If Expires is in the future, definitely cache. But we might be able to
-  // cache even if it's not.
-  if (!preferCacheControl && expiresExists) {
-    bool alreadyExpired = std::difftime(
-                              convertHttpDateToTime(expiresHeader->second),
-                              std::time(nullptr)) <= 0.0;
-    if (!alreadyExpired)
-      return true;
-  }
-
-  // If we have a way to revalidate, we can store
-  bool hasEtag = headers.find("ETag") != headers.end();
-  bool hasLastModifiedEtag = headers.find("Last-Modified") != headers.end();
-  if (hasEtag || hasLastModifiedEtag)
-    return true;
-
-  // Else don't store it
-  return false;
-}
-
-std::string calculateCacheKey(const IAssetRequest& request) {
-  // TODO: more complete cache key
-  return request.url();
-}
+std::string calculateCacheKey(const IAssetRequest& request);
 
 std::time_t calculateExpiryTime(
     const IAssetRequest& request,
-    const std::optional<ResponseCacheControl>& cacheControl) {
-
-  //
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
-  //
-  // If there is a Cache-Control header with the max-age or s-maxage directive
-  // in the response, the Expires header is ignored
-  bool preferCacheControl =
-      cacheControl &&
-      (cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists());
-
-  if (preferCacheControl) {
-    int maxAgeValue =
-        cacheControl->maxAgeExists() ? cacheControl->maxAgeValue() : 0;
-    return std::time(nullptr) + maxAgeValue;
-  } else {
-    const IAssetResponse* pResponse = request.response();
-    const HttpHeaders& responseHeaders = pResponse->headers();
-    HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
-    if (expiresHeader != responseHeaders.end())
-      return convertHttpDateToTime(expiresHeader->second);
-
-    return std::time(nullptr);
-  }
-}
+    const std::optional<ResponseCacheControl>& cacheControl);
 
 std::shared_ptr<IAssetRequest> updateCacheItem(
     std::string&& url,
     std::vector<IAssetAccessor::THeader>&& headers,
     CacheItem&& cacheItem,
-    const IAssetRequest& request) {
-  const IAssetResponse* pResponse = request.response();
-  if (pResponse) {
-    // Copy the response headers from the new request into the cacheItem so that
-    // they're included in the new response. This is particularly important for
-    // Expires headers and the like.
-    for (const auto& pair : pResponse->headers()) {
-      cacheItem.cacheResponse.headers[pair.first] = pair.second;
-    }
-  }
+    const IAssetRequest& request);
 
-  return std::make_shared<CacheAssetRequest>(
-      std::move(url),
-      HttpHeaders(
-          std::make_move_iterator(headers.begin()),
-          std::make_move_iterator(headers.end())),
-      std::move(cacheItem));
-}
 } // namespace
 
 CachingAssetAccessor::CachingAssetAccessor(
@@ -438,4 +301,169 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::request(
 }
 
 void CachingAssetAccessor::tick() noexcept { _pAssetAccessor->tick(); }
+
+namespace {
+
+bool shouldRevalidateCache(const CacheItem& cacheItem) {
+  std::optional<ResponseCacheControl> cacheControl =
+      ResponseCacheControl::parseFromResponseHeaders(
+          cacheItem.cacheResponse.headers);
+  if (cacheControl && cacheControl->noCache())
+    return true;
+
+  // Always revalidate if cache is stale. We always assume online scenarios.
+  // A must-revalidate directive doesn't change this logic.
+  return isCacheStale(cacheItem);
+}
+
+bool isCacheStale(const CacheItem& cacheItem) noexcept {
+  const std::time_t currentTime = std::time(nullptr);
+  return std::difftime(cacheItem.expiryTime, currentTime) < 0.0;
+}
+
+bool shouldCacheRequest(
+    const IAssetRequest& request,
+    const std::optional<ResponseCacheControl>& cacheControl) {
+  // no response then no cache
+  const IAssetResponse* pResponse = request.response();
+  if (!pResponse) {
+    return false;
+  }
+
+  // only cache GET method
+  if (request.method() != "GET") {
+    return false;
+  }
+
+  // check if response status code is cacheable
+  const uint16_t statusCode = pResponse->statusCode();
+  if (statusCode != 200 && // status OK
+      statusCode != 201 && // status Created
+      statusCode != 202 && // status Accepted
+      statusCode != 203 && // status Non-Authoritive Information
+      statusCode != 204 && // status No-Content
+      statusCode != 205 && // status Reset-Content
+      statusCode != 304)   // status Not-Modifed
+  {
+    return false;
+  }
+
+  const HttpHeaders& headers = pResponse->headers();
+  HttpHeaders::const_iterator expiresHeader = headers.find("Expires");
+  bool expiresExists = expiresHeader != headers.end();
+
+  //
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+  //
+  // The no-store response directive indicates that any caches of any kind
+  // (private or shared) should not store this response.
+  if (cacheControl && cacheControl->noStore())
+    return false;
+
+  //
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
+  //
+  // If there is a Cache-Control header with the max-age or s-maxage directive
+  // in the response, the Expires header is ignored
+  bool preferCacheControl = false;
+
+  // If Cache-Control expiration is in the future, definitely cache. But we
+  // might be able to cache even if it's not.
+  if (cacheControl) {
+    if (cacheControl->maxAgeExists()) {
+      preferCacheControl = true;
+      if (cacheControl->maxAgeValue() > 0)
+        return true;
+    } else if (cacheControl->sharedMaxAgeExists()) {
+      preferCacheControl = true;
+      if (cacheControl->sharedMaxAgeValue() > 0)
+        return true;
+    }
+  }
+
+  // If Expires is in the future, definitely cache. But we might be able to
+  // cache even if it's not.
+  if (!preferCacheControl && expiresExists) {
+    bool alreadyExpired = std::difftime(
+                              convertHttpDateToTime(expiresHeader->second),
+                              std::time(nullptr)) <= 0.0;
+    if (!alreadyExpired)
+      return true;
+  }
+
+  // If we have a way to revalidate, we can store
+  bool hasEtag = headers.find("ETag") != headers.end();
+  bool hasLastModifiedEtag = headers.find("Last-Modified") != headers.end();
+  if (hasEtag || hasLastModifiedEtag)
+    return true;
+
+  // Else don't store it
+  return false;
+}
+
+std::string calculateCacheKey(const IAssetRequest& request) {
+  // TODO: more complete cache key
+  return request.url();
+}
+
+std::time_t calculateExpiryTime(
+    const IAssetRequest& request,
+    const std::optional<ResponseCacheControl>& cacheControl) {
+
+  //
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
+  //
+  // If there is a Cache-Control header with the max-age or s-maxage directive
+  // in the response, the Expires header is ignored
+  bool preferCacheControl =
+      cacheControl &&
+      (cacheControl->maxAgeExists() || cacheControl->sharedMaxAgeExists());
+
+  if (preferCacheControl) {
+    int maxAgeValue =
+        cacheControl->maxAgeExists() ? cacheControl->maxAgeValue() : 0;
+    return std::time(nullptr) + maxAgeValue;
+  } else {
+    const IAssetResponse* pResponse = request.response();
+    const HttpHeaders& responseHeaders = pResponse->headers();
+    HttpHeaders::const_iterator expiresHeader = responseHeaders.find("Expires");
+    if (expiresHeader != responseHeaders.end())
+      return convertHttpDateToTime(expiresHeader->second);
+
+    return std::time(nullptr);
+  }
+}
+
+std::shared_ptr<IAssetRequest> updateCacheItem(
+    std::string&& url,
+    std::vector<IAssetAccessor::THeader>&& headers,
+    CacheItem&& cacheItem,
+    const IAssetRequest& request) {
+  const IAssetResponse* pResponse = request.response();
+  if (pResponse) {
+    // Copy the response headers from the new request into the cacheItem so that
+    // they're included in the new response. This is particularly important for
+    // Expires headers and the like.
+    for (const auto& pair : pResponse->headers()) {
+      cacheItem.cacheResponse.headers[pair.first] = pair.second;
+    }
+  }
+
+  return std::make_shared<CacheAssetRequest>(
+      std::move(url),
+      HttpHeaders(
+          std::make_move_iterator(headers.begin()),
+          std::make_move_iterator(headers.end())),
+      std::move(cacheItem));
+}
+
+std::time_t convertHttpDateToTime(const std::string& httpDate) {
+  std::tm tm = {};
+  std::stringstream ss(httpDate);
+  ss >> std::get_time(&tm, "%a, %d %b %Y %H:%M:%S");
+  return internalTimegm(&tm);
+}
+
+} // namespace
+
 } // namespace CesiumAsync
