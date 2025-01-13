@@ -252,7 +252,10 @@ GltfReaderResult readBinaryGltf(
 }
 
 void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
-  CESIUM_ASSERT(readGltf.model.has_value());
+  if (!readGltf.model) {
+    return;
+  }
+
   Model& model = readGltf.model.value();
 
   auto extFeatureMetadataIter = std::find(
