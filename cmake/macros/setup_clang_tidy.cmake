@@ -74,14 +74,18 @@ function(setup_clang_tidy)
         # Generate a CMake target that runs clang-tidy by itself
         # `run-clang-tidy` is a python script that comes with llvm that runs clang-tidy in parallel over a compile_commands.json
         # See: https://clang.llvm.org/extra/doxygen/run-clang-tidy_8py_source.html
-        get_compiler_tool_with_correct_version(
-            TOOL_NAME
-            "run-clang-tidy"
-            TOOLCHAIN_NAME
-            "Clang"
-            RESULT_TOOL_PATH
-            CLANG_TIDY_RUNNER_PATH)
+        if(NOT CLANG_TIDY_RUNNER_PATH)
+            get_compiler_tool_with_correct_version(
+                TOOL_NAME
+                "run-clang-tidy"
+                TOOLCHAIN_NAME
+                "Clang"
+                RESULT_TOOL_PATH
+                CLANG_TIDY_RUNNER_PATH)
+        endif()
         if(CLANG_TIDY_RUNNER_PATH)
+            message(STATUS "Found run-clang-tidy: ${CLANG_TIDY_RUNNER_PATH}")
+
             add_custom_target(
                 clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} -clang-tidy-binary ${CLANG_TIDY_PATH} -p
                 ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
@@ -91,6 +95,8 @@ function(setup_clang_tidy)
                 ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
             )
         else()
+            message(WARNING "Could not find run-clang-tidy. clang-tidy will still work, but it will run very slowly.")
+
             # run-clang-tidy was not found, so call clang-tidy directly.
             # this takes a lot longer because it's not parallelized.
             set(SOURCE_EXTENSIONS

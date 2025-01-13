@@ -21,6 +21,7 @@ This guide contains the basic setup information for developers looking to work w
 - [Generate Documentation](#generate-documentation)
 - [Regenerate glTF and 3D Tiles classes](#regenerate-gltf-and-3d-tiles-classes)
 - [Regenerate Dependency Graphs](#regenerate-dependency-graphs)
+- [Run clang-tidy](#run-clang-tidy)
 
 <!--! \endcond -->
 
@@ -113,3 +114,34 @@ cd tools/dep-graph-gen
 npm install
 ```
 * From the `tools/dep-graph-gen` directory, run `npm run generate-dep-graph` to regenerate the graphs.
+
+## Run clang-tidy
+
+We use [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) to help improve the quality of the code, and an automated process that runs on every commit ensures that there are no clang-tidy warnings or errors. To run it locally, follow the instructions for your system.
+
+### macOS
+
+1. To get clang-tidy, install llvm 19+. The easiest way is via Homebrew:
+
+```
+brew install llvm
+```
+
+2. Installing llvm via Homebrew does _not_ add it to your path, so that it doesn't conflict with Xcode. So, we need to specify its location explicitly when running cmake Cesium Native's configure for use with clang-tidy:
+
+```
+cmake -B build -S . -DCLANG_TIDY_PATH=$(brew --prefix llvm)/bin/clang-tidy -DCLANG_TIDY_RUNNER_PATH=$(brew --prefix llvm)/bin/run-clang-tidy
+```
+
+3. Next, we run the clang-tidy target of Cesium Native's cmake build, which will run clang-tidy. clang-tidy produces a lot of not-very-useful output, so we send it to a file instead of the console:
+
+```
+cmake --build build-tidy --target clang-tidy > clang-tidy.log
+```
+
+4. Finally, we use `sed` to extract the errors and warnings from the log:
+
+```
+sed -n '/error:/,/^$/p' clang-tidy.log
+sed -n '/warning:/,/^$/p' clang-tidy.log
+```
