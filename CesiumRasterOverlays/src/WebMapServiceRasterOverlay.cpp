@@ -312,8 +312,7 @@ WebMapServiceRasterOverlay::createTileProvider(
            pLogger,
            options = this->_options,
            url = this->_baseUrl,
-           headers =
-               this->_headers](std::shared_ptr<IAssetRequest>&& pRequest)
+           headers = this->_headers](std::shared_ptr<IAssetRequest>&& pRequest)
               -> CreateTileProviderResult {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
