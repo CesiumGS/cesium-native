@@ -82,7 +82,7 @@ function(setup_clang_tidy)
             RESULT_TOOL_PATH
             CLANG_TIDY_RUNNER_PATH)
         list(APPEND CLANG_TIDY_RUNNER_PARAMS -extra-arg=-Wno-unknown-warning-option)
-        list(APPEND CLANG_TIDY_RUNNER_PARAMS -j14)
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -j${CESIUM_CLANG_TIDY_USE_THREADS})
         list(APPEND CLANG_TIDY_RUNNER_PARAMS -clang-tidy-binary ${CLANG_TIDY_PATH})
         list(APPEND CLANG_TIDY_RUNNER_PARAMS -p ${_PROJECT_BUILD_DIRECTORY}) # path that contains a compile_commands.json
         list(APPEND CLANG_TIDY_RUNNER_PARAMS "\".*(src\/|include\/).*\"")
