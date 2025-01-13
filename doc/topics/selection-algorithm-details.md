@@ -199,7 +199,7 @@ _Forbid Holes_ mode operates via a small change in `_visitTileIfNeeded`. Normall
 A tile that is "unconditionally refined" will always be _REFINED_, it will never be _RENDERED_. We can think of such a tile as having infinite geometric and screen-space error. Unconditionally-refined tiles are used in the following situations:
 
 1. The `_pRootTile` held by the `TilesetContentManager`. This is root tile of the entire bounding-volume hierarchy. For a standard 3D Tiles `tileset.json` tileset, the root tile defined in the `tileset.json` is the single child of this `_pRootTile`.
-2. Tiles whose "content" is an [external tileset](#external-tilesets-and-implicit-tilesets).
+2. Tiles whose "content" is an [external tileset](https://github.com/CesiumGS/3d-tiles/tree/main/specification#core-external-tilesets).
 3. Tiles that have a geometric error that is higher than their parent's.
 
 In all three cases, the tile flag is set with a call to [Tile::setUnconditionallyRefine](\ref Cesium3DTilesSelection::Tile::setUnconditionallyRefine).
@@ -215,14 +215,22 @@ To start, [Tile::isRenderable](\ref Cesium3DTilesSelection::Tile::isRenderable) 
 
 Also, when the children of an unconditionally-refined tile are kicked out of the render list, those tiles will _not_ also be kicked out of the load queue, even if the [Loading Descendant Limit](#loading-descendant-limit) is exceeded. Because the unconditionally-refined tile will never become renderable, failing to load its children would result in the entire subtree never becoming renderable.
 
-When [Forbid Holes](#forbid-holes) is enabled, `_visitTileIfNeeded` will always visit unconditionally-refined tiles, even if they're culled. This is necessary because the non-renderable, unconditionally-refined tile would otherwise block renderable siblings from rendering, too. By visiting the unconditionally-refined tile, we allow its children to load, and thereby allow the subtree to become renderable.
+Finally, when [Forbid Holes](#forbid-holes) is enabled, `_visitTileIfNeeded` will always visit unconditionally-refined tiles, even if they're culled. This is necessary because the non-renderable, unconditionally-refined tile would otherwise block renderable siblings from rendering, too. By visiting the unconditionally-refined tile, we allow its children to load, and thereby allow the subtree to become renderable.
 
-## External Tilesets and Implicit Tiles {#external-tilesets-and-implicit-tilesets}
+## Implicit Tilesets {#implicit-tilesets}
+
+The tile selection algorithm selects tiles from an explicit representation of the bounding-volume hierarchy. Every tile in the tileset is represented as a [Tile](\ref Cesium3DTilesSelection::Tile) instance. Starting with 3D Tiles 1.1, the bounding-volume hierarchy may instead be defined _implicitly_ using [Implicit Tiling](https://github.com/CesiumGS/3d-tiles/tree/main/specification#core-implicit-tiling). This is much more efficient representation when the bounding-volume hierarchy has a uniform subdivision structure.
+
+> [!note]
+> The older `layer.json` / [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) terrain format also uses a form of implicit tiling.
+
+Cesium Native supports implicit tiling by lazily transforming the implicit representation into an explicit one as individual tiles are needed. This happens in the `TilesetContentManager::createLatentChildrenIfNecessary` method, called for each tile near the top of `_visitTileIfNeeded`. This method attempts to create explicit tile instances for the implicitly-defined children of the current tile by invoking [TilesetContentLoader::createTileChildren](\ref Cesium3DTilesSelection::TilesetContentLoader::createTileChildren).
+
+Implicit loaders, such as `ImplicitQuadtreeLoader`, `ImplicitOctreeLoader`, and `LayerJsonTerrainLoader`, implement this method by determining in their own way whether this tile has any children, and creating them if it does. In some cases, extra asynchronous work, like downloading subtree availability files, may be necessary to determine if children exist. In that case, the `createTileChildren` will return [TileLoadResultState::RetryLater](\ref Cesium3DTilesSelection::TileLoadResultState::RetryLater) to signal that children may exist, but they can't be created yet. The selection algorithm will try again next frame if the tile's children are still needed.
 
 ## Additional Topics Not Yet Covered {#additional-topics}
 
 Here are some additional selection algorithm topics that are not yet covered here, but should be in the future:
 
-* Unconditionally-Refined Tiles
 * Occlusion Culling
 * Additive Refinement
