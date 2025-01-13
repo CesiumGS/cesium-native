@@ -57,6 +57,10 @@ jobs:
       - name: List clang-tidy warnings & errors
         run: |
           sed -n '/\(error\|warning\):/,/^$/p' output.log
+          # On macOS, the above doesn't work because the escaped pipe is not supported.
+          # Instead, use two commands:
+          #   sed -n '/error:/,/^$/p' output.log
+          #   sed -n '/warning:/,/^$/p' output.log
 
   Documentation:
     runs-on: ubuntu-22.04

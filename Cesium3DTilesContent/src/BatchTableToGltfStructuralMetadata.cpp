@@ -37,6 +37,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_set>
 #include <utility>
@@ -724,19 +725,22 @@ void updateExtensionWithJsonStringProperty(
       rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
       continue;
     }
-    if (!it->IsString() || (it->IsNull() && !noDataValue)) {
-      // Everything else that is not string will be serialized by json
-      rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
-      it->Accept(writer);
-    } else {
+    if (it->IsString() || (it->IsNull() && noDataValue)) {
       // Because serialized string json will add double quotations in the
       // buffer which is not needed by us, we will manually add the string to
       // the buffer
-      const auto& rapidjsonStr = it->GetString();
-      rapidjsonStrBuffer.Reserve(it->GetStringLength());
-      for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
-        rapidjsonStrBuffer.PutUnsafe(rapidjsonStr[j]);
+      std::string_view value =
+          it->IsNull()
+              ? *noDataValue
+              : std::string_view(it->GetString(), it->GetStringLength());
+      rapidjsonStrBuffer.Reserve(value.size());
+      for (rapidjson::SizeType j = 0; j < value.size(); ++j) {
+        rapidjsonStrBuffer.PutUnsafe(value[j]);
       }
+    } else {
+      // Everything else that is not string will be serialized by json
+      rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
+      it->Accept(writer);
     }
 
     rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
