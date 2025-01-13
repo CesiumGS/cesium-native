@@ -621,17 +621,20 @@ function formatWriterPropertyImpl(property) {
   const isVector = type.startsWith("std::vector");
   const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
+  const isPointer = type.startsWith("CesiumUtility::IntrusivePointer");
 
   const hasDefaultValueGuard =
     !isId && !isRequiredEnum && defaultValue !== undefined;
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
+  const hasPointerGuard = isPointer;
   const hasNegativeIndexGuard = isId;
   const hasGuard =
     hasDefaultValueGuard ||
     hasEmptyGuard ||
     hasOptionalGuard ||
+    hasPointerGuard ||
     hasNegativeIndexGuard;
 
   if (hasDefaultVectorGuard) {
@@ -653,7 +656,7 @@ function formatWriterPropertyImpl(property) {
     result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
   } else if (hasNegativeIndexGuard) {
     result += `if (obj.${property.cppSafeName} > -1) {\n`;
-  } else if (hasOptionalGuard) {
+  } else if (hasOptionalGuard || hasPointerGuard) {
     result += `if (obj.${property.cppSafeName}) {\n`;
   }
 
