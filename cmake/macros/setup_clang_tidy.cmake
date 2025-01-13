@@ -52,25 +52,26 @@ function(setup_clang_tidy)
 
     # Generate compile_commands.json for clang-tidy to use.
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+    # CMake has built-in support for running clang-tidy during the build
+    if(_ENABLE_CLANG_TIDY_ON_BUILD)
+        message(STATUS "CESIUM_ENABLE_CLANG_TIDY_ON_BUILD enabled, clang-tidy will be run for every build command")
+        if(MSVC)
+            # We need to manually tell clang-tidy that exceptions are enabled,
+            # as per https://gitlab.kitware.com/cmake/cmake/-/issues/20512#note_722771
+            set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=/EHsc)
+        else()
+            # If not set, when building for GCC clang-tidy will pass any warning flags to its underlying clang,
+            # causing an error if GCC has a flag that clang does not.
+            set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=-Wno-unknown-warning-option)
+        endif()
+        set(CMAKE_CXX_CLANG_TIDY
+            ${CMAKE_CXX_CLANG_TIDY}
+            PARENT_SCOPE)
+    endif()
     
     # compile_commands.json, which clang-tidy requires, is only generated on when CMAKE_GENERATOR is Ninja or Unix Makefiles.
     if(CMAKE_GENERATOR MATCHES "Ninja" OR CMAKE_GENERATOR MATCHES "Unix Makefiles")
-        # CMake has built-in support for running clang-tidy during the build
-        if(_ENABLE_CLANG_TIDY_ON_BUILD)
-            if(MSVC)
-                # We need to manually tell clang-tidy that exceptions are enabled,
-                # as per https://gitlab.kitware.com/cmake/cmake/-/issues/20512#note_722771
-                set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=/EHsc)
-            else()
-                # If not set, when building for GCC clang-tidy will pass any warning flags to its underlying clang,
-                # causing an error if GCC has a flag that clang does not.
-                set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_PATH} --extra-arg=-Wno-unknown-warning-option)
-            endif()
-            set(CMAKE_CXX_CLANG_TIDY
-                ${CMAKE_CXX_CLANG_TIDY}
-                PARENT_SCOPE)
-        endif()
-
         # Generate a CMake target that runs clang-tidy by itself
         # `run-clang-tidy` is a python script that comes with llvm that runs clang-tidy in parallel over a compile_commands.json
         # See: https://clang.llvm.org/extra/doxygen/run-clang-tidy_8py_source.html
