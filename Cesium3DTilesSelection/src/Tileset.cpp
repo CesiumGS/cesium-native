@@ -1333,15 +1333,16 @@ Tileset::TraversalDetails Tileset::_visitTile(
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
+  const bool refineForSse = !meetsSse && !ancestorMeetsSse;
 
   // Determine whether to REFINE or RENDER. Note that even if this tile is
   // initially marked for RENDER here, it may later switch to REFINE as a
   // result of `mustContinueRefiningToDeeperTiles`.
-  VisitTileAction action = VisitTileAction::Render;
-  if (unconditionallyRefine)
+  VisitTileAction action;
+  if (unconditionallyRefine || refineForSse)
     action = VisitTileAction::Refine;
-  else if (!meetsSse && !ancestorMeetsSse)
-    action = VisitTileAction::Refine;
+  else
+    action = VisitTileAction::Render;
 
   const TileSelectionState lastFrameSelectionState =
       tile.getLastSelectionState();
