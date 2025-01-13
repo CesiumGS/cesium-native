@@ -27,10 +27,10 @@ struct CESIUM3DTILES_API ImplicitTiling final
    * within the tileset.
    */
   struct SubdivisionScheme {
-    /** @brief The QUADTREE value. */
+    /** @brief `QUADTREE` */
     inline static const std::string QUADTREE = "QUADTREE";
 
-    /** @brief The OCTREE value. */
+    /** @brief `OCTREE` */
     inline static const std::string OCTREE = "OCTREE";
   };
 

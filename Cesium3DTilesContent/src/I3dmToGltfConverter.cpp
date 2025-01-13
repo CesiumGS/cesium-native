@@ -166,29 +166,17 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
 
 /*
   Calculate the rotation quaternion described by the up, right vectors passed
-  in NORMAL_UP and NORMAL_RIGHT. This is composed of two rotations:
-   + The rotation that takes the up vector to its new position;
-   + The rotation around the new up vector that takes the right vector to its
-  new position.
+  in NORMAL_UP and NORMAL_RIGHT.
 
-  I like to think of each rotation as describing a coordinate frame. The
-  calculation of the second rotation must take place within the first frame.
-
-  The rotations are calculated by finding the rotation that takes one vector to
-  another.
+  There may be a faster method that avoids creating a rotation matrix, but it is
+  hard to get the exceptional cases correct e.g., rotations of 180 degrees about
+  an axis.
  */
 
 glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
-  // First rotation: up
-  auto upRot = CesiumUtility::Math::rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
-  // We can rotate a point vector by a quaternion using q * (0, v) *
-  // conj(q). But here we are doing an inverse rotation of the right vector into
-  // the "up frame."
-  glm::quat temp = glm::conjugate(upRot) * glm::quat(0.0f, right) * upRot;
-  glm::vec3 innerRight(temp.x, temp.y, temp.z);
-  glm::quat rightRot =
-      CesiumUtility::Math::rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
-  return upRot * rightRot;
+  glm::vec3 forward = cross(right, up);
+  glm::mat3x3 rotMat(right, up, forward);
+  return glm::quat(rotMat);
 }
 
 struct ConvertedI3dm {

@@ -24,13 +24,23 @@ struct CESIUMGLTF_API AnimationSampler final
    * @brief Known values for Interpolation algorithm.
    */
   struct Interpolation {
-    /** @brief The LINEAR value. */
+    /** @brief The animated values are linearly interpolated between keyframes.
+     * When targeting a rotation, spherical linear interpolation (slerp)
+     * **SHOULD** be used to interpolate quaternions. The number of output
+     * elements **MUST** equal the number of input elements. */
     inline static const std::string LINEAR = "LINEAR";
 
-    /** @brief The STEP value. */
+    /** @brief The animated values remain constant to the output of the first
+     * keyframe, until the next keyframe. The number of output elements **MUST**
+     * equal the number of input elements. */
     inline static const std::string STEP = "STEP";
 
-    /** @brief The CUBICSPLINE value. */
+    /** @brief The animation's interpolation is computed using a cubic spline
+     * with specified tangents. The number of output elements **MUST** equal
+     * three times the number of input elements. For each input element, the
+     * output stores three elements, an in-tangent, a spline vertex, and an
+     * out-tangent. There **MUST** be at least two keyframes when using this
+     * interpolation. */
     inline static const std::string CUBICSPLINE = "CUBICSPLINE";
   };
 

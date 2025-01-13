@@ -29,16 +29,16 @@ struct CESIUMGLTF_API AnimationChannelTarget final
    * along the X, Y, and Z axes.
    */
   struct Path {
-    /** @brief The translation value. */
+    /** @brief `translation` */
     inline static const std::string translation = "translation";
 
-    /** @brief The rotation value. */
+    /** @brief `rotation` */
     inline static const std::string rotation = "rotation";
 
-    /** @brief The scale value. */
+    /** @brief `scale` */
     inline static const std::string scale = "scale";
 
-    /** @brief The weights value. */
+    /** @brief `weights` */
     inline static const std::string weights = "weights";
   };
 

@@ -1468,7 +1468,16 @@ Tileset::TraversalDetails Tileset::_visitTile(
       lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
       pRenderContent && pRenderContent->getLodTransitionFadePercentage() < 1.0f;
 
-  if (kickDueToNonReadyDescendant || kickDueToTileFadingIn) {
+  // Only kick the descendants of this tile if it is renderable, or if we've
+  // exceeded the loadingDescendantLimit. It's pointless to kick the descendants
+  // of a tile that is not yet loaded, because it means we will still have a
+  // hole, and quite possibly a bigger one.
+  bool wantToKick = kickDueToNonReadyDescendant || kickDueToTileFadingIn;
+  bool willKick = wantToKick && (traversalDetails.notYetRenderableCount >
+                                     this->_options.loadingDescendantLimit ||
+                                 tile.isRenderable());
+
+  if (willKick) {
     // Kick all descendants out of the render list and render this tile instead
     // Continue to load them though!
     queuedForLoad = _kickDescendantsAndRenderTile(

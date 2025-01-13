@@ -30,10 +30,10 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * default is to inherit from the parent tile.
    */
   struct Refine {
-    /** @brief The ADD value. */
+    /** @brief `ADD` */
     inline static const std::string ADD = "ADD";
 
-    /** @brief The REPLACE value. */
+    /** @brief `REPLACE` */
     inline static const std::string REPLACE = "REPLACE";
   };
 

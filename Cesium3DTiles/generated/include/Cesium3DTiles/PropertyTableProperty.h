@@ -27,16 +27,16 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * @brief Known values for The type of values in `arrayOffsets`.
    */
   struct ArrayOffsetType {
-    /** @brief The UINT8 value. */
+    /** @brief `UINT8` */
     inline static const std::string UINT8 = "UINT8";
 
-    /** @brief The UINT16 value. */
+    /** @brief `UINT16` */
     inline static const std::string UINT16 = "UINT16";
 
-    /** @brief The UINT32 value. */
+    /** @brief `UINT32` */
     inline static const std::string UINT32 = "UINT32";
 
-    /** @brief The UINT64 value. */
+    /** @brief `UINT64` */
     inline static const std::string UINT64 = "UINT64";
   };
 
@@ -44,16 +44,16 @@ struct CESIUM3DTILES_API PropertyTableProperty final
    * @brief Known values for The type of values in `stringOffsets`.
    */
   struct StringOffsetType {
-    /** @brief The UINT8 value. */
+    /** @brief `UINT8` */
     inline static const std::string UINT8 = "UINT8";
 
-    /** @brief The UINT16 value. */
+    /** @brief `UINT16` */
     inline static const std::string UINT16 = "UINT16";
 
-    /** @brief The UINT32 value. */
+    /** @brief `UINT32` */
     inline static const std::string UINT32 = "UINT32";
 
-    /** @brief The UINT64 value. */
+    /** @brief `UINT64` */
     inline static const std::string UINT64 = "UINT64";
   };
 

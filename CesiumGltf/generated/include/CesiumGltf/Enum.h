@@ -24,28 +24,28 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
    * @brief Known values for The type of the integer enum value.
    */
   struct ValueType {
-    /** @brief The INT8 value. */
+    /** @brief `INT8` */
     inline static const std::string INT8 = "INT8";
 
-    /** @brief The UINT8 value. */
+    /** @brief `UINT8` */
     inline static const std::string UINT8 = "UINT8";
 
-    /** @brief The INT16 value. */
+    /** @brief `INT16` */
     inline static const std::string INT16 = "INT16";
 
-    /** @brief The UINT16 value. */
+    /** @brief `UINT16` */
     inline static const std::string UINT16 = "UINT16";
 
-    /** @brief The INT32 value. */
+    /** @brief `INT32` */
     inline static const std::string INT32 = "INT32";
 
-    /** @brief The UINT32 value. */
+    /** @brief `UINT32` */
     inline static const std::string UINT32 = "UINT32";
 
-    /** @brief The INT64 value. */
+    /** @brief `INT64` */
     inline static const std::string INT64 = "INT64";
 
-    /** @brief The UINT64 value. */
+    /** @brief `UINT64` */
     inline static const std::string UINT64 = "UINT64";
   };
 
