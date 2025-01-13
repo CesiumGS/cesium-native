@@ -729,10 +729,13 @@ void updateExtensionWithJsonStringProperty(
       // Because serialized string json will add double quotations in the
       // buffer which is not needed by us, we will manually add the string to
       // the buffer
-      std::string_view value =
-          it->IsNull()
-              ? *noDataValue
-              : std::string_view(it->GetString(), it->GetStringLength());
+      std::string_view value;
+      if (it->IsString()) {
+        value = std::string_view(it->GetString(), it->GetStringLength());
+      } else {
+        CESIUM_ASSERT(noDataValue);
+        value = *noDataValue;
+      }
       rapidjsonStrBuffer.Reserve(value.size());
       for (rapidjson::SizeType j = 0; j < value.size(); ++j) {
         rapidjsonStrBuffer.PutUnsafe(value[j]);

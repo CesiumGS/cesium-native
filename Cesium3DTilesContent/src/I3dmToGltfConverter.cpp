@@ -18,17 +18,16 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/AttributeCompression.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/quaternion_common.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_double4.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/matrix.hpp>
