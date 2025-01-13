@@ -28,7 +28,6 @@
 #include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
-#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Tracing.h>
