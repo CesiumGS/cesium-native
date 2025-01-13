@@ -55,7 +55,7 @@ jobs:
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --target clang-tidy > output.log
       - name: List clang-tidy warnings & errors
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         run: |
           sed -n '/\(error\|warning\):/,/^$/p' output.log
           # On macOS, the above doesn't work because the escaped pipe is not supported.
