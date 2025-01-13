@@ -21,42 +21,6 @@ using namespace CesiumUtility;
 using namespace CesiumGeometry;
 
 namespace CesiumGeospatial {
-
-namespace {
-OrientedBoundingBox fromPlaneExtents(
-    const glm::dvec3& planeOrigin,
-    const glm::dvec3& planeXAxis,
-    const glm::dvec3& planeYAxis,
-    const glm::dvec3& planeZAxis,
-    double minimumX,
-    double maximumX,
-    double minimumY,
-    double maximumY,
-    double minimumZ,
-    double maximumZ) noexcept {
-  glm::dmat3 halfAxes(planeXAxis, planeYAxis, planeZAxis);
-
-  const glm::dvec3 centerOffset(
-      (minimumX + maximumX) / 2.0,
-      (minimumY + maximumY) / 2.0,
-      (minimumZ + maximumZ) / 2.0);
-
-  const glm::dvec3 scale(
-      (maximumX - minimumX) / 2.0,
-      (maximumY - minimumY) / 2.0,
-      (maximumZ - minimumZ) / 2.0);
-
-  const glm::dmat3 scaledHalfAxes(
-      halfAxes[0] * scale.x,
-      halfAxes[1] * scale.y,
-      halfAxes[2] * scale.z);
-
-  return OrientedBoundingBox(
-      planeOrigin + (halfAxes * centerOffset),
-      scaledHalfAxes);
-}
-} // namespace
-
 BoundingRegion::BoundingRegion(
     const GlobeRectangle& rectangle,
     double minimumHeight,
@@ -271,6 +235,41 @@ BoundingRegion BoundingRegion::computeUnion(
       glm::max(this->_maximumHeight, other._maximumHeight),
       ellipsoid);
 }
+
+namespace {
+OrientedBoundingBox fromPlaneExtents(
+    const glm::dvec3& planeOrigin,
+    const glm::dvec3& planeXAxis,
+    const glm::dvec3& planeYAxis,
+    const glm::dvec3& planeZAxis,
+    double minimumX,
+    double maximumX,
+    double minimumY,
+    double maximumY,
+    double minimumZ,
+    double maximumZ) noexcept {
+  glm::dmat3 halfAxes(planeXAxis, planeYAxis, planeZAxis);
+
+  const glm::dvec3 centerOffset(
+      (minimumX + maximumX) / 2.0,
+      (minimumY + maximumY) / 2.0,
+      (minimumZ + maximumZ) / 2.0);
+
+  const glm::dvec3 scale(
+      (maximumX - minimumX) / 2.0,
+      (maximumY - minimumY) / 2.0,
+      (maximumZ - minimumZ) / 2.0);
+
+  const glm::dmat3 scaledHalfAxes(
+      halfAxes[0] * scale.x,
+      halfAxes[1] * scale.y,
+      halfAxes[2] * scale.z);
+
+  return OrientedBoundingBox(
+      planeOrigin + (halfAxes * centerOffset),
+      scaledHalfAxes);
+}
+} // namespace
 
 /*static*/ OrientedBoundingBox BoundingRegion::_computeBoundingBox(
     const GlobeRectangle& rectangle,
