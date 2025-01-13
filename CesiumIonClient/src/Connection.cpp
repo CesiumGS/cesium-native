@@ -1,13 +1,12 @@
-#include <CesiumIonClient/Connection.h>
-
-#include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumIonClient/Geocoder.h>
 #include "fillWithRandomBytes.h"
 #include "parseLinkHeader.h"
 
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumIonClient/Connection.h>
+#include <CesiumIonClient/Geocoder.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/SpanHelper.h>
@@ -591,43 +590,47 @@ Defaults defaultsFromJson(const rapidjson::Document& json) {
 GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
   GeocoderResult result;
 
-  const rapidjson::Pointer labelPointer = rapidjson::Pointer("/properties/label");
-  const rapidjson::Pointer coordinatesPointer = rapidjson::Pointer("/geometry/coordinates");
+  const rapidjson::Pointer labelPointer =
+      rapidjson::Pointer("/properties/label");
+  const rapidjson::Pointer coordinatesPointer =
+      rapidjson::Pointer("/geometry/coordinates");
 
   auto featuresMember = json.FindMember("features");
-  if (featuresMember != json.MemberEnd() &&
-      featuresMember->value.IsArray()) {
+  if (featuresMember != json.MemberEnd() && featuresMember->value.IsArray()) {
     auto featuresIt = featuresMember->value.GetArray();
     for (auto& feature : featuresIt) {
-      const rapidjson::Value* pLabel =
-          labelPointer.Get(feature);
+      const rapidjson::Value* pLabel = labelPointer.Get(feature);
 
       std::string label;
-      if(pLabel) {
+      if (pLabel) {
         label = JsonHelpers::getStringOrDefault(*pLabel, "");
       }
 
-      std::optional<std::vector<double>> bboxItems = JsonHelpers::getDoubles(feature, 4, "bbox");
+      std::optional<std::vector<double>> bboxItems =
+          JsonHelpers::getDoubles(feature, 4, "bbox");
       if (!bboxItems) {
         // Could be a point value.
-        const rapidjson::Value* pCoordinates =
-            coordinatesPointer.Get(feature);
+        const rapidjson::Value* pCoordinates = coordinatesPointer.Get(feature);
 
         CesiumGeospatial::Cartographic point(0, 0);
-        if (pCoordinates && pCoordinates->IsArray() && pCoordinates->Size() == 2) {
+        if (pCoordinates && pCoordinates->IsArray() &&
+            pCoordinates->Size() == 2) {
           auto coordinatesArray = pCoordinates->GetArray();
 
-          point =
-              CesiumGeospatial::Cartographic::fromDegrees(
-                  JsonHelpers::getDoubleOrDefault(coordinatesArray[0], 0),
-                  JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
+          point = CesiumGeospatial::Cartographic::fromDegrees(
+              JsonHelpers::getDoubleOrDefault(coordinatesArray[0], 0),
+              JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
         }
 
         result.features.emplace_back(label, point);
       } else {
         std::vector<double>& values = bboxItems.value();
         CesiumGeospatial::GlobeRectangle rect =
-            CesiumGeospatial::GlobeRectangle::fromDegrees(values[0], values[1], values[2], values[3]);
+            CesiumGeospatial::GlobeRectangle::fromDegrees(
+                values[0],
+                values[1],
+                values[2],
+                values[3]);
 
         result.features.emplace_back(label, rect);
       }
