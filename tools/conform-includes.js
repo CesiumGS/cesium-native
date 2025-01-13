@@ -1,3 +1,14 @@
+/**
+ * Attempts to conform all `#include` directives to match the style guide.
+ * Including header files from the same directory as the current file will
+ * be formatted as #include "file.h"
+ * Including header files from other directories will be formatted as 
+ * #include <file.h>
+ * 
+ * This script should be run in the root directory of the project, 
+ * like `node tools/conform-includes.js`.
+ */
+
 const fs = require("fs");
 const path = require("path");
 
