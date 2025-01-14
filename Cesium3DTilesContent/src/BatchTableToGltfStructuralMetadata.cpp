@@ -2034,8 +2034,6 @@ template <> int32_t componentTypeFromCpp<uint32_t>() {
   return Accessor::ComponentType::UNSIGNED_INT;
 }
 
-} // namespace
-
 // encapsulation of the binary batch id data in an I3dm
 struct BatchIdSemantic {
   std::variant<
@@ -2127,8 +2125,6 @@ struct BatchIdSemantic {
         batchSpan);
   }
 };
-
-namespace {
 
 // returns an accessor ID for the added feature IDs
 int32_t
