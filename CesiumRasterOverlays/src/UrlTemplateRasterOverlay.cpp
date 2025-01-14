@@ -1,7 +1,7 @@
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumAsync/HttpHeaders.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -60,31 +60,47 @@ protected:
     const GlobeRectangle unprojectedRect =
         unprojectRectangleSimple(this->getProjection(), options.rectangle);
 
-    const std::map<std::string, std::string, CaseInsensitiveCompare> placeholdersMap {
-      { "x", std::to_string(tileID.x) },
-      { "y", std::to_string(tileID.y) },
-      { "z", std::to_string(tileID.level) },
-      {"reverseX", std::to_string(tileID.computeInvertedX(this->getTilingScheme()))},
-      {"reverseY", std::to_string(tileID.computeInvertedY(this->getTilingScheme()))},
-      {"reverseZ", std::to_string(this->getMaximumLevel() - tileID.level)},
-      {"westDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getWest()))},
-      {"southDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getSouth()))},
-      {"eastDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getEast()))},
-      {"northDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getNorth()))},
-      {"westProjected", std::to_string(Math::radiansToDegrees(options.rectangle.minimumY))},
-      {"southProjected", std::to_string(Math::radiansToDegrees(options.rectangle.minimumX))},
-      {"eastProjected", std::to_string(Math::radiansToDegrees(options.rectangle.maximumY))},
-      {"northProjected", std::to_string(Math::radiansToDegrees(options.rectangle.maximumX)) },
-      {"width", std::to_string(this->getWidth()) },
-      {"height", std::to_string(this->getHeight()) }
-    };
-    
+    const std::map<std::string, std::string, CaseInsensitiveCompare>
+        placeholdersMap{
+            {"x", std::to_string(tileID.x)},
+            {"y", std::to_string(tileID.y)},
+            {"z", std::to_string(tileID.level)},
+            {"reverseX",
+             std::to_string(tileID.computeInvertedX(this->getTilingScheme()))},
+            {"reverseY",
+             std::to_string(tileID.computeInvertedY(this->getTilingScheme()))},
+            {"reverseZ",
+             std::to_string(this->getMaximumLevel() - tileID.level)},
+            {"westDegrees",
+             std::to_string(Math::radiansToDegrees(unprojectedRect.getWest()))},
+            {"southDegrees",
+             std::to_string(
+                 Math::radiansToDegrees(unprojectedRect.getSouth()))},
+            {"eastDegrees",
+             std::to_string(Math::radiansToDegrees(unprojectedRect.getEast()))},
+            {"northDegrees",
+             std::to_string(
+                 Math::radiansToDegrees(unprojectedRect.getNorth()))},
+            {"westProjected",
+             std::to_string(
+                 Math::radiansToDegrees(options.rectangle.minimumY))},
+            {"southProjected",
+             std::to_string(
+                 Math::radiansToDegrees(options.rectangle.minimumX))},
+            {"eastProjected",
+             std::to_string(
+                 Math::radiansToDegrees(options.rectangle.maximumY))},
+            {"northProjected",
+             std::to_string(
+                 Math::radiansToDegrees(options.rectangle.maximumX))},
+            {"width", std::to_string(this->getWidth())},
+            {"height", std::to_string(this->getHeight())}};
+
     const std::string substitutedUrl = Uri::substituteTemplateParameters(
         this->_url,
-        [&placeholdersMap](
-            const std::string& placeholder) {
+        [&placeholdersMap](const std::string& placeholder) {
           auto placeholderIt = placeholdersMap.find(placeholder);
-          if(placeholderIt != placeholdersMap.end()) {
+          if (placeholderIt != placeholdersMap.end()) {
             return placeholderIt->second;
           }
           return std::string("[UNKNOWN PLACEHOLDER]");
