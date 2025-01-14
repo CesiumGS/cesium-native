@@ -1,29 +1,20 @@
-#include "CesiumGltfReader/ImageDecoder.h"
-
-#include "ModelJsonHandler.h"
-#include "applyKhrTextureTransform.h"
-#include "decodeDataUrls.h"
-#include "decodeDraco.h"
-#include "decodeMeshOpt.h"
-#include "dequantizeMeshData.h"
-#include "registerReaderExtensions.h"
-
-#include <CesiumAsync/IAssetRequest.h>
-#include <CesiumAsync/IAssetResponse.h>
-#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
-#include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumJsonReader/JsonHandler.h>
-#include <CesiumJsonReader/JsonReader.h>
-#include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
-#include <CesiumUtility/Uri.h>
 
 #include <ktx.h>
-#include <rapidjson/reader.h>
 #include <turbojpeg.h>
 #include <webp/decode.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <optional>
 #include <span>
+#include <string>
 
 #define STBI_FAILURE_USERMSG
 
@@ -52,7 +43,10 @@ bool isKtx(const std::span<const std::byte>& data) {
   const uint8_t ktxMagic[ktxMagicByteLength] =
       {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
 
-  return memcmp(data.data(), ktxMagic, ktxMagicByteLength) == 0;
+  return memcmp(
+             data.data(),
+             reinterpret_cast<const void*>(ktxMagic),
+             ktxMagicByteLength) == 0;
 }
 
 bool isWebP(const std::span<const std::byte>& data) {
@@ -275,7 +269,7 @@ ImageReaderResult ImageDecoder::readImage(
             &image.height)) {
       image.channels = 4;
       image.bytesPerChannel = 1;
-      uint8_t* pImage = NULL;
+      uint8_t* pImage = nullptr;
       const auto bufferSize = image.width * image.height * image.channels;
       image.pixelData.resize(static_cast<std::size_t>(bufferSize));
       pImage = WebPDecodeRGBAInto(
@@ -298,7 +292,7 @@ ImageReaderResult ImageDecoder::readImage(
     if (!tjDecompressHeader3(
             tjInstance,
             reinterpret_cast<const unsigned char*>(data.data()),
-            static_cast<unsigned long>(data.size()),
+            static_cast<unsigned long>(data.size()), // NOLINT
             &image.width,
             &image.height,
             &inSubsamp,
@@ -312,7 +306,7 @@ ImageReaderResult ImageDecoder::readImage(
       if (tjDecompress2(
               tjInstance,
               reinterpret_cast<const unsigned char*>(data.data()),
-              static_cast<unsigned long>(data.size()),
+              static_cast<unsigned long>(data.size()), // NOLINT
               reinterpret_cast<unsigned char*>(image.pixelData.data()),
               image.width,
               0,

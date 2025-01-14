@@ -1,10 +1,33 @@
 #include "ResponseCacheControl.h"
 
+#include <CesiumAsync/HttpHeaders.h>
+
+#include <cstddef>
 #include <map>
+#include <optional>
 #include <set>
+#include <string>
 
 namespace CesiumAsync {
-static std::string trimSpace(const std::string& str);
+namespace {
+std::string trimSpace(const std::string& str) {
+  if (str.empty()) {
+    return "";
+  }
+
+  size_t begin = 0;
+  while (str[begin] == ' ') {
+    ++begin;
+  }
+
+  size_t end = str.size() - 1;
+  while (str[end] == ' ') {
+    --end;
+  }
+
+  return str.substr(begin, end - begin + 1);
+}
+} // namespace
 
 ResponseCacheControl::ResponseCacheControl(
     bool mustRevalidate,
@@ -104,23 +127,5 @@ ResponseCacheControl::parseFromResponseHeaders(const HttpHeaders& headers) {
       maxAge,
       sharedMaxAge,
       staleWhileRevalidate);
-}
-
-std::string trimSpace(const std::string& str) {
-  if (str.empty()) {
-    return "";
-  }
-
-  size_t begin = 0;
-  while (str[begin] == ' ') {
-    ++begin;
-  }
-
-  size_t end = str.size() - 1;
-  while (str[end] == ' ') {
-    --end;
-  }
-
-  return str.substr(begin, end - begin + 1);
 }
 } // namespace CesiumAsync

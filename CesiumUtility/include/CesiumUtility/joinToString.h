@@ -41,7 +41,8 @@ joinToString(TIterator begin, TIterator end, const std::string& separator) {
  * @return The joined string.
  */
 template <class TCollection>
-std::string joinToString(TCollection collection, const std::string& separator) {
+std::string
+joinToString(const TCollection& collection, const std::string& separator) {
   return joinToString(collection.cbegin(), collection.cend(), separator);
 }
 } // namespace CesiumUtility

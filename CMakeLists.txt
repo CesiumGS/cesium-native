@@ -85,7 +85,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.42.0
+    VERSION 0.43.0
     LANGUAGES CXX C
 )
 
@@ -114,6 +114,14 @@ cmake_dependent_option(
     OFF
     CESIUM_ENABLE_CLANG_TIDY
     OFF
+)
+
+cmake_dependent_option(
+    CESIUM_CLANG_TIDY_USE_THREADS
+    "Sets the number of threads for run-clang-tidy to use."
+    14
+    CESIUM_ENABLE_CLANG_TIDY
+    1
 )
 
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
