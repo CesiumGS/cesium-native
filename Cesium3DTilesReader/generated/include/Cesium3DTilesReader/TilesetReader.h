@@ -19,7 +19,7 @@ struct Tileset;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Tileset} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Tileset "Tileset" instances from JSON.
  */
 class CESIUM3DTILESREADER_API TilesetReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of Tileset from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Tileset>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of Tileset from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<Cesium3DTiles::Tileset>>

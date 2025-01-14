@@ -3,6 +3,8 @@
 /**
  * @brief Classes for accessing terrain based on layer.json and
  * quantized-mesh-1.0.
+ *
+ * @mermaid-interactive{dependencies/CesiumQuantizedMeshTerrain}
  */
 namespace CesiumQuantizedMeshTerrain {}
 

@@ -97,18 +97,22 @@ function generate(options, schema, writers) {
              * @brief ${schema.description ? schema.description : schema.title}
              */
             struct ${namespace.toUpperCase()}_API ${name}${thisConfig.toBeInherited ? "Spec" : (thisConfig.isBaseClass ? "" : " final")} : public ${base} {
+                /**
+                 * @brief The original name of this type.
+                 */
                 static constexpr const char* TypeName = "${name}";
-                ${thisConfig.extensionName ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
+                ${thisConfig.extensionName ? `/** @brief The official name of the extension. This should be the same as its key in the \`extensions\` object. */
+                static constexpr const char* ExtensionName = "${thisConfig.extensionName}";` : ""}
 
                 ${indent(localTypes.join("\n\n"), 16)}
 
                 ${indent(
-    properties
-      .map((property) => formatProperty(property))
-      .filter(propertyText => propertyText !== undefined)
-      .join("\n\n"),
-    16
-  )}
+                  properties
+                    .map((property) => formatProperty(property))
+                    .filter(propertyText => propertyText !== undefined)
+                    .join("\n\n"),
+                  16
+                )}
 
                 /**
                  * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
@@ -200,11 +204,11 @@ function generate(options, schema, writers) {
             ${indent(readerLocalTypes.join("\n\n"), 12)}
             ${namespace}::${name}* _pObject = nullptr;
             ${indent(
-    properties
-      .map((property) => formatReaderProperty(property))
-      .join("\n"),
-    12
-  )}
+              properties
+                .map((property) => formatReaderProperty(property))
+                .join("\n"),
+              12
+            )}
           };
         }  // namespace ${readerNamespace}
   `;
@@ -246,7 +250,7 @@ function generate(options, schema, writers) {
     namespace ${readerNamespace} {
 
     /**
-     * @brief Reads {@link ${name}} instances from JSON.
+     * @brief Reads \\ref ${namespace}::${name} "${name}" instances from JSON.
      */
     class ${readerNamespace.toUpperCase()}_API ${name}Reader {
     public:
@@ -276,7 +280,7 @@ function generate(options, schema, writers) {
       /**
        * @brief Reads an instance of ${name} from a rapidJson::Value.
        *
-       * @param data The buffer from which to read the instance.
+       * @param value The value from which to read the instance.
        * @return The result of reading the instance.
        */
       CesiumJsonReader::ReadJsonResult<${namespace}::${name}> readFromJson(const rapidjson::Value& value) const;
@@ -284,7 +288,7 @@ function generate(options, schema, writers) {
       /**
        * @brief Reads an array of instances of ${name} from a rapidJson::Value.
        *
-       * @param data The buffer from which to read the array of instances.
+       * @param value The value from which to read the array of instances.
        * @return The result of reading the array of instances.
        */
       CesiumJsonReader::ReadJsonResult<std::vector<${namespace}::${name}>> readArrayFromJson(const rapidjson::Value& value) const;
@@ -386,11 +390,11 @@ function generate(options, schema, writers) {
 
           ${properties.length > 0 ? `
           ${indent(
-    properties
-      .map((property) => formatReaderPropertyImpl(property))
-      .join("\n"),
-    10
-  )}` : `(void)o;`}
+            properties
+              .map((property) => formatReaderPropertyImpl(property))
+              .join("\n"),
+            10
+          )}` : `(void)o;`}
 
           return this->readObjectKey${NameFormatters.removeNamespace(base)}(objectType, str, *this->_pObject);
         }
@@ -433,9 +437,10 @@ function generate(options, schema, writers) {
           using ValueType = ${namespace}::${name};
 
           ${thisConfig.extensionName
-      ? `static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
-      : ""
-    }
+            ? `/** @brief The official name of the extension. This should be the same as its key in the \`extensions\` object. */
+          static constexpr const char* ExtensionName = "${thisConfig.extensionName}";`
+            : ""
+          }
 
           static void write(
               const ${namespace}::${name}& obj,
@@ -472,11 +477,11 @@ function generate(options, schema, writers) {
             const CesiumJsonWriter::ExtensionWriterContext& context) {
 
           ${indent(
-      properties
-        .map((property) => formatWriterPropertyImpl(property))
-        .join("\n\n"),
-      10
-    )}
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
         }
@@ -503,11 +508,11 @@ function generate(options, schema, writers) {
           jsonWriter.StartObject();
 
           ${indent(
-      properties
-        .map((property) => formatWriterPropertyImpl(property))
-        .join("\n\n"),
-      10
-    )}
+            properties
+              .map((property) => formatWriterPropertyImpl(property))
+              .join("\n\n"),
+            10
+          )}
 
           write${NameFormatters.getWriterName(base)}(obj, jsonWriter, context);
 
@@ -616,17 +621,20 @@ function formatWriterPropertyImpl(property) {
   const isVector = type.startsWith("std::vector");
   const isMap = type.startsWith("std::unordered_map");
   const isOptional = type.startsWith("std::optional");
+  const isPointer = type.startsWith("CesiumUtility::IntrusivePointer");
 
   const hasDefaultValueGuard =
     !isId && !isRequiredEnum && defaultValue !== undefined;
   const hasDefaultVectorGuard = hasDefaultValueGuard && isVector;
   const hasEmptyGuard = isVector || isMap;
   const hasOptionalGuard = isOptional;
+  const hasPointerGuard = isPointer;
   const hasNegativeIndexGuard = isId;
   const hasGuard =
     hasDefaultValueGuard ||
     hasEmptyGuard ||
     hasOptionalGuard ||
+    hasPointerGuard ||
     hasNegativeIndexGuard;
 
   if (hasDefaultVectorGuard) {
@@ -648,7 +656,7 @@ function formatWriterPropertyImpl(property) {
     result += `if (!obj.${property.cppSafeName}.empty()) {\n`;
   } else if (hasNegativeIndexGuard) {
     result += `if (obj.${property.cppSafeName} > -1) {\n`;
-  } else if (hasOptionalGuard) {
+  } else if (hasOptionalGuard || hasPointerGuard) {
     result += `if (obj.${property.cppSafeName}) {\n`;
   }
 

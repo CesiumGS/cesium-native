@@ -12,7 +12,7 @@ namespace Cesium3DTilesSelection {
 class Tileset;
 
 /**
- * @brief The type of load that failed in {@link TilesetLoadFailureDetails}.
+ * @brief The type of load that failed in `TilesetLoadFailureDetails`.
  */
 enum class TilesetLoadType {
   /**
@@ -31,6 +31,9 @@ enum class TilesetLoadType {
   TilesetJson
 };
 
+/**
+ * Information on a tileset that failed to load.
+ */
 class TilesetLoadFailureDetails {
 public:
   /**

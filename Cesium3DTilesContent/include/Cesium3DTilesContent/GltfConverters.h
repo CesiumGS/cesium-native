@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Library.h"
-
 #include <Cesium3DTilesContent/GltfConverterResult.h>
+#include <Cesium3DTilesContent/Library.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
@@ -15,8 +14,18 @@
 
 namespace Cesium3DTilesContent {
 
+/**
+ * @brief The result of an \ref AssetFetcher::get call.
+ */
 struct AssetFetcherResult {
+  /**
+   * @brief The byte buffer obtained from a URL. This will be empty if fetching
+   * the asset failed.
+   */
   std::vector<std::byte> bytes;
+  /**
+   * @brief The errors and warnings reported while fetching the asset.
+   */
   CesiumUtility::ErrorList errorList;
 };
 
@@ -25,6 +34,20 @@ struct AssetFetcherResult {
  * benefit of i3dm files.
  */
 struct CESIUM3DTILESCONTENT_API AssetFetcher {
+  /**
+   * @brief Creates an \ref AssetFetcher with the given base URL and settings.
+   *
+   * @param asyncSystem_ The \ref CesiumAsync::AsyncSystem used for fetching
+   * assets asynchronously.
+   * @param pAssetAccessor_ The \ref CesiumAsync::IAssetAccessor providing the
+   * implementation for fetching assets from a remote server.
+   * @param baseUrl_ The base URL that relative URLs passed to \ref get will be
+   * relative to.
+   * @param tileTransform_ A transformation matrix applied to this tile.
+   * @param requestHeaders_ The headers to be used for a request made with the
+   * \ref AssetFetcher.
+   * @param upAxis_ The `gltfUpAxis` property to be set on loaded glTFs.
+   */
   AssetFetcher(
       const CesiumAsync::AsyncSystem& asyncSystem_,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor_,
@@ -39,14 +62,43 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
         requestHeaders(requestHeaders_),
         upAxis(upAxis_) {}
 
+  /**
+   * @brief Gets a buffer of bytes from the given relative URL.
+   *
+   * @param relativeUrl The URL of the asset to fetch, relative to the \ref
+   * baseUrl property.
+   * @returns A future that resolves into an \ref AssetFetcherResult.
+   */
   CesiumAsync::Future<AssetFetcherResult>
   get(const std::string& relativeUrl) const;
 
+  /**
+   * @brief The \ref CesiumAsync::AsyncSystem used for this \ref AssetFetcher.
+   */
   CesiumAsync::AsyncSystem asyncSystem;
+  /**
+   * @brief The \ref CesiumAsync::IAssetAccessor used for this \ref
+   * AssetFetcher.
+   */
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+  /**
+   * @brief The base URL that this \ref AssetFetcher's requests will be relative
+   * to.
+   */
   std::string baseUrl;
-  glm::dmat4 tileTransform; // For ENU transforms in i3dm
+  /**
+   * @brief The transformation matrix applied to this tile. Used for
+   * East-North-Up transforms in i3dm.
+   */
+  glm::dmat4 tileTransform;
+  /**
+   * @brief Headers that will be attached to each request made with this \ref
+   * AssetFetcher.
+   */
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
+  /**
+   * @brief The `gltfUpAxis` property that will be specified for loaded assets.
+   */
   CesiumGeometry::Axis upAxis;
 };
 

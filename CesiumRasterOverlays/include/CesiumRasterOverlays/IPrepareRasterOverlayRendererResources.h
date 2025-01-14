@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumRasterOverlays/Library.h>
 
 #include <any>
 
@@ -14,6 +14,13 @@ class RasterOverlayTile;
 
 namespace CesiumRasterOverlays {
 
+/**
+ * @brief An interface between Cesium Native and the application using it,
+ * allowing Cesium Native to pass loaded raster overlay data to the implementing
+ * application in order for the application to prepare it to be used in its
+ * renderer of choice. This could involve creating a texture asset, uploading
+ * the texture data to the GPU, or any other similar tasks required.
+ */
 class CESIUMRASTEROVERLAYS_API IPrepareRasterOverlayRendererResources {
 public:
   /**

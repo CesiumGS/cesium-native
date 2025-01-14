@@ -1,14 +1,13 @@
 #pragma once
 
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltf/KhrTextureTransform.h"
-#include "CesiumGltf/PropertyTextureProperty.h"
-#include "CesiumGltf/PropertyTransformations.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumGltf/PropertyView.h"
-#include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/TextureView.h"
-
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/TextureView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <array>
@@ -83,6 +82,13 @@ public:
   static const int ErrorChannelsAndTypeMismatch = 22;
 };
 
+/**
+ * @brief Attempts to obtain a scalar value from the given span of bytes.
+ *
+ * @tparam ElementType The scalar value type to read from `bytes`.
+ * @param bytes A span of bytes to convert into a scalar value.
+ * @returns A value of `ElementType`.
+ */
 template <typename ElementType>
 ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
   if constexpr (std::is_same_v<ElementType, float>) {
@@ -110,6 +116,13 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
   }
 }
 
+/**
+ * @brief Attempts to obtain a vector value from the given span of bytes.
+ *
+ * @tparam ElementType The vector value type to read from `bytes`.
+ * @param bytes A span of bytes to convert into a vector value.
+ * @returns A value of `ElementType`.
+ */
 template <typename ElementType>
 ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
@@ -157,6 +170,13 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   return result;
 }
 
+/**
+ * @brief Attempts to obtain an array value from the given span of bytes.
+ *
+ * @tparam T The element type to read from `bytes`.
+ * @param bytes A span of bytes to convert into an array value.
+ * @returns A \ref PropertyArrayCopy containing the elements read.
+ */
 template <typename T>
 PropertyArrayCopy<T>
 assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
@@ -178,6 +198,15 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   return PropertyArrayCopy<T>(std::move(result));
 }
 
+/**
+ * @brief Assembles the given type from the provided channel values of sampling
+ * a texture.
+ *
+ * @tparam ElementType The type of element to assemble.
+ * @param bytes The byte values of the sampled channels of the texture.
+ * @returns The result of \ref assembleScalarValue, \ref assembleVecNValue, or
+ * \ref assembleArrayValue depending on `ElementType`.
+ */
 template <typename ElementType>
 PropertyValueViewToCopy<ElementType>
 assembleValueFromChannels(const std::span<uint8_t> bytes) noexcept {
@@ -256,8 +285,7 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTexturePropertyView::get} is called. However,
-   * {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   * when \ref get is called. However, \ref getRaw cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    */
@@ -488,8 +516,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a
    * default value. Although this property has no data, it can return the
-   * default value when {@link PropertyTexturePropertyView::get} is called.
-   * However, {@link PropertyTexturePropertyView::getRaw} cannot be used.
+   * default value when {@link PropertyTexturePropertyView<ElementType, true>::get} is called.
+   * However, {@link PropertyTexturePropertyView<ElementType, true>::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    */

@@ -1,27 +1,98 @@
 #pragma once
 
-#include "CesiumGltf/Library.h"
+#include <CesiumGltf/Library.h>
 
 namespace CesiumGltf {
 
 /**
- * @brief Supported gpu compressed pixel formats.
+ * @brief Supported GPU compressed pixel formats.
  */
 enum class CESIUMGLTF_API GpuCompressedPixelFormat {
+  /**
+   * @brief The data is uncompressed.
+   */
   NONE,
+  /**
+   * @brief The data is an <a
+   * href="https://registry.khronos.org/OpenGL/extensions/OES/OES_compressed_ETC1_RGB8_texture.txt">ETC1-compressed</a>
+   * RGB888 texture.
+   */
   ETC1_RGB,
+  /**
+   * @brief The data is an ETC2-compressed RGBA8888 texture.
+   */
   ETC2_RGBA,
+  /**
+   * @brief The data is a <a
+   * href="https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc1">BC1-compressed</a>
+   * RGB565 texture.
+   */
   BC1_RGB,
+  /**
+   * @brief The data is a <a
+   * href="https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc3">BC3-compressed</a>
+   * RGBA5658 texture.
+   */
   BC3_RGBA,
+  /**
+   * @brief The data is a <a
+   * href="https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc4">BC4-compressed</a>
+   * R8 texture.
+   */
   BC4_R,
+  /**
+   * @brief The data is a <a
+   * href="https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression#bc5">BC5-compressed</a>
+   * RG88 texture.
+   */
   BC5_RG,
+  /**
+   * @brief The data is a <a
+   * href="https://learn.microsoft.com/en-us/windows/win32/direct3d11/bc7-format">BC7-compressed</a>
+   * RGBA8888 texture.
+   */
   BC7_RGBA,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.3/dataformat.1.3.html#_format_pvrtc1_4bpp">PVRTC1-compressed</a>
+   * RGB444 texture.
+   */
   PVRTC1_4_RGB,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.3/dataformat.1.3.html#_format_pvrtc1_4bpp">PVRTC1-compressed</a>
+   * RGBA4444 texture.
+   */
   PVRTC1_4_RGBA,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.1/dataformat.1.1.html#ASTC">ASTC-compressed</a>
+   * RGBA texture with a 4x4 block footprint.
+   */
   ASTC_4x4_RGBA,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.3/dataformat.1.3.html#_format_pvrtc2_4bpp">PVRTC2-compressed</a>
+   * RGB444 texture.
+   */
   PVRTC2_4_RGB,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.3/dataformat.1.3.html#_format_pvrtc2_4bpp">PVRTC2-compressed</a>
+   * RGBA4444 texture.
+   */
   PVRTC2_4_RGBA,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.3/dataformat.1.3.html#Section-r11eac">ETC2
+   * R11 EAC-compressed</a> texture with a single channel.
+   */
   ETC2_EAC_R11,
+  /**
+   * @brief The data is a <a
+   * href="https://registry.khronos.org/DataFormat/specs/1.3/dataformat.1.3.html#Section-rg11eac">ETC2
+   * RG11 EAC-compressed</a> texture with two channels.
+   */
   ETC2_EAC_RG11
 };
 
@@ -36,19 +107,33 @@ enum class CESIUMGLTF_API GpuCompressedPixelFormat {
  * compressed pixel format with the corresponding name is supported.
  */
 struct CESIUMGLTF_API SupportedGpuCompressedPixelFormats {
+  /** @copydoc GpuCompressedPixelFormat::ETC1_RGB */
   bool ETC1_RGB{};
+  /** @copydoc GpuCompressedPixelFormat::ETC2_RGBA */
   bool ETC2_RGBA{};
+  /** @copydoc GpuCompressedPixelFormat::BC1_RGB */
   bool BC1_RGB{};
+  /** @copydoc GpuCompressedPixelFormat::BC3_RGBA */
   bool BC3_RGBA{};
+  /** @copydoc GpuCompressedPixelFormat::BC4_R */
   bool BC4_R{};
+  /** @copydoc GpuCompressedPixelFormat::BC5_RG */
   bool BC5_RG{};
+  /** @copydoc GpuCompressedPixelFormat::BC7_RGBA */
   bool BC7_RGBA{};
+  /** @copydoc GpuCompressedPixelFormat::PVRTC1_4_RGB */
   bool PVRTC1_4_RGB{};
+  /** @copydoc GpuCompressedPixelFormat::PVRTC1_4_RGBA */
   bool PVRTC1_4_RGBA{};
+  /** @copydoc GpuCompressedPixelFormat::ASTC_4x4_RGBA */
   bool ASTC_4x4_RGBA{};
+  /** @copydoc GpuCompressedPixelFormat::PVRTC2_4_RGB */
   bool PVRTC2_4_RGB{};
+  /** @copydoc GpuCompressedPixelFormat::PVRTC2_4_RGBA */
   bool PVRTC2_4_RGBA{};
+  /** @copydoc GpuCompressedPixelFormat::ETC2_EAC_R11 */
   bool ETC2_EAC_R11{};
+  /** @copydoc GpuCompressedPixelFormat::ETC2_EAC_RG11 */
   bool ETC2_EAC_RG11{};
 };
 

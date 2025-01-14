@@ -3,18 +3,32 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumNativeTests/waitForFuture.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <spdlog/spdlog.h>
 
+#include <cassert>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <map>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace Cesium3DTiles;
@@ -30,11 +44,11 @@ struct SubtreeHeader {
   uint64_t binaryByteLength;
 };
 
-struct SubtreeBuffers {
+struct SubtreeContent {
   std::vector<std::byte> buffers;
-  SubtreeAvailability::SubtreeBufferViewAvailability tileAvailability;
-  SubtreeAvailability::SubtreeBufferViewAvailability subtreeAvailability;
-  SubtreeAvailability::SubtreeBufferViewAvailability contentAvailability;
+  SubtreeAvailability::AvailabilityView tileAvailability;
+  SubtreeAvailability::AvailabilityView subtreeAvailability;
+  SubtreeAvailability::AvailabilityView contentAvailability;
 };
 
 uint64_t calculateTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels) {
@@ -68,16 +82,63 @@ void markSubtreeAvailableForQuadtree(
   available[byteIndex] |= std::byte(1 << bitIndex);
 }
 
-SubtreeBuffers createSubtreeBuffers(
+using SubtreeContentInput =
+    std::variant<bool, std::vector<CesiumGeometry::QuadtreeTileID>>;
+
+struct NeedsAvailabilityBuffer {
+  bool operator()(bool) { return false; }
+  bool operator()(const std::vector<CesiumGeometry::QuadtreeTileID>&) {
+    return true;
+  }
+};
+
+struct GetAvailabilityView {
+  std::span<std::byte> buffer;
+  bool isSubtreeBuffer;
+
+  SubtreeAvailability::AvailabilityView operator()(bool constant) {
+    return SubtreeAvailability::SubtreeConstantAvailability{constant};
+  }
+
+  SubtreeAvailability::AvailabilityView
+  operator()(const std::vector<CesiumGeometry::QuadtreeTileID>& availableIDs) {
+    if (isSubtreeBuffer) {
+      for (const auto& subtreeID : availableIDs) {
+        markSubtreeAvailableForQuadtree(subtreeID, buffer);
+      }
+    } else {
+      for (const auto& tileID : availableIDs) {
+        markTileAvailableForQuadtree(tileID, buffer);
+      }
+    }
+
+    return SubtreeAvailability::SubtreeBufferViewAvailability{buffer};
+  }
+};
+
+SubtreeContent createSubtreeContent(
     uint32_t maxSubtreeLevels,
-    const std::vector<CesiumGeometry::QuadtreeTileID>& tileAvailabilities,
-    const std::vector<CesiumGeometry::QuadtreeTileID>& subtreeAvailabilities) {
+    const SubtreeContentInput& tileAvailabilities,
+    const SubtreeContentInput& subtreeAvailabilities) {
+  bool needsTileAvailabilityBuffer =
+      std::visit(NeedsAvailabilityBuffer{}, tileAvailabilities);
+  bool needsSubtreeAvailabilityBuffer =
+      std::visit(NeedsAvailabilityBuffer{}, subtreeAvailabilities);
+
+  // Create and populate the availability buffers.
   uint64_t numTiles = calculateTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
   uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
-  uint64_t bufferSize =
-      static_cast<uint64_t>(std::ceil(static_cast<double>(numTiles) / 8.0));
-  uint64_t subtreeBufferSize = static_cast<uint64_t>(
-      std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
+
+  uint64_t bufferSize = needsTileAvailabilityBuffer
+                            ? static_cast<uint64_t>(std::ceil(
+                                  static_cast<double>(numTiles) / 8.0))
+                            : 0;
+  uint64_t subtreeBufferSize =
+      needsSubtreeAvailabilityBuffer
+          ? static_cast<uint64_t>(
+                std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0))
+          : 0;
+
   std::vector<std::byte> availabilityBuffer(
       bufferSize + bufferSize + subtreeBufferSize);
 
@@ -90,21 +151,16 @@ SubtreeBuffers createSubtreeBuffers(
   std::span<std::byte> subtreeAvailabilityBuffer(
       availabilityBuffer.data() + bufferSize + bufferSize,
       subtreeBufferSize);
-  for (const auto& tileID : tileAvailabilities) {
-    markTileAvailableForQuadtree(tileID, tileAvailabilityBuffer);
-    markTileAvailableForQuadtree(tileID, contentAvailabilityBuffer);
-  }
 
-  for (const auto& subtreeID : subtreeAvailabilities) {
-    markSubtreeAvailableForQuadtree(subtreeID, subtreeAvailabilityBuffer);
-  }
-
-  SubtreeAvailability::SubtreeBufferViewAvailability tileAvailability{
-      tileAvailabilityBuffer};
-  SubtreeAvailability::SubtreeBufferViewAvailability subtreeAvailability{
-      subtreeAvailabilityBuffer};
-  SubtreeAvailability::SubtreeBufferViewAvailability contentAvailability{
-      contentAvailabilityBuffer};
+  SubtreeAvailability::AvailabilityView tileAvailability = std::visit(
+      GetAvailabilityView{tileAvailabilityBuffer, false},
+      tileAvailabilities);
+  SubtreeAvailability::AvailabilityView contentAvailability = std::visit(
+      GetAvailabilityView{contentAvailabilityBuffer, false},
+      tileAvailabilities);
+  SubtreeAvailability::AvailabilityView subtreeAvailability = std::visit(
+      GetAvailabilityView{subtreeAvailabilityBuffer, true},
+      subtreeAvailabilities);
 
   return {
       std::move(availabilityBuffer),
@@ -114,106 +170,111 @@ SubtreeBuffers createSubtreeBuffers(
 }
 
 rapidjson::Document createSubtreeJson(
-    const SubtreeBuffers& subtreeBuffers,
+    const SubtreeContent& subtreeContent,
     const std::string& bufferUrl) {
   // create subtree json
   rapidjson::Document subtreeJson;
   subtreeJson.SetObject();
 
-  // create buffers
-  rapidjson::Value bufferObj(rapidjson::kObjectType);
-  bufferObj.AddMember(
-      "byteLength",
-      uint64_t(subtreeBuffers.buffers.size()),
-      subtreeJson.GetAllocator());
+  bool hasTileAvailabilityBufferView = false;
+  bool hasContentAvailabilityBufferView = false;
+  bool hasSubtreeAvailabilityBufferView = false;
 
-  if (!bufferUrl.empty()) {
-    rapidjson::Value uriStr(rapidjson::kStringType);
-    uriStr.SetString(
-        bufferUrl.c_str(),
-        static_cast<rapidjson::SizeType>(bufferUrl.size()),
+  // create buffers and buffer views, if necessary
+  if (!subtreeContent.buffers.empty()) {
+    rapidjson::Value bufferObj(rapidjson::kObjectType);
+    bufferObj.AddMember(
+        "byteLength",
+        uint64_t(subtreeContent.buffers.size()),
         subtreeJson.GetAllocator());
-    bufferObj.AddMember("uri", std::move(uriStr), subtreeJson.GetAllocator());
+
+    if (!bufferUrl.empty()) {
+      rapidjson::Value uriStr(rapidjson::kStringType);
+      uriStr.SetString(
+          bufferUrl.c_str(),
+          static_cast<rapidjson::SizeType>(bufferUrl.size()),
+          subtreeJson.GetAllocator());
+      bufferObj.AddMember("uri", std::move(uriStr), subtreeJson.GetAllocator());
+    }
+
+    rapidjson::Value buffersArray(rapidjson::kArrayType);
+    buffersArray.GetArray().PushBack(
+        std::move(bufferObj),
+        subtreeJson.GetAllocator());
+
+    subtreeJson.AddMember(
+        "buffers",
+        std::move(buffersArray),
+        subtreeJson.GetAllocator());
+    rapidjson::Value bufferViewsArray(rapidjson::kArrayType);
+
+    auto addBufferViewIfNeeded =
+        [&subtreeJson, &bufferViewsArray](
+            const SubtreeAvailability::AvailabilityView& view,
+            const std::vector<std::byte>& data,
+            bool& result) {
+          const auto* pBufferView =
+              std::get_if<SubtreeAvailability::SubtreeBufferViewAvailability>(
+                  &view);
+          if (pBufferView) {
+            rapidjson::Value bufferView(rapidjson::kObjectType);
+            bufferView.AddMember(
+                "buffer",
+                uint64_t(0),
+                subtreeJson.GetAllocator());
+            bufferView.AddMember(
+                "byteOffset",
+                uint64_t(pBufferView->view.data() - data.data()),
+                subtreeJson.GetAllocator());
+            bufferView.AddMember(
+                "byteLength",
+                uint64_t(pBufferView->view.size()),
+                subtreeJson.GetAllocator());
+            bufferViewsArray.GetArray().PushBack(
+                std::move(bufferView),
+                subtreeJson.GetAllocator());
+          }
+          result = (pBufferView != nullptr);
+        };
+
+    addBufferViewIfNeeded(
+        subtreeContent.tileAvailability,
+        subtreeContent.buffers,
+        hasTileAvailabilityBufferView);
+    addBufferViewIfNeeded(
+        subtreeContent.contentAvailability,
+        subtreeContent.buffers,
+        hasContentAvailabilityBufferView);
+    addBufferViewIfNeeded(
+        subtreeContent.subtreeAvailability,
+        subtreeContent.buffers,
+        hasSubtreeAvailabilityBufferView);
+
+    subtreeJson.AddMember(
+        "bufferViews",
+        std::move(bufferViewsArray),
+        subtreeJson.GetAllocator());
   }
 
-  rapidjson::Value buffersArray(rapidjson::kArrayType);
-  buffersArray.GetArray().PushBack(
-      std::move(bufferObj),
-      subtreeJson.GetAllocator());
-
-  subtreeJson.AddMember(
-      "buffers",
-      std::move(buffersArray),
-      subtreeJson.GetAllocator());
-
-  // create buffer views
-  rapidjson::Value tileAvailabilityBufferView(rapidjson::kObjectType);
-  tileAvailabilityBufferView.AddMember(
-      "buffer",
-      uint64_t(0),
-      subtreeJson.GetAllocator());
-  tileAvailabilityBufferView.AddMember(
-      "byteOffset",
-      uint64_t(
-          subtreeBuffers.tileAvailability.view.data() -
-          subtreeBuffers.buffers.data()),
-      subtreeJson.GetAllocator());
-  tileAvailabilityBufferView.AddMember(
-      "byteLength",
-      uint64_t(subtreeBuffers.tileAvailability.view.size()),
-      subtreeJson.GetAllocator());
-
-  rapidjson::Value contentAvailabilityBufferView(rapidjson::kObjectType);
-  contentAvailabilityBufferView.AddMember(
-      "buffer",
-      uint64_t(0),
-      subtreeJson.GetAllocator());
-  contentAvailabilityBufferView.AddMember(
-      "byteOffset",
-      uint64_t(
-          subtreeBuffers.contentAvailability.view.data() -
-          subtreeBuffers.buffers.data()),
-      subtreeJson.GetAllocator());
-  contentAvailabilityBufferView.AddMember(
-      "byteLength",
-      uint64_t(subtreeBuffers.contentAvailability.view.size()),
-      subtreeJson.GetAllocator());
-
-  rapidjson::Value subtreeAvailabilityBufferView(rapidjson::kObjectType);
-  subtreeAvailabilityBufferView.AddMember(
-      "buffer",
-      uint64_t(0),
-      subtreeJson.GetAllocator());
-  subtreeAvailabilityBufferView.AddMember(
-      "byteOffset",
-      uint64_t(
-          subtreeBuffers.subtreeAvailability.view.data() -
-          subtreeBuffers.buffers.data()),
-      subtreeJson.GetAllocator());
-  subtreeAvailabilityBufferView.AddMember(
-      "byteLength",
-      uint64_t(subtreeBuffers.subtreeAvailability.view.size()),
-      subtreeJson.GetAllocator());
-
-  rapidjson::Value bufferViewsArray(rapidjson::kArrayType);
-  bufferViewsArray.GetArray().PushBack(
-      std::move(tileAvailabilityBufferView),
-      subtreeJson.GetAllocator());
-  bufferViewsArray.GetArray().PushBack(
-      std::move(contentAvailabilityBufferView),
-      subtreeJson.GetAllocator());
-  bufferViewsArray.GetArray().PushBack(
-      std::move(subtreeAvailabilityBufferView),
-      subtreeJson.GetAllocator());
-
-  subtreeJson.AddMember(
-      "bufferViews",
-      std::move(bufferViewsArray),
-      subtreeJson.GetAllocator());
+  int32_t bufferViewIndex = 0;
 
   // create tileAvailability field
   rapidjson::Value tileAvailabilityObj(rapidjson::kObjectType);
-  tileAvailabilityObj.AddMember("bitstream", 0, subtreeJson.GetAllocator());
+  if (hasTileAvailabilityBufferView) {
+    tileAvailabilityObj.AddMember(
+        "bitstream",
+        bufferViewIndex++,
+        subtreeJson.GetAllocator());
+  } else {
+    const auto* pTileAvailabilityConstant =
+        std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
+            &subtreeContent.tileAvailability);
+    assert(pTileAvailabilityConstant);
+    tileAvailabilityObj.AddMember(
+        "constant",
+        pTileAvailabilityConstant->constant ? 1 : 0,
+        subtreeJson.GetAllocator());
+  }
   subtreeJson.AddMember(
       "tileAvailability",
       std::move(tileAvailabilityObj),
@@ -221,7 +282,21 @@ rapidjson::Document createSubtreeJson(
 
   // create contentAvailability field
   rapidjson::Value contentAvailabilityObj(rapidjson::kObjectType);
-  contentAvailabilityObj.AddMember("bitstream", 1, subtreeJson.GetAllocator());
+  if (hasContentAvailabilityBufferView) {
+    contentAvailabilityObj.AddMember(
+        "bitstream",
+        bufferViewIndex++,
+        subtreeJson.GetAllocator());
+  } else {
+    const auto* pContentAvailabilityConstant =
+        std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
+            &subtreeContent.contentAvailability);
+    assert(pContentAvailabilityConstant);
+    contentAvailabilityObj.AddMember(
+        "constant",
+        pContentAvailabilityConstant->constant ? 1 : 0,
+        subtreeJson.GetAllocator());
+  }
 
   rapidjson::Value contentAvailabilityArray(rapidjson::kArrayType);
   contentAvailabilityArray.GetArray().PushBack(
@@ -235,7 +310,21 @@ rapidjson::Document createSubtreeJson(
 
   // create childSubtreeAvailability
   rapidjson::Value subtreeAvailabilityObj(rapidjson::kObjectType);
-  subtreeAvailabilityObj.AddMember("bitstream", 2, subtreeJson.GetAllocator());
+  if (hasSubtreeAvailabilityBufferView) {
+    subtreeAvailabilityObj.AddMember(
+        "bitstream",
+        bufferViewIndex++,
+        subtreeJson.GetAllocator());
+  } else {
+    const auto* pSubtreeAvailabilityConstant =
+        std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
+            &subtreeContent.subtreeAvailability);
+    assert(pSubtreeAvailabilityConstant);
+    subtreeAvailabilityObj.AddMember(
+        "constant",
+        pSubtreeAvailabilityConstant->constant ? 1 : 0,
+        subtreeJson.GetAllocator());
+  }
   subtreeJson.AddMember(
       "childSubtreeAvailability",
       std::move(subtreeAvailabilityObj),
@@ -246,7 +335,7 @@ rapidjson::Document createSubtreeJson(
 
 std::optional<SubtreeAvailability> mockLoadSubtreeJson(
     uint32_t levelsInSubtree,
-    SubtreeBuffers&& subtreeBuffers,
+    SubtreeContent&& subtreeContent,
     rapidjson::Document&& subtreeJson) {
   rapidjson::StringBuffer subtreeJsonBuffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
@@ -273,7 +362,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       uint16_t(200),
       "buffer",
       CesiumAsync::HttpHeaders{},
-      std::move(subtreeBuffers.buffers));
+      std::move(subtreeContent.buffers));
   auto pMockBufferRequest = std::make_unique<SimpleAssetRequest>(
       "GET",
       "buffer",
@@ -511,13 +600,12 @@ TEST_CASE("Test parsing subtree format") {
       CesiumGeometry::QuadtreeTileID{5, 21, 11},
       CesiumGeometry::QuadtreeTileID{5, 11, 12}};
 
-  auto subtreeBuffers = createSubtreeBuffers(
-      maxSubtreeLevels,
-      availableTileIDs,
-      availableSubtreeIDs);
-
   SECTION("Parse binary subtree") {
     // create subtree json
+    auto subtreeBuffers = createSubtreeContent(
+        maxSubtreeLevels,
+        availableTileIDs,
+        availableSubtreeIDs);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "");
 
     // serialize it into binary subtree format
@@ -603,7 +691,184 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
+  SECTION("Parse binary subtree with mixed availability types") {
+    // create subtree json
+    auto subtreeContent =
+        createSubtreeContent(maxSubtreeLevels, true, availableSubtreeIDs);
+    auto subtreeJson = createSubtreeJson(subtreeContent, "");
+
+    // serialize it into binary subtree format
+    rapidjson::StringBuffer subtreeJsonBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
+    subtreeJson.Accept(writer);
+
+    SubtreeHeader subtreeHeader;
+    subtreeHeader.magic[0] = 's';
+    subtreeHeader.magic[1] = 'u';
+    subtreeHeader.magic[2] = 'b';
+    subtreeHeader.magic[3] = 't';
+    subtreeHeader.version = 1U;
+    subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
+    subtreeHeader.binaryByteLength = subtreeContent.buffers.size();
+
+    std::vector<std::byte> buffer(
+        sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
+        subtreeHeader.binaryByteLength);
+    std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
+    std::memcpy(
+        buffer.data() + sizeof(subtreeHeader),
+        subtreeJsonBuffer.GetString(),
+        subtreeHeader.jsonByteLength);
+    std::memcpy(
+        buffer.data() + sizeof(subtreeHeader) + subtreeHeader.jsonByteLength,
+        subtreeContent.buffers.data(),
+        subtreeHeader.binaryByteLength);
+
+    // mock the request
+    auto pMockResponse = std::make_unique<SimpleAssetResponse>(
+        uint16_t(200),
+        "test",
+        CesiumAsync::HttpHeaders{},
+        std::move(buffer));
+    auto pMockRequest = std::make_unique<SimpleAssetRequest>(
+        "GET",
+        "test",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockResponse));
+    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
+        {"test", std::move(pMockRequest)}};
+    auto pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
+
+    // mock async system
+    auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
+    CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
+
+    auto subtreeFuture = SubtreeAvailability::loadSubtree(
+        ImplicitTileSubdivisionScheme::Quadtree,
+        maxSubtreeLevels,
+        asyncSystem,
+        pMockAssetAccessor,
+        spdlog::default_logger(),
+        "test",
+        {});
+
+    asyncSystem.dispatchMainThreadTasks();
+    auto parsedSubtree = subtreeFuture.wait();
+    REQUIRE(parsedSubtree != std::nullopt);
+
+    for (const auto& tileID : availableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& tileID : unavailableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& subtreeID : availableSubtreeIDs) {
+      CHECK(parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+
+    for (const auto& subtreeID : unavailableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+  }
+
+  SECTION("Parse binary subtree with constant availability only") {
+    // create subtree json
+    auto subtreeContent = createSubtreeContent(maxSubtreeLevels, true, false);
+    auto subtreeJson = createSubtreeJson(subtreeContent, "");
+
+    // serialize it into binary subtree format
+    rapidjson::StringBuffer subtreeJsonBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
+    subtreeJson.Accept(writer);
+
+    SubtreeHeader subtreeHeader;
+    subtreeHeader.magic[0] = 's';
+    subtreeHeader.magic[1] = 'u';
+    subtreeHeader.magic[2] = 'b';
+    subtreeHeader.magic[3] = 't';
+    subtreeHeader.version = 1U;
+    subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
+    subtreeHeader.binaryByteLength = 0;
+
+    std::vector<std::byte> buffer(
+        sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
+        subtreeHeader.binaryByteLength);
+    std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
+    std::memcpy(
+        buffer.data() + sizeof(subtreeHeader),
+        subtreeJsonBuffer.GetString(),
+        subtreeHeader.jsonByteLength);
+
+    // mock the request
+    auto pMockResponse = std::make_unique<SimpleAssetResponse>(
+        uint16_t(200),
+        "test",
+        CesiumAsync::HttpHeaders{},
+        std::move(buffer));
+    auto pMockRequest = std::make_unique<SimpleAssetRequest>(
+        "GET",
+        "test",
+        CesiumAsync::HttpHeaders{},
+        std::move(pMockResponse));
+    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
+        {"test", std::move(pMockRequest)}};
+    auto pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
+
+    // mock async system
+    auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
+    CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
+
+    auto subtreeFuture = SubtreeAvailability::loadSubtree(
+        ImplicitTileSubdivisionScheme::Quadtree,
+        maxSubtreeLevels,
+        asyncSystem,
+        pMockAssetAccessor,
+        spdlog::default_logger(),
+        "test",
+        {});
+
+    asyncSystem.dispatchMainThreadTasks();
+    auto parsedSubtree = subtreeFuture.wait();
+    REQUIRE(parsedSubtree != std::nullopt);
+
+    for (const auto& tileID : availableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& tileID : unavailableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& subtreeID : availableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+
+    for (const auto& subtreeID : unavailableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+  }
+
   SECTION("Parse json subtree") {
+    auto subtreeBuffers = createSubtreeContent(
+        maxSubtreeLevels,
+        availableTileIDs,
+        availableSubtreeIDs);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
 
     auto parsedSubtree = mockLoadSubtreeJson(
@@ -636,7 +901,46 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
+  SECTION("Parse json subtree with mixed availability types") {
+    auto subtreeBuffers =
+        createSubtreeContent(maxSubtreeLevels, availableTileIDs, false);
+    auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
+
+    auto parsedSubtree = mockLoadSubtreeJson(
+        maxSubtreeLevels,
+        std::move(subtreeBuffers),
+        std::move(subtreeJson));
+
+    REQUIRE(parsedSubtree != std::nullopt);
+
+    for (const auto& tileID : availableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& tileID : unavailableTileIDs) {
+      uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
+      CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
+      CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID, 0));
+    }
+
+    for (const auto& subtreeID : availableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+
+    for (const auto& subtreeID : unavailableSubtreeIDs) {
+      CHECK(!parsedSubtree->isSubtreeAvailable(
+          libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
+    }
+  }
+
   SECTION("Subtree json has ill form format") {
+    auto subtreeBuffers = createSubtreeContent(
+        maxSubtreeLevels,
+        availableTileIDs,
+        availableSubtreeIDs);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
 
     SECTION("Subtree json has no tileAvailability field") {

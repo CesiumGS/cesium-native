@@ -1,10 +1,16 @@
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
-#include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/SharedAsset.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <cstdint>
+#include <memory>
+#include <string>
 
 using namespace CesiumAsync;
 using namespace CesiumNativeTests;
@@ -123,5 +129,26 @@ TEST_CASE("SharedAssetDepot") {
     CHECK(pDepot->getAssetCount() == 1);
     CHECK(pDepot->getActiveAssetCount() == 0);
     CHECK(pDepot->getInactiveAssetCount() == 1);
+  }
+
+  SECTION("is kept alive until all of its assets are unreferenced") {
+    auto pDepot = createDepot();
+    SharedAssetDepot<TestAsset, std::string>* pDepotRaw = pDepot.get();
+
+    ResultPointer<TestAsset> assetOne =
+        pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
+    ResultPointer<TestAsset> assetTwo =
+        pDepot->getOrCreate(asyncSystem, nullptr, "two!!").waitInMainThread();
+
+    pDepot.reset();
+
+    assetTwo.pValue.reset();
+
+    REQUIRE(assetOne.pValue->getDepot() == pDepotRaw);
+    CHECK(
+        pDepotRaw->getInactiveAssetTotalSizeBytes() ==
+        int64_t(std::string("two!!").size()));
+
+    assetOne.pValue.reset();
   }
 }

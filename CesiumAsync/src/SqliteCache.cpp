@@ -1,18 +1,30 @@
-#include "CesiumAsync/SqliteCache.h"
-
-#include "CesiumAsync/IAssetResponse.h"
-
+#include <CesiumAsync/CacheItem.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/SqliteCache.h>
+#include <CesiumAsync/SqliteHelper.h>
 #include <CesiumAsync/cesium-sqlite3.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <span>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 
@@ -129,40 +141,6 @@ std::optional<HttpHeaders> convertStringToHeaders(
   return headers;
 }
 
-struct DeleteSqliteConnection {
-  void operator()(CESIUM_SQLITE(sqlite3*) pConnection) noexcept {
-    CESIUM_SQLITE(sqlite3_close_v2)(pConnection);
-  }
-};
-
-struct DeleteSqliteStatement {
-  void operator()(CESIUM_SQLITE(sqlite3_stmt*) pStatement) noexcept {
-    CESIUM_SQLITE(sqlite3_finalize)(pStatement);
-  }
-};
-
-using SqliteConnectionPtr =
-    std::unique_ptr<CESIUM_SQLITE(sqlite3), DeleteSqliteConnection>;
-using SqliteStatementPtr =
-    std::unique_ptr<CESIUM_SQLITE(sqlite3_stmt), DeleteSqliteStatement>;
-
-SqliteStatementPtr prepareStatement(
-    const SqliteConnectionPtr& pConnection,
-    const std::string& sql) {
-  CESIUM_SQLITE(sqlite3_stmt*) pStmt;
-  const int status = CESIUM_SQLITE(sqlite3_prepare_v2)(
-      pConnection.get(),
-      sql.c_str(),
-      int(sql.size()),
-      &pStmt,
-      nullptr);
-  if (status != SQLITE_OK) {
-    throw std::runtime_error(
-        std::string(CESIUM_SQLITE(sqlite3_errstr)(status)));
-  }
-  return SqliteStatementPtr(pStmt);
-}
-
 } // namespace
 
 namespace CesiumAsync {
@@ -277,32 +255,37 @@ void SqliteCache::createConnection() const {
 
   // get entry based on key
   this->_pImpl->_getEntryStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, GET_ENTRY_SQL);
+      SqliteHelper::prepareStatement(this->_pImpl->_pConnection, GET_ENTRY_SQL);
 
   // update last accessed for entry
-  this->_pImpl->_updateLastAccessedTimeStmtWrapper = prepareStatement(
-      this->_pImpl->_pConnection,
-      UPDATE_LAST_ACCESSED_TIME_SQL);
+  this->_pImpl->_updateLastAccessedTimeStmtWrapper =
+      SqliteHelper::prepareStatement(
+          this->_pImpl->_pConnection,
+          UPDATE_LAST_ACCESSED_TIME_SQL);
 
   // store response
-  this->_pImpl->_storeResponseStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, STORE_RESPONSE_SQL);
+  this->_pImpl->_storeResponseStmtWrapper = SqliteHelper::prepareStatement(
+      this->_pImpl->_pConnection,
+      STORE_RESPONSE_SQL);
 
   // query total items
-  this->_pImpl->_totalItemsQueryStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, TOTAL_ITEMS_QUERY_SQL);
+  this->_pImpl->_totalItemsQueryStmtWrapper = SqliteHelper::prepareStatement(
+      this->_pImpl->_pConnection,
+      TOTAL_ITEMS_QUERY_SQL);
 
   // delete expired items
-  this->_pImpl->_deleteExpiredStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, DELETE_EXPIRED_ITEMS_SQL);
+  this->_pImpl->_deleteExpiredStmtWrapper = SqliteHelper::prepareStatement(
+      this->_pImpl->_pConnection,
+      DELETE_EXPIRED_ITEMS_SQL);
 
   // delete expired items
-  this->_pImpl->_deleteLRUStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, DELETE_LRU_ITEMS_SQL);
+  this->_pImpl->_deleteLRUStmtWrapper = SqliteHelper::prepareStatement(
+      this->_pImpl->_pConnection,
+      DELETE_LRU_ITEMS_SQL);
 
   // clear all items
   this->_pImpl->_clearAllStmtWrapper =
-      prepareStatement(this->_pImpl->_pConnection, CLEAR_ALL_SQL);
+      SqliteHelper::prepareStatement(this->_pImpl->_pConnection, CLEAR_ALL_SQL);
 }
 
 SqliteCache::~SqliteCache() = default;
@@ -788,7 +771,7 @@ void SqliteCache::destroyDatabase() {
   uint64_t maxItems = _pImpl->_maxItems;
   _pImpl.reset();
   _pImpl = std::make_unique<Impl>(pLogger, databaseName, maxItems);
-  if (remove(_pImpl->_databaseName.c_str()) != 0) {
+  if (std::remove(_pImpl->_databaseName.c_str()) != 0) {
     SPDLOG_LOGGER_ERROR(
         this->_pImpl->_pLogger,
         "Unable to delete database file.");

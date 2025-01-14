@@ -1,15 +1,22 @@
 #include "fillWithRandomBytes.h"
-#include "parseLinkHeader.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumIonClient/ApplicationData.h>
+#include <CesiumIonClient/Assets.h>
 #include <CesiumIonClient/Connection.h>
-#include <CesiumIonClient/Geocoder.h>
+#include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Profile.h>
+#include <CesiumIonClient/Response.h>
+#include <CesiumIonClient/Token.h>
+#include <CesiumIonClient/TokenList.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Result.h>
-#include <CesiumUtility/SpanHelper.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -18,11 +25,26 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/pointer.h>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <uriparser/Uri.h>
+#include <uriparser/UriBase.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -1094,12 +1116,12 @@ Future<Response<NoValue>> Connection::modifyToken(
 
 /*static*/ std::optional<std::string>
 Connection::getIdFromToken(const std::string& token) {
-  size_t startPos = token.find(".");
+  size_t startPos = token.find('.');
   if (startPos == std::string::npos || startPos == token.size() - 1) {
     return std::nullopt;
   }
 
-  size_t endPos = token.find(".", startPos + 1);
+  size_t endPos = token.find('.', startPos + 1);
   if (endPos == std::string::npos) {
     return std::nullopt;
   }

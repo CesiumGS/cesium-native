@@ -329,7 +329,7 @@ function toPascalCase(name) {
 }
 
 function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
-  const fullDoc =
+  let fullDoc =
     propertyDetails.gltf_detailedDescription &&
       propertyDetails.gltf_detailedDescription.indexOf(
         propertyDetails.description
@@ -338,6 +338,16 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
         .substr(propertyDetails.description.length)
         .trim()
       : propertyDetails.gltf_detailedDescription;
+  let briefDoc = propertyDetails.description;
+  // Removing the description from the detailed description can have some
+  // unintended consequences, like if the difference between the two lines
+  // is as small as a single period. If it's that small, just append it to
+  // the brief.
+  if (fullDoc && fullDoc.length < 10) {
+    briefDoc += fullDoc;
+    fullDoc = null;
+  }
+
   return {
     name: propertyName,
     cppSafeName: cppSafeName,
@@ -354,7 +364,7 @@ function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
     localTypes: [],
     readerLocalTypes: [],
     readerLocalTypesImpl: [],
-    briefDoc: propertyDetails.description,
+    briefDoc: briefDoc,
     fullDoc: fullDoc,
   };
 }
@@ -723,14 +733,26 @@ function createEnum(enumDetails) {
     return undefined;
   }
 
-  if (enumDetails.type === "integer") {
-    return `static constexpr int32_t ${createEnumIdentifier(
-      enumDetails
-    )} = ${enumValue}`;
+  const identifier = createEnumIdentifier(enumDetails);
+
+  const valueMatchesIdentifier = enumValue === identifier;
+  const valueMatchesDescription = !enumDetails.description || enumValue === enumDetails.description;
+
+  let description;
+  if (valueMatchesDescription) {
+    description = `\`${enumValue}\``;
+  } else if (valueMatchesIdentifier) {
+    description = enumDetails.description ?? `\`${identifier}\``;
   } else {
-    return `inline static const std::string ${createEnumIdentifier(
-      enumDetails
-    )} = \"${enumValue}\"`;
+    description = `${enumDetails.description ?? identifier} (\`${enumValue}\`)`;
+  }
+
+  const comment = `/** @brief ${description} */`;
+
+  if (enumDetails.type === "integer") {
+    return `${comment}\nstatic constexpr int32_t ${identifier} = ${enumValue}`;
+  } else {
+    return `${comment}\ninline static const std::string ${identifier} = \"${enumValue}\"`;
   }
 }
 

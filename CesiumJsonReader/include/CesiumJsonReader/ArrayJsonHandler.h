@@ -1,22 +1,35 @@
 #pragma once
 
-#include "CesiumUtility/Assert.h"
-#include "DoubleJsonHandler.h"
-#include "IntegerJsonHandler.h"
-#include "JsonHandler.h"
-#include "Library.h"
-#include "StringJsonHandler.h"
+#include <CesiumJsonReader/DoubleJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
+#include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumJsonReader/Library.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
+#include <CesiumUtility/Assert.h>
 
 #include <functional>
 #include <memory>
 #include <vector>
 
 namespace CesiumJsonReader {
+/**
+ * @brief \ref IJsonHandler for reading a JSON array into an `std::vector`.
+ *
+ * @tparam T The element type of the destination vector.
+ * @tparam THandler The \ref IJsonHandler to handle each element.
+ */
 template <typename T, typename THandler>
 class CESIUMJSONREADER_API ArrayJsonHandler : public JsonHandler {
 public:
+  /** @brief The destination type. */
   using ValueType = std::vector<T>;
 
+  /**
+   * @brief Creates a new \ref ArrayJsonHandler.
+   *
+   * @param args The arguments that will be passed to the constructor of
+   * THandler when it's instantiated.
+   */
   template <typename... Ts>
   ArrayJsonHandler(Ts&&... args) noexcept
       : JsonHandler(),
@@ -24,6 +37,10 @@ public:
             std::bind(handlerFactory<Ts...>, std::forward<Ts>(args)...)),
         _objectHandler() {}
 
+  /**
+   * @brief Resets the parent and destination array of this \ref
+   * ArrayJsonHandler.
+   */
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
@@ -127,14 +144,25 @@ private:
   std::unique_ptr<THandler> _objectHandler;
 };
 
+/**
+ * @brief Special case of \ref ArrayJsonHandler for handling arrays of double
+ * values. This will read every scalar value as a double, regardless of whether
+ * it's floating point or not. Attempting to read other values will cause a
+ * warning.
+ */
 template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<double, DoubleJsonHandler>
     : public JsonHandler {
 public:
+  /** @brief The destination type. */
   using ValueType = std::vector<double>;
 
   ArrayJsonHandler() noexcept : JsonHandler() {}
 
+  /**
+   * @brief Resets the parent and destination array of this \ref
+   * ArrayJsonHandler.
+   */
   void reset(IJsonHandler* pParent, std::vector<double>* pArray) {
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
@@ -246,14 +274,23 @@ private:
   bool _arrayIsOpen = false;
 };
 
+/**
+ * @brief Special case of \ref ArrayJsonHandler for handling arrays of integer
+ * values. Attempting to read other values will cause a warning.
+ */
 template <typename T>
 class CESIUMJSONREADER_API ArrayJsonHandler<T, IntegerJsonHandler<T>>
     : public JsonHandler {
 public:
+  /** @brief The destination type. */
   using ValueType = std::vector<T>;
 
   ArrayJsonHandler() noexcept : JsonHandler() {}
 
+  /**
+   * @brief Resets the parent and destination array of this \ref
+   * ArrayJsonHandler.
+   */
   void reset(IJsonHandler* pParent, std::vector<T>* pArray) {
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
@@ -359,14 +396,23 @@ private:
   bool _arrayIsOpen = false;
 };
 
+/**
+ * @brief Special case of \ref ArrayJsonHandler for reading arrays of string
+ * values. Attempting to read other values will cause a warning.
+ */
 template <>
 class CESIUMJSONREADER_API ArrayJsonHandler<std::string, StringJsonHandler>
     : public JsonHandler {
 public:
+  /** @brief The destination type. */
   using ValueType = std::vector<std::string>;
 
   ArrayJsonHandler() noexcept : JsonHandler() {}
 
+  /**
+   * @brief Resets the parent and destination array of this \ref
+   * ArrayJsonHandler.
+   */
   void reset(IJsonHandler* pParent, std::vector<std::string>* pArray) {
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
@@ -454,13 +500,27 @@ private:
   bool _arrayIsOpen = false;
 };
 
+/**
+ * @brief Special case of \ref ArrayJsonHandler for reading arrays of arrays.
+ * Attempting to read other values will cause a warning.
+ *
+ * @tparam T The inner type of the nested array.
+ * @tparam THandler The handler of the inner type of the array.
+ */
 template <typename T, typename THandler>
 class CESIUMJSONREADER_API
     ArrayJsonHandler<std::vector<T>, ArrayJsonHandler<T, THandler>>
     : public JsonHandler {
 public:
+  /** @brief The destination type. */
   using ValueType = std::vector<T>;
 
+  /**
+   * @brief Creates a new \ref ArrayJsonHandler.
+   *
+   * @param args The arguments passed to the constructor of THandler when it's
+   * instantiated.
+   */
   template <typename... Ts>
   ArrayJsonHandler(Ts&&... args) noexcept
       : JsonHandler(),
@@ -468,6 +528,10 @@ public:
             std::bind(handlerFactory<Ts...>, std::forward<Ts>(args)...)),
         _elementHandler() {}
 
+  /**
+   * @brief Resets the parent and destination array of this \ref
+   * ArrayJsonHandler.
+   */
   void reset(IJsonHandler* pParent, std::vector<std::vector<T>>* pArray) {
     JsonHandler::reset(pParent);
     this->_pArray = pArray;

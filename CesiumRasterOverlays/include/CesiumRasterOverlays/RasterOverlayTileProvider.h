@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Library.h"
-
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/Library.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ErrorList.h>
@@ -127,7 +126,11 @@ class RasterOverlayTileProvider;
  * value of {@link RasterOverlayTileProvider::loadTile}.
  */
 struct TileProviderAndTile {
+  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
+   * RasterOverlayTileProvider used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
+  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
+   * RasterOverlayTile used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 
   ~TileProviderAndTile() noexcept;

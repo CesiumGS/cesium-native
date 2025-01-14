@@ -1,6 +1,20 @@
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Hash.h>
+#include <CesiumUtility/Result.h>
+
+#include <fmt/format.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace CesiumUtility;
 

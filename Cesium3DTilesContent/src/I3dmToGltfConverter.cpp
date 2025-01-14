@@ -1,29 +1,51 @@
 // Heavily inspired by PntsToGltfConverter.cpp
 
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverterUtility.h>
+#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/AttributeCompression.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
-#include <glm/gtc/matrix_transform.hpp>
+#include <fmt/format.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/matrix.hpp>
+#include <rapidjson/document.h>
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <numeric>
+#include <limits>
 #include <optional>
 #include <set>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 
@@ -143,29 +165,17 @@ glm::vec3 decodeOct32P(const uint16_t rawOct[2]) {
 
 /*
   Calculate the rotation quaternion described by the up, right vectors passed
-  in NORMAL_UP and NORMAL_RIGHT. This is composed of two rotations:
-   + The rotation that takes the up vector to its new position;
-   + The rotation around the new up vector that takes the right vector to its
-  new position.
+  in NORMAL_UP and NORMAL_RIGHT.
 
-  I like to think of each rotation as describing a coordinate frame. The
-  calculation of the second rotation must take place within the first frame.
-
-  The rotations are calculated by finding the rotation that takes one vector to
-  another.
+  There may be a faster method that avoids creating a rotation matrix, but it is
+  hard to get the exceptional cases correct e.g., rotations of 180 degrees about
+  an axis.
  */
 
 glm::quat rotationFromUpRight(const glm::vec3& up, const glm::vec3& right) {
-  // First rotation: up
-  auto upRot = CesiumUtility::Math::rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
-  // We can rotate a point vector by a quaternion using q * (0, v) *
-  // conj(q). But here we are doing an inverse rotation of the right vector into
-  // the "up frame."
-  glm::quat temp = glm::conjugate(upRot) * glm::quat(0.0f, right) * upRot;
-  glm::vec3 innerRight(temp.x, temp.y, temp.z);
-  glm::quat rightRot =
-      CesiumUtility::Math::rotation(glm::vec3(1.0f, 0.0f, 0.0f), innerRight);
-  return upRot * rightRot;
+  glm::vec3 forward = cross(right, up);
+  glm::mat3x3 rotMat(right, up, forward);
+  return glm::quat(rotMat);
 }
 
 struct ConvertedI3dm {
@@ -330,7 +340,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   if (!parsedJsonResult) {
     return finishEarly();
   }
-  const I3dmContent& parsedContent = *parsedJsonResult;
+  I3dmContent& parsedContent = *parsedJsonResult;
   decodedInstances.rtcCenter = parsedContent.rtcCenter;
   decodedInstances.rotationENU = parsedContent.eastNorthUp;
 
@@ -346,7 +356,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
             pBinaryData + *parsedContent.position),
         numInstances);
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
-  } else {
+  } else if (parsedContent.positionQuantized) {
     std::span<const uint16_t[3]> rawQuantizedPositions(
         reinterpret_cast<const uint16_t(*)[3]>(
             pBinaryData + *parsedContent.positionQuantized),
@@ -365,7 +375,11 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
           }
           return position;
         });
+  } else {
+    parsedContent.errors.emplaceError(
+        "Missing position or positionQuantized in parsed content");
   }
+
   decodedInstances.rotations.resize(
       numInstances,
       glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
@@ -502,7 +516,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
                            GltfConverterResult&& converterResult) {
         if (converterResult.model.has_value()) {
           CesiumGltfReader::GltfReaderResult readerResult{
-              std::move(*converterResult.model),
+              std::move(converterResult.model),
               {},
               {}};
           CesiumAsync::HttpHeaders externalRequestHeaders(

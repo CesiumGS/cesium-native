@@ -1,16 +1,15 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlayCollection.h"
-#include "SampleHeightResult.h"
-#include "Tile.h"
-#include "TilesetContentLoader.h"
-#include "TilesetExternals.h"
-#include "TilesetLoadFailureDetails.h"
-#include "TilesetOptions.h"
-#include "ViewState.h"
-#include "ViewUpdateResult.h"
-
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/RasterOverlayCollection.h>
+#include <Cesium3DTilesSelection/SampleHeightResult.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/ViewState.h>
+#include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
@@ -236,6 +235,14 @@ public:
   void forEachLoadedTile(const std::function<void(Tile& tile)>& callback);
 
   /**
+   * @brief Invokes a function for each tile that is currently loaded.
+   *
+   * @param callback The function to invoke.
+   */
+  void forEachLoadedTile(
+      const std::function<void(const Tile& tile)>& callback) const;
+
+  /**
    * @brief Gets the total number of bytes of tile and raster overlay data that
    * are currently loaded.
    */
@@ -304,6 +311,9 @@ public:
    */
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
+
+  Tileset(const Tileset& rhs) = delete;
+  Tileset& operator=(const Tileset& rhs) = delete;
 
 private:
   /**
@@ -556,9 +566,6 @@ private:
       const FrameState& frameState,
       const Tile& tile,
       const TileSelectionState& lastFrameSelectionState);
-
-  Tileset(const Tileset& rhs) = delete;
-  Tileset& operator=(const Tileset& rhs) = delete;
 };
 
 } // namespace Cesium3DTilesSelection

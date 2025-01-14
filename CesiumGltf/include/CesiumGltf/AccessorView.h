@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/Accessor.h"
-#include "CesiumGltf/Model.h"
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Model.h>
 
 #include <cstddef>
 #include <stdexcept>
@@ -56,12 +56,12 @@ enum class AccessorViewStatus {
   WrongSizeT,
 
   /**
-   * @brief The {@link Accessor:type} is invalid.
+   * @brief The `AccessorSpec:type` is invalid.
    */
   InvalidType,
 
   /**
-   * @brief The {@link Accessor::componentType} is invalid.
+   * @brief The {@link AccessorSpec::componentType} is invalid.
    */
   InvalidComponentType,
 
@@ -213,6 +213,14 @@ public:
    * @returns The stride.
    */
   int64_t stride() const noexcept { return this->_stride; }
+
+  /**
+   * @brief Returns the offset of this accessor, which is the number of bytes
+   * from the start of the buffer to the first element.
+   *
+   * @returns The offset.
+   */
+  int64_t offset() const noexcept { return this->_offset; }
 
   /**
    * @brief Returns a pointer to the first byte of this accessor view's data.

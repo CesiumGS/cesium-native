@@ -1,14 +1,30 @@
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/ITaskProcessor.h>
+#include <CesiumAsync/Promise.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <map>
+#include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <thread>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace CesiumNativeTests;
 
@@ -157,7 +173,7 @@ TEST_CASE("AsyncSystem Examples") {
   };
   //! [capture-by-value]
 
-  SECTION("waitInMainThread") {
+  SECTION("wait") {
     //! [create-request-future]
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
@@ -166,10 +182,10 @@ TEST_CASE("AsyncSystem Examples") {
         pAssetAccessor->get(asyncSystem, "https://example.com");
     //! [create-request-future]
 
-    //! [wait-in-main-thread]
+    //! [wait]
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest =
-        std::move(future).waitInMainThread();
-    //! [wait-in-main-thread]
+        std::move(future).wait();
+    //! [wait]
   }
 
   SECTION("thenInMainThread") {

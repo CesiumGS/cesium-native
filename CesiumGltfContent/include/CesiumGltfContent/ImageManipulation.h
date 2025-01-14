@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumGltfContent/Library.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 // Forward declarations
 namespace CesiumGltf {
@@ -37,6 +38,9 @@ struct PixelRectangle {
   int32_t height;
 };
 
+/**
+ * @brief A collection of utility functions for image manipulation operations.
+ */
 class CESIUMGLTFCONTENT_API ImageManipulation {
 public:
   /**

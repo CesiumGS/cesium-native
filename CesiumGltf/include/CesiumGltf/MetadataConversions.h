@@ -1,7 +1,6 @@
 #pragma once
 
-#include "PropertyTypeTraits.h"
-
+#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/common.hpp>
@@ -27,6 +26,10 @@ namespace CesiumGltf {
  */
 template <typename TTo, typename TFrom, typename Enable = void>
 struct MetadataConversions {
+  /**
+   * @brief Converts between `TFrom` and `TTo` where no actual conversion is
+   * defined, returning `std::nullopt`.
+   */
   static std::optional<TTo> convert(TFrom /*from*/) { return std::nullopt; }
 };
 
@@ -34,6 +37,10 @@ struct MetadataConversions {
  * @brief Trivially converts any type to itself.
  */
 template <typename T> struct MetadataConversions<T, T> {
+  /**
+   * @brief Converts an instance of `T` to an instance of `T`, always returning
+   * the same value that was passed in.
+   */
   static std::optional<T> convert(T from) { return from; }
 };
 

@@ -7,13 +7,14 @@ This is a guide to writing C++ code for cesium-native. These guidelines are inte
 
 In all cases these are _guidelines_. There are sometimes good reasons to violate the advice given here. In particular, when writing code that is meant to integrate into another system, it is rarely a good idea to fight that other system's conventions.
 
-**cesium-native uses ISO Standard C++17.**
+**cesium-native uses ISO Standard C++20.**
 
 We follow the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines), with a few exceptions. We suggest proceeding as follows:
 
 * Skim the sections below, which call out where (and why) our practices differ from the C++ Core Guidelines.
 * Skim the C++ Core Guidelines. Read sections that seem interesting or surprising.
 * Read the sections below more thoroughly.
+<!--! [TOC] -->
 
 ## 💄 Source Code Formatting
 
@@ -54,8 +55,8 @@ Use `#pragma once` at the top of header files rather than manual inclusion guard
 
 Not covered by C++ Core Guidelines.
 
-* Forward declare types in our own libraries whenever you can. Only #include when you must.
-* For third-party libraries, prefer to #include a fwd.h type of file if one is provided. #include the full implementation only when you must.
+* Forward declare types in our own libraries whenever you can. Only `#include` when you must.
+* For third-party libraries, prefer to `#include` a fwd.h type of file if one is provided. `#include` the full implementation only when you must.
 * If you find yourself writing complicated forward declarations for our own types or for third-party ones that don't include a fwd.h, consider making a fwd.h file for it.
 
 ## 🛑 Exceptions

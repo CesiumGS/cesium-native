@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Library.h"
-#include "RasterOverlayDetails.h"
-
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 
 #include <glm/fwd.hpp>
 
@@ -19,7 +18,16 @@ struct Model;
 
 namespace CesiumRasterOverlays {
 
+/**
+ * @brief A collection of utilities useful for operations involving raster
+ * overlay tiles.
+ */
 struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
+  /**
+   * @brief Texture coordinates will be stored in the glTF under the following
+   * name, appended with a number. See \ref
+   * createRasterOverlayTextureCoordinates.
+   */
   static constexpr std::string_view DEFAULT_TEXTURE_COORDINATE_BASE_NAME =
       "_CESIUMOVERLAY_";
 
@@ -145,7 +153,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * this method.
    *
    * The `target screen pixels` returned here may be further modified by the
-   * raster overlay's {@link RasterOverlay::getTile} method. In particular, it
+   * raster overlay's {@link RasterOverlayTileProvider::getTile} method. In particular, it
    * will usually be divided by the raster overlay's `maximum screen space
    * error` of the raster overlay (not to be confused with the `maximum screen
    * space error` of the tileset, mentioned above).

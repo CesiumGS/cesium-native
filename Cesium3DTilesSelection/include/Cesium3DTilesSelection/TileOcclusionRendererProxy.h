@@ -1,16 +1,17 @@
 #pragma once
 
-#include "Library.h"
-#include "Tile.h"
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/Tile.h>
 
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
 
+namespace Cesium3DTilesSelection {
+
 /**
  * @brief The occlusion state of a tile as reported by the renderer proxy.
  */
-namespace Cesium3DTilesSelection {
 enum class CESIUM3DTILESSELECTION_API TileOcclusionState {
   /**
    * @brief The renderer does not yet know if the tile's bounding volume is
