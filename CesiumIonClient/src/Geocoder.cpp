@@ -1,7 +1,9 @@
-#include "CesiumIonClient/Geocoder.h"
+#include <CesiumIonClient/Geocoder.h>
 
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+
+#include <variant>
 
 namespace CesiumIonClient {
 

@@ -116,13 +116,7 @@ cmake_dependent_option(
     OFF
 )
 
-cmake_dependent_option(
-    CESIUM_CLANG_TIDY_USE_THREADS
-    "Sets the number of threads for run-clang-tidy to use."
-    14
-    CESIUM_ENABLE_CLANG_TIDY
-    1
-)
+set(CESIUM_CLANG_TIDY_USE_THREADS 14 CACHE STRING "Sets the number of threads for run-clang-tidy to use.")
 
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
