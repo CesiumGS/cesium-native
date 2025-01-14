@@ -1,7 +1,13 @@
-#include "CesiumGltf/AccessorUtility.h"
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorUtility.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 
-#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
-#include "CesiumGltf/Model.h"
+#include <cstdint>
+#include <string>
 
 namespace CesiumGltf {
 PositionAccessorType

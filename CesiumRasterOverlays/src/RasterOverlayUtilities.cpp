@@ -1,17 +1,46 @@
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <limits>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;
@@ -894,7 +923,7 @@ bool upsamplePrimitiveForRasterOverlays(
       std::to_string(textureCoordinateIndex);
 
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
-    if (attribute.first.find(textureCoordinateAttributeBaseName) == 0) {
+    if (attribute.first.starts_with(textureCoordinateAttributeBaseName)) {
       if (uvAccessorIndex == -1) {
         if (attribute.first == textureCoordinateName) {
           uvAccessorIndex = attribute.second;
@@ -1166,8 +1195,8 @@ bool upsamplePrimitiveForRasterOverlays(
     Accessor& accessor =
         model.accessors[static_cast<size_t>(attribute.accessorIndex)];
     accessor.count = numberOfVertices;
-    accessor.min = std::move(attribute.minimums);
-    accessor.max = std::move(attribute.maximums);
+    accessor.min = attribute.minimums;
+    accessor.max = attribute.maximums;
   }
 
   // Add an accessor for the indices

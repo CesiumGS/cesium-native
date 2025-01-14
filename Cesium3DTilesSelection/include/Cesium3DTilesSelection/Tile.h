@@ -1,13 +1,12 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "Library.h"
-#include "RasterMappedTo3DTile.h"
-#include "TileContent.h"
-#include "TileID.h"
-#include "TileRefine.h"
-#include "TileSelectionState.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/DoublyLinkedList.h>
 
 #include <glm/common.hpp>

@@ -2,6 +2,8 @@
 
 #include <openssl/rand.h>
 
+#include <cstdint>
+#include <span>
 #include <stdexcept>
 
 namespace CesiumIonClient {

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Cesium3DTilesWriter/Library.h"
-
+#include <Cesium3DTilesWriter/Library.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // forward declarations
