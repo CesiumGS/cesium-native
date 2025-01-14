@@ -1,8 +1,10 @@
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <optional>
 
 using namespace CesiumGltfContent;
 using namespace CesiumUtility;

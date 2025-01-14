@@ -1,11 +1,10 @@
 #pragma once
 
-#include "BoundingRegion.h"
-#include "Ellipsoid.h"
-#include "S2CellID.h"
-
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/Plane.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellID.h>
 
 #include <glm/vec3.hpp>
 

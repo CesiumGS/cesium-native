@@ -1,8 +1,26 @@
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Uri.h>
 
-#include <spdlog/spdlog.h>
+#include <fmt/format.h>
+
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
 
 using namespace CesiumUtility;
 
@@ -98,8 +116,8 @@ std::string GltfConverters::toLowerCase(const std::string_view& str) {
 }
 
 std::string GltfConverters::getFileExtension(const std::string_view& filePath) {
-  std::string_view urlWithoutQueries = filePath.substr(0, filePath.find("?"));
-  size_t extensionPos = urlWithoutQueries.rfind(".");
+  std::string_view urlWithoutQueries = filePath.substr(0, filePath.find('?'));
+  size_t extensionPos = urlWithoutQueries.rfind('.');
   if (extensionPos < urlWithoutQueries.size()) {
     std::string_view extension = urlWithoutQueries.substr(extensionPos);
     std::string lowerCaseExtension = toLowerCase(extension);

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltfReader/Library.h"
-
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltfReader/Library.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <optional>
