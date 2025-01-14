@@ -1,5 +1,8 @@
 #include <CesiumUtility/ErrorList.h>
 
+#include <string>
+#include <utility>
+
 namespace CesiumUtility {
 
 /*static*/ ErrorList ErrorList::error(std::string errorMessage) {

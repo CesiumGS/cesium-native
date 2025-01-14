@@ -1,14 +1,22 @@
-#include "CesiumGltfReader/GltfReader.h"
-
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;

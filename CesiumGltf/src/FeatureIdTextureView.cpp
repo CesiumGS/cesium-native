@@ -1,8 +1,11 @@
-#include "CesiumGltf/FeatureIdTextureView.h"
+#include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/FeatureIdTextureView.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/TextureView.h>
 
-#include "CesiumGltf/ExtensionKhrTextureTransform.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/SamplerUtility.h"
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 namespace CesiumGltf {
 FeatureIdTextureView::FeatureIdTextureView() noexcept
@@ -48,8 +51,8 @@ FeatureIdTextureView::FeatureIdTextureView(
   }
 
   // Only channel values 0-3 are supported.
-  for (size_t i = 0; i < channels.size(); i++) {
-    if (channels[i] < 0 || channels[i] > 3) {
+  for (int64_t channel : channels) {
+    if (channel < 0 || channel > 3) {
       this->_status = FeatureIdTextureViewStatus::ErrorInvalidChannels;
       return;
     }

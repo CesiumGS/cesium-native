@@ -1,7 +1,10 @@
-#include "CesiumUtility/DoublyLinkedList.h"
+#include <CesiumUtility/DoublyLinkedList.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 using namespace CesiumUtility;
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "AccessorView.h"
-
+#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/MeshPrimitive.h>
 
 #include <glm/common.hpp>
