@@ -117,7 +117,6 @@ public:
         _url(url),
         _headers(headers),
         _options(urlTemplateOptions) {}
-  virtual ~UrlTemplateRasterOverlay() override {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,

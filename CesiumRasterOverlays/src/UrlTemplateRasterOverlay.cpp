@@ -1,6 +1,7 @@
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumAsync/HttpHeaders.h>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -8,15 +9,6 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
-
-namespace {
-static bool caseInsensitiveCompare(std::string_view lhs, std::string_view rhs) {
-  return lhs.size() == rhs.size() &&
-         std::equal(lhs.begin(), lhs.end(), rhs.begin(), [](char a, char b) {
-           return std::tolower(a) == std::tolower(b);
-         });
-}
-} // namespace
 
 class UrlTemplateRasterOverlayTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
@@ -68,51 +60,32 @@ protected:
     const GlobeRectangle unprojectedRect =
         unprojectRectangleSimple(this->getProjection(), options.rectangle);
 
+    const std::map<std::string, std::string, CaseInsensitiveCompare> placeholdersMap {
+      { "x", std::to_string(tileID.x) },
+      { "y", std::to_string(tileID.y) },
+      { "z", std::to_string(tileID.level) },
+      {"reverseX", std::to_string(tileID.computeInvertedX(this->getTilingScheme()))},
+      {"reverseY", std::to_string(tileID.computeInvertedY(this->getTilingScheme()))},
+      {"reverseZ", std::to_string(this->getMaximumLevel() - tileID.level)},
+      {"westDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getWest()))},
+      {"southDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getSouth()))},
+      {"eastDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getEast()))},
+      {"northDegrees", std::to_string(Math::radiansToDegrees(unprojectedRect.getNorth()))},
+      {"westProjected", std::to_string(Math::radiansToDegrees(options.rectangle.minimumY))},
+      {"southProjected", std::to_string(Math::radiansToDegrees(options.rectangle.minimumX))},
+      {"eastProjected", std::to_string(Math::radiansToDegrees(options.rectangle.maximumY))},
+      {"northProjected", std::to_string(Math::radiansToDegrees(options.rectangle.maximumX)) },
+      {"width", std::to_string(this->getWidth()) },
+      {"height", std::to_string(this->getHeight()) }
+    };
+    
     const std::string substitutedUrl = Uri::substituteTemplateParameters(
         this->_url,
-        [this, tileID, &rectangle = options.rectangle, &unprojectedRect](
+        [&placeholdersMap](
             const std::string& placeholder) {
-          if (caseInsensitiveCompare(placeholder, "x")) {
-            return std::to_string(tileID.x);
-          } else if (caseInsensitiveCompare(placeholder, "y")) {
-            return std::to_string(tileID.y);
-          } else if (caseInsensitiveCompare(placeholder, "z")) {
-            return std::to_string(tileID.level);
-          } else if (caseInsensitiveCompare(placeholder, "reverseX")) {
-            return std::to_string(
-                tileID.computeInvertedX(this->getTilingScheme()));
-          } else if (caseInsensitiveCompare(placeholder, "reverseY")) {
-            return std::to_string(
-                tileID.computeInvertedY(this->getTilingScheme()));
-          } else if (caseInsensitiveCompare(placeholder, "reverseZ")) {
-            return std::to_string(this->getMaximumLevel() - tileID.level);
-          } else if (caseInsensitiveCompare(placeholder, "westDegrees")) {
-            return std::to_string(
-                Math::radiansToDegrees(unprojectedRect.getWest()));
-          } else if (caseInsensitiveCompare(placeholder, "southDegrees")) {
-            return std::to_string(
-                Math::radiansToDegrees(unprojectedRect.getSouth()));
-          } else if (caseInsensitiveCompare(placeholder, "eastDegrees")) {
-            return std::to_string(
-                Math::radiansToDegrees(unprojectedRect.getEast()));
-          } else if (caseInsensitiveCompare(placeholder, "northDegrees")) {
-            return std::to_string(
-                Math::radiansToDegrees(unprojectedRect.getNorth()));
-          } else if (caseInsensitiveCompare(placeholder, "westDegrees")) {
-            return std::to_string(
-                Math::radiansToDegrees(unprojectedRect.getWest()));
-          } else if (caseInsensitiveCompare(placeholder, "westProjected")) {
-            return std::to_string(Math::radiansToDegrees(rectangle.minimumY));
-          } else if (caseInsensitiveCompare(placeholder, "southProjected")) {
-            return std::to_string(Math::radiansToDegrees(rectangle.minimumX));
-          } else if (caseInsensitiveCompare(placeholder, "eastProjected")) {
-            return std::to_string(Math::radiansToDegrees(rectangle.maximumY));
-          } else if (caseInsensitiveCompare(placeholder, "northProjected")) {
-            return std::to_string(Math::radiansToDegrees(rectangle.maximumX));
-          } else if (caseInsensitiveCompare(placeholder, "width")) {
-            return std::to_string(this->getWidth());
-          } else if (caseInsensitiveCompare(placeholder, "height")) {
-            return std::to_string(this->getHeight());
+          auto placeholderIt = placeholdersMap.find(placeholder);
+          if(placeholderIt != placeholdersMap.end()) {
+            return placeholderIt->second;
           }
           return std::string("[UNKNOWN PLACEHOLDER]");
         });
