@@ -430,7 +430,7 @@ template <typename TIndex> struct IndicesViewRemapper {
         // three adds an additional triangle
         indicesCount = (accessorView->size() - 2) * 3;
       }
-    } else if(primitiveIndices < 0) {
+    } else if (primitiveIndices < 0) {
       // Non-indexed triangles
       indicesCount = numVertices;
       viewStatus = AccessorViewStatus::Valid;
@@ -439,9 +439,7 @@ template <typename TIndex> struct IndicesViewRemapper {
 
   int64_t size() const { return indicesCount; }
 
-  AccessorViewStatus status() const {
-    return viewStatus;
-  }
+  AccessorViewStatus status() const { return viewStatus; }
 
   const TIndex operator[](int64_t i) const {
     if (i < 0 || i >= indicesCount) {
