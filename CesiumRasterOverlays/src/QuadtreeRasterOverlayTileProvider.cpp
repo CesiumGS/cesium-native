@@ -6,12 +6,6 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/SpanHelper.h>
 
-#if SHOW_QUADTREE_RASTER_IDS
-#include "DebugText.h"
-
-#include <format>
-#endif
-
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -110,15 +104,6 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                         }
                       }
                     }
-#endif
-
-#if SHOW_QUADTREE_RASTER_IDS
-                    blitString(
-                        *loaded.pImage,
-                        std::format("X{} Y{} Z{}", key.x, key.y, key.level),
-                        0,
-                        0,
-                        1);
 #endif
 
                     IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
