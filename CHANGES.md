@@ -1,15 +1,14 @@
 # Change Log
 
-### ? - ?
-
-##### Additions :tada:
-- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
-
 ### v0.44.0 - 2025-02-03
 
 ##### Fixes :wrench:
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+
+##### Additions :tada:
+
+- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
 
 ### v0.43.0 - 2025-01-02
 
