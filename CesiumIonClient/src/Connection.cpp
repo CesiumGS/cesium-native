@@ -622,7 +622,7 @@ GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
               JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
         }
 
-        result.features.emplace_back(label, point);
+        result.features.emplace_back(GeocoderFeature{label, point});
       } else {
         std::vector<double>& values = bboxItems.value();
         CesiumGeospatial::GlobeRectangle rect =
@@ -632,7 +632,7 @@ GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
                 values[2],
                 values[3]);
 
-        result.features.emplace_back(label, rect);
+        result.features.emplace_back(GeocoderFeature{label, rect});
       }
     }
   }
@@ -649,7 +649,7 @@ GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
       std::string html = JsonHelpers::getStringOrDefault(element, "html", "");
       bool showOnScreen =
           !JsonHelpers::getBoolOrDefault(element, "collapsible", false);
-      result.attributions.emplace_back(html, showOnScreen);
+      result.attributions.emplace_back(GeocoderAttribution{html, showOnScreen});
     }
   }
 
