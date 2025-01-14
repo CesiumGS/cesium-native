@@ -418,7 +418,8 @@ template <typename TIndex> struct IndicesViewRemapper {
         indicesCount(0),
         primitiveMode(primitive.mode) {
     AccessorView<TIndex> view(model, primitiveIndices);
-    if (view.status() == AccessorViewStatus::Valid) {
+    viewStatus = view.status();
+    if (viewStatus == AccessorViewStatus::Valid) {
       accessorView = std::move(view);
       if (primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
         indicesCount = accessorView->size();
@@ -429,19 +430,17 @@ template <typename TIndex> struct IndicesViewRemapper {
         // three adds an additional triangle
         indicesCount = (accessorView->size() - 2) * 3;
       }
-    } else {
+    } else if(primitiveIndices < 0) {
+      // Non-indexed triangles
       indicesCount = numVertices;
+      viewStatus = AccessorViewStatus::Valid;
     }
   }
 
   int64_t size() const { return indicesCount; }
 
   AccessorViewStatus status() const {
-    if (accessorView) {
-      return accessorView->status();
-    }
-
-    return AccessorViewStatus::Valid;
+    return viewStatus;
   }
 
   const TIndex operator[](int64_t i) const {
@@ -484,6 +483,7 @@ private:
   std::optional<AccessorView<TIndex>> accessorView;
   int64_t indicesCount;
   int32_t primitiveMode;
+  AccessorViewStatus viewStatus;
 };
 
 } // namespace
