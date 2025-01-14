@@ -822,6 +822,7 @@ void instantiateWithExistingInstances(
     const DecodedInstances& decodedInstances,
     int32_t instanceBufferId,
     int32_t instanceBufferViewId) {
+  CESIUM_ASSERT(result.model);
   auto& instanceBuffer =
       result.model->buffers[static_cast<uint32_t>(instanceBufferId)];
   const auto numI3dmInstances =
@@ -856,7 +857,7 @@ void instantiateWithExistingInstances(
           return;
         }
         if (modelInstanceTransforms.empty()) {
-          modelInstanceTransforms.push_back(glm::dmat4(1.0));
+          modelInstanceTransforms.emplace_back(glm::dmat4(1.0));
         }
         const uint32_t numNewInstances = static_cast<uint32_t>(
             numI3dmInstances * modelInstanceTransforms.size());

@@ -2015,6 +2015,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
   return result;
 }
 
+namespace {
+
 // Does something like this already exist?
 
 template <typename T> int32_t componentTypeFromCpp();
@@ -2030,6 +2032,8 @@ template <> int32_t componentTypeFromCpp<uint16_t>() {
 template <> int32_t componentTypeFromCpp<uint32_t>() {
   return Accessor::ComponentType::UNSIGNED_INT;
 }
+
+} // namespace
 
 // encapsulation of the binary batch id data in an I3dm
 struct BatchIdSemantic {
@@ -2123,6 +2127,8 @@ struct BatchIdSemantic {
   }
 };
 
+namespace {
+
 // returns an accessor ID for the added feature IDs
 int32_t
 addFeatureIdsToGltf(CesiumGltf::Model& gltf, const BatchIdSemantic& batchIds) {
@@ -2149,6 +2155,8 @@ addFeatureIdsToGltf(CesiumGltf::Model& gltf, const BatchIdSemantic& batchIds) {
       Accessor::Type::SCALAR);
   return accessorId;
 }
+
+} // namespace
 
 ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
     const rapidjson::Document& featureTableJson,
