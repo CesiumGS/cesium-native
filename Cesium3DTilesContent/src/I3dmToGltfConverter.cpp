@@ -18,6 +18,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Uri.h>
 
@@ -857,7 +858,7 @@ void instantiateWithExistingInstances(
           return;
         }
         if (modelInstanceTransforms.empty()) {
-          modelInstanceTransforms.emplace_back(glm::dmat4(1.0));
+          modelInstanceTransforms.emplace_back(1.0);
         }
         const uint32_t numNewInstances = static_cast<uint32_t>(
             numI3dmInstances * modelInstanceTransforms.size());
