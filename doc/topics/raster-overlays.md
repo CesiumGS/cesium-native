@@ -1,4 +1,21 @@
-# RasterOverlayTileProvider
+# Raster Overlays {#raster-overlays}
+
+Cesium Native's raster overlays are georeferenced 2D images - perhaps consisting of trillions of pixels or more! - that are draped over the top of a [Tileset](\ref Cesium3DTilesSelection::Tileset). A classic example of a raster overlay is a satellite imagery layer. A `Tileset` can have multiple raster overlays, and they're usually alpha-blended together in a layered fashion. They can also be used for more sophisticated effects, however. For example, a raster overlay could represent a "mask" of where on Earth is land versus water, and that mask used in a custom shader or material to render waves in the water-covered areas.
+
+Raster overlays are implemented by deriving from the [RasterOverlay](\ref CesiumRasterOverlays::RasterOverlay) abstract base class, so new ones can be easily added even from outside of Cesium Native. The following raster overlay types are currently included in Cesium Native:
+
+* [BingMapsRasterOverlay](\ref CesiumRasterOverlays::BingMapsRasterOverlay)
+* [DebugColorizeTilesRasterOverlay](\ref CesiumRasterOverlays::DebugColorizeTilesRasterOverlay)
+* [IonRasterOverlay](\ref CesiumRasterOverlays::IonRasterOverlay)
+* [WebMapServiceRasterOverlay](\ref CesiumRasterOverlays::WebMapServiceRasterOverlay)
+* [WebMapTileServiceRasterOverlay](\ref CesiumRasterOverlays::WebMapTileServiceRasterOverlay)
+* [TileMapServiceRasterOverlay](\ref CesiumRasterOverlays::TileMapServiceRasterOverlay)
+
+To add a raster overlay to a `Tileset`, construct an instance of the appropriate class and add it to the [RasterOverlayCollection](\ref Cesium3DTilesSelection::RasterOverlayCollection) returned by [Tileset::getOverlays](\ref Cesium3DTilesSelection::Tileset::getOverlays). See the reference documentation for each overlay for details about how to configure that overlay type.
+
+The rest of this document describes how the raster overlay system is implemented.
+
+## RasterOverlayTileProvider
 
 Loads or creates a `RasterOverlayTile` to cover a given geometry tile.
 
