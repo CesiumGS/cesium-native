@@ -38,8 +38,8 @@
 #include <climits>
 #include <cstddef>
 #include <cstring>
+#include <ostream>
 #include <span>
-#include <sstream>
 #include <string>
 #include <vector>
 
