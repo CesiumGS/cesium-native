@@ -6,6 +6,10 @@
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
 
+##### Additions :tada:
+
+- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
+
 ### v0.43.0 - 2025-01-02
 
 ##### Breaking Changes :mega:
