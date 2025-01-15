@@ -10,8 +10,8 @@
 #include <functional>
 #include <iomanip>
 #include <ios>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -26,12 +26,12 @@ std::string escapeNonAscii(const std::string& url) {
   output << std::hex;
   output.fill('0');
 
-  for(size_t i = 0; i < url.length(); i++) {
+  for (size_t i = 0; i < url.length(); i++) {
     unsigned char c = static_cast<unsigned char>(url[i]);
-    if(c > 0x7f) {
-      output << std::uppercase << '%' << std::setw(2) << int(c) << std::nouppercase;
-    }
-    else {
+    if (c > 0x7f) {
+      output << std::uppercase << '%' << std::setw(2) << int(c)
+             << std::nouppercase;
+    } else {
       output << c;
     }
   }
@@ -53,7 +53,8 @@ std::string Uri::resolve(
     const std::string& relative,
     bool useBaseQuery,
     bool assumeHttpsDefault) {
-  const std::string conformedBase = cesiumConformUrl(escapeNonAscii(base), assumeHttpsDefault);
+  const std::string conformedBase =
+      cesiumConformUrl(escapeNonAscii(base), assumeHttpsDefault);
   const std::string conformedRelative =
       cesiumConformUrl(escapeNonAscii(relative), assumeHttpsDefault);
   UriUriA baseUri;
@@ -355,7 +356,8 @@ std::string Uri::uriPathToNativePath(const std::string& nativePath) {
 std::string Uri::getPath(const std::string& uri) {
   const std::string escapedUri = escapeNonAscii(uri);
   UriUriA parsedUri;
-  if (uriParseSingleUriA(&parsedUri, escapedUri.c_str(), nullptr) != URI_SUCCESS) {
+  if (uriParseSingleUriA(&parsedUri, escapedUri.c_str(), nullptr) !=
+      URI_SUCCESS) {
     // Could not parse the URI, so return an empty string.
     return std::string();
   }

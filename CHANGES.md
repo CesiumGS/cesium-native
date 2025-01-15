@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+- `CesiumUtility::Uri` now fully supports non-ASCII characters.
 
 ### v0.43.0 - 2025-01-02
 

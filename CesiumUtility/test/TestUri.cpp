@@ -34,7 +34,10 @@ TEST_CASE("Uri::getPath") {
     CHECK(Uri::getPath("http://example.com/🐶.bin") == "/🐶.bin");
     CHECK(Uri::getPath("http://example.com/示例测试用例") == "/示例测试用例");
     CHECK(Uri::getPath("http://example.com/Ῥόδος") == "/Ῥόδος");
-    CHECK(Uri::getPath("http://example.com/🙍‍♂️🚪🤚/🪝🚗🚪/❓📞") == "/🙍‍♂️🚪🤚/🪝🚗🚪/❓📞");
+    CHECK(
+        Uri::getPath(
+            "http://example.com/🙍‍♂️🚪🤚/🪝🚗🚪/❓📞") ==
+        "/🙍‍♂️🚪🤚/🪝🚗🚪/❓📞");
   }
 }
 
@@ -89,8 +92,12 @@ TEST_CASE("Uri::setPath") {
   }
 
   SECTION("handles unicode characters") {
-    CHECK(Uri::setPath("http://example.com/foo/", "/🐶.bin") == "http://example.com/🐶.bin");
-    CHECK(Uri::setPath("http://example.com/bar/", "/示例测试用例") == "http://example.com/示例测试用例");
+    CHECK(
+        Uri::setPath("http://example.com/foo/", "/🐶.bin") ==
+        "http://example.com/🐶.bin");
+    CHECK(
+        Uri::setPath("http://example.com/bar/", "/示例测试用例") ==
+        "http://example.com/示例测试用例");
   }
 }
 
@@ -108,8 +115,8 @@ TEST_CASE("Uri::resolve") {
           false,
           false) == "http://www.example.com/page/test");
   CHECK(
-    CesiumUtility::Uri::resolve("https://www.example.com/", "/Ῥόδος") == "https://www.example.com/Ῥόδος"
-  );
+      CesiumUtility::Uri::resolve("https://www.example.com/", "/Ῥόδος") ==
+      "https://www.example.com/Ῥόδος");
 }
 
 TEST_CASE("Uri::escape") {
