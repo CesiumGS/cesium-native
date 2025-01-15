@@ -216,12 +216,67 @@ struct ConvertedI3dm {
     accessors.
 */
 
+void validateI3dmDataSections(
+    const std::span<const std::byte>& instancesBinary,
+    const I3dmHeader& header,
+    uint32_t headerLength,
+    CesiumUtility::ErrorList& errors) {
+  size_t dataSectionOffset = headerLength;
+  if (dataSectionOffset + header.featureTableJsonByteLength >
+      instancesBinary.size()) {
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm feature table offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.featureTableJsonByteLength,
+        instancesBinary.size()));
+    return;
+  }
+  dataSectionOffset += header.featureTableJsonByteLength;
+  if (dataSectionOffset + header.featureTableBinaryByteLength >
+      instancesBinary.size()) {
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm feature table binary offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.featureTableBinaryByteLength,
+        instancesBinary.size()));
+    return;
+  }
+  dataSectionOffset += header.featureTableBinaryByteLength;
+  if (dataSectionOffset + header.batchTableJsonByteLength >
+      instancesBinary.size()) {
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm batch table offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.batchTableJsonByteLength,
+        instancesBinary.size()));
+    return;
+  }
+  dataSectionOffset += header.batchTableJsonByteLength;
+  if (dataSectionOffset + header.batchTableJsonByteLength >
+      instancesBinary.size()) {
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm batch table binary offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.batchTableBinaryByteLength,
+        instancesBinary.size()));
+    return;
+  }
+}
+
 void parseJsonAndBinaryData(
     const std::span<const std::byte>& instancesBinary,
     const I3dmHeader& header,
     uint32_t headerLength,
     ConvertedI3dm& convertedI3dm,
     CesiumUtility::ErrorList& errors) {
+  validateI3dmDataSections(instancesBinary, header, headerLength, errors);
+  if (errors.hasErrors()) {
+    return;
+  }
   // Offset to the beginning of each section as it is parsed in turn.
   size_t dataSectionOffset = headerLength;
   auto featureTableJsonData = instancesBinary.subspan(
@@ -242,8 +297,7 @@ void parseJsonAndBinaryData(
   auto featureTableBinaryData = instancesBinary.subspan(
       dataSectionOffset,
       header.featureTableBinaryByteLength);
-  convertedI3dm.featureTableBinaryData.insert(
-      convertedI3dm.featureTableBinaryData.begin(),
+  convertedI3dm.featureTableBinaryData.assign(
       featureTableBinaryData.begin(),
       featureTableBinaryData.end());
   if (header.batchTableJsonByteLength > 0) {
@@ -268,8 +322,7 @@ void parseJsonAndBinaryData(
   auto batchTableBinaryData = instancesBinary.subspan(
       dataSectionOffset,
       header.batchTableBinaryByteLength);
-  convertedI3dm.batchTableBinaryData.insert(
-      convertedI3dm.batchTableBinaryData.begin(),
+  convertedI3dm.batchTableBinaryData.assign(
       batchTableBinaryData.begin(),
       batchTableBinaryData.end());
 }
@@ -403,7 +456,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
       convertedI3dm,
       convertedI3dm.gltfResult.errors);
   if (convertedI3dm.gltfResult.errors.hasErrors()) {
-    finishEarly();
+    return finishEarly();
   }
   std::optional<I3dmContent> parsedJsonResult = parseI3dmJson(
       *convertedI3dm.pFeatureTableJson,
@@ -870,7 +923,7 @@ void instantiateWithExistingInstances(
         const glm::dmat4 toTile = upToZ * transform;
         const glm::dmat4 toTileInv = inverse(toTile);
         size_t destInstanceIndx = 0;
-        for (unsigned i = 0; i < numI3dmInstances; ++i) {
+        for (uint32_t i = 0; i < numI3dmInstances; ++i) {
           const glm::dmat4 instanceTransform =
               toTileInv * composeInstanceTransform(i, decodedInstances) *
               toTile;
