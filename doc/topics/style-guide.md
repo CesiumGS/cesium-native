@@ -147,7 +147,7 @@ Not covered by C++ Core Guidelines.
 
 * Test files should be prefixed with `Test`, e.g. `TestModel` instead of `ModelTests`.
 
-## Documentation
+## ✏️ Documentation
 
 Not covered by C++ Core Guidelines.
 
