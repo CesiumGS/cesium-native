@@ -2,7 +2,7 @@
 
 Cesium Native's raster overlays are georeferenced 2D images - perhaps consisting of trillions of pixels or more! - that are draped over the top of a [Tileset](\ref Cesium3DTilesSelection::Tileset). A classic example of a raster overlay is a satellite imagery layer. A `Tileset` can have multiple raster overlays, and they're usually alpha-blended together in a layered fashion. They can also be used for more sophisticated effects, however. For example, a raster overlay could represent a "mask" of where on Earth is land versus water, and that mask used in a custom shader or material to render waves in the water-covered areas.
 
-Raster overlays are implemented by deriving from the [RasterOverlay](\ref CesiumRasterOverlays::RasterOverlay) abstract base class, so new ones can be easily added even from outside of Cesium Native. The following raster overlay types are currently included in Cesium Native:
+The following raster overlay types are currently included in Cesium Native:
 
 * [BingMapsRasterOverlay](\ref CesiumRasterOverlays::BingMapsRasterOverlay)
 * [DebugColorizeTilesRasterOverlay](\ref CesiumRasterOverlays::DebugColorizeTilesRasterOverlay)
@@ -13,9 +13,18 @@ Raster overlays are implemented by deriving from the [RasterOverlay](\ref Cesium
 
 To add a raster overlay to a `Tileset`, construct an instance of the appropriate class and add it to the [RasterOverlayCollection](\ref Cesium3DTilesSelection::RasterOverlayCollection) returned by [Tileset::getOverlays](\ref Cesium3DTilesSelection::Tileset::getOverlays). See the reference documentation for each overlay for details about how to configure that overlay type.
 
-The rest of this document describes how the raster overlay system is implemented.
+## Implementing a new RasterOverlay {#implementing-a-raster-overlay}
+
+Raster overlays are implemented by deriving from the [RasterOverlay](\ref CesiumRasterOverlays::RasterOverlay) abstract base class, so new ones can be easily added even from outside of Cesium Native. `RasterOverlay` has just a single pure-virtual method that must be implemented: [createTileProvider](\ref CesiumRasterOverlays::RasterOverlay::createTileProvider). This method [asynchronously](#async-system) produces an instance of a class derived from [RasterOverlayTileProvider](\ref CesiumRasterOverlays::RasterOverlayTileProvider).
+
+A `RasterOverlayTileProvider` has a particular [Projection](\ref CesiumGeospatial::Projection) and a rectangle that it covers, expressed in that projection.
+
+Deriving a class from `RasterOverlayTileProvider`, in turn, requires implementing one more pure-virtual method: [loadTileImage](\ref CesiumRasterOverlays::RasterOverlayTileProvider::loadTileImage). This class is passed an instance of [RasterOverlayTile](\ref CesiumRasterOverlays::RasterOverlayTile) and is expected to asynchronously produce a [LoadedRasterOverlayImage](\ref CesiumRasterOverlays::LoadedRasterOverlayImage), containing the actual image data plus details...
 
 ## RasterOverlayTileProvider
+
+
+The job of a `RasterOverlayTileProvider` is to create `RasterOverlayTile` instances on demand to cover each geometry tile.
 
 Loads or creates a `RasterOverlayTile` to cover a given geometry tile.
 
