@@ -1702,12 +1702,12 @@ bool upsamplePrimitiveForRasterOverlays(
 
     // No indices buffer - pick the smallest indices type that will fit all
     // vertices
-    const Accessor& accessor = parentModel.getSafe(parentModel.accessors, positionIt->second);
-    if(accessor.count < 1) {
+    const Accessor& accessor =
+        parentModel.getSafe(parentModel.accessors, positionIt->second);
+    if (accessor.count < 1) {
       // Invalid accessor
       return false;
-    }
-    else if (accessor.count < 0xff) {
+    } else if (accessor.count < 0xff) {
       return upsamplePrimitiveForRasterOverlays<uint8_t>(
           parentModel,
           model,
