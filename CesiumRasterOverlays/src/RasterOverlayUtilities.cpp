@@ -1702,9 +1702,12 @@ bool upsamplePrimitiveForRasterOverlays(
 
     // No indices buffer - pick the smallest indices type that will fit all
     // vertices
-    const int64_t vertexCount =
-        parentModel.accessors[static_cast<size_t>(positionIt->second)].count;
-    if (vertexCount <= 0xff) {
+    const Accessor& accessor = parentModel.getSafe(parentModel.accessors, positionIt->second);
+    if(accessor.count < 1) {
+      // Invalid accessor
+      return false;
+    }
+    else if (accessor.count < 0xff) {
       return upsamplePrimitiveForRasterOverlays<uint8_t>(
           parentModel,
           model,
@@ -1715,7 +1718,7 @@ bool upsamplePrimitiveForRasterOverlays(
           textureCoordinateAttributeBaseName,
           textureCoordinateIndex,
           ellipsoid);
-    } else if (vertexCount <= 0xffff) {
+    } else if (accessor.count < 0xffff) {
       return upsamplePrimitiveForRasterOverlays<uint16_t>(
           parentModel,
           model,
