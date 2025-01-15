@@ -33,7 +33,7 @@
 #include <CesiumGltf/PropertyTexturePropertyView.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <climits>
 #include <cstddef>
@@ -533,18 +533,18 @@ void checkNormalizedTextureArrayValues(
 } // namespace
 
 TEST_CASE("Check scalar PropertyTexturePropertyView") {
-  SECTION("uint8_t") {
+  SUBCASE("uint8_t") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     checkTextureValues(data, data);
   }
 
-  SECTION("int8_t") {
+  SUBCASE("int8_t") {
     std::vector<uint8_t> data{255, 0, 223, 67};
     std::vector<int8_t> expected{-1, 0, -33, 67};
     checkTextureValues(data, expected);
   }
 
-  SECTION("uint16_t") {
+  SUBCASE("uint16_t") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 0,
@@ -556,7 +556,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("int16_t") {
+  SUBCASE("int16_t") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255,
@@ -568,7 +568,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("uint32_t") {
+  SUBCASE("uint32_t") {
     // clang-format off
     std::vector<uint8_t> data{
       0, 0, 0, 1,
@@ -580,7 +580,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("int32_t") {
+  SUBCASE("int32_t") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255, 255, 255,
@@ -592,7 +592,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("float") {
+  SUBCASE("float") {
     // clang-format off
     std::vector<uint8_t> data{
       0, 0, 0, 1,
@@ -611,7 +611,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("float with offset / scale") {
+  SUBCASE("float with offset / scale") {
     // clang-format off
     std::vector<uint8_t> data{
       0, 0, 0, 1,
@@ -636,7 +636,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
     checkTextureValues(data, expectedRaw, expectedTransformed, offset, scale);
   }
 
-  SECTION("uint8_t with noData") {
+  SUBCASE("uint8_t with noData") {
     std::vector<uint8_t> data{12, 33, 0, 128, 0, 56, 67};
     const uint8_t noData = 0;
     std::vector<std::optional<uint8_t>> expected{
@@ -656,7 +656,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
         noData);
   }
 
-  SECTION("uint8_t with noData and defaultValue") {
+  SUBCASE("uint8_t with noData and defaultValue") {
     std::vector<uint8_t> data{12, 33, 0, 128, 0, 56, 67};
     const uint8_t noData = 0;
     const uint8_t defaultValue = 255;
@@ -680,7 +680,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView") {
 }
 
 TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
-  SECTION("uint8_t") {
+  SUBCASE("uint8_t") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     std::vector<std::optional<double>> expected{
         12.0 / 255.0,
@@ -690,7 +690,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, data, expected);
   }
 
-  SECTION("int16_t") {
+  SUBCASE("int16_t") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255,
@@ -707,7 +707,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, expectedRaw, expectedTransformed);
   }
 
-  SECTION("uint32_t") {
+  SUBCASE("uint32_t") {
     // clang-format off
     std::vector<uint8_t> data{
       0, 0, 0, 1,
@@ -724,7 +724,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, expectedRaw, expectedTransformed);
   }
 
-  SECTION("uint8_t with offset / scale") {
+  SUBCASE("uint8_t with offset / scale") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     const double offset = 1.0;
     const double scale = 2.0;
@@ -737,7 +737,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, data, expected, offset, scale);
   }
 
-  SECTION("uint8_t with all properties") {
+  SUBCASE("uint8_t with all properties") {
     std::vector<uint8_t> data{12, 33, 56, 0};
     const double offset = 1.0;
     const double scale = 2.0;
@@ -761,7 +761,7 @@ TEST_CASE("Check scalar PropertyTexturePropertyView (normalized)") {
 }
 
 TEST_CASE("Check vecN PropertyTexturePropertyView") {
-  SECTION("glm::u8vec2") {
+  SUBCASE("glm::u8vec2") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 0,
@@ -777,7 +777,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::i8vec2") {
+  SUBCASE("glm::i8vec2") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 255,
@@ -793,7 +793,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::u8vec3") {
+  SUBCASE("glm::u8vec3") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3,
@@ -809,7 +809,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::i8vec3") {
+  SUBCASE("glm::i8vec3") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 2, 3,
@@ -825,7 +825,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::u8vec4") {
+  SUBCASE("glm::u8vec4") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -841,7 +841,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::i8vec4") {
+  SUBCASE("glm::i8vec4") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 200, 3, 0,
@@ -857,7 +857,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::u16vec2") {
+  SUBCASE("glm::u16vec2") {
     // clang-format off
     std::vector<uint8_t> data{
       0, 0, 0, 1,
@@ -873,7 +873,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::i16vec2") {
+  SUBCASE("glm::i16vec2") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255, 0, 1,
@@ -889,7 +889,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
     checkTextureValues(data, expected);
   }
 
-  SECTION("glm::i8vec2 with noData") {
+  SUBCASE("glm::i8vec2 with noData") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 255,
@@ -920,7 +920,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
         noData);
   }
 
-  SECTION("glm::i8vec2 with defaultValue") {
+  SUBCASE("glm::i8vec2 with defaultValue") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 255,
@@ -955,7 +955,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView") {
 }
 
 TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
-  SECTION("glm::i8vec2") {
+  SUBCASE("glm::i8vec2") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 255,
@@ -976,7 +976,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, expectedRaw, expectedTransformed);
   }
 
-  SECTION("glm::u8vec3") {
+  SUBCASE("glm::u8vec3") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3,
@@ -997,7 +997,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, expectedRaw, expectedTransformed);
   }
 
-  SECTION("glm::u8vec4") {
+  SUBCASE("glm::u8vec4") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1018,7 +1018,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, expectedRaw, expectedTransformed);
   }
 
-  SECTION("glm::i16vec2") {
+  SUBCASE("glm::i16vec2") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255, 0, 1,
@@ -1039,7 +1039,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
     checkNormalizedTextureValues(data, expectedRaw, expectedTransformed);
   }
 
-  SECTION("glm::i8vec2 with offset / scale") {
+  SUBCASE("glm::i8vec2 with offset / scale") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 255,
@@ -1072,7 +1072,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
         JsonValue::Array{scale[0], scale[1]});
   }
 
-  SECTION("glm::i8vec2 with all properties") {
+  SUBCASE("glm::i8vec2 with all properties") {
     // clang-format off
     std::vector<uint8_t> data{
       28, 255,
@@ -1111,7 +1111,7 @@ TEST_CASE("Check vecN PropertyTexturePropertyView (normalized)") {
 }
 
 TEST_CASE("Check array PropertyTexturePropertyView") {
-  SECTION("uint8_t array") {
+  SUBCASE("uint8_t array") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1128,7 +1128,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
     checkTextureArrayValues(data, 4, expected);
   }
 
-  SECTION("int8_t array") {
+  SUBCASE("int8_t array") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 200, 3, 0,
@@ -1144,7 +1144,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
     checkTextureArrayValues(data, 4, expected);
   }
 
-  SECTION("uint16_t array") {
+  SUBCASE("uint16_t array") {
     // clang-format off
     std::vector<uint8_t> data{
       0, 0, 0, 1,
@@ -1160,7 +1160,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
     checkTextureArrayValues(data, 2, expected);
   }
 
-  SECTION("int16_t array") {
+  SUBCASE("int16_t array") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255, 0, 1,
@@ -1176,7 +1176,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
     checkTextureArrayValues(data, 2, expected);
   }
 
-  SECTION("uint8_t array with noData") {
+  SUBCASE("uint8_t array with noData") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1199,7 +1199,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
     checkTextureArrayValues(data, 4, expectedRaw, expectedTransformed, noData);
   }
 
-  SECTION("uint8_t array with noData and defaultValue") {
+  SUBCASE("uint8_t array with noData and defaultValue") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1231,7 +1231,7 @@ TEST_CASE("Check array PropertyTexturePropertyView") {
 }
 
 TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
-  SECTION("uint8_t array") {
+  SUBCASE("uint8_t array") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1262,7 +1262,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedTransformed);
   }
 
-  SECTION("int16_t array") {
+  SUBCASE("int16_t array") {
     // clang-format off
     std::vector<uint8_t> data{
       255, 255, 0, 1,
@@ -1294,7 +1294,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedTransformed);
   }
 
-  SECTION("uint8_t array with offset / scale") {
+  SUBCASE("uint8_t array with offset / scale") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1331,7 +1331,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         JsonValue::Array{scale[0], scale[1], scale[2], scale[3]});
   }
 
-  SECTION("uint8_t array with noData") {
+  SUBCASE("uint8_t array with noData") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1370,7 +1370,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         noData);
   }
 
-  SECTION("uint8_t array with all properties") {
+  SUBCASE("uint8_t array with all properties") {
     // clang-format off
     std::vector<uint8_t> data{
       1, 2, 3, 0,
@@ -1495,7 +1495,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
       glm::dvec2(0, 0.5),
       glm::dvec2(0.5, 0.5)};
 
-  SECTION("single-byte scalar") {
+  SUBCASE("single-byte scalar") {
     PropertyTextureProperty property;
     property.channels = {3};
 
@@ -1537,7 +1537,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     }
   }
 
-  SECTION("multi-byte scalar") {
+  SUBCASE("multi-byte scalar") {
     PropertyTextureProperty property;
     property.channels = {2, 0};
 
@@ -1578,7 +1578,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     }
   }
 
-  SECTION("vecN") {
+  SUBCASE("vecN") {
     PropertyTextureProperty property;
     property.channels = {3, 2, 1};
 
@@ -1623,7 +1623,7 @@ TEST_CASE("Check that non-adjacent channels resolve to expected output") {
     }
   }
 
-  SECTION("array") {
+  SUBCASE("array") {
     PropertyTextureProperty property;
     property.channels = {1, 0, 3, 2};
 
@@ -1701,7 +1701,7 @@ TEST_CASE("Check sampling with different sampler values") {
   imageData.resize(data.size());
   std::memcpy(imageData.data(), data.data(), data.size());
 
-  SECTION("REPEAT") {
+  SUBCASE("REPEAT") {
     Sampler sampler;
     sampler.wrapS = Sampler::WrapS::REPEAT;
     sampler.wrapT = Sampler::WrapT::REPEAT;
@@ -1725,7 +1725,7 @@ TEST_CASE("Check sampling with different sampler values") {
     }
   }
 
-  SECTION("MIRRORED_REPEAT") {
+  SUBCASE("MIRRORED_REPEAT") {
     Sampler sampler;
     sampler.wrapS = Sampler::WrapS::MIRRORED_REPEAT;
     sampler.wrapT = Sampler::WrapT::MIRRORED_REPEAT;
@@ -1752,7 +1752,7 @@ TEST_CASE("Check sampling with different sampler values") {
     }
   }
 
-  SECTION("CLAMP_TO_EDGE") {
+  SUBCASE("CLAMP_TO_EDGE") {
     Sampler sampler;
     sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
@@ -1776,7 +1776,7 @@ TEST_CASE("Check sampling with different sampler values") {
     }
   }
 
-  SECTION("Mismatched wrap values") {
+  SUBCASE("Mismatched wrap values") {
     Sampler sampler;
     sampler.wrapS = Sampler::WrapS::REPEAT;
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;

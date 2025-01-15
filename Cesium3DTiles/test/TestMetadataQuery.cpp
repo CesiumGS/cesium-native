@@ -5,7 +5,7 @@
 #include <Cesium3DTiles/Schema.h>
 #include <CesiumUtility/JsonValue.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <optional>
 
@@ -13,7 +13,7 @@ using namespace Cesium3DTiles;
 using namespace CesiumUtility;
 
 TEST_CASE("MetadataQuery") {
-  SECTION("findFirstPropertyWithSemantic") {
+  SUBCASE("findFirstPropertyWithSemantic") {
     Schema schema{};
     Class& classDefinition =
         schema.classes.emplace("someClass", Class()).first->second;

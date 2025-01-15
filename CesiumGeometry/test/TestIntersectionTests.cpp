@@ -6,8 +6,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
+#include <doctest/doctest.h>
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
@@ -20,6 +19,7 @@
 
 #include <array>
 #include <optional>
+#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -31,7 +31,7 @@ TEST_CASE("IntersectionTests::rayPlane") {
     std::optional<glm::dvec3> expectedIntersectionPoint;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // intersects
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
@@ -46,11 +46,13 @@ TEST_CASE("IntersectionTests::rayPlane") {
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(0.0, 1.0, 0.0)),
           Plane(glm::dvec3(1.0, 0.0, 0.0), -1.0),
-          std::nullopt});
+          std::nullopt}};
 
+    for(auto& testCase : testCases) {
   std::optional<glm::dvec3> intersectionPoint =
       IntersectionTests::rayPlane(testCase.ray, testCase.plane);
   CHECK(intersectionPoint == testCase.expectedIntersectionPoint);
+    }
 }
 
 namespace {
@@ -65,7 +67,7 @@ TEST_CASE("IntersectionTests::rayEllipsoid") {
     std::optional<glm::dvec2> expectedIntersection;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // Degenerate ellipsoid
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0)),
@@ -142,11 +144,13 @@ TEST_CASE("IntersectionTests::rayEllipsoid") {
           unitRadii,
           std::nullopt}
 
-  );
+  };
 
+    for(auto& testCase : testCases) {
   std::optional<glm::dvec2> intersection =
       IntersectionTests::rayEllipsoid(testCase.ray, testCase.inverseRadii);
   CHECK(intersection == testCase.expectedIntersection);
+    }
 }
 
 TEST_CASE("IntersectionTests::rayTriangle") {
@@ -161,7 +165,7 @@ TEST_CASE("IntersectionTests::rayTriangle") {
     std::optional<glm::dvec3> expectedIntersectionPoint;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // rayTriangle intersects front face
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, 1.0), glm::dvec3(0.0, 0.0, -1.0)),
@@ -206,8 +210,9 @@ TEST_CASE("IntersectionTests::rayTriangle") {
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, 1.0), glm::dvec3(0.0, 0.0, 1.0)),
           false,
-          std::nullopt});
+          std::nullopt}};
 
+    for(auto& testCase : testCases) {
   std::optional<glm::dvec3> intersectionPoint = IntersectionTests::rayTriangle(
       testCase.ray,
       V0,
@@ -215,6 +220,7 @@ TEST_CASE("IntersectionTests::rayTriangle") {
       V2,
       testCase.cullBackFaces);
   CHECK(intersectionPoint == testCase.expectedIntersectionPoint);
+    }
 }
 
 TEST_CASE("IntersectionTests::rayAABB") {
@@ -225,7 +231,7 @@ TEST_CASE("IntersectionTests::rayAABB") {
     std::optional<glm::dvec3> expectedIntersectionPoint;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // basic intersection works
       TestCase{
           Ray(glm::dvec3(-1.0, 0.5, 0.5), glm::dvec3(1.0, 0.0, 0.0)),
@@ -246,10 +252,13 @@ TEST_CASE("IntersectionTests::rayAABB") {
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, 0.0), glm::dvec3(0.0, -1.0, 0.0)),
           AxisAlignedBox(-1.0, -1.0, -1.0, 1.0, 1.0, 1.0),
-          glm::dvec3(0.0, -1.0, 0.0)});
+          glm::dvec3(0.0, -1.0, 0.0)}};
+
+    for(auto& testCase : testCases) {
   std::optional<glm::dvec3> intersectionPoint =
       IntersectionTests::rayAABB(testCase.ray, testCase.aabb);
   CHECK(intersectionPoint == testCase.expectedIntersectionPoint);
+    }
 }
 
 TEST_CASE("IntersectionTests::rayOBB") {
@@ -259,7 +268,7 @@ TEST_CASE("IntersectionTests::rayOBB") {
     std::optional<glm::dvec3> expectedIntersectionPoint;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // 2x2x2 obb at origin that is rotated -45 degrees on the x-axis.
       TestCase{
           Ray(glm::dvec3(0.0, 0.0, 10.0), glm::dvec3(0.0, 0.0, -1.0)),
@@ -372,12 +381,15 @@ TEST_CASE("IntersectionTests::rayOBB") {
                   glm::dmat3(glm::rotate(
                       glm::radians(45.0),
                       glm::dvec3(0.0, 1.0, 0.0)))),
-          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(3.0))});
+          glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(3.0))}};
+
+    for(auto& testCase : testCases) {
   std::optional<glm::dvec3> intersectionPoint =
       IntersectionTests::rayOBB(testCase.ray, testCase.obb);
   CHECK(glm::all(glm::lessThan(
       glm::abs(*intersectionPoint - *testCase.expectedIntersectionPoint),
       glm::dvec3(CesiumUtility::Math::Epsilon6))));
+    }
 }
 
 TEST_CASE("IntersectionTests::raySphere") {
@@ -387,7 +399,7 @@ TEST_CASE("IntersectionTests::raySphere") {
     double t;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // raySphere outside intersections
       TestCase{
           Ray(glm::dvec3(2.0, 0.0, 0.0), glm::dvec3(-1.0, 0.0, 0.0)),
@@ -511,8 +523,9 @@ TEST_CASE("IntersectionTests::raySphere") {
       TestCase{
           Ray(glm::dvec3(200.0, 0.0, -2.0), glm::dvec3(0.0, 0.0, -1.0)),
           BoundingSphere(glm::dvec3(200.0, 0.0, 0.0), 1.0),
-          -1.0});
+          -1.0}};
 
+    for(auto& testCase : testCases) {
   std::optional<double> t =
       IntersectionTests::raySphereParametric(testCase.ray, testCase.sphere);
   if (!t)
@@ -522,6 +535,7 @@ TEST_CASE("IntersectionTests::raySphere") {
       t.value(),
       testCase.t,
       CesiumUtility::Math::Epsilon6));
+    }
 }
 
 TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
@@ -543,7 +557,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
       glm::dvec2(4.0, 1.0),
       glm::dvec2(6.0, 0.0)};
 
-  auto testCase = GENERATE_REF(
+  std::vector<TestCase> testCases{
       // Corner of triangle returns true.
       TestCase{
           rightTriangle[2],
@@ -592,8 +606,9 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
           rightTriangle[0],
           rightTriangle[0],
           rightTriangle[2],
-          true});
+          true}};
 
+    for(auto& testCase : testCases) {
   bool result = IntersectionTests::pointInTriangle(
       testCase.point,
       testCase.triangleVert1,
@@ -608,6 +623,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (2D overload)") {
       testCase.triangleVert2,
       testCase.triangleVert1);
   CHECK(reverseResult == testCase.expected);
+    }
 }
 
 TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
@@ -629,7 +645,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
       glm::dvec3(0.0, 1.0, 0.0),
       glm::dvec3(0.0, 0.0, 1.0)};
 
-  auto testCase = GENERATE_REF(
+  std::vector<TestCase> testCases{
       // Corner of triangle returns true.
       TestCase{
           rightTriangle[2],
@@ -692,8 +708,9 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
           rightTriangle[0],
           rightTriangle[0],
           rightTriangle[2],
-          false});
+          false}};
 
+    for(auto& testCase : testCases) {
   bool result = IntersectionTests::pointInTriangle(
       testCase.point,
       testCase.triangleVert1,
@@ -708,6 +725,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
       testCase.triangleVert2,
       testCase.triangleVert1);
   CHECK(reverseResult == testCase.expected);
+    }
 }
 
 TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
@@ -731,7 +749,7 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
       glm::dvec3(0.0, 1.0, 0.0),
       glm::dvec3(0.0, 0.0, 1.0)};
 
-  auto testCase = GENERATE_REF(
+  std::vector<TestCase> testCases{
       // Corner of triangle returns true.
       TestCase{
           rightTriangle[2],
@@ -803,33 +821,35 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
           rightTriangle[0],
           rightTriangle[2],
           false,
-          glm::dvec3()});
+          glm::dvec3()}};
 
-  glm::dvec3 barycentricCoordinates = glm::dvec3();
-  bool result = IntersectionTests::pointInTriangle(
-      testCase.point,
-      testCase.triangleVert1,
-      testCase.triangleVert2,
-      testCase.triangleVert3,
-      barycentricCoordinates);
+    for(auto& testCase : testCases) {
+        glm::dvec3 barycentricCoordinates = glm::dvec3();
+        bool result = IntersectionTests::pointInTriangle(
+            testCase.point,
+            testCase.triangleVert1,
+            testCase.triangleVert2,
+            testCase.triangleVert3,
+            barycentricCoordinates);
 
-  REQUIRE(result == testCase.expected);
-  REQUIRE(
-      (barycentricCoordinates.x == testCase.expectedCoordinates.x &&
-       barycentricCoordinates.y == testCase.expectedCoordinates.y &&
-       barycentricCoordinates.z == testCase.expectedCoordinates.z));
+        REQUIRE(result == testCase.expected);
+        REQUIRE(
+            (barycentricCoordinates.x == testCase.expectedCoordinates.x &&
+            barycentricCoordinates.y == testCase.expectedCoordinates.y &&
+            barycentricCoordinates.z == testCase.expectedCoordinates.z));
 
-  // Do same test but with reverse winding
-  bool reverseResult = IntersectionTests::pointInTriangle(
-      testCase.point,
-      testCase.triangleVert3,
-      testCase.triangleVert2,
-      testCase.triangleVert1,
-      barycentricCoordinates);
+        // Do same test but with reverse winding
+        bool reverseResult = IntersectionTests::pointInTriangle(
+            testCase.point,
+            testCase.triangleVert3,
+            testCase.triangleVert2,
+            testCase.triangleVert1,
+            barycentricCoordinates);
 
-  CHECK(reverseResult == testCase.expected);
-  REQUIRE(
-      (barycentricCoordinates.z == testCase.expectedCoordinates.x &&
-       barycentricCoordinates.y == testCase.expectedCoordinates.y &&
-       barycentricCoordinates.x == testCase.expectedCoordinates.z));
+        CHECK(reverseResult == testCase.expected);
+        REQUIRE(
+            (barycentricCoordinates.z == testCase.expectedCoordinates.x &&
+            barycentricCoordinates.y == testCase.expectedCoordinates.y &&
+            barycentricCoordinates.x == testCase.expectedCoordinates.z));
+    }
 }

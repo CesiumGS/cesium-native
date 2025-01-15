@@ -5,19 +5,19 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 
 #include <cmath>
+#include <vector>
 
 using namespace CesiumUtility;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 TEST_CASE("BoundingRegion") {
-  SECTION("computeDistanceSquaredToPosition") {
+  SUBCASE("computeDistanceSquaredToPosition") {
     struct TestCase {
       double longitude;
       double latitude;
@@ -47,7 +47,7 @@ TEST_CASE("BoundingRegion") {
 
     const GlobeRectangle& rectangle = region.getRectangle();
 
-    auto testCase = GENERATE_COPY(
+    std::vector<TestCase> testCases{
         // Inside bounding region
         TestCase{
             rectangle.getWest() + Math::Epsilon6,
@@ -83,8 +83,9 @@ TEST_CASE("BoundingRegion") {
                 0.0},
             rectangle.getWest(),
             rectangle.getSouth(),
-            0.0));
+            0.0)};
 
+    for(auto& testCase : testCases) {
     glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
         Cartographic(testCase.longitude, testCase.latitude, testCase.height));
     CHECK(Math::equalsEpsilon(
@@ -92,9 +93,10 @@ TEST_CASE("BoundingRegion") {
                  .computeDistanceSquaredToPosition(position, Ellipsoid::WGS84)),
         testCase.expectedDistance,
         Math::Epsilon6));
+    }
   }
 
-  SECTION("computeDistanceSquaredToPosition with degenerate region") {
+  SUBCASE("computeDistanceSquaredToPosition with degenerate region") {
     struct TestCase {
       double longitude;
       double latitude;
@@ -120,12 +122,13 @@ TEST_CASE("BoundingRegion") {
         3.0,
         Ellipsoid::WGS84);
 
-    auto testCase = GENERATE_COPY(
+    std::vector<TestCase> testCases{
         TestCase{-1.03, 0.2292, 4.0, 1.0},
         TestCase{-1.03, 0.2292, 3.0, 0.0},
         TestCase{-1.03, 0.2292, 2.0, 0.0},
-        updateDistance(TestCase{-1.02, 0.2291, 2.0, 0.0}, -1.03, 0.2292, 2.0));
+        updateDistance(TestCase{-1.02, 0.2291, 2.0, 0.0}, -1.03, 0.2292, 2.0)};
 
+    for(auto& testCase : testCases) {
     glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
         Cartographic(testCase.longitude, testCase.latitude, testCase.height));
     CHECK(Math::equalsEpsilon(
@@ -133,9 +136,10 @@ TEST_CASE("BoundingRegion") {
                  .computeDistanceSquaredToPosition(position, Ellipsoid::WGS84)),
         testCase.expectedDistance,
         Math::Epsilon6));
+    }
   }
 
-  SECTION("intersectPlane") {
+  SUBCASE("intersectPlane") {
     BoundingRegion region(
         GlobeRectangle(0.0, 0.0, 1.0, 1.0),
         0.0,

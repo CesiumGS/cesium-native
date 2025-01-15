@@ -13,7 +13,7 @@
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_bool3.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_float2.hpp>
@@ -206,7 +206,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
   CesiumGeometry::UpsampledQuadtreeNode upperRight{
       CesiumGeometry::QuadtreeTileID(1, 1, 1)};
 
-  SECTION("Upsample bottom left child") {
+  SUBCASE("Upsample bottom left child") {
     Model upsampledModel =
         *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             model,
@@ -280,7 +280,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
             glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
-  SECTION("Upsample bottom left child with inverted texture coordinates") {
+  SUBCASE("Upsample bottom left child with inverted texture coordinates") {
     // Invert the V coordinate
     AccessorWriter<glm::vec2> uvWriter(model, 1);
     for (int64_t i = 0; i < uvWriter.size(); ++i) {
@@ -360,7 +360,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
             glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
-  SECTION("Upsample upper left child") {
+  SUBCASE("Upsample upper left child") {
     Model upsampledModel =
         *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             model,
@@ -434,7 +434,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
             glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
-  SECTION("Upsample upper right child") {
+  SUBCASE("Upsample upper right child") {
     Model upsampledModel =
         *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             model,
@@ -508,7 +508,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
             glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
-  SECTION("Upsample bottom right child") {
+  SUBCASE("Upsample bottom right child") {
     Model upsampledModel =
         *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             model,
@@ -582,7 +582,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
             glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
   }
 
-  SECTION("Check skirt") {
+  SUBCASE("Check skirt") {
     // add skirts info to primitive extra in case we need to upsample from it
     double skirtHeight = 12.0;
     SkirtMeshMetadata skirtMeshMetadata;
@@ -597,7 +597,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
 
     primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
 
-    SECTION("Check bottom left skirt") {
+    SUBCASE("Check bottom left skirt") {
       Model upsampledModel =
           *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
               model,
@@ -702,7 +702,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
           skirtHeight * 0.5);
     }
 
-    SECTION("Check upper left skirt") {
+    SUBCASE("Check upper left skirt") {
       Model upsampledModel =
           *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
               model,
@@ -831,7 +831,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
           skirtHeight);
     }
 
-    SECTION("Check upper right skirt") {
+    SUBCASE("Check upper right skirt") {
       Model upsampledModel =
           *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
               model,
@@ -936,7 +936,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
           skirtHeight);
     }
 
-    SECTION("Check bottom right skirt") {
+    SUBCASE("Check bottom right skirt") {
       Model upsampledModel =
           *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
               model,

@@ -1,7 +1,6 @@
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
+#include <doctest/doctest.h>
 
 #include <vector>
 
@@ -21,7 +20,7 @@ TEST_CASE("clipTriangleAtAxisAlignedThreshold") {
     std::vector<TriangleClipVertex> expectedResult;
   };
 
-  auto testCase = GENERATE(
+  std::vector<TestCase> testCases{
       // eliminates a triangle that is entirely on the wrong side of the
       // threshold
       TestCase{0.1, false, 0, 1, 2, 0.2, 0.3, 0.4, {}, {}},
@@ -216,8 +215,9 @@ TEST_CASE("clipTriangleAtAxisAlignedThreshold") {
           0.2,
           0.6,
           {},
-          {2, InterpolatedVertex{0, 2, 0.5}, InterpolatedVertex{1, 2, 0.75}}});
+          {2, InterpolatedVertex{0, 2, 0.5}, InterpolatedVertex{1, 2, 0.75}}}};
 
+for(auto& testCase : testCases) {
   clipTriangleAtAxisAlignedThreshold(
       testCase.threshold,
       testCase.keepAbove,
@@ -230,4 +230,5 @@ TEST_CASE("clipTriangleAtAxisAlignedThreshold") {
       testCase.calculatedResult);
 
   CHECK(testCase.calculatedResult == testCase.expectedResult);
+}
 }

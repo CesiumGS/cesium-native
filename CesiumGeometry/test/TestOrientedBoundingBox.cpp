@@ -5,9 +5,7 @@
 #include <CesiumGeometry/Plane.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
+#include <doctest/doctest.h>
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
@@ -23,51 +21,17 @@
 #include <string>
 #include <vector>
 
+using namespace doctest;
 using namespace CesiumGeometry;
 using namespace CesiumUtility;
 
-TEST_CASE("OrientedBoundingBox::intersectPlane") {
   struct TestCase {
     glm::dvec3 center;
     glm::dmat3 axes;
   };
-
-  auto testCase = GENERATE(
-      // untransformed
-      TestCase{glm::dvec3(0.0), glm::dmat3(1.0)},
-      // off-center
-      TestCase{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(1.0)},
-      TestCase{glm::dvec3(0.7, -1.8, 12.0), glm::dmat3(1.0)},
-      // rotated
-      TestCase{
-          glm::dvec3(0.0),
-          glm::dmat3(
-              glm::rotate(glm::dmat4(), 1.2, glm::dvec3(0.5, 1.5, -1.2)))},
-      // scaled
-      TestCase{
-          glm::dvec3(0.0),
-          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 20.6)))},
-      TestCase{
-          glm::dvec3(0.0),
-          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.4, 20.6)))},
-      TestCase{
-          glm::dvec3(0.0),
-          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.0, 20.6)))},
-      TestCase{
-          glm::dvec3(0.0),
-          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 0.0)))},
-      TestCase{
-          glm::dvec3(0.0),
-          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.0, 0.0)))},
-      // arbitrary box
-      TestCase{
-          glm::dvec3(-5.1, 0.0, 0.1),
-          glm::dmat3(glm::rotate(
-              glm::scale(glm::dmat4(), glm::dvec3(1.5, 80.4, 2.6)),
-              1.2,
-              glm::dvec3(0.5, 1.5, -1.2)))});
-
-  SECTION("test corners, edges, faces") {
+  
+  void testIntersectPlane(const TestCase& testCase) {
+    CAPTURE(testCase);
     const double SQRT1_2 = pow(1.0 / 2.0, 1 / 2.0);
     const double SQRT3_4 = pow(3.0 / 4.0, 1 / 2.0);
 
@@ -330,6 +294,46 @@ TEST_CASE("OrientedBoundingBox::intersectPlane") {
     pl = planeNormXform(-1.0, -1.0, -1.0, -SQRT3_4 - 0.00001);
     CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
   }
+
+TEST_CASE("OrientedBoundingBox::intersectPlane") {
+  std::vector<TestCase> testCases {
+      // untransformed
+      TestCase{glm::dvec3(0.0), glm::dmat3(1.0)},
+      // off-center
+      TestCase{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(1.0)},
+      TestCase{glm::dvec3(0.7, -1.8, 12.0), glm::dmat3(1.0)},
+      // rotated
+      TestCase{
+          glm::dvec3(0.0),
+          glm::dmat3(
+              glm::rotate(glm::dmat4(), 1.2, glm::dvec3(0.5, 1.5, -1.2)))},
+      // scaled
+      TestCase{
+          glm::dvec3(0.0),
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 20.6)))},
+      TestCase{
+          glm::dvec3(0.0),
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.4, 20.6)))},
+      TestCase{
+          glm::dvec3(0.0),
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.0, 20.6)))},
+      TestCase{
+          glm::dvec3(0.0),
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(1.5, 0.4, 0.0)))},
+      TestCase{
+          glm::dvec3(0.0),
+          glm::dmat3(glm::scale(glm::dmat4(), glm::dvec3(0.0, 0.0, 0.0)))},
+      // arbitrary box
+      TestCase{
+          glm::dvec3(-5.1, 0.0, 0.1),
+          glm::dmat3(glm::rotate(
+              glm::scale(glm::dmat4(), glm::dvec3(1.5, 80.4, 2.6)),
+              1.2,
+              glm::dvec3(0.5, 1.5, -1.2)))}};
+
+  for(auto& testCase : testCases) {
+    testIntersectPlane(testCase);
+  }
 }
 
 TEST_CASE("OrientedBoundingBox constructor example") {
@@ -370,7 +374,7 @@ TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition example") {
 }
 
 TEST_CASE("OrientedBoundingBox::toAxisAligned") {
-  SECTION("simple box that is already axis-aligned") {
+  SUBCASE("simple box that is already axis-aligned") {
     OrientedBoundingBox obb(
         glm::dvec3(1.0, 2.0, 3.0),
         glm::dmat3(
@@ -386,7 +390,7 @@ TEST_CASE("OrientedBoundingBox::toAxisAligned") {
     CHECK(aabb.maximumZ == 33.0);
   }
 
-  SECTION("a truly oriented box") {
+  SUBCASE("a truly oriented box") {
     // Rotate the OBB 45 degrees around the Y-axis
     double fortyFiveDegrees = Math::OnePi / 4.0;
     glm::dmat3 rotation = glm::dmat3(glm::eulerAngleY(fortyFiveDegrees));
@@ -403,7 +407,7 @@ TEST_CASE("OrientedBoundingBox::toAxisAligned") {
 }
 
 TEST_CASE("OrientedBoundingBox::toSphere") {
-  SECTION("axis-aligned box with identity half-axes") {
+  SUBCASE("axis-aligned box with identity half-axes") {
     OrientedBoundingBox obb(
         glm::dvec3(1.0, 2.0, 3.0),
         glm::dmat3(
@@ -419,7 +423,7 @@ TEST_CASE("OrientedBoundingBox::toSphere") {
     CHECK(sphere.getRadius() == Approx(glm::sqrt(3.0)));
   }
 
-  SECTION("rotating the box does not change the bounding sphere") {
+  SUBCASE("rotating the box does not change the bounding sphere") {
     // Rotate the OBB 45 degrees around the Y-axis.
     // This shouldn't change the bounding sphere at all.
     double fortyFiveDegrees = Math::OnePi / 4.0;
@@ -434,7 +438,7 @@ TEST_CASE("OrientedBoundingBox::toSphere") {
     CHECK(sphere.getRadius() == Approx(glm::sqrt(3.0)));
   }
 
-  SECTION("a scaled axis-aligned box") {
+  SUBCASE("a scaled axis-aligned box") {
     OrientedBoundingBox obb(
         glm::dvec3(1.0, 2.0, 3.0),
         glm::dmat3(
@@ -454,7 +458,7 @@ TEST_CASE("OrientedBoundingBox::toSphere") {
 }
 
 TEST_CASE("OrientedBoundingBox::contains") {
-  SECTION("axis-aligned") {
+  SUBCASE("axis-aligned") {
     OrientedBoundingBox obb(
         glm::dvec3(10.0, 20.0, 30.0),
         glm::dmat3(
@@ -470,7 +474,7 @@ TEST_CASE("OrientedBoundingBox::contains") {
     CHECK(!obb.contains(glm::dvec3(10.0, 20.0, 35.0)));
   }
 
-  SECTION("rotated") {
+  SUBCASE("rotated") {
     // Rotate the OBB 45 degrees around the Y-axis
     double fortyFiveDegrees = Math::OnePi / 4.0;
     glm::dmat3 halfAngles(

@@ -2,7 +2,7 @@
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double2x2.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
@@ -194,7 +194,7 @@ TEST_CASE("Test MetadataArrayType") {
 }
 
 TEST_CASE("TypeToPropertyType") {
-  SECTION("Works for scalar types") {
+  SUBCASE("Works for scalar types") {
     REQUIRE(TypeToPropertyType<uint8_t>::value == PropertyType::Scalar);
     REQUIRE(
         TypeToPropertyType<uint8_t>::component == PropertyComponentType::Uint8);
@@ -231,7 +231,7 @@ TEST_CASE("TypeToPropertyType") {
         TypeToPropertyType<int64_t>::component == PropertyComponentType::Int64);
   }
 
-  SECTION("Works for vecN types") {
+  SUBCASE("Works for vecN types") {
     // Vec2
     REQUIRE(TypeToPropertyType<glm::u8vec2>::value == PropertyType::Vec2);
     REQUIRE(
@@ -386,7 +386,7 @@ TEST_CASE("TypeToPropertyType") {
         PropertyComponentType::Float64);
   }
 
-  SECTION("Works for matN types") {
+  SUBCASE("Works for matN types") {
     // Mat2
     REQUIRE(TypeToPropertyType<glm::u8mat2x2>::value == PropertyType::Mat2);
     REQUIRE(
@@ -541,12 +541,12 @@ TEST_CASE("TypeToPropertyType") {
         PropertyComponentType::Float64);
   }
 
-  SECTION("Works for boolean") {
+  SUBCASE("Works for boolean") {
     REQUIRE(TypeToPropertyType<bool>::value == PropertyType::Boolean);
     REQUIRE(TypeToPropertyType<bool>::component == PropertyComponentType::None);
   }
 
-  SECTION("Works for string") {
+  SUBCASE("Works for string") {
     REQUIRE(
         TypeToPropertyType<std::string_view>::value == PropertyType::String);
     REQUIRE(
@@ -556,7 +556,7 @@ TEST_CASE("TypeToPropertyType") {
 }
 
 TEST_CASE("CanBeNormalized") {
-  SECTION("Works for scalars") {
+  SUBCASE("Works for scalars") {
     REQUIRE(CanBeNormalized<uint8_t>::value);
     REQUIRE(CanBeNormalized<int8_t>::value);
     REQUIRE(CanBeNormalized<uint16_t>::value);
@@ -572,7 +572,7 @@ TEST_CASE("CanBeNormalized") {
     REQUIRE(!CanBeNormalized<std::string_view>::value);
   }
 
-  SECTION("Works for vecNs") {
+  SUBCASE("Works for vecNs") {
     REQUIRE(CanBeNormalized<glm::u8vec2>::value);
     REQUIRE(CanBeNormalized<glm::u8vec3>::value);
     REQUIRE(CanBeNormalized<glm::u8vec4>::value);
@@ -614,7 +614,7 @@ TEST_CASE("CanBeNormalized") {
     REQUIRE(!CanBeNormalized<glm::dvec4>::value);
   }
 
-  SECTION("Works for matN") {
+  SUBCASE("Works for matN") {
     REQUIRE(CanBeNormalized<glm::u8mat2x2>::value);
     REQUIRE(CanBeNormalized<glm::u8mat3x3>::value);
     REQUIRE(CanBeNormalized<glm::u8mat4x4>::value);
@@ -656,7 +656,7 @@ TEST_CASE("CanBeNormalized") {
     REQUIRE(!CanBeNormalized<glm::dmat4>::value);
   }
 
-  SECTION("Works for arrays") {
+  SUBCASE("Works for arrays") {
     REQUIRE(CanBeNormalized<PropertyArrayView<int32_t>>::value);
     REQUIRE(CanBeNormalized<PropertyArrayView<glm::uvec2>>::value);
     REQUIRE(CanBeNormalized<PropertyArrayView<glm::i64mat2x2>>::value);
@@ -664,7 +664,7 @@ TEST_CASE("CanBeNormalized") {
 }
 
 TEST_CASE("TypeToNormalizedType") {
-  SECTION("Works for scalars") {
+  SUBCASE("Works for scalars") {
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint8_t>::type, double>);
     REQUIRE(std::is_same_v<TypeToNormalizedType<int8_t>::type, double>);
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint16_t>::type, double>);
@@ -676,7 +676,7 @@ TEST_CASE("TypeToNormalizedType") {
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint64_t>::type, double>);
   }
 
-  SECTION("Works for vecNs") {
+  SUBCASE("Works for vecNs") {
     using ExpectedVec2Type = glm::dvec2;
     using ExpectedVec3Type = glm::dvec3;
     using ExpectedVec4Type = glm::dvec4;
@@ -762,7 +762,7 @@ TEST_CASE("TypeToNormalizedType") {
             ExpectedVec4Type>);
   }
 
-  SECTION("Works for matNs") {
+  SUBCASE("Works for matNs") {
     using ExpectedMat2Type = glm::dmat2;
     using ExpectedMat3Type = glm::dmat3;
     using ExpectedMat4Type = glm::dmat4;
@@ -848,7 +848,7 @@ TEST_CASE("TypeToNormalizedType") {
             ExpectedMat4Type>);
   }
 
-  SECTION("Works for arrays") {
+  SUBCASE("Works for arrays") {
     REQUIRE(std::is_same_v<
             TypeToNormalizedType<PropertyArrayView<int64_t>>::type,
             PropertyArrayView<double>>);

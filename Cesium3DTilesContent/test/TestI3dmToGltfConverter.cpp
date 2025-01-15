@@ -4,7 +4,7 @@
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float4.hpp>
 
@@ -14,7 +14,7 @@ using namespace Cesium3DTilesContent;
 using namespace CesiumGltf;
 
 TEST_CASE("I3dmToGltfConverter") {
-  SECTION("loads a simple i3dm") {
+  SUBCASE("loads a simple i3dm") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InstancedWithBatchTable" /
                    "instancedWithBatchTable.i3dm";
@@ -40,7 +40,7 @@ TEST_CASE("I3dmToGltfConverter") {
     CHECK(translations.size() == 25);
   }
 
-  SECTION("loads a simple i3dm with orientations") {
+  SUBCASE("loads a simple i3dm with orientations") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InstancedOrientation" /
                    "instancedOrientation.i3dm";
@@ -73,7 +73,7 @@ TEST_CASE("I3dmToGltfConverter") {
     CHECK(rotations.size() == 25);
   }
 
-  SECTION("reports an error if the glTF is v1, which is unsupported") {
+  SUBCASE("reports an error if the glTF is v1, which is unsupported") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath =
         testFilePath / "i3dm" / "ObsoleteGltf" / "instancedWithBatchTable.i3dm";

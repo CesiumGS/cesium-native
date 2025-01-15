@@ -56,7 +56,7 @@ set(PACKAGES_PRIVATE
 )
 
 # Packages only used for testing
-set(PACKAGES_TEST catch2)
+set(PACKAGES_TEST doctest)
 
 if(NOT VCPKG_MANIFEST_MODE)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
@@ -247,7 +247,7 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
 # these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
 find_package(Async++ CONFIG REQUIRED)
-find_package(Catch2 CONFIG REQUIRED)
+find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
