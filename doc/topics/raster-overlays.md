@@ -10,6 +10,7 @@ The following raster overlay types are currently included in Cesium Native:
 * [WebMapServiceRasterOverlay](\ref CesiumRasterOverlays::WebMapServiceRasterOverlay)
 * [WebMapTileServiceRasterOverlay](\ref CesiumRasterOverlays::WebMapTileServiceRasterOverlay)
 * [TileMapServiceRasterOverlay](\ref CesiumRasterOverlays::TileMapServiceRasterOverlay)
+* [UrlTemplateRasterOverlay](\ref CesiumRasterOverlays::UrlTemplateRasterOverlay)
 
 To add a raster overlay to a `Tileset`, construct an instance of the appropriate class and add it to the [RasterOverlayCollection](\ref Cesium3DTilesSelection::RasterOverlayCollection) returned by [Tileset::getOverlays](\ref Cesium3DTilesSelection::Tileset::getOverlays). See the reference documentation for each overlay for details about how to configure that overlay type.
 
@@ -17,12 +18,28 @@ To add a raster overlay to a `Tileset`, construct an instance of the appropriate
 
 Raster overlays are implemented by deriving from the [RasterOverlay](\ref CesiumRasterOverlays::RasterOverlay) abstract base class, so new ones can be easily added even from outside of Cesium Native. `RasterOverlay` has just a single pure-virtual method that must be implemented: [createTileProvider](\ref CesiumRasterOverlays::RasterOverlay::createTileProvider). This method [asynchronously](#async-system) produces an instance of a class derived from [RasterOverlayTileProvider](\ref CesiumRasterOverlays::RasterOverlayTileProvider).
 
-A `RasterOverlayTileProvider` has a particular [Projection](\ref CesiumGeospatial::Projection) and a rectangle that it covers, expressed in that projection.
+A `RasterOverlayTileProvider` has a particular [Projection](\ref CesiumGeospatial::Projection) and a rectangle that the raster overlay covers, expressed in the coordinates of that map projection.
 
-Deriving a class from `RasterOverlayTileProvider`, in turn, requires implementing one more pure-virtual method: [loadTileImage](\ref CesiumRasterOverlays::RasterOverlayTileProvider::loadTileImage). This class is passed an instance of [RasterOverlayTile](\ref CesiumRasterOverlays::RasterOverlayTile) and is expected to asynchronously produce a [LoadedRasterOverlayImage](\ref CesiumRasterOverlays::LoadedRasterOverlayImage), containing the actual image data plus details...
+While it's possible to derive a class from `RasterOverlayTileProvider` directly and implement the [loadTileImage](\ref CesiumRasterOverlays::RasterOverlayTileProvider::loadTileImage) method, there are two shortcuts available that often save a lot of implementation effort.
+
+In the very common scenario where a raster overlay source is organized into a quadtree of tiles, and each tile can be downloaded from a web URL, we can implement `createTileProvider` to construct an instance of [UrlTemplateRasterOverlay](\ref CesiumRasterOverlays::UrlTemplateRasterOverlay) with the appropriate templatized URL and then call its `createTileProvider`:
+
+\snippet{trimleft} ExamplesRasterOverlays.cpp use-url-template
+
+If we need a little more control, or if the raster overlay images are not downloaded from web URLs, then we can derive a new class from [QuadtreeRasterOverlayTileProvider](\ref CesiumRasterOverlays::QuadtreeRasterOverlayTileProvider) and create and return an instance of it from `createTileProvider`. Deriving from `QuadtreeRasterOverlayTileProvider` requires implementing the [loadQuadtreeTileImage](\ref CesiumRasterOverlays::QuadtreeRasterOverlayTileProvider::loadQuadtreeTileImage) method, which is given a quadtree tile ID (level, x, and y) and must asynchronously return the image for that quadtree tile. `QuadtreeRasterOverlayTileProvider` will automatically figure out an appropriate quadtree level to use for ther raster overlay tile attached to a given geometry tile, and it will make multiple calls to `loadQuadtreeTileImage` as necessary to get all of the quadtree images that cover it. In the common case that multiple geometry tiles overlap a single raster overlay quadtree tile, a small cache ensures that raster overlay tiles are not requested more than is necessary.
+
+If our raster overlay source is not arranged in a quadtree, however, we're left with the final option, which is deriving from `RasterOverlayTileProvider` directly. This requires implementing the [loadTileImage](\ref CesiumRasterOverlays::RasterOverlayTileProvider::loadTileImage) method. When Cesium Native calls this method, it passes a [RasterOverlayTile](\ref CesiumRasterOverlays::RasterOverlayTile) which captures the requirements for the raster overlay tile that covers this geometry tile:
+
+* [getRectangle](\ref CesiumRasterOverlays::RasterOverlayTile::getRectangle): Describes the minimum rectangle that the provided image must cover, expressed in the provider's [getProjection](\ref CesiumRasterOverlays::RasterOverlayTileProvider::getProjection). The returned image is allowed to be bigger than this, but the extra pixels will be wasted.
+* [getTargetScreenPixels](\ref CesiumRasterOverlays::RasterOverlayTile::getTargetScreenPixels): The number of pixels on the screen that the rectangle is expected to map to, just before the geometry tile switches to a higher level-of-detail. This is used to control how detailed the image will be.
+
+In a typical implementation, the target screen pixels is divided by the raster overlay's configured [maximumScreenSpaceError](\ref CesiumRasterOverlays::RasterOverlayOptions::maximumScreenSpaceError) to determine the target number of pixels in the raster overlay image. Then, that number of pixels is rounded up in order to cover the rectangle without resampling and without partial pixels.
+
+TODO: add a diagram of this
+
+Old stuff starts here...
 
 ## RasterOverlayTileProvider
-
 
 The job of a `RasterOverlayTileProvider` is to create `RasterOverlayTile` instances on demand to cover each geometry tile.
 
