@@ -39,6 +39,8 @@
 #include <cstddef>
 #include <cstring>
 #include <span>
+#include <sstream>
+#include <string>
 #include <vector>
 
 using namespace doctest;
