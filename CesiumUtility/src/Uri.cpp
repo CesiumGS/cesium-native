@@ -8,7 +8,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <iomanip>
+#include <ios>
 #include <stdexcept>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -17,6 +20,24 @@ namespace CesiumUtility {
 namespace {
 const char* const HTTPS_PREFIX = "https:";
 const char* const HTTP_PREFIX = "http:";
+
+std::string escapeNonAscii(const std::string& url) {
+  std::ostringstream output;
+  output << std::hex;
+  output.fill('0');
+
+  for(size_t i = 0; i < url.length(); i++) {
+    unsigned char c = static_cast<unsigned char>(url[i]);
+    if(c > 0x7f) {
+      output << std::uppercase << '%' << std::setw(2) << int(c) << std::nouppercase;
+    }
+    else {
+      output << c;
+    }
+  }
+
+  return output.str();
+}
 
 std::string cesiumConformUrl(const std::string& url, bool useHttps) {
   // Prepend protocol to protocol-relative URIs.
@@ -32,9 +53,9 @@ std::string Uri::resolve(
     const std::string& relative,
     bool useBaseQuery,
     bool assumeHttpsDefault) {
-  const std::string conformedBase = cesiumConformUrl(base, assumeHttpsDefault);
+  const std::string conformedBase = cesiumConformUrl(escapeNonAscii(base), assumeHttpsDefault);
   const std::string conformedRelative =
-      cesiumConformUrl(relative, assumeHttpsDefault);
+      cesiumConformUrl(escapeNonAscii(relative), assumeHttpsDefault);
   UriUriA baseUri;
 
   if (uriParseSingleUriA(&baseUri, conformedBase.c_str(), nullptr) !=
@@ -104,7 +125,7 @@ std::string Uri::resolve(
   uriFreeUriMembersA(&relativeUri);
   uriFreeUriMembersA(&baseUri);
 
-  return result;
+  return unescape(result);
 }
 
 std::string Uri::addQuery(
@@ -332,8 +353,9 @@ std::string Uri::uriPathToNativePath(const std::string& nativePath) {
 }
 
 std::string Uri::getPath(const std::string& uri) {
+  const std::string escapedUri = escapeNonAscii(uri);
   UriUriA parsedUri;
-  if (uriParseSingleUriA(&parsedUri, uri.c_str(), nullptr) != URI_SUCCESS) {
+  if (uriParseSingleUriA(&parsedUri, escapedUri.c_str(), nullptr) != URI_SUCCESS) {
     // Could not parse the URI, so return an empty string.
     return std::string();
   }
@@ -344,9 +366,9 @@ std::string Uri::getPath(const std::string& uri) {
 
   UriPathSegmentA* pCurrent = parsedUri.pathHead;
   while (pCurrent != nullptr) {
-    parts.emplace_back(
+    parts.emplace_back(unescape(std::string(
         pCurrent->text.first,
-        size_t(pCurrent->text.afterLast - pCurrent->text.first));
+        size_t(pCurrent->text.afterLast - pCurrent->text.first))));
     pCurrent = pCurrent->next;
   }
 
