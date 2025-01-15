@@ -217,18 +217,18 @@ TEST_CASE("clipTriangleAtAxisAlignedThreshold") {
           {},
           {2, InterpolatedVertex{0, 2, 0.5}, InterpolatedVertex{1, 2, 0.75}}}};
 
-for(auto& testCase : testCases) {
-  clipTriangleAtAxisAlignedThreshold(
-      testCase.threshold,
-      testCase.keepAbove,
-      testCase.i0,
-      testCase.i1,
-      testCase.i2,
-      testCase.u0,
-      testCase.u1,
-      testCase.u2,
-      testCase.calculatedResult);
+  for (auto& testCase : testCases) {
+    clipTriangleAtAxisAlignedThreshold(
+        testCase.threshold,
+        testCase.keepAbove,
+        testCase.i0,
+        testCase.i1,
+        testCase.i2,
+        testCase.u0,
+        testCase.u1,
+        testCase.u2,
+        testCase.calculatedResult);
 
-  CHECK(testCase.calculatedResult == testCase.expectedResult);
-}
+    CHECK(testCase.calculatedResult == testCase.expectedResult);
+  }
 }

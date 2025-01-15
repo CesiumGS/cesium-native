@@ -25,278 +25,278 @@ using namespace doctest;
 using namespace CesiumGeometry;
 using namespace CesiumUtility;
 
-  struct TestCase {
-    glm::dvec3 center;
-    glm::dmat3 axes;
-  };
-  
-  void testIntersectPlane(const TestCase& testCase) {
-    CAPTURE(testCase);
-    const double SQRT1_2 = pow(1.0 / 2.0, 1 / 2.0);
-    const double SQRT3_4 = pow(3.0 / 4.0, 1 / 2.0);
+struct TestCase {
+  glm::dvec3 center;
+  glm::dmat3 axes;
+};
 
-    auto box = OrientedBoundingBox(testCase.center, testCase.axes * 0.5);
+void testIntersectPlane(const TestCase& testCase) {
+  CAPTURE(testCase);
+  const double SQRT1_2 = pow(1.0 / 2.0, 1 / 2.0);
+  const double SQRT3_4 = pow(3.0 / 4.0, 1 / 2.0);
 
-    std::string s = glm::to_string(box.getHalfAxes());
+  auto box = OrientedBoundingBox(testCase.center, testCase.axes * 0.5);
 
-    auto planeNormXform =
-        [&testCase](double nx, double ny, double nz, double dist) {
-          auto n = glm::dvec3(nx, ny, nz);
-          auto arb = glm::dvec3(357, 924, 258);
-          auto p0 = glm::normalize(n) * -dist;
-          auto tang = glm::normalize(glm::cross(n, arb));
-          auto binorm = glm::normalize(glm::cross(n, tang));
+  std::string s = glm::to_string(box.getHalfAxes());
 
-          p0 = testCase.axes * p0;
-          tang = testCase.axes * tang;
-          binorm = testCase.axes * binorm;
+  auto planeNormXform =
+      [&testCase](double nx, double ny, double nz, double dist) {
+        auto n = glm::dvec3(nx, ny, nz);
+        auto arb = glm::dvec3(357, 924, 258);
+        auto p0 = glm::normalize(n) * -dist;
+        auto tang = glm::normalize(glm::cross(n, arb));
+        auto binorm = glm::normalize(glm::cross(n, tang));
 
-          n = glm::cross(tang, binorm);
-          if (glm::length(n) == 0.0) {
-            return std::optional<Plane>();
-          }
-          n = glm::normalize(n);
+        p0 = testCase.axes * p0;
+        tang = testCase.axes * tang;
+        binorm = testCase.axes * binorm;
 
-          p0 += testCase.center;
-          double d = -glm::dot(p0, n);
-          if (glm::abs(d) > 0.0001 && glm::dot(n, n) > 0.0001) {
-            return std::optional(Plane(n, d));
-          }
-
+        n = glm::cross(tang, binorm);
+        if (glm::length(n) == 0.0) {
           return std::optional<Plane>();
-        };
+        }
+        n = glm::normalize(n);
 
-    std::optional<Plane> pl;
+        p0 += testCase.center;
+        double d = -glm::dot(p0, n);
+        if (glm::abs(d) > 0.0001 && glm::dot(n, n) > 0.0001) {
+          return std::optional(Plane(n, d));
+        }
 
-    // Tests against faces
+        return std::optional<Plane>();
+      };
 
-    pl = planeNormXform(+1.0, +0.0, +0.0, 0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, +0.0, +0.0, 0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, +1.0, +0.0, 0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, -1.0, +0.0, 0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, +0.0, +1.0, 0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, +0.0, -1.0, 0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  std::optional<Plane> pl;
 
-    pl = planeNormXform(+1.0, +0.0, +0.0, 0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +0.0, +0.0, 0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +1.0, +0.0, 0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, -1.0, +0.0, 0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +0.0, +1.0, 0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +0.0, -1.0, 0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  // Tests against faces
 
-    pl = planeNormXform(+1.0, +0.0, +0.0, -0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +0.0, +0.0, -0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +1.0, +0.0, -0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, -1.0, +0.0, -0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +0.0, +1.0, -0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +0.0, -1.0, -0.49999);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +0.0, +0.0, 0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, +0.0, +0.0, 0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, +1.0, +0.0, 0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, -1.0, +0.0, 0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, +0.0, +1.0, 0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, +0.0, -1.0, 0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
 
-    pl = planeNormXform(+1.0, +0.0, +0.0, -0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, +0.0, +0.0, -0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, +1.0, +0.0, -0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, -1.0, +0.0, -0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, +0.0, +1.0, -0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, +0.0, -1.0, -0.50001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, +0.0, +0.0, 0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +0.0, +0.0, 0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +1.0, +0.0, 0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, -1.0, +0.0, 0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +0.0, +1.0, 0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +0.0, -1.0, 0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
 
-    // Tests against edges
+  pl = planeNormXform(+1.0, +0.0, +0.0, -0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +0.0, +0.0, -0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +1.0, +0.0, -0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, -1.0, +0.0, -0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +0.0, +1.0, -0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +0.0, -1.0, -0.49999);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
 
-    pl = planeNormXform(+1.0, +1.0, +0.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+1.0, -1.0, +0.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, +1.0, +0.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, -1.0, +0.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+1.0, +0.0, +1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+1.0, +0.0, -1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, +0.0, +1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, +0.0, -1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, +1.0, +1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, +1.0, -1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, -1.0, +1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+0.0, -1.0, -1.0, SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, +0.0, +0.0, -0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, +0.0, +0.0, -0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, +1.0, +0.0, -0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, -1.0, +0.0, -0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, +0.0, +1.0, -0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, +0.0, -1.0, -0.50001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
 
-    pl = planeNormXform(+1.0, +1.0, +0.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, -1.0, +0.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +1.0, +0.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, -1.0, +0.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, +0.0, +1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, +0.0, -1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +0.0, +1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +0.0, -1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +1.0, +1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +1.0, -1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, -1.0, +1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, -1.0, -1.0, SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  // Tests against edges
 
-    pl = planeNormXform(+1.0, +1.0, +0.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, -1.0, +0.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +1.0, +0.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, -1.0, +0.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, +0.0, +1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, +0.0, -1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +0.0, +1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +0.0, -1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +1.0, +1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, +1.0, -1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, -1.0, +1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+0.0, -1.0, -1.0, -SQRT1_2 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +1.0, +0.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, -1.0, +0.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, +1.0, +0.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, -1.0, +0.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, +0.0, +1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, +0.0, -1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, +0.0, +1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, +0.0, -1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, +1.0, +1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, +1.0, -1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, -1.0, +1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+0.0, -1.0, -1.0, SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
 
-    pl = planeNormXform(+1.0, +1.0, +0.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+1.0, -1.0, +0.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, +1.0, +0.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, -1.0, +0.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+1.0, +0.0, +1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+1.0, +0.0, -1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, +0.0, +1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, +0.0, -1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, +1.0, +1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, +1.0, -1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, -1.0, +1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+0.0, -1.0, -1.0, -SQRT1_2 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, +1.0, +0.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, -1.0, +0.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +1.0, +0.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, -1.0, +0.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +0.0, +1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +0.0, -1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +0.0, +1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +0.0, -1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +1.0, +1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +1.0, -1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, -1.0, +1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, -1.0, -1.0, SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
 
-    // Tests against corners
+  pl = planeNormXform(+1.0, +1.0, +0.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, -1.0, +0.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +1.0, +0.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, -1.0, +0.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +0.0, +1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +0.0, -1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +0.0, +1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +0.0, -1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +1.0, +1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, +1.0, -1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, -1.0, +1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+0.0, -1.0, -1.0, -SQRT1_2 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
 
-    pl = planeNormXform(+1.0, +1.0, +1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+1.0, +1.0, -1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+1.0, -1.0, +1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(+1.0, -1.0, -1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, +1.0, +1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, +1.0, -1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, -1.0, +1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
-    pl = planeNormXform(-1.0, -1.0, -1.0, SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, +1.0, +0.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, -1.0, +0.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, +1.0, +0.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, -1.0, +0.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, +0.0, +1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, +0.0, -1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, +0.0, +1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, +0.0, -1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, +1.0, +1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, +1.0, -1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, -1.0, +1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+0.0, -1.0, -1.0, -SQRT1_2 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
 
-    pl = planeNormXform(+1.0, +1.0, +1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, +1.0, -1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, -1.0, +1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, -1.0, -1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +1.0, +1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +1.0, -1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, -1.0, +1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, -1.0, -1.0, SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  // Tests against corners
 
-    pl = planeNormXform(+1.0, +1.0, +1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, +1.0, -1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, -1.0, +1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(+1.0, -1.0, -1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +1.0, +1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, +1.0, -1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, -1.0, +1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
-    pl = planeNormXform(-1.0, -1.0, -1.0, -SQRT3_4 + 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +1.0, +1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, +1.0, -1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, -1.0, +1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(+1.0, -1.0, -1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, +1.0, +1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, +1.0, -1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, -1.0, +1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
+  pl = planeNormXform(-1.0, -1.0, -1.0, SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Inside));
 
-    pl = planeNormXform(+1.0, +1.0, +1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+1.0, +1.0, -1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+1.0, -1.0, +1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(+1.0, -1.0, -1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, +1.0, +1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, +1.0, -1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, -1.0, +1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-    pl = planeNormXform(-1.0, -1.0, -1.0, -SQRT3_4 - 0.00001);
-    CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
-  }
+  pl = planeNormXform(+1.0, +1.0, +1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +1.0, -1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, -1.0, +1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, -1.0, -1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +1.0, +1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +1.0, -1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, -1.0, +1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, -1.0, -1.0, SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+
+  pl = planeNormXform(+1.0, +1.0, +1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, +1.0, -1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, -1.0, +1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(+1.0, -1.0, -1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +1.0, +1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, +1.0, -1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, -1.0, +1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+  pl = planeNormXform(-1.0, -1.0, -1.0, -SQRT3_4 + 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Intersecting));
+
+  pl = planeNormXform(+1.0, +1.0, +1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, +1.0, -1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, -1.0, +1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(+1.0, -1.0, -1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, +1.0, +1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, +1.0, -1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, -1.0, +1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+  pl = planeNormXform(-1.0, -1.0, -1.0, -SQRT3_4 - 0.00001);
+  CHECK((!pl || box.intersectPlane(*pl) == CullingResult::Outside));
+}
 
 TEST_CASE("OrientedBoundingBox::intersectPlane") {
-  std::vector<TestCase> testCases {
+  std::vector<TestCase> testCases{
       // untransformed
       TestCase{glm::dvec3(0.0), glm::dmat3(1.0)},
       // off-center
@@ -331,7 +331,7 @@ TEST_CASE("OrientedBoundingBox::intersectPlane") {
               1.2,
               glm::dvec3(0.5, 1.5, -1.2)))}};
 
-  for(auto& testCase : testCases) {
+  for (auto& testCase : testCases) {
     testIntersectPlane(testCase);
   }
 }

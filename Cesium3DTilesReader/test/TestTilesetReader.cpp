@@ -15,17 +15,19 @@
 
 using namespace doctest;
 
-bool compareVectors(const std::vector<double>& a, const std::vector<double>& b) {
-  if(a.size() != b.size()) {
+bool compareVectors(
+    const std::vector<double>& a,
+    const std::vector<double>& b) {
+  if (a.size() != b.size()) {
     return false;
   }
 
-  for(size_t i = 0; i < a.size(); i++) {
-    if(a[i] != doctest::Approx(b[i])) {
+  for (size_t i = 0; i < a.size(); i++) {
+    if (a[i] != doctest::Approx(b[i])) {
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -91,24 +93,20 @@ TEST_CASE("Reads tileset JSON") {
       0,
       158.4};
 
-  REQUIRE(
-      compareVectors(tileset.root.boundingVolume.region,
-      expectedRegion));
+  REQUIRE(compareVectors(tileset.root.boundingVolume.region, expectedRegion));
 
-  REQUIRE(
-      compareVectors(tileset.root.content->boundingVolume->region,
+  REQUIRE(compareVectors(
+      tileset.root.content->boundingVolume->region,
       expectedContentRegion));
 
   REQUIRE(tileset.root.children.size() == 4);
 
   const Cesium3DTiles::Tile& child = tileset.root.children[0];
 
-  REQUIRE(
-      compareVectors(child.boundingVolume.region,
-      expectedChildRegion));
+  REQUIRE(compareVectors(child.boundingVolume.region, expectedChildRegion));
 
-  REQUIRE(
-      compareVectors(child.content->boundingVolume->region,
+  REQUIRE(compareVectors(
+      child.content->boundingVolume->region,
       expectedChildContentRegion));
 
   CHECK(child.content->uri == "1/0/0.b3dm");

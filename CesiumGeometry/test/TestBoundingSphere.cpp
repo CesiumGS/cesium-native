@@ -23,7 +23,7 @@ TEST_CASE("BoundingSphere::intersectPlane") {
     CullingResult expectedResult;
   };
 
-  std::vector<TestCase> testCases {
+  std::vector<TestCase> testCases{
       // sphere on the positive side of a plane
       TestCase{
           BoundingSphere(glm::dvec3(0.0), 0.5),
@@ -40,7 +40,7 @@ TEST_CASE("BoundingSphere::intersectPlane") {
           Plane(glm::dvec3(1.0, 0.0, 0.0), -1.0),
           CullingResult::Intersecting}};
 
-  for(auto& testCase : testCases) {
+  for (auto& testCase : testCases) {
     CHECK(
         testCase.sphere.intersectPlane(testCase.plane) ==
         testCase.expectedResult);

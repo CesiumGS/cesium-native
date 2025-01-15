@@ -142,181 +142,182 @@ TEST_CASE("Test the condition of caching the request") {
     SUBCASE("GET request, has max-age, cacheable status code") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
-      HttpHeaders headers = {
-          {"Content-Type", "app/json"},
-          {"Cache-Control", "must-revalidate, max-age=100"}};
+      for (auto& statusCode : statusCodes) {
+        HttpHeaders headers = {
+            {"Content-Type", "app/json"},
+            {"Cache-Control", "must-revalidate, max-age=100"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, has Expires header, cacheable status code") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "app/json"},
-          {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}};
+        HttpHeaders headers = {
+            {"Content-Type", "app/json"},
+            {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, max-age 0, old Expires header") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      // Similar to Google Photorealistic 3D Tiles, root request
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "private, max-age=0, must-revalidate"},
-          {"ETag", "deadbeef"},
-          {"Expires", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+        // Similar to Google Photorealistic 3D Tiles, root request
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "private, max-age=0, must-revalidate"},
+            {"ETag", "deadbeef"},
+            {"Expires", "Mon, 01 Jan 1990 00:00:00 GMT"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, max-age 0, stale-while-revalidate") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      // Similar to Google Photorealistic 3D Tiles, tile request
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "private, max-age=0, stale-while-revalidate=86400"},
-          {"ETag", "deadbeef"}};
+        // Similar to Google Photorealistic 3D Tiles, tile request
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control",
+             "private, max-age=0, stale-while-revalidate=86400"},
+            {"ETag", "deadbeef"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, no-cache with Etag") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "no-cache"},
-          {"ETag", "deadbeef"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "no-cache"},
+            {"ETag", "deadbeef"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, no-cache with Last-Modified") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "no-cache"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "no-cache"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, just Last-Modified") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, just Etag") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"ETag", "deadbeef"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"ETag", "deadbeef"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE(
         "GET Request, Expires header is less than current, but has an ETag") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"ETag", "deadbeef"},
-          {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"ETag", "deadbeef"},
+            {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, Expires header is less than current, but has a "
             "Last-Modified") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
-          {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
+            {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, max-age is zero, but has an ETag") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"ETag", "deadbeef"},
-          {"Cache-Control", "max-age=0"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"ETag", "deadbeef"},
+            {"Cache-Control", "max-age=0"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
     SUBCASE("GET Request, max-age is zero, but has a Last-Modified") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
+      for (auto& statusCode : statusCodes) {
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
-          {"Cache-Control", "max-age=0"}};
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
+            {"Cache-Control", "max-age=0"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == true);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
   }
 
@@ -546,14 +547,14 @@ TEST_CASE("Test the condition of caching the request") {
     SUBCASE("No store if max-age=0 and response has no ETag or Last-Modified") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-        for(auto& statusCode : statusCodes) {
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "max-age=0"}};
+      for (auto& statusCode : statusCodes) {
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "max-age=0"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      CHECK(responseCached == false);
-        }
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == false);
+      }
     }
   }
 }

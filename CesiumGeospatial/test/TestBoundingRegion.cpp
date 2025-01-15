@@ -47,52 +47,52 @@ TEST_CASE("BoundingRegion") {
 
     const GlobeRectangle& rectangle = region.getRectangle();
 
-    std::vector<TestCase> testCases{
-        // Inside bounding region
-        TestCase{
-            rectangle.getWest() + Math::Epsilon6,
-            rectangle.getSouth(),
-            region.getMinimumHeight(),
-            0.0},
-        // Outside bounding region
-        TestCase{
-            rectangle.getWest(),
-            rectangle.getSouth(),
-            region.getMaximumHeight() + 1.0,
-            1.0},
-        // Inside rectangle, above height
-        TestCase{0.0, 0.0, 20.0, 10.0},
-        // Inside rectangle, below height
-        TestCase{0.0, 0.0, 5.0, 0.0},
-        // From southwest
-        updateDistance(
-            TestCase{
-                rectangle.getEast() + offset,
-                rectangle.getNorth() + offset,
-                0.0,
-                0.0},
-            rectangle.getEast(),
-            rectangle.getNorth(),
-            0.0),
-        // From northeast
-        updateDistance(
-            TestCase{
-                rectangle.getWest() - offset,
-                rectangle.getSouth() - offset,
-                0.0,
-                0.0},
-            rectangle.getWest(),
-            rectangle.getSouth(),
-            0.0)};
+    std::vector<TestCase> testCases{// Inside bounding region
+                                    TestCase{
+                                        rectangle.getWest() + Math::Epsilon6,
+                                        rectangle.getSouth(),
+                                        region.getMinimumHeight(),
+                                        0.0},
+                                    // Outside bounding region
+                                    TestCase{
+                                        rectangle.getWest(),
+                                        rectangle.getSouth(),
+                                        region.getMaximumHeight() + 1.0,
+                                        1.0},
+                                    // Inside rectangle, above height
+                                    TestCase{0.0, 0.0, 20.0, 10.0},
+                                    // Inside rectangle, below height
+                                    TestCase{0.0, 0.0, 5.0, 0.0},
+                                    // From southwest
+                                    updateDistance(
+                                        TestCase{
+                                            rectangle.getEast() + offset,
+                                            rectangle.getNorth() + offset,
+                                            0.0,
+                                            0.0},
+                                        rectangle.getEast(),
+                                        rectangle.getNorth(),
+                                        0.0),
+                                    // From northeast
+                                    updateDistance(
+                                        TestCase{
+                                            rectangle.getWest() - offset,
+                                            rectangle.getSouth() - offset,
+                                            0.0,
+                                            0.0},
+                                        rectangle.getWest(),
+                                        rectangle.getSouth(),
+                                        0.0)};
 
-    for(auto& testCase : testCases) {
-    glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
-        Cartographic(testCase.longitude, testCase.latitude, testCase.height));
-    CHECK(Math::equalsEpsilon(
-        sqrt(region
-                 .computeDistanceSquaredToPosition(position, Ellipsoid::WGS84)),
-        testCase.expectedDistance,
-        Math::Epsilon6));
+    for (auto& testCase : testCases) {
+      glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
+          Cartographic(testCase.longitude, testCase.latitude, testCase.height));
+      CHECK(Math::equalsEpsilon(
+          sqrt(region.computeDistanceSquaredToPosition(
+              position,
+              Ellipsoid::WGS84)),
+          testCase.expectedDistance,
+          Math::Epsilon6));
     }
   }
 
@@ -128,14 +128,15 @@ TEST_CASE("BoundingRegion") {
         TestCase{-1.03, 0.2292, 2.0, 0.0},
         updateDistance(TestCase{-1.02, 0.2291, 2.0, 0.0}, -1.03, 0.2292, 2.0)};
 
-    for(auto& testCase : testCases) {
-    glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
-        Cartographic(testCase.longitude, testCase.latitude, testCase.height));
-    CHECK(Math::equalsEpsilon(
-        sqrt(region
-                 .computeDistanceSquaredToPosition(position, Ellipsoid::WGS84)),
-        testCase.expectedDistance,
-        Math::Epsilon6));
+    for (auto& testCase : testCases) {
+      glm::dvec3 position = Ellipsoid::WGS84.cartographicToCartesian(
+          Cartographic(testCase.longitude, testCase.latitude, testCase.height));
+      CHECK(Math::equalsEpsilon(
+          sqrt(region.computeDistanceSquaredToPosition(
+              position,
+              Ellipsoid::WGS84)),
+          testCase.expectedDistance,
+          Math::Epsilon6));
     }
   }
 

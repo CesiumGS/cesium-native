@@ -63,12 +63,12 @@ TEST_CASE("Rectangle::computeSignedDistance") {
           glm::dvec2(-35.0, -45.0),
           std::sqrt(5.0 * 5.0 + 5.0 * 5.0)}};
 
-for(auto& testCase : testCases) { 
-  CHECK(CesiumUtility::Math::equalsEpsilon(
-      testCase.rectangle.computeSignedDistance(testCase.position),
-      testCase.expectedResult,
-      CesiumUtility::Math::Epsilon13));
-}
+  for (auto& testCase : testCases) {
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        testCase.rectangle.computeSignedDistance(testCase.position),
+        testCase.expectedResult,
+        CesiumUtility::Math::Epsilon13));
+  }
 }
 
 TEST_CASE("Rectangle::computeUnion") {
