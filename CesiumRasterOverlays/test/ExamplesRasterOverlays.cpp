@@ -7,8 +7,10 @@ using namespace CesiumRasterOverlays;
 
 namespace {
 
-class [[maybe_unused]] MyRasterOverlay : public RasterOverlay {
+class MyRasterOverlay : public RasterOverlay {
 public:
+  MyRasterOverlay() : RasterOverlay("name", {}) {}
+
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -65,3 +67,8 @@ MyRasterOverlay::createTileProvider(
 //! [use-url-template]
 
 } // namespace
+
+TEST_CASE("RasterOverlay examples") {
+  CesiumUtility::IntrusivePointer<RasterOverlay> pOverlay =
+      new MyRasterOverlay();
+}
