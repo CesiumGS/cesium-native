@@ -1,7 +1,9 @@
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Connection.h>
 #include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Geocoder.h>
 #include <CesiumIonClient/Profile.h>
 #include <CesiumIonClient/Response.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -110,4 +112,80 @@ TEST_CASE("CesiumIonClient::Connection on single-user mode") {
   CHECK(me.value);
   CHECK(me.value->id == 0);
   CHECK(me.value->username == "ion-user");
+}
+
+TEST_CASE("CesiumIonClient::Connection::geocode") {
+  std::shared_ptr<SimpleAssetAccessor> pAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(
+          std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+
+  std::unique_ptr<SimpleAssetResponse> pResponse =
+      std::make_unique<SimpleAssetResponse>(
+          static_cast<uint16_t>(200),
+          "doesn't matter",
+          CesiumAsync::HttpHeaders{},
+          readFile(
+              std::filesystem::path(CesiumIonClient_TEST_DATA_DIR) /
+              "geocode.json"));
+
+  std::shared_ptr<SimpleAssetRequest> pRequest =
+      std::make_shared<SimpleAssetRequest>(
+          "GET",
+          "doesn't matter",
+          CesiumAsync::HttpHeaders{},
+          std::move(pResponse));
+
+  pAssetAccessor->mockCompletedRequests.insert(
+      {"https://example.com/v1/geocode/search?text=antarctica&geocoder=bing",
+       std::move(pRequest)});
+
+  AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
+  Connection connection(
+      asyncSystem,
+      pAssetAccessor,
+      "my access token",
+      CesiumIonClient::ApplicationData(),
+      "https://example.com/");
+
+  Future<Response<GeocoderResult>> futureGeocode = connection.geocode(
+      GeocoderProviderType::Bing,
+      GeocoderRequestType::Search,
+      "antarctica");
+  Response<GeocoderResult> geocode =
+      waitForFuture(asyncSystem, std::move(futureGeocode));
+
+  REQUIRE(geocode.value);
+
+  CHECK(geocode.value->attributions.size() == 2);
+  CHECK(geocode.value->attributions[0].showOnScreen);
+  CHECK(!geocode.value->attributions[1].showOnScreen);
+
+  CHECK(geocode.value->features.size() == 5);
+  CHECK(geocode.value->features[0].displayName == "Antarctica");
+  CHECK(
+      geocode.value->features[0].getGlobeRectangle().getNorth() ==
+      -1.05716816000174529);
+
+  CHECK(geocode.value->features[1].displayName == "Antarctica, FL");
+  CesiumGeospatial::Cartographic center(
+      -1.4217365374220714,
+      0.4958794631292909);
+  CHECK(geocode.value->features[1].getCartographic() == center);
+
+  CHECK(geocode.value->features[2].displayName == "Point Value");
+  CesiumGeospatial::Cartographic point =
+      CesiumGeospatial::Cartographic::fromDegrees(-180, -90);
+  CHECK(geocode.value->features[2].getCartographic() == point);
+  CHECK(
+      geocode.value->features[2].getGlobeRectangle().getNorth() ==
+      point.latitude);
+  CHECK(
+      geocode.value->features[2].getGlobeRectangle().getSouth() ==
+      point.latitude);
+  CHECK(
+      geocode.value->features[2].getGlobeRectangle().getEast() ==
+      point.longitude);
+  CHECK(
+      geocode.value->features[2].getGlobeRectangle().getWest() ==
+      point.longitude);
 }
