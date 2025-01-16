@@ -106,18 +106,18 @@ protected:
             {"northDegrees",
              std::to_string(
                  Math::radiansToDegrees(unprojectedRect.getNorth()))},
-            {"westProjected",
+            {"minimumY",
              std::to_string(
-                 Math::radiansToDegrees(options.rectangle.minimumY))},
-            {"southProjected",
+                 options.rectangle.minimumY)},
+            {"minimumX",
              std::to_string(
-                 Math::radiansToDegrees(options.rectangle.minimumX))},
-            {"eastProjected",
+                 options.rectangle.minimumX)},
+            {"maximumY",
              std::to_string(
-                 Math::radiansToDegrees(options.rectangle.maximumY))},
-            {"northProjected",
+                 options.rectangle.maximumY)},
+            {"maximumX",
              std::to_string(
-                 Math::radiansToDegrees(options.rectangle.maximumX))},
+                 options.rectangle.maximumX)},
             {"width", std::to_string(this->getWidth())},
             {"height", std::to_string(this->getHeight())}};
 

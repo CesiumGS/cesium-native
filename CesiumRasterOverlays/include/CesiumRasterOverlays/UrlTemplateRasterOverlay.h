@@ -93,10 +93,10 @@ public:
    * - `{southDegrees}` - The southern edge of the tile in geodetic degrees.
    * - `{eastDegrees}` - The eastern edge of the tile in geodetic degrees.
    * - `{northDegrees}` - The northern edge of the tile in geodetic degrees.
-   * - `{westProjected}` - The western edge of the tile in projected coordinates of the tiling scheme.
-   * - `{southProjected}` - The southern edge of the tile in projected coordinates of the tiling scheme.
-   * - `{eastProjected}` - The eastern edge of the tile in projected coordinates of the tiling scheme.
-   * - `{northProjected}` - The northern edge of the tile in projected coordinates of the tiling scheme.
+   * - `{minimumX}` - The minimum X coordinate of the tile's projected coordinates.
+   * - `{minimumY}` - The minimum Y coordinate of the tile's projected coordinates.
+   * - `{maximumX}` - The maximum X coordinate of the tile's projected coordinates.
+   * - `{maximumY}` - The maximum Y coordinate of the tile's projected coordinates.
    * - `{width}` - The width of each tile in pixels.
    * - `{height}` - The height of each tile in pixels.
    *
