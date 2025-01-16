@@ -2,6 +2,7 @@
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumNativeTests/Comparisons.h>
 #include <CesiumNativeTests/readFile.h>
 
 #include <doctest/doctest.h>
@@ -14,22 +15,6 @@
 #include <vector>
 
 using namespace doctest;
-
-bool compareVectors(
-    const std::vector<double>& a,
-    const std::vector<double>& b) {
-  if (a.size() != b.size()) {
-    return false;
-  }
-
-  for (size_t i = 0; i < a.size(); i++) {
-    if (a[i] != doctest::Approx(b[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;
@@ -93,9 +78,11 @@ TEST_CASE("Reads tileset JSON") {
       0,
       158.4};
 
-  REQUIRE(compareVectors(tileset.root.boundingVolume.region, expectedRegion));
+  REQUIRE(CesiumNativeTests::compareVectors(
+      tileset.root.boundingVolume.region,
+      expectedRegion));
 
-  REQUIRE(compareVectors(
+  REQUIRE(CesiumNativeTests::compareVectors(
       tileset.root.content->boundingVolume->region,
       expectedContentRegion));
 
@@ -103,9 +90,11 @@ TEST_CASE("Reads tileset JSON") {
 
   const Cesium3DTiles::Tile& child = tileset.root.children[0];
 
-  REQUIRE(compareVectors(child.boundingVolume.region, expectedChildRegion));
+  REQUIRE(CesiumNativeTests::compareVectors(
+      child.boundingVolume.region,
+      expectedChildRegion));
 
-  REQUIRE(compareVectors(
+  REQUIRE(CesiumNativeTests::compareVectors(
       child.content->boundingVolume->region,
       expectedChildContentRegion));
 
