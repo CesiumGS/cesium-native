@@ -60,7 +60,7 @@ MyRasterOverlay::createTileProvider(
       pCreditSystem,
       pPrepareRendererResources,
       pLogger,
-      this);
+      pOwner != nullptr ? pOwner : this);
 }
 //! [use-url-template]
 
