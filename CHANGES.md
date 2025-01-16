@@ -4,6 +4,7 @@
 
 ##### Additions :tada:
 
+- Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
 - Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
 
 ##### Fixes :wrench:
