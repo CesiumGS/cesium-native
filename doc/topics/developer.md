@@ -4,3 +4,4 @@
 * \subpage multithreading
 * \subpage style-guide
 * \subpage contributing
+* \subpage geospatial-guide
