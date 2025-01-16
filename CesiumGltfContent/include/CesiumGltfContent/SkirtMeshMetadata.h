@@ -89,7 +89,8 @@ struct SkirtMeshMetadata {
    */
   uint32_t noSkirtVerticesCount;
   /**
-   * @brief The center coordinates of the mesh, in \ref what-are-ecef-coordinates.
+   * @brief The center coordinates of the mesh, in \ref
+   * what-are-ecef-coordinates.
    */
   glm::dvec3 meshCenter;
   /**

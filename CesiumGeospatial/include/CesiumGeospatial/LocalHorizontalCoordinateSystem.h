@@ -55,8 +55,8 @@ public:
       const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
-   * @brief Create a new coordinate system centered at a \ref what-are-ecef-coordinates
-   * "Earth-Centered, Earth-Fixed" position.
+   * @brief Create a new coordinate system centered at a \ref
+   * what-are-ecef-coordinates "Earth-Centered, Earth-Fixed" position.
    *
    * @param originEcef The origin of the coordinate system.
    * @param xAxisDirection The local direction in which the X axis points at the
@@ -80,8 +80,8 @@ public:
 
   /**
    * @brief Create a new coordinate system with a specified transformation to
-   * the \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed" frame. This is an
-   * advanced constructor and should be avoided in most cases.
+   * the \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed" frame.
+   * This is an advanced constructor and should be avoided in most cases.
    *
    * This constructor can be used to save/restore the state of an instance. It
    * can also be used to create unusual coordinate systems that can't be created
@@ -96,8 +96,8 @@ public:
   /**
    * @brief Create a new coordinate system with the specified transformations
    * between the local frame and the
-   * \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed" frame. This is an advanced
-   * constructor and should be avoided in most cases.
+   * \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed" frame. This is
+   * an advanced constructor and should be avoided in most cases.
    *
    * This constructor can be used to save/restore the state of an instance. It
    * can also be used to create unusual coordinate systems that can't be created
@@ -126,8 +126,8 @@ public:
   }
 
   /**
-   * @brief Gets the transformation matrix from \ref what-are-ecef-coordinates to the
-   * local horizontal coordinate system managed by this instance.
+   * @brief Gets the transformation matrix from \ref what-are-ecef-coordinates
+   * to the local horizontal coordinate system managed by this instance.
    *
    * @return The transformation.
    */
@@ -148,8 +148,9 @@ public:
 
   /**
    * @brief Converts a position in the
-   * \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed (ECEF)" coordinate system
-   * to the local horizontal coordinate system managed by this instance.
+   * \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed (ECEF)"
+   * coordinate system to the local horizontal coordinate system managed by this
+   * instance.
    *
    * @param ecefPosition The position in the ECEF coordinate system.
    * @return The equivalent position in the local coordinate system.
@@ -172,8 +173,9 @@ public:
 
   /**
    * @brief Converts a direction in the
-   * \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed (ECEF)" coordinate system
-   * to the local horizontal coordinate system managed by this instance.
+   * \ref what-are-ecef-coordinates "Earth-Centered, Earth-Fixed (ECEF)"
+   * coordinate system to the local horizontal coordinate system managed by this
+   * instance.
    *
    * Because the vector is treated as a direction only, the translation portion
    * of the transformation is ignored.
