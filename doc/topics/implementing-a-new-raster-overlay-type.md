@@ -4,6 +4,9 @@ Raster overlays are implemented by deriving from the [RasterOverlay](\ref Cesium
 
 A `RasterOverlayTileProvider` has a particular [Projection](\ref CesiumGeospatial::Projection), which is used to select or generate appropriate texture coordinates for this raster overlay, and a rectangle that the raster overlay covers, expressed in the coordinates of that map projection.
 
+> [!note]
+> In the explanation below, we distinguish between a "geometry tile", which is an instance of [Tile](\ref Cesium3DTilesSelection::Tile) from a 3D Tiles or quantized-mesh-1.0 tileset, and a "raster overlay tile" which is an instance of [RasterOverlayTile](\ref CesiumRasterOverlays::RasterOverlayTile) that represents a raster overlay image applied to a geometry tile. While a `Tile` may have textures, too, a `RasterOverlayTile` never has geometry.
+
 While it's possible to derive a class from `RasterOverlayTileProvider` directly and implement the [loadTileImage](\ref CesiumRasterOverlays::RasterOverlayTileProvider::loadTileImage) method, there are two shortcuts available that often save a lot of implementation effort.
 
 In the very common scenario where a raster overlay source is organized into a quadtree of tiles, and each tile can be downloaded from a web URL, we can implement `createTileProvider` to construct an instance of [UrlTemplateRasterOverlay](\ref CesiumRasterOverlays::UrlTemplateRasterOverlay) with the appropriate templatized URL and then call its `createTileProvider`:

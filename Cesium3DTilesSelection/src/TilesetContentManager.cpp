@@ -448,8 +448,8 @@ void calcRasterOverlayDetailsInWorkerThread(
     const TileContentLoadInfo& tileLoadInfo) {
   CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
 
-  // we will use the fittest bounding volume to calculate raster overlay details
-  // below
+  // we will use the best-fitting bounding volume to calculate raster overlay
+  // details below
   const BoundingVolume& contentBoundingVolume =
       getEffectiveContentBoundingVolume(
           tileLoadInfo.tileBoundingVolume,
