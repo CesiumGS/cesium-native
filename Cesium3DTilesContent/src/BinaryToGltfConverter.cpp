@@ -1,5 +1,14 @@
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGltfReader/GltfReader.h>
+
+#include <cstddef>
+#include <span>
+#include <type_traits>
+#include <utility>
 
 namespace Cesium3DTilesContent {
 CesiumGltfReader::GltfReader BinaryToGltfConverter::_gltfReader;

@@ -1,5 +1,8 @@
 #include <CesiumGltf/VertexAttributeSemantics.h>
 
+#include <array>
+#include <string>
+
 namespace CesiumGltf {
 
 /**

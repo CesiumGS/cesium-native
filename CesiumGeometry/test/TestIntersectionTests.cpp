@@ -1,17 +1,25 @@
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/IntersectionTests.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Ray.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumUtility/Math.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Ray.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
+#include <catch2/generators/catch_generators.hpp>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/trigonometric.hpp>
+#include <glm/vector_relational.hpp>
 
 #include <array>
+#include <optional>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

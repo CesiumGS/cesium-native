@@ -83,16 +83,21 @@ function(setup_clang_tidy)
                 RESULT_TOOL_PATH
                 CLANG_TIDY_RUNNER_PATH)
         endif()
+
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -extra-arg=-Wno-unknown-warning-option)
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -j${CESIUM_CLANG_TIDY_USE_THREADS})
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -clang-tidy-binary ${CLANG_TIDY_PATH})
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS -p ${_PROJECT_BUILD_DIRECTORY}) # path that contains a compile_commands.json
+        list(APPEND CLANG_TIDY_RUNNER_PARAMS "\".*(src\/|include\/).*\"")
+
         if(CLANG_TIDY_RUNNER_PATH)
             message(STATUS "Found run-clang-tidy: ${CLANG_TIDY_RUNNER_PATH}")
 
             add_custom_target(
-                clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} -clang-tidy-binary ${CLANG_TIDY_PATH} -p
-                ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
+                clang-tidy COMMAND ${CLANG_TIDY_RUNNER_PATH} ${CLANG_TIDY_RUNNER_PARAMS}
             )
             add_custom_target(
-                clang-tidy-fix COMMAND ${CLANG_TIDY_RUNNER_PATH} -fix -clang-tidy-binary ${CLANG_TIDY_PATH} -p
-                ${_PROJECT_BUILD_DIRECTORY} # path that contains a compile_commands.json
+                clang-tidy-fix COMMAND ${CLANG_TIDY_RUNNER_PATH} -fix ${CLANG_TIDY_RUNNER_PARAMS}
             )
         else()
             message(WARNING "Could not find run-clang-tidy. clang-tidy will still work, but it will run very slowly.")

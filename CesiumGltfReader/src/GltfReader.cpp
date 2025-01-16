@@ -1,5 +1,3 @@
-#include "CesiumGltfReader/GltfReader.h"
-
 #include "ModelJsonHandler.h"
 #include "applyKhrTextureTransform.h"
 #include "decodeDataUrls.h"
@@ -8,27 +6,48 @@
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
-#include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
+#include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
-#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
-#include <ktx.h>
-#include <rapidjson/reader.h>
-#include <webp/decode.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <cstddef>
-#include <iomanip>
+#include <cstdint>
+#include <ios>
+#include <memory>
+#include <optional>
+#include <span>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
@@ -232,6 +251,10 @@ GltfReaderResult readBinaryGltf(
 }
 
 void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
+  if (!readGltf.model) {
+    return;
+  }
+
   Model& model = readGltf.model.value();
 
   auto extFeatureMetadataIter = std::find(
@@ -506,6 +529,10 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
   constexpr std::string_view dataPrefix = "data:";
   constexpr size_t dataPrefixLength = dataPrefix.size();
 
+  // We already checked pResult->model at the top of the method, but clang-tidy
+  // doesn't understand this.
+  // NOLINTBEGIN(bugprone-unchecked-optional-access)
+
   for (Buffer& buffer : pResult->model->buffers) {
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
@@ -593,6 +620,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 
   ExtensionModelExtStructuralMetadata* pStructuralMetadata =
       pResult->model->getExtension<ExtensionModelExtStructuralMetadata>();
+  // NOLINTEND(bugprone-unchecked-optional-access)
 
   if (options.resolveExternalStructuralMetadata && pStructuralMetadata &&
       pStructuralMetadata->schemaUri.has_value()) {

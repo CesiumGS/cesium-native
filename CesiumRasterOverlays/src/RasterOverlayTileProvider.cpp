@@ -1,13 +1,35 @@
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Tracing.h>
-#include <CesiumUtility/joinToString.h>
 
+#include <fmt/format.h>
+#include <glm/ext/vector_double2.hpp>
 #include <spdlog/fwd.h>
+
+#include <any>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -32,12 +54,10 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _projection(CesiumGeospatial::GeographicProjection(ellipsoid)),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
                              computeMaximumProjectedRectangle(ellipsoid)),
-      _pPlaceholder(),
+      _pPlaceholder(new RasterOverlayTile(*this)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {
-  this->_pPlaceholder = new RasterOverlayTile(*this);
-}
+      _throttledTilesCurrentlyLoading(0) {}
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,

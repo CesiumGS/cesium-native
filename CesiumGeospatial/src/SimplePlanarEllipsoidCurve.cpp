@@ -1,9 +1,15 @@
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
-#include <CesiumUtility/Math.h>
 
+#include <glm/common.hpp>
+#include <glm/ext/quaternion_trigonometric.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#include <optional>
 
 namespace CesiumGeospatial {
 
@@ -81,7 +87,13 @@ SimplePlanarEllipsoidCurve::SimplePlanarEllipsoidCurve(
     const glm::dvec3& scaledDestinationEcef,
     const glm::dvec3& originalSourceEcef,
     const glm::dvec3& originalDestinationEcef)
-    : _ellipsoid(ellipsoid),
+    : _sourceHeight(
+          glm::length(originalSourceEcef) - glm::length(scaledSourceEcef)),
+      _destinationHeight(
+          glm::length(originalDestinationEcef) -
+          glm::length(scaledDestinationEcef)),
+      _ellipsoid(ellipsoid),
+      _sourceDirection(glm::normalize(originalSourceEcef)),
       _sourceEcef(originalSourceEcef),
       _destinationEcef(originalDestinationEcef) {
   // Here we find the center of a circle that passes through both the source and
@@ -94,15 +106,6 @@ SimplePlanarEllipsoidCurve::SimplePlanarEllipsoidCurve(
 
   this->_rotationAxis = glm::axis(flyQuat);
   this->_totalAngle = glm::angle(flyQuat);
-
-  // Calculate difference between lengths instead of length between points -
-  // allows for negative source height
-  this->_sourceHeight =
-      glm::length(originalSourceEcef) - glm::length(scaledSourceEcef);
-  this->_destinationHeight =
-      glm::length(originalDestinationEcef) - glm::length(scaledDestinationEcef);
-
-  this->_sourceDirection = glm::normalize(originalSourceEcef);
 }
 
 } // namespace CesiumGeospatial

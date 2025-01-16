@@ -1,19 +1,25 @@
-#include "CesiumGeometry/IntersectionTests.h"
-
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Ray.h"
-
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Ray.h>
 #include <CesiumUtility/Math.h>
 
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/matrix.hpp>
 
+#include <cmath>
+#include <cstdint>
 #include <limits>
+#include <optional>
+#include <utility>
 
 using namespace CesiumUtility;
 
