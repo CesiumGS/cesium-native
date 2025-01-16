@@ -1,8 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "InternalTimegm.h"
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <ctime>
 
 using namespace CesiumAsync;
 

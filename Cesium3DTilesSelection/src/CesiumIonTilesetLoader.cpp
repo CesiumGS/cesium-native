@@ -1,15 +1,40 @@
 #include "CesiumIonTilesetLoader.h"
 
 #include "LayerJsonTerrainLoader.h"
+#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
 
+#include <fmt/format.h>
+#include <rapidjson/document.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 

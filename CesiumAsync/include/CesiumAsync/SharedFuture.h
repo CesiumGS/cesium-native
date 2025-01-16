@@ -4,8 +4,8 @@
 #include "Impl/CatchFunction.h"
 #include "Impl/ContinuationFutureType.h"
 #include "Impl/WithTracing.h"
-#include "ThreadPool.h"
 
+#include <CesiumAsync/ThreadPool.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <type_traits>

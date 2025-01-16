@@ -1,12 +1,16 @@
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-
+#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/Plane.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
+
+#include <cmath>
 
 using namespace CesiumUtility;
 using namespace CesiumGeometry;

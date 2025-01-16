@@ -4,9 +4,15 @@
 #include "MockTaskProcessor.h"
 
 #include <CesiumAsync/GunzipAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 
