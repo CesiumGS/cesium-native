@@ -7,7 +7,7 @@ using namespace CesiumRasterOverlays;
 
 namespace {
 
-class MyRasterOverlay : public RasterOverlay {
+class [[maybe_unused]] MyRasterOverlay : public RasterOverlay {
 public:
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
