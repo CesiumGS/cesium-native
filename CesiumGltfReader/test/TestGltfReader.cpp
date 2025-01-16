@@ -14,6 +14,7 @@
 
 #include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/detail/qualifier.hpp>
 #include <glm/vec3.hpp>
 #include <rapidjson/reader.h>
 
@@ -118,7 +119,7 @@ T getRange(const CesiumGltf::AccessorView<T>& accessorView) {
   T max{std::numeric_limits<float>::lowest()};
   for (int32_t i = 0; i < accessorView.size(); ++i) {
     const T& value = accessorView[i];
-    for (uint32_t j = 0; j < static_cast<uint32_t>(value.length()); ++j) {
+    for (glm::length_t j = 0; j < value.length(); ++j) {
       min[j] = glm::min<float>(min[j], value[j]);
       max[j] = glm::max<float>(max[j], value[j]);
     }
@@ -162,7 +163,7 @@ VertexAttributeRange getVertexAttributeRange(const Model& model) {
 
 template <typename T>
 bool epsilonCompare(const T& v1, const T& v2, double epsilon) {
-  for (uint32_t i = 0; i < static_cast<uint32_t>(v1.length()); ++i) {
+  for (glm::length_t i = 0; i < v1.length(); ++i) {
     if (!CesiumUtility::Math::equalsEpsilon(v1[i], v2[i], epsilon)) {
       return false;
     }
