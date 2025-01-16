@@ -1,5 +1,7 @@
 #include <CesiumUtility/Hash.h>
 
+#include <cstddef>
+
 namespace CesiumUtility {
 
 // This function is adapted from Boost v1.86.0, `hash_mix_impl<64>` function.

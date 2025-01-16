@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Plane.h"
+#include <CesiumGeometry/Plane.h>
 
 namespace Cesium3DTilesSelection {
 

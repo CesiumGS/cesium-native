@@ -1,7 +1,13 @@
+#include <Cesium3DTiles/Class.h>
+#include <Cesium3DTiles/ClassProperty.h>
+#include <Cesium3DTiles/MetadataEntity.h>
 #include <Cesium3DTiles/MetadataQuery.h>
+#include <Cesium3DTiles/Schema.h>
+#include <CesiumUtility/JsonValue.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+
+#include <optional>
 
 using namespace Cesium3DTiles;
 using namespace CesiumUtility;
