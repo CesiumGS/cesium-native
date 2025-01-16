@@ -49,7 +49,7 @@ MyRasterOverlay::createTileProvider(
   CesiumUtility::IntrusivePointer<RasterOverlay> pUrlTemplate =
       new UrlTemplateRasterOverlay(
           this->getName(),
-          "https://example.com/{z}/{x}/{y}.png",
+          "https://example.com/level-{z}/column-{x}/row-{y}.png",
           {},
           options);
 
