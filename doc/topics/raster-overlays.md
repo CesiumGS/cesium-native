@@ -14,5 +14,7 @@ The following raster overlay types are currently included in Cesium Native:
 
 To add a raster overlay to a `Tileset`, construct an instance of the appropriate class and add it to the [RasterOverlayCollection](\ref Cesium3DTilesSelection::RasterOverlayCollection) returned by [Tileset::getOverlays](\ref Cesium3DTilesSelection::Tileset::getOverlays). See the reference documentation for each overlay for details about how to configure that overlay type.
 
-* \subpage implementing-a-new-raster-overlay-type - How to implement a new kind of `RasterOverlay`.
+For more information about `RasterOverlays`, see the following topics:
 
+* \subpage implementing-a-new-raster-overlay-type - How to implement a new kind of `RasterOverlay`.
+* \subpage how-raster-overlays-work - How Cesium Native's Raster Overlay system works under-the-hood.
