@@ -17,7 +17,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_double2.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
@@ -182,7 +182,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   REQUIRE(pProvider);
   REQUIRE(!pProvider->isPlaceholder());
 
-  SECTION("uses root tile for a large area") {
+  SUBCASE("uses root tile for a large area") {
     Rectangle rectangle =
         GeographicProjection::computeMaximumProjectedRectangle(
             Ellipsoid::WGS84);
@@ -208,7 +208,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         [](std::byte b) { return b == std::byte(0); }));
   }
 
-  SECTION("uses a mix of levels when a tile returns an error") {
+  SUBCASE("uses a mix of levels when a tile returns an error") {
     glm::dvec2 center(0.1, 0.2);
 
     TestTileProvider* pTestProvider =

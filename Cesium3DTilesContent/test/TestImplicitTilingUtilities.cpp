@@ -9,7 +9,7 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <libmorton/morton.h>
 
@@ -24,7 +24,7 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 TEST_CASE("ImplicitTilingUtilities child tile iteration") {
-  SECTION("QuadtreeTileID") {
+  SUBCASE("QuadtreeTileID") {
     QuadtreeTileID parent(11, 2, 3);
 
     QuadtreeChildren children = ImplicitTilingUtilities::getChildren(parent);
@@ -55,7 +55,7 @@ TEST_CASE("ImplicitTilingUtilities child tile iteration") {
     CHECK(mismatch.second == expected.end());
   }
 
-  SECTION("OctreeTileID") {
+  SUBCASE("OctreeTileID") {
     OctreeTileID parent(11, 2, 3, 4);
 
     OctreeChildren children = ImplicitTilingUtilities::getChildren(parent);
@@ -93,7 +93,7 @@ TEST_CASE("ImplicitTilingUtilities child tile iteration") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID tileID(11, 2, 3);
     std::string url = ImplicitTilingUtilities::resolveUrl(
         "https://example.com",
@@ -102,7 +102,7 @@ TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
     CHECK(url == "https://example.com/tiles/11/2/3");
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     OctreeTileID tileID(11, 2, 3, 4);
     std::string url = ImplicitTilingUtilities::resolveUrl(
         "https://example.com",
@@ -113,14 +113,14 @@ TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::computeMortonIndex") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID tileID(11, 2, 3);
     CHECK(
         ImplicitTilingUtilities::computeMortonIndex(tileID) ==
         libmorton::morton2D_64_encode(2, 3));
   }
 
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     OctreeTileID tileID(11, 2, 3, 4);
     CHECK(
         ImplicitTilingUtilities::computeMortonIndex(tileID) ==
@@ -129,7 +129,7 @@ TEST_CASE("ImplicitTilingUtilities::computeMortonIndex") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID rootID(11, 2, 3);
     QuadtreeTileID tileID(12, 5, 6);
     CHECK(
@@ -137,7 +137,7 @@ TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
         1);
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     OctreeTileID rootID(11, 2, 3, 4);
     OctreeTileID tileID(12, 5, 6, 8);
     CHECK(
@@ -147,7 +147,7 @@ TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID tileID(10, 2, 3);
     CHECK(
         ImplicitTilingUtilities::getSubtreeRootID(5, tileID) ==
@@ -157,7 +157,7 @@ TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
         QuadtreeTileID(8, 0, 0));
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     OctreeTileID tileID(10, 2, 3, 4);
     CHECK(
         ImplicitTilingUtilities::getSubtreeRootID(5, tileID) ==
@@ -169,7 +169,7 @@ TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::absoluteTileIDToRelative") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     CHECK(
         ImplicitTilingUtilities::absoluteTileIDToRelative(
             QuadtreeTileID(0, 0, 0),
@@ -184,7 +184,7 @@ TEST_CASE("ImplicitTilingUtilities::absoluteTileIDToRelative") {
             QuadtreeTileID(12, 5, 7)) == QuadtreeTileID(1, 1, 1));
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     CHECK(
         ImplicitTilingUtilities::absoluteTileIDToRelative(
             OctreeTileID(0, 0, 0, 0),
@@ -207,8 +207,8 @@ TEST_CASE("ImplicitTilingUtilities::computeLevelDenominator") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
-  SECTION("OrientedBoundingBox") {
-    SECTION("quadtree") {
+  SUBCASE("OrientedBoundingBox") {
+    SUBCASE("quadtree") {
       OrientedBoundingBox root(glm::dvec3(1.0, 2.0, 3.0), glm::dmat3(10.0));
 
       OrientedBoundingBox l1x0y0 =
@@ -233,7 +233,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(l1x0y1.getLengths() == glm::dvec3(10.0, 10.0, 20.0));
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       OrientedBoundingBox root(glm::dvec3(1.0, 2.0, 3.0), glm::dmat3(10.0));
 
       OrientedBoundingBox l1x0y0z0 =
@@ -266,8 +266,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SECTION("BoundingRegion") {
-    SECTION("quadtree") {
+  SUBCASE("BoundingRegion") {
+    SUBCASE("quadtree") {
       BoundingRegion root(
           GlobeRectangle(1.0, 2.0, 3.0, 4.0),
           10.0,
@@ -308,7 +308,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(l1x0y1.getMaximumHeight() == 20.0);
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       BoundingRegion root(
           GlobeRectangle(1.0, 2.0, 3.0, 4.0),
           10.0,
@@ -361,8 +361,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SECTION("S2") {
-    SECTION("quadtree") {
+  SUBCASE("S2") {
+    SUBCASE("quadtree") {
       S2CellBoundingVolume root(
           S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
           10.0,
@@ -406,7 +406,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(l1x0y1.getMaximumHeight() == 20.0);
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       S2CellBoundingVolume root(
           S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
           10.0,
@@ -463,8 +463,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SECTION("BoundingVolume") {
-    SECTION("quadtree") {
+  SUBCASE("BoundingVolume") {
+    SUBCASE("quadtree") {
       BoundingVolume root{};
 
       TileBoundingVolumes::setOrientedBoundingBox(
@@ -526,7 +526,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(maybeS2->getMaximumHeight() == 20.0);
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       BoundingVolume root{};
 
       TileBoundingVolumes::setOrientedBoundingBox(

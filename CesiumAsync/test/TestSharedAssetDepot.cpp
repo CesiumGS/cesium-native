@@ -6,7 +6,7 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/SharedAsset.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstdint>
 #include <memory>
@@ -43,7 +43,7 @@ TEST_CASE("SharedAssetDepot") {
       std::make_shared<SimpleTaskProcessor>();
   AsyncSystem asyncSystem(pTaskProcessor);
 
-  SECTION("getOrCreate can create assets") {
+  SUBCASE("getOrCreate can create assets") {
     auto pDepot = createDepot();
 
     ResultPointer<TestAsset> assetOne =
@@ -52,7 +52,7 @@ TEST_CASE("SharedAssetDepot") {
     REQUIRE(assetOne.pValue != nullptr);
   }
 
-  SECTION("getOrCreate returns the same asset when called a second time with "
+  SUBCASE("getOrCreate returns the same asset when called a second time with "
           "the same key") {
     auto pDepot = createDepot();
 
@@ -66,7 +66,7 @@ TEST_CASE("SharedAssetDepot") {
     CHECK(assetOne.pValue == assetTwo.pValue);
   }
 
-  SECTION("unreferenced assets become inactive") {
+  SUBCASE("unreferenced assets become inactive") {
     auto pDepot = createDepot();
 
     ResultPointer<TestAsset> assetOne =
@@ -83,7 +83,7 @@ TEST_CASE("SharedAssetDepot") {
     CHECK(pDepot->getInactiveAssetCount() == 1);
   }
 
-  SECTION("re-referenced assets become active again") {
+  SUBCASE("re-referenced assets become active again") {
     auto pDepot = createDepot();
 
     ResultPointer<TestAsset> assetOne =
@@ -107,7 +107,7 @@ TEST_CASE("SharedAssetDepot") {
     CHECK(pDepot->getInactiveAssetCount() == 0);
   }
 
-  SECTION("inactive assets are deleted when size threshold is exceeded") {
+  SUBCASE("inactive assets are deleted when size threshold is exceeded") {
     auto pDepot = createDepot();
 
     pDepot->inactiveAssetSizeLimitBytes =
@@ -131,7 +131,7 @@ TEST_CASE("SharedAssetDepot") {
     CHECK(pDepot->getInactiveAssetCount() == 1);
   }
 
-  SECTION("is kept alive until all of its assets are unreferenced") {
+  SUBCASE("is kept alive until all of its assets are unreferenced") {
     auto pDepot = createDepot();
     SharedAssetDepot<TestAsset, std::string>* pDepotRaw = pDepot.get();
 

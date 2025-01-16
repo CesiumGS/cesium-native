@@ -1,7 +1,7 @@
 #include <CesiumUtility/AttributeCompression.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_uint2_sized.hpp>
 #include <glm/geometric.hpp>
