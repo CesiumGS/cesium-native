@@ -106,18 +106,10 @@ protected:
             {"northDegrees",
              std::to_string(
                  Math::radiansToDegrees(unprojectedRect.getNorth()))},
-            {"minimumY",
-             std::to_string(
-                 options.rectangle.minimumY)},
-            {"minimumX",
-             std::to_string(
-                 options.rectangle.minimumX)},
-            {"maximumY",
-             std::to_string(
-                 options.rectangle.maximumY)},
-            {"maximumX",
-             std::to_string(
-                 options.rectangle.maximumX)},
+            {"minimumY", std::to_string(options.rectangle.minimumY)},
+            {"minimumX", std::to_string(options.rectangle.minimumX)},
+            {"maximumY", std::to_string(options.rectangle.maximumY)},
+            {"maximumX", std::to_string(options.rectangle.maximumX)},
             {"width", std::to_string(this->getWidth())},
             {"height", std::to_string(this->getHeight())}};
 
