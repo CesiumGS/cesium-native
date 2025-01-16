@@ -2,6 +2,10 @@
 
 ### v0.44.0 - 2025-02-03
 
+##### Additions :tada:
+
+- Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
+
 ##### Fixes :wrench:
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
