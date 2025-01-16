@@ -331,7 +331,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
 
   /**
-   * @brief Headers to attach to requests made for this tileset.
+   * @brief HTTP headers to attach to requests made for this tileset.
    */
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 };
