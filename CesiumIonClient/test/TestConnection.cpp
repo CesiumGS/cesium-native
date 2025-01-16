@@ -1,10 +1,9 @@
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumIonClient/Geocoder.h"
-
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Connection.h>
 #include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Geocoder.h>
 #include <CesiumIonClient/Profile.h>
 #include <CesiumIonClient/Response.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
