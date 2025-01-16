@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionKhrTextureTransform.h"
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
 
 #include <glm/glm.hpp>
 

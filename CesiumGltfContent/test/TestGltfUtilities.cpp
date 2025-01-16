@@ -1,3 +1,4 @@
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/Model.h>
@@ -5,9 +6,14 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/quaternion_trigonometric.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#include <cstddef>
+#include <optional>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;

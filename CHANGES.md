@@ -10,6 +10,10 @@
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
 
+##### Additions :tada:
+
+- `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
+
 ### v0.43.0 - 2025-01-02
 
 ##### Breaking Changes :mega:

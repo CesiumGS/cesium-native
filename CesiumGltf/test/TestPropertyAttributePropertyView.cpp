@@ -1,17 +1,39 @@
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyAttributeProperty.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumUtility/JsonValue.h>
+
+#include <glm/ext/matrix_double2x2.hpp>
+#include <glm/ext/matrix_float2x2.hpp>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_int2_sized.hpp>
+#include <glm/ext/vector_uint3_sized.hpp>
+#include <glm/fwd.hpp>
+
+#include <cstdint>
+#include <cstring>
+#include <optional>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include "CesiumGltf/PropertyAttributePropertyView.h"
-
+#include <CesiumGltf/PropertyAttributePropertyView.h>
 #include <CesiumUtility/Assert.h>
 
-#include <catch2/catch.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstddef>
-#include <span>
 #include <vector>
 
 using namespace CesiumGltf;

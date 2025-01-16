@@ -1,6 +1,11 @@
-#include "CesiumJsonReader/IgnoreValueJsonHandler.h"
+#include <CesiumJsonReader/IJsonHandler.h>
+#include <CesiumJsonReader/IgnoreValueJsonHandler.h>
 
+#include <cstdint>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace CesiumJsonReader {
 void IgnoreValueJsonHandler::reset(IJsonHandler* pParent) noexcept {
@@ -69,7 +74,7 @@ IJsonHandler* IgnoreValueJsonHandler::readArrayEnd() {
 void IgnoreValueJsonHandler::reportWarning(
     const std::string& warning,
     std::vector<std::string>&& context) {
-  context.push_back("Ignoring a value");
+  context.emplace_back("Ignoring a value");
   this->parent()->reportWarning(warning, std::move(context));
 }
 

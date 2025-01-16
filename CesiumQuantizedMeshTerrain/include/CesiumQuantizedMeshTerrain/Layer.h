@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Library.h"
-
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumQuantizedMeshTerrain/LayerSpec.h>
+#include <CesiumQuantizedMeshTerrain/Library.h>
 
 #include <optional>
 

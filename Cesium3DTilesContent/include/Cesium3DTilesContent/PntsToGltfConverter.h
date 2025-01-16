@@ -1,7 +1,6 @@
 #pragma once
 
-#include "GltfConverterResult.h"
-
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>

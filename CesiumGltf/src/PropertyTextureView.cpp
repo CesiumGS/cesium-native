@@ -1,4 +1,18 @@
-#include "CesiumGltf/PropertyTextureView.h"
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTexture.h>
+#include <CesiumGltf/PropertyTexturePropertyView.h>
+#include <CesiumGltf/PropertyTextureView.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace CesiumGltf {
 PropertyTextureView::PropertyTextureView(
@@ -102,8 +116,8 @@ PropertyViewStatusType PropertyTextureView::checkChannels(
   }
 
   int64_t imageChannelCount = static_cast<int64_t>(image.channels);
-  for (size_t i = 0; i < channels.size(); i++) {
-    if (channels[i] < 0 || channels[i] >= imageChannelCount) {
+  for (int64_t channel : channels) {
+    if (channel < 0 || channel >= imageChannelCount) {
       return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
     }
   }

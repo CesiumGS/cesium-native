@@ -1,11 +1,12 @@
-#include "Cesium3DTilesWriter/TilesetWriter.h"
-
 #include "TilesetJsonWriter.h"
 #include "registerWriterExtensions.h"
 
+#include <Cesium3DTilesWriter/TilesetWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Tracing.h>
+
+#include <memory>
 
 namespace Cesium3DTilesWriter {
 
