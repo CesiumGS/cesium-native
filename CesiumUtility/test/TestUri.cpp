@@ -186,4 +186,7 @@ TEST_CASE("Uri::addQuery") {
   CHECK(
       Uri::addQuery("https://unparseable url", "a", "1") ==
       "https://unparseable url");
+  CHECK(
+      Uri::addQuery("https://example.com/", "a", "!@#$%^&()_+{}|") ==
+          "https://example.com/?a=%21%40%23%24%25%5E%26%28%29_%2B%7B%7D%7C");
 }

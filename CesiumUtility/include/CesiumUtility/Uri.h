@@ -9,26 +9,100 @@
 namespace ada {
 struct url_aggregator;
 struct url_search_params;
-}
+} // namespace ada
 
 namespace CesiumUtility {
 
 /**
- * @brief A class for building and manipulating Uniform Resource Identifiers
+ * @brief A class for parsing and manipulating Uniform Resource Identifiers
  * (URIs).
+ *
+ * The URI parser supports the [WhatWG URL
+ * specification](https://url.spec.whatwg.org/). It also supports
+ * protocol-relative URIs such as `//example.com`, and opaque paths such as
+ * `a/b/c`.
  */
 class Uri final {
 public:
+  /**
+   * @brief Attempts to create a new Uri by parsing the given string. If the
+   * string fails to parse, \ref isValid will return false.
+   *
+   * @param uri A string containing the URI to attempt to parse.
+   */
   Uri(const std::string& uri);
-  Uri(const Uri& uri);
+  /**
+   * @brief Attempts to create a new Uri from a base URI and a relative URI. If
+   * the base URI is invalid or the relative URI string fails to parse, \ref
+   * isValid will return false.
+   *
+   * @param base The base URI that the relative URI is relative to.
+   * @param relative A string containing a relative URI to attempt to parse.
+   * @param useBaseQuery If true, the resulting URI will include the query
+   * parameters of both the base URI and the relative URI. If false, only the
+   * relative URI's query parameters will be used (if any).
+   */
   Uri(const Uri& base, const std::string& relative, bool useBaseQuery = false);
 
+  /**
+   * @brief Copy constructor for Uri.
+   */
+  Uri(const Uri& uri);
+
+  /**
+   * @brief Returns a string representation of the entire URI including path and
+   * query parameters.
+   */
   std::string toString() const;
+
+  /**
+   * @brief Returns true if this URI has been successfully parsed.
+   */
   bool isValid() const;
 
-  const std::optional<std::string_view> getQueryValue(const std::string& key) const;
+  /**
+   * @brief Equivalent to \ref isValid.
+   */
+  operator bool() const { return this->isValid(); }
+
+  /**
+   * @brief Obtains the value of the given key from the query string of the URI,
+   * if possible.
+   *
+   * If the URI can't be parsed, or the key doesn't exist in the
+   * query string, `std::nullopt` will be returned.
+   *
+   * @param key The key whose value will be obtained from the URI, if possible.
+   * @returns The value of the given key in the query string, or `std::nullopt`
+   * if not found.
+   */
+  const std::optional<std::string_view>
+  getQueryValue(const std::string& key) const;
+
+  /**
+   * @brief Sets the given key in the URI's query parameters to the given value.
+   * If the key doesn't exist already, it will be added to the query parameters.
+   * Otherwise, the previous value will be overwritten.
+   *
+   * @param key The key to be added to the query string.
+   * @param value The value to be added to the query string.
+   */
   void setQueryValue(const std::string& key, const std::string& value);
+
+  /**
+   * @brief Gets the path portion of the URI. This will not include query
+   * parameters, if present.
+   *
+   * @return The path, or empty string if the URI could not be parsed.
+   */
   const std::string_view getPath() const;
+
+  /**
+   * @brief Sets the path portion of a URI to a new value. The other portions of
+   * the URI are left unmodified, including any query parameters.
+   *
+   * @param newPath The new path portion of the URI.
+   */
   void setPath(const std::string_view& path);
 
   /**
@@ -42,10 +116,11 @@ public:
    * @param relative The relative URI to be resolved against the base URI.
    * @param useBaseQuery If true, any query parameters of the base URI will be
    * retained in the resolved URI.
-   * @param assumeHttpsDefault If true, protocol-relative URIs (such as
-   * `//api.cesium.com`) will be assumed to be `https`. If false, they will be
-   * assumed to be `http`.
+   * @param assumeHttpsDefault This parameter is ignored and is only kept for
+   * API compatibility.
    * @returns The resolved URI.
+   *
+   * @deprecated Use the \ref Uri constructor instead.
    */
   static std::string resolve(
       const std::string& base,
@@ -61,6 +136,9 @@ public:
    * @param key The key to be added to the query string.
    * @param value The value to be added to the query string.
    * @returns The modified URI including the new query string parameter.
+   *
+   * @deprecated Create a \ref Uri instance and use \ref Uri::setQueryValue
+   * instead.
    */
   static std::string addQuery(
       const std::string& uri,
@@ -77,6 +155,9 @@ public:
    * @param key The key whose value will be obtained from the URI, if possible.
    * @returns The value of the given key in the query string, or an empty string
    * if not found.
+   *
+   * @deprecated Create a \ref Uri instance and use \ref
+   * Uri::getQueryValue(const std::string& key) instead.
    */
   static std::string
   getQueryValue(const std::string& uri, const std::string& key);
@@ -214,6 +295,8 @@ public:
    *
    * @param uri The URI from which to get the path.
    * @return The path, or empty string if the URI could not be parsed.
+   *
+   * @deprecated Create a \ref Uri instance and use \ref Uri::getPath() instead.
    */
   static std::string getPath(const std::string& uri);
 
@@ -225,6 +308,9 @@ public:
    * @param newPath The new path portion of the URI.
    * @returns The new URI after setting the path. If the original URI cannot be
    * parsed, it is returned unmodified.
+   *
+   * @deprecated Create a \ref Uri instance and use \ref Uri::setPath(const
+   * std::string_view& path) instead.
    */
   static std::string
   setPath(const std::string& uri, const std::string& newPath);
