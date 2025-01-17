@@ -1,15 +1,36 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+
+namespace ada {
+struct url_aggregator;
+struct url_search_params;
+}
 
 namespace CesiumUtility {
+
 /**
  * @brief A class for building and manipulating Uniform Resource Identifiers
  * (URIs).
  */
 class Uri final {
 public:
+  Uri(const std::string& uri);
+  Uri(const Uri& uri);
+  Uri(const Uri& base, const std::string& relative, bool useBaseQuery = false);
+
+  std::string toString() const;
+  bool isValid() const;
+
+  const std::optional<std::string_view> getQueryValue(const std::string& key) const;
+  void setQueryValue(const std::string& key, const std::string& value);
+  const std::string_view getPath() const;
+  void setPath(const std::string_view& path);
+
   /**
    * @brief Attempts to resolve a relative URI using a base URI.
    *
@@ -207,5 +228,10 @@ public:
    */
   static std::string
   setPath(const std::string& uri, const std::string& newPath);
+
+private:
+  std::unique_ptr<ada::url_aggregator> url = nullptr;
+  std::unique_ptr<ada::url_search_params> params = nullptr;
+  bool hasScheme = false;
 };
 } // namespace CesiumUtility
