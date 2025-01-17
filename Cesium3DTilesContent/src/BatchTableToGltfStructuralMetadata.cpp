@@ -2110,7 +2110,7 @@ struct BatchIdSemantic {
   uint32_t maxBatchId() const {
     return std::visit(
         [](auto&& batchIds) {
-          auto itr = std::ranges::max_element(batchIds);
+          auto itr = std::max_element(batchIds.begin(), batchIds.end());
           return static_cast<uint32_t>(*itr);
         },
         batchSpan);
