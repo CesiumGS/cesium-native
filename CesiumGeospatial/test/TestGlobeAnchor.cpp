@@ -4,7 +4,7 @@
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/quaternion_trigonometric.hpp>
@@ -35,7 +35,7 @@ TEST_CASE("GlobeAnchor") {
       1.0,
       Ellipsoid::WGS84);
 
-  SECTION("Identity transform in local is equivalent to the local") {
+  SUBCASE("Identity transform in local is equivalent to the local") {
     GlobeAnchor anchor = GlobeAnchor::fromAnchorToLocalTransform(
         leftHandedEastUpNorth,
         glm::dmat4(1.0));
@@ -44,7 +44,7 @@ TEST_CASE("GlobeAnchor") {
         leftHandedEastUpNorth.getLocalToEcefTransformation());
   }
 
-  SECTION("Translation in local is represented correctly in ECEF") {
+  SUBCASE("Translation in local is represented correctly in ECEF") {
     GlobeAnchor anchor = GlobeAnchor::fromAnchorToLocalTransform(
         leftHandedEastUpNorth,
         glm::dmat4(
@@ -70,7 +70,7 @@ TEST_CASE("GlobeAnchor") {
         Math::Epsilon10));
   }
 
-  SECTION(
+  SUBCASE(
       "Translation-rotation-scale in local is represented correctly in ECEF") {
     glm::dquat ninetyDegreesAboutX =
         glm::angleAxis(Math::degreesToRadians(90.0), glm::dvec3(1.0, 0.0, 0.0));
@@ -97,7 +97,7 @@ TEST_CASE("GlobeAnchor") {
         Math::Epsilon10));
   }
 
-  SECTION("Can transform between different local coordinate systems") {
+  SUBCASE("Can transform between different local coordinate systems") {
     glm::dmat4 toLocal = glm::dmat4(
         glm::dvec4(1.0, 0.0, 0.0, 0.0),
         glm::dvec4(0.0, 1.0, 0.0, 0.0),
@@ -133,7 +133,7 @@ TEST_CASE("GlobeAnchor") {
         Math::Epsilon10));
   }
 
-  SECTION("Moving in ECEF adjusts orientation if requested") {
+  SUBCASE("Moving in ECEF adjusts orientation if requested") {
     glm::dmat4 toLocal = glm::dmat4(
         glm::dvec4(1.0, 0.0, 0.0, 0.0),
         glm::dvec4(0.0, 1.0, 0.0, 0.0),

@@ -85,8 +85,7 @@ target_include_directories(
 
 target_link_libraries(cesium-native-tests
 PUBLIC
-    Catch2::Catch2 Catch2::Catch2WithMain
-    include_helpers # catch2/catch.hpp For the header fix
+    doctest::doctest
     ${cesium_native_targets}
 PRIVATE
     s2::s2
@@ -99,5 +98,5 @@ PRIVATE
 )
 
 include(CTest)
-include(Catch)
-catch_discover_tests(cesium-native-tests)
+include(doctest)
+doctest_discover_tests(cesium-native-tests)

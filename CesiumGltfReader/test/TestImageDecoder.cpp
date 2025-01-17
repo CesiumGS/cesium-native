@@ -2,7 +2,7 @@
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumNativeTests/readFile.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <filesystem>
@@ -12,7 +12,7 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 
 TEST_CASE("CesiumGltfReader::ImageDecoder") {
-  SECTION("Can correctly interpret mipmaps in KTX2 files") {
+  SUBCASE("Can correctly interpret mipmaps in KTX2 files") {
     {
       // This KTX2 file has a single mip level and no further mip levels should
       // be generated. `mipPositions` should reflect this single mip level.

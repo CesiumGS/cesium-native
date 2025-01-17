@@ -131,6 +131,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                       }
                     }
 #endif
+
                     IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
                     pLoadedImage.emplace(
                         std::make_shared<LoadedRasterOverlayImage>(

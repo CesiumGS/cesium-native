@@ -7,6 +7,11 @@
 #include <functional>
 
 namespace CesiumGeometry {
+uint32_t QuadtreeTileID::computeInvertedX(
+    const QuadtreeTilingScheme& tilingScheme) const noexcept {
+  const uint32_t xTiles = tilingScheme.getNumberOfXTilesAtLevel(this->level);
+  return xTiles - this->x - 1;
+}
 
 uint32_t QuadtreeTileID::computeInvertedY(
     const QuadtreeTilingScheme& tilingScheme) const noexcept {

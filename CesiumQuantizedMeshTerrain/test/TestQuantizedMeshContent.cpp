@@ -15,7 +15,7 @@
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
@@ -781,7 +781,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
       glm::radians(90.0));
   QuadtreeTilingScheme tilingScheme(rectangle, 2, 1);
 
-  SECTION("Check quantized mesh that has uint16_t indices") {
+  SUBCASE("Check quantized mesh that has uint16_t indices") {
     // mock quantized mesh
     uint32_t verticesWidth = 3;
     uint32_t verticesHeight = 3;
@@ -855,7 +855,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         verticesHeight);
   }
 
-  SECTION("Check quantized mesh that has uint32_t indices") {
+  SUBCASE("Check quantized mesh that has uint32_t indices") {
     // mock quantized mesh
     uint32_t verticesWidth = 300;
     uint32_t verticesHeight = 300;
@@ -929,7 +929,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         verticesHeight);
   }
 
-  SECTION("Check 16 bit indices turns to 32 bits when adding skirt") {
+  SUBCASE("Check 16 bit indices turns to 32 bits when adding skirt") {
     // mock quantized mesh
     uint32_t verticesWidth = 255;
     uint32_t verticesHeight = 255;
@@ -1003,7 +1003,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
         verticesHeight);
   }
 
-  SECTION("Check quantized mesh that has oct normal") {
+  SUBCASE("Check quantized mesh that has oct normal") {
     // mock quantized mesh
     uint32_t verticesWidth = 3;
     uint32_t verticesHeight = 3;
@@ -1131,7 +1131,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
 
   quantizedMesh.extensions.emplace_back(std::move(octNormalExtension));
 
-  SECTION("Quantized mesh with ill-formed header") {
+  SUBCASE("Quantized mesh with ill-formed header") {
     std::vector<std::byte> quantizedMeshBin(32);
     std::span<const std::byte> data(
         quantizedMeshBin.data(),
@@ -1141,7 +1141,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     REQUIRE(loadResult.model == std::nullopt);
   }
 
-  SECTION("Quantized mesh with ill-formed vertex data") {
+  SUBCASE("Quantized mesh with ill-formed vertex data") {
     std::vector<std::byte> quantizedMeshBin(
         sizeof(quantizedMesh.header) +                       // header
         sizeof(uint32_t) +                                   // vertex count
@@ -1177,7 +1177,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     REQUIRE(loadResult.model == std::nullopt);
   }
 
-  SECTION("Quantized mesh with ill-formed indices") {
+  SUBCASE("Quantized mesh with ill-formed indices") {
     std::vector<std::byte> quantizedMeshBin(
         sizeof(quantizedMesh.header) +                         // header
         sizeof(uint32_t) +                                     // vertex count
@@ -1240,7 +1240,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     REQUIRE(loadResult.model == std::nullopt);
   }
 
-  SECTION("Quantized mesh with ill-formed west edge indices") {
+  SUBCASE("Quantized mesh with ill-formed west edge indices") {
     std::vector<std::byte> quantizedMeshBin(
         sizeof(quantizedMesh.header) +                         // header
         sizeof(uint32_t) +                                     // vertex count
@@ -1320,7 +1320,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     REQUIRE(loadResult.model == std::nullopt);
   }
 
-  SECTION("Quantized mesh with ill-formed south edge indices") {
+  SUBCASE("Quantized mesh with ill-formed south edge indices") {
     std::vector<std::byte> quantizedMeshBin(
         sizeof(quantizedMesh.header) +                         // header
         sizeof(uint32_t) +                                     // vertex count
@@ -1416,7 +1416,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     REQUIRE(loadResult.model == std::nullopt);
   }
 
-  SECTION("Quantized mesh with ill-formed east edge indices") {
+  SUBCASE("Quantized mesh with ill-formed east edge indices") {
     std::vector<std::byte> quantizedMeshBin(
         sizeof(quantizedMesh.header) +                         // header
         sizeof(uint32_t) +                                     // vertex count
@@ -1528,7 +1528,7 @@ TEST_CASE("Test converting ill-formed quantized mesh") {
     REQUIRE(loadResult.model == std::nullopt);
   }
 
-  SECTION("Quantized mesh with ill-formed north edge indices") {
+  SUBCASE("Quantized mesh with ill-formed north edge indices") {
     std::vector<std::byte> quantizedMeshBin(
         sizeof(quantizedMesh.header) +                         // header
         sizeof(uint32_t) +                                     // vertex count

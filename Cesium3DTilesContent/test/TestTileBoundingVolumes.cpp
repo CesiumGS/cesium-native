@@ -7,19 +7,19 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/geometric.hpp>
 
 #include <optional>
 
+using namespace doctest;
 using namespace Cesium3DTiles;
 using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 TEST_CASE("TileBoundingVolumes") {
-  SECTION("box") {
+  SUBCASE("box") {
     BoundingVolume bv{};
 
     // Example bounding box from the 3D Tiles spec
@@ -47,7 +47,7 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(next.box == bv.box);
   }
 
-  SECTION("sphere") {
+  SUBCASE("sphere") {
     BoundingVolume bv{};
 
     // Example bounding sphere from the 3D Tiles spec
@@ -67,7 +67,7 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(next.sphere == bv.sphere);
   }
 
-  SECTION("region") {
+  SUBCASE("region") {
     BoundingVolume bv{};
 
     // Example bounding region from the 3D Tiles spec
@@ -95,7 +95,7 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(next.region == bv.region);
   }
 
-  SECTION("S2") {
+  SUBCASE("S2") {
     BoundingVolume bv{};
 
     // Example from 3DTILES_bounding_volume_S2 spec
@@ -122,7 +122,7 @@ TEST_CASE("TileBoundingVolumes") {
     CHECK(pNextExtension->maximumHeight == extension.maximumHeight);
   }
 
-  SECTION("invalid") {
+  SUBCASE("invalid") {
     BoundingVolume bv{};
     CHECK(!TileBoundingVolumes::getOrientedBoundingBox(bv).has_value());
     CHECK(!TileBoundingVolumes::getBoundingSphere(bv).has_value());

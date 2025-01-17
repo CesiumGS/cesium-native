@@ -1,17 +1,17 @@
 #include <CesiumUtility/Uri.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 using namespace CesiumUtility;
 
 TEST_CASE("Uri::getPath") {
-  SECTION("returns path") {
+  SUBCASE("returns path") {
     CHECK(Uri::getPath("https://example.com/") == "/");
     CHECK(Uri::getPath("https://example.com/foo/bar") == "/foo/bar");
     CHECK(Uri::getPath("https://example.com/foo/bar/") == "/foo/bar/");
   }
 
-  SECTION("ignores path parameters") {
+  SUBCASE("ignores path parameters") {
     CHECK(Uri::getPath("https://example.com/?some=parameter") == "/");
     CHECK(
         Uri::getPath("https://example.com/foo/bar?some=parameter") ==
@@ -21,12 +21,12 @@ TEST_CASE("Uri::getPath") {
         "/foo/bar/");
   }
 
-  SECTION("returns / path for nonexistent paths") {
+  SUBCASE("returns / path for nonexistent paths") {
     CHECK(Uri::getPath("https://example.com") == "/");
     CHECK(Uri::getPath("https://example.com?some=parameter") == "/");
   }
 
-  SECTION("handles unicode characters") {
+  SUBCASE("handles unicode characters") {
     CHECK(Uri::getPath("http://example.com/🐶.bin") == "/%F0%9F%90%B6.bin");
     CHECK(Uri::getPath("http://example.com/示例测试用例") == "/%E7%A4%BA%E4%BE%8B%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B");
     CHECK(Uri::getPath("http://example.com/Ῥόδος") == "/%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82");
@@ -38,11 +38,11 @@ TEST_CASE("Uri::getPath") {
 }
 
 TEST_CASE("Uri::setPath") {
-  SECTION("sets empty path") {
+  SUBCASE("sets empty path") {
     CHECK(Uri::setPath("https://example.com/", "") == "https://example.com/");
   }
 
-  SECTION("sets new path") {
+  SUBCASE("sets new path") {
     CHECK(Uri::setPath("https://example.com/", "/") == "https://example.com/");
     CHECK(
         Uri::setPath("https://example.com/foo", "/bar") ==
@@ -55,7 +55,7 @@ TEST_CASE("Uri::setPath") {
         "https://example.com/bar/");
   }
 
-  SECTION("preserves path parameters") {
+  SUBCASE("preserves path parameters") {
     CHECK(
         Uri::setPath("https://example.com?some=parameter", "") ==
         "https://example.com/?some=parameter");
@@ -73,7 +73,7 @@ TEST_CASE("Uri::setPath") {
         "https://example.com/bar/?some=parameter");
   }
 
-  SECTION("sets same path") {
+  SUBCASE("sets same path") {
     CHECK(
         Uri::setPath("https://example.com/foo/bar", "/foo/bar") ==
         "https://example.com/foo/bar");
@@ -83,7 +83,7 @@ TEST_CASE("Uri::setPath") {
             "/foo/bar") == "https://example.com/foo/bar?some=parameter");
   }
 
-  SECTION("handles unicode characters") {
+  SUBCASE("handles unicode characters") {
     CHECK(
         Uri::setPath("http://example.com/foo/", "/🐶.bin") ==
         "http://example.com/%F0%9F%90%B6.bin");
