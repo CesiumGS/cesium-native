@@ -23,7 +23,7 @@ namespace CesiumUtility {
 using UrlResult = ada::result<ada::url_aggregator>;
 
 namespace {
-constexpr const char* HTTPS_PREFIX = "https:";
+const std::string HTTPS_PREFIX = "https:";
 const std::string FILE_PREFIX = "file:///";
 const char WINDOWS_PATH_SEP = '\\';
 const char PATH_SEP = '/';
@@ -54,20 +54,6 @@ bool urlHasScheme(const std::string& uri) {
 
   return false;
 }
-
-class Path {
-public:
-  Path(const std::string_view& buffer_) : buffer(buffer_) {}
-
-  std::string toUriPath() const {}
-
-  std::string toWindowsPath() const {}
-
-  std::string toUnixPath() const {}
-
-private:
-  std::string buffer;
-};
 } // namespace
 
 Uri::Uri(const std::string& uri) {
