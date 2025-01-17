@@ -28,12 +28,17 @@ TEST_CASE("Uri::getPath") {
 
   SUBCASE("handles unicode characters") {
     CHECK(Uri::getPath("http://example.com/🐶.bin") == "/%F0%9F%90%B6.bin");
-    CHECK(Uri::getPath("http://example.com/示例测试用例") == "/%E7%A4%BA%E4%BE%8B%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B");
-    CHECK(Uri::getPath("http://example.com/Ῥόδος") == "/%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82");
+    CHECK(
+        Uri::getPath("http://example.com/示例测试用例") ==
+        "/%E7%A4%BA%E4%BE%8B%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B");
+    CHECK(
+        Uri::getPath("http://example.com/Ῥόδος") ==
+        "/%E1%BF%AC%CF%8C%CE%B4%CE%BF%CF%82");
     CHECK(
         Uri::getPath(
             "http://example.com/🙍‍♂️🚪🤚/🪝🚗🚪/❓📞") ==
-        "/%F0%9F%99%8D%E2%80%8D%E2%99%82%EF%B8%8F%F0%9F%9A%AA%F0%9F%A4%9A/%F0%9F%AA%9D%F0%9F%9A%97%F0%9F%9A%AA/%E2%9D%93%F0%9F%93%9E");
+        "/%F0%9F%99%8D%E2%80%8D%E2%99%82%EF%B8%8F%F0%9F%9A%AA%F0%9F%A4%9A/"
+        "%F0%9F%AA%9D%F0%9F%9A%97%F0%9F%9A%AA/%E2%9D%93%F0%9F%93%9E");
   }
 }
 
@@ -89,7 +94,8 @@ TEST_CASE("Uri::setPath") {
         "http://example.com/%F0%9F%90%B6.bin");
     CHECK(
         Uri::setPath("http://example.com/bar/", "/示例测试用例") ==
-        "http://example.com/%E7%A4%BA%E4%BE%8B%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B");
+        "http://example.com/"
+        "%E7%A4%BA%E4%BE%8B%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B");
   }
 }
 
@@ -188,5 +194,5 @@ TEST_CASE("Uri::addQuery") {
       "https://unparseable url");
   CHECK(
       Uri::addQuery("https://example.com/", "a", "!@#$%^&()_+{}|") ==
-          "https://example.com/?a=%21%40%23%24%25%5E%26%28%29_%2B%7B%7D%7C");
+      "https://example.com/?a=%21%40%23%24%25%5E%26%28%29_%2B%7B%7D%7C");
 }

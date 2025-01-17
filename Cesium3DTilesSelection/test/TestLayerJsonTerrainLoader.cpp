@@ -261,7 +261,8 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].version == "1.33.0");
     CHECK(
         layers[0].tileTemplateUrls.front() ==
-        "%7Bz%7D/%7Bx%7D/%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals-metadata");
+        "%7Bz%7D/%7Bx%7D/"
+        "%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals-metadata");
     CHECK(layers[0].loadedSubtrees.size() == 2);
     CHECK(layers[0].availabilityLevels == 10);
   }
@@ -290,7 +291,8 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].version == "1.0.0");
     CHECK(
         layers[0].tileTemplateUrls.front() ==
-        "%7Bz%7D/%7Bx%7D/%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals");
+        "%7Bz%7D/%7Bx%7D/"
+        "%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals");
     CHECK(layers[0].loadedSubtrees.empty());
     CHECK(layers[0].availabilityLevels == -1);
 
@@ -411,7 +413,9 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].tileTemplateUrls.size() == 1);
     CHECK(
         layers[0].tileTemplateUrls[0] ==
-        "%7Bz%7D/%7Bx%7D/%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals-watermask");
+        "%7Bz%7D/%7Bx%7D/"
+        "%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals-"
+        "watermask");
   }
 }
 
