@@ -1,22 +1,18 @@
 #include <CesiumUtility/Uri.h>
-#include <CesiumUtility/joinToString.h>
 
 #include <ada.h>
-#include <ada/character_sets.h>
-#include <ada/encoding_type.h>
+#include <ada/character_sets-inl.h>
+#include <ada/implementation.h>
 #include <ada/unicode.h>
 #include <ada/url_aggregator.h>
 
-#include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
 #include <functional>
-#include <ios>
-#include <sstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace CesiumUtility {
 
@@ -43,11 +39,8 @@ bool urlHasScheme(const std::string& uri) {
   for (size_t i = 0; i < uri.length(); i++) {
     if (uri[i] == ':') {
       return uri.length() > i + 2 && uri[i + 1] == '/' && uri[i + 2] == '/';
-    } else if (i == 0 && !isAsciiAlpha(uri[i])) {
-      // Scheme must start with an ASCII alpha character
-      return false;
-    } else if (!isAscii(uri[i])) {
-      // Scheme must be an ASCII string
+    } else if ((i == 0 && !isAsciiAlpha(uri[i])) || !isAscii(uri[i])) {
+      // Scheme must start with an ASCII alpha character and be an ASCII string
       return false;
     }
   }
