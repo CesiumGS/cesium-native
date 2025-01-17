@@ -5,6 +5,8 @@
 #include <cassert>
 #define NDEBUG
 
+#include <cstdint>
+
 namespace CesiumUtility {
 std::int32_t forceAssertFailure() {
   assert(0 && "Assertion failed");
