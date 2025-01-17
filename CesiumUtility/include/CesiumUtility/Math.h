@@ -4,8 +4,6 @@
 
 #include <glm/gtc/epsilon.hpp>
 
-#include <numbers>
-
 namespace CesiumUtility {
 
 /**
@@ -79,7 +77,7 @@ public:
   /**
    * @brief Pi
    */
-  static constexpr double OnePi = std::numbers::pi;
+  static constexpr double OnePi = 3.14159265358979323846;
 
   /**
    * @brief Two times pi

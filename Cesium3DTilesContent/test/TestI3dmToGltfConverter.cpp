@@ -86,7 +86,7 @@ TEST_CASE("I3dmToGltfConverter") {
     CHECK(result.errors.hasErrors());
   }
 
-  SECTION("loads an i3dm with metadata") {
+  SUBCASE("loads an i3dm with metadata") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InstancedWithBatchTable" /
                    "instancedWithBatchTable.i3dm";
