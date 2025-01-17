@@ -2,7 +2,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <ada.h>
-#include <ada/character_sets-inl.h>
+#include <ada/character_sets.h>
 #include <ada/encoding_type.h>
 #include <ada/unicode.h>
 #include <ada/url_aggregator.h>
@@ -23,37 +23,26 @@ namespace CesiumUtility {
 using UrlResult = ada::result<ada::url_aggregator>;
 
 namespace {
-void conformWindowsPathInPlace(std::string& path) {
-  // Treated as a Unix path, c:/file.txt will be /c:/file.txt.
-  if (path.length() >= 3 && path[0] == '/' && std::isalpha(path[1]) &&
-      path[2] == ':') {
-    path.erase(0, 1);
-  }
-
-  // Replace slashes in-place
-  for (size_t i = 0; i < path.length(); i++) {
-    if (path[i] == '/') {
-      path[i] = '\\';
-    }
-  }
-}
-
 constexpr const char* HTTPS_PREFIX = "https:";
 const std::string FILE_PREFIX = "file:///";
+const char WINDOWS_PATH_SEP = '\\';
+const char PATH_SEP = '/';
 
-// C++ locale settings might change which values std::isalpha checks for. We only want ASCII.
+// C++ locale settings might change which values std::isalpha checks for. We
+// only want ASCII.
 bool isAsciiAlpha(char c) {
   return c >= 0x41 && c <= 0x7a && (c <= 0x5a || c >= 0x61);
 }
 bool isAscii(char c) { return c <= 0x7f; }
 
 /**
- * A URI has a valid scheme if it starts with an ASCII alpha character and has a sequence of ASCII characters followed by a "://"
+ * A URI has a valid scheme if it starts with an ASCII alpha character and has a
+ * sequence of ASCII characters followed by a "://"
  */
 bool urlHasScheme(const std::string& uri) {
   for (size_t i = 0; i < uri.length(); i++) {
     if (uri[i] == ':') {
-      return uri.length() > i + 2 && uri [i + 1] == '/' && uri[i + 2] == '/';
+      return uri.length() > i + 2 && uri[i + 1] == '/' && uri[i + 2] == '/';
     } else if (i == 0 && !isAsciiAlpha(uri[i])) {
       // Scheme must start with an ASCII alpha character
       return false;
@@ -65,6 +54,20 @@ bool urlHasScheme(const std::string& uri) {
 
   return false;
 }
+
+class Path {
+public:
+  Path(const std::string_view& buffer_) : buffer(buffer_) {}
+
+  std::string toUriPath() const {}
+
+  std::string toWindowsPath() const {}
+
+  std::string toUnixPath() const {}
+
+private:
+  std::string buffer;
+};
 } // namespace
 
 Uri::Uri(const std::string& uri) {
@@ -80,7 +83,8 @@ Uri::Uri(const std::string& uri) {
   }
 
   if (result) {
-    this->url = std::make_unique<ada::url_aggregator>(std::move(result.value()));
+    this->url =
+        std::make_unique<ada::url_aggregator>(std::move(result.value()));
     this->params =
         std::make_unique<ada::url_search_params>(this->url->get_search());
   }
@@ -137,7 +141,8 @@ std::string Uri::toString() const {
 }
 
 bool Uri::isValid() const {
-  return this->url != nullptr && this->params != nullptr; }
+  return this->url != nullptr && this->params != nullptr;
+}
 
 const std::optional<std::string_view>
 Uri::getQueryValue(const std::string& key) const {
@@ -161,6 +166,7 @@ const std::string_view Uri::getPath() const {
     return {};
   }
 
+  // Remove leading '/'
   return this->url->get_pathname();
 }
 
@@ -226,46 +232,81 @@ std::string Uri::substituteTemplateParameters(
   return result;
 }
 
-std::string Uri::escape(const std::string& s) { return ada::unicode::percent_encode(s, ada::character_sets::WWW_FORM_URLENCODED_PERCENT_ENCODE); }
+std::string Uri::escape(const std::string& s) {
+  return ada::unicode::percent_encode(
+      s,
+      ada::character_sets::WWW_FORM_URLENCODED_PERCENT_ENCODE);
+}
 
 std::string Uri::unescape(const std::string& s) {
   return ada::unicode::percent_decode(s, s.find('%'));
 }
 
 std::string Uri::unixPathToUriPath(const std::string& unixPath) {
-  return nativePathToUriPath(unixPath);
+  return Uri::nativePathToUriPath(unixPath);
 }
 
 std::string Uri::windowsPathToUriPath(const std::string& windowsPath) {
-  return nativePathToUriPath(windowsPath);
+  return Uri::nativePathToUriPath(windowsPath);
 }
 
 std::string Uri::nativePathToUriPath(const std::string& nativePath) {
-  UrlResult parsedUrl = ada::parse("file://" + nativePath);
-  if (!parsedUrl) {
-    return nativePath;
+  const std::string encoded = ada::unicode::percent_encode(
+      nativePath,
+      ada::character_sets::PATH_PERCENT_ENCODE);
+
+  const bool startsWithDriveLetter =
+      encoded.length() >= 2 && isAsciiAlpha(encoded[0]) && encoded[1] == ':';
+
+  std::string output;
+  output.reserve(encoded.length() + (startsWithDriveLetter ? 1 : 0));
+
+  // Paths like C:/... should be prefixed with a path separator
+  if (startsWithDriveLetter) {
+    output += PATH_SEP;
   }
 
-  std::string result(parsedUrl->get_pathname());
-  return result;
+  // All we really need to do from here is convert our slashes
+  for (size_t i = 0; i < encoded.length(); i++) {
+    if (encoded[i] == WINDOWS_PATH_SEP) {
+      output += PATH_SEP;
+    } else {
+      output += encoded[i];
+    }
+  }
+
+  return output;
 }
 
 std::string Uri::uriPathToUnixPath(const std::string& uriPath) {
-  ada::url_aggregator url;
-  url.set_pathname(uriPath);
-  std::string result = ada::unicode::percent_decode(
-      url.get_pathname(),
-      url.get_pathname().find('%'));
-  if (result.starts_with("/") && !uriPath.starts_with("/")) {
-    result.erase(0, 1);
-  }
-  return result;
+  // URI paths are pretty much just unix paths with URL encoding
+  const std::string_view& rawPath = uriPath;
+  return ada::unicode::percent_decode(rawPath, rawPath.find('%'));
 }
 
 std::string Uri::uriPathToWindowsPath(const std::string& uriPath) {
-  std::string result = uriPathToUnixPath(uriPath);
-  conformWindowsPathInPlace(result);
-  return result;
+  const std::string path =
+      ada::unicode::percent_decode(uriPath, uriPath.find('%'));
+
+  size_t i = 0;
+  // A path including a drive name will start like /C:/....
+  // In that case, we just skip the first slash and continue on
+  if (path.length() >= 3 && path[0] == '/' && isAsciiAlpha(path[1]) &&
+      path[2] == ':') {
+    i++;
+  }
+
+  std::string output;
+  output.reserve(path.length() - i);
+  for (; i < path.length(); i++) {
+    if (path[i] == PATH_SEP) {
+      output += WINDOWS_PATH_SEP;
+    } else {
+      output += path[i];
+    }
+  }
+
+  return output;
 }
 
 std::string Uri::uriPathToNativePath(const std::string& uriPath) {
@@ -276,7 +317,9 @@ std::string Uri::uriPathToNativePath(const std::string& uriPath) {
 #endif
 }
 
-std::string Uri::getPath(const std::string& uri) { return std::string(Uri(uri).getPath()); }
+std::string Uri::getPath(const std::string& uri) {
+  return std::string(Uri(uri).getPath());
+}
 
 std::string Uri::setPath(const std::string& uri, const std::string& newPath) {
   Uri parsedUri(uri);
