@@ -101,7 +101,7 @@ public:
    * @brief Sets the path portion of a URI to a new value. The other portions of
    * the URI are left unmodified, including any query parameters.
    *
-   * @param newPath The new path portion of the URI.
+   * @param path The new path portion of the URI.
    */
   void setPath(const std::string_view& path);
 
@@ -157,7 +157,7 @@ public:
    * if not found.
    *
    * @deprecated Create a \ref Uri instance and use \ref
-   * Uri::getQueryValue(const std::string& key) instead.
+   * Uri::getQueryValue(const std::string&) instead.
    */
   static std::string
   getQueryValue(const std::string& uri, const std::string& key);
@@ -310,7 +310,7 @@ public:
    * parsed, it is returned unmodified.
    *
    * @deprecated Create a \ref Uri instance and use \ref Uri::setPath(const
-   * std::string_view& path) instead.
+   * std::string_view&) instead.
    */
   static std::string
   setPath(const std::string& uri, const std::string& newPath);
