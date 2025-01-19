@@ -1,15 +1,12 @@
 #pragma once
 
+#include <ada.h>
+
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
-
-namespace ada {
-struct url_aggregator;
-struct url_search_params;
-} // namespace ada
 
 namespace CesiumUtility {
 
