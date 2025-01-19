@@ -255,7 +255,6 @@ find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
-find_package(uriparser CONFIG REQUIRED char wchar_t)
 find_package(WebP CONFIG REQUIRED)
 find_package(ada CONFIG REQUIRED)
 
