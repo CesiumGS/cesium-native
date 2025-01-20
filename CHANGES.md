@@ -12,6 +12,7 @@
 ##### Fixes :wrench:
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+- Fixed a bug in `SharedAssetDepot` that could cause assertion failures in debug builds, and could rarely cause premature deletion of shared assets even in release builds.
 
 ### v0.43.0 - 2025-01-02
 
