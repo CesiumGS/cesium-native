@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <concepts>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -30,10 +32,9 @@ template <> struct LosslessNarrower<double, float> {
 template <> struct LosslessNarrower<float, double> {
   static std::optional<float> losslessNarrow(double from) noexcept {
     std::optional<float> asFloat = std::make_optional(static_cast<float>(from));
-    if (static_cast<double>(*asFloat) == from) {
-      return asFloat;
-    } else if (std::isnan(*asFloat) && std::isnan(from)) {
-      // NaN successfully converted
+    if (static_cast<double>(*asFloat) == from ||
+        (std::isnan(*asFloat) && std::isnan(from))) {
+      // Value or NaN successfully converted.
       return asFloat;
     } else {
       return std::nullopt;
