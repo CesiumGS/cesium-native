@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
+- Added `requestHeaders` field to `RasterOverlayOptions` to allow per-raster-overlay request headers to be specified.
 
 ### v0.44.0 - 2025-02-03
 
