@@ -1,7 +1,7 @@
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
 
@@ -16,7 +16,7 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
   glm::dvec3 oneMeterNorthEcef(0.0, 0.0, 1.0);
   glm::dvec3 oneMeterUpEcef(1.0, 0.0, 0.0);
 
-  SECTION("East-north-up") {
+  SUBCASE("East-north-up") {
     LocalHorizontalCoordinateSystem lh(
         nullIsland,
         LocalDirection::East,
@@ -44,7 +44,7 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1e-10));
   }
 
-  SECTION("North-east-down") {
+  SUBCASE("North-east-down") {
     LocalHorizontalCoordinateSystem lh(
         nullIsland,
         LocalDirection::North,
@@ -72,7 +72,7 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1e-10));
   }
 
-  SECTION("Left handed East South Up") {
+  SUBCASE("Left handed East South Up") {
     LocalHorizontalCoordinateSystem lh(
         nullIsland,
         LocalDirection::East,
@@ -100,7 +100,7 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1e-10));
   }
 
-  SECTION("Left handed East Up North") {
+  SUBCASE("Left handed East Up North") {
     LocalHorizontalCoordinateSystem lh(
         nullIsland,
         LocalDirection::East,
@@ -128,7 +128,7 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1e-10));
   }
 
-  SECTION("Scale") {
+  SUBCASE("Scale") {
     LocalHorizontalCoordinateSystem lh(
         nullIsland,
         LocalDirection::East,
@@ -156,7 +156,7 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1e-10));
   }
 
-  SECTION("computeTransformationToAnotherLocal") {
+  SUBCASE("computeTransformationToAnotherLocal") {
     LocalHorizontalCoordinateSystem original(
         nullIsland,
         LocalDirection::East,

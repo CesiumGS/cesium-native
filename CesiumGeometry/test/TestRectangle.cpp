@@ -1,11 +1,11 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_double2.hpp>
 
 #include <cmath>
+#include <vector>
 
 using namespace CesiumGeometry;
 
@@ -19,7 +19,7 @@ TEST_CASE("Rectangle::computeSignedDistance") {
   CesiumGeometry::Rectangle positive(10.0, 20.0, 30.0, 40.0);
   CesiumGeometry::Rectangle negative(-30.0, -40.0, -10.0, -20.0);
 
-  auto testCase = GENERATE_REF(
+  std::vector<TestCase> testCases{
       TestCase{positive, glm::dvec2(20.0, 30.0), -10.0},
       TestCase{negative, glm::dvec2(-20.0, -30.0), -10.0},
       TestCase{positive, glm::dvec2(-5.0, 30.0), 15.0},
@@ -61,12 +61,14 @@ TEST_CASE("Rectangle::computeSignedDistance") {
       TestCase{
           negative,
           glm::dvec2(-35.0, -45.0),
-          std::sqrt(5.0 * 5.0 + 5.0 * 5.0)});
+          std::sqrt(5.0 * 5.0 + 5.0 * 5.0)}};
 
-  CHECK(CesiumUtility::Math::equalsEpsilon(
-      testCase.rectangle.computeSignedDistance(testCase.position),
-      testCase.expectedResult,
-      CesiumUtility::Math::Epsilon13));
+  for (auto& testCase : testCases) {
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        testCase.rectangle.computeSignedDistance(testCase.position),
+        testCase.expectedResult,
+        CesiumUtility::Math::Epsilon13));
+  }
 }
 
 TEST_CASE("Rectangle::computeUnion") {

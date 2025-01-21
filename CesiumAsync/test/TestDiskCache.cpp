@@ -6,7 +6,7 @@
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/SqliteCache.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <spdlog/spdlog.h>
 
 #include <cstddef>
@@ -25,7 +25,7 @@ TEST_CASE("Test disk cache with Sqlite") {
 
   REQUIRE(diskCache.clearAll());
 
-  SECTION("Test store and retrive cache") {
+  SUBCASE("Test store and retrive cache") {
     HttpHeaders responseHeaders = {
         {"Response-Header", "Response-Value"},
         {"Content-Type", "text/html"}};
@@ -84,7 +84,7 @@ TEST_CASE("Test disk cache with Sqlite") {
     REQUIRE(!cacheControl.has_value());
   }
 
-  SECTION("Test prune") {
+  SUBCASE("Test prune") {
     // store data in the cache first
     std::time_t currentTime = std::time(nullptr);
     std::time_t interval = -10;
@@ -181,7 +181,7 @@ TEST_CASE("Test disk cache with Sqlite") {
     }
   }
 
-  SECTION("Test clear all") {
+  SUBCASE("Test clear all") {
     // store data in the cache first
     HttpHeaders responseHeaders{
         {"Content-Type", "text/html"},
