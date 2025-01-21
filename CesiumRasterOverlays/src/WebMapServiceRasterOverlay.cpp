@@ -260,7 +260,7 @@ WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _baseUrl(url),
       _headers(
-          CesiumAsync::mergeHeaders(overlayOptions.requestHeaders, headers)),
+          IAssetAccessor::mergeHeaders(overlayOptions.requestHeaders, headers)),
       _options(wmsOptions) {}
 
 WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() = default;

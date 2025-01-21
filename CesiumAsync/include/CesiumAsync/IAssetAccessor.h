@@ -69,45 +69,45 @@ public:
    * dispatch requests, this method does not need to do anything.
    */
   virtual void tick() noexcept = 0;
-};
 
-/**
- * @brief Merges two vectors of HTTP headers together, with one vector of
- * headers overriding a base vector of headers if both contain headers with the
- * same name.
- *
- * @param baseHeaders The base set of HTTP headers.
- * @param overrideHeaders The override vector of HTTP headers. If any header
- * names in this vector are also included in the `baseHeaders` vector, the
- * values of the override headers will be used instead.
- *
- * @returns A new vector of headers combining headers from the two vectors
- * passed in.
- */
-static std::vector<IAssetAccessor::THeader> mergeHeaders(
-    const std::vector<IAssetAccessor::THeader>& baseHeaders,
-    const std::vector<IAssetAccessor::THeader>& overrideHeaders) {
-  std::vector<IAssetAccessor::THeader> headers;
-  headers.reserve(std::max(baseHeaders.size(), overrideHeaders.size()));
+  /**
+   * @brief Merges two vectors of HTTP headers together, with one vector of
+   * headers overriding a base vector of headers if both contain headers with
+   * the same name.
+   *
+   * @param baseHeaders The base set of HTTP headers.
+   * @param overrideHeaders The override vector of HTTP headers. If any header
+   * names in this vector are also included in the `baseHeaders` vector, the
+   * values of the override headers will be used instead.
+   *
+   * @returns A new vector of headers combining headers from the two vectors
+   * passed in.
+   */
+  static std::vector<IAssetAccessor::THeader> mergeHeaders(
+      const std::vector<IAssetAccessor::THeader>& baseHeaders,
+      const std::vector<IAssetAccessor::THeader>& overrideHeaders) {
+    std::vector<IAssetAccessor::THeader> headers;
+    headers.reserve(std::max(baseHeaders.size(), overrideHeaders.size()));
 
-  std::set<std::string> overrideHeaderNames;
-  for (auto& [name, value] : overrideHeaders) {
-    overrideHeaderNames.emplace(name);
-  }
-
-  // Add all base headers that aren't overridden
-  for (auto& [name, value] : baseHeaders) {
-    if (!overrideHeaderNames.contains(name)) {
-      headers.emplace_back(name, value);
+    std::set<std::string> overrideHeaderNames;
+    for (auto& [name, value] : overrideHeaders) {
+      overrideHeaderNames.emplace(name);
     }
-  }
 
-  // Add override headers
-  for (auto& pair : overrideHeaders) {
-    headers.emplace_back(pair);
-  }
+    // Add all base headers that aren't overridden
+    for (auto& [name, value] : baseHeaders) {
+      if (!overrideHeaderNames.contains(name)) {
+        headers.emplace_back(name, value);
+      }
+    }
 
-  return headers;
-}
+    // Add override headers
+    for (auto& pair : overrideHeaders) {
+      headers.emplace_back(pair);
+    }
+
+    return headers;
+  }
+};
 
 } // namespace CesiumAsync

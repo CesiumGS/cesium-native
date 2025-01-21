@@ -196,7 +196,7 @@ WebMapTileServiceRasterOverlay::WebMapTileServiceRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _url(url),
       _headers(
-          CesiumAsync::mergeHeaders(overlayOptions.requestHeaders, headers)),
+          IAssetAccessor::mergeHeaders(overlayOptions.requestHeaders, headers)),
       _options(wmtsOptions) {}
 
 WebMapTileServiceRasterOverlay::~WebMapTileServiceRasterOverlay() = default;
