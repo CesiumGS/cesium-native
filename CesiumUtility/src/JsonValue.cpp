@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <concepts>
+#include <limits>
 #include <optional>
 #include <string>
 #include <variant>
