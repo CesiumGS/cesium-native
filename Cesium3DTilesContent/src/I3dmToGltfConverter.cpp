@@ -23,6 +23,7 @@
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
+#include <glm/detail/setup.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_double3.hpp>

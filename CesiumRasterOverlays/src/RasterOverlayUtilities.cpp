@@ -25,6 +25,7 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_float2.hpp>
