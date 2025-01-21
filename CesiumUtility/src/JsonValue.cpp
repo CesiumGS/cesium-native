@@ -144,7 +144,7 @@ struct LosslessNarrower<TTo, TFrom> {
 };
 
 // Conversion of unsigned to signed integer
-template <std::signed_integral TTo, std::unsigned_integral TFrom>
+template <signed_integral TTo, unsigned_integral TFrom>
 struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     // Conversion to a larger type is always fine.

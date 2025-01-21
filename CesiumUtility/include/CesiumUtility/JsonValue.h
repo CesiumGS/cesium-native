@@ -23,7 +23,7 @@ namespace CesiumUtility {
  *
  * @tparam TTo The type to convert to.
  * @tparam TFrom The type to convert from.
- * @param u The value to perform the conversion on.
+ * @param from The value to perform the conversion on.
  */
 template <typename TTo, typename TFrom>
 extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
@@ -35,7 +35,7 @@ extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
  *
  * @tparam TTo The type to convert to.
  * @tparam TFrom The type to convert from.
- * @param u The value to perform the conversion on.
+ * @param from The value to perform the conversion on.
  * @param defaultValue The value that will be returned if a lossless conversion
  * can't be performed.
  */
