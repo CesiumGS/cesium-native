@@ -1,18 +1,20 @@
 #include <CesiumUtility/Uri.h>
 
-#include <ada.h>
 #include <ada/character_sets-inl.h>
 #include <ada/implementation.h>
 #include <ada/unicode.h>
 #include <ada/url_aggregator.h>
+#include <ada/url_search_params.h>
 
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace CesiumUtility {
 
@@ -26,10 +28,10 @@ const char PATH_SEP = '/';
 
 // C++ locale settings might change which values std::isalpha checks for. We
 // only want ASCII.
-bool isAsciiAlpha(char c) {
+bool isAsciiAlpha(unsigned char c) {
   return c >= 0x41 && c <= 0x7a && (c <= 0x5a || c >= 0x61);
 }
-bool isAscii(char c) { return c <= 0x7f; }
+bool isAscii(unsigned char c) { return c <= 0x7f; }
 
 /**
  * A URI has a valid scheme if it starts with an ASCII alpha character and has a
@@ -37,9 +39,10 @@ bool isAscii(char c) { return c <= 0x7f; }
  */
 bool urlHasScheme(const std::string& uri) {
   for (size_t i = 0; i < uri.length(); i++) {
-    if (uri[i] == ':') {
+    unsigned char c = static_cast<unsigned char>(uri[i]);
+    if (c == ':') {
       return uri.length() > i + 2 && uri[i + 1] == '/' && uri[i + 2] == '/';
-    } else if ((i == 0 && !isAsciiAlpha(uri[i])) || !isAscii(uri[i])) {
+    } else if ((i == 0 && !isAsciiAlpha(c)) || !isAscii(c)) {
       // Scheme must start with an ASCII alpha character and be an ASCII string
       return false;
     }
@@ -235,7 +238,7 @@ std::string Uri::nativePathToUriPath(const std::string& nativePath) {
       ada::character_sets::PATH_PERCENT_ENCODE);
 
   const bool startsWithDriveLetter =
-      encoded.length() >= 2 && isAsciiAlpha(encoded[0]) && encoded[1] == ':';
+      encoded.length() >= 2 && isAsciiAlpha(static_cast<unsigned char>(encoded[0])) && encoded[1] == ':';
 
   std::string output;
   output.reserve(encoded.length() + (startsWithDriveLetter ? 1 : 0));
@@ -270,7 +273,7 @@ std::string Uri::uriPathToWindowsPath(const std::string& uriPath) {
   size_t i = 0;
   // A path including a drive name will start like /C:/....
   // In that case, we just skip the first slash and continue on
-  if (path.length() >= 3 && path[0] == '/' && isAsciiAlpha(path[1]) &&
+  if (path.length() >= 3 && path[0] == '/' && isAsciiAlpha(static_cast<unsigned char>(path[1])) &&
       path[2] == ':') {
     i++;
   }
