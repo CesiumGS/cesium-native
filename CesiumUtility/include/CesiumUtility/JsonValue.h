@@ -40,8 +40,8 @@ extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
  * can't be performed.
  */
 template <typename TTo, typename TFrom>
-constexpr TTo losslessNarrowOrDefault(TFrom u, TTo defaultValue) noexcept {
-  return losslessNarrow<TTo, TFrom>(u).value_or(defaultValue);
+constexpr TTo losslessNarrowOrDefault(TFrom from, TTo defaultValue) noexcept {
+  return losslessNarrow<TTo, TFrom>(from).value_or(defaultValue);
 }
 
 /**
