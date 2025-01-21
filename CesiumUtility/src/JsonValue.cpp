@@ -12,8 +12,18 @@ namespace CesiumUtility {
 
 namespace {
 
-template <typename TTo, typename TFrom, typename Enable = void>
-struct LosslessNarrower {
+// We're defining these instead of using the ones in <concepts> in order to
+// support Android NDK r25b which doesn't have a working <concepts> header.
+template <typename T>
+concept integral = std::is_integral_v<T>;
+template <typename T>
+concept signed_integral = integral<T> && std::is_signed_v<T>;
+template <typename T>
+concept unsigned_integral = integral<T> && std::is_unsigned_v<T>;
+template <typename T>
+concept floating_point = std::is_floating_point_v<T>;
+
+template <typename TTo, typename TFrom> struct LosslessNarrower {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept;
 };
 
@@ -45,12 +55,8 @@ template <> struct LosslessNarrower<float, double> {
 
 // Conversion of a floating-point value to an integer. The floating point number
 // must be integer-valued and within the range of the integer.
-template <typename TTo, typename TFrom>
-struct LosslessNarrower<
-    TTo,
-    TFrom,
-    std::enable_if_t<
-        std::is_integral_v<TTo> && std::is_floating_point_v<TFrom>>> {
+template <integral TTo, floating_point TFrom>
+struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     TTo min = std::numeric_limits<TTo>::lowest();
     TTo max = std::numeric_limits<TTo>::max();
@@ -67,12 +73,8 @@ struct LosslessNarrower<
 // Conversion of an integer to a floating point value. All integers are within
 // range of both float and double, but we need to make sure the conversion is
 // lossless.
-template <typename TTo, typename TFrom>
-struct LosslessNarrower<
-    TTo,
-    TFrom,
-    std::enable_if_t<
-        std::is_floating_point_v<TTo> && std::is_integral_v<TFrom>>> {
+template <floating_point TTo, integral TFrom>
+struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     std::optional<TTo> casted = std::make_optional(static_cast<TTo>(from));
 
@@ -86,14 +88,8 @@ struct LosslessNarrower<
 
 // Conversion between signed integers. If TFrom is bigger the value must be in
 // range of TTo.
-template <typename TTo, typename TFrom>
-struct LosslessNarrower<
-    TTo,
-    TFrom,
-    std::enable_if_t<
-        !std::is_same_v<TTo, TFrom> && std::is_integral_v<TTo> &&
-        std::is_signed_v<TTo> && std::is_integral_v<TFrom> &&
-        std::is_signed_v<TFrom>>> {
+template <signed_integral TTo, signed_integral TFrom>
+struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     if constexpr (sizeof(TFrom) > sizeof(TTo)) {
       TTo min = std::numeric_limits<TTo>::lowest();
@@ -109,14 +105,8 @@ struct LosslessNarrower<
 
 // Conversion between unsigned integers. Identical to conversion between signed
 // integers.
-template <typename TTo, typename TFrom>
-struct LosslessNarrower<
-    TTo,
-    TFrom,
-    std::enable_if_t<
-        !std::is_same_v<TTo, TFrom> && std::is_integral_v<TTo> &&
-        std::is_unsigned_v<TTo> && std::is_integral_v<TFrom> &&
-        std::is_unsigned_v<TFrom>>> {
+template <unsigned_integral TTo, unsigned_integral TFrom>
+struct LosslessNarrower<TTo, TFrom> {
   static constexpr std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     if constexpr (sizeof(TFrom) > sizeof(TTo)) {
       TTo min = std::numeric_limits<TTo>::lowest();
@@ -131,13 +121,8 @@ struct LosslessNarrower<
 };
 
 // Conversion of signed to unsigned integer
-template <typename TTo, typename TFrom>
-struct LosslessNarrower<
-    TTo,
-    TFrom,
-    std::enable_if_t<
-        std::is_integral_v<TTo> && std::is_unsigned_v<TTo> &&
-        std::is_integral_v<TFrom> && std::is_signed_v<TFrom>>> {
+template <unsigned_integral TTo, signed_integral TFrom>
+struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     // Can't convert a value less than zero to unsigned.
     if (from < TFrom(0)) {
@@ -159,13 +144,8 @@ struct LosslessNarrower<
 };
 
 // Conversion of unsigned to signed integer
-template <typename TTo, typename TFrom>
-struct LosslessNarrower<
-    TTo,
-    TFrom,
-    std::enable_if_t<
-        std::is_integral_v<TTo> && std::is_signed_v<TTo> &&
-        std::is_integral_v<TFrom> && std::is_unsigned_v<TFrom>>> {
+template <std::signed_integral TTo, std::unsigned_integral TFrom>
+struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
     // Conversion to a larger type is always fine.
     // For an equal or smaller type, make sure the `from` value is not greater
