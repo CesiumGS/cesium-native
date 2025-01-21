@@ -506,7 +506,6 @@ TEST_CASE("Test tile state machine") {
             externals,
             options,
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -612,7 +611,6 @@ TEST_CASE("Test tile state machine") {
             externals,
             options,
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -689,7 +687,6 @@ TEST_CASE("Test tile state machine") {
             externals,
             options,
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -792,7 +789,6 @@ TEST_CASE("Test tile state machine") {
             externals,
             options,
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -947,7 +943,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             {},
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1017,7 +1012,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             options,
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1083,7 +1077,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             {},
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1134,7 +1127,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             {},
             std::move(rasterOverlayCollection),
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1428,7 +1420,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             {},
             std::move(rasterOverlayCollection),
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1651,7 +1642,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             {},
             std::move(rasterOverlayCollection),
-            {},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1720,7 +1710,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             externals,
             {},
             RasterOverlayCollection{loadedTiles, externals},
-            {},
             std::move(loaderResult.pLoader),
             std::move(loaderResult.pRootTile)};
 
