@@ -21,8 +21,8 @@ namespace CesiumUtility {
  * information. If a lossless conversion can't be performed, `std::nullopt` is
  * returned.
  *
- * @tparam U The type to convert from.
- * @tparam T The type to convert to.
+ * @tparam TTo The type to convert to.
+ * @tparam TFrom The type to convert from.
  * @param u The value to perform the conversion on.
  */
 template <typename TTo, typename TFrom>
@@ -33,15 +33,15 @@ extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
  * information. If a lossless conversion can't be performed, `defaultValue` is
  * returned.
  *
- * @tparam U The type to convert from.
- * @tparam T The type to convert to.
+ * @tparam TTo The type to convert to.
+ * @tparam TFrom The type to convert from.
  * @param u The value to perform the conversion on.
  * @param defaultValue The value that will be returned if a lossless conversion
  * can't be performed.
  */
-template <typename T, typename U>
-constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
-  return losslessNarrow<T, U>(u).value_or(defaultValue);
+template <typename TTo, typename TFrom>
+constexpr TTo losslessNarrowOrDefault(TFrom u, TTo defaultValue) noexcept {
+  return losslessNarrow<TTo, TFrom>(u).value_or(defaultValue);
 }
 
 /**
