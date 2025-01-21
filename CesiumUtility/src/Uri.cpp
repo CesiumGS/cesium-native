@@ -238,7 +238,8 @@ std::string Uri::nativePathToUriPath(const std::string& nativePath) {
       ada::character_sets::PATH_PERCENT_ENCODE);
 
   const bool startsWithDriveLetter =
-      encoded.length() >= 2 && isAsciiAlpha(static_cast<unsigned char>(encoded[0])) && encoded[1] == ':';
+      encoded.length() >= 2 &&
+      isAsciiAlpha(static_cast<unsigned char>(encoded[0])) && encoded[1] == ':';
 
   std::string output;
   output.reserve(encoded.length() + (startsWithDriveLetter ? 1 : 0));
@@ -273,8 +274,8 @@ std::string Uri::uriPathToWindowsPath(const std::string& uriPath) {
   size_t i = 0;
   // A path including a drive name will start like /C:/....
   // In that case, we just skip the first slash and continue on
-  if (path.length() >= 3 && path[0] == '/' && isAsciiAlpha(static_cast<unsigned char>(path[1])) &&
-      path[2] == ':') {
+  if (path.length() >= 3 && path[0] == '/' &&
+      isAsciiAlpha(static_cast<unsigned char>(path[1])) && path[2] == ':') {
     i++;
   }
 

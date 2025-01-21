@@ -153,7 +153,8 @@ public:
    * @returns The value of the given key in the query string, or an empty string
    * if not found.
    *
-   * @deprecated Create a \ref Uri instance andthe member function \ref getQueryValue instead.
+   * @deprecated Create a \ref Uri instance andthe member function \ref
+   * getQueryValue instead.
    */
   static std::string
   getQueryValue(const std::string& uri, const std::string& key);
