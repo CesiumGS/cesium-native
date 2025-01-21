@@ -25,20 +25,8 @@ namespace CesiumUtility {
  * @tparam T The type to convert to.
  * @param u The value to perform the conversion on.
  */
-template <typename T, typename U>
-constexpr std::optional<T> losslessNarrow(U u) noexcept {
-  constexpr const bool is_different_signedness =
-      (std::is_signed<T>::value != std::is_signed<U>::value);
-
-  const T t = static_cast<T>(u);
-
-  if (static_cast<U>(t) != u ||
-      (is_different_signedness && ((t < T{}) != (u < U{})))) {
-    return std::nullopt;
-  }
-
-  return t;
-}
+template <typename TTo, typename TFrom>
+extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
 
 /**
  * @brief Attempts a narrowing conversion of `U` into `T` without losing
@@ -53,17 +41,7 @@ constexpr std::optional<T> losslessNarrow(U u) noexcept {
  */
 template <typename T, typename U>
 constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
-  constexpr const bool is_different_signedness =
-      (std::is_signed<T>::value != std::is_signed<U>::value);
-
-  const T t = static_cast<T>(u);
-
-  if (static_cast<U>(t) != u ||
-      (is_different_signedness && ((t < T{}) != (u < U{})))) {
-    return defaultValue;
-  }
-
-  return t;
+  return losslessNarrow<T, U>(u).value_or(defaultValue);
 }
 
 /**
