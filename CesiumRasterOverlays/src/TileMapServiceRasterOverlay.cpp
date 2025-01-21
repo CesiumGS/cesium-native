@@ -175,7 +175,8 @@ TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _url(url),
-      _headers(headers),
+      _headers(
+          CesiumAsync::mergeHeaders(overlayOptions.requestHeaders, headers)),
       _options(tmsOptions) {}
 
 TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() = default;

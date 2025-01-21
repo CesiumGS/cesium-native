@@ -75,7 +75,8 @@ public:
    * @param name The user-given name of this overlay layer.
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
-   * form (Key,Value) that will be inserted as request headers internally.
+   * form (Key,Value) that will be inserted as request headers internally. These
+   * values will override headers specified in `overlayOptions`.
    * @param wmsOptions The {@link WebMapServiceRasterOverlayOptions}.
    * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
    */

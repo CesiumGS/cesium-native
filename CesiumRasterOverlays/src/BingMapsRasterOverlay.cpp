@@ -133,7 +133,8 @@ public:
             height),
         _credits(perTileCredits),
         _urlTemplate(urlTemplate),
-        _subdomains(subdomains) {
+        _subdomains(subdomains),
+        _headers(pOwner->getOptions().requestHeaders) {
     if (this->_urlTemplate.find("n=z") == std::string::npos) {
       this->_urlTemplate =
           CesiumUtility::Uri::addQuery(this->_urlTemplate, "n", "z");
@@ -208,7 +209,7 @@ protected:
       }
     }
 
-    return this->loadTileImageFromUrl(url, {}, std::move(options));
+    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
   }
 
 private:
@@ -235,6 +236,7 @@ private:
   std::vector<CreditAndCoverageAreas> _credits;
   std::string _urlTemplate;
   std::vector<std::string> _subdomains;
+  std::vector<IAssetAccessor::THeader> _headers;
 };
 
 BingMapsRasterOverlay::BingMapsRasterOverlay(
@@ -467,7 +469,8 @@ BingMapsRasterOverlay::createTileProvider(
         handleResponse(nullptr, std::span<std::byte>(cacheResultIt->second)));
   }
 
-  return pAssetAccessor->get(asyncSystem, metadataUrl)
+  return pAssetAccessor
+      ->get(asyncSystem, metadataUrl, this->getOptions().requestHeaders)
       .thenInMainThread(
           [metadataUrl,
            handleResponse](std::shared_ptr<IAssetRequest>&& pRequest)

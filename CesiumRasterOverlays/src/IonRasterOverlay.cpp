@@ -123,7 +123,8 @@ IonRasterOverlay::createTileProvider(
         pOwner);
   }
 
-  return pAssetAccessor->get(asyncSystem, ionUrl)
+  return pAssetAccessor
+      ->get(asyncSystem, ionUrl, this->getOptions().requestHeaders)
       .thenImmediately(
           [](std::shared_ptr<IAssetRequest>&& pRequest)
               -> nonstd::expected<

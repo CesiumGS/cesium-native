@@ -259,7 +259,8 @@ WebMapServiceRasterOverlay::WebMapServiceRasterOverlay(
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _baseUrl(url),
-      _headers(headers),
+      _headers(
+          CesiumAsync::mergeHeaders(overlayOptions.requestHeaders, headers)),
       _options(wmsOptions) {}
 
 WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() = default;
