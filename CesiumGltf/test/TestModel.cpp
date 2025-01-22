@@ -658,6 +658,24 @@ TEST_CASE("Model::removeExtensionRequired") {
   }
 }
 
+TEST_CASE("Model::isExtensionUsed") {
+  Model m;
+  m.extensionsUsed = {"Foo", "Bar"};
+
+  CHECK(m.isExtensionUsed("Foo"));
+  CHECK(m.isExtensionUsed("Bar"));
+  CHECK_FALSE(m.isExtensionUsed("Baz"));
+}
+
+TEST_CASE("Model::isExtensionRequired") {
+  Model m;
+  m.extensionsRequired = {"Foo", "Bar"};
+
+  CHECK(m.isExtensionRequired("Foo"));
+  CHECK(m.isExtensionRequired("Bar"));
+  CHECK_FALSE(m.isExtensionRequired("Baz"));
+}
+
 TEST_CASE("Model::merge") {
   SUBCASE("performs a simple merge") {
     Model m1;
