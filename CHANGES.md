@@ -12,6 +12,7 @@
 - Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
 - Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
 - `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
+- Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
 
 ##### Fixes :wrench:
 
