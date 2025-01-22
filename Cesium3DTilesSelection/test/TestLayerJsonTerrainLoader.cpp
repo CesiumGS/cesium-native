@@ -25,8 +25,7 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <spdlog/spdlog.h>
 
 #include <cstdint>
@@ -38,6 +37,7 @@
 #include <variant>
 #include <vector>
 
+using namespace doctest;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
@@ -112,7 +112,7 @@ TEST_CASE("Test create layer json terrain loader") {
       asyncSystem,
       pMockedCreditSystem};
 
-  SECTION("Create layer json loader") {
+  SUBCASE("Create layer json loader") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "QuantizedMesh.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -197,7 +197,7 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(region_0_1_0.getMaximumHeight() == 9000.0);
   }
 
-  SECTION("Load error layer json with empty tiles array") {
+  SUBCASE("Load error layer json with empty tiles array") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "EmptyTilesArray.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -217,7 +217,7 @@ TEST_CASE("Test create layer json terrain loader") {
         "Layer Json does not specify any tile URL templates");
   }
 
-  SECTION("Load error layer json with no tiles field") {
+  SUBCASE("Load error layer json with no tiles field") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "NoTiles.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -237,7 +237,7 @@ TEST_CASE("Test create layer json terrain loader") {
         "Layer Json does not specify any tile URL templates");
   }
 
-  SECTION("Load layer json with metadataAvailability field") {
+  SUBCASE("Load layer json with metadataAvailability field") {
     auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
                          "MetadataAvailability.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -266,7 +266,7 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].availabilityLevels == 10);
   }
 
-  SECTION("Load layer json with OctVertexNormals extension") {
+  SUBCASE("Load layer json with OctVertexNormals extension") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "OctVertexNormals.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -304,7 +304,7 @@ TEST_CASE("Test create layer json terrain loader") {
         layers[0].contentAvailability.isTileAvailable(QuadtreeTileID(1, 3, 1)));
   }
 
-  SECTION("Load multiple layers") {
+  SUBCASE("Load multiple layers") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "ParentUrl.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -343,7 +343,7 @@ TEST_CASE("Test create layer json terrain loader") {
         "{z}/{x}/{y}.terrain?v={version}");
   }
 
-  SECTION("Load layer json with partial availability") {
+  SUBCASE("Load layer json with partial availability") {
     auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
                          "PartialAvailability.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -366,7 +366,7 @@ TEST_CASE("Test create layer json terrain loader") {
         QuadtreeTileID(2, 0, 0)));
   }
 
-  SECTION("Load layer json with attribution") {
+  SUBCASE("Load layer json with attribution") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "WithAttribution.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -386,7 +386,7 @@ TEST_CASE("Test create layer json terrain loader") {
         "This amazing data is courtesy The Amazing Data Source!");
   }
 
-  SECTION("Load layer json with watermask") {
+  SUBCASE("Load layer json with watermask") {
     auto layerJsonPath =
         testDataPath / "CesiumTerrainTileJson" / "WaterMask.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -436,7 +436,7 @@ TEST_CASE("Test load layer json tile content") {
       tilingScheme,
       maxZoom};
 
-  SECTION("Load tile when layer have availabilityLevels field") {
+  SUBCASE("Load tile when layer have availabilityLevels field") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;
     layers.emplace_back(
@@ -486,7 +486,7 @@ TEST_CASE("Test load layer json tile content") {
     CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(9, 0, 0)));
   }
 
-  SECTION("Load tile when layer have no availabilityLevels field") {
+  SUBCASE("Load tile when layer have no availabilityLevels field") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;
     layers.emplace_back(
@@ -538,7 +538,7 @@ TEST_CASE("Test load layer json tile content") {
         QuadtreeTileID(8, 177, 177)));
   }
 
-  SECTION("Load tile with multiple layers. Ensure layer is chosen correctly to "
+  SUBCASE("Load tile with multiple layers. Ensure layer is chosen correctly to "
           "load tile") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;
@@ -618,7 +618,7 @@ TEST_CASE("Test load layer json tile content") {
     }
   }
 
-  SECTION("Ensure layers metadata does not load twice when tile at "
+  SUBCASE("Ensure layers metadata does not load twice when tile at "
           "availability level is loaded the 2nd time") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;
@@ -758,7 +758,7 @@ TEST_CASE("Test creating tile children for layer json") {
 
   LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
 
-  SECTION("Create children for tile that is at the root of subtree") {
+  SUBCASE("Create children for tile that is at the root of subtree") {
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID(0, 0, 0));
     tile.setBoundingVolume(BoundingRegion(
@@ -855,7 +855,7 @@ TEST_CASE("Test creating tile children for layer json") {
     }
   }
 
-  SECTION("Create children for tile that is in the middle of subtree") {
+  SUBCASE("Create children for tile that is in the middle of subtree") {
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID(1, 0, 1));
     tile.setBoundingVolume(BoundingRegion(
@@ -930,7 +930,7 @@ TEST_CASE("Test creating tile children for layer json") {
     CHECK(region_2_1_3.getRectangle().getNorth() == Approx(Math::PiOverTwo));
   }
 
-  SECTION("Create upsample children for tile") {
+  SUBCASE("Create upsample children for tile") {
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID(1, 1, 0));
     tile.setBoundingVolume(BoundingRegion(

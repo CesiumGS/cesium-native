@@ -4,7 +4,7 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <rapidjson/document.h>
 
 #include <algorithm>
@@ -613,13 +613,13 @@ TEST_CASE("Handles models with unregistered extension") {
   CesiumGltf::Model model;
   model.addExtension<ExtensionModelTest>();
 
-  SECTION("Reports a warning if the extension is enabled") {
+  SUBCASE("Reports a warning if the extension is enabled") {
     CesiumGltfWriter::GltfWriter writer;
     CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
     REQUIRE(!result.warnings.empty());
   }
 
-  SECTION("Does not report a warning if the extension is disabled") {
+  SUBCASE("Does not report a warning if the extension is disabled") {
     CesiumGltfWriter::GltfWriter writer;
     writer.getExtensions().setExtensionState(
         ExtensionModelTest::ExtensionName,

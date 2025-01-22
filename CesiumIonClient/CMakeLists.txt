@@ -40,6 +40,7 @@ target_link_libraries(CesiumIonClient
     PUBLIC
         CesiumAsync
         CesiumUtility
+        CesiumGeospatial
     PRIVATE
         picosha2::picosha2
         modp_b64::modp_b64

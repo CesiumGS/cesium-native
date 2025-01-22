@@ -5,10 +5,14 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Assets.h>
 #include <CesiumIonClient/Connection.h>
 #include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Geocoder.h>
 #include <CesiumIonClient/Profile.h>
 #include <CesiumIonClient/Response.h>
 #include <CesiumIonClient/Token.h>
@@ -21,6 +25,7 @@
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/pointer.h>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -603,6 +608,75 @@ Defaults defaultsFromJson(const rapidjson::Document& json) {
   }
 
   return defaults;
+}
+
+GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
+  GeocoderResult result;
+
+  const rapidjson::Pointer labelPointer =
+      rapidjson::Pointer("/properties/label");
+  const rapidjson::Pointer coordinatesPointer =
+      rapidjson::Pointer("/geometry/coordinates");
+
+  auto featuresMember = json.FindMember("features");
+  if (featuresMember != json.MemberEnd() && featuresMember->value.IsArray()) {
+    auto featuresIt = featuresMember->value.GetArray();
+    for (auto& feature : featuresIt) {
+      const rapidjson::Value* pLabel = labelPointer.Get(feature);
+
+      std::string label;
+      if (pLabel) {
+        label = JsonHelpers::getStringOrDefault(*pLabel, "");
+      }
+
+      std::optional<std::vector<double>> bboxItems =
+          JsonHelpers::getDoubles(feature, 4, "bbox");
+      if (!bboxItems) {
+        // Could be a point value.
+        const rapidjson::Value* pCoordinates = coordinatesPointer.Get(feature);
+
+        CesiumGeospatial::Cartographic point(0, 0);
+        if (pCoordinates && pCoordinates->IsArray() &&
+            pCoordinates->Size() == 2) {
+          auto coordinatesArray = pCoordinates->GetArray();
+
+          point = CesiumGeospatial::Cartographic::fromDegrees(
+              JsonHelpers::getDoubleOrDefault(coordinatesArray[0], 0),
+              JsonHelpers::getDoubleOrDefault(coordinatesArray[1], 0));
+        }
+
+        result.features.emplace_back(GeocoderFeature{label, point});
+      } else {
+        std::vector<double>& values = bboxItems.value();
+        CesiumGeospatial::GlobeRectangle rect =
+            CesiumGeospatial::GlobeRectangle::fromDegrees(
+                values[0],
+                values[1],
+                values[2],
+                values[3]);
+
+        result.features.emplace_back(GeocoderFeature{label, rect});
+      }
+    }
+  }
+
+  auto attributionMemberIt = json.FindMember("attributions");
+  if (attributionMemberIt != json.MemberEnd() &&
+      attributionMemberIt->value.IsArray()) {
+    const auto& valueJson = attributionMemberIt->value;
+
+    result.attributions.reserve(valueJson.Size());
+
+    for (rapidjson::SizeType i = 0; i < valueJson.Size(); ++i) {
+      const rapidjson::Value& element = valueJson[i];
+      std::string html = JsonHelpers::getStringOrDefault(element, "html", "");
+      bool showOnScreen =
+          !JsonHelpers::getBoolOrDefault(element, "collapsible", false);
+      result.attributions.emplace_back(GeocoderAttribution{html, showOnScreen});
+    }
+  }
+
+  return result;
 }
 
 } // namespace
@@ -1200,5 +1274,64 @@ Connection::tokens(const std::string& url) const {
             }
 
             return Response<TokenList>(pRequest, tokenListFromJson(d));
+          });
+}
+
+CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
+    GeocoderProviderType provider,
+    GeocoderRequestType type,
+    const std::string& query) {
+  const std::string endpointUrl = type == GeocoderRequestType::Autocomplete
+                                      ? "v1/geocode/autocomplete"
+                                      : "v1/geocode/search";
+  std::string requestUrl =
+      CesiumUtility::Uri::resolve(this->_apiUrl, endpointUrl);
+  requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "text", query);
+
+  // Add provider type to url
+  switch (provider) {
+  case GeocoderProviderType::Bing:
+    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "bing");
+    break;
+  case GeocoderProviderType::Google:
+    requestUrl = CesiumUtility::Uri::addQuery(requestUrl, "geocoder", "google");
+    break;
+  case GeocoderProviderType::Default:
+    break;
+  }
+
+  return this->_pAssetAccessor
+      ->get(
+          this->_asyncSystem,
+          requestUrl,
+          {{"Accept", "application/json"},
+           {"Authorization", "Bearer " + this->_accessToken}})
+      .thenInMainThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return createEmptyResponse<GeocoderResult>();
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return createErrorResponse<GeocoderResult>(pResponse);
+            }
+
+            rapidjson::Document d;
+            if (!parseJsonObject(pResponse, d)) {
+              return createJsonErrorResponse<GeocoderResult>(pResponse, d);
+            }
+            if (!d.IsObject()) {
+              return createJsonTypeResponse<GeocoderResult>(
+                  pResponse,
+                  "object");
+            }
+
+            return Response<GeocoderResult>(
+                geocoderResultFromJson(d),
+                pResponse->statusCode(),
+                std::string(),
+                std::string());
           });
 }

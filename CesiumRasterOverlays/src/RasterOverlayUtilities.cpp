@@ -25,6 +25,7 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_float2.hpp>
@@ -1477,9 +1478,11 @@ void addSkirt(
         position -= center;
 
         for (uint32_t c = 0; c < 3; ++c) {
-          output.push_back(static_cast<float>(position[c]));
-          attribute.minimums[c] = glm::min(attribute.minimums[c], position[c]);
-          attribute.maximums[c] = glm::max(attribute.maximums[c], position[c]);
+          output.push_back(static_cast<float>(position[glm::length_t(c)]));
+          attribute.minimums[c] =
+              glm::min(attribute.minimums[c], position[glm::length_t(c)]);
+          attribute.maximums[c] =
+              glm::max(attribute.maximums[c], position[glm::length_t(c)]);
         }
       } else {
         for (uint32_t c = 0;

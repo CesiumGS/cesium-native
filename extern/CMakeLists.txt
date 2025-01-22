@@ -17,8 +17,6 @@ target_include_directories(earcut INTERFACE "${EARCUT_HPP_INCLUDE_DIRS}")
 
 
 
-# Allow the catch2 cmake include to be found
-list(APPEND CMAKE_MODULE_PATH "${PACKAGE_BUILD_DIR}/share/Catch2")
 # Modp_b64 doesn't contain a CMake config, so we construct a fake import library here
 add_library(modp_b64::modp_b64 STATIC IMPORTED GLOBAL)
 set_target_properties(modp_b64::modp_b64 PROPERTIES

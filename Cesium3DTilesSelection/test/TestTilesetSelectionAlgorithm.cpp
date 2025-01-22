@@ -27,7 +27,7 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/exponential.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
@@ -199,7 +199,7 @@ TEST_CASE("Test replace refinement for render") {
     REQUIRE(child.getState() == TileLoadState::Unloaded);
   }
 
-  SECTION("No refinement happen when tile meet SSE") {
+  SUBCASE("No refinement happen when tile meet SSE") {
     // Zoom to tileset. Expect the root will not meet sse in this configure
     ViewState viewState = zoomToTileset(tileset);
 
@@ -246,12 +246,12 @@ TEST_CASE("Test replace refinement for render") {
     }
   }
 
-  SECTION("Root doesn't meet sse but has to be rendered because children "
+  SUBCASE("Root doesn't meet sse but has to be rendered because children "
           "cannot be rendered") {
     // we should forbid hole first to let the checks below happen
     tileset.getOptions().forbidHoles = true;
 
-    SECTION("Children cannot be rendered because of no response") {
+    SUBCASE("Children cannot be rendered because of no response") {
       // remove one of children completed response to mock network error
       mockAssetAccessor->mockCompletedRequests["ll.b3dm"]->pResponse = nullptr;
       mockAssetAccessor->mockCompletedRequests["lr.b3dm"]->pResponse = nullptr;
@@ -259,7 +259,7 @@ TEST_CASE("Test replace refinement for render") {
       mockAssetAccessor->mockCompletedRequests["ur.b3dm"]->pResponse = nullptr;
     }
 
-    SECTION("Children cannot be rendered because response has an failed status "
+    SUBCASE("Children cannot be rendered because response has an failed status "
             "code") {
       // remove one of children completed response to mock network error
       mockAssetAccessor->mockCompletedRequests["ll.b3dm"]
@@ -325,7 +325,7 @@ TEST_CASE("Test replace refinement for render") {
     }
   }
 
-  SECTION("Parent meets sse but not renderable") {
+  SUBCASE("Parent meets sse but not renderable") {
     // Zoom to tileset. Expect the root will not meet sse in this configure
     ViewState viewState = zoomToTileset(tileset);
     glm::dvec3 zoomInPosition =
@@ -471,7 +471,7 @@ TEST_CASE("Test replace refinement for render") {
     }
   }
 
-  SECTION("Child should be chosen when parent doesn't meet SSE") {
+  SUBCASE("Child should be chosen when parent doesn't meet SSE") {
     ViewState viewState = zoomToTileset(tileset);
 
     // 1st frame. Root doesn't meet sse and children does. However, because
@@ -586,7 +586,7 @@ TEST_CASE("Test additive refinement") {
   REQUIRE(root->getState() == TileLoadState::ContentLoading);
   REQUIRE(root->getChildren().size() == 0);
 
-  SECTION("Load external tilesets") {
+  SUBCASE("Load external tilesets") {
     ViewState viewState = zoomToTileset(tileset);
 
     // 1st frame. Root, its child, and its four grandchildren will all be
@@ -859,7 +859,7 @@ TEST_CASE("Test multiple frustums") {
       viewState.getVerticalFieldOfView(),
       Ellipsoid::WGS84);
 
-  SECTION("The frustum with the highest SSE should be used for deciding to "
+  SUBCASE("The frustum with the highest SSE should be used for deciding to "
           "refine") {
 
     // frame 1
@@ -908,7 +908,7 @@ TEST_CASE("Test multiple frustums") {
     }
   }
 
-  SECTION("Tiles should be culled if all the cameras agree") {
+  SUBCASE("Tiles should be culled if all the cameras agree") {
 
     REQUIRE(root->getChildren().size() == 4);
     const Tile& firstChild = root->getChildren()[0];
@@ -1641,11 +1641,11 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
 } // namespace
 
 TEST_CASE("An unconditionally-refined tile is not rendered") {
-  SECTION("With default settings") {
+  SUBCASE("With default settings") {
     runUnconditionallyRefinedTestCase(TilesetOptions());
   }
 
-  SECTION("With forbidHoles enabled") {
+  SUBCASE("With forbidHoles enabled") {
     TilesetOptions options{};
     options.forbidHoles = true;
     runUnconditionallyRefinedTestCase(options);

@@ -31,7 +31,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_double2.hpp>

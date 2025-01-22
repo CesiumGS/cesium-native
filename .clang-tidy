@@ -124,7 +124,9 @@ Checks:
   - "modernize-use-equals-delete"
   - "modernize-use-nullptr"
   - "modernize-use-starts-ends-with"
-  - "modernize-use-std-numbers"
+  # The <numbers> header is unfortunately not available in Android NDK r25b,
+  # which is an important target for cesium-native via Unreal Engine.
+  #- "modernize-use-std-numbers"
   #- "modernize-use-using"
   - "performance-*"
   - "-performance-enum-size"

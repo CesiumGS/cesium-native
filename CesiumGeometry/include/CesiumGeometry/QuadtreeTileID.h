@@ -45,6 +45,19 @@ struct CESIUMGEOMETRY_API QuadtreeTileID final {
   }
 
   /**
+   * @brief Computes the inverse x-coordinate of this tile ID.
+   *
+   * This will compute the inverse x-coordinate of this tile ID, based
+   * on the given tiling scheme, which provides the number of tiles
+   * in x-direction for the level of this tile ID.
+   *
+   * @param tilingScheme The {@link QuadtreeTilingScheme}.
+   * @return The inverted x-coordinate.
+   */
+  uint32_t
+  computeInvertedX(const QuadtreeTilingScheme& tilingScheme) const noexcept;
+
+  /**
    * @brief Computes the inverse y-coordinate of this tile ID.
    *
    * This will compute the inverse y-coordinate of this tile ID, based
