@@ -5,6 +5,7 @@
 * \subpage developer-setup
 * \subpage style-guide
 * \subpage contributing
+* \subpage geospatial-guide
 
 ## Architecture of Cesium Native
 
