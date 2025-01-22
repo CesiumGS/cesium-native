@@ -1,15 +1,21 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
-  SECTION("for OrientedBoundingBox, the box is returned directly") {
+  SUBCASE("for OrientedBoundingBox, the box is returned directly") {
     OrientedBoundingBox obb(
         glm::dvec3(1.0, 2.0, 3.0),
         glm::dmat3(
@@ -22,7 +28,7 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     CHECK(obb.getHalfAxes() == newObb.getHalfAxes());
   }
 
-  SECTION("for BoundingSphere, a circumscribed box is returned") {
+  SUBCASE("for BoundingSphere, a circumscribed box is returned") {
     BoundingSphere bs(glm::dvec3(1.0, 2.0, 3.0), 10.0);
     BoundingVolume bv = bs;
     OrientedBoundingBox newObb = getOrientedBoundingBoxFromBoundingVolume(bv);
@@ -30,7 +36,7 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     CHECK(newObb.getLengths() == glm::dvec3(20.0));
   }
 
-  SECTION("for others, their aggregated oriented bounding box is returned") {
+  SUBCASE("for others, their aggregated oriented bounding box is returned") {
     BoundingRegion region(
         GlobeRectangle(0.5, 1.0, 1.5, 2.0),
         100.0,

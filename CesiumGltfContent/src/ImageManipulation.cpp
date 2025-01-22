@@ -2,7 +2,9 @@
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 
+#include <cstddef>
 #include <cstring>
+#include <vector>
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION

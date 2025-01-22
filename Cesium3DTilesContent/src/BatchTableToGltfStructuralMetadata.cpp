@@ -1,23 +1,55 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
+#include "MetadataProperty.h"
 
+#include <Cesium3DTilesContent/GltfConverterUtility.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/FeatureId.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Log.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/JsonValue.h>
 
-#include <glm/glm.hpp>
+#include <fmt/format.h>
+#include <glm/common.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <limits>
 #include <map>
+#include <optional>
+#include <span>
+#include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_set>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace Cesium3DTilesContent::CesiumImpl;
@@ -387,7 +419,7 @@ public:
    * This is helpful for when a property contains a sentinel value as non-null
    * data; the sentinel value can then be removed from consideration.
    */
-  void removeSentinelValues(CesiumUtility::JsonValue value) noexcept {
+  void removeSentinelValues(const CesiumUtility::JsonValue& value) noexcept {
     if (value.isNumber()) {
       // Don't try to use string as sentinels for numbers.
       _canUseNullStringSentinel = false;
@@ -406,7 +438,7 @@ public:
       _canUseZeroSentinel = false;
       _canUseNegativeOneSentinel = false;
 
-      auto stringValue = value.getString();
+      const auto& stringValue = value.getString();
       if (stringValue == "null") {
         _canUseNullStringSentinel = false;
       }
@@ -700,19 +732,25 @@ void updateExtensionWithJsonStringProperty(
       rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
       continue;
     }
-    if (!it->IsString() || (it->IsNull() && !noDataValue)) {
-      // Everything else that is not string will be serialized by json
-      rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
-      it->Accept(writer);
-    } else {
+    if (it->IsString() || (it->IsNull() && noDataValue)) {
       // Because serialized string json will add double quotations in the
       // buffer which is not needed by us, we will manually add the string to
       // the buffer
-      const auto& rapidjsonStr = it->IsNull() ? *noDataValue : it->GetString();
-      rapidjsonStrBuffer.Reserve(it->GetStringLength());
-      for (rapidjson::SizeType j = 0; j < it->GetStringLength(); ++j) {
-        rapidjsonStrBuffer.PutUnsafe(rapidjsonStr[j]);
+      std::string_view value;
+      if (it->IsString()) {
+        value = std::string_view(it->GetString(), it->GetStringLength());
+      } else {
+        CESIUM_ASSERT(noDataValue);
+        value = *noDataValue;
       }
+      rapidjsonStrBuffer.Reserve(value.size());
+      for (rapidjson::SizeType j = 0; j < value.size(); ++j) {
+        rapidjsonStrBuffer.PutUnsafe(value[j]);
+      }
+    } else {
+      // Everything else that is not string will be serialized by json
+      rapidjson::Writer<rapidjson::StringBuffer> writer(rapidjsonStrBuffer);
+      it->Accept(writer);
     }
 
     rapidjsonOffsets.emplace_back(rapidjsonStrBuffer.GetLength());
@@ -791,6 +829,7 @@ void updateExtensionWithJsonScalarProperty(
 
   for (int64_t i = 0; i < propertyTable.count; ++i, ++p, ++it) {
     if (it->IsNull()) {
+      CESIUM_ASSERT(noDataValue.has_value());
       *p = *noDataValue;
     } else {
       *p = static_cast<T>(it->template Get<TRapidJson>());
@@ -1974,6 +2013,217 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
     featureID.label = "_FEATURE_ID_0";
   }
 
+  return result;
+}
+
+namespace {
+
+// Does something like this already exist?
+
+template <typename T> int32_t componentTypeFromCpp();
+
+template <> int32_t componentTypeFromCpp<uint8_t>() {
+  return Accessor::ComponentType::UNSIGNED_BYTE;
+}
+
+template <> int32_t componentTypeFromCpp<uint16_t>() {
+  return Accessor::ComponentType::UNSIGNED_SHORT;
+}
+
+template <> int32_t componentTypeFromCpp<uint32_t>() {
+  return Accessor::ComponentType::UNSIGNED_INT;
+}
+
+// encapsulation of the binary batch id data in an I3dm
+struct BatchIdSemantic {
+  std::variant<
+      std::span<const uint8_t>,
+      std::span<const uint16_t>,
+      std::span<const uint32_t>>
+      batchSpan;
+  const std::byte* rawData;
+  uint32_t numElements;
+  uint32_t byteSize;
+
+  template <typename UintType>
+  static std::span<const UintType>
+  makeSpan(const std::byte* byteData, uint32_t offset, uint32_t numElements) {
+    return std::span<const UintType>(
+        reinterpret_cast<const UintType*>(byteData + offset),
+        numElements);
+  }
+
+  BatchIdSemantic(
+      const rapidjson::Document& featureTableJson,
+      uint32_t numInstances,
+      const std::span<const std::byte>& featureTableJsonData)
+      : rawData(nullptr), numElements(0), byteSize(0) {
+    const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
+    if (batchIdIt == featureTableJson.MemberEnd() ||
+        !batchIdIt->value.IsObject()) {
+      return;
+    }
+    const auto byteOffsetIt = batchIdIt->value.FindMember("byteOffset");
+    if (byteOffsetIt == batchIdIt->value.MemberEnd() ||
+        !byteOffsetIt->value.IsUint()) {
+      // Warning
+    }
+    uint32_t byteOffset = byteOffsetIt->value.GetUint();
+    const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
+    if (componentTypeIt != featureTableJson.MemberEnd() &&
+        componentTypeIt->value.IsString()) {
+      const std::string& componentTypeString =
+          componentTypeIt->value.GetString();
+      if (MetadataProperty::stringToMetadataComponentType.find(
+              componentTypeString) ==
+          MetadataProperty::stringToMetadataComponentType.end()) {
+        // Warning
+      }
+      MetadataProperty::ComponentType componentType =
+          MetadataProperty::stringToMetadataComponentType.at(
+              componentTypeString);
+      rawData = featureTableJsonData.data();
+      if (componentType == MetadataProperty::ComponentType::UNSIGNED_BYTE) {
+        batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
+        numElements = numInstances;
+        byteSize = numElements * sizeof(uint8_t);
+      } else if (
+          componentType == MetadataProperty::ComponentType::UNSIGNED_SHORT) {
+        batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
+        numElements = numInstances;
+        byteSize = numElements * sizeof(uint16_t);
+      } else if (
+          componentType == MetadataProperty::ComponentType::UNSIGNED_INT) {
+        batchSpan = makeSpan<uint32_t>(rawData, byteOffset, numInstances);
+        numElements = numInstances;
+        byteSize = numElements * sizeof(uint32_t);
+      }
+    }
+  }
+
+  size_t idSize() const {
+    return std::visit(
+        [](auto&& batchIds) { return sizeof(batchIds[0]); },
+        batchSpan);
+  }
+
+  uint32_t maxBatchId() const {
+    return std::visit(
+        [](auto&& batchIds) {
+          auto itr = std::max_element(batchIds.begin(), batchIds.end());
+          return static_cast<uint32_t>(*itr);
+        },
+        batchSpan);
+  }
+
+  int32_t componentType() const {
+    return std::visit(
+        [](auto&& batchIds) {
+          using span_type = std::remove_reference_t<decltype(batchIds)>;
+          return componentTypeFromCpp<typename span_type::value_type>();
+        },
+        batchSpan);
+  }
+};
+
+// returns an accessor ID for the added feature IDs
+int32_t
+addFeatureIdsToGltf(CesiumGltf::Model& gltf, const BatchIdSemantic& batchIds) {
+  int32_t featuresBufferId = GltfConverterUtility::createBufferInGltf(gltf);
+  auto& featuresBuffer = gltf.buffers[static_cast<uint32_t>(featuresBufferId)];
+  featuresBuffer.cesium.data.resize(batchIds.byteSize);
+  std::memcpy(
+      &featuresBuffer.cesium.data[0],
+      batchIds.rawData,
+      batchIds.byteSize);
+  int32_t featuresBufferViewId = GltfConverterUtility::createBufferViewInGltf(
+      gltf,
+      featuresBufferId,
+      0,
+      static_cast<int64_t>(batchIds.idSize()));
+  gltf.bufferViews[static_cast<uint32_t>(featuresBufferViewId)].byteLength =
+      batchIds.byteSize;
+
+  int32_t accessorId = GltfConverterUtility::createAccessorInGltf(
+      gltf,
+      featuresBufferViewId,
+      batchIds.componentType(),
+      batchIds.numElements,
+      Accessor::Type::SCALAR);
+  return accessorId;
+}
+
+} // namespace
+
+ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
+    const rapidjson::Document& featureTableJson,
+    const rapidjson::Document& batchTableJson,
+    const std::span<const std::byte>& featureTableJsonData,
+    const std::span<const std::byte>& batchTableBinaryData,
+    CesiumGltf::Model& gltf) {
+  // Check to make sure a char of rapidjson is 1 byte
+  static_assert(
+      sizeof(rapidjson::Value::Ch) == 1,
+      "RapidJson::Value::Ch is not 1 byte");
+
+  ErrorList result;
+
+  // Parse the batch table and convert it to the EXT_structural_metadata
+  // extension.
+
+  // Batch table length is either the max batch ID + 1 or, if there are no batch
+  // IDs, the number of instances.
+  int64_t featureCount = 0;
+  std::optional<BatchIdSemantic> optBatchIds;
+  const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
+  std::optional<uint32_t> optInstancesLength =
+      GltfConverterUtility::getValue<uint32_t>(
+          featureTableJson,
+          "INSTANCES_LENGTH");
+  if (!optInstancesLength) {
+    result.emplaceError("Required INSTANCES_LENGTH semantic is missing");
+    return result;
+  }
+  if (batchIdIt == featureTableJson.MemberEnd()) {
+    featureCount = *optInstancesLength;
+  } else {
+    optBatchIds = BatchIdSemantic(
+        featureTableJson,
+        *optInstancesLength,
+        featureTableJsonData);
+    uint32_t maxBatchId = optBatchIds->maxBatchId();
+    featureCount = maxBatchId + 1;
+  }
+
+  convertBatchTableToGltfStructuralMetadataExtension(
+      batchTableJson,
+      batchTableBinaryData,
+      gltf,
+      featureCount,
+      result);
+
+  int32_t featureIdAccessor = -1;
+  if (optBatchIds.has_value()) {
+    featureIdAccessor = addFeatureIdsToGltf(gltf, *optBatchIds);
+  }
+
+  // Create an EXT_instance_features extension for node that has an
+  // EXT_mesh_gpu_instancing extension
+  for (Node& node : gltf.nodes) {
+    if (auto* pGpuInstancing =
+            node.getExtension<ExtensionExtMeshGpuInstancing>()) {
+      auto& instanceFeatureExt =
+          node.addExtension<ExtensionExtInstanceFeatures>();
+      gltf.addExtensionUsed(ExtensionExtInstanceFeatures::ExtensionName);
+      instanceFeatureExt.featureIds.resize(1);
+      instanceFeatureExt.featureIds[0].featureCount = featureCount;
+      instanceFeatureExt.featureIds[0].propertyTable = 0;
+      if (featureIdAccessor >= 0) {
+        pGpuInstancing->attributes["_FEATURE_ID_0"] = featureIdAccessor;
+        instanceFeatureExt.featureIds[0].attribute = 0;
+      }
+    }
+  }
   return result;
 }
 } // namespace Cesium3DTilesContent

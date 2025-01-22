@@ -1,8 +1,14 @@
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/SimplePlanarEllipsoidCurve.h>
+#include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/common.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
+
+#include <optional>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
@@ -34,7 +40,7 @@ const glm::dvec3
     timesSquareEcef(1334771.9227395034, -4650343.070699833, 4142168.965635141);
 
 TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
-  SECTION("positions at start and end of curve are identical to input "
+  SUBCASE("positions at start and end of curve are identical to input "
           "coordinates") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
@@ -53,7 +59,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
         Math::Epsilon6));
   }
 
-  SECTION("all points should be coplanar") {
+  SUBCASE("all points should be coplanar") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -77,7 +83,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
     }
   }
 
-  SECTION("should always stay above the earth") {
+  SUBCASE("should always stay above the earth") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -99,7 +105,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
     }
   }
 
-  SECTION("midpoint of reverse path should be identical") {
+  SUBCASE("midpoint of reverse path should be identical") {
     std::optional<SimplePlanarEllipsoidCurve> forwardCurve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -121,7 +127,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
     CHECK(Math::equalsEpsilon(forwardResult, reverseResult, Math::Epsilon6));
   }
 
-  SECTION("curve with same start and end point shouldn't change positions") {
+  SUBCASE("curve with same start and end point shouldn't change positions") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -139,7 +145,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
     }
   }
 
-  SECTION("should correctly interpolate height") {
+  SUBCASE("should correctly interpolate height") {
     double startHeight = 100.0;
     double endHeight = 25.0;
 
@@ -181,7 +187,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
   // Testing a bug in SimplePlanarEllipsoidCurve where a path from a point with
   // negative height to one with positive height would give results on the other
   // side of the earth
-  SECTION("should correctly handle points with negative height") {
+  SUBCASE("should correctly handle points with negative height") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -205,7 +211,7 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
 
 TEST_CASE(
     "SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates") {
-  SECTION("should fail on coordinates (0, 0, 0)") {
+  SUBCASE("should fail on coordinates (0, 0, 0)") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -217,7 +223,7 @@ TEST_CASE(
 }
 
 TEST_CASE("SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight") {
-  SECTION("should match results of curve created from equivalent ECEF "
+  SUBCASE("should match results of curve created from equivalent ECEF "
           "coordinates") {
     std::optional<SimplePlanarEllipsoidCurve> llhCurve =
         SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight(

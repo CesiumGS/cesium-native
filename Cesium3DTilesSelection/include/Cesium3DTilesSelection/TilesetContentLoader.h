@@ -1,12 +1,11 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "Library.h"
-#include "TileContent.h"
-#include "TileLoadResult.h"
-#include "TilesetOptions.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>

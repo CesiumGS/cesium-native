@@ -1,8 +1,9 @@
-#include "Cesium3DTilesSelection/RasterizedPolygonsTileExcluder.h"
-
-#include "Cesium3DTilesSelection/Tile.h"
-#include "CesiumRasterOverlays/RasterizedPolygonsOverlay.h"
 #include "TileUtilities.h"
+
+#include <Cesium3DTilesSelection/RasterizedPolygonsTileExcluder.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <CesiumRasterOverlays/RasterizedPolygonsOverlay.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 using namespace Cesium3DTilesSelection;
 

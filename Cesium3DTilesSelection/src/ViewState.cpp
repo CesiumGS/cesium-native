@@ -1,8 +1,22 @@
-#include "Cesium3DTilesSelection/ViewState.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 
+#include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/trigonometric.hpp>
+
+#include <optional>
+#include <variant>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -53,8 +67,9 @@ ViewState::ViewState(
           horizontalFieldOfView,
           verticalFieldOfView)) {}
 
+namespace {
 template <class T>
-static bool isBoundingVolumeVisible(
+bool isBoundingVolumeVisible(
     const T& boundingVolume,
     const CullingVolume& cullingVolume) noexcept {
   const CullingResult left =
@@ -83,6 +98,7 @@ static bool isBoundingVolumeVisible(
 
   return true;
 }
+} // namespace
 
 bool ViewState::isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) const noexcept {

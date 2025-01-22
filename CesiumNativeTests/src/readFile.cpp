@@ -1,9 +1,12 @@
 #include <CesiumNativeTests/readFile.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
+#include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <ios>
+#include <vector>
 
 std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);

@@ -1,18 +1,22 @@
 #include "ConvertTileToGltf.h"
 
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <CesiumGltf/AccessorView.h>
-#include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <glm/vec3.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
+
+#include <filesystem>
 
 using namespace Cesium3DTilesContent;
 using namespace CesiumGltf;
 
 TEST_CASE("I3dmToGltfConverter") {
-  SECTION("loads a simple i3dm") {
+  SUBCASE("loads a simple i3dm") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InstancedWithBatchTable" /
                    "instancedWithBatchTable.i3dm";
@@ -38,7 +42,7 @@ TEST_CASE("I3dmToGltfConverter") {
     CHECK(translations.size() == 25);
   }
 
-  SECTION("loads a simple i3dm with orientations") {
+  SUBCASE("loads a simple i3dm with orientations") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InstancedOrientation" /
                    "instancedOrientation.i3dm";
@@ -71,7 +75,7 @@ TEST_CASE("I3dmToGltfConverter") {
     CHECK(rotations.size() == 25);
   }
 
-  SECTION("reports an error if the glTF is v1, which is unsupported") {
+  SUBCASE("reports an error if the glTF is v1, which is unsupported") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath =
         testFilePath / "i3dm" / "ObsoleteGltf" / "instancedWithBatchTable.i3dm";
@@ -80,5 +84,43 @@ TEST_CASE("I3dmToGltfConverter") {
 
     REQUIRE(!result.model);
     CHECK(result.errors.hasErrors());
+  }
+
+  SUBCASE("loads an i3dm with metadata") {
+    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+    testFilePath = testFilePath / "i3dm" / "InstancedWithBatchTable" /
+                   "instancedWithBatchTable.i3dm";
+
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+
+    REQUIRE(result.model);
+    CHECK(result.model->isExtensionUsed(
+        ExtensionExtMeshGpuInstancing::ExtensionName));
+    CHECK(result.model->isExtensionRequired(
+        ExtensionExtMeshGpuInstancing::ExtensionName));
+    REQUIRE(result.model->nodes.size() == 1);
+    CHECK(result.model->isExtensionUsed(
+        ExtensionExtInstanceFeatures::ExtensionName));
+    for (Node& node : result.model->nodes) {
+      if (node.getExtension<ExtensionExtMeshGpuInstancing>()) {
+        auto* pInstanceExt = node.getExtension<ExtensionExtInstanceFeatures>();
+        REQUIRE(pInstanceExt);
+        REQUIRE(pInstanceExt->featureIds.size() == 1);
+        CHECK(pInstanceExt->featureIds[0].featureCount == 25);
+        CHECK(!pInstanceExt->featureIds[0].attribute.has_value());
+        REQUIRE(pInstanceExt->featureIds[0].propertyTable.has_value());
+        CHECK(*pInstanceExt->featureIds[0].propertyTable == 0);
+        CHECK(!pInstanceExt->featureIds[0].nullFeatureId.has_value());
+        CHECK(!pInstanceExt->featureIds[0].label.has_value());
+      }
+    }
+    auto* pStructuralMetadataExt =
+        result.model->getExtension<ExtensionModelExtStructuralMetadata>();
+    REQUIRE(pStructuralMetadataExt);
+    REQUIRE(pStructuralMetadataExt->propertyTables.size() == 1);
+    PropertyTable& propertyTable = pStructuralMetadataExt->propertyTables[0];
+    CHECK(propertyTable.classProperty == "default");
+    auto heightIt = propertyTable.properties.find("Height");
+    REQUIRE(heightIt != propertyTable.properties.end());
   }
 }

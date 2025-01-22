@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumGeometry/Library.h>
+#include <CesiumUtility/Assert.h>
 
 #include <cstdint>
 #include <memory>
@@ -182,6 +183,7 @@ public:
    * specified by the \ref SubtreeBufferView.
    */
   const std::span<const std::byte>& getBufferAccessor() const {
+    CESIUM_ASSERT(bufferAccessor.has_value());
     return *bufferAccessor;
   }
 
@@ -193,6 +195,7 @@ public:
    * @returns The byte at the given index of the buffer accessor.
    */
   const std::byte& operator[](size_t i) const {
+    CESIUM_ASSERT(bufferAccessor.has_value());
     return bufferAccessor.value()[i];
   }
 

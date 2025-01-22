@@ -1,9 +1,10 @@
-#include "CesiumNativeTests/RandomVector.h"
-#include "CesiumUtility/Math.h"
+#include <CesiumNativeTests/RandomVector.h>
+#include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <glm/glm.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 
 using namespace CesiumUtility;
 
