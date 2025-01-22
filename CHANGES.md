@@ -2,6 +2,10 @@
 
 ### v0.44.0 - 2025-02-03
 
+##### Breaking Changes :mega:
+
+- cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
+
 ##### Additions :tada:
 
 - Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.

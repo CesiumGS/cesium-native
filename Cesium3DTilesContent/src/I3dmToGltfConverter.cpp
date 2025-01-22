@@ -23,6 +23,7 @@
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
+#include <glm/detail/setup.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_double3.hpp>
@@ -492,7 +493,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
         decodedInstances.positions.begin(),
         [&parsedContent](auto&& posQuantized) {
           glm::vec3 position;
-          for (unsigned j = 0; j < 3; ++j) {
+          for (glm::length_t j = 0; j < 3; ++j) {
             position[j] = static_cast<float>(
                 posQuantized[j] / 65535.0 *
                     (*parsedContent.quantizedVolumeScale)[j] +
