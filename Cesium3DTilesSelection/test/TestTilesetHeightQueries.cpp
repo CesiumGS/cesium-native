@@ -275,4 +275,35 @@ TEST_CASE("Tileset height queries") {
         0.0,
         Math::Epsilon4));
   }
+
+  SUBCASE("stacked-cubes") {
+    // This tileset has two cubes on top of each other, each in a different
+    // tile, so we can test that the height of the top one is returned.
+    // The bottom cube has a height of 78.0 meters, the upper cube has a height
+    // of 83.0 meters.
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
+
+    Tileset tileset(externals, url);
+
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        {Cartographic::fromDegrees(10.0, 45.0, 0.0)});
+
+    while (!future.isReady()) {
+      tileset.updateView({});
+    }
+
+    SampleHeightResult results = future.waitInMainThread();
+    CHECK(results.warnings.empty());
+    REQUIRE(results.positions.size() == 1);
+
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        83.0,
+        0.0,
+        Math::Epsilon1));
+  }
 }

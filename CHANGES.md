@@ -17,6 +17,7 @@
 ##### Fixes :wrench:
 
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+- Fixed a bug that could cause `Tileset::sampleHeightMostDetailed` to return a height that is not the highest one when the sampled tileset contained multiple heights at the given location.
 
 ### v0.43.0 - 2025-01-02
 
