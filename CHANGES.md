@@ -8,6 +8,7 @@
 
 ##### Additions :tada:
 
+- Added `forEachTile`, `forEachContent`, `addExtensionUsed`, `addExtensionRequired`, `removeExtensionUsed`, `removeExtensionRequired`, `isExtensionUsed`, and `isExtensionRequired` to `Cesium3DTiles::Tileset`.
 - Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
 - Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
 - Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
