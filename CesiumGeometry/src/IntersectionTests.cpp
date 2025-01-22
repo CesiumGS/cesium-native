@@ -7,6 +7,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/vector_double2.hpp>
@@ -16,7 +17,6 @@
 #include <glm/matrix.hpp>
 
 #include <cmath>
-#include <cstdint>
 #include <limits>
 #include <optional>
 #include <utility>

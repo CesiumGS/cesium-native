@@ -496,14 +496,14 @@ private:
 
     /**
      * @brief Medium priority tiles that are needed to render the current view
-     * the appropriate level-of-detail.
+     * at the appropriate level-of-detail.
      */
     Normal = 1,
 
     /**
-     * @brief High priority tiles that are causing extra detail to be rendered
-     * in the scene, potentially creating a performance problem and aliasing
-     * artifacts.
+     * @brief High priority tiles whose absence is causing extra detail to be
+     * rendered in the scene, potentially creating a performance problem and
+     * aliasing artifacts.
      */
     Urgent = 2
   };

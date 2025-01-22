@@ -14,7 +14,7 @@ class LocalHorizontalCoordinateSystem;
 /**
  * @brief Anchors an object to the globe by defining a transformation from the
  * object's coordinate to the globe-fixed coordinate system (usually
- * \ref glossary-ecef).
+ * \ref what-are-ecef-coordinates).
  *
  * This class allows the anchored coordinate system to be realized in any
  * {@link LocalHorizontalCoordinateSystem}. When the object is moved, either by

@@ -2,11 +2,10 @@
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
+#include <CesiumNativeTests/Comparisons.h>
 #include <CesiumNativeTests/readFile.h>
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers.hpp>
-#include <catch2/matchers/catch_matchers_vector.hpp>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -14,6 +13,8 @@
 #include <span>
 #include <string>
 #include <vector>
+
+using namespace doctest;
 
 TEST_CASE("Reads tileset JSON") {
   using namespace std::string_literals;
@@ -77,25 +78,25 @@ TEST_CASE("Reads tileset JSON") {
       0,
       158.4};
 
-  REQUIRE_THAT(
+  REQUIRE(CesiumNativeTests::compareVectors(
       tileset.root.boundingVolume.region,
-      Catch::Matchers::Approx(expectedRegion));
+      expectedRegion));
 
-  REQUIRE_THAT(
+  REQUIRE(CesiumNativeTests::compareVectors(
       tileset.root.content->boundingVolume->region,
-      Catch::Matchers::Approx(expectedContentRegion));
+      expectedContentRegion));
 
   REQUIRE(tileset.root.children.size() == 4);
 
   const Cesium3DTiles::Tile& child = tileset.root.children[0];
 
-  REQUIRE_THAT(
+  REQUIRE(CesiumNativeTests::compareVectors(
       child.boundingVolume.region,
-      Catch::Matchers::Approx(expectedChildRegion));
+      expectedChildRegion));
 
-  REQUIRE_THAT(
+  REQUIRE(CesiumNativeTests::compareVectors(
       child.content->boundingVolume->region,
-      Catch::Matchers::Approx(expectedChildContentRegion));
+      expectedChildContentRegion));
 
   CHECK(child.content->uri == "1/0/0.b3dm");
   CHECK(child.geometricError == 159.43385994848);

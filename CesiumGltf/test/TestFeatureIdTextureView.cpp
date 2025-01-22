@@ -13,7 +13,7 @@
 #include <CesiumGltf/TextureView.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <climits>
 #include <cstddef>
@@ -842,7 +842,7 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
 
   FeatureIdTextureView view(model, featureIdTexture);
 
-  SECTION("REPEAT") {
+  SUBCASE("REPEAT") {
     sampler.wrapS = Sampler::WrapS::REPEAT;
     sampler.wrapT = Sampler::WrapT::REPEAT;
 
@@ -858,7 +858,7 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
     }
   }
 
-  SECTION("MIRRORED_REPEAT") {
+  SUBCASE("MIRRORED_REPEAT") {
     sampler.wrapS = Sampler::WrapS::MIRRORED_REPEAT;
     sampler.wrapT = Sampler::WrapT::MIRRORED_REPEAT;
 
@@ -878,7 +878,7 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
     }
   }
 
-  SECTION("CLAMP_TO_EDGE") {
+  SUBCASE("CLAMP_TO_EDGE") {
     sampler.wrapS = Sampler::WrapS::CLAMP_TO_EDGE;
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 
@@ -894,7 +894,7 @@ TEST_CASE("Check FeatureIdTextureView sampling with different wrap values") {
     }
   }
 
-  SECTION("Mismatched wrap values") {
+  SUBCASE("Mismatched wrap values") {
     sampler.wrapS = Sampler::WrapS::REPEAT;
     sampler.wrapT = Sampler::WrapT::CLAMP_TO_EDGE;
 

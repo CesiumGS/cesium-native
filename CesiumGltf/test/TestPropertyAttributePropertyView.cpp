@@ -31,7 +31,7 @@
 #include <CesiumGltf/PropertyAttributePropertyView.h>
 #include <CesiumUtility/Assert.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <vector>
@@ -224,22 +224,22 @@ void checkNormalizedAttributeValues(
 } // namespace
 
 TEST_CASE("Check scalar PropertyAttributePropertyView") {
-  SECTION("Uint8") {
+  SUBCASE("Uint8") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     checkAttributeValues(data);
   }
 
-  SECTION("Int16") {
+  SUBCASE("Int16") {
     std::vector<int16_t> data{-1, -32511, 768, 438};
     checkAttributeValues(data);
   }
 
-  SECTION("float") {
+  SUBCASE("float") {
     std::vector<float> data{12.3333f, -12.44555f, -5.6111f, 6.7421f};
     checkAttributeValues(data);
   }
 
-  SECTION("float with offset / scale") {
+  SUBCASE("float with offset / scale") {
     std::vector<float> data{1.0f, 2.0f, 3.0f, 4.0f};
 
     const float offset = 1.0f;
@@ -249,7 +249,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView") {
     checkAttributeValues(data, expected, offset, scale);
   }
 
-  SECTION("uint8_t with noData") {
+  SUBCASE("uint8_t with noData") {
     std::vector<uint8_t> data{12, 33, 0, 128, 0, 56, 67};
     const uint8_t noData = 0;
     std::vector<std::optional<uint8_t>> expected{
@@ -263,7 +263,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView") {
     checkAttributeValues(data, expected, std::nullopt, std::nullopt, noData);
   }
 
-  SECTION("uint8_t with noData and defaultValue") {
+  SUBCASE("uint8_t with noData and defaultValue") {
     std::vector<uint8_t> data{12, 33, 0, 128, 0, 56, 67};
     const uint8_t noData = 0;
     const uint8_t defaultValue = 255;
@@ -286,7 +286,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView") {
 }
 
 TEST_CASE("Check scalar PropertyAttributePropertyView (normalized)") {
-  SECTION("Uint8") {
+  SUBCASE("Uint8") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     std::vector<std::optional<double>> expected{
         12.0 / 255.0,
@@ -296,7 +296,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("Int16") {
+  SUBCASE("Int16") {
     std::vector<int16_t> data{-1, -32511, 768, 438};
     std::vector<std::optional<double>> expected{
         normalize(data[0]),
@@ -306,7 +306,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("Uint8 with offset / scale") {
+  SUBCASE("Uint8 with offset / scale") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     const double offset = 1.0;
     const double scale = 2.0;
@@ -319,7 +319,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected, offset, scale);
   }
 
-  SECTION("Uint8 with all properties") {
+  SUBCASE("Uint8 with all properties") {
     std::vector<uint8_t> data{12, 33, 56, 0, 67};
     const double offset = 1.0;
     const double scale = 2.0;
@@ -343,7 +343,7 @@ TEST_CASE("Check scalar PropertyAttributePropertyView (normalized)") {
 }
 
 TEST_CASE("Check vecN PropertyAttributePropertyView") {
-  SECTION("glm::i8vec2") {
+  SUBCASE("glm::i8vec2") {
     std::vector<glm::i8vec2> data{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -352,7 +352,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-  SECTION("glm::vec3") {
+  SUBCASE("glm::vec3") {
     std::vector<glm::vec3> data{
         glm::vec3(1.5f, 2.0f, -3.3f),
         glm::vec3(4.12f, -5.008f, 6.0f),
@@ -361,7 +361,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-  SECTION("glm::vec3 with offset / scale") {
+  SUBCASE("glm::vec3 with offset / scale") {
     std::vector<glm::vec3> data{
         glm::vec3(1.0f, 2.0f, 3.0f),
         glm::vec3(-1.0f, -2.0f, -3.0f),
@@ -380,7 +380,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView") {
     checkAttributeValues(data, expected, offset, scale);
   }
 
-  SECTION("glm::i8vec2 with noData") {
+  SUBCASE("glm::i8vec2 with noData") {
     std::vector<glm::i8vec2> data{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -399,7 +399,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView") {
     checkAttributeValues(data, expected, std::nullopt, std::nullopt, noData);
   }
 
-  SECTION("glm::i8vec2 with defaultValue") {
+  SUBCASE("glm::i8vec2 with defaultValue") {
     std::vector<glm::i8vec2> data{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -427,7 +427,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView") {
 }
 
 TEST_CASE("Check vecN PropertyAttributePropertyView (normalized)") {
-  SECTION("glm::i8vec2") {
+  SUBCASE("glm::i8vec2") {
     std::vector<glm::i8vec2> data{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -441,7 +441,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("glm::u8vec3") {
+  SUBCASE("glm::u8vec3") {
     std::vector<glm::u8vec3> data{
         glm::u8vec3(1, 2, 3),
         glm::u8vec3(4, 5, 6),
@@ -455,7 +455,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("glm::i8vec2 with offset / scale") {
+  SUBCASE("glm::i8vec2 with offset / scale") {
     std::vector<glm::i8vec2> data{
         glm::i8vec2(28, -1),
         glm::i8vec2(-2, 1),
@@ -480,7 +480,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView (normalized)") {
         JsonValue::Array{scale[0], scale[1]});
   }
 
-  SECTION("glm::i8vec2 with all properties") {
+  SUBCASE("glm::i8vec2 with all properties") {
     const glm::dvec2 offset(-1.0, 4.0);
     const glm::dvec2 scale(2.0, 1.0);
     const glm::i8vec2 noData(0);
@@ -510,7 +510,7 @@ TEST_CASE("Check vecN PropertyAttributePropertyView (normalized)") {
 }
 
 TEST_CASE("Check matN PropertyAttributePropertyView") {
-  SECTION("Float Mat2") {
+  SUBCASE("Float Mat2") {
     // clang-format off
     std::vector<glm::mat2> data{
         glm::mat2(
@@ -527,7 +527,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-  SECTION("Int16 Mat3") {
+  SUBCASE("Int16 Mat3") {
     // clang-format off
     std::vector<glm::i16mat3x3> data{
         glm::i16mat3x3(
@@ -547,7 +547,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-  SECTION("Float Mat4") {
+  SUBCASE("Float Mat4") {
     // clang-format off
     std::vector<glm::mat4> data{
         glm::mat4(
@@ -570,7 +570,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView") {
     checkAttributeValues(data);
   }
 
-  SECTION("Float Mat2 with Offset / Scale") {
+  SUBCASE("Float Mat2 with Offset / Scale") {
     // clang-format off
     std::vector<glm::mat2> data{
         glm::mat2(
@@ -605,7 +605,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView") {
     checkAttributeValues(data, expected, offset, scale);
   }
 
-  SECTION("Int16 Mat3 with NoData") {
+  SUBCASE("Int16 Mat3 with NoData") {
     // clang-format off
     std::vector<glm::i16mat3x3> data{
         glm::i16mat3x3(
@@ -638,7 +638,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView") {
         std::nullopt);
   };
 
-  SECTION("Int16 Mat3 with NoData and DefaultValue") {
+  SUBCASE("Int16 Mat3 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::i16mat3x3> data{
         glm::i16mat3x3(
@@ -677,7 +677,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView") {
 }
 
 TEST_CASE("Check matN PropertyAttributePropertyView (normalized)") {
-  SECTION("Normalized Uint8 Mat2") {
+  SUBCASE("Normalized Uint8 Mat2") {
     // clang-format off
     std::vector<glm::u8mat2x2> data{
         glm::u8mat2x2(
@@ -697,7 +697,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("Normalized Int16 Mat2") {
+  SUBCASE("Normalized Int16 Mat2") {
     // clang-format off
     std::vector<glm::i16mat2x2> data{
         glm::i16mat2x2(
@@ -718,7 +718,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(data, expected);
   }
 
-  SECTION("Normalized Uint8 Mat2 with Offset and Scale") {
+  SUBCASE("Normalized Uint8 Mat2 with Offset and Scale") {
     // clang-format off
     std::vector<glm::u8mat2x2> values{
         glm::u8mat2x2(
@@ -744,7 +744,7 @@ TEST_CASE("Check matN PropertyAttributePropertyView (normalized)") {
     checkNormalizedAttributeValues(values, expected, offset, scale);
   }
 
-  SECTION("Normalized Uint8 Mat2 with all properties") {
+  SUBCASE("Normalized Uint8 Mat2 with all properties") {
     // clang-format off
     std::vector<glm::u8mat2x2> values{
         glm::u8mat2x2(

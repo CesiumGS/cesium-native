@@ -23,7 +23,7 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
@@ -730,7 +730,7 @@ TEST_CASE("GltfReader::loadGltf") {
                            .path()
                            .generic_u8string());
 
-  SECTION("loads glTF") {
+  SUBCASE("loads glTF") {
     GltfReader reader{};
     Future<GltfReaderResult> future =
         reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor);
@@ -755,7 +755,7 @@ TEST_CASE("GltfReader::loadGltf") {
     }
   }
 
-  SECTION(
+  SUBCASE(
       "does not resolve external images when resolveExternalImages is false") {
     GltfReaderOptions options;
     options.resolveExternalImages = false;
@@ -782,14 +782,14 @@ TEST_CASE("GltfReader::postprocessGltf") {
   GltfReader reader;
   GltfReaderResult readerResult;
 
-  SECTION("returns immediately if there is no model") {
+  SUBCASE("returns immediately if there is no model") {
     reader.postprocessGltf(readerResult, options);
     CHECK(!readerResult.model);
     CHECK(readerResult.errors.empty());
     CHECK(readerResult.warnings.empty());
   }
 
-  SECTION("performs requested post processing") {
+  SUBCASE("performs requested post processing") {
     options.decodeDataUrls = true;
 
     Model& model = readerResult.model.emplace();

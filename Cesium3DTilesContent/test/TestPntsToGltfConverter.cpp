@@ -17,8 +17,7 @@
 #include <CesiumGltf/Node.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_double4.hpp>
 #include <glm/ext/vector_float3.hpp>
@@ -34,6 +33,7 @@
 #include <string>
 #include <vector>
 
+using namespace doctest;
 using namespace CesiumGltf;
 using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
