@@ -2,7 +2,7 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/geometric.hpp>
 
 using namespace CesiumGeometry;

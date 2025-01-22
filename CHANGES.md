@@ -2,13 +2,20 @@
 
 ### v0.44.0 - 2025-02-03
 
-##### Fixes :wrench:
+##### Breaking Changes :mega:
 
-- Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+- cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
 
 ##### Additions :tada:
 
+- Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
+- Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
+- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
 - `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
+
+##### Fixes :wrench:
+
+- Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
 
 ### v0.43.0 - 2025-01-02
 

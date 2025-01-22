@@ -2,7 +2,7 @@
 #include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 using namespace CesiumGltf;
 

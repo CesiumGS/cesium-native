@@ -7,7 +7,7 @@
 #include <CesiumQuantizedMeshTerrain/Layer.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <optional>
 #include <variant>
@@ -18,7 +18,7 @@ using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
 TEST_CASE("LayerJsonUtilities") {
-  SECTION("getProjection") {
+  SUBCASE("getProjection") {
     Layer layer;
     std::optional<Projection> maybeProjection;
 
@@ -37,7 +37,7 @@ TEST_CASE("LayerJsonUtilities") {
     CHECK(!maybeProjection);
   }
 
-  SECTION("getTilingScheme") {
+  SUBCASE("getTilingScheme") {
     Layer layer;
     std::optional<QuadtreeTilingScheme> maybeTilingScheme;
 
@@ -78,7 +78,7 @@ TEST_CASE("LayerJsonUtilities") {
     CHECK(!maybeTilingScheme);
   }
 
-  SECTION("getRootBoundingRegion") {
+  SUBCASE("getRootBoundingRegion") {
     Layer layer;
     std::optional<BoundingRegion> maybeBoundingRegion;
 

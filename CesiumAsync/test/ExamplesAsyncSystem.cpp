@@ -10,7 +10,7 @@
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -173,7 +173,7 @@ TEST_CASE("AsyncSystem Examples") {
   };
   //! [capture-by-value]
 
-  SECTION("wait") {
+  SUBCASE("wait") {
     //! [create-request-future]
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
@@ -188,7 +188,7 @@ TEST_CASE("AsyncSystem Examples") {
     //! [wait]
   }
 
-  SECTION("thenInMainThread") {
+  SUBCASE("thenInMainThread") {
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
 
@@ -210,7 +210,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("chaining") {
+  SUBCASE("chaining") {
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
 
@@ -234,7 +234,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("catch") {
+  SUBCASE("catch") {
     //! [catch]
     CesiumAsync::Future<void> future =
         startOperationThatMightFail(asyncSystem)
@@ -253,7 +253,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("unwrapping") {
+  SUBCASE("unwrapping") {
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
 
@@ -279,7 +279,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("then-pass-through") {
+  SUBCASE("then-pass-through") {
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
 
@@ -313,7 +313,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("all") {
+  SUBCASE("all") {
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
 
@@ -365,7 +365,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("create-resolved-future") {
+  SUBCASE("create-resolved-future") {
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
         getAssetAccessor();
 
@@ -402,7 +402,7 @@ TEST_CASE("AsyncSystem Examples") {
     std::move(future).waitInMainThread();
   }
 
-  SECTION("promise") {
+  SUBCASE("promise") {
     //! [compute-something-slowly]
     computeSomethingSlowly("some parameter", [](const SlowValue& value) {
       doSomething(value);
@@ -427,7 +427,7 @@ TEST_CASE("AsyncSystem Examples") {
     future.waitInMainThread();
   }
 
-  SECTION("lambda-move") {
+  SUBCASE("lambda-move") {
     //! [lambda-move]
     CesiumGltf::Model model = getModelFromSomewhere();
     CesiumAsync::Future<void> future =
@@ -444,7 +444,7 @@ TEST_CASE("AsyncSystem Examples") {
     future.waitInMainThread();
   }
 
-  SECTION("use example functions") {
+  SUBCASE("use example functions") {
     CesiumAsync::AsyncSystem& localAsyncSystem = getAsyncSystem();
     myComputeSomethingSlowlyWrapper(localAsyncSystem, "something")
         .waitInMainThread();

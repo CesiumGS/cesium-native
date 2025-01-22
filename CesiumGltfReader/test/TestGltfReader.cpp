@@ -23,7 +23,7 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
@@ -137,7 +137,7 @@ T getRange(const CesiumGltf::AccessorView<T>& accessorView) {
   T max{std::numeric_limits<float>::lowest()};
   for (int32_t i = 0; i < accessorView.size(); ++i) {
     const T& value = accessorView[i];
-    for (uint32_t j = 0; j < static_cast<uint32_t>(value.length()); ++j) {
+    for (glm::length_t j = 0; j < value.length(); ++j) {
       min[j] = glm::min<float>(min[j], value[j]);
       max[j] = glm::max<float>(max[j], value[j]);
     }
@@ -181,7 +181,7 @@ VertexAttributeRange getVertexAttributeRange(const Model& model) {
 
 template <typename T>
 bool epsilonCompare(const T& v1, const T& v2, double epsilon) {
-  for (uint32_t i = 0; i < static_cast<uint32_t>(v1.length()); ++i) {
+  for (glm::length_t i = 0; i < v1.length(); ++i) {
     if (!CesiumUtility::Math::equalsEpsilon(v1[i], v2[i], epsilon)) {
       return false;
     }
@@ -730,7 +730,7 @@ TEST_CASE("GltfReader::loadGltf") {
                            .path()
                            .generic_u8string());
 
-  SECTION("loads glTF") {
+  SUBCASE("loads glTF") {
     GltfReader reader{};
     Future<GltfReaderResult> future =
         reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor);
@@ -755,7 +755,7 @@ TEST_CASE("GltfReader::loadGltf") {
     }
   }
 
-  SECTION(
+  SUBCASE(
       "does not resolve external images when resolveExternalImages is false") {
     GltfReaderOptions options;
     options.resolveExternalImages = false;
@@ -782,14 +782,14 @@ TEST_CASE("GltfReader::postprocessGltf") {
   GltfReader reader;
   GltfReaderResult readerResult;
 
-  SECTION("returns immediately if there is no model") {
+  SUBCASE("returns immediately if there is no model") {
     reader.postprocessGltf(readerResult, options);
     CHECK(!readerResult.model);
     CHECK(readerResult.errors.empty());
     CHECK(readerResult.warnings.empty());
   }
 
-  SECTION("performs requested post processing") {
+  SUBCASE("performs requested post processing") {
     options.decodeDataUrls = true;
 
     Model& model = readerResult.model.emplace();

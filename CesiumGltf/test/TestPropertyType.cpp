@@ -3,7 +3,7 @@
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyType.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstdint>
 
