@@ -115,6 +115,8 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
 
+    list(APPEND DOXYGEN_TAGFILES "${CMAKE_CURRENT_LIST_DIR}/community.tag=https://github.com/CesiumGS/community/blob/main")
+
     cesium_glob_files(
       CESIUM_DOC_TOPICS
       ${CMAKE_CURRENT_LIST_DIR}/topics/*.md
