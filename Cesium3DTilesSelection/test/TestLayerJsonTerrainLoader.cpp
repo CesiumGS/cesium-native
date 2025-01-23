@@ -747,8 +747,10 @@ TEST_CASE("Test load layer json tile content") {
 
     std::vector<std::string> logMessages = pLog->last_formatted();
     REQUIRE(logMessages.size() == 1);
-    REQUIRE(logMessages.back().ends_with(
-        "Received status code 404 for tile content nonexistent.terrain\r\n"));
+    REQUIRE(logMessages.back()
+                .substr(0, logMessages.back().find_last_not_of("\n\r") + 1)
+                .ends_with("Received status code 404 for tile content "
+                           "nonexistent.terrain"));
   }
 }
 
