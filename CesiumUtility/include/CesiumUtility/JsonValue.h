@@ -17,7 +17,7 @@
 namespace CesiumUtility {
 
 /**
- * @brief Attempts a narrowing conversion of `U` into `T` without losing
+ * @brief Attempts a narrowing conversion of `TFrom` into `TTo` without losing
  * information. If a lossless conversion can't be performed, `std::nullopt` is
  * returned.
  *
@@ -29,7 +29,7 @@ template <typename TTo, typename TFrom>
 extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
 
 /**
- * @brief Attempts a narrowing conversion of `U` into `T` without losing
+ * @brief Attempts a narrowing conversion of `TFrom` into `TTo` without losing
  * information. If a lossless conversion can't be performed, `defaultValue` is
  * returned.
  *
