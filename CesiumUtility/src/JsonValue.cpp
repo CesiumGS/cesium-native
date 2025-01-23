@@ -54,7 +54,7 @@ template <> struct LosslessNarrower<float, double> {
 };
 
 // Conversion of a floating-point value to an integer. The floating point number
-// must be integer-valued and within the range of the integer.
+// must be integer-valued and within the range of the integer type.
 template <integral TTo, floating_point TFrom>
 struct LosslessNarrower<TTo, TFrom> {
   static std::optional<TTo> losslessNarrow(TFrom from) noexcept {
