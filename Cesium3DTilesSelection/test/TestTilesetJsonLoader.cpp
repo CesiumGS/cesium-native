@@ -29,6 +29,7 @@
 #include <doctest/doctest.h>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
+#include <spdlog/sinks/ringbuffer_sink.h>
 #include <spdlog/spdlog.h>
 
 #include <array>
@@ -56,14 +57,23 @@ TileLoadResult loadTileContent(
     const std::filesystem::path& tilePath,
     TilesetContentLoader& loader,
     Tile& tile) {
-  auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
-      static_cast<uint16_t>(200),
-      "doesn't matter",
-      CesiumAsync::HttpHeaders{},
-      readFile(tilePath));
+  std::unique_ptr<SimpleAssetResponse> pMockCompletedResponse;
+  if (std::filesystem::exists(tilePath)) {
+    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        readFile(tilePath));
+  } else {
+    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(404),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::vector<std::byte>{});
+  }
   auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
       "GET",
-      "doesn't matter",
+      tilePath.filename().string(),
       CesiumAsync::HttpHeaders{},
       std::move(pMockCompletedResponse));
 
@@ -603,6 +613,34 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(pLoader);
     CHECK(pLoader->getSubtreeLevels() == 2);
     CHECK(pLoader->getAvailableLevels() == 2);
+  }
+
+  SUBCASE("Tile with missing content") {
+    auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+    spdlog::default_logger()->sinks().emplace_back(pLog);
+
+    auto loaderResult = createTilesetJsonLoader(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "ErrorMissingContentTileset.json");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+
+    const auto& tileID = std::get<std::string>(pRootTile->getTileID());
+    CHECK(tileID == "nonexistent.b3dm");
+
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "MultipleKindsOfTilesets" / tileID,
+        *loaderResult.pLoader,
+        *pRootTile);
+    CHECK(tileLoadResult.state == TileLoadResultState::Failed);
+
+    std::vector<std::string> logMessages = pLog->last_formatted();
+    REQUIRE(logMessages.size() == 1);
+    REQUIRE(logMessages.back().ends_with(
+        "Received status code 404 for tile content nonexistent.b3dm\r\n"));
   }
 }
 Cesium3DTilesSelection::TilesetContentLoaderResult<TilesetJsonLoader>
