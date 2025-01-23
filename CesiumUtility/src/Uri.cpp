@@ -195,36 +195,45 @@ std::string Uri::substituteTemplateParameters(
   // Iterate through the string, replacing placeholders where found
   while (currentPos < templateUri.length()) {
     const bool roomForEncodedChar = currentPos < templateUri.length() - 2;
-    if(!inPlaceholder && (
-      templateUri[currentPos] == '{' || 
-      (roomForEncodedChar && templateUri[currentPos] == '%' && templateUri[currentPos + 1] == '7' && (templateUri[currentPos + 2] == 'B' || templateUri[currentPos + 2] == 'b')))) {
+    if (!inPlaceholder &&
+        (templateUri[currentPos] == '{' ||
+         (roomForEncodedChar && templateUri[currentPos] == '%' &&
+          templateUri[currentPos + 1] == '7' &&
+          (templateUri[currentPos + 2] == 'B' ||
+           templateUri[currentPos + 2] == 'b')))) {
       inPlaceholder = true;
       startPos = currentPos + 1;
       // Skip past rest of encoded char if necessary
-      if(templateUri[currentPos] == '%') {
+      if (templateUri[currentPos] == '%') {
         currentPos += 2;
       }
-    } else if(inPlaceholder && (templateUri[currentPos] == '}' ||
-    (roomForEncodedChar && templateUri[currentPos] == '%' && templateUri[currentPos + 1] == '7' && (templateUri[currentPos + 2] == 'D' || templateUri[currentPos + 2] == 'd')))) {
+    } else if (
+        inPlaceholder &&
+        (templateUri[currentPos] == '}' ||
+         (roomForEncodedChar && templateUri[currentPos] == '%' &&
+          templateUri[currentPos + 1] == '7' &&
+          (templateUri[currentPos + 2] == 'D' ||
+           templateUri[currentPos + 2] == 'd')))) {
       placeholder = templateUri.substr(startPos, currentPos - startPos);
       result.append(substitutionCallback(placeholder));
       inPlaceholder = false;
       // Skip past rest of encoded char if necessary
-      if(templateUri[currentPos] == '%') {
+      if (templateUri[currentPos] == '%') {
         currentPos += 2;
       }
-    } else if(!inPlaceholder) {
+    } else if (!inPlaceholder) {
       result += templateUri[currentPos];
     }
 
     ++currentPos;
   }
 
-  if(inPlaceholder) {
+  if (inPlaceholder) {
     throw std::runtime_error("Unclosed template parameter");
   }
 
-  // It's possible some placeholders were replaced with strings shorter than the placeholder itself, so we might need to shrink to fit
+  // It's possible some placeholders were replaced with strings shorter than the
+  // placeholder itself, so we might need to shrink to fit
   result.shrink_to_fit();
 
   return result;
