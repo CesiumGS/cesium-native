@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="600"
+   height="378.953"
+   viewBox="0 0 158.74999 100.26464"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="raster-overlay-mapping.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="414.71813"
+     inkscape:cy="162.10423"
+     inkscape:window-width="3840"
+     inkscape:window-height="2054"
+     inkscape:window-x="3829"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="-0.15689199"
+       originy="-0.075241052"
+       spacingx="0.26458333"
+       spacingy="0.26458333"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       dotted="false"
+       gridanglex="30"
+       gridanglez="30"
+       visible="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="marker366"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path366" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker365"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path365" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker364"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path364" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="ArrowWideHeavy"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Wide, heavy arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="m 1,0 -3,3 h -2 l 3,-3 -3,-3 h 2 z"
+         id="path3" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-0.15689199,-0.07524105)" />
+  <rect
+     style="fill:none;fill-opacity:1;stroke:#808000;stroke-width:1.05833325;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+     id="rect368"
+     width="80.449936"
+     height="84.550354"
+     x="11.898827"
+     y="9.1195488" />
+  <path
+     style="fill:#008000;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1"
+     d="M 12.03854,14.2875 16.668748,93.530205 92.207286,89.16458 86.518745,9.2604161 Z"
+     id="path362" />
+  <g
+     inkscape:label="GridCartesian:X20:Y20"
+     transform="translate(0.1322915,0.1322915)"
+     id="g362"
+     style="stroke-width:0.264583;stroke-dasharray:none;paint-order:stroke fill markers">
+    <g
+       inkscape:label="MajorXGridlines"
+       id="g342"
+       style="stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 5,0 V 100"
+         inkscape:label="MajorXDiv1"
+         id="path324" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 10,0 V 100"
+         inkscape:label="MajorXDiv2"
+         id="path325" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 15,0 V 100"
+         inkscape:label="MajorXDiv3"
+         id="path326" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 20,0 V 100"
+         inkscape:label="MajorXDiv4"
+         id="path327" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 25,0 V 100"
+         inkscape:label="MajorXDiv5"
+         id="path328" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 30,0 V 100"
+         inkscape:label="MajorXDiv6"
+         id="path329" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 35,0 V 100"
+         inkscape:label="MajorXDiv7"
+         id="path330" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 40,0 V 100"
+         inkscape:label="MajorXDiv8"
+         id="path331" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 45,0 V 100"
+         inkscape:label="MajorXDiv9"
+         id="path332" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 50,0 V 100"
+         inkscape:label="MajorXDiv10"
+         id="path333" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 55,0 V 100"
+         inkscape:label="MajorXDiv11"
+         id="path334" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 60,0 V 100"
+         inkscape:label="MajorXDiv12"
+         id="path335" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 65,0 V 100"
+         inkscape:label="MajorXDiv13"
+         id="path336" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 70,0 V 100"
+         inkscape:label="MajorXDiv14"
+         id="path337" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 75,0 V 100"
+         inkscape:label="MajorXDiv15"
+         id="path338" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 80,0 V 100"
+         inkscape:label="MajorXDiv16"
+         id="path339" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 85,0 V 100"
+         inkscape:label="MajorXDiv17"
+         id="path340" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 90,0 V 100"
+         inkscape:label="MajorXDiv18"
+         id="path341" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 95,0 V 100"
+         inkscape:label="MajorXDiv19"
+         id="path342" />
+    </g>
+    <g
+       inkscape:label="MajorYGridlines"
+       id="g361"
+       style="stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,5 H 100"
+         inkscape:label="MajorYDiv1"
+         id="path343" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,10 H 100"
+         inkscape:label="MajorYDiv2"
+         id="path344" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,15 H 100"
+         inkscape:label="MajorYDiv3"
+         id="path345" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,20 H 100"
+         inkscape:label="MajorYDiv4"
+         id="path346" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,25 H 100"
+         inkscape:label="MajorYDiv5"
+         id="path347" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,30 H 100"
+         inkscape:label="MajorYDiv6"
+         id="path348" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,35 H 100"
+         inkscape:label="MajorYDiv7"
+         id="path349" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,40 H 100"
+         inkscape:label="MajorYDiv8"
+         id="path350" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,45 H 100"
+         inkscape:label="MajorYDiv9"
+         id="path351" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,50 H 100"
+         inkscape:label="MajorYDiv10"
+         id="path352" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,55 H 100"
+         inkscape:label="MajorYDiv11"
+         id="path353" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,60 H 100"
+         inkscape:label="MajorYDiv12"
+         id="path354" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,65 H 100"
+         inkscape:label="MajorYDiv13"
+         id="path355" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,70 H 100"
+         inkscape:label="MajorYDiv14"
+         id="path356" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,75 H 100"
+         inkscape:label="MajorYDiv15"
+         id="path357" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,80 H 100"
+         inkscape:label="MajorYDiv16"
+         id="path358" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,85 H 100"
+         inkscape:label="MajorYDiv17"
+         id="path359" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,90 H 100"
+         inkscape:label="MajorYDiv18"
+         id="path360" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+         d="M 0,95 H 100"
+         inkscape:label="MajorYDiv19"
+         id="path361" />
+    </g>
+    <rect
+       x="0"
+       y="0"
+       width="100"
+       height="100"
+       style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;paint-order:stroke fill markers"
+       inkscape:label="Border"
+       id="rect361" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#008000;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       x="114.55305"
+       y="33.824299"
+       id="text367"><tspan
+         sodipodi:role="line"
+         id="tspan367"
+         style="stroke-width:0.264583"
+         x="114.55305"
+         y="33.824299"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       x="110.98552"
+       y="14.882724"
+       id="text366"><tspan
+         sodipodi:role="line"
+         id="tspan366"
+         style="fill:#1a1a1a;fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
+         x="110.98552"
+         y="14.882724">Pixels in overlay source</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       x="111.1173"
+       y="35.081203"
+       id="text366-7"><tspan
+         sodipodi:role="line"
+         id="tspan366-3"
+         style="fill:#1a1a1a;fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
+         x="111.1173"
+         y="35.081203">RasterOverlayTile rectangle</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       x="111.1173"
+       y="25.045931"
+       id="text366-8"><tspan
+         sodipodi:role="line"
+         id="tspan366-8"
+         style="fill:#1a1a1a;fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
+         x="111.1173"
+         y="25.045931">Geometry tile</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#1a1a1a;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       x="111.1173"
+       y="45.111385"
+       id="text369"><tspan
+         sodipodi:role="line"
+         id="tspan369"
+         style="fill:#1a1a1a;fill-opacity:1;stroke-width:0.264583;stroke-dasharray:none"
+         x="111.1173"
+         y="45.111385">Output image rectangle</tspan></text>
+    <rect
+       style="fill:none;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect366"
+       width="4.5689397"
+       height="4.8335242"
+       x="105.35828"
+       y="11.579194" />
+  </g>
+  <path
+     style="fill:none;stroke:#0000ff;stroke-width:1.05833;stroke-dasharray:none;stroke-opacity:1"
+     d="M 9.9999999,5.2645829 10.264583,94.999998 H 95.264582 L 94.999998,5.0000001 Z"
+     id="path363" />
+  <path
+     style="fill:none;stroke:#808000;stroke-width:1.05833;stroke-dasharray:none;stroke-opacity:1"
+     d="m 105.45035,31.94206 0.0145,4.802155 h 4.63483 l -0.0145,-4.816313 z"
+     id="path363-8" />
+  <rect
+     style="fill:#008000;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.264583;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+     id="rect367"
+     width="4.914711"
+     height="5"
+     x="105.31767"
+     y="21.791456" />
+  <path
+     style="fill:none;stroke:#0000ff;stroke-width:1.05833;stroke-dasharray:none;stroke-opacity:1"
+     d="m 105.45035,41.972245 0.0145,4.802155 h 4.63483 l -0.0145,-4.816313 z"
+     id="path369" />
+</svg>

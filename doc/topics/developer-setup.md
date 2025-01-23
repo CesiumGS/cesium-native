@@ -159,7 +159,7 @@ cmake -B build -S .
 3. Next, we run the clang-tidy target of Cesium Native's cmake build, which will run clang-tidy. clang-tidy produces a lot of not-very-useful output, so we send it to a file instead of the console:
 
 ```
-cmake --build build-tidy --target clang-tidy > clang-tidy.log
+cmake --build build --target clang-tidy > clang-tidy.log
 ```
 
 4. Finally, we use `sed` to extract the errors and warnings from the log:
@@ -187,7 +187,7 @@ cmake -B build -S . -DCLANG_TIDY_PATH=$(brew --prefix llvm)/bin/clang-tidy -DCLA
 3. Next, we run the clang-tidy target of Cesium Native's cmake build, which will run clang-tidy. clang-tidy produces a lot of not-very-useful output, so we send it to a file instead of the console:
 
 ```
-cmake --build build-tidy --target clang-tidy > clang-tidy.log
+cmake --build build --target clang-tidy > clang-tidy.log
 ```
 
 4. Finally, we use `sed` to extract the errors and warnings from the log:
