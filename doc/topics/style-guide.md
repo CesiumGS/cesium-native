@@ -209,6 +209,16 @@ struct Bar { ... }
 
 > Although private classes and functions aren't required to have the same level of documentation, it never hurts to add any, especially if they have non-obvious assumptions, scope, or consequences.
 
+## ⌛ Deprecation
+
+Not covered by C++ Core Guidelines.
+
+Cesium Native currently does not have any measures for deprecation or backwards compatibility. This grants us the mobility needed for rapid, iterative development.
+
+Breaking changes can be made without warning, but they should be well-documented under the `Breaking Changes` section in [CHANGES.md](https://github.com/CesiumGS/cesium-native/blob/main/CHANGES.md).
+
+> This may change if Cesium Native is officially released as v1.0.0 with a stabilized API.
+
 ## 🗂️ Other
 
 Not covered by C++ Core Guidelines.
