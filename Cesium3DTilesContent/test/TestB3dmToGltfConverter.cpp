@@ -8,7 +8,7 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <filesystem>
@@ -17,7 +17,7 @@ using namespace Cesium3DTilesContent;
 using namespace CesiumGltf;
 
 TEST_CASE("B3dmToGltfConverter") {
-  SECTION("includes CESIUM_RTC extension in extensionsUsed") {
+  SUBCASE("includes CESIUM_RTC extension in extensionsUsed") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
 
@@ -31,7 +31,7 @@ TEST_CASE("B3dmToGltfConverter") {
     CHECK(gltf.isExtensionRequired(ExtensionCesiumRTC::ExtensionName));
   }
 
-  SECTION("Index bufferViews created from Draco are valid") {
+  SUBCASE("Index bufferViews created from Draco are valid") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath =
         testFilePath / "BatchTables" / "batchedWithBatchTable-draco.b3dm";

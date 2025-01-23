@@ -705,11 +705,10 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
-    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
-      _requestHeaders{std::move(requestHeaders)},
+      _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{std::move(pLoader)},
       _pRootTile{std::move(pRootTile)},
       _userCredit(
@@ -739,7 +738,7 @@ TilesetContentManager::TilesetContentManager(
     RasterOverlayCollection&& overlayCollection,
     const std::string& url)
     : _externals{externals},
-      _requestHeaders{},
+      _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
       _pRootTile{},
       _userCredit(
@@ -891,7 +890,7 @@ TilesetContentManager::TilesetContentManager(
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
     : _externals{externals},
-      _requestHeaders{},
+      _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
       _pRootTile{},
       _userCredit(

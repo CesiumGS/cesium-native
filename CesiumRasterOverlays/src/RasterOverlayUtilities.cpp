@@ -25,6 +25,7 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_float2.hpp>
@@ -36,6 +37,7 @@
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -432,6 +434,87 @@ bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
 
 void copyImages(const Model& parentModel, Model& result);
 void copyMetadataTables(const Model& parentModel, Model& result);
+
+/**
+ * @brief Helper struct for working with non-indexed triangles. Returns either
+ * the indices from an index accessor view, or generates new indices.
+ */
+template <typename TIndex> struct IndicesViewRemapper {
+  IndicesViewRemapper(
+      const Model& model,
+      const MeshPrimitive& primitive,
+      int32_t primitiveIndices,
+      int64_t numVertices)
+      : accessorView(std::nullopt),
+        indicesCount(0),
+        primitiveMode(primitive.mode) {
+    AccessorView<TIndex> view(model, primitiveIndices);
+    viewStatus = view.status();
+    if (viewStatus == AccessorViewStatus::Valid) {
+      accessorView = std::move(view);
+      if (primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
+        indicesCount = accessorView->size();
+      } else if (
+          primitiveMode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
+          primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+        // With a triangle strip or fan, each additional vertex past the first
+        // three adds an additional triangle
+        indicesCount = (accessorView->size() - 2) * 3;
+      }
+    } else if (primitiveIndices < 0) {
+      // Non-indexed triangles
+      indicesCount = numVertices;
+      viewStatus = AccessorViewStatus::Valid;
+    }
+  }
+
+  int64_t size() const { return indicesCount; }
+
+  AccessorViewStatus status() const { return viewStatus; }
+
+  const TIndex operator[](int64_t i) const {
+    if (i < 0 || i >= indicesCount) {
+      throw std::range_error("index out of range");
+    }
+
+    if (accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
+      return (*accessorView)[i];
+    } else if (
+        accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
+      // Indices 0, 1, 2 map normally, indices 3, 4, 5 map to 2, 1, 3,
+      // indices 6, 7, 8 map to 2, 3, 4, etc.
+      const int64_t startIndex = i / 3;
+      const int64_t triIndex = i % 3;
+      // For every other triangle we need to reverse the order of the first two
+      // indices to maintain proper winding.
+      if (startIndex % 2 == 1 && triIndex < 2) {
+        return triIndex == 0 ? (*accessorView)[startIndex + 1]
+                             : (*accessorView)[startIndex];
+      }
+      return (*accessorView)[startIndex + triIndex];
+    } else if (
+        accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+      // Indices 0, 1, 2 map normally, indices 3, 4, 5 map to 0, 2, 3,
+      // indices 6, 7, 8 map to 0, 3, 4, etc.
+      const int64_t startIndex = i / 3;
+      const int64_t triIndex = i % 3;
+      if (triIndex == 0) {
+        return (*accessorView)[0];
+      }
+      return (*accessorView)[startIndex + triIndex];
+    }
+
+    // The indices of a non-indexed primitive are simply 0, 1, 2, 3, 4...
+    return static_cast<TIndex>(i);
+  }
+
+private:
+  std::optional<AccessorView<TIndex>> accessorView;
+  int64_t indicesCount;
+  int32_t primitiveMode;
+  AccessorViewStatus viewStatus;
+};
+
 } // namespace
 
 /*static*/ std::optional<Model>
@@ -831,6 +914,7 @@ bool upsamplePrimitiveForRasterOverlays(
   indexBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   int64_t vertexSizeFloats = 0;
+  int64_t positionAttributeCount = 0;
   int32_t uvAccessorIndex = -1;
   int32_t positionAttributeIndex = -1;
 
@@ -915,6 +999,7 @@ bool upsamplePrimitiveForRasterOverlays(
     // get position to be used to create skirts later
     if (attribute.first == "POSITION") {
       positionAttributeIndex = int32_t(attributes.size() - 1);
+      positionAttributeCount = accessor.count;
     }
   }
 
@@ -931,7 +1016,11 @@ bool upsamplePrimitiveForRasterOverlays(
   const bool keepAboveV = !isSouthChild(childID);
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
-  const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
+  const IndicesViewRemapper<TIndex> indicesView(
+      parentModel,
+      primitive,
+      primitive.indices,
+      positionAttributeCount);
 
   if (uvView.status() != AccessorViewStatus::Valid ||
       indicesView.status() != AccessorViewStatus::Valid) {
@@ -1389,9 +1478,11 @@ void addSkirt(
         position -= center;
 
         for (uint32_t c = 0; c < 3; ++c) {
-          output.push_back(static_cast<float>(position[c]));
-          attribute.minimums[c] = glm::min(attribute.minimums[c], position[c]);
-          attribute.maximums[c] = glm::max(attribute.maximums[c], position[c]);
+          output.push_back(static_cast<float>(position[glm::length_t(c)]));
+          attribute.minimums[c] =
+              glm::min(attribute.minimums[c], position[glm::length_t(c)]);
+          attribute.maximums[c] =
+              glm::max(attribute.maximums[c], position[glm::length_t(c)]);
         }
       } else {
         for (uint32_t c = 0;
@@ -1596,12 +1687,63 @@ bool upsamplePrimitiveForRasterOverlays(
     const std::string_view& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
-      primitive.indices < 0 ||
-      primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
-    // Not indexed triangles, so we don't know how to divide this primitive
+  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_FAN &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
+    // Not triangles, so we don't know how to divide this primitive
     // (yet). So remove it.
     return false;
+  }
+
+  if (primitive.indices < 0 ||
+      primitive.indices > static_cast<int64_t>(parentModel.accessors.size())) {
+    const auto& positionIt = primitive.attributes.find("POSITION");
+    if (positionIt == primitive.attributes.end()) {
+      // No position buffer - nothing we can do here
+      return false;
+    }
+
+    // No indices buffer - pick the smallest indices type that will fit all
+    // vertices
+    const Accessor& accessor =
+        parentModel.getSafe(parentModel.accessors, positionIt->second);
+    if (accessor.count < 1) {
+      // Invalid accessor
+      return false;
+    } else if (accessor.count < 0xff) {
+      return upsamplePrimitiveForRasterOverlays<uint8_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    } else if (accessor.count < 0xffff) {
+      return upsamplePrimitiveForRasterOverlays<uint16_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    } else {
+      return upsamplePrimitiveForRasterOverlays<uint32_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    }
   }
 
   const Accessor& indicesAccessorGltf =

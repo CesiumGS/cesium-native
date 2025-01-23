@@ -1,14 +1,12 @@
-#include "CesiumRasterOverlays/RasterOverlay.h"
-#include "CesiumRasterOverlays/RasterOverlayTile.h"
-#include "CesiumRasterOverlays/UrlTemplateRasterOverlay.h"
-
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <filesystem>
 

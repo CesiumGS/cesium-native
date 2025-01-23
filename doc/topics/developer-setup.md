@@ -21,6 +21,7 @@ This guide contains the basic setup information for developers looking to work w
 - [Generate Documentation](#generate-documentation)
 - [Regenerate glTF and 3D Tiles classes](#regenerate-gltf-and-3d-tiles-classes)
 - [Regenerate Dependency Graphs](#regenerate-dependency-graphs)
+- [Run clang-tidy](#run-clang-tidy)
 
 <!--! \endcond -->
 
@@ -113,3 +114,85 @@ cd tools/dep-graph-gen
 npm install
 ```
 * From the `tools/dep-graph-gen` directory, run `npm run generate-dep-graph` to regenerate the graphs.
+
+## Run clang-tidy
+
+We use [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) to help improve the quality of the code, and an automated process that runs on every commit ensures that there are no clang-tidy warnings or errors. To run it locally, follow the instructions for your system.
+
+### Windows
+
+It's recommended to use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) to run clang-tidy on Windows. The following instructions cover using clang-tidy through Visual Studio 2022's CMake support. To set up clang-tidy on WSL2, follow the Linux instructions below.
+
+1. Install clang-tidy for Windows. This can be obtained from [the installer on the LLVM GitHub releases page](https://github.com/llvm/llvm-project/releases). Download `LLVM-19.x.x-win64.exe` and run the installer.
+
+2. clang-tidy requires a `compile_commands.json` file to be generated in the build directory in order to run. This file is only generated with the cmake Ninja or Unix Makefile generators. Visual Studio 2022's CMake support uses the Ninja generator. Open the Cesium Native cmake project with Visual Studio 2022.
+
+3. Right click on the root `CMakeLists.txt` and select "CMake Settings for cesium-native"
+![Visual Studio CMake settings](../img/vs-cmake-settings.png)
+
+4. Specify the path to the installed `clang-tidy.exe` under "CMake command arguments":
+![Visual Studio CMake path](../img/vs-clang-tidy-path.png)
+
+5. Under "CMake variables and cache", check `CESIUM_ENABLE_CLANG_TIDY_ON_BUILD`:
+![CESIUM_ENABLE_CLANG_TIDY_ON_BUILD](../img/vs-clang-tidy-on-build.png)
+
+6. Build cesium-native through Visual Studio 2022 as normal. clang-tidy will be invoked for each build command and its warnings and errors will appear in the build output.
+
+
+### Linux
+
+1. To get clang-tidy, install llvm 19+. For Debian-based systems, LLVM provides an easy install script:
+
+```
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh 19
+```
+Binaries and source releases for use with other platforms can be downloaded from the [LLVM GitHub releases page](https://github.com/llvm/llvm-project/releases).
+
+2. cmake should detect the installed `clang-tidy-19` automatically, so the project can be configured normally:
+
+```
+cmake -B build -S .
+```
+
+3. Next, we run the clang-tidy target of Cesium Native's cmake build, which will run clang-tidy. clang-tidy produces a lot of not-very-useful output, so we send it to a file instead of the console:
+
+```
+cmake --build build --target clang-tidy > clang-tidy.log
+```
+
+4. Finally, we use `sed` to extract the errors and warnings from the log:
+
+```
+sed -n '/error:/,/^$/p' clang-tidy.log
+sed -n '/warning:/,/^$/p' clang-tidy.log
+```
+
+
+### macOS
+
+1. To get clang-tidy, install llvm 19+. The easiest way is via Homebrew:
+
+```
+brew install llvm
+```
+
+2. Installing llvm via Homebrew does _not_ add it to your path, so that it doesn't conflict with Xcode. So, we need to specify its location explicitly when running cmake Cesium Native's configure for use with clang-tidy:
+
+```
+cmake -B build -S . -DCLANG_TIDY_PATH=$(brew --prefix llvm)/bin/clang-tidy -DCLANG_TIDY_RUNNER_PATH=$(brew --prefix llvm)/bin/run-clang-tidy
+```
+
+3. Next, we run the clang-tidy target of Cesium Native's cmake build, which will run clang-tidy. clang-tidy produces a lot of not-very-useful output, so we send it to a file instead of the console:
+
+```
+cmake --build build --target clang-tidy > clang-tidy.log
+```
+
+4. Finally, we use `sed` to extract the errors and warnings from the log:
+
+```
+sed -n '/error:/,/^$/p' clang-tidy.log
+sed -n '/warning:/,/^$/p' clang-tidy.log
+```

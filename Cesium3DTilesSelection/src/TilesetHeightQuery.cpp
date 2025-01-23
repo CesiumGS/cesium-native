@@ -133,9 +133,9 @@ void TilesetHeightQuery::intersectVisibleTile(
   // Set ray info to this hit if closer, or the first hit
   if (!this->intersection.has_value()) {
     this->intersection = std::move(gltfIntersectResult.hit);
-  } else {
+  } else if (gltfIntersectResult.hit) {
     double prevDistSq = this->intersection->rayToWorldPointDistanceSq;
-    double thisDistSq = intersection->rayToWorldPointDistanceSq;
+    double thisDistSq = gltfIntersectResult.hit->rayToWorldPointDistanceSq;
     if (thisDistSq < prevDistSq)
       this->intersection = std::move(gltfIntersectResult.hit);
   }

@@ -1,7 +1,7 @@
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesWriter/TilesetWriter.h>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <rapidjson/document.h>
 
 #include <algorithm>
