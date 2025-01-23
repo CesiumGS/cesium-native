@@ -74,7 +74,6 @@ Tileset::Tileset(
                   _loadedTiles,
                   externals,
                   options.ellipsoid},
-              std::vector<CesiumAsync::IAssetAccessor::THeader>{},
               std::move(pCustomLoader),
               std::move(pRootTile)),
       } {}

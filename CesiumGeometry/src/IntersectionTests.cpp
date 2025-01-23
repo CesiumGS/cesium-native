@@ -7,6 +7,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/vector_double2.hpp>
@@ -16,7 +17,6 @@
 #include <glm/matrix.hpp>
 
 #include <cmath>
-#include <cstdint>
 #include <limits>
 #include <optional>
 #include <utility>
@@ -205,7 +205,7 @@ std::optional<double> IntersectionTests::rayAABBParametric(
   double tmin = greatestMin;
   double tmax = smallestMax;
 
-  for (uint32_t i = 0; i < 3; ++i) {
+  for (glm::length_t i = 0; i < 3; ++i) {
     if (glm::abs(dir[i]) < Math::Epsilon6) {
       continue;
     } else {

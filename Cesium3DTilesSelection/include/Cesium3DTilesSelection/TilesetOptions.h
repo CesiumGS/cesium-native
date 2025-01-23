@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 
@@ -328,6 +329,11 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * If no ellipsoid is set, Ellipsoid::WGS84 will be used by default.
    */
   CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
+
+  /**
+   * @brief HTTP headers to attach to requests made for this tileset.
+   */
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 };
 
 } // namespace Cesium3DTilesSelection
