@@ -196,3 +196,16 @@ TEST_CASE("Uri::addQuery") {
       Uri::addQuery("https://example.com/", "a", "!@#$%^&()_+{}|") ==
       "https://example.com/?a=%21%40%23%24%25%5E%26%28%29_%2B%7B%7D%7C");
 }
+
+TEST_CASE("Uri::substituteTemplateParameters") {
+  CHECK(
+    Uri::substituteTemplateParameters("https://example.com/{a}/{b}/{c}", [](const std::string& placeholder) { return placeholder; }) == "https://example.com/a/b/c"
+  );
+  CHECK(
+    Uri::substituteTemplateParameters("https://example.com/%7Ba%7D/test", []([[maybe_unused]] const std::string& placeholder) { return "1"; }) == "https://example.com/1/test"
+  );
+  CHECK(
+    Uri::substituteTemplateParameters("https://example.com/enco%24d%5Ee%2Fd%7Bs%7Dtr1n%25g", []([[maybe_unused]] const std::string& placeholder) { return "teststr"; }) == "https://example.com/enco%24d%5Ee%2Fdteststrtr1n%25g"
+  );
+  CHECK_THROWS_WITH_AS(Uri::substituteTemplateParameters("https://example.com/{unclosed placeholder", [](const std::string& placeholder) { return placeholder; }), "Unclosed template parameter", std::runtime_error);
+}

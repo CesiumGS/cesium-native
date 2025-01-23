@@ -184,32 +184,48 @@ std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
 std::string Uri::substituteTemplateParameters(
     const std::string& templateUri,
     const std::function<SubstitutionCallbackSignature>& substitutionCallback) {
-  const std::string& decodedUri =
-      ada::unicode::percent_decode(templateUri, templateUri.find('%'));
   std::string result;
+  result.reserve(templateUri.length());
   std::string placeholder;
 
+  bool inPlaceholder = false;
   size_t startPos = 0;
-  size_t nextPos;
+  size_t currentPos = 0;
 
-  // Find the start of a parameter
-  while ((nextPos = decodedUri.find('{', startPos)) != std::string::npos) {
-    result.append(decodedUri, startPos, nextPos - startPos);
-
-    // Find the end of this parameter
-    ++nextPos;
-    const size_t endPos = decodedUri.find('}', nextPos);
-    if (endPos == std::string::npos) {
-      throw std::runtime_error("Unclosed template parameter");
+  // Iterate through the string, replacing placeholders where found
+  while (currentPos < templateUri.length()) {
+    const bool roomForEncodedChar = currentPos < templateUri.length() - 2;
+    if(!inPlaceholder && (
+      templateUri[currentPos] == '{' || 
+      (roomForEncodedChar && templateUri[currentPos] == '%' && templateUri[currentPos + 1] == '7' && (templateUri[currentPos + 2] == 'B' || templateUri[currentPos + 2] == 'b')))) {
+      inPlaceholder = true;
+      startPos = currentPos + 1;
+      // Skip past rest of encoded char if necessary
+      if(templateUri[currentPos] == '%') {
+        currentPos += 2;
+      }
+    } else if(inPlaceholder && (templateUri[currentPos] == '}' ||
+    (roomForEncodedChar && templateUri[currentPos] == '%' && templateUri[currentPos + 1] == '7' && (templateUri[currentPos + 2] == 'D' || templateUri[currentPos + 2] == 'd')))) {
+      placeholder = templateUri.substr(startPos, currentPos - startPos);
+      result.append(substitutionCallback(placeholder));
+      inPlaceholder = false;
+      // Skip past rest of encoded char if necessary
+      if(templateUri[currentPos] == '%') {
+        currentPos += 2;
+      }
+    } else if(!inPlaceholder) {
+      result += templateUri[currentPos];
     }
 
-    placeholder = decodedUri.substr(nextPos, endPos - nextPos);
-    result.append(substitutionCallback(placeholder));
-
-    startPos = endPos + 1;
+    ++currentPos;
   }
 
-  result.append(decodedUri, startPos, templateUri.length() - startPos);
+  if(inPlaceholder) {
+    throw std::runtime_error("Unclosed template parameter");
+  }
+
+  // It's possible some placeholders were replaced with strings shorter than the placeholder itself, so we might need to shrink to fit
+  result.shrink_to_fit();
 
   return result;
 }
