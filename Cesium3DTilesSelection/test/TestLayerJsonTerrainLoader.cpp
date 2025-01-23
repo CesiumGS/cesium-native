@@ -26,8 +26,8 @@
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/ringbuffer_sink.h>
+#include <spdlog/spdlog.h>
 
 #include <cstdint>
 #include <filesystem>
@@ -714,7 +714,7 @@ TEST_CASE("Test load layer json tile content") {
     }
   }
 
-SUBCASE("Should error when fetching non-existent .terrain tiles") {
+  SUBCASE("Should error when fetching non-existent .terrain tiles") {
     auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
     spdlog::default_logger()->sinks().emplace_back(pLog);
 
@@ -734,8 +734,7 @@ SUBCASE("Should error when fetching non-existent .terrain tiles") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"0.0.0/1.0.0.terrain",
          createMockAssetRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "nonexistent.terrain")});
+             testDataPath / "CesiumTerrainTileJson" / "nonexistent.terrain")});
 
     // check the load result
     auto tileLoadResultFuture = loadTile(
