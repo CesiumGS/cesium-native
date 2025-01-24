@@ -11,7 +11,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <stdexcept>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -25,6 +25,9 @@ const std::string HTTPS_PREFIX = "https:";
 const std::string FILE_PREFIX = "file:///";
 const char WINDOWS_PATH_SEP = '\\';
 const char PATH_SEP = '/';
+const std::regex TEMPLATE_REGEX(
+    "(\\{|%7B)(.*?)(\\}|%7D)",
+    std::regex::icase | std::regex::optimize);
 
 // C++ locale settings might change which values std::isalpha checks for. We
 // only want ASCII.
@@ -184,52 +187,43 @@ std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
 std::string Uri::substituteTemplateParameters(
     const std::string& templateUri,
     const std::function<SubstitutionCallbackSignature>& substitutionCallback) {
+
   std::string result;
+  // The output string will *probably* be at least as long as the input string.
+  // If not, we shrink_to_fit later.
   result.reserve(templateUri.length());
   std::string placeholder;
 
-  bool inPlaceholder = false;
+  std::sregex_iterator begin(
+      templateUri.begin(),
+      templateUri.end(),
+      TEMPLATE_REGEX),
+      end;
+
   size_t startPos = 0;
-  size_t currentPos = 0;
 
-  // Iterate through the string, replacing placeholders where found
-  while (currentPos < templateUri.length()) {
-    const bool roomForEncodedChar = currentPos < templateUri.length() - 2;
-    if (!inPlaceholder &&
-        (templateUri[currentPos] == '{' ||
-         (roomForEncodedChar && templateUri[currentPos] == '%' &&
-          templateUri[currentPos + 1] == '7' &&
-          (templateUri[currentPos + 2] == 'B' ||
-           templateUri[currentPos + 2] == 'b')))) {
-      inPlaceholder = true;
-      startPos = currentPos + 1;
-      // Skip past rest of encoded char if necessary
-      if (templateUri[currentPos] == '%') {
-        currentPos += 2;
+  for (auto i = begin; i != end; i++) {
+    if (i->ready()) {
+      const size_t position = static_cast<size_t>(i->position(0));
+      if (position > startPos) {
+        result.append(templateUri.substr(startPos, position - startPos));
       }
-    } else if (
-        inPlaceholder &&
-        (templateUri[currentPos] == '}' ||
-         (roomForEncodedChar && templateUri[currentPos] == '%' &&
-          templateUri[currentPos + 1] == '7' &&
-          (templateUri[currentPos + 2] == 'D' ||
-           templateUri[currentPos + 2] == 'd')))) {
-      placeholder = templateUri.substr(startPos, currentPos - startPos);
-      result.append(substitutionCallback(placeholder));
-      inPlaceholder = false;
-      // Skip past rest of encoded char if necessary
-      if (templateUri[currentPos] == '%') {
-        currentPos += 2;
-      }
-    } else if (!inPlaceholder) {
-      result += templateUri[currentPos];
+
+      placeholder = templateUri.substr(
+          static_cast<size_t>(i->position(2)),
+          static_cast<size_t>(i->length(2)));
+      result += ada::unicode::percent_encode(
+          substitutionCallback(placeholder),
+          ada::character_sets::WWW_FORM_URLENCODED_PERCENT_ENCODE);
+
+      startPos = position + static_cast<size_t>(i->length(0));
     }
-
-    ++currentPos;
   }
 
-  if (inPlaceholder) {
-    throw std::runtime_error("Unclosed template parameter");
+  // Append rest of URL if any remaining
+  if (startPos < templateUri.length() - 1) {
+    result.append(
+        templateUri.substr(startPos, templateUri.length() - startPos));
   }
 
   // It's possible some placeholders were replaced with strings shorter than the

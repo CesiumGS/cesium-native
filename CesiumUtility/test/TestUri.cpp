@@ -2,6 +2,9 @@
 
 #include <doctest/doctest.h>
 
+#include <map>
+#include <string>
+
 using namespace CesiumUtility;
 
 TEST_CASE("Uri::getPath") {
@@ -198,27 +201,46 @@ TEST_CASE("Uri::addQuery") {
 }
 
 TEST_CASE("Uri::substituteTemplateParameters") {
+  const std::map<std::string, std::string> params{
+      {"a", "aValue"},
+      {"b", "bValue"},
+      {"c", "cValue"},
+      {"s", "teststr"},
+      {"one", "1"}};
+
+  const auto substitutionCallback = [&params](const std::string& placeholder) {
+    auto it = params.find(placeholder);
+    return it == params.end() ? placeholder : it->second;
+  };
+
   CHECK(
       Uri::substituteTemplateParameters(
           "https://example.com/{a}/{b}/{c}",
-          [](const std::string& placeholder) { return placeholder; }) ==
-      "https://example.com/a/b/c");
+          substitutionCallback) == "https://example.com/aValue/bValue/cValue");
   CHECK(
       Uri::substituteTemplateParameters(
-          "https://example.com/%7Ba%7D/test",
-          []([[maybe_unused]] const std::string& placeholder) {
-            return "1";
-          }) == "https://example.com/1/test");
+          "https://example.com/%7Bone%7D/test",
+          substitutionCallback) == "https://example.com/1/test");
   CHECK(
       Uri::substituteTemplateParameters(
           "https://example.com/enco%24d%5Ee%2Fd%7Bs%7Dtr1n%25g",
           []([[maybe_unused]] const std::string& placeholder) {
             return "teststr";
           }) == "https://example.com/enco%24d%5Ee%2Fdteststrtr1n%25g");
-  CHECK_THROWS_WITH_AS(
+  CHECK(
       Uri::substituteTemplateParameters(
-          "https://example.com/{unclosed placeholder",
-          [](const std::string& placeholder) { return placeholder; }),
-      "Unclosed template parameter",
-      std::runtime_error);
+          "https://example.com/{a",
+          substitutionCallback) == "https://example.com/{a");
+  CHECK(
+      Uri::substituteTemplateParameters(
+          "https://example.com/{}",
+          substitutionCallback) == "https://example.com/");
+  CHECK(
+      Uri::substituteTemplateParameters(
+          "https://example.com/%7Ba}",
+          substitutionCallback) == "https://example.com/aValue");
+  CHECK(
+      Uri::substituteTemplateParameters(
+          "https://example.com/a}",
+          substitutionCallback) == "https://example.com/a}");
 }
