@@ -21,7 +21,10 @@ CullingVolume createCullingVolume(
   const double l = -r;
 
   const double positionLen = glm::length(position);
-  const double n = std::max(1.0, std::nextafter(positionLen, std::numeric_limits<double>::max()) - positionLen);
+  const double n = std::max(
+      1.0,
+      std::nextafter(positionLen, std::numeric_limits<double>::max()) -
+          positionLen);
 
   // TODO: this is all ported directly from CesiumJS, can probably be refactored
   // to be more efficient with GLM.
@@ -70,4 +73,4 @@ CullingVolume createCullingVolume(
 
   return {leftPlane, rightPlane, topPlane, bottomPlane};
 }
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeometry

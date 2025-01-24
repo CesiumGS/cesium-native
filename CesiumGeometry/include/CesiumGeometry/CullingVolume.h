@@ -58,4 +58,4 @@ CullingVolume createCullingVolume(
     const glm::dvec3& up,
     double fovx,
     double fovy) noexcept;
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeometry
