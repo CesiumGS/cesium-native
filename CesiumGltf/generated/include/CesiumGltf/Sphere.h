@@ -10,6 +10,9 @@ namespace CesiumGltf {
  * @brief Parameters describing a sphere shape.
  */
 struct CESIUMGLTF_API Sphere final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Sphere";
 
   /**

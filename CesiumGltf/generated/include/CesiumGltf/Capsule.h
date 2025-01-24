@@ -10,6 +10,9 @@ namespace CesiumGltf {
  * @brief Parameters describing a capsule shape.
  */
 struct CESIUMGLTF_API Capsule final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Capsule";
 
   /**

@@ -19,7 +19,8 @@ struct ExtensionKhrImplicitShapes;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionKhrImplicitShapes} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionKhrImplicitShapes
+ * "ExtensionKhrImplicitShapes" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionKhrImplicitShapesReader {
 public:
@@ -51,7 +52,7 @@ public:
    * @brief Reads an instance of ExtensionKhrImplicitShapes from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrImplicitShapes>
@@ -61,7 +62,7 @@ public:
    * @brief Reads an array of instances of ExtensionKhrImplicitShapes from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

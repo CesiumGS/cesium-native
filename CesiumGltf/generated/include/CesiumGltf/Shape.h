@@ -14,21 +14,34 @@
 
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a node's physics collision geometry.
+ * @brief Parameters describing an implicit shape.
  */
 struct CESIUMGLTF_API Shape final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Shape";
 
   /**
    * @brief Known values for Specifies the shape type.
    */
   struct Type {
+    /** @brief A sphere with a specified radius, centered at the origin in local
+     * space. */
     inline static const std::string sphere = "sphere";
 
+    /** @brief An axis-aligned box with a size per-axis, centered at the origin
+     * in local space */
     inline static const std::string box = "box";
 
+    /** @brief A capsule shape, centered at the origin in local space,
+     * equivalent to the convex hull of two spheres located along the Y axis (in
+     * local space) at a specified distance. */
     inline static const std::string capsule = "capsule";
 
+    /** @brief A cylinder shape, centered at the origin in local space,
+     * equivalent to the convex hull of two circles in the X/Z plane positioned
+     * along the Y axis at a specified distance. */
     inline static const std::string cylinder = "cylinder";
   };
 

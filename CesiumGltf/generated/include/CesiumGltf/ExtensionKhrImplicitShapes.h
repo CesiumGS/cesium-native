@@ -10,11 +10,16 @@
 
 namespace CesiumGltf {
 /**
- * @brief Top level collision primitives.
+ * @brief Top level implicit shapes.
  */
 struct CESIUMGLTF_API ExtensionKhrImplicitShapes final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionKhrImplicitShapes";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_implicit_shapes";
 
   /**

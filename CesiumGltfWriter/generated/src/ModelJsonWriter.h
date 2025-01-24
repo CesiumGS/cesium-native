@@ -353,6 +353,8 @@ struct ExtensionCesiumPrimitiveOutlineJsonWriter {
 struct ExtensionKhrImplicitShapesJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrImplicitShapes;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_implicit_shapes";
 
   static void write(
@@ -364,6 +366,8 @@ struct ExtensionKhrImplicitShapesJsonWriter {
 struct ExtensionExtImplicitEllipsoidRegionJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtImplicitEllipsoidRegion;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_implicit_ellipsoid_region";
 
   static void write(
@@ -375,6 +379,8 @@ struct ExtensionExtImplicitEllipsoidRegionJsonWriter {
 struct ExtensionExtImplicitCylinderRegionJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtImplicitCylinderRegion;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_implicit_cylinder_region";
 
   static void write(
@@ -386,6 +392,8 @@ struct ExtensionExtImplicitCylinderRegionJsonWriter {
 struct ExtensionExtPrimitiveVoxelsJsonWriter {
   using ValueType = CesiumGltf::ExtensionExtPrimitiveVoxels;
 
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_primitive_voxels";
 
   static void write(

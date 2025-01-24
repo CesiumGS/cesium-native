@@ -19,7 +19,8 @@ struct ExtensionContent3dTilesContentVoxels;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link ExtensionContent3dTilesContentVoxels} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::ExtensionContent3dTilesContentVoxels
+ * "ExtensionContent3dTilesContentVoxels" instances from JSON.
  */
 class CESIUM3DTILESREADER_API ExtensionContent3dTilesContentVoxelsReader {
 public:
@@ -53,7 +54,7 @@ public:
    * @brief Reads an instance of ExtensionContent3dTilesContentVoxels from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<
@@ -64,7 +65,7 @@ public:
    * @brief Reads an array of instances of ExtensionContent3dTilesContentVoxels
    * from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

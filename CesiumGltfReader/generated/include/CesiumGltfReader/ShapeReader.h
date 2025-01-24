@@ -19,7 +19,7 @@ struct Shape;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Shape} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Shape "Shape" instances from JSON.
  */
 class CESIUMGLTFREADER_API ShapeReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of Shape from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::Shape>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of Shape from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::Shape>>

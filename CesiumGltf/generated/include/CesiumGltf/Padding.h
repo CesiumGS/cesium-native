@@ -14,6 +14,9 @@ namespace CesiumGltf {
  * data come from neighboring grids in each dimension.
  */
 struct CESIUMGLTF_API Padding final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Padding";
 
   /**

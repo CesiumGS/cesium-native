@@ -19,7 +19,7 @@ struct Sphere;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Sphere} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Sphere "Sphere" instances from JSON.
  */
 class CESIUMGLTFREADER_API SphereReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of Sphere from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::Sphere>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of Sphere from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::Sphere>>
