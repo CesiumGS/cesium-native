@@ -175,7 +175,7 @@ private:
   const double _sseDenominator;
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const CullingVolume _cullingVolume;
+  const CesiumGeometry::CullingVolume _cullingVolume;
 };
 
 } // namespace Cesium3DTilesSelection
