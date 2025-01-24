@@ -2,7 +2,7 @@
 
 #include <CesiumGeometry/Plane.h>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumGeometry {
 
 /**
  * @brief A culling volume, defined by four planes.

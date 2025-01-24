@@ -5,7 +5,9 @@
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
-namespace Cesium3DTilesSelection {
+#include <cmath>
+
+namespace CesiumGeometry {
 
 CullingVolume createCullingVolume(
     const glm::dvec3& position,
@@ -18,7 +20,8 @@ CullingVolume createCullingVolume(
   const double r = glm::tan(0.5 * fovx);
   const double l = -r;
 
-  const double n = 1.0;
+  const double positionLen = glm::length(position);
+  const double n = std::max(1.0, std::nextafter(positionLen, std::numeric_limits<double>::max()) - positionLen);
 
   // TODO: this is all ported directly from CesiumJS, can probably be refactored
   // to be more efficient with GLM.
