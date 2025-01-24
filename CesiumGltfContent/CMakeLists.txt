@@ -32,8 +32,6 @@ set_target_properties(CesiumGltfContent
     PUBLIC_HEADER "${CESIUM_GLTF_CONTENT_PUBLIC_HEADERS}"
 )
 
-target_compile_definitions(CesiumGltfContent PRIVATE GLM_ENABLE_EXPERIMENTAL)
-
 target_sources(
     CesiumGltfContent
     PRIVATE
