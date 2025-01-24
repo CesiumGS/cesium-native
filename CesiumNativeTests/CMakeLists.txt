@@ -93,7 +93,6 @@ PRIVATE
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
-  GLM_ENABLE_EXPERIMENTAL
   CESIUM_NATIVE_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/../data\"
 )
 

@@ -45,8 +45,6 @@ PRIVATE
     s2::s2
 )
 
-target_compile_definitions(CesiumGeospatial PRIVATE GLM_ENABLE_EXPERIMENTAL)
-
 if(CESIUM_DISABLE_DEFAULT_ELLIPSOID)
   target_compile_definitions(CesiumGeospatial PUBLIC CESIUM_DISABLE_DEFAULT_ELLIPSOID=1)
 endif()

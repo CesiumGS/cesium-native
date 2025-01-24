@@ -4,6 +4,9 @@
 
 ##### Breaking Changes :mega:
 
+- Removed `Math::rotation`. Use `glm::rotation` from `<glm/gtx/quaternion.hpp>` instead.
+- Removed `Math::perpVector`. Use `glm::perp` from `<glm/gtx/perpendicular.hpp>` instead.
+- Using Cesium Native in non-cmake projects now requires manually defining `GLM_ENABLE_EXPERIMENTAL`.
 - cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
 
 ##### Additions :tada:
