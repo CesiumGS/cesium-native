@@ -1,13 +1,22 @@
-#include "CesiumGeospatial/S2CellBoundingVolume.h"
-
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Math.h>
 
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/matrix.hpp>
 
 #include <array>
+#include <cstddef>
+#include <limits>
+#include <optional>
+#include <span>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -157,9 +166,9 @@ CesiumGeometry::CullingResult S2CellBoundingVolume::intersectPlane(
     const CesiumGeometry::Plane& plane) const noexcept {
   size_t plusCount = 0;
   size_t negCount = 0;
-  for (size_t i = 0; i < this->_vertices.size(); ++i) {
+  for (const auto& vertex : this->_vertices) {
     double distanceToPlane =
-        glm::dot(plane.getNormal(), this->_vertices[i]) + plane.getDistance();
+        glm::dot(plane.getNormal(), vertex) + plane.getDistance();
     if (distanceToPlane < 0.0) {
       ++negCount;
     } else {

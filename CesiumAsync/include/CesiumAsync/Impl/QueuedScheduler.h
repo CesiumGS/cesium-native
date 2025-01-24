@@ -6,6 +6,8 @@
 #include <atomic>
 
 namespace CesiumAsync {
+// Begin omitting doxygen warnings for Impl namespace
+//! @cond Doxygen_Suppress
 namespace CesiumImpl {
 
 class QueuedScheduler {
@@ -86,6 +88,8 @@ private:
   struct Impl;
   std::unique_ptr<Impl> _pImpl;
 };
+//! @endcond
+// End omitting doxygen warnings for Impl namespace
 
 } // namespace CesiumImpl
 } // namespace CesiumAsync

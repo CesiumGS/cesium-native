@@ -50,7 +50,11 @@ struct NetworkImageAssetDescriptor
 
 } // namespace CesiumGltfReader
 
+/** @brief Hash implementation for \ref
+ * CesiumGltfReader::NetworkImageAssetDescriptor. */
 template <> struct std::hash<CesiumGltfReader::NetworkImageAssetDescriptor> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumGltfReader::NetworkImageAssetDescriptor. */
   std::size_t operator()(
       const CesiumGltfReader::NetworkImageAssetDescriptor& key) const noexcept;
 };

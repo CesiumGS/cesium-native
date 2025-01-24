@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumJsonWriter/JsonWriter.h"
-#include "CesiumJsonWriter/Library.h"
+#include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/Library.h>
 
 #include <any>
 #include <functional>
@@ -32,6 +32,10 @@ enum class ExtensionState {
   Disabled
 };
 
+/**
+ * @brief A context for writing extensions where known extensions and their
+ * handlers can be registered.
+ */
 class CESIUMJSONWRITER_API ExtensionWriterContext {
 private:
   template <typename TExtension>
@@ -102,6 +106,16 @@ public:
   void
   setExtensionState(const std::string& extensionName, ExtensionState newState);
 
+  /**
+   * @brief Attempts to create an `ExtensionHandler` for the given object,
+   * returning `nullptr` if no handler could be found.
+   *
+   * @param extensionName The name of the extension.
+   * @param obj The object of unknown type to create the handler for.
+   * @param extendedObjectType The `TypeName` of the extended object.
+   * @returns The handler for this extension, or `nullptr` if none could be
+   * created.
+   */
   ExtensionHandler<std::any> createExtensionHandler(
       const std::string_view& extensionName,
       const std::any& obj,

@@ -1,10 +1,11 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Gzip.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
+#include <cstddef>
 #include <filesystem>
+#include <vector>
 
 using namespace CesiumUtility;
 
@@ -20,19 +21,19 @@ std::filesystem::path invalidCompressedDataPath =
 } // namespace
 
 TEST_CASE("isGzip") {
-  SECTION("returns true if data is gzipped") {
+  SUBCASE("returns true if data is gzipped") {
     std::vector<std::byte> compressedData = readFile(compressedDataPath);
     CHECK(isGzip(compressedData));
   }
 
-  SECTION("returns false if data is not gzipped") {
+  SUBCASE("returns false if data is not gzipped") {
     std::vector<std::byte> uncompressedData = readFile(uncompressedDataPath);
     CHECK(!isGzip(uncompressedData));
   }
 }
 
 TEST_CASE("gzip") {
-  SECTION("gzips data") {
+  SUBCASE("gzips data") {
     std::vector<std::byte> uncompressedData = readFile(uncompressedDataPath);
     std::vector<std::byte> compressedData;
     bool result = gzip(uncompressedData, compressedData);
@@ -48,7 +49,7 @@ TEST_CASE("gzip") {
 }
 
 TEST_CASE("gunzip") {
-  SECTION("gunzips data") {
+  SUBCASE("gunzips data") {
     std::vector<std::byte> compressedData = readFile(compressedDataPath);
     std::vector<std::byte> uncompressedData = readFile(uncompressedDataPath);
 
@@ -58,7 +59,7 @@ TEST_CASE("gunzip") {
     CHECK(decompressedData == uncompressedData);
   }
 
-  SECTION("returns false for invalid header") {
+  SUBCASE("returns false for invalid header") {
     std::vector<std::byte> invalidCompressedData =
         readFile(uncompressedDataPath);
 
@@ -68,7 +69,7 @@ TEST_CASE("gunzip") {
     CHECK(!result);
   }
 
-  SECTION("returns false for truncated data") {
+  SUBCASE("returns false for truncated data") {
     std::vector<std::byte> invalidCompressedData =
         readFile(invalidCompressedDataPath);
 

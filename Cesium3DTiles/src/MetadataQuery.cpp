@@ -1,4 +1,12 @@
+#include <Cesium3DTiles/Class.h>
+#include <Cesium3DTiles/ClassProperty.h>
+#include <Cesium3DTiles/MetadataEntity.h>
 #include <Cesium3DTiles/MetadataQuery.h>
+#include <Cesium3DTiles/Schema.h>
+
+#include <optional>
+#include <string>
+#include <utility>
 
 namespace Cesium3DTiles {
 
@@ -14,10 +22,8 @@ MetadataQuery::findFirstPropertyWithSemantic(
 
   const Cesium3DTiles::Class& klass = classIt->second;
 
-  for (auto it = entity.properties.begin(); it != entity.properties.end();
-       ++it) {
-    const std::pair<std::string, CesiumUtility::JsonValue>& property = *it;
-    auto propertyIt = klass.properties.find(property.first);
+  for (const auto& propertyValue : entity.properties) {
+    auto propertyIt = klass.properties.find(propertyValue.first);
     if (propertyIt == klass.properties.end())
       continue;
 
@@ -26,9 +32,9 @@ MetadataQuery::findFirstPropertyWithSemantic(
       return FoundMetadataProperty{
           classIt->first,
           classIt->second,
-          it->first,
+          propertyValue.first,
           propertyIt->second,
-          it->second};
+          propertyValue.second};
     }
   }
 

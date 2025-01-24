@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionKhrTextureTransform.h"
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
 
 #include <glm/glm.hpp>
 
@@ -34,6 +34,10 @@ public:
    */
   KhrTextureTransform(const ExtensionKhrTextureTransform& extension) noexcept;
 
+  /**
+   * @brief The current \ref KhrTextureTransformStatus of the transform
+   * operation.
+   */
   KhrTextureTransformStatus status() const noexcept { return this->_status; }
 
   /**

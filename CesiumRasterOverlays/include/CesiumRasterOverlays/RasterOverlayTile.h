@@ -72,9 +72,9 @@ public:
    *
    * Values of this enumeration are returned by
    * {@link Cesium3DTilesSelection::RasterMappedTo3DTile::update}, which in turn is called by
-   * {@link Cesium3DTilesSelection::TilesetContentManager::updateDoneState}. These values are
-   * used to determine whether a leaf tile has been reached, but the associated
-   * raster tiles are not yet the most detailed ones that are available.
+   * `TilesetContentManager::updateDoneState`. These values are used to
+   * determine whether a leaf tile has been reached, but the associated raster
+   * tiles are not yet the most detailed ones that are available.
    */
   enum class MoreDetailAvailable {
 

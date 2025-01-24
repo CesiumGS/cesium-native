@@ -1,3 +1,4 @@
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/Model.h>
@@ -5,9 +6,14 @@
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/quaternion_trigonometric.hpp>
+#include <glm/fwd.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#include <cstddef>
+#include <optional>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;
@@ -16,7 +22,7 @@ using namespace CesiumUtility;
 TEST_CASE("GltfUtilities::getNodeTransform") {
   Node node;
 
-  SECTION("gets matrix if it has 16 elements") {
+  SUBCASE("gets matrix if it has 16 elements") {
     // clang-format off
     node.matrix = {
       1.0, 2.0, 3.0, 4.0,
@@ -36,7 +42,7 @@ TEST_CASE("GltfUtilities::getNodeTransform") {
     CHECK(m[3] == glm::dvec4(13.0, 14.0, 15.0, 16.0));
   }
 
-  SECTION("gets matrix if it has more than 16 elements (ignoring extras)") {
+  SUBCASE("gets matrix if it has more than 16 elements (ignoring extras)") {
     // clang-format off
     node.matrix = {
       1.0, 2.0, 3.0, 4.0,
@@ -57,7 +63,7 @@ TEST_CASE("GltfUtilities::getNodeTransform") {
     CHECK(m[3] == glm::dvec4(13.0, 14.0, 15.0, 16.0));
   }
 
-  SECTION("return std::nullopt if matrix has too few elements") {
+  SUBCASE("return std::nullopt if matrix has too few elements") {
     // clang-format off
     node.matrix = {
       1.0, 2.0, 3.0, 4.0,
@@ -71,7 +77,7 @@ TEST_CASE("GltfUtilities::getNodeTransform") {
     REQUIRE(!maybeMatrix);
   }
 
-  SECTION("gets translation/rotation/scale if matrix is not specified") {
+  SUBCASE("gets translation/rotation/scale if matrix is not specified") {
     glm::dquat ninetyDegreesAboutX =
         glm::angleAxis(Math::degreesToRadians(90.0), glm::dvec3(1.0, 0.0, 0.0));
 
@@ -118,21 +124,21 @@ TEST_CASE("GltfUtilities::getNodeTransform") {
         Math::Epsilon14));
   }
 
-  SECTION("returns std::nullopt if translation has too few elements") {
+  SUBCASE("returns std::nullopt if translation has too few elements") {
     node.translation = {1.0, 2.0};
     std::optional<glm::dmat4x4> maybeMatrix =
         GltfUtilities::getNodeTransform(node);
     REQUIRE(!maybeMatrix);
   }
 
-  SECTION("returns std::nullopt if rotation has too few elements") {
+  SUBCASE("returns std::nullopt if rotation has too few elements") {
     node.rotation = {1.0, 2.0, 3.0};
     std::optional<glm::dmat4x4> maybeMatrix =
         GltfUtilities::getNodeTransform(node);
     REQUIRE(!maybeMatrix);
   }
 
-  SECTION("returns std::nullopt if scale has too few elements") {
+  SUBCASE("returns std::nullopt if scale has too few elements") {
     node.scale = {1.0, 2.0};
     std::optional<glm::dmat4x4> maybeMatrix =
         GltfUtilities::getNodeTransform(node);
@@ -143,7 +149,7 @@ TEST_CASE("GltfUtilities::getNodeTransform") {
 TEST_CASE("GltfUtilities::setNodeTransform") {
   Node node;
 
-  SECTION("sets matrix") {
+  SUBCASE("sets matrix") {
     glm::dmat4x4 m(
         glm::dvec4(1.0, 2.0, 3.0, 4.0),
         glm::dvec4(5.0, 6.0, 7.0, 8.0),
@@ -171,7 +177,7 @@ TEST_CASE("GltfUtilities::setNodeTransform") {
     CHECK(node.matrix[15] == 16.0);
   }
 
-  SECTION("resets translation/rotation/scale to identity") {
+  SUBCASE("resets translation/rotation/scale to identity") {
     node.translation = {1.0, 2.0, 3.0};
     node.rotation = {3.0, 6.0, 9.0, 12.0};
     node.scale = {2.0, 4.0, 8.0};
@@ -206,13 +212,13 @@ TEST_CASE("GltfUtilities::setNodeTransform") {
 TEST_CASE("GltfUtilities::removeUnusedTextures") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.textures.emplace_back();
     GltfUtilities::removeUnusedTextures(m);
     CHECK(m.textures.empty());
   }
 
-  SECTION("does not remove used") {
+  SUBCASE("does not remove used") {
     m.textures.emplace_back();
     m.materials.emplace_back()
         .pbrMetallicRoughness.emplace()
@@ -222,7 +228,7 @@ TEST_CASE("GltfUtilities::removeUnusedTextures") {
     CHECK(!m.textures.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.textures.emplace_back();
     m.textures.emplace_back();
 
@@ -244,20 +250,20 @@ TEST_CASE("GltfUtilities::removeUnusedTextures") {
 TEST_CASE("GltfUtilities::removeUnusedSamplers") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.samplers.emplace_back();
     GltfUtilities::removeUnusedSamplers(m);
     CHECK(m.samplers.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.samplers.emplace_back();
     m.textures.emplace_back().sampler = 0;
     GltfUtilities::removeUnusedSamplers(m);
     CHECK(!m.samplers.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.samplers.emplace_back();
     m.samplers.emplace_back();
 
@@ -274,20 +280,20 @@ TEST_CASE("GltfUtilities::removeUnusedSamplers") {
 TEST_CASE("GltfUtilities::removeUnusedImages") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.images.emplace_back();
     GltfUtilities::removeUnusedImages(m);
     CHECK(m.images.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.images.emplace_back();
     m.textures.emplace_back().source = 0;
     GltfUtilities::removeUnusedImages(m);
     CHECK(!m.images.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.images.emplace_back();
     m.images.emplace_back();
 
@@ -304,13 +310,13 @@ TEST_CASE("GltfUtilities::removeUnusedImages") {
 TEST_CASE("GltfUtilities::removeUnusedAccessors") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.accessors.emplace_back();
     GltfUtilities::removeUnusedAccessors(m);
     CHECK(m.accessors.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.accessors.emplace_back();
     m.meshes.emplace_back().primitives.emplace_back().attributes["POSITION"] =
         0;
@@ -318,7 +324,7 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
     CHECK(!m.accessors.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.accessors.emplace_back();
     m.accessors.emplace_back();
 
@@ -340,20 +346,20 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
 TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.bufferViews.emplace_back();
     GltfUtilities::removeUnusedBufferViews(m);
     CHECK(m.bufferViews.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.bufferViews.emplace_back();
     m.accessors.emplace_back().bufferView = 0;
     GltfUtilities::removeUnusedBufferViews(m);
     CHECK(!m.bufferViews.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.bufferViews.emplace_back();
     m.bufferViews.emplace_back();
 
@@ -370,20 +376,20 @@ TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
 TEST_CASE("GltfUtilities::removeUnusedBuffers") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.buffers.emplace_back();
     GltfUtilities::removeUnusedBuffers(m);
     CHECK(m.buffers.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.buffers.emplace_back();
     m.bufferViews.emplace_back().buffer = 0;
     GltfUtilities::removeUnusedBuffers(m);
     CHECK(!m.buffers.empty());
   }
 
-  SECTION("does not remove buffer used by EXT_meshopt_compression") {
+  SUBCASE("does not remove buffer used by EXT_meshopt_compression") {
     m.buffers.emplace_back();
     m.bufferViews.emplace_back()
         .addExtension<ExtensionBufferViewExtMeshoptCompression>()
@@ -392,7 +398,7 @@ TEST_CASE("GltfUtilities::removeUnusedBuffers") {
     CHECK(!m.buffers.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.buffers.emplace_back();
     m.buffers.emplace_back();
 
@@ -409,20 +415,20 @@ TEST_CASE("GltfUtilities::removeUnusedBuffers") {
 TEST_CASE("GltfUtilities::removeUnusedMeshes") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.meshes.emplace_back();
     GltfUtilities::removeUnusedMeshes(m);
     CHECK(m.meshes.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.meshes.emplace_back();
     m.nodes.emplace_back().mesh = 0;
     GltfUtilities::removeUnusedMeshes(m);
     CHECK(!m.meshes.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.meshes.emplace_back();
     m.meshes.emplace_back();
 
@@ -439,20 +445,20 @@ TEST_CASE("GltfUtilities::removeUnusedMeshes") {
 TEST_CASE("GltfUtilities::removeUnusedMaterials") {
   Model m;
 
-  SECTION("removes unused") {
+  SUBCASE("removes unused") {
     m.materials.emplace_back();
     GltfUtilities::removeUnusedMaterials(m);
     CHECK(m.materials.empty());
   }
 
-  SECTION("does not removed used") {
+  SUBCASE("does not removed used") {
     m.materials.emplace_back();
     m.meshes.emplace_back().primitives.emplace_back().material = 0;
     GltfUtilities::removeUnusedMaterials(m);
     CHECK(!m.materials.empty());
   }
 
-  SECTION("updates indices when removing") {
+  SUBCASE("updates indices when removing") {
     m.materials.emplace_back();
     m.materials.emplace_back();
 
@@ -478,7 +484,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     buffer.cesium.data[i] = std::byte(i);
   }
 
-  SECTION("removes unused bytes at the beginning of the buffer") {
+  SUBCASE("removes unused bytes at the beginning of the buffer") {
     BufferView& bv = m.bufferViews.emplace_back();
     bv.buffer = 0;
     bv.byteOffset = 10;
@@ -495,7 +501,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     }
   }
 
-  SECTION("removes unused bytes at the end of the buffer") {
+  SUBCASE("removes unused bytes at the end of the buffer") {
     BufferView& bv = m.bufferViews.emplace_back();
     bv.buffer = 0;
     bv.byteOffset = 0;
@@ -512,7 +518,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     }
   }
 
-  SECTION("removes unused bytes in the middle of the buffer") {
+  SUBCASE("removes unused bytes in the middle of the buffer") {
     BufferView& bv = m.bufferViews.emplace_back();
     bv.buffer = 0;
     bv.byteOffset = 10;
@@ -529,7 +535,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     }
   }
 
-  SECTION("does not remove gaps less than 8 bytes") {
+  SUBCASE("does not remove gaps less than 8 bytes") {
     BufferView& bv1 = m.bufferViews.emplace_back();
     bv1.buffer = 0;
     bv1.byteOffset = 1;
@@ -552,7 +558,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
     }
   }
 
-  SECTION("counts meshopt bufferViews when determining used byte ranges") {
+  SUBCASE("counts meshopt bufferViews when determining used byte ranges") {
     BufferView& bv = m.bufferViews.emplace_back();
     bv.buffer = 0;
     bv.byteOffset = 0;
@@ -577,7 +583,7 @@ TEST_CASE("GltfUtilities::compactBuffers") {
 }
 
 TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
-  SECTION("merges two buffers into one") {
+  SUBCASE("merges two buffers into one") {
     Model m;
     m.buffers.emplace_back();
     m.buffers.emplace_back();
@@ -611,7 +617,7 @@ TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
     CHECK(m.bufferViews[1].byteLength == 10);
   }
 
-  SECTION("leaves buffer with a URI and no data intact") {
+  SUBCASE("leaves buffer with a URI and no data intact") {
     Model m;
     m.buffers.emplace_back();
     m.buffers.emplace_back();
@@ -656,7 +662,7 @@ TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
     CHECK(m.bufferViews[2].byteLength == 100);
   }
 
-  SECTION("leaves a meshopt fallback buffer with no data intact even if it has "
+  SUBCASE("leaves a meshopt fallback buffer with no data intact even if it has "
           "no URI") {
     Model m;
     m.buffers.emplace_back();

@@ -3,6 +3,13 @@
 #include <CesiumUtility/Assert.h>
 
 #include <glm/common.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 using namespace Cesium3DTilesContent::CesiumImpl;
 

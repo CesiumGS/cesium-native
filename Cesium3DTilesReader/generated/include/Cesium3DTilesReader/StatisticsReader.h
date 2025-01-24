@@ -19,7 +19,7 @@ struct Statistics;
 namespace Cesium3DTilesReader {
 
 /**
- * @brief Reads {@link Statistics} instances from JSON.
+ * @brief Reads \ref Cesium3DTiles::Statistics "Statistics" instances from JSON.
  */
 class CESIUM3DTILESREADER_API StatisticsReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of Statistics from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<Cesium3DTiles::Statistics>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of Statistics from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<Cesium3DTiles::Statistics>>

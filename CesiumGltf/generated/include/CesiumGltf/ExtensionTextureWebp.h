@@ -13,7 +13,12 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionTextureWebp final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ExtensionTextureWebp";
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "EXT_texture_webp";
 
   /**

@@ -1,8 +1,11 @@
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/Math.h"
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+
+#include <optional>
+#include <utility>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
@@ -20,16 +23,16 @@ TEST_CASE("GlobeRectangle::isEmpty") { CHECK(GlobeRectangle::EMPTY.isEmpty()); }
 TEST_CASE("GlobeRectangle::equals") {
   GlobeRectangle simple(0.1, 0.2, 0.3, 0.4);
 
-  SECTION("returns true for self") {
+  SUBCASE("returns true for self") {
     CHECK(GlobeRectangle::equals(simple, simple));
   }
 
-  SECTION("returns true for equal rectangle") {
+  SUBCASE("returns true for equal rectangle") {
     GlobeRectangle equalRectangle(0.1, 0.2, 0.3, 0.4);
     CHECK(GlobeRectangle::equals(simple, equalRectangle));
   }
 
-  SECTION("returns false for unequal rectangles") {
+  SUBCASE("returns false for unequal rectangles") {
     GlobeRectangle unequalWest(0.11, 0.2, 0.3, 0.4);
     CHECK(!GlobeRectangle::equals(simple, unequalWest));
 
@@ -43,7 +46,7 @@ TEST_CASE("GlobeRectangle::equals") {
     CHECK(!GlobeRectangle::equals(simple, unequalNorth));
   }
 
-  SECTION("splitAtAntiMeridian") {
+  SUBCASE("splitAtAntiMeridian") {
     // Cross Prime meridian, do not cross Antimeridian
     GlobeRectangle nonCrossing =
         GlobeRectangle::fromDegrees(-10.0, -20.0, 30.0, 40.0);
@@ -112,17 +115,17 @@ TEST_CASE("GlobeRectangle::equals") {
 TEST_CASE("GlobeRectangle::equalsEpsilon") {
   GlobeRectangle simple(0.1, 0.2, 0.3, 0.4);
 
-  SECTION("returns true for self") {
+  SUBCASE("returns true for self") {
     CHECK(GlobeRectangle::equalsEpsilon(simple, simple, Math::Epsilon6));
   }
 
-  SECTION("returns true for exactly equal rectangle") {
+  SUBCASE("returns true for exactly equal rectangle") {
     GlobeRectangle equalRectangle(0.1, 0.2, 0.3, 0.4);
     CHECK(
         GlobeRectangle::equalsEpsilon(simple, equalRectangle, Math::Epsilon6));
   }
 
-  SECTION("returns true for rectangle within epsilon") {
+  SUBCASE("returns true for rectangle within epsilon") {
     GlobeRectangle epsilonWest(0.10001, 0.200, 0.3, 0.4);
     CHECK(GlobeRectangle::equalsEpsilon(simple, epsilonWest, Math::Epsilon3));
 
@@ -136,7 +139,7 @@ TEST_CASE("GlobeRectangle::equalsEpsilon") {
     CHECK(GlobeRectangle::equalsEpsilon(simple, epsilonNorth, Math::Epsilon3));
   }
 
-  SECTION("returns false for rectangle outside epsilon") {
+  SUBCASE("returns false for rectangle outside epsilon") {
     GlobeRectangle unequalWest(0.11, 0.2, 0.3, 0.4);
     CHECK(!GlobeRectangle::equalsEpsilon(simple, unequalWest, Math::Epsilon3));
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Library.h"
-
+#include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>

@@ -1,8 +1,8 @@
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <cstdint>
 #include <optional>
-#include <stdexcept>
 
 using namespace CesiumUtility;
 

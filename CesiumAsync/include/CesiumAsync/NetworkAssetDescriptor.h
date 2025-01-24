@@ -61,7 +61,10 @@ struct NetworkAssetDescriptor {
 
 } // namespace CesiumAsync
 
+/** @brief Hash implementation for \ref CesiumAsync::NetworkAssetDescriptor. */
 template <> struct std::hash<CesiumAsync::NetworkAssetDescriptor> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumAsync::NetworkAssetDescriptor. */
   std::size_t
   operator()(const CesiumAsync::NetworkAssetDescriptor& key) const noexcept;
 };

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/Library.h"
-#include "CesiumGeometry/OctreeTileID.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/Library.h>
+#include <CesiumGeometry/OctreeTileID.h>
 
 #include <glm/vec3.hpp>
 

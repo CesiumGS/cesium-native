@@ -1,4 +1,6 @@
-#include "Cesium3DTilesSelection/TileID.h"
+#include <Cesium3DTilesSelection/TileID.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <string>
 #include <variant>

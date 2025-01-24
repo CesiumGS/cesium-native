@@ -1,10 +1,23 @@
-#include "CesiumGltf/AccessorUtility.h"
-#include "CesiumGltf/ExtensionExtMeshGpuInstancing.h"
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorUtility.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_uint2_sized.hpp>
 
+#include <cstdint>
 #include <cstring>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 
@@ -30,7 +43,7 @@ TEST_CASE("Test CountFromAccessor") {
   accessor.type = Accessor::Type::SCALAR;
   accessor.count = bufferView.byteLength;
 
-  SECTION("Handles invalid accessor") {
+  SUBCASE("Handles invalid accessor") {
     // Wrong type
     TexCoordAccessorType texcoordAccessor =
         AccessorView<AccessorTypes::VEC2<uint8_t>>(model, accessor);
@@ -48,7 +61,7 @@ TEST_CASE("Test CountFromAccessor") {
     REQUIRE(std::visit(CountFromAccessor{}, featureIdAccessor) == 0);
   }
 
-  SECTION("Retrieves from valid accessor") {
+  SUBCASE("Retrieves from valid accessor") {
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<uint8_t>(model, accessor);
     REQUIRE(
@@ -90,7 +103,7 @@ TEST_CASE("Test getPositionAccessorView") {
   MeshPrimitive primitive = mesh.primitives.emplace_back();
   primitive.attributes.insert({"POSITION", 0});
 
-  SECTION("Handles invalid accessor type") {
+  SUBCASE("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::SCALAR;
 
     PositionAccessorType positionAccessor =
@@ -101,7 +114,7 @@ TEST_CASE("Test getPositionAccessorView") {
     model.accessors[0].type = Accessor::Type::VEC3;
   }
 
-  SECTION("Handles unsupported accessor component type") {
+  SUBCASE("Handles unsupported accessor component type") {
     model.accessors[0].componentType = Accessor::ComponentType::BYTE;
 
     PositionAccessorType positionAccessor =
@@ -112,7 +125,7 @@ TEST_CASE("Test getPositionAccessorView") {
     model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
   }
 
-  SECTION("Creates from valid accessor") {
+  SUBCASE("Creates from valid accessor") {
     PositionAccessorType positionAccessor =
         getPositionAccessorView(model, primitive);
     REQUIRE(positionAccessor.status() == AccessorViewStatus::Valid);
@@ -151,7 +164,7 @@ TEST_CASE("Test getNormalAccessorView") {
   MeshPrimitive primitive = mesh.primitives.emplace_back();
   primitive.attributes.insert({"NORMAL", 0});
 
-  SECTION("Handles invalid accessor type") {
+  SUBCASE("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::SCALAR;
 
     NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
@@ -161,7 +174,7 @@ TEST_CASE("Test getNormalAccessorView") {
     model.accessors[0].type = Accessor::Type::VEC3;
   }
 
-  SECTION("Handles unsupported accessor component type") {
+  SUBCASE("Handles unsupported accessor component type") {
     model.accessors[0].componentType = Accessor::ComponentType::BYTE;
 
     NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
@@ -171,7 +184,7 @@ TEST_CASE("Test getNormalAccessorView") {
     model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
   }
 
-  SECTION("Creates from valid accessor") {
+  SUBCASE("Creates from valid accessor") {
     NormalAccessorType normalAccessor = getNormalAccessorView(model, primitive);
     REQUIRE(normalAccessor.status() == AccessorViewStatus::Valid);
     REQUIRE(static_cast<size_t>(normalAccessor.size()) == normals.size());
@@ -233,7 +246,7 @@ TEST_CASE("Test getFeatureIdAccessorView") {
   primitive.attributes.insert({"_FEATURE_ID_0", 0});
   primitive.attributes.insert({"_FEATURE_ID_1", 1});
 
-  SECTION("Handles invalid feature ID set index") {
+  SUBCASE("Handles invalid feature ID set index") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, primitive, 2);
     REQUIRE(
@@ -242,7 +255,7 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
   }
 
-  SECTION("Handles invalid accessor type") {
+  SUBCASE("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::VEC2;
 
     FeatureIdAccessorType featureIDAccessor =
@@ -255,7 +268,7 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
 
-  SECTION("Handles invalid normalized accessor") {
+  SUBCASE("Handles invalid normalized accessor") {
     model.accessors[1].normalized = true;
 
     FeatureIdAccessorType featureIDAccessor =
@@ -268,7 +281,7 @@ TEST_CASE("Test getFeatureIdAccessorView") {
     model.accessors[1].normalized = false;
   }
 
-  SECTION("Creates from valid feature ID sets") {
+  SUBCASE("Creates from valid feature ID sets") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, primitive, 0);
     REQUIRE(
@@ -315,7 +328,7 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
       node.addExtension<ExtensionExtMeshGpuInstancing>();
   instancingExtension.attributes["_FEATURE_ID_0"] = 0;
 
-  SECTION("Handles missing extension") {
+  SUBCASE("Handles missing extension") {
     Node temporaryNode;
 
     FeatureIdAccessorType featureIDAccessor =
@@ -328,7 +341,7 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
 
-  SECTION("Handles invalid feature ID set index") {
+  SUBCASE("Handles invalid feature ID set index") {
     FeatureIdAccessorType featureIDAccessor =
         getFeatureIdAccessorView(model, node, 2);
     REQUIRE(
@@ -337,7 +350,7 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     REQUIRE(std::visit(CountFromAccessor{}, featureIDAccessor) == 0);
   }
 
-  SECTION("Handles invalid accessor type") {
+  SUBCASE("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::VEC2;
 
     FeatureIdAccessorType featureIDAccessor =
@@ -350,7 +363,7 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
 
-  SECTION("Handles invalid normalized accessor") {
+  SUBCASE("Handles invalid normalized accessor") {
     model.accessors[0].normalized = true;
 
     FeatureIdAccessorType featureIDAccessor =
@@ -363,7 +376,7 @@ TEST_CASE("Test getFeatureIdAccessorView for instances") {
     model.accessors[0].normalized = false;
   }
 
-  SECTION("Retrieves from valid accessor") {
+  SUBCASE("Retrieves from valid accessor") {
     FeatureIdAccessorType featureIdAccessor =
         getFeatureIdAccessorView(model, node, 0);
     for (size_t i = 0; i < featureIds.size(); i++) {
@@ -397,14 +410,14 @@ TEST_CASE("FeatureIdFromAccessor") {
   accessor.type = Accessor::Type::SCALAR;
   accessor.count = bufferView.byteLength;
 
-  SECTION("Handles invalid accessor") {
+  SUBCASE("Handles invalid accessor") {
     // Wrong component type
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<int16_t>(model, accessor);
     REQUIRE(std::visit(FeatureIdFromAccessor{0}, featureIdAccessor) == -1);
   }
 
-  SECTION("Retrieves from valid accessor") {
+  SUBCASE("Retrieves from valid accessor") {
     FeatureIdAccessorType featureIdAccessor =
         AccessorView<int8_t>(model, accessor);
     for (size_t i = 0; i < featureIds.size(); i++) {
@@ -444,7 +457,7 @@ TEST_CASE("Test getIndexAccessorView") {
   MeshPrimitive primitive = mesh.primitives.emplace_back();
   primitive.indices = 0;
 
-  SECTION("Handles invalid accessor type") {
+  SUBCASE("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::VEC2;
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
@@ -456,7 +469,7 @@ TEST_CASE("Test getIndexAccessorView") {
     model.accessors[0].type = Accessor::Type::SCALAR;
   }
 
-  SECTION("Handles unsupported accessor component type") {
+  SUBCASE("Handles unsupported accessor component type") {
     model.accessors[0].componentType = Accessor::ComponentType::BYTE;
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
@@ -468,7 +481,7 @@ TEST_CASE("Test getIndexAccessorView") {
     model.accessors[0].componentType = Accessor::ComponentType::UNSIGNED_BYTE;
   }
 
-  SECTION("Handles invalid normalized accessor") {
+  SUBCASE("Handles invalid normalized accessor") {
     model.accessors[0].normalized = true;
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
@@ -480,7 +493,7 @@ TEST_CASE("Test getIndexAccessorView") {
     model.accessors[0].normalized = false;
   }
 
-  SECTION("Creates from valid accessor") {
+  SUBCASE("Creates from valid accessor") {
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
     REQUIRE(
         std::visit(StatusFromAccessor{}, indexAccessor) ==
@@ -490,7 +503,7 @@ TEST_CASE("Test getIndexAccessorView") {
         static_cast<int64_t>(indices.size()));
   }
 
-  SECTION("Creates from nonexistent accessor") {
+  SUBCASE("Creates from nonexistent accessor") {
     primitive.indices = -1;
 
     IndexAccessorType indexAccessor = getIndexAccessorView(model, primitive);
@@ -549,7 +562,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
         bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
   }
 
-  SECTION("Handles invalid accessor") {
+  SUBCASE("Handles invalid accessor") {
     REQUIRE(model.accessors.size() > 0);
     // Wrong component type
     IndexAccessorType indexAccessor =
@@ -565,7 +578,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Handles invalid face index") {
+  SUBCASE("Handles invalid face index") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
@@ -590,7 +603,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Handles invalid primitive modes") {
+  SUBCASE("Handles invalid primitive modes") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
@@ -622,7 +635,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Retrieves from valid accessor and face index; triangles mode") {
+  SUBCASE("Retrieves from valid accessor and face index; triangles mode") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
@@ -644,7 +657,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Retrieves from valid accessor and face index; triangle strip mode") {
+  SUBCASE("Retrieves from valid accessor and face index; triangle strip mode") {
     REQUIRE(model.accessors.size() > 1);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[1]);
@@ -665,7 +678,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Retrieves from valid accessor and face index; triangle fan mode") {
+  SUBCASE("Retrieves from valid accessor and face index; triangle fan mode") {
     REQUIRE(model.accessors.size() > 1);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[1]);
@@ -685,7 +698,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Handles invalid face index for nonexistent accessor") {
+  SUBCASE("Handles invalid face index for nonexistent accessor") {
     IndexAccessorType indexAccessor;
     auto indicesForFace = std::visit(
         IndicesForFaceFromAccessor{
@@ -708,7 +721,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Retrieves from valid face index for nonexistent accessor; triangles "
+  SUBCASE("Retrieves from valid face index for nonexistent accessor; triangles "
           "mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount / 3;
@@ -728,7 +741,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Retrieves from valid face index for nonexistent accessor; triangle "
+  SUBCASE("Retrieves from valid face index for nonexistent accessor; triangle "
           "strip mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount - 2;
@@ -748,7 +761,7 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SECTION("Retrieves from valid face index for nonexistent accessor; triangle "
+  SUBCASE("Retrieves from valid face index for nonexistent accessor; triangle "
           "fan mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount - 2;
@@ -793,7 +806,7 @@ TEST_CASE("Test IndexFromAccessor") {
         bufferView.byteLength / static_cast<int64_t>(sizeof(uint32_t));
   }
 
-  SECTION("Handles invalid accessor") {
+  SUBCASE("Handles invalid accessor") {
     REQUIRE(model.accessors.size() > 0);
     // Wrong component type
     IndexAccessorType indexAccessor =
@@ -802,7 +815,7 @@ TEST_CASE("Test IndexFromAccessor") {
     REQUIRE(index == -1);
   }
 
-  SECTION("Handles invalid index") {
+  SUBCASE("Handles invalid index") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
@@ -815,7 +828,7 @@ TEST_CASE("Test IndexFromAccessor") {
     REQUIRE(index == -1);
   }
 
-  SECTION("Retrieves from valid accessor and index") {
+  SUBCASE("Retrieves from valid accessor and index") {
     REQUIRE(model.accessors.size() > 0);
     IndexAccessorType indexAccessor =
         AccessorView<uint32_t>(model, model.accessors[0]);
@@ -893,7 +906,7 @@ TEST_CASE("Test getTexCoordAccessorView") {
   primitive.attributes.insert({"TEXCOORD_0", 0});
   primitive.attributes.insert({"TEXCOORD_1", 1});
 
-  SECTION("Handles invalid texture coordinate set index") {
+  SUBCASE("Handles invalid texture coordinate set index") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(
@@ -902,7 +915,7 @@ TEST_CASE("Test getTexCoordAccessorView") {
     REQUIRE(std::visit(CountFromAccessor{}, texCoordAccessor) == 0);
   }
 
-  SECTION("Handles invalid accessor type") {
+  SUBCASE("Handles invalid accessor type") {
     model.accessors[0].type = Accessor::Type::SCALAR;
 
     TexCoordAccessorType texCoordAccessor =
@@ -915,7 +928,7 @@ TEST_CASE("Test getTexCoordAccessorView") {
     model.accessors[0].type = Accessor::Type::VEC2;
   }
 
-  SECTION("Handles unsupported accessor component type") {
+  SUBCASE("Handles unsupported accessor component type") {
     model.accessors[0].componentType = Accessor::ComponentType::BYTE;
 
     TexCoordAccessorType texCoordAccessor =
@@ -928,7 +941,7 @@ TEST_CASE("Test getTexCoordAccessorView") {
     model.accessors[0].componentType = Accessor::ComponentType::FLOAT;
   }
 
-  SECTION("Handles invalid un-normalized texcoord") {
+  SUBCASE("Handles invalid un-normalized texcoord") {
     model.accessors[1].normalized = false;
 
     TexCoordAccessorType texCoordAccessor =
@@ -941,7 +954,7 @@ TEST_CASE("Test getTexCoordAccessorView") {
     model.accessors[1].normalized = true;
   }
 
-  SECTION("Creates from valid texture coordinate sets") {
+  SUBCASE("Creates from valid texture coordinate sets") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(
@@ -1026,20 +1039,20 @@ TEST_CASE("Test TexCoordFromAccessor") {
   primitive.attributes.insert({"TEXCOORD_0", 0});
   primitive.attributes.insert({"TEXCOORD_1", 1});
 
-  SECTION("Handles invalid accessor") {
+  SUBCASE("Handles invalid accessor") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 2);
     REQUIRE(!std::visit(TexCoordFromAccessor{0}, texCoordAccessor));
   }
 
-  SECTION("Handles invalid index") {
+  SUBCASE("Handles invalid index") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     REQUIRE(!std::visit(TexCoordFromAccessor{-1}, texCoordAccessor));
     REQUIRE(!std::visit(TexCoordFromAccessor{10}, texCoordAccessor));
   }
 
-  SECTION("Retrieves from valid accessor and index") {
+  SUBCASE("Retrieves from valid accessor and index") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 0);
     for (size_t i = 0; i < texCoords0.size(); i++) {
@@ -1052,7 +1065,7 @@ TEST_CASE("Test TexCoordFromAccessor") {
       REQUIRE(*maybeTexCoord == expected);
     }
   }
-  SECTION("Retrieves from valid normalized accessor and index") {
+  SUBCASE("Retrieves from valid normalized accessor and index") {
     TexCoordAccessorType texCoordAccessor =
         getTexCoordAccessorView(model, primitive, 1);
     for (size_t i = 0; i < texCoords1.size(); i++) {

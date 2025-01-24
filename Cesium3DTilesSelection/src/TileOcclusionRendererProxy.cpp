@@ -1,4 +1,8 @@
-#include "Cesium3DTilesSelection/TileOcclusionRendererProxy.h"
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
+
+#include <cstddef>
+#include <cstdint>
 
 namespace Cesium3DTilesSelection {
 

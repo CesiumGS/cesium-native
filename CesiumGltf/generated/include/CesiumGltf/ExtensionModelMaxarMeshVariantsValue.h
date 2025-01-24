@@ -13,6 +13,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionModelMaxarMeshVariantsValue final
     : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName =
       "ExtensionModelMaxarMeshVariantsValue";
 

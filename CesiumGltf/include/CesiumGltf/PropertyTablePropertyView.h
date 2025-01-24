@@ -1,10 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/PropertyArrayView.h"
-#include "CesiumGltf/PropertyTransformations.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumGltf/PropertyView.h"
-
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/PropertyView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <cstddef>
@@ -19,8 +18,7 @@ namespace CesiumGltf {
  *
  * The {@link PropertyTablePropertyView} constructor always completes successfully.
  * However, it may not always reflect the actual content of the
- * {@link PropertyTableProperty}, but instead indicate that its
- * {@link PropertyTablePropertyView::size} is 0.
+ * {@link PropertyTableProperty}, but instead indicate that its `size` is 0.
  * This enumeration provides the reason.
  */
 class PropertyTablePropertyViewStatus : public PropertyViewStatus {
@@ -133,6 +131,10 @@ public:
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
 };
 
+/**
+ * @brief Returns the size in bytes of a \ref PropertyComponentType used as the
+ * `arrayOffsetType` in the constructor of \ref PropertyTablePropertyView.
+ */
 int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
 
 /**
@@ -148,7 +150,7 @@ class PropertyTablePropertyView;
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
+ * instance can be accessed through the {@link PropertyTablePropertyView<ElementType, false>::get} method.
  *
  * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
  * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
@@ -197,8 +199,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView::get} is called. However,
-   * {@link PropertyTablePropertyView::getRaw} cannot be used.
+   * when {@link PropertyTablePropertyView<ElementType, false>::get} is called. However,
+   * {@link PropertyTablePropertyView<ElementType, false>::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
@@ -506,7 +508,7 @@ private:
  *
  * It provides utility to retrieve the actual data stored in the
  * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView::get} method.
+ * instance can be accessed through the \ref get method.
  *
  * @param ElementType must be one of the following: an integer scalar (uint8_t,
  * int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t), a glm vecN
@@ -552,8 +554,8 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView::get} is called. However,
-   * {@link PropertyTablePropertyView::getRaw} cannot be used.
+   * when {@link PropertyTablePropertyView<ElementType, true>::get} is called. However,
+   * {@link PropertyTablePropertyView<ElementType, true>::getRaw} cannot be used.
    *
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}

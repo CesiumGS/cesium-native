@@ -346,7 +346,7 @@ public:
    * The provided `relativeSubtreeMortonId` must refer to a child of the leaves
    * of this subtree.
    *
-   * @param relativeTileMortonId The Morton ID of the tile for which to check
+   * @param relativeSubtreeMortonId The Morton ID of the tile for which to check
    * subtree availability. See
    * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
    * @return True if the subtree is available; otherwise, false.
@@ -394,9 +394,10 @@ public:
    * The provided `relativeSubtreeMortonId` must refer to a child of the leaves
    * of this subtree.
    *
-   * @param relativeTileMortonId The Morton ID of the tile for which to set
+   * @param relativeSubtreeMortonId The Morton ID of the tile for which to set
    * subtree availability. See
    * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @param isAvailable The new availability state.
    */
   void setSubtreeAvailable(
       uint64_t relativeSubtreeMortonId,

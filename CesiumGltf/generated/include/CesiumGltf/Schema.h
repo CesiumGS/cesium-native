@@ -16,6 +16,9 @@ namespace CesiumGltf {
  * @brief An object defining classes and enums.
  */
 struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Schema";
 
   /**

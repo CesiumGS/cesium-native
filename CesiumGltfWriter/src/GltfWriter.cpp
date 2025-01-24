@@ -1,12 +1,19 @@
-#include "CesiumGltfWriter/GltfWriter.h"
-
 #include "ModelJsonWriter.h"
 #include "registerWriterExtensions.h"
 
+#include <CesiumGltfWriter/GltfWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <memory>
+#include <span>
+#include <vector>
 
 namespace CesiumGltfWriter {
 

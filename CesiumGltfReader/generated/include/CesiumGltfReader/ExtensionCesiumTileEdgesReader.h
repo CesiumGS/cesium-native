@@ -19,7 +19,8 @@ struct ExtensionCesiumTileEdges;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionCesiumTileEdges} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionCesiumTileEdges
+ * "ExtensionCesiumTileEdges" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionCesiumTileEdgesReader {
 public:
@@ -51,7 +52,7 @@ public:
    * @brief Reads an instance of ExtensionCesiumTileEdges from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionCesiumTileEdges>
@@ -61,7 +62,7 @@ public:
    * @brief Reads an array of instances of ExtensionCesiumTileEdges from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

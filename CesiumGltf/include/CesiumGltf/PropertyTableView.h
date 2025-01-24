@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/Model.h"
-#include "CesiumGltf/PropertyTablePropertyView.h"
-#include "CesiumGltf/PropertyType.h"
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyType.h>
 
 #include <glm/common.hpp>
 
@@ -116,7 +116,7 @@ public:
    * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
    * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
    * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
+   * std::string_view, or \ref PropertyArrayView with T as one of the
    * aforementioned types.
    *
    * If T does not match the type specified by the class property, this returns
@@ -130,8 +130,8 @@ public:
    * @tparam Normalized Whether the property is normalized. Only applicable to
    * types with integer components.
    * @param propertyId The id of the property to retrieve data from
-   * @return A {@link PropertyTablePropertyView} of the property. If no valid property is
-   * found, the property view will be invalid.
+   * @return A \ref PropertyTablePropertyView of the property. If no valid
+   * property is found, the property view will be invalid.
    */
   template <typename T, bool Normalized = false>
   PropertyTablePropertyView<T, Normalized>
@@ -151,25 +151,25 @@ public:
   }
 
   /**
-   * @brief Gets a {@link PropertyTablePropertyView} through a callback that accepts a
-   * property id and a {@link PropertyTablePropertyView<T>} that views the data
-   * of the property with the specified id.
+   * @brief Gets a \ref PropertyTablePropertyView through a callback that
+   * accepts a property id and a \ref PropertyTablePropertyView that views the
+   * data of the property with the specified id.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
-   * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
-   * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
-   * types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
+   * \ref PropertyTablePropertyView retrieves the correct data. T must be one of
+   * the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
+   * the scalar types, a glm matN composed of one of the scalar types, bool,
+   * std::string_view, or \ref PropertyArrayView with T as one of the
    * aforementioned types.
    *
-   * If the property is invalid, an empty {@link PropertyTablePropertyView} with an
+   * If the property is invalid, an empty \ref PropertyTablePropertyView with an
    * error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
    * @param callback A callback function that accepts a property id and a
-   * {@link PropertyTablePropertyView<T>}
+   * \ref PropertyTablePropertyView
    * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
@@ -306,24 +306,24 @@ public:
   }
 
   /**
-   * @brief Iterates over each property in the {@link PropertyTable} with a callback
-   * that accepts a property id and a {@link PropertyTablePropertyView<T>} to view
-   * the data stored in the {@link PropertyTableProperty}.
+   * @brief Iterates over each property in the \ref PropertyTable with a
+   * callback that accepts a property id and a \ref PropertyTablePropertyView to
+   * view the data stored in the \ref PropertyTableProperty.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * {@link PropertyTablePropertyView} retrieves the correct data. T must be one of the
-   * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * \ref PropertyTablePropertyView retrieves the correct data. T must be one of
+   * the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
    * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
    * the scalar types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or {@link PropertyArrayView<T>} with T as one of the
+   * std::string_view, or \ref PropertyArrayView with T as one of the
    * aforementioned types.
    *
-   * If the property is invalid, an empty {@link PropertyTablePropertyView} with
+   * If the property is invalid, an empty \ref PropertyTablePropertyView with
    * an error status code will be passed to the callback. Otherwise, a valid
    * property view will be passed to the callback.
    *
    * @param callback A callback function that accepts property id and
-   * {@link PropertyTablePropertyView<T>}
+   * \ref PropertyTablePropertyView
    * @tparam Callback The type of the callback function.
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {

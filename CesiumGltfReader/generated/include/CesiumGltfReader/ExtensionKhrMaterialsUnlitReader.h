@@ -19,7 +19,8 @@ struct ExtensionKhrMaterialsUnlit;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionKhrMaterialsUnlit} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionKhrMaterialsUnlit
+ * "ExtensionKhrMaterialsUnlit" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionKhrMaterialsUnlitReader {
 public:
@@ -51,7 +52,7 @@ public:
    * @brief Reads an instance of ExtensionKhrMaterialsUnlit from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrMaterialsUnlit>
@@ -61,7 +62,7 @@ public:
    * @brief Reads an array of instances of ExtensionKhrMaterialsUnlit from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

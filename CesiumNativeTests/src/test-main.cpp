@@ -1,4 +1,2 @@
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-
-int main(int argc, char* argv[]) { return Catch::Session().run(argc, argv); }
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>

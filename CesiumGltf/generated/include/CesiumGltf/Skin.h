@@ -13,6 +13,9 @@ namespace CesiumGltf {
  * @brief Joints and matrices defining a skin.
  */
 struct CESIUMGLTF_API Skin final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Skin";
 
   /**

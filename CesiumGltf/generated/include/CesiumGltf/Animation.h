@@ -14,6 +14,9 @@ namespace CesiumGltf {
  * @brief A keyframe animation.
  */
 struct CESIUMGLTF_API Animation final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Animation";
 
   /**

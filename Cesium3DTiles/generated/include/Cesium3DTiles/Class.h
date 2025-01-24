@@ -15,6 +15,9 @@ namespace Cesium3DTiles {
  * @brief A class containing a set of properties.
  */
 struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Class";
 
   /**

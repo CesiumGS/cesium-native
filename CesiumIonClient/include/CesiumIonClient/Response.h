@@ -17,18 +17,48 @@ namespace CesiumIonClient {
  * @tparam T The type of the response object.
  */
 template <typename T> struct Response final {
+  /**
+   * @brief Creates a new empty `Response`.
+   */
   Response();
 
+  /**
+   * @brief Creates a `Response` from a completed request and a response value.
+   *
+   * @param pRequest A completed request. The constructor will attempt to obtain
+   * the `httpStatusCode`, `previousPageUrl`, and `nextPageUrl` from this
+   * request.
+   * @param value The response value.
+   */
   Response(
       const std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
       T&& value);
 
+  /**
+   * @brief Creates a `Response` from a response value, status code, and error
+   * information
+   *
+   * @param value The response value.
+   * @param httpStatusCode The HTTP status code of the response.
+   * @param errorCode The error code. See \ref Response::errorCode. If no error
+   * occurred, pass an empty string.
+   * @param errorMessage The error message. See \ref Response::errorMessage. If
+   * no error occurred, pass an empty string.
+   */
   Response(
       T&& value,
       uint16_t httpStatusCode,
       const std::string& errorCode,
       const std::string& errorMessage);
 
+  /**
+   * @brief Creates a `Response` with no value, a status code, and error
+   * information.
+   *
+   * @param httpStatusCode The HTTP status code of the response.
+   * @param errorCode The error code. See \ref Response::errorCode.
+   * @param errorMessage The error message. See \ref Response::errorMessage.
+   */
   Response(
       uint16_t httpStatusCode,
       const std::string& errorCode,

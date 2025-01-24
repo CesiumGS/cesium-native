@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Library.h"
-
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/Library.h>
 
 #include <vector>
 

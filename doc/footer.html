@@ -2,7 +2,13 @@
 <script type="text/javascript" src="$relpath^mingcute.json.js"></script>
 <script type="text/javascript" src="$relpath^panzoom.js"></script>
 <script type="text/javascript">
+  let theme = "default";
+  // Detect browser dark mode and use dark theme for Mermaid if enabled
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    theme = "dark";
+  }
   mermaid.initialize({
+    theme: theme,
     startOnLoad: true,
     graph: {
       useMaxWidth: true

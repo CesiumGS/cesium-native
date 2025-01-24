@@ -13,6 +13,9 @@ namespace CesiumGltf {
  * @brief A texture containing feature IDs
  */
 struct CESIUMGLTF_API FeatureIdTexture final : public TextureInfo {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "FeatureIdTexture";
 
   /**

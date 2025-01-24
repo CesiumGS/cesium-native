@@ -1,14 +1,20 @@
-#include "Cesium3DTilesSelection/Tile.h"
-
-#include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/Rectangle.h>
-#include <CesiumGeometry/Transforms.h>
-#include <CesiumGeospatial/GlobeTransforms.h>
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/Math.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

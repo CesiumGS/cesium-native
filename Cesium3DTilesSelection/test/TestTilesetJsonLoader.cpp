@@ -2,24 +2,48 @@
 
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
+#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/CreditSystem.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <spdlog/spdlog.h>
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
+using namespace doctest;
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumNativeTests;
@@ -72,7 +96,7 @@ TileLoadResult loadTileContent(
 TEST_CASE("Test creating tileset json loader") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
-  SECTION("Create valid tileset json with REPLACE refinement") {
+  SUBCASE("Create valid tileset json with REPLACE refinement") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ReplaceTileset" / "tileset.json");
 
@@ -139,7 +163,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Create valid tileset json with ADD refinement") {
+  SUBCASE("Create valid tileset json with ADD refinement") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "AddTileset" / "tileset2.json");
 
@@ -187,7 +211,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with sphere bounding volume") {
+  SUBCASE("Tileset has tile with sphere bounding volume") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "SphereBoundingVolumeTileset.json");
@@ -205,7 +229,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with box bounding volume") {
+  SUBCASE("Tileset has tile with box bounding volume") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "BoxBoundingVolumeTileset.json");
@@ -224,7 +248,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(box.getCenter() == glm::dvec3(0.0, 0.0, 10.0));
   }
 
-  SECTION("Tileset has tile with no bounding volume field") {
+  SUBCASE("Tileset has tile with no bounding volume field") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "NoBoundingVolumeTileset.json");
@@ -239,7 +263,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with no geometric error field") {
+  SUBCASE("Tileset has tile with no geometric error field") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "NoGeometricErrorTileset.json");
@@ -258,7 +282,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with no capitalized Refinement field") {
+  SUBCASE("Tileset has tile with no capitalized Refinement field") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "NoCapitalizedRefineTileset.json");
@@ -279,7 +303,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Scale geometric error along with tile transform") {
+  SUBCASE("Scale geometric error along with tile transform") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "ScaleGeometricErrorTileset.json");
@@ -298,7 +322,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset with empty tile") {
+  SUBCASE("Tileset with empty tile") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" / "EmptyTileTileset.json");
     CHECK(!loaderResult.errors.hasErrors());
@@ -315,7 +339,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset with quadtree implicit tile") {
+  SUBCASE("Tileset with quadtree implicit tile") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "QuadtreeImplicitTileset.json");
@@ -338,7 +362,7 @@ TEST_CASE("Test creating tileset json loader") {
         CesiumGeometry::QuadtreeTileID(0, 0, 0));
   }
 
-  SECTION("Tileset with octree implicit tile") {
+  SUBCASE("Tileset with octree implicit tile") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "OctreeImplicitTileset.json");
@@ -361,7 +385,7 @@ TEST_CASE("Test creating tileset json loader") {
         CesiumGeometry::OctreeTileID(0, 0, 0, 0));
   }
 
-  SECTION("Tileset with metadata") {
+  SUBCASE("Tileset with metadata") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "WithMetadata" / "tileset.json");
 
@@ -383,7 +407,7 @@ TEST_CASE("Test creating tileset json loader") {
 TEST_CASE("Test loading individual tile of tileset json") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
-  SECTION("Load tile that has render content") {
+  SUBCASE("Load tile that has render content") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ReplaceTileset" / "tileset.json");
     REQUIRE(loaderResult.pRootTile);
@@ -407,7 +431,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(!tileLoadResult.tileInitializer);
   }
 
-  SECTION("Load tile that has external content") {
+  SUBCASE("Load tile that has external content") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "AddTileset" / "tileset.json");
 
@@ -459,7 +483,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     }
   }
 
-  SECTION("Load tile that has external content with implicit tiling") {
+  SUBCASE("Load tile that has external content with implicit tiling") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ImplicitTileset" / "tileset_1.1.json");
 
@@ -558,7 +582,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     }
   }
 
-  SECTION("Check that tile with legacy implicit tiling extension still works") {
+  SUBCASE("Check that tile with legacy implicit tiling extension still works") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ImplicitTileset" / "tileset_1.0.json");
 

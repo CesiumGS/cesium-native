@@ -86,8 +86,11 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_SOURCE_BROWSER YES)
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
+    list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
+    list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/build/*")
 
+    set(DOXYGEN_DOT_GRAPH_MAX_NODES 100)
+    set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS_PRINT)
     list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/")
     list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")
 
@@ -97,6 +100,13 @@ if(DOXYGEN_FOUND)
     # For example, Cesium for Unreal can use it to link to the Cesium Native docs without duplicating them.
     set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/html/cesium-native.tag")
 
+    if(NOT CESIUM_PRODUCTION_DOCS)
+      set(DOXYGEN_PROJECT_BRIEF "PRE-RELEASE")
+      set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header-noindex.html")
+    else()
+      set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header.html")
+    endif()
+
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js ${CMAKE_CURRENT_LIST_DIR}/assets/panzoom.js")
     list(APPEND DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
@@ -104,6 +114,8 @@ if(DOXYGEN_FOUND)
     list(APPEND DOXYGEN_ALIASES svg-interactive{2}="\\htmlonly <div class=\\\"svg interactive\\\" style=\\\"min-height: \\2\\\"> ^^ \\endhtmlonly \\image html \\\"\\1.svg\\\" \\htmlonly ^^ </div> \\endhtmlonly")
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
+
+    list(APPEND DOXYGEN_TAGFILES "${CMAKE_CURRENT_LIST_DIR}/community.tag=https://github.com/CesiumGS/community/blob/main")
 
     cesium_glob_files(
       CESIUM_DOC_TOPICS

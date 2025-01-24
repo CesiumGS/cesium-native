@@ -19,7 +19,8 @@ struct PropertyTable;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link PropertyTable} instances from JSON.
+ * @brief Reads \ref CesiumGltf::PropertyTable "PropertyTable" instances from
+ * JSON.
  */
 class CESIUMGLTFREADER_API PropertyTableReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of PropertyTable from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::PropertyTable>
@@ -60,7 +61,7 @@ public:
    * @brief Reads an array of instances of PropertyTable from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::PropertyTable>>

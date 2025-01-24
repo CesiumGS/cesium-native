@@ -5,10 +5,19 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
 #include <CesiumUtility/Uri.h>
 
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <libmorton/morton.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

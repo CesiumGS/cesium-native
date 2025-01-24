@@ -2,14 +2,15 @@
 #include <Cesium3DTilesContent/TileTransform.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <glm/mat4x4.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double4x4.hpp>
+
+#include <optional>
 
 using namespace CesiumUtility;
 
 TEST_CASE("TileTransform::getTransform") {
-  SECTION("correctly interprets a valid transform") {
+  SUBCASE("correctly interprets a valid transform") {
     Cesium3DTiles::Tile tile;
     tile.transform = {
         1.0,
@@ -50,7 +51,7 @@ TEST_CASE("TileTransform::getTransform") {
         1e-14));
   }
 
-  SECTION("returns nullopt on too few elements") {
+  SUBCASE("returns nullopt on too few elements") {
     Cesium3DTiles::Tile tile;
     tile.transform = {
         1.0,
@@ -73,7 +74,7 @@ TEST_CASE("TileTransform::getTransform") {
     REQUIRE(!maybeTransform);
   }
 
-  SECTION("ignores extra elements") {
+  SUBCASE("ignores extra elements") {
     Cesium3DTiles::Tile tile;
     tile.transform = {
         1.0,
@@ -117,7 +118,7 @@ TEST_CASE("TileTransform::getTransform") {
 }
 
 TEST_CASE("TileTransform::setTransform") {
-  SECTION("correctly sets the transform") {
+  SUBCASE("correctly sets the transform") {
     glm::dmat4 transform(
         glm::dvec4(1.0, 2.0, 3.0, 4.0),
         glm::dvec4(5.0, 6.0, 7.0, 8.0),
@@ -146,7 +147,7 @@ TEST_CASE("TileTransform::setTransform") {
     CHECK(tile.transform[15] == 16.0);
   }
 
-  SECTION("clobbers the existing transform") {
+  SUBCASE("clobbers the existing transform") {
     glm::dmat4 transform(
         glm::dvec4(1.0, 2.0, 3.0, 4.0),
         glm::dvec4(5.0, 6.0, 7.0, 8.0),

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include <Cesium3DTilesSelection/Library.h>
 
 #include <cstdint>
 #include <unordered_set>
@@ -49,16 +49,42 @@ public:
    */
   int32_t mainThreadTileLoadQueueLength = 0;
 
-  //! @cond Doxygen_Suppress
+  /**
+   * @brief The number of tiles visited during tileset traversal this frame.
+   */
   uint32_t tilesVisited = 0;
+  /**
+   * @brief The number of culled tiles visited during tileset traversal this
+   * frame.
+   */
   uint32_t culledTilesVisited = 0;
+  /**
+   * @brief The number of tiles that were skipped because they were culled
+   * during tileset traversal this frame.
+   */
   uint32_t tilesCulled = 0;
+  /**
+   * @brief The number of tiles occluded this frame.
+   */
   uint32_t tilesOccluded = 0;
+  /**
+   * @brief The number of tiles still waiting to obtain a \ref
+   * TileOcclusionState this frame.
+   */
   uint32_t tilesWaitingForOcclusionResults = 0;
+  /**
+   * @brief The number of tiles kicked from the render list this frame.
+   */
   uint32_t tilesKicked = 0;
+  /**
+   * @brief The maximum depth of the tile tree visited this frame.
+   */
   uint32_t maxDepthVisited = 0;
-  //! @endcond
 
+  /**
+   * @brief The frame number. This is incremented every time \ref
+   * Tileset::updateView is called.
+   */
   int32_t frameNumber = 0;
 };
 

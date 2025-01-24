@@ -4,9 +4,9 @@
 #include "Impl/CatchFunction.h"
 #include "Impl/ContinuationFutureType.h"
 #include "Impl/WithTracing.h"
-#include "SharedFuture.h"
-#include "ThreadPool.h"
 
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumAsync/ThreadPool.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <variant>
@@ -35,6 +35,9 @@ public:
       : _pSchedulers(std::move(rhs._pSchedulers)),
         _task(std::move(rhs._task)) {}
 
+  /**
+   * @brief Move assignment operator.
+   */
   Future<T>& operator=(Future<T>&& rhs) noexcept {
     this->_pSchedulers = std::move(rhs._pSchedulers);
     this->_task = std::move(rhs._task);

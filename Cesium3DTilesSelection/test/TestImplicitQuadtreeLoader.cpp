@@ -1,10 +1,18 @@
 #include "ImplicitQuadtreeLoader.h"
 
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -12,11 +20,24 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
+using namespace doctest;
 using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -44,7 +65,7 @@ TEST_CASE("Test implicit quadtree loader") {
       5,
       OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
 
-  SECTION("Load tile that does not have quadtree ID") {
+  SUBCASE("Load tile that does not have quadtree ID") {
     Tile tile(&loader);
     tile.setTileID("This is a test tile");
 
@@ -64,7 +85,7 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Failed);
   }
 
-  SECTION("Load empty tile") {
+  SUBCASE("Load empty tile") {
     // add subtree with all empty tiles
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
@@ -100,7 +121,7 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
   }
 
-  SECTION("Load tile with render content") {
+  SUBCASE("Load tile with render content") {
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
@@ -153,7 +174,7 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
   }
 
-  SECTION("load unknown content") {
+  SUBCASE("load unknown content") {
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
@@ -235,7 +256,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
   CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
-  SECTION("Subdivide bounding box tile") {
+  SUBCASE("Subdivide bounding box tile") {
     OrientedBoundingBox loaderBoundingVolume{glm::dvec3(0.0), glm::dmat3(20.0)};
     ImplicitQuadtreeLoader loader{
         "tileset.json",
@@ -346,7 +367,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     }
   }
 
-  SECTION("Subdivide bounding region tile") {
+  SUBCASE("Subdivide bounding region tile") {
     BoundingRegion loaderBoundingVolume{
         GlobeRectangle{
             -Math::OnePi,
@@ -485,7 +506,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     }
   }
 
-  SECTION("Subdivide S2 volume tile") {
+  SUBCASE("Subdivide S2 volume tile") {
     S2CellID rootID = S2CellID::fromToken("1");
     CHECK(rootID.getFace() == 0);
 

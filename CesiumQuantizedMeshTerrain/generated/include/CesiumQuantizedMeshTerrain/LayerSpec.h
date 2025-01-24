@@ -17,6 +17,9 @@ namespace CesiumQuantizedMeshTerrain {
  */
 struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Layer";
 
   /**

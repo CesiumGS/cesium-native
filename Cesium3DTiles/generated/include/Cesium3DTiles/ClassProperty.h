@@ -16,30 +16,43 @@ namespace Cesium3DTiles {
  */
 struct CESIUM3DTILES_API ClassProperty final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "ClassProperty";
 
   /**
    * @brief Known values for The element type.
    */
   struct Type {
+    /** @brief `SCALAR` */
     inline static const std::string SCALAR = "SCALAR";
 
+    /** @brief `VEC2` */
     inline static const std::string VEC2 = "VEC2";
 
+    /** @brief `VEC3` */
     inline static const std::string VEC3 = "VEC3";
 
+    /** @brief `VEC4` */
     inline static const std::string VEC4 = "VEC4";
 
+    /** @brief `MAT2` */
     inline static const std::string MAT2 = "MAT2";
 
+    /** @brief `MAT3` */
     inline static const std::string MAT3 = "MAT3";
 
+    /** @brief `MAT4` */
     inline static const std::string MAT4 = "MAT4";
 
+    /** @brief `STRING` */
     inline static const std::string STRING = "STRING";
 
+    /** @brief `BOOLEAN` */
     inline static const std::string BOOLEAN = "BOOLEAN";
 
+    /** @brief `ENUM` */
     inline static const std::string ENUM = "ENUM";
   };
 
@@ -48,24 +61,34 @@ struct CESIUM3DTILES_API ClassProperty final
    * for `SCALAR`, `VECN`, and `MATN` types, and disallowed for other types.
    */
   struct ComponentType {
+    /** @brief `INT8` */
     inline static const std::string INT8 = "INT8";
 
+    /** @brief `UINT8` */
     inline static const std::string UINT8 = "UINT8";
 
+    /** @brief `INT16` */
     inline static const std::string INT16 = "INT16";
 
+    /** @brief `UINT16` */
     inline static const std::string UINT16 = "UINT16";
 
+    /** @brief `INT32` */
     inline static const std::string INT32 = "INT32";
 
+    /** @brief `UINT32` */
     inline static const std::string UINT32 = "UINT32";
 
+    /** @brief `INT64` */
     inline static const std::string INT64 = "INT64";
 
+    /** @brief `UINT64` */
     inline static const std::string UINT64 = "UINT64";
 
+    /** @brief `FLOAT32` */
     inline static const std::string FLOAT32 = "FLOAT32";
 
+    /** @brief `FLOAT64` */
     inline static const std::string FLOAT64 = "FLOAT64";
   };
 

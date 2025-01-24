@@ -16,6 +16,9 @@ namespace Cesium3DTiles {
  * @brief An object defining classes and enums.
  */
 struct CESIUM3DTILES_API Schema final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Schema";
 
   /**

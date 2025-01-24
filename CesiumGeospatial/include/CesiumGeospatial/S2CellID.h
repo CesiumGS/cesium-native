@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Cartographic.h"
-#include "GlobeRectangle.h"
-#include "Library.h"
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Library.h>
 
 #include <array>
 #include <cstdint>

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Library.h"
-
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/Library.h>
 
 #include <glm/mat4x4.hpp>
 
@@ -15,7 +14,7 @@ class LocalHorizontalCoordinateSystem;
 /**
  * @brief Anchors an object to the globe by defining a transformation from the
  * object's coordinate to the globe-fixed coordinate system (usually
- * Earth-Centered, Earth-Fixed or ECEF).
+ * \ref what-are-ecef-coordinates).
  *
  * This class allows the anchored coordinate system to be realized in any
  * {@link LocalHorizontalCoordinateSystem}. When the object is moved, either by

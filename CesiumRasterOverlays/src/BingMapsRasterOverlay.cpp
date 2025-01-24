@@ -1,23 +1,34 @@
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
+#include <fmt/format.h>
+#include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
+#include <spdlog/logger.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <optional>
+#include <span>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -143,7 +154,7 @@ public:
         });
   }
 
-  virtual ~BingMapsTileProvider() {}
+  virtual ~BingMapsTileProvider() = default;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -171,7 +182,10 @@ protected:
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     std::vector<Credit>& tileCredits = options.credits =
         this->getOwner().getCredits();
-    tileCredits.push_back(*this->getCredit());
+    const std::optional<Credit>& thisCredit = this->getCredit();
+    if (thisCredit.has_value()) {
+      tileCredits.push_back(*thisCredit);
+    }
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
@@ -236,7 +250,7 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
       _mapStyle(mapStyle),
       _culture(culture) {}
 
-BingMapsRasterOverlay::~BingMapsRasterOverlay() {}
+BingMapsRasterOverlay::~BingMapsRasterOverlay() = default;
 
 namespace {
 

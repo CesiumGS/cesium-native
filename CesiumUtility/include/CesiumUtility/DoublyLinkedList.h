@@ -31,7 +31,7 @@ public:
    * @brief Assignment operator.
    */
   DoublyLinkedListPointers&
-  operator=(const DoublyLinkedListPointers& /*rhs*/) noexcept {
+  operator=(const DoublyLinkedListPointers& /*rhs*/) noexcept { // NOLINT
     return *this;
   }
 
@@ -265,6 +265,9 @@ private:
   T* _pTail = nullptr;
 };
 
+/**
+ * @brief An intrusive doubly-linked list.
+ */
 template <typename T, DoublyLinkedListPointers<T>(T::*Pointers)>
 using DoublyLinkedList = DoublyLinkedListAdvanced<T, T, Pointers>;
 

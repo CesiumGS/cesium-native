@@ -1,12 +1,12 @@
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 namespace CesiumIonClient {
 
 /**
- *  @brief An enumeration representing the values of {@link ApplicationData::authenticationMode}.
+ *  @brief An enumeration representing the values of the `authenticationMode`
+ * property in the `appData` response.
  */
 enum AuthenticationMode {
   /**
@@ -51,6 +51,9 @@ struct ApplicationData {
    */
   std::string attribution;
 
+  /**
+   * @brief Does the `authenticationMode` require OAuth authentication?
+   */
   bool needsOauthAuthentication() const {
     return this->authenticationMode != AuthenticationMode::SingleUser;
   }

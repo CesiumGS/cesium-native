@@ -19,7 +19,8 @@ struct ExtensionNodeMaxarMeshVariants;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionNodeMaxarMeshVariants} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionNodeMaxarMeshVariants
+ * "ExtensionNodeMaxarMeshVariants" instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionNodeMaxarMeshVariantsReader {
 public:
@@ -52,7 +53,7 @@ public:
    * @brief Reads an instance of ExtensionNodeMaxarMeshVariants from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionNodeMaxarMeshVariants>
@@ -62,7 +63,7 @@ public:
    * @brief Reads an array of instances of ExtensionNodeMaxarMeshVariants from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

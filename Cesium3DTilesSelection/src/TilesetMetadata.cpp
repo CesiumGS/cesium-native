@@ -1,9 +1,21 @@
 #include <Cesium3DTilesReader/SchemaReader.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/Promise.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumUtility/joinToString.h>
+
+#include <fmt/format.h>
+
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 using namespace CesiumAsync;
 using namespace Cesium3DTilesReader;

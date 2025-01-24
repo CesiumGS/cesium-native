@@ -14,7 +14,7 @@ namespace CesiumUtility {
  */
 template <typename TAssetType> class IDepotOwningAsset {
 public:
-  virtual ~IDepotOwningAsset() {}
+  virtual ~IDepotOwningAsset() = default;
 
   /**
    * @brief Marks the given asset as a candidate for deletion.

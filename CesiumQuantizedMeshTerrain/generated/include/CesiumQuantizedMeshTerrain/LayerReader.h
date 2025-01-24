@@ -19,7 +19,8 @@ struct Layer;
 namespace CesiumQuantizedMeshTerrain {
 
 /**
- * @brief Reads {@link Layer} instances from JSON.
+ * @brief Reads \ref CesiumQuantizedMeshTerrain::Layer "Layer" instances from
+ * JSON.
  */
 class CESIUMQUANTIZEDMESHTERRAIN_API LayerReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of Layer from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumQuantizedMeshTerrain::Layer>
@@ -59,7 +60,7 @@ public:
   /**
    * @brief Reads an array of instances of Layer from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

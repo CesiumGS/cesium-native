@@ -1,13 +1,15 @@
-#include "Cesium3DTilesWriter/TilesetWriter.h"
-
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
+#include <Cesium3DTilesWriter/TilesetWriter.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <rapidjson/document.h>
 
+#include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <span>
+#include <string>
+#include <vector>
 
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {

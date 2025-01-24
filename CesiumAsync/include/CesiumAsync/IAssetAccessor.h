@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Future.h"
-#include "IAssetRequest.h"
-#include "Library.h"
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/Library.h>
 
 #include <cstddef>
 #include <memory>

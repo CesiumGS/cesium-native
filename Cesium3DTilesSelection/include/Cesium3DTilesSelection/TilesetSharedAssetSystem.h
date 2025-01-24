@@ -10,6 +10,10 @@ namespace Cesium3DTilesSelection {
 class TilesetSharedAssetSystem
     : public CesiumGltfReader::GltfSharedAssetSystem {
 public:
+  /**
+   * @brief Obtains an `IntrusivePointer` to the `TilesetSharedAssetSystem`
+   * singleton.
+   */
   static CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> getDefault();
 
   virtual ~TilesetSharedAssetSystem() = default;

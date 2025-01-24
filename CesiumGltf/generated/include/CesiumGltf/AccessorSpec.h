@@ -16,30 +16,43 @@ namespace CesiumGltf {
  * @brief A typed view into a buffer view that contains raw binary data.
  */
 struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Accessor";
 
   /**
    * @brief Known values for The datatype of the accessor's components.
    */
   struct ComponentType {
+    /** @brief BYTE (`5120`) */
     static constexpr int32_t BYTE = 5120;
 
+    /** @brief UNSIGNED_BYTE (`5121`) */
     static constexpr int32_t UNSIGNED_BYTE = 5121;
 
+    /** @brief SHORT (`5122`) */
     static constexpr int32_t SHORT = 5122;
 
+    /** @brief UNSIGNED_SHORT (`5123`) */
     static constexpr int32_t UNSIGNED_SHORT = 5123;
 
+    /** @brief INT (`5124`) */
     static constexpr int32_t INT = 5124;
 
+    /** @brief UNSIGNED_INT (`5125`) */
     static constexpr int32_t UNSIGNED_INT = 5125;
 
+    /** @brief INT64 (`5134`) */
     static constexpr int32_t INT64 = 5134;
 
+    /** @brief UNSIGNED_INT64 (`5135`) */
     static constexpr int32_t UNSIGNED_INT64 = 5135;
 
+    /** @brief FLOAT (`5126`) */
     static constexpr int32_t FLOAT = 5126;
 
+    /** @brief DOUBLE (`5130`) */
     static constexpr int32_t DOUBLE = 5130;
   };
 
@@ -48,18 +61,25 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    * vectors, or matrices.
    */
   struct Type {
+    /** @brief `SCALAR` */
     inline static const std::string SCALAR = "SCALAR";
 
+    /** @brief `VEC2` */
     inline static const std::string VEC2 = "VEC2";
 
+    /** @brief `VEC3` */
     inline static const std::string VEC3 = "VEC3";
 
+    /** @brief `VEC4` */
     inline static const std::string VEC4 = "VEC4";
 
+    /** @brief `MAT2` */
     inline static const std::string MAT2 = "MAT2";
 
+    /** @brief `MAT3` */
     inline static const std::string MAT3 = "MAT3";
 
+    /** @brief `MAT4` */
     inline static const std::string MAT4 = "MAT4";
   };
 

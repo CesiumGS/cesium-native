@@ -14,6 +14,8 @@ namespace CesiumAsync {
  * non-ASCII strings unspecified).
  */
 struct CaseInsensitiveCompare {
+  /** @brief Performs a case-insensitive comparison of the two strings using
+   * `std::lexicographical_compare`. */
   bool operator()(const std::string& s1, const std::string& s2) const;
 };
 

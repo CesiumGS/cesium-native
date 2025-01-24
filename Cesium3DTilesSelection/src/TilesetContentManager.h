@@ -28,7 +28,6 @@ public:
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       RasterOverlayCollection&& overlayCollection,
-      std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
       std::unique_ptr<TilesetContentLoader>&& pLoader,
       std::unique_ptr<Tile>&& pRootTile);
 

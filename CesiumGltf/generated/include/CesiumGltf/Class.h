@@ -15,6 +15,9 @@ namespace CesiumGltf {
  * @brief A class containing a set of properties.
  */
 struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Class";
 
   /**

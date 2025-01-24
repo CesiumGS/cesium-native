@@ -1,8 +1,10 @@
-#include "CesiumUtility/SpanHelper.h"
+#include <CesiumUtility/SpanHelper.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <span>
 #include <vector>
 
 TEST_CASE("reintepretCastSpan") {

@@ -12,14 +12,19 @@ namespace CesiumGltf {
  * @brief Texture sampler properties for filtering and wrapping modes.
  */
 struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Sampler";
 
   /**
    * @brief Known values for Magnification filter.
    */
   struct MagFilter {
+    /** @brief NEAREST (`9728`) */
     static constexpr int32_t NEAREST = 9728;
 
+    /** @brief LINEAR (`9729`) */
     static constexpr int32_t LINEAR = 9729;
   };
 
@@ -27,16 +32,22 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for Minification filter.
    */
   struct MinFilter {
+    /** @brief NEAREST (`9728`) */
     static constexpr int32_t NEAREST = 9728;
 
+    /** @brief LINEAR (`9729`) */
     static constexpr int32_t LINEAR = 9729;
 
+    /** @brief NEAREST_MIPMAP_NEAREST (`9984`) */
     static constexpr int32_t NEAREST_MIPMAP_NEAREST = 9984;
 
+    /** @brief LINEAR_MIPMAP_NEAREST (`9985`) */
     static constexpr int32_t LINEAR_MIPMAP_NEAREST = 9985;
 
+    /** @brief NEAREST_MIPMAP_LINEAR (`9986`) */
     static constexpr int32_t NEAREST_MIPMAP_LINEAR = 9986;
 
+    /** @brief LINEAR_MIPMAP_LINEAR (`9987`) */
     static constexpr int32_t LINEAR_MIPMAP_LINEAR = 9987;
   };
 
@@ -44,10 +55,13 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for S (U) wrapping mode.
    */
   struct WrapS {
+    /** @brief CLAMP_TO_EDGE (`33071`) */
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
+    /** @brief MIRRORED_REPEAT (`33648`) */
     static constexpr int32_t MIRRORED_REPEAT = 33648;
 
+    /** @brief REPEAT (`10497`) */
     static constexpr int32_t REPEAT = 10497;
   };
 
@@ -55,10 +69,13 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
    * @brief Known values for T (V) wrapping mode.
    */
   struct WrapT {
+    /** @brief CLAMP_TO_EDGE (`33071`) */
     static constexpr int32_t CLAMP_TO_EDGE = 33071;
 
+    /** @brief MIRRORED_REPEAT (`33648`) */
     static constexpr int32_t MIRRORED_REPEAT = 33648;
 
+    /** @brief REPEAT (`10497`) */
     static constexpr int32_t REPEAT = 10497;
   };
 

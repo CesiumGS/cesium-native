@@ -38,5 +38,3 @@ cesium_target_include_directories(
 target_link_libraries(CesiumGeometry PUBLIC
     CesiumUtility
 )
-
-target_compile_definitions(CesiumGeometry PRIVATE GLM_ENABLE_EXPERIMENTAL)

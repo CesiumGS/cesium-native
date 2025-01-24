@@ -1,16 +1,16 @@
 #pragma once
 
-#include "ApplicationData.h"
-#include "Assets.h"
-#include "Defaults.h"
-#include "Profile.h"
-#include "Response.h"
-#include "Token.h"
-#include "TokenList.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Library.h>
+#include <CesiumIonClient/ApplicationData.h>
+#include <CesiumIonClient/Assets.h>
+#include <CesiumIonClient/Defaults.h>
+#include <CesiumIonClient/Geocoder.h>
+#include <CesiumIonClient/Profile.h>
+#include <CesiumIonClient/Response.h>
+#include <CesiumIonClient/Token.h>
+#include <CesiumIonClient/TokenList.h>
 
 #include <cstdint>
 
@@ -112,6 +112,10 @@ public:
   /**
    * @brief Retrieves information about the ion API server.
    *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param pAssetAccessor The interface used to interact with the Cesium ion
+   * REST API.
+   * @param apiUrl The URL of the ion REST API to make requests against.
    * @return A future that resolves to the application information.
    */
   static CesiumAsync::Future<Response<ApplicationData>> appData(
@@ -119,6 +123,22 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& apiUrl = "https://api.cesium.com");
 
+  /**
+   * @brief Attempts to retrieve the ion endpoint URL by looking for a
+   * `config.json` file on the server.
+   *
+   * This config file isn't present on `ion.cesium.com`, but will be present on
+   * Cesium ion self-hosted instances to allow the user to configure the URLs of
+   * their self-hosted instance as needed.
+   *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param pAssetAccessor The interface used to interact with the Cesium ion
+   * REST API.
+   * @param ionUrl The URL of the Cesium ion instance to make this request
+   * against.
+   * @returns The Cesium ion REST API url for this ion instance, or
+   * `std::nullopt` if none found.
+   */
   static CesiumAsync::Future<std::optional<std::string>> getApiUrl(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -290,6 +310,21 @@ public:
       const std::optional<std::vector<int64_t>>& newAssetIDs,
       const std::vector<std::string>& newScopes,
       const std::optional<std::vector<std::string>>& newAllowedUrls) const;
+
+  /**
+   * @brief Makes a request to the ion geocoding service.
+   *
+   * A geocoding service is used to make a plain text query (like an address,
+   * city name, or landmark) and obtain information about where it's located.
+   *
+   * @param provider The ion geocoding provider to use.
+   * @param type The type of request to make. See {@link GeocoderRequestType} for more information.
+   * @param query The query to make.
+   */
+  CesiumAsync::Future<Response<GeocoderResult>> geocode(
+      GeocoderProviderType provider,
+      GeocoderRequestType type,
+      const std::string& query);
 
   /**
    * @brief Decodes a token ID from a token.

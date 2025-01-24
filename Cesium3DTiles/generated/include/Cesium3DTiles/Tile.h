@@ -18,6 +18,9 @@ namespace Cesium3DTiles {
  * @brief A tile in a 3D Tiles tileset.
  */
 struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Tile";
 
   /**
@@ -27,8 +30,10 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * default is to inherit from the parent tile.
    */
   struct Refine {
+    /** @brief `ADD` */
     inline static const std::string ADD = "ADD";
 
+    /** @brief `REPLACE` */
     inline static const std::string REPLACE = "REPLACE";
   };
 

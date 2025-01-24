@@ -54,5 +54,3 @@ target_link_libraries(CesiumGltf
     PUBLIC
         CesiumUtility
 )
-
-target_compile_definitions(CesiumGltf PRIVATE GLM_ENABLE_EXPERIMENTAL)

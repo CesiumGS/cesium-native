@@ -1,4 +1,4 @@
-#include "CesiumGltf/PropertyView.h"
+#include <CesiumGltf/PropertyView.h>
 
 using namespace CesiumGltf;
 

@@ -2,8 +2,7 @@
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumUtility/JsonValue.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <cstdint>
 #include <string>
@@ -18,7 +17,7 @@ using Bool = JsonValue::Bool;
 using Null = JsonValue::Null;
 
 TEST_CASE("TestJsonObjectWriter") {
-  SECTION("[{}, {}, {}]") {
+  SUBCASE("[{}, {}, {}]") {
     CesiumJsonWriter::JsonWriter writer;
     const auto extrasObject =
         Object{{"extras", Array{Object{}, Object{}, Object{}}}};
@@ -26,7 +25,7 @@ TEST_CASE("TestJsonObjectWriter") {
     REQUIRE(writer.toStringView() == R"({"extras":[{},{},{}]})");
   }
 
-  SECTION("[0,1,2.5]") {
+  SUBCASE("[0,1,2.5]") {
     CesiumJsonWriter::JsonWriter writer;
     const auto extrasObject =
         Array{std::int64_t(0), std::uint64_t(1), double(2.5)};
@@ -34,7 +33,7 @@ TEST_CASE("TestJsonObjectWriter") {
     REQUIRE(writer.toStringView() == R"([0,1,2.5])");
   }
 
-  SECTION("[👀]") {
+  SUBCASE("[👀]") {
     CesiumJsonWriter::JsonWriter writer;
     writer.StartArray();
     writeJsonValue(JsonValue("👀"), writer);
@@ -42,7 +41,7 @@ TEST_CASE("TestJsonObjectWriter") {
     REQUIRE(writer.toStringView() == "[\"👀\"]");
   }
 
-  SECTION(R"("A": {"B": "C"{}})") {
+  SUBCASE(R"("A": {"B": "C"{}})") {
     CesiumJsonWriter::JsonWriter writer;
     // clang-format off
         const auto extrasObject = Object {{
@@ -60,7 +59,7 @@ TEST_CASE("TestJsonObjectWriter") {
     REQUIRE(writer.toStringView() == R"({"extras":{"A":{"B":{"C":{}}}}})");
   }
 
-  SECTION(R"([[[1 -2,false,null,true,{"emojis": "😂👽🇵🇷"}]]])") {
+  SUBCASE(R"([[[1 -2,false,null,true,{"emojis": "😂👽🇵🇷"}]]])") {
     CesiumJsonWriter::JsonWriter writer;
     // clang-format off
         const auto extrasObject = Object {{
@@ -76,7 +75,7 @@ TEST_CASE("TestJsonObjectWriter") {
         R"({"extras":[[[1.0,-2.0,false,null,true,{"emojis":"😂👽🇵🇷"}]]]})");
   }
 
-  SECTION("Empty object is serialized correctly") {
+  SUBCASE("Empty object is serialized correctly") {
     CesiumJsonWriter::JsonWriter writer;
     writeJsonValue(Object{}, writer);
     REQUIRE(writer.toStringView() == "{}");

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Library.h"
-#include "TilesetMetadata.h"
-
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>

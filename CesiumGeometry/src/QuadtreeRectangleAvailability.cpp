@@ -1,10 +1,18 @@
-#include "CesiumGeometry/QuadtreeRectangleAvailability.h"
-
-#include "CesiumGeometry/TileAvailabilityFlags.h"
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 namespace CesiumGeometry {
 
@@ -13,9 +21,9 @@ QuadtreeRectangleAvailability::QuadtreeRectangleAvailability(
     uint32_t maximumLevel) noexcept
     : _tilingScheme(tilingScheme),
       _maximumLevel(maximumLevel),
-      _rootNodes(
+      _rootNodes(static_cast<size_t>(
           this->_tilingScheme.getRootTilesX() *
-          this->_tilingScheme.getRootTilesY()) {
+          this->_tilingScheme.getRootTilesY())) {
   for (uint32_t j = 0; j < this->_tilingScheme.getRootTilesY(); ++j) {
     const uint32_t rowStart = j * this->_tilingScheme.getRootTilesX();
     for (uint32_t i = 0; i < this->_tilingScheme.getRootTilesX(); ++i) {

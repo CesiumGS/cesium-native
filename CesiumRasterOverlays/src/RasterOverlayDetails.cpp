@@ -1,8 +1,16 @@
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumUtility/Assert.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <limits>
+#include <utility>
+#include <vector>
 
 namespace CesiumRasterOverlays {
 RasterOverlayDetails::RasterOverlayDetails()

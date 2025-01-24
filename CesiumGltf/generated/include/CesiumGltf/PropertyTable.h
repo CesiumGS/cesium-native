@@ -18,6 +18,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API PropertyTable final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "PropertyTable";
 
   /**

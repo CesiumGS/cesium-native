@@ -19,7 +19,8 @@ struct ExtensionTextureWebp;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link ExtensionTextureWebp} instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionTextureWebp "ExtensionTextureWebp"
+ * instances from JSON.
  */
 class CESIUMGLTFREADER_API ExtensionTextureWebpReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of ExtensionTextureWebp from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionTextureWebp>
@@ -60,7 +61,7 @@ public:
    * @brief Reads an array of instances of ExtensionTextureWebp from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<

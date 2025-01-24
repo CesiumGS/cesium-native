@@ -16,6 +16,9 @@ namespace CesiumGltf {
  * transform to place the camera in the scene.
  */
 struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Camera";
 
   /**
@@ -23,8 +26,10 @@ struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
    * orthographic projection.
    */
   struct Type {
+    /** @brief `perspective` */
     inline static const std::string perspective = "perspective";
 
+    /** @brief `orthographic` */
     inline static const std::string orthographic = "orthographic";
   };
 

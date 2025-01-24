@@ -2,28 +2,61 @@
 
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
+#include "TilesetContentLoaderResult.h"
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumUtility/joinToString.h>
 
+#include <fmt/format.h>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/geometric.hpp>
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumUtility;
 using namespace Cesium3DTilesContent;
@@ -905,7 +938,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            ellipsoid,
            upAxis = _upAxis,
            externalContentInitializer = std::move(externalContentInitializer),
-           pAssetAccessor = pAssetAccessor,
+           pAssetAccessor,
            asyncSystem,
            requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                pCompletedRequest) mutable {
@@ -918,7 +951,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   tileUrl);
               return asyncSystem.createResolvedFuture(
                   TileLoadResult::createFailedResult(
-                      std::move(pAssetAccessor),
+                      pAssetAccessor,
                       std::move(pCompletedRequest)));
             }
 
@@ -931,7 +964,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   tileUrl);
               return asyncSystem.createResolvedFuture(
                   TileLoadResult::createFailedResult(
-                      std::move(pAssetAccessor),
+                      pAssetAccessor,
                       std::move(pCompletedRequest)));
             }
 
@@ -962,12 +995,13 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                        pLogger,
                        upAxis,
                        tileUrl,
-                       pAssetAccessor = std::move(pAssetAccessor),
-                       pCompletedRequest](GltfConverterResult&& result) {
+                       pAssetAccessor,
+                       pCompletedRequest = std::move(pCompletedRequest)](
+                          GltfConverterResult&& result) mutable {
                         logTileLoadResult(pLogger, tileUrl, result.errors);
                         if (result.errors) {
                           return TileLoadResult::createFailedResult(
-                              std::move(pAssetAccessor),
+                              pAssetAccessor,
                               std::move(pCompletedRequest));
                         }
                         return TileLoadResult{
@@ -976,7 +1010,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                             std::nullopt,
                             std::nullopt,
                             std::nullopt,
-                            std::move(pAssetAccessor),
+                            pAssetAccessor,
                             std::move(pCompletedRequest),
                             {},
                             TileLoadResultState::Success,
@@ -990,7 +1024,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       upAxis,
                       tileRefine,
                       pLogger,
-                      std::move(pAssetAccessor),
+                      pAssetAccessor,
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
                       ellipsoid));

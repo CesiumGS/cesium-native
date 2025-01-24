@@ -1,6 +1,33 @@
 # Change Log
 
-### ? - ?
+### v0.44.0 - 2025-02-03
+
+##### Breaking Changes :mega:
+
+- Removed `Math::rotation`. Use `glm::rotation` from `<glm/gtx/quaternion.hpp>` instead.
+- Removed `Math::perpVector`. Use `glm::perp` from `<glm/gtx/perpendicular.hpp>` instead.
+- Using Cesium Native in non-cmake projects now requires manually defining `GLM_ENABLE_EXPERIMENTAL`.
+- cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
+
+##### Additions :tada:
+
+- Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
+- Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
+- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
+- `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
+- Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
+
+##### Fixes :wrench:
+
+- Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+- Fixed a bug in `SharedAssetDepot` that could cause assertion failures in debug builds, and could rarely cause premature deletion of shared assets even in release builds.
+- Fixed a bug that could cause `Tileset::sampleHeightMostDetailed` to return a height that is not the highest one when the sampled tileset contained multiple heights at the given location.
+
+### v0.43.0 - 2025-01-02
+
+##### Breaking Changes :mega:
+
+- Removed unused types `JsonValueMissingKey` and `JsonValueNotRealValue` from `CesiumUtility`.
 
 ##### Additions :tada:
 
@@ -20,6 +47,9 @@
 - Fixed a raster overlay bug that could cause unnecessary upsampling with failed or missing overlay tiles.
 - Fixed a bug in  `SubtreeFileReader::loadBinary` that prevented valid subtrees from loading if they did not contain binary data.
 - Fixed a bug in the `Tileset` selection algorithm that could cause detail to disappear during load in some cases.
+- Improved the "kicking" mechanism in the tileset selection algorithm. The new criteria allows holes in a `Tileset`, when they do occur, to be filled with loaded tiles more incrementally.
+- Fixed a bug in `SharedAssetDepot` that could lead to crashes and other undefined behavior when an asset in the depot outlived the depot itself.
+- Fixed a bug that could cause some rotations in an Instanced 3D Model (.i3dm) to be represented incorrectly.
 
 ### v0.42.0 - 2024-12-02
 

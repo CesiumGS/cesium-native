@@ -1,9 +1,15 @@
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <glm/geometric.hpp>
+#include <doctest/doctest.h>
+#include <glm/exponential.hpp>
+#include <glm/ext/vector_double3.hpp>
+
+#include <span>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -16,14 +22,14 @@ TEST_CASE("S2CellBoundingVolume") {
       100000.0,
       Ellipsoid::WGS84);
 
-  SECTION("distance-squared to position is 0 when camera is inside bounding "
+  SUBCASE("distance-squared to position is 0 when camera is inside bounding "
           "volume") {
     CHECK(
         tileS2Cell.computeDistanceSquaredToPosition(tileS2Cell.getCenter()) ==
         0.0);
   }
 
-  SECTION(
+  SUBCASE(
       "Case I - distanceToCamera works when camera is facing only one plane") {
     const double testDistance = 100.0;
 
@@ -58,7 +64,7 @@ TEST_CASE("S2CellBoundingVolume") {
         Math::Epsilon7));
   }
 
-  SECTION("Case II - distanceToCamera works when camera is facing two planes") {
+  SUBCASE("Case II - distanceToCamera works when camera is facing two planes") {
     const double testDistance = 5.0;
 
     // Test with the top plane and the first side plane.
@@ -95,7 +101,7 @@ TEST_CASE("S2CellBoundingVolume") {
         Math::Epsilon7));
   }
 
-  SECTION(
+  SUBCASE(
       "Case III - distanceToCamera works when camera is facing three planes") {
     glm::dvec3 position = tileS2Cell.getVertices()[2] + glm::dvec3(1.0);
     CHECK(Math::equalsEpsilon(
@@ -105,7 +111,7 @@ TEST_CASE("S2CellBoundingVolume") {
         Math::Epsilon7));
   }
 
-  SECTION("Case IV - distanceToCamera works when camera is facing more than "
+  SUBCASE("Case IV - distanceToCamera works when camera is facing more than "
           "three planes") {
     glm::dvec3 position(-Ellipsoid::WGS84.getMaximumRadius(), 0.0, 0.0);
     CHECK(Math::equalsEpsilon(
@@ -116,7 +122,7 @@ TEST_CASE("S2CellBoundingVolume") {
         Math::Epsilon7));
   }
 
-  SECTION("intersect plane") {
+  SUBCASE("intersect plane") {
     CHECK(
         tileS2Cell.intersectPlane(Plane::ORIGIN_ZX_PLANE) ==
         CullingResult::Intersecting);
@@ -132,7 +138,7 @@ TEST_CASE("S2CellBoundingVolume") {
         CullingResult::Inside);
   }
 
-  SECTION("can construct face 2 (North pole)") {
+  SUBCASE("can construct face 2 (North pole)") {
     S2CellBoundingVolume face2Root(
         S2CellID::fromToken("5"),
         1000.0,

@@ -13,6 +13,9 @@ namespace CesiumGltf {
  * @brief Metadata about the glTF asset.
  */
 struct CESIUMGLTF_API Asset final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Asset";
 
   /**

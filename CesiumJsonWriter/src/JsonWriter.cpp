@@ -1,9 +1,16 @@
-#include "CesiumJsonWriter/JsonWriter.h"
+#include <CesiumJsonWriter/JsonWriter.h>
+
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 #include <algorithm>
-#include <iterator>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace CesiumJsonWriter {
 JsonWriter::JsonWriter()
@@ -114,7 +121,7 @@ void JsonWriter::KeyPrimitive(std::string_view keyName, std::nullptr_t value) {
 // Array / Objects
 void JsonWriter::KeyArray(
     std::string_view keyName,
-    std::function<void(void)> insideArray) {
+    const std::function<void(void)>& insideArray) {
   Key(keyName);
   _compact->StartArray();
   insideArray();
@@ -123,7 +130,7 @@ void JsonWriter::KeyArray(
 
 void JsonWriter::KeyObject(
     std::string_view keyName,
-    std::function<void(void)> insideObject) {
+    const std::function<void(void)>& insideObject) {
   Key(keyName);
   _compact->StartObject();
   insideObject();

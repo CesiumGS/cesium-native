@@ -15,16 +15,22 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API AccessorSparseIndices final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "AccessorSparseIndices";
 
   /**
    * @brief Known values for The indices data type.
    */
   struct ComponentType {
+    /** @brief UNSIGNED_BYTE (`5121`) */
     static constexpr int32_t UNSIGNED_BYTE = 5121;
 
+    /** @brief UNSIGNED_SHORT (`5123`) */
     static constexpr int32_t UNSIGNED_SHORT = 5123;
 
+    /** @brief UNSIGNED_INT (`5125`) */
     static constexpr int32_t UNSIGNED_INT = 5125;
   };
 

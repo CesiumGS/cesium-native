@@ -1,27 +1,46 @@
-#include "CesiumGltfReader/GltfReader.h"
-
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <glm/vec3.hpp>
-#include <rapidjson/reader.h>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
-#include <fstream>
 #include <limits>
+#include <map>
+#include <memory>
 #include <span>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
@@ -118,7 +137,7 @@ T getRange(const CesiumGltf::AccessorView<T>& accessorView) {
   T max{std::numeric_limits<float>::lowest()};
   for (int32_t i = 0; i < accessorView.size(); ++i) {
     const T& value = accessorView[i];
-    for (uint32_t j = 0; j < static_cast<uint32_t>(value.length()); ++j) {
+    for (glm::length_t j = 0; j < value.length(); ++j) {
       min[j] = glm::min<float>(min[j], value[j]);
       max[j] = glm::max<float>(max[j], value[j]);
     }
@@ -162,7 +181,7 @@ VertexAttributeRange getVertexAttributeRange(const Model& model) {
 
 template <typename T>
 bool epsilonCompare(const T& v1, const T& v2, double epsilon) {
-  for (uint32_t i = 0; i < static_cast<uint32_t>(v1.length()); ++i) {
+  for (glm::length_t i = 0; i < v1.length(); ++i) {
     if (!CesiumUtility::Math::equalsEpsilon(v1[i], v2[i], epsilon)) {
       return false;
     }
@@ -711,7 +730,7 @@ TEST_CASE("GltfReader::loadGltf") {
                            .path()
                            .generic_u8string());
 
-  SECTION("loads glTF") {
+  SUBCASE("loads glTF") {
     GltfReader reader{};
     Future<GltfReaderResult> future =
         reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor);
@@ -727,7 +746,8 @@ TEST_CASE("GltfReader::loadGltf") {
     const CesiumGltf::Image& image = result.model->images[0];
     CHECK(image.pAsset->width == 2048);
     CHECK(image.pAsset->height == 2048);
-    CHECK(image.pAsset->pixelData.size() == 2048 * 2048 * 4);
+    CHECK(
+        image.pAsset->pixelData.size() == static_cast<size_t>(2048 * 2048 * 4));
 
     CHECK(!result.model->buffers.empty());
     for (const CesiumGltf::Buffer& buffer : result.model->buffers) {
@@ -735,7 +755,7 @@ TEST_CASE("GltfReader::loadGltf") {
     }
   }
 
-  SECTION(
+  SUBCASE(
       "does not resolve external images when resolveExternalImages is false") {
     GltfReaderOptions options;
     options.resolveExternalImages = false;
@@ -762,14 +782,14 @@ TEST_CASE("GltfReader::postprocessGltf") {
   GltfReader reader;
   GltfReaderResult readerResult;
 
-  SECTION("returns immediately if there is no model") {
+  SUBCASE("returns immediately if there is no model") {
     reader.postprocessGltf(readerResult, options);
     CHECK(!readerResult.model);
     CHECK(readerResult.errors.empty());
     CHECK(readerResult.warnings.empty());
   }
 
-  SECTION("performs requested post processing") {
+  SUBCASE("performs requested post processing") {
     options.decodeDataUrls = true;
 
     Model& model = readerResult.model.emplace();

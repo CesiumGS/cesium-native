@@ -31,12 +31,20 @@ struct InterpolatedVertex {
    */
   double t;
 
+  /**
+   * @brief Compares this \ref InterpolatedVertex against another.
+   *
+   * Two \ref InterpolatedVertex instances are considered equivalent if their
+   * \ref first and \ref second fields are equivalent and the difference between
+   * their \ref t fields is less than `std::numeric_limits<double>::epsilon()`.
+   */
   constexpr bool operator==(const InterpolatedVertex& other) const noexcept {
     return this->first == other.first && this->second == other.second &&
            std::fabs(this->t - other.t) <=
                std::numeric_limits<double>::epsilon();
   }
 
+  /** @brief The inverse of \ref InterpolatedVertex::operator== */
   constexpr bool operator!=(const InterpolatedVertex& other) const noexcept {
     return !(*this == other);
   }

@@ -13,6 +13,9 @@ namespace CesiumGltf {
  * @brief The root nodes of a scene.
  */
 struct CESIUMGLTF_API Scene final : public CesiumGltf::NamedObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "Scene";
 
   /**

@@ -92,6 +92,9 @@ enum class TextureViewStatus {
   ErrorInvalidBytesPerChannel,
 };
 
+/**
+ * @brief A view into the texture data of a single texture from a \ref Model.
+ */
 class TextureView {
 public:
   /**

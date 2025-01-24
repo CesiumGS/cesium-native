@@ -19,7 +19,7 @@ struct Buffer;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link Buffer} instances from JSON.
+ * @brief Reads \ref CesiumGltf::Buffer "Buffer" instances from JSON.
  */
 class CESIUMGLTFREADER_API BufferReader {
 public:
@@ -50,7 +50,7 @@ public:
   /**
    * @brief Reads an instance of Buffer from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::Buffer>
@@ -59,7 +59,7 @@ public:
   /**
    * @brief Reads an array of instances of Buffer from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::Buffer>>

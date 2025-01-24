@@ -1,8 +1,12 @@
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeAnchor.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <glm/vec3.hpp>
 
 namespace {
 

@@ -1,19 +1,22 @@
-#include "CesiumUtility/Uri.h"
-
+#include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <uriparser/Uri.h>
+#include <uriparser/UriBase.h>
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
+#include <functional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace CesiumUtility {
-const char* HTTPS_PREFIX = "https:";
-const char* HTTP_PREFIX = "http:";
+
+namespace {
+const char* const HTTPS_PREFIX = "https:";
+const char* const HTTP_PREFIX = "http:";
 
 std::string cesiumConformUrl(const std::string& url, bool useHttps) {
   // Prepend protocol to protocol-relative URIs.
@@ -22,6 +25,7 @@ std::string cesiumConformUrl(const std::string& url, bool useHttps) {
   }
   return url;
 }
+} // namespace
 
 std::string Uri::resolve(
     const std::string& base,
@@ -340,9 +344,9 @@ std::string Uri::getPath(const std::string& uri) {
 
   UriPathSegmentA* pCurrent = parsedUri.pathHead;
   while (pCurrent != nullptr) {
-    parts.emplace_back(std::string(
+    parts.emplace_back(
         pCurrent->text.first,
-        size_t(pCurrent->text.afterLast - pCurrent->text.first)));
+        size_t(pCurrent->text.afterLast - pCurrent->text.first));
     pCurrent = pCurrent->next;
   }
 

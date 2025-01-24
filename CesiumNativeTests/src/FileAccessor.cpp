@@ -1,10 +1,23 @@
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumUtility/Uri.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <ios>
+#include <memory>
+#include <span>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumNativeTests {
 

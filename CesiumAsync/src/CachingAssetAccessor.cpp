@@ -1,17 +1,29 @@
-#include "CesiumAsync/CachingAssetAccessor.h"
-
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/CacheItem.h"
-#include "CesiumAsync/IAssetResponse.h"
 #include "InternalTimegm.h"
 #include "ResponseCacheControl.h"
 
-#include <spdlog/spdlog.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/CacheItem.h>
+#include <CesiumAsync/CachingAssetAccessor.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/ICacheDatabase.h>
+#include <CesiumUtility/Tracing.h>
 
-#include <algorithm>
+#include <spdlog/logger.h>
+
 #include <cstddef>
+#include <cstdint>
+#include <ctime>
 #include <iomanip>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <span>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumAsync {
 class CacheAssetResponse : public IAssetResponse {
@@ -79,27 +91,31 @@ private:
   CacheAssetResponse _response;
 };
 
-static std::time_t convertHttpDateToTime(const std::string& httpDate);
+namespace {
 
-static bool shouldRevalidateCache(const CacheItem& cacheItem);
+std::time_t convertHttpDateToTime(const std::string& httpDate);
 
-static bool isCacheStale(const CacheItem& cacheItem) noexcept;
+bool shouldRevalidateCache(const CacheItem& cacheItem);
 
-static bool shouldCacheRequest(
+bool isCacheStale(const CacheItem& cacheItem) noexcept;
+
+bool shouldCacheRequest(
     const IAssetRequest& request,
     const std::optional<ResponseCacheControl>& cacheControl);
 
-static std::string calculateCacheKey(const IAssetRequest& request);
+std::string calculateCacheKey(const IAssetRequest& request);
 
-static std::time_t calculateExpiryTime(
+std::time_t calculateExpiryTime(
     const IAssetRequest& request,
     const std::optional<ResponseCacheControl>& cacheControl);
 
-static std::shared_ptr<IAssetRequest> updateCacheItem(
+std::shared_ptr<IAssetRequest> updateCacheItem(
     std::string&& url,
     std::vector<IAssetAccessor::THeader>&& headers,
     CacheItem&& cacheItem,
     const IAssetRequest& request);
+
+} // namespace
 
 CachingAssetAccessor::CachingAssetAccessor(
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -113,7 +129,7 @@ CachingAssetAccessor::CachingAssetAccessor(
       _pCacheDatabase(pCacheDatabase),
       _cacheThreadPool(1) {}
 
-CachingAssetAccessor::~CachingAssetAccessor() noexcept {}
+CachingAssetAccessor::~CachingAssetAccessor() noexcept = default;
 
 Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
     const AsyncSystem& asyncSystem,
@@ -286,6 +302,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::request(
 
 void CachingAssetAccessor::tick() noexcept { _pAssetAccessor->tick(); }
 
+namespace {
+
 bool shouldRevalidateCache(const CacheItem& cacheItem) {
   std::optional<ResponseCacheControl> cacheControl =
       ResponseCacheControl::parseFromResponseHeaders(
@@ -445,4 +463,7 @@ std::time_t convertHttpDateToTime(const std::string& httpDate) {
   ss >> std::get_time(&tm, "%a, %d %b %Y %H:%M:%S");
   return internalTimegm(&tm);
 }
+
+} // namespace
+
 } // namespace CesiumAsync
