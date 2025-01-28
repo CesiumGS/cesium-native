@@ -18,16 +18,16 @@
 
 namespace CesiumUtility {
 
-using UrlResult = ada::result<ada::url_aggregator>;
-
 namespace {
 const std::string HTTPS_PREFIX = "https:";
 const std::string FILE_PREFIX = "file:///";
 const char WINDOWS_PATH_SEP = '\\';
 const char PATH_SEP = '/';
+
 const std::regex TEMPLATE_REGEX(
-    "(\\{|%7B)(.*?)(\\}|%7D)",
-    std::regex::icase | std::regex::optimize);
+    "\\{(.*?)\\}", std::regex::optimize);
+
+using UrlResult = ada::result<ada::url_aggregator>;
 
 // C++ locale settings might change which values std::isalpha checks for. We
 // only want ASCII.
@@ -60,82 +60,75 @@ Uri::Uri(const std::string& uri) {
   if (uri.starts_with("//")) {
     // This is a protocol-relative URL.
     // We will treat it as an HTTPS URL.
-    this->hasScheme = true;
+    this->_hasScheme = true;
     result = ada::parse(HTTPS_PREFIX + uri);
   } else {
-    this->hasScheme = urlHasScheme(uri);
-    result = this->hasScheme ? ada::parse(uri) : ada::parse(FILE_PREFIX + uri);
+    this->_hasScheme = urlHasScheme(uri);
+    result = this->_hasScheme ? ada::parse(uri) : ada::parse(FILE_PREFIX + uri);
   }
 
   if (result) {
-    this->url =
-        std::make_unique<ada::url_aggregator>(std::move(result.value()));
-    this->params =
-        std::make_unique<ada::url_search_params>(this->url->get_search());
+    this->_url.emplace(std::move(result.value()));
+    this->_params.emplace(this->_url->get_search());
   }
 }
 
 Uri::Uri(const Uri& uri) {
-  if (uri.url) {
-    this->url = std::make_unique<ada::url_aggregator>(*uri.url);
-    this->params =
-        std::make_unique<ada::url_search_params>(this->url->get_search());
+  if (uri._url) {
+    this->_url.emplace(*uri._url);
+    this->_params.emplace(this->_url->get_search());
   }
-  this->hasScheme = uri.hasScheme;
+  this->_hasScheme = uri._hasScheme;
 }
 
 Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
   UrlResult result;
   if (!base.isValid()) {
-    this->hasScheme = urlHasScheme(relative);
-    result = this->hasScheme ? ada::parse(relative)
+    this->_hasScheme = urlHasScheme(relative);
+    result = this->_hasScheme ? ada::parse(relative)
                              : ada::parse(FILE_PREFIX + relative);
   } else {
-    this->hasScheme = base.hasScheme;
-    result = ada::parse(relative, base.url.get());
+    this->_hasScheme = base._hasScheme;
+    result = ada::parse(relative, &base._url.value());
   }
 
   if (result) {
-    this->url =
-        std::make_unique<ada::url_aggregator>(std::move(result.value()));
-    this->params =
-        std::make_unique<ada::url_search_params>(this->url->get_search());
+    this->_url.emplace(std::move(result.value()));
+    this->_params.emplace(this->_url->get_search());
 
     if (useBaseQuery) {
       // Set from relative to base to give priority to relative URL query string
-      for (const auto& [key, value] : *base.params) {
-        if (!this->params->has(key)) {
-          this->params->set(key, value);
+      for (const auto& [key, value] : *base._params) {
+        if (!this->_params->has(key)) {
+          this->_params->set(key, value);
         }
       }
-      this->url->set_search(this->params->to_string());
+      this->_url->set_search(this->_params->to_string());
     }
   }
 }
 
 std::string Uri::toString() const {
-  if (!this->url) {
+  if (!this->_url) {
     return "";
   }
 
-  // Update URL with any param modifications
-  this->url->set_search(this->params->to_string());
-  const std::string_view result = this->url->get_href();
-  return this->hasScheme ? std::string(result)
+  const std::string_view result = this->_url->get_href();
+  return this->_hasScheme ? std::string(result)
                          : std::string(result.substr(FILE_PREFIX.length()));
 }
 
 bool Uri::isValid() const {
-  return this->url != nullptr && this->params != nullptr;
+  return this->_url && this->_params;
 }
 
 const std::optional<std::string_view>
-Uri::getQueryValue(const std::string& key) const {
+Uri::getQueryValue(const std::string& key) {
   if (!this->isValid()) {
     return std::nullopt;
   }
 
-  return this->params->get(key);
+  return this->_params->get(key);
 }
 
 void Uri::setQueryValue(const std::string& key, const std::string& value) {
@@ -143,20 +136,22 @@ void Uri::setQueryValue(const std::string& key, const std::string& value) {
     return;
   }
 
-  this->params->set(key, value);
+  this->_params->set(key, value);
+  // Update URL with modified params
+  this->_url->set_search(this->_params->to_string());
 }
 
-const std::string_view Uri::getPath() const {
+std::string_view Uri::getPath() const {
   if (!this->isValid()) {
     return {};
   }
 
   // Remove leading '/'
-  return this->url->get_pathname();
+  return this->_url->get_pathname();
 }
 
 void Uri::setPath(const std::string_view& path) {
-  this->url->set_pathname(path);
+  this->_url->set_pathname(path);
 }
 
 std::string Uri::resolve(
@@ -190,7 +185,6 @@ std::string Uri::substituteTemplateParameters(
 
   std::string result;
   // The output string will *probably* be at least as long as the input string.
-  // If not, we shrink_to_fit later.
   result.reserve(templateUri.length());
   std::string placeholder;
 
@@ -225,10 +219,6 @@ std::string Uri::substituteTemplateParameters(
     result.append(
         templateUri.substr(startPos, templateUri.length() - startPos));
   }
-
-  // It's possible some placeholders were replaced with strings shorter than the
-  // placeholder itself, so we might need to shrink to fit
-  result.shrink_to_fit();
 
   return result;
 }

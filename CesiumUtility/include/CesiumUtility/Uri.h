@@ -3,7 +3,6 @@
 #include <ada.h>
 
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -74,7 +73,7 @@ public:
    * if not found.
    */
   const std::optional<std::string_view>
-  getQueryValue(const std::string& key) const;
+  getQueryValue(const std::string& key);
 
   /**
    * @brief Sets the given key in the URI's query parameters to the given value.
@@ -92,7 +91,7 @@ public:
    *
    * @return The path, or empty string if the URI could not be parsed.
    */
-  const std::string_view getPath() const;
+  std::string_view getPath() const;
 
   /**
    * @brief Sets the path portion of a URI to a new value. The other portions of
@@ -313,8 +312,8 @@ public:
   setPath(const std::string& uri, const std::string& newPath);
 
 private:
-  std::unique_ptr<ada::url_aggregator> url = nullptr;
-  std::unique_ptr<ada::url_search_params> params = nullptr;
-  bool hasScheme = false;
+  std::optional<ada::url_aggregator> _url = std::nullopt;
+  std::optional<ada::url_search_params> _params = std::nullopt;
+  bool _hasScheme = false;
 };
 } // namespace CesiumUtility

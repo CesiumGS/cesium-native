@@ -45,7 +45,7 @@ message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB and ada-url aren't technically part of the public interface, but they're used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada-url uriparser)
+set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada-url)
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
