@@ -127,15 +127,19 @@ validatePropertyType(const ClassProperty& classProperty) {
   PropertyComponentType expectedComponentType =
       TypeToPropertyType<T>::component;
 
-  if (!classProperty.componentType &&
-      expectedComponentType != PropertyComponentType::None) {
-    return PropertyViewStatus::ErrorComponentTypeMismatch;
-  }
+  // Metadata values have an expected component type but the component type
+  // isn't stored on the class property.
+  if (!IsMetadataEnum<T>::value) {
+    if (!classProperty.componentType &&
+        expectedComponentType != PropertyComponentType::None) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
 
-  if (classProperty.componentType &&
-      expectedComponentType !=
-          convertStringToPropertyComponentType(*classProperty.componentType)) {
-    return PropertyViewStatus::ErrorComponentTypeMismatch;
+    if (classProperty.componentType &&
+        expectedComponentType != convertStringToPropertyComponentType(
+                                     *classProperty.componentType)) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
   }
 
   if (classProperty.array) {

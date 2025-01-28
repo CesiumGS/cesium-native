@@ -5,6 +5,7 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
@@ -1194,6 +1195,84 @@ TEST_CASE("Test string PropertyTableProperty") {
         stringProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
   }
+}
+
+TEST_CASE("Test enum PropertyTableProperty") {
+  Model model;
+
+  std::vector<uint64_t> expected{0, 1, 2};
+  std::vector<std::string> expectedNames{"Foo", "Bar", "Baz"};
+
+  addBufferToModel(model, expected);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+
+  schema.enums.emplace("TestEnum", Enum{});
+  Enum& enumDef = schema.enums["TestEnum"];
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      EnumValue{.name = "Foo", .description = std::nullopt, .value = 0},
+      EnumValue{.name = "Bar", .description = std::nullopt, .value = 1},
+      EnumValue{.name = "Baz", .description = std::nullopt, .value = 2}};
+  enumDef.valueType = Enum::ValueType::UINT64;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(expected.size());
+
+  PropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::ENUM;
+  testClassProperty.enumType = "TestEnum";
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::ENUM);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->enumType == "TestEnum");
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+
+  SUBCASE("Access correct type") {
+    PropertyTablePropertyView<PropertyEnumValue<uint64_t>> enumProperty =
+        view.getPropertyView<PropertyEnumValue<uint64_t>>("TestClassProperty");
+    REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      REQUIRE(
+          enumProperty.getRaw(static_cast<int64_t>(i)).value() == expected[i]);
+      REQUIRE(
+          enumProperty.get(static_cast<int64_t>(i)).value().value() ==
+          expected[i]);
+      REQUIRE(
+          enumProperty.getRaw(static_cast<int64_t>(i)).name() ==
+          expectedNames[i]);
+    }
+  }
+
+  /*SUBCASE("Wrong array type") {
+    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue<uint64_t>>>
+        enumArrayInvalid =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue<uint64_t>>>(
+                "TestClassProperty");
+    REQUIRE(
+        enumArrayInvalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+  }*/
 }
 
 TEST_CASE("Test fixed-length scalar array") {

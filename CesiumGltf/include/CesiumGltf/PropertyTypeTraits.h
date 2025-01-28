@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyType.h>
 
 #include <glm/glm.hpp>
@@ -128,6 +129,16 @@ template <typename T> struct IsMetadataString<T> : std::false_type {};
 template <> struct IsMetadataString<std::string_view> : std::true_type {};
 
 /**
+ * @brief Check if a C++ type can be represented as an enum property type
+ */
+template <typename... T> struct IsMetadataEnum;
+/** @copydoc IsMetadataEnum */
+template <typename T> struct IsMetadataEnum<T> : std::false_type {};
+/** @copydoc IsMetadataEnum */
+template <typename T>
+struct IsMetadataEnum<PropertyEnumValue<T>> : std::true_type {};
+
+/**
  * @brief Check if a C++ type can be represented as an array.
  */
 template <typename... T> struct IsMetadataArray;
@@ -198,6 +209,20 @@ struct MetadataArrayType<CesiumGltf::PropertyArrayView<T>> {
 template <typename T>
 struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
   /** @brief The component type of this metadata array. */
+  using type = T;
+};
+
+/**
+ * @brief Retrieve the component type of an enum
+ */
+template <typename T> struct MetadataEnumType {
+  /** @brief The component type of this metadata enum. */
+  using type = void;
+};
+/** @copydoc MetadataEnumType */
+template <typename T>
+struct MetadataEnumType<CesiumGltf::PropertyEnumValue<T>> {
+  /** @brief The component type of this metadata enum. */
   using type = T;
 };
 
@@ -390,6 +415,16 @@ template <> struct TypeToPropertyType<std::string_view> {
       PropertyComponentType::None;
   /** @brief The \ref PropertyType corresponding to a `std::string_view`. */
   static constexpr PropertyType value = PropertyType::String;
+};
+
+/** @copydoc TypeToPropertyType */
+template <typename T> struct TypeToPropertyType<PropertyEnumValue<T>> {
+  /** @brief The \ref PropertyComponentType corresponding to a
+   * `PropertyEnumValue<T>`. */
+  static constexpr PropertyComponentType component =
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `PropertyEnumValue<T>`. */
+  static constexpr PropertyType value = PropertyType::Enum;
 };
 
 /**

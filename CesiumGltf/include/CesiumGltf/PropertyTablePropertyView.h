@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
@@ -129,6 +130,11 @@ public:
    * @brief This property view has a string offset that is out of bounds.
    */
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
+
+  /**
+   * @brief This property view has a string offset that is out of bounds.
+   */
+  static const PropertyViewStatusType ErrorInvalidEnumType = 32;
 };
 
 /**
@@ -174,7 +180,8 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -190,7 +197,8 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {
     CESIUM_ASSERT(
         this->_status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -214,7 +222,8 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {
     if (this->_status != PropertyTablePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
       // property's definition.
@@ -256,7 +265,34 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {}
+
+  /**
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty} along with an enum definition. Used for enum values.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      std::span<const std::byte> values,
+      const CesiumGltf::Enum* enumDefinition) noexcept
+      : PropertyView<ElementType>(classProperty, property),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{enumDefinition} {}
 
   /**
    * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
@@ -288,7 +324,8 @@ public:
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
-        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
+        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
+        _pEnumDefinition{nullptr} {}
 
   /**
    * @brief Get the value of an element in the {@link PropertyTable},
@@ -360,6 +397,10 @@ public:
       return getStringValue(index);
     }
 
+    if constexpr (IsMetadataEnum<ElementType>::value) {
+      return getEnumValue<typename MetadataEnumType<ElementType>::type>(index);
+    }
+
     if constexpr (IsMetadataNumericArray<ElementType>::value) {
       return getNumericArrayValues<
           typename MetadataArrayType<ElementType>::type>(index);
@@ -405,6 +446,23 @@ private:
     return std::string_view(
         reinterpret_cast<const char*>(_values.data() + currentOffset),
         nextOffset - currentOffset);
+  }
+
+  template <typename T>
+  PropertyEnumValue<T> getEnumValue(int64_t index) const noexcept {
+    const T value = reinterpret_cast<const T*>(_values.data())[index];
+    const auto& enumValueDefinitionIt = std::find_if(
+        this->_pEnumDefinition->values.begin(),
+        this->_pEnumDefinition->values.end(),
+        [value](const CesiumGltf::EnumValue& v) {
+          return v.value == static_cast<int64_t>(value);
+        });
+
+    if (enumValueDefinitionIt == this->_pEnumDefinition->values.end()) {
+      return PropertyEnumValue<T>();
+    }
+
+    return PropertyEnumValue<T>(enumValueDefinitionIt->name, value);
   }
 
   template <typename T>
@@ -500,6 +558,8 @@ private:
   std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
+
+  const CesiumGltf::Enum* _pEnumDefinition;
 };
 
 /**

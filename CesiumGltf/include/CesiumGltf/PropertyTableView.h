@@ -1,13 +1,16 @@
 #pragma once
 
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyType.h>
 
 #include <glm/common.hpp>
 
 #include <optional>
+#include <unordered_map>
 
 namespace CesiumGltf {
 
@@ -296,6 +299,15 @@ public:
       callback(
           propertyId,
           getPropertyViewImpl<bool, false>(propertyId, *pClassProperty));
+      return;
+    }
+
+    if (type == PropertyType::Enum) {
+      getEnumPropertyViewImpl<Callback>(
+          propertyId,
+          *pClassProperty,
+          componentType,
+          std::forward<Callback>(callback));
       return;
     }
 
@@ -1034,6 +1046,79 @@ private:
     }
   }
 
+  template <typename Callback>
+  void getEnumPropertyViewImpl(
+      const std::string& propertyId,
+      const ClassProperty& classProperty,
+      PropertyComponentType componentType,
+      Callback&& callback) const {
+
+    switch (componentType) {
+    case PropertyComponentType::Int8:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<int8_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint8:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<uint8_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Int16:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<int16_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint16:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<uint16_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Int32:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<int32_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint32:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<uint32_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Int64:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<int64_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    case PropertyComponentType::Uint64:
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyEnumValue<uint64_t>, false>(
+              propertyId,
+              classProperty));
+      break;
+    default:
+      callback(
+          propertyId,
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
+      break;
+    }
+  }
+
   template <typename T, bool Normalized>
   PropertyTablePropertyView<T, Normalized> getPropertyViewImpl(
       const std::string& propertyId,
@@ -1066,6 +1151,12 @@ private:
 
     if constexpr (IsMetadataString<T>::value) {
       return getStringPropertyValues(classProperty, propertyTableProperty);
+    }
+
+    if constexpr (IsMetadataEnum<T>::value) {
+      return getEnumPropertyValues<typename MetadataEnumType<T>::type>(
+          classProperty,
+          propertyTableProperty);
     }
 
     if constexpr (IsMetadataBooleanArray<T>::value) {
@@ -1148,6 +1239,70 @@ private:
   PropertyTablePropertyView<std::string_view> getStringPropertyValues(
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const;
+
+  template <typename T>
+  PropertyTablePropertyView<PropertyEnumValue<T>> getEnumPropertyValues(
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& propertyTableProperty) const {
+    if (classProperty.array) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+    }
+
+    const PropertyType type = convertStringToPropertyType(classProperty.type);
+    if (TypeToPropertyType<PropertyEnumValue<T>>::value != type) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+    }
+
+    if (!classProperty.enumType) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::ErrorInvalidEnumType);
+    }
+
+    const auto& enumDefinitionIt =
+        this->_pEnumDefinitions->find(*classProperty.enumType);
+    if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::ErrorInvalidEnumType);
+    }
+
+    const Enum* pEnumDefinition = &enumDefinitionIt->second;
+
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(pEnumDefinition->valueType);
+    if (TypeToPropertyType<T>::component != componentType) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
+    }
+
+    std::span<const std::byte> values;
+    const auto status = getBufferSafe(propertyTableProperty.values, values);
+    if (status != PropertyTablePropertyViewStatus::Valid) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(status);
+    }
+
+    if (values.size() % sizeof(T) != 0) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::
+              ErrorBufferViewSizeNotDivisibleByTypeSize);
+    }
+
+    size_t maxRequiredBytes = _pPropertyTable->count * sizeof(T);
+
+    if (values.size() < maxRequiredBytes) {
+      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+          PropertyTablePropertyViewStatus::
+              ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+    }
+
+    return PropertyTablePropertyView<PropertyEnumValue<T>>(
+        propertyTableProperty,
+        classProperty,
+        _pPropertyTable->count,
+        values,
+        pEnumDefinition);
+  }
 
   PropertyTablePropertyView<PropertyArrayView<bool>>
   getBooleanArrayPropertyValues(
@@ -1298,6 +1453,7 @@ private:
   const Model* _pModel;
   const PropertyTable* _pPropertyTable;
   const Class* _pClass;
+  const std::unordered_map<std::string, CesiumGltf::Enum>* _pEnumDefinitions;
   PropertyTableViewStatus _status;
 };
 } // namespace CesiumGltf
