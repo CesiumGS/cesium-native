@@ -26,6 +26,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
+#include <spdlog/sinks/ringbuffer_sink.h>
 #include <spdlog/spdlog.h>
 
 #include <cstdint>
@@ -50,18 +51,26 @@ std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
 
 std::shared_ptr<SimpleAssetRequest>
 createMockAssetRequest(const std::filesystem::path& requestContentPath) {
-  auto pMockResponse = std::make_unique<SimpleAssetResponse>(
-      static_cast<uint16_t>(200),
-      "doesn't matter",
-      CesiumAsync::HttpHeaders{},
-      readFile(requestContentPath));
-  auto pMockRequest = std::make_shared<SimpleAssetRequest>(
+  std::unique_ptr<SimpleAssetResponse> pMockCompletedResponse;
+  if (std::filesystem::exists(requestContentPath)) {
+    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        readFile(requestContentPath));
+  } else {
+    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(404),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::vector<std::byte>{});
+  }
+  auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
       "GET",
       requestContentPath.filename().string(),
       CesiumAsync::HttpHeaders{},
-      std::move(pMockResponse));
-
-  return pMockRequest;
+      std::move(pMockCompletedResponse));
+  return pMockCompletedRequest;
 }
 
 Future<TileLoadResult> loadTile(
@@ -706,6 +715,45 @@ TEST_CASE("Test load layer json tile content") {
       CHECK(!tileLoadResult.tileInitializer);
       CHECK(tileLoadResult.state == TileLoadResultState::Success);
     }
+  }
+
+  SUBCASE("Should error when fetching non-existent .terrain tiles") {
+    auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+    spdlog::default_logger()->sinks().emplace_back(pLog);
+
+    // create loader
+    std::vector<LayerJsonTerrainLoader::Layer> layers;
+    layers.emplace_back(
+        "layer.json",
+        "1.0.0",
+        std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        std::move(contentAvailability),
+        maxZoom,
+        10);
+
+    LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
+
+    // mock tile content request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"0.0.0/1.0.0.terrain",
+         createMockAssetRequest(
+             testDataPath / "CesiumTerrainTileJson" / "nonexistent.terrain")});
+
+    // check the load result
+    auto tileLoadResultFuture = loadTile(
+        QuadtreeTileID(0, 0, 0),
+        loader,
+        asyncSystem,
+        pMockedAssetAccessor);
+    auto tileLoadResult = tileLoadResultFuture.wait();
+    CHECK(tileLoadResult.state == TileLoadResultState::Failed);
+
+    std::vector<std::string> logMessages = pLog->last_formatted();
+    REQUIRE(logMessages.size() == 1);
+    REQUIRE(logMessages.back()
+                .substr(0, logMessages.back().find_last_not_of("\n\r") + 1)
+                .ends_with("Received status code 404 for tile content "
+                           "nonexistent.terrain"));
   }
 }
 
