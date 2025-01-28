@@ -4,10 +4,14 @@
 
 ##### Breaking Changes :mega:
 
+- Removed `Math::rotation`. Use `glm::rotation` from `<glm/gtx/quaternion.hpp>` instead.
+- Removed `Math::perpVector`. Use `glm::perp` from `<glm/gtx/perpendicular.hpp>` instead.
+- Using Cesium Native in non-cmake projects now requires manually defining `GLM_ENABLE_EXPERIMENTAL`.
 - cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
 
 ##### Additions :tada:
 
+- Added `forEachTile`, `forEachContent`, `addExtensionUsed`, `addExtensionRequired`, `removeExtensionUsed`, `removeExtensionRequired`, `isExtensionUsed`, and `isExtensionRequired` to `Cesium3DTiles::Tileset`.
 - Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
 - Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
 - Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
