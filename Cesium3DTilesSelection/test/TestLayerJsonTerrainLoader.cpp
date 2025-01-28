@@ -270,8 +270,8 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].version == "1.33.0");
     CHECK(
         layers[0].tileTemplateUrls.front() ==
-        "%7Bz%7D/%7Bx%7D/"
-        "%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals-metadata");
+        "{z}/{x}/{y}.terrain?v={version}");
+    CHECK(layers[0].extensionsToRequest == "octvertexnormals-metadata");
     CHECK(layers[0].loadedSubtrees.size() == 2);
     CHECK(layers[0].availabilityLevels == 10);
   }
@@ -300,8 +300,8 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].version == "1.0.0");
     CHECK(
         layers[0].tileTemplateUrls.front() ==
-        "%7Bz%7D/%7Bx%7D/"
-        "%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals");
+        "{z}/{x}/{y}.terrain?v={version}");
+    CHECK(layers[0].extensionsToRequest == "octvertexnormals");
     CHECK(layers[0].loadedSubtrees.empty());
     CHECK(layers[0].availabilityLevels == -1);
 
@@ -420,11 +420,8 @@ TEST_CASE("Test create layer json terrain loader") {
     const auto& layers = loaderResult.pLoader->getLayers();
     CHECK(layers.size() == 1);
     CHECK(layers[0].tileTemplateUrls.size() == 1);
-    CHECK(
-        layers[0].tileTemplateUrls[0] ==
-        "%7Bz%7D/%7Bx%7D/"
-        "%7By%7D.terrain?v=%7Bversion%7D&extensions=octvertexnormals-"
-        "watermask");
+    CHECK(layers[0].tileTemplateUrls[0] == "{z}/{x}/{y}.terrain?v={version}");
+    CHECK(layers[0].extensionsToRequest == "octvertexnormals-watermask");
   }
 }
 
@@ -455,6 +452,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        "one-two",
         std::move(contentAvailability),
         maxZoom,
         10);
@@ -463,7 +461,7 @@ TEST_CASE("Test load layer json tile content") {
 
     // mock tile content request
     pMockedAssetAccessor->mockCompletedRequests.insert(
-        {"0.0.0/1.0.0.terrain",
+        {"0.0.0/1.0.0.terrain?extensions=one-two",
          createMockAssetRequest(
              testDataPath / "CesiumTerrainTileJson" /
              "tile.metadataavailability.terrain")});
@@ -505,6 +503,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        std::string(),
         std::move(contentAvailability),
         maxZoom,
         -1);
@@ -566,6 +565,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}_layer0.terrain"},
+        std::string(),
         std::move(layer0ContentAvailability),
         maxZoom,
         -1);
@@ -580,6 +580,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}_layer1.terrain"},
+        std::string(),
         std::move(layer1ContentAvailability),
         maxZoom,
         -1);
@@ -642,6 +643,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}_layer0.terrain"},
+        std::string(),
         std::move(layer0ContentAvailability),
         maxZoom,
         10);
@@ -653,6 +655,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}_layer1.terrain"},
+        std::string(),
         std::move(layer1ContentAvailability),
         maxZoom,
         10);
@@ -787,6 +790,7 @@ TEST_CASE("Test creating tile children for layer json") {
       "layer.json",
       "1.0.0",
       std::vector<std::string>{"{level}.{x}.{y}/{version}_layer0.terrain"},
+      std::string(),
       std::move(layer0ContentAvailability),
       maxZoom,
       10);
@@ -802,6 +806,7 @@ TEST_CASE("Test creating tile children for layer json") {
       "layer.json",
       "1.0.0",
       std::vector<std::string>{"{level}.{x}.{y}/{version}_layer1.terrain"},
+      std::string(),
       std::move(layer1ContentAvailability),
       maxZoom,
       10);

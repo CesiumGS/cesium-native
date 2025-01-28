@@ -340,13 +340,6 @@ Future<LoadLayersResult> loadLayersRecursive(
   std::string extensionsToRequest =
       createExtensionsQueryParameter(knownExtensions, extensions);
 
-  if (!extensionsToRequest.empty()) {
-    for (std::string& url : urls) {
-      url =
-          CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
-    }
-  }
-
   const auto availabilityLevelsIt =
       layerJson.FindMember("metadataAvailability");
 
@@ -379,6 +372,7 @@ Future<LoadLayersResult> loadLayersRecursive(
       baseUrl,
       std::move(version),
       std::move(urls),
+      std::move(extensionsToRequest),
       std::move(availability),
       static_cast<uint32_t>(maxZoom),
       availabilityLevels);
@@ -648,12 +642,14 @@ LayerJsonTerrainLoader::Layer::Layer(
     const std::string& baseUrl_,
     std::string&& version_,
     std::vector<std::string>&& tileTemplateUrls_,
+    std::string&& extensionsToRequest_,
     CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability_,
     uint32_t maxZooms_,
     int32_t availabilityLevels_)
     : baseUrl{baseUrl_},
       version{std::move(version_)},
       tileTemplateUrls{std::move(tileTemplateUrls_)},
+      extensionsToRequest{std::move(extensionsToRequest_)},
       contentAvailability{std::move(contentAvailability_)},
       loadedSubtrees(maxSubtreeInLayer(maxZooms_, availabilityLevels_)),
       availabilityLevels{availabilityLevels_} {}
@@ -675,9 +671,9 @@ std::string resolveTileUrl(
     return std::string();
   }
 
-  return CesiumUtility::Uri::resolve(
+  Uri uri(
       layer.baseUrl,
-      CesiumUtility::Uri::substituteTemplateParameters(
+      Uri::substituteTemplateParameters(
           layer.tileTemplateUrls[0],
           [&tileID, &layer](const std::string& placeholder) -> std::string {
             if (placeholder == "level" || placeholder == "z") {
@@ -695,6 +691,12 @@ std::string resolveTileUrl(
 
             return placeholder;
           }));
+
+  if (!layer.extensionsToRequest.empty()) {
+    uri.setQueryValue("extensions", layer.extensionsToRequest);
+  }
+
+  return uri.toString();
 }
 
 Future<QuantizedMeshLoadResult> requestTileContent(
