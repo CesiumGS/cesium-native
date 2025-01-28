@@ -72,8 +72,7 @@ public:
    * @returns The value of the given key in the query string, or `std::nullopt`
    * if not found.
    */
-  const std::optional<std::string_view>
-  getQueryValue(const std::string& key);
+  const std::optional<std::string_view> getQueryValue(const std::string& key);
 
   /**
    * @brief Sets the given key in the URI's query parameters to the given value.
@@ -84,6 +83,21 @@ public:
    * @param value The value to be added to the query string.
    */
   void setQueryValue(const std::string& key, const std::string& value);
+
+  /**
+   * @brief Gets the scheme portion of the URI. If the URI was created without a scheme, this will return an empty string.
+   *
+   * @returns The scheme, or an empty string if the URI could not be parsed or has no scheme.
+   */
+  std::string_view getScheme() const;
+
+  /**
+   * @brief Gets the host portion of the URI. If the URI also specifies a non-default port, it will be included in the returned host.
+   * If the URI contains no host, this will return an empty string.
+   *
+   * @returns The host, or an empty string if the URI could not be parsed or has no host.
+   */
+  std::string_view getHost() const;
 
   /**
    * @brief Gets the path portion of the URI. This will not include query

@@ -50,6 +50,9 @@ bool urlHasScheme(const std::string& uri) {
 }
 } // namespace
 
+// clang-tidy isn't smart enough to understand that we *are* checking the
+// optionals before accessing them, so disable the warning.
+// NOLINTBEGIN(bugprone-unchecked-optional-access)
 Uri::Uri(const std::string& uri) {
   UrlResult result;
   if (uri.starts_with("//")) {
@@ -81,7 +84,7 @@ Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
   if (!base.isValid()) {
     this->_hasScheme = urlHasScheme(relative);
     result = this->_hasScheme ? ada::parse(relative)
-                             : ada::parse(FILE_PREFIX + relative);
+                              : ada::parse(FILE_PREFIX + relative);
   } else {
     this->_hasScheme = base._hasScheme;
     result = ada::parse(relative, &base._url.value());
@@ -110,12 +113,10 @@ std::string Uri::toString() const {
 
   const std::string_view result = this->_url->get_href();
   return this->_hasScheme ? std::string(result)
-                         : std::string(result.substr(FILE_PREFIX.length()));
+                          : std::string(result.substr(FILE_PREFIX.length()));
 }
 
-bool Uri::isValid() const {
-  return this->_url && this->_params;
-}
+bool Uri::isValid() const { return this->_url && this->_params; }
 
 const std::optional<std::string_view>
 Uri::getQueryValue(const std::string& key) {
@@ -134,6 +135,22 @@ void Uri::setQueryValue(const std::string& key, const std::string& value) {
   this->_params->set(key, value);
   // Update URL with modified params
   this->_url->set_search(this->_params->to_string());
+}
+
+std::string_view Uri::getScheme() const {
+  if(!this->isValid()) {
+    return {};
+  }
+
+  return this->_hasScheme ? this->_url->get_protocol() : std::string_view{};
+}
+
+std::string_view Uri::getHost() const {
+  if(!this->isValid()) {
+    return {};
+  }
+
+  return this->_url->get_host();
 }
 
 std::string_view Uri::getPath() const {
@@ -174,6 +191,8 @@ std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
   return std::string(Uri(uri).getQueryValue(key).value_or(""));
 }
 
+// NOLINTEND(bugprone-unchecked-optional-access)
+
 std::string Uri::substituteTemplateParameters(
     const std::string& templateUri,
     const std::function<SubstitutionCallbackSignature>& substitutionCallback) {
@@ -191,7 +210,8 @@ std::string Uri::substituteTemplateParameters(
     ++nextPos;
     const size_t endPos = templateUri.find('}', nextPos);
     if (endPos == std::string::npos) {
-      // It's not a properly closed placeholder, so let's just output the rest of the URL (including the open brace) as-is and bail.
+      // It's not a properly closed placeholder, so let's just output the rest
+      // of the URL (including the open brace) as-is and bail.
       startPos = nextPos - 1;
       break;
     }
