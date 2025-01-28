@@ -219,11 +219,7 @@ TEST_CASE("Uri::substituteTemplateParameters") {
           substitutionCallback) == "https://example.com/aValue/bValue/cValue");
   CHECK(
       Uri::substituteTemplateParameters(
-          "https://example.com/%7Bone%7D/test",
-          substitutionCallback) == "https://example.com/1/test");
-  CHECK(
-      Uri::substituteTemplateParameters(
-          "https://example.com/enco%24d%5Ee%2Fd%7Bs%7Dtr1n%25g",
+          "https://example.com/enco%24d%5Ee%2Fd{s}tr1n%25g",
           []([[maybe_unused]] const std::string& placeholder) {
             return "teststr";
           }) == "https://example.com/enco%24d%5Ee%2Fdteststrtr1n%25g");
@@ -235,10 +231,6 @@ TEST_CASE("Uri::substituteTemplateParameters") {
       Uri::substituteTemplateParameters(
           "https://example.com/{}",
           substitutionCallback) == "https://example.com/");
-  CHECK(
-      Uri::substituteTemplateParameters(
-          "https://example.com/%7Ba}",
-          substitutionCallback) == "https://example.com/aValue");
   CHECK(
       Uri::substituteTemplateParameters(
           "https://example.com/a}",

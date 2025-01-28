@@ -730,6 +730,7 @@ TEST_CASE("Test load layer json tile content") {
         "layer.json",
         "1.0.0",
         std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        std::string{},
         std::move(contentAvailability),
         maxZoom,
         10);
