@@ -10,3 +10,5 @@ CMakeSettings.json
 test.db
 build-wsl
 .idea
+build-debug
+clang-tidy.log
