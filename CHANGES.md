@@ -23,6 +23,7 @@
 - Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
 - Fixed a bug in `SharedAssetDepot` that could cause assertion failures in debug builds, and could rarely cause premature deletion of shared assets even in release builds.
 - Fixed a bug that could cause `Tileset::sampleHeightMostDetailed` to return a height that is not the highest one when the sampled tileset contained multiple heights at the given location.
+- `LayerJsonTerrainLoader` will now log errors and warnings when failing to load a `.terrain` file referenced in the layer.json, instead of silently ignoring them.
 
 ### v0.43.0 - 2025-01-02
 

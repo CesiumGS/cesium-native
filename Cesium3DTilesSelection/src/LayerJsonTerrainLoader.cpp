@@ -730,7 +730,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
             (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
           QuantizedMeshLoadResult result;
           result.errors.emplaceError(fmt::format(
-              "Receive status code {} for tile content {}",
+              "Received status code {} for tile content {}",
               pResponse->statusCode(),
               pRequest->url()));
           result.pRequest = std::move(pRequest);
@@ -900,11 +900,19 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         .thenInMainThread([this,
                            asyncSystem,
                            pAssetAccessor,
+                           pLogger,
                            ellipsoid,
                            &currentLayer,
                            &tile,
                            shouldCurrLayerLoadAvailability](
                               QuantizedMeshLoadResult&& loadResult) mutable {
+          loadResult.errors.logWarning(
+              pLogger,
+              "Warnings loading quantized mesh terrain");
+          loadResult.errors.logError(
+              pLogger,
+              "Errors loading quantized mesh terrain");
+
           if (shouldCurrLayerLoadAvailability) {
             const QuadtreeTileID& tileID =
                 std::get<QuadtreeTileID>(tile.getTileID());
@@ -947,11 +955,19 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   return std::move(futureQuantizedMesh)
       .thenImmediately(
           [pAssetAccessor,
+           pLogger,
            doesTileHaveUpsampledChild,
            projection = this->_projection,
            tileTransform = tile.getTransform(),
            tileBoundingVolume = tile.getBoundingVolume(),
            ellipsoid](QuantizedMeshLoadResult&& loadResult) mutable {
+            loadResult.errors.logWarning(
+                pLogger,
+                "Warnings loading quantized mesh terrain");
+            loadResult.errors.logError(
+                pLogger,
+                "Errors loading quantized mesh terrain");
+
             // if this tile has one of the children needs to be upsampled, we
             // will need to generate its raster overlay UVs in the worker thread
             // based on the projection of the loader since the upsampler needs
