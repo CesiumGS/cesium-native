@@ -138,7 +138,7 @@ void Uri::setQueryValue(const std::string& key, const std::string& value) {
 }
 
 std::string_view Uri::getScheme() const {
-  if(!this->isValid()) {
+  if (!this->isValid()) {
     return {};
   }
 
@@ -146,7 +146,7 @@ std::string_view Uri::getScheme() const {
 }
 
 std::string_view Uri::getHost() const {
-  if(!this->isValid()) {
+  if (!this->isValid()) {
     return {};
   }
 

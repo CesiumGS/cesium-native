@@ -494,7 +494,7 @@ Asset jsonToAsset(const rapidjson::Value& item) {
 
 std::optional<std::string> generateApiUrl(const std::string& ionUrl) {
   Uri parsedIonUrl(ionUrl);
-  if(!parsedIonUrl) {
+  if (!parsedIonUrl) {
     return std::nullopt;
   }
 

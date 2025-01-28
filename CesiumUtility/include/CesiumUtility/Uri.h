@@ -85,17 +85,21 @@ public:
   void setQueryValue(const std::string& key, const std::string& value);
 
   /**
-   * @brief Gets the scheme portion of the URI. If the URI was created without a scheme, this will return an empty string.
+   * @brief Gets the scheme portion of the URI. If the URI was created without a
+   * scheme, this will return an empty string.
    *
-   * @returns The scheme, or an empty string if the URI could not be parsed or has no scheme.
+   * @returns The scheme, or an empty string if the URI could not be parsed or
+   * has no scheme.
    */
   std::string_view getScheme() const;
 
   /**
-   * @brief Gets the host portion of the URI. If the URI also specifies a non-default port, it will be included in the returned host.
-   * If the URI contains no host, this will return an empty string.
+   * @brief Gets the host portion of the URI. If the URI also specifies a
+   * non-default port, it will be included in the returned host. If the URI
+   * contains no host, this will return an empty string.
    *
-   * @returns The host, or an empty string if the URI could not be parsed or has no host.
+   * @returns The host, or an empty string if the URI could not be parsed or has
+   * no host.
    */
   std::string_view getHost() const;
 
