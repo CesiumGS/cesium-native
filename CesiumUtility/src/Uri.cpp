@@ -1,433 +1,332 @@
 #include <CesiumUtility/Uri.h>
-#include <CesiumUtility/joinToString.h>
 
-#include <uriparser/Uri.h>
-#include <uriparser/UriBase.h>
+#include <ada/character_sets-inl.h>
+#include <ada/implementation.h>
+#include <ada/unicode.h>
+#include <ada/url_aggregator.h>
+#include <ada/url_search_params.h>
 
-#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <stdexcept>
+#include <memory>
+#include <optional>
+#include <regex>
 #include <string>
-#include <vector>
+#include <string_view>
+#include <utility>
 
 namespace CesiumUtility {
 
-namespace {
-const char* const HTTPS_PREFIX = "https:";
-const char* const HTTP_PREFIX = "http:";
+using UrlResult = ada::result<ada::url_aggregator>;
 
-std::string cesiumConformUrl(const std::string& url, bool useHttps) {
-  // Prepend protocol to protocol-relative URIs.
-  if (url.length() > 2 && url.at(0) == '/' && url.at(1) == '/') {
-    return std::string(useHttps ? HTTPS_PREFIX : HTTP_PREFIX).append(url);
+namespace {
+const std::string HTTPS_PREFIX = "https:";
+const std::string FILE_PREFIX = "file:///";
+const char WINDOWS_PATH_SEP = '\\';
+const char PATH_SEP = '/';
+const std::regex TEMPLATE_REGEX(
+    "(\\{|%7B)(.*?)(\\}|%7D)",
+    std::regex::icase | std::regex::optimize);
+
+// C++ locale settings might change which values std::isalpha checks for. We
+// only want ASCII.
+bool isAsciiAlpha(unsigned char c) {
+  return c >= 0x41 && c <= 0x7a && (c <= 0x5a || c >= 0x61);
+}
+bool isAscii(unsigned char c) { return c <= 0x7f; }
+
+/**
+ * A URI has a valid scheme if it starts with an ASCII alpha character and has a
+ * sequence of ASCII characters followed by a "://"
+ */
+bool urlHasScheme(const std::string& uri) {
+  for (size_t i = 0; i < uri.length(); i++) {
+    unsigned char c = static_cast<unsigned char>(uri[i]);
+    if (c == ':') {
+      return uri.length() > i + 2 && uri[i + 1] == '/' && uri[i + 2] == '/';
+    } else if ((i == 0 && !isAsciiAlpha(c)) || !isAscii(c)) {
+      // Scheme must start with an ASCII alpha character and be an ASCII string
+      return false;
+    }
   }
-  return url;
+
+  return false;
 }
 } // namespace
+
+Uri::Uri(const std::string& uri) {
+  UrlResult result;
+  if (uri.starts_with("//")) {
+    // This is a protocol-relative URL.
+    // We will treat it as an HTTPS URL.
+    this->hasScheme = true;
+    result = ada::parse(HTTPS_PREFIX + uri);
+  } else {
+    this->hasScheme = urlHasScheme(uri);
+    result = this->hasScheme ? ada::parse(uri) : ada::parse(FILE_PREFIX + uri);
+  }
+
+  if (result) {
+    this->url =
+        std::make_unique<ada::url_aggregator>(std::move(result.value()));
+    this->params =
+        std::make_unique<ada::url_search_params>(this->url->get_search());
+  }
+}
+
+Uri::Uri(const Uri& uri) {
+  if (uri.url) {
+    this->url = std::make_unique<ada::url_aggregator>(*uri.url);
+    this->params =
+        std::make_unique<ada::url_search_params>(this->url->get_search());
+  }
+  this->hasScheme = uri.hasScheme;
+}
+
+Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
+  UrlResult result;
+  if (!base.isValid()) {
+    this->hasScheme = urlHasScheme(relative);
+    result = this->hasScheme ? ada::parse(relative)
+                             : ada::parse(FILE_PREFIX + relative);
+  } else {
+    this->hasScheme = base.hasScheme;
+    result = ada::parse(relative, base.url.get());
+  }
+
+  if (result) {
+    this->url =
+        std::make_unique<ada::url_aggregator>(std::move(result.value()));
+    this->params =
+        std::make_unique<ada::url_search_params>(this->url->get_search());
+
+    if (useBaseQuery) {
+      // Set from relative to base to give priority to relative URL query string
+      for (const auto& [key, value] : *base.params) {
+        if (!this->params->has(key)) {
+          this->params->set(key, value);
+        }
+      }
+      this->url->set_search(this->params->to_string());
+    }
+  }
+}
+
+std::string Uri::toString() const {
+  if (!this->url) {
+    return "";
+  }
+
+  // Update URL with any param modifications
+  this->url->set_search(this->params->to_string());
+  const std::string_view result = this->url->get_href();
+  return this->hasScheme ? std::string(result)
+                         : std::string(result.substr(FILE_PREFIX.length()));
+}
+
+bool Uri::isValid() const {
+  return this->url != nullptr && this->params != nullptr;
+}
+
+const std::optional<std::string_view>
+Uri::getQueryValue(const std::string& key) const {
+  if (!this->isValid()) {
+    return std::nullopt;
+  }
+
+  return this->params->get(key);
+}
+
+void Uri::setQueryValue(const std::string& key, const std::string& value) {
+  if (!this->isValid()) {
+    return;
+  }
+
+  this->params->set(key, value);
+}
+
+const std::string_view Uri::getPath() const {
+  if (!this->isValid()) {
+    return {};
+  }
+
+  // Remove leading '/'
+  return this->url->get_pathname();
+}
+
+void Uri::setPath(const std::string_view& path) {
+  this->url->set_pathname(path);
+}
 
 std::string Uri::resolve(
     const std::string& base,
     const std::string& relative,
     bool useBaseQuery,
-    bool assumeHttpsDefault) {
-  const std::string conformedBase = cesiumConformUrl(base, assumeHttpsDefault);
-  const std::string conformedRelative =
-      cesiumConformUrl(relative, assumeHttpsDefault);
-  UriUriA baseUri;
-
-  if (uriParseSingleUriA(&baseUri, conformedBase.c_str(), nullptr) !=
-      URI_SUCCESS) {
-    // Could not parse the base, so just use the relative directly and hope for
-    // the best.
-    return relative;
-  }
-
-  UriUriA relativeUri;
-  if (uriParseSingleUriA(&relativeUri, conformedRelative.c_str(), nullptr) !=
-      URI_SUCCESS) {
-    // Could not parse one of the URLs, so just use the relative directly and
-    // hope for the best.
-    uriFreeUriMembersA(&baseUri);
-    return relative;
-  }
-
-  UriUriA resolvedUri;
-  if (uriAddBaseUriA(&resolvedUri, &relativeUri, &baseUri) != URI_SUCCESS) {
-    uriFreeUriMembersA(&resolvedUri);
-    uriFreeUriMembersA(&relativeUri);
-    uriFreeUriMembersA(&baseUri);
-    return relative;
-  }
-
-  if (uriNormalizeSyntaxA(&resolvedUri) != URI_SUCCESS) {
-    uriFreeUriMembersA(&resolvedUri);
-    uriFreeUriMembersA(&relativeUri);
-    uriFreeUriMembersA(&baseUri);
-    return relative;
-  }
-
-  int charsRequired;
-  if (uriToStringCharsRequiredA(&resolvedUri, &charsRequired) != URI_SUCCESS) {
-    uriFreeUriMembersA(&resolvedUri);
-    uriFreeUriMembersA(&relativeUri);
-    uriFreeUriMembersA(&baseUri);
-    return relative;
-  }
-
-  std::string result(static_cast<size_t>(charsRequired), ' ');
-
-  if (uriToStringA(
-          const_cast<char*>(result.c_str()),
-          &resolvedUri,
-          charsRequired + 1,
-          nullptr) != URI_SUCCESS) {
-    uriFreeUriMembersA(&resolvedUri);
-    uriFreeUriMembersA(&relativeUri);
-    uriFreeUriMembersA(&baseUri);
-    return relative;
-  }
-
-  if (useBaseQuery) {
-    std::string query(baseUri.query.first, baseUri.query.afterLast);
-    if (query.length() > 0) {
-      if (resolvedUri.query.first) {
-        result += "&" + query;
-      } else {
-        result += "?" + query;
-      }
-    }
-  }
-
-  uriFreeUriMembersA(&resolvedUri);
-  uriFreeUriMembersA(&relativeUri);
-  uriFreeUriMembersA(&baseUri);
-
-  return result;
+    [[maybe_unused]] bool assumeHttpsDefault) {
+  return Uri(Uri(base), relative, useBaseQuery).toString();
 }
 
 std::string Uri::addQuery(
     const std::string& uri,
     const std::string& key,
     const std::string& value) {
-  // TODO
-  if (uri.find('?') != std::string::npos) {
-    return uri + "&" + key + "=" + value;
+  Uri parsedUri(uri);
+  if (!parsedUri.isValid()) {
+    return uri;
   }
-  return uri + "?" + key + "=" + value;
-  // UriUriA baseUri;
 
-  // if (uriParseSingleUriA(&baseUri, uri.c_str(), nullptr) != URI_SUCCESS)
-  //{
-  //	// TODO: report error
-  //	return uri;
-  //}
-
-  // uriFreeUriMembersA(&baseUri);
+  parsedUri.setQueryValue(key, value);
+  return parsedUri.toString();
 }
 
-std::string Uri::getQueryValue(const std::string& url, const std::string& key) {
-  // We need to conform the URL since it will fail parsing if it's
-  // protocol-relative. However, it doesn't matter what protocol we use since
-  // it's only extracting query parameters.
-  const std::string conformedUrl = cesiumConformUrl(url, true);
-  UriUriA uri;
-  if (uriParseSingleUriA(&uri, conformedUrl.c_str(), nullptr) != URI_SUCCESS) {
-    return "";
-  }
-  UriQueryListA* queryList;
-  int itemCount;
-  if (uriDissectQueryMallocA(
-          &queryList,
-          &itemCount,
-          uri.query.first,
-          uri.query.afterLast) != URI_SUCCESS) {
-    uriFreeUriMembersA(&uri);
-    return "";
-  }
-  UriQueryListA* p = queryList;
-  while (p) {
-    if (p->key && std::strcmp(p->key, key.c_str()) == 0) {
-      std::string value = p->value ? p->value : "";
-      uriUnescapeInPlaceA(value.data());
-      uriFreeQueryListA(queryList);
-      uriFreeUriMembersA(&uri);
-      return value;
-    }
-    p = p->next;
-  }
-  uriFreeQueryListA(queryList);
-  uriFreeUriMembersA(&uri);
-  return "";
+std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
+  return std::string(Uri(uri).getQueryValue(key).value_or(""));
 }
 
 std::string Uri::substituteTemplateParameters(
     const std::string& templateUri,
     const std::function<SubstitutionCallbackSignature>& substitutionCallback) {
+
   std::string result;
+  // The output string will *probably* be at least as long as the input string.
+  // If not, we shrink_to_fit later.
+  result.reserve(templateUri.length());
   std::string placeholder;
 
+  std::sregex_iterator begin(
+      templateUri.begin(),
+      templateUri.end(),
+      TEMPLATE_REGEX),
+      end;
+
   size_t startPos = 0;
-  size_t nextPos;
 
-  // Find the start of a parameter
-  while ((nextPos = templateUri.find('{', startPos)) != std::string::npos) {
-    result.append(templateUri, startPos, nextPos - startPos);
+  for (auto i = begin; i != end; i++) {
+    if (i->ready()) {
+      const size_t position = static_cast<size_t>(i->position(0));
+      if (position > startPos) {
+        result.append(templateUri.substr(startPos, position - startPos));
+      }
 
-    // Find the end of this parameter
-    ++nextPos;
-    const size_t endPos = templateUri.find('}', nextPos);
-    if (endPos == std::string::npos) {
-      throw std::runtime_error("Unclosed template parameter");
+      placeholder = templateUri.substr(
+          static_cast<size_t>(i->position(2)),
+          static_cast<size_t>(i->length(2)));
+      result += ada::unicode::percent_encode(
+          substitutionCallback(placeholder),
+          ada::character_sets::WWW_FORM_URLENCODED_PERCENT_ENCODE);
+
+      startPos = position + static_cast<size_t>(i->length(0));
     }
-
-    placeholder = templateUri.substr(nextPos, endPos - nextPos);
-    result.append(substitutionCallback(placeholder));
-
-    startPos = endPos + 1;
   }
 
-  result.append(templateUri, startPos, templateUri.length() - startPos);
+  // Append rest of URL if any remaining
+  if (startPos < templateUri.length() - 1) {
+    result.append(
+        templateUri.substr(startPos, templateUri.length() - startPos));
+  }
+
+  // It's possible some placeholders were replaced with strings shorter than the
+  // placeholder itself, so we might need to shrink to fit
+  result.shrink_to_fit();
 
   return result;
 }
 
 std::string Uri::escape(const std::string& s) {
-  // In the worst case, escaping causes each character to turn into three.
-  std::string result(s.size() * 3, '\0');
-  char* pTerminator = uriEscapeExA(
-      s.data(),
-      s.data() + s.size(),
-      result.data(),
-      URI_FALSE,
-      URI_FALSE);
-  result.resize(size_t(pTerminator - result.data()));
-  return result;
+  return ada::unicode::percent_encode(
+      s,
+      ada::character_sets::WWW_FORM_URLENCODED_PERCENT_ENCODE);
 }
 
 std::string Uri::unescape(const std::string& s) {
-  std::string result = s;
-  const char* pNewNull =
-      uriUnescapeInPlaceExA(result.data(), URI_FALSE, URI_BR_DONT_TOUCH);
-  result.resize(size_t(pNewNull - result.data()));
-  return result;
+  return ada::unicode::percent_decode(s, s.find('%'));
 }
 
 std::string Uri::unixPathToUriPath(const std::string& unixPath) {
-  // UriParser docs:
-  //   The destination buffer must be large enough to hold 7 + 3 * len(filename)
-  //   + 1 characters in case of an absolute filename or 3 * len(filename) + 1
-  //   in case of a relative filename.
-  std::string result(7 + 3 * unixPath.size() + 1, '\0');
-  if (uriUnixFilenameToUriStringA(unixPath.data(), result.data()) != 0) {
-    // Error - return original string.
-    return unixPath;
-  } else {
-    // An absolute URI will start with "file://". Remove this.
-    if (result.find("file://", 0, 7) != std::string::npos) {
-      result.erase(0, 7);
-    }
-
-    // Truncate at first null character
-    result.resize(std::strlen(result.data()));
-    return result;
-  }
+  return Uri::nativePathToUriPath(unixPath);
 }
 
 std::string Uri::windowsPathToUriPath(const std::string& windowsPath) {
-  // uriWindowsFilenameToUriStringA doesn't allow `/` character in the path (it
-  // percent encodes them) even though that's a perfectly valid path separator
-  // on Windows. So convert all forward slashes to back slashes before calling
-  // it.
-  std::string windowsPathClean;
-  windowsPathClean.resize(windowsPath.size());
-  std::replace_copy(
-      windowsPath.begin(),
-      windowsPath.end(),
-      windowsPathClean.begin(),
-      '/',
-      '\\');
-
-  // UriParser docs:
-  //   The destination buffer must be large enough to hold 8 + 3 * len(filename)
-  //   + 1 characters in case of an absolute filename or 3 * len(filename) + 1
-  //   in case of a relative filename.
-  std::string result(8 + 3 * windowsPathClean.size() + 1, '\0');
-
-  if (uriWindowsFilenameToUriStringA(windowsPathClean.data(), result.data()) !=
-      0) {
-    // Error - return original string.
-    return windowsPath;
-  } else {
-    // An absolute URI will start with "file://". Remove this.
-    if (result.find("file://", 0, 7) != std::string::npos) {
-      result.erase(0, 7);
-    }
-
-    // Truncate at first null character
-    result.resize(std::strlen(result.data()));
-    return result;
-  }
+  return Uri::nativePathToUriPath(windowsPath);
 }
 
 std::string Uri::nativePathToUriPath(const std::string& nativePath) {
-#ifdef _WIN32
-  return windowsPathToUriPath(nativePath);
-#else
-  return unixPathToUriPath(nativePath);
-#endif
+  const std::string encoded = ada::unicode::percent_encode(
+      nativePath,
+      ada::character_sets::PATH_PERCENT_ENCODE);
+
+  const bool startsWithDriveLetter =
+      encoded.length() >= 2 &&
+      isAsciiAlpha(static_cast<unsigned char>(encoded[0])) && encoded[1] == ':';
+
+  std::string output;
+  output.reserve(encoded.length() + (startsWithDriveLetter ? 1 : 0));
+
+  // Paths like C:/... should be prefixed with a path separator
+  if (startsWithDriveLetter) {
+    output += PATH_SEP;
+  }
+
+  // All we really need to do from here is convert our slashes
+  for (size_t i = 0; i < encoded.length(); i++) {
+    if (encoded[i] == WINDOWS_PATH_SEP) {
+      output += PATH_SEP;
+    } else {
+      output += encoded[i];
+    }
+  }
+
+  return output;
 }
 
 std::string Uri::uriPathToUnixPath(const std::string& uriPath) {
-  // UriParser docs:
-  //   The destination buffer must be large enough to hold len(uriString) + 1
-  //   - 5 characters in case of an absolute URI or len(uriString) + 1 in case
-  //   of a relative URI.
-  // However, the above seems to assume that uriPath starts with "file:", which
-  // is not required.
-  std::string result(uriPath.size() + 1, '\0');
-  if (uriUriStringToUnixFilenameA(uriPath.data(), result.data()) != 0) {
-    // Error - return original string.
-    return uriPath;
-  } else {
-    // Truncate at first null character
-    result.resize(std::strlen(result.data()));
-    return result;
-  }
+  // URI paths are pretty much just unix paths with URL encoding
+  const std::string_view& rawPath = uriPath;
+  return ada::unicode::percent_decode(rawPath, rawPath.find('%'));
 }
 
 std::string Uri::uriPathToWindowsPath(const std::string& uriPath) {
-  // If the URI starts with `/c:` or similar, remove the initial slash.
-  size_t skip = 0;
-  if (uriPath.size() >= 3 && uriPath[0] == '/' && uriPath[1] != '/' &&
-      uriPath[2] == ':') {
-    skip = 1;
+  const std::string path =
+      ada::unicode::percent_decode(uriPath, uriPath.find('%'));
+
+  size_t i = 0;
+  // A path including a drive name will start like /C:/....
+  // In that case, we just skip the first slash and continue on
+  if (path.length() >= 3 && path[0] == '/' &&
+      isAsciiAlpha(static_cast<unsigned char>(path[1])) && path[2] == ':') {
+    i++;
   }
 
-  // UriParser docs:
-  //   The destination buffer must be large enough to hold len(uriString) + 1
-  //   - 5 characters in case of an absolute URI or len(uriString) + 1 in case
-  //   of a relative URI.
-  // However, the above seems to assume that uriPath starts with "file:", which
-  // is not required.
-  std::string result(uriPath.size() + 1, '\0');
-  if (uriUriStringToWindowsFilenameA(uriPath.data() + skip, result.data()) !=
-      0) {
-    // Error - return original string.
-    return uriPath;
-  } else {
-    // Truncate at first null character
-    result.resize(std::strlen(result.data()));
-    return result;
+  std::string output;
+  output.reserve(path.length() - i);
+  for (; i < path.length(); i++) {
+    if (path[i] == PATH_SEP) {
+      output += WINDOWS_PATH_SEP;
+    } else {
+      output += path[i];
+    }
   }
+
+  return output;
 }
 
-std::string Uri::uriPathToNativePath(const std::string& nativePath) {
+std::string Uri::uriPathToNativePath(const std::string& uriPath) {
 #ifdef _WIN32
-  return uriPathToWindowsPath(nativePath);
+  return uriPathToWindowsPath(uriPath);
 #else
-  return uriPathToUnixPath(nativePath);
+  return uriPathToUnixPath(uriPath);
 #endif
 }
 
 std::string Uri::getPath(const std::string& uri) {
-  UriUriA parsedUri;
-  if (uriParseSingleUriA(&parsedUri, uri.c_str(), nullptr) != URI_SUCCESS) {
-    // Could not parse the URI, so return an empty string.
-    return std::string();
-  }
-
-  // The initial string in this vector can be thought of as the "nothing" before
-  // the first slash in the path.
-  std::vector<std::string> parts{std::string()};
-
-  UriPathSegmentA* pCurrent = parsedUri.pathHead;
-  while (pCurrent != nullptr) {
-    parts.emplace_back(
-        pCurrent->text.first,
-        size_t(pCurrent->text.afterLast - pCurrent->text.first));
-    pCurrent = pCurrent->next;
-  }
-
-  uriFreeUriMembersA(&parsedUri);
-
-  return joinToString(parts, "/");
+  return std::string(Uri(uri).getPath());
 }
 
 std::string Uri::setPath(const std::string& uri, const std::string& newPath) {
-  UriUriA parsedUri;
-  if (uriParseSingleUriA(&parsedUri, uri.c_str(), nullptr) != URI_SUCCESS) {
-    // Could not parse the URI, so return an empty string.
-    return std::string();
-  }
-
-  // Free the existing path. Strangely, uriparser doesn't provide any simple way
-  // to do this.
-  UriPathSegmentA* pCurrent = parsedUri.pathHead;
-  while (pCurrent != nullptr) {
-    UriPathSegmentA* pNext = pCurrent->next;
-    free(pCurrent);
-    pCurrent = pNext;
-  }
-
-  parsedUri.pathHead = nullptr;
-  parsedUri.pathTail = nullptr;
-
-  // Set the new path.
-  if (!newPath.empty()) {
-    std::string::size_type startPos = 0;
-    do {
-      std::string::size_type nextSlashIndex = newPath.find('/', startPos);
-
-      // Skip the initial slash if there is one.
-      if (nextSlashIndex == 0) {
-        startPos = 1;
-        continue;
-      }
-
-      UriPathSegmentA* pSegment =
-          static_cast<UriPathSegmentA*>(malloc(sizeof(UriPathSegmentA)));
-      memset(pSegment, 0, sizeof(UriPathSegmentA));
-
-      if (parsedUri.pathHead == nullptr) {
-        parsedUri.pathHead = pSegment;
-        parsedUri.pathTail = pSegment;
-      } else {
-        parsedUri.pathTail->next = pSegment;
-        parsedUri.pathTail = parsedUri.pathTail->next;
-      }
-
-      pSegment->text.first = newPath.data() + startPos;
-
-      if (nextSlashIndex != std::string::npos) {
-        pSegment->text.afterLast = newPath.data() + nextSlashIndex;
-        startPos = nextSlashIndex + 1;
-      } else {
-        pSegment->text.afterLast = newPath.data() + newPath.size();
-        startPos = nextSlashIndex;
-      }
-    } while (startPos != std::string::npos);
-  }
-
-  int charsRequired;
-  if (uriToStringCharsRequiredA(&parsedUri, &charsRequired) != URI_SUCCESS) {
-    uriFreeUriMembersA(&parsedUri);
-    return uri;
-  }
-
-  std::string result(static_cast<size_t>(charsRequired), ' ');
-
-  if (uriToStringA(
-          const_cast<char*>(result.c_str()),
-          &parsedUri,
-          charsRequired + 1,
-          nullptr) != URI_SUCCESS) {
-    uriFreeUriMembersA(&parsedUri);
-    return uri;
-  }
-
-  return result;
+  Uri parsedUri(uri);
+  parsedUri.setPath(newPath);
+  return parsedUri.toString();
 }
 
 } // namespace CesiumUtility
