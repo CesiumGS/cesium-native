@@ -57,29 +57,6 @@ public:
   operator bool() const { return this->isValid(); }
 
   /**
-   * @brief Obtains the value of the given key from the query string of the URI,
-   * if possible.
-   *
-   * If the URI can't be parsed, or the key doesn't exist in the
-   * query string, `std::nullopt` will be returned.
-   *
-   * @param key The key whose value will be obtained from the URI, if possible.
-   * @returns The value of the given key in the query string, or `std::nullopt`
-   * if not found.
-   */
-  std::optional<std::string_view> getQueryValue(const std::string& key);
-
-  /**
-   * @brief Sets the given key in the URI's query parameters to the given value.
-   * If the key doesn't exist already, it will be added to the query parameters.
-   * Otherwise, the previous value will be overwritten.
-   *
-   * @param key The key to be added to the query string.
-   * @param value The value to be added to the query string.
-   */
-  void setQueryValue(const std::string& key, const std::string& value);
-
-  /**
    * @brief Gets the scheme portion of the URI. If the URI was created without a
    * scheme, this will return an empty string.
    *
@@ -107,12 +84,27 @@ public:
   std::string_view getPath() const;
 
   /**
+   * @brief Gets the query portion of the URI.
+   *
+   * @return The path, or empty string if the URI could not be parsed.
+   */
+  std::string_view getQuery() const;
+
+  /**
    * @brief Sets the path portion of a URI to a new value. The other portions of
    * the URI are left unmodified, including any query parameters.
    *
    * @param path The new path portion of the URI.
    */
   void setPath(const std::string_view& path);
+
+  /**
+   * @brief Sets the query portion of a URI to a new value. The other portions
+   * of the URI are left unmodified.
+   *
+   * @param queryString The new query portion of the URI.
+   */
+  void setQuery(const std::string_view& queryString);
 
   /**
    * @brief Attempts to resolve a relative URI using a base URI.
@@ -326,7 +318,66 @@ public:
 
 private:
   std::optional<ada::url_aggregator> _url = std::nullopt;
-  std::optional<ada::url_search_params> _params = std::nullopt;
   bool _hasScheme = false;
 };
+
+/**
+ * @brief A class for parsing and manipulating the query string of a URI.
+ */
+class UriQueryParams final {
+public:
+  UriQueryParams(const std::string_view& queryString) : _params(queryString) {}
+  UriQueryParams(const Uri& uri) : _params(uri.getQuery()) {}
+
+  /**
+   * @brief Obtains the value of the given key from the query parameters,
+   * if possible.
+   *
+   * If the URI can't be parsed, or the key doesn't exist in the
+   * query string, `std::nullopt` will be returned.
+   *
+   * @param key The key whose value will be obtained from the query string, if
+   * possible.
+   * @returns The value of the given key in the query string, or `std::nullopt`
+   * if not found.
+   */
+  std::optional<std::string_view> getValue(const std::string& key) {
+    return this->_params.get(key);
+  }
+
+  /**
+   * @brief Sets the given key in the query parameters to the given value.
+   * If the key doesn't exist already, it will be added to the query parameters.
+   * Otherwise, the previous value will be overwritten.
+   *
+   * @param key The key to be added to the query string.
+   * @param value The value to be added to the query string.
+   */
+  void setValue(const std::string& key, const std::string& value) {
+    this->_params.set(key, value);
+  }
+
+  /**
+   * @brief Returns true if this query string contains a value for the given
+   * key, or false otherwise.
+   *
+   * @param key The key to check.
+   */
+  bool hasValue(const std::string& key) { return this->_params.has(key); }
+
+  /**
+   * @brief Converts this object back into a query string, including all
+   * modifications that have been made.
+   */
+  std::string toQueryString() const { return this->_params.to_string(); }
+
+  inline auto begin() const { return this->_params.begin(); }
+  inline auto end() const { return this->_params.end(); }
+  inline auto front() const { return this->_params.front(); }
+  inline auto back() const { return this->_params.back(); }
+
+private:
+  ada::url_search_params _params;
+};
+
 } // namespace CesiumUtility

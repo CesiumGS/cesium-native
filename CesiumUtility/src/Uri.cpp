@@ -83,16 +83,17 @@ Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
 
   if (result) {
     this->_url.emplace(std::move(result.value()));
-    this->_params.emplace(this->_url->get_search());
 
     if (useBaseQuery) {
+      UriQueryParams baseParams(base);
+      UriQueryParams relativeParams(*this);
       // Set from relative to base to give priority to relative URL query string
-      for (const auto& [key, value] : *base._params) {
-        if (!this->_params->has(key)) {
-          this->_params->set(key, value);
+      for (const auto& [key, value] : baseParams) {
+        if (!relativeParams.hasValue(key)) {
+          relativeParams.setValue(key, value);
         }
       }
-      this->_url->set_search(this->_params->to_string());
+      this->_url->set_search(relativeParams.toQueryString());
     }
   }
 }
@@ -107,25 +108,7 @@ std::string Uri::toString() const {
                           : std::string(result.substr(FILE_PREFIX.length()));
 }
 
-bool Uri::isValid() const { return this->_url && this->_params; }
-
-std::optional<std::string_view> Uri::getQueryValue(const std::string& key) {
-  if (!this->isValid()) {
-    return std::nullopt;
-  }
-
-  return this->_params->get(key);
-}
-
-void Uri::setQueryValue(const std::string& key, const std::string& value) {
-  if (!this->isValid()) {
-    return;
-  }
-
-  this->_params->set(key, value);
-  // Update URL with modified params
-  this->_url->set_search(this->_params->to_string());
-}
+bool Uri::isValid() const { return this->_url.has_value(); }
 
 std::string_view Uri::getScheme() const {
   if (!this->isValid()) {
@@ -143,6 +126,14 @@ std::string_view Uri::getHost() const {
   return this->_url->get_host();
 }
 
+std::string_view Uri::getQuery() const {
+  if (!this->isValid()) {
+    return {};
+  }
+
+  return this->_url->get_search();
+}
+
 std::string_view Uri::getPath() const {
   if (!this->isValid()) {
     return {};
@@ -154,6 +145,10 @@ std::string_view Uri::getPath() const {
 
 void Uri::setPath(const std::string_view& path) {
   this->_url->set_pathname(path);
+}
+
+void Uri::setQuery(const std::string_view& queryString) {
+  this->_url->set_search(queryString);
 }
 
 std::string Uri::resolve(
@@ -173,12 +168,19 @@ std::string Uri::addQuery(
     return uri;
   }
 
-  parsedUri.setQueryValue(key, value);
+  UriQueryParams params(parsedUri);
+  params.setValue(key, value);
+  parsedUri.setQuery(params.toQueryString());
   return parsedUri.toString();
 }
 
 std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
-  return std::string(Uri(uri).getQueryValue(key).value_or(""));
+  Uri parsedUri(uri);
+  if (!parsedUri.isValid()) {
+    return {};
+  }
+
+  return std::string(UriQueryParams(parsedUri).getValue(key).value_or(""));
 }
 
 // NOLINTEND(bugprone-unchecked-optional-access)
