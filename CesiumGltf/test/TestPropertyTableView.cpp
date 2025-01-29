@@ -1200,8 +1200,9 @@ TEST_CASE("Test string PropertyTableProperty") {
 TEST_CASE("Test enum PropertyTableProperty") {
   Model model;
 
-  std::vector<int64_t> expected{0, 1, 2};
-  std::vector<std::string> expectedNames{"Foo", "Bar", "Baz"};
+  const uint64_t expectedUint = 0xABADCAFEDEADBEEF;
+  std::vector<int64_t> expected{0, 1, 2, static_cast<int64_t>(expectedUint)};
+  std::vector<std::string> expectedNames{"Foo", "Bar", "Baz", "Uint64"};
 
   addBufferToModel(model, expected);
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
@@ -1218,7 +1219,8 @@ TEST_CASE("Test enum PropertyTableProperty") {
   enumDef.values = std::vector<EnumValue>{
       EnumValue{.name = "Foo", .description = std::nullopt, .value = 0},
       EnumValue{.name = "Bar", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Baz", .description = std::nullopt, .value = 2}};
+      EnumValue{.name = "Baz", .description = std::nullopt, .value = 2},
+      EnumValue{.name="Uint64", .description = std::nullopt, .value = static_cast<int64_t>(expectedUint)}};
   enumDef.valueType = Enum::ValueType::UINT64;
 
   PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
@@ -1264,15 +1266,29 @@ TEST_CASE("Test enum PropertyTableProperty") {
     }
   }
 
+  SUBCASE("Wrong type") {
+    PropertyTablePropertyView<int64_t> enumProperty =
+        view.getPropertyView<int64_t>("TestClassProperty");
+    REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+  }
+
   /*SUBCASE("Wrong array type") {
-    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue<uint64_t>>>
+    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
         enumArrayInvalid =
-            view.getPropertyView<PropertyArrayView<PropertyEnumValue<uint64_t>>>(
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
                 "TestClassProperty");
     REQUIRE(
         enumArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }*/
+
+  SUBCASE("Valid uint64_t -> int64_t -> uint64_t round trip") {
+    PropertyTablePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(enumProperty.getRaw(3).value() == static_cast<int64_t>(expectedUint));
+    REQUIRE(static_cast<uint64_t>(enumProperty.getRaw(3).value()) == expectedUint);
+  }
 }
 
 TEST_CASE("Test fixed-length scalar array") {
