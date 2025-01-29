@@ -188,7 +188,7 @@ Then reference the file and the name of the snippet:
 ```cpp
 /**
  * @brief Constructs a new plane from a normal and a distance from the origin.
- * 
+ *
  * Example:
  * @snippet TestPlane.cpp constructor-normal-distance
  */

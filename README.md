@@ -102,6 +102,15 @@ In addition, Cesium Native has been used by the community to build projects incl
 
 If you have a project that integrates with Cesium Native that isn't on this list yet, please let us know!
 
+## ⌛ Backward Compatibility
+
+Cesium Native currently does not have any measures for deprecation or backwards compatibility. This grants us the mobility needed for rapid, iterative development.
+
+Breaking changes can be made without warning, but they should be well-documented under the `Breaking Changes` section in [CHANGES.md](CHANGES.md).
+
+> [!note]
+> This will change when Cesium Native is officially released as v1.0.0 with a stabilized API.
+
 ## 💻Developing with Cesium Native
 
 See the [Developer Setup Guide](doc/topics/developer-setup.md) to learn how to set up a development environment with Cesium Native and begin developing with it.

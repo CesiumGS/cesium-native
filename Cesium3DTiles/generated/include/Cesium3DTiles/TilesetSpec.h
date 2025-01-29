@@ -21,8 +21,7 @@ namespace Cesium3DTiles {
 /**
  * @brief A 3D Tiles tileset.
  */
-struct CESIUM3DTILES_API Tileset final
-    : public CesiumUtility::ExtensibleObject {
+struct CESIUM3DTILES_API TilesetSpec : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
@@ -98,7 +97,7 @@ struct CESIUM3DTILES_API Tileset final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(Tileset));
+    accum += int64_t(sizeof(TilesetSpec));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += this->asset.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::Asset));
@@ -135,5 +134,12 @@ struct CESIUM3DTILES_API Tileset final
     accum += int64_t(sizeof(std::string) * this->extensionsRequired.capacity());
     return accum;
   }
+
+protected:
+  /**
+   * @brief This class is not meant to be instantiated directly. Use {@link Tileset} instead.
+   */
+  TilesetSpec() = default;
+  friend struct Tileset;
 };
 } // namespace Cesium3DTiles
