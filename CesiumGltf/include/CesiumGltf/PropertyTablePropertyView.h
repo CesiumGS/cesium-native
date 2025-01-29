@@ -3,6 +3,7 @@
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/PropertyView.h>
 #include <CesiumUtility/Assert.h>
@@ -398,7 +399,7 @@ public:
     }
 
     if constexpr (IsMetadataEnum<ElementType>::value) {
-      return getEnumValue<typename MetadataEnumType<ElementType>::type>(index);
+      return getEnumValue(index);
     }
 
     if constexpr (IsMetadataNumericArray<ElementType>::value) {
@@ -448,21 +449,60 @@ private:
         nextOffset - currentOffset);
   }
 
-  template <typename T>
-  PropertyEnumValue<T> getEnumValue(int64_t index) const noexcept {
-    const T value = reinterpret_cast<const T*>(_values.data())[index];
+  PropertyEnumValue getEnumValue(int64_t index) const noexcept {
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(this->_pEnumDefinition->valueType);
+
+    int64_t value;
+    switch (componentType) {
+    case PropertyComponentType::Uint8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::None:
+    case PropertyComponentType::Float32:
+    case PropertyComponentType::Float64:
+      return {};
+    }
+
     const auto& enumValueDefinitionIt = std::find_if(
         this->_pEnumDefinition->values.begin(),
         this->_pEnumDefinition->values.end(),
-        [value](const CesiumGltf::EnumValue& v) {
-          return v.value == static_cast<int64_t>(value);
-        });
+        [value](const CesiumGltf::EnumValue& v) { return v.value == value; });
 
     if (enumValueDefinitionIt == this->_pEnumDefinition->values.end()) {
-      return PropertyEnumValue<T>();
+      return {};
     }
 
-    return PropertyEnumValue<T>(enumValueDefinitionIt->name, value);
+    return PropertyEnumValue(enumValueDefinitionIt->name, value);
   }
 
   template <typename T>

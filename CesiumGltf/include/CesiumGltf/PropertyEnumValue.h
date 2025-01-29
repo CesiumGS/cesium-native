@@ -13,7 +13,7 @@ namespace CesiumGltf {
  *
  * Contains the integer value of the enum as well as the name of the value.
  */
-template <typename ElementType> class PropertyEnumValue {
+class PropertyEnumValue {
 public:
   /**
    * @brief Constructs an empty enum value.
@@ -26,24 +26,19 @@ public:
    * @param name The name of this enum value.
    * @param value The integer value.
    */
-  PropertyEnumValue(const std::string& name, const ElementType& value) noexcept
+  PropertyEnumValue(const std::string& name, const int64_t& value) noexcept
       : _value{value}, _name{name} {}
 
   std::string_view name() const { return this->_name; }
 
-  ElementType value() const { return this->_value; }
+  int64_t value() const { return this->_value; }
 
 private:
-  ElementType _value;
+  int64_t _value;
   std::string _name;
 };
 
 /** @brief Compares a \ref PropertyEnumValue with a \ref
  * PropertyEnumValue. */
-template <typename T>
-bool operator==(
-    const PropertyEnumValue<T>& lhs,
-    const PropertyEnumValue<T>& rhs) {
-  return lhs.value() == rhs.value() && lhs.name() == rhs.name();
-}
+bool operator==(const PropertyEnumValue& lhs, const PropertyEnumValue& rhs);
 } // namespace CesiumGltf

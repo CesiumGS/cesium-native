@@ -303,11 +303,11 @@ public:
     }
 
     if (type == PropertyType::Enum) {
-      getEnumPropertyViewImpl<Callback>(
+      callback(
           propertyId,
-          *pClassProperty,
-          componentType,
-          std::forward<Callback>(callback));
+          getPropertyViewImpl<PropertyEnumValue, false>(
+              propertyId,
+              *pClassProperty));
       return;
     }
 
@@ -721,6 +721,12 @@ private:
           getPropertyViewImpl<PropertyArrayView<std::string_view>, false>(
               propertyId,
               classProperty));
+    } else if (type == PropertyType::Enum) {
+      callback(
+          propertyId,
+          getPropertyViewImpl<PropertyArrayView<PropertyEnumValue>, false>(
+              propertyId,
+              classProperty));
     } else {
       callback(
           propertyId,
@@ -1046,79 +1052,6 @@ private:
     }
   }
 
-  template <typename Callback>
-  void getEnumPropertyViewImpl(
-      const std::string& propertyId,
-      const ClassProperty& classProperty,
-      PropertyComponentType componentType,
-      Callback&& callback) const {
-
-    switch (componentType) {
-    case PropertyComponentType::Int8:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<int8_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Uint8:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<uint8_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Int16:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<int16_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Uint16:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<uint16_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Int32:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<int32_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Uint32:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<uint32_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Int64:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<int64_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    case PropertyComponentType::Uint64:
-      callback(
-          propertyId,
-          getPropertyViewImpl<PropertyEnumValue<uint64_t>, false>(
-              propertyId,
-              classProperty));
-      break;
-    default:
-      callback(
-          propertyId,
-          PropertyTablePropertyView<uint8_t>(
-              PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch));
-      break;
-    }
-  }
-
   template <typename T, bool Normalized>
   PropertyTablePropertyView<T, Normalized> getPropertyViewImpl(
       const std::string& propertyId,
@@ -1154,9 +1087,7 @@ private:
     }
 
     if constexpr (IsMetadataEnum<T>::value) {
-      return getEnumPropertyValues<typename MetadataEnumType<T>::type>(
-          classProperty,
-          propertyTableProperty);
+      return getEnumPropertyValues(classProperty, propertyTableProperty);
     }
 
     if constexpr (IsMetadataBooleanArray<T>::value) {
@@ -1240,30 +1171,29 @@ private:
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const;
 
-  template <typename T>
-  PropertyTablePropertyView<PropertyEnumValue<T>> getEnumPropertyValues(
+  PropertyTablePropertyView<PropertyEnumValue> getEnumPropertyValues(
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const {
     if (classProperty.array) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+      return PropertyTablePropertyView<PropertyEnumValue>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<PropertyEnumValue<T>>::value != type) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+    if (TypeToPropertyType<PropertyEnumValue>::value != type) {
+      return PropertyTablePropertyView<PropertyEnumValue>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
 
     if (!classProperty.enumType) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+      return PropertyTablePropertyView<PropertyEnumValue>(
           PropertyTablePropertyViewStatus::ErrorInvalidEnumType);
     }
 
     const auto& enumDefinitionIt =
         this->_pEnumDefinitions->find(*classProperty.enumType);
     if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+      return PropertyTablePropertyView<PropertyEnumValue>(
           PropertyTablePropertyViewStatus::ErrorInvalidEnumType);
     }
 
@@ -1271,32 +1201,31 @@ private:
 
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(pEnumDefinition->valueType);
-    if (TypeToPropertyType<T>::component != componentType) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
-          PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
-    }
 
     std::span<const std::byte> values;
     const auto status = getBufferSafe(propertyTableProperty.values, values);
     if (status != PropertyTablePropertyViewStatus::Valid) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(status);
+      return PropertyTablePropertyView<PropertyEnumValue>(status);
     }
 
-    if (values.size() % sizeof(T) != 0) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+    const size_t componentSize = getSizeOfComponentType(componentType);
+
+    if (values.size() % componentSize != 0) {
+      return PropertyTablePropertyView<PropertyEnumValue>(
           PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeNotDivisibleByTypeSize);
     }
 
-    size_t maxRequiredBytes = _pPropertyTable->count * sizeof(T);
+    size_t maxRequiredBytes =
+        static_cast<size_t>(_pPropertyTable->count) * componentSize;
 
     if (values.size() < maxRequiredBytes) {
-      return PropertyTablePropertyView<PropertyEnumValue<T>>(
+      return PropertyTablePropertyView<PropertyEnumValue>(
           PropertyTablePropertyViewStatus::
               ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
     }
 
-    return PropertyTablePropertyView<PropertyEnumValue<T>>(
+    return PropertyTablePropertyView<PropertyEnumValue>(
         propertyTableProperty,
         classProperty,
         _pPropertyTable->count,

@@ -1200,7 +1200,7 @@ TEST_CASE("Test string PropertyTableProperty") {
 TEST_CASE("Test enum PropertyTableProperty") {
   Model model;
 
-  std::vector<uint64_t> expected{0, 1, 2};
+  std::vector<int64_t> expected{0, 1, 2};
   std::vector<std::string> expectedNames{"Foo", "Bar", "Baz"};
 
   addBufferToModel(model, expected);
@@ -1249,8 +1249,8 @@ TEST_CASE("Test enum PropertyTableProperty") {
   REQUIRE(!classProperty->normalized);
 
   SUBCASE("Access correct type") {
-    PropertyTablePropertyView<PropertyEnumValue<uint64_t>> enumProperty =
-        view.getPropertyView<PropertyEnumValue<uint64_t>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
     REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       REQUIRE(
