@@ -180,6 +180,17 @@ template <>
 struct IsMetadataBooleanArray<PropertyArrayView<bool>> : std::true_type {};
 
 /**
+ * @brief Check if a C++ type can be represented as an array of enums
+ * property type
+ */
+template <typename... T> struct IsMetadataEnumArray;
+/** @copydoc IsMetadataBooleanArray */
+template <typename T> struct IsMetadataEnumArray<T> : std::false_type {};
+/** @copydoc IsMetadataBooleanArray */
+template <>
+struct IsMetadataEnumArray<PropertyArrayView<PropertyEnumValue>> : std::true_type {};
+
+/**
  * @brief Check if a C++ type can be represented as an array of strings property
  * type
  */

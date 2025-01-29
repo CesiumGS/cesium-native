@@ -1360,6 +1360,12 @@ private:
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const;
 
+      
+  PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
+  getEnumArrayPropertyValues(
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& propertyTableProperty) const;
+
   PropertyViewStatusType getBufferSafe(
       int32_t bufferView,
       std::span<const std::byte>& buffer) const noexcept;

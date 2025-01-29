@@ -2,6 +2,7 @@
 
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
@@ -276,6 +277,7 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param enumDefinition The definition of the enum used for this property specified by {@link PropertyTableProperty::enumType}
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -327,6 +329,41 @@ public:
         _stringOffsetType{stringOffsetType},
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
         _pEnumDefinition{nullptr} {}
+
+  /**
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty} along with an enum definition. Used for arrays of enum values.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
+   * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param stringOffsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
+   * @param enumDefinition The definition of the enum used for this property specified by {@link PropertyTableProperty::enumType}
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      std::span<const std::byte> values,
+      std::span<const std::byte> arrayOffsets,
+      std::span<const std::byte> stringOffsets,
+      PropertyComponentType arrayOffsetType,
+      PropertyComponentType stringOffsetType,
+      const CesiumGltf::Enum* enumDefinition) noexcept
+      : PropertyView<ElementType>(classProperty, property),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{arrayOffsets},
+        _arrayOffsetType{arrayOffsetType},
+        _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
+        _stringOffsets{stringOffsets},
+        _stringOffsetType{stringOffsetType},
+        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
+        _pEnumDefinition{enumDefinition} {}
 
   /**
    * @brief Get the value of an element in the {@link PropertyTable},
@@ -507,6 +544,35 @@ private:
 
   template <typename T>
   PropertyArrayView<T> getNumericArrayValues(int64_t index) const noexcept {
+    size_t count = static_cast<size_t>(this->arrayCount());
+    // Handle fixed-length arrays
+    if (count > 0) {
+      size_t arraySize = count * sizeof(T);
+      const std::span<const std::byte> values(
+          _values.data() + index * arraySize,
+          arraySize);
+      return PropertyArrayView<T>{values};
+    }
+
+    // Handle variable-length arrays. The offsets are interpreted as array
+    // indices, not byte offsets, so they must be multiplied by sizeof(T)
+    const size_t currentOffset =
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
+        sizeof(T);
+    const size_t nextOffset =
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
+        sizeof(T);
+    const std::span<const std::byte> values(
+        _values.data() + currentOffset,
+        nextOffset - currentOffset);
+    return PropertyArrayView<T>{values};
+  }
+
+  PropertyArrayView<PropertyEnumValue> getEnumArrayValues(int64_t index) const noexcept {
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(this->_pEnumDefinition->valueType);
+    const size_t componentSize = getSizeOfComponentType(componentType);
+
     size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
     if (count > 0) {
