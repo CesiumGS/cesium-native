@@ -67,16 +67,7 @@ Uri::Uri(const std::string& uri) {
 
   if (result) {
     this->_url.emplace(std::move(result.value()));
-    this->_params.emplace(this->_url->get_search());
   }
-}
-
-Uri::Uri(const Uri& uri) {
-  if (uri._url) {
-    this->_url.emplace(*uri._url);
-    this->_params.emplace(this->_url->get_search());
-  }
-  this->_hasScheme = uri._hasScheme;
 }
 
 Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
@@ -118,8 +109,7 @@ std::string Uri::toString() const {
 
 bool Uri::isValid() const { return this->_url && this->_params; }
 
-const std::optional<std::string_view>
-Uri::getQueryValue(const std::string& key) {
+std::optional<std::string_view> Uri::getQueryValue(const std::string& key) {
   if (!this->isValid()) {
     return std::nullopt;
   }

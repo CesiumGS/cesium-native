@@ -29,8 +29,8 @@ public:
   Uri(const std::string& uri);
   /**
    * @brief Attempts to create a new Uri from a base URI and a relative URI. If
-   * the base URI is invalid or the relative URI string fails to parse, \ref
-   * isValid will return false.
+   * the base URI is invalid, only the relative URI string will be used. If the
+   * relative URI fails to parse, \ref isValid will return false.
    *
    * @param base The base URI that the relative URI is relative to.
    * @param relative A string containing a relative URI to attempt to parse.
@@ -39,11 +39,6 @@ public:
    * relative URI's query parameters will be used (if any).
    */
   Uri(const Uri& base, const std::string& relative, bool useBaseQuery = false);
-
-  /**
-   * @brief Copy constructor for Uri.
-   */
-  Uri(const Uri& uri);
 
   /**
    * @brief Returns a string representation of the entire URI including path and
@@ -72,7 +67,7 @@ public:
    * @returns The value of the given key in the query string, or `std::nullopt`
    * if not found.
    */
-  const std::optional<std::string_view> getQueryValue(const std::string& key);
+  std::optional<std::string_view> getQueryValue(const std::string& key);
 
   /**
    * @brief Sets the given key in the URI's query parameters to the given value.
