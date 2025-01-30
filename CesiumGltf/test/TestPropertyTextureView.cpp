@@ -3171,3 +3171,256 @@ TEST_CASE(
 
   REQUIRE(invokedCallbackCount == 1);
 }
+
+TEST_CASE("Test scalar PropertyTextureProperty") {
+  Model model;
+  std::vector<uint8_t> data = {11, 28, 223, 191, 0, 77, 43, 1};
+
+  addTextureToModel(
+      model,
+      Sampler::WrapS::REPEAT,
+      Sampler::WrapT::REPEAT,
+      2,
+      4,
+      1,
+      data);
+  size_t textureIndex = model.textures.size() - 1;
+  size_t imageIndex = model.images.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+  Enum& enumDef = schema.enums["TestEnum"];
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      EnumValue{.name = "Foo", .description = std::nullopt, .value = 11},
+      EnumValue{.name = "Bar", .description = std::nullopt, .value = 28},
+      EnumValue{.name = "Baz", .description = std::nullopt, .value = 223},
+      EnumValue{.name = "Qux", .description = std::nullopt, .value = 191},
+      EnumValue{.name = "Quig", .description = std::nullopt, .value = 0},
+      EnumValue{.name = "Quag", .description = std::nullopt, .value = 77},
+      EnumValue{.name = "Hock", .description = std::nullopt, .value = 43},
+      EnumValue{.name = "Hork", .description = std::nullopt, .value = 1},
+  };
+  enumDef.valueType = Enum::ValueType::UINT8;
+
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::ENUM;
+  testClassProperty.enumType = "TestEnum";
+
+  PropertyTexture& propertyTexture = metadata.propertyTextures.emplace_back();
+  propertyTexture.classProperty = "TestClass";
+
+  PropertyTextureProperty& propertyTextureProperty =
+      propertyTexture.properties["TestClassProperty"];
+  propertyTextureProperty.index = static_cast<int32_t>(textureIndex);
+  propertyTextureProperty.texCoord = 0;
+  propertyTextureProperty.channels = {0};
+
+  PropertyTextureView view(model, propertyTexture);
+  REQUIRE(view.status() == PropertyTextureViewStatus::Valid);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::ENUM);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+
+  SUBCASE("Access correct type") {
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(enumProperty.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.25),
+        glm::dvec2(0.5, 0.25),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5),
+        glm::dvec2(0, 0.75),
+        glm::dvec2(0.5, 0.75)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(
+          enumProperty.getRaw(uv[0], uv[1]).value() ==
+          static_cast<int64_t>(data[i]));
+      REQUIRE(
+          enumProperty.get(uv[0], uv[1]).value() ==
+          static_cast<int64_t>(data[i]));
+    }
+  }
+
+  SUBCASE("Access with KHR_texture_transform") {
+    TextureViewOptions options;
+    options.applyKhrTextureTransformExtension = true;
+
+    ExtensionKhrTextureTransform& extension =
+        propertyTextureProperty.addExtension<ExtensionKhrTextureTransform>();
+    extension.offset = {0.5, -0.5};
+    extension.rotation = CesiumUtility::Math::PiOverTwo;
+    extension.scale = {0.5, 0.5};
+    extension.texCoord = 10;
+
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty", options);
+    REQUIRE(enumProperty.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    verifyTextureTransformConstruction(enumProperty, extension);
+
+    // This transforms to the following UV values:
+    // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
+    // (1, 0) -> (0.5, -1) -> wraps to (0.5, 0)
+    // (0, 1) -> (1, -0.5) -> wraps to (0, 0.5)
+    // (1, 1) -> (1, -1) -> wraps to (0.0, 0.0)
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(1, 0),
+        glm::dvec2(0, 1),
+        glm::dvec2(1, 1)};
+
+    std::vector<uint8_t> expected{data[5], data[1], data[4], data[0]};
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(
+          enumProperty.getRaw(uv[0], uv[1]).value() ==
+          static_cast<int64_t>(expected[i]));
+      REQUIRE(
+          enumProperty.get(uv[0], uv[1]).value() ==
+          static_cast<int64_t>(expected[i]));
+    }
+
+    propertyTextureProperty.extensions.clear();
+  }
+
+  SUBCASE("Access with image copy") {
+    TextureViewOptions options;
+    options.makeImageCopy = true;
+
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty", options);
+    REQUIRE(enumProperty.status() == PropertyTexturePropertyViewStatus::Valid);
+
+    // Clear the original image data.
+    std::vector<std::byte> emptyData;
+    model.images[model.images.size() - 1].pAsset->pixelData.swap(emptyData);
+
+    std::vector<glm::dvec2> texCoords{
+        glm::dvec2(0, 0),
+        glm::dvec2(0.5, 0),
+        glm::dvec2(0, 0.25),
+        glm::dvec2(0.5, 0.25),
+        glm::dvec2(0, 0.5),
+        glm::dvec2(0.5, 0.5),
+        glm::dvec2(0, 0.75),
+        glm::dvec2(0.5, 0.75)};
+
+    for (size_t i = 0; i < texCoords.size(); ++i) {
+      glm::dvec2 uv = texCoords[i];
+      REQUIRE(
+          enumProperty.getRaw(uv[0], uv[1]).value() ==
+          static_cast<int64_t>(data[i]));
+      REQUIRE(
+          enumProperty.get(uv[0], uv[1]).value() ==
+          static_cast<int64_t>(data[i]));
+    }
+  }
+
+  SUBCASE("Access wrong type") {
+    PropertyTexturePropertyView<glm::u8vec2> u8vec2Invalid =
+        view.getPropertyView<glm::u8vec2>("TestClassProperty");
+    REQUIRE(
+        u8vec2Invalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SUBCASE("Access incorrectly as array") {
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        arrayInvalid =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
+    REQUIRE(
+        arrayInvalid.status() ==
+        PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SUBCASE("Channel and type mismatch") {
+    model.images[imageIndex].pAsset->channels = 2;
+    propertyTextureProperty.channels = {0, 1};
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
+  }
+
+  SUBCASE("Invalid channel values") {
+    propertyTextureProperty.channels = {5};
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
+  }
+
+  SUBCASE("Zero channel values") {
+    propertyTextureProperty.channels.clear();
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
+  }
+
+  SUBCASE("Invalid bytes per channel") {
+    model.images[imageIndex].pAsset->bytesPerChannel = 2;
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
+  }
+
+  SUBCASE("Empty image") {
+    model.images[imageIndex].pAsset->width = 0;
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorEmptyImage);
+  }
+
+  SUBCASE("Wrong image index") {
+    model.textures[textureIndex].source = 1;
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidImage);
+  }
+
+  SUBCASE("Wrong sampler index") {
+    model.textures[textureIndex].sampler = 1;
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidSampler);
+  }
+
+  SUBCASE("Wrong texture index") {
+    propertyTextureProperty.index = 1;
+    PropertyTexturePropertyView<PropertyEnumValue> enumProperty =
+        view.getPropertyView<PropertyEnumValue>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTexturePropertyViewStatus::ErrorInvalidTexture);
+  }
+}

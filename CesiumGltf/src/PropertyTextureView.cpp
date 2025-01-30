@@ -43,6 +43,7 @@ PropertyTextureView::PropertyTextureView(
   }
 
   this->_pClass = &classIt->second;
+  this->_pEnumDefinitions = &pMetadata->schema->enums;
 }
 
 const ClassProperty*

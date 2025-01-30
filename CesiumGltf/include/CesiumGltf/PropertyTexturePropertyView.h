@@ -2,8 +2,10 @@
 
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/PropertyView.h>
 #include <CesiumGltf/Sampler.h>
@@ -80,6 +82,11 @@ public:
    * image itself has a different channel count / byte size than expected.
    */
   static const int ErrorChannelsAndTypeMismatch = 22;
+
+  /**
+   * @brief This property view uses an invalid enum type.
+   */
+  static const PropertyViewStatusType ErrorInvalidEnumType = 23;
 };
 
 /**
@@ -115,6 +122,18 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
     return *reinterpret_cast<ElementType*>(&resultAsUint);
   }
 }
+
+/**
+ * @brief Attempts to obtain an `int64_t` from the given span of bytes
+ * representing the given component type.
+ *
+ * @param bytes A span of bytes to convert into an enum value.
+ * @param componentType The component type of the enum being read.
+ * @returns An int64_t value.
+ */
+int64_t assembleEnumValue(
+    const std::span<uint8_t> bytes,
+    PropertyComponentType componentType) noexcept;
 
 /**
  * @brief Attempts to obtain a vector value from the given span of bytes.
@@ -468,6 +487,231 @@ public:
 private:
   std::vector<int64_t> _channels;
   std::string _swizzle;
+};
+
+/**
+ * @brief A view of enum data specified by a
+ * {@link PropertyTextureProperty}.
+ *
+ * Provides utilities to sample the property texture property using texture
+ * coordinates.
+ *
+ * @tparam ElementType The type of the elements represented in the property view
+ */
+template <>
+class PropertyTexturePropertyView<PropertyEnumValue>
+    : public PropertyView<PropertyEnumValue>, public TextureView {
+public:
+  /**
+   * @brief Constructs an invalid instance for a non-existent property.
+   */
+  PropertyTexturePropertyView() noexcept
+      : PropertyView<PropertyEnumValue>(),
+        TextureView(),
+        _channels(),
+        _swizzle() {}
+
+  /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The code from {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
+   */
+  PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
+      : PropertyView<PropertyEnumValue>(status),
+        TextureView(),
+        _channels(),
+        _swizzle() {
+    CESIUM_ASSERT(
+        this->_status != PropertyTexturePropertyViewStatus::Valid &&
+        "An empty property view should not be constructed with a valid status");
+  }
+
+  /**
+   * @brief Constructs an instance of an empty property that specifies a default
+   * value. Although this property has no data, it can return the default value
+   * when \ref get is called. However, \ref getRaw cannot be used.
+   *
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   */
+  PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
+      : PropertyView<PropertyEnumValue>(classProperty),
+        TextureView(),
+        _channels(),
+        _swizzle() {
+    if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      // Don't override the status / size if something is wrong with the class
+      // property's definition.
+      return;
+    }
+
+    if (!classProperty.defaultProperty) {
+      // This constructor should only be called if the class property *has* a
+      // default value. But in the case that it does not, this property view
+      // becomes invalid.
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorNonexistentProperty;
+      return;
+    }
+
+    this->_status = PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault;
+  }
+
+  /**
+   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
+   *
+   * @param property The {@link PropertyTextureProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param pEnumDefinition The {@link CesiumGltf::Enum} defining the values for this property.
+   * @param sampler The {@link Sampler} used by the property.
+   * @param image The {@link ImageAsset} used by the property.
+   * @param options The options for constructing the view.
+   */
+  PropertyTexturePropertyView(
+      const PropertyTextureProperty& property,
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
+      const Sampler& sampler,
+      const ImageAsset& image,
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
+      : PropertyView<PropertyEnumValue>(classProperty, pEnumDefinition),
+        TextureView(
+            sampler,
+            image,
+            property.texCoord,
+            property.getExtension<ExtensionKhrTextureTransform>(),
+            options),
+        _channels(property.channels),
+        _swizzle(),
+        _componentType(
+            convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
+    if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    switch (this->getTextureViewStatus()) {
+    case TextureViewStatus::Valid:
+      break;
+    case TextureViewStatus::ErrorInvalidSampler:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
+      return;
+    case TextureViewStatus::ErrorInvalidImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
+      return;
+    case TextureViewStatus::ErrorEmptyImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+      return;
+    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
+      return;
+    case TextureViewStatus::ErrorUninitialized:
+    case TextureViewStatus::ErrorInvalidTexture:
+    default:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
+      return;
+    }
+
+    _swizzle.reserve(_channels.size());
+
+    for (size_t i = 0; i < _channels.size(); ++i) {
+      switch (_channels[i]) {
+      case 0:
+        _swizzle += "r";
+        break;
+      case 1:
+        _swizzle += "g";
+        break;
+      case 2:
+        _swizzle += "b";
+        break;
+      case 3:
+        _swizzle += "a";
+        break;
+      default:
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
+      }
+    }
+  }
+
+  /**
+   * @brief Gets the value of the property for the given texture coordinates.
+   * The sampler's wrapping mode will be used when sampling the texture.
+   *
+   * Value transforms are not applied for enum values, so this method is
+   * equivalent to @ref getRaw, except that if this property has a specified "no
+   * data" value, this will return the property's default value for any elements
+   * that equal this "no data" value. If the property did not specify a default
+   * value, this returns std::nullopt.
+   *
+   * @param u The u-component of the texture coordinates.
+   * @param v The v-component of the texture coordinates.
+   *
+   * @return The value of the element, or std::nullopt if it matches the "no
+   * data" value
+   */
+  std::optional<PropertyValueViewToCopy<PropertyEnumValue>>
+  get(double u, double v) const noexcept {
+    if (this->_status ==
+        PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
+      return propertyValueViewToCopy(this->defaultValue());
+    }
+
+    PropertyValueViewToCopy<PropertyEnumValue> value = getRaw(u, v);
+
+    if (value == this->noData()) {
+      return propertyValueViewToCopy(this->defaultValue());
+    } else {
+      return value;
+    }
+  }
+
+  /**
+   * @brief Gets the raw value of the property for the given texture
+   * coordinates. The sampler's wrapping mode will be used when sampling the
+   * texture.
+   *
+   * If this property has a specified "no data" value, the raw value will still
+   * be returned, even if it equals the "no data" value.
+   *
+   * @param u The u-component of the texture coordinates.
+   * @param v The v-component of the texture coordinates.
+   *
+   * @return The value at the nearest pixel to the texture coordinates.
+   */
+
+  PropertyValueViewToCopy<PropertyEnumValue>
+  getRaw(double u, double v) const noexcept {
+    CESIUM_ASSERT(
+        this->_status == PropertyTexturePropertyViewStatus::Valid &&
+        "Check the status() first to make sure view is valid");
+
+    std::vector<uint8_t> sample =
+        this->sampleNearestPixel(u, v, this->_channels);
+
+    const int64_t enumValue = assembleEnumValue(
+        std::span(sample.data(), this->_channels.size()),
+        this->_componentType);
+
+    return PropertyEnumValue{enumValue};
+  }
+
+  /**
+   * @brief Gets the channels of this property texture property.
+   */
+  const std::vector<int64_t>& getChannels() const noexcept {
+    return this->_channels;
+  }
+
+  /**
+   * @brief Gets this property's channels as a swizzle string.
+   */
+  const std::string& getSwizzle() const noexcept { return this->_swizzle; }
+
+private:
+  std::vector<int64_t> _channels;
+  std::string _swizzle;
+  PropertyComponentType _componentType;
 };
 
 #pragma endregion

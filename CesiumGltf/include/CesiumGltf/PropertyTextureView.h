@@ -6,6 +6,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/PropertyTexturePropertyView.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/TextureView.h>
 
 namespace CesiumGltf {
@@ -338,6 +339,13 @@ private:
           propertyOptions);
     }
 
+    if constexpr (IsMetadataEnum<T>::value) {
+      return createEnumPropertyView(
+          classProperty,
+          propertyTextureProperty,
+          propertyOptions);
+    }
+
     if constexpr (IsMetadataArray<T>::value) {
       return createArrayPropertyView<
           typename MetadataArrayType<T>::type,
@@ -626,6 +634,88 @@ private:
     }
   }
 
+  PropertyTexturePropertyView<PropertyEnumValue> createEnumPropertyView(
+      const ClassProperty& classProperty,
+      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty,
+      const TextureViewOptions& propertyOptions) const {
+    if (classProperty.array) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(
+          PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
+    }
+
+    const PropertyType type = convertStringToPropertyType(classProperty.type);
+    if (TypeToPropertyType<PropertyEnumValue>::value != type) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(
+          PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+    }
+
+    if (!classProperty.enumType) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidEnumType);
+    }
+
+    const auto& enumDefinitionIt =
+        this->_pEnumDefinitions->find(*classProperty.enumType);
+    if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidEnumType);
+    }
+
+    const Enum* pEnumDefinition = &enumDefinitionIt->second;
+
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(pEnumDefinition->valueType);
+    const size_t componentSize = getSizeOfComponentType(componentType);
+
+    // Only up to four bytes of image data are supported.
+    if (componentSize > 4) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    }
+
+    int32_t samplerIndex;
+    int32_t imageIndex;
+
+    auto status =
+        getTextureSafe(propertyTextureProperty.index, samplerIndex, imageIndex);
+
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(status);
+    }
+
+    status = checkSampler(samplerIndex);
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(status);
+    }
+
+    status = checkImage(imageIndex);
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(status);
+    }
+
+    const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
+        _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
+    const std::vector<int64_t>& channels = propertyTextureProperty.channels;
+
+    status = checkChannels(channels, *pImage);
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyEnumValue>(status);
+    }
+
+    if (channels.size() * static_cast<size_t>(pImage->bytesPerChannel) !=
+        componentSize) {
+      return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
+    }
+
+    return PropertyTexturePropertyView<PropertyEnumValue>(
+        propertyTextureProperty,
+        classProperty,
+        pEnumDefinition,
+        _pModel->samplers[static_cast<size_t>(samplerIndex)],
+        *pImage,
+        propertyOptions);
+  }
+
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> createVecNPropertyView(
       const ClassProperty& classProperty,
@@ -751,7 +841,7 @@ private:
     }
 
     const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
-        _pModel->images[imageIndex].pAsset;
+        _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
     status = checkChannels(channels, *pImage);
@@ -759,7 +849,8 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    if (channels.size() * pImage->bytesPerChannel != elementSize) {
+    if (channels.size() * static_cast<size_t>(pImage->bytesPerChannel) !=
+        elementSize) {
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
@@ -788,6 +879,7 @@ private:
   const Model* _pModel;
   const PropertyTexture* _pPropertyTexture;
   const Class* _pClass;
+  const std::unordered_map<std::string, CesiumGltf::Enum>* _pEnumDefinitions;
 
   PropertyTextureViewStatus _status;
 };
