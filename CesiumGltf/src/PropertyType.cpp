@@ -207,10 +207,18 @@ convertAccessorComponentTypeToPropertyComponentType(int componentType) {
     return PropertyComponentType::Int16;
   case AccessorSpec::ComponentType::UNSIGNED_SHORT:
     return PropertyComponentType::Uint16;
+  case AccessorSpec::ComponentType::INT:
+    return PropertyComponentType::Int32;
   case AccessorSpec::ComponentType::UNSIGNED_INT:
     return PropertyComponentType::Uint32;
+  case AccessorSpec::ComponentType::INT64:
+    return PropertyComponentType::Int64;
+  case AccessorSpec::ComponentType::UNSIGNED_INT64:
+    return PropertyComponentType::Uint64;
   case AccessorSpec::ComponentType::FLOAT:
     return PropertyComponentType::Float32;
+  case AccessorSpec::ComponentType::DOUBLE:
+    return PropertyComponentType::Float64;
   default:
     return PropertyComponentType::None;
   }
