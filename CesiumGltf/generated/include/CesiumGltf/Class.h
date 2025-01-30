@@ -38,7 +38,7 @@ struct CESIUMGLTF_API Class final : public CesiumUtility::ExtensibleObject {
   std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
 
   /**
-   * @brief The parent class ID.
+   * @brief Experimental. The parent class ID.
    */
   std::optional<std::string> parent;
 

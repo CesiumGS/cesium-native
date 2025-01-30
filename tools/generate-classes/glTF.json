@@ -112,9 +112,6 @@
     "No Data Value": {
       "overrideName": "CesiumUtility::JsonValue"
     },
-    "EXT_structural_metadata_hierarchy Property Table extension": {
-      "overrideName": "ExtensionPropertyTableExtStructuralMetadataHierarchy"
-    },
     "KHR_draco_mesh_compression glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrDracoMeshCompression"
     },
@@ -190,10 +187,6 @@
     {
       "extensionName": "EXT_structural_metadata",
       "schema": "Vendor/EXT_structural_metadata/schema/mesh.primitive.EXT_structural_metadata.schema.json"
-    },
-    {
-      "extensionName": "EXT_structural_metadata_hierarchy",
-      "schema": "Vendor/EXT_structural_metadata_hierarchy/schema/propertyTable.EXT_structural_metadata_hierarchy.schema.json"
     },
     {
       "extensionName": "KHR_draco_mesh_compression",

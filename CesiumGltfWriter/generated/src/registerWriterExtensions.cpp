@@ -14,7 +14,6 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
-#include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
@@ -40,7 +39,6 @@
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
-#include <CesiumGltf/ExtensionPropertyTableExtStructuralMetadataHierarchy.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 // NOLINTEND(misc-include-cleaner)
 
@@ -101,9 +99,6 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::PropertyTable,
-      ExtensionPropertyTableExtStructuralMetadataHierarchyJsonWriter>();
   context.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonWriter>();
