@@ -1220,7 +1220,10 @@ TEST_CASE("Test enum PropertyTableProperty") {
       EnumValue{.name = "Foo", .description = std::nullopt, .value = 0},
       EnumValue{.name = "Bar", .description = std::nullopt, .value = 1},
       EnumValue{.name = "Baz", .description = std::nullopt, .value = 2},
-      EnumValue{.name="Uint64", .description = std::nullopt, .value = static_cast<int64_t>(expectedUint)}};
+      EnumValue{
+          .name = "Uint64",
+          .description = std::nullopt,
+          .value = static_cast<int64_t>(expectedUint)}};
   enumDef.valueType = Enum::ValueType::UINT64;
 
   PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
@@ -1269,7 +1272,9 @@ TEST_CASE("Test enum PropertyTableProperty") {
   SUBCASE("Wrong type") {
     PropertyTablePropertyView<int64_t> enumProperty =
         view.getPropertyView<int64_t>("TestClassProperty");
-    REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
 
   /*SUBCASE("Wrong array type") {
@@ -1286,21 +1291,29 @@ TEST_CASE("Test enum PropertyTableProperty") {
     PropertyTablePropertyView<PropertyEnumValue> enumProperty =
         view.getPropertyView<PropertyEnumValue>("TestClassProperty");
     REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
-    REQUIRE(enumProperty.getRaw(3).value() == static_cast<int64_t>(expectedUint));
-    REQUIRE(static_cast<uint64_t>(enumProperty.getRaw(3).value()) == expectedUint);
+    REQUIRE(
+        enumProperty.getRaw(3).value() == static_cast<int64_t>(expectedUint));
+    REQUIRE(
+        static_cast<uint64_t>(enumProperty.getRaw(3).value()) == expectedUint);
   }
 }
 
 TEST_CASE("Test fixed-length enum array") {
   Model model;
-  std::vector<uint16_t> values =
-      {0, 1, 2, 1, 2, 3, 3, 4, 5, 5, 0, 1};
+  std::vector<uint16_t> values = {0, 1, 2, 1, 2, 3, 3, 4, 5, 5, 0, 1};
   std::vector<std::string> names = {
-    "Scarlet", "Mustard", "Green",
-     "Mustard", "Green", "White" ,
-    "White", "Peacock", "Plum",
-     "Plum", "Scarlet", "Mustard"
-  };
+      "Scarlet",
+      "Mustard",
+      "Green",
+      "Mustard",
+      "Green",
+      "White",
+      "White",
+      "Peacock",
+      "Plum",
+      "Plum",
+      "Scarlet",
+      "Mustard"};
 
   addBufferToModel(model, values);
   size_t valueBufferViewIndex = model.bufferViews.size() - 1;
@@ -1354,8 +1367,10 @@ TEST_CASE("Test fixed-length enum array") {
   REQUIRE(!classProperty->normalized);
 
   SUBCASE("Access the right type") {
-    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
+        arrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
@@ -1365,7 +1380,8 @@ TEST_CASE("Test fixed-length enum array") {
 
       for (int64_t j = 0; j < array.size(); ++j) {
         REQUIRE(array[j].value() == values[static_cast<size_t>(i * 3 + j)]);
-        REQUIRE(array[j].name(enumDef) == names[static_cast<size_t>(i * 3 + j)]);
+        REQUIRE(
+            array[j].name(enumDef) == names[static_cast<size_t>(i * 3 + j)]);
         REQUIRE((*maybeArray)[j] == array[j]);
       }
     }
@@ -1396,8 +1412,10 @@ TEST_CASE("Test fixed-length enum array") {
 
   SUBCASE("Buffer size is not a multiple of type size") {
     model.bufferViews[valueBufferViewIndex].byteLength = 13;
-    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
+        arrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
@@ -1406,8 +1424,10 @@ TEST_CASE("Test fixed-length enum array") {
 
   SUBCASE("Negative count") {
     testClassProperty.count = -1;
-    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
+        arrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
         arrayProperty.status() == PropertyTablePropertyViewStatus::
                                       ErrorArrayCountAndOffsetBufferDontExist);
@@ -1415,8 +1435,10 @@ TEST_CASE("Test fixed-length enum array") {
 
   SUBCASE("Value buffer doesn't fit into property table count") {
     testClassProperty.count = 55;
-    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>> arrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
+        arrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::

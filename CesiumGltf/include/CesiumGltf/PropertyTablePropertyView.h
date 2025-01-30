@@ -559,7 +559,8 @@ private:
     return PropertyArrayView<T>{values};
   }
 
-  PropertyArrayView<PropertyEnumValue> getEnumArrayValues(int64_t index) const noexcept {
+  PropertyArrayView<PropertyEnumValue>
+  getEnumArrayValues(int64_t index) const noexcept {
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(this->_pEnumDefinition->valueType);
     const size_t componentSize = getSizeOfComponentType(componentType);

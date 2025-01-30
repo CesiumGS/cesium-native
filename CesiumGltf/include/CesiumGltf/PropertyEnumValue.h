@@ -26,8 +26,7 @@ public:
    *
    * @param value The integer value.
    */
-  PropertyEnumValue(const int64_t& value) noexcept
-      : _value{value} {}
+  PropertyEnumValue(const int64_t& value) noexcept : _value{value} {}
 
   std::string_view name(const CesiumGltf::Enum& parentEnum) const;
 

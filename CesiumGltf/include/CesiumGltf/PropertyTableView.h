@@ -1360,7 +1360,6 @@ private:
       const ClassProperty& classProperty,
       const PropertyTableProperty& propertyTableProperty) const;
 
-      
   PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
   getEnumArrayPropertyValues(
       const ClassProperty& classProperty,
