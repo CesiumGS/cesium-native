@@ -254,12 +254,26 @@ TEST_CASE("Test convertAccessorComponentTypeToPropertyComponentType") {
       PropertyComponentType::Uint16);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::INT) == PropertyComponentType::Int32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
           AccessorSpec::ComponentType::UNSIGNED_INT) ==
       PropertyComponentType::Uint32);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::INT64) == PropertyComponentType::Int64);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::UNSIGNED_INT64) ==
+      PropertyComponentType::Uint64);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
           AccessorSpec::ComponentType::FLOAT) ==
       PropertyComponentType::Float32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::DOUBLE) ==
+      PropertyComponentType::Float64);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(-1) ==
       PropertyComponentType::None);
