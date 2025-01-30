@@ -1,5 +1,8 @@
 {
   "classes": {
+    "Tileset": {
+      "toBeInherited": true
+    },
     "Root Property": {
       "overrideName": "CesiumUtility::ExtensibleObject",
       "manuallyDefined": true
