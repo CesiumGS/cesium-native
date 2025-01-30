@@ -556,6 +556,11 @@ void writeJson(
     writeJson(obj.properties, jsonWriter, context);
   }
 
+  if (obj.parent) {
+    jsonWriter.Key("parent");
+    writeJson(obj.parent, jsonWriter, context);
+  }
+
   writeExtensibleObject(obj, jsonWriter, context);
 
   jsonWriter.EndObject();

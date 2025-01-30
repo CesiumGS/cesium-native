@@ -38,6 +38,11 @@ struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
   std::unordered_map<std::string, Cesium3DTiles::ClassProperty> properties;
 
   /**
+   * @brief The parent class ID.
+   */
+  std::optional<std::string> parent;
+
+  /**
    * @brief Calculates the size in bytes of this object, including the contents
    * of all collections, pointers, and strings. This will NOT include the size
    * of any extensions attached to the object. Calling this method may be slow
@@ -60,6 +65,9 @@ struct CESIUM3DTILES_API Class final : public CesiumUtility::ExtensibleObject {
     for (const auto& [k, v] : this->properties) {
       accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
       accum += v.getSizeBytes() - int64_t(sizeof(Cesium3DTiles::ClassProperty));
+    }
+    if (this->parent) {
+      accum += int64_t(this->parent->capacity() * sizeof(char));
     }
     return accum;
   }
