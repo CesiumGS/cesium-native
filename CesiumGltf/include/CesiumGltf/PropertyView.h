@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumUtility/JsonValue.h"
+
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyEnumValue.h>
@@ -1352,6 +1353,217 @@ private:
 };
 
 /**
+ * @brief Represents a string metadata property in
+ * EXT_structural_metadata.
+ */
+template <> class PropertyView<PropertyEnumValue> {
+public:
+  /**
+   * @brief Constructs an empty property instance.
+   */
+  PropertyView()
+      : _status(PropertyViewStatus::ErrorNonexistentProperty),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
+        _required(false),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {}
+
+  /**
+   * @brief Constructs a property instance from a class definition only.
+   */
+  PropertyView(
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition)
+      : _status(
+            pEnumDefinition == nullptr
+                ? PropertyViewStatus::ErrorNonexistentProperty
+                : validatePropertyType<PropertyEnumValue>(classProperty)),
+        _name(classProperty.name),
+        _semantic(classProperty.semantic),
+        _description(classProperty.description),
+        _required(classProperty.required),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {
+    if (_status != PropertyViewStatus::Valid) {
+      return;
+    }
+
+    if (classProperty.noData) {
+      if (!_required) {
+        _noData = getEnumValue(*classProperty.noData, pEnumDefinition);
+      }
+
+      if (!_noData) {
+        // The value was specified but something went wrong.
+        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
+        return;
+      }
+    }
+
+    if (classProperty.defaultProperty) {
+      if (!_required) {
+        _defaultValue =
+            getEnumValue(*classProperty.defaultProperty, pEnumDefinition);
+      }
+
+      if (!_defaultValue) {
+        // The value was specified but something went wrong.
+        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        return;
+      }
+    }
+  }
+
+  PropertyView(const ClassProperty& classProperty)
+      : PropertyView(classProperty, nullptr) {}
+
+protected:
+  /**
+   * @brief Constructs an invalid instance for an erroneous property.
+   *
+   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   */
+  PropertyView(PropertyViewStatusType status)
+      : _status(status),
+        _name(std::nullopt),
+        _semantic(std::nullopt),
+        _description(std::nullopt),
+        _required(false),
+        _noData(std::nullopt),
+        _defaultValue(std::nullopt) {}
+
+  /**
+   * @brief Constructs a property instance from a property table property and
+   * its class definition.
+   */
+  PropertyView(
+      const ClassProperty& classProperty,
+      const PropertyTableProperty& /*property*/)
+      : PropertyView(classProperty) {}
+
+public:
+  /**
+   * @copydoc PropertyView<ElementType, false>::status
+   */
+  PropertyViewStatusType status() const noexcept { return _status; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::name
+   */
+  const std::optional<std::string>& name() const noexcept { return _name; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::semantic
+   */
+  const std::optional<std::string>& semantic() const noexcept {
+    return _semantic;
+  }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::description
+   */
+  const std::optional<std::string>& description() const noexcept {
+    return _description;
+  }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::arrayCount
+   */
+  int64_t arrayCount() const noexcept { return 0; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::normalized
+   */
+  bool normalized() const noexcept { return false; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::offset
+   */
+  std::optional<PropertyEnumValue> offset() const noexcept {
+    return std::nullopt;
+  }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::scale
+   */
+  std::optional<PropertyEnumValue> scale() const noexcept {
+    return std::nullopt;
+  }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::max
+   */
+  std::optional<PropertyEnumValue> max() const noexcept { return std::nullopt; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::min
+   */
+  std::optional<PropertyEnumValue> min() const noexcept { return std::nullopt; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::required
+   */
+  bool required() const noexcept { return _required; }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::noData
+   */
+  std::optional<PropertyEnumValue> noData() const noexcept {
+    if (_noData)
+      return PropertyEnumValue(_noData->value());
+
+    return std::nullopt;
+  }
+
+  /**
+   * @copydoc PropertyView<ElementType, false>::defaultValue
+   */
+  std::optional<PropertyEnumValue> defaultValue() const noexcept {
+    if (_defaultValue)
+      return PropertyEnumValue(_defaultValue->value());
+
+    return std::nullopt;
+  }
+
+protected:
+  /** @copydoc PropertyViewStatus */
+  PropertyViewStatusType _status;
+
+private:
+  std::optional<std::string> _name;
+  std::optional<std::string> _semantic;
+  std::optional<std::string> _description;
+
+  bool _required;
+  std::optional<PropertyEnumValue> _noData;
+  std::optional<PropertyEnumValue> _defaultValue;
+
+  static std::optional<PropertyEnumValue> getEnumValue(
+      const CesiumUtility::JsonValue& value,
+      const CesiumGltf::Enum* pEnumDefinition) {
+    if (!value.isString()) {
+      return std::nullopt;
+    }
+
+    const CesiumUtility::JsonValue::String& valueStr = value.getString();
+    const auto foundValue = std::find_if(
+        pEnumDefinition->values.begin(),
+        pEnumDefinition->values.end(),
+        [&valueStr](const CesiumGltf::EnumValue& value) {
+          return value.name == valueStr;
+        });
+
+    if (foundValue == pEnumDefinition->values.end()) {
+      return std::nullopt;
+    }
+
+    return PropertyEnumValue{foundValue->value};
+  }
+};
+
+/**
  * @brief Represents a non-normalized array metadata property in
  * EXT_structural_metadata.
  *
@@ -2630,8 +2842,6 @@ private:
   }
 };
 
-
-
 /**
  * @brief Represents an enum array metadata property in
  * EXT_structural_metadata.
@@ -2652,16 +2862,24 @@ public:
         _defaultValue() {}
 
   /**
-   * @brief Constructs a property instance from a class definition and enum definition.
+   * @brief Constructs a property instance from a class definition and enum
+   * definition.
    */
-  PropertyView(const ClassProperty& classProperty, const CesiumGltf::Enum* pEnumDefinition)
-      : _status(validateArrayPropertyType<PropertyArrayView<PropertyEnumValue>>(
-            classProperty)),
+  PropertyView(
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition)
+      : _status(
+            pEnumDefinition == nullptr
+                ? PropertyViewStatus::ErrorNonexistentProperty
+                : validateArrayPropertyType<
+                      PropertyArrayView<PropertyEnumValue>>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
         _count(classProperty.count ? *classProperty.count : 0),
         _required(classProperty.required),
+        _componentType(
+            convertStringToPropertyComponentType(pEnumDefinition->valueType)),
         _noData(),
         _defaultValue() {
     if (_status != PropertyViewStatus::Valid) {
@@ -2673,7 +2891,8 @@ public:
         _noData = getEnumArrayValue(*classProperty.noData, pEnumDefinition);
       }
 
-      if (!_noData || _noData->size() == 0 || (_count > 0 && static_cast<int64_t>(_noData->size()) != _count)) {
+      if (!_noData || _noData->size() == 0 ||
+          (_count > 0 && static_cast<int64_t>(_noData->size()) != _count)) {
         _status = PropertyViewStatus::ErrorInvalidNoDataValue;
         return;
       }
@@ -2681,11 +2900,13 @@ public:
 
     if (classProperty.defaultProperty) {
       if (!_required) {
-        _defaultValue = getEnumArrayValue(*classProperty.defaultProperty, pEnumDefinition);
+        _defaultValue =
+            getEnumArrayValue(*classProperty.defaultProperty, pEnumDefinition);
       }
 
       if (!_defaultValue || _defaultValue->size() == 0 ||
-          (_count > 0 && static_cast<int64_t>(_defaultValue->size()) != _count)) {
+          (_count > 0 &&
+           static_cast<int64_t>(_defaultValue->size()) != _count)) {
         // The value was specified but something went wrong.
         _status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
@@ -2696,7 +2917,8 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty) : PropertyView(classProperty, nullptr) {}
+  PropertyView(const ClassProperty& classProperty)
+      : PropertyView(classProperty, nullptr) {}
 
 protected:
   /**
@@ -2761,28 +2983,28 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::offset
    */
-  std::optional<PropertyArrayView<std::string_view>> offset() const noexcept {
+  std::optional<PropertyArrayView<PropertyEnumValue>> offset() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::scale
    */
-  std::optional<PropertyArrayView<std::string_view>> scale() const noexcept {
+  std::optional<PropertyArrayView<PropertyEnumValue>> scale() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::max
    */
-  std::optional<PropertyArrayView<std::string_view>> max() const noexcept {
+  std::optional<PropertyArrayView<PropertyEnumValue>> max() const noexcept {
     return std::nullopt;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::min
    */
-  std::optional<PropertyArrayView<std::string_view>> min() const noexcept {
+  std::optional<PropertyArrayView<PropertyEnumValue>> min() const noexcept {
     return std::nullopt;
   }
 
@@ -2795,8 +3017,13 @@ public:
    * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<PropertyArrayView<PropertyEnumValue>> noData() const noexcept {
-    if (_noData && _noData->size() > 0) {
-      return PropertyArrayView<PropertyEnumValue>(*_noData, _componentType, static_cast<int64_t>(_noData->size() / getSizeOfComponentType(_componentType)));
+    if (_noData && _noData->size() > 0 &&
+        _componentType != PropertyComponentType::None) {
+      return PropertyArrayView<PropertyEnumValue>(
+          *_noData,
+          _componentType,
+          static_cast<int64_t>(
+              _noData->size() / getSizeOfComponentType(_componentType)));
     }
 
     return std::nullopt;
@@ -2807,8 +3034,13 @@ public:
    */
   std::optional<PropertyArrayView<PropertyEnumValue>>
   defaultValue() const noexcept {
-    if (_defaultValue && _defaultValue->size() > 0) {
-      return PropertyArrayView<PropertyEnumValue>(*_defaultValue, _componentType, static_cast<int64_t>(_defaultValue->size() / getSizeOfComponentType(_componentType)));
+    if (_defaultValue && _defaultValue->size() > 0 &&
+        _componentType != PropertyComponentType::None) {
+      return PropertyArrayView<PropertyEnumValue>(
+          *_defaultValue,
+          _componentType,
+          static_cast<int64_t>(
+              _defaultValue->size() / getSizeOfComponentType(_componentType)));
     }
 
     return std::nullopt;
@@ -2838,8 +3070,9 @@ private:
       return std::nullopt;
     }
 
-    const PropertyComponentType componentType = convertStringToPropertyComponentType(pEnumDefinition->valueType);
-    if(componentType == PropertyComponentType::None) {
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(pEnumDefinition->valueType);
+    if (componentType == PropertyComponentType::None) {
       return std::nullopt;
     }
 
@@ -2854,51 +3087,56 @@ private:
         return std::nullopt;
       }
 
-      // default and noData values for enums contain the name of the enum as a string
+      // default and noData values for enums contain the name of the enum as a
+      // string
       CesiumUtility::JsonValue::String str = array[i].getString();
-      auto foundValue = std::find_if(pEnumDefinition->values.begin(), pEnumDefinition->values.end(), [&str](const CesiumGltf::EnumValue& value) {
-        return value.name == str;
-      });
+      auto foundValue = std::find_if(
+          pEnumDefinition->values.begin(),
+          pEnumDefinition->values.end(),
+          [&str](const CesiumGltf::EnumValue& value) {
+            return value.name == str;
+          });
 
-      if(foundValue == pEnumDefinition->values.end()) {
+      if (foundValue == pEnumDefinition->values.end()) {
         return std::nullopt;
       }
 
-      switch(componentType) {
-        case PropertyComponentType::Int8:
-          castAndAppendAsBytes<int8_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Uint8:
-          castAndAppendAsBytes<uint8_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Int16:
-          castAndAppendAsBytes<int16_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Uint16:
-          castAndAppendAsBytes<uint16_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Int32:
-          castAndAppendAsBytes<int32_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Uint32:
-          castAndAppendAsBytes<uint32_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Int64:
-          castAndAppendAsBytes<int64_t>(values, foundValue->value);
-          break;
-        case PropertyComponentType::Uint64:
-          castAndAppendAsBytes<uint64_t>(values, foundValue->value);
-          break;
-        default:
-          return std::nullopt;
+      switch (componentType) {
+      case PropertyComponentType::Int8:
+        castAndAppendAsBytes<int8_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Uint8:
+        castAndAppendAsBytes<uint8_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Int16:
+        castAndAppendAsBytes<int16_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Uint16:
+        castAndAppendAsBytes<uint16_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Int32:
+        castAndAppendAsBytes<int32_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Uint32:
+        castAndAppendAsBytes<uint32_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Int64:
+        castAndAppendAsBytes<int64_t>(values, foundValue->value);
+        break;
+      case PropertyComponentType::Uint64:
+        castAndAppendAsBytes<uint64_t>(values, foundValue->value);
+        break;
+      default:
+        return std::nullopt;
       }
     }
 
     return values;
   }
 
-  template<typename T>
-  static void castAndAppendAsBytes(std::vector<std::byte>& values, int64_t val) {
+  template <typename T>
+  static void
+  castAndAppendAsBytes(std::vector<std::byte>& values, int64_t val) {
     T castVal = static_cast<T>(val);
     std::byte* castPtr = reinterpret_cast<std::byte*>(&castVal);
     values.insert(values.end(), castPtr, castPtr + sizeof(T));

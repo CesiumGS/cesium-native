@@ -1277,7 +1277,7 @@ TEST_CASE("Test enum PropertyTableProperty") {
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
 
-  /*SUBCASE("Wrong array type") {
+  SUBCASE("Wrong array type") {
     PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
         enumArrayInvalid =
             view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
@@ -1285,7 +1285,7 @@ TEST_CASE("Test enum PropertyTableProperty") {
     REQUIRE(
         enumArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
-  }*/
+  }
 
   SUBCASE("Valid uint64_t -> int64_t -> uint64_t round trip") {
     PropertyTablePropertyView<PropertyEnumValue> enumProperty =

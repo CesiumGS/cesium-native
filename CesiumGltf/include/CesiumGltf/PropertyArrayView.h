@@ -292,9 +292,7 @@ public:
    * @brief Constructs an empty array view.
    */
   PropertyArrayView()
-      : _values{},
-        _enumValueType{PropertyComponentType::None},
-        _size{0} {}
+      : _values{}, _enumValueType{PropertyComponentType::None}, _size{0} {}
 
   /**
    * @brief Constructs an array view from buffers and their information.
@@ -308,9 +306,7 @@ public:
       const std::span<const std::byte>& values,
       PropertyComponentType enumValueType,
       int64_t size) noexcept
-      : _values{values},
-        _enumValueType{enumValueType},
-        _size{size} {}
+      : _values{values}, _enumValueType{enumValueType}, _size{size} {}
 
   /**
    * @brief Obtains a `PropertyEnumValue` for the element at the given index.
@@ -355,7 +351,7 @@ public:
     case PropertyComponentType::Float64:
       return {};
     }
-    
+
     return PropertyEnumValue{value};
   }
 

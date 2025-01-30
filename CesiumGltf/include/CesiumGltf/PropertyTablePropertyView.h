@@ -134,7 +134,7 @@ public:
   static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
 
   /**
-   * @brief This property view has a string offset that is out of bounds.
+   * @brief This property view uses an invalid enum type.
    */
   static const PropertyViewStatusType ErrorInvalidEnumType = 32;
 };
@@ -280,12 +280,12 @@ public:
    * @param enumDefinition The definition of the enum used for this property specified by {@link PropertyTableProperty::enumType}
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
+      const PropertyTableProperty& /*property*/,
       const ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values,
       const CesiumGltf::Enum* enumDefinition) noexcept
-      : PropertyView<ElementType>(classProperty, property),
+      : PropertyView<ElementType>(classProperty, enumDefinition),
         _values{values},
         _size{
             this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
@@ -572,7 +572,10 @@ private:
       const std::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
-      return PropertyArrayView<PropertyEnumValue>{values, componentType, static_cast<int64_t>(count)};
+      return PropertyArrayView<PropertyEnumValue>{
+          values,
+          componentType,
+          static_cast<int64_t>(count)};
     }
 
     // Handle variable-length arrays. The offsets are interpreted as array
@@ -586,7 +589,10 @@ private:
     const std::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
-    return PropertyArrayView<PropertyEnumValue>{values, componentType, values.size() / componentSize};
+    return PropertyArrayView<PropertyEnumValue>{
+        values,
+        componentType,
+        values.size() / componentSize};
   }
 
   PropertyArrayView<std::string_view>
