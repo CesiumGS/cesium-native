@@ -1334,7 +1334,7 @@ TEST_CASE("Test fixed-length enum array") {
       EnumValue{.name = "White", .description = std::nullopt, .value = 3},
       EnumValue{.name = "Peacock", .description = std::nullopt, .value = 4},
       EnumValue{.name = "Plum", .description = std::nullopt, .value = 5}};
-  enumDef.valueType = Enum::ValueType::UINT8;
+  enumDef.valueType = Enum::ValueType::UINT16;
 
   Class& testClass = schema.classes["TestClass"];
   ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
@@ -1375,7 +1375,7 @@ TEST_CASE("Test fixed-length enum array") {
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
       PropertyArrayView<PropertyEnumValue> array = arrayProperty.getRaw(i);
-      auto maybeArray = arrayProperty.getRaw(i);
+      auto maybeArray = arrayProperty.get(i);
       REQUIRE(maybeArray);
 
       for (int64_t j = 0; j < array.size(); ++j) {

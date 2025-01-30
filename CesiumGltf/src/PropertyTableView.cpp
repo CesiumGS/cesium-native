@@ -546,9 +546,7 @@ PropertyTableView::getEnumArrayPropertyValues(
       _pPropertyTable->count,
       values,
       arrayOffsets,
-      std::span<const std::byte>(),
       arrayOffsetType,
-      PropertyComponentType::None,
       pEnumDefinition);
 }
 

@@ -1105,6 +1105,10 @@ private:
     if constexpr (IsMetadataStringArray<T>::value) {
       return getStringArrayPropertyValues(classProperty, propertyTableProperty);
     }
+
+    if constexpr (IsMetadataEnumArray<T>::value) {
+      return getEnumArrayPropertyValues(classProperty, propertyTableProperty);
+    }
   }
 
   template <typename T, bool Normalized>
