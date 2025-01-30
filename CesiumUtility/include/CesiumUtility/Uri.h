@@ -339,8 +339,9 @@ public:
   /**
    * @brief Creates a \ref UriQueryParams object from a query string.
    *
-   * This query string should be in the format `key1=value1&key2=value2&key3=value3...`.
-   * This is the format returned by \ref Uri::getQuery. This string can include percent-encoded values.
+   * This query string should be in the format
+   * `key1=value1&key2=value2&key3=value3...`. This is the format returned by
+   * \ref Uri::getQuery. This string can include percent-encoded values.
    *
    * @param queryString The query string to parse into a query params object.
    */
@@ -348,7 +349,7 @@ public:
   /**
    * @brief Creates a \ref UriQueryParams object from a \ref Uri instance.
    *
-   * This is equivalent to `UriQueryParams(uri.getQuery())`. 
+   * This is equivalent to `UriQueryParams(uri.getQuery())`.
    *
    * @param uri The URI instance to obtain the query params from.
    */
@@ -392,11 +393,13 @@ public:
 
   /**
    * @brief Converts this object back into a query string, including all
-   * modifications that have been made. This result can be passed directly to \ref Uri::setQuery.
+   * modifications that have been made. This result can be passed directly to
+   * \ref Uri::setQuery.
    */
   std::string toQueryString() const { return this->_params.to_string(); }
 
-  /** @brief Returns an iterator pointing to the beginning of the query parameters. */
+  /** @brief Returns an iterator pointing to the beginning of the query
+   * parameters. */
   inline auto begin() const { return this->_params.begin(); }
   /** @brief Returns an iterator pointing to the end of the query parameters. */
   inline auto end() const { return this->_params.end(); }
