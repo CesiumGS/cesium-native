@@ -1,4 +1,3 @@
-
 #if defined CESIUM_FORCE_ASSERTIONS && defined NDEBUG
 
 #undef NDEBUG

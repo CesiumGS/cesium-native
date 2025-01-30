@@ -24,6 +24,9 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   /**
    * @brief Apply the given callback to all tiles.
    *
+   * This will only invoke the callback for explicit tiles. It won't follow
+   * external tilesets or implicit tiles.
+   *
    * @param callback The callback to apply
    */
   void forEachTile(std::function<ForEachTileCallback>&& callback);
@@ -50,6 +53,9 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
 
   /**
    * @brief Apply the given callback to all contents.
+   *
+   * This will only invoke the callback for contents of explicit tiles. It won't
+   * follow external tilesets or implicit tiles.
    *
    * @param callback The callback to apply
    */
