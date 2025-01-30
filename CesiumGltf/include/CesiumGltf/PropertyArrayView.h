@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/getOffsetFromOffsetsBuffer.h>
 #include <CesiumUtility/SpanHelper.h>
@@ -275,6 +276,97 @@ private:
   std::span<const std::byte> _values;
   std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
+  int64_t _size;
+};
+
+/**
+ * @brief A view on an enum array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
+ *
+ * Provides utility to retrieve the data stored in the array of
+ * elements via the array index operator.
+ */
+template <> class PropertyArrayView<PropertyEnumValue> {
+public:
+  /**
+   * @brief Constructs an empty array view.
+   */
+  PropertyArrayView()
+      : _values{},
+        _enumValueType{PropertyComponentType::None},
+        _size{0} {}
+
+  /**
+   * @brief Constructs an array view from buffers and their information.
+   *
+   * @param values The buffer containing the values.
+   * @param stringOffsets The buffer containing the string offsets.
+   * @param stringOffsetType The component type of the string offsets.
+   * @param size The number of values in the array.
+   */
+  PropertyArrayView(
+      const std::span<const std::byte>& values,
+      PropertyComponentType enumValueType,
+      int64_t size) noexcept
+      : _values{values},
+        _enumValueType{enumValueType},
+        _size{size} {}
+
+  /**
+   * @brief Obtains a `PropertyEnumValue` for the element at the given index.
+   */
+  PropertyEnumValue operator[](int64_t index) const noexcept {
+    int64_t value;
+    switch (this->_enumValueType) {
+    case PropertyComponentType::Uint8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::None:
+    case PropertyComponentType::Float32:
+    case PropertyComponentType::Float64:
+      return {};
+    }
+    
+    return PropertyEnumValue{value};
+  }
+
+  /**
+   * @brief The number of elements in this array.
+   */
+  int64_t size() const noexcept { return _size; }
+
+private:
+  std::span<const std::byte> _values;
+  PropertyComponentType _enumValueType;
   int64_t _size;
 };
 

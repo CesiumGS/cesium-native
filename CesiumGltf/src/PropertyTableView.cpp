@@ -442,13 +442,13 @@ PropertyTableView::getEnumArrayPropertyValues(
     const ClassProperty& classProperty,
     const PropertyTableProperty& propertyTableProperty) const {
   if (!classProperty.array) {
-    return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
         PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
   }
 
   const PropertyType type = convertStringToPropertyType(classProperty.type);
   if (TypeToPropertyType<PropertyEnumValue>::value != type) {
-    return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }
 

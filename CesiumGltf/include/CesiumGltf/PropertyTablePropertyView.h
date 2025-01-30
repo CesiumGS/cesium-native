@@ -444,6 +444,10 @@ public:
           typename MetadataArrayType<ElementType>::type>(index);
     }
 
+    if constexpr (IsMetadataEnumArray<ElementType>::value) {
+      return getEnumArrayValues(index);
+    }
+
     if constexpr (IsMetadataBooleanArray<ElementType>::value) {
       return getBooleanArrayValues(index);
     }
@@ -568,25 +572,25 @@ private:
     size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
     if (count > 0) {
-      size_t arraySize = count * sizeof(T);
+      size_t arraySize = count * componentSize;
       const std::span<const std::byte> values(
           _values.data() + index * arraySize,
           arraySize);
-      return PropertyArrayView<T>{values};
+      return PropertyArrayView<PropertyEnumValue>{values, componentType, static_cast<int64_t>(count)};
     }
 
     // Handle variable-length arrays. The offsets are interpreted as array
     // indices, not byte offsets, so they must be multiplied by sizeof(T)
     const size_t currentOffset =
         getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
-        sizeof(T);
+        componentSize;
     const size_t nextOffset =
         getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
-        sizeof(T);
+        componentSize;
     const std::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
-    return PropertyArrayView<T>{values};
+    return PropertyArrayView<PropertyEnumValue>{values, componentType, values.size() / componentSize};
   }
 
   PropertyArrayView<std::string_view>

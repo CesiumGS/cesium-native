@@ -1375,7 +1375,7 @@ TEST_CASE("Test fixed-length enum array") {
 
     for (int64_t i = 0; i < arrayProperty.size(); ++i) {
       PropertyArrayView<PropertyEnumValue> array = arrayProperty.getRaw(i);
-      auto maybeArray = arrayProperty.get(i);
+      auto maybeArray = arrayProperty.getRaw(i);
       REQUIRE(maybeArray);
 
       for (int64_t j = 0; j < array.size(); ++j) {
