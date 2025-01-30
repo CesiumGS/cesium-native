@@ -139,8 +139,13 @@ public:
    * @param value The value to be added to the query string.
    * @returns The modified URI including the new query string parameter.
    *
-   * @deprecated Create a \ref Uri instance and use \ref Uri::setQueryValue
-   * instead.
+   * @deprecated Use the \ref UriQueryParams class:
+   * ```
+   * Uri parsedUri(uri);
+   * UriQueryParams params(parsedUri);
+   * params.setValue(key, value);
+   * parsedUri.setQuery(params.toQueryString());
+   * ```
    */
   static std::string addQuery(
       const std::string& uri,
@@ -158,8 +163,12 @@ public:
    * @returns The value of the given key in the query string, or an empty string
    * if not found.
    *
-   * @deprecated Create a \ref Uri instance andthe member function \ref
-   * getQueryValue instead.
+   * @deprecated Use the \ref UriQueryParams class:
+   * ```
+   * Uri parsedUri(uri);
+   * UriQueryParams params(parsedUri);
+   * params.getValue(key);
+   * ```
    */
   static std::string
   getQueryValue(const std::string& uri, const std::string& key);
@@ -327,7 +336,22 @@ private:
  */
 class UriQueryParams final {
 public:
+  /**
+   * @brief Creates a \ref UriQueryParams object from a query string.
+   *
+   * This query string should be in the format `key1=value1&key2=value2&key3=value3...`.
+   * This is the format returned by \ref Uri::getQuery. This string can include percent-encoded values.
+   *
+   * @param queryString The query string to parse into a query params object.
+   */
   UriQueryParams(const std::string_view& queryString) : _params(queryString) {}
+  /**
+   * @brief Creates a \ref UriQueryParams object from a \ref Uri instance.
+   *
+   * This is equivalent to `UriQueryParams(uri.getQuery())`. 
+   *
+   * @param uri The URI instance to obtain the query params from.
+   */
   UriQueryParams(const Uri& uri) : _params(uri.getQuery()) {}
 
   /**
@@ -368,13 +392,17 @@ public:
 
   /**
    * @brief Converts this object back into a query string, including all
-   * modifications that have been made.
+   * modifications that have been made. This result can be passed directly to \ref Uri::setQuery.
    */
   std::string toQueryString() const { return this->_params.to_string(); }
 
+  /** @brief Returns an iterator pointing to the beginning of the query parameters. */
   inline auto begin() const { return this->_params.begin(); }
+  /** @brief Returns an iterator pointing to the end of the query parameters. */
   inline auto end() const { return this->_params.end(); }
+  /** @brief Returns the first element in the query parameters. */
   inline auto front() const { return this->_params.front(); }
+  /** @brief Returns the last element in the query parameters. */
   inline auto back() const { return this->_params.back(); }
 
 private:
