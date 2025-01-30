@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumUtility/SpanHelper.h>
 
@@ -18,24 +19,22 @@ public:
   /**
    * @brief Constructs an empty enum value.
    */
-  PropertyEnumValue() : _value{}, _name{} {}
+  PropertyEnumValue() : _value{} {}
 
   /**
-   * @brief Constructs a \ref PropertyEnumValue from a name and value.
+   * @brief Constructs a \ref PropertyEnumValue from an integer value.
    *
-   * @param name The name of this enum value.
    * @param value The integer value.
    */
-  PropertyEnumValue(const std::string& name, const int64_t& value) noexcept
-      : _value{value}, _name{name} {}
+  PropertyEnumValue(const int64_t& value) noexcept
+      : _value{value} {}
 
-  std::string_view name() const { return this->_name; }
+  std::string_view name(const CesiumGltf::Enum& parentEnum) const;
 
   int64_t value() const { return this->_value; }
 
 private:
   int64_t _value;
-  std::string _name;
 };
 
 /** @brief Compares a \ref PropertyEnumValue with a \ref

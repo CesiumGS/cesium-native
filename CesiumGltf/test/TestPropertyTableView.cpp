@@ -1261,7 +1261,7 @@ TEST_CASE("Test enum PropertyTableProperty") {
           enumProperty.get(static_cast<int64_t>(i)).value().value() ==
           expected[i]);
       REQUIRE(
-          enumProperty.getRaw(static_cast<int64_t>(i)).name() ==
+          enumProperty.getRaw(static_cast<int64_t>(i)).name(enumDef) ==
           expectedNames[i]);
     }
   }
@@ -1365,7 +1365,7 @@ TEST_CASE("Test fixed-length enum array") {
 
       for (int64_t j = 0; j < array.size(); ++j) {
         REQUIRE(array[j].value() == values[static_cast<size_t>(i * 3 + j)]);
-        REQUIRE(array[j].name() == names[static_cast<size_t>(i * 3 + j)]);
+        REQUIRE(array[j].name(enumDef) == names[static_cast<size_t>(i * 3 + j)]);
         REQUIRE((*maybeArray)[j] == array[j]);
       }
     }

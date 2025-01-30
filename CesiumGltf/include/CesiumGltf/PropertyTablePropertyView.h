@@ -530,16 +530,7 @@ private:
       return {};
     }
 
-    const auto& enumValueDefinitionIt = std::find_if(
-        this->_pEnumDefinition->values.begin(),
-        this->_pEnumDefinition->values.end(),
-        [value](const CesiumGltf::EnumValue& v) { return v.value == value; });
-
-    if (enumValueDefinitionIt == this->_pEnumDefinition->values.end()) {
-      return {};
-    }
-
-    return PropertyEnumValue(enumValueDefinitionIt->name, value);
+    return PropertyEnumValue(value);
   }
 
   template <typename T>
