@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ada.h>
+#include <ada/url_search_params.h>
 
 #include <functional>
 #include <optional>

@@ -4,7 +4,6 @@
 #include <ada/implementation.h>
 #include <ada/unicode.h>
 #include <ada/url_aggregator.h>
-#include <ada/url_search_params.h>
 
 #include <cstdlib>
 #include <cstring>
