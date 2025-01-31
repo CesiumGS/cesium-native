@@ -6,6 +6,7 @@
 #include <glm/detail/qualifier.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 namespace CesiumGltf {
