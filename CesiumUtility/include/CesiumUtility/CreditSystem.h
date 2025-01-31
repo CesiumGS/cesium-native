@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumUtility/Library.h>
 
 #include <string>
 #include <unordered_map>
@@ -26,7 +26,7 @@ public:
 private:
   size_t id;
 
-  Credit(size_t id_) noexcept { id = id_; }
+  Credit(size_t id_) noexcept : id(id_) {}
 
   friend class CreditSystem;
 };

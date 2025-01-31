@@ -1,16 +1,23 @@
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
+#include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 #include <CesiumUtility/Uri.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <filesystem>
+#include <memory>
+#include <string>
 
 using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
@@ -41,7 +48,7 @@ TEST_CASE("Tileset height queries") {
 
   TilesetExternals externals{pAccessor, nullptr, asyncSystem, nullptr};
 
-  SECTION("Additive-refined tileset") {
+  SUBCASE("Additive-refined tileset") {
     std::string url =
         "file://" +
         Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
@@ -80,7 +87,7 @@ TEST_CASE("Tileset height queries") {
         Math::Epsilon4));
   }
 
-  SECTION("Replace-refined tileset") {
+  SUBCASE("Replace-refined tileset") {
     std::string url =
         "file://" +
         Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
@@ -114,7 +121,7 @@ TEST_CASE("Tileset height queries") {
         Math::Epsilon4));
   }
 
-  SECTION("External tileset") {
+  SUBCASE("External tileset") {
     std::string url =
         "file://" +
         Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
@@ -153,7 +160,7 @@ TEST_CASE("Tileset height queries") {
         Math::Epsilon4));
   }
 
-  SECTION("Implicit tileset") {
+  SUBCASE("Implicit tileset") {
     std::string url =
         "file://" + Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
                         (testDataPath / "ImplicitTileset" / "tileset_1.1.json")
@@ -192,7 +199,7 @@ TEST_CASE("Tileset height queries") {
         Math::Epsilon4));
   }
 
-  SECTION("Instanced model is not yet supported") {
+  SUBCASE("Instanced model is not yet supported") {
     std::string url =
         "file://" +
         Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
@@ -217,7 +224,7 @@ TEST_CASE("Tileset height queries") {
         std::string::npos);
   }
 
-  SECTION("broken tileset") {
+  SUBCASE("broken tileset") {
     Tileset tileset(externals, "http://localhost/notgonnawork");
 
     Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
@@ -235,7 +242,7 @@ TEST_CASE("Tileset height queries") {
     CHECK(results.warnings[0].find("failed to load") != std::string::npos);
   }
 
-  SECTION("ellipsoid tileset") {
+  SUBCASE("ellipsoid tileset") {
     std::unique_ptr<Tileset> pTileset =
         EllipsoidTilesetLoader::createTileset(externals);
 
@@ -267,5 +274,36 @@ TEST_CASE("Tileset height queries") {
         0.0,
         0.0,
         Math::Epsilon4));
+  }
+
+  SUBCASE("stacked-cubes") {
+    // This tileset has two cubes on top of each other, each in a different
+    // tile, so we can test that the height of the top one is returned.
+    // The bottom cube has a height of 78.0 meters, the upper cube has a height
+    // of 83.0 meters.
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
+
+    Tileset tileset(externals, url);
+
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        {Cartographic::fromDegrees(10.0, 45.0, 0.0)});
+
+    while (!future.isReady()) {
+      tileset.updateView({});
+    }
+
+    SampleHeightResult results = future.waitInMainThread();
+    CHECK(results.warnings.empty());
+    REQUIRE(results.positions.size() == 1);
+
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        83.0,
+        0.0,
+        Math::Epsilon1));
   }
 }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Plane.h"
+#include <CesiumGeometry/Plane.h>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumGeometry {
 
 /**
  * @brief A culling volume, defined by four planes.
@@ -58,4 +58,4 @@ CullingVolume createCullingVolume(
     const glm::dvec3& up,
     double fovx,
     double fovy) noexcept;
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeometry

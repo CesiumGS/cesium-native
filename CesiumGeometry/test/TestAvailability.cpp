@@ -1,25 +1,24 @@
 
-#include "CesiumGeometry/Availability.h"
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/OctreeAvailability.h"
-#include "CesiumGeometry/OctreeTileID.h"
-#include "CesiumGeometry/QuadtreeAvailability.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeometry/TileAvailabilityFlags.h"
+#include <CesiumGeometry/Availability.h>
+#include <CesiumGeometry/OctreeAvailability.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/QuadtreeAvailability.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/TileAvailabilityFlags.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
-#include <algorithm>
-#include <memory>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <span>
+#include <utility>
 #include <vector>
 
 using namespace CesiumGeometry;
 
 TEST_CASE("Test AvailabilityUtilities") {
-  SECTION("Test countOnesInByte") {
+  SUBCASE("Test countOnesInByte") {
     uint8_t byte = static_cast<uint8_t>(0xFF);
     for (uint8_t i = 0; i <= 8; ++i) {
       REQUIRE(
@@ -28,7 +27,7 @@ TEST_CASE("Test AvailabilityUtilities") {
     }
   }
 
-  SECTION("Test countOnesInBuffer") {
+  SUBCASE("Test countOnesInBuffer") {
     std::vector<std::byte> buffer(64);
     for (size_t i = 0; i < 64U; ++i) {
       buffer[i] = static_cast<std::byte>(0xFC);
@@ -64,7 +63,7 @@ TEST_CASE("Test AvailabilityAccessor") {
       subtree.subtreeAvailability,
       subtree);
 
-  SECTION("Test constant availability") {
+  SUBCASE("Test constant availability") {
     REQUIRE(tileAvailabilityAccessor.isConstant());
     REQUIRE(tileAvailabilityAccessor.getConstant());
     REQUIRE(!tileAvailabilityAccessor.isBufferView());
@@ -73,7 +72,7 @@ TEST_CASE("Test AvailabilityAccessor") {
     REQUIRE(!subtreeAvailabilityAccessor.isBufferView());
   }
 
-  SECTION("Test buffer availability") {
+  SUBCASE("Test buffer availability") {
     REQUIRE(!contentAvailabilityAccessor.isConstant());
     REQUIRE(contentAvailabilityAccessor.isBufferView());
     REQUIRE(contentAvailabilityAccessor.size() == 64);
@@ -82,7 +81,7 @@ TEST_CASE("Test AvailabilityAccessor") {
     }
   }
 
-  SECTION("Test combined buffer availability") {
+  SUBCASE("Test combined buffer availability") {
     // Now try sharing a single buffer between multiple views.
     subtree.tileAvailability = SubtreeBufferView{0, 32, 0};
     subtree.contentAvailability = SubtreeBufferView{32, 32, 0};
@@ -171,7 +170,7 @@ TEST_CASE("Test OctreeAvailability") {
 
   AvailabilityNode* pParentNode = octreeAvailability.getRootNode();
 
-  SECTION("Test tile and content availability") {
+  SUBCASE("Test tile and content availability") {
     for (uint32_t level = 0; level < 3U; ++level) {
       for (uint32_t z = 0; z < (1U << level); ++z) {
         for (uint32_t y = 0; y < (1U << level); ++y) {
@@ -184,7 +183,7 @@ TEST_CASE("Test OctreeAvailability") {
             REQUIRE(availability == availability2);
 
             // All tiles should be available.
-            REQUIRE(availability & TileAvailabilityFlags::TILE_AVAILABLE);
+            REQUIRE_UNARY(availability & TileAvailabilityFlags::TILE_AVAILABLE);
 
             // Whether the content should be available
             bool contentShouldBeAvailable = true;
@@ -204,7 +203,7 @@ TEST_CASE("Test OctreeAvailability") {
     }
   }
 
-  SECTION("Test children subtree availability") {
+  SUBCASE("Test children subtree availability") {
     // Check child subtree availability, none are loaded yet.
     uint32_t componentLengthAtLevel = 1U << 3;
     for (uint32_t z = 0; z < componentLengthAtLevel; ++z) {
@@ -233,7 +232,7 @@ TEST_CASE("Test OctreeAvailability") {
     }
   }
 
-  SECTION("Test children subtree loaded flag") {
+  SUBCASE("Test children subtree loaded flag") {
     // Mock loaded child subtrees for tile IDs (3, 0, 0, 0), (3, 0, 1, 0), (3,
     // 0, 2, 0), and (3, 1, 2, 1).
     OctreeTileID mockChildrenSubtreeIds[]{
@@ -242,7 +241,7 @@ TEST_CASE("Test OctreeAvailability") {
         OctreeTileID(3, 0, 2, 0),
         OctreeTileID(3, 1, 2, 1)};
 
-    SECTION("Use addSubtree(id, newSubtree)") {
+    SUBCASE("Use addSubtree(id, newSubtree)") {
       for (const OctreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
         AvailabilitySubtree childSubtree{
             ConstantAvailability{true},
@@ -256,7 +255,7 @@ TEST_CASE("Test OctreeAvailability") {
       }
     }
 
-    SECTION("Use addNode and addLoadedSubtree") {
+    SUBCASE("Use addNode and addLoadedSubtree") {
       for (const OctreeTileID& mockChildrenSubtreeId : mockChildrenSubtreeIds) {
         AvailabilitySubtree childSubtree{
             ConstantAvailability{true},
@@ -364,7 +363,7 @@ TEST_CASE("Test QuadtreeAvailability") {
 
   AvailabilityNode* pParentNode = quadtreeAvailability.getRootNode();
 
-  SECTION("Test tile and content availability") {
+  SUBCASE("Test tile and content availability") {
     for (uint32_t level = 0; level < 3U; ++level) {
       for (uint32_t y = 0; y < (1U << level); ++y) {
         for (uint32_t x = 0; x < (1U << level); ++x) {
@@ -376,7 +375,7 @@ TEST_CASE("Test QuadtreeAvailability") {
           REQUIRE(availability == availability2);
 
           // All tiles should be available.
-          REQUIRE(availability & TileAvailabilityFlags::TILE_AVAILABLE);
+          REQUIRE_UNARY(availability & TileAvailabilityFlags::TILE_AVAILABLE);
 
           // Whether the content should be available
           bool contentShouldBeAvailable = true;
@@ -395,7 +394,7 @@ TEST_CASE("Test QuadtreeAvailability") {
     }
   }
 
-  SECTION("Test children subtree availability") {
+  SUBCASE("Test children subtree availability") {
     // Check child subtree availability, none are loaded yet.
     uint32_t componentLengthAtLevel = 1U << 3;
     for (uint32_t y = 0; y < componentLengthAtLevel; ++y) {
@@ -422,7 +421,7 @@ TEST_CASE("Test QuadtreeAvailability") {
     }
   }
 
-  SECTION("Test children subtree loaded flag") {
+  SUBCASE("Test children subtree loaded flag") {
     // Mock loaded child subtrees for tile IDs (3, 0, 0), (3, 0, 1), (3, 0, 2),
     // and (3, 1, 2).
     QuadtreeTileID mockChildrenSubtreeIds[]{
@@ -431,7 +430,7 @@ TEST_CASE("Test QuadtreeAvailability") {
         QuadtreeTileID(3, 0, 2),
         QuadtreeTileID(3, 1, 2)};
 
-    SECTION("Use addSubtree(id, newSubtree)") {
+    SUBCASE("Use addSubtree(id, newSubtree)") {
       for (const QuadtreeTileID& mockChildrenSubtreeId :
            mockChildrenSubtreeIds) {
         AvailabilitySubtree childSubtree{
@@ -446,7 +445,7 @@ TEST_CASE("Test QuadtreeAvailability") {
       }
     }
 
-    SECTION("Use addNode and addLoadedSubtree") {
+    SUBCASE("Use addNode and addLoadedSubtree") {
       for (const QuadtreeTileID& mockChildrenSubtreeId :
            mockChildrenSubtreeIds) {
         AvailabilitySubtree childSubtree{

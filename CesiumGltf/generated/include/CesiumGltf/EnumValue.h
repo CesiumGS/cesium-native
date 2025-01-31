@@ -14,6 +14,9 @@ namespace CesiumGltf {
  * @brief An enum value.
  */
 struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "EnumValue";
 
   /**

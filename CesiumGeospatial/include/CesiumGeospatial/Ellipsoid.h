@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Cartographic.h"
-#include "Library.h"
-
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Library.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/vec3.hpp>
@@ -34,6 +33,8 @@ namespace CesiumGeospatial {
  * 1`. This is primarily used by Cesium to represent the shape of planetary
  * bodies. Rather than constructing this object directly, one of the provided
  * constants is normally used.
+ *
+ * @see \ref what-is-an-ellipsoid
  */
 class CESIUMGEOSPATIAL_API Ellipsoid final {
 public:

@@ -2,7 +2,8 @@
 
 #include "Impl/ImmediateScheduler.h"
 #include "Impl/cesium-async++.h"
-#include "Library.h"
+
+#include <CesiumAsync/Library.h>
 
 #include <memory>
 
@@ -17,6 +18,11 @@ namespace CesiumAsync {
  */
 class CESIUMASYNC_API ThreadPool {
 public:
+  /**
+   * @brief Creates a new thread pool with the given number of threads.
+   *
+   * @param numberOfThreads The number of threads to create in this ThreadPool.
+   */
   ThreadPool(int32_t numberOfThreads);
 
 private:

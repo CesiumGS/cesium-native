@@ -4,8 +4,8 @@
 #include "Impl/CatchFunction.h"
 #include "Impl/ContinuationFutureType.h"
 #include "Impl/WithTracing.h"
-#include "ThreadPool.h"
 
+#include <CesiumAsync/ThreadPool.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <type_traits>
@@ -213,8 +213,8 @@ public:
   /**
    * @brief Waits for the future to resolve or reject and returns the result.
    *
-   * This method must not be called from the main thread, the one that calls
-   * {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
+   * \attention This method must not be called from the main thread, the one
+   * that calls {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
    * deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
@@ -231,6 +231,18 @@ public:
     return this->_task.get();
   }
 
+  /**
+   * @brief Waits for the future to resolve or reject.
+   *
+   * \attention This method must not be called from the main thread, the one
+   * that calls {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
+   * deadlock because the main thread tasks will never complete while this
+   * method is blocking the main thread.
+   *
+   * To wait in the main thread, use {@link waitInMainThread} instead.
+   *
+   * @throws An exception if the future rejected.
+   */
   template <
       typename U = T,
       std::enable_if_t<std::is_same_v<U, T>, int> = 0,

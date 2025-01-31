@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumUtility/Library.h>
 
 #include <cmath>
 #include <cstdint>
@@ -16,44 +16,32 @@
 
 namespace CesiumUtility {
 
-struct JsonValueMissingKey : public std::runtime_error {
-  JsonValueMissingKey(const std::string& key)
-      : std::runtime_error(key + " is not present in Object") {}
-};
+/**
+ * @brief Attempts a narrowing conversion of `TFrom` into `TTo` without losing
+ * information. If a lossless conversion can't be performed, `std::nullopt` is
+ * returned.
+ *
+ * @tparam TTo The type to convert to.
+ * @tparam TFrom The type to convert from.
+ * @param from The value to perform the conversion on.
+ */
+template <typename TTo, typename TFrom>
+extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
 
-struct JsonValueNotRealValue : public std::runtime_error {
-  JsonValueNotRealValue()
-      : std::runtime_error("this->value was not double, uint64_t or int64_t") {}
-};
-
-template <typename T, typename U>
-constexpr std::optional<T> losslessNarrow(U u) noexcept {
-  constexpr const bool is_different_signedness =
-      (std::is_signed<T>::value != std::is_signed<U>::value);
-
-  const T t = static_cast<T>(u);
-
-  if (static_cast<U>(t) != u ||
-      (is_different_signedness && ((t < T{}) != (u < U{})))) {
-    return std::nullopt;
-  }
-
-  return t;
-}
-
-template <typename T, typename U>
-constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
-  constexpr const bool is_different_signedness =
-      (std::is_signed<T>::value != std::is_signed<U>::value);
-
-  const T t = static_cast<T>(u);
-
-  if (static_cast<U>(t) != u ||
-      (is_different_signedness && ((t < T{}) != (u < U{})))) {
-    return defaultValue;
-  }
-
-  return t;
+/**
+ * @brief Attempts a narrowing conversion of `TFrom` into `TTo` without losing
+ * information. If a lossless conversion can't be performed, `defaultValue` is
+ * returned.
+ *
+ * @tparam TTo The type to convert to.
+ * @tparam TFrom The type to convert from.
+ * @param from The value to perform the conversion on.
+ * @param defaultValue The value that will be returned if a lossless conversion
+ * can't be performed.
+ */
+template <typename TTo, typename TFrom>
+constexpr TTo losslessNarrowOrDefault(TFrom from, TTo defaultValue) noexcept {
+  return losslessNarrow<TTo, TFrom>(from).value_or(defaultValue);
 }
 
 /**
@@ -210,8 +198,17 @@ public:
   JsonValue(std::initializer_list<std::pair<const std::string, JsonValue>> v)
       : value(std::map<std::string, JsonValue>(v)) {}
 
+  /**
+   * @brief Attempts to obtain a pointer to a \ref JsonValue for the given key
+   * on this object.
+   *
+   * @param key The key to lookup.
+   * @returns A pointer to the \ref JsonValue for the provided key, or
+   * `nullptr`.
+   */
   [[nodiscard]] const JsonValue*
   getValuePtrForKey(const std::string& key) const;
+  /** @copydoc getValuePtrForKey */
   [[nodiscard]] JsonValue* getValuePtrForKey(const std::string& key);
 
   /**

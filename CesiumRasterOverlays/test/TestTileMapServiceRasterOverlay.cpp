@@ -1,16 +1,30 @@
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/StringHelpers.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <spdlog/spdlog.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumNativeTests;
@@ -56,7 +70,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
   IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlay =
       new TileMapServiceRasterOverlay("test", tmr);
 
-  SECTION("can load images") {
+  SUBCASE("can load images") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
@@ -84,7 +98,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     CHECK(image.height > 0);
   }
 
-  SECTION("appends tilemapresource.xml to URL if not already present and "
+  SUBCASE("appends tilemapresource.xml to URL if not already present and "
           "direct request fails") {
     std::string url =
         "file:///" +
@@ -117,7 +131,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     REQUIRE(result);
   }
 
-  SECTION("does not add another slash when URL has query parameters") {
+  SUBCASE("does not add another slash when URL has query parameters") {
     // Add a request handler for `.../tilemapresource.xml?some=parameter` but
     // _not_ `.../tilemapresource.xml?some=parameter/`or
     // `.../tilemapresource.xml/?some=parameter`, in order to verify that the
@@ -152,7 +166,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     REQUIRE(result);
   }
 
-  SECTION("adds tilemapresource.xml in the correct place even with query "
+  SUBCASE("adds tilemapresource.xml in the correct place even with query "
           "parameters") {
     // The initial URL does not include tilemapresource.xml and will fail
     std::string url =
@@ -207,7 +221,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     REQUIRE(result);
   }
 
-  SECTION("loads with credit") {
+  SUBCASE("loads with credit") {
     TileMapServiceRasterOverlayOptions options;
     options.credit = "test credit";
     IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlayWithCredit =
@@ -236,7 +250,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     CHECK(pCreditSystem->getHtml(*maybeCredit) == "test credit");
   }
 
-  SECTION("loads with credit and null credit system") {
+  SUBCASE("loads with credit and null credit system") {
     TileMapServiceRasterOverlayOptions options;
     options.credit = "test credit";
     IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlayWithCredit =

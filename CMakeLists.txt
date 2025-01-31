@@ -61,6 +61,8 @@ if (NOT VCPKG_OVERLAY_PORTS)
     endif()
 endif()
 
+list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+
 message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
 
 if (NOT VCPKG_OVERLAY_TRIPLETS)
@@ -86,7 +88,7 @@ set(PACKAGES_PRIVATE
 )
 
 # Packages only used for testing
-set(PACKAGES_TEST catch2)
+set(PACKAGES_TEST doctest)
 
 if(CESIUM_USE_EZVCPKG)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
@@ -115,7 +117,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.42.0
+    VERSION 0.43.0
     LANGUAGES CXX C
 )
 
@@ -145,6 +147,8 @@ cmake_dependent_option(
     CESIUM_ENABLE_CLANG_TIDY
     OFF
 )
+
+set(CESIUM_CLANG_TIDY_USE_THREADS 14 CACHE STRING "Sets the number of threads for run-clang-tidy to use.")
 
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS AND EZVCPKG_PACKAGES_DIR)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
@@ -278,7 +282,7 @@ find_package(zlib-ng REQUIRED)
 find_package(modp_b64 REQUIRED)
 
 find_package(Async++ CONFIG REQUIRED)
-find_package(Catch2 CONFIG REQUIRED)
+find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)

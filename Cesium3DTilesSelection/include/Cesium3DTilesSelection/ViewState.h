@@ -1,8 +1,7 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "Library.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -176,7 +175,7 @@ private:
   const double _sseDenominator;
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const CullingVolume _cullingVolume;
+  const CesiumGeometry::CullingVolume _cullingVolume;
 };
 
 } // namespace Cesium3DTilesSelection

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumGltf/PropertyArrayView.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <glm/common.hpp>
 
@@ -10,6 +10,12 @@
 #include <optional>
 
 namespace CesiumGltf {
+/**
+ * @brief Normalizes the given value between [0, 1] if unsigned or [-1, 1] if
+ * signed, based on the type's maximum value.
+ *
+ * @param value The value to normalize.
+ */
 template <typename T> double normalize(T value) {
   constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
   if constexpr (std::is_signed_v<T>) {
@@ -19,6 +25,12 @@ template <typename T> double normalize(T value) {
   }
 }
 
+/**
+ * @brief Normalizes the given vector's components between [0, 1] if unsigned or
+ * [-1, 1] if signed, based on the type's maximum value.
+ *
+ * @param value The value to normalize.
+ */
 template <glm::length_t N, typename T>
 glm::vec<N, double> normalize(glm::vec<N, T> value) {
   constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
@@ -29,6 +41,12 @@ glm::vec<N, double> normalize(glm::vec<N, T> value) {
   }
 }
 
+/**
+ * @brief Normalizes the given matrix's components between [0, 1] if unsigned or
+ * [-1, 1] if signed, based on the type's maximum value.
+ *
+ * @param value The value to normalize.
+ */
 template <glm::length_t N, typename T>
 glm::mat<N, N, double> normalize(glm::mat<N, N, T> value) {
   constexpr double max = static_cast<double>(std::numeric_limits<T>::max());
@@ -46,6 +64,12 @@ glm::mat<N, N, double> normalize(glm::mat<N, N, T> value) {
   return result;
 }
 
+/**
+ * @brief Multiplies each component of the value by the given scale factor.
+ *
+ * @param value The value to scale.
+ * @param scale The scale factor to apply to the value.
+ */
 template <typename T> T applyScale(const T& value, const T& scale) {
   if constexpr (IsMetadataMatN<T>::value) {
     // Do component-wise multiplication instead of actual matrix
@@ -61,6 +85,15 @@ template <typename T> T applyScale(const T& value, const T& scale) {
   }
 }
 
+/**
+ * @brief Transforms the value by optional offset and scale factors.
+ *
+ * @param value The value to transform.
+ * @param offset The amount to offset the value by, or `std::nullopt` to apply
+ * no offset.
+ * @param scale The amount to scale the value by, or `std::nullopt` to apply no
+ * scale. See \ref applyScale.
+ */
 template <typename T>
 T transformValue(
     const T& value,
@@ -78,6 +111,17 @@ T transformValue(
   return result;
 }
 
+/**
+ * @brief Transforms each element of an array of values by optional offset and
+ * scale factors. See \ref transformValue.
+ *
+ * @param value The array whose elements will be transformed.
+ * @param offset The amount to offset each element by, or `std::nullopt` to
+ * apply no offset.
+ * @param scale The amount to scale each element by, or `std::nullopt` to apply
+ * no scale factor.
+ * @returns A transformed copy of the input array.
+ */
 template <typename T>
 PropertyArrayCopy<T> transformArray(
     const PropertyArrayView<T>& value,
@@ -99,6 +143,18 @@ PropertyArrayCopy<T> transformArray(
   return PropertyArrayCopy(std::move(result));
 }
 
+/**
+ * @brief Normalizes each element of an array of values and transforms them by
+ * optional offset and scale factors. See \ref transformValue and \ref
+ * transformArray.
+ *
+ * @param value The array whose elements will be transformed.
+ * @param offset The amount to offset each element by, or `std::nullopt` to
+ * apply no offset. The offset will be applied after normalization.
+ * @param scale The amount to scale each element by, or `std::nullopt` to apply
+ * no scale factor. The scale will be applied after normalization.
+ * @returns A normalized and transformed copy of the input array.
+ */
 template <
     typename T,
     typename NormalizedType = typename TypeToNormalizedType<T>::type>
@@ -122,6 +178,17 @@ PropertyArrayCopy<NormalizedType> transformNormalizedArray(
   return PropertyArrayCopy(std::move(result));
 }
 
+/**
+ * @brief Normalizes each element of an array of vectors and transforms them by
+ * optional offset and scale factors. See \ref transformNormalizedArray.
+ *
+ * @param value The array whose elements will be transformed.
+ * @param offset The amount to offset each element by, or `std::nullopt` to
+ * apply no offset. The offset will be applied after normalization.
+ * @param scale The amount to scale each element by, or `std::nullopt` to apply
+ * no scale factor. The scale will be applied after normalization.
+ * @returns A normalized and transformed copy of the input array.
+ */
 template <glm::length_t N, typename T>
 PropertyArrayCopy<glm::vec<N, double>> transformNormalizedVecNArray(
     const PropertyArrayView<glm::vec<N, T>>& value,
@@ -143,6 +210,17 @@ PropertyArrayCopy<glm::vec<N, double>> transformNormalizedVecNArray(
   return PropertyArrayCopy(std::move(result));
 }
 
+/**
+ * @brief Normalizes each element of an array of matrices and transforms them by
+ * optional offset and scale factors. See \ref transformNormalizedArray.
+ *
+ * @param value The array whose elements will be transformed.
+ * @param offset The amount to offset each element by, or `std::nullopt` to
+ * apply no offset. The offset will be applied after normalization.
+ * @param scale The amount to scale each element by, or `std::nullopt` to apply
+ * no scale factor. The scale will be applied after normalization.
+ * @returns A normalized and transformed copy of the input array.
+ */
 template <glm::length_t N, typename T>
 PropertyArrayCopy<glm::mat<N, N, double>> transformNormalizedMatNArray(
     const PropertyArrayView<glm::mat<N, N, T>>& value,

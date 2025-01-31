@@ -15,6 +15,9 @@ namespace CesiumGltf {
  */
 struct CESIUMGLTF_API ExtensionExtInstanceFeaturesFeatureId final
     : public CesiumUtility::ExtensibleObject {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName =
       "ExtensionExtInstanceFeaturesFeatureId";
 

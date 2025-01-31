@@ -1,18 +1,17 @@
 #include <CesiumUtility/Uri.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 using namespace CesiumUtility;
 
 TEST_CASE("Uri::getPath") {
-  SECTION("returns path") {
+  SUBCASE("returns path") {
     CHECK(Uri::getPath("https://example.com/") == "/");
     CHECK(Uri::getPath("https://example.com/foo/bar") == "/foo/bar");
     CHECK(Uri::getPath("https://example.com/foo/bar/") == "/foo/bar/");
   }
 
-  SECTION("ignores path parameters") {
+  SUBCASE("ignores path parameters") {
     CHECK(Uri::getPath("https://example.com/?some=parameter") == "/");
     CHECK(
         Uri::getPath("https://example.com/foo/bar?some=parameter") ==
@@ -22,22 +21,22 @@ TEST_CASE("Uri::getPath") {
         "/foo/bar/");
   }
 
-  SECTION("returns empty path for nonexistent paths") {
+  SUBCASE("returns empty path for nonexistent paths") {
     CHECK(Uri::getPath("https://example.com") == "");
     CHECK(Uri::getPath("https://example.com?some=parameter") == "");
   }
 
-  SECTION("returns empty path for invalid uri") {
+  SUBCASE("returns empty path for invalid uri") {
     CHECK(Uri::getPath("not a valid uri") == "");
   }
 }
 
 TEST_CASE("Uri::setPath") {
-  SECTION("sets empty path") {
+  SUBCASE("sets empty path") {
     CHECK(Uri::setPath("https://example.com", "") == "https://example.com");
   }
 
-  SECTION("sets new path") {
+  SUBCASE("sets new path") {
     CHECK(Uri::setPath("https://example.com", "/") == "https://example.com/");
     CHECK(
         Uri::setPath("https://example.com/foo", "/bar") ==
@@ -50,7 +49,7 @@ TEST_CASE("Uri::setPath") {
         "https://example.com/bar/");
   }
 
-  SECTION("preserves path parameters") {
+  SUBCASE("preserves path parameters") {
     CHECK(
         Uri::setPath("https://example.com?some=parameter", "") ==
         "https://example.com?some=parameter");
@@ -68,7 +67,7 @@ TEST_CASE("Uri::setPath") {
         "https://example.com/bar/?some=parameter");
   }
 
-  SECTION("sets same path") {
+  SUBCASE("sets same path") {
     CHECK(
         Uri::setPath("https://example.com/foo/bar", "/foo/bar") ==
         "https://example.com/foo/bar");
@@ -78,7 +77,7 @@ TEST_CASE("Uri::setPath") {
             "/foo/bar") == "https://example.com/foo/bar?some=parameter");
   }
 
-  SECTION("returns empty path for invalid uri") {
+  SUBCASE("returns empty path for invalid uri") {
     CHECK(Uri::setPath("not a valid uri", "/foo/") == "");
   }
 }

@@ -1,8 +1,12 @@
-#include "CesiumGltf/PropertyType.h"
+#include <CesiumGltf/AccessorSpec.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyType.h>
 
-#include "CesiumGltf/AccessorSpec.h"
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/PropertyTable.h"
+#include <glm/detail/qualifier.hpp>
+
+#include <cstddef>
+#include <string>
 
 namespace CesiumGltf {
 std::string convertPropertyTypeToString(PropertyType type) {

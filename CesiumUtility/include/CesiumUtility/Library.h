@@ -2,6 +2,8 @@
 
 /**
  * @brief Utility classes for Cesium
+ *
+ * @mermaid-interactive{dependencies/CesiumUtility}
  */
 namespace CesiumUtility {}
 

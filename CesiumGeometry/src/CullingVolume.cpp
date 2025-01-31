@@ -1,10 +1,15 @@
-#include "CesiumGeometry/CullingVolume.h"
+#include <CesiumGeometry/CullingVolume.h>
+#include <CesiumGeometry/Plane.h>
 
-#include <glm/glm.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
-#include <glm/vec3.hpp>
 
-namespace Cesium3DTilesSelection {
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
+namespace CesiumGeometry {
 
 CullingVolume createCullingVolume(
     const glm::dvec3& position,
@@ -17,7 +22,11 @@ CullingVolume createCullingVolume(
   const double r = glm::tan(0.5 * fovx);
   const double l = -r;
 
-  const double n = 1.0;
+  const double positionLen = glm::length(position);
+  const double n = std::max(
+      1.0,
+      std::nextafter(positionLen, std::numeric_limits<double>::max()) -
+          positionLen);
 
   // TODO: this is all ported directly from CesiumJS, can probably be refactored
   // to be more efficient with GLM.
@@ -66,4 +75,4 @@ CullingVolume createCullingVolume(
 
   return {leftPlane, rightPlane, topPlane, bottomPlane};
 }
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumGeometry

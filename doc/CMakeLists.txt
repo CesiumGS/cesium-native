@@ -5,6 +5,7 @@ if(DOXYGEN_FOUND)
         LIB_DIRS
         ../Cesium3DTiles/include
         ../Cesium3DTiles/generated/include
+        ../Cesium3DTilesContent/include
         ../Cesium3DTilesReader/include
         ../Cesium3DTilesReader/generated/include
         ../Cesium3DTilesWriter/include
@@ -31,6 +32,7 @@ if(DOXYGEN_FOUND)
     set(
         DOXYGEN_EXAMPLE_PATH
         ../Cesium3DTiles/test
+        ../Cesium3DTilesContent/test
         ../Cesium3DTilesReader/test
         ../Cesium3DTilesWriter/test
         ../Cesium3DTilesSelection/test
@@ -42,11 +44,11 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/test
         ../CesiumGltfWriter/test
         ../CesiumIonClient/test
-        ../CesiumJsonReader/test
         ../CesiumJsonWriter/test
         ../CesiumQuantizedMeshTerrain/test
         ../CesiumRasterOverlays/test
         ../CesiumUtility/test
+        ../ # For examples drawn from the actual code
     )
 
     # These macro definitions confuse doxygen, causing it
@@ -84,14 +86,36 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_SOURCE_BROWSER YES)
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
-    set(DOXYGEN_IMAGE_PATH "./")
+    list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
+    list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/build/*")
+
+    set(DOXYGEN_DOT_GRAPH_MAX_NODES 100)
+    set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS_PRINT)
+    list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/")
+    list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")
+
+    set(DOXYGEN_MARKDOWN_ID_STYLE GITHUB)
+    set(DOXYGEN_INTERACTIVE_SVG YES)
+    # Tag files can be used by other Doxygen projects to link to our docs
+    # For example, Cesium for Unreal can use it to link to the Cesium Native docs without duplicating them.
+    set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/html/cesium-native.tag")
+
+    if(NOT CESIUM_PRODUCTION_DOCS)
+      set(DOXYGEN_PROJECT_BRIEF "PRE-RELEASE")
+      set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header-noindex.html")
+    else()
+      set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header.html")
+    endif()
 
     # Add support for Mermaid charts using the @mermaid command.
-    set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js")
-    set(DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
+    set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js ${CMAKE_CURRENT_LIST_DIR}/assets/panzoom.js")
+    list(APPEND DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES mermaid-interactive{1}="\\htmlonly <div class=\\\"mermaid interactive\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES svg-interactive{2}="\\htmlonly <div class=\\\"svg interactive\\\" style=\\\"min-height: \\2\\\"> ^^ \\endhtmlonly \\image html \\\"\\1.svg\\\" \\htmlonly ^^ </div> \\endhtmlonly")
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
+
+    list(APPEND DOXYGEN_TAGFILES "${CMAKE_CURRENT_LIST_DIR}/community.tag=https://github.com/CesiumGS/community/blob/main")
 
     cesium_glob_files(
       CESIUM_DOC_TOPICS
@@ -100,7 +124,9 @@ if(DOXYGEN_FOUND)
 
     doxygen_add_docs(
         cesium-native-docs
+        "../CONTRIBUTING.md"
         "../README.md"
+        "../CHANGES.md"
         ${CESIUM_DOC_TOPICS}
         ${LIB_DIRS}
     )

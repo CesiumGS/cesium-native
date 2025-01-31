@@ -92,8 +92,9 @@ public:
   /**
    * @brief Assignment operator.
    */
+  // NOLINTNEXTLINE(bugprone-unhandled-self-assignment)
   IntrusivePointer& operator=(const IntrusivePointer& rhs) noexcept {
-    if (this->_p != rhs._p) {
+    if (*this != rhs) {
       // addReference the new pointer before releaseReference'ing the old.
       T* pOld = this->_p;
       this->_p = rhs._p;
@@ -106,9 +107,14 @@ public:
 
     return *this;
   }
+
+  /**
+   * @brief Assigns an \ref IntrusivePointer of another type to this \ref
+   * IntrusivePointer.
+   */
   template <class U>
   IntrusivePointer& operator=(const IntrusivePointer<U>& rhs) noexcept {
-    if (this->_p != rhs._p) {
+    if (*this != rhs) {
       // addReference the new pointer before releaseReference'ing the old.
       T* pOld = this->_p;
       this->_p = rhs._p;
@@ -178,6 +184,8 @@ public:
   bool operator==(const IntrusivePointer<T>& rhs) const noexcept {
     return this->_p == rhs._p;
   }
+
+  /** @brief Returns `true` if two pointers are equal. */
   template <class U>
   bool operator==(const IntrusivePointer<U>& rhs) const noexcept {
     return this->_p == rhs._p;
@@ -187,6 +195,14 @@ public:
    * @brief Returns `true` if two pointers are *not* equal.
    */
   bool operator!=(const IntrusivePointer<T>& rhs) const noexcept {
+    return !(*this == rhs);
+  }
+
+  /**
+   * @brief Returns `true` if two pointers are *not* equal.
+   */
+  template <class U>
+  bool operator!=(const IntrusivePointer<U>& rhs) const noexcept {
     return !(*this == rhs);
   }
 
@@ -219,6 +235,12 @@ private:
   template <typename U> friend class IntrusivePointer;
 };
 
+/**
+ * @brief Casts a `const` \ref IntrusivePointer to its non-const equivalent.
+ *
+ * @param p The `const` \ref IntrusivePointer.
+ * @returns A non-const \ref IntrusivePointer with the same underlying pointer.
+ */
 template <typename T, typename U>
 IntrusivePointer<T>
 const_intrusive_cast(const IntrusivePointer<U>& p) noexcept {

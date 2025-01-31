@@ -10,6 +10,9 @@ namespace CesiumGltf {
  * @brief Material Occlusion Texture Info
  */
 struct CESIUMGLTF_API MaterialOcclusionTextureInfo final : public TextureInfo {
+  /**
+   * @brief The original name of this type.
+   */
   static constexpr const char* TypeName = "MaterialOcclusionTextureInfo";
 
   /**

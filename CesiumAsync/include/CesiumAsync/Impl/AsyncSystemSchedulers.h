@@ -9,7 +9,7 @@ namespace CesiumAsync {
 class ITaskProcessor;
 
 namespace CesiumImpl {
-// Begin omitting doxgen warnings for Impl namespace
+// Begin omitting doxygen warnings for Impl namespace
 //! @cond Doxygen_Suppress
 
 class AsyncSystemSchedulers {
@@ -22,6 +22,6 @@ public:
 };
 
 //! @endcond
-// End omitting doxgen warnings for Impl namespace
+// End omitting doxygen warnings for Impl namespace
 } // namespace CesiumImpl
 } // namespace CesiumAsync

@@ -11,6 +11,7 @@
 
 namespace CesiumUtility {
 
+/** \cond Doxygen_Suppress */
 #ifndef NDEBUG
 template <bool isThreadSafe> class ThreadIdHolder;
 
@@ -24,6 +25,7 @@ template <> class ThreadIdHolder<false> {
 
 template <> class ThreadIdHolder<true> {};
 #endif
+/** \endcond */
 
 /**
  * @brief A reference-counted base class, meant to be used with
@@ -51,7 +53,6 @@ class ReferenceCounted
 #endif
 {
 public:
-  ReferenceCounted() noexcept {}
   ~ReferenceCounted() noexcept { CESIUM_ASSERT(this->_referenceCount == 0); }
 
   /**
@@ -97,6 +98,9 @@ public:
   }
 
 private:
+  ReferenceCounted() noexcept = default;
+  friend T;
+
   using ThreadSafeCounter = std::atomic<std::int32_t>;
   using NonThreadSafeCounter = std::int32_t;
   using CounterType =

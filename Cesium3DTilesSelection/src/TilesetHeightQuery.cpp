@@ -1,13 +1,33 @@
 #include "TilesetHeightQuery.h"
 
-#include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
 #include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+
+#include <glm/exponential.hpp>
+
+#include <cstddef>
+#include <iterator>
+#include <list>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
@@ -113,9 +133,9 @@ void TilesetHeightQuery::intersectVisibleTile(
   // Set ray info to this hit if closer, or the first hit
   if (!this->intersection.has_value()) {
     this->intersection = std::move(gltfIntersectResult.hit);
-  } else {
+  } else if (gltfIntersectResult.hit) {
     double prevDistSq = this->intersection->rayToWorldPointDistanceSq;
-    double thisDistSq = intersection->rayToWorldPointDistanceSq;
+    double thisDistSq = gltfIntersectResult.hit->rayToWorldPointDistanceSq;
     if (thisDistSq < prevDistSq)
       this->intersection = std::move(gltfIntersectResult.hit);
   }
@@ -145,7 +165,7 @@ void TilesetHeightQuery::findCandidateTiles(
 
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
-    warnings.push_back("Tile load failed during query. Ignoring.");
+    warnings.emplace_back("Tile load failed during query. Ignoring.");
     return;
   }
 

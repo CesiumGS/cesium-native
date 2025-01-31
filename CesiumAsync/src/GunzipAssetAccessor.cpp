@@ -1,8 +1,18 @@
-#include "CesiumAsync/GunzipAssetAccessor.h"
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/GunzipAssetAccessor.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/Gzip.h>
 
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/IAssetResponse.h"
-#include "CesiumUtility/Gzip.h"
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumAsync {
 
@@ -44,7 +54,7 @@ class GunzippedAssetRequest : public IAssetRequest {
 public:
   GunzippedAssetRequest(std::shared_ptr<IAssetRequest>&& pOther)
       : _pAssetRequest(std::move(pOther)),
-        _AssetResponse(_pAssetRequest->response()){};
+        _assetResponse(_pAssetRequest->response()){};
   virtual const std::string& method() const noexcept override {
     return this->_pAssetRequest->method();
   }
@@ -58,12 +68,12 @@ public:
   }
 
   virtual const IAssetResponse* response() const noexcept override {
-    return &this->_AssetResponse;
+    return &this->_assetResponse;
   }
 
 private:
   std::shared_ptr<IAssetRequest> _pAssetRequest;
-  GunzippedAssetResponse _AssetResponse;
+  GunzippedAssetResponse _assetResponse;
 };
 
 Future<std::shared_ptr<IAssetRequest>> gunzipIfNeeded(
@@ -87,7 +97,7 @@ GunzipAssetAccessor::GunzipAssetAccessor(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor)
     : _pAssetAccessor(pAssetAccessor) {}
 
-GunzipAssetAccessor::~GunzipAssetAccessor() noexcept {}
+GunzipAssetAccessor::~GunzipAssetAccessor() noexcept = default;
 
 Future<std::shared_ptr<IAssetRequest>> GunzipAssetAccessor::get(
     const AsyncSystem& asyncSystem,

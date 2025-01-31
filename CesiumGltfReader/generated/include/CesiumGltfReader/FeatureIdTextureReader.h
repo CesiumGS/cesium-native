@@ -19,7 +19,8 @@ struct FeatureIdTexture;
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads {@link FeatureIdTexture} instances from JSON.
+ * @brief Reads \ref CesiumGltf::FeatureIdTexture "FeatureIdTexture" instances
+ * from JSON.
  */
 class CESIUMGLTFREADER_API FeatureIdTextureReader {
 public:
@@ -50,7 +51,7 @@ public:
   /**
    * @brief Reads an instance of FeatureIdTexture from a rapidJson::Value.
    *
-   * @param data The buffer from which to read the instance.
+   * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
   CesiumJsonReader::ReadJsonResult<CesiumGltf::FeatureIdTexture>
@@ -60,7 +61,7 @@ public:
    * @brief Reads an array of instances of FeatureIdTexture from a
    * rapidJson::Value.
    *
-   * @param data The buffer from which to read the array of instances.
+   * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
   CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::FeatureIdTexture>>

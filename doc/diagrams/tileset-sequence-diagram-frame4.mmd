@@ -1,0 +1,14 @@
+sequenceDiagram
+  actor Application
+  participant Tileset
+  actor IAssetAccessor
+  actor IPrepareRendererResources
+
+  Note over Application,Tileset: Frame 4
+  Application->>Tileset: updateView
+  IPrepareRendererResources--)Tileset: Resolve: prepareInLoadThread (Tile B)
+  Tileset->>Tileset: Select Tile B Only
+  Tileset->>IPrepareRendererResources: prepareInMainThread (Tile B)
+  IPrepareRendererResources-->>Tileset: Renderer resources (Tile B)
+  Tileset->>IPrepareRendererResources: free (Tile A)
+  Tileset-->>Application: Tiles to Render This Frame (B)
