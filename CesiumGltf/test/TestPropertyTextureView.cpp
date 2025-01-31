@@ -3425,7 +3425,7 @@ TEST_CASE("Test enum PropertyTextureProperty") {
   }
 }
 
-/*TEST_CASE("Test array PropertyTextureProperty") {
+TEST_CASE("Test enum array PropertyTextureProperty") {
 
   Model model;
   std::vector<uint8_t> data = {
@@ -3436,7 +3436,7 @@ TEST_CASE("Test enum PropertyTextureProperty") {
     77, 0, 191,
     223, 28, 11};
 
-  std::vector<std::vector<int64_t>> expected {
+  std::vector<std::vector<int64_t, 3>> expected {
     { 11, 28, 223 },
     { 191, 0, 77},
     { 43, 1, 200},
@@ -3503,10 +3503,10 @@ TEST_CASE("Test enum PropertyTextureProperty") {
   REQUIRE(!classProperty->normalized);
 
   SUBCASE("Access correct type") {
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
-        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
+        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
     REQUIRE(
-        uint8ArrayProperty.status() ==
+        enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::Valid);
 
     std::vector<glm::dvec2> texCoords{
@@ -3517,17 +3517,17 @@ TEST_CASE("Test enum PropertyTextureProperty") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      const std::array<uint8_t, 3>& expectedArray = expected[i];
+      const std::array<int64_t, 3>& expectedArray = expected[i];
 
-      PropertyArrayCopy<uint8_t> value =
-          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+      PropertyArrayCopy<PropertyEnumValue> value =
+          enumArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
       for (int64_t j = 0; j < value.size(); j++) {
         REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
       }
 
-      auto maybeValue = uint8ArrayProperty.get(uv[0], uv[1]);
+      auto maybeValue = enumArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -3546,15 +3546,15 @@ TEST_CASE("Test enum PropertyTextureProperty") {
     extension.scale = {0.5, 0.5};
     extension.texCoord = 10;
 
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
-        view.getPropertyView<PropertyArrayView<uint8_t>>(
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
+        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
             "TestClassProperty",
             options);
     REQUIRE(
-        uint8ArrayProperty.status() ==
+        enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::Valid);
 
-    verifyTextureTransformConstruction(uint8ArrayProperty, extension);
+    verifyTextureTransformConstruction(enumArrayProperty, extension);
 
     // This transforms to the following UV values:
     // (0, 0) -> (0.5, -0.5) -> wraps to (0.5, 0.5)
@@ -3578,7 +3578,7 @@ TEST_CASE("Test enum PropertyTextureProperty") {
       const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
 
       PropertyArrayCopy<uint8_t> value =
-          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+          enumArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
       for (int64_t j = 0; j < value.size(); j++) {
@@ -3586,7 +3586,7 @@ TEST_CASE("Test enum PropertyTextureProperty") {
       }
 
       std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
-          uint8ArrayProperty.get(uv[0], uv[1]);
+          enumArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -3600,12 +3600,12 @@ TEST_CASE("Test enum PropertyTextureProperty") {
     TextureViewOptions options;
     options.makeImageCopy = true;
 
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
-        view.getPropertyView<PropertyArrayView<uint8_t>>(
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
+        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
             "TestClassProperty",
             options);
     REQUIRE(
-        uint8ArrayProperty.status() ==
+        enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::Valid);
 
     // Clear the original image data.
@@ -3623,7 +3623,7 @@ TEST_CASE("Test enum PropertyTextureProperty") {
       const std::array<uint8_t, 3>& expectedArray = expected[i];
 
       PropertyArrayCopy<uint8_t> value =
-          uint8ArrayProperty.getRaw(uv[0], uv[1]);
+          enumArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
       for (int64_t j = 0; j < value.size(); j++) {
@@ -3631,7 +3631,7 @@ TEST_CASE("Test enum PropertyTextureProperty") {
       }
 
       std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
-          uint8ArrayProperty.get(uv[0], uv[1]);
+          enumArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
         REQUIRE((*maybeValue)[j] == value[j]);
@@ -3669,9 +3669,9 @@ TEST_CASE("Test enum PropertyTextureProperty") {
   }
 
   SUBCASE("Access incorrectly as normalized") {
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>, true>
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>, true>
         normalizedInvalid =
-            view.getPropertyView<PropertyArrayView<uint8_t>, true>(
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>, true>(
                 "TestClassProperty");
     REQUIRE(
         normalizedInvalid.status() ==
@@ -3681,29 +3681,28 @@ TEST_CASE("Test enum PropertyTextureProperty") {
   SUBCASE("Channel and type mismatch") {
     model.images[imageIndex].pAsset->channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
-        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
+        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
     REQUIRE(
-        uint8ArrayProperty.status() ==
+        enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
   }
 
   SUBCASE("Invalid channel values") {
     propertyTextureProperty.channels = {0, 4, 1};
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
-        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
+        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
     REQUIRE(
-        uint8ArrayProperty.status() ==
+        enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
   }
 
   SUBCASE("Invalid bytes per channel") {
     model.images[imageIndex].pAsset->bytesPerChannel = 2;
-    PropertyTexturePropertyView<PropertyArrayView<uint8_t>> uint8ArrayProperty =
-        view.getPropertyView<PropertyArrayView<uint8_t>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
+        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
     REQUIRE(
-        uint8ArrayProperty.status() ==
+        enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);
   }
 }
-*/

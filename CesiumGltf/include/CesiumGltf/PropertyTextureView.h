@@ -346,6 +346,10 @@ private:
           propertyOptions);
     }
 
+    if constexpr (IsMetadataEnumArray<T>::value) {
+      return createEnumArrayPropertyView(classProperty, propertyTextureProperty, propertyOptions);
+    }
+
     if constexpr (IsMetadataArray<T>::value) {
       return createArrayPropertyView<
           typename MetadataArrayType<T>::type,
@@ -712,6 +716,102 @@ private:
         classProperty,
         pEnumDefinition,
         _pModel->samplers[static_cast<size_t>(samplerIndex)],
+        *pImage,
+        propertyOptions);
+  }
+
+  PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+  createEnumArrayPropertyView(
+      const ClassProperty& classProperty,
+      const PropertyTextureProperty& propertyTextureProperty,
+      [[maybe_unused]] const TextureViewOptions& propertyOptions) const {
+    if (!classProperty.array) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
+    }
+
+    const PropertyType type = convertStringToPropertyType(classProperty.type);
+    if (TypeToPropertyType<PropertyEnumValue>::value != type) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
+    }
+
+    if (!classProperty.enumType) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidEnumType);
+    }
+
+    const auto& enumDefinitionIt =
+        this->_pEnumDefinitions->find(*classProperty.enumType);
+    if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidEnumType);
+    }
+
+    const Enum* pEnumDefinition = &enumDefinitionIt->second;
+
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(pEnumDefinition->valueType);
+    const size_t componentSize = getSizeOfComponentType(componentType);
+
+    // We can only grab up to four bytes from the texture.
+    if (componentSize > 4) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    }
+
+    const int64_t count = classProperty.count.value_or(0);
+    if(count <= 0 || count > 4) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    }
+
+    const size_t arraySize = static_cast<size_t>(count) * componentSize;
+
+    if(arraySize > 4) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
+    }
+
+    int32_t samplerIndex;
+    int32_t imageIndex;
+
+    PropertyViewStatusType status =
+        getTextureSafe(propertyTextureProperty.index, samplerIndex, imageIndex);
+
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+    }
+
+    status = checkSampler(samplerIndex);
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+    }
+
+    status = checkImage(imageIndex);
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+    }
+
+    const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
+        _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
+    const std::vector<int64_t>& channels = propertyTextureProperty.channels;
+
+    status = checkChannels(channels, *pImage);
+    if (status != PropertyTexturePropertyViewStatus::Valid) {
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+    }
+
+    if (channels.size() * static_cast<size_t>(pImage->bytesPerChannel) !=
+        arraySize) {
+      return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
+    }
+
+    return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        propertyTextureProperty,
+        classProperty,
+        pEnumDefinition,
+        _pModel->samplers[samplerIndex],
         *pImage,
         propertyOptions);
   }
