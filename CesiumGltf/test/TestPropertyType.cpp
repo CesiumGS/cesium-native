@@ -279,6 +279,48 @@ TEST_CASE("Test convertAccessorComponentTypeToPropertyComponentType") {
       PropertyComponentType::None);
 }
 
+TEST_CASE("Test convertPropertyComponentTypeToAccessorComponentType") {
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int8) == AccessorSpec::ComponentType::BYTE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint8) ==
+      AccessorSpec::ComponentType::UNSIGNED_BYTE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int16) == AccessorSpec::ComponentType::SHORT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint16) ==
+      AccessorSpec::ComponentType::UNSIGNED_SHORT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int32) == AccessorSpec::ComponentType::INT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint32) ==
+      AccessorSpec::ComponentType::UNSIGNED_INT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int64) == AccessorSpec::ComponentType::INT64);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint64) ==
+      AccessorSpec::ComponentType::UNSIGNED_INT64);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Float32) ==
+      AccessorSpec::ComponentType::FLOAT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Float64) ==
+      AccessorSpec::ComponentType::DOUBLE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::None) == -1);
+}
+
 TEST_CASE("Test isPropertyTypeVecN") {
   REQUIRE(isPropertyTypeVecN(PropertyType::Vec2));
   REQUIRE(isPropertyTypeVecN(PropertyType::Vec3));

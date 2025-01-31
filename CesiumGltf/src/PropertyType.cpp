@@ -224,6 +224,34 @@ convertAccessorComponentTypeToPropertyComponentType(int componentType) {
   }
 }
 
+int32_t convertPropertyComponentTypeToAccessorComponentType(
+    PropertyComponentType componentType) {
+  switch (componentType) {
+  case PropertyComponentType::Int8:
+    return AccessorSpec::ComponentType::BYTE;
+  case PropertyComponentType::Uint8:
+    return AccessorSpec::ComponentType::UNSIGNED_BYTE;
+  case PropertyComponentType::Int16:
+    return AccessorSpec::ComponentType::SHORT;
+  case PropertyComponentType::Uint16:
+    return AccessorSpec::ComponentType::UNSIGNED_SHORT;
+  case PropertyComponentType::Int32:
+    return AccessorSpec::ComponentType::INT;
+  case PropertyComponentType::Uint32:
+    return AccessorSpec::ComponentType::UNSIGNED_INT;
+  case PropertyComponentType::Int64:
+    return AccessorSpec::ComponentType::INT64;
+  case PropertyComponentType::Uint64:
+    return AccessorSpec::ComponentType::UNSIGNED_INT64;
+  case PropertyComponentType::Float32:
+    return AccessorSpec::ComponentType::FLOAT;
+  case PropertyComponentType::Float64:
+    return AccessorSpec::ComponentType::DOUBLE;
+  default:
+    return -1;
+  }
+}
+
 bool isPropertyTypeVecN(PropertyType type) {
   return type == PropertyType::Vec2 || type == PropertyType::Vec3 ||
          type == PropertyType::Vec4;
