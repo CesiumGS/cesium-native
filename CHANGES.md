@@ -19,6 +19,7 @@
 - `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
 - Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
 - Added support for `3DTILES_ellipsoid` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
 
 ##### Fixes :wrench:
 
