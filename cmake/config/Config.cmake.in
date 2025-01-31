@@ -8,7 +8,7 @@ find_dependency(zlib-ng REQUIRED)
 find_dependency(modp_b64 REQUIRED)
 
 find_dependency(Async++ CONFIG REQUIRED)
-find_dependency(Catch2 CONFIG REQUIRED)
+find_dependency(doctest CONFIG REQUIRED)
 find_dependency(draco CONFIG REQUIRED)
 find_dependency(expected-lite CONFIG REQUIRED)
 find_dependency(glm CONFIG REQUIRED)
