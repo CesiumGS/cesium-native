@@ -84,8 +84,8 @@ Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
     this->_url.emplace(std::move(result.value()));
 
     if (useBaseQuery) {
-      UriQueryParams baseParams(base);
-      UriQueryParams relativeParams(*this);
+      UriQuery baseParams(base);
+      UriQuery relativeParams(*this);
       // Set from relative to base to give priority to relative URL query string
       for (const auto& [key, value] : baseParams) {
         if (!relativeParams.hasValue(key)) {
@@ -167,7 +167,7 @@ std::string Uri::addQuery(
     return uri;
   }
 
-  UriQueryParams params(parsedUri);
+  UriQuery params(parsedUri);
   params.setValue(key, value);
   parsedUri.setQuery(params.toQueryString());
   return parsedUri.toString();
@@ -179,7 +179,7 @@ std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
     return {};
   }
 
-  return std::string(UriQueryParams(parsedUri).getValue(key).value_or(""));
+  return std::string(UriQuery(parsedUri).getValue(key).value_or(""));
 }
 
 // NOLINTEND(bugprone-unchecked-optional-access)

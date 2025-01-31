@@ -693,7 +693,7 @@ std::string resolveTileUrl(
           }));
 
   if (!layer.extensionsToRequest.empty()) {
-    UriQueryParams params(uri);
+    UriQuery params(uri);
     params.setValue("extensions", layer.extensionsToRequest);
     uri.setQuery(params.toQueryString());
   }

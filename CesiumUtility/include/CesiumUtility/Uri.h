@@ -139,10 +139,10 @@ public:
    * @param value The value to be added to the query string.
    * @returns The modified URI including the new query string parameter.
    *
-   * @deprecated Use the \ref UriQueryParams class:
+   * @deprecated Use the \ref UriQuery class:
    * ```
    * Uri parsedUri(uri);
-   * UriQueryParams params(parsedUri);
+   * UriQuery params(parsedUri);
    * params.setValue(key, value);
    * parsedUri.setQuery(params.toQueryString());
    * ```
@@ -163,10 +163,10 @@ public:
    * @returns The value of the given key in the query string, or an empty string
    * if not found.
    *
-   * @deprecated Use the \ref UriQueryParams class:
+   * @deprecated Use the \ref UriQuery class:
    * ```
    * Uri parsedUri(uri);
-   * UriQueryParams params(parsedUri);
+   * UriQuery params(parsedUri);
    * params.getValue(key);
    * ```
    */
@@ -334,10 +334,10 @@ private:
 /**
  * @brief A class for parsing and manipulating the query string of a URI.
  */
-class UriQueryParams final {
+class UriQuery final {
 public:
   /**
-   * @brief Creates a \ref UriQueryParams object from a query string.
+   * @brief Creates a \ref UriQuery object from a query string.
    *
    * This query string should be in the format
    * `key1=value1&key2=value2&key3=value3...`. This is the format returned by
@@ -345,15 +345,15 @@ public:
    *
    * @param queryString The query string to parse into a query params object.
    */
-  UriQueryParams(const std::string_view& queryString) : _params(queryString) {}
+  UriQuery(const std::string_view& queryString) : _params(queryString) {}
   /**
-   * @brief Creates a \ref UriQueryParams object from a \ref Uri instance.
+   * @brief Creates a \ref UriQuery object from a \ref Uri instance.
    *
-   * This is equivalent to `UriQueryParams(uri.getQuery())`.
+   * This is equivalent to `UriQuery(uri.getQuery())`.
    *
    * @param uri The URI instance to obtain the query params from.
    */
-  UriQueryParams(const Uri& uri) : _params(uri.getQuery()) {}
+  UriQuery(const Uri& uri) : _params(uri.getQuery()) {}
 
   /**
    * @brief Obtains the value of the given key from the query parameters,
