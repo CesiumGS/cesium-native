@@ -536,10 +536,15 @@ void checkNormalizedTextureArrayValues(
 void checkEnumTextureValues(
     const std::vector<uint8_t>& data,
     const std::vector<int64_t>& expected,
-    const CesiumGltf::Enum& enumDef) {
+    const CesiumGltf::Enum& enumDef,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt,
+    const std::optional<std::vector<std::optional<int64_t>>>& expectedTransformed = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
   classProperty.type = ClassProperty::Type::ENUM;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
 
   const PropertyComponentType componentType =
       convertStringToPropertyComponentType(enumDef.valueType);
@@ -563,6 +568,8 @@ void checkEnumTextureValues(
 
   PropertyTexturePropertyView<PropertyEnumValue>
       view(property, classProperty, &enumDef, sampler, image);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+
   switch (componentSize) {
   case 1:
     CHECK(view.getSwizzle() == "r");
@@ -591,7 +598,12 @@ void checkEnumTextureValues(
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
     REQUIRE(view.getRaw(uv[0], uv[1]).value() == expected[i]);
-    REQUIRE(view.get(uv[0], uv[1]).value() == expected[i]);
+    if(expectedTransformed && (*expectedTransformed)[i]) {
+      REQUIRE(view.get(uv[0], uv[1]).value() == (*expectedTransformed)[i].value());
+    }
+    else if (expectedTransformed) {
+      REQUIRE(view.get(uv[0], uv[1]) == std::nullopt);
+    }
   }
 }
 } // namespace
@@ -2150,6 +2162,7 @@ TEST_CASE("Check enum PropertyTexturePropertyView") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
+      EnumValue{.name = "NoData", .description = std::nullopt, .value = 0xff},
       EnumValue{.name = "Foo", .description = std::nullopt, .value = 11},
       EnumValue{.name = "Bar", .description = std::nullopt, .value = 28},
       EnumValue{.name = "Baz", .description = std::nullopt, .value = 223},
@@ -2262,10 +2275,10 @@ TEST_CASE("Check enum PropertyTexturePropertyView") {
     checkEnumTextureValues(data, expected, enumDef);
   }
 
-  /*SUBCASE("uint8_t with noData") {
-    std::vector<uint8_t> data{12, 33, 0, 128, 0, 56, 67};
-    const uint8_t noData = 0;
-    std::vector<std::optional<uint8_t>> expected{
+  SUBCASE("uint8_t with noData") {
+    enumDef.valueType = Enum::ValueType::UINT8;
+    std::vector<uint8_t> data{11, 28, 0xff, 233, 0xff, 77, 43};
+    std::vector<std::optional<int64_t>> expected{
         data[0],
         data[1],
         std::nullopt,
@@ -2273,36 +2286,36 @@ TEST_CASE("Check enum PropertyTexturePropertyView") {
         std::nullopt,
         data[5],
         data[6]};
-    checkTextureValues(
+    std::vector<int64_t> expectedRaw(data.begin(), data.end());
+    checkEnumTextureValues(
         data,
-        data,
-        expected,
+        expectedRaw,
+        enumDef,
+        "NoData",
         std::nullopt,
-        std::nullopt,
-        noData);
+        expected);
   }
 
   SUBCASE("uint8_t with noData and defaultValue") {
-    std::vector<uint8_t> data{12, 33, 0, 128, 0, 56, 67};
-    const uint8_t noData = 0;
-    const uint8_t defaultValue = 255;
-    std::vector<std::optional<uint8_t>> expected{
+    enumDef.valueType = Enum::ValueType::UINT8;
+    std::vector<uint8_t> data{11, 28, 0xff, 233, 0xff, 77, 43};
+    std::vector<std::optional<int64_t>> expected{
         data[0],
         data[1],
-        defaultValue,
+        0,
         data[3],
-        defaultValue,
+        0,
         data[5],
         data[6]};
-    checkTextureValues(
+    std::vector<int64_t> expectedRaw(data.begin(), data.end());
+    checkEnumTextureValues(
         data,
-        data,
-        expected,
-        std::nullopt,
-        std::nullopt,
-        noData,
-        defaultValue);
-  }*/
+        expectedRaw,
+        enumDef,
+        "NoData",
+        "Quig",
+        expected);
+  }
 }
 
 #if defined(__GNUC__) && !defined(__clang__)
