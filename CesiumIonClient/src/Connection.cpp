@@ -29,8 +29,6 @@
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
-#include <uriparser/Uri.h>
-#include <uriparser/UriBase.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -495,19 +493,18 @@ Asset jsonToAsset(const rapidjson::Value& item) {
 }
 
 std::optional<std::string> generateApiUrl(const std::string& ionUrl) {
-  UriUriA newUri;
-  if (uriParseSingleUriA(&newUri, ionUrl.c_str(), nullptr) != URI_SUCCESS) {
-    return std::optional<std::string>();
+  Uri parsedIonUrl(ionUrl);
+  if (!parsedIonUrl) {
+    return std::nullopt;
   }
 
-  std::string hostName =
-      std::string(newUri.hostText.first, newUri.hostText.afterLast);
-  std::string scheme =
-      std::string(newUri.scheme.first, newUri.scheme.afterLast);
+  std::string url;
+  url.append(parsedIonUrl.getScheme());
+  url.append("//api.");
+  url.append(parsedIonUrl.getHost());
+  url.append("/");
 
-  uriFreeUriMembersA(&newUri);
-
-  return std::make_optional<std::string>(scheme + "://api." + hostName + '/');
+  return url;
 }
 
 } // namespace
