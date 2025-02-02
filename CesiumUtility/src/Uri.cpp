@@ -97,14 +97,13 @@ Uri::Uri(const Uri& base, const std::string& relative, bool useBaseQuery) {
   }
 }
 
-std::string Uri::toString() const {
+std::string_view Uri::toString() const {
   if (!this->_url) {
-    return "";
+    return std::string_view();
   }
 
   const std::string_view result = this->_url->get_href();
-  return this->_hasScheme ? std::string(result)
-                          : std::string(result.substr(FILE_PREFIX.length()));
+  return this->_hasScheme ? result : result.substr(FILE_PREFIX.length());
 }
 
 bool Uri::isValid() const { return this->_url.has_value(); }
@@ -155,7 +154,7 @@ std::string Uri::resolve(
     const std::string& relative,
     bool useBaseQuery,
     [[maybe_unused]] bool assumeHttpsDefault) {
-  return Uri(Uri(base), relative, useBaseQuery).toString();
+  return std::string(Uri(Uri(base), relative, useBaseQuery).toString());
 }
 
 std::string Uri::addQuery(
@@ -170,7 +169,7 @@ std::string Uri::addQuery(
   UriQuery params(parsedUri);
   params.setValue(key, value);
   parsedUri.setQuery(params.toQueryString());
-  return parsedUri.toString();
+  return std::string(parsedUri.toString());
 }
 
 std::string Uri::getQueryValue(const std::string& uri, const std::string& key) {
@@ -311,7 +310,7 @@ std::string Uri::getPath(const std::string& uri) {
 std::string Uri::setPath(const std::string& uri, const std::string& newPath) {
   Uri parsedUri(uri);
   parsedUri.setPath(newPath);
-  return parsedUri.toString();
+  return std::string(parsedUri.toString());
 }
 
 } // namespace CesiumUtility

@@ -45,7 +45,7 @@ public:
    * @brief Returns a string representation of the entire URI including path and
    * query parameters.
    */
-  std::string toString() const;
+  std::string_view toString() const;
 
   /**
    * @brief Returns true if this URI has been successfully parsed.
