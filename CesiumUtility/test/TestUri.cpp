@@ -236,3 +236,20 @@ TEST_CASE("Uri::substituteTemplateParameters") {
           "https://example.com/a}",
           substitutionCallback) == "https://example.com/a}");
 }
+
+TEST_CASE("UriQuery") {
+  SUBCASE("preserves placeholders") {
+    Uri uri("https://example.com?query={whatever}&{this}={that}");
+    UriQuery query(uri);
+
+    CHECK(query.getValue("query") == "{whatever}");
+    CHECK(query.getValue("{this}") == "{that}");
+
+    query.setValue("query", "foo");
+    query.setValue("{this}", "{another}");
+    CHECK(query.getValue("query") == "foo");
+    CHECK(query.getValue("{this}") == "{another}");
+
+    CHECK(query.toQueryString() == "query=foo&%7Bthis%7D=%7Banother%7D");
+  }
+}

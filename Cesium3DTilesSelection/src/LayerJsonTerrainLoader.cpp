@@ -698,7 +698,7 @@ std::string resolveTileUrl(
     uri.setQuery(params.toQueryString());
   }
 
-  return uri.toString();
+  return std::string(uri.toString());
 }
 
 Future<QuantizedMeshLoadResult> requestTileContent(
