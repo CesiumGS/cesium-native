@@ -3164,18 +3164,9 @@ TEST_CASE("Enum Array PropertyView") {
   enumDef.valueType =
       convertPropertyComponentTypeToString(PropertyComponentType::Uint8);
   enumDef.values = {
-      CesiumGltf::EnumValue{
-          .name = "Foo",
-          .description = std::nullopt,
-          .value = 0},
-      CesiumGltf::EnumValue{
-          .name = "Bar",
-          .description = std::nullopt,
-          .value = 1},
-      CesiumGltf::EnumValue{
-          .name = "Baz",
-          .description = std::nullopt,
-          .value = 2}};
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2)};
 
   SUBCASE("Constructs empty PropertyView") {
     PropertyView<PropertyArrayView<PropertyEnumValue>> view;
