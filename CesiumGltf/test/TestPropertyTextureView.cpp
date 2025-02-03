@@ -31,6 +31,13 @@
 using namespace CesiumGltf;
 
 namespace {
+EnumValue makeEnumValue(const std::string& name, int64_t value) {
+  EnumValue enumValue;
+  enumValue.name = name;
+  enumValue.value = value;
+  return enumValue;
+}
+
 void addTextureToModel(
     Model& model,
     int32_t wrapS,
@@ -3195,14 +3202,14 @@ TEST_CASE("Test enum PropertyTextureProperty") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "Foo", .description = std::nullopt, .value = 11},
-      EnumValue{.name = "Bar", .description = std::nullopt, .value = 28},
-      EnumValue{.name = "Baz", .description = std::nullopt, .value = 223},
-      EnumValue{.name = "Qux", .description = std::nullopt, .value = 191},
-      EnumValue{.name = "Quig", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Quag", .description = std::nullopt, .value = 77},
-      EnumValue{.name = "Hock", .description = std::nullopt, .value = 43},
-      EnumValue{.name = "Hork", .description = std::nullopt, .value = 1},
+      makeEnumValue("Foo", 11),
+      makeEnumValue("Bar", 28),
+      makeEnumValue("Baz", 223),
+      makeEnumValue("Qux", 191),
+      makeEnumValue("Quig", 0),
+      makeEnumValue("Quag", 77),
+      makeEnumValue("Hock", 43),
+      makeEnumValue("Hork", 1),
   };
   enumDef.valueType = Enum::ValueType::UINT8;
 
@@ -3461,15 +3468,15 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "Foo", .description = std::nullopt, .value = 11},
-      EnumValue{.name = "Bar", .description = std::nullopt, .value = 28},
-      EnumValue{.name = "Baz", .description = std::nullopt, .value = 223},
-      EnumValue{.name = "Qux", .description = std::nullopt, .value = 191},
-      EnumValue{.name = "Quig", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Quag", .description = std::nullopt, .value = 77},
-      EnumValue{.name = "Hock", .description = std::nullopt, .value = 43},
-      EnumValue{.name = "Hork", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Hurk", .description = std::nullopt, .value = 200}};
+      makeEnumValue("Foo", 11),
+      makeEnumValue("Bar", 28),
+      makeEnumValue("Baz", 223),
+      makeEnumValue("Qux", 191),
+      makeEnumValue("Quig", 0),
+      makeEnumValue("Quag", 77),
+      makeEnumValue("Hock", 43),
+      makeEnumValue("Hork", 1),
+      makeEnumValue("Hurk", 200)};
   enumDef.valueType = Enum::ValueType::UINT8;
 
   Class& testClass = schema.classes["TestClass"];

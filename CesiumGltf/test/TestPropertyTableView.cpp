@@ -37,6 +37,12 @@
 using namespace CesiumGltf;
 
 namespace {
+EnumValue makeEnumValue(const std::string& name, int64_t value) {
+  EnumValue enumValue;
+  enumValue.name = name;
+  enumValue.value = value;
+  return enumValue;
+}
 
 template <typename T>
 void addBufferToModel(Model& model, const std::vector<T>& values) {
@@ -1221,13 +1227,10 @@ TEST_CASE("Test enum PropertyTableProperty") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "Foo", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Bar", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Baz", .description = std::nullopt, .value = 2},
-      EnumValue{
-          .name = "Uint64",
-          .description = std::nullopt,
-          .value = static_cast<int64_t>(expectedUint)}};
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2),
+      makeEnumValue("Uint64", static_cast<int64_t>(expectedUint))};
   enumDef.valueType = Enum::ValueType::UINT64;
 
   PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
@@ -1332,12 +1335,12 @@ TEST_CASE("Test fixed-length enum array") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "Scarlet", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Mustard", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Green", .description = std::nullopt, .value = 2},
-      EnumValue{.name = "White", .description = std::nullopt, .value = 3},
-      EnumValue{.name = "Peacock", .description = std::nullopt, .value = 4},
-      EnumValue{.name = "Plum", .description = std::nullopt, .value = 5}};
+      makeEnumValue("Scarlet", 0),
+      makeEnumValue("Mustard", 1),
+      makeEnumValue("Green", 2),
+      makeEnumValue("White", 3),
+      makeEnumValue("Peacock", 4),
+      makeEnumValue("Plum", 5)};
   enumDef.valueType = Enum::ValueType::UINT16;
 
   Class& testClass = schema.classes["TestClass"];
@@ -4966,13 +4969,10 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "Foo", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Bar", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Baz", .description = std::nullopt, .value = 2},
-      EnumValue{
-          .name = "Uint64",
-          .description = std::nullopt,
-          .value = static_cast<int64_t>(expectedUint)}};
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2),
+      makeEnumValue("Uint64", static_cast<int64_t>(expectedUint))};
   enumDef.valueType = Enum::ValueType::UINT64;
 
   PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
@@ -5678,12 +5678,12 @@ TEST_CASE("Test callback for enum array PropertyTableProperty") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "Scarlet", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Mustard", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Green", .description = std::nullopt, .value = 2},
-      EnumValue{.name = "White", .description = std::nullopt, .value = 3},
-      EnumValue{.name = "Peacock", .description = std::nullopt, .value = 4},
-      EnumValue{.name = "Plum", .description = std::nullopt, .value = 5}};
+      makeEnumValue("Scarlet", 0),
+      makeEnumValue("Mustard", 1),
+      makeEnumValue("Green", 2),
+      makeEnumValue("White", 3),
+      makeEnumValue("Peacock", 4),
+      makeEnumValue("Plum", 5)};
   enumDef.valueType = Enum::ValueType::UINT16;
 
   Class& testClass = schema.classes["TestClass"];

@@ -45,6 +45,13 @@ using namespace CesiumGltf;
 using namespace CesiumUtility;
 
 namespace {
+EnumValue makeEnumValue(const std::string& name, int64_t value) {
+  EnumValue enumValue;
+  enumValue.name = name;
+  enumValue.value = value;
+  return enumValue;
+}
+
 template <typename T>
 void checkTextureValues(
     const std::vector<uint8_t>& data,
@@ -2163,40 +2170,24 @@ TEST_CASE("Check enum PropertyTexturePropertyView") {
   enumDef.name = "Test";
   enumDef.description = "An example enum";
   enumDef.values = std::vector<EnumValue>{
-      EnumValue{.name = "NoData", .description = std::nullopt, .value = 0xff},
-      EnumValue{.name = "Foo", .description = std::nullopt, .value = 11},
-      EnumValue{.name = "Bar", .description = std::nullopt, .value = 28},
-      EnumValue{.name = "Baz", .description = std::nullopt, .value = 223},
-      EnumValue{.name = "Qux", .description = std::nullopt, .value = 191},
-      EnumValue{.name = "Quig", .description = std::nullopt, .value = 0},
-      EnumValue{.name = "Quag", .description = std::nullopt, .value = 77},
-      EnumValue{.name = "Hock", .description = std::nullopt, .value = 43},
-      EnumValue{.name = "Hork", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Quax", .description = std::nullopt, .value = 2048},
-      EnumValue{.name = "Quix", .description = std::nullopt, .value = 19284},
-      EnumValue{.name = "Qunx", .description = std::nullopt, .value = 45000},
-      EnumValue{.name = "Stux", .description = std::nullopt, .value = 75000},
-      EnumValue{
-          .name = "Stuy",
-          .description = std::nullopt,
-          .value = 0x00ffffff},
-      EnumValue{
-          .name = "Stun",
-          .description = std::nullopt,
-          .value = 0xf0ffffff},
-      EnumValue{
-          .name = "Yurt",
-          .description = std::nullopt,
-          .value = 0xf00f00f00f00},
-      EnumValue{
-          .name = "Yurn",
-          .description = std::nullopt,
-          .value = 0x0fffff00ff00ff00},
-      EnumValue{
-          .name = "Yurg",
-          .description = std::nullopt,
-          .value = static_cast<int64_t>(0xf00dfeedf1eddead)},
-  };
+      makeEnumValue("NoData", 0xff),
+      makeEnumValue("Foo", 11),
+      makeEnumValue("Bar", 28),
+      makeEnumValue("Baz", 223),
+      makeEnumValue("Qux", 191),
+      makeEnumValue("Quig", 0),
+      makeEnumValue("Quag", 77),
+      makeEnumValue("Hock", 43),
+      makeEnumValue("Hork", 1),
+      makeEnumValue("Quax", 2048),
+      makeEnumValue("Quix", 19284),
+      makeEnumValue("Qunx", 45000),
+      makeEnumValue("Stux", 75000),
+      makeEnumValue("Stuy", 0x00ffffff),
+      makeEnumValue("Stun", 0xf0ffffff),
+      makeEnumValue("Yurt", 0xf00f00f00f00),
+      makeEnumValue("Yurn", 0x0fffff00ff00ff00),
+      makeEnumValue("Yurg", static_cast<int64_t>(0xf00dfeedf1eddead))};
 
   SUBCASE("uint8_t") {
     enumDef.valueType = Enum::ValueType::UINT8;
