@@ -47,5 +47,5 @@ target_link_libraries(
         zlib-ng::zlib-ng
         spdlog::spdlog
         glm::glm
-        uriparser::uriparser
+        ada::ada
 )

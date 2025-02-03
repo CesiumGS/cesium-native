@@ -52,6 +52,7 @@ public:
         const std::string& baseUrl,
         std::string&& version,
         std::vector<std::string>&& tileTemplateUrls,
+        std::string&& extensionsToRequest,
         CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability,
         uint32_t maxZooms,
         int32_t availabilityLevels);
@@ -59,6 +60,7 @@ public:
     std::string baseUrl;
     std::string version;
     std::vector<std::string> tileTemplateUrls;
+    std::string extensionsToRequest;
     CesiumGeometry::QuadtreeRectangleAvailability contentAvailability;
     std::vector<std::unordered_set<uint64_t>> loadedSubtrees;
     int32_t availabilityLevels;
