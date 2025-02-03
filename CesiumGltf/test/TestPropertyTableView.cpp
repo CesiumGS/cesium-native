@@ -36,6 +36,8 @@
 
 using namespace CesiumGltf;
 
+namespace {
+
 template <typename T>
 void addBufferToModel(Model& model, const std::vector<T>& values) {
   Buffer& valueBuffer = model.buffers.emplace_back();
@@ -51,6 +53,8 @@ void addBufferToModel(Model& model, const std::vector<T>& values) {
   valueBufferView.byteOffset = 0;
   valueBufferView.byteLength = valueBuffer.byteLength;
 }
+
+} // namespace
 
 TEST_CASE("Test PropertyTableView on model without EXT_structural_metadata "
           "extension") {

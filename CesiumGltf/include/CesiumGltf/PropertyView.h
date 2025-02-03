@@ -255,7 +255,7 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
 
   const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
   constexpr glm::length_t N = MatType::length();
-  if (array.size() != N * N) {
+  if (array.size() != static_cast<size_t>(N * N)) {
     return std::nullopt;
   }
 

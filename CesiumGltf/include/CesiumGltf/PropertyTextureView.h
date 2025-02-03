@@ -818,7 +818,7 @@ private:
         propertyTextureProperty,
         classProperty,
         pEnumDefinition,
-        _pModel->samplers[samplerIndex],
+        _pModel->samplers[static_cast<size_t>(samplerIndex)],
         *pImage,
         propertyOptions);
   }

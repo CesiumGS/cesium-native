@@ -157,9 +157,9 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
     CESIUM_ASSERT(
         N == 2 && "Only vec2s can contain two-byte integer components.");
     uint16_t x = static_cast<uint16_t>(bytes[0]) |
-                 (static_cast<uint16_t>(bytes[1]) << 8);
+                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     uint16_t y = static_cast<uint16_t>(bytes[2]) |
-                 (static_cast<uint16_t>(bytes[3]) << 8);
+                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[3]) << 8);
 
     result[0] = *reinterpret_cast<int16_t*>(&x);
     result[1] = *reinterpret_cast<int16_t*>(&y);

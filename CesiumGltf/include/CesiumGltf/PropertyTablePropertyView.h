@@ -634,12 +634,15 @@ private:
     size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
     if (count > 0) {
-      const size_t offsetBits = count * index;
-      const size_t nextOffsetBits = count * (index + 1);
+      const size_t offsetBits = count * static_cast<size_t>(index);
+      const size_t nextOffsetBits = count * static_cast<size_t>(index + 1);
       const std::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
+      return PropertyArrayView<bool>(
+          buffer,
+          offsetBits % 8,
+          static_cast<int64_t>(count));
     }
 
     // Handle variable-length arrays

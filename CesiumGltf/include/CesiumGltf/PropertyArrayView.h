@@ -96,6 +96,7 @@ public:
         this->_storage.data(),
         reinterpret_cast<const std::byte*>(values.data()),
         sizeInBytes);
+    // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     this->_view = PropertyArrayView<ElementType>(this->_storage);
   }
 
@@ -202,7 +203,9 @@ public:
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    const int bitValue =
+        static_cast<int>(_values[static_cast<size_t>(byteIndex)] >> bitIndex) &
+        1;
     return bitValue == 1;
   }
 
@@ -257,10 +260,12 @@ public:
    * @brief Obtains an `std::string_view` for the element at the given index.
    */
   std::string_view operator[](int64_t index) const noexcept {
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
+    const size_t currentOffset = getOffsetFromOffsetsBuffer(
+        static_cast<size_t>(index),
+        _stringOffsets,
+        _stringOffsetType);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
-        index + 1,
+        static_cast<size_t>(index + 1),
         _stringOffsets,
         _stringOffsetType);
     return std::string_view(
