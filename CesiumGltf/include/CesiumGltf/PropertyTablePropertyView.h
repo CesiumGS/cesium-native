@@ -277,10 +277,10 @@ public:
    * @param classProperty The {@link ClassProperty} this property conforms to.
    * @param size The number of elements in the property table specified by {@link PropertyTable::count}
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
-   * @param enumDefinition The definition of the enum used for this property specified by {@link PropertyTableProperty::enumType}
+   * @param enumDefinition The definition of the enum used for this property specified by {@link ClassProperty::enumType}
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& /*property*/,
+      [[maybe_unused]] const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values,
@@ -339,10 +339,10 @@ public:
    * @param values The raw buffer specified by {@link PropertyTableProperty::values}
    * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
    * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
-   * @param enumDefinition The definition of the enum used for this property specified by {@link PropertyTableProperty::enumType}
+   * @param enumDefinition The definition of the enum used for this property specified by {@link ClassProperty::enumType}
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& /*property*/,
+      [[maybe_unused]] const PropertyTableProperty& property,
       const ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values,

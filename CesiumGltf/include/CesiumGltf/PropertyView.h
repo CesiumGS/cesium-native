@@ -1416,6 +1416,13 @@ public:
     }
   }
 
+  /**
+   * @brief Constructs an empty \ref PropertyView from the given \ref
+   * ClassProperty.
+   *
+   * @param classProperty The \ref ClassProperty instance corresponding to this
+   * enum value.
+   */
   PropertyView(const ClassProperty& classProperty)
       : PropertyView(classProperty, nullptr) {}
 

@@ -299,9 +299,8 @@ public:
    * @brief Constructs an array view from buffers and their information.
    *
    * @param values The buffer containing the values.
-   * @param stringOffsets The buffer containing the string offsets.
-   * @param stringOffsetType The component type of the string offsets.
-   * @param size The number of values in the array.
+   * @param enumValueType The component type of the enum.
+   * @param size The number of elements in the array.
    */
   PropertyArrayView(
       const std::span<const std::byte>& values,
@@ -400,6 +399,14 @@ public:
    */
   PropertyArrayCopy() : _storage{}, _view() {}
 
+  /**
+   * @brief Creates a new \ref PropertyArrayCopy<PropertyEnumValue> from the
+   * given bytes, component type, and array length.
+   *
+   * @param values The bytes containing the contents of this array.
+   * @param componentType The component type of the enum.
+   * @param size The number of elements in the array.
+   */
   PropertyArrayCopy(
       const std::vector<std::byte>& values,
       PropertyComponentType componentType,
