@@ -38,5 +38,5 @@ private:
 
 /** @brief Compares a \ref PropertyEnumValue with a \ref
  * PropertyEnumValue. */
-bool operator==(const PropertyEnumValue& lhs, const PropertyEnumValue& rhs);
+bool operator==(const PropertyEnumValue lhs, const PropertyEnumValue rhs);
 } // namespace CesiumGltf

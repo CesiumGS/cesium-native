@@ -99,17 +99,6 @@ public:
     this->_view = PropertyArrayView<ElementType>(this->_storage);
   }
 
-  PropertyArrayCopy(const std::vector<std::byte>& values, PropertyComponentType componentType, int64_t size) {
-    const size_t sizeInBytes = static_cast<size_t>(size) * getSizeOfComponentType(componentType);
-    this->_storage.resize(sizeInBytes);
-    std::memcpy(
-      this->_storage.data(),
-      values.data(),
-      sizeInBytes
-    );
-    this->_view = PropertyArrayView<ElementType>(this->_storage, componentType, size);
-  }
-
   /** @brief Default move constructor */
   PropertyArrayCopy(PropertyArrayCopy&&) = default;
   /** @brief Default move assignment operator */
@@ -390,6 +379,97 @@ private:
   std::span<const std::byte> _values;
   PropertyComponentType _enumValueType;
   int64_t _size;
+};
+
+/**
+ * @brief A copy of an array element of a {@link PropertyTableProperty} or
+ * {@link PropertyTextureProperty} of enum values.
+ *
+ * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * place, a PropertyArrayCopy owns the data that it's viewing.
+ *
+ * Provides utility to retrieve the data stored in the array of elements via the
+ * array index operator.
+ */
+template <> class PropertyArrayCopy<PropertyEnumValue> {
+public:
+  /**
+   * @brief Constructs an empty array view.
+   */
+  PropertyArrayCopy() : _storage{}, _view() {}
+
+  PropertyArrayCopy(const std::vector<std::byte>& values, PropertyComponentType componentType, int64_t size) {
+    const size_t sizeInBytes = static_cast<size_t>(size) * getSizeOfComponentType(componentType);
+    this->_storage.resize(sizeInBytes);
+    std::memcpy(
+      this->_storage.data(),
+      values.data(),
+      sizeInBytes
+    );
+    this->_view = PropertyArrayView<PropertyEnumValue>(this->_storage, componentType, size);
+  }
+
+  /** @brief Default move constructor */
+  PropertyArrayCopy(PropertyArrayCopy&&) = default;
+  /** @brief Default move assignment operator */
+  PropertyArrayCopy& operator=(PropertyArrayCopy&&) = default;
+
+  /** @brief Copy constructor */
+  PropertyArrayCopy(const PropertyArrayCopy& rhs)
+      : _storage(rhs._storage), _view(this->_storage, rhs._view.componentType(), rhs._view.size()) {}
+
+  /** @brief Copy assignment operator */
+  PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
+    this->_storage = rhs._storage;
+    this->_view = PropertyArrayView<PropertyEnumValue>(this->_storage, rhs._view.componentType(), rhs._view.size());
+    return *this;
+  }
+
+  /**
+   * @brief Returns the `ElementType` at the given index from this copy.
+   *
+   * @param index The index to obtain.
+   * @returns The `ElementType` at that index from the internal view.
+   */
+  PropertyEnumValue operator[](int64_t index) const noexcept {
+    return this->_view[index];
+  }
+
+  /** @copydoc PropertyArrayView::size */
+  int64_t size() const noexcept { return this->_view.size(); }
+
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() { return this->_view.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() { return this->_view.end(); }
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() const { return this->_view.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() const { return this->_view.end(); }
+
+  /**
+   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   */
+  const PropertyArrayView<PropertyEnumValue>& view() const { return this->_view; }
+
+  /**
+   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * PropertyArrayCopy empty.
+   *
+   * @param outBuffer The destination where this copy's internal buffer will be
+   * moved to.
+   */
+  PropertyArrayView<PropertyEnumValue>
+  toViewAndExternalBuffer(std::vector<std::byte>& outBuffer) && {
+    outBuffer = std::move(this->_storage);
+    PropertyArrayView<PropertyEnumValue> result = std::move(this->_view);
+    this->_view = PropertyArrayView<PropertyEnumValue>();
+    return result;
+  }
+
+private:
+  std::vector<std::byte> _storage;
+  PropertyArrayView<PropertyEnumValue> _view;
 };
 
 /** @brief Compares two \ref PropertyArrayView instances by comparing their

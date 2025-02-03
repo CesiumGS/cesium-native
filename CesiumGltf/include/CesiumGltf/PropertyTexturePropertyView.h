@@ -875,7 +875,7 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<PropertyArrayCopy<PropertyEnumValue>>
+  std::optional<PropertyValueViewToCopy<PropertyArrayView<PropertyEnumValue>>>
   get(double u, double v) const noexcept {
     if (this->_status ==
         PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
@@ -905,7 +905,7 @@ public:
    * @return The value at the nearest pixel to the texture coordinates.
    */
 
-  PropertyArrayCopy<PropertyEnumValue>
+  PropertyValueViewToCopy<PropertyArrayView<PropertyEnumValue>>
   getRaw(double u, double v) const noexcept {
     CESIUM_ASSERT(
         this->_status == PropertyTexturePropertyViewStatus::Valid &&
@@ -917,8 +917,7 @@ public:
     byteSample.resize(sample.size());
     std::memcpy(byteSample.data(), reinterpret_cast<const std::byte*>(sample.data()), sample.size());
 
-    return PropertyArrayCopy<PropertyEnumValue>(byteSample, this->_componentType, static_cast<int64_t>(this->_channels.size()));
-  }
+    return PropertyArrayCopy<PropertyEnumValue>(byteSample, this->_componentType, static_cast<int64_t>(this->_channels.size()));  }
 
   /**
    * @brief Gets the channels of this property texture property.

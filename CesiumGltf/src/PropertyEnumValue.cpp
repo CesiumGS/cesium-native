@@ -19,7 +19,7 @@ CesiumGltf::PropertyEnumValue::name(const CesiumGltf::Enum& parentEnum) const {
 }
 
 bool CesiumGltf::operator==(
-    const PropertyEnumValue& lhs,
-    const PropertyEnumValue& rhs) {
+    const PropertyEnumValue lhs,
+    const PropertyEnumValue rhs) {
   return lhs.value() == rhs.value();
 }

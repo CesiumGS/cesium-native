@@ -665,7 +665,7 @@ static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
     return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
   } else if constexpr (IsMetadataEnumArray<T>::value) {
     return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()), view.componentType(), view.size());
-  } else {
+  }else {
     return view;
   }
 }
@@ -680,7 +680,7 @@ static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
  */
 template <typename T>
 static PropertyValueCopyToView<T> propertyValueCopyToView(const T& copy) {
-  if constexpr (IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
     return copy.view();
   } else {
     return copy;
