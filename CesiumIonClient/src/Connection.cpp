@@ -171,7 +171,7 @@ std::string createAuthorizationErrorHtml(
   authorizeUrl =
       Uri::addQuery(authorizeUrl, "client_id", std::to_string(clientID));
   authorizeUrl =
-      Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, "%20"));
+      Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, " "));
   authorizeUrl = Uri::addQuery(authorizeUrl, "redirect_uri", redirectUrl);
   authorizeUrl = Uri::addQuery(authorizeUrl, "state", state);
   authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge_method", "S256");
