@@ -8,7 +8,7 @@
         "rapidjson",
         "spdlog",
         "stb",
-        "uriparser",
+        "ada-url",
         "draco",
         "ktx",
         "modp-base64",
