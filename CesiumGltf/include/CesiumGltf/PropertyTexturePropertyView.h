@@ -136,28 +136,6 @@ int64_t assembleEnumValue(
     PropertyComponentType componentType) noexcept;
 
 /**
- * @brief Attempts to obtain an `int64_t` array value from the given span of bytes.
- *
- * @tparam T The element type to read from `bytes`.
- * @param bytes A span of bytes to convert into an array value.
- * @returns A \ref PropertyArrayCopy containing the elements read.
- */
-PropertyArrayCopy<PropertyEnumValue>
-assembleEnumArrayValue(const std::span<uint8_t> bytes, PropertyComponentType componentType) noexcept {
-  const size_t componentSize = getSizeOfComponentType(componentType);
-  const size_t numEnums = bytes.size() / componentSize;
-  std::vector<PropertyEnumValue> result;
-  result.reserve(numEnums);
-
-  for(size_t i = 0; i < result.size(); i++) {
-    const int64_t val = assembleEnumValue(bytes.subspan(i * componentSize), componentType);
-    result.emplace_back(val);
-  }
-
-  return PropertyArrayCopy<PropertyEnumValue>(result);
-}
-
-/**
  * @brief Attempts to obtain a vector value from the given span of bytes.
  *
  * @tparam ElementType The vector value type to read from `bytes`.
@@ -935,8 +913,11 @@ public:
 
     std::vector<uint8_t> sample =
         this->sampleNearestPixel(u, v, this->_channels);
+    std::vector<std::byte> byteSample;
+    byteSample.resize(sample.size());
+    std::memcpy(byteSample.data(), reinterpret_cast<const std::byte*>(sample.data()), sample.size());
 
-    return assembleEnumArrayValue(sample, _componentType);
+    return PropertyArrayCopy<PropertyEnumValue>(byteSample, this->_componentType, static_cast<int64_t>(this->_channels.size()));
   }
 
   /**

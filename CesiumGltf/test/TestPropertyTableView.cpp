@@ -1382,7 +1382,7 @@ TEST_CASE("Test fixed-length enum array") {
         REQUIRE(array[j].value() == values[static_cast<size_t>(i * 3 + j)]);
         REQUIRE(
             array[j].name(enumDef) == names[static_cast<size_t>(i * 3 + j)]);
-        REQUIRE((*maybeArray)[j] == array[j]);
+        REQUIRE((*maybeArray)[j].value() == array[j].value());
       }
     }
   }

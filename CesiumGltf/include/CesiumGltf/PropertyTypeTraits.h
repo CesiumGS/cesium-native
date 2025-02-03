@@ -633,8 +633,16 @@ static std::optional<PropertyValueViewToCopy<T>>
 propertyValueViewToCopy(const std::optional<T>& view) {
   if constexpr (IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value) {
     if (view) {
-      return std::make_optional<PropertyValueViewToCopy<T>>(
-          std::vector(view->begin(), view->end()));
+      if constexpr (IsMetadataEnumArray<T>::value) {
+        return std::make_optional<PropertyArrayCopy<PropertyEnumValue>>(
+          std::vector(view->begin(), view->end()),
+          view->componentType(),
+          view->size());
+      }
+      else {
+        return std::make_optional<PropertyValueViewToCopy<T>>(
+            std::vector(view->begin(), view->end()));
+      }
     } else {
       return std::nullopt;
     }
@@ -653,8 +661,10 @@ propertyValueViewToCopy(const std::optional<T>& view) {
  */
 template <typename T>
 static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
-  if constexpr (IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value) {
+  if constexpr (IsMetadataNumericArray<T>::value) {
     return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
+  } else if constexpr (IsMetadataEnumArray<T>::value) {
+    return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()), view.componentType(), view.size());
   } else {
     return view;
   }

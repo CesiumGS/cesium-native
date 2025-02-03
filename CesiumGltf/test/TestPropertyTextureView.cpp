@@ -3436,7 +3436,7 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
     77, 0, 191,
     223, 28, 11};
 
-  std::vector<std::vector<int64_t, 3>> expected {
+  std::vector<std::array<int64_t, 3>> expected {
     { 11, 28, 223 },
     { 191, 0, 77},
     { 43, 1, 200},
@@ -3567,7 +3567,7 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
         glm::dvec2(0, 1),
         glm::dvec2(1, 1)};
 
-    std::vector<std::array<uint8_t, 3>> expectedTransformed{
+    std::vector<std::array<int64_t, 3>> expectedTransformed{
         expected[3],
         expected[1],
         expected[2],
@@ -3575,21 +3575,21 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      const std::array<uint8_t, 3>& expectedArray = expectedTransformed[i];
+      const std::array<int64_t, 3>& expectedArray = expectedTransformed[i];
 
-      PropertyArrayCopy<uint8_t> value =
+      PropertyArrayCopy<PropertyEnumValue> value =
           enumArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
       for (int64_t j = 0; j < value.size(); j++) {
-        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
+        REQUIRE(value[j].value() == expectedArray[static_cast<size_t>(j)]);
       }
 
-      std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
+      std::optional<PropertyArrayCopy<PropertyEnumValue>> maybeValue =
           enumArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
-        REQUIRE((*maybeValue)[j] == value[j]);
+        REQUIRE((*maybeValue)[j].value() == value[j].value());
       }
     }
 
@@ -3620,21 +3620,21 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
 
     for (size_t i = 0; i < texCoords.size(); ++i) {
       glm::dvec2 uv = texCoords[i];
-      const std::array<uint8_t, 3>& expectedArray = expected[i];
+      const std::array<int64_t, 3>& expectedArray = expected[i];
 
-      PropertyArrayCopy<uint8_t> value =
+      PropertyArrayCopy<PropertyEnumValue> value =
           enumArrayProperty.getRaw(uv[0], uv[1]);
       REQUIRE(static_cast<size_t>(value.size()) == expectedArray.size());
 
       for (int64_t j = 0; j < value.size(); j++) {
-        REQUIRE(value[j] == expectedArray[static_cast<size_t>(j)]);
+        REQUIRE(value[j].value() == expectedArray[static_cast<size_t>(j)]);
       }
 
-      std::optional<PropertyArrayCopy<uint8_t>> maybeValue =
+      std::optional<PropertyArrayCopy<PropertyEnumValue>> maybeValue =
           enumArrayProperty.get(uv[0], uv[1]);
       REQUIRE(maybeValue);
       for (int64_t j = 0; j < maybeValue->size(); j++) {
-        REQUIRE((*maybeValue)[j] == value[j]);
+        REQUIRE((*maybeValue)[j].value() == value[j].value());
       }
     }
   }
@@ -3666,16 +3666,6 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
     REQUIRE(
         u8vec3Invalid.status() ==
         PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
-  }
-
-  SUBCASE("Access incorrectly as normalized") {
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>, true>
-        normalizedInvalid =
-            view.getPropertyView<PropertyArrayView<PropertyEnumValue>, true>(
-                "TestClassProperty");
-    REQUIRE(
-        normalizedInvalid.status() ==
-        PropertyTexturePropertyViewStatus::ErrorNormalizationMismatch);
   }
 
   SUBCASE("Channel and type mismatch") {

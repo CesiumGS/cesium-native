@@ -394,7 +394,10 @@ public:
       return transformValue(value, this->offset(), this->scale());
     } else if constexpr (IsMetadataNumericArray<ElementType>::value) {
       return transformArray(value, this->offset(), this->scale());
-    } else {
+    } else if constexpr (IsMetadataEnumArray<ElementType>::value) {
+      return propertyValueViewToCopy(value);
+    }
+    else {
       return value;
     }
   }

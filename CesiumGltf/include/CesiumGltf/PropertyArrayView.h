@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <iterator>
 #include <span>
 #include <variant>
 #include <vector>
@@ -96,6 +97,17 @@ public:
         reinterpret_cast<const std::byte*>(values.data()),
         sizeInBytes);
     this->_view = PropertyArrayView<ElementType>(this->_storage);
+  }
+
+  PropertyArrayCopy(const std::vector<std::byte>& values, PropertyComponentType componentType, int64_t size) {
+    const size_t sizeInBytes = static_cast<size_t>(size) * getSizeOfComponentType(componentType);
+    this->_storage.resize(sizeInBytes);
+    std::memcpy(
+      this->_storage.data(),
+      values.data(),
+      sizeInBytes
+    );
+    this->_view = PropertyArrayView<ElementType>(this->_storage, componentType, size);
   }
 
   /** @brief Default move constructor */
@@ -359,6 +371,20 @@ public:
    * @brief The number of elements in this array.
    */
   int64_t size() const noexcept { return _size; }
+
+  /**
+   * @brief The underlying component type of this enum value.
+   */
+  PropertyComponentType componentType() const noexcept { return _enumValueType; }
+
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() { return this->_values.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() { return this->_values.end(); }
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() const { return this->_values.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() const { return this->_values.end(); }
 
 private:
   std::span<const std::byte> _values;
