@@ -3428,26 +3428,19 @@ TEST_CASE("Test enum PropertyTextureProperty") {
 TEST_CASE("Test enum array PropertyTextureProperty") {
 
   Model model;
-  std::vector<uint8_t> data = {
-    11, 28, 223,
-    191, 0, 77,
-    43, 1, 200,
-    200, 1, 43,
-    77, 0, 191,
-    223, 28, 11,
-    1, 200, 43,
-    77, 28, 0};
+  std::vector<uint8_t> data = {11,  28,  223, 191, 0,  77, 43,  1,
+                               200, 200, 1,   43,  77, 0,  191, 223,
+                               28,  11,  1,   200, 43, 77, 28,  0};
 
-  std::vector<std::array<int64_t, 3>> expected {
-    { 11, 28, 223 },
-    { 191, 0, 77},
-    { 43, 1, 200},
-    { 200, 1, 43 },
-    { 77, 0, 191},
-    { 223, 28, 11},
-    {1, 200, 43},
-    {77, 28, 0}
-  };
+  std::vector<std::array<int64_t, 3>> expected{
+      {11, 28, 223},
+      {191, 0, 77},
+      {43, 1, 200},
+      {200, 1, 43},
+      {77, 0, 191},
+      {223, 28, 11},
+      {1, 200, 43},
+      {77, 28, 0}};
 
   addTextureToModel(
       model,
@@ -3476,8 +3469,7 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
       EnumValue{.name = "Quag", .description = std::nullopt, .value = 77},
       EnumValue{.name = "Hock", .description = std::nullopt, .value = 43},
       EnumValue{.name = "Hork", .description = std::nullopt, .value = 1},
-      EnumValue{.name = "Hurk", .description = std::nullopt, .value = 200}
-  };
+      EnumValue{.name = "Hurk", .description = std::nullopt, .value = 200}};
   enumDef.valueType = Enum::ValueType::UINT8;
 
   Class& testClass = schema.classes["TestClass"];
@@ -3509,11 +3501,12 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
   REQUIRE(!classProperty->normalized);
 
   SUBCASE("Access correct type") {
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        enumArrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
-        enumArrayProperty.status() ==
-        PropertyTexturePropertyViewStatus::Valid);
+        enumArrayProperty.status() == PropertyTexturePropertyViewStatus::Valid);
 
     std::vector<glm::dvec2> texCoords{
         glm::dvec2(0, 0),
@@ -3556,13 +3549,13 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
     extension.scale = {0.5, 0.5};
     extension.texCoord = 10;
 
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
-            "TestClassProperty",
-            options);
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        enumArrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty",
+                options);
     REQUIRE(
-        enumArrayProperty.status() ==
-        PropertyTexturePropertyViewStatus::Valid);
+        enumArrayProperty.status() == PropertyTexturePropertyViewStatus::Valid);
 
     verifyTextureTransformConstruction(enumArrayProperty, extension);
 
@@ -3610,13 +3603,13 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
     TextureViewOptions options;
     options.makeImageCopy = true;
 
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
-            "TestClassProperty",
-            options);
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        enumArrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty",
+                options);
     REQUIRE(
-        enumArrayProperty.status() ==
-        PropertyTexturePropertyViewStatus::Valid);
+        enumArrayProperty.status() == PropertyTexturePropertyViewStatus::Valid);
 
     // Clear the original image data.
     std::vector<std::byte> emptyData;
@@ -3685,8 +3678,10 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
   SUBCASE("Channel and type mismatch") {
     model.images[imageIndex].pAsset->channels = 4;
     propertyTextureProperty.channels = {0, 1, 2, 3};
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        enumArrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
         enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch);
@@ -3694,8 +3689,10 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
 
   SUBCASE("Invalid channel values") {
     propertyTextureProperty.channels = {0, 4, 1};
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        enumArrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
         enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorInvalidChannels);
@@ -3703,8 +3700,10 @@ TEST_CASE("Test enum array PropertyTextureProperty") {
 
   SUBCASE("Invalid bytes per channel") {
     model.images[imageIndex].pAsset->bytesPerChannel = 2;
-    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>> enumArrayProperty =
-        view.getPropertyView<PropertyArrayView<PropertyEnumValue>>("TestClassProperty");
+    PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
+        enumArrayProperty =
+            view.getPropertyView<PropertyArrayView<PropertyEnumValue>>(
+                "TestClassProperty");
     REQUIRE(
         enumArrayProperty.status() ==
         PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel);

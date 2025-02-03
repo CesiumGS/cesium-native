@@ -539,7 +539,8 @@ void checkEnumTextureValues(
     const CesiumGltf::Enum& enumDef,
     const std::optional<JsonValue>& noData = std::nullopt,
     const std::optional<JsonValue>& defaultValue = std::nullopt,
-    const std::optional<std::vector<std::optional<int64_t>>>& expectedTransformed = std::nullopt) {
+    const std::optional<std::vector<std::optional<int64_t>>>&
+        expectedTransformed = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
   classProperty.type = ClassProperty::Type::ENUM;
@@ -598,10 +599,10 @@ void checkEnumTextureValues(
   for (size_t i = 0; i < texCoords.size(); i++) {
     glm::dvec2 uv = texCoords[i];
     REQUIRE(view.getRaw(uv[0], uv[1]).value() == expected[i]);
-    if(expectedTransformed && (*expectedTransformed)[i]) {
-      REQUIRE(view.get(uv[0], uv[1]).value() == (*expectedTransformed)[i].value());
-    }
-    else if (expectedTransformed) {
+    if (expectedTransformed && (*expectedTransformed)[i]) {
+      REQUIRE(
+          view.get(uv[0], uv[1]).value() == (*expectedTransformed)[i].value());
+    } else if (expectedTransformed) {
       REQUIRE(view.get(uv[0], uv[1]) == std::nullopt);
     }
   }
@@ -2299,14 +2300,8 @@ TEST_CASE("Check enum PropertyTexturePropertyView") {
   SUBCASE("uint8_t with noData and defaultValue") {
     enumDef.valueType = Enum::ValueType::UINT8;
     std::vector<uint8_t> data{11, 28, 0xff, 233, 0xff, 77, 43};
-    std::vector<std::optional<int64_t>> expected{
-        data[0],
-        data[1],
-        0,
-        data[3],
-        0,
-        data[5],
-        data[6]};
+    std::vector<std::optional<int64_t>>
+        expected{data[0], data[1], 0, data[3], 0, data[5], data[6]};
     std::vector<int64_t> expectedRaw(data.begin(), data.end());
     checkEnumTextureValues(
         data,

@@ -364,7 +364,9 @@ public:
   /**
    * @brief The underlying component type of this enum value.
    */
-  PropertyComponentType componentType() const noexcept { return _enumValueType; }
+  PropertyComponentType componentType() const noexcept {
+    return _enumValueType;
+  }
 
   /** @copydoc PropertyArrayView::begin */
   auto begin() { return this->_values.begin(); }
@@ -398,15 +400,18 @@ public:
    */
   PropertyArrayCopy() : _storage{}, _view() {}
 
-  PropertyArrayCopy(const std::vector<std::byte>& values, PropertyComponentType componentType, int64_t size) {
-    const size_t sizeInBytes = static_cast<size_t>(size) * getSizeOfComponentType(componentType);
+  PropertyArrayCopy(
+      const std::vector<std::byte>& values,
+      PropertyComponentType componentType,
+      int64_t size) {
+    const size_t sizeInBytes =
+        static_cast<size_t>(size) * getSizeOfComponentType(componentType);
     this->_storage.resize(sizeInBytes);
-    std::memcpy(
-      this->_storage.data(),
-      values.data(),
-      sizeInBytes
-    );
-    this->_view = PropertyArrayView<PropertyEnumValue>(this->_storage, componentType, size);
+    std::memcpy(this->_storage.data(), values.data(), sizeInBytes);
+    this->_view = PropertyArrayView<PropertyEnumValue>(
+        this->_storage,
+        componentType,
+        size);
   }
 
   /** @brief Default move constructor */
@@ -416,12 +421,16 @@ public:
 
   /** @brief Copy constructor */
   PropertyArrayCopy(const PropertyArrayCopy& rhs)
-      : _storage(rhs._storage), _view(this->_storage, rhs._view.componentType(), rhs._view.size()) {}
+      : _storage(rhs._storage),
+        _view(this->_storage, rhs._view.componentType(), rhs._view.size()) {}
 
   /** @brief Copy assignment operator */
   PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
     this->_storage = rhs._storage;
-    this->_view = PropertyArrayView<PropertyEnumValue>(this->_storage, rhs._view.componentType(), rhs._view.size());
+    this->_view = PropertyArrayView<PropertyEnumValue>(
+        this->_storage,
+        rhs._view.componentType(),
+        rhs._view.size());
     return *this;
   }
 
@@ -450,7 +459,9 @@ public:
   /**
    * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
    */
-  const PropertyArrayView<PropertyEnumValue>& view() const { return this->_view; }
+  const PropertyArrayView<PropertyEnumValue>& view() const {
+    return this->_view;
+  }
 
   /**
    * @brief Obtains a buffer and view from the copied data, leaving this \ref

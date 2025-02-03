@@ -396,8 +396,7 @@ public:
       return transformArray(value, this->offset(), this->scale());
     } else if constexpr (IsMetadataEnumArray<ElementType>::value) {
       return propertyValueViewToCopy(value);
-    }
-    else {
+    } else {
       return value;
     }
   }

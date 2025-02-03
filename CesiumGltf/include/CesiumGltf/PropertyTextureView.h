@@ -347,7 +347,10 @@ private:
     }
 
     if constexpr (IsMetadataEnumArray<T>::value) {
-      return createEnumArrayPropertyView(classProperty, propertyTextureProperty, propertyOptions);
+      return createEnumArrayPropertyView(
+          classProperty,
+          propertyTextureProperty,
+          propertyOptions);
     }
 
     if constexpr (IsMetadataArray<T>::value) {
@@ -761,14 +764,14 @@ private:
     }
 
     const int64_t count = classProperty.count.value_or(0);
-    if(count <= 0 || count > 4) {
+    if (count <= 0 || count > 4) {
       return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
 
     const size_t arraySize = static_cast<size_t>(count) * componentSize;
 
-    if(arraySize > 4) {
+    if (arraySize > 4) {
       return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
     }
@@ -780,17 +783,20 @@ private:
         getTextureSafe(propertyTextureProperty.index, samplerIndex, imageIndex);
 
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          status);
     }
 
     status = checkSampler(samplerIndex);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          status);
     }
 
     status = checkImage(imageIndex);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          status);
     }
 
     const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
@@ -799,7 +805,8 @@ private:
 
     status = checkChannels(channels, *pImage);
     if (status != PropertyTexturePropertyViewStatus::Valid) {
-      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(status);
+      return PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          status);
     }
 
     if (channels.size() * static_cast<size_t>(pImage->bytesPerChannel) !=

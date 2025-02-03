@@ -650,8 +650,7 @@ public:
    * @return The value of the element, or std::nullopt if it matches the "no
    * data" value
    */
-  std::optional<PropertyEnumValue>
-  get(double u, double v) const noexcept {
+  std::optional<PropertyEnumValue> get(double u, double v) const noexcept {
     if (this->_status ==
         PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault) {
       return this->defaultValue();
@@ -725,7 +724,8 @@ private:
  */
 template <>
 class PropertyTexturePropertyView<PropertyArrayView<PropertyEnumValue>>
-    : public PropertyView<PropertyArrayView<PropertyEnumValue>>, public TextureView {
+    : public PropertyView<PropertyArrayView<PropertyEnumValue>>,
+      public TextureView {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
@@ -798,7 +798,9 @@ public:
       const Sampler& sampler,
       const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
-      : PropertyView<PropertyArrayView<PropertyEnumValue>>(classProperty, pEnumDefinition),
+      : PropertyView<PropertyArrayView<PropertyEnumValue>>(
+            classProperty,
+            pEnumDefinition),
         TextureView(
             sampler,
             image,
@@ -915,9 +917,16 @@ public:
         this->sampleNearestPixel(u, v, this->_channels);
     std::vector<std::byte> byteSample;
     byteSample.resize(sample.size());
-    std::memcpy(byteSample.data(), reinterpret_cast<const std::byte*>(sample.data()), sample.size());
+    std::memcpy(
+        byteSample.data(),
+        reinterpret_cast<const std::byte*>(sample.data()),
+        sample.size());
 
-    return PropertyArrayCopy<PropertyEnumValue>(byteSample, this->_componentType, static_cast<int64_t>(this->_channels.size()));  }
+    return PropertyArrayCopy<PropertyEnumValue>(
+        byteSample,
+        this->_componentType,
+        static_cast<int64_t>(this->_channels.size()));
+  }
 
   /**
    * @brief Gets the channels of this property texture property.

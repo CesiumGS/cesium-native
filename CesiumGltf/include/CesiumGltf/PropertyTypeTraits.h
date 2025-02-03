@@ -588,8 +588,9 @@ struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
  * @brief Transforms a property value type from a view to an equivalent type
  * that owns the data it is viewing. For most property types this is an identity
  * transformation, because most property types are held by value. However, it
- * transforms numeric and enum `PropertyArrayView<T>` to `PropertyArrayCopy<T>` because a
- * `PropertyArrayView<T>` only has a pointer to the value it is viewing.
+ * transforms numeric and enum `PropertyArrayView<T>` to `PropertyArrayCopy<T>`
+ * because a `PropertyArrayView<T>` only has a pointer to the value it is
+ * viewing.
  *
  * See `propertyValueViewToCopy`.
  *
@@ -631,15 +632,15 @@ using PropertyValueCopyToView = std::conditional_t<
 template <typename T>
 static std::optional<PropertyValueViewToCopy<T>>
 propertyValueViewToCopy(const std::optional<T>& view) {
-  if constexpr (IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value) {
+  if constexpr (
+      IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value) {
     if (view) {
       if constexpr (IsMetadataEnumArray<T>::value) {
         return std::make_optional<PropertyArrayCopy<PropertyEnumValue>>(
-          std::vector(view->begin(), view->end()),
-          view->componentType(),
-          view->size());
-      }
-      else {
+            std::vector(view->begin(), view->end()),
+            view->componentType(),
+            view->size());
+      } else {
         return std::make_optional<PropertyValueViewToCopy<T>>(
             std::vector(view->begin(), view->end()));
       }
@@ -664,8 +665,11 @@ static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
   if constexpr (IsMetadataNumericArray<T>::value) {
     return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
   } else if constexpr (IsMetadataEnumArray<T>::value) {
-    return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()), view.componentType(), view.size());
-  }else {
+    return PropertyValueViewToCopy<T>(
+        std::vector(view.begin(), view.end()),
+        view.componentType(),
+        view.size());
+  } else {
     return view;
   }
 }
