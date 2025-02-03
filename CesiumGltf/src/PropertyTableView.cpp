@@ -500,7 +500,7 @@ PropertyTableView::getEnumArrayPropertyValues(
 
   // Handle fixed-length arrays
   if (fixedLengthArrayCount > 0) {
-    size_t maxRequiredBytes = maxRequiredBytes =
+    size_t maxRequiredBytes =
         static_cast<size_t>(_pPropertyTable->count * fixedLengthArrayCount) *
         componentSize;
 
