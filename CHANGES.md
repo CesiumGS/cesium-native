@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.44.1 - 2025-02-03
+
+##### Fixes :wrench:
+
+- Fixed a bug in `CesiumIonClient::Connection` that caused the `authorize` method to use an incorrect URL.
+
 ### v0.44.0 - 2025-02-03
 
 ##### Breaking Changes :mega:
