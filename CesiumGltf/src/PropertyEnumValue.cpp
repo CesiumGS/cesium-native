@@ -1,6 +1,9 @@
+#include <CesiumGltf/Enum.h>
+#include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/PropertyEnumValue.h>
 
 #include <algorithm>
+#include <string_view>
 
 std::string_view
 CesiumGltf::PropertyEnumValue::name(const CesiumGltf::Enum& parentEnum) const {

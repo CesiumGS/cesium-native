@@ -1,6 +1,7 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyArrayView.h>
@@ -447,7 +448,7 @@ PropertyTableView::getEnumArrayPropertyValues(
   }
 
   const PropertyType type = convertStringToPropertyType(classProperty.type);
-  if (TypeToPropertyType<PropertyEnumValue>::value != type) {
+  if (type != PropertyType::Enum) {
     return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
   }

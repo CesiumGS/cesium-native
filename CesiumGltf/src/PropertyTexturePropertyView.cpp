@@ -1,5 +1,9 @@
 #include <CesiumGltf/PropertyTexturePropertyView.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyView.h>
+
+#include <cstdint>
+#include <span>
 
 namespace CesiumGltf {
 
