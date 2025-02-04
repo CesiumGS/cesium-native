@@ -29,27 +29,14 @@ if(DOXYGEN_FOUND)
     )
 
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})
-    set(
-        DOXYGEN_EXAMPLE_PATH
-        ../Cesium3DTiles/test
-        ../Cesium3DTilesContent/test
-        ../Cesium3DTilesReader/test
-        ../Cesium3DTilesWriter/test
-        ../Cesium3DTilesSelection/test
-        ../CesiumAsync/test
-        ../CesiumGeometry/test
-        ../CesiumGeospatial/test
-        ../CesiumGltf/test
-        ../CesiumGltfContent/test
-        ../CesiumGltfReader/test
-        ../CesiumGltfWriter/test
-        ../CesiumIonClient/test
-        ../CesiumJsonWriter/test
-        ../CesiumQuantizedMeshTerrain/test
-        ../CesiumRasterOverlays/test
-        ../CesiumUtility/test
-        ../ # For examples drawn from the actual code
-    )
+
+    # Instead of specifying the full source tree in the example path, specify only the Cesium* lib directories to reduce parsing time
+    file(GLOB example_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_LIST_DIR} "../Cesium*")
+    foreach(child ${example_dirs})
+      if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
+        list(APPEND DOXYGEN_EXAMPLE_PATH ${CMAKE_CURRENT_LIST_DIR}/${child})
+      endif()
+    endforeach()
 
     # These macro definitions confuse doxygen, causing it
     # to omit the respective elements in the documentation,
@@ -76,7 +63,7 @@ if(DOXYGEN_FOUND)
         "CESIUMQUANTIZEDMESHTERRAIN_API"
         "CESIUMRASTEROVERLAYS_API"
         "CESIUMUTILITY_API"
-        "CESIUM_DEFAULT_ELLIPSOID=\=CesiumGeospatial::Ellipsoid::WGS84")
+        "CESIUM_DEFAULT_ELLIPSOID==CesiumGeospatial::Ellipsoid::WGS84")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/../node_modules/doxygen-awesome-css/doxygen-awesome.css")
     set(DOXYGEN_HTML_FOOTER "${CMAKE_CURRENT_LIST_DIR}/footer.html")
     set(DOXYGEN_GENERATE_TREEVIEW YES)
