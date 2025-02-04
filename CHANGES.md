@@ -1,5 +1,10 @@
 # Change Log
 
+### ? - ?
+
+### Additions :tada:
+- Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
+
 ### v0.44.1 - 2025-02-03
 
 ##### Fixes :wrench:
@@ -24,7 +29,6 @@
 - Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
 - `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
 - Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
-- Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
 
 ##### Fixes :wrench:
 
