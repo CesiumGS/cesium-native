@@ -492,7 +492,7 @@ private:
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(this->_pEnumDefinition->valueType);
 
-    int64_t value;
+    int64_t value = -1;
     switch (componentType) {
     case PropertyComponentType::Uint8:
       value = static_cast<int64_t>(
@@ -529,7 +529,7 @@ private:
     case PropertyComponentType::None:
     case PropertyComponentType::Float32:
     case PropertyComponentType::Float64:
-      return {};
+      return {-1};
     }
 
     return PropertyEnumValue(value);

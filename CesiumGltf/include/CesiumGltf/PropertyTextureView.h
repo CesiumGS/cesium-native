@@ -330,30 +330,22 @@ private:
           classProperty,
           propertyTextureProperty,
           propertyOptions);
-    }
-
-    if constexpr (IsMetadataVecN<T>::value) {
+    } else if constexpr (IsMetadataVecN<T>::value) {
       return createVecNPropertyView<T, Normalized>(
           classProperty,
           propertyTextureProperty,
           propertyOptions);
-    }
-
-    if constexpr (IsMetadataEnum<T>::value) {
+    } else if constexpr (IsMetadataEnum<T>::value) {
       return createEnumPropertyView(
           classProperty,
           propertyTextureProperty,
           propertyOptions);
-    }
-
-    if constexpr (IsMetadataEnumArray<T>::value) {
+    } else if constexpr (IsMetadataEnumArray<T>::value) {
       return createEnumArrayPropertyView(
           classProperty,
           propertyTextureProperty,
           propertyOptions);
-    }
-
-    if constexpr (IsMetadataArray<T>::value) {
+    } else if constexpr (IsMetadataArray<T>::value) {
       return createArrayPropertyView<
           typename MetadataArrayType<T>::type,
           Normalized>(classProperty, propertyTextureProperty, propertyOptions);
