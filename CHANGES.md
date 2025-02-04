@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Removed `TilesetOptions::maximumSimultaneousSubtreeLoads` because it was unused.
+
 ### v0.44.1 - 2025-02-03
 
 ##### Fixes :wrench:
