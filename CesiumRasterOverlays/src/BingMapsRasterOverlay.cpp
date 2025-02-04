@@ -132,49 +132,46 @@ public:
             width,
             height),
         _credits(perTileCredits),
+        _baseUrl(baseUrl),
         _urlTemplate(urlTemplate),
-        _subdomains(subdomains) {
-    if (this->_urlTemplate.find("n=z") == std::string::npos) {
-      this->_urlTemplate =
-          CesiumUtility::Uri::addQuery(this->_urlTemplate, "n", "z");
-    }
-
-    std::string resolvedUrl =
-        CesiumUtility::Uri::resolve(baseUrl, this->_urlTemplate);
-
-    resolvedUrl = CesiumUtility::Uri::substituteTemplateParameters(
-        resolvedUrl,
-        [&culture](const std::string& templateKey) {
-          if (templateKey == "culture") {
-            return culture;
-          }
-
-          // Keep other placeholders
-          return "{" + templateKey + "}";
-        });
-  }
+        _culture(culture),
+        _subdomains(subdomains) {}
 
   virtual ~BingMapsTileProvider() = default;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-        this->_urlTemplate,
-        [this, &tileID](const std::string& key) {
-          if (key == "quadkey") {
-            return BingMapsTileProvider::tileXYToQuadKey(
-                tileID.level,
-                tileID.x,
-                tileID.computeInvertedY(this->getTilingScheme()));
-          }
-          if (key == "subdomain") {
-            const size_t subdomainIndex =
-                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
-            return this->_subdomains[subdomainIndex];
-          }
-          return key;
-        });
+    Uri uri(
+        this->_baseUrl,
+        CesiumUtility::Uri::substituteTemplateParameters(
+            this->_urlTemplate,
+            [this, &tileID](const std::string& key) {
+              if (key == "quadkey") {
+                return BingMapsTileProvider::tileXYToQuadKey(
+                    tileID.level,
+                    tileID.x,
+                    tileID.computeInvertedY(this->getTilingScheme()));
+              }
+              if (key == "subdomain") {
+                const size_t subdomainIndex =
+                    (tileID.level + tileID.x + tileID.y) %
+                    this->_subdomains.size();
+                return this->_subdomains[subdomainIndex];
+              }
+              if (key == "culture") {
+                return this->_culture;
+              }
+              return key;
+            }));
+
+    UriQuery query(uri);
+    if (!query.hasValue("n")) {
+      query.setValue("n", "z");
+      uri.setQuery(query.toQueryString());
+    }
+
+    std::string url = std::string(uri.toString());
 
     LoadTileImageFromUrlOptions options;
     options.allowEmptyImages = true;
@@ -233,7 +230,9 @@ private:
   }
 
   std::vector<CreditAndCoverageAreas> _credits;
+  std::string _baseUrl;
   std::string _urlTemplate;
+  std::string _culture;
   std::vector<std::string> _subdomains;
 };
 
@@ -357,14 +356,21 @@ BingMapsRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     IntrusivePointer<const RasterOverlay> pOwner) const {
-  std::string metadataUrl = CesiumUtility::Uri::resolve(
+  Uri metadataUri(
       this->_url,
       "REST/v1/Imagery/Metadata/" + this->_mapStyle,
       true);
-  metadataUrl =
-      CesiumUtility::Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
-  metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "key", this->_key);
-  metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "uriScheme", "https");
+
+  UriQuery metadataQuery(metadataUri);
+  metadataQuery.setValue("incl", "ImageryProviders");
+  metadataQuery.setValue("key", this->_key);
+  metadataQuery.setValue("uriScheme", "https");
+  if (!this->_culture.empty()) {
+    metadataQuery.setValue("culture", this->_culture);
+  }
+  metadataUri.setQuery(metadataQuery.toQueryString());
+
+  std::string metadataUrl = std::string(metadataUri.toString());
 
   pOwner = pOwner ? pOwner : this;
 

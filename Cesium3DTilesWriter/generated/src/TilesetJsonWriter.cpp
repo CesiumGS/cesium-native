@@ -16,6 +16,7 @@
 #include <Cesium3DTiles/EnumValue.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/GroupMetadata.h>
 #include <Cesium3DTiles/ImplicitTiling.h>
@@ -57,6 +58,11 @@ void writeJson(
 
 void writeJson(
     const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -390,6 +396,27 @@ void writeJson(
 }
 
 void writeJson(
+    const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.body) {
+    jsonWriter.Key("body");
+    writeJson(obj.body, jsonWriter, context);
+  }
+
+  if (!obj.radii.empty()) {
+    jsonWriter.Key("radii");
+    writeJson(obj.radii, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
     const Cesium3DTiles::ExtensionContent3dTilesContentVoxels& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -633,6 +660,11 @@ void writeJson(
   if (!obj.properties.empty()) {
     jsonWriter.Key("properties");
     writeJson(obj.properties, jsonWriter, context);
+  }
+
+  if (obj.parent) {
+    jsonWriter.Key("parent");
+    writeJson(obj.parent, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -1219,6 +1251,13 @@ void Extension3dTilesBoundingVolumeS2JsonWriter::write(
 
 void Extension3dTilesBoundingVolumeCylinderJsonWriter::write(
     const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesEllipsoidJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

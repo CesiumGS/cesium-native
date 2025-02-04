@@ -2879,7 +2879,8 @@ ExtensionExtPrimitiveVoxelsJsonHandler::ExtensionExtPrimitiveVoxelsJsonHandler(
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _shape(),
       _dimensions(),
-      _padding(options) {}
+      _padding(options),
+      _noData() {}
 
 void ExtensionExtPrimitiveVoxelsJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -2926,6 +2927,9 @@ CesiumJsonReader::IJsonHandler* ExtensionExtPrimitiveVoxelsJsonHandler::
   }
   if ("padding"s == str) {
     return property("padding", this->_padding, o.padding);
+  }
+  if ("noData"s == str) {
+    return property("noData", this->_noData, o.noData);
   }
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
@@ -5105,7 +5109,8 @@ ClassJsonHandler::ClassJsonHandler(
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _description(),
-      _properties(options) {}
+      _properties(options),
+      _parent() {}
 
 void ClassJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -5137,6 +5142,9 @@ CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(
   }
   if ("properties"s == str) {
     return property("properties", this->_properties, o.properties);
+  }
+  if ("parent"s == str) {
+    return property("parent", this->_parent, o.parent);
   }
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);

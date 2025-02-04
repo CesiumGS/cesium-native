@@ -6,6 +6,8 @@
 
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
+#include <CesiumJsonReader/DictionaryJsonHandler.h>
+#include <CesiumJsonReader/DoubleJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
@@ -50,5 +52,10 @@ private:
       ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>>
           _dimensions;
   PaddingJsonHandler _padding;
+  CesiumJsonReader::DictionaryJsonHandler<
+      std::vector<double>,
+      CesiumJsonReader::
+          ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>>
+      _noData;
 };
 } // namespace CesiumGltfReader

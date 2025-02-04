@@ -1,5 +1,11 @@
 [
   {
+    "name": "ada",
+    "url": "https://github.com/ada-url/ada",
+    "version": "2.9.2",
+    "license": ["Apache 2.0"]
+  },
+  {
     "name": "Async++",
     "url": "https://github.com/Amanieu/asyncplusplus",
     "version": "756893feb9e69c098225d5a454a668a2c139e4be",
@@ -113,12 +119,6 @@
     "url": "https://github.com/leethomason/tinyxml2",
     "version": "1aeb57d26bc303d5cfa1a9ff2a331df7ba278656",
     "license": ["zlib"]
-  },
-  {
-    "name": "uriparser",
-    "url": "https://github.com/uriparser/uriparser",
-    "version": "0.9.6",
-    "license": ["BSD-3-Clause"]
   },
   {
     "name": "zlib",

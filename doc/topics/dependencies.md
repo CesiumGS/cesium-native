@@ -4,6 +4,7 @@ Cesium Native relies on a number of third-party dependencies. These dependencies
 
 | Dependency                                                                                                          | Usage                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [ada](https://github.com/ada-url/ada)                                                                               | Used to parse and manipulate URIs.                                                                                |
 | [Async++](https://github.com/Amanieu/asyncplusplus)                                                                 | Used by CesiumAsync for cross-platform concurrency.                                                               |
 | [Catch2](https://github.com/catchorg/Catch2)                                                                        | Test framework used by CesiumNativeTests.                                                                         |
 | [draco](https://github.com/google/draco)                                                                            | Required to decode meshes and point clouds compressed with Draco.                                                 |
@@ -25,7 +26,6 @@ Cesium Native relies on a number of third-party dependencies. These dependencies
 | [sqlite3](https://www.sqlite.org/index.html)                                                                        | Used to cache HTTP responses.                                                                                     |
 | [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h)                                                | A simple image loader.                                                                                            |
 | [tinyxml2](https://github.com/leethomason/tinyxml2)                                                                 | XML parser for interacting with XML APIs such as those implementing the Web Map Service standard.                 |
-| [uriparser](https://github.com/uriparser/uriparser)                                                                 | Used to parse and manipulate URIs.                                                                                |
 | [zlib-ng](https://github.com/zlib-ng/zlib-ng)                                                                       | An optimized zlib implementation for working with Gzipped data.                                                   |
 
 The following chart illustrates the connections between the Cesium Native libraries and third-party dependencies:

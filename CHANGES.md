@@ -1,5 +1,17 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Removed `TilesetOptions::maximumSimultaneousSubtreeLoads` because it was unused.
+
+### v0.44.1 - 2025-02-03
+
+##### Fixes :wrench:
+
+- Fixed a bug in `CesiumIonClient::Connection` that caused the `authorize` method to use an incorrect URL.
+
 ### v0.44.0 - 2025-02-03
 
 ##### Breaking Changes :mega:
@@ -18,6 +30,8 @@
 - Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
 - `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
 - Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
+- Added support for `3DTILES_ellipsoid` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
 
 ##### Fixes :wrench:
 
@@ -25,7 +39,9 @@
 - Fixed a bug in `SharedAssetDepot` that could cause assertion failures in debug builds, and could rarely cause premature deletion of shared assets even in release builds.
 - Fixed a bug that could cause `Tileset::sampleHeightMostDetailed` to return a height that is not the highest one when the sampled tileset contained multiple heights at the given location.
 - `LayerJsonTerrainLoader` will now log errors and warnings when failing to load a `.terrain` file referenced in the layer.json, instead of silently ignoring them.
+- URIs containing unicode characters are now supported.
 - Fixed a crash in `CullingVolume` when the camera was very far away from the globe.
+- Fixed a bug that prevented the `culture` parameter of the `BingMapsRasterOverlay` from having an effect.
 
 ### v0.43.0 - 2025-01-02
 

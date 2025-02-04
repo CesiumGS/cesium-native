@@ -8,6 +8,8 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace CesiumGltf {
@@ -43,6 +45,14 @@ struct CESIUMGLTF_API ExtensionExtPrimitiveVoxels final
   std::optional<CesiumGltf::Padding> padding;
 
   /**
+   * @brief A plain JSON object, where each key corresponds to an existing
+   * semantic in the primitive's `attributes`, and each value is the attribute's
+   * `noData` value. A `noData` value represents missing data — also known as a
+   * sentinel value — wherever it appears.
+   */
+  std::unordered_map<std::string, std::vector<double>> noData;
+
+  /**
    * @brief Calculates the size in bytes of this object, including the contents
    * of all collections, pointers, and strings. This will NOT include the size
    * of any extensions attached to the object. Calling this method may be slow
@@ -57,6 +67,13 @@ struct CESIUMGLTF_API ExtensionExtPrimitiveVoxels final
     if (this->padding) {
       accum +=
           this->padding->getSizeBytes() - int64_t(sizeof(CesiumGltf::Padding));
+    }
+    accum += int64_t(
+        this->noData.bucket_count() *
+        (sizeof(std::string) + sizeof(std::vector<double>)));
+    for (const auto& [k, v] : this->noData) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += int64_t(sizeof(double) * v.capacity());
     }
     return accum;
   }

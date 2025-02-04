@@ -54,7 +54,6 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumUtility
         spdlog::spdlog spdlog::spdlog_header_only
 # PRIVATE
-        uriparser::uriparser
         libmorton::libmorton
         draco::draco
         nonstd::expected-lite
