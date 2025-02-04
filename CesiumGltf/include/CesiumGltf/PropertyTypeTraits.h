@@ -184,11 +184,14 @@ struct IsMetadataBooleanArray<PropertyArrayView<bool>> : std::true_type {};
  * property type
  */
 template <typename... T> struct IsMetadataEnumArray;
-/** @copydoc IsMetadataBooleanArray */
+/** @copydoc IsMetadataEnumArray */
 template <typename T> struct IsMetadataEnumArray<T> : std::false_type {};
-/** @copydoc IsMetadataBooleanArray */
+/** @copydoc IsMetadataEnumArray */
 template <>
 struct IsMetadataEnumArray<PropertyArrayView<PropertyEnumValue>>
+    : std::true_type {};
+template <>
+struct IsMetadataEnumArray<PropertyArrayCopy<PropertyEnumValue>>
     : std::true_type {};
 
 /**

@@ -315,9 +315,13 @@ public:
 
   /**
    * @brief Obtains a `PropertyEnumValue` for the element at the given index.
+   *
+   * @param index The index into this array to obtain the value of.
+   * @returns The value at the specified index, or -1 if the component type
+   * isn't valid.
    */
   PropertyEnumValue operator[](int64_t index) const noexcept {
-    int64_t value;
+    int64_t value = -1;
     switch (this->_enumValueType) {
     case PropertyComponentType::Uint8:
       value = static_cast<int64_t>(
@@ -354,10 +358,10 @@ public:
     case PropertyComponentType::None:
     case PropertyComponentType::Float32:
     case PropertyComponentType::Float64:
-      return {};
+      return {-1};
     }
 
-    return PropertyEnumValue{value};
+    return {value};
   }
 
   /**

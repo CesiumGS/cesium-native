@@ -594,7 +594,7 @@ private:
     return PropertyArrayView<PropertyEnumValue>{
         values,
         componentType,
-        values.size() / componentSize};
+        static_cast<int64_t>(values.size() / componentSize)};
   }
 
   PropertyArrayView<std::string_view>

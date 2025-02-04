@@ -44,7 +44,7 @@ public:
   int64_t value() const { return this->_value; }
 
 private:
-  int64_t _value;
+  int64_t _value = -1;
 };
 
 /** @brief Compares a \ref PropertyEnumValue with a \ref
