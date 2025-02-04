@@ -6,6 +6,10 @@
 
 - Removed `TilesetOptions::maximumSimultaneousSubtreeLoads` because it was unused.
 
+### Additions :tada:
+
+- Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
+
 ### v0.44.1 - 2025-02-03
 
 ##### Fixes :wrench:

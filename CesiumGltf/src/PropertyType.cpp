@@ -6,6 +6,7 @@
 #include <glm/detail/qualifier.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 namespace CesiumGltf {
@@ -207,12 +208,48 @@ convertAccessorComponentTypeToPropertyComponentType(int componentType) {
     return PropertyComponentType::Int16;
   case AccessorSpec::ComponentType::UNSIGNED_SHORT:
     return PropertyComponentType::Uint16;
+  case AccessorSpec::ComponentType::INT:
+    return PropertyComponentType::Int32;
   case AccessorSpec::ComponentType::UNSIGNED_INT:
     return PropertyComponentType::Uint32;
+  case AccessorSpec::ComponentType::INT64:
+    return PropertyComponentType::Int64;
+  case AccessorSpec::ComponentType::UNSIGNED_INT64:
+    return PropertyComponentType::Uint64;
   case AccessorSpec::ComponentType::FLOAT:
     return PropertyComponentType::Float32;
+  case AccessorSpec::ComponentType::DOUBLE:
+    return PropertyComponentType::Float64;
   default:
     return PropertyComponentType::None;
+  }
+}
+
+int32_t convertPropertyComponentTypeToAccessorComponentType(
+    PropertyComponentType componentType) {
+  switch (componentType) {
+  case PropertyComponentType::Int8:
+    return AccessorSpec::ComponentType::BYTE;
+  case PropertyComponentType::Uint8:
+    return AccessorSpec::ComponentType::UNSIGNED_BYTE;
+  case PropertyComponentType::Int16:
+    return AccessorSpec::ComponentType::SHORT;
+  case PropertyComponentType::Uint16:
+    return AccessorSpec::ComponentType::UNSIGNED_SHORT;
+  case PropertyComponentType::Int32:
+    return AccessorSpec::ComponentType::INT;
+  case PropertyComponentType::Uint32:
+    return AccessorSpec::ComponentType::UNSIGNED_INT;
+  case PropertyComponentType::Int64:
+    return AccessorSpec::ComponentType::INT64;
+  case PropertyComponentType::Uint64:
+    return AccessorSpec::ComponentType::UNSIGNED_INT64;
+  case PropertyComponentType::Float32:
+    return AccessorSpec::ComponentType::FLOAT;
+  case PropertyComponentType::Float64:
+    return AccessorSpec::ComponentType::DOUBLE;
+  default:
+    return -1;
   }
 }
 
