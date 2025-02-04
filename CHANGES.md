@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for `3DTILES_ellipsoid` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+
 ### v0.44.0 - 2025-02-03
 
 ##### Breaking Changes :mega:
@@ -18,7 +24,6 @@
 - Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
 - `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
 - Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
-- Added support for `3DTILES_ellipsoid` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
 
 ##### Fixes :wrench:
 
