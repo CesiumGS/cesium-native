@@ -94,9 +94,9 @@ if(DOXYGEN_FOUND)
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js ${CMAKE_CURRENT_LIST_DIR}/assets/panzoom.js")
-    list(APPEND DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
-    list(APPEND DOXYGEN_ALIASES mermaid-interactive{1}="\\htmlonly <div class=\\\"mermaid interactive\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
-    list(APPEND DOXYGEN_ALIASES svg-interactive{2}="\\htmlonly <div class=\\\"svg interactive\\\" style=\\\"min-height: \\2\\\"> ^^ \\endhtmlonly \\image html \\\"\\1.svg\\\" \\htmlonly ^^ </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> \\ilinebr \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly \\ilinebr </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES mermaid-interactive{1}="\\htmlonly <div class=\\\"mermaid interactive\\\"> \\ilinebr \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly \\ilinebr </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES svg-interactive{2}="\\htmlonly <div class=\\\"svg interactive\\\" style=\\\"min-height: \\2\\\"> \\ilinebr \\endhtmlonly \\image html \\\"\\1.svg\\\" \\htmlonly \\ilinebr </div> \\endhtmlonly")
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
 
