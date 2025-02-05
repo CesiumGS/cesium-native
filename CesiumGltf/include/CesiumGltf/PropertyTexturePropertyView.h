@@ -115,7 +115,8 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
     using UintType = std::make_unsigned_t<ElementType>;
     UintType resultAsUint = 0;
     for (size_t i = 0; i < bytes.size(); i++) {
-      resultAsUint |= static_cast<UintType>(bytes[i]) << i * 8;
+      resultAsUint |=
+          static_cast<UintType>(static_cast<UintType>(bytes[i]) << i * 8);
     }
 
     // Reinterpret the bits with the correct signedness.
@@ -146,7 +147,7 @@ template <typename ElementType>
 ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
 
-  const glm::length_t N =
+  [[maybe_unused]] glm::length_t N =
       getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
   using T = typename ElementType::value_type;
 

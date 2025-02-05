@@ -1559,8 +1559,8 @@ private:
     const auto foundValue = std::find_if(
         pEnumDefinition->values.begin(),
         pEnumDefinition->values.end(),
-        [&valueStr](const CesiumGltf::EnumValue& value) {
-          return value.name == valueStr;
+        [&valueStr](const CesiumGltf::EnumValue& enumValue) {
+          return enumValue.name == valueStr;
         });
 
     if (foundValue == pEnumDefinition->values.end()) {
@@ -1613,7 +1613,7 @@ public:
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
-        _count(_count = classProperty.count ? *classProperty.count : 0),
+        _count(classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -2010,7 +2010,7 @@ public:
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
-        _count(_count = classProperty.count ? *classProperty.count : 0),
+        _count(classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
