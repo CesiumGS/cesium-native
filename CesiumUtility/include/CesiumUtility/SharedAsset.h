@@ -78,7 +78,7 @@ public:
    */
   IDepotOwningAsset<T>* getDepot() { return this->_pDepot; }
 
-protected:
+private:
   SharedAsset() = default;
   ~SharedAsset() { CESIUM_ASSERT(this->_referenceCount == 0); }
 
@@ -93,7 +93,7 @@ protected:
    * After a move construction, the content of the asset is moved to the new
    * instance, but the asset depot still references the old instance.
    */
-  SharedAsset(SharedAsset&& rhs)
+  SharedAsset(SharedAsset&& rhs) noexcept
       : ExtensibleObject(std::move(rhs)),
         _referenceCount(0),
         _pDepot(nullptr) {}
@@ -103,7 +103,9 @@ protected:
    * useful to assign the data in derived classes.
    */
   SharedAsset& operator=(const SharedAsset& rhs) {
-    CesiumUtility::ExtensibleObject::operator=(rhs);
+    if (rhs != this) {
+      CesiumUtility::ExtensibleObject::operator=(rhs);
+    }
     return *this;
   }
 
@@ -111,12 +113,13 @@ protected:
    * Assignment does not affect the asset's relationship with the depot, but is
    * useful to assign the data in derived classes.
    */
-  SharedAsset& operator=(SharedAsset&& rhs) {
-    CesiumUtility::ExtensibleObject::operator=(std::move(rhs));
+  SharedAsset& operator=(SharedAsset&& rhs) noexcept {
+    if (rhs != this) {
+      CesiumUtility::ExtensibleObject::operator=(std::move(rhs));
+    }
     return *this;
   }
 
-private:
   void addReference(bool threadOwnsDepotLock) const noexcept {
     const int32_t prevReferences = this->_referenceCount++;
     if (this->_pDepot && prevReferences <= 0) {
@@ -149,6 +152,7 @@ private:
   // To allow the depot to modify _pDepot.
   template <typename TAssetType, typename TAssetKey>
   friend class CesiumAsync::SharedAssetDepot;
+  friend T;
 };
 
 } // namespace CesiumUtility

@@ -201,7 +201,8 @@ struct IndicesForFaceFromAccessor {
     } else {
       for (int64_t i = 0; i < 3; i++) {
         int64_t vertexIndex = firstVertex + i;
-        result[i] = vertexIndex < vertexCount ? vertexIndex : -1;
+        result[static_cast<size_t>(i)] =
+            vertexIndex < vertexCount ? vertexIndex : -1;
       }
     }
 
@@ -241,12 +242,17 @@ struct IndicesForFaceFromAccessor {
 
     if (primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
       result[0] = value[0];
-      result[1] = firstIndex < value.size() ? value[firstIndex] : -1;
-      result[2] = firstIndex + 1 < value.size() ? value[firstIndex + 1] : -1;
+      result[1] = firstIndex < value.size()
+                      ? static_cast<int64_t>(value[firstIndex])
+                      : -1;
+      result[2] = firstIndex + 1 < value.size()
+                      ? static_cast<int64_t>(value[firstIndex + 1])
+                      : -1;
     } else {
       for (int64_t i = 0; i < 3; i++) {
         int64_t index = firstIndex + i;
-        result[i] = index < value.size() ? value[index] : -1;
+        result[static_cast<size_t>(i)] =
+            index < value.size() ? static_cast<int64_t>(value[index]) : -1;
       }
     }
 
