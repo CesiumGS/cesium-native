@@ -464,6 +464,14 @@ public:
    */
   int64_t size() const noexcept { return _size; }
 
+  /**
+   * @brief Obtains the \ref CesiumGltf::Enum definition corresponding to this
+   * property, if this is an enum property.
+   *
+   * @returns The contained enum definition, or nullptr if none is set.
+   */
+  const CesiumGltf::Enum* enumDefinition() const { return _pEnumDefinition; }
+
 private:
   ElementType getNumericValue(int64_t index) const noexcept {
     return reinterpret_cast<const ElementType*>(_values.data())[index];
@@ -668,7 +676,7 @@ private:
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
 
-  const CesiumGltf::Enum* _pEnumDefinition;
+  const CesiumGltf::Enum* _pEnumDefinition = nullptr;
 };
 
 /**
