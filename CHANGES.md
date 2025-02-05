@@ -9,6 +9,7 @@
 ### Additions :tada:
 
 - Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
+- Added support for `3DTILES_ellipsoid` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
 
 ### v0.44.1 - 2025-02-03
 
