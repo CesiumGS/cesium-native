@@ -40,13 +40,15 @@ public:
    * @brief Accesses the element of this array at the given index.
    */
   const ElementType& operator[](int64_t index) const noexcept {
-    return this->_values[index];
+    return this->_values[static_cast<size_t>(index)];
   }
 
   /**
    * @brief The number of elements in this array.
    */
-  int64_t size() const noexcept { return this->_values.size(); }
+  int64_t size() const noexcept {
+    return static_cast<int64_t>(this->_values.size());
+  }
 
   /**
    * @brief The `begin` iterator.

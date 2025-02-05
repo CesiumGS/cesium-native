@@ -225,7 +225,7 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
 
   VecType result;
   for (glm::length_t i = 0; i < N; i++) {
-    std::optional<T> value = getScalar<T>(array[i]);
+    std::optional<T> value = getScalar<T>(array[static_cast<size_t>(i)]);
     if (!value) {
       return std::nullopt;
     }
@@ -265,7 +265,8 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
   for (glm::length_t i = 0; i < N; i++) {
     // Try to parse each value in the column.
     for (glm::length_t j = 0; j < N; j++) {
-      std::optional<T> value = getScalar<T>(array[i * N + j]);
+      std::optional<T> value =
+          getScalar<T>(array[static_cast<size_t>(i * N + j)]);
       if (!value) {
         return std::nullopt;
       }

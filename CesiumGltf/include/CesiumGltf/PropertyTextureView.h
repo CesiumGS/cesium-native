@@ -897,7 +897,7 @@ private:
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
       }
 
-      if (count * sizeof(T) > 4) {
+      if (count * static_cast<int64_t>(sizeof(T)) > 4) {
         return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
       }
@@ -905,7 +905,7 @@ private:
       return createPropertyViewImpl<PropertyArrayView<T>, Normalized>(
           classProperty,
           propertyTextureProperty,
-          count * sizeof(T),
+          static_cast<size_t>(count) * sizeof(T),
           propertyOptions);
     } else {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
@@ -956,7 +956,7 @@ private:
     return PropertyTexturePropertyView<T, Normalized>(
         propertyTextureProperty,
         classProperty,
-        _pModel->samplers[samplerIndex],
+        _pModel->samplers[static_cast<size_t>(samplerIndex)],
         *pImage,
         propertyOptions);
   }

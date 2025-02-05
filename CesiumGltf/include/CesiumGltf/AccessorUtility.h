@@ -247,7 +247,8 @@ struct IndicesForFaceFromAccessor {
     } else {
       for (int64_t i = 0; i < 3; i++) {
         int64_t index = firstIndex + i;
-        result[i] = index < value.size() ? value[index] : -1;
+        result[static_cast<size_t>(i)] =
+            index < value.size() ? value[index] : -1;
       }
     }
 
