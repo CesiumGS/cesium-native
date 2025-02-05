@@ -108,7 +108,12 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
     }
 
     // Reinterpret the bits as a float.
-    return *reinterpret_cast<float*>(&resultAsUint);
+    // We need to memcpy to avoid a "dereferencing type-punned pointer will
+    // break strict-aliasing rules" error on GCC See
+    // https://gist.github.com/shafik/848ae25ee209f698763cffee272a58f8#how-do-we-type-pun-correctly
+    float resultAsFloat;
+    std::memcpy(&resultAsFloat, &resultAsUint, sizeof(float));
+    return resultAsFloat;
   }
 
   if constexpr (IsMetadataInteger<ElementType>::value) {
