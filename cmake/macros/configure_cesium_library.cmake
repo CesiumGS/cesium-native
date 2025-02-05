@@ -2,7 +2,7 @@ function(configure_cesium_library targetName)
     if (MSVC)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj /w45038 /w44254 /w44242 /w44191 /w45220)
     else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
+        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
     endif()
 
     set_target_properties(${targetName} PROPERTIES
@@ -14,11 +14,6 @@ function(configure_cesium_library targetName)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
         # Disable dangling-reference warning due to amount of false positives: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109642
         target_compile_options(${targetName} PRIVATE -Wno-dangling-reference)
-    endif()
-
-    if (CMAKE_CXX_COMPILERID STREQUAL "GNU")
-        # Disable unknown-pragmas errors because GCC doesn't recognize #pragma region
-        target_compile_options(${targetName} PRIVATE -Wno-error=unknown-pragmas -Wno-unknown-pragmas)
     endif()
 
     if (CESIUM_GLM_STRICT_ENABLED)
