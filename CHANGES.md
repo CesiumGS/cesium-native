@@ -9,6 +9,7 @@
 ### Additions :tada:
 
 - Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
+- `LayerJsonTerrainLoader` now includes the query parameters from the base URL in the requests for each `.terrain` file loaded.
 
 ### v0.44.1 - 2025-02-03
 
