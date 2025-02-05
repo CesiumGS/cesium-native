@@ -15,6 +15,8 @@ function(configure_cesium_library targetName)
         # Disable dangling-reference warning due to amount of false positives: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109642
         # Also disable unknown pragmas warning so we can use #pragma region
         target_compile_options(${targetName} PRIVATE -Wno-dangling-reference -Wno-unknown-pragmas)
+    elseif(CMAKE_CXX_COMPILE_ID STREQUAL "GCC") 
+        target_compile_options(${targetName} PRIVATE -Wno-unknown-pragmas)
     endif()
 
     if (CESIUM_GLM_STRICT_ENABLED)
