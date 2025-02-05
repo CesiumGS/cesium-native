@@ -19,6 +19,9 @@
     "3DTILES_bounding_volume_S2 extension": {
       "overrideName": "Extension3dTilesBoundingVolumeS2"
     },
+    "3DTILES_ellipsoid extension": {
+      "overrideName": "Extension3dTilesEllipsoid"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     },
@@ -30,6 +33,13 @@
     {
       "extensionName": "3DTILES_bounding_volume_S2",
       "schema": "3DTILES_bounding_volume_S2/schema/boundingVolume.3DTILES_bounding_volume_S2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_ellipsoid",
+      "schema": "3DTILES_ellipsoid/schema/3DTILES_ellipsoid.schema.json",
+      "attachTo": [
+        "tileset"
+      ]
     }
   ]
 }

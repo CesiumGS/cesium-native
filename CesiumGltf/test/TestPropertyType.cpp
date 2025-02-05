@@ -254,15 +254,71 @@ TEST_CASE("Test convertAccessorComponentTypeToPropertyComponentType") {
       PropertyComponentType::Uint16);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::INT) == PropertyComponentType::Int32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
           AccessorSpec::ComponentType::UNSIGNED_INT) ==
       PropertyComponentType::Uint32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::INT64) == PropertyComponentType::Int64);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::UNSIGNED_INT64) ==
+      PropertyComponentType::Uint64);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(
           AccessorSpec::ComponentType::FLOAT) ==
       PropertyComponentType::Float32);
   REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::DOUBLE) ==
+      PropertyComponentType::Float64);
+  REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(-1) ==
       PropertyComponentType::None);
+}
+
+TEST_CASE("Test convertPropertyComponentTypeToAccessorComponentType") {
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int8) == AccessorSpec::ComponentType::BYTE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint8) ==
+      AccessorSpec::ComponentType::UNSIGNED_BYTE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int16) == AccessorSpec::ComponentType::SHORT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint16) ==
+      AccessorSpec::ComponentType::UNSIGNED_SHORT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int32) == AccessorSpec::ComponentType::INT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint32) ==
+      AccessorSpec::ComponentType::UNSIGNED_INT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int64) == AccessorSpec::ComponentType::INT64);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint64) ==
+      AccessorSpec::ComponentType::UNSIGNED_INT64);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Float32) ==
+      AccessorSpec::ComponentType::FLOAT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Float64) ==
+      AccessorSpec::ComponentType::DOUBLE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::None) == -1);
 }
 
 TEST_CASE("Test isPropertyTypeVecN") {
