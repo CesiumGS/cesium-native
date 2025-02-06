@@ -32,13 +32,13 @@ bool isAscii(unsigned char c) { return c <= 0x7f; }
 
 /**
  * A URI has a valid scheme if it starts with an ASCII alpha character and has a
- * sequence of ASCII characters followed by a "://"
+ * sequence of ASCII characters followed by a ":"
  */
 bool urlHasScheme(const std::string& uri) {
   for (size_t i = 0; i < uri.length(); i++) {
     unsigned char c = static_cast<unsigned char>(uri[i]);
     if (c == ':') {
-      return uri.length() > i + 2 && uri[i + 1] == '/' && uri[i + 2] == '/';
+      return true;
     } else if ((i == 0 && !isAsciiAlpha(c)) || !isAscii(c)) {
       // Scheme must start with an ASCII alpha character and be an ASCII string
       return false;
