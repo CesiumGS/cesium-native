@@ -906,7 +906,8 @@ ClassJsonHandler::ClassJsonHandler(
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _name(),
       _description(),
-      _properties(options) {}
+      _properties(options),
+      _parent() {}
 
 void ClassJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -938,6 +939,9 @@ CesiumJsonReader::IJsonHandler* ClassJsonHandler::readObjectKeyClass(
   }
   if ("properties"s == str) {
     return property("properties", this->_properties, o.properties);
+  }
+  if ("parent"s == str) {
+    return property("parent", this->_parent, o.parent);
   }
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
