@@ -711,3 +711,41 @@ TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
     CHECK(m.bufferViews[2].byteLength == 100);
   }
 }
+
+TEST_CASE("GltfUtilities::parseGltfCopyright") {
+  SUBCASE("properly parses multiple copyright entries") {
+    Model model;
+    model.asset.copyright = "Test;a;b;c";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "Test");
+    CHECK(result[1] == "a");
+    CHECK(result[2] == "b");
+    CHECK(result[3] == "c");
+  }
+
+  SUBCASE("properly parses a single copyright entry") {
+    Model model;
+    model.asset.copyright = "Test";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 1);
+    CHECK(result[0] == "Test");
+  }
+
+  SUBCASE("properly parses an entry with a trailing semicolon") {
+    Model model;
+    model.asset.copyright = "Test;a;b;c;";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "Test");
+    CHECK(result[1] == "a");
+    CHECK(result[2] == "b");
+    CHECK(result[3] == "c");
+  }
+}
