@@ -252,6 +252,9 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
       size_t rtrim;
       do {
         ltrim = copyright.find_first_not_of(" \t", start);
+        if (ltrim == std::string::npos) {
+          break;
+        }
         end = copyright.find(';', ltrim);
         rtrim = copyright.find_last_not_of(" \t", end - 1);
         result.emplace_back(copyright.substr(ltrim, rtrim - ltrim + 1));
