@@ -10,6 +10,7 @@
 
 - Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
 - Added support for `3DTILES_ellipsoid` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+- Added generated classes for `EXT_primitive_voxels` and its dependencies in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 
 ##### Fixes :wrench:
 
