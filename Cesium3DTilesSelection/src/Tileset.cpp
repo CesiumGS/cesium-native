@@ -252,6 +252,8 @@ void Tileset::_updateLodTransitions(
         // This tile is done fading out and was immediately kicked from the
         // cache.
         tileIt = result.tilesFadingOut.erase(tileIt);
+        (*tileIt)->decrementDoNotUnloadCount(
+            "Tileset::_updateLodTransitions done fading out");
         continue;
       }
 
@@ -263,6 +265,8 @@ void Tileset::_updateLodTransitions(
         // This tile will already be on the render list.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
+        (*tileIt)->decrementDoNotUnloadCount(
+            "Tileset::_updateLodTransitions in render list");
         continue;
       }
 
@@ -274,6 +278,8 @@ void Tileset::_updateLodTransitions(
         // last frame.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
+        (*tileIt)->decrementDoNotUnloadCount(
+            "Tileset::_updateLodTransitions done fading out");
         continue;
       }
 
@@ -323,6 +329,11 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
     this->updateView(frustums, 0.0f);
   }
 
+  for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+    pTile->decrementDoNotUnloadCount(
+        "Tileset::updateViewOffline clear tilesFadingOut");
+  }
+
   this->_updateResult.tilesFadingOut.clear();
 
   std::unordered_set<Tile*> uniqueTilesToRenderThisFrame(
@@ -335,6 +346,8 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
         this->_updateResult.tilesFadingOut.insert(tile);
+        tile->incrementDoNotUnloadCount(
+            "Tileset::updateViewOffline start fading out");
       }
     }
   }
@@ -368,6 +381,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
   result.maxDepthVisited = 0;
 
   if (!_options.enableLodTransitionPeriod) {
+    for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+      pTile->decrementDoNotUnloadCount(
+          "Tileset::updateView clear tilesFadingOut");
+    }
     result.tilesFadingOut.clear();
   }
 
@@ -630,6 +647,7 @@ void markTileNonRendered(
       (lastResult == TileSelectionState::Result::Refined &&
        tile.getRefine() == TileRefine::Add)) {
     result.tilesFadingOut.insert(&tile);
+    tile.incrementDoNotUnloadCount("markTileNonRendered fading out");
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);

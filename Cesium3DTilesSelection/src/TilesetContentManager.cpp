@@ -1037,6 +1037,9 @@ void TilesetContentManager::loadTileContent(
     }
   }
 
+  tile.incrementDoNotUnloadCount(
+      "TilesetContentManager::loadTileContent begin");
+
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
       mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
@@ -1109,6 +1112,8 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
+        tile.decrementDoNotUnloadCount(
+            "TilesetContentManager::loadTileContent done loading");
         thiz->notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](

@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -22,6 +23,26 @@ using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
+std::unordered_map<std::string, std::vector<TileDoNotUnloadCountTracker::Entry>>
+    TileDoNotUnloadCountTracker::_entries;
+
+void TileDoNotUnloadCountTracker::addEntry(
+    const TileID& id,
+    bool increment,
+    const std::string& reason,
+    int32_t newCount) {
+  const std::string idString = TileIdUtilities::createTileIdString(id);
+  const auto foundIt = TileDoNotUnloadCountTracker::_entries.find(idString);
+  if (foundIt != TileDoNotUnloadCountTracker::_entries.end()) {
+    foundIt->second.push_back(Entry{reason, increment, newCount});
+  } else {
+    std::vector<Entry> entries{Entry{reason, increment, newCount}};
+
+    TileDoNotUnloadCountTracker::_entries.insert(
+        {idString, std::move(entries)});
+  }
+}
+
 Tile::Tile(TilesetContentLoader* pLoader) noexcept
     : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader) {}
 
