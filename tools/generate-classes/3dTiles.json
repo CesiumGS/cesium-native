@@ -27,6 +27,9 @@
     },
     "Buffer": {
       "toBeInherited": true
+    },
+    "3DTILES_content_voxels content extension": {
+      "overrideName": "ExtensionContent3dTilesContentVoxels"
     }
   },
   "extensions": [
@@ -40,6 +43,10 @@
       "attachTo": [
         "tileset"
       ]
+    },
+    {
+      "extensionName": "3DTILES_content_voxels",
+      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/cesium-native/extensions/3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
     }
   ]
 }
