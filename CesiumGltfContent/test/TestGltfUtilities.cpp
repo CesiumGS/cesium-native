@@ -748,4 +748,17 @@ TEST_CASE("GltfUtilities::parseGltfCopyright") {
     CHECK(result[2] == "b");
     CHECK(result[3] == "c");
   }
+
+  SUBCASE("properly parses entries with whitespace") {
+    Model model;
+    model.asset.copyright = "\tTest;a\t ;\tb;\t \tc\t;\t ";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "Test");
+    CHECK(result[1] == "a");
+    CHECK(result[2] == "b");
+    CHECK(result[3] == "c");
+  }
 }
