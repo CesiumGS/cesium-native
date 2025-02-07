@@ -1641,6 +1641,17 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
+namespace {
+void clearChildrenRecursively(Tile& tile) {
+  CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
+  for(Tile& child : tile.getChildren()) {
+    clearChildrenRecursively(child);
+  }
+
+  tile.clearChildren();
+}
+}
+
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
@@ -1654,6 +1665,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
                  ? std::chrono::time_point<std::chrono::system_clock>::max()
                  : (start + std::chrono::microseconds(
                                 static_cast<int64_t>(1000.0 * timeBudget)));
+
+  std::vector<Tile*> tilesNeedingChildrenCleared;
 
   while (this->getTotalDataBytes() > maxBytes) {
     if (pTile == nullptr || pTile == pRootTile) {
@@ -1672,10 +1685,14 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
     Tile* pNext = this->_loadedTiles.next(*pTile);
 
-    const bool removed =
+    const UnloadTileContentResult removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
-    if (removed) {
+    if (removed != UnloadTileContentResult::Keep) {
       this->_loadedTiles.remove(*pTile);
+    }
+
+    if(removed == UnloadTileContentResult::RemoveAndClearChildren) {
+      tilesNeedingChildrenCleared.emplace_back(pTile);
     }
 
     pTile = pNext;
@@ -1683,6 +1700,13 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     auto time = std::chrono::system_clock::now();
     if (time >= end) {
       break;
+    }
+  }
+
+  if(!tilesNeedingChildrenCleared.empty()) {
+    // Iterate backwards as tiles loaded sooner might contain tiles loaded later
+    for(auto it = tilesNeedingChildrenCleared.rbegin(); it != tilesNeedingChildrenCleared.rend(); ++it) {
+      clearChildrenRecursively(**it);
     }
   }
 }

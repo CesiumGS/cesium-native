@@ -1167,32 +1167,21 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
   }
 }
 
-void TilesetContentManager::clearChildrenRecursively(Tile& tile) {
-  CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
-
-  for (Tile& child : tile.getChildren()) {
-    clearChildrenRecursively(child);
-    unloadTileContent(child);
-  }
-
-  tile.clearChildren();
-}
-
-bool TilesetContentManager::unloadTileContent(Tile& tile) {
+UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
-    return true;
+    return UnloadTileContentResult::Remove;
   }
 
   if (state == TileLoadState::ContentLoading) {
-    return false;
+    return UnloadTileContentResult::Keep;
   }
 
   TileContent& content = tile.getContent();
 
   // Don't unload empty tile
   if (content.isEmptyContent()) {
-    return false;
+    return UnloadTileContentResult::Keep;
   }
 
   if (content.isExternalContent()) {
@@ -1200,11 +1189,10 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
     // its children's pointers - we can't unload.
     // We also, of course, don't want to unload the root tile.
     if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0) {
-      return false;
+      return UnloadTileContentResult::Keep;
     }
 
-    clearChildrenRecursively(tile);
-    return true;
+    return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
   // Detach raster tiles first so that the renderer's tile free
@@ -1238,7 +1226,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
       // it right now. So mark the tile as in the process of unloading and stop
       // here.
       tile.setState(TileLoadState::Unloading);
-      return false;
+      return UnloadTileContentResult::Keep;
     }
   }
 
@@ -1246,7 +1234,7 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
-  return true;
+  return UnloadTileContentResult::Remove;
 }
 
 void TilesetContentManager::unloadAll() {

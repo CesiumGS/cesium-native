@@ -18,6 +18,24 @@
 
 namespace Cesium3DTilesSelection {
 
+/**
+ * @brief Represents the result of calling \ref TilesetContentManager::unloadTileContent.
+ */
+enum class UnloadTileContentResult {
+    /**
+     * @brief The tile should remain in the loaded tiles list.
+     */
+    Keep,
+    /**
+     * @brief The tile should be removed from the loaded tiles list.
+     */
+    Remove,
+    /**
+     * @brief The tile should be removed from the loaded tiles list and have its children cleared.
+     */
+    RemoveAndClearChildren
+};
+
 class TilesetSharedAssetSystem;
 
 class TilesetContentManager
@@ -86,7 +104,7 @@ public:
       Tile& tile,
       const TilesetOptions& tilesetOptions);
 
-  bool unloadTileContent(Tile& tile);
+  UnloadTileContentResult unloadTileContent(Tile& tile);
 
   void waitUntilIdle();
 
@@ -151,7 +169,6 @@ private:
   void notifyTileDoneLoading(const Tile* pTile) noexcept;
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
-  void clearChildrenRecursively(Tile& tile);
 
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
