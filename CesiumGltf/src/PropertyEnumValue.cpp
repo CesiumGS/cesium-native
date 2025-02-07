@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <string_view>
 
-std::string_view
+std::optional<std::string_view>
 CesiumGltf::PropertyEnumValue::name(const CesiumGltf::Enum& parentEnum) const {
   const auto found = std::find_if(
       parentEnum.values.begin(),
@@ -15,7 +15,7 @@ CesiumGltf::PropertyEnumValue::name(const CesiumGltf::Enum& parentEnum) const {
       });
 
   if (found == parentEnum.values.end()) {
-    return {};
+    return std::nullopt;
   }
 
   return found->name;

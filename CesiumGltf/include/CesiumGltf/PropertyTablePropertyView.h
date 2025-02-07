@@ -30,113 +30,108 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTable}.
    */
-  static const PropertyViewStatusType ErrorInvalidPropertyTable = 14;
+  static const PropertyViewStatusType ErrorInvalidPropertyTable = 15;
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBufferView = 15;
+  static const PropertyViewStatusType ErrorInvalidValueBufferView = 16;
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 16;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 17;
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 17;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 18;
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBuffer = 18;
+  static const PropertyViewStatusType ErrorInvalidValueBuffer = 19;
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 19;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 20;
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 20;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 21;
 
   /**
    * @brief This property view has a buffer view that points outside the bounds
    * of its target buffer.
    */
-  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 21;
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 22;
 
   /**
    * @brief This property view has an invalid buffer view; its length is not
    * a multiple of the size of its type / offset type.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeNotDivisibleByTypeSize = 22;
+      ErrorBufferViewSizeNotDivisibleByTypeSize = 23;
 
   /**
    * @brief This property view has an invalid buffer view; its length does not
    * match the size of the property table.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 23;
+      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 24;
 
   /**
    * @brief This array property view has both a fixed length and an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferCoexist =
-      24;
+      25;
 
   /**
    * @brief This array property view has neither a fixed length nor an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferDontExist =
-      25;
+      26;
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 26;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 27;
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 27;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 28;
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 28;
+  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 29;
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 29;
+  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 30;
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 30;
+  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 31;
 
   /**
    * @brief This property view has a string offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
-
-  /**
-   * @brief This property view uses an invalid enum type.
-   */
-  static const PropertyViewStatusType ErrorInvalidEnumType = 32;
+  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 32;
 };
 
 /**

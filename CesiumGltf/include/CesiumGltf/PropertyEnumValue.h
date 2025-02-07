@@ -36,7 +36,8 @@ public:
    * @returns The name in the enum definition corresponding to this value, or an
    * empty string if the value cannot be found in the definition.
    */
-  std::string_view name(const CesiumGltf::Enum& parentEnum) const;
+  std::optional<std::string_view>
+  name(const CesiumGltf::Enum& parentEnum) const;
 
   /**
    * @brief Obtains the integer value from this \ref PropertyEnumValue.

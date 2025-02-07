@@ -113,6 +113,10 @@ public:
    * @brief The property provided an invalid default value.
    */
   static const PropertyViewStatusType ErrorInvalidDefaultValue = 13;
+  /**
+   * @brief This property view uses an invalid enum type.
+   */
+  static const PropertyViewStatusType ErrorInvalidEnumType = 14;
 };
 
 /**
@@ -1353,7 +1357,7 @@ private:
 };
 
 /**
- * @brief Represents a string metadata property in
+ * @brief Represents an enum metadata property in
  * EXT_structural_metadata.
  */
 template <> class PropertyView<PropertyEnumValue> {
@@ -1371,14 +1375,25 @@ public:
         _defaultValue(std::nullopt) {}
 
   /**
-   * @brief Constructs a property instance from a class definition only.
+   * @brief Constructs an empty \ref PropertyView from the given \ref
+   * ClassProperty.
+   *
+   * @param classProperty The \ref ClassProperty instance corresponding to this
+   * enum value.
+   */
+  PropertyView(const ClassProperty& classProperty)
+      : PropertyView(classProperty, nullptr) {}
+
+  /**
+   * @brief Constructs a property instance from a class definition and enum
+   * definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition)
       : _status(
             pEnumDefinition == nullptr
-                ? PropertyViewStatus::ErrorNonexistentProperty
+                ? PropertyViewStatus::ErrorInvalidEnumType
                 : validatePropertyType<PropertyEnumValue>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1415,16 +1430,6 @@ public:
       }
     }
   }
-
-  /**
-   * @brief Constructs an empty \ref PropertyView from the given \ref
-   * ClassProperty.
-   *
-   * @param classProperty The \ref ClassProperty instance corresponding to this
-   * enum value.
-   */
-  PropertyView(const ClassProperty& classProperty)
-      : PropertyView(classProperty, nullptr) {}
 
 protected:
   /**
@@ -1518,8 +1523,9 @@ public:
    * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<PropertyEnumValue> noData() const noexcept {
-    if (_noData)
-      return PropertyEnumValue(_noData->value());
+    if (_noData) {
+      return _noData;
+    }
 
     return std::nullopt;
   }
@@ -1528,8 +1534,9 @@ public:
    * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<PropertyEnumValue> defaultValue() const noexcept {
-    if (_defaultValue)
-      return PropertyEnumValue(_defaultValue->value());
+    if (_defaultValue) {
+      return _defaultValue;
+    }
 
     return std::nullopt;
   }
@@ -1549,7 +1556,7 @@ private:
 
   static std::optional<PropertyEnumValue> getEnumValue(
       const CesiumUtility::JsonValue& value,
-      const CesiumGltf::Enum* pEnumDefinition) {
+      const CesiumGltf::Enum& pEnumDefinition) {
     if (!value.isString()) {
       return std::nullopt;
     }
@@ -2877,7 +2884,7 @@ public:
       const CesiumGltf::Enum* pEnumDefinition)
       : _status(
             pEnumDefinition == nullptr
-                ? PropertyViewStatus::ErrorNonexistentProperty
+                ? PropertyViewStatus::ErrorInvalidEnumType
                 : validateArrayPropertyType<
                       PropertyArrayView<PropertyEnumValue>>(classProperty)),
         _name(classProperty.name),

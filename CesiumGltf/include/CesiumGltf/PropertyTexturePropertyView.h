@@ -32,39 +32,39 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTexture}.
    */
-  static const int ErrorInvalidPropertyTexture = 14;
+  static const int ErrorInvalidPropertyTexture = 15;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 15;
+  static const int ErrorUnsupportedProperty = 16;
 
   /**
    * @brief This property view does not have a valid texture index.
    */
-  static const int ErrorInvalidTexture = 16;
+  static const int ErrorInvalidTexture = 17;
 
   /**
    * @brief This property view does not have a valid sampler index.
    */
-  static const int ErrorInvalidSampler = 17;
+  static const int ErrorInvalidSampler = 18;
 
   /**
    * @brief This property view does not have a valid image index.
    */
-  static const int ErrorInvalidImage = 18;
+  static const int ErrorInvalidImage = 19;
 
   /**
    * @brief This property is viewing an empty image.
    */
-  static const int ErrorEmptyImage = 19;
+  static const int ErrorEmptyImage = 20;
 
   /**
    * @brief This property uses an image with multi-byte channels. Only
    * single-byte channels are supported.
    */
-  static const int ErrorInvalidBytesPerChannel = 20;
+  static const int ErrorInvalidBytesPerChannel = 21;
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -73,7 +73,7 @@ public:
    * more than four channels can be defined for specialized texture
    * formats, this implementation only supports four channels max.
    */
-  static const int ErrorInvalidChannels = 21;
+  static const int ErrorInvalidChannels = 22;
 
   /**
    * @brief The channels of this property texture property do not provide
@@ -81,12 +81,7 @@ public:
    * because an incorrect number of channels was provided, or because the
    * image itself has a different channel count / byte size than expected.
    */
-  static const int ErrorChannelsAndTypeMismatch = 22;
-
-  /**
-   * @brief This property view uses an invalid enum type.
-   */
-  static const PropertyViewStatusType ErrorInvalidEnumType = 23;
+  static const int ErrorChannelsAndTypeMismatch = 23;
 };
 
 /**
