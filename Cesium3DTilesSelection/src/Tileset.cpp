@@ -1675,8 +1675,6 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     const bool removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
     if (removed) {
-      pTile->decrementDoNotUnloadCount(
-          "Tileset::_unloadCachedTiles remove from _loadedTiles");
       this->_loadedTiles.remove(*pTile);
     }
 
@@ -1691,8 +1689,6 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
   this->_loadedTiles.insertAtTail(tile);
-  tile.incrementDoNotUnloadCount(
-      "Tileset::_markTileVisited add to _loadedTiles");
 }
 
 void Tileset::addTileToLoadQueue(

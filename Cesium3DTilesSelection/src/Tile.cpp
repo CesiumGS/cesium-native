@@ -32,11 +32,12 @@ void TileDoNotUnloadCountTracker::addEntry(
     const std::string& reason,
     int32_t newCount) {
   const std::string idString = TileIdUtilities::createTileIdString(id);
+  const std::string reasonWithId = fmt::format("Tile {}: {}", idString, reason);
   const auto foundIt = TileDoNotUnloadCountTracker::_entries.find(idString);
   if (foundIt != TileDoNotUnloadCountTracker::_entries.end()) {
-    foundIt->second.push_back(Entry{reason, increment, newCount});
+    foundIt->second.push_back(Entry{reasonWithId, increment, newCount});
   } else {
-    std::vector<Entry> entries{Entry{reason, increment, newCount}};
+    std::vector<Entry> entries{Entry{reasonWithId, increment, newCount}};
 
     TileDoNotUnloadCountTracker::_entries.insert(
         {idString, std::move(entries)});
