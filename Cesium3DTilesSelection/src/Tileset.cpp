@@ -1644,13 +1644,13 @@ void Tileset::_processMainThreadLoadQueue() {
 namespace {
 void clearChildrenRecursively(Tile& tile) {
   CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
-  for(Tile& child : tile.getChildren()) {
+  for (Tile& child : tile.getChildren()) {
     clearChildrenRecursively(child);
   }
 
   tile.clearChildren();
 }
-}
+} // namespace
 
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
@@ -1691,7 +1691,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
       this->_loadedTiles.remove(*pTile);
     }
 
-    if(removed == UnloadTileContentResult::RemoveAndClearChildren) {
+    if (removed == UnloadTileContentResult::RemoveChildren) {
       tilesNeedingChildrenCleared.emplace_back(pTile);
     }
 
@@ -1703,9 +1703,11 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     }
   }
 
-  if(!tilesNeedingChildrenCleared.empty()) {
+  if (!tilesNeedingChildrenCleared.empty()) {
     // Iterate backwards as tiles loaded sooner might contain tiles loaded later
-    for(auto it = tilesNeedingChildrenCleared.rbegin(); it != tilesNeedingChildrenCleared.rend(); ++it) {
+    for (auto it = tilesNeedingChildrenCleared.rbegin();
+         it != tilesNeedingChildrenCleared.rend();
+         ++it) {
       clearChildrenRecursively(**it);
     }
   }

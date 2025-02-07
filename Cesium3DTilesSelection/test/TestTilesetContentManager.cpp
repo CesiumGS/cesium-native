@@ -869,7 +869,9 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // unload upsampled tile: ContentLoaded -> Done
-    CHECK(pManager->unloadTileContent(upsampledTile) == UnloadTileContentResult::Remove);
+    CHECK(
+        pManager->unloadTileContent(upsampledTile) ==
+        UnloadTileContentResult::Remove);
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
     CHECK(!upsampledTile.isRenderContent());
     CHECK(!upsampledTile.getContent().getRenderContent());

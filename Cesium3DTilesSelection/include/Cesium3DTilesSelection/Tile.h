@@ -529,7 +529,10 @@ public:
    * This function is not supposed to be called by clients.
    */
   void incrementDoNotUnloadCount(const char* reason) noexcept {
-    const std::string reasonStr = fmt::format("Initiator ID: {}, {}", TileIdUtilities::createTileIdString(this->getTileID()), reason);
+    const std::string reasonStr = fmt::format(
+        "Initiator ID: {}, {}",
+        TileIdUtilities::createTileIdString(this->getTileID()),
+        reason);
     this->incrementDoNotUnloadCount(reasonStr);
   }
 
@@ -540,7 +543,10 @@ public:
    * This function is not supposed to be called by clients.
    */
   void decrementDoNotUnloadCount(const char* reason) noexcept {
-    const std::string reasonStr = fmt::format("Initiator ID: {}, {}", TileIdUtilities::createTileIdString(this->getTileID()), reason);
+    const std::string reasonStr = fmt::format(
+        "Initiator ID: {}, {}",
+        TileIdUtilities::createTileIdString(this->getTileID()),
+        reason);
     this->decrementDoNotUnloadCount(reasonStr);
   }
 
