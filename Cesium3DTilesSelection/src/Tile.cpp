@@ -254,7 +254,20 @@ TileLoadState Tile::getState() const noexcept { return this->_loadState; }
 
 void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
-void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
+void Tile::setState(TileLoadState state) noexcept { 
+  this->_loadState = state; 
+  switch(state) {
+    case TileLoadState::Unloaded:
+    case TileLoadState::ContentLoaded:
+    case TileLoadState::Done:
+    case TileLoadState::Failed:
+      this->decrementDoNotUnloadCount("Tile::setState ready to unload");
+      break;
+    default:
+      this->incrementDoNotUnloadCount("Tile::setState state not ready for unloading");
+      break;
+  }
+}
 
 bool Tile::getMightHaveLatentChildren() const noexcept {
   return this->_mightHaveLatentChildren;
