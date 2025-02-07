@@ -3,6 +3,7 @@
 #include <CesiumGltf/PropertyEnumValue.h>
 
 #include <algorithm>
+#include <optional>
 #include <string_view>
 
 std::optional<std::string_view>
