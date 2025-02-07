@@ -151,6 +151,7 @@ private:
   void notifyTileDoneLoading(const Tile* pTile) noexcept;
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
+  void clearChildrenRecursively(Tile& tile);
 
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(

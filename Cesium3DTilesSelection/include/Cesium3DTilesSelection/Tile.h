@@ -209,6 +209,13 @@ public:
   }
 
   /**
+   * @brief Clears the children of this tile.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void clearChildren() noexcept { this->_children.clear(); }
+
+  /**
    * @brief Assigns the given child tiles to this tile.
    *
    * This function is not supposed to be called by clients.

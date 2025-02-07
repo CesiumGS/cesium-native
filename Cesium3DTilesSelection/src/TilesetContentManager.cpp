@@ -1167,6 +1167,17 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
   }
 }
 
+void TilesetContentManager::clearChildrenRecursively(Tile& tile) {
+  CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
+
+  for (Tile& child : tile.getChildren()) {
+    clearChildrenRecursively(child);
+    unloadTileContent(child);
+  }
+
+  tile.clearChildren();
+}
+
 bool TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
@@ -1179,9 +1190,21 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
 
   TileContent& content = tile.getContent();
 
-  // don't unload external or empty tile
-  if (content.isExternalContent() || content.isEmptyContent()) {
+  // Don't unload empty tile
+  if (content.isEmptyContent()) {
     return false;
+  }
+
+  if (content.isExternalContent()) {
+    // Tile with external content that still has references to its pointer or to
+    // its children's pointers - we can't unload.
+    // We also, of course, don't want to unload the root tile.
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0) {
+      return false;
+    }
+
+    clearChildrenRecursively(tile);
+    return true;
   }
 
   // Detach raster tiles first so that the renderer's tile free
