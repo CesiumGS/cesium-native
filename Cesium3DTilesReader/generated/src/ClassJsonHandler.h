@@ -38,5 +38,6 @@ private:
       Cesium3DTiles::ClassProperty,
       ClassPropertyJsonHandler>
       _properties;
+  CesiumJsonReader::StringJsonHandler _parent;
 };
 } // namespace Cesium3DTilesReader
