@@ -577,8 +577,7 @@ public:
             options),
         _channels(property.channels),
         _swizzle(),
-        _componentType(
-            convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
+        _pEnumDefinition(pEnumDefinition) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
     }
@@ -685,7 +684,8 @@ public:
 
     const int64_t enumValue = assembleEnumValue(
         std::span(sample.data(), this->_channels.size()),
-        this->_componentType);
+        convertStringToPropertyComponentType(
+            this->_pEnumDefinition->valueType));
 
     return PropertyEnumValue{enumValue};
   }
@@ -702,10 +702,19 @@ public:
    */
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
+  /**
+   * @brief Obtains the \ref CesiumGltf::Enum definition corresponding to this
+   * property, if this is an enum property.
+   *
+   * @returns The contained enum definition, or nullptr if none is set.
+   */
+  const CesiumGltf::Enum* enumDefinition() const { return _pEnumDefinition; }
+
 private:
   std::vector<int64_t> _channels;
   std::string _swizzle;
-  PropertyComponentType _componentType;
+
+  const CesiumGltf::Enum* _pEnumDefinition = nullptr;
 };
 
 /**
@@ -804,8 +813,7 @@ public:
             options),
         _channels(property.channels),
         _swizzle(),
-        _componentType(
-            convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
+        _pEnumDefinition(pEnumDefinition) {
     if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
       return;
     }
@@ -919,7 +927,7 @@ public:
 
     return PropertyArrayCopy<PropertyEnumValue>(
         byteSample,
-        this->_componentType,
+        convertStringToPropertyComponentType(this->_pEnumDefinition->valueType),
         static_cast<int64_t>(this->_channels.size()));
   }
 
@@ -935,10 +943,19 @@ public:
    */
   const std::string& getSwizzle() const noexcept { return this->_swizzle; }
 
+  /**
+   * @brief Obtains the \ref CesiumGltf::Enum definition corresponding to this
+   * property, if this is an enum property.
+   *
+   * @returns The contained enum definition, or nullptr if none is set.
+   */
+  const CesiumGltf::Enum* enumDefinition() const { return _pEnumDefinition; }
+
 private:
   std::vector<int64_t> _channels;
   std::string _swizzle;
-  PropertyComponentType _componentType;
+
+  const CesiumGltf::Enum* _pEnumDefinition = nullptr;
 };
 
 #pragma endregion

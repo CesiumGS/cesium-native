@@ -43,8 +43,6 @@ const PropertyViewStatusType
     PropertyTablePropertyViewStatus::ErrorArrayOffsetOutOfBounds;
 const PropertyViewStatusType
     PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds;
-const PropertyViewStatusType
-    PropertyTablePropertyViewStatus::ErrorInvalidEnumType;
 
 int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
   switch (offsetType) {

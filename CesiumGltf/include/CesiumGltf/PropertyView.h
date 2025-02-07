@@ -1407,7 +1407,7 @@ public:
 
     if (classProperty.noData) {
       if (!_required) {
-        _noData = getEnumValue(*classProperty.noData, pEnumDefinition);
+        _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
       }
 
       if (!_noData) {
@@ -1420,7 +1420,7 @@ public:
     if (classProperty.defaultProperty) {
       if (!_required) {
         _defaultValue =
-            getEnumValue(*classProperty.defaultProperty, pEnumDefinition);
+            getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
       }
 
       if (!_defaultValue) {
@@ -1563,13 +1563,13 @@ private:
 
     const CesiumUtility::JsonValue::String& valueStr = value.getString();
     const auto foundValue = std::find_if(
-        pEnumDefinition->values.begin(),
-        pEnumDefinition->values.end(),
+        pEnumDefinition.values.begin(),
+        pEnumDefinition.values.end(),
         [&valueStr](const CesiumGltf::EnumValue& value) {
           return value.name == valueStr;
         });
 
-    if (foundValue == pEnumDefinition->values.end()) {
+    if (foundValue == pEnumDefinition.values.end()) {
       return std::nullopt;
     }
 
