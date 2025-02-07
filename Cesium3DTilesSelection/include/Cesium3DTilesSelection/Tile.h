@@ -529,6 +529,23 @@ public:
    * This function is not supposed to be called by clients.
    */
   void incrementDoNotUnloadCount(const char* reason) noexcept {
+    const std::string reasonStr = fmt::format("Initiator ID: {}, {}", TileIdUtilities::createTileIdString(this->getTileID()), reason);
+    this->incrementDoNotUnloadCount(reasonStr);
+  }
+
+  /**
+   * @brief Decrements the internal count denoting that the tile and its
+   * ancestors should not be unloaded.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void decrementDoNotUnloadCount(const char* reason) noexcept {
+    const std::string reasonStr = fmt::format("Initiator ID: {}, {}", TileIdUtilities::createTileIdString(this->getTileID()), reason);
+    this->decrementDoNotUnloadCount(reasonStr);
+  }
+
+private:
+  void incrementDoNotUnloadCount(const std::string& reason) noexcept {
     ++this->_doNotUnloadCount;
     TileDoNotUnloadCountTracker::addEntry(
         this->getTileID(),
@@ -540,13 +557,7 @@ public:
     }
   }
 
-  /**
-   * @brief Decrements the internal count denoting that the tile and its
-   * ancestors should not be unloaded.
-   *
-   * This function is not supposed to be called by clients.
-   */
-  void decrementDoNotUnloadCount(const char* reason) noexcept {
+  void decrementDoNotUnloadCount(const std::string& reason) noexcept {
     CESIUM_ASSERT(this->_doNotUnloadCount > 0);
     --this->_doNotUnloadCount;
     TileDoNotUnloadCountTracker::addEntry(
@@ -559,7 +570,6 @@ public:
     }
   }
 
-private:
   struct TileConstructorImpl {};
   template <
       typename... TileContentArgs,
