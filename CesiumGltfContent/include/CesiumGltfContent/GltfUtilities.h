@@ -130,6 +130,16 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   parseGltfCopyright(const CesiumGltf::Model& gltf);
 
   /**
+   * @brief Parse a semicolon-separated string, such as the copyright field of a
+   * glTF model, and return the individual parts (credits).
+   *
+   * @param s The string to parse.
+   * @return The semicolon-delimited parts.
+   */
+  static std::vector<std::string_view>
+  parseGltfCopyright(const std::string_view& s);
+
+  /**
    * @brief Merges all of the glTF's buffers into a single buffer (the first
    * one).
    *
