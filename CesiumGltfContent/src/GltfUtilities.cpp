@@ -283,26 +283,45 @@ GltfUtilities::computeBoundingRegion(
 
 std::vector<std::string_view>
 GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
-  std::vector<std::string_view> result;
   if (gltf.asset.copyright) {
-    const std::string_view copyright = *gltf.asset.copyright;
-    if (copyright.size() > 0) {
-      size_t start = 0;
-      size_t end;
-      size_t ltrim;
-      size_t rtrim;
-      do {
-        ltrim = copyright.find_first_not_of(" \t", start);
-        if (ltrim == std::string::npos) {
-          break;
-        }
-        end = copyright.find(';', ltrim);
-        rtrim = copyright.find_last_not_of(" \t", end - 1);
-        result.emplace_back(copyright.substr(ltrim, rtrim - ltrim + 1));
-        start = end + 1;
-      } while (end < copyright.size() - 1);
+    return GltfUtilities::parseGltfCopyright(*gltf.asset.copyright);
+  } else {
+    return {};
+  }
+}
+
+namespace {
+std::string_view trimWhitespace(const std::string_view& s) {
+  size_t end = s.find_last_not_of(" \t");
+  if (end == std::string::npos)
+    return {};
+  size_t start = s.find_first_not_of(" \t", 0, end + 1);
+  return s.substr(start, end - start + 1);
+}
+} // namespace
+
+std::vector<std::string_view>
+GltfUtilities::parseGltfCopyright(const std::string_view& s) {
+  std::vector<std::string_view> result;
+  if (s.empty())
+    return result;
+
+  size_t start = 0;
+
+  auto addPart = [&](size_t end) {
+    std::string_view trimmed = trimWhitespace(s.substr(start, end - start));
+    if (!trimmed.empty())
+      result.emplace_back(std::move(trimmed));
+  };
+
+  for (size_t i = 0, length = s.size(); i < length; ++i) {
+    if (s[i] == ';') {
+      addPart(i);
+      start = i + 1;
     }
   }
+
+  addPart(s.size());
 
   return result;
 }
