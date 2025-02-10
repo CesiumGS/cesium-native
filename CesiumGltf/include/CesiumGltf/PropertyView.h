@@ -3,6 +3,8 @@
 #include "CesiumUtility/JsonValue.h"
 
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Enum.h>
+#include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTableProperty.h>

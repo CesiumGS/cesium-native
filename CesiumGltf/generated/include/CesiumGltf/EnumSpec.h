@@ -14,7 +14,7 @@ namespace CesiumGltf {
 /**
  * @brief An object defining the values of an enum.
  */
-struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API EnumSpec : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
@@ -81,7 +81,7 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(Enum));
+    accum += int64_t(sizeof(EnumSpec));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     if (this->name) {
@@ -96,5 +96,12 @@ struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
     }
     return accum;
   }
+
+protected:
+  /**
+   * @brief This class is not meant to be instantiated directly. Use {@link Enum} instead.
+   */
+  EnumSpec() = default;
+  friend struct Enum;
 };
 } // namespace CesiumGltf
