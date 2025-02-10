@@ -530,7 +530,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void incrementDoNotUnloadCount(const char* reason) noexcept {
+  void incrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept {
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
     const std::string reasonStr = fmt::format(
         "Initiator ID: {}, {}",
@@ -548,7 +548,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void decrementDoNotUnloadCount(const char* reason) noexcept {
+  void decrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept {
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
     const std::string reasonStr = fmt::format(
         "Initiator ID: {}, {}",
