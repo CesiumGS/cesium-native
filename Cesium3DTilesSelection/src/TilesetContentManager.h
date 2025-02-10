@@ -35,7 +35,7 @@ enum class UnloadTileContentResult {
    * @brief The tile should be removed from the loaded tiles list and have its
    * children cleared.
    */
-  RemoveChildren
+  RemoveAndClearChildren
 };
 
 class TilesetSharedAssetSystem;

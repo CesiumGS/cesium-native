@@ -1694,7 +1694,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
       this->_loadedTiles.remove(*pTile);
     }
 
-    if (removed == UnloadTileContentResult::RemoveChildren) {
+    if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
       tilesNeedingChildrenCleared.emplace_back(pTile);
     }
 

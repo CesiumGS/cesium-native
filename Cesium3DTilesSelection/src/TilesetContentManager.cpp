@@ -1195,7 +1195,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    return UnloadTileContentResult::RemoveChildren;
+    return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
   // Detach raster tiles first so that the renderer's tile free
