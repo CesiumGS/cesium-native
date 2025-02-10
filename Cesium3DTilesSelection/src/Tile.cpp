@@ -23,6 +23,7 @@ using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
 std::unordered_map<std::string, std::vector<TileDoNotUnloadCountTracker::Entry>>
     TileDoNotUnloadCountTracker::_entries;
 
@@ -42,6 +43,7 @@ void TileDoNotUnloadCountTracker::addEntry(
         {idString, std::move(entries)});
   }
 }
+#endif
 
 Tile::Tile(TilesetContentLoader* pLoader) noexcept
     : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader) {}

@@ -1641,16 +1641,15 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
-namespace {
-void clearChildrenRecursively(Tile& tile) {
+void Tileset::_clearChildrenRecursively(Tile& tile) noexcept {
   CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
   for (Tile& child : tile.getChildren()) {
-    clearChildrenRecursively(child);
+    this->_loadedTiles.remove(child);
+    _clearChildrenRecursively(child);
   }
 
   tile.clearChildren();
 }
-} // namespace
 
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
@@ -1708,7 +1707,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     for (auto it = tilesNeedingChildrenCleared.rbegin();
          it != tilesNeedingChildrenCleared.rend();
          ++it) {
-      clearChildrenRecursively(**it);
+      _clearChildrenRecursively(**it);
     }
   }
 }

@@ -479,6 +479,8 @@ private:
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
 
+  void _clearChildrenRecursively(Tile& tile) noexcept;
+
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 
