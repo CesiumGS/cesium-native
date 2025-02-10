@@ -189,6 +189,18 @@ PropertyComponentType
 convertAccessorComponentTypeToPropertyComponentType(int componentType);
 
 /**
+ * @brief Converts a \ref PropertyComponentType to an integer type ID listed in
+ * \ref AccessorSpec::ComponentType.
+ *
+ * @param componentType The \ref PropertyComponentType to convert to an integer
+ * type ID.
+ * @returns The integer type ID listed in \ref AccessorSpec::ComponentType, or
+ * -1 if no conversion is possible.
+ */
+int32_t convertPropertyComponentTypeToAccessorComponentType(
+    PropertyComponentType componentType);
+
+/**
  * @brief Checks if the given \ref PropertyType represents a vector with any
  * number of components.
  *
