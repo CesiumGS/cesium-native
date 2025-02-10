@@ -14,6 +14,7 @@
 #include <Cesium3DTiles/Content.h>
 #include <Cesium3DTiles/Enum.h>
 #include <Cesium3DTiles/EnumValue.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
@@ -57,6 +58,11 @@ void writeJson(
 
 void writeJson(
     const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -387,6 +393,22 @@ void writeJson(
   if (!obj.radii.empty()) {
     jsonWriter.Key("radii");
     writeJson(obj.radii, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.cylinder.empty()) {
+    jsonWriter.Key("cylinder");
+    writeJson(obj.cylinder, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -1229,6 +1251,13 @@ void Extension3dTilesBoundingVolumeS2JsonWriter::write(
 
 void Extension3dTilesEllipsoidJsonWriter::write(
     const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesBoundingVolumeCylinderJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
