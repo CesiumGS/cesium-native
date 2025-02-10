@@ -14,7 +14,12 @@
 ##### Fixes :wrench:
 
 - Fixed parsing URIs that have a scheme followed by `:` instead of `://`.
-- Fixed crash in `GltfUtilities::parseGltfCopyright` when the copyright string ends with a trailing semicolon.
+
+### v0.44.2 - 2025-02-10
+
+##### Fixes :wrench:
+
+- Fixed a bug in `GltfUtilities::parseGltfCopyright` that could cause a crash when the copyright ends with a semicolon.
 
 ### v0.44.1 - 2025-02-03
 
