@@ -561,7 +561,8 @@ public:
   }
 
 private:
-  void incrementDoNotUnloadCount([[maybe_unused]] const std::string& reason) noexcept {
+  void incrementDoNotUnloadCount(
+      [[maybe_unused]] const std::string& reason) noexcept {
     ++this->_doNotUnloadCount;
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
     TileDoNotUnloadCountTracker::addEntry(
@@ -575,7 +576,8 @@ private:
     }
   }
 
-  void decrementDoNotUnloadCount([[maybe_unused]] const std::string& reason) noexcept {
+  void decrementDoNotUnloadCount(
+      [[maybe_unused]] const std::string& reason) noexcept {
     CESIUM_ASSERT(this->_doNotUnloadCount > 0);
     --this->_doNotUnloadCount;
 #ifdef CESIUM_DEBUG_TILE_UNLOADING

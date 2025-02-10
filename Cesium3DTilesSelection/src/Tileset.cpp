@@ -1644,6 +1644,10 @@ void Tileset::_processMainThreadLoadQueue() {
 void Tileset::_clearChildrenRecursively(Tile& tile) noexcept {
   CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
   for (Tile& child : tile.getChildren()) {
+    // Though most tiles will have to be removed from _loadedTiles already to
+    // get to this point, tiles with empty content will not be. We have to
+    // remove them manually to ensure no dangling pointers are left in
+    // _loadedTiles.
     this->_loadedTiles.remove(child);
     _clearChildrenRecursively(child);
   }
