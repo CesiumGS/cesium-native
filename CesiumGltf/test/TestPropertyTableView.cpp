@@ -1266,7 +1266,10 @@ TEST_CASE("Test enum PropertyTableProperty") {
     REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
     for (size_t i = 0; i < expected.size(); ++i) {
       REQUIRE(enumProperty.getRaw(static_cast<int64_t>(i)) == expected[i]);
-      REQUIRE(enumProperty.get(static_cast<int64_t>(i)).value() == expected[i]);
+      REQUIRE(enumProperty.get(static_cast<int64_t>(i)) == expected[i]);
+      REQUIRE(
+          enumDef.getName(*enumProperty.get(static_cast<int64_t>(i))) ==
+          expectedNames[i]);
     }
   }
 
@@ -4983,7 +4986,7 @@ TEST_CASE("Test callback for enum PropertyTableProperty") {
   uint32_t invokedCallbackCount = 0;
   view.getPropertyView(
       "TestClassProperty",
-      [&expected, &invokedCallbackCount](
+      [&expected, &expectedNames, &enumDef, &invokedCallbackCount](
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
@@ -4998,6 +5001,9 @@ TEST_CASE("Test callback for enum PropertyTableProperty") {
             auto expectedValue = expected[static_cast<size_t>(i)];
             REQUIRE(propertyValue.getRaw(i) == expectedValue);
             REQUIRE(propertyValue.get(i).value() == expectedValue);
+            REQUIRE(
+                enumDef.getName(*propertyValue.get(i)) ==
+                expectedNames[static_cast<size_t>(i)]);
           }
         } else {
           FAIL("getPropertyView returned PropertyTablePropertyView of "
