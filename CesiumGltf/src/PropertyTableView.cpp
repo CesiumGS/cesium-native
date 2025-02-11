@@ -134,6 +134,7 @@ PropertyTableView::PropertyTableView(
     : _pModel{&model},
       _pPropertyTable{&propertyTable},
       _pClass{nullptr},
+      _pEnumDefinitions{},
       _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
@@ -155,6 +156,7 @@ PropertyTableView::PropertyTableView(
   }
 
   _pClass = &classIter->second;
+  _pEnumDefinitions = &schema->enums;
 }
 
 const ClassProperty*

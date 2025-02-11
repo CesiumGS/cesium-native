@@ -30,39 +30,39 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTexture}.
    */
-  static const int ErrorInvalidPropertyTexture = 14;
+  static const int ErrorInvalidPropertyTexture = 15;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 15;
+  static const int ErrorUnsupportedProperty = 16;
 
   /**
    * @brief This property view does not have a valid texture index.
    */
-  static const int ErrorInvalidTexture = 16;
+  static const int ErrorInvalidTexture = 17;
 
   /**
    * @brief This property view does not have a valid sampler index.
    */
-  static const int ErrorInvalidSampler = 17;
+  static const int ErrorInvalidSampler = 18;
 
   /**
    * @brief This property view does not have a valid image index.
    */
-  static const int ErrorInvalidImage = 18;
+  static const int ErrorInvalidImage = 19;
 
   /**
    * @brief This property is viewing an empty image.
    */
-  static const int ErrorEmptyImage = 19;
+  static const int ErrorEmptyImage = 20;
 
   /**
    * @brief This property uses an image with multi-byte channels. Only
    * single-byte channels are supported.
    */
-  static const int ErrorInvalidBytesPerChannel = 20;
+  static const int ErrorInvalidBytesPerChannel = 21;
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -71,7 +71,7 @@ public:
    * more than four channels can be defined for specialized texture
    * formats, this implementation only supports four channels max.
    */
-  static const int ErrorInvalidChannels = 21;
+  static const int ErrorInvalidChannels = 22;
 
   /**
    * @brief The channels of this property texture property do not provide
@@ -79,7 +79,7 @@ public:
    * because an incorrect number of channels was provided, or because the
    * image itself has a different channel count / byte size than expected.
    */
-  static const int ErrorChannelsAndTypeMismatch = 22;
+  static const int ErrorChannelsAndTypeMismatch = 23;
 };
 
 /**
@@ -328,6 +328,85 @@ public:
       const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
+        TextureView(
+            sampler,
+            image,
+            property.texCoord,
+            property.getExtension<ExtensionKhrTextureTransform>(),
+            options),
+        _channels(property.channels),
+        _swizzle() {
+    if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    switch (this->getTextureViewStatus()) {
+    case TextureViewStatus::Valid:
+      break;
+    case TextureViewStatus::ErrorInvalidSampler:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
+      return;
+    case TextureViewStatus::ErrorInvalidImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
+      return;
+    case TextureViewStatus::ErrorEmptyImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+      return;
+    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
+      return;
+    case TextureViewStatus::ErrorUninitialized:
+    case TextureViewStatus::ErrorInvalidTexture:
+    default:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
+      return;
+    }
+
+    _swizzle.reserve(_channels.size());
+
+    for (size_t i = 0; i < _channels.size(); ++i) {
+      switch (_channels[i]) {
+      case 0:
+        _swizzle += "r";
+        break;
+      case 1:
+        _swizzle += "g";
+        break;
+      case 2:
+        _swizzle += "b";
+        break;
+      case 3:
+        _swizzle += "a";
+        break;
+      default:
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
+      }
+    }
+  }
+
+  /**
+   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
+   *
+   * @param property The {@link PropertyTextureProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param pEnumDefinition The {@link CesiumGltf::Enum} definition this property uses.
+   * @param sampler The {@link Sampler} used by the property.
+   * @param image The {@link ImageAsset} used by the property.
+   * @param options The options for constructing the view.
+   */
+  PropertyTexturePropertyView(
+      const PropertyTextureProperty& property,
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
+      const Sampler& sampler,
+      const ImageAsset& image,
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
+      : PropertyView<ElementType, false>(
+            classProperty,
+            property,
+            pEnumDefinition),
         TextureView(
             sampler,
             image,

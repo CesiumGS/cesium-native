@@ -21,6 +21,7 @@ PropertyTextureView::PropertyTextureView(
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),
+      _pEnumDefinitions{},
       _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
@@ -43,6 +44,7 @@ PropertyTextureView::PropertyTextureView(
   }
 
   this->_pClass = &classIt->second;
+  this->_pEnumDefinitions = &pMetadata->schema->enums;
 }
 
 const ClassProperty*
