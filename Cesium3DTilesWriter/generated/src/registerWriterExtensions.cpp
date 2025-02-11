@@ -6,10 +6,12 @@
 #include "TilesetJsonWriter.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 // NOLINTEND(misc-include-cleaner)
 
 namespace Cesium3DTilesWriter {
@@ -20,5 +22,8 @@ void registerWriterExtensions(
   context.registerExtension<
       Cesium3DTiles::BoundingVolume,
       Extension3dTilesBoundingVolumeS2JsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Tileset,
+      Extension3dTilesEllipsoidJsonWriter>();
 }
 } // namespace Cesium3DTilesWriter
