@@ -1,4 +1,5 @@
 #pragma once
+#if false
 
 #include <memory>
 #include <string>
@@ -46,3 +47,4 @@ private:
 };
 
 } // namespace Cesium3DTilesSelection
+#endif

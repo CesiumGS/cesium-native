@@ -58,7 +58,6 @@ Tile::Tile(
       _geometricError(0.0),
       _refine(TileRefine::Replace),
       _transform(1.0),
-      _lastSelectionState(),
       _loadedTilesLinks(),
       _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
@@ -75,7 +74,6 @@ Tile::Tile(Tile&& rhs) noexcept
       _geometricError(rhs._geometricError),
       _refine(rhs._refine),
       _transform(rhs._transform),
-      _lastSelectionState(rhs._lastSelectionState),
       _loadedTilesLinks(),
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
@@ -107,7 +105,6 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_geometricError = rhs._geometricError;
     this->_refine = rhs._refine;
     this->_transform = rhs._transform;
-    this->_lastSelectionState = rhs._lastSelectionState;
     this->_content = std::move(rhs._content);
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;

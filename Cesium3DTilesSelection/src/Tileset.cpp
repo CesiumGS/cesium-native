@@ -76,7 +76,9 @@ Tileset::Tileset(
                   options.ellipsoid},
               std::move(pCustomLoader),
               std::move(pRootTile)),
-      } {}
+      },
+      _heightRequests(),
+      _defaultViewGroup() {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -97,7 +99,9 @@ Tileset::Tileset(
                   externals,
                   options.ellipsoid},
               url),
-      } {}
+      },
+      _heightRequests(),
+      _defaultViewGroup() {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -117,7 +121,9 @@ Tileset::Tileset(
           RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
           ionAssetID,
           ionAccessToken,
-          ionAssetEndpointUrl)} {}
+          ionAssetEndpointUrl)},
+      _heightRequests(),
+      _defaultViewGroup() {}
 
 Tileset::~Tileset() noexcept {
   TilesetHeightRequest::failHeightRequests(
@@ -257,7 +263,7 @@ void Tileset::_updateLodTransitions(
 
       // Remove tile from fade-out list if it is back on the render list.
       TileSelectionState::Result selectionResult =
-          (*tileIt)->getLastSelectionState().getResult(
+          frameState.viewGroup.getCurrentSelectionState(**tileIt).getResult(
               frameState.currentFrameNumber);
       if (selectionResult == TileSelectionState::Result::Rendered) {
         // This tile will already be on the render list.
@@ -344,6 +350,14 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
+  this->_defaultViewGroup.startNextFrame();
+  return this->updateView(this->_defaultViewGroup, frustums, deltaTime);
+}
+
+const ViewUpdateResult& Tileset::updateView(
+    ViewGroup& viewGroup,
+    const std::vector<ViewState>& frustums,
+    float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
   // Fixup TilesetOptions to ensure lod transitions works correctly.
   _options.enableFrustumCulling =
@@ -404,6 +418,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       });
 
   FrameState frameState{
+      viewGroup,
       frustums,
       std::move(fogDensities),
       previousFrameNumber,
@@ -638,15 +653,17 @@ void markTileNonRendered(
 }
 
 void markTileNonRendered(
+    ViewGroup& viewGroup,
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
   const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
+      viewGroup.getPreviousSelectionState(tile).getResult(lastFrameNumber);
   markTileNonRendered(lastResult, tile, result);
 }
 
 void markChildrenNonRendered(
+    ViewGroup& viewGroup,
     int32_t lastFrameNumber,
     TileSelectionState::Result lastResult,
     Tile& tile,
@@ -654,30 +671,37 @@ void markChildrenNonRendered(
   if (lastResult == TileSelectionState::Result::Refined) {
     for (Tile& child : tile.getChildren()) {
       const TileSelectionState::Result childLastResult =
-          child.getLastSelectionState().getResult(lastFrameNumber);
+          viewGroup.getPreviousSelectionState(child).getResult(lastFrameNumber);
       markTileNonRendered(childLastResult, child, result);
-      markChildrenNonRendered(lastFrameNumber, childLastResult, child, result);
+      markChildrenNonRendered(
+          viewGroup,
+          lastFrameNumber,
+          childLastResult,
+          child,
+          result);
     }
   }
 }
 
 void markChildrenNonRendered(
+    ViewGroup& viewGroup,
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
   const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
-  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
+      viewGroup.getPreviousSelectionState(tile).getResult(lastFrameNumber);
+  markChildrenNonRendered(viewGroup, lastFrameNumber, lastResult, tile, result);
 }
 
 void markTileAndChildrenNonRendered(
+    ViewGroup& viewGroup,
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
   const TileSelectionState::Result lastResult =
-      tile.getLastSelectionState().getResult(lastFrameNumber);
+      viewGroup.getPreviousSelectionState(tile).getResult(lastFrameNumber);
   markTileNonRendered(lastResult, tile, result);
-  markChildrenNonRendered(lastFrameNumber, lastResult, tile, result);
+  markChildrenNonRendered(viewGroup, lastFrameNumber, lastResult, tile, result);
 }
 
 /**
@@ -973,12 +997,18 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
 
   if (!cullResult.shouldVisit) {
     const TileSelectionState lastFrameSelectionState =
-        tile.getLastSelectionState();
+        frameState.viewGroup.getPreviousSelectionState(tile);
 
-    markTileAndChildrenNonRendered(frameState.lastFrameNumber, tile, result);
-    tile.setLastSelectionState(TileSelectionState(
-        frameState.currentFrameNumber,
-        TileSelectionState::Result::Culled));
+    markTileAndChildrenNonRendered(
+        frameState.viewGroup,
+        frameState.lastFrameNumber,
+        tile,
+        result);
+    frameState.viewGroup.setCurrentSelectionState(
+        tile,
+        TileSelectionState(
+            frameState.currentFrameNumber,
+            TileSelectionState::Result::Culled));
 
     ++result.tilesCulled;
 
@@ -1030,11 +1060,13 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     ViewUpdateResult& result) {
 
   const TileSelectionState lastFrameSelectionState =
-      tile.getLastSelectionState();
+      frameState.viewGroup.getPreviousSelectionState(tile);
 
-  tile.setLastSelectionState(TileSelectionState(
-      frameState.currentFrameNumber,
-      TileSelectionState::Result::Rendered));
+  frameState.viewGroup.setCurrentSelectionState(
+      tile,
+      TileSelectionState(
+          frameState.currentFrameNumber,
+          TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
   addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
@@ -1083,12 +1115,18 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
     ViewUpdateResult& result) {
 
   const TileSelectionState lastFrameSelectionState =
-      tile.getLastSelectionState();
+      frameState.viewGroup.getPreviousSelectionState(tile);
 
-  markChildrenNonRendered(frameState.lastFrameNumber, tile, result);
-  tile.setLastSelectionState(TileSelectionState(
-      frameState.currentFrameNumber,
-      TileSelectionState::Result::Rendered));
+  markChildrenNonRendered(
+      frameState.viewGroup,
+      frameState.lastFrameNumber,
+      tile,
+      result);
+  frameState.viewGroup.setCurrentSelectionState(
+      tile,
+      TileSelectionState(
+          frameState.currentFrameNumber,
+          TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
   return Tileset::createTraversalDetailsForSingleTile(
@@ -1127,7 +1165,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     bool queuedForLoad,
     double tilePriority) {
   const TileSelectionState lastFrameSelectionState =
-      tile.getLastSelectionState();
+      frameState.viewGroup.getPreviousSelectionState(tile);
 
   std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
 
@@ -1136,10 +1174,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
   for (size_t i = firstRenderedDescendantIndex; i < renderList.size(); ++i) {
     Tile* pWorkTile = renderList[i];
     while (pWorkTile != nullptr &&
-           !pWorkTile->getLastSelectionState().wasKicked(
-               frameState.currentFrameNumber) &&
+           !frameState.viewGroup.getCurrentSelectionState(*pWorkTile)
+                .wasKicked(frameState.currentFrameNumber) &&
            pWorkTile != &tile) {
-      pWorkTile->getLastSelectionState().kick();
+      frameState.viewGroup.kick(*pWorkTile);
       pWorkTile = pWorkTile->getParent();
     }
   }
@@ -1155,9 +1193,11 @@ bool Tileset::_kickDescendantsAndRenderTile(
     renderList.push_back(&tile);
   }
 
-  tile.setLastSelectionState(TileSelectionState(
-      frameState.currentFrameNumber,
-      TileSelectionState::Result::Rendered));
+  frameState.viewGroup.setCurrentSelectionState(
+      tile,
+      TileSelectionState(
+          frameState.currentFrameNumber,
+          TileSelectionState::Result::Rendered));
 
   // If we're waiting on heaps of descendants, the above will take too long. So
   // in that case, load this tile INSTEAD of loading any of the descendants, and
@@ -1344,7 +1384,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     action = VisitTileAction::Render;
 
   const TileSelectionState lastFrameSelectionState =
-      tile.getLastSelectionState();
+      frameState.viewGroup.getPreviousSelectionState(tile);
   const TileSelectionState::Result lastFrameSelectionResult =
       lastFrameSelectionState.getResult(frameState.lastFrameNumber);
 
@@ -1360,7 +1400,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
       lastFrameSelectionResult == TileSelectionState::Result::Refined;
   bool childLastRefined = false;
   for (const Tile& child : tile.getChildren()) {
-    if (child.getLastSelectionState().getResult(frameState.lastFrameNumber) ==
+    if (frameState.viewGroup.getPreviousSelectionState(child).getResult(
+            frameState.lastFrameNumber) ==
         TileSelectionState::Result::Refined) {
       childLastRefined = true;
       break;
@@ -1383,7 +1424,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     } else if (
         occlusion == TileOcclusionState::OcclusionUnavailable &&
         this->_options.delayRefinementForOcclusion &&
-        tile.getLastSelectionState().getOriginalResult(
+        frameState.viewGroup.getPreviousSelectionState(tile).getOriginalResult(
             frameState.lastFrameNumber) !=
             TileSelectionState::Result::Refined) {
       ++result.tilesWaitingForOcclusionResults;
@@ -1493,11 +1534,18 @@ Tileset::TraversalDetails Tileset::_visitTile(
         tilePriority);
   } else {
     if (tile.getRefine() != TileRefine::Add) {
-      markTileNonRendered(frameState.lastFrameNumber, tile, result);
+      markTileNonRendered(
+          frameState.viewGroup,
+          frameState.lastFrameNumber,
+          tile,
+          result);
     }
-    tile.setLastSelectionState(TileSelectionState(
-        frameState.currentFrameNumber,
-        TileSelectionState::Result::Refined));
+
+    frameState.viewGroup.setCurrentSelectionState(
+        tile,
+        TileSelectionState(
+            frameState.currentFrameNumber,
+            TileSelectionState::Result::Refined));
   }
 
   if (this->_options.preloadAncestors && !queuedForLoad) {
@@ -1724,7 +1772,7 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
         TraversalDetails childDetails = createTraversalDetailsForSingleTile(
             frameState,
             child,
-            child.getLastSelectionState());
+            frameState.viewGroup.getPreviousSelectionState(child));
         wasRenderedLastFrame |= childDetails.anyWereRenderedLastFrame;
       }
     }

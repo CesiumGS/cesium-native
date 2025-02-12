@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/ViewGroup.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -216,6 +217,11 @@ public:
   const ViewUpdateResult&
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
+  const ViewUpdateResult& updateView(
+      ViewGroup& viewGroup,
+      const std::vector<ViewState>& frustums,
+      float deltaTime = 0.0f);
+
   /**
    * @brief Gets the total number of tiles that are currently loaded.
    */
@@ -374,6 +380,7 @@ private:
    * passed on through the traversal.
    */
   struct FrameState {
+    ViewGroup& viewGroup;
     const std::vector<ViewState>& frustums;
     std::vector<double> fogDensities;
     int32_t lastFrameNumber;
@@ -556,6 +563,8 @@ private:
       _pTilesetContentManager;
 
   std::list<TilesetHeightRequest> _heightRequests;
+
+  ViewGroup _defaultViewGroup;
 
   void addTileToLoadQueue(
       Tile& tile,
