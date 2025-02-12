@@ -2,6 +2,7 @@
 
 #include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/Library.h"
+#include "CesiumGeometry/OrientedBoundingBox.h"
 
 #include <glm/glm.hpp>
 
@@ -12,6 +13,12 @@ class Plane;
 /**
  * @brief A bounding volume defined as a closed and convex cylinder with any
  * orientation.
+ *
+ * Note: This uses a \ref OrientedBoundingBox underneath the hood to approximate
+ * the result, similar to how CesiumJS approximates cylinders. The output may
+ * not be accurate to the actual cylinder itself.
+ *
+ * @see OrientedBoundingBox
  */
 class CESIUMGEOMETRY_API BoundingCylinder final {
 public:
@@ -28,10 +35,7 @@ public:
   BoundingCylinder(
       const glm::dvec3& center,
       const glm::dmat3& halfAxes) noexcept
-      : _center(center),
-        _halfAxes(halfAxes),
-        // TODO: what should we do if halfAxes is singular?
-        _inverseHalfAxes(glm::inverse(halfAxes)),
+      : _box(center, halfAxes),
         _radius(glm::length(halfAxes[0])),
         _height(2.0 * glm::length(halfAxes[2])) {}
 
@@ -39,7 +43,7 @@ public:
    * @brief Gets the center of the cylinder.
    */
   constexpr const glm::dvec3& getCenter() const noexcept {
-    return this->_center;
+    return this->_box.getCenter();
   }
 
   /**
@@ -48,7 +52,7 @@ public:
    * a radius and height of 1 that is centered at the origin.
    */
   constexpr const glm::dmat3& getHalfAxes() const noexcept {
-    return this->_halfAxes;
+    return this->_box.getHalfAxes();
   }
 
   /**
@@ -66,7 +70,7 @@ public:
    * to local space relative to the cylinder.
    */
   constexpr const glm::dmat3& getInverseHalfAxes() const noexcept {
-    return this->_inverseHalfAxes;
+    return this->_box.getInverseHalfAxes();
   }
 
   /**
@@ -113,10 +117,7 @@ public:
   BoundingCylinder transform(const glm::dmat4& transformation) const noexcept;
 
 private:
-  glm::dvec3 _center;
-  glm::dmat3 _halfAxes;
-  glm::dmat3 _inverseHalfAxes;
-
+  OrientedBoundingBox _box;
   double _radius;
   double _height;
 };

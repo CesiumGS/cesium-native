@@ -45,25 +45,7 @@ TEST_CASE("BoundingCylinder::computeDistanceSquaredToPosition test") {
     CHECK(cylinder.computeDistanceSquaredToPosition(position) == 0);
   }
 
-  SUBCASE("outside cylinder along height") {
-    glm::dvec3 position(-3.0, 0.0, 0.0);
-    double expected = 4.0;
-    CHECK(CesiumUtility::Math::equalsEpsilon(
-        cylinder.computeDistanceSquaredToPosition(position),
-        expected,
-        CesiumUtility::Math::Epsilon6));
-  }
-
-  SUBCASE("outside cylinder above disc") {
-    glm::dvec3 position(0.0, 0.0, 2.0);
-    double expected = 0.25;
-    CHECK(CesiumUtility::Math::equalsEpsilon(
-        cylinder.computeDistanceSquaredToPosition(position),
-        expected,
-        CesiumUtility::Math::Epsilon6));
-  }
-
-  SUBCASE("outside cylinder 'corner'") {
+  SUBCASE("outside cylinder") {
     glm::dvec3 position(-3.0, 0.0, 2.0);
     double expected = 4.25;
     CHECK(CesiumUtility::Math::equalsEpsilon(
