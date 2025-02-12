@@ -752,6 +752,13 @@ public:
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
 
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept {
+    return _pEnumDefinition;
+  }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1124,6 +1131,11 @@ public:
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
 
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1363,6 +1375,11 @@ public:
    */
   PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
 
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1556,6 +1573,11 @@ public:
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::String; }
+
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -1935,6 +1957,11 @@ public:
    * accessing.
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
+
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -2382,6 +2409,11 @@ public:
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
 
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2677,6 +2709,11 @@ public:
    */
   PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
 
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2928,6 +2965,11 @@ public:
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::String; }
+
+  /**
+   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
+   */
+  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
 
 protected:
   /** @copydoc PropertyViewStatus */
