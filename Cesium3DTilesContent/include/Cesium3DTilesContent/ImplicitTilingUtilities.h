@@ -16,7 +16,7 @@ class S2CellBoundingVolume;
 namespace CesiumGeometry {
 class OrientedBoundingBox;
 class BoundingCylinder;
-}
+} // namespace CesiumGeometry
 
 namespace Cesium3DTiles {
 struct BoundingVolume;
