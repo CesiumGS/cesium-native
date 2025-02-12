@@ -5,6 +5,7 @@
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <algorithm>
@@ -396,7 +397,8 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -412,7 +414,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -473,7 +476,8 @@ public:
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt),
-        _pEnumDefinition(pEnumDefinition) {
+        _pEnumDefinition(pEnumDefinition),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -534,7 +538,8 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -741,6 +746,12 @@ public:
     return _defaultValue;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -759,6 +770,7 @@ private:
   std::optional<ElementType> _noData;
   std::optional<ElementType> _defaultValue;
   const CesiumGltf::Enum* _pEnumDefinition = nullptr;
+  PropertyType _propertyType;
 
   /**
    * @brief Attempts to parse an ElementType from the given json value.
@@ -908,7 +920,8 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -924,7 +937,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -981,7 +995,8 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -1103,6 +1118,12 @@ public:
     return _defaultValue;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1120,6 +1141,7 @@ private:
   bool _required;
   std::optional<ElementType> _noData;
   std::optional<NormalizedType> _defaultValue;
+  PropertyType _propertyType;
 
   /**
    * @brief Attempts to parse from the given json value.
@@ -1335,6 +1357,12 @@ public:
    */
   std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1523,6 +1551,12 @@ public:
     return std::nullopt;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::String; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1577,7 +1611,8 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -1595,7 +1630,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -1653,7 +1689,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -1711,7 +1748,8 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -1892,6 +1930,12 @@ public:
         _defaultValue->size()));
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1911,6 +1955,7 @@ private:
   bool _required;
   std::optional<std::vector<std::byte>> _noData;
   std::optional<std::vector<std::byte>> _defaultValue;
+  PropertyType _propertyType;
 
   using PropertyDefinitionType = std::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
@@ -2105,7 +2150,8 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -2123,7 +2169,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -2180,7 +2227,8 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -2328,6 +2376,12 @@ public:
         _defaultValue->size()));
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2347,6 +2401,7 @@ private:
   bool _required;
   std::optional<std::vector<std::byte>> _noData;
   std::optional<std::vector<std::byte>> _defaultValue;
+  PropertyType _propertyType;
 
   using PropertyDefinitionType = std::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
@@ -2616,6 +2671,12 @@ public:
     return std::nullopt;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2861,6 +2922,12 @@ public:
 
     return std::nullopt;
   }
+
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::String; }
 
 protected:
   /** @copydoc PropertyViewStatus */
