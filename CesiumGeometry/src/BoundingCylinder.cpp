@@ -4,7 +4,9 @@
 #include "CesiumGeometry/OrientedBoundingBox.h"
 #include "CesiumGeometry/Plane.h"
 
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace CesiumGeometry {
 
