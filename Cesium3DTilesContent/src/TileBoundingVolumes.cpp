@@ -1,6 +1,9 @@
+#include "Cesium3DTilesContent/TileBoundingVolumes.h"
+
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
-#include <Cesium3DTilesContent/TileBoundingVolumes.h>
+#include <CesiumGeometry/BoundingCylinder.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -119,4 +122,43 @@ void TileBoundingVolumes::setS2CellBoundingVolume(
   extension.maximumHeight = s2BoundingVolume.getMaximumHeight();
 }
 
+std::optional<BoundingCylinder>
+TileBoundingVolumes::getBoundingCylinder(const BoundingVolume& boundingVolume) {
+  const Extension3dTilesBoundingVolumeCylinder* pExtension =
+      boundingVolume.getExtension<Extension3dTilesBoundingVolumeCylinder>();
+  if (!pExtension)
+    return std::nullopt;
+
+  if (pExtension->cylinder.size() < 12)
+    return std::nullopt;
+
+  const std::vector<double>& a = pExtension->cylinder;
+  return CesiumGeometry::BoundingCylinder(
+      glm::dvec3(a[0], a[1], a[2]),
+      glm::dmat3(a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11]));
+}
+
+void TileBoundingVolumes::setBoundingCylinder(
+    Cesium3DTiles::BoundingVolume& boundingVolume,
+    const CesiumGeometry::BoundingCylinder& boundingCylinder) {
+  Extension3dTilesBoundingVolumeCylinder& extension =
+      boundingVolume.addExtension<Extension3dTilesBoundingVolumeCylinder>();
+
+  const glm::dvec3& center = boundingCylinder.getCenter();
+  const glm::dmat3& halfAxes = boundingCylinder.getHalfAxes();
+
+  extension.cylinder = {
+      center.x,
+      center.y,
+      center.z,
+      halfAxes[0].x,
+      halfAxes[0].y,
+      halfAxes[0].z,
+      halfAxes[1].x,
+      halfAxes[1].y,
+      halfAxes[1].z,
+      halfAxes[2].x,
+      halfAxes[2].y,
+      halfAxes[2].z};
+}
 } // namespace Cesium3DTilesContent

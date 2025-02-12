@@ -15,7 +15,7 @@ BoundingCylinder::intersectPlane(const Plane& plane) const noexcept {
 
 double BoundingCylinder::computeDistanceSquaredToPosition(
     const glm::dvec3& position) const noexcept {
-  this->_box.computeDistanceSquaredToPosition(position);
+  return this->_box.computeDistanceSquaredToPosition(position);
 }
 
 bool BoundingCylinder::contains(const glm::dvec3& position) const noexcept {

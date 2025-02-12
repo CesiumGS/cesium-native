@@ -72,6 +72,13 @@ bool boundingVolumeContainsCoordinate(
       return s2Cell.computeBoundingRegion(ellipsoid).getRectangle().contains(
           coordinate);
     }
+
+    bool operator()(const BoundingCylinder& cylinder) noexcept {
+      std::optional<double> t = IntersectionTests::rayOBBParametric(
+          ray,
+          OrientedBoundingBox::fromCylinder(cylinder));
+      return t && t.value() >= 0;
+    }
   };
 
   return std::visit(Operation{ray, coordinate, ellipsoid}, boundingVolume);

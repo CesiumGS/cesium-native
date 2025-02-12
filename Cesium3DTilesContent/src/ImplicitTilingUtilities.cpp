@@ -1,6 +1,9 @@
+#include "Cesium3DTilesContent/ImplicitTilingUtilities.h"
+
+#include "Cesium3DTilesContent/TileBoundingVolumes.h"
+
 #include <Cesium3DTiles/BoundingVolume.h>
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesContent/TileBoundingVolumes.h>
+#include <CesiumGeometry/BoundingCylinder.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -177,6 +180,14 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
     TileBoundingVolumes::setS2CellBoundingVolume(result, s2);
   }
 
+  std::optional<BoundingCylinder> maybeCylinder =
+      TileBoundingVolumes::getBoundingCylinder(rootBoundingVolume);
+  if (maybeCylinder) {
+    BoundingCylinder cylinder =
+        ImplicitTilingUtilities::computeBoundingVolume(*maybeCylinder, tileID);
+    TileBoundingVolumes::setBoundingCylinder(result, cylinder);
+  }
+
   return result;
 }
 } // namespace
@@ -341,6 +352,24 @@ ImplicitTilingUtilities::computeBoundingVolume(
       childMinHeight,
       childMaxHeight,
       ellipsoid);
+}
+
+CesiumGeometry::BoundingCylinder ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::BoundingCylinder& rootBoundingVolume,
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  CesiumGeometry::OrientedBoundingBox result = computeBoundingVolume(
+      CesiumGeometry::OrientedBoundingBox::fromCylinder(rootBoundingVolume),
+      tileID);
+  return result.toCylinder();
+}
+
+CesiumGeometry::BoundingCylinder ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::BoundingCylinder& rootBoundingVolume,
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  CesiumGeometry::OrientedBoundingBox result = computeBoundingVolume(
+      CesiumGeometry::OrientedBoundingBox::fromCylinder(rootBoundingVolume),
+      tileID);
+  return result.toCylinder();
 }
 
 double
