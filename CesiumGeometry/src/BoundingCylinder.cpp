@@ -1,10 +1,10 @@
 #include "CesiumGeometry/BoundingCylinder.h"
 
+#include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/OrientedBoundingBox.h"
 #include "CesiumGeometry/Plane.h"
 
-#include <glm/geometric.hpp>
-#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
 
 namespace CesiumGeometry {
 

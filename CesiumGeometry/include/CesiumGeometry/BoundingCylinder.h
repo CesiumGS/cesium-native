@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CesiumGeometry/CullingResult.h"
 #include "CesiumGeometry/Library.h"
 #include "CesiumGeometry/OrientedBoundingBox.h"
 
@@ -9,6 +8,7 @@
 namespace CesiumGeometry {
 
 class Plane;
+enum class CullingResult;
 
 /**
  * @brief A bounding volume defined as a closed and convex cylinder with any
