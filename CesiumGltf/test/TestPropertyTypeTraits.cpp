@@ -193,365 +193,65 @@ TEST_CASE("Test MetadataArrayType") {
   REQUIRE(std::is_same_v<type, uint32_t>);
 }
 
-TEST_CASE("TypeToPropertyType") {
-  SUBCASE("Works for scalar types") {
-    REQUIRE(TypeToPropertyType<uint8_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<uint8_t>::component == PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<int8_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<int8_t>::component == PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<uint16_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<uint16_t>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<int16_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<int16_t>::component == PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<uint32_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<uint32_t>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<int32_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<int32_t>::component == PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<uint64_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<uint64_t>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<int64_t>::value == PropertyType::Scalar);
-    REQUIRE(
-        TypeToPropertyType<int64_t>::component == PropertyComponentType::Int64);
+TEST_CASE("Test canRepresentPropertyType") {
+  SUBCASE("Works for scalars") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Scalar));
   }
 
-  SUBCASE("Works for vecN types") {
-    // Vec2
-    REQUIRE(TypeToPropertyType<glm::u8vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::u8vec2>::component ==
-        PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<glm::i8vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::i8vec2>::component ==
-        PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<glm::u16vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::u16vec2>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<glm::i16vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::i16vec2>::component ==
-        PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<glm::uvec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::uvec2>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<glm::ivec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::ivec2>::component ==
-        PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<glm::u64vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::u64vec2>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<glm::i64vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::i64vec2>::component ==
-        PropertyComponentType::Int64);
-
-    REQUIRE(TypeToPropertyType<glm::vec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::vec2>::component ==
-        PropertyComponentType::Float32);
-
-    REQUIRE(TypeToPropertyType<glm::dvec2>::value == PropertyType::Vec2);
-    REQUIRE(
-        TypeToPropertyType<glm::dvec2>::component ==
-        PropertyComponentType::Float64);
-
-    // Vec3
-    REQUIRE(TypeToPropertyType<glm::u8vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::u8vec3>::component ==
-        PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<glm::i8vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::i8vec3>::component ==
-        PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<glm::u16vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::u16vec3>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<glm::i16vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::i16vec3>::component ==
-        PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<glm::uvec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::uvec3>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<glm::ivec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::ivec3>::component ==
-        PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<glm::u64vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::u64vec3>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<glm::i64vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::i64vec3>::component ==
-        PropertyComponentType::Int64);
-
-    REQUIRE(TypeToPropertyType<glm::vec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::vec3>::component ==
-        PropertyComponentType::Float32);
-
-    REQUIRE(TypeToPropertyType<glm::dvec3>::value == PropertyType::Vec3);
-    REQUIRE(
-        TypeToPropertyType<glm::dvec3>::component ==
-        PropertyComponentType::Float64);
-
-    // Vec4
-    REQUIRE(TypeToPropertyType<glm::u8vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::u8vec4>::component ==
-        PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<glm::i8vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::i8vec4>::component ==
-        PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<glm::u16vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::u16vec4>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<glm::i16vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::i16vec4>::component ==
-        PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<glm::uvec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::uvec4>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<glm::ivec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::ivec4>::component ==
-        PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<glm::u64vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::u64vec4>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<glm::i64vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::i64vec4>::component ==
-        PropertyComponentType::Int64);
-
-    REQUIRE(TypeToPropertyType<glm::vec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::vec4>::component ==
-        PropertyComponentType::Float32);
-
-    REQUIRE(TypeToPropertyType<glm::dvec4>::value == PropertyType::Vec4);
-    REQUIRE(
-        TypeToPropertyType<glm::dvec4>::component ==
-        PropertyComponentType::Float64);
+  SUBCASE("Works for enums") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Enum));
   }
 
-  SUBCASE("Works for matN types") {
-    // Mat2
-    REQUIRE(TypeToPropertyType<glm::u8mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::u8mat2x2>::component ==
-        PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<glm::i8mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::i8mat2x2>::component ==
-        PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<glm::u16mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::u16mat2x2>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<glm::i16mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::i16mat2x2>::component ==
-        PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<glm::u32mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::u32mat2x2>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<glm::i32mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::i32mat2x2>::component ==
-        PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<glm::u64mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::u64mat2x2>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<glm::i64mat2x2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::i64mat2x2>::component ==
-        PropertyComponentType::Int64);
-
-    REQUIRE(TypeToPropertyType<glm::mat2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::mat2>::component ==
-        PropertyComponentType::Float32);
-
-    REQUIRE(TypeToPropertyType<glm::dmat2>::value == PropertyType::Mat2);
-    REQUIRE(
-        TypeToPropertyType<glm::dmat2>::component ==
-        PropertyComponentType::Float64);
-
-    // Mat3
-    REQUIRE(TypeToPropertyType<glm::u8mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::u8mat3x3>::component ==
-        PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<glm::i8mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::i8mat3x3>::component ==
-        PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<glm::u16mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::u16mat3x3>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<glm::i16mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::i16mat3x3>::component ==
-        PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<glm::u32mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::u32mat3x3>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<glm::i32mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::i32mat3x3>::component ==
-        PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<glm::u64mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::u64mat3x3>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<glm::i64mat3x3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::i64mat3x3>::component ==
-        PropertyComponentType::Int64);
-
-    REQUIRE(TypeToPropertyType<glm::mat3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::mat3>::component ==
-        PropertyComponentType::Float32);
-
-    REQUIRE(TypeToPropertyType<glm::dmat3>::value == PropertyType::Mat3);
-    REQUIRE(
-        TypeToPropertyType<glm::dmat3>::component ==
-        PropertyComponentType::Float64);
-
-    // Mat4
-    REQUIRE(TypeToPropertyType<glm::u8mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::u8mat4x4>::component ==
-        PropertyComponentType::Uint8);
-
-    REQUIRE(TypeToPropertyType<glm::i8mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::i8mat4x4>::component ==
-        PropertyComponentType::Int8);
-
-    REQUIRE(TypeToPropertyType<glm::u16mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::u16mat4x4>::component ==
-        PropertyComponentType::Uint16);
-
-    REQUIRE(TypeToPropertyType<glm::i16mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::i16mat4x4>::component ==
-        PropertyComponentType::Int16);
-
-    REQUIRE(TypeToPropertyType<glm::u32mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::u32mat4x4>::component ==
-        PropertyComponentType::Uint32);
-
-    REQUIRE(TypeToPropertyType<glm::i32mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::i32mat4x4>::component ==
-        PropertyComponentType::Int32);
-
-    REQUIRE(TypeToPropertyType<glm::u64mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::u64mat4x4>::component ==
-        PropertyComponentType::Uint64);
-
-    REQUIRE(TypeToPropertyType<glm::i64mat4x4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::i64mat4x4>::component ==
-        PropertyComponentType::Int64);
-
-    REQUIRE(TypeToPropertyType<glm::mat4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::mat4>::component ==
-        PropertyComponentType::Float32);
-
-    REQUIRE(TypeToPropertyType<glm::dmat4>::value == PropertyType::Mat4);
-    REQUIRE(
-        TypeToPropertyType<glm::dmat4>::component ==
-        PropertyComponentType::Float64);
+  SUBCASE("Works for vecNs") {
+    REQUIRE(canRepresentPropertyType<glm::vec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::dvec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::vec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::dvec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::vec4>(PropertyType::Vec4));
+    REQUIRE(canRepresentPropertyType<glm::dvec4>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Vec4));
   }
 
-  SUBCASE("Works for boolean") {
-    REQUIRE(TypeToPropertyType<bool>::value == PropertyType::Boolean);
-    REQUIRE(TypeToPropertyType<bool>::component == PropertyComponentType::None);
+  SUBCASE("Works for matNs") {
+    REQUIRE(canRepresentPropertyType<glm::mat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::dmat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::mat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::dmat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::mat4>(PropertyType::Mat4));
+    REQUIRE(canRepresentPropertyType<glm::dmat4>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Mat4));
   }
 
-  SUBCASE("Works for string") {
-    REQUIRE(
-        TypeToPropertyType<std::string_view>::value == PropertyType::String);
-    REQUIRE(
-        TypeToPropertyType<std::string_view>::component ==
-        PropertyComponentType::None);
+  SUBCASE("Works for strings") {
+    REQUIRE(canRepresentPropertyType<std::string_view>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::String));
+  }
+
+  SUBCASE("Works for booleans") {
+    REQUIRE(canRepresentPropertyType<bool>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Boolean));
   }
 }
 

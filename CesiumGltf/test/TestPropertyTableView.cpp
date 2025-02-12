@@ -1390,9 +1390,8 @@ TEST_CASE("Test fixed-length enum array") {
         boolArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorTypeMismatch);
 
-    PropertyTablePropertyView<PropertyArrayView<glm::uvec2>> uvec2ArrayInvalid =
-        view.getPropertyView<PropertyArrayView<glm::uvec2>>(
-            "TestClassProperty");
+    PropertyTablePropertyView<PropertyArrayView<int8_t>> uvec2ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<int8_t>>("TestClassProperty");
     REQUIRE(
         uvec2ArrayInvalid.status() ==
         PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);

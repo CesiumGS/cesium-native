@@ -4,6 +4,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <glm/common.hpp>
 
@@ -1126,8 +1127,7 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type &&
-        !(type == PropertyType::Enum && IsMetadataInteger<T>::value)) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -1157,7 +1157,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorInvalidEnum);
     }
 
-    if (TypeToPropertyType<T>::component != componentType) {
+    if (TypeToPropertyComponentType<T>::component != componentType) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
@@ -1238,7 +1238,7 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type && type != PropertyType::Enum) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -1268,7 +1268,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorInvalidEnum);
     }
 
-    if (TypeToPropertyType<T>::component != componentType) {
+    if (TypeToPropertyComponentType<T>::component != componentType) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }

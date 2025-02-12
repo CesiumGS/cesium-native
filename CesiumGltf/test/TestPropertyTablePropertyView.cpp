@@ -1,3 +1,5 @@
+#include "CesiumNativeTests/TypeToPropertyTypeString.h"
+
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTableProperty.h>
@@ -65,10 +67,10 @@ template <typename T> static void checkNumeric(const std::vector<T>& expected) {
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   if (componentType != PropertyComponentType::None) {
     classProperty.componentType =
         convertPropertyComponentTypeToString(componentType);
@@ -102,10 +104,10 @@ static void checkNumeric(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -147,10 +149,10 @@ static void checkNormalizedNumeric(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -197,10 +199,10 @@ static void checkVariableLengthArray(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<DataType>::value);
+  classProperty.type = TypeToPropertyTypeString<DataType>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<DataType>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<DataType>::component;
   if (componentType != PropertyComponentType::None) {
     classProperty.componentType =
         convertPropertyComponentTypeToString(componentType);
@@ -262,10 +264,10 @@ static void checkVariableLengthArray(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<DataType>::value);
+  classProperty.type = TypeToPropertyTypeString<DataType>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<DataType>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<DataType>::component;
   if (componentType != PropertyComponentType::None) {
     classProperty.componentType =
         convertPropertyComponentTypeToString(componentType);
@@ -343,10 +345,10 @@ static void checkNormalizedVariableLengthArray(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<DataType>::value);
+  classProperty.type = TypeToPropertyTypeString<DataType>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<DataType>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<DataType>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -408,10 +410,10 @@ static void checkFixedLengthArray(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   if (componentType != PropertyComponentType::None) {
     classProperty.componentType =
         convertPropertyComponentTypeToString(componentType);
@@ -468,10 +470,10 @@ static void checkFixedLengthArray(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   if (componentType != PropertyComponentType::None) {
     classProperty.componentType =
         convertPropertyComponentTypeToString(componentType);
@@ -543,10 +545,10 @@ static void checkNormalizedFixedLengthArray(
 
   PropertyTableProperty propertyTableProperty;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 

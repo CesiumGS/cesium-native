@@ -1,3 +1,5 @@
+#include "CesiumNativeTests/TypeToPropertyTypeString.h"
+
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
@@ -61,35 +63,17 @@ const Accessor& addValuesToModel(Model& model, const std::vector<T>& values) {
   accessor.count = static_cast<int64_t>(values.size());
   accessor.byteOffset = 0;
 
-  PropertyType type = TypeToPropertyType<T>::value;
-  switch (type) {
-  case PropertyType::Scalar:
-    accessor.type = Accessor::Type::SCALAR;
-    break;
-  case PropertyType::Vec2:
-    accessor.type = Accessor::Type::VEC2;
-    break;
-  case PropertyType::Vec3:
-    accessor.type = Accessor::Type::VEC3;
-    break;
-  case PropertyType::Vec4:
-    accessor.type = Accessor::Type::VEC4;
-    break;
-  case PropertyType::Mat2:
-    accessor.type = Accessor::Type::MAT2;
-    break;
-  case PropertyType::Mat3:
-    accessor.type = Accessor::Type::MAT3;
-    break;
-  case PropertyType::Mat4:
-    accessor.type = Accessor::Type::MAT4;
-    break;
-  default:
+  const std::string typeStr = TypeToPropertyTypeString<T>::value;
+  if (typeStr == ClassProperty::Type::STRING ||
+      typeStr == ClassProperty::Type::BOOLEAN ||
+      typeStr == ClassProperty::Type::ENUM) {
     CESIUM_ASSERT(false && "Input type is not supported as an accessor type");
-    break;
+  } else {
+    accessor.type = typeStr;
   }
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   switch (componentType) {
   case PropertyComponentType::Int8:
     accessor.componentType = Accessor::ComponentType::BYTE;
@@ -125,10 +109,10 @@ template <typename T> void checkAttributeValues(const std::vector<T>& values) {
 
   PropertyAttributeProperty property;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -157,10 +141,10 @@ void checkAttributeValues(
 
   PropertyAttributeProperty property;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -194,10 +178,10 @@ void checkNormalizedAttributeValues(
 
   PropertyAttributeProperty property;
   ClassProperty classProperty;
-  classProperty.type =
-      convertPropertyTypeToString(TypeToPropertyType<T>::value);
+  classProperty.type = TypeToPropertyTypeString<T>::value;
 
-  PropertyComponentType componentType = TypeToPropertyType<T>::component;
+  PropertyComponentType componentType =
+      TypeToPropertyComponentType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 

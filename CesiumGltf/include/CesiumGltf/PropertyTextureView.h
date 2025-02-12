@@ -6,6 +6,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/PropertyTexturePropertyView.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/TextureView.h>
 
 namespace CesiumGltf {
@@ -595,7 +596,7 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type && type != PropertyType::Enum) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -626,7 +627,7 @@ private:
           PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
     }
 
-    if (TypeToPropertyType<T>::component != componentType) {
+    if (TypeToPropertyComponentType<T>::component != componentType) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
     }
@@ -661,7 +662,7 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -669,7 +670,7 @@ private:
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
-    if (TypeToPropertyType<T>::component != componentType) {
+    if (TypeToPropertyComponentType<T>::component != componentType) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
     }
@@ -705,7 +706,7 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type && type != PropertyType::Enum) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -736,7 +737,7 @@ private:
           PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
     }
 
-    if (TypeToPropertyType<T>::component != componentType) {
+    if (TypeToPropertyComponentType<T>::component != componentType) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
     }

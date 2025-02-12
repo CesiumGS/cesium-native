@@ -126,13 +126,13 @@ public:
 template <typename T>
 PropertyViewStatusType
 validatePropertyType(const ClassProperty& classProperty) {
-  if (TypeToPropertyType<T>::value !=
-      convertStringToPropertyType(classProperty.type)) {
+  if (!canRepresentPropertyType<T>(
+          convertStringToPropertyType(classProperty.type))) {
     return PropertyViewStatus::ErrorTypeMismatch;
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyType<T>::component;
+      TypeToPropertyComponentType<T>::component;
 
   if (!classProperty.componentType &&
       expectedComponentType != PropertyComponentType::None) {
@@ -168,7 +168,7 @@ PropertyViewStatusType validatePropertyType(
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyType<T>::component;
+      TypeToPropertyComponentType<T>::component;
 
   if (expectedComponentType !=
       convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
@@ -195,13 +195,13 @@ validateArrayPropertyType(const ClassProperty& classProperty) {
   using ElementType = typename MetadataArrayType<T>::type;
 
   if (convertStringToPropertyType(classProperty.type) != PropertyType::Enum) {
-    if (TypeToPropertyType<ElementType>::value !=
-        convertStringToPropertyType(classProperty.type)) {
+    if (!canRepresentPropertyType<ElementType>(
+            convertStringToPropertyType(classProperty.type))) {
       return PropertyViewStatus::ErrorTypeMismatch;
     }
 
     PropertyComponentType expectedComponentType =
-        TypeToPropertyType<ElementType>::component;
+        TypeToPropertyComponentType<ElementType>::component;
 
     if (!classProperty.componentType &&
         expectedComponentType != PropertyComponentType::None) {
@@ -240,7 +240,7 @@ PropertyViewStatusType validateArrayPropertyType(
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyType<ElementType>::component;
+      TypeToPropertyComponentType<ElementType>::component;
 
   if (classProperty.componentType &&
       expectedComponentType !=
@@ -822,7 +822,7 @@ private:
         [this](auto property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
-            switch (TypeToPropertyType<ElementType>::component) {
+            switch (TypeToPropertyComponentType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               this->_offset = getValue(*property.offset);
@@ -839,7 +839,7 @@ private:
 
           if (property.scale) {
             // Only floating point types can specify a scale.
-            switch (TypeToPropertyType<ElementType>::component) {
+            switch (TypeToPropertyComponentType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               this->_scale = getValue(*property.scale);
@@ -1919,7 +1919,7 @@ private:
         [this](auto property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
-            switch (TypeToPropertyType<ElementType>::component) {
+            switch (TypeToPropertyComponentType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               if (this->_count > 0) {
@@ -1939,7 +1939,7 @@ private:
 
           if (property.scale) {
             // Only floating point types can specify a scale.
-            switch (TypeToPropertyType<ElementType>::component) {
+            switch (TypeToPropertyComponentType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               if (_count > 0) {
