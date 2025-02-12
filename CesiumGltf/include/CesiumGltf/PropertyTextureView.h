@@ -814,22 +814,24 @@ private:
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
-    if (pEnumDefinition == nullptr) {
-      return PropertyTexturePropertyView<T, Normalized>(
-          propertyTextureProperty,
-          classProperty,
-          _pModel->samplers[samplerIndex],
-          *pImage,
-          propertyOptions);
-    } else if constexpr (!Normalized) {
-      return PropertyTexturePropertyView<T, Normalized>(
-          propertyTextureProperty,
-          classProperty,
-          pEnumDefinition,
-          _pModel->samplers[samplerIndex],
-          *pImage,
-          propertyOptions);
+    if constexpr (!Normalized) {
+      if (pEnumDefinition != nullptr) {
+        return PropertyTexturePropertyView<T, Normalized>(
+            propertyTextureProperty,
+            classProperty,
+            pEnumDefinition,
+            _pModel->samplers[samplerIndex],
+            *pImage,
+            propertyOptions);
+      }
     }
+
+    return PropertyTexturePropertyView<T, Normalized>(
+        propertyTextureProperty,
+        classProperty,
+        _pModel->samplers[samplerIndex],
+        *pImage,
+        propertyOptions);
   }
 
   PropertyViewStatusType getTextureSafe(
