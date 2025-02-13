@@ -11,6 +11,7 @@
 - Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
 - `LayerJsonTerrainLoader` now includes the query parameters from the base URL in the requests for each `.terrain` file loaded.
 - Added support for `3DTILES_ellipsoid` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+- Added support for `3DTILES_content_voxels` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
 - Added generated classes for `EXT_primitive_voxels` and its dependencies in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 
 ##### Fixes :wrench:
