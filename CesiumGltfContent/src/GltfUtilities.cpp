@@ -295,8 +295,13 @@ std::string_view trimWhitespace(const std::string_view& s) {
   size_t end = s.find_last_not_of(" \t");
   if (end == std::string::npos)
     return {};
-  size_t start = s.find_first_not_of(" \t", 0, end + 1);
-  return s.substr(start, end - start + 1);
+
+  std::string_view trimmedRight = s.substr(0, end + 1);
+  size_t start = trimmedRight.find_first_not_of(" \t");
+  if (start == std::string::npos)
+    return {};
+
+  return trimmedRight.substr(start);
 }
 } // namespace
 

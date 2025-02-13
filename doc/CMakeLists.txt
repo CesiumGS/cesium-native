@@ -29,34 +29,21 @@ if(DOXYGEN_FOUND)
     )
 
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})
-    set(
-        DOXYGEN_EXAMPLE_PATH
-        ../Cesium3DTiles/test
-        ../Cesium3DTilesContent/test
-        ../Cesium3DTilesReader/test
-        ../Cesium3DTilesWriter/test
-        ../Cesium3DTilesSelection/test
-        ../CesiumAsync/test
-        ../CesiumGeometry/test
-        ../CesiumGeospatial/test
-        ../CesiumGltf/test
-        ../CesiumGltfContent/test
-        ../CesiumGltfReader/test
-        ../CesiumGltfWriter/test
-        ../CesiumIonClient/test
-        ../CesiumJsonWriter/test
-        ../CesiumQuantizedMeshTerrain/test
-        ../CesiumRasterOverlays/test
-        ../CesiumUtility/test
-        ../ # For examples drawn from the actual code
-    )
+
+    # Instead of specifying the full source tree in the example path, specify only the Cesium* lib directories to reduce parsing time
+    file(GLOB example_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_LIST_DIR} "../Cesium*")
+    foreach(child ${example_dirs})
+      if(IS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/${child})
+        list(APPEND DOXYGEN_EXAMPLE_PATH ${CMAKE_CURRENT_LIST_DIR}/${child})
+      endif()
+    endforeach()
 
     # These macro definitions confuse doxygen, causing it
     # to omit the respective elements in the documentation,
     # so ignore these macros during doxygen preprocessing:
     set(DOXYGEN_ENABLE_PREPROCESSING YES)
     set(DOXYGEN_MACRO_EXPANSION YES)
-    set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
+    set(DOXYGEN_EXPAND_ONLY_PREDEF NO)
     set(DOXYGEN_PREDEFINED
         "CESIUM3DTILES_API"
         "CESIUM3DTILESCONTENT_API"
@@ -76,7 +63,7 @@ if(DOXYGEN_FOUND)
         "CESIUMQUANTIZEDMESHTERRAIN_API"
         "CESIUMRASTEROVERLAYS_API"
         "CESIUMUTILITY_API"
-        "CESIUM_DEFAULT_ELLIPSOID=\=CesiumGeospatial::Ellipsoid::WGS84")
+        "CESIUM_DEFAULT_ELLIPSOID==CesiumGeospatial::Ellipsoid::WGS84")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/../node_modules/doxygen-awesome-css/doxygen-awesome.css")
     set(DOXYGEN_HTML_FOOTER "${CMAKE_CURRENT_LIST_DIR}/footer.html")
     set(DOXYGEN_GENERATE_TREEVIEW YES)
@@ -86,8 +73,6 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_SOURCE_BROWSER YES)
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
-    list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/node_modules/*")
-    list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/build/*")
 
     set(DOXYGEN_DOT_GRAPH_MAX_NODES 100)
     set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS_PRINT)
@@ -109,9 +94,9 @@ if(DOXYGEN_FOUND)
 
     # Add support for Mermaid charts using the @mermaid command.
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/assets/mermaid.min.js ${CMAKE_CURRENT_LIST_DIR}/assets/mingcute.json.js ${CMAKE_CURRENT_LIST_DIR}/assets/panzoom.js")
-    list(APPEND DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
-    list(APPEND DOXYGEN_ALIASES mermaid-interactive{1}="\\htmlonly <div class=\\\"mermaid interactive\\\"> ^^ \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly ^^ </div> \\endhtmlonly")
-    list(APPEND DOXYGEN_ALIASES svg-interactive{2}="\\htmlonly <div class=\\\"svg interactive\\\" style=\\\"min-height: \\2\\\"> ^^ \\endhtmlonly \\image html \\\"\\1.svg\\\" \\htmlonly ^^ </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES mermaid{1}="\\htmlonly <div class=\\\"mermaid\\\"> \\ilinebr \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly \\ilinebr </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES mermaid-interactive{1}="\\htmlonly <div class=\\\"mermaid interactive\\\"> \\ilinebr \\endhtmlonly \\htmlinclude \\\"\\1.mmd\\\" \\htmlonly \\ilinebr </div> \\endhtmlonly")
+    list(APPEND DOXYGEN_ALIASES svg-interactive{2}="\\htmlonly <div class=\\\"svg interactive\\\" style=\\\"min-height: \\2\\\"> \\ilinebr \\endhtmlonly \\image html \\\"\\1.svg\\\" \\htmlonly \\ilinebr </div> \\endhtmlonly")
     set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES DOXYGEN_HTML_EXTRA_FILES)
     list(APPEND DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_LIST_DIR}/diagrams")
 
