@@ -14,6 +14,7 @@
 ##### Fixes :wrench:
 
 - Fixed parsing URIs that have a scheme followed by `:` instead of `://`.
+- Fixed decoding of KHR_mesh_quantization normalized values.
 
 ### v0.44.2 - 2025-02-10
 
