@@ -12,6 +12,8 @@ class ExtensionWriterContext;
 namespace Cesium3DTiles {
 struct Extension3dTilesBoundingVolumeS2;
 struct Extension3dTilesEllipsoid;
+struct ExtensionContent3dTilesContentVoxels;
+struct Padding;
 struct Statistics;
 struct ClassStatistics;
 struct PropertyStatistics;
@@ -62,6 +64,28 @@ struct Extension3dTilesEllipsoidJsonWriter {
 
   static void write(
       const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionContent3dTilesContentVoxelsJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionContent3dTilesContentVoxels;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_content_voxels";
+
+  static void write(
+      const Cesium3DTiles::ExtensionContent3dTilesContentVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PaddingJsonWriter {
+  using ValueType = Cesium3DTiles::Padding;
+
+  static void write(
+      const Cesium3DTiles::Padding& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
