@@ -16,6 +16,12 @@
 
 - Fixed parsing URIs that have a scheme followed by `:` instead of `://`.
 
+### v0.44.3 - 2025-02-12
+
+##### Fixes :wrench:
+
+- Fixed another bug in `GltfUtilities::parseGltfCopyright` that could cause it to crash or produce incorrect results.
+
 ### v0.44.2 - 2025-02-10
 
 ##### Fixes :wrench:
