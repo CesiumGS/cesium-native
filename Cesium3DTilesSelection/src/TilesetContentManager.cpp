@@ -1118,6 +1118,8 @@ void TilesetContentManager::loadTileContent(
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
+        tile.decrementDoNotUnloadCount(
+            "TilesetContentManager::loadTileContent error while loading");
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
@@ -1179,9 +1181,12 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
 
   TileContent& content = tile.getContent();
 
-  // Don't unload empty tile
+  // We can unload an empty tile at any time.
   if (content.isEmptyContent()) {
-    return UnloadTileContentResult::Keep;
+    notifyTileUnloading(&tile);
+    content.setContentKind(TileUnknownContent{});
+    tile.setState(TileLoadState::Unloaded);
+    return UnloadTileContentResult::Remove;
   }
 
   if (content.isExternalContent()) {

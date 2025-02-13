@@ -1641,25 +1641,14 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
-void Tileset::_clearChildrenRecursively(Tile& tile) noexcept {
-  CESIUM_ASSERT(tile.getDoNotUnloadCount() == 0);
-  for (Tile& child : tile.getChildren()) {
-    // Though most tiles will have to be removed from _loadedTiles already to
-    // get to this point, tiles with empty content will not be. We have to
-    // remove them manually to ensure no dangling pointers are left in
-    // _loadedTiles.
-    this->_loadedTiles.remove(child);
-    _clearChildrenRecursively(child);
-  }
-
-  tile.clearChildren();
-}
-
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
-  const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
-  Tile* pTile = this->_loadedTiles.head();
+  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
+  // The root tile marks the beginning of the tiles that were used for rendering
+  // last frame. By iterating backwards starting from this position, we ensure
+  // that descendants will always be unloaded before their ancestors.
+  Tile* pTile = this->_loadedTiles.previous(pRootTile);
 
   // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
   // the end time to the max time_point in that case.
@@ -1672,7 +1661,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   std::vector<Tile*> tilesNeedingChildrenCleared;
 
   while (this->getTotalDataBytes() > maxBytes) {
-    if (pTile == nullptr || pTile == pRootTile) {
+    if (pTile == nullptr) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
       // for rendering last frame.
@@ -1682,11 +1671,11 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     // Don't unload this tile if it is still fading out.
     if (_updateResult.tilesFadingOut.find(pTile) !=
         _updateResult.tilesFadingOut.end()) {
-      pTile = this->_loadedTiles.next(*pTile);
+      pTile = this->_loadedTiles.previous(*pTile);
       continue;
     }
 
-    Tile* pNext = this->_loadedTiles.next(*pTile);
+    Tile* pNext = this->_loadedTiles.previous(*pTile);
 
     const UnloadTileContentResult removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
@@ -1707,11 +1696,12 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   }
 
   if (!tilesNeedingChildrenCleared.empty()) {
-    // Iterate backwards as tiles loaded sooner might contain tiles loaded later
-    for (auto it = tilesNeedingChildrenCleared.rbegin();
-         it != tilesNeedingChildrenCleared.rend();
-         ++it) {
-      _clearChildrenRecursively(**it);
+    // Because we iterated over the tiles list backwards, the
+    // `tilesNeedingChildrenCleared` vector is in order from bottom to top of
+    // the tree.
+    for (Tile* tile : tilesNeedingChildrenCleared) {
+      CESIUM_ASSERT(tile->getDoNotUnloadCount() == 0);
+      tile->clearChildren();
     }
   }
 }

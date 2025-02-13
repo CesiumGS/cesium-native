@@ -135,7 +135,6 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
-    this->_doNotUnloadCount = rhs._doNotUnloadCount;
   }
 
   return *this;
@@ -265,6 +264,68 @@ bool Tile::getMightHaveLatentChildren() const noexcept {
 
 void Tile::setMightHaveLatentChildren(bool mightHaveLatentChildren) noexcept {
   this->_mightHaveLatentChildren = mightHaveLatentChildren;
+}
+
+void Tile::clearChildren() noexcept {
+  CESIUM_ASSERT(this->_doNotUnloadCount == 0);
+  this->_children.clear();
+}
+
+void Tile::incrementDoNotUnloadCount(
+    [[maybe_unused]] const char* reason) noexcept {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+  const std::string reasonStr = fmt::format(
+      "Initiator ID: {}, {}",
+      TileIdUtilities::createTileIdString(this->getTileID()),
+      reason);
+  this->incrementDoNotUnloadCount(reasonStr);
+#else
+  this->incrementDoNotUnloadCount(std::string());
+#endif
+}
+
+void Tile::decrementDoNotUnloadCount(
+    [[maybe_unused]] const char* reason) noexcept {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+  const std::string reasonStr = fmt::format(
+      "Initiator ID: {}, {}",
+      TileIdUtilities::createTileIdString(this->getTileID()),
+      reason);
+  this->decrementDoNotUnloadCount(reasonStr);
+#else
+  this->decrementDoNotUnloadCount(std::string());
+#endif
+}
+
+void Tile::incrementDoNotUnloadCount(
+    [[maybe_unused]] const std::string& reason) noexcept {
+  ++this->_doNotUnloadCount;
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+  TileDoNotUnloadCountTracker::addEntry(
+      this->getTileID(),
+      true,
+      std::string(reason),
+      this->_doNotUnloadCount);
+#endif
+  if (this->getParent() != nullptr) {
+    this->getParent()->incrementDoNotUnloadCount(reason);
+  }
+}
+
+void Tile::decrementDoNotUnloadCount(
+    [[maybe_unused]] const std::string& reason) noexcept {
+  CESIUM_ASSERT(this->_doNotUnloadCount > 0);
+  --this->_doNotUnloadCount;
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+  TileDoNotUnloadCountTracker::addEntry(
+      this->getTileID(),
+      false,
+      std::string(reason),
+      this->_doNotUnloadCount);
+#endif
+  if (this->getParent() != nullptr) {
+    this->getParent()->decrementDoNotUnloadCount(reason);
+  }
 }
 
 } // namespace Cesium3DTilesSelection

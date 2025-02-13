@@ -215,7 +215,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void clearChildren() noexcept { this->_children.clear(); }
+  void clearChildren() noexcept;
 
   /**
    * @brief Assigns the given child tiles to this tile.
@@ -530,17 +530,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void incrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept {
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-    const std::string reasonStr = fmt::format(
-        "Initiator ID: {}, {}",
-        TileIdUtilities::createTileIdString(this->getTileID()),
-        reason);
-    this->incrementDoNotUnloadCount(reasonStr);
-#else
-    this->incrementDoNotUnloadCount(std::string());
-#endif
-  }
+  void incrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept;
 
   /**
    * @brief Decrements the internal count denoting that the tile and its
@@ -548,49 +538,14 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void decrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept {
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-    const std::string reasonStr = fmt::format(
-        "Initiator ID: {}, {}",
-        TileIdUtilities::createTileIdString(this->getTileID()),
-        reason);
-    this->decrementDoNotUnloadCount(reasonStr);
-#else
-    this->decrementDoNotUnloadCount(std::string());
-#endif
-  }
+  void decrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept;
 
 private:
   void incrementDoNotUnloadCount(
-      [[maybe_unused]] const std::string& reason) noexcept {
-    ++this->_doNotUnloadCount;
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-    TileDoNotUnloadCountTracker::addEntry(
-        this->getTileID(),
-        true,
-        std::string(reason),
-        this->_doNotUnloadCount);
-#endif
-    if (this->getParent() != nullptr) {
-      this->getParent()->incrementDoNotUnloadCount(reason);
-    }
-  }
+      [[maybe_unused]] const std::string& reason) noexcept;
 
   void decrementDoNotUnloadCount(
-      [[maybe_unused]] const std::string& reason) noexcept {
-    CESIUM_ASSERT(this->_doNotUnloadCount > 0);
-    --this->_doNotUnloadCount;
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-    TileDoNotUnloadCountTracker::addEntry(
-        this->getTileID(),
-        false,
-        std::string(reason),
-        this->_doNotUnloadCount);
-#endif
-    if (this->getParent() != nullptr) {
-      this->getParent()->decrementDoNotUnloadCount(reason);
-    }
-  }
+      [[maybe_unused]] const std::string& reason) noexcept;
 
   struct TileConstructorImpl {};
   template <
