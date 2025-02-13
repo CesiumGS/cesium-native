@@ -136,6 +136,12 @@ bool ViewState::isBoundingVolumeVisible(
           s2Cell,
           viewState._cullingVolume);
     }
+
+    bool operator()(const BoundingCylinder& boundingCylinder) noexcept {
+      return Cesium3DTilesSelection::isBoundingVolumeVisible(
+          boundingCylinder,
+          viewState._cullingVolume);
+    }
   };
 
   return std::visit(Operation{*this}, boundingVolume);
@@ -180,6 +186,11 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 
     double operator()(const S2CellBoundingVolume& s2Cell) noexcept {
       return s2Cell.computeDistanceSquaredToPosition(viewState._position);
+    }
+
+    double operator()(const BoundingCylinder& boundingCylinder) noexcept {
+      return boundingCylinder.computeDistanceSquaredToPosition(
+          viewState._position);
     }
   };
 

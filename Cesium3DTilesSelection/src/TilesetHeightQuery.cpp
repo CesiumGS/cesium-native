@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
+#include <CesiumGeometry/BoundingCylinder.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
@@ -71,6 +72,13 @@ bool boundingVolumeContainsCoordinate(
     bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
       return s2Cell.computeBoundingRegion(ellipsoid).getRectangle().contains(
           coordinate);
+    }
+
+    bool operator()(const BoundingCylinder& cylinder) noexcept {
+      std::optional<double> t = IntersectionTests::rayOBBParametric(
+          ray,
+          OrientedBoundingBox::fromCylinder(cylinder));
+      return t && t.value() >= 0;
     }
   };
 

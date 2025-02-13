@@ -5,6 +5,8 @@
 #include "TilesetContentLoaderResult.h"
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
@@ -159,8 +161,8 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
   const auto extensionsIt = bvIt->value.FindMember("extensions");
   if (extensionsIt != bvIt->value.MemberEnd() &&
       extensionsIt->value.IsObject()) {
-    const auto s2It =
-        extensionsIt->value.FindMember("3DTILES_bounding_volume_S2");
+    const auto s2It = extensionsIt->value.FindMember(
+        Cesium3DTiles::Extension3dTilesBoundingVolumeS2::ExtensionName);
     if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
       std::string token = CesiumUtility::JsonHelpers::getStringOrDefault(
           s2It->value,
@@ -179,6 +181,37 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
           minimumHeight,
           maximumHeight,
           ellipsoid);
+    }
+
+    const auto cylinderExtensionIt = extensionsIt->value.FindMember(
+        Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder::ExtensionName);
+    if (cylinderExtensionIt != extensionsIt->value.MemberEnd() &&
+        cylinderExtensionIt->value.IsObject()) {
+      const auto cylinderIt = cylinderExtensionIt->value.FindMember("cylinder");
+      if (cylinderIt == cylinderExtensionIt->value.MemberEnd() ||
+          !cylinderIt->value.IsArray()) {
+        return std::nullopt;
+      }
+
+      const auto& a = cylinderIt->value.GetArray();
+      for (rapidjson::SizeType i = 0; i < 12; ++i) {
+        if (!a[i].IsNumber()) {
+          return std::nullopt;
+        }
+      }
+
+      return CesiumGeometry::BoundingCylinder(
+          glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
+          glm::dmat3(
+              a[3].GetDouble(),
+              a[4].GetDouble(),
+              a[5].GetDouble(),
+              a[6].GetDouble(),
+              a[7].GetDouble(),
+              a[8].GetDouble(),
+              a[9].GetDouble(),
+              a[10].GetDouble(),
+              a[11].GetDouble()));
     }
   }
 
@@ -328,6 +361,8 @@ void createImplicitOctreeLoader(
       std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
   const CesiumGeometry::OrientedBoundingBox* pBox =
       std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
+  const CesiumGeometry::BoundingCylinder* pCylinder =
+      std::get_if<CesiumGeometry::BoundingCylinder>(&boundingVolume);
 
   // the implicit loader will be the child loader of this tileset json loader
   TilesetContentLoader* pImplicitLoader = nullptr;
@@ -349,6 +384,16 @@ void createImplicitOctreeLoader(
         subtreeLevels,
         availableLevels,
         *pBox);
+    pImplicitLoader = pLoader.get();
+    currentLoader.addChildLoader(std::move(pLoader));
+  } else if (pCylinder) {
+    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
+        currentLoader.getBaseUrl(),
+        contentUriTemplate,
+        subtreeUriTemplate,
+        subtreeLevels,
+        availableLevels,
+        *pCylinder);
     pImplicitLoader = pLoader.get();
     currentLoader.addChildLoader(std::move(pLoader));
   }
