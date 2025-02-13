@@ -13,7 +13,9 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
 #include <unordered_map>
+#endif
 #include <utility>
 #include <vector>
 

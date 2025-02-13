@@ -17,7 +17,9 @@
 #include <optional>
 #include <span>
 #include <string>
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
 #include <unordered_map>
+#endif
 #include <vector>
 
 namespace Cesium3DTilesSelection {
