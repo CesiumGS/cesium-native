@@ -1,7 +1,10 @@
 #pragma once
 
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/PropertyView.h>
 #include <CesiumUtility/Assert.h>
@@ -27,108 +30,108 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTable}.
    */
-  static const PropertyViewStatusType ErrorInvalidPropertyTable = 14;
+  static const PropertyViewStatusType ErrorInvalidPropertyTable = 15;
 
   /**
    * @brief This property view does not have a valid value buffer view index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBufferView = 15;
+  static const PropertyViewStatusType ErrorInvalidValueBufferView = 16;
 
   /**
    * @brief This array property view does not have a valid array offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 16;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBufferView = 17;
 
   /**
    * @brief This string property view does not have a valid string offset buffer
    * view index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 17;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBufferView = 18;
 
   /**
    * @brief This property view has a valid value buffer view, but the buffer
    * view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidValueBuffer = 18;
+  static const PropertyViewStatusType ErrorInvalidValueBuffer = 19;
 
   /**
    * @brief This property view has a valid array string buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 19;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetBuffer = 20;
 
   /**
    * @brief This property view has a valid string offset buffer view, but the
    * buffer view specifies an invalid buffer index.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 20;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetBuffer = 21;
 
   /**
    * @brief This property view has a buffer view that points outside the bounds
    * of its target buffer.
    */
-  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 21;
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 22;
 
   /**
    * @brief This property view has an invalid buffer view; its length is not
    * a multiple of the size of its type / offset type.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeNotDivisibleByTypeSize = 22;
+      ErrorBufferViewSizeNotDivisibleByTypeSize = 23;
 
   /**
    * @brief This property view has an invalid buffer view; its length does not
    * match the size of the property table.
    */
   static const PropertyViewStatusType
-      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 23;
+      ErrorBufferViewSizeDoesNotMatchPropertyTableCount = 24;
 
   /**
    * @brief This array property view has both a fixed length and an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferCoexist =
-      24;
+      25;
 
   /**
    * @brief This array property view has neither a fixed length nor an offset
    * buffer view defined.
    */
   static const PropertyViewStatusType ErrorArrayCountAndOffsetBufferDontExist =
-      25;
+      26;
 
   /**
    * @brief This property view has an unknown array offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 26;
+  static const PropertyViewStatusType ErrorInvalidArrayOffsetType = 27;
 
   /**
    * @brief This property view has an unknown string offset type.
    */
-  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 27;
+  static const PropertyViewStatusType ErrorInvalidStringOffsetType = 28;
 
   /**
    * @brief This property view's array offset values are not sorted in ascending
    * order.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 28;
+  static const PropertyViewStatusType ErrorArrayOffsetsNotSorted = 29;
 
   /**
    * @brief This property view's string offset values are not sorted in
    * ascending order.
    */
-  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 29;
+  static const PropertyViewStatusType ErrorStringOffsetsNotSorted = 30;
 
   /**
    * @brief This property view has an array offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 30;
+  static const PropertyViewStatusType ErrorArrayOffsetOutOfBounds = 31;
 
   /**
    * @brief This property view has a string offset that is out of bounds.
    */
-  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 31;
+  static const PropertyViewStatusType ErrorStringOffsetOutOfBounds = 32;
 };
 
 /**
@@ -174,7 +177,8 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {}
 
   /**
    * @brief Constructs an invalid instance for an erroneous property.
@@ -190,7 +194,8 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {
     CESIUM_ASSERT(
         this->_status != PropertyTablePropertyViewStatus::Valid &&
         "An empty property view should not be constructed with a valid status");
@@ -214,7 +219,8 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {
     if (this->_status != PropertyTablePropertyViewStatus::Valid) {
       // Don't override the status / size if something is wrong with the class
       // property's definition.
@@ -256,7 +262,35 @@ public:
         _arrayOffsetTypeSize{0},
         _stringOffsets{},
         _stringOffsetType{PropertyComponentType::None},
-        _stringOffsetTypeSize{0} {}
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{nullptr} {}
+
+  /**
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty} along with an enum definition. Used for enum values.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param enumDefinition The definition of the enum used for this property specified by {@link ClassProperty::enumType}
+   */
+  PropertyTablePropertyView(
+      [[maybe_unused]] const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      std::span<const std::byte> values,
+      const CesiumGltf::Enum* enumDefinition) noexcept
+      : PropertyView<ElementType>(classProperty, enumDefinition),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0},
+        _pEnumDefinition{enumDefinition} {}
 
   /**
    * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
@@ -288,7 +322,39 @@ public:
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
         _stringOffsets{stringOffsets},
         _stringOffsetType{stringOffsetType},
-        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
+        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)},
+        _pEnumDefinition{nullptr} {}
+
+  /**
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty} along with an enum definition. Used for arrays of enum values.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param enumDefinition The definition of the enum used for this property specified by {@link ClassProperty::enumType}
+   */
+  PropertyTablePropertyView(
+      [[maybe_unused]] const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      std::span<const std::byte> values,
+      std::span<const std::byte> arrayOffsets,
+      PropertyComponentType arrayOffsetType,
+      const CesiumGltf::Enum* enumDefinition) noexcept
+      : PropertyView<ElementType>(classProperty, enumDefinition),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{arrayOffsets},
+        _arrayOffsetType{arrayOffsetType},
+        _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{},
+        _pEnumDefinition{enumDefinition} {}
 
   /**
    * @brief Get the value of an element in the {@link PropertyTable},
@@ -323,6 +389,8 @@ public:
       return transformValue(value, this->offset(), this->scale());
     } else if constexpr (IsMetadataNumericArray<ElementType>::value) {
       return transformArray(value, this->offset(), this->scale());
+    } else if constexpr (IsMetadataEnumArray<ElementType>::value) {
+      return propertyValueViewToCopy(value);
     } else {
       return value;
     }
@@ -360,9 +428,17 @@ public:
       return getStringValue(index);
     }
 
+    if constexpr (IsMetadataEnum<ElementType>::value) {
+      return getEnumValue(index);
+    }
+
     if constexpr (IsMetadataNumericArray<ElementType>::value) {
       return getNumericArrayValues<
           typename MetadataArrayType<ElementType>::type>(index);
+    }
+
+    if constexpr (IsMetadataEnumArray<ElementType>::value) {
+      return getEnumArrayValues(index);
     }
 
     if constexpr (IsMetadataBooleanArray<ElementType>::value) {
@@ -382,6 +458,14 @@ public:
    * @return The number of elements in this PropertyTablePropertyView.
    */
   int64_t size() const noexcept { return _size; }
+
+  /**
+   * @brief Obtains the \ref CesiumGltf::Enum definition corresponding to this
+   * property, if this is an enum property.
+   *
+   * @returns The contained enum definition, or nullptr if none is set.
+   */
+  const CesiumGltf::Enum* enumDefinition() const { return _pEnumDefinition; }
 
 private:
   ElementType getNumericValue(int64_t index) const noexcept {
@@ -405,6 +489,53 @@ private:
     return std::string_view(
         reinterpret_cast<const char*>(_values.data() + currentOffset),
         nextOffset - currentOffset);
+  }
+
+  PropertyEnumValue getEnumValue(int64_t index) const noexcept {
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(this->_pEnumDefinition->valueType);
+
+    int64_t value = -1;
+    switch (componentType) {
+    case PropertyComponentType::Uint8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::None:
+    case PropertyComponentType::Float32:
+    case PropertyComponentType::Float64:
+      return {-1};
+    }
+
+    return PropertyEnumValue(value);
   }
 
   template <typename T>
@@ -431,6 +562,42 @@ private:
         _values.data() + currentOffset,
         nextOffset - currentOffset);
     return PropertyArrayView<T>{values};
+  }
+
+  PropertyArrayView<PropertyEnumValue>
+  getEnumArrayValues(int64_t index) const noexcept {
+    const PropertyComponentType componentType =
+        convertStringToPropertyComponentType(this->_pEnumDefinition->valueType);
+    const size_t componentSize = getSizeOfComponentType(componentType);
+
+    size_t count = static_cast<size_t>(this->arrayCount());
+    // Handle fixed-length arrays
+    if (count > 0) {
+      size_t arraySize = count * componentSize;
+      const std::span<const std::byte> values(
+          _values.data() + index * arraySize,
+          arraySize);
+      return PropertyArrayView<PropertyEnumValue>{
+          values,
+          componentType,
+          static_cast<int64_t>(count)};
+    }
+
+    // Handle variable-length arrays. The offsets are interpreted as array
+    // indices, not byte offsets, so they must be multiplied by sizeof(T)
+    const size_t currentOffset =
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
+        componentSize;
+    const size_t nextOffset =
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
+        componentSize;
+    const std::span<const std::byte> values(
+        _values.data() + currentOffset,
+        nextOffset - currentOffset);
+    return PropertyArrayView<PropertyEnumValue>{
+        values,
+        componentType,
+        static_cast<int64_t>(values.size() / componentSize)};
   }
 
   PropertyArrayView<std::string_view>
@@ -470,12 +637,15 @@ private:
     size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
     if (count > 0) {
-      const size_t offsetBits = count * index;
-      const size_t nextOffsetBits = count * (index + 1);
+      const size_t offsetBits = count * static_cast<size_t>(index);
+      const size_t nextOffsetBits = count * static_cast<size_t>(index + 1);
       const std::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
+      return PropertyArrayView<bool>(
+          buffer,
+          offsetBits % 8,
+          static_cast<int64_t>(count));
     }
 
     // Handle variable-length arrays
@@ -500,6 +670,8 @@ private:
   std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _stringOffsetTypeSize;
+
+  const CesiumGltf::Enum* _pEnumDefinition = nullptr;
 };
 
 /**

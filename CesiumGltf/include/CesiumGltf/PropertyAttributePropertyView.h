@@ -25,66 +25,66 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyAttribute}.
    */
-  static const int ErrorInvalidPropertyAttribute = 14;
+  static const int ErrorInvalidPropertyAttribute = 15;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 15;
+  static const int ErrorUnsupportedProperty = 16;
 
   /**
    * @brief This property view was initialized with a primitive that does not
    * contain the specified attribute.
    */
-  static const int ErrorMissingAttribute = 16;
+  static const int ErrorMissingAttribute = 17;
 
   /**
    * @brief This property view's attribute does not have a valid accessor index.
    */
-  static const int ErrorInvalidAccessor = 17;
+  static const int ErrorInvalidAccessor = 18;
 
   /**
    * @brief This property view's type does not match the type of the accessor it
    * uses.
    */
-  static const int ErrorAccessorTypeMismatch = 18;
+  static const int ErrorAccessorTypeMismatch = 19;
 
   /**
    * @brief This property view's component type does not match the type of the
    * accessor it uses.
    */
-  static const int ErrorAccessorComponentTypeMismatch = 19;
+  static const int ErrorAccessorComponentTypeMismatch = 20;
 
   /**
    * @brief This property view's normalization does not match the normalization
    * of the accessor it uses.
    */
-  static const int ErrorAccessorNormalizationMismatch = 20;
+  static const int ErrorAccessorNormalizationMismatch = 21;
 
   /**
    * @brief This property view uses an accessor that does not have a valid
    * buffer view index.
    */
-  static const int ErrorInvalidBufferView = 21;
+  static const int ErrorInvalidBufferView = 22;
 
   /**
    * @brief This property view uses a buffer view that does not have a valid
    * buffer index.
    */
-  static const int ErrorInvalidBuffer = 22;
+  static const int ErrorInvalidBuffer = 23;
 
   /**
    * @brief This property view uses an accessor that points outside the bounds
    * of its target buffer view.
    */
-  static const PropertyViewStatusType ErrorAccessorOutOfBounds = 23;
+  static const PropertyViewStatusType ErrorAccessorOutOfBounds = 24;
 
   /**
    * @brief This property view uses a buffer view that points outside the bounds
    * of its target buffer.
    */
-  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 24;
+  static const PropertyViewStatusType ErrorBufferViewOutOfBounds = 25;
 };
 
 /**

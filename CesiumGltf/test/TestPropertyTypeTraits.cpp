@@ -1,4 +1,5 @@
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 
@@ -159,6 +160,12 @@ TEST_CASE("Test IsMetadataString") {
   REQUIRE(!IsMetadataString<std::string>::value);
 }
 
+TEST_CASE("Test IsMetadataEnum") {
+  REQUIRE(IsMetadataEnum<PropertyEnumValue>::value);
+  REQUIRE(!IsMetadataEnum<uint16_t>::value);
+  REQUIRE(!IsMetadataEnum<std::string_view>::value);
+}
+
 TEST_CASE("Test IsMetadataNumeric") {
   REQUIRE(IsMetadataNumeric<uint8_t>::value);
   REQUIRE(IsMetadataNumeric<float>::value);
@@ -182,10 +189,16 @@ TEST_CASE("Test IsMetadataBooleanArray") {
   REQUIRE(!IsMetadataBooleanArray<PropertyArrayView<uint8_t>>::value);
 }
 
-TEST_CASE("Test IsStringArray") {
+TEST_CASE("Test IsMetadataStringArray") {
   REQUIRE(IsMetadataStringArray<PropertyArrayView<std::string_view>>::value);
   REQUIRE(!IsMetadataStringArray<PropertyArrayView<std::string>>::value);
   REQUIRE(!IsMetadataStringArray<PropertyArrayView<uint32_t>>::value);
+}
+
+TEST_CASE("Test IsMetadataEnumArray") {
+  REQUIRE(IsMetadataEnumArray<PropertyArrayView<PropertyEnumValue>>::value);
+  REQUIRE(!IsMetadataEnumArray<PropertyArrayView<std::string>>::value);
+  REQUIRE(!IsMetadataEnumArray<PropertyArrayView<uint32_t>>::value);
 }
 
 TEST_CASE("Test MetadataArrayType") {
@@ -551,6 +564,13 @@ TEST_CASE("TypeToPropertyType") {
         TypeToPropertyType<std::string_view>::value == PropertyType::String);
     REQUIRE(
         TypeToPropertyType<std::string_view>::component ==
+        PropertyComponentType::None);
+  }
+
+  SUBCASE("Works for enum") {
+    REQUIRE(TypeToPropertyType<PropertyEnumValue>::value == PropertyType::Enum);
+    REQUIRE(
+        TypeToPropertyType<PropertyEnumValue>::component ==
         PropertyComponentType::None);
   }
 }

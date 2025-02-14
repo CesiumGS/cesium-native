@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
 
@@ -344,6 +345,29 @@ struct MetadataConversions<
    * @param from The boolean value to be converted.
    */
   static std::optional<TTo> convert(bool from) { return from ? 1 : 0; }
+};
+
+/**
+ * @brief Converts from PropertyEnumValue to an integer.
+ */
+template <typename TTo>
+struct MetadataConversions<
+    TTo,
+    PropertyEnumValue,
+    std::enable_if_t<CesiumGltf::IsMetadataInteger<TTo>::value>> {
+  /**
+   * @brief Converts the contents of a \ref PropertyEnumValue to an integer.
+   *
+   * This consists of a cast from the \ref PropertyEnumValue's underlying
+   * `int64_t` to the target integer type. This narrowing conversion could
+   * potentially result in an incorrect scalar value if the enum's value type is
+   * wider than `TTo`!
+   *
+   * @param from The \ref PropertyEnumValue to parse from.
+   */
+  static std::optional<TTo> convert(const PropertyEnumValue& from) {
+    return static_cast<TTo>(from.value());
+  }
 };
 #pragma endregion
 
@@ -847,6 +871,28 @@ struct MetadataConversions<
     return result;
   }
 };
+#pragma endregion
+
+#pragma region Conversion to enum
+
+/**
+ * @brief Converts from an integer to a PropertyEnumValue.
+ */
+template <typename TFrom>
+struct MetadataConversions<
+    PropertyEnumValue,
+    TFrom,
+    std::enable_if_t<CesiumGltf::IsMetadataInteger<TFrom>::value>> {
+  /**
+   * @brief Converts an integer to a \ref PropertyEnumValue.
+   *
+   * @param from The integer to create an enum value from.
+   */
+  static std::optional<PropertyEnumValue> convert(const TFrom from) {
+    return PropertyEnumValue{static_cast<int64_t>(from)};
+  }
+};
+
 #pragma endregion
 
 } // namespace CesiumGltf

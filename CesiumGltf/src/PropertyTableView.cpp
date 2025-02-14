@@ -1,9 +1,11 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
@@ -134,6 +136,7 @@ PropertyTableView::PropertyTableView(
     : _pModel{&model},
       _pPropertyTable{&propertyTable},
       _pClass{nullptr},
+      _pEnumDefinitions{},
       _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
@@ -155,6 +158,7 @@ PropertyTableView::PropertyTableView(
   }
 
   _pClass = &classIter->second;
+  _pEnumDefinitions = &schema->enums;
 }
 
 const ClassProperty*
@@ -432,6 +436,119 @@ PropertyTableView::getBooleanArrayPropertyValues(
       std::span<const std::byte>(),
       arrayOffsetType,
       PropertyComponentType::None);
+}
+
+PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>
+PropertyTableView::getEnumArrayPropertyValues(
+    const ClassProperty& classProperty,
+    const PropertyTableProperty& propertyTableProperty) const {
+  if (!classProperty.array) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  const PropertyType type = convertStringToPropertyType(classProperty.type);
+  if (type != PropertyType::Enum) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  if (!classProperty.enumType) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::ErrorInvalidEnumType);
+  }
+
+  const auto& enumDefinitionIt =
+      this->_pEnumDefinitions->find(*classProperty.enumType);
+  if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::ErrorInvalidEnumType);
+  }
+
+  const Enum* pEnumDefinition = &enumDefinitionIt->second;
+
+  const PropertyComponentType componentType =
+      convertStringToPropertyComponentType(pEnumDefinition->valueType);
+
+  std::span<const std::byte> values;
+  PropertyViewStatusType status =
+      getBufferSafe(propertyTableProperty.values, values);
+  if (status != PropertyTablePropertyViewStatus::Valid) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        status);
+  }
+
+  const size_t componentSize = getSizeOfComponentType(componentType);
+
+  if (values.size() % componentSize != 0) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::
+            ErrorBufferViewSizeNotDivisibleByTypeSize);
+  }
+
+  const int64_t fixedLengthArrayCount = classProperty.count.value_or(0);
+  if (fixedLengthArrayCount > 0 && propertyTableProperty.arrayOffsets >= 0) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::ErrorArrayCountAndOffsetBufferCoexist);
+  }
+
+  if (fixedLengthArrayCount <= 0 && propertyTableProperty.arrayOffsets < 0) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::
+            ErrorArrayCountAndOffsetBufferDontExist);
+  }
+
+  // Handle fixed-length arrays
+  if (fixedLengthArrayCount > 0) {
+    size_t maxRequiredBytes =
+        static_cast<size_t>(_pPropertyTable->count * fixedLengthArrayCount) *
+        componentSize;
+
+    if (values.size() < maxRequiredBytes) {
+      return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+          PropertyTablePropertyViewStatus::
+              ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+    }
+
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        propertyTableProperty,
+        classProperty,
+        _pPropertyTable->count,
+        values,
+        pEnumDefinition);
+  }
+
+  // Handle variable-length arrays
+  const PropertyComponentType arrayOffsetType =
+      convertArrayOffsetTypeStringToPropertyComponentType(
+          propertyTableProperty.arrayOffsetType);
+  if (arrayOffsetType == PropertyComponentType::None) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType);
+  }
+
+  constexpr bool checkBitsSize = false;
+  std::span<const std::byte> arrayOffsets;
+  status = getArrayOffsetsBufferSafe(
+      propertyTableProperty.arrayOffsets,
+      arrayOffsetType,
+      values.size(),
+      static_cast<size_t>(_pPropertyTable->count),
+      checkBitsSize,
+      arrayOffsets);
+  if (status != PropertyTablePropertyViewStatus::Valid) {
+    return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>>(
+        status);
+  }
+
+  return PropertyTablePropertyView<PropertyArrayView<PropertyEnumValue>, false>(
+      propertyTableProperty,
+      classProperty,
+      _pPropertyTable->count,
+      values,
+      arrayOffsets,
+      arrayOffsetType,
+      pEnumDefinition);
 }
 
 PropertyTablePropertyView<PropertyArrayView<std::string_view>>

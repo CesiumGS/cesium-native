@@ -1,11 +1,13 @@
 #pragma once
 
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/getOffsetFromOffsetsBuffer.h>
 #include <CesiumUtility/SpanHelper.h>
 
 #include <cstddef>
 #include <cstring>
+#include <iterator>
 #include <span>
 #include <variant>
 #include <vector>
@@ -94,6 +96,7 @@ public:
         this->_storage.data(),
         reinterpret_cast<const std::byte*>(values.data()),
         sizeInBytes);
+    // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     this->_view = PropertyArrayView<ElementType>(this->_storage);
   }
 
@@ -200,7 +203,9 @@ public:
     index += _bitOffset;
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    const int bitValue =
+        static_cast<int>(_values[static_cast<size_t>(byteIndex)] >> bitIndex) &
+        1;
     return bitValue == 1;
   }
 
@@ -255,10 +260,12 @@ public:
    * @brief Obtains an `std::string_view` for the element at the given index.
    */
   std::string_view operator[](int64_t index) const noexcept {
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
+    const size_t currentOffset = getOffsetFromOffsetsBuffer(
+        static_cast<size_t>(index),
+        _stringOffsets,
+        _stringOffsetType);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
-        index + 1,
+        static_cast<size_t>(index + 1),
         _stringOffsets,
         _stringOffsetType);
     return std::string_view(
@@ -276,6 +283,220 @@ private:
   std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _size;
+};
+
+/**
+ * @brief A view on an enum array element of a {@link PropertyTableProperty}
+ * or {@link PropertyTextureProperty}.
+ *
+ * Provides utility to retrieve the data stored in the array of
+ * elements via the array index operator.
+ */
+template <> class PropertyArrayView<PropertyEnumValue> {
+public:
+  /**
+   * @brief Constructs an empty array view.
+   */
+  PropertyArrayView()
+      : _values{}, _enumValueType{PropertyComponentType::None}, _size{0} {}
+
+  /**
+   * @brief Constructs an array view from buffers and their information.
+   *
+   * @param values The buffer containing the values.
+   * @param enumValueType The component type of the enum.
+   * @param size The number of elements in the array.
+   */
+  PropertyArrayView(
+      const std::span<const std::byte>& values,
+      PropertyComponentType enumValueType,
+      int64_t size) noexcept
+      : _values{values}, _enumValueType{enumValueType}, _size{size} {}
+
+  /**
+   * @brief Obtains a `PropertyEnumValue` for the element at the given index.
+   *
+   * @param index The index into this array to obtain the value of.
+   * @returns The value at the specified index, or -1 if the component type
+   * isn't valid.
+   */
+  PropertyEnumValue operator[](int64_t index) const noexcept {
+    int64_t value = -1;
+    switch (this->_enumValueType) {
+    case PropertyComponentType::Uint8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int8:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int8_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int16:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int16_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int32:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int32_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Uint64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const uint64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::Int64:
+      value = static_cast<int64_t>(
+          reinterpret_cast<const int64_t*>(_values.data())[index]);
+      break;
+    case PropertyComponentType::None:
+    case PropertyComponentType::Float32:
+    case PropertyComponentType::Float64:
+      return {-1};
+    }
+
+    return {value};
+  }
+
+  /**
+   * @brief The number of elements in this array.
+   */
+  int64_t size() const noexcept { return _size; }
+
+  /**
+   * @brief The underlying component type of this enum value.
+   */
+  PropertyComponentType componentType() const noexcept {
+    return _enumValueType;
+  }
+
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() { return this->_values.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() { return this->_values.end(); }
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() const { return this->_values.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() const { return this->_values.end(); }
+
+private:
+  std::span<const std::byte> _values;
+  PropertyComponentType _enumValueType;
+  int64_t _size;
+};
+
+/**
+ * @brief A copy of an array element of a {@link PropertyTableProperty} or
+ * {@link PropertyTextureProperty} of enum values.
+ *
+ * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * place, a PropertyArrayCopy owns the data that it's viewing.
+ *
+ * Provides utility to retrieve the data stored in the array of elements via the
+ * array index operator.
+ */
+template <> class PropertyArrayCopy<PropertyEnumValue> {
+public:
+  /**
+   * @brief Constructs an empty array view.
+   */
+  PropertyArrayCopy() : _storage{}, _view() {}
+
+  /**
+   * @brief Creates a new \ref PropertyArrayCopy<PropertyEnumValue> from the
+   * given bytes, component type, and array length.
+   *
+   * @param values The bytes containing the contents of this array.
+   * @param componentType The component type of the enum.
+   * @param size The number of elements in the array.
+   */
+  PropertyArrayCopy(
+      const std::vector<std::byte>& values,
+      PropertyComponentType componentType,
+      int64_t size) {
+    const size_t sizeInBytes =
+        static_cast<size_t>(size) * getSizeOfComponentType(componentType);
+    this->_storage.resize(sizeInBytes);
+    std::memcpy(this->_storage.data(), values.data(), sizeInBytes);
+    this->_view = PropertyArrayView<PropertyEnumValue>(
+        this->_storage,
+        componentType,
+        size);
+  }
+
+  /** @brief Default move constructor */
+  PropertyArrayCopy(PropertyArrayCopy&&) = default;
+  /** @brief Default move assignment operator */
+  PropertyArrayCopy& operator=(PropertyArrayCopy&&) = default;
+
+  /** @brief Copy constructor */
+  PropertyArrayCopy(const PropertyArrayCopy& rhs)
+      : _storage(rhs._storage),
+        _view(this->_storage, rhs._view.componentType(), rhs._view.size()) {}
+
+  /** @brief Copy assignment operator */
+  PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
+    this->_storage = rhs._storage;
+    this->_view = PropertyArrayView<PropertyEnumValue>(
+        this->_storage,
+        rhs._view.componentType(),
+        rhs._view.size());
+    return *this;
+  }
+
+  /**
+   * @brief Returns the `ElementType` at the given index from this copy.
+   *
+   * @param index The index to obtain.
+   * @returns The `ElementType` at that index from the internal view.
+   */
+  PropertyEnumValue operator[](int64_t index) const noexcept {
+    return this->_view[index];
+  }
+
+  /** @copydoc PropertyArrayView::size */
+  int64_t size() const noexcept { return this->_view.size(); }
+
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() { return this->_view.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() { return this->_view.end(); }
+  /** @copydoc PropertyArrayView::begin */
+  auto begin() const { return this->_view.begin(); }
+  /** @copydoc PropertyArrayView::end */
+  auto end() const { return this->_view.end(); }
+
+  /**
+   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   */
+  const PropertyArrayView<PropertyEnumValue>& view() const {
+    return this->_view;
+  }
+
+  /**
+   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * PropertyArrayCopy empty.
+   *
+   * @param outBuffer The destination where this copy's internal buffer will be
+   * moved to.
+   */
+  PropertyArrayView<PropertyEnumValue>
+  toViewAndExternalBuffer(std::vector<std::byte>& outBuffer) && {
+    outBuffer = std::move(this->_storage);
+    PropertyArrayView<PropertyEnumValue> result = std::move(this->_view);
+    this->_view = PropertyArrayView<PropertyEnumValue>();
+    return result;
+  }
+
+private:
+  std::vector<std::byte> _storage;
+  PropertyArrayView<PropertyEnumValue> _view;
 };
 
 /** @brief Compares two \ref PropertyArrayView instances by comparing their

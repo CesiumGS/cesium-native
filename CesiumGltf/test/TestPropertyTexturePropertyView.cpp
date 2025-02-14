@@ -1,7 +1,9 @@
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/PropertyType.h>
@@ -43,6 +45,13 @@ using namespace CesiumGltf;
 using namespace CesiumUtility;
 
 namespace {
+EnumValue makeEnumValue(const std::string& name, int64_t value) {
+  EnumValue enumValue;
+  enumValue.name = name;
+  enumValue.value = value;
+  return enumValue;
+}
+
 template <typename T>
 void checkTextureValues(
     const std::vector<uint8_t>& data,
@@ -110,10 +119,10 @@ void checkTextureValues(
     const std::vector<uint8_t>& data,
     const std::vector<T>& expectedRaw,
     const std::vector<std::optional<T>>& expectedTransformed,
-    const std::optional<JsonValue> offset = std::nullopt,
-    const std::optional<JsonValue> scale = std::nullopt,
-    const std::optional<JsonValue> noData = std::nullopt,
-    const std::optional<JsonValue> defaultValue = std::nullopt) {
+    const std::optional<JsonValue>& offset = std::nullopt,
+    const std::optional<JsonValue>& scale = std::nullopt,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
   classProperty.type =
@@ -182,10 +191,10 @@ void checkNormalizedTextureValues(
     const std::vector<uint8_t>& data,
     const std::vector<T>& expectedRaw,
     const std::vector<std::optional<D>>& expectedTransformed,
-    const std::optional<JsonValue> offset = std::nullopt,
-    const std::optional<JsonValue> scale = std::nullopt,
-    const std::optional<JsonValue> noData = std::nullopt,
-    const std::optional<JsonValue> defaultValue = std::nullopt) {
+    const std::optional<JsonValue>& offset = std::nullopt,
+    const std::optional<JsonValue>& scale = std::nullopt,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
   classProperty.type =
@@ -342,8 +351,8 @@ void checkTextureArrayValues(
     const int64_t count,
     const std::vector<std::vector<T>>& expectedRaw,
     const std::vector<std::optional<std::vector<T>>>& expectedTransformed,
-    const std::optional<JsonValue> noData = std::nullopt,
-    const std::optional<JsonValue> defaultValue = std::nullopt) {
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
   classProperty.type =
@@ -437,10 +446,10 @@ void checkNormalizedTextureArrayValues(
     const int64_t count,
     const std::vector<std::vector<T>>& expectedRaw,
     const std::vector<std::optional<std::vector<D>>>& expectedTransformed,
-    const std::optional<JsonValue> offset = std::nullopt,
-    const std::optional<JsonValue> scale = std::nullopt,
-    const std::optional<JsonValue> noData = std::nullopt,
-    const std::optional<JsonValue> defaultValue = std::nullopt) {
+    const std::optional<JsonValue>& offset = std::nullopt,
+    const std::optional<JsonValue>& scale = std::nullopt,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
   classProperty.type =
@@ -527,6 +536,81 @@ void checkNormalizedTextureArrayValues(
     REQUIRE(maybeValue->size() == static_cast<int64_t>(expectedValue.size()));
     for (int64_t j = 0; j < maybeValue->size(); j++) {
       REQUIRE((*maybeValue)[j] == expectedValue[static_cast<size_t>(j)]);
+    }
+  }
+}
+
+void checkEnumTextureValues(
+    const std::vector<uint8_t>& data,
+    const std::vector<int64_t>& expected,
+    const CesiumGltf::Enum& enumDef,
+    const std::optional<JsonValue>& noData = std::nullopt,
+    const std::optional<JsonValue>& defaultValue = std::nullopt,
+    const std::optional<std::vector<std::optional<int64_t>>>&
+        expectedTransformed = std::nullopt) {
+  PropertyTextureProperty property;
+  ClassProperty classProperty;
+  classProperty.type = ClassProperty::Type::ENUM;
+  classProperty.noData = noData;
+  classProperty.defaultProperty = defaultValue;
+
+  const PropertyComponentType componentType =
+      convertStringToPropertyComponentType(enumDef.valueType);
+  const size_t componentSize = getSizeOfComponentType(componentType);
+
+  Sampler sampler;
+  ImageAsset image;
+  image.width = 2;
+  image.height = 2;
+  image.channels = static_cast<int32_t>(componentSize);
+  image.bytesPerChannel = 1;
+
+  std::vector<std::byte>& imageData = image.pixelData;
+  imageData.resize(data.size());
+  std::memcpy(imageData.data(), data.data(), data.size());
+
+  property.channels.resize(static_cast<size_t>(image.channels));
+  for (size_t i = 0; i < property.channels.size(); i++) {
+    property.channels[i] = static_cast<int64_t>(i);
+  }
+
+  PropertyTexturePropertyView<PropertyEnumValue>
+      view(property, classProperty, &enumDef, sampler, image);
+  REQUIRE(view.status() == PropertyTexturePropertyViewStatus::Valid);
+
+  switch (componentSize) {
+  case 1:
+    CHECK(view.getSwizzle() == "r");
+    break;
+  case 2:
+    CHECK(view.getSwizzle() == "rg");
+    break;
+  case 3:
+    CHECK(view.getSwizzle() == "rgb");
+    break;
+  case 4:
+    CHECK(view.getSwizzle() == "rgba");
+    break;
+  default:
+    FAIL("Invalid property texture property view type");
+  }
+
+  REQUIRE(!view.normalized());
+
+  std::vector<glm::dvec2> texCoords{
+      glm::dvec2(0, 0),
+      glm::dvec2(0.5, 0),
+      glm::dvec2(0, 0.5),
+      glm::dvec2(0.5, 0.5)};
+
+  for (size_t i = 0; i < texCoords.size(); i++) {
+    glm::dvec2 uv = texCoords[i];
+    REQUIRE(view.getRaw(uv[0], uv[1]).value() == expected[i]);
+    if (expectedTransformed && (*expectedTransformed)[i]) {
+      REQUIRE(
+          view.get(uv[0], uv[1]).value() == (*expectedTransformed)[i].value());
+    } else if (expectedTransformed) {
+      REQUIRE(view.get(uv[0], uv[1]) == std::nullopt);
     }
   }
 }
@@ -1248,7 +1332,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedRaw.size());
 
     for (size_t i = 0; i < expectedRaw.size(); i++) {
-      auto rawValues = expectedRaw[i];
+      const auto& rawValues = expectedRaw[i];
       std::vector<double> transformedValues(rawValues.size());
       for (size_t j = 0; j < rawValues.size(); j++) {
         transformedValues[j] = normalize(rawValues[j]);
@@ -1279,7 +1363,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedRaw.size());
 
     for (size_t i = 0; i < expectedRaw.size(); i++) {
-      auto rawValues = expectedRaw[i];
+      const auto& rawValues = expectedRaw[i];
       std::vector<double> transformedValues(rawValues.size());
       for (size_t j = 0; j < rawValues.size(); j++) {
         transformedValues[j] = normalize(rawValues[j]);
@@ -1314,7 +1398,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedRaw.size());
 
     for (size_t i = 0; i < expectedRaw.size(); i++) {
-      auto rawValues = expectedRaw[i];
+      const auto& rawValues = expectedRaw[i];
       std::vector<double> transformedValues(rawValues.size());
       for (size_t j = 0; j < rawValues.size(); j++) {
         transformedValues[j] = normalize(rawValues[j]) * scale[j] + offset[j];
@@ -1350,7 +1434,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedRaw.size());
 
     for (size_t i = 0; i < expectedRaw.size() - 1; i++) {
-      auto rawValues = expectedRaw[i];
+      const auto& rawValues = expectedRaw[i];
       std::vector<double> transformedValues(rawValues.size());
       for (size_t j = 0; j < rawValues.size(); j++) {
         transformedValues[j] = normalize(rawValues[j]);
@@ -1393,7 +1477,7 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
         expectedRaw.size());
 
     for (size_t i = 0; i < expectedRaw.size() - 1; i++) {
-      auto rawValues = expectedRaw[i];
+      const auto& rawValues = expectedRaw[i];
       std::vector<double> transformedValues(rawValues.size());
       for (size_t j = 0; j < rawValues.size(); j++) {
         transformedValues[j] = normalize(rawValues[j]) * scale[j] + offset[j];
@@ -2078,6 +2162,145 @@ TEST_CASE("Test normalized PropertyTextureProperty constructs with "
     glm::dvec2 uv = texCoords[i];
     REQUIRE(view.getRaw(uv[0], uv[1]) == data[i]);
     REQUIRE(view.get(uv[0], uv[1]) == static_cast<double>(data[i]) / 255.0);
+  }
+}
+
+TEST_CASE("Check enum PropertyTexturePropertyView") {
+  Enum enumDef;
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      makeEnumValue("NoData", 0xff),
+      makeEnumValue("Foo", 11),
+      makeEnumValue("Bar", 28),
+      makeEnumValue("Baz", 223),
+      makeEnumValue("Qux", 191),
+      makeEnumValue("Quig", 0),
+      makeEnumValue("Quag", 77),
+      makeEnumValue("Hock", 43),
+      makeEnumValue("Hork", 1),
+      makeEnumValue("Quax", 2048),
+      makeEnumValue("Quix", 19284),
+      makeEnumValue("Qunx", 45000),
+      makeEnumValue("Stux", 75000),
+      makeEnumValue("Stuy", 0x00ffffff),
+      makeEnumValue("Stun", 0xf0ffffff),
+      makeEnumValue("Yurt", 0xf00f00f00f00),
+      makeEnumValue("Yurn", 0x0fffff00ff00ff00),
+      makeEnumValue("Yurg", static_cast<int64_t>(0xf00dfeedf1eddead))};
+
+  SUBCASE("uint8_t") {
+    enumDef.valueType = Enum::ValueType::UINT8;
+    std::vector<uint8_t> data{11, 28, 223, 191};
+    std::vector<int64_t> expected(data.begin(), data.end());
+    checkEnumTextureValues(data, expected, enumDef);
+  }
+
+  SUBCASE("int8_t") {
+    enumDef.valueType = Enum::ValueType::INT8;
+    std::vector<uint8_t> data{11, 28, 223, 191};
+    std::vector<int64_t> expected{
+        11,
+        28,
+        static_cast<int8_t>(223),
+        static_cast<int8_t>(191)};
+    checkEnumTextureValues(data, expected, enumDef);
+  }
+
+  SUBCASE("uint16_t") {
+    enumDef.valueType = Enum::ValueType::UINT16;
+    // clang-format off
+    std::vector<uint8_t> data{
+      0xdf, 0,
+      0x00, 0x08,
+      0x54, 0x4b,
+      0xc8, 0xaf
+    };
+    // clang-format on
+    std::vector<int64_t> expected{223, 2048, 19284, 45000};
+    checkEnumTextureValues(data, expected, enumDef);
+  }
+
+  SUBCASE("int16_t") {
+    enumDef.valueType = Enum::ValueType::INT16;
+    // clang-format off
+    std::vector<uint8_t> data{
+      0xdf, 0,
+      0x00, 0x08,
+      0x54, 0x4b,
+      0xc8, 0xaf
+    };
+    // clang-format on
+    std::vector<int64_t> expected{
+        223,
+        2048,
+        19284,
+        static_cast<int16_t>(45000)};
+    checkEnumTextureValues(data, expected, enumDef);
+  }
+
+  SUBCASE("uint32_t") {
+    enumDef.valueType = Enum::ValueType::UINT32;
+    // clang-format off
+    std::vector<uint8_t> data{
+      0xc8, 0xaf, 0x00, 0x00,
+      0xf8, 0x24, 0x01, 0x00,
+      0xff, 0xff, 0xff, 0x00,
+      0xff, 0xff, 0xff, 0xf0
+    };
+    // clang-format on
+    std::vector<int64_t> expected{45000, 75000, 0x00ffffff, 0xf0ffffff};
+    checkEnumTextureValues(data, expected, enumDef);
+  }
+
+  SUBCASE("int32_t") {
+    enumDef.valueType = Enum::ValueType::UINT32;
+    // clang-format off
+    std::vector<uint8_t> data{
+      0xc8, 0xaf, 0x00, 0x00,
+      0xf8, 0x24, 0x01, 0x00,
+      0xff, 0xff, 0xff, 0x00,
+      0xff, 0xff, 0xff, 0xf0
+    };
+    // clang-format on
+    std::vector<int64_t> expected{45000, 75000, 0x00ffffff, 0xf0ffffff};
+    checkEnumTextureValues(data, expected, enumDef);
+  }
+
+  SUBCASE("uint8_t with noData") {
+    enumDef.valueType = Enum::ValueType::UINT8;
+    std::vector<uint8_t> data{11, 28, 0xff, 233, 0xff, 77, 43};
+    std::vector<std::optional<int64_t>> expected{
+        data[0],
+        data[1],
+        std::nullopt,
+        data[3],
+        std::nullopt,
+        data[5],
+        data[6]};
+    std::vector<int64_t> expectedRaw(data.begin(), data.end());
+    checkEnumTextureValues(
+        data,
+        expectedRaw,
+        enumDef,
+        "NoData",
+        std::nullopt,
+        expected);
+  }
+
+  SUBCASE("uint8_t with noData and defaultValue") {
+    enumDef.valueType = Enum::ValueType::UINT8;
+    std::vector<uint8_t> data{11, 28, 0xff, 233, 0xff, 77, 43};
+    std::vector<std::optional<int64_t>>
+        expected{data[0], data[1], 0, data[3], 0, data[5], data[6]};
+    std::vector<int64_t> expectedRaw(data.begin(), data.end());
+    checkEnumTextureValues(
+        data,
+        expectedRaw,
+        enumDef,
+        "NoData",
+        "Quig",
+        expected);
   }
 }
 

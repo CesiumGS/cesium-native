@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyEnumValue.h>
 #include <CesiumGltf/PropertyType.h>
 
 #include <glm/glm.hpp>
@@ -128,6 +129,15 @@ template <typename T> struct IsMetadataString<T> : std::false_type {};
 template <> struct IsMetadataString<std::string_view> : std::true_type {};
 
 /**
+ * @brief Check if a C++ type can be represented as an enum property type
+ */
+template <typename... T> struct IsMetadataEnum;
+/** @copydoc IsMetadataEnum */
+template <typename T> struct IsMetadataEnum<T> : std::false_type {};
+/** @copydoc IsMetadataEnum */
+template <> struct IsMetadataEnum<PropertyEnumValue> : std::true_type {};
+
+/**
  * @brief Check if a C++ type can be represented as an array.
  */
 template <typename... T> struct IsMetadataArray;
@@ -168,6 +178,21 @@ template <typename T> struct IsMetadataBooleanArray<T> : std::false_type {};
 /** @copydoc IsMetadataBooleanArray */
 template <>
 struct IsMetadataBooleanArray<PropertyArrayView<bool>> : std::true_type {};
+
+/**
+ * @brief Check if a C++ type can be represented as an array of enums
+ * property type
+ */
+template <typename... T> struct IsMetadataEnumArray;
+/** @copydoc IsMetadataEnumArray */
+template <typename T> struct IsMetadataEnumArray<T> : std::false_type {};
+/** @copydoc IsMetadataEnumArray */
+template <>
+struct IsMetadataEnumArray<PropertyArrayView<PropertyEnumValue>>
+    : std::true_type {};
+template <>
+struct IsMetadataEnumArray<PropertyArrayCopy<PropertyEnumValue>>
+    : std::true_type {};
 
 /**
  * @brief Check if a C++ type can be represented as an array of strings property
@@ -392,6 +417,16 @@ template <> struct TypeToPropertyType<std::string_view> {
   static constexpr PropertyType value = PropertyType::String;
 };
 
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<PropertyEnumValue> {
+  /** @brief The \ref PropertyComponentType corresponding to a
+   * `PropertyEnumValue<T>`. */
+  static constexpr PropertyComponentType component =
+      PropertyComponentType::None;
+  /** @brief The \ref PropertyType corresponding to a `PropertyEnumValue<T>`. */
+  static constexpr PropertyType value = PropertyType::Enum;
+};
+
 /**
  * @brief Check if a C++ type can be normalized.
  */
@@ -556,8 +591,9 @@ struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
  * @brief Transforms a property value type from a view to an equivalent type
  * that owns the data it is viewing. For most property types this is an identity
  * transformation, because most property types are held by value. However, it
- * transforms numeric `PropertyArrayView<T>` to `PropertyArrayCopy<T>` because a
- * `PropertyArrayView<T>` only has a pointer to the value it is viewing.
+ * transforms numeric and enum `PropertyArrayView<T>` to `PropertyArrayCopy<T>`
+ * because a `PropertyArrayView<T>` only has a pointer to the value it is
+ * viewing.
  *
  * See `propertyValueViewToCopy`.
  *
@@ -566,7 +602,7 @@ struct TypeToNormalizedType<PropertyArrayView<glm::mat<N, N, T, Q>>> {
  */
 template <typename T>
 using PropertyValueViewToCopy = std::conditional_t<
-    IsMetadataNumericArray<T>::value,
+    IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value,
     PropertyArrayCopy<typename MetadataArrayType<T>::type>,
     T>;
 
@@ -574,7 +610,7 @@ using PropertyValueViewToCopy = std::conditional_t<
  * @brief Transforms a property value type from a copy that owns the data it is
  * viewing to a view into that data. For most property types this is an identity
  * transformation, because most property types are held by value. However, it
- * transforms numeric `PropertyArrayCopy<T>` to `PropertyArrayView<T>`.
+ * transforms numeric and enum `PropertyArrayCopy<T>` to `PropertyArrayView<T>`.
  *
  * See `propertyValueCopyToView`.
  *
@@ -583,7 +619,7 @@ using PropertyValueViewToCopy = std::conditional_t<
  */
 template <typename T>
 using PropertyValueCopyToView = std::conditional_t<
-    IsMetadataNumericArray<T>::value,
+    IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value,
     PropertyArrayView<typename MetadataArrayType<T>::type>,
     T>;
 
@@ -599,10 +635,18 @@ using PropertyValueCopyToView = std::conditional_t<
 template <typename T>
 static std::optional<PropertyValueViewToCopy<T>>
 propertyValueViewToCopy(const std::optional<T>& view) {
-  if constexpr (IsMetadataNumericArray<T>::value) {
+  if constexpr (
+      IsMetadataNumericArray<T>::value || IsMetadataEnumArray<T>::value) {
     if (view) {
-      return std::make_optional<PropertyValueViewToCopy<T>>(
-          std::vector(view->begin(), view->end()));
+      if constexpr (IsMetadataEnumArray<T>::value) {
+        return std::make_optional<PropertyArrayCopy<PropertyEnumValue>>(
+            std::vector(view->begin(), view->end()),
+            view->componentType(),
+            view->size());
+      } else {
+        return std::make_optional<PropertyValueViewToCopy<T>>(
+            std::vector(view->begin(), view->end()));
+      }
     } else {
       return std::nullopt;
     }
@@ -623,6 +667,11 @@ template <typename T>
 static PropertyValueViewToCopy<T> propertyValueViewToCopy(const T& view) {
   if constexpr (IsMetadataNumericArray<T>::value) {
     return PropertyValueViewToCopy<T>(std::vector(view.begin(), view.end()));
+  } else if constexpr (IsMetadataEnumArray<T>::value) {
+    return PropertyValueViewToCopy<T>(
+        std::vector(view.begin(), view.end()),
+        view.componentType(),
+        view.size());
   } else {
     return view;
   }

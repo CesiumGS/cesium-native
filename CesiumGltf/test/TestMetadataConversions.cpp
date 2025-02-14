@@ -1322,3 +1322,64 @@ TEST_CASE("Test MetadataConversions for std::string") {
         std::to_string(1.2345f).c_str());
   };
 }
+
+TEST_CASE("Test MetadataConversions for integer") {
+  PropertyEnumValue byteEnum{0x6f};
+  PropertyEnumValue shortEnum{0x6fff};
+  PropertyEnumValue longEnum{0x6fffffff};
+  PropertyEnumValue longLongEnum{0x6fffffffffffffff};
+
+  SUBCASE("converts from integer") {
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, uint8_t>::convert(0x6f) ==
+        byteEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, int8_t>::convert(0x6f) ==
+        byteEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, uint16_t>::convert(0x6fff) ==
+        shortEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, int16_t>::convert(0x6fff) ==
+        shortEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, uint32_t>::convert(0x6fffffff) ==
+        longEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, int32_t>::convert(0x6fffffff) ==
+        longEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, uint64_t>::convert(
+            0x6fffffffffffffff) == longLongEnum);
+    REQUIRE(
+        MetadataConversions<PropertyEnumValue, int64_t>::convert(
+            0x6fffffffffffffff) == longLongEnum);
+  }
+
+  SUBCASE("converts to integer") {
+    REQUIRE(
+        MetadataConversions<uint8_t, PropertyEnumValue>::convert(byteEnum) ==
+        0x6f);
+    REQUIRE(
+        MetadataConversions<int8_t, PropertyEnumValue>::convert(byteEnum) ==
+        0x6f);
+    REQUIRE(
+        MetadataConversions<uint16_t, PropertyEnumValue>::convert(shortEnum) ==
+        0x6fff);
+    REQUIRE(
+        MetadataConversions<int16_t, PropertyEnumValue>::convert(shortEnum) ==
+        0x6fff);
+    REQUIRE(
+        MetadataConversions<uint32_t, PropertyEnumValue>::convert(longEnum) ==
+        0x6fffffff);
+    REQUIRE(
+        MetadataConversions<int32_t, PropertyEnumValue>::convert(longEnum) ==
+        0x6fffffff);
+    REQUIRE(
+        MetadataConversions<uint64_t, PropertyEnumValue>::convert(
+            longLongEnum) == 0x6fffffffffffffff);
+    REQUIRE(
+        MetadataConversions<int64_t, PropertyEnumValue>::convert(
+            longLongEnum) == 0x6fffffffffffffff);
+  }
+}
