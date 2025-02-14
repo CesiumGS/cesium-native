@@ -17,10 +17,34 @@
 #include <optional>
 #include <span>
 #include <string>
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+#include <unordered_map>
+#endif
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
+
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+class TileDoNotUnloadCountTracker {
+private:
+  struct Entry {
+    std::string reason;
+    bool increment;
+    int32_t newCount;
+  };
+
+public:
+  static void addEntry(
+      const TileID& id,
+      bool increment,
+      const std::string& reason,
+      int32_t newCount);
+
+private:
+  static std::unordered_map<std::string, std::vector<Entry>> _entries;
+};
+#endif
 
 /**
  * The current state of this tile in the loading process.
@@ -187,6 +211,13 @@ public:
   std::span<const Tile> getChildren() const noexcept {
     return std::span<const Tile>(this->_children);
   }
+
+  /**
+   * @brief Clears the children of this tile.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void clearChildren() noexcept;
 
   /**
    * @brief Assigns the given child tiles to this tile.
@@ -485,7 +516,37 @@ public:
    */
   TileLoadState getState() const noexcept;
 
+  /**
+   * @brief Returns the internal count denoting that the tile and its ancestors
+   * should not be unloaded.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  int32_t getDoNotUnloadCount() const noexcept {
+    return this->_doNotUnloadCount;
+  }
+
+  /**
+   * @brief Increments the internal count denoting that the tile and its
+   * ancestors should not be unloaded.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void incrementDoNotUnloadCount(const char* reason) noexcept;
+
+  /**
+   * @brief Decrements the internal count denoting that the tile and its
+   * ancestors should not be unloaded.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void decrementDoNotUnloadCount(const char* reason) noexcept;
+
 private:
+  void incrementDoNotUnloadCount(const std::string& reason) noexcept;
+
+  void decrementDoNotUnloadCount(const std::string& reason) noexcept;
+
   struct TileConstructorImpl {};
   template <
       typename... TileContentArgs,
@@ -547,6 +608,10 @@ private:
 
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
+
+  // Number of existing claims on this tile preventing it and its parent
+  // external tileset (if any) from being unloaded from the tree.
+  int32_t _doNotUnloadCount = 0;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;

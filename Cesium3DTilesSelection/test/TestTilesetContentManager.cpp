@@ -843,12 +843,12 @@ TEST_CASE("Test tile state machine") {
 
     // trying to unload parent while upsampled children is loading while put the
     // tile into the Unloading state but not unload the render content.
-    CHECK(!pManager->unloadTileContent(tile));
+    CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
     CHECK(tile.getState() == TileLoadState::Unloading);
     CHECK(tile.isRenderContent());
 
     // Unloading again will have the same result.
-    CHECK(!pManager->unloadTileContent(tile));
+    CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
     CHECK(tile.getState() == TileLoadState::Unloading);
     CHECK(tile.isRenderContent());
 
@@ -863,13 +863,15 @@ TEST_CASE("Test tile state machine") {
 
     // trying to unload parent will work now since the upsampled tile is already
     // in the main thread
-    CHECK(pManager->unloadTileContent(tile));
+    CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Remove);
     CHECK(tile.getState() == TileLoadState::Unloaded);
     CHECK(!tile.isRenderContent());
     CHECK(!tile.getContent().getRenderContent());
 
     // unload upsampled tile: ContentLoaded -> Done
-    CHECK(pManager->unloadTileContent(upsampledTile));
+    CHECK(
+        pManager->unloadTileContent(upsampledTile) ==
+        UnloadTileContentResult::Remove);
     CHECK(upsampledTile.getState() == TileLoadState::Unloaded);
     CHECK(!upsampledTile.isRenderContent());
     CHECK(!upsampledTile.getContent().getRenderContent());
