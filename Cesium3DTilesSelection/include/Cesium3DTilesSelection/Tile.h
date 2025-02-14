@@ -532,7 +532,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void incrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept;
+  void incrementDoNotUnloadCount(const char* reason) noexcept;
 
   /**
    * @brief Decrements the internal count denoting that the tile and its
@@ -540,14 +540,12 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void decrementDoNotUnloadCount([[maybe_unused]] const char* reason) noexcept;
+  void decrementDoNotUnloadCount(const char* reason) noexcept;
 
 private:
-  void incrementDoNotUnloadCount(
-      [[maybe_unused]] const std::string& reason) noexcept;
+  void incrementDoNotUnloadCount(const std::string& reason) noexcept;
 
-  void decrementDoNotUnloadCount(
-      [[maybe_unused]] const std::string& reason) noexcept;
+  void decrementDoNotUnloadCount(const std::string& reason) noexcept;
 
   struct TileConstructorImpl {};
   template <

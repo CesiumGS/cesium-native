@@ -137,6 +137,14 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
+    // We deliberately do *not* copy the _doNotUnloadCount of rhs here.
+    // This is because the _doNotUnloadCount is a count of instances of the
+    // *pointer* to the tile, denoting the number of active pointers that would
+    // be invalidated if the Tile were to be deleted. Because the memory
+    // location of the tile will have changed as a result of the move operation,
+    // the new Tile object will not have any pointers referencing it, so copying
+    // over the count would be incorrect and could result in a Tile not being
+    // removed when it otherwise should be.
   }
 
   return *this;
