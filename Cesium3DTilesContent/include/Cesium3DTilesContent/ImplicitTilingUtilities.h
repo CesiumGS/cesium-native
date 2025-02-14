@@ -15,7 +15,7 @@ class S2CellBoundingVolume;
 
 namespace CesiumGeometry {
 class OrientedBoundingBox;
-class BoundingCylinder;
+class BoundingCylinderRegion;
 } // namespace CesiumGeometry
 
 namespace Cesium3DTiles {
@@ -528,8 +528,8 @@ public:
    * @param tileID The tile ID for which to compute the oriented bounding box.
    * @return The oriented bounding box for the given implicit tile.
    */
-  static CesiumGeometry::BoundingCylinder computeBoundingVolume(
-      const CesiumGeometry::BoundingCylinder& rootBoundingVolume,
+  static CesiumGeometry::BoundingCylinderRegion computeBoundingVolume(
+      const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
       const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
 
   /**
@@ -540,8 +540,8 @@ public:
    * @param tileID The tile ID for which to compute the bounding cylinder.
    * @return The bounding cylinder for the given implicit tile.
    */
-  static CesiumGeometry::BoundingCylinder computeBoundingVolume(
-      const CesiumGeometry::BoundingCylinder& rootBoundingVolume,
+  static CesiumGeometry::BoundingCylinderRegion computeBoundingVolume(
+      const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
       const CesiumGeometry::OctreeTileID& tileID) noexcept;
 };
 

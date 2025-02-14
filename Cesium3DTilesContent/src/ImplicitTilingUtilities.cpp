@@ -3,7 +3,7 @@
 #include "Cesium3DTilesContent/TileBoundingVolumes.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
-#include <CesiumGeometry/BoundingCylinder.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -15,6 +15,7 @@
 #include <CesiumUtility/Uri.h>
 
 #include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <libmorton/morton.h>
 
@@ -180,12 +181,12 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
     TileBoundingVolumes::setS2CellBoundingVolume(result, s2);
   }
 
-  std::optional<BoundingCylinder> maybeCylinder =
-      TileBoundingVolumes::getBoundingCylinder(rootBoundingVolume);
+  std::optional<BoundingCylinderRegion> maybeCylinder =
+      TileBoundingVolumes::getBoundingCylinderRegion(rootBoundingVolume);
   if (maybeCylinder) {
-    BoundingCylinder cylinder =
+    BoundingCylinderRegion cylinder =
         ImplicitTilingUtilities::computeBoundingVolume(*maybeCylinder, tileID);
-    TileBoundingVolumes::setBoundingCylinder(result, cylinder);
+    TileBoundingVolumes::setBoundingCylinderRegion(result, cylinder);
   }
 
   return result;
@@ -354,22 +355,67 @@ ImplicitTilingUtilities::computeBoundingVolume(
       ellipsoid);
 }
 
-CesiumGeometry::BoundingCylinder ImplicitTilingUtilities::computeBoundingVolume(
-    const CesiumGeometry::BoundingCylinder& rootBoundingVolume,
+CesiumGeometry::BoundingCylinderRegion
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
     const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
-  CesiumGeometry::OrientedBoundingBox result = computeBoundingVolume(
-      CesiumGeometry::OrientedBoundingBox::fromCylinder(rootBoundingVolume),
-      tileID);
-  return result.toCylinder();
+  double denominator = computeLevelDenominator(tileID.level);
+
+  const glm::dvec2& rootRadialBounds = rootBoundingVolume.getRadialBounds();
+  const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
+
+  double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
+  double rootAngularRange = rootAngularBounds.y - rootAngularBounds.x;
+
+  double radiusDim = rootRadiusRange / denominator;
+  double angleDim = rootAngularRange / denominator;
+
+  double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
+  double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
+
+  return CesiumGeometry::BoundingCylinderRegion(
+      rootBoundingVolume.getTranslation(),
+      rootBoundingVolume.getRotation(),
+      rootBoundingVolume.getHeight(),
+      glm::dvec2(minRadius, minRadius + radiusDim),
+      glm::dvec2(minAngle, minAngle + angleDim));
 }
 
-CesiumGeometry::BoundingCylinder ImplicitTilingUtilities::computeBoundingVolume(
-    const CesiumGeometry::BoundingCylinder& rootBoundingVolume,
+CesiumGeometry::BoundingCylinderRegion
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
     const CesiumGeometry::OctreeTileID& tileID) noexcept {
-  CesiumGeometry::OrientedBoundingBox result = computeBoundingVolume(
-      CesiumGeometry::OrientedBoundingBox::fromCylinder(rootBoundingVolume),
-      tileID);
-  return result.toCylinder();
+  double denominator = computeLevelDenominator(tileID.level);
+
+  const glm::dvec2& rootRadialBounds = rootBoundingVolume.getRadialBounds();
+  const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
+
+  double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
+  double rootAngularRange = rootAngularBounds.y - rootAngularBounds.x;
+  double rootHeight = rootBoundingVolume.getHeight();
+
+  double radiusDim = rootRadiusRange / denominator;
+  double angleDim = rootAngularRange / denominator;
+  double heightDim = rootHeight / denominator;
+
+  double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
+  double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
+
+  // Due to the smaller height, the region has to be translated along its local
+  // height axis.
+  glm::dvec3 heightOffset(
+      0.0,
+      0.0,
+      0.5 * (-rootHeight + heightDim * double(tileID.z + 1)));
+
+  // However, this translation needs to be done before the previous translation / rotation are applied...
+// TODO  glm::translate(glm::dmat4(1.0), heightOffset);
+  return CesiumGeometry::BoundingCylinderRegion(
+      rootBoundingVolume.getTranslation(),
+      rootBoundingVolume.getRotation(),
+      heightDim,
+      glm::dvec2(minRadius, minRadius + radiusDim),
+      glm::dvec2(minAngle, minAngle + angleDim));
 }
 
 double

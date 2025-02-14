@@ -137,9 +137,10 @@ bool ViewState::isBoundingVolumeVisible(
           viewState._cullingVolume);
     }
 
-    bool operator()(const BoundingCylinder& boundingCylinder) noexcept {
+    bool
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
       return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingCylinder,
+          boundingCylinderRegion,
           viewState._cullingVolume);
     }
   };
@@ -188,8 +189,9 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
       return s2Cell.computeDistanceSquaredToPosition(viewState._position);
     }
 
-    double operator()(const BoundingCylinder& boundingCylinder) noexcept {
-      return boundingCylinder.computeDistanceSquaredToPosition(
+    double
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
+      return boundingCylinderRegion.computeDistanceSquaredToPosition(
           viewState._position);
     }
   };

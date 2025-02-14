@@ -42,6 +42,7 @@
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/geometric.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
 #include <spdlog/logger.h>
@@ -183,35 +184,70 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
           ellipsoid);
     }
 
-    const auto cylinderExtensionIt = extensionsIt->value.FindMember(
+    const auto cylinderIt = extensionsIt->value.FindMember(
         Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder::ExtensionName);
-    if (cylinderExtensionIt != extensionsIt->value.MemberEnd() &&
-        cylinderExtensionIt->value.IsObject()) {
-      const auto cylinderIt = cylinderExtensionIt->value.FindMember("cylinder");
-      if (cylinderIt == cylinderExtensionIt->value.MemberEnd() ||
-          !cylinderIt->value.IsArray()) {
+    if (cylinderIt != extensionsIt->value.MemberEnd() &&
+        cylinderIt->value.IsObject()) {
+      const auto minRadiusIt = cylinderIt->value.FindMember("minRadius");
+      if (minRadiusIt == cylinderIt->value.MemberEnd() ||
+          !minRadiusIt->value.IsNumber()) {
         return std::nullopt;
       }
 
-      const auto& a = cylinderIt->value.GetArray();
-      for (rapidjson::SizeType i = 0; i < 12; ++i) {
-        if (!a[i].IsNumber()) {
-          return std::nullopt;
+      const auto maxRadiusIt = cylinderIt->value.FindMember("maxRadius");
+      if (maxRadiusIt == cylinderIt->value.MemberEnd() ||
+          !maxRadiusIt->value.IsNumber()) {
+        return std::nullopt;
+      }
+
+      const auto heightIt = cylinderIt->value.FindMember("height");
+      if (heightIt == cylinderIt->value.MemberEnd() ||
+          !heightIt->value.IsNumber()) {
+        return std::nullopt;
+      }
+
+      double minRadius = minRadiusIt->value.GetDouble();
+      double maxRadius = maxRadiusIt->value.GetDouble();
+      double height = heightIt->value.GetDouble();
+      double minAngle = CesiumUtility::JsonHelpers::getDoubleOrDefault(
+          cylinderIt->value,
+          "minAngle",
+          -CesiumUtility::Math::OnePi);
+      double maxAngle = CesiumUtility::JsonHelpers::getDoubleOrDefault(
+          cylinderIt->value,
+          "maxAngle",
+          CesiumUtility::Math::OnePi);
+
+      glm::dvec3 translation(0.0);
+      glm::dquat rotation(1.0, 0.0, 0.0, 0.0);
+
+      const auto translationIt = cylinderIt->value.FindMember("translation");
+      if (translationIt != cylinderIt->value.MemberEnd() &&
+          translationIt->value.IsArray()) {
+        const auto& t = translationIt->value.GetArray();
+        for (rapidjson::SizeType i = 0; i < 3; ++i) {
+          if (t[i].IsNumber()) {
+            translation[static_cast<glm::length_t>(i)] = t[i].GetDouble();
+          }
         }
       }
 
-      return CesiumGeometry::BoundingCylinder(
-          glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
-          glm::dmat3(
-              a[3].GetDouble(),
-              a[4].GetDouble(),
-              a[5].GetDouble(),
-              a[6].GetDouble(),
-              a[7].GetDouble(),
-              a[8].GetDouble(),
-              a[9].GetDouble(),
-              a[10].GetDouble(),
-              a[11].GetDouble()));
+      const auto rotationIt = cylinderIt->value.FindMember("rotation");
+      if (rotationIt != cylinderIt->value.MemberEnd() &&
+          rotationIt->value.IsArray()) {
+        const auto& r = rotationIt->value.GetArray();
+        rotation.x = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[1], 0.0);
+        rotation.y = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[2], 0.0);
+        rotation.z = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[3], 0.0);
+        rotation.w = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[1], 1.0);
+      }
+
+      return CesiumGeometry::BoundingCylinderRegion(
+          translation,
+          rotation,
+          height,
+          glm::dvec2(minRadius, maxRadius),
+          glm::dvec2(minAngle, maxAngle));
     }
   }
 
@@ -361,8 +397,8 @@ void createImplicitOctreeLoader(
       std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
   const CesiumGeometry::OrientedBoundingBox* pBox =
       std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
-  const CesiumGeometry::BoundingCylinder* pCylinder =
-      std::get_if<CesiumGeometry::BoundingCylinder>(&boundingVolume);
+  const CesiumGeometry::BoundingCylinderRegion* pCylinder =
+      std::get_if<CesiumGeometry::BoundingCylinderRegion>(&boundingVolume);
 
   // the implicit loader will be the child loader of this tileset json loader
   TilesetContentLoader* pImplicitLoader = nullptr;

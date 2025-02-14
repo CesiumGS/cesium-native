@@ -129,10 +129,6 @@ public:
    */
   BoundingSphere toSphere() const noexcept;
 
-  /**
-   * @brief Converts this oriented bounding box to a bounding cylinder.
-   */
-  BoundingCylinder toCylinder() const noexcept;
 
   /**
    * @brief Creates an oriented bounding box from the given axis-aligned
@@ -145,12 +141,6 @@ public:
    * @brief Creates an oriented bounding box from the given bounding sphere.
    */
   static OrientedBoundingBox fromSphere(const BoundingSphere& sphere) noexcept;
-
-  /**
-   * @brief Creates an oriented bounding box from the given bounding cylinder.
-   */
-  static OrientedBoundingBox
-  fromCylinder(const BoundingCylinder& cylinder) noexcept;
 
 private:
   glm::dvec3 _center;

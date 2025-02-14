@@ -8,7 +8,7 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
-#include <CesiumGeometry/BoundingCylinder.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
@@ -74,10 +74,10 @@ bool boundingVolumeContainsCoordinate(
           coordinate);
     }
 
-    bool operator()(const BoundingCylinder& cylinder) noexcept {
+    bool operator()(const BoundingCylinderRegion& cylinderRegion) noexcept {
       std::optional<double> t = IntersectionTests::rayOBBParametric(
           ray,
-          OrientedBoundingBox::fromCylinder(cylinder));
+          cylinderRegion.toOrientedBoundingBox());
       return t && t.value() >= 0;
     }
   };

@@ -55,8 +55,9 @@ BoundingVolume transformBoundingVolume(
       return s2CellBoundingVolume;
     }
 
-    BoundingVolume operator()(const BoundingCylinder& boundingCylinder) {
-      return boundingCylinder.transform(transform);
+    BoundingVolume
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) {
+      return boundingCylinderRegion.transform(transform);
     }
   };
 
@@ -86,8 +87,9 @@ glm::dvec3 getBoundingVolumeCenter(const BoundingVolume& boundingVolume) {
       return s2Cell.getCenter();
     }
 
-    glm::dvec3 operator()(const BoundingCylinder& boundingCylinder) {
-      return boundingCylinder.getCenter();
+    glm::dvec3
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) {
+      return boundingCylinderRegion.getCenter();
     }
   };
 
@@ -214,8 +216,8 @@ std::optional<GlobeRectangle> estimateGlobeRectangle(
     }
 
     std::optional<GlobeRectangle>
-    operator()(const BoundingCylinder& boundingCylinder) {
-      return operator()(OrientedBoundingBox::fromCylinder(boundingCylinder));
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) {
+      return operator()(boundingCylinderRegion.toOrientedBoundingBox());
     }
   };
 
@@ -266,8 +268,8 @@ OrientedBoundingBox getOrientedBoundingBoxFromBoundingVolume(
       return s2.computeBoundingRegion(ellipsoid).getBoundingBox();
     }
 
-    OrientedBoundingBox operator()(const BoundingCylinder& cylinder) const {
-      return OrientedBoundingBox::fromCylinder(cylinder);
+    OrientedBoundingBox operator()(const BoundingCylinderRegion& cylinderRegion) const {
+      return cylinderRegion.toOrientedBoundingBox();
     }
   };
 

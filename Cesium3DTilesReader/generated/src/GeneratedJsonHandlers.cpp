@@ -277,7 +277,14 @@ namespace Cesium3DTilesReader {
 Extension3dTilesBoundingVolumeCylinderJsonHandler::
     Extension3dTilesBoundingVolumeCylinderJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _cylinder() {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
+      _minRadius(),
+      _maxRadius(),
+      _height(),
+      _minAngle(),
+      _maxAngle(),
+      _translation(),
+      _rotation() {}
 
 void Extension3dTilesBoundingVolumeCylinderJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -320,8 +327,26 @@ Extension3dTilesBoundingVolumeCylinderJsonHandler::
         Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& o) {
   using namespace std::string_literals;
 
-  if ("cylinder"s == str) {
-    return property("cylinder", this->_cylinder, o.cylinder);
+  if ("minRadius"s == str) {
+    return property("minRadius", this->_minRadius, o.minRadius);
+  }
+  if ("maxRadius"s == str) {
+    return property("maxRadius", this->_maxRadius, o.maxRadius);
+  }
+  if ("height"s == str) {
+    return property("height", this->_height, o.height);
+  }
+  if ("minAngle"s == str) {
+    return property("minAngle", this->_minAngle, o.minAngle);
+  }
+  if ("maxAngle"s == str) {
+    return property("maxAngle", this->_maxAngle, o.maxAngle);
+  }
+  if ("translation"s == str) {
+    return property("translation", this->_translation, o.translation);
+  }
+  if ("rotation"s == str) {
+    return property("rotation", this->_rotation, o.rotation);
   }
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);

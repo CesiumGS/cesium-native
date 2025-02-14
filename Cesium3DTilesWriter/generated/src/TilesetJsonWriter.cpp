@@ -406,9 +406,35 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (!obj.cylinder.empty()) {
-    jsonWriter.Key("cylinder");
-    writeJson(obj.cylinder, jsonWriter, context);
+  jsonWriter.Key("minRadius");
+  writeJson(obj.minRadius, jsonWriter, context);
+
+  jsonWriter.Key("maxRadius");
+  writeJson(obj.maxRadius, jsonWriter, context);
+
+  jsonWriter.Key("height");
+  writeJson(obj.height, jsonWriter, context);
+
+  if (obj.minAngle != -3.14159265359) {
+    jsonWriter.Key("minAngle");
+    writeJson(obj.minAngle, jsonWriter, context);
+  }
+
+  if (obj.maxAngle != 3.14159265359) {
+    jsonWriter.Key("maxAngle");
+    writeJson(obj.maxAngle, jsonWriter, context);
+  }
+
+  static const std::vector<double> translationDefault = {0, 0, 0};
+  if (obj.translation != translationDefault) {
+    jsonWriter.Key("translation");
+    writeJson(obj.translation, jsonWriter, context);
+  }
+
+  static const std::vector<double> rotationDefault = {0, 0, 0, 1};
+  if (obj.rotation != rotationDefault) {
+    jsonWriter.Key("rotation");
+    writeJson(obj.rotation, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
