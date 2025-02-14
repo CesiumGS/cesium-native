@@ -6,6 +6,7 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Math.h>
 
 #include <algorithm>
