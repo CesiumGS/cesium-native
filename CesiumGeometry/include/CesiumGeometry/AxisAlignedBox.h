@@ -128,8 +128,8 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
    * @brief Creates a tight-fitting, axis-aligned bounding box that contains all
    * of the input positions.
    *
-   * @param position The positions.
-   * @returns An axis-aligned bounding box containing the positions.
+   * @param positions The positions.
+   * @returns An axis-aligned bounding box derived from the input positions.
    */
   static AxisAlignedBox
   fromPositions(const std::vector<glm::dvec3>& positions) {
