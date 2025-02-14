@@ -655,7 +655,7 @@ private:
       const ClassProperty& classProperty,
       const PropertyAttributeProperty& propertyAttributeProperty) const {
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -663,7 +663,7 @@ private:
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
-    if (TypeToPropertyType<T>::component != componentType) {
+    if (TypeToPropertyComponentType<T>::component != componentType) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorComponentTypeMismatch);
     }

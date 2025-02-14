@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
@@ -259,6 +260,34 @@ public:
         _stringOffsetTypeSize{0} {}
 
   /**
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}, with an enum definition attached.
+   * Used for non-array or fixed-length array data.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param pEnumDefinition A pointer to the enum definition used for this
+   * value.
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      std::span<const std::byte> values,
+      const CesiumGltf::Enum* pEnumDefinition) noexcept
+      : PropertyView<ElementType>(classProperty, property, pEnumDefinition),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{},
+        _arrayOffsetType{PropertyComponentType::None},
+        _arrayOffsetTypeSize{0},
+        _stringOffsets{},
+        _stringOffsetType{PropertyComponentType::None},
+        _stringOffsetTypeSize{0} {}
+
+  /**
    * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
    *
    * @param property The {@link PropertyTableProperty}
@@ -280,6 +309,41 @@ public:
       PropertyComponentType arrayOffsetType,
       PropertyComponentType stringOffsetType) noexcept
       : PropertyView<ElementType>(classProperty, property),
+        _values{values},
+        _size{
+            this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
+        _arrayOffsets{arrayOffsets},
+        _arrayOffsetType{arrayOffsetType},
+        _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)},
+        _stringOffsets{stringOffsets},
+        _stringOffsetType{stringOffsetType},
+        _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
+
+  /**
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}, with an enum definition attached.
+   *
+   * @param property The {@link PropertyTableProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
+   * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param stringOffsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
+   * @param pEnumDefinition A pointer to the enum definition used for this
+   * value.
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      int64_t size,
+      std::span<const std::byte> values,
+      std::span<const std::byte> arrayOffsets,
+      std::span<const std::byte> stringOffsets,
+      PropertyComponentType arrayOffsetType,
+      PropertyComponentType stringOffsetType,
+      const CesiumGltf::Enum* pEnumDefinition) noexcept
+      : PropertyView<ElementType>(classProperty, property, pEnumDefinition),
         _values{values},
         _size{
             this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
