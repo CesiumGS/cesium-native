@@ -122,11 +122,23 @@ if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
             )
         endif()
 
-        if (CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
-            install(
-                DIRECTORY ${PACKAGE_DIR}/lib/
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            )
+        if(CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS)
+            # For non-Debug configurations, copy libraries from the normal lib folder.
+            if(EXISTS ${PACKAGE_DIR}/lib)
+                install(
+                    DIRECTORY ${PACKAGE_DIR}/lib/
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+                )
+            endif()
+            # For Debug, copy from the debug subfolder (adjust the path as needed).
+            if(EXISTS ${PACKAGE_DIR}/debug/lib)
+                install(
+                    DIRECTORY ${PACKAGE_DIR}/debug/lib/
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                    CONFIGURATIONS Debug
+                )
+            endif()
         endif()
     endforeach()
 endif()
@@ -135,11 +147,21 @@ if(CESIUM_INSTALL_STATIC_LIBS)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
-        if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
-            install(
-                DIRECTORY ${PACKAGE_DIR}/lib/
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            )
+        if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS)
+            if(EXISTS ${PACKAGE_DIR}/lib)
+                install(
+                    DIRECTORY ${PACKAGE_DIR}/lib/
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+                )
+            endif()
+            if(EXISTS ${PACKAGE_DIR}/debug/lib)
+                install(
+                    DIRECTORY ${PACKAGE_DIR}/debug/lib/
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                    CONFIGURATIONS Debug
+                )
+            endif()
         endif()
     endforeach()
 endif()
