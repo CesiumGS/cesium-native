@@ -27,7 +27,7 @@ jobs:
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ReferenceDocumentation
           path: build/doc/html
@@ -70,7 +70,7 @@ jobs:
           submodules: recursive
       - name: Compile Debug Configuration
         run: |
-          cmake -B build -S .
+          cmake -B build -S . -T "version=14.38"
           cmake --build build --config Debug --parallel 4
       - name: Test Debug Configuration
         run: |
