@@ -70,7 +70,7 @@ jobs:
           submodules: recursive
       - name: Compile Debug Configuration
         run: |
-          cmake -B build -S . -T "version=14.38"
+          cmake -B build -S .
           cmake --build build --config Debug --parallel 4
       - name: Test Debug Configuration
         run: |
