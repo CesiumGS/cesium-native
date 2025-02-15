@@ -10,7 +10,7 @@
 namespace CesiumJsonReader {
 class CESIUMJSONREADER_API IJsonHandler {
 public:
-  virtual ~IJsonHandler() {};
+  virtual ~IJsonHandler(){};
   virtual IJsonHandler* readNull() = 0;
   virtual IJsonHandler* readBool(bool b) = 0;
   virtual IJsonHandler* readInt32(int32_t i) = 0;
