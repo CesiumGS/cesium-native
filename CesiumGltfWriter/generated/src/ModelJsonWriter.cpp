@@ -12,13 +12,16 @@
 #include <CesiumGltf/AnimationChannelTarget.h>
 #include <CesiumGltf/AnimationSampler.h>
 #include <CesiumGltf/Asset.h>
+#include <CesiumGltf/Box.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Camera.h>
 #include <CesiumGltf/CameraOrthographic.h>
 #include <CesiumGltf/CameraPerspective.h>
+#include <CesiumGltf/Capsule.h>
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Cylinder.h>
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
@@ -26,12 +29,16 @@
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
+#include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapes.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
@@ -57,6 +64,7 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
+#include <CesiumGltf/Padding.h>
 #include <CesiumGltf/PropertyAttribute.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyTable.h>
@@ -66,7 +74,9 @@
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumGltf/Shape.h>
 #include <CesiumGltf/Skin.h>
+#include <CesiumGltf/Sphere.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
@@ -185,6 +195,56 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrImplicitShapes& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtImplicitEllipsoidRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtImplicitCylinderRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtPrimitiveVoxels& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Padding& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Shape& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Cylinder& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Capsule& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Box& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Sphere& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -987,6 +1047,266 @@ void writeJson(
   if (obj.indices > -1) {
     jsonWriter.Key("indices");
     writeJson(obj.indices, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrImplicitShapes& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.shapes.empty()) {
+    jsonWriter.Key("shapes");
+    writeJson(obj.shapes, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtImplicitEllipsoidRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("semiMajorAxisRadius");
+  writeJson(obj.semiMajorAxisRadius, jsonWriter, context);
+
+  jsonWriter.Key("semiMinorAxisRadius");
+  writeJson(obj.semiMinorAxisRadius, jsonWriter, context);
+
+  jsonWriter.Key("minHeight");
+  writeJson(obj.minHeight, jsonWriter, context);
+
+  jsonWriter.Key("maxHeight");
+  writeJson(obj.maxHeight, jsonWriter, context);
+
+  if (obj.minLatitude != -1.57079632679) {
+    jsonWriter.Key("minLatitude");
+    writeJson(obj.minLatitude, jsonWriter, context);
+  }
+
+  if (obj.maxLatitude != 1.57079632679) {
+    jsonWriter.Key("maxLatitude");
+    writeJson(obj.maxLatitude, jsonWriter, context);
+  }
+
+  if (obj.minLongitude != -3.14159265359) {
+    jsonWriter.Key("minLongitude");
+    writeJson(obj.minLongitude, jsonWriter, context);
+  }
+
+  if (obj.maxLongitude != 3.14159265359) {
+    jsonWriter.Key("maxLongitude");
+    writeJson(obj.maxLongitude, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtImplicitCylinderRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("minRadius");
+  writeJson(obj.minRadius, jsonWriter, context);
+
+  jsonWriter.Key("maxRadius");
+  writeJson(obj.maxRadius, jsonWriter, context);
+
+  jsonWriter.Key("height");
+  writeJson(obj.height, jsonWriter, context);
+
+  if (obj.minAngle != -3.14159265359) {
+    jsonWriter.Key("minAngle");
+    writeJson(obj.minAngle, jsonWriter, context);
+  }
+
+  if (obj.maxAngle != 3.14159265359) {
+    jsonWriter.Key("maxAngle");
+    writeJson(obj.maxAngle, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtPrimitiveVoxels& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.shape > -1) {
+    jsonWriter.Key("shape");
+    writeJson(obj.shape, jsonWriter, context);
+  }
+
+  if (!obj.dimensions.empty()) {
+    jsonWriter.Key("dimensions");
+    writeJson(obj.dimensions, jsonWriter, context);
+  }
+
+  if (obj.padding) {
+    jsonWriter.Key("padding");
+    writeJson(obj.padding, jsonWriter, context);
+  }
+
+  if (!obj.noData.empty()) {
+    jsonWriter.Key("noData");
+    writeJson(obj.noData, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Padding& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.before.empty()) {
+    jsonWriter.Key("before");
+    writeJson(obj.before, jsonWriter, context);
+  }
+
+  if (!obj.after.empty()) {
+    jsonWriter.Key("after");
+    writeJson(obj.after, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Shape& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("type");
+  writeJson(obj.type, jsonWriter, context);
+
+  if (obj.sphere) {
+    jsonWriter.Key("sphere");
+    writeJson(obj.sphere, jsonWriter, context);
+  }
+
+  if (obj.box) {
+    jsonWriter.Key("box");
+    writeJson(obj.box, jsonWriter, context);
+  }
+
+  if (obj.capsule) {
+    jsonWriter.Key("capsule");
+    writeJson(obj.capsule, jsonWriter, context);
+  }
+
+  if (obj.cylinder) {
+    jsonWriter.Key("cylinder");
+    writeJson(obj.cylinder, jsonWriter, context);
+  }
+
+  writeNamedObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Cylinder& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.height != 0.5) {
+    jsonWriter.Key("height");
+    writeJson(obj.height, jsonWriter, context);
+  }
+
+  if (obj.radiusBottom != 0.25) {
+    jsonWriter.Key("radiusBottom");
+    writeJson(obj.radiusBottom, jsonWriter, context);
+  }
+
+  if (obj.radiusTop != 0.25) {
+    jsonWriter.Key("radiusTop");
+    writeJson(obj.radiusTop, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Capsule& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.height != 0.5) {
+    jsonWriter.Key("height");
+    writeJson(obj.height, jsonWriter, context);
+  }
+
+  if (obj.radiusBottom != 0.25) {
+    jsonWriter.Key("radiusBottom");
+    writeJson(obj.radiusBottom, jsonWriter, context);
+  }
+
+  if (obj.radiusTop != 0.25) {
+    jsonWriter.Key("radiusTop");
+    writeJson(obj.radiusTop, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Box& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  static const std::vector<double> sizeDefault = {1, 1, 1};
+  if (obj.size != sizeDefault) {
+    jsonWriter.Key("size");
+    writeJson(obj.size, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Sphere& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.radius != 0.5) {
+    jsonWriter.Key("radius");
+    writeJson(obj.radius, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2539,6 +2859,76 @@ void ExtensionTextureWebpJsonWriter::write(
 
 void ExtensionCesiumPrimitiveOutlineJsonWriter::write(
     const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionKhrImplicitShapesJsonWriter::write(
+    const CesiumGltf::ExtensionKhrImplicitShapes& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtImplicitEllipsoidRegionJsonWriter::write(
+    const CesiumGltf::ExtensionExtImplicitEllipsoidRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtImplicitCylinderRegionJsonWriter::write(
+    const CesiumGltf::ExtensionExtImplicitCylinderRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtPrimitiveVoxelsJsonWriter::write(
+    const CesiumGltf::ExtensionExtPrimitiveVoxels& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void PaddingJsonWriter::write(
+    const CesiumGltf::Padding& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ShapeJsonWriter::write(
+    const CesiumGltf::Shape& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void CylinderJsonWriter::write(
+    const CesiumGltf::Cylinder& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void CapsuleJsonWriter::write(
+    const CesiumGltf::Capsule& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void BoxJsonWriter::write(
+    const CesiumGltf::Box& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void SphereJsonWriter::write(
+    const CesiumGltf::Sphere& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
