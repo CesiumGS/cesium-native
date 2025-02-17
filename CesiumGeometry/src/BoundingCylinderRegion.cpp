@@ -7,7 +7,6 @@
 #include "CesiumGeometry/Transforms.h"
 #include "CesiumUtility/Math.h"
 
-#include <glm/detail/func_matrix.inl>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_double2.hpp>
