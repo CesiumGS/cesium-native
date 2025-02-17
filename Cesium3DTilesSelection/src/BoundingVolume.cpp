@@ -1,5 +1,6 @@
 #include "Cesium3DTilesSelection/BoundingVolume.h"
 
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -268,7 +269,8 @@ OrientedBoundingBox getOrientedBoundingBoxFromBoundingVolume(
       return s2.computeBoundingRegion(ellipsoid).getBoundingBox();
     }
 
-    OrientedBoundingBox operator()(const BoundingCylinderRegion& cylinderRegion) const {
+    OrientedBoundingBox
+    operator()(const BoundingCylinderRegion& cylinderRegion) const {
       return cylinderRegion.toOrientedBoundingBox();
     }
   };

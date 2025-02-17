@@ -7,6 +7,7 @@
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -15,7 +16,7 @@
 #include <CesiumUtility/Uri.h>
 
 #include <glm/ext/matrix_double3x3.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <libmorton/morton.h>
 
@@ -403,16 +404,32 @@ ImplicitTilingUtilities::computeBoundingVolume(
 
   // Due to the smaller height, the region has to be translated along its local
   // height axis.
-  glm::dvec3 heightOffset(
-      0.0,
-      0.0,
-      0.5 * (-rootHeight + heightDim * double(tileID.z + 1)));
+  // Start at the center of the bottommost tiles:
+  double heightOffset = -0.5 * rootHeight + 0.5 * heightDim;
+  // Then offset according to tileID.z.
+  heightOffset += heightDim * double(tileID.z);
 
-  // However, this translation needs to be done before the previous translation / rotation are applied...
-// TODO  glm::translate(glm::dmat4(1.0), heightOffset);
+  // However, this translation needs to be done before the previous translation
+  // or rotation are applied.
+  glm::dmat4 transform =
+      CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
+          rootBoundingVolume.getTranslation(),
+          rootBoundingVolume.getRotation(),
+          glm::dvec3(1.0)) *
+      glm::translate(glm::dmat4(1.0), glm::dvec3(0.0, 0.0, heightOffset));
+
+  glm::dvec3 translation(0.0);
+  glm::dquat rotation(1.0, 0.0, 0.0, 0.0);
+
+  CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
+      transform,
+      &translation,
+      &rotation,
+      nullptr);
+
   return CesiumGeometry::BoundingCylinderRegion(
-      rootBoundingVolume.getTranslation(),
-      rootBoundingVolume.getRotation(),
+      translation,
+      rotation,
       heightDim,
       glm::dvec2(minRadius, minRadius + radiusDim),
       glm::dvec2(minAngle, minAngle + angleDim));

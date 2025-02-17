@@ -3,6 +3,7 @@
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/Transforms.h>
@@ -11,7 +12,7 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
 
-#include <glm/gtx/quaternion.hpp>
+#include <glm/ext/quaternion_double.hpp>
 
 #include <optional>
 #include <vector>

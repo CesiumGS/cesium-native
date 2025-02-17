@@ -36,11 +36,15 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/quaternion_double.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <rapidjson/document.h>

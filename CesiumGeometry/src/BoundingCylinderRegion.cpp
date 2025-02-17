@@ -2,13 +2,19 @@
 
 #include "CesiumGeometry/AxisAlignedBox.h"
 #include "CesiumGeometry/CullingResult.h"
+#include "CesiumGeometry/OrientedBoundingBox.h"
 #include "CesiumGeometry/Plane.h"
 #include "CesiumGeometry/Transforms.h"
+#include "CesiumUtility/Math.h"
 
+#include <glm/detail/func_matrix.inl>
+#include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/mat3x3.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/vec3.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#include <cmath>
 
 namespace CesiumGeometry {
 

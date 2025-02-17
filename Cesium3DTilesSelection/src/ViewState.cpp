@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
