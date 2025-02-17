@@ -129,7 +129,6 @@ public:
    */
   BoundingSphere toSphere() const noexcept;
 
-
   /**
    * @brief Creates an oriented bounding box from the given axis-aligned
    * bounding box.
