@@ -350,7 +350,6 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
-  this->_defaultViewGroup.startNextFrame();
   return this->updateView(this->_defaultViewGroup, frustums, deltaTime);
 }
 
@@ -359,6 +358,9 @@ const ViewUpdateResult& Tileset::updateView(
     const std::vector<ViewState>& frustums,
     float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
+
+  viewGroup.startNextFrame();
+
   // Fixup TilesetOptions to ensure lod transitions works correctly.
   _options.enableFrustumCulling =
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
