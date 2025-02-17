@@ -79,8 +79,7 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
   glm::dvec3 center = obb.getCenter();
 
   // If the input transform has a rotation, then it must be applied relative to
-  // the reference cylinder's origin (instead of the region's center). This
-  // undoes the translation, performs the rotation, then reapplies.
+  // the reference cylinder's origin (instead of the region's center).
   glm::dmat4 centerCylinder = glm::translate(glm::dmat4(1.0), -center);
   glm::dmat4 transformCylinder =
       CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
@@ -88,7 +87,7 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
           rotation,
           glm::dvec3(1.0));
   glm::dmat4 finalTransform =
-      glm::translate(transformCylinder * centerCylinder, center);
+      glm::inverse(centerCylinder) * transformCylinder * centerCylinder;
 
   return obb.transform(finalTransform);
 }
@@ -130,7 +129,6 @@ bool BoundingCylinderRegion::contains(
 
 BoundingCylinderRegion BoundingCylinderRegion::transform(
     const glm::dmat4& transformation) const noexcept {
-
   glm::dmat4 originalTransform =
       CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
           this->_translation,

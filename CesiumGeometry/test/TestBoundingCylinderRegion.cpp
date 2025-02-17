@@ -1,6 +1,7 @@
 #include "CesiumGeometry/BoundingCylinderRegion.h"
 
 #include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -93,11 +94,8 @@ TEST_CASE("BoundingCylinderRegion::toOrientedBoundingBox test") {
   }
 
   SUBCASE("transformed partial cylinder") {
-    // Rotate 90 degrees clockwise around the Z-axis.
-    glm::dquat rotation(glm::rotate(
-        glm::dmat4(1.0),
-        CesiumUtility::Math::PiOverTwo,
-        glm::dvec3(0.0, 0.0, 1.0)));
+    // Rotate 90 degrees counter-clockwise around the Z-axis.
+    glm::dquat rotation(CesiumGeometry::Transforms::X_UP_TO_Y_UP);
     glm::dvec3 translation(1.0, 2.0, 3.0);
 
     BoundingCylinderRegion region(
@@ -109,10 +107,160 @@ TEST_CASE("BoundingCylinderRegion::toOrientedBoundingBox test") {
 
     CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(0.0, 1.0, 3.0);
-    glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.5);
+    glm::dvec3 expectedCenter(0.0, 3.0, 3.0);
+    glm::dmat3 expectedHalfAxes(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.5);
+
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        box.getCenter(),
+        expectedCenter,
+        CesiumUtility::Math::Epsilon6));
+
+    const glm::dmat3& halfAxes = box.getHalfAxes();
+    for (glm::length_t i = 0; i < 3; i++) {
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          halfAxes[i],
+          expectedHalfAxes[i],
+          CesiumUtility::Math::Epsilon6));
+    }
+  }
+}
+
+TEST_CASE("BoundingCylinderRegion::transform test") {
+  glm::dmat4 transform(CesiumGeometry::Transforms::Z_UP_TO_Y_UP);
+  transform[3] = glm::dvec4(1.0, 2.0, 3.0, 1.0);
+
+  SUBCASE("solid cylinder") {
+    BoundingCylinderRegion region(
+        glm::dvec3(0.0),
+        glm::dquat(1.0, 0.0, 0.0, 0.0),
+        3.0,
+        glm::dvec2(0.0, 2.0));
+
+    BoundingCylinderRegion transformedRegion = region.transform(transform);
+    CHECK(transformedRegion.getTranslation() == glm::dvec3(1.0, 2.0, 3.0));
+    CHECK(
+        transformedRegion.getRotation() ==
+        glm::dquat(CesiumGeometry::Transforms::Z_UP_TO_Y_UP));
+
+    CesiumGeometry::OrientedBoundingBox box =
+        transformedRegion.toOrientedBoundingBox();
+
+    glm::dvec3 expectedCenter(1.0, 2.0, 3.0);
+    glm::dmat3 expectedHalfAxes(2.0, 0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 1.5, 0.0);
 
     CHECK(box.getCenter() == expectedCenter);
-    CHECK(box.getHalfAxes() == expectedHalfAxes);
+
+    const glm::dmat3& halfAxes = box.getHalfAxes();
+    for (glm::length_t i = 0; i < 3; i++) {
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          halfAxes[i],
+          expectedHalfAxes[i],
+          CesiumUtility::Math::Epsilon6));
+    }
+  }
+
+  SUBCASE("partial cylinder") {
+    BoundingCylinderRegion region(
+        glm::dvec3(0.0),
+        glm::dquat(1.0, 0.0, 0.0, 0.0),
+        3.0,
+        glm::dvec2(1.0, 2.0),
+        glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo));
+
+    BoundingCylinderRegion transformedRegion = region.transform(transform);
+    CHECK(transformedRegion.getTranslation() == glm::dvec3(1.0, 2.0, 3.0));
+    CHECK(
+        transformedRegion.getRotation() ==
+        glm::dquat(CesiumGeometry::Transforms::Z_UP_TO_Y_UP));
+
+    CesiumGeometry::OrientedBoundingBox box =
+        transformedRegion.toOrientedBoundingBox();
+
+    glm::dvec3 expectedCenter(0.0, 3.0, 3.0);
+    glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.5, 0.0);
+
+    CHECK(box.getCenter() == expectedCenter);
+
+    const glm::dmat3& halfAxes = box.getHalfAxes();
+    for (glm::length_t i = 0; i < 3; i++) {
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          halfAxes[i],
+          expectedHalfAxes[i],
+          CesiumUtility::Math::Epsilon6));
+    }
+  }
+
+  SUBCASE("transformed partial cylinder") {
+    glm::dquat rotation(CesiumGeometry::Transforms::X_UP_TO_Z_UP);
+    glm::dvec3 translation(-1.0, 0.0, 1.0);
+
+    BoundingCylinderRegion region(
+        translation,
+        rotation,
+        3.0,
+        glm::dvec2(1.0, 2.0),
+        glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo));
+
+    // Verify construction before the additional transform.
+    {
+      CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
+      glm::dvec3 expectedCenter(-2.0, 1.0, 1.0);
+      glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.5, 0.0, 0);
+
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          box.getCenter(),
+          expectedCenter,
+          CesiumUtility::Math::Epsilon6));
+
+      const glm::dmat3& halfAxes = box.getHalfAxes();
+      for (glm::length_t i = 0; i < 3; i++) {
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            halfAxes[i],
+            expectedHalfAxes[i],
+            CesiumUtility::Math::Epsilon6));
+      }
+    }
+
+    BoundingCylinderRegion transformedRegion = region.transform(transform);
+    glm::dmat4 finalTransform =
+        transform * glm::translate(glm::dmat4(1.0), translation) *
+        glm::dmat4(CesiumGeometry::Transforms::X_UP_TO_Z_UP);
+
+    glm::dvec3 expectedTranslation(0.0);
+    glm::dquat expectedRotation(1.0, 0.0, 0.0, 0.0);
+
+    CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
+        finalTransform,
+        &expectedTranslation,
+        &expectedRotation,
+        nullptr);
+
+    CHECK(transformedRegion.getTranslation() == expectedTranslation);
+    glm::dquat transformedRotation = transformedRegion.getRotation();
+    for (glm::length_t i = 0; i < 3; i++) {
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          transformedRotation[i],
+          expectedRotation[i],
+          CesiumUtility::Math::Epsilon6));
+    }
+
+    {
+      CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
+      glm::dvec3 expectedCenter(-2.0, 1.0, 1.0);
+      glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.5, 0.0, 0.0);
+
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          box.getCenter(),
+          expectedCenter,
+          CesiumUtility::Math::Epsilon6));
+
+      const glm::dmat3& halfAxes = box.getHalfAxes();
+      for (glm::length_t i = 0; i < 3; i++) {
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            halfAxes[i],
+            expectedHalfAxes[i],
+            CesiumUtility::Math::Epsilon6));
+      }
+    }
   }
 }
