@@ -51,7 +51,8 @@ struct BoundingVolumeSubdivision {
     return ImplicitTilingUtilities::computeBoundingVolume(obb, this->tileID);
   }
 
-  BoundingVolume operator()(const CesiumGeometry::BoundingCylinderRegion& cylinderRegion) {
+  BoundingVolume
+  operator()(const CesiumGeometry::BoundingCylinderRegion& cylinderRegion) {
     return ImplicitTilingUtilities::computeBoundingVolume(
         cylinderRegion,
         this->tileID);
