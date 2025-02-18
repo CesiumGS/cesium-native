@@ -116,8 +116,8 @@ Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() {
   }
 
   for (Tile* pTile : additiveCandidateTiles) {
-    pTile->decrementDoNotUnloadCount(
-        "TilesetHeightQuery::~TilesetHeightQuery destructing additiveCandidateTiles");
+    pTile->decrementDoNotUnloadCount("TilesetHeightQuery::~TilesetHeightQuery "
+                                     "destructing additiveCandidateTiles");
   }
 
   for (Tile* pTile : previousCandidateTiles) {
@@ -221,7 +221,8 @@ void TilesetHeightQuery::findCandidateTiles(
                 this->inputPosition,
                 this->ellipsoid)) {
           pTile->incrementDoNotUnloadCount(
-              "TilesetHeightQuery::findCandidateTiles add to additiveCandidateTiles");
+              "TilesetHeightQuery::findCandidateTiles add to "
+              "additiveCandidateTiles");
           this->additiveCandidateTiles.push_back(pTile);
         }
       } else {
@@ -277,16 +278,21 @@ void TilesetHeightQuery::findCandidateTiles(
     }
   }
 
-  // Decrement doNotUnloadCount for tiles currently in the queue, as the queue will be overwritten after this.
-  for(Tile* pTile : heightQueryLoadQueue) {
-    pTile->decrementDoNotUnloadCount("TilesetHeightRequest::processHeightRequests clear from heightQueryLoadQueue");
+  // Decrement doNotUnloadCount for tiles currently in the queue, as the queue
+  // will be overwritten after this.
+  for (Tile* pTile : heightQueryLoadQueue) {
+    pTile->decrementDoNotUnloadCount(
+        "TilesetHeightRequest::processHeightRequests clear from "
+        "heightQueryLoadQueue");
   }
 
   heightQueryLoadQueue.assign(tileLoadSet.begin(), tileLoadSet.end());
 
   // Track the pointers in the load queue in doNotUnloadCount
-  for(Tile* pTile : heightQueryLoadQueue) {
-    pTile->incrementDoNotUnloadCount("TilesetHeightRequest::processHeightRequests assign to heightQueryLoadQueue");
+  for (Tile* pTile : heightQueryLoadQueue) {
+    pTile->incrementDoNotUnloadCount(
+        "TilesetHeightRequest::processHeightRequests assign to "
+        "heightQueryLoadQueue");
   }
 }
 

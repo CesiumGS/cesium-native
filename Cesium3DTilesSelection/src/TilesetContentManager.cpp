@@ -1112,8 +1112,6 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
 
-        tile.decrementDoNotUnloadCount(
-            "TilesetContentManager::loadTileContent done loading");
         thiz->notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
@@ -1404,9 +1402,13 @@ void TilesetContentManager::setTileContent(
   if (result.state == TileLoadResultState::Failed) {
     tile.getMappedRasterTiles().clear();
     tile.setState(TileLoadState::Failed);
+    tile.decrementDoNotUnloadCount(
+        "TilesetContentManager::loadTileContent failed loading");
   } else if (result.state == TileLoadResultState::RetryLater) {
     tile.getMappedRasterTiles().clear();
     tile.setState(TileLoadState::FailedTemporarily);
+    tile.decrementDoNotUnloadCount(
+        "TilesetContentManager::loadTileContent failed loading temporarily");
   } else {
     // update tile if the result state is success
     if (result.updatedBoundingVolume) {
@@ -1430,6 +1432,8 @@ void TilesetContentManager::setTileContent(
     }
 
     tile.setState(TileLoadState::ContentLoaded);
+    tile.decrementDoNotUnloadCount(
+        "TilesetContentManager::loadTileContent done loading");
   }
 }
 
