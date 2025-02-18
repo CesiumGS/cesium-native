@@ -100,9 +100,9 @@ public:
    * @return The {@link TileSelectionState::Result}
    */
   constexpr Result getResult(int32_t frameNumber) const noexcept {
-    if (this->_frameNumber != frameNumber) {
-      return Result::None;
-    }
+    // if (this->_frameNumber != frameNumber) {
+    //   return Result::None;
+    // }
     return this->_result;
   }
 
