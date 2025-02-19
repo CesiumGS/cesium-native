@@ -1111,6 +1111,8 @@ void TilesetContentManager::loadTileContent(
       })
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
+        tile.decrementDoNotUnloadCount(
+            "TilesetContentManager::loadTileContent done loading");
 
         thiz->notifyTileDoneLoading(&tile);
       })
@@ -1184,6 +1186,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
+    tile.decrementLoadedContentsCount();
     return UnloadTileContentResult::Remove;
   }
 
@@ -1191,13 +1194,14 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     // Tile with external content that still has references to its pointer or to
     // its children's pointers - we can't unload.
     // We also, of course, don't want to unload the root tile.
-    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0) {
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0 || tile.getLoadedContentsCount() > 1) {
       return UnloadTileContentResult::Keep;
     }
 
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
+    tile.decrementLoadedContentsCount();
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
@@ -1240,6 +1244,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
+  tile.decrementLoadedContentsCount();
   return UnloadTileContentResult::Remove;
 }
 
@@ -1402,13 +1407,9 @@ void TilesetContentManager::setTileContent(
   if (result.state == TileLoadResultState::Failed) {
     tile.getMappedRasterTiles().clear();
     tile.setState(TileLoadState::Failed);
-    tile.decrementDoNotUnloadCount(
-        "TilesetContentManager::loadTileContent failed loading");
   } else if (result.state == TileLoadResultState::RetryLater) {
     tile.getMappedRasterTiles().clear();
     tile.setState(TileLoadState::FailedTemporarily);
-    tile.decrementDoNotUnloadCount(
-        "TilesetContentManager::loadTileContent failed loading temporarily");
   } else {
     // update tile if the result state is success
     if (result.updatedBoundingVolume) {
@@ -1427,13 +1428,15 @@ void TilesetContentManager::setTileContent(
             pWorkerRenderResources},
         std::move(result.contentKind));
 
+    if (!tile.getContent().isUnknownContent()) {
+      tile.incrementLoadedContentsCount();
+    }
+
     if (result.tileInitializer) {
       result.tileInitializer(tile);
     }
 
     tile.setState(TileLoadState::ContentLoaded);
-    tile.decrementDoNotUnloadCount(
-        "TilesetContentManager::loadTileContent done loading");
   }
 }
 

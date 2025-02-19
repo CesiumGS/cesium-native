@@ -25,6 +25,7 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
+#define CESIUM_DEBUG_TILE_UNLOADING 1
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 class TileDoNotUnloadCountTracker {
 private:
@@ -36,7 +37,7 @@ private:
 
 public:
   static void addEntry(
-      const TileID& id,
+      const uint64_t id,
       bool increment,
       const std::string& reason,
       int32_t newCount);
@@ -542,6 +543,14 @@ public:
    */
   void decrementDoNotUnloadCount(const char* reason) noexcept;
 
+  void incrementLoadedContentsCount() noexcept;
+
+  void decrementLoadedContentsCount() noexcept;
+
+  int32_t getLoadedContentsCount() const noexcept {
+    return this->_childrenWithLoadedContents;
+  }
+
 private:
   void incrementDoNotUnloadCount(const std::string& reason) noexcept;
 
@@ -612,6 +621,8 @@ private:
   // Number of existing claims on this tile preventing it and its parent
   // external tileset (if any) from being unloaded from the tree.
   int32_t _doNotUnloadCount = 0;
+
+  int32_t _childrenWithLoadedContents = 0;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;

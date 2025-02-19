@@ -1641,21 +1641,18 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
-bool Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
+void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
   // Iterate through all children, calling this method recursively unless the
   // child is still in _loadedTiles. If the child is still in _loadedTiles, or
   // any of its children (or children's children and so on) are in _loadedTiles,
   // we return false so we don't clear the children prematurely.
   for (Tile& child : pTile->getChildren()) {
-    if (this->_loadedTiles.contains(child) ||
-        !_clearChildrenRecursively(&child)) {
-      return false;
-    }
+    CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
+    this->_loadedTiles.remove(child);
+    _clearChildrenRecursively(&child);
   }
 
   pTile->clearChildren();
-
-  return true;
 }
 
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
@@ -1696,7 +1693,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
     const UnloadTileContentResult removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
-    if (removed == UnloadTileContentResult::Remove) {
+    if (removed != UnloadTileContentResult::Keep) {
       this->_loadedTiles.remove(*pTile);
     }
 
@@ -1718,9 +1715,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     // the tree.
     for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
       CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
-      if (_clearChildrenRecursively(pTileToClear)) {
-        this->_loadedTiles.remove(*pTileToClear);
-      }
+      _clearChildrenRecursively(pTileToClear);
     }
   }
 }
