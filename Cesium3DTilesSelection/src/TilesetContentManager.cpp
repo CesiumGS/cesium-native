@@ -1267,9 +1267,11 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
 
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
+  if (!content.isUnknownContent()) {
+    tile.decrementTilesStillNotUnloadedCount();
+  }
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
-  tile.decrementTilesStillNotUnloadedCount();
   return UnloadTileContentResult::Remove;
 }
 
