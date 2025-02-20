@@ -90,7 +90,8 @@ Tile::Tile(
       _pLoader{pLoader},
       _loadState{loadState},
       _mightHaveLatentChildren{true} {
-  if (_loadState != TileLoadState::Unloaded && !_content.isUnknownContent()) {
+  if (_loadState != TileLoadState::Unloaded && !_content.isUnknownContent() &&
+      !_content.isEmptyContent()) {
     incrementTilesStillNotUnloadedCount();
   }
 }
@@ -165,10 +166,6 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
   int32_t prevLoadedContentsCount = this->_tilesStillNotUnloadedCount;
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
-    SPDLOG_INFO(
-        "Tile {:x} created and added to parent {:x}",
-        reinterpret_cast<uint64_t>(&tile),
-        reinterpret_cast<uint64_t>(this));
     tile.setParent(this);
     this->_tilesStillNotUnloadedCount += tile._tilesStillNotUnloadedCount;
   }
@@ -287,14 +284,7 @@ TileLoadState Tile::getState() const noexcept { return this->_loadState; }
 
 void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
-void Tile::setState(TileLoadState state) noexcept {
-  SPDLOG_INFO(
-      "set state of tile {:x} to {} from {}",
-      reinterpret_cast<uint64_t>(this),
-      static_cast<uint64_t>(state),
-      static_cast<uint64_t>(this->_loadState));
-  this->_loadState = state;
-}
+void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
 
 bool Tile::getMightHaveLatentChildren() const noexcept {
   return this->_mightHaveLatentChildren;

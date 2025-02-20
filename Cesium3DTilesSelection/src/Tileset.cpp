@@ -1642,8 +1642,12 @@ void Tileset::_processMainThreadLoadQueue() {
 }
 
 void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
-  // Iterate through all children, calling this method recursively to make sure children are all removed from _loadedTiles.
+  // Iterate through all children, calling this method recursively to make sure
+  // children are all removed from _loadedTiles.
   for (Tile& child : pTile->getChildren()) {
+    if (child.isEmptyContent()) {
+      this->_pTilesetContentManager->finalizeEmptyTile(child);
+    }
     CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
     CESIUM_ASSERT(child.getTilesStillNotUnloadedCount() == 0);
@@ -1653,9 +1657,6 @@ void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
   }
 
   pTile->clearChildren();
-  SPDLOG_INFO(
-      "_clearChildrenRecursively end for {:x}",
-      reinterpret_cast<uint64_t>(pTile));
 }
 
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
@@ -1696,14 +1697,7 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
 
     const UnloadTileContentResult removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
-    SPDLOG_INFO(
-        "unloadTileContent tile {:x} result {}",
-        reinterpret_cast<uint64_t>(pTile),
-        static_cast<uint64_t>(removed));
     if (removed != UnloadTileContentResult::Keep) {
-      SPDLOG_INFO(
-          "Tile {:x} removed from _loadedTiles by _unloadTileContent",
-          reinterpret_cast<uint64_t>(pTile));
       this->_loadedTiles.remove(*pTile);
     }
 
@@ -1731,21 +1725,14 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     // `tilesNeedingChildrenCleared` vector is in order from bottom to top of
     // the tree.
     for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
-      SPDLOG_INFO(
-          "_clearChildrenRecursively start with {:x}",
-          reinterpret_cast<uint64_t>(pTileToClear));
       CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
       CESIUM_ASSERT(pTileToClear->getTilesStillNotUnloadedCount() == 0);
       _clearChildrenRecursively(pTileToClear);
-     // pTileToClear->clearChildren();
     }
   }
 }
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {
-  SPDLOG_INFO(
-      "Tile {:x} added to _loadedTiles by _markTileVisited",
-      reinterpret_cast<uint64_t>(&tile));
   this->_loadedTiles.insertAtTail(tile);
 }
 
