@@ -1172,10 +1172,16 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
 UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
+    SPDLOG_INFO(
+        "unloadTileContent Remove: tile {:x} was already unloaded",
+        reinterpret_cast<uint64_t>(&tile));
     return UnloadTileContentResult::Remove;
   }
 
   if (state == TileLoadState::ContentLoading) {
+    SPDLOG_INFO(
+        "unloadTileContent Keep: tile {:x} is ContentLoading",
+        reinterpret_cast<uint64_t>(&tile));
     return UnloadTileContentResult::Keep;
   }
 
@@ -1186,7 +1192,10 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.decrementLoadedContentsCount();
+    tile.decrementTilesStillNotUnloadedCount();
+    SPDLOG_INFO(
+        "unloadTileContent Remove: tile {:x} was empty content",
+        reinterpret_cast<uint64_t>(&tile));
     return UnloadTileContentResult::Remove;
   }
 
@@ -1194,14 +1203,21 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     // Tile with external content that still has references to its pointer or to
     // its children's pointers - we can't unload.
     // We also, of course, don't want to unload the root tile.
-    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0 || tile.getLoadedContentsCount() > 1) {
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0 ||
+        tile.getTilesStillNotUnloadedCount() > 1) {
+      SPDLOG_INFO(
+          "unloadTileContent Keep: tile {:x} is external content not ready for unloading",
+          reinterpret_cast<uint64_t>(&tile));
       return UnloadTileContentResult::Keep;
     }
 
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.decrementLoadedContentsCount();
+    tile.decrementTilesStillNotUnloadedCount();
+    SPDLOG_INFO(
+        "unloadTileContent RemoveAndClearChildren: tile {:x} is external content ready to go",
+        reinterpret_cast<uint64_t>(&tile));
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
@@ -1236,6 +1252,9 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
       // it right now. So mark the tile as in the process of unloading and stop
       // here.
       tile.setState(TileLoadState::Unloading);
+      SPDLOG_INFO(
+          "unloadTileContent Keep: tile {:x} is being used for upsampling",
+          reinterpret_cast<uint64_t>(&tile));
       return UnloadTileContentResult::Keep;
     }
   }
@@ -1244,7 +1263,10 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   notifyTileUnloading(&tile);
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
-  tile.decrementLoadedContentsCount();
+  tile.decrementTilesStillNotUnloadedCount();
+  SPDLOG_INFO(
+      "unloadTileContent Remove: tile {:x} was render content",
+      reinterpret_cast<uint64_t>(&tile));
   return UnloadTileContentResult::Remove;
 }
 
@@ -1429,7 +1451,7 @@ void TilesetContentManager::setTileContent(
         std::move(result.contentKind));
 
     if (!tile.getContent().isUnknownContent()) {
-      tile.incrementLoadedContentsCount();
+      tile.incrementTilesStillNotUnloadedCount();
     }
 
     if (result.tileInitializer) {

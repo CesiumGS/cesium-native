@@ -31,7 +31,7 @@ std::unordered_map<std::string, std::vector<TileDoNotUnloadCountTracker::Entry>>
     TileDoNotUnloadCountTracker::_entries;
 
 void TileDoNotUnloadCountTracker::addEntry(
-    const uint64_t id,
+    uint64_t id,
     bool increment,
     const std::string& reason,
     int32_t newCount) {
@@ -45,13 +45,6 @@ void TileDoNotUnloadCountTracker::addEntry(
     TileDoNotUnloadCountTracker::_entries.insert(
         {idString, std::move(entries)});
   }
-
-  SPDLOG_INFO(
-      "doNotUnloadCount tracker, tile {}, increment {}, newCount {}, reason {}",
-      idString,
-      increment,
-      newCount,
-      reason);
 }
 #endif
 
@@ -98,7 +91,7 @@ Tile::Tile(
       _loadState{loadState},
       _mightHaveLatentChildren{true} {
   if (_loadState != TileLoadState::Unloaded && !_content.isUnknownContent()) {
-    incrementLoadedContentsCount();
+    incrementTilesStillNotUnloadedCount();
   }
 }
 
@@ -118,7 +111,7 @@ Tile::Tile(Tile&& rhs) noexcept
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
-      _childrenWithLoadedContents{rhs._childrenWithLoadedContents} {
+      _tilesStillNotUnloadedCount{rhs._tilesStillNotUnloadedCount} {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -150,7 +143,7 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
-    this->_childrenWithLoadedContents = rhs._childrenWithLoadedContents;
+    this->_tilesStillNotUnloadedCount = rhs._tilesStillNotUnloadedCount;
     // We deliberately do *not* copy the _doNotUnloadCount of rhs here.
     // This is because the _doNotUnloadCount is a count of instances of the
     // *pointer* to the tile, denoting the number of active pointers that would
@@ -166,24 +159,25 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {
   if (!this->_children.empty()) {
-    SPDLOG_INFO(
-        "Children for {:x} already created",
-        reinterpret_cast<uint64_t>(this));
     throw std::runtime_error("Children already created.");
   }
 
-  int32_t prevLoadedContentsCount = this->_childrenWithLoadedContents;
+  int32_t prevLoadedContentsCount = this->_tilesStillNotUnloadedCount;
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
+    SPDLOG_INFO(
+        "Tile {:x} created and added to parent {:x}",
+        reinterpret_cast<uint64_t>(&tile),
+        reinterpret_cast<uint64_t>(this));
     tile.setParent(this);
-    this->_childrenWithLoadedContents += tile._childrenWithLoadedContents;
+    this->_tilesStillNotUnloadedCount += tile._tilesStillNotUnloadedCount;
   }
 
   // Propagate new loaded contents count up the chain
   Tile* pParent = this->_pParent;
   while (pParent != nullptr) {
-    pParent->_childrenWithLoadedContents -= prevLoadedContentsCount;
-    pParent->_childrenWithLoadedContents += this->_childrenWithLoadedContents;
+    pParent->_tilesStillNotUnloadedCount -= prevLoadedContentsCount;
+    pParent->_tilesStillNotUnloadedCount += this->_tilesStillNotUnloadedCount;
     pParent = pParent->_pParent;
   }
 }
@@ -295,7 +289,7 @@ void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
 void Tile::setState(TileLoadState state) noexcept {
   SPDLOG_INFO(
-      "Setting tile {:x} state to {} from {}",
+      "set state of tile {:x} to {} from {}",
       reinterpret_cast<uint64_t>(this),
       static_cast<uint64_t>(state),
       static_cast<uint64_t>(this->_loadState));
@@ -372,17 +366,19 @@ void Tile::decrementDoNotUnloadCount(
   }
 }
 
-void Tile::incrementLoadedContentsCount() noexcept {
-  this->_childrenWithLoadedContents++;
+void Tile::incrementTilesStillNotUnloadedCount() noexcept {
+  CESIUM_ASSERT(this->_tilesStillNotUnloadedCount >= 0);
+  this->_tilesStillNotUnloadedCount++;
   if (this->getParent() != nullptr) {
-    this->getParent()->incrementLoadedContentsCount();
+    this->getParent()->incrementTilesStillNotUnloadedCount();
   }
 }
 
-void Tile::decrementLoadedContentsCount() noexcept {
-  --this->_childrenWithLoadedContents;
+void Tile::decrementTilesStillNotUnloadedCount() noexcept {
+  CESIUM_ASSERT(this->_tilesStillNotUnloadedCount > 0);
+  --this->_tilesStillNotUnloadedCount;
   if (this->getParent() != nullptr) {
-    this->getParent()->decrementLoadedContentsCount();
+    this->getParent()->decrementTilesStillNotUnloadedCount();
   }
 }
 

@@ -25,7 +25,6 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
-#define CESIUM_DEBUG_TILE_UNLOADING 1
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 class TileDoNotUnloadCountTracker {
 private:
@@ -543,12 +542,31 @@ public:
    */
   void decrementDoNotUnloadCount(const char* reason) noexcept;
 
-  void incrementLoadedContentsCount() noexcept;
+  /**
+   * @brief Marks this tile as having content that has not yet been unloaded,
+   * preventing a parent external tileset from cleaning up. This count will be
+   * propagated to any ancestors.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void incrementTilesStillNotUnloadedCount() noexcept;
 
-  void decrementLoadedContentsCount() noexcept;
+  /**
+   * @brief Unmarks this tile as having content that has not yet been unloaded,
+   * allowing a parent external tileset to clean up. This count will be
+   * propagated to any ancestors.
+   *
+   * This function is not supposed to be called by clients.
+   */
+  void decrementTilesStillNotUnloadedCount() noexcept;
 
-  int32_t getLoadedContentsCount() const noexcept {
-    return this->_childrenWithLoadedContents;
+  /**
+   * @brief Obtains the number of tiles at or below this tile (that is, the tile
+   * itself and its children) that still have content that has not yet been
+   * unloaded, preventing a parent external tileset from cleaning up.
+   */
+  int32_t getTilesStillNotUnloadedCount() const noexcept {
+    return this->_tilesStillNotUnloadedCount;
   }
 
 private:
@@ -622,7 +640,7 @@ private:
   // external tileset (if any) from being unloaded from the tree.
   int32_t _doNotUnloadCount = 0;
 
-  int32_t _childrenWithLoadedContents = 0;
+  int32_t _tilesStillNotUnloadedCount = 0;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
