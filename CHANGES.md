@@ -18,6 +18,7 @@
 
 - Fixed parsing URIs that have a scheme followed by `:` instead of `://`.
 - Fixed decoding of KHR_mesh_quantization normalized values.
+- `Tile` children of external tilesets will now be cleared when the external tileset is unloaded, fixing a memory leak that happened as a result of these `Tile` skeletons accumulating over time.
 
 ### v0.44.3 - 2025-02-12
 

@@ -1037,6 +1037,9 @@ void TilesetContentManager::loadTileContent(
     }
   }
 
+  tile.incrementDoNotUnloadCount(
+      "TilesetContentManager::loadTileContent begin");
+
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
       mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
@@ -1108,11 +1111,15 @@ void TilesetContentManager::loadTileContent(
       })
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
+        tile.decrementDoNotUnloadCount(
+            "TilesetContentManager::loadTileContent done loading");
 
         thiz->notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
+        tile.decrementDoNotUnloadCount(
+            "TilesetContentManager::loadTileContent error while loading");
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
@@ -1162,21 +1169,65 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
   }
 }
 
-bool TilesetContentManager::unloadTileContent(Tile& tile) {
+void TilesetContentManager::finalizeEmptyTile(Tile& tile) {
+  CESIUM_ASSERT(tile.getContent().isEmptyContent());
+  notifyTileUnloading(&tile);
+  tile.getContent().setContentKind(TileUnknownContent{});
+  tile.setState(TileLoadState::Unloaded);
+}
+
+UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
-    return true;
+    return UnloadTileContentResult::Remove;
   }
 
   if (state == TileLoadState::ContentLoading) {
-    return false;
+    return UnloadTileContentResult::Keep;
   }
 
   TileContent& content = tile.getContent();
 
-  // don't unload external or empty tile
-  if (content.isExternalContent() || content.isEmptyContent()) {
-    return false;
+  /**
+   * External tilesets load like this :
+   * 1. Tile in parent tileset points to a new tileset to load. This is the tile
+   *    with TileExternalContent.
+   * 2. TilesetJsonLoader loads new tileset.
+   * 3. The root tile of the new tileset is added as a child of the
+   *    TileExternalContent parent. This tile is TileEmptyContent, but has the
+   *    rest of the tileset as its children.
+   * 4. The loader used to load the external tileset is set as the
+   *    TileEmptyContent's _pLoader.
+   *
+   * This causes a bit of an issue for us, because if we unload this empty tile
+   * right now - before the parent TileExternalContent is unloaded and has its
+   * children cleared - we are introducing a tile into the tree with
+   * TileLoadState::Unloaded, TileUnknownContent, an infinite geometric error
+   * (aka the unconditionally refine flag), and a loader for the external
+   * tileset it's the root of. If this is allowed to happen, this Tile will be
+   * treated as an unloaded external tileset, and we will attempt to load its
+   * children. Once loaded, Tile::createChildren will find that the tile already
+   * has children, and throw an exception. To solve this problem, let's just
+   * avoid marking empty content tiles as Unloaded.
+   */
+  if (content.isEmptyContent()) {
+    return UnloadTileContentResult::Keep;
+  }
+
+  if (content.isExternalContent()) {
+    // Tile with external content that still has references to its pointer or to
+    // its children's pointers - we can't unload.
+    // We also, of course, don't want to unload the root tile.
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0 ||
+        tile.getTilesStillNotUnloadedCount() > 1) {
+      return UnloadTileContentResult::Keep;
+    }
+
+    notifyTileUnloading(&tile);
+    content.setContentKind(TileUnknownContent{});
+    tile.setState(TileLoadState::Unloaded);
+    tile.decrementTilesStillNotUnloadedCount();
+    return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
   // Detach raster tiles first so that the renderer's tile free
@@ -1210,15 +1261,18 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
       // it right now. So mark the tile as in the process of unloading and stop
       // here.
       tile.setState(TileLoadState::Unloading);
-      return false;
+      return UnloadTileContentResult::Keep;
     }
   }
 
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
+  if (!content.isUnknownContent()) {
+    tile.decrementTilesStillNotUnloadedCount();
+  }
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
-  return true;
+  return UnloadTileContentResult::Remove;
 }
 
 void TilesetContentManager::unloadAll() {
@@ -1400,6 +1454,11 @@ void TilesetContentManager::setTileContent(
             std::move(result.rasterOverlayDetails),
             pWorkerRenderResources},
         std::move(result.contentKind));
+
+    if (!tile.getContent().isUnknownContent() &&
+        !tile.getContent().isEmptyContent()) {
+      tile.incrementTilesStillNotUnloadedCount();
+    }
 
     if (result.tileInitializer) {
       result.tileInitializer(tile);
