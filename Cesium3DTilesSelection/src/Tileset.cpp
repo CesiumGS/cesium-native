@@ -1713,13 +1713,6 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     }
   }
 
-  pTile = this->_loadedTiles.previous(pRootTile);
-  while (pTile != nullptr) {
-    CESIUM_ASSERT(this->_loadedTiles.previous(pTile) != pTile);
-    CESIUM_ASSERT(this->_loadedTiles.next(pTile) != pTile);
-    pTile = this->_loadedTiles.previous(pTile);
-  }
-
   if (!tilesNeedingChildrenCleared.empty()) {
     // Because we iterated over the tiles list backwards, the
     // `tilesNeedingChildrenCleared` vector is in order from bottom to top of
