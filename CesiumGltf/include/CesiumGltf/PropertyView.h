@@ -164,8 +164,12 @@ template <typename T>
 PropertyViewStatusType validatePropertyType(
     const ClassProperty& classProperty,
     const CesiumGltf::Enum* pEnumDefinition) {
-  if (convertStringToPropertyType(classProperty.type) != PropertyType::Enum) {
+  if (classProperty.type != ClassProperty::Type::ENUM) {
     return PropertyViewStatus::ErrorTypeMismatch;
+  }
+
+  if (pEnumDefinition == nullptr) {
+    return PropertyViewStatus::ErrorInvalidEnum;
   }
 
   PropertyComponentType expectedComponentType =
@@ -195,25 +199,23 @@ PropertyViewStatusType
 validateArrayPropertyType(const ClassProperty& classProperty) {
   using ElementType = typename MetadataArrayType<T>::type;
 
-  if (convertStringToPropertyType(classProperty.type) != PropertyType::Enum) {
-    if (!canRepresentPropertyType<ElementType>(
-            convertStringToPropertyType(classProperty.type))) {
-      return PropertyViewStatus::ErrorTypeMismatch;
-    }
+  if (!canRepresentPropertyType<ElementType>(
+          convertStringToPropertyType(classProperty.type))) {
+    return PropertyViewStatus::ErrorTypeMismatch;
+  }
 
-    PropertyComponentType expectedComponentType =
-        TypeToPropertyComponentType<ElementType>::component;
+  PropertyComponentType expectedComponentType =
+      TypeToPropertyComponentType<ElementType>::component;
 
-    if (!classProperty.componentType &&
-        expectedComponentType != PropertyComponentType::None) {
-      return PropertyViewStatus::ErrorComponentTypeMismatch;
-    }
+  if (!classProperty.componentType &&
+      expectedComponentType != PropertyComponentType::None) {
+    return PropertyViewStatus::ErrorComponentTypeMismatch;
+  }
 
-    if (classProperty.componentType &&
-        expectedComponentType != convertStringToPropertyComponentType(
-                                     *classProperty.componentType)) {
-      return PropertyViewStatus::ErrorComponentTypeMismatch;
-    }
+  if (classProperty.componentType &&
+      expectedComponentType !=
+          convertStringToPropertyComponentType(*classProperty.componentType)) {
+    return PropertyViewStatus::ErrorComponentTypeMismatch;
   }
 
   if (!classProperty.array) {
@@ -476,7 +478,6 @@ public:
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt),
-        _pEnumDefinition(pEnumDefinition),
         _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -752,13 +753,6 @@ public:
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
 
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept {
-    return _pEnumDefinition;
-  }
-
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -776,7 +770,6 @@ private:
   bool _required;
   std::optional<ElementType> _noData;
   std::optional<ElementType> _defaultValue;
-  const CesiumGltf::Enum* _pEnumDefinition = nullptr;
   PropertyType _propertyType;
 
   /**
@@ -1131,11 +1124,6 @@ public:
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
 
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
-
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1375,11 +1363,6 @@ public:
    */
   PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
 
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
-
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1573,11 +1556,6 @@ public:
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::String; }
-
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -1957,11 +1935,6 @@ public:
    * accessing.
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
-
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -2409,11 +2382,6 @@ public:
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
 
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
-
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2709,11 +2677,6 @@ public:
    */
   PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
 
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
-
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2965,11 +2928,6 @@ public:
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::String; }
-
-  /**
-   * @brief The \ref CesiumGltf::Enum definition attached to this view, if any.
-   */
-  const CesiumGltf::Enum* enumDefinition() const noexcept { return nullptr; }
 
 protected:
   /** @copydoc PropertyViewStatus */
