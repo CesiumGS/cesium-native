@@ -1,4 +1,4 @@
-#include "CesiumNativeTests/TypeToPropertyTypeString.h"
+#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>

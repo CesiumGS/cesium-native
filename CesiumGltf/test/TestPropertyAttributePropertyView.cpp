@@ -1,4 +1,4 @@
-#include "CesiumNativeTests/TypeToPropertyTypeString.h"
+#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
