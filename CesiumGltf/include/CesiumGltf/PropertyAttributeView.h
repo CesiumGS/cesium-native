@@ -663,7 +663,7 @@ private:
     const PropertyComponentType componentType =
         convertStringToPropertyComponentType(
             classProperty.componentType.value_or(""));
-    if (TypeToPropertyComponentType<T>::component != componentType) {
+    if (TypeToPropertyType<T>::component != componentType) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorComponentTypeMismatch);
     }

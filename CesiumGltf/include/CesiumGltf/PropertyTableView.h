@@ -1156,7 +1156,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorInvalidEnum);
     }
 
-    if (TypeToPropertyComponentType<T>::component != componentType) {
+    if (TypeToPropertyType<T>::component != componentType) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
@@ -1267,7 +1267,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorInvalidEnum);
     }
 
-    if (TypeToPropertyComponentType<T>::component != componentType) {
+    if (TypeToPropertyType<T>::component != componentType) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }

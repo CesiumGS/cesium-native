@@ -914,7 +914,7 @@ void updateScalarArrayProperty(
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType =
       convertPropertyComponentTypeToString(static_cast<PropertyComponentType>(
-          TypeToPropertyComponentType<ValueType>::component));
+          TypeToPropertyType<ValueType>::component));
   classProperty.array = true;
 
   // Handle fixed-length arrays.

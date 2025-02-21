@@ -133,7 +133,7 @@ validatePropertyType(const ClassProperty& classProperty) {
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
 
   if (!classProperty.componentType &&
       expectedComponentType != PropertyComponentType::None) {
@@ -173,7 +173,7 @@ PropertyViewStatusType validatePropertyType(
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
 
   if (expectedComponentType !=
       convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
@@ -205,7 +205,7 @@ validateArrayPropertyType(const ClassProperty& classProperty) {
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyComponentType<ElementType>::component;
+      TypeToPropertyType<ElementType>::component;
 
   if (!classProperty.componentType &&
       expectedComponentType != PropertyComponentType::None) {
@@ -243,7 +243,7 @@ PropertyViewStatusType validateArrayPropertyType(
   }
 
   PropertyComponentType expectedComponentType =
-      TypeToPropertyComponentType<ElementType>::component;
+      TypeToPropertyType<ElementType>::component;
 
   if (classProperty.componentType &&
       expectedComponentType !=
@@ -834,7 +834,7 @@ private:
         [this](auto property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
-            switch (TypeToPropertyComponentType<ElementType>::component) {
+            switch (TypeToPropertyType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               this->_offset = getValue(*property.offset);
@@ -851,7 +851,7 @@ private:
 
           if (property.scale) {
             // Only floating point types can specify a scale.
-            switch (TypeToPropertyComponentType<ElementType>::component) {
+            switch (TypeToPropertyType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               this->_scale = getValue(*property.scale);
@@ -1965,7 +1965,7 @@ private:
         [this](auto property) {
           if (property.offset) {
             // Only floating point types can specify an offset.
-            switch (TypeToPropertyComponentType<ElementType>::component) {
+            switch (TypeToPropertyType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               if (this->_count > 0) {
@@ -1985,7 +1985,7 @@ private:
 
           if (property.scale) {
             // Only floating point types can specify a scale.
-            switch (TypeToPropertyComponentType<ElementType>::component) {
+            switch (TypeToPropertyType<ElementType>::component) {
             case PropertyComponentType::Float32:
             case PropertyComponentType::Float64:
               if (_count > 0) {

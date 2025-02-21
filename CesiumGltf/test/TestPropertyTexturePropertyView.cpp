@@ -8,7 +8,6 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/TextureView.h>
-#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/vector_double2.hpp>
@@ -57,10 +56,10 @@ void checkTextureValues(
     const std::vector<T>& expected) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
-  classProperty.type = TypeToPropertyTypeString<T>::value;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
-  PropertyComponentType componentType =
-      TypeToPropertyComponentType<T>::component;
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -124,10 +123,10 @@ void checkTextureValues(
     const std::optional<JsonValue> defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
-  classProperty.type = TypeToPropertyTypeString<T>::value;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
-  PropertyComponentType componentType =
-      TypeToPropertyComponentType<T>::component;
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -196,10 +195,10 @@ void checkNormalizedTextureValues(
     const std::optional<JsonValue> defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
-  classProperty.type = TypeToPropertyTypeString<T>::value;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
-  PropertyComponentType componentType =
-      TypeToPropertyComponentType<T>::component;
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -270,10 +269,10 @@ void checkTextureArrayValues(
     const std::vector<std::vector<T>>& expected) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
-  classProperty.type = TypeToPropertyTypeString<T>::value;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
-  PropertyComponentType componentType =
-      TypeToPropertyComponentType<T>::component;
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -354,10 +353,10 @@ void checkTextureArrayValues(
     const std::optional<JsonValue> defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
-  classProperty.type = TypeToPropertyTypeString<T>::value;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
-  PropertyComponentType componentType =
-      TypeToPropertyComponentType<T>::component;
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 
@@ -451,10 +450,10 @@ void checkNormalizedTextureArrayValues(
     const std::optional<JsonValue> defaultValue = std::nullopt) {
   PropertyTextureProperty property;
   ClassProperty classProperty;
-  classProperty.type = TypeToPropertyTypeString<T>::value;
+  classProperty.type =
+      convertPropertyTypeToString(TypeToPropertyType<T>::value);
 
-  PropertyComponentType componentType =
-      TypeToPropertyComponentType<T>::component;
+  PropertyComponentType componentType = TypeToPropertyType<T>::component;
   classProperty.componentType =
       convertPropertyComponentTypeToString(componentType);
 

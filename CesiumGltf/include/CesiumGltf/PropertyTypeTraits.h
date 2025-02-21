@@ -201,159 +201,198 @@ struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
   using type = T;
 };
 
-/**
- * @brief Lookup a \ref PropertyComponentType from a C++ type.
- */
-template <typename T> struct TypeToPropertyComponentType;
+/** * @brief Infer the best-fitting PropertyType and PropertyComponentType for a
+ * C++ type. * * Note that this cannot infer whether an integer is actually an *
+ * \ref PropertyType::Enum, since the enum definition is separate * from the
+ * PropertyType. It is on the runtime to refer to the * original class property
+ * definition, and check whether there is an * associated \ref
+ * CesiumGltf::ClassProperty::enumType. */
+template <typename T> struct TypeToPropertyType;
 
 #pragma region Scalar Property Types
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<uint8_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<uint8_t> {
   /** @brief The \ref PropertyComponentType corresponding to a `uint8_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Uint8;
+  /** @brief The \ref PropertyType corresponding to a `uint8_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<int8_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<int8_t> {
   /** @brief The \ref PropertyComponentType corresponding to an `int8_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Int8;
+  /** @brief The \ref PropertyType corresponding to an `int8_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<uint16_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<uint16_t> {
   /** @brief The \ref PropertyComponentType corresponding to a `uint16_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Uint16;
+  /** @brief The \ref PropertyType corresponding to a `uint16_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<int16_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<int16_t> {
   /** @brief The \ref PropertyComponentType corresponding to an `int16_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Int16;
+  /** @brief The \ref PropertyType corresponding to an `int16_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<uint32_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<uint32_t> {
   /** @brief The \ref PropertyComponentType corresponding to a `uint32_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Uint32;
+  /** @brief The \ref PropertyType corresponding to a `uint32_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<int32_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<int32_t> {
   /** @brief The \ref PropertyComponentType corresponding to an `int32_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Int32;
+  /** @brief The \ref PropertyType corresponding to an `int32_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<uint64_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<uint64_t> {
   /** @brief The \ref PropertyComponentType corresponding to a `uint64_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Uint64;
+  /** @brief The \ref PropertyType corresponding to a `uint64_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<int64_t> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<int64_t> {
   /** @brief The \ref PropertyComponentType corresponding to an `int64_t`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Int64;
+  /** @brief The \ref PropertyType corresponding to an `int64_t`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<float> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<float> {
   /** @brief The \ref PropertyComponentType corresponding to a `float`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Float32;
+  /** @brief The \ref PropertyType corresponding to a `float`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<double> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<double> {
   /** @brief The \ref PropertyComponentType corresponding to a `double`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::Float64;
+  /** @brief The \ref PropertyType corresponding to a `float`. */
+  static constexpr PropertyType value = PropertyType::Scalar;
 };
 #pragma endregion
 
 #pragma region Vector Property Types
 
-/** @copydoc TypeToPropertyComponentType */
+/** @copydoc TypeToPropertyType */
 template <typename T, glm::qualifier P>
-struct TypeToPropertyComponentType<glm::vec<2, T, P>> {
+struct TypeToPropertyType<glm::vec<2, T, P>> {
   /** @brief The \ref PropertyComponentType corresponding to a `glm::vec<2,
    * ...>`. */
   static constexpr PropertyComponentType component =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `glm::vec<2, ...>`. */
+  static constexpr PropertyType value = PropertyType::Vec2;
 };
 
-/** @copydoc TypeToPropertyComponentType */
+/** @copydoc TypeToPropertyType */
 template <typename T, glm::qualifier P>
-struct TypeToPropertyComponentType<glm::vec<3, T, P>> {
+struct TypeToPropertyType<glm::vec<3, T, P>> {
   /** @brief The \ref PropertyComponentType corresponding to a `glm::vec<3,
    * ...>`. */
   static constexpr PropertyComponentType component =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `glm::vec<3, ...>`. */
+  static constexpr PropertyType value = PropertyType::Vec3;
 };
 
-/** @copydoc TypeToPropertyComponentType */
+/** @copydoc TypeToPropertyType */
 template <typename T, glm::qualifier P>
-struct TypeToPropertyComponentType<glm::vec<4, T, P>> {
+struct TypeToPropertyType<glm::vec<4, T, P>> {
   /** @brief The \ref PropertyComponentType corresponding to a `glm::vec<4,
    * ...>`. */
   static constexpr PropertyComponentType component =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `glm::vec<4, ...>`. */
+  static constexpr PropertyType value = PropertyType::Vec4;
 };
 
 #pragma endregion
 
 #pragma region Matrix Property Types
 
-/** @copydoc TypeToPropertyComponentType */
+/** @copydoc TypeToPropertyType */
 template <typename T, glm::qualifier P>
-struct TypeToPropertyComponentType<glm::mat<2, 2, T, P>> {
+struct TypeToPropertyType<glm::mat<2, 2, T, P>> {
   /** @brief The \ref PropertyComponentType corresponding to a `glm::mat<2, 2,
    * ...>`. */
   static constexpr PropertyComponentType component =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `glm::mat<2, 2, ...>`. */
+  static constexpr PropertyType value = PropertyType::Mat2;
 };
 
-/** @copydoc TypeToPropertyComponentType */
+/** @copydoc TypeToPropertyType */
 template <typename T, glm::qualifier P>
-struct TypeToPropertyComponentType<glm::mat<3, 3, T, P>> {
+struct TypeToPropertyType<glm::mat<3, 3, T, P>> {
   /** @brief The \ref PropertyComponentType corresponding to a `glm::mat<3, 3,
    * ...>`. */
   static constexpr PropertyComponentType component =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `glm::mat<3, 3, ...>`. */
+  static constexpr PropertyType value = PropertyType::Mat3;
 };
 
-/** @copydoc TypeToPropertyComponentType */
+/** @copydoc TypeToPropertyType */
 template <typename T, glm::qualifier P>
-struct TypeToPropertyComponentType<glm::mat<4, 4, T, P>> {
+struct TypeToPropertyType<glm::mat<4, 4, T, P>> {
   /** @brief The \ref PropertyComponentType corresponding to a `glm::mat<4, 4,
    * ...>`. */
   static constexpr PropertyComponentType component =
-      TypeToPropertyComponentType<T>::component;
+      TypeToPropertyType<T>::component;
+  /** @brief The \ref PropertyType corresponding to a `glm::mat<4, 4, ...>`. */
+  static constexpr PropertyType value = PropertyType::Mat4;
 };
 
 #pragma endregion
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<bool> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<bool> {
   /** @brief The \ref PropertyComponentType corresponding to a `bool`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::None;
+  /** @brief The \ref PropertyType corresponding to a `bool`. */
+  static constexpr PropertyType value = PropertyType::Boolean;
 };
 
-/** @copydoc TypeToPropertyComponentType */
-template <> struct TypeToPropertyComponentType<std::string_view> {
+/** @copydoc TypeToPropertyType */
+template <> struct TypeToPropertyType<std::string_view> {
   /** @brief The \ref PropertyComponentType corresponding to a
    * `std::string_view`. */
   static constexpr PropertyComponentType component =
       PropertyComponentType::None;
+  /** @brief The \ref PropertyType corresponding to a `std::string_view`. */
+  static constexpr PropertyType value = PropertyType::String;
 };
 
 /**
@@ -381,28 +420,10 @@ struct TypeToDimensions<glm::mat<n, n, T, P>> {
  * @param type The \ref PropertyType to compare to `T`.
  */
 template <typename T> bool canRepresentPropertyType(PropertyType type) {
-  if constexpr (IsMetadataBoolean<T>::value) {
-    return type == PropertyType::Boolean;
-  } else if constexpr (IsMetadataScalar<T>::value) {
+  if constexpr (IsMetadataScalar<T>::value) {
     return type == PropertyType::Scalar || type == PropertyType::Enum;
-  } else if constexpr (IsMetadataMatN<T>::value) {
-    if constexpr (TypeToDimensions<T>::dimensions == 2) {
-      return type == PropertyType::Mat2;
-    } else if constexpr (TypeToDimensions<T>::dimensions == 3) {
-      return type == PropertyType::Mat3;
-    } else if constexpr (TypeToDimensions<T>::dimensions == 4) {
-      return type == PropertyType::Mat4;
-    }
-  } else if constexpr (IsMetadataVecN<T>::value) {
-    if constexpr (TypeToDimensions<T>::dimensions == 2) {
-      return type == PropertyType::Vec2;
-    } else if constexpr (TypeToDimensions<T>::dimensions == 3) {
-      return type == PropertyType::Vec3;
-    } else if constexpr (TypeToDimensions<T>::dimensions == 4) {
-      return type == PropertyType::Vec4;
-    }
-  } else if constexpr (IsMetadataString<T>::value) {
-    return type == PropertyType::String;
+  } else {
+    return TypeToPropertyType<T>::value == type;
   }
 }
 
