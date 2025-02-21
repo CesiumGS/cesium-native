@@ -403,12 +403,22 @@ template <typename T> struct TypeToDimensions;
 /** @copydoc TypeToDimensions */
 template <glm::length_t n, typename T, glm::qualifier P>
 struct TypeToDimensions<glm::vec<n, T, P>> {
+  /**
+   * @brief The number of dimensions present in this `glm::vec` type.
+   *
+   * For example, for a `glm::dvec3` this value would be 3.
+   */
   static constexpr glm::length_t dimensions = n;
 };
 
 /** @copydoc TypeToDimensions */
 template <glm::length_t n, typename T, glm::qualifier P>
 struct TypeToDimensions<glm::mat<n, n, T, P>> {
+  /**
+   * @brief The number of dimensions present in this `glm::mat` type.
+   *
+   * For example, for a `glm::dmat4x4` this value would be 4.
+   */
   static constexpr glm::length_t dimensions = n;
 };
 

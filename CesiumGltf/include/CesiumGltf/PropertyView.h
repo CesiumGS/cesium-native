@@ -558,6 +558,10 @@ protected:
     getNumericPropertyValues(property);
   }
 
+  /**
+   * @brief Constructs a property instance from a property table property, class
+   * definition, and an associated enum definition.
+   */
   PropertyView(
       const ClassProperty& classProperty,
       const PropertyTableProperty& property,
@@ -586,6 +590,10 @@ protected:
     getNumericPropertyValues(property);
   }
 
+  /**
+   * @brief Constructs a property instance from a property texture property,
+   * class definition, and an associated enum definition.
+   */
   PropertyView(
       const ClassProperty& classProperty,
       const PropertyTextureProperty& property,
