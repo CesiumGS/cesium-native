@@ -638,6 +638,7 @@ std::optional<Tile> parseTileJsonRecursively(
 TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
+    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     const rapidjson::Document& tilesetJson,
     const glm::dmat4& parentTransform,
     TileRefine parentRefine,
@@ -667,7 +668,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::move(pLoader),
       std::move(pRootTile),
       std::vector<LoaderCreditResult>{},
-      std::vector<CesiumAsync::IAssetAccessor::THeader>{},
+      std::move(requestHeaders),
       ErrorList{}};
 }
 
@@ -745,6 +746,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       parseTilesetJson(
           pLogger,
           tileUrl,
+          {pCompletedRequest->headers().begin(),
+           pCompletedRequest->headers().end()},
           tilesetJson,
           tileTransform,
           tileRefine,
@@ -863,16 +866,21 @@ TilesetJsonLoader::createLoader(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
-    const CesiumAsync::HttpHeaders& /*requestHeaders*/,
+    const CesiumAsync::HttpHeaders& requestHeaders,
     const rapidjson::Document& tilesetJson,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
       pLogger,
       tilesetJsonUrl,
+      {requestHeaders.begin(), requestHeaders.end()},
       tilesetJson,
       glm::dmat4(1.0),
       TileRefine::Replace,
       ellipsoid);
+
+  if (!result.pRootTile) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
 
   // Create a root tile to represent the tileset.json itself.
   std::vector<Tile> children;
