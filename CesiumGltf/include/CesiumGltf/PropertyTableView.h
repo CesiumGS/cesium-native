@@ -1135,8 +1135,7 @@ private:
     PropertyComponentType componentType = convertStringToPropertyComponentType(
         classProperty.componentType.value_or(""));
     const CesiumGltf::Enum* pEnumDefinition = nullptr;
-    if (type == PropertyType::Enum && classProperty.enumType &&
-        !IsMetadataBoolean<T>::value) {
+    if (type == PropertyType::Enum && classProperty.enumType) {
       const auto& enumDefinitionIt =
           this->_pEnumDefinitions->find(*classProperty.enumType);
       if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
@@ -1199,9 +1198,9 @@ private:
         return PropertyTablePropertyView<T, Normalized>(
             propertyTableProperty,
             classProperty,
+            pEnumDefinition,
             _pPropertyTable->count,
-            values,
-            pEnumDefinition);
+            values);
       } else {
         return PropertyTablePropertyView<T, Normalized>(
             propertyTableProperty,
@@ -1320,9 +1319,9 @@ private:
           return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
               propertyTableProperty,
               classProperty,
+              pEnumDefinition,
               _pPropertyTable->count,
-              values,
-              pEnumDefinition);
+              values);
         } else {
           return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
               propertyTableProperty,
@@ -1376,13 +1375,13 @@ private:
           return PropertyTablePropertyView<PropertyArrayView<T>, false>(
               propertyTableProperty,
               classProperty,
+              pEnumDefinition,
               _pPropertyTable->count,
               values,
               arrayOffsets,
               std::span<const std::byte>(),
               arrayOffsetType,
-              PropertyComponentType::None,
-              pEnumDefinition);
+              PropertyComponentType::None);
         }
       }
       return PropertyTablePropertyView<PropertyArrayView<T>, false>(

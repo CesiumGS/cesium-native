@@ -1671,7 +1671,8 @@ public:
   }
 
   /**
-   * @brief Constructs a property instance from a class definition only.
+   * @brief Constructs a property instance from a class definition and enum
+   * definition.
    */
   PropertyView(
       const ClassProperty& classProperty,

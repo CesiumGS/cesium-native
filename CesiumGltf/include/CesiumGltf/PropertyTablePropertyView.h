@@ -273,9 +273,9 @@ public:
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
       int64_t size,
-      std::span<const std::byte> values,
-      const CesiumGltf::Enum* pEnumDefinition) noexcept
+      std::span<const std::byte> values) noexcept
       : PropertyView<ElementType>(classProperty, property, pEnumDefinition),
         _values{values},
         _size{
@@ -336,13 +336,13 @@ public:
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
       const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
       int64_t size,
       std::span<const std::byte> values,
       std::span<const std::byte> arrayOffsets,
       std::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
-      PropertyComponentType stringOffsetType,
-      const CesiumGltf::Enum* pEnumDefinition) noexcept
+      PropertyComponentType stringOffsetType) noexcept
       : PropertyView<ElementType>(classProperty, property, pEnumDefinition),
         _values{values},
         _size{
