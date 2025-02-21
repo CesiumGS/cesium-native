@@ -23,10 +23,13 @@ public:
     return this->id == rhs.id;
   }
 
+  int32_t getPriority() const noexcept { return priority; }
+
 private:
   size_t id;
+  int32_t priority = -1;
 
-  Credit(size_t id_) noexcept : id(id_) {}
+  Credit(size_t id_, int32_t priority_ = -1) noexcept : id(id_), priority(priority_) {}
 
   friend class CreditSystem;
 };
@@ -44,7 +47,10 @@ public:
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    */
-  Credit createCredit(std::string&& html, bool showOnScreen = false);
+  Credit createCredit(
+      std::string&& html,
+      bool showOnScreen = false,
+      int32_t priority = -1);
 
   /**
    * @brief Inserts a credit string
@@ -52,7 +58,10 @@ public:
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    */
-  Credit createCredit(const std::string& html, bool showOnScreen = false);
+  Credit createCredit(
+      const std::string& html,
+      bool showOnScreen = false,
+      int32_t priority = -1);
 
   /**
    * @brief Gets whether or not the credit should be shown on screen.

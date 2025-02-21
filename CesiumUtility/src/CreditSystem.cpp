@@ -9,23 +9,23 @@
 
 namespace CesiumUtility {
 
-Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
-  return this->createCredit(std::string(html), showOnScreen);
+Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen, int32_t priority) {
+  return this->createCredit(std::string(html), showOnScreen, priority);
 }
 
-Credit CreditSystem::createCredit(std::string&& html, bool showOnScreen) {
+Credit CreditSystem::createCredit(std::string&& html, bool showOnScreen, int32_t priority) {
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
       // Override the existing credit's showOnScreen value.
       _credits[id].showOnScreen = showOnScreen;
-      return Credit(id);
+      return Credit(id, priority);
     }
   }
 
   _credits.push_back({std::move(html), showOnScreen, -1, 0});
 
-  return Credit(_credits.size() - 1);
+  return Credit(_credits.size() - 1, priority);
 }
 
 bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
@@ -84,7 +84,7 @@ void CreditSystem::startNextFrame() noexcept {
 }
 
 const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
-  // sort credits based on the number of occurrences
+  // sort credits based on their priority or then their number of occurrences
   if (_creditsToShowThisFrame.size() < 2) {
     return _creditsToShowThisFrame;
   }
@@ -92,6 +92,9 @@ const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
       _creditsToShowThisFrame.begin(),
       _creditsToShowThisFrame.end(),
       [this](const Credit& a, const Credit& b) {
+        // compare custom priority before count/id, if any
+        if (a.getPriority() != b.getPriority())
+          return a.getPriority() > b.getPriority();
         int32_t aCounts = _credits[a.id].count;
         int32_t bCounts = _credits[b.id].count;
         if (aCounts == bCounts)

@@ -81,6 +81,11 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   std::optional<std::string> credit;
 
   /**
+   * @brief Priority to apply to the credit text, if needed.
+   */
+  std::optional<int32_t> creditPriority;
+
+  /**
    * @brief Whether or not to display tileset's credits on the screen.
    */
   bool showCreditsOnScreen = false;
