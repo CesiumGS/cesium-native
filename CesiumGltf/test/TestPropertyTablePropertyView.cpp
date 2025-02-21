@@ -1,10 +1,9 @@
-#include <CesiumNativeTests/TypeToPropertyTypeString.h>
-
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/matrix_double2x2.hpp>

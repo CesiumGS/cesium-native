@@ -1,5 +1,3 @@
-#include <CesiumNativeTests/TypeToPropertyTypeString.h>
-
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
@@ -10,6 +8,7 @@
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/matrix_double2x2.hpp>

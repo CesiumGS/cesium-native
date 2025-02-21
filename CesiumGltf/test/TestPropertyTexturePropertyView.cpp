@@ -1,5 +1,3 @@
-#include <CesiumNativeTests/TypeToPropertyTypeString.h>
-
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ImageAsset.h>
@@ -10,6 +8,7 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/TextureView.h>
+#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/vector_double2.hpp>

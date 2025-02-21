@@ -1,5 +1,3 @@
-#include <CesiumNativeTests/TypeToPropertyTypeString.h>
-
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -17,6 +15,7 @@
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumNativeTests/TypeToPropertyTypeString.h>
 #include <CesiumUtility/Assert.h>
 
 #include <doctest/doctest.h>
