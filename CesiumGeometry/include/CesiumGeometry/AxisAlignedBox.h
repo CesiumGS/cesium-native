@@ -2,8 +2,7 @@
 
 #include <CesiumGeometry/Library.h>
 
-#include <glm/common.hpp>
-#include <glm/vec3.hpp>
+#include <glm/ext/vector_double3.hpp>
 
 #include <vector>
 
