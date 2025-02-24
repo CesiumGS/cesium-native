@@ -167,6 +167,13 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
     tile.setParent(this);
+    // If a tile is created with children that are already ContentLoaded, we
+    // bypassed the normal route that _doNotUnloadSubtreeCount would be
+    // incremented by. We have to manually increment it or else we will see a
+    // mismatch when trying to unload the tile and fail the assertion.
+    if (tile.getState() == TileLoadState::ContentLoaded) {
+      ++this->_doNotUnloadSubtreeCount;
+    }
   }
 }
 
