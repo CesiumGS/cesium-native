@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -124,6 +125,36 @@ public:
   static void setS2CellBoundingVolume(
       Cesium3DTiles::BoundingVolume& boundingVolume,
       const CesiumGeospatial::S2CellBoundingVolume& s2BoundingVolume);
+
+  /**
+   * @brief Gets the bounding cylinder region defined in the
+   * `3DTILES_bounding_volume_cylinder` extension of a \ref
+   * Cesium3DTiles::BoundingVolume, if any.
+   *
+   * @param boundingVolume The bounding volume from which to get the bounding
+   * cylinder.
+   * @return The cylinder region, or `std::nullopt` if the bounding volume does
+   * not define such a region. The cylinder is defined in the tile's coordinate
+   * system.
+   */
+  static std::optional<CesiumGeometry::BoundingCylinderRegion>
+  getBoundingCylinderRegion(
+      const Cesium3DTiles::BoundingVolume& boundingVolume);
+
+  /**
+   * @brief Adds the `3DTILES_bounding_volume_cylinder` extension to a
+   * \ref Cesium3DTiles::BoundingVolume based on a \ref
+   * CesiumGeometry::BoundingCylinderRegion.
+   *
+   * Other bounding volume types, if any, are not modified.
+   *
+   * @param boundingVolume The bounding volume to set.
+   * @param boundingCylinderRegion The bounding cylinder region with which to
+   * set the property.
+   */
+  static void setBoundingCylinderRegion(
+      Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumGeometry::BoundingCylinderRegion& boundingCylinderRegion);
 };
 
 } // namespace Cesium3DTilesContent

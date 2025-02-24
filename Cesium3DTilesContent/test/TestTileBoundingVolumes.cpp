@@ -1,11 +1,14 @@
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
 #include <glm/geometric.hpp>
@@ -17,6 +20,7 @@ using namespace Cesium3DTiles;
 using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 TEST_CASE("TileBoundingVolumes") {
   SUBCASE("box") {
@@ -117,9 +121,49 @@ TEST_CASE("TileBoundingVolumes") {
     TileBoundingVolumes::setS2CellBoundingVolume(next, *s2);
     Extension3dTilesBoundingVolumeS2* pNextExtension =
         bv.getExtension<Extension3dTilesBoundingVolumeS2>();
+    REQUIRE(pNextExtension);
     CHECK(pNextExtension->token == extension.token);
     CHECK(pNextExtension->minimumHeight == extension.minimumHeight);
     CHECK(pNextExtension->maximumHeight == extension.maximumHeight);
+  }
+
+  SUBCASE("cylinder region") {
+    BoundingVolume bv{};
+
+    Extension3dTilesBoundingVolumeCylinder& extension =
+        bv.addExtension<Extension3dTilesBoundingVolumeCylinder>();
+    extension.translation = {1.0, 2.0, 3.0};
+    extension.rotation = {0.0, 0.0, 0.0, 1.0};
+    extension.height = 2.0;
+    extension.minRadius = 1.0;
+    extension.maxRadius = 2.0;
+    extension.minAngle = -Math::PiOverTwo;
+    extension.maxAngle = Math::PiOverTwo;
+
+    std::optional<BoundingCylinderRegion> cylinder =
+        TileBoundingVolumes::getBoundingCylinderRegion(bv);
+    REQUIRE(cylinder);
+
+    CHECK(cylinder->getTranslation() == glm::dvec3(1.0, 2.0, 3.0));
+    CHECK(cylinder->getRotation() == glm::dquat(1.0, 0.0, 0.0, 0.0));
+    CHECK(cylinder->getHeight() == 2.0);
+    CHECK(cylinder->getRadialBounds() == glm::dvec2(1.0, 2.0));
+    CHECK(
+        cylinder->getAngularBounds() ==
+        glm::dvec2(-Math::PiOverTwo, Math::PiOverTwo));
+
+    BoundingVolume next{};
+    TileBoundingVolumes::setBoundingCylinderRegion(next, *cylinder);
+    Extension3dTilesBoundingVolumeCylinder* pNextExtension =
+        bv.getExtension<Extension3dTilesBoundingVolumeCylinder>();
+    REQUIRE(pNextExtension);
+    CHECK(pNextExtension->translation == extension.translation);
+    CHECK(pNextExtension->rotation == extension.rotation);
+    CHECK(pNextExtension->height == extension.height);
+    CHECK(pNextExtension->minRadius == extension.minRadius);
+    CHECK(pNextExtension->maxRadius == extension.maxRadius);
+    CHECK(pNextExtension->minAngle == extension.minAngle);
+    CHECK(pNextExtension->maxAngle == extension.maxAngle);
   }
 
   SUBCASE("invalid") {
