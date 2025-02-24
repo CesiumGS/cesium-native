@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/Library.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/Library.h>
 
 #include <glm/mat3x3.hpp>
 #include <glm/vec3.hpp>
@@ -11,7 +11,6 @@
 namespace CesiumGeometry {
 
 class Plane;
-class BoundingCylinder;
 
 /**
  * @brief A bounding volume defined as a closed and convex cuboid with any

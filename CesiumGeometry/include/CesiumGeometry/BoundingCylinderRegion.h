@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Library.h"
-#include "OrientedBoundingBox.h"
-
+#include <CesiumGeometry/Library.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumUtility/Math.h>
 
 #include <glm/gtc/quaternion.hpp>

@@ -1,6 +1,5 @@
-#include "CesiumGeometry/BoundingCylinderRegion.h"
-
 #include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumUtility/Math.h>
 

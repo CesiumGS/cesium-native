@@ -1,11 +1,10 @@
-#include "CesiumGeometry/BoundingCylinderRegion.h"
-
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Transforms.h"
-#include "CesiumUtility/Math.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Transforms.h>
+#include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
@@ -27,12 +26,13 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
     double height,
     const glm::dvec2& radialBounds,
     const glm::dvec2& angularBounds) {
-  // The radial and angular bounds must be resolved to the scale of a box.
   double innerRadius = radialBounds.x;
   double outerRadius = radialBounds.y;
   double angleMin = angularBounds.x;
   double angleMax = angularBounds.y;
 
+  // The radial and angular bounds must be resolved to the scale of a box.
+  //
   // First, compute the min and max points (x, y) on the arc drawn by the given
   // angles. Recall that the angle opens counter-clockwise, such that 0 aligns
   // with the +y axis. The -pi/pi discontinuity happens along -y.
@@ -51,8 +51,10 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
                                         : angleMinSign != angleMaxSign;
   angleCrossesZero |= angleMinSign == 0 || angleMaxSign == 0;
 
-  double yMin = angleReversed ? -1.0 : glm::min(cos(angleMin), cos(angleMax));
-  double yMax = angleCrossesZero ? 1.0 : glm::max(cos(angleMin), cos(angleMax));
+  double yMin =
+      angleReversed ? -1.0 : glm::min(glm::cos(angleMin), glm::cos(angleMax));
+  double yMax =
+      angleCrossesZero ? 1.0 : glm::max(glm::cos(angleMin), glm::cos(angleMax));
 
   constexpr double piOverTwo = CesiumUtility::Math::PiOverTwo;
   bool angleCrossesNegativePiOverTwo =
@@ -93,8 +95,9 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
           translation,
           rotation,
           glm::dvec3(1.0));
+  glm::dmat4 uncenterCylinder = glm::translate(glm::dmat4(1.0), center);
   glm::dmat4 finalTransform =
-      glm::inverse(centerCylinder) * transformCylinder * centerCylinder;
+      uncenterCylinder * transformCylinder * centerCylinder;
 
   return obb.transform(finalTransform);
 }
