@@ -25,7 +25,6 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
-#define CESIUM_DEBUG_TILE_UNLOADING 1
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 class TileDoNotUnloadSubtreeCountTracker {
 private:
