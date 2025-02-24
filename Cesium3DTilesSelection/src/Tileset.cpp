@@ -252,7 +252,7 @@ void Tileset::_updateLodTransitions(
         // This tile is done fading out and was immediately kicked from the
         // cache.
         tileIt = result.tilesFadingOut.erase(tileIt);
-        (*tileIt)->decrementDoNotUnloadCount(
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions done fading out");
         continue;
       }
@@ -265,7 +265,7 @@ void Tileset::_updateLodTransitions(
         // This tile will already be on the render list.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
-        (*tileIt)->decrementDoNotUnloadCount(
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions in render list");
         continue;
       }
@@ -278,7 +278,7 @@ void Tileset::_updateLodTransitions(
         // last frame.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
-        (*tileIt)->decrementDoNotUnloadCount(
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions done fading out");
         continue;
       }
@@ -330,7 +330,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   }
 
   for (Tile* pTile : this->_updateResult.tilesFadingOut) {
-    pTile->decrementDoNotUnloadCount(
+    pTile->decrementDoNotUnloadSubtreeCount(
         "Tileset::updateViewOffline clear tilesFadingOut");
   }
 
@@ -346,7 +346,7 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
         this->_updateResult.tilesFadingOut.insert(tile);
-        tile->incrementDoNotUnloadCount(
+        tile->incrementDoNotUnloadSubtreeCount(
             "Tileset::updateViewOffline start fading out");
       }
     }
@@ -382,7 +382,7 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 
   if (!_options.enableLodTransitionPeriod) {
     for (Tile* pTile : this->_updateResult.tilesFadingOut) {
-      pTile->decrementDoNotUnloadCount(
+      pTile->decrementDoNotUnloadSubtreeCount(
           "Tileset::updateView clear tilesFadingOut");
     }
     result.tilesFadingOut.clear();
@@ -647,7 +647,7 @@ void markTileNonRendered(
       (lastResult == TileSelectionState::Result::Refined &&
        tile.getRefine() == TileRefine::Add)) {
     result.tilesFadingOut.insert(&tile);
-    tile.incrementDoNotUnloadCount("markTileNonRendered fading out");
+    tile.incrementDoNotUnloadSubtreeCount("markTileNonRendered fading out");
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);
@@ -1650,7 +1650,6 @@ void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
     }
     CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
-    CESIUM_ASSERT(child.getTilesStillNotUnloadedCount() == 0);
     CESIUM_ASSERT(child.getContent().isUnknownContent());
     this->_loadedTiles.remove(child);
     _clearChildrenRecursively(&child);
@@ -1714,12 +1713,8 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   }
 
   if (!tilesNeedingChildrenCleared.empty()) {
-    // Because we iterated over the tiles list backwards, the
-    // `tilesNeedingChildrenCleared` vector is in order from bottom to top of
-    // the tree.
     for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
       CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
-      CESIUM_ASSERT(pTileToClear->getTilesStillNotUnloadedCount() == 0);
       _clearChildrenRecursively(pTileToClear);
     }
   }

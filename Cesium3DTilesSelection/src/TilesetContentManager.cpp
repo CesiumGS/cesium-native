@@ -1037,7 +1037,7 @@ void TilesetContentManager::loadTileContent(
     }
   }
 
-  tile.incrementDoNotUnloadCount(
+  tile.incrementDoNotUnloadSubtreeCount(
       "TilesetContentManager::loadTileContent begin");
 
   // map raster overlay to tile
@@ -1111,14 +1111,14 @@ void TilesetContentManager::loadTileContent(
       })
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
-        tile.decrementDoNotUnloadCount(
+        tile.decrementDoNotUnloadSubtreeCount(
             "TilesetContentManager::loadTileContent done loading");
 
         thiz->notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
-        tile.decrementDoNotUnloadCount(
+        tile.decrementDoNotUnloadSubtreeCount(
             "TilesetContentManager::loadTileContent error while loading");
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
@@ -1218,15 +1218,15 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     // Tile with external content that still has references to its pointer or to
     // its children's pointers - we can't unload.
     // We also, of course, don't want to unload the root tile.
-    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0 ||
-        tile.getTilesStillNotUnloadedCount() > 1) {
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0) {
       return UnloadTileContentResult::Keep;
     }
 
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.decrementTilesStillNotUnloadedCount();
+    tile.decrementDoNotUnloadSubtreeCountOnParent(
+        "TilesetContentManager::unloadTileContent unload external content");
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
@@ -1268,7 +1268,8 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
   if (!content.isUnknownContent()) {
-    tile.decrementTilesStillNotUnloadedCount();
+    tile.decrementDoNotUnloadSubtreeCountOnParent(
+        "TilesetContentManager::unloadTileContent unload render content");
   }
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
@@ -1457,7 +1458,8 @@ void TilesetContentManager::setTileContent(
 
     if (!tile.getContent().isUnknownContent() &&
         !tile.getContent().isEmptyContent()) {
-      tile.incrementTilesStillNotUnloadedCount();
+      tile.incrementDoNotUnloadSubtreeCountOnParent(
+          "TilesetContentManager::setTileContent");
     }
 
     if (result.tileInitializer) {

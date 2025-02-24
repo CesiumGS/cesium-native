@@ -25,8 +25,9 @@
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
+#define CESIUM_DEBUG_TILE_UNLOADING 1
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-class TileDoNotUnloadCountTracker {
+class TileDoNotUnloadSubtreeCountTracker {
 private:
   struct Entry {
     std::string reason;
@@ -523,7 +524,7 @@ public:
    * This function is not supposed to be called by clients.
    */
   int32_t getDoNotUnloadCount() const noexcept {
-    return this->_doNotUnloadCount;
+    return this->_doNotUnloadSubtreeCount;
   }
 
   /**
@@ -532,7 +533,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void incrementDoNotUnloadCount(const char* reason) noexcept;
+  void incrementDoNotUnloadSubtreeCount(const char* reason) noexcept;
 
   /**
    * @brief Decrements the internal count denoting that the tile and its
@@ -540,39 +541,28 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  void decrementDoNotUnloadCount(const char* reason) noexcept;
+  void decrementDoNotUnloadSubtreeCount(const char* reason) noexcept;
 
   /**
-   * @brief Marks this tile as having content that has not yet been unloaded,
-   * preventing a parent external tileset from cleaning up. This count will be
-   * propagated to any ancestors.
+   * @brief Increments the internal count denoting that the tile and its
+   * ancestors should not be unloaded starting with this tile's parent.
    *
    * This function is not supposed to be called by clients.
    */
-  void incrementTilesStillNotUnloadedCount() noexcept;
+  void incrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
 
   /**
-   * @brief Unmarks this tile as having content that has not yet been unloaded,
-   * allowing a parent external tileset to clean up. This count will be
-   * propagated to any ancestors.
+   * @brief Decrements the internal count denoting that the tile and its
+   * ancestors should not be unloaded starting with this tile's parent.
    *
    * This function is not supposed to be called by clients.
    */
-  void decrementTilesStillNotUnloadedCount() noexcept;
-
-  /**
-   * @brief Obtains the number of tiles at or below this tile (that is, the tile
-   * itself and its children) that still have content that has not yet been
-   * unloaded, preventing a parent external tileset from cleaning up.
-   */
-  int32_t getTilesStillNotUnloadedCount() const noexcept {
-    return this->_tilesStillNotUnloadedCount;
-  }
+  void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
 
 private:
-  void incrementDoNotUnloadCount(const std::string& reason) noexcept;
+  void incrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
 
-  void decrementDoNotUnloadCount(const std::string& reason) noexcept;
+  void decrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
 
   struct TileConstructorImpl {};
   template <
@@ -638,9 +628,7 @@ private:
 
   // Number of existing claims on this tile preventing it and its parent
   // external tileset (if any) from being unloaded from the tree.
-  int32_t _doNotUnloadCount = 0;
-
-  int32_t _tilesStillNotUnloadedCount = 0;
+  int32_t _doNotUnloadSubtreeCount = 0;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;

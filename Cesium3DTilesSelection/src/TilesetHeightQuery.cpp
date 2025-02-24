@@ -111,18 +111,20 @@ TilesetHeightQuery::TilesetHeightQuery(
 
 Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() {
   for (Tile* pTile : candidateTiles) {
-    pTile->decrementDoNotUnloadCount(
+    pTile->decrementDoNotUnloadSubtreeCount(
         "TilesetHeightQuery::~TilesetHeightQuery destructing candidateTiles");
   }
 
   for (Tile* pTile : additiveCandidateTiles) {
-    pTile->decrementDoNotUnloadCount("TilesetHeightQuery::~TilesetHeightQuery "
-                                     "destructing additiveCandidateTiles");
+    pTile->decrementDoNotUnloadSubtreeCount(
+        "TilesetHeightQuery::~TilesetHeightQuery "
+        "destructing additiveCandidateTiles");
   }
 
   for (Tile* pTile : previousCandidateTiles) {
-    pTile->decrementDoNotUnloadCount("TilesetHeightQuery::~TilesetHeightQuery "
-                                     "destructing previousCandidateTiles");
+    pTile->decrementDoNotUnloadSubtreeCount(
+        "TilesetHeightQuery::~TilesetHeightQuery "
+        "destructing previousCandidateTiles");
   }
 }
 
@@ -199,12 +201,12 @@ void TilesetHeightQuery::findCandidateTiles(
               this->ray,
               this->inputPosition,
               this->ellipsoid)) {
-        pTile->incrementDoNotUnloadCount(
+        pTile->incrementDoNotUnloadSubtreeCount(
             "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
         this->candidateTiles.push_back(pTile);
       }
     } else {
-      pTile->incrementDoNotUnloadCount(
+      pTile->incrementDoNotUnloadSubtreeCount(
           "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
       this->candidateTiles.push_back(pTile);
     }
@@ -220,13 +222,13 @@ void TilesetHeightQuery::findCandidateTiles(
                 this->ray,
                 this->inputPosition,
                 this->ellipsoid)) {
-          pTile->incrementDoNotUnloadCount(
+          pTile->incrementDoNotUnloadSubtreeCount(
               "TilesetHeightQuery::findCandidateTiles add to "
               "additiveCandidateTiles");
           this->additiveCandidateTiles.push_back(pTile);
         }
       } else {
-        pTile->incrementDoNotUnloadCount(
+        pTile->incrementDoNotUnloadSubtreeCount(
             "TilesetHeightQuery::findCandidateTiles add to "
             "additiveCandidateTiles");
         this->additiveCandidateTiles.push_back(pTile);
@@ -281,7 +283,7 @@ void TilesetHeightQuery::findCandidateTiles(
   // Decrement doNotUnloadCount for tiles currently in the queue, as the queue
   // will be overwritten after this.
   for (Tile* pTile : heightQueryLoadQueue) {
-    pTile->decrementDoNotUnloadCount(
+    pTile->decrementDoNotUnloadSubtreeCount(
         "TilesetHeightRequest::processHeightRequests clear from "
         "heightQueryLoadQueue");
   }
@@ -290,7 +292,7 @@ void TilesetHeightQuery::findCandidateTiles(
 
   // Track the pointers in the load queue in doNotUnloadCount
   for (Tile* pTile : heightQueryLoadQueue) {
-    pTile->incrementDoNotUnloadCount(
+    pTile->incrementDoNotUnloadSubtreeCount(
         "TilesetHeightRequest::processHeightRequests assign to "
         "heightQueryLoadQueue");
   }
@@ -362,7 +364,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       std::swap(query.candidateTiles, query.previousCandidateTiles);
 
       for (Tile* pTile : query.candidateTiles) {
-        pTile->decrementDoNotUnloadCount(
+        pTile->decrementDoNotUnloadSubtreeCount(
             "TilesetHeightRequest::tryCompleteHeightRequest clear "
             "candidateTiles");
       }
@@ -379,7 +381,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
           markTileVisited(loadedTiles, pCandidate);
 
           // Check again next frame to see if this tile has children.
-          pCandidate->incrementDoNotUnloadCount(
+          pCandidate->incrementDoNotUnloadSubtreeCount(
               "TilesetHeightRequest::tryCompleteHeightRequest add to "
               "candidateTiles");
           query.candidateTiles.emplace_back(pCandidate);
