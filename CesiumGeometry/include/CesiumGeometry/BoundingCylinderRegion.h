@@ -27,11 +27,24 @@ enum class CullingResult;
 class CESIUMGEOMETRY_API BoundingCylinderRegion final {
 public:
   /**
-   * @brief Construct a new instance.
+   * @brief Construct a new bounding cylinder region.
+   *
+   * @remarks A cylinder region is defined relative to a reference cylinder
+   * centered at the local origin. The height aligns with the z-axis, and the
+   * cylinder extends to half the height in each direction. The angular bounds
+   * are in the range [-pi, pi], and are oriented such that an angle of -pi
+   * aligns with the negative y-axis, while an angle of 0 aligns with the
+   * positive y-axis. The angular range opens counter-clockwise.
+   *
+   * It is possible for the region to only occupy part of the cylinder, and if
+   * that is the case, the region's center may not necessarily equal the
+   * translation. Additionally, the rotation is applied at to the reference
+   * cylinder at the local origin. In other words, the region is rotated around
+   * the whole cylinder's center, and not necessarily its own.
    *
    * @param translation The translation applied to the reference cylinder.
    * @param rotation The rotation applied to the reference cylinder.
-   * @param height The height of the cylinder region.
+   * @param height The height of the cylinder region along the z-axis.
    * @param radialBounds The radial bounds of the region, where x is the minimum
    * radius and y is the maximum.
    * @param angularBounds The angular bounds of the region, where x is the
