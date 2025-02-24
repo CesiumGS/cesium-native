@@ -307,17 +307,17 @@ void createImplicitQuadtreeLoader(
         *pCylinder);
     pImplicitLoader = pLoader.get();
     currentLoader.addChildLoader(std::move(pLoader));
-
-    // create an implicit root to associate with the above implicit loader
-    std::vector<Tile> implicitRootTile;
-    implicitRootTile.emplace_back(pImplicitLoader);
-    implicitRootTile[0].setTransform(implicitTile.getTransform());
-    implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
-    implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
-    implicitRootTile[0].setRefine(implicitTile.getRefine());
-    implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
-    implicitTile.createChildTiles(std::move(implicitRootTile));
   }
+
+  // create an implicit root to associate with the above implicit loader
+  std::vector<Tile> implicitRootTile;
+  implicitRootTile.emplace_back(pImplicitLoader);
+  implicitRootTile[0].setTransform(implicitTile.getTransform());
+  implicitRootTile[0].setBoundingVolume(implicitTile.getBoundingVolume());
+  implicitRootTile[0].setGeometricError(implicitTile.getGeometricError());
+  implicitRootTile[0].setRefine(implicitTile.getRefine());
+  implicitRootTile[0].setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
+  implicitTile.createChildTiles(std::move(implicitRootTile));
 }
 
 void createImplicitOctreeLoader(
