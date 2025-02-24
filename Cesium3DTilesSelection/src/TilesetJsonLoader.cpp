@@ -34,10 +34,10 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>

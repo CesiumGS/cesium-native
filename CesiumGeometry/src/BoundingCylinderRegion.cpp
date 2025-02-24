@@ -12,7 +12,7 @@
 #include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
-#include <glm/matrix.hpp>
+#include <glm/trigonometric.hpp>
 
 #include <cmath>
 
