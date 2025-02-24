@@ -9,6 +9,7 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <optional>
 
@@ -326,7 +327,7 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
 
   const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
   constexpr glm::length_t N = MatType::length();
-  if (array.size() != N * N) {
+  if (array.size() != static_cast<size_t>(N * N)) {
     return std::nullopt;
   }
 
@@ -2970,7 +2971,7 @@ private:
     std::vector<std::string> strings;
     std::vector<uint64_t> stringOffsets;
 
-    const auto array = jsonValue.getArray();
+    const auto& array = jsonValue.getArray();
     strings.reserve(array.size());
     stringOffsets.reserve(array.size() + 1);
     stringOffsets.push_back(static_cast<uint64_t>(0));

@@ -802,7 +802,7 @@ private:
     }
 
     const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
-        _pModel->images[imageIndex].pAsset;
+        _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
     status = checkChannels(channels, *pImage);
@@ -810,7 +810,8 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    if (channels.size() * pImage->bytesPerChannel != elementSize) {
+    if (channels.size() * static_cast<size_t>(pImage->bytesPerChannel) !=
+        elementSize) {
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
