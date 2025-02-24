@@ -2,6 +2,8 @@
 
 #include <CesiumGeometry/Library.h>
 
+#include <glm/ext/vector_double3.hpp>
+
 #include <vector>
 
 namespace CesiumGeometry {

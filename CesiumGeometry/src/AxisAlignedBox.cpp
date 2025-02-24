@@ -1,6 +1,7 @@
 #include <CesiumGeometry/AxisAlignedBox.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
 
 #include <cstddef>
