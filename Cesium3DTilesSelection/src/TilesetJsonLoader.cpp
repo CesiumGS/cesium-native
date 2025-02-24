@@ -9,6 +9,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
@@ -155,161 +156,89 @@ CesiumGeometry::Axis obtainGltfUpAxis(
 }
 
 std::optional<BoundingVolume> getBoundingVolumeProperty(
-    const CesiumGeospatial::Ellipsoid& ellipsoid,
     const rapidjson::Value& tileJson,
-    const std::string& key) {
+    const std::string& key,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const auto bvIt = tileJson.FindMember(key.c_str());
   if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
     return std::nullopt;
   }
 
-  const auto extensionsIt = bvIt->value.FindMember("extensions");
-  if (extensionsIt != bvIt->value.MemberEnd() &&
-      extensionsIt->value.IsObject()) {
-    const auto s2It = extensionsIt->value.FindMember(
-        Cesium3DTiles::Extension3dTilesBoundingVolumeS2::ExtensionName);
-    if (s2It != extensionsIt->value.MemberEnd() && s2It->value.IsObject()) {
-      std::string token = CesiumUtility::JsonHelpers::getStringOrDefault(
-          s2It->value,
-          "token",
-          "1");
-      double minimumHeight = CesiumUtility::JsonHelpers::getDoubleOrDefault(
-          s2It->value,
-          "minimumHeight",
-          0.0);
-      double maximumHeight = CesiumUtility::JsonHelpers::getDoubleOrDefault(
-          s2It->value,
-          "maximumHeight",
-          0.0);
+  Cesium3DTilesReader::BoundingVolumeReader reader;
+  CesiumJsonReader::ReadJsonResult<Cesium3DTiles::BoundingVolume>
+      boundingVolumeResult = reader.readFromJson(bvIt->value);
+
+  if (!boundingVolumeResult.value) {
+    return std::nullopt;
+  }
+
+  const Cesium3DTiles::BoundingVolume& result = *boundingVolumeResult.value;
+
+  if (result.extensions.size() > 0) {
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeS2* pS2 =
+        result.getExtension<Cesium3DTiles::Extension3dTilesBoundingVolumeS2>();
+    if (pS2) {
       return CesiumGeospatial::S2CellBoundingVolume(
-          CesiumGeospatial::S2CellID::fromToken(token),
-          minimumHeight,
-          maximumHeight,
+          CesiumGeospatial::S2CellID::fromToken(pS2->token),
+          pS2->minimumHeight,
+          pS2->maximumHeight,
           ellipsoid);
     }
 
-    const auto cylinderIt = extensionsIt->value.FindMember(
-        Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder::ExtensionName);
-    if (cylinderIt != extensionsIt->value.MemberEnd() &&
-        cylinderIt->value.IsObject()) {
-      const auto minRadiusIt = cylinderIt->value.FindMember("minRadius");
-      if (minRadiusIt == cylinderIt->value.MemberEnd() ||
-          !minRadiusIt->value.IsNumber()) {
+    const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder* pCylinder =
+        result.getExtension<
+            Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder>();
+    if (pCylinder) {
+      const std::vector<double>& translation = pCylinder->translation;
+      const std::vector<double>& rotation = pCylinder->rotation;
+
+      if (translation.size() < 3 || rotation.size() < 3) {
         return std::nullopt;
-      }
-
-      const auto maxRadiusIt = cylinderIt->value.FindMember("maxRadius");
-      if (maxRadiusIt == cylinderIt->value.MemberEnd() ||
-          !maxRadiusIt->value.IsNumber()) {
-        return std::nullopt;
-      }
-
-      const auto heightIt = cylinderIt->value.FindMember("height");
-      if (heightIt == cylinderIt->value.MemberEnd() ||
-          !heightIt->value.IsNumber()) {
-        return std::nullopt;
-      }
-
-      double minRadius = minRadiusIt->value.GetDouble();
-      double maxRadius = maxRadiusIt->value.GetDouble();
-      double height = heightIt->value.GetDouble();
-      double minAngle = CesiumUtility::JsonHelpers::getDoubleOrDefault(
-          cylinderIt->value,
-          "minAngle",
-          -CesiumUtility::Math::OnePi);
-      double maxAngle = CesiumUtility::JsonHelpers::getDoubleOrDefault(
-          cylinderIt->value,
-          "maxAngle",
-          CesiumUtility::Math::OnePi);
-
-      glm::dvec3 translation(0.0);
-      glm::dquat rotation(1.0, 0.0, 0.0, 0.0);
-
-      const auto translationIt = cylinderIt->value.FindMember("translation");
-      if (translationIt != cylinderIt->value.MemberEnd() &&
-          translationIt->value.IsArray()) {
-        const auto& t = translationIt->value.GetArray();
-        for (rapidjson::SizeType i = 0; i < 3; ++i) {
-          if (t[i].IsNumber()) {
-            translation[static_cast<glm::length_t>(i)] = t[i].GetDouble();
-          }
-        }
-      }
-
-      const auto rotationIt = cylinderIt->value.FindMember("rotation");
-      if (rotationIt != cylinderIt->value.MemberEnd() &&
-          rotationIt->value.IsArray()) {
-        const auto& r = rotationIt->value.GetArray();
-        rotation.x = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[1], 0.0);
-        rotation.y = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[2], 0.0);
-        rotation.z = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[3], 0.0);
-        rotation.w = CesiumUtility::JsonHelpers::getDoubleOrDefault(r[1], 1.0);
       }
 
       return CesiumGeometry::BoundingCylinderRegion(
-          translation,
-          rotation,
-          height,
-          glm::dvec2(minRadius, maxRadius),
-          glm::dvec2(minAngle, maxAngle));
+          glm::dvec3(translation[0], translation[1], translation[2]),
+          glm::dquat(rotation[3], rotation[0], rotation[1], rotation[2]),
+          pCylinder->height,
+          glm::dvec2(pCylinder->minRadius, pCylinder->maxRadius),
+          glm::dvec2(pCylinder->minAngle, pCylinder->maxAngle));
     }
   }
 
-  const auto boxIt = bvIt->value.FindMember("box");
-  if (boxIt != bvIt->value.MemberEnd() && boxIt->value.IsArray() &&
-      boxIt->value.Size() >= 12) {
-    const auto& a = boxIt->value.GetArray();
-    for (rapidjson::SizeType i = 0; i < 12; ++i) {
-      if (!a[i].IsNumber()) {
-        return std::nullopt;
-      }
-    }
+  if (result.box.size() >= 12) {
+    const std::vector<double>& box = result.box;
     return CesiumGeometry::OrientedBoundingBox(
-        glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
+        glm::dvec3(box[0], box[1], box[2]),
         glm::dmat3(
-            a[3].GetDouble(),
-            a[4].GetDouble(),
-            a[5].GetDouble(),
-            a[6].GetDouble(),
-            a[7].GetDouble(),
-            a[8].GetDouble(),
-            a[9].GetDouble(),
-            a[10].GetDouble(),
-            a[11].GetDouble()));
+            box[3],
+            box[4],
+            box[5],
+            box[6],
+            box[7],
+            box[8],
+            box[9],
+            box[10],
+            box[11]));
   }
 
-  const auto regionIt = bvIt->value.FindMember("region");
-  if (regionIt != bvIt->value.MemberEnd() && regionIt->value.IsArray() &&
-      regionIt->value.Size() >= 6) {
-    const auto& a = regionIt->value;
-    for (rapidjson::SizeType i = 0; i < 6; ++i) {
-      if (!a[i].IsNumber()) {
-        return std::nullopt;
-      }
-    }
+  if (result.region.size() >= 6) {
+    const std::vector<double>& region = result.region;
     return CesiumGeospatial::BoundingRegion(
         CesiumGeospatial::GlobeRectangle(
-            a[0].GetDouble(),
-            a[1].GetDouble(),
-            a[2].GetDouble(),
-            a[3].GetDouble()),
-        a[4].GetDouble(),
-        a[5].GetDouble(),
+            region[0],
+            region[1],
+            region[2],
+            region[3]),
+        region[4],
+        region[5],
         ellipsoid);
   }
 
-  const auto sphereIt = bvIt->value.FindMember("sphere");
-  if (sphereIt != bvIt->value.MemberEnd() && sphereIt->value.IsArray() &&
-      sphereIt->value.Size() >= 4) {
-    const auto& a = sphereIt->value;
-    for (rapidjson::SizeType i = 0; i < 4; ++i) {
-      if (!a[i].IsNumber()) {
-        return std::nullopt;
-      }
-    }
+  if (result.sphere.size() >= 4) {
+    const std::vector<double>& sphere = result.sphere;
     return CesiumGeometry::BoundingSphere(
-        glm::dvec3(a[0].GetDouble(), a[1].GetDouble(), a[2].GetDouble()),
-        a[3].GetDouble());
+        glm::dvec3(sphere[0], sphere[1], sphere[2]),
+        sphere[3]);
   }
 
   return std::nullopt;
@@ -532,7 +461,7 @@ std::optional<Tile> parseTileJsonRecursively(
 
   // parse bounding volume
   std::optional<BoundingVolume> boundingVolume =
-      getBoundingVolumeProperty(ellipsoid, tileJson, "boundingVolume");
+      getBoundingVolumeProperty(tileJson, "boundingVolume", ellipsoid);
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return std::nullopt;
@@ -543,7 +472,7 @@ std::optional<Tile> parseTileJsonRecursively(
 
   // parse viewer request volume
   std::optional<BoundingVolume> tileViewerRequestVolume =
-      getBoundingVolumeProperty(ellipsoid, tileJson, "viewerRequestVolume");
+      getBoundingVolumeProperty(tileJson, "viewerRequestVolume", ellipsoid);
   if (tileViewerRequestVolume) {
     tileViewerRequestVolume =
         transformBoundingVolume(tileTransform, tileViewerRequestVolume.value());
@@ -660,9 +589,9 @@ std::optional<Tile> parseTileJsonRecursively(
   std::optional<BoundingVolume> tileContentBoundingVolume;
   if (hasContentMember) {
     tileContentBoundingVolume = getBoundingVolumeProperty(
-        ellipsoid,
         contentIt->value,
-        "boundingVolume");
+        "boundingVolume",
+        ellipsoid);
     if (tileContentBoundingVolume) {
       tileContentBoundingVolume = transformBoundingVolume(
           tileTransform,
