@@ -1,9 +1,11 @@
-#pragma once
-
 #include <CesiumGeometry/AxisAlignedBox.h>
 
-namespace CesiumGeometry {
+#include <glm/common.hpp>
+#include <glm/vec3.hpp>
 
+#include <vector>
+
+namespace CesiumGeometry {
 /*static*/ AxisAlignedBox
 AxisAlignedBox::fromPositions(const std::vector<glm::dvec3>& positions) {
   if (positions.size() == 0) {
