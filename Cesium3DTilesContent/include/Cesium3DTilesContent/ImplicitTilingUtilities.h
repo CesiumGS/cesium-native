@@ -15,7 +15,8 @@ class S2CellBoundingVolume;
 
 namespace CesiumGeometry {
 class OrientedBoundingBox;
-}
+class BoundingCylinderRegion;
+} // namespace CesiumGeometry
 
 namespace Cesium3DTiles {
 struct BoundingVolume;
@@ -518,6 +519,30 @@ public:
       const CesiumGeometry::OctreeTileID& tileID,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit quadtree tile
+   * with the given ID as a bounding cylinder.
+   *
+   * @param rootBoundingVolume The oriented bounding box of the root tile.
+   * @param tileID The tile ID for which to compute the oriented bounding box.
+   * @return The oriented bounding box for the given implicit tile.
+   */
+  static CesiumGeometry::BoundingCylinderRegion computeBoundingVolume(
+      const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit octree tile with
+   * the given ID as a bounding cylinder.
+   *
+   * @param rootBoundingVolume The bounding cylinder of the root tile.
+   * @param tileID The tile ID for which to compute the bounding cylinder.
+   * @return The bounding cylinder for the given implicit tile.
+   */
+  static CesiumGeometry::BoundingCylinderRegion computeBoundingVolume(
+      const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
 };
 
 } // namespace Cesium3DTilesContent
