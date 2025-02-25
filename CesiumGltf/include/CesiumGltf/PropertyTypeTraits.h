@@ -201,12 +201,15 @@ struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
   using type = T;
 };
 
-/** * @brief Infer the best-fitting PropertyType and PropertyComponentType for a
- * C++ type. * * Note that this cannot infer whether an integer is actually an *
- * \ref PropertyType::Enum, since the enum definition is separate * from the
- * PropertyType. It is on the runtime to refer to the * original class property
- * definition, and check whether there is an * associated \ref
- * CesiumGltf::ClassProperty::enumType. */
+/** @brief Infer the best-fitting PropertyType and PropertyComponentType for a
+ * C++ type.
+ *
+ * Note that this cannot infer whether an integer is actually an
+ * \ref PropertyType::Enum, since the enum definition is separate from the
+ * PropertyType. It is on the runtime to refer to the original class property
+ * definition, and check whether there is an associated \ref
+ * CesiumGltf::ClassProperty::enumType.
+ */
 template <typename T> struct TypeToPropertyType;
 
 #pragma region Scalar Property Types

@@ -1193,21 +1193,13 @@ private:
               ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
     }
 
-    if constexpr (!IsMetadataBoolean<T>::value && !Normalized) {
-      if (type == PropertyType::Enum) {
-        return PropertyTablePropertyView<T, Normalized>(
-            propertyTableProperty,
-            classProperty,
-            pEnumDefinition,
-            _pPropertyTable->count,
-            values);
-      } else {
-        return PropertyTablePropertyView<T, Normalized>(
-            propertyTableProperty,
-            classProperty,
-            _pPropertyTable->count,
-            values);
-      }
+    if constexpr (!Normalized) {
+      return PropertyTablePropertyView<T, Normalized>(
+          propertyTableProperty,
+          classProperty,
+          pEnumDefinition,
+          _pPropertyTable->count,
+          values);
     } else {
       return PropertyTablePropertyView<T, Normalized>(
           propertyTableProperty,
