@@ -151,8 +151,6 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void finalizeEmptyTile(Tile& tile);
-
 private:
   static void setTileContent(
       Tile& tile,

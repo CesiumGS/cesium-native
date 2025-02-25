@@ -1645,9 +1645,6 @@ void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
   // Iterate through all children, calling this method recursively to make sure
   // children are all removed from _loadedTiles.
   for (Tile& child : pTile->getChildren()) {
-    if (child.isEmptyContent()) {
-      this->_pTilesetContentManager->finalizeEmptyTile(child);
-    }
     CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
     CESIUM_ASSERT(child.getContent().isUnknownContent());

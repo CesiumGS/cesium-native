@@ -1169,13 +1169,6 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
   }
 }
 
-void TilesetContentManager::finalizeEmptyTile(Tile& tile) {
-  CESIUM_ASSERT(tile.getContent().isEmptyContent());
-  notifyTileUnloading(&tile);
-  tile.getContent().setContentKind(TileUnknownContent{});
-  tile.setState(TileLoadState::Unloaded);
-}
-
 UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
@@ -1188,30 +1181,14 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
 
   TileContent& content = tile.getContent();
 
-  /**
-   * External tilesets load like this :
-   * 1. Tile in parent tileset points to a new tileset to load. This is the tile
-   *    with TileExternalContent.
-   * 2. TilesetJsonLoader loads new tileset.
-   * 3. The root tile of the new tileset is added as a child of the
-   *    TileExternalContent parent. This tile is TileEmptyContent, but has the
-   *    rest of the tileset as its children.
-   * 4. The loader used to load the external tileset is set as the
-   *    TileEmptyContent's _pLoader.
-   *
-   * This causes a bit of an issue for us, because if we unload this empty tile
-   * right now - before the parent TileExternalContent is unloaded and has its
-   * children cleared - we are introducing a tile into the tree with
-   * TileLoadState::Unloaded, TileUnknownContent, an infinite geometric error
-   * (aka the unconditionally refine flag), and a loader for the external
-   * tileset it's the root of. If this is allowed to happen, this Tile will be
-   * treated as an unloaded external tileset, and we will attempt to load its
-   * children. Once loaded, Tile::createChildren will find that the tile already
-   * has children, and throw an exception. To solve this problem, let's just
-   * avoid marking empty content tiles as Unloaded.
-   */
+  // We can unload empty content at any time.
   if (content.isEmptyContent()) {
-    return UnloadTileContentResult::Keep;
+    notifyTileUnloading(&tile);
+    content.setContentKind(TileUnknownContent{});
+    tile.setState(TileLoadState::Unloaded);
+    tile.decrementDoNotUnloadSubtreeCountOnParent(
+        "TilesetContentManager::unloadTileContent unload empty content");
+    return UnloadTileContentResult::Remove;
   }
 
   if (content.isExternalContent()) {
@@ -1456,8 +1433,7 @@ void TilesetContentManager::setTileContent(
             pWorkerRenderResources},
         std::move(result.contentKind));
 
-    if (!tile.getContent().isUnknownContent() &&
-        !tile.getContent().isEmptyContent()) {
+    if (!tile.getContent().isUnknownContent()) {
       tile.incrementDoNotUnloadSubtreeCountOnParent(
           "TilesetContentManager::setTileContent");
     }

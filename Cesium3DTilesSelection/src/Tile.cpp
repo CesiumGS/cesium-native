@@ -92,12 +92,7 @@ Tile::Tile(
       _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
       _loadState{loadState},
-      _mightHaveLatentChildren{true} {
-  if (_loadState != TileLoadState::Unloaded && !_content.isUnknownContent() &&
-      !_content.isEmptyContent()) {
-    incrementDoNotUnloadSubtreeCountOnParent("Tile constructor");
-  }
-}
+      _mightHaveLatentChildren{true} {}
 
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
