@@ -258,6 +258,8 @@ void Tileset::_updateLodTransitions(
         // This tile is done fading out and was immediately kicked from the
         // cache.
         tileIt = result.tilesFadingOut.erase(tileIt);
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions done fading out");
         continue;
       }
 
@@ -269,6 +271,8 @@ void Tileset::_updateLodTransitions(
         // This tile will already be on the render list.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions in render list");
         continue;
       }
 
@@ -280,6 +284,8 @@ void Tileset::_updateLodTransitions(
         // last frame.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions done fading out");
         continue;
       }
 
@@ -329,6 +335,11 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
     this->updateView(frustums, 0.0f);
   }
 
+  for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+    pTile->decrementDoNotUnloadSubtreeCount(
+        "Tileset::updateViewOffline clear tilesFadingOut");
+  }
+
   this->_updateResult.tilesFadingOut.clear();
 
   std::unordered_set<Tile*> uniqueTilesToRenderThisFrame(
@@ -341,6 +352,8 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
         this->_updateResult.tilesFadingOut.insert(tile);
+        tile->incrementDoNotUnloadSubtreeCount(
+            "Tileset::updateViewOffline start fading out");
       }
     }
   }
@@ -384,6 +397,10 @@ const ViewUpdateResult& Tileset::updateView(
   result.maxDepthVisited = 0;
 
   if (!_options.enableLodTransitionPeriod) {
+    for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+      pTile->decrementDoNotUnloadSubtreeCount(
+          "Tileset::updateView clear tilesFadingOut");
+    }
     result.tilesFadingOut.clear();
   }
 
@@ -647,6 +664,7 @@ void markTileNonRendered(
       (lastResult == TileSelectionState::Result::Refined &&
        tile.getRefine() == TileRefine::Add)) {
     result.tilesFadingOut.insert(&tile);
+    tile.incrementDoNotUnloadSubtreeCount("markTileNonRendered fading out");
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);
@@ -1673,11 +1691,28 @@ void Tileset::_processMainThreadLoadQueue() {
   this->_mainThreadLoadQueue.clear();
 }
 
+void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
+  // Iterate through all children, calling this method recursively to make sure
+  // children are all removed from _loadedTiles.
+  for (Tile& child : pTile->getChildren()) {
+    CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
+    CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
+    CESIUM_ASSERT(child.getContent().isUnknownContent());
+    this->_loadedTiles.remove(child);
+    _clearChildrenRecursively(&child);
+  }
+
+  pTile->clearChildren();
+}
+
 void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
   const int64_t maxBytes = this->getOptions().maximumCachedBytes;
 
-  const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
-  Tile* pTile = this->_loadedTiles.head();
+  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
+  // The root tile marks the beginning of the tiles that were used for rendering
+  // last frame. By iterating backwards starting from this position, we ensure
+  // that descendants will always be unloaded before their ancestors.
+  Tile* pTile = this->_loadedTiles.previous(pRootTile);
 
   // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
   // the end time to the max time_point in that case.
@@ -1687,8 +1722,10 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
                  : (start + std::chrono::microseconds(
                                 static_cast<int64_t>(1000.0 * timeBudget)));
 
+  std::vector<Tile*> tilesNeedingChildrenCleared;
+
   while (this->getTotalDataBytes() > maxBytes) {
-    if (pTile == nullptr || pTile == pRootTile) {
+    if (pTile == nullptr) {
       // We've either removed all tiles or the next tile is the root.
       // The root tile marks the beginning of the tiles that were used
       // for rendering last frame.
@@ -1698,16 +1735,20 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     // Don't unload this tile if it is still fading out.
     if (_updateResult.tilesFadingOut.find(pTile) !=
         _updateResult.tilesFadingOut.end()) {
-      pTile = this->_loadedTiles.next(*pTile);
+      pTile = this->_loadedTiles.previous(*pTile);
       continue;
     }
 
-    Tile* pNext = this->_loadedTiles.next(*pTile);
+    Tile* pNext = this->_loadedTiles.previous(*pTile);
 
-    const bool removed =
+    const UnloadTileContentResult removed =
         this->_pTilesetContentManager->unloadTileContent(*pTile);
-    if (removed) {
+    if (removed != UnloadTileContentResult::Keep) {
       this->_loadedTiles.remove(*pTile);
+    }
+
+    if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
+      tilesNeedingChildrenCleared.emplace_back(pTile);
     }
 
     pTile = pNext;
@@ -1715,6 +1756,13 @@ void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
     auto time = std::chrono::system_clock::now();
     if (time >= end) {
       break;
+    }
+  }
+
+  if (!tilesNeedingChildrenCleared.empty()) {
+    for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
+      CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
+      _clearChildrenRecursively(pTileToClear);
     }
   }
 }

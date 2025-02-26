@@ -6,6 +6,7 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Math.h>
 
 #include <algorithm>
@@ -13,6 +14,9 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+#include <unordered_map>
+#endif
 #include <utility>
 #include <vector>
 
@@ -22,6 +26,31 @@ using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+std::unordered_map<
+    std::string,
+    std::vector<TileDoNotUnloadSubtreeCountTracker::Entry>>
+    TileDoNotUnloadSubtreeCountTracker::_entries;
+
+void TileDoNotUnloadSubtreeCountTracker::addEntry(
+    uint64_t id,
+    bool increment,
+    const std::string& reason,
+    int32_t newCount) {
+  const std::string idString = fmt::format("{:x}", id);
+  const auto foundIt =
+      TileDoNotUnloadSubtreeCountTracker::_entries.find(idString);
+  if (foundIt != TileDoNotUnloadSubtreeCountTracker::_entries.end()) {
+    foundIt->second.push_back(Entry{reason, increment, newCount});
+  } else {
+    std::vector<Entry> entries{Entry{reason, increment, newCount}};
+
+    TileDoNotUnloadSubtreeCountTracker::_entries.insert(
+        {idString, std::move(entries)});
+  }
+}
+#endif
+
 Tile::Tile(TilesetContentLoader* pLoader) noexcept
     : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader) {}
 
@@ -109,6 +138,14 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
+    // We deliberately do *not* copy the _doNotUnloadSubtreeCount of rhs here.
+    // This is because the _doNotUnloadSubtreeCount is a count of instances of
+    // the *pointer* to the tile, denoting the number of active pointers that
+    // would be invalidated if the Tile were to be deleted. Because the memory
+    // location of the tile will have changed as a result of the move operation,
+    // the new Tile object will not have any pointers referencing it, so copying
+    // over the count would be incorrect and could result in a Tile not being
+    // removed when it otherwise should be.
   }
 
   return *this;
@@ -122,6 +159,13 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
     tile.setParent(this);
+    // If a tile is created with children that are already ContentLoaded, we
+    // bypassed the normal route that _doNotUnloadSubtreeCount would be
+    // incremented by. We have to manually increment it or else we will see a
+    // mismatch when trying to unload the tile and fail the assertion.
+    if (tile.getState() == TileLoadState::ContentLoaded) {
+      ++this->_doNotUnloadSubtreeCount;
+    }
   }
 }
 
@@ -238,6 +282,84 @@ bool Tile::getMightHaveLatentChildren() const noexcept {
 
 void Tile::setMightHaveLatentChildren(bool mightHaveLatentChildren) noexcept {
   this->_mightHaveLatentChildren = mightHaveLatentChildren;
+}
+
+void Tile::clearChildren() noexcept {
+  CESIUM_ASSERT(this->_doNotUnloadSubtreeCount == 0);
+  this->_children.clear();
+}
+
+void Tile::incrementDoNotUnloadSubtreeCount(
+    [[maybe_unused]] const char* reason) noexcept {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+  const std::string reasonStr = fmt::format(
+      "Initiator ID: {:x}, {}",
+      reinterpret_cast<uint64_t>(this),
+      reason);
+  this->incrementDoNotUnloadSubtreeCount(reasonStr);
+#else
+  this->incrementDoNotUnloadSubtreeCount(std::string());
+#endif
+}
+
+void Tile::decrementDoNotUnloadSubtreeCount(
+    [[maybe_unused]] const char* reason) noexcept {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+  const std::string reasonStr = fmt::format(
+      "Initiator ID: {:x}, {}",
+      reinterpret_cast<uint64_t>(this),
+      reason);
+  this->decrementDoNotUnloadSubtreeCount(reasonStr);
+#else
+  this->decrementDoNotUnloadSubtreeCount(std::string());
+#endif
+}
+
+void Tile::incrementDoNotUnloadSubtreeCountOnParent(
+    const char* reason) noexcept {
+  if (this->getParent() != nullptr) {
+    this->getParent()->incrementDoNotUnloadSubtreeCount(reason);
+  }
+}
+
+void Tile::decrementDoNotUnloadSubtreeCountOnParent(
+    const char* reason) noexcept {
+  if (this->getParent() != nullptr) {
+    this->getParent()->decrementDoNotUnloadSubtreeCount(reason);
+  }
+}
+
+void Tile::incrementDoNotUnloadSubtreeCount(
+    [[maybe_unused]] const std::string& reason) noexcept {
+  Tile* pTile = this;
+  while (pTile != nullptr) {
+    ++pTile->_doNotUnloadSubtreeCount;
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+    TileDoNotUnloadSubtreeCountTracker::addEntry(
+        reinterpret_cast<uint64_t>(pTile),
+        true,
+        std::string(reason),
+        pTile->_doNotUnloadSubtreeCount);
+#endif
+    pTile = pTile->getParent();
+  }
+}
+
+void Tile::decrementDoNotUnloadSubtreeCount(
+    [[maybe_unused]] const std::string& reason) noexcept {
+  CESIUM_ASSERT(this->_doNotUnloadSubtreeCount > 0);
+  Tile* pTile = this;
+  while (pTile != nullptr) {
+    --pTile->_doNotUnloadSubtreeCount;
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+    TileDoNotUnloadSubtreeCountTracker::addEntry(
+        reinterpret_cast<uint64_t>(pTile),
+        false,
+        std::string(reason),
+        pTile->_doNotUnloadSubtreeCount);
+#endif
+    pTile = pTile->getParent();
+  }
 }
 
 } // namespace Cesium3DTilesSelection
