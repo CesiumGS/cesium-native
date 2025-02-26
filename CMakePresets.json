@@ -4,21 +4,35 @@
     {
       "name": "vcpkg",
       "binaryDir": "${sourceDir}/build",
-      "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_BUILD_TYPE": "Release",
         "CESIUM_USE_EZVCPKG": "OFF"
       }
     },
     {
+      "name": "vcpkg-ninja",
+      "generator": "Ninja",
+      "inherits": ["vcpkg"]
+    },
+    {
       "name": "vcpkg-ninja-multi",
       "generator": "Ninja Multi-Config",
-      "binaryDir": "${sourceDir}/build",
+      "inherits": ["vcpkg"]
+    },
+    {
+      "name": "vcpkg-linux",
+      "inherits": ["vcpkg"],
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_BUILD_TYPE": "Release",
-        "CESIUM_USE_EZVCPKG": "OFF"
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "vcpkg-windows",
+      "inherits": ["vcpkg"],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "VCPKG_TRIPLET": "x64-windows-static-md"
       }
     }
   ]
