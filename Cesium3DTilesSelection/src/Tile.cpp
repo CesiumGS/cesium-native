@@ -160,6 +160,7 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
     throw std::runtime_error("Children already created.");
   }
 
+  const int32_t prevDoNotUnloadSubtreeCount = this->_doNotUnloadSubtreeCount;
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
     tile.setParent(this);
@@ -169,6 +170,22 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
     // mismatch when trying to unload the tile and fail the assertion.
     if (tile.getState() == TileLoadState::ContentLoaded) {
       ++this->_doNotUnloadSubtreeCount;
+    }
+
+    // Add the child's count to our count, as it might represent a tile lower
+    // down on the tree that's loaded that we can't see from here. None of the
+    // children should have other references to their tile pointer at this
+    // moment so this count should just represent loaded children.
+    this->_doNotUnloadSubtreeCount += tile._doNotUnloadSubtreeCount;
+  }
+
+  const int32_t addedDoNotUnloadSubtreeCount =
+      this->_doNotUnloadSubtreeCount - prevDoNotUnloadSubtreeCount;
+  if (addedDoNotUnloadSubtreeCount > 0) {
+    Tile* pParent = this->getParent();
+    while (pParent != nullptr) {
+      pParent->_doNotUnloadSubtreeCount += addedDoNotUnloadSubtreeCount;
+      pParent = pParent->getParent();
     }
   }
 }
