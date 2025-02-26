@@ -1,7 +1,7 @@
 {
     "dependencies": [
         "asyncplusplus",
-        "catch2",
+        "doctest",
         "expected-lite",
         "glm",
         "ms-gsl",
