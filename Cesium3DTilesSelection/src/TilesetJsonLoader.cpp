@@ -954,7 +954,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult{
             TileEmptyContent{},
-            _upAxis,
+            this->_upAxis,
             std::nullopt,
             std::nullopt,
             std::nullopt,

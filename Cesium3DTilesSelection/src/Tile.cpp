@@ -14,11 +14,12 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
+
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 #include <unordered_map>
 #endif
-#include <utility>
-#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

@@ -1195,7 +1195,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     // Tile with external content that still has references to its pointer or to
     // its children's pointers - we can't unload.
     // We also, of course, don't want to unload the root tile.
-    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0) {
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadSubtreeCount() > 0) {
       return UnloadTileContentResult::Keep;
     }
 
