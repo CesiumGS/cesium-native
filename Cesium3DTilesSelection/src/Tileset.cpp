@@ -14,6 +14,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -78,7 +79,7 @@ Tileset::Tileset(
               std::move(pRootTile)),
       },
       _heightRequests(),
-      _defaultViewGroup() {}
+      _defaultViewGroup(this->_pTilesetContentManager) {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -101,7 +102,7 @@ Tileset::Tileset(
               url),
       },
       _heightRequests(),
-      _defaultViewGroup() {}
+      _defaultViewGroup(this->_pTilesetContentManager) {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -123,7 +124,7 @@ Tileset::Tileset(
           ionAccessToken,
           ionAssetEndpointUrl)},
       _heightRequests(),
-      _defaultViewGroup() {}
+      _defaultViewGroup(this->_pTilesetContentManager) {}
 
 Tileset::~Tileset() noexcept {
   TilesetHeightRequest::failHeightRequests(
@@ -367,12 +368,10 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
 }
 
 const ViewUpdateResult& Tileset::updateView(
-    ViewGroup& viewGroup,
+    TilesetViewGroup& viewGroup,
     const std::vector<ViewState>& frustums,
     float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
-
-  viewGroup.startNextFrame();
 
   // Fixup TilesetOptions to ensure lod transitions works correctly.
   _options.enableFrustumCulling =
@@ -468,7 +467,11 @@ const ViewUpdateResult& Tileset::updateView(
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
 
-  this->_unloadCachedTiles(this->_options.tileCacheUnloadTimeLimit);
+  viewGroup.finishFrame();
+
+  this->_pTilesetContentManager->unloadCachedBytes(
+      this->getOptions().maximumCachedBytes,
+      this->_options.tileCacheUnloadTimeLimit);
   this->_processWorkerThreadLoadQueue();
   this->_processMainThreadLoadQueue();
   this->_updateLodTransitions(frameState, deltaTime, result);
@@ -655,6 +658,10 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   return promise.getFuture();
 }
 
+TilesetViewGroup Tileset::createViewGroup() {
+  return TilesetViewGroup(this->_pTilesetContentManager);
+}
+
 namespace {
 void markTileNonRendered(
     TileSelectionState::Result lastResult,
@@ -673,7 +680,7 @@ void markTileNonRendered(
 }
 
 void markTileNonRendered(
-    ViewGroup& viewGroup,
+    TilesetViewGroup& viewGroup,
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
@@ -683,7 +690,7 @@ void markTileNonRendered(
 }
 
 void markChildrenNonRendered(
-    ViewGroup& viewGroup,
+    TilesetViewGroup& viewGroup,
     int32_t lastFrameNumber,
     TileSelectionState::Result lastResult,
     Tile& tile,
@@ -704,7 +711,7 @@ void markChildrenNonRendered(
 }
 
 void markChildrenNonRendered(
-    ViewGroup& viewGroup,
+    TilesetViewGroup& viewGroup,
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
@@ -714,7 +721,7 @@ void markChildrenNonRendered(
 }
 
 void markTileAndChildrenNonRendered(
-    ViewGroup& viewGroup,
+    TilesetViewGroup& viewGroup,
     int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
@@ -1689,82 +1696,6 @@ void Tileset::_processMainThreadLoadQueue() {
   }
 
   this->_mainThreadLoadQueue.clear();
-}
-
-void Tileset::_clearChildrenRecursively(Tile* pTile) noexcept {
-  // Iterate through all children, calling this method recursively to make sure
-  // children are all removed from _loadedTiles.
-  for (Tile& child : pTile->getChildren()) {
-    CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
-    CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
-    CESIUM_ASSERT(child.getContent().isUnknownContent());
-    this->_loadedTiles.remove(child);
-    _clearChildrenRecursively(&child);
-  }
-
-  pTile->clearChildren();
-}
-
-void Tileset::_unloadCachedTiles(double timeBudget) noexcept {
-  const int64_t maxBytes = this->getOptions().maximumCachedBytes;
-
-  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
-  // The root tile marks the beginning of the tiles that were used for rendering
-  // last frame. By iterating backwards starting from this position, we ensure
-  // that descendants will always be unloaded before their ancestors.
-  Tile* pTile = this->_loadedTiles.previous(pRootTile);
-
-  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
-  // the end time to the max time_point in that case.
-  auto start = std::chrono::system_clock::now();
-  auto end = (timeBudget <= 0.0)
-                 ? std::chrono::time_point<std::chrono::system_clock>::max()
-                 : (start + std::chrono::microseconds(
-                                static_cast<int64_t>(1000.0 * timeBudget)));
-
-  std::vector<Tile*> tilesNeedingChildrenCleared;
-
-  while (this->getTotalDataBytes() > maxBytes) {
-    if (pTile == nullptr) {
-      // We've either removed all tiles or the next tile is the root.
-      // The root tile marks the beginning of the tiles that were used
-      // for rendering last frame.
-      break;
-    }
-
-    // Don't unload this tile if it is still fading out.
-    if (_updateResult.tilesFadingOut.find(pTile) !=
-        _updateResult.tilesFadingOut.end()) {
-      pTile = this->_loadedTiles.previous(*pTile);
-      continue;
-    }
-
-    Tile* pNext = this->_loadedTiles.previous(*pTile);
-
-    const UnloadTileContentResult removed =
-        this->_pTilesetContentManager->unloadTileContent(*pTile);
-    if (removed != UnloadTileContentResult::Keep) {
-      this->_loadedTiles.remove(*pTile);
-    }
-
-    if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
-      tilesNeedingChildrenCleared.emplace_back(pTile);
-    }
-
-    pTile = pNext;
-
-    auto time = std::chrono::system_clock::now();
-    if (time >= end) {
-      break;
-    }
-  }
-
-  if (!tilesNeedingChildrenCleared.empty()) {
-    for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
-      CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
-      _clearChildrenRecursively(pTileToClear);
-    }
-  }
 }
 
 void Tileset::_markTileVisited(Tile& tile) noexcept {

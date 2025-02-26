@@ -362,4 +362,15 @@ void Tile::decrementDoNotUnloadSubtreeCount(
   }
 }
 
+bool Tile::addViewGroupReference() const noexcept {
+  ++this->_viewGroupReferences;
+  return this->_viewGroupReferences == 1;
+}
+
+bool Tile::releaseViewGroupReference() const noexcept {
+  CESIUM_ASSERT(this->_viewGroupReferences > 0);
+  --this->_viewGroupReferences;
+  return this->_viewGroupReferences == 0;
+}
+
 } // namespace Cesium3DTilesSelection

@@ -728,7 +728,8 @@ TilesetContentManager::TilesetContentManager(
           this->_destructionCompletePromise.getFuture().share()},
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()} {
+          this->_rootTileAvailablePromise.getFuture().share()},
+      _unusedTiles() {
   this->_rootTileAvailablePromise.resolve();
 }
 
@@ -758,7 +759,8 @@ TilesetContentManager::TilesetContentManager(
           this->_destructionCompletePromise.getFuture().share()},
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()} {
+          this->_rootTileAvailablePromise.getFuture().share()},
+      _unusedTiles() {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -910,7 +912,8 @@ TilesetContentManager::TilesetContentManager(
           this->_destructionCompletePromise.getFuture().share()},
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()} {
+          this->_rootTileAvailablePromise.getFuture().share()},
+      _unusedTiles() {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -1403,6 +1406,78 @@ void TilesetContentManager::finishLoading(
   // This allows the raster tile to be updated and children to be created, if
   // necessary.
   updateTileContent(tile, tilesetOptions);
+}
+
+void TilesetContentManager::markTileNowUsed(const Tile& tile) {
+  this->_unusedTiles.remove(const_cast<Tile&>(tile));
+}
+
+void TilesetContentManager::markTileNowUnused(const Tile& tile) {
+  this->_unusedTiles.insertAtTail(const_cast<Tile&>(tile));
+}
+
+void TilesetContentManager::unloadCachedBytes(
+    int64_t maximumCachedBytes,
+    double timeBudgetMilliseconds) {
+  Tile* pTile = this->_unusedTiles.head();
+
+  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
+  // the end time to the max time_point in that case.
+  auto start = std::chrono::system_clock::now();
+  auto end = (timeBudgetMilliseconds <= 0.0)
+                 ? std::chrono::time_point<std::chrono::system_clock>::max()
+                 : (start + std::chrono::microseconds(static_cast<int64_t>(
+                                1000.0 * timeBudgetMilliseconds)));
+
+  std::vector<Tile*> tilesNeedingChildrenCleared;
+
+  while (this->getTotalDataUsed() > maximumCachedBytes) {
+    if (pTile == nullptr) {
+      // We've either removed all tiles or the next tile is the root.
+      // The root tile marks the beginning of the tiles that were used
+      // for rendering last frame.
+      break;
+    }
+
+    Tile* pNext = this->_unusedTiles.next(*pTile);
+
+    const UnloadTileContentResult removed = this->unloadTileContent(*pTile);
+    if (removed != UnloadTileContentResult::Keep) {
+      this->_unusedTiles.remove(*pTile);
+    }
+
+    if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
+      tilesNeedingChildrenCleared.emplace_back(pTile);
+    }
+
+    pTile = pNext;
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
+  }
+
+  if (!tilesNeedingChildrenCleared.empty()) {
+    for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
+      CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
+      this->clearChildrenRecursively(pTileToClear);
+    }
+  }
+}
+
+void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
+  // Iterate through all children, calling this method recursively to make sure
+  // children are all removed from _unusedTiles.
+  for (Tile& child : pTile->getChildren()) {
+    CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
+    CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
+    CESIUM_ASSERT(child.getContent().isUnknownContent());
+    this->_unusedTiles.remove(child);
+    this->clearChildrenRecursively(&child);
+  }
+
+  pTile->clearChildren();
 }
 
 void TilesetContentManager::setTileContent(

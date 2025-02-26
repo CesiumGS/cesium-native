@@ -151,6 +151,13 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
+  void markTileNowUsed(const Tile& tile);
+  void markTileNowUnused(const Tile& tile);
+
+  void
+  unloadCachedBytes(int64_t maximumCachedBytes, double timeBudgetMilliseconds);
+  void clearChildrenRecursively(Tile* pTile) noexcept;
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -199,5 +206,7 @@ private:
 
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
+
+  Tile::UnusedLinkedList _unusedTiles;
 };
 } // namespace Cesium3DTilesSelection

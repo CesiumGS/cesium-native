@@ -531,6 +531,9 @@ public:
    */
   void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
 
+  bool addViewGroupReference() const noexcept;
+  bool releaseViewGroupReference() const noexcept;
+
 private:
   void incrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
 
@@ -587,6 +590,7 @@ private:
 
   // tile content
   CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+  CesiumUtility::DoublyLinkedListPointers<Tile> _unusedTilesLinks;
   TileContent _content;
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
@@ -599,6 +603,11 @@ private:
   // external tileset (if any) from being unloaded from the tree.
   int32_t _doNotUnloadSubtreeCount = 0;
 
+  // The number of ViewGroups that currently reference this tile. While a tile
+  // is referenced by a view group, its content may not be unloaded, nor can the
+  // external tileset that contains this tile be unloaded.
+  mutable int32_t _viewGroupReferences = 0;
+
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
 
@@ -608,6 +617,9 @@ public:
    */
   typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks>
       LoadedLinkedList;
+
+  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_unusedTilesLinks>
+      UnusedLinkedList;
 };
 
 } // namespace Cesium3DTilesSelection

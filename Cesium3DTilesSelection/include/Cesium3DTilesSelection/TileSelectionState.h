@@ -99,7 +99,7 @@ public:
    * @param frameNumber The previous frame number.
    * @return The {@link TileSelectionState::Result}
    */
-  constexpr Result getResult(int32_t frameNumber) const noexcept {
+  constexpr Result getResult(int32_t /* frameNumber */) const noexcept {
     // if (this->_frameNumber != frameNumber) {
     //   return Result::None;
     // }

@@ -8,7 +8,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
-#include <Cesium3DTilesSelection/ViewGroup.h>
+#include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -29,6 +29,7 @@ class TilesetMetadata;
 class TilesetHeightQuery;
 struct TilesetHeightRequest;
 class TilesetSharedAssetSystem;
+class TilesetViewGroup;
 
 /**
  * @brief A <a
@@ -218,7 +219,7 @@ public:
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   const ViewUpdateResult& updateView(
-      ViewGroup& viewGroup,
+      TilesetViewGroup& viewGroup,
       const std::vector<ViewState>& frustums,
       float deltaTime = 0.0f);
 
@@ -318,6 +319,8 @@ public:
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
+  TilesetViewGroup createViewGroup();
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 
@@ -380,7 +383,7 @@ private:
    * passed on through the traversal.
    */
   struct FrameState {
-    ViewGroup& viewGroup;
+    TilesetViewGroup& viewGroup;
     const std::vector<ViewState>& frustums;
     std::vector<double> fogDensities;
     int32_t lastFrameNumber;
@@ -478,7 +481,6 @@ private:
   void _processWorkerThreadLoadQueue();
   void _processMainThreadLoadQueue();
 
-  void _clearChildrenRecursively(Tile* pTile) noexcept;
   void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
@@ -565,7 +567,7 @@ private:
 
   std::list<TilesetHeightRequest> _heightRequests;
 
-  ViewGroup _defaultViewGroup;
+  TilesetViewGroup _defaultViewGroup;
 
   void addTileToLoadQueue(
       Tile& tile,
