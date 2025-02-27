@@ -122,7 +122,8 @@ public:
  * @brief Validates a \ref ClassProperty representing a property, checking for
  * any type mismatches.
  *
- * @tparam T The value type of the PropertyView we are validating.
+ * @tparam T The value type of the PropertyView that was constructed for this
+ * ClassProperty.
  * @param classProperty The class property to validate.
  * @param pEnumDefinition If the class property is an enum, this should be the
  * enum definition. If not, this should be nullptr.
@@ -177,7 +178,8 @@ PropertyViewStatusType validatePropertyType(
  * @brief Validates a \ref ClassProperty representing an array of values,
  * checking for any type mismatches.
  *
- * @tparam T The array type of the PropertyView we are validating.
+ * @tparam T The array type of the PropertyView that was constructed for this
+ * ClassProperty.
  * @param classProperty The class property to validate.
  * @param pEnumDefinition If the class property is an enum array, this should be
  * the enum definition. If not, this should be nullptr.
