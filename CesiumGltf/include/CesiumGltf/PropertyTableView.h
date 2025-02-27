@@ -1193,21 +1193,13 @@ private:
               ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
     }
 
-    if constexpr (!IsMetadataBoolean<T>::value && !Normalized) {
-      if (type == PropertyType::Enum) {
-        return PropertyTablePropertyView<T, Normalized>(
-            propertyTableProperty,
-            classProperty,
-            pEnumDefinition,
-            _pPropertyTable->count,
-            values);
-      } else {
-        return PropertyTablePropertyView<T, Normalized>(
-            propertyTableProperty,
-            classProperty,
-            _pPropertyTable->count,
-            values);
-      }
+    if constexpr (!Normalized) {
+      return PropertyTablePropertyView<T, Normalized>(
+          propertyTableProperty,
+          classProperty,
+          pEnumDefinition,
+          _pPropertyTable->count,
+          values);
     } else {
       return PropertyTablePropertyView<T, Normalized>(
           propertyTableProperty,
@@ -1314,21 +1306,13 @@ private:
                 ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
       }
 
-      if constexpr (!IsMetadataBoolean<T>::value && !Normalized) {
-        if (type == PropertyType::Enum) {
-          return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
-              propertyTableProperty,
-              classProperty,
-              pEnumDefinition,
-              _pPropertyTable->count,
-              values);
-        } else {
-          return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
-              propertyTableProperty,
-              classProperty,
-              _pPropertyTable->count,
-              values);
-        }
+      if constexpr (!Normalized) {
+        return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+            propertyTableProperty,
+            classProperty,
+            pEnumDefinition,
+            _pPropertyTable->count,
+            values);
       } else {
         return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
             propertyTableProperty,
@@ -1370,23 +1354,10 @@ private:
           arrayOffsets,
           arrayOffsetType);
     } else {
-      if constexpr (!IsMetadataBoolean<T>::value) {
-        if (type == PropertyType::Enum) {
-          return PropertyTablePropertyView<PropertyArrayView<T>, false>(
-              propertyTableProperty,
-              classProperty,
-              pEnumDefinition,
-              _pPropertyTable->count,
-              values,
-              arrayOffsets,
-              std::span<const std::byte>(),
-              arrayOffsetType,
-              PropertyComponentType::None);
-        }
-      }
       return PropertyTablePropertyView<PropertyArrayView<T>, false>(
           propertyTableProperty,
           classProperty,
+          pEnumDefinition,
           _pPropertyTable->count,
           values,
           arrayOffsets,

@@ -1,3 +1,5 @@
+#include "makeEnumValue.h"
+
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Class.h>
@@ -35,15 +37,9 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumNativeTests;
 
 namespace {
-
-EnumValue makeEnumValue(const std::string& name, int64_t value) {
-  EnumValue enumValue;
-  enumValue.name = name;
-  enumValue.value = value;
-  return enumValue;
-}
 
 template <typename T>
 void addBufferToModel(Model& model, const std::vector<T>& values) {

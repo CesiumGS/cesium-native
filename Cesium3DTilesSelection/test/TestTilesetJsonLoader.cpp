@@ -333,6 +333,11 @@ TEST_CASE("Test creating tileset json loader") {
   }
 
   SUBCASE("Tileset with empty tile") {
+    std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(
+            std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+    AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" / "EmptyTileTileset.json");
     CHECK(!loaderResult.errors.hasErrors());
@@ -342,7 +347,20 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(pRootTile->getGeometricError() == Approx(70.0));
     CHECK(pRootTile->getChildren().size() == 1);
 
-    const Tile& child = pRootTile->getChildren().front();
+    Tile& child = pRootTile->getChildren().front();
+    auto future = loaderResult.pLoader->loadTileContent(TileLoadInput{
+        child,
+        {},
+        asyncSystem,
+        pMockAssetAccessor,
+        spdlog::default_logger(),
+        {}});
+    TileLoadResult result = future.wait();
+    REQUIRE(result.state == TileLoadResultState::Success);
+    TileEmptyContent* emptyContent =
+        std::get_if<TileEmptyContent>(&result.contentKind);
+    REQUIRE(emptyContent);
+    child.getContent().setContentKind(*emptyContent);
     CHECK(child.isEmptyContent());
 
     // check loader up axis

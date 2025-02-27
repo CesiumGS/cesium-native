@@ -29,6 +29,8 @@
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
+#include "makeEnumValue.h"
+
 #include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumGltf/PropertyTexturePropertyView.h>
 #include <CesiumUtility/Math.h>
@@ -41,15 +43,9 @@
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
-EnumValue makeEnumValue(const std::string& name, int64_t value) {
-  EnumValue enumValue;
-  enumValue.name = name;
-  enumValue.value = value;
-  return enumValue;
-}
-
 template <typename T>
 void checkTextureValues(
     const std::vector<uint8_t>& data,

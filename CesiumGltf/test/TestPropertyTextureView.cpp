@@ -1,3 +1,5 @@
+#include "makeEnumValue.h"
+
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/EnumValue.h>
@@ -30,15 +32,9 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumNativeTests;
 
 namespace {
-EnumValue makeEnumValue(const std::string& name, int64_t value) {
-  EnumValue enumValue;
-  enumValue.name = name;
-  enumValue.value = value;
-  return enumValue;
-}
-
 void addTextureToModel(
     Model& model,
     int32_t wrapS,

@@ -2,7 +2,9 @@
 
 #include <CesiumGeometry/Library.h>
 
-#include <glm/vec3.hpp>
+#include <glm/ext/vector_double3.hpp>
+
+#include <vector>
 
 namespace CesiumGeometry {
 
@@ -120,6 +122,15 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
            position.y >= this->minimumY && position.y <= this->maximumY &&
            position.z >= this->minimumZ && position.z <= this->maximumZ;
   }
+
+  /**
+   * @brief Creates a tight-fitting, axis-aligned bounding box that contains all
+   * of the input positions.
+   *
+   * @param positions The positions.
+   * @returns An axis-aligned bounding box derived from the input positions.
+   */
+  static AxisAlignedBox fromPositions(const std::vector<glm::dvec3>& positions);
 };
 
 } // namespace CesiumGeometry
