@@ -112,6 +112,8 @@ Tile::Tile(Tile&& rhs) noexcept
       _loadState{rhs._loadState},
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
       _rasterTiles(std::move(rhs._rasterTiles)),
+      // See the move assignment operator for an explanation of why we copy
+      // `_doNotUnloadSubtreeCount` here.
       _doNotUnloadSubtreeCount(rhs._doNotUnloadSubtreeCount) {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
@@ -145,6 +147,20 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_loadState = rhs._loadState;
     this->_rasterTiles = std::move(rhs._rasterTiles);
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
+
+    // A "count" in the `rhs` could, in theory, represent an external
+    // pointer that references that Tile. In that case, we wouldn't want to copy
+    // that "count" to this tile because the target of that pointer is not going
+    // to change over to this Tile.
+
+    // However, when a "count" represents loaded content in this tile's subtree,
+    // that _will_ move over, and so it's essential we copy that count over to
+    // the target.
+
+    // There's no way to tell the difference between these two cases. However,
+    // as a practical matter, we take pains to avoid having pointers to Tiles
+    // that we're moving out of, and so we can safely assume that all "counts"
+    // refer to loaded subtree content instead of pointers.
     this->_doNotUnloadSubtreeCount = rhs._doNotUnloadSubtreeCount;
   }
 
