@@ -13,6 +13,10 @@
 - Added support for `3DTILES_content_voxels` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
 - Added generated classes for `EXT_primitive_voxels` and its dependencies in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added `AxisAlignedBox::fromPositions`, which creates an `AxisAlignedBox` from an input vector of positions.
+- `PropertyView`, `PropertyTableView`, `PropertyTablePropertyView`, `PropertyTextureView`, and `PropertyTexturePropertyView` now support the enum metadata type in `EXT_structural_metadata`.
+- Added `TypeToDimensions` class in `PropertyTypeTraits` to obtain the dimension count of a glm vector or matrix.
+- Added `canRepresentPropertyType<T>` to `PropertyTypeTraits` to check if a C++ type can represent the given `PropertyType`.
+- Added `getName` method to `CesiumGltf::Enum`, allowing a scalar enum value to be resolved into its corresponding name in the enum.
 
 ##### Fixes :wrench:
 
