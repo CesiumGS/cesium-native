@@ -471,6 +471,7 @@ private:
   void _processWorkerThreadLoadQueue();
   void _processMainThreadLoadQueue();
 
+  void _clearChildrenRecursively(Tile* pTile) noexcept;
   void _unloadCachedTiles(double timeBudget) noexcept;
   void _markTileVisited(Tile& tile) noexcept;
 
