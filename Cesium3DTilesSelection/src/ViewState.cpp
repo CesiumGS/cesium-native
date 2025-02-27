@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ViewState.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
@@ -136,6 +137,13 @@ bool ViewState::isBoundingVolumeVisible(
           s2Cell,
           viewState._cullingVolume);
     }
+
+    bool
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
+      return Cesium3DTilesSelection::isBoundingVolumeVisible(
+          boundingCylinderRegion,
+          viewState._cullingVolume);
+    }
   };
 
   return std::visit(Operation{*this}, boundingVolume);
@@ -180,6 +188,12 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 
     double operator()(const S2CellBoundingVolume& s2Cell) noexcept {
       return s2Cell.computeDistanceSquaredToPosition(viewState._position);
+    }
+
+    double
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
+      return boundingCylinderRegion.computeDistanceSquaredToPosition(
+          viewState._position);
     }
   };
 

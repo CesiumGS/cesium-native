@@ -31,6 +31,8 @@ public:
       const CesiumGeospatial::Cartographic& position,
       const CesiumGeospatial::Ellipsoid& ellipsoid);
 
+  ~TilesetHeightQuery();
+
   /**
    * @brief The original input position for which the height is to be queried.
    */
