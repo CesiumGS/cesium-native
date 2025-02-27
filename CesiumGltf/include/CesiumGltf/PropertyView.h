@@ -268,7 +268,7 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
 
   VecType result;
   for (glm::length_t i = 0; i < N; i++) {
-    std::optional<T> value = getScalar<T>(array[i]);
+    std::optional<T> value = getScalar<T>(array[static_cast<size_t>(i)]);
     if (!value) {
       return std::nullopt;
     }
@@ -308,7 +308,8 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
   for (glm::length_t i = 0; i < N; i++) {
     // Try to parse each value in the column.
     for (glm::length_t j = 0; j < N; j++) {
-      std::optional<T> value = getScalar<T>(array[i * N + j]);
+      std::optional<T> value =
+          getScalar<T>(array[static_cast<size_t>(i * N + j)]);
       if (!value) {
         return std::nullopt;
       }
@@ -705,8 +706,8 @@ private:
     const auto foundValue = std::find_if(
         enumDefinition.values.begin(),
         enumDefinition.values.end(),
-        [&valueStr](const CesiumGltf::EnumValue& value) {
-          return value.name == valueStr;
+        [&valueStr](const CesiumGltf::EnumValue& enumValue) {
+          return enumValue.name == valueStr;
         });
 
     if (foundValue == enumDefinition.values.end()) {
@@ -1532,7 +1533,7 @@ public:
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
-        _count(_count = classProperty.count ? *classProperty.count : 0),
+        _count(classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -1993,7 +1994,7 @@ public:
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
-        _count(_count = classProperty.count ? *classProperty.count : 0),
+        _count(classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),

@@ -751,7 +751,7 @@ private:
     // exceed two bytes.
     if constexpr (IsMetadataScalar<T>::value && sizeof(T) <= 4) {
       // Only up to four elements are supported.
-      int64_t count = classProperty.count.value_or(0);
+      size_t count = static_cast<size_t>(classProperty.count.value_or(0));
       if (count <= 0 || count > 4) {
         return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
@@ -821,7 +821,7 @@ private:
             propertyTextureProperty,
             classProperty,
             pEnumDefinition,
-            _pModel->samplers[samplerIndex],
+            _pModel->samplers[static_cast<size_t>(samplerIndex)],
             *pImage,
             propertyOptions);
       }
@@ -830,7 +830,7 @@ private:
     return PropertyTexturePropertyView<T, Normalized>(
         propertyTextureProperty,
         classProperty,
-        _pModel->samplers[samplerIndex],
+        _pModel->samplers[static_cast<size_t>(samplerIndex)],
         *pImage,
         propertyOptions);
   }

@@ -23,7 +23,6 @@
 #include <glm/fwd.hpp>
 
 #include <cstdint>
-#include <ostream>
 #include <string_view>
 
 using namespace CesiumGltf;
