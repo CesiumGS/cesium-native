@@ -590,7 +590,6 @@ private:
   glm::dmat4x4 _transform;
 
   // tile content
-  CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
   CesiumUtility::DoublyLinkedListPointers<Tile> _unusedTilesLinks;
   TileContent _content;
   TilesetContentLoader* _pLoader;
@@ -616,9 +615,6 @@ public:
   /**
    * @brief A {@link CesiumUtility::DoublyLinkedList} for tile objects.
    */
-  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks>
-      LoadedLinkedList;
-
   typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_unusedTilesLinks>
       UnusedLinkedList;
 };

@@ -67,12 +67,13 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _loadedTileEnumerator(),
       _pTilesetContentManager{
           new TilesetContentManager(
               _externals,
               _options,
               RasterOverlayCollection{
-                  _loadedTiles,
+                  _loadedTileEnumerator,
                   externals,
                   options.ellipsoid},
               std::move(pCustomLoader),
@@ -91,12 +92,13 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _loadedTileEnumerator(),
       _pTilesetContentManager{
           new TilesetContentManager(
               _externals,
               _options,
               RasterOverlayCollection{
-                  _loadedTiles,
+                  _loadedTileEnumerator,
                   externals,
                   options.ellipsoid},
               url),
@@ -116,10 +118,14 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
+      _loadedTileEnumerator(),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
+          RasterOverlayCollection{
+              _loadedTileEnumerator,
+              externals,
+              options.ellipsoid},
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)},
@@ -452,7 +458,7 @@ const ViewUpdateResult& Tileset::updateView(
       this->getAsyncSystem(),
       *this->_pTilesetContentManager,
       this->_options,
-      this->_loadedTiles,
+      this->_loadedTileEnumerator,
       this->_heightRequests,
       this->_heightQueryLoadQueue);
 
@@ -560,21 +566,15 @@ float Tileset::computeLoadProgress() noexcept {
 
 void Tileset::forEachLoadedTile(
     const std::function<void(Tile& tile)>& callback) {
-  Tile* pCurrent = this->_loadedTiles.head();
-  while (pCurrent) {
-    Tile* pNext = this->_loadedTiles.next(pCurrent);
-    callback(*pCurrent);
-    pCurrent = pNext;
+  for (const Tile& tile : this->_loadedTileEnumerator) {
+    callback(const_cast<Tile&>(tile));
   }
 }
 
 void Tileset::forEachLoadedTile(
     const std::function<void(const Tile& tile)>& callback) const {
-  const Tile* pCurrent = this->_loadedTiles.head();
-  while (pCurrent) {
-    const Tile* pNext = this->_loadedTiles.next(pCurrent);
-    callback(*pCurrent);
-    pCurrent = pNext;
+  for (const Tile& tile : this->_loadedTileEnumerator) {
+    callback(tile);
   }
 }
 
@@ -981,7 +981,6 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       computeTilePriority(tile, frameState.frustums, distances);
 
   this->_pTilesetContentManager->updateTileContent(tile, _options);
-  this->_markTileVisited(tile);
 
   CullResult cullResult{};
 
@@ -1696,10 +1695,6 @@ void Tileset::_processMainThreadLoadQueue() {
   }
 
   this->_mainThreadLoadQueue.clear();
-}
-
-void Tileset::_markTileVisited(Tile& tile) noexcept {
-  this->_loadedTiles.insertAtTail(tile);
 }
 
 void Tileset::addTileToLoadQueue(

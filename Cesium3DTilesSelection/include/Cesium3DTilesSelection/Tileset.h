@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -482,7 +483,6 @@ private:
   void _processMainThreadLoadQueue();
 
   void _unloadCachedTiles(double timeBudget) noexcept;
-  void _markTileVisited(Tile& tile) noexcept;
 
   void _updateLodTransitions(
       const FrameState& frameState,
@@ -552,8 +552,6 @@ private:
   std::vector<TileLoadTask> _workerThreadLoadQueue;
   std::vector<Tile*> _heightQueryLoadQueue;
 
-  Tile::LoadedLinkedList _loadedTiles;
-
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.
   std::vector<double> _distances;
@@ -562,6 +560,7 @@ private:
   // scratch variable so that it can allocate only when growing bigger.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
+  LoadedTileEnumerator _loadedTileEnumerator;
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 

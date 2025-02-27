@@ -170,7 +170,7 @@ void TilesetHeightQuery::intersectVisibleTile(
 
 namespace {
 
-void markTileVisited(Tile::LoadedLinkedList& loadedTiles, Tile* pTile) {
+void markTileVisited(const LoadedTileEnumerator& /*loadedTiles*/, Tile* pTile) {
   // Don't move the root tile to the tail, because this tile is used to mark the
   // beginning of the tiles used in the current frame. If we move it, some tiles
   // may be deemed to have most recently been used last frame, and so will be
@@ -178,14 +178,15 @@ void markTileVisited(Tile::LoadedLinkedList& loadedTiles, Tile* pTile) {
   if (pTile == nullptr || pTile->getParent() == nullptr)
     return;
 
-  loadedTiles.insertAtTail(*pTile);
+  // TODO
+  // loadedTiles.insertAtTail(*pTile);
 }
 
 } // namespace
 
 void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
-    Tile::LoadedLinkedList& loadedTiles,
+    const LoadedTileEnumerator& loadedTiles,
     std::vector<std::string>& warnings) {
   // Make sure this tile is not unloaded until we're done with it.
   markTileVisited(loadedTiles, pTile);
@@ -263,7 +264,7 @@ void TilesetHeightQuery::findCandidateTiles(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
-    Tile::LoadedLinkedList& loadedTiles,
+    const LoadedTileEnumerator& loadedTiles,
     std::list<TilesetHeightRequest>& heightRequests,
     std::vector<Tile*>& heightQueryLoadQueue) {
   if (heightRequests.empty())
@@ -329,7 +330,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
-    Tile::LoadedLinkedList& loadedTiles,
+    const LoadedTileEnumerator& loadedTiles,
     std::set<Tile*>& tileLoadSet) {
   // If this TilesetContentLoader supports direct height queries, use that
   // instead of downloading tiles.

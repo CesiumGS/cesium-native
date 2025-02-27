@@ -17,6 +17,7 @@ namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 struct TilesetOptions;
 struct SampleHeightResult;
+class LoadedTileEnumerator;
 
 class TilesetHeightQuery {
 public:
@@ -105,7 +106,7 @@ public:
    */
   void findCandidateTiles(
       Tile* pTile,
-      Tile::LoadedLinkedList& loadedTiles,
+      const LoadedTileEnumerator& loadedTiles,
       std::vector<std::string>& outWarnings);
 };
 
@@ -143,7 +144,7 @@ struct TilesetHeightRequest {
       const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
-      Tile::LoadedLinkedList& loadedTiles,
+      const LoadedTileEnumerator& loadedTiles,
       std::list<TilesetHeightRequest>& heightRequests,
       std::vector<Tile*>& heightQueryLoadQueue);
 
@@ -177,7 +178,7 @@ struct TilesetHeightRequest {
       const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
-      Tile::LoadedLinkedList& loadedTiles,
+      const LoadedTileEnumerator& loadedTiles,
       std::set<Tile*>& tileLoadSet);
 };
 

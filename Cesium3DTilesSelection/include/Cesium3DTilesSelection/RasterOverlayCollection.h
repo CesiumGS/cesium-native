@@ -15,6 +15,8 @@
 
 namespace Cesium3DTilesSelection {
 
+class LoadedTileEnumerator;
+
 /**
  * @brief A collection of {@link CesiumRasterOverlays::RasterOverlay} instances that are associated
  * with a {@link Tileset}.
@@ -38,7 +40,7 @@ public:
    * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayCollection(
-      Tile::LoadedLinkedList& loadedTiles,
+      const LoadedTileEnumerator& loadedTiles,
       const TilesetExternals& externals,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
@@ -206,7 +208,7 @@ private:
         placeholders{};
   };
 
-  Tile::LoadedLinkedList* _pLoadedTiles;
+  const LoadedTileEnumerator* _pLoadedTiles;
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;

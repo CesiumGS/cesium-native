@@ -1,5 +1,6 @@
 #include "EmptyRasterOverlayTileProvider.h"
 
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -34,12 +35,9 @@ namespace Cesium3DTilesSelection {
 namespace {
 
 template <class Function>
-void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
-  Tile* pCurrent = list.head();
-  while (pCurrent) {
-    Tile* pNext = list.next(pCurrent);
-    callback(*pCurrent);
-    pCurrent = pNext;
+void forEachTile(const LoadedTileEnumerator& list, Function callback) {
+  for (const Tile& tile : list) {
+    callback(const_cast<Tile&>(tile));
   }
 }
 
@@ -52,7 +50,7 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 } // namespace
 
 RasterOverlayCollection::RasterOverlayCollection(
-    Tile::LoadedLinkedList& loadedTiles,
+    const LoadedTileEnumerator& loadedTiles,
     const TilesetExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pLoadedTiles(&loadedTiles),

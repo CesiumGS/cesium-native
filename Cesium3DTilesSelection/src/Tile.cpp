@@ -88,7 +88,6 @@ Tile::Tile(
       _geometricError(0.0),
       _refine(TileRefine::Replace),
       _transform(1.0),
-      _loadedTilesLinks(),
       _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
       _loadState{loadState},
@@ -104,7 +103,6 @@ Tile::Tile(Tile&& rhs) noexcept
       _geometricError(rhs._geometricError),
       _refine(rhs._refine),
       _transform(rhs._transform),
-      _loadedTilesLinks(),
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
@@ -122,7 +120,7 @@ Tile::Tile(Tile&& rhs) noexcept
 
 Tile& Tile::operator=(Tile&& rhs) noexcept {
   if (this != &rhs) {
-    this->_loadedTilesLinks = rhs._loadedTilesLinks;
+    this->_unusedTilesLinks = rhs._unusedTilesLinks;
 
     // since children of rhs will have the parent pointed to rhs,
     // we will reparent them to this tile as rhs will be destroyed after this
