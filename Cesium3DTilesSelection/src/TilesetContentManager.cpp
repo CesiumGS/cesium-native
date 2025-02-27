@@ -1118,12 +1118,15 @@ void TilesetContentManager::loadTileContent(
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
+        tile.getMappedRasterTiles().clear();
+        tile.setState(TileLoadState::Failed);
+
         tile.decrementDoNotUnloadSubtreeCount(
             "TilesetContentManager::loadTileContent error while loading");
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
-            "An unexpected error occurs when loading tile: {}",
+            "An unexpected error occurred when loading tile: {}",
             e.what());
       });
 }
