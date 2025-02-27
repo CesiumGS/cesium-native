@@ -1121,12 +1121,15 @@ void TilesetContentManager::loadTileContent(
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
+        tile.getMappedRasterTiles().clear();
+        tile.setState(TileLoadState::Failed);
+
         tile.decrementDoNotUnloadSubtreeCount(
             "TilesetContentManager::loadTileContent error while loading");
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
-            "An unexpected error occurs when loading tile: {}",
+            "An unexpected error occurred when loading tile: {}",
             e.what());
       });
 }
@@ -1198,7 +1201,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     // Tile with external content that still has references to its pointer or to
     // its children's pointers - we can't unload.
     // We also, of course, don't want to unload the root tile.
-    if (tile.getParent() == nullptr || tile.getDoNotUnloadCount() > 0) {
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadSubtreeCount() > 0) {
       return UnloadTileContentResult::Keep;
     }
 
@@ -1460,7 +1463,7 @@ void TilesetContentManager::unloadCachedBytes(
 
   if (!tilesNeedingChildrenCleared.empty()) {
     for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
-      CESIUM_ASSERT(pTileToClear->getDoNotUnloadCount() == 0);
+      CESIUM_ASSERT(pTileToClear->getDoNotUnloadSubtreeCount() == 0);
       this->clearChildrenRecursively(pTileToClear);
     }
   }
@@ -1471,7 +1474,7 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
   // children are all removed from _unusedTiles.
   for (Tile& child : pTile->getChildren()) {
     CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
-    CESIUM_ASSERT(child.getDoNotUnloadCount() == 0);
+    CESIUM_ASSERT(child.getDoNotUnloadSubtreeCount() == 0);
     CESIUM_ASSERT(child.getContent().isUnknownContent());
     this->_unusedTiles.remove(child);
     this->clearChildrenRecursively(&child);

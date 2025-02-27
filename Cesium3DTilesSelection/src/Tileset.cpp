@@ -258,9 +258,9 @@ void Tileset::_updateLodTransitions(
       if (!pRenderContent) {
         // This tile is done fading out and was immediately kicked from the
         // cache.
-        tileIt = result.tilesFadingOut.erase(tileIt);
         (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions done fading out");
+        tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
@@ -271,9 +271,9 @@ void Tileset::_updateLodTransitions(
       if (selectionResult == TileSelectionState::Result::Rendered) {
         // This tile will already be on the render list.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
-        tileIt = result.tilesFadingOut.erase(tileIt);
         (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions in render list");
+        tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
@@ -284,9 +284,9 @@ void Tileset::_updateLodTransitions(
         // The client will already have had a chance to stop rendering the tile
         // last frame.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
-        tileIt = result.tilesFadingOut.erase(tileIt);
         (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions done fading out");
+        tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 

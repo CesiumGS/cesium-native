@@ -17,11 +17,12 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <vector>
+
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 #include <unordered_map>
 #endif
-#include <vector>
-//
+
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
@@ -495,7 +496,7 @@ public:
    *
    * This function is not supposed to be called by clients.
    */
-  int32_t getDoNotUnloadCount() const noexcept {
+  int32_t getDoNotUnloadSubtreeCount() const noexcept {
     return this->_doNotUnloadSubtreeCount;
   }
 

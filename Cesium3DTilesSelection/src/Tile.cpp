@@ -14,11 +14,12 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
+
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 #include <unordered_map>
 #endif
-#include <utility>
-#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -107,7 +108,11 @@ Tile::Tile(Tile&& rhs) noexcept
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
-      _mightHaveLatentChildren{rhs._mightHaveLatentChildren} {
+      _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
+      _rasterTiles(std::move(rhs._rasterTiles)),
+      // See the move assignment operator for an explanation of why we copy
+      // `_doNotUnloadSubtreeCount` here.
+      _doNotUnloadSubtreeCount(rhs._doNotUnloadSubtreeCount) {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -137,15 +142,23 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_content = std::move(rhs._content);
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
+    this->_rasterTiles = std::move(rhs._rasterTiles);
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
-    // We deliberately do *not* copy the _doNotUnloadSubtreeCount of rhs here.
-    // This is because the _doNotUnloadSubtreeCount is a count of instances of
-    // the *pointer* to the tile, denoting the number of active pointers that
-    // would be invalidated if the Tile were to be deleted. Because the memory
-    // location of the tile will have changed as a result of the move operation,
-    // the new Tile object will not have any pointers referencing it, so copying
-    // over the count would be incorrect and could result in a Tile not being
-    // removed when it otherwise should be.
+
+    // A "count" in the `rhs` could, in theory, represent an external
+    // pointer that references that Tile. In that case, we wouldn't want to copy
+    // that "count" to this tile because the target of that pointer is not going
+    // to change over to this Tile.
+
+    // However, when a "count" represents loaded content in this tile's subtree,
+    // that _will_ move over, and so it's essential we copy that count over to
+    // the target.
+
+    // There's no way to tell the difference between these two cases. However,
+    // as a practical matter, we take pains to avoid having pointers to Tiles
+    // that we're moving out of, and so we can safely assume that all "counts"
+    // refer to loaded subtree content instead of pointers.
+    this->_doNotUnloadSubtreeCount = rhs._doNotUnloadSubtreeCount;
   }
 
   return *this;
@@ -156,6 +169,7 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
     throw std::runtime_error("Children already created.");
   }
 
+  const int32_t prevDoNotUnloadSubtreeCount = this->_doNotUnloadSubtreeCount;
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
     tile.setParent(this);
@@ -165,6 +179,22 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
     // mismatch when trying to unload the tile and fail the assertion.
     if (tile.getState() == TileLoadState::ContentLoaded) {
       ++this->_doNotUnloadSubtreeCount;
+    }
+
+    // Add the child's count to our count, as it might represent a tile lower
+    // down on the tree that's loaded that we can't see from here. None of the
+    // children should have other references to their tile pointer at this
+    // moment so this count should just represent loaded children.
+    this->_doNotUnloadSubtreeCount += tile._doNotUnloadSubtreeCount;
+  }
+
+  const int32_t addedDoNotUnloadSubtreeCount =
+      this->_doNotUnloadSubtreeCount - prevDoNotUnloadSubtreeCount;
+  if (addedDoNotUnloadSubtreeCount > 0) {
+    Tile* pParent = this->getParent();
+    while (pParent != nullptr) {
+      pParent->_doNotUnloadSubtreeCount += addedDoNotUnloadSubtreeCount;
+      pParent = pParent->getParent();
     }
   }
 }
