@@ -201,7 +201,8 @@ struct IndicesForFaceFromAccessor {
     } else {
       for (int64_t i = 0; i < 3; i++) {
         int64_t vertexIndex = firstVertex + i;
-        result[static_cast<size_t>(i)] = vertexIndex < vertexCount ? vertexIndex : -1;
+        result[static_cast<size_t>(i)] =
+            vertexIndex < vertexCount ? vertexIndex : -1;
       }
     }
 

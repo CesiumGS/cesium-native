@@ -1930,8 +1930,8 @@ private:
       auto foundValue = std::find_if(
           enumDefinition.values.begin(),
           enumDefinition.values.end(),
-          [&str](const CesiumGltf::EnumValue& value) {
-            return value.name == str;
+          [&str](const CesiumGltf::EnumValue& enumValue) {
+            return enumValue.name == str;
           });
 
       if (foundValue == enumDefinition.values.end()) {
