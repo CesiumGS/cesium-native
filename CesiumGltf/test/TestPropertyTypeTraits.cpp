@@ -193,374 +193,6 @@ TEST_CASE("Test MetadataArrayType") {
   REQUIRE(std::is_same_v<type, uint32_t>);
 }
 
-TEST_CASE("Test canRepresentPropertyType") {
-  SUBCASE("Works for scalars") {
-    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Scalar));
-    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Scalar));
-    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Scalar));
-    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Scalar));
-  }
-
-  SUBCASE("Works for enums") {
-    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Enum));
-    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Enum));
-    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Enum));
-    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Enum));
-  }
-
-  SUBCASE("Works for vecNs") {
-    REQUIRE(canRepresentPropertyType<glm::vec2>(PropertyType::Vec2));
-    REQUIRE(canRepresentPropertyType<glm::dvec2>(PropertyType::Vec2));
-    REQUIRE(canRepresentPropertyType<glm::vec3>(PropertyType::Vec3));
-    REQUIRE(canRepresentPropertyType<glm::dvec3>(PropertyType::Vec3));
-    REQUIRE(canRepresentPropertyType<glm::vec4>(PropertyType::Vec4));
-    REQUIRE(canRepresentPropertyType<glm::dvec4>(PropertyType::Vec4));
-    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Vec4));
-    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Vec4));
-  }
-
-  SUBCASE("Works for matNs") {
-    REQUIRE(canRepresentPropertyType<glm::mat2>(PropertyType::Mat2));
-    REQUIRE(canRepresentPropertyType<glm::dmat2>(PropertyType::Mat2));
-    REQUIRE(canRepresentPropertyType<glm::mat3>(PropertyType::Mat3));
-    REQUIRE(canRepresentPropertyType<glm::dmat3>(PropertyType::Mat3));
-    REQUIRE(canRepresentPropertyType<glm::mat4>(PropertyType::Mat4));
-    REQUIRE(canRepresentPropertyType<glm::dmat4>(PropertyType::Mat4));
-    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Mat4));
-    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Mat4));
-  }
-
-  SUBCASE("Works for strings") {
-    REQUIRE(canRepresentPropertyType<std::string_view>(PropertyType::String));
-    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::String));
-    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::String));
-  }
-
-  SUBCASE("Works for booleans") {
-    REQUIRE(canRepresentPropertyType<bool>(PropertyType::Boolean));
-    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::Boolean));
-    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Boolean));
-  }
-}
-
-TEST_CASE("CanBeNormalized") {
-  SUBCASE("Works for scalars") {
-    REQUIRE(CanBeNormalized<uint8_t>::value);
-    REQUIRE(CanBeNormalized<int8_t>::value);
-    REQUIRE(CanBeNormalized<uint16_t>::value);
-    REQUIRE(CanBeNormalized<int16_t>::value);
-    REQUIRE(CanBeNormalized<uint32_t>::value);
-    REQUIRE(CanBeNormalized<int32_t>::value);
-    REQUIRE(CanBeNormalized<uint64_t>::value);
-    REQUIRE(CanBeNormalized<int64_t>::value);
-
-    REQUIRE(!CanBeNormalized<float>::value);
-    REQUIRE(!CanBeNormalized<double>::value);
-    REQUIRE(!CanBeNormalized<bool>::value);
-    REQUIRE(!CanBeNormalized<std::string_view>::value);
-  }
-
-  SUBCASE("Works for vecNs") {
-    REQUIRE(CanBeNormalized<glm::u8vec2>::value);
-    REQUIRE(CanBeNormalized<glm::u8vec3>::value);
-    REQUIRE(CanBeNormalized<glm::u8vec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::i8vec2>::value);
-    REQUIRE(CanBeNormalized<glm::i8vec3>::value);
-    REQUIRE(CanBeNormalized<glm::i8vec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::u16vec2>::value);
-    REQUIRE(CanBeNormalized<glm::u16vec3>::value);
-    REQUIRE(CanBeNormalized<glm::u16vec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::i16vec2>::value);
-    REQUIRE(CanBeNormalized<glm::i16vec3>::value);
-    REQUIRE(CanBeNormalized<glm::i16vec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::uvec2>::value);
-    REQUIRE(CanBeNormalized<glm::uvec3>::value);
-    REQUIRE(CanBeNormalized<glm::uvec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::ivec2>::value);
-    REQUIRE(CanBeNormalized<glm::ivec3>::value);
-    REQUIRE(CanBeNormalized<glm::ivec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::u64vec2>::value);
-    REQUIRE(CanBeNormalized<glm::u64vec3>::value);
-    REQUIRE(CanBeNormalized<glm::u64vec4>::value);
-
-    REQUIRE(CanBeNormalized<glm::i64vec2>::value);
-    REQUIRE(CanBeNormalized<glm::i64vec3>::value);
-    REQUIRE(CanBeNormalized<glm::i64vec4>::value);
-
-    REQUIRE(!CanBeNormalized<glm::vec2>::value);
-    REQUIRE(!CanBeNormalized<glm::vec3>::value);
-    REQUIRE(!CanBeNormalized<glm::vec4>::value);
-
-    REQUIRE(!CanBeNormalized<glm::dvec2>::value);
-    REQUIRE(!CanBeNormalized<glm::dvec3>::value);
-    REQUIRE(!CanBeNormalized<glm::dvec4>::value);
-  }
-
-  SUBCASE("Works for matN") {
-    REQUIRE(CanBeNormalized<glm::u8mat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::u8mat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::u8mat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::i8mat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::i8mat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::i8mat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::u16mat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::u16mat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::u16mat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::i16mat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::i16mat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::i16mat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::umat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::umat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::umat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::imat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::imat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::imat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::u64mat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::u64mat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::u64mat4x4>::value);
-
-    REQUIRE(CanBeNormalized<glm::i64mat2x2>::value);
-    REQUIRE(CanBeNormalized<glm::i64mat3x3>::value);
-    REQUIRE(CanBeNormalized<glm::i64mat4x4>::value);
-
-    REQUIRE(!CanBeNormalized<glm::mat2>::value);
-    REQUIRE(!CanBeNormalized<glm::mat3>::value);
-    REQUIRE(!CanBeNormalized<glm::mat4>::value);
-
-    REQUIRE(!CanBeNormalized<glm::dmat2>::value);
-    REQUIRE(!CanBeNormalized<glm::dmat3>::value);
-    REQUIRE(!CanBeNormalized<glm::dmat4>::value);
-  }
-
-  SUBCASE("Works for arrays") {
-    REQUIRE(CanBeNormalized<PropertyArrayView<int32_t>>::value);
-    REQUIRE(CanBeNormalized<PropertyArrayView<glm::uvec2>>::value);
-    REQUIRE(CanBeNormalized<PropertyArrayView<glm::i64mat2x2>>::value);
-  }
-}
-
-TEST_CASE("TypeToNormalizedType") {
-  SUBCASE("Works for scalars") {
-    REQUIRE(std::is_same_v<TypeToNormalizedType<uint8_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<int8_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<uint16_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<int16_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<uint16_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<int32_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<uint32_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<int64_t>::type, double>);
-    REQUIRE(std::is_same_v<TypeToNormalizedType<uint64_t>::type, double>);
-  }
-
-  SUBCASE("Works for vecNs") {
-    using ExpectedVec2Type = glm::dvec2;
-    using ExpectedVec3Type = glm::dvec3;
-    using ExpectedVec4Type = glm::dvec4;
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u8vec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u8vec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u8vec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i8vec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i8vec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i8vec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u16vec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u16vec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u16vec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i16vec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i16vec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i16vec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::uvec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::uvec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::uvec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::ivec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::ivec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::ivec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u64vec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u64vec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u64vec4>::type,
-            ExpectedVec4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i64vec2>::type,
-            ExpectedVec2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i64vec3>::type,
-            ExpectedVec3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i64vec4>::type,
-            ExpectedVec4Type>);
-  }
-
-  SUBCASE("Works for matNs") {
-    using ExpectedMat2Type = glm::dmat2;
-    using ExpectedMat3Type = glm::dmat3;
-    using ExpectedMat4Type = glm::dmat4;
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u8mat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u8mat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u8mat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i8mat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i8mat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i8mat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u16mat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u16mat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u16mat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i16mat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i16mat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i16mat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::umat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::umat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::umat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::imat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::imat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::imat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u64mat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u64mat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::u64mat4x4>::type,
-            ExpectedMat4Type>);
-
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i64mat2x2>::type,
-            ExpectedMat2Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i64mat3x3>::type,
-            ExpectedMat3Type>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<glm::i64mat4x4>::type,
-            ExpectedMat4Type>);
-  }
-
-  SUBCASE("Works for arrays") {
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<PropertyArrayView<int64_t>>::type,
-            PropertyArrayView<double>>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<PropertyArrayView<glm::u8vec4>>::type,
-            PropertyArrayView<glm::dvec4>>);
-    REQUIRE(std::is_same_v<
-            TypeToNormalizedType<PropertyArrayView<glm::imat2x2>>::type,
-            PropertyArrayView<glm::dmat2>>);
-  }
-}
-
 TEST_CASE("TypeToPropertyType") {
   SUBCASE("Works for scalar types") {
     REQUIRE(TypeToPropertyType<uint8_t>::value == PropertyType::Scalar);
@@ -920,5 +552,373 @@ TEST_CASE("TypeToPropertyType") {
     REQUIRE(
         TypeToPropertyType<std::string_view>::component ==
         PropertyComponentType::None);
+  }
+}
+
+TEST_CASE("CanBeNormalized") {
+  SUBCASE("Works for scalars") {
+    REQUIRE(CanBeNormalized<uint8_t>::value);
+    REQUIRE(CanBeNormalized<int8_t>::value);
+    REQUIRE(CanBeNormalized<uint16_t>::value);
+    REQUIRE(CanBeNormalized<int16_t>::value);
+    REQUIRE(CanBeNormalized<uint32_t>::value);
+    REQUIRE(CanBeNormalized<int32_t>::value);
+    REQUIRE(CanBeNormalized<uint64_t>::value);
+    REQUIRE(CanBeNormalized<int64_t>::value);
+
+    REQUIRE(!CanBeNormalized<float>::value);
+    REQUIRE(!CanBeNormalized<double>::value);
+    REQUIRE(!CanBeNormalized<bool>::value);
+    REQUIRE(!CanBeNormalized<std::string_view>::value);
+  }
+
+  SUBCASE("Works for vecNs") {
+    REQUIRE(CanBeNormalized<glm::u8vec2>::value);
+    REQUIRE(CanBeNormalized<glm::u8vec3>::value);
+    REQUIRE(CanBeNormalized<glm::u8vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i8vec2>::value);
+    REQUIRE(CanBeNormalized<glm::i8vec3>::value);
+    REQUIRE(CanBeNormalized<glm::i8vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u16vec2>::value);
+    REQUIRE(CanBeNormalized<glm::u16vec3>::value);
+    REQUIRE(CanBeNormalized<glm::u16vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i16vec2>::value);
+    REQUIRE(CanBeNormalized<glm::i16vec3>::value);
+    REQUIRE(CanBeNormalized<glm::i16vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::uvec2>::value);
+    REQUIRE(CanBeNormalized<glm::uvec3>::value);
+    REQUIRE(CanBeNormalized<glm::uvec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::ivec2>::value);
+    REQUIRE(CanBeNormalized<glm::ivec3>::value);
+    REQUIRE(CanBeNormalized<glm::ivec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u64vec2>::value);
+    REQUIRE(CanBeNormalized<glm::u64vec3>::value);
+    REQUIRE(CanBeNormalized<glm::u64vec4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i64vec2>::value);
+    REQUIRE(CanBeNormalized<glm::i64vec3>::value);
+    REQUIRE(CanBeNormalized<glm::i64vec4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::vec2>::value);
+    REQUIRE(!CanBeNormalized<glm::vec3>::value);
+    REQUIRE(!CanBeNormalized<glm::vec4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::dvec2>::value);
+    REQUIRE(!CanBeNormalized<glm::dvec3>::value);
+    REQUIRE(!CanBeNormalized<glm::dvec4>::value);
+  }
+
+  SUBCASE("Works for matN") {
+    REQUIRE(CanBeNormalized<glm::u8mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::u8mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::u8mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i8mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::i8mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::i8mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u16mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::u16mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::u16mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i16mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::i16mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::i16mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::umat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::umat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::umat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::imat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::imat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::imat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::u64mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::u64mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::u64mat4x4>::value);
+
+    REQUIRE(CanBeNormalized<glm::i64mat2x2>::value);
+    REQUIRE(CanBeNormalized<glm::i64mat3x3>::value);
+    REQUIRE(CanBeNormalized<glm::i64mat4x4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::mat2>::value);
+    REQUIRE(!CanBeNormalized<glm::mat3>::value);
+    REQUIRE(!CanBeNormalized<glm::mat4>::value);
+
+    REQUIRE(!CanBeNormalized<glm::dmat2>::value);
+    REQUIRE(!CanBeNormalized<glm::dmat3>::value);
+    REQUIRE(!CanBeNormalized<glm::dmat4>::value);
+  }
+
+  SUBCASE("Works for arrays") {
+    REQUIRE(CanBeNormalized<PropertyArrayView<int32_t>>::value);
+    REQUIRE(CanBeNormalized<PropertyArrayView<glm::uvec2>>::value);
+    REQUIRE(CanBeNormalized<PropertyArrayView<glm::i64mat2x2>>::value);
+  }
+}
+
+TEST_CASE("Test canRepresentPropertyType") {
+  SUBCASE("Works for scalars") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Scalar));
+  }
+
+  SUBCASE("Works for enums") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Enum));
+  }
+
+  SUBCASE("Works for vecNs") {
+    REQUIRE(canRepresentPropertyType<glm::vec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::dvec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::vec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::dvec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::vec4>(PropertyType::Vec4));
+    REQUIRE(canRepresentPropertyType<glm::dvec4>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Vec4));
+  }
+
+  SUBCASE("Works for matNs") {
+    REQUIRE(canRepresentPropertyType<glm::mat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::dmat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::mat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::dmat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::mat4>(PropertyType::Mat4));
+    REQUIRE(canRepresentPropertyType<glm::dmat4>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Mat4));
+  }
+
+  SUBCASE("Works for strings") {
+    REQUIRE(canRepresentPropertyType<std::string_view>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::String));
+  }
+
+  SUBCASE("Works for booleans") {
+    REQUIRE(canRepresentPropertyType<bool>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Boolean));
+  }
+}
+
+TEST_CASE("TypeToNormalizedType") {
+  SUBCASE("Works for scalars") {
+    REQUIRE(std::is_same_v<TypeToNormalizedType<uint8_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<int8_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<uint16_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<int16_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<uint16_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<int32_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<uint32_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<int64_t>::type, double>);
+    REQUIRE(std::is_same_v<TypeToNormalizedType<uint64_t>::type, double>);
+  }
+
+  SUBCASE("Works for vecNs") {
+    using ExpectedVec2Type = glm::dvec2;
+    using ExpectedVec3Type = glm::dvec3;
+    using ExpectedVec4Type = glm::dvec4;
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u8vec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u8vec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u8vec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i8vec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i8vec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i8vec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u16vec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u16vec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u16vec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i16vec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i16vec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i16vec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::uvec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::uvec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::uvec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::ivec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::ivec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::ivec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u64vec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u64vec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u64vec4>::type,
+            ExpectedVec4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i64vec2>::type,
+            ExpectedVec2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i64vec3>::type,
+            ExpectedVec3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i64vec4>::type,
+            ExpectedVec4Type>);
+  }
+
+  SUBCASE("Works for matNs") {
+    using ExpectedMat2Type = glm::dmat2;
+    using ExpectedMat3Type = glm::dmat3;
+    using ExpectedMat4Type = glm::dmat4;
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u8mat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u8mat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u8mat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i8mat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i8mat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i8mat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u16mat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u16mat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u16mat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i16mat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i16mat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i16mat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::umat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::umat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::umat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::imat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::imat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::imat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u64mat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u64mat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::u64mat4x4>::type,
+            ExpectedMat4Type>);
+
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i64mat2x2>::type,
+            ExpectedMat2Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i64mat3x3>::type,
+            ExpectedMat3Type>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<glm::i64mat4x4>::type,
+            ExpectedMat4Type>);
+  }
+
+  SUBCASE("Works for arrays") {
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<PropertyArrayView<int64_t>>::type,
+            PropertyArrayView<double>>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<PropertyArrayView<glm::u8vec4>>::type,
+            PropertyArrayView<glm::dvec4>>);
+    REQUIRE(std::is_same_v<
+            TypeToNormalizedType<PropertyArrayView<glm::imat2x2>>::type,
+            PropertyArrayView<glm::dmat2>>);
   }
 }

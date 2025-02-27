@@ -417,8 +417,8 @@ public:
     }
 
     if (classProperty.noData) {
-      if (!_required && _propertyType == PropertyType::Enum &&
-          pEnumDefinition != nullptr) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
         // "noData" can only be defined if the property is not required.
         _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
       } else if (!_required && _propertyType != PropertyType::Enum) {
@@ -433,8 +433,8 @@ public:
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required && _propertyType == PropertyType::Enum &&
-          pEnumDefinition != nullptr) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
         // "default" can only be defined if the property is not required.
         _defaultValue =
             getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
@@ -1558,8 +1558,8 @@ public:
     }
 
     if (classProperty.noData) {
-      if (!_required && _propertyType == PropertyType::Enum &&
-          pEnumDefinition != nullptr) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
         _noData = getEnumArrayValue(*classProperty.noData, *pEnumDefinition);
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getArrayValue(*classProperty.noData);
@@ -1572,8 +1572,8 @@ public:
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required && _propertyType == PropertyType::Enum &&
-          pEnumDefinition != nullptr) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
         _defaultValue =
             getEnumArrayValue(*classProperty.defaultProperty, *pEnumDefinition);
       } else if (!_required && _propertyType != PropertyType::Enum) {
