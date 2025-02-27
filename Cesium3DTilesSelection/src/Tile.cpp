@@ -110,7 +110,9 @@ Tile::Tile(Tile&& rhs) noexcept
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
-      _mightHaveLatentChildren{rhs._mightHaveLatentChildren} {
+      _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
+      _rasterTiles(std::move(rhs._rasterTiles)),
+      _doNotUnloadSubtreeCount(rhs._doNotUnloadSubtreeCount) {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -141,15 +143,9 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_content = std::move(rhs._content);
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
+    this->_rasterTiles = std::move(rhs._rasterTiles);
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
-    // We deliberately do *not* copy the _doNotUnloadSubtreeCount of rhs here.
-    // This is because the _doNotUnloadSubtreeCount is a count of instances of
-    // the *pointer* to the tile, denoting the number of active pointers that
-    // would be invalidated if the Tile were to be deleted. Because the memory
-    // location of the tile will have changed as a result of the move operation,
-    // the new Tile object will not have any pointers referencing it, so copying
-    // over the count would be incorrect and could result in a Tile not being
-    // removed when it otherwise should be.
+    this->_doNotUnloadSubtreeCount = rhs._doNotUnloadSubtreeCount;
   }
 
   return *this;
