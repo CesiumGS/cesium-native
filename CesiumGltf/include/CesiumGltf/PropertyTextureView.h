@@ -611,16 +611,16 @@ private:
       if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
         return PropertyTexturePropertyView<T, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
-      } else {
-        componentType = convertStringToPropertyComponentType(
-            enumDefinitionIt->second.valueType);
-        pEnumDefinition = &enumDefinitionIt->second;
+      }
 
-        if (componentType == PropertyComponentType::Float32 ||
-            componentType == PropertyComponentType::Float64) {
-          return PropertyTexturePropertyView<T, Normalized>(
-              PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
-        }
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+      pEnumDefinition = &enumDefinitionIt->second;
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        return PropertyTexturePropertyView<T, Normalized>(
+            PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
       }
     } else if (type == PropertyType::Enum) {
       return PropertyTexturePropertyView<T, Normalized>(
@@ -721,16 +721,16 @@ private:
       if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
         return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
-      } else {
-        componentType = convertStringToPropertyComponentType(
-            enumDefinitionIt->second.valueType);
-        pEnumDefinition = &enumDefinitionIt->second;
+      }
 
-        if (componentType == PropertyComponentType::Float32 ||
-            componentType == PropertyComponentType::Float64) {
-          return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
-              PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
-        }
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+      pEnumDefinition = &enumDefinitionIt->second;
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
+            PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
       }
     } else if (type == PropertyType::Enum) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(

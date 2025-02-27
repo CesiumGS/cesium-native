@@ -206,19 +206,20 @@ public:
             PropertyTablePropertyView<uint8_t>(
                 PropertyTablePropertyViewStatus::ErrorInvalidEnum));
         return;
-      } else {
-        componentType = convertStringToPropertyComponentType(
-            enumDefinitionIt->second.valueType);
-
-        if (componentType == PropertyComponentType::Float32 ||
-            componentType == PropertyComponentType::Float64) {
-          callback(
-              propertyId,
-              PropertyTablePropertyView<uint8_t>(
-                  PropertyTablePropertyViewStatus::ErrorInvalidEnum));
-          return;
-        }
       }
+
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        callback(
+            propertyId,
+            PropertyTablePropertyView<uint8_t>(
+                PropertyTablePropertyViewStatus::ErrorInvalidEnum));
+        return;
+      }
+
     } else if (type == PropertyType::Enum) {
       callback(
           propertyId,
