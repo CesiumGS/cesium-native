@@ -16,6 +16,10 @@ jobs:
   Linting:
     name: "Linting"
     runs-on: ubuntu-24.04
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_REGION: us-east-1
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -31,16 +35,6 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 19
           sudo apt-get install clang-tidy-19
-      #cache vcpkg dependencies in our actions cache
-      - name: Capture AWS secrets
-        uses: aws-actions/configure-aws-credentials@v2
-        env:
-          AWS_S3_USERNAME: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_S3_PASSWORD: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        with:
-          aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
-          aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
-          aws-region: us-east-1
       - name: Set CC and CXX
         run: |
           echo "CC=/usr/bin/clang-19" >> "$GITHUB_ENV"
@@ -70,6 +64,10 @@ jobs:
 
   Documentation:
     runs-on: ubuntu-22.04
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_REGION: us-east-1
     steps:
       - name: Install Doxygen
         run: |
@@ -88,16 +86,6 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ccache-ubuntu-22.04-doxygen
-      #cache vcpkg dependencies in our actions cache
-      - name: Capture AWS secrets
-        uses: aws-actions/configure-aws-credentials@v2
-        env:
-          AWS_S3_USERNAME: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_S3_PASSWORD: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        with:
-          aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
-          aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
-          aws-region: us-east-1
       - name: Generate Documentation
         run: |
           npm install
@@ -118,6 +106,9 @@ jobs:
     name: "${{matrix.platform}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}"
+      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_REGION: us-east-1
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Install ninja
@@ -135,16 +126,6 @@ jobs:
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}-1
           variant: sccache
-      #cache vcpkg dependencies in our actions cache
-      - name: Capture AWS secrets
-        uses: aws-actions/configure-aws-credentials@v2
-        env:
-          AWS_S3_USERNAME: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_S3_PASSWORD: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        with:
-          aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
-          aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
-          aws-region: us-east-1
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
@@ -171,6 +152,9 @@ jobs:
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
+      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_REGION: us-east-1
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Install ninja
@@ -185,16 +169,6 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
-      #cache vcpkg dependencies in our actions cache
-      - name: Capture AWS secrets
-        uses: aws-actions/configure-aws-credentials@v2
-        env:
-          AWS_S3_USERNAME: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_S3_PASSWORD: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        with:
-          aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
-          aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
-          aws-region: us-east-1
       - name: Set CC and CXX
         if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-13'}}
         run: |
