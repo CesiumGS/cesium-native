@@ -3,6 +3,7 @@
 #include "RasterOverlayUpsampler.h"
 #include "TilesetContentLoaderResult.h"
 
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -47,20 +48,17 @@ public:
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      RasterOverlayCollection&& overlayCollection,
       std::unique_ptr<TilesetContentLoader>&& pLoader,
       std::unique_ptr<Tile>&& pRootTile);
 
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      RasterOverlayCollection&& overlayCollection,
       const std::string& url);
 
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      RasterOverlayCollection&& overlayCollection,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
@@ -158,6 +156,8 @@ public:
   unloadCachedBytes(int64_t maximumCachedBytes, double timeBudgetMilliseconds);
   void clearChildrenRecursively(Tile* pTile) noexcept;
 
+  const LoadedTileEnumerator& getLoadedTileEnumerator() const;
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -206,6 +206,8 @@ private:
 
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
+
+  LoadedTileEnumerator _loadedTileEnumerator;
 
   Tile::UnusedLinkedList _unusedTiles;
 };

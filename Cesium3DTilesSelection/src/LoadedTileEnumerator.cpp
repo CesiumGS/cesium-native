@@ -3,6 +3,9 @@
 
 namespace Cesium3DTilesSelection {
 
+LoadedTileEnumerator::LoadedTileEnumerator(const Tile* pRootTile) noexcept
+    : _pRootTile(pRootTile) {}
+
 void LoadedTileEnumerator::updateRootTile(const Tile* pRootTile) {
   this->_pRootTile = pRootTile;
 }

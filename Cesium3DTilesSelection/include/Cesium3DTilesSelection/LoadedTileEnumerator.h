@@ -65,6 +65,8 @@ public:
     std::vector<const Tile*> _traversalStack;
   };
 
+  explicit LoadedTileEnumerator(const Tile* pRootTile) noexcept;
+
   void updateRootTile(const Tile* pRootTile);
 
   const_iterator begin() const;

@@ -704,7 +704,6 @@ postProcessContentInWorkerThread(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
@@ -718,7 +717,10 @@ TilesetContentManager::TilesetContentManager(
                     tilesetOptions.showCreditsOnScreen))
               : std::nullopt),
       _tilesetCredits{},
-      _overlayCollection{std::move(overlayCollection)},
+      _overlayCollection(
+          this->_loadedTileEnumerator,
+          externals,
+          tilesetOptions.ellipsoid),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -729,6 +731,7 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
+      _loadedTileEnumerator(this->_pRootTile.get()),
       _unusedTiles() {
   this->_rootTileAvailablePromise.resolve();
 }
@@ -736,7 +739,6 @@ TilesetContentManager::TilesetContentManager(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     const std::string& url)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
@@ -749,7 +751,10 @@ TilesetContentManager::TilesetContentManager(
                     tilesetOptions.showCreditsOnScreen))
               : std::nullopt),
       _tilesetCredits{},
-      _overlayCollection{std::move(overlayCollection)},
+      _overlayCollection(
+          this->_loadedTileEnumerator,
+          externals,
+          tilesetOptions.ellipsoid),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -760,6 +765,7 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
+      _loadedTileEnumerator(nullptr),
       _unusedTiles() {
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
@@ -887,7 +893,6 @@ TilesetContentManager::TilesetContentManager(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
@@ -902,7 +907,10 @@ TilesetContentManager::TilesetContentManager(
                     tilesetOptions.showCreditsOnScreen))
               : std::nullopt),
       _tilesetCredits{},
-      _overlayCollection{std::move(overlayCollection)},
+      _overlayCollection(
+          this->_loadedTileEnumerator,
+          externals,
+          tilesetOptions.ellipsoid),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -913,6 +921,7 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
+      _loadedTileEnumerator(nullptr),
       _unusedTiles() {
   if (ionAssetID > 0) {
     auto authorizationChangeListener = [this](
@@ -1483,6 +1492,11 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
   pTile->clearChildren();
 }
 
+const LoadedTileEnumerator&
+TilesetContentManager::getLoadedTileEnumerator() const {
+  return this->_loadedTileEnumerator;
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
@@ -1765,6 +1779,8 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     this->_requestHeaders = std::move(result.requestHeaders);
     this->_pLoader = std::move(result.pLoader);
     this->_pRootTile = std::move(result.pRootTile);
+
+    this->_loadedTileEnumerator.updateRootTile(this->_pRootTile.get());
   }
 }
 } // namespace Cesium3DTilesSelection

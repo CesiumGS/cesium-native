@@ -67,15 +67,10 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _loadedTileEnumerator(),
       _pTilesetContentManager{
           new TilesetContentManager(
               _externals,
               _options,
-              RasterOverlayCollection{
-                  _loadedTileEnumerator,
-                  externals,
-                  options.ellipsoid},
               std::move(pCustomLoader),
               std::move(pRootTile)),
       },
@@ -92,16 +87,8 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _loadedTileEnumerator(),
       _pTilesetContentManager{
-          new TilesetContentManager(
-              _externals,
-              _options,
-              RasterOverlayCollection{
-                  _loadedTileEnumerator,
-                  externals,
-                  options.ellipsoid},
-              url),
+          new TilesetContentManager(_externals, _options, url),
       },
       _heightRequests(),
       _defaultViewGroup(this->_pTilesetContentManager) {}
@@ -118,14 +105,9 @@ Tileset::Tileset(
       _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
-      _loadedTileEnumerator(),
       _pTilesetContentManager{new TilesetContentManager(
           _externals,
           _options,
-          RasterOverlayCollection{
-              _loadedTileEnumerator,
-              externals,
-              options.ellipsoid},
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)},
@@ -458,7 +440,6 @@ const ViewUpdateResult& Tileset::updateView(
       this->getAsyncSystem(),
       *this->_pTilesetContentManager,
       this->_options,
-      this->_loadedTileEnumerator,
       this->_heightRequests,
       this->_heightQueryLoadQueue);
 
@@ -566,14 +547,16 @@ float Tileset::computeLoadProgress() noexcept {
 
 void Tileset::forEachLoadedTile(
     const std::function<void(Tile& tile)>& callback) {
-  for (const Tile& tile : this->_loadedTileEnumerator) {
+  for (const Tile& tile :
+       this->_pTilesetContentManager->getLoadedTileEnumerator()) {
     callback(const_cast<Tile&>(tile));
   }
 }
 
 void Tileset::forEachLoadedTile(
     const std::function<void(const Tile& tile)>& callback) const {
-  for (const Tile& tile : this->_loadedTileEnumerator) {
+  for (const Tile& tile :
+       this->_pTilesetContentManager->getLoadedTileEnumerator()) {
     callback(tile);
   }
 }

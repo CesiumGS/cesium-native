@@ -144,7 +144,6 @@ struct TilesetHeightRequest {
       const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
-      const LoadedTileEnumerator& loadedTiles,
       std::list<TilesetHeightRequest>& heightRequests,
       std::vector<Tile*>& heightQueryLoadQueue);
 
@@ -178,7 +177,6 @@ struct TilesetHeightRequest {
       const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
-      const LoadedTileEnumerator& loadedTiles,
       std::set<Tile*>& tileLoadSet);
 };
 
