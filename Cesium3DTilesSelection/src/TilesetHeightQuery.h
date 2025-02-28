@@ -61,20 +61,20 @@ public:
    * @brief Non-leaf tiles with additive refinement whose bounding volumes are
    * intersected by the query ray.
    */
-  std::vector<Tile*> additiveCandidateTiles;
+  std::vector<CesiumUtility::IntrusivePointer<Tile>> additiveCandidateTiles;
 
   /**
    * @brief The current set of leaf tiles whose bounding volumes are intersected
    * by the query ray.
    */
-  std::vector<Tile*> candidateTiles;
+  std::vector<CesiumUtility::IntrusivePointer<Tile>> candidateTiles;
 
   /**
    * @brief The previous set of leaf tiles. Swapping `candidateTiles` and
    * `previousCandidateTiles` each frame allows us to avoid a heap allocation
    * for a new vector each frame.
    */
-  std::vector<Tile*> previousCandidateTiles;
+  std::vector<CesiumUtility::IntrusivePointer<Tile>> previousCandidateTiles;
 
   /**
    * @brief Find the intersection of the ray with the given tile. If there is

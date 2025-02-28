@@ -58,8 +58,8 @@ public:
 
   /**
    * @brief Finishes the current frame by making the current tile selection
-   * state the previous one and releasing references to tiles in the old previous
-   * one.
+   * state the previous one and releasing references to tiles in the old
+   * previous one.
    */
   void finishFrame();
 
@@ -74,8 +74,14 @@ private:
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
-  std::unordered_map<const Tile*, TileSelectionState> _previousSelectionStates;
-  std::unordered_map<const Tile*, TileSelectionState> _currentSelectionStates;
+  std::unordered_map<
+      CesiumUtility::IntrusivePointer<const Tile>,
+      TileSelectionState>
+      _previousSelectionStates;
+  std::unordered_map<
+      CesiumUtility::IntrusivePointer<const Tile>,
+      TileSelectionState>
+      _currentSelectionStates;
 
   // So that the Tileset can create instances of this class.
   friend class Tileset;

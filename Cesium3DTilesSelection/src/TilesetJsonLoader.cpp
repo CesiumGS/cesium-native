@@ -1091,6 +1091,18 @@ CesiumGeometry::Axis TilesetJsonLoader::getUpAxis() const noexcept {
 
 void TilesetJsonLoader::addChildLoader(
     std::unique_ptr<TilesetContentLoader> pLoader) {
+  if (this->getOwner() != nullptr) {
+    pLoader->setOwner(*this->getOwner());
+  }
+
   this->_children.emplace_back(std::move(pLoader));
 }
+
+void TilesetJsonLoader::setOwnerOfNestedLoaders(
+    TilesetContentManager& owner) noexcept {
+  for (const std::unique_ptr<TilesetContentLoader>& pLoader : this->_children) {
+    pLoader->setOwner(owner);
+  }
+}
+
 } // namespace Cesium3DTilesSelection

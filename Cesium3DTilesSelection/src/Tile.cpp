@@ -1,7 +1,10 @@
+#include "TilesetContentManager.h"
+
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>
@@ -390,15 +393,21 @@ void Tile::decrementDoNotUnloadSubtreeCount(
   }
 }
 
-bool Tile::addViewGroupReference() const noexcept {
+void Tile::addReference() const noexcept {
   ++this->_viewGroupReferences;
-  return this->_viewGroupReferences == 1;
+  if (this->_viewGroupReferences == 1 && this->_pLoader &&
+      this->_pLoader->getOwner()) {
+    this->_pLoader->getOwner()->markTileNowUsed(*this);
+  }
 }
 
-bool Tile::releaseViewGroupReference() const noexcept {
+void Tile::releaseReference() const noexcept {
   CESIUM_ASSERT(this->_viewGroupReferences > 0);
   --this->_viewGroupReferences;
-  return this->_viewGroupReferences == 0;
+  if (this->_viewGroupReferences == 0 && this->_pLoader &&
+      this->_pLoader->getOwner()) {
+    this->_pLoader->getOwner()->markTileNowUnused(*this);
+  }
 }
 
 } // namespace Cesium3DTilesSelection

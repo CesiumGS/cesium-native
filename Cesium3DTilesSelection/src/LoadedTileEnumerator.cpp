@@ -5,39 +5,11 @@
 
 namespace Cesium3DTilesSelection {
 
-LoadedTileEnumerator::LoadedTileEnumerator(
-    const TilesetContentManager& tilesetContentManager,
-    bool keepContentManagerAlive) noexcept
-    : _pTilesetContentManager(&tilesetContentManager),
-      _keepContentManagerAlive(keepContentManagerAlive) {
-  if (this->_keepContentManagerAlive) {
-    this->_pTilesetContentManager->addReference();
-  }
-}
-
-LoadedTileEnumerator::~LoadedTileEnumerator() noexcept {
-  if (this->_keepContentManagerAlive) {
-    this->_pTilesetContentManager->releaseReference();
-  }
-}
-
-LoadedTileEnumerator::LoadedTileEnumerator(
-    const LoadedTileEnumerator& rhs) noexcept
-    : _pTilesetContentManager(rhs._pTilesetContentManager),
-      _keepContentManagerAlive(rhs._keepContentManagerAlive) {
-  if (this->_keepContentManagerAlive) {
-    this->_pTilesetContentManager->addReference();
-  }
-}
-
-LoadedTileEnumerator::LoadedTileEnumerator(LoadedTileEnumerator&& rhs) noexcept
-    : _pTilesetContentManager(rhs._pTilesetContentManager),
-      _keepContentManagerAlive(rhs._keepContentManagerAlive) {
-  rhs._keepContentManagerAlive = false;
-}
+LoadedTileEnumerator::LoadedTileEnumerator(const Tile* pRootTile) noexcept
+    : _pRootTile(pRootTile) {}
 
 LoadedTileEnumerator::const_iterator LoadedTileEnumerator::begin() const {
-  return const_iterator(this->_pTilesetContentManager->getRootTile());
+  return const_iterator(this->_pRootTile);
 }
 
 LoadedTileEnumerator::const_iterator LoadedTileEnumerator::end() const {

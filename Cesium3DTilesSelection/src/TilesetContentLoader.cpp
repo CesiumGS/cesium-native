@@ -63,4 +63,21 @@ TileLoadResult TileLoadResult::createRetryLaterResult(
       TileLoadResultState::RetryLater,
       CesiumGeospatial::Ellipsoid::UNIT_SPHERE};
 }
+
+const TilesetContentManager* TilesetContentLoader::getOwner() const noexcept {
+  return this->_pOwner;
+}
+
+TilesetContentManager* TilesetContentLoader::getOwner() noexcept {
+  return this->_pOwner;
+}
+
+void TilesetContentLoader::setOwner(TilesetContentManager& owner) noexcept {
+  this->_pOwner = &owner;
+  this->setOwnerOfNestedLoaders(owner);
+}
+
+void TilesetContentLoader::setOwnerOfNestedLoaders(
+    TilesetContentManager& /*owner*/) noexcept {}
+
 } // namespace Cesium3DTilesSelection

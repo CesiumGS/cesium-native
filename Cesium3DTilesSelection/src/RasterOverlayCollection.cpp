@@ -70,6 +70,11 @@ RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   }
 }
 
+void RasterOverlayCollection::setLoadedTileEnumerator(
+    const LoadedTileEnumerator& loadedTiles) {
+  this->_loadedTiles = loadedTiles;
+}
+
 void RasterOverlayCollection::add(
     const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) {
   // CESIUM_TRACE_USE_TRACK_SET(this->_loadingSlots);

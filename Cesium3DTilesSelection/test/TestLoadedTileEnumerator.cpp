@@ -36,8 +36,7 @@ TEST_CASE("LoadedTileEnumerator") {
 
   root.getChildren()[1].createChildTiles(std::move(grandchildren));
 
-  LoadedTileEnumerator enumerator;
-  enumerator.updateRootTile(&root);
+  LoadedTileEnumerator enumerator(&root);
 
   SUBCASE("with no loaded tiles it enumerates the root tile only") {
     CHECK(enumerate(enumerator) == std::vector<const Tile*>{&root});

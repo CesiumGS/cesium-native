@@ -66,22 +66,13 @@ public:
     std::vector<const Tile*> _traversalStack;
   };
 
-  ~LoadedTileEnumerator() noexcept;
-  LoadedTileEnumerator(const LoadedTileEnumerator& rhs) noexcept;
-  LoadedTileEnumerator(LoadedTileEnumerator&& rhs) noexcept;
+  explicit LoadedTileEnumerator(const Tile* pRootTile) noexcept;
 
   const_iterator begin() const;
   const_iterator end() const;
 
 private:
-  explicit LoadedTileEnumerator(
-      const TilesetContentManager& tilesetContentManager,
-      bool keepContentManagerAlive) noexcept;
-
-  const TilesetContentManager* _pTilesetContentManager;
-  bool _keepContentManagerAlive;
-
-  friend class TilesetContentManager;
+  const Tile* _pRootTile;
 };
 
 } // namespace Cesium3DTilesSelection

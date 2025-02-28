@@ -6,43 +6,12 @@
 
 namespace Cesium3DTilesSelection {
 
-TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept
-    : _pTilesetContentManager(rhs._pTilesetContentManager),
-      _previousSelectionStates(rhs._previousSelectionStates),
-      _currentSelectionStates(rhs._currentSelectionStates) {
-  for (const std::pair<const Tile*, TileSelectionState>& pair :
-       this->_previousSelectionStates) {
-    [[maybe_unused]] bool firstReference = pair.first->addViewGroupReference();
-    CESIUM_ASSERT(!firstReference);
-  }
+TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept =
+    default;
 
-  for (const std::pair<const Tile*, TileSelectionState>& pair :
-       this->_currentSelectionStates) {
-    [[maybe_unused]] bool firstReference = pair.first->addViewGroupReference();
-    CESIUM_ASSERT(!firstReference);
-  }
-}
+TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept = default;
 
-TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept
-    : _pTilesetContentManager(std::move(rhs._pTilesetContentManager)),
-      _previousSelectionStates(std::move(rhs._previousSelectionStates)),
-      _currentSelectionStates(std::move(rhs._currentSelectionStates)) {}
-
-TilesetViewGroup::~TilesetViewGroup() noexcept {
-  for (const std::pair<const Tile*, TileSelectionState>& pair :
-       this->_previousSelectionStates) {
-    if (pair.first->releaseViewGroupReference()) {
-      this->_pTilesetContentManager->markTileNowUnused(*pair.first);
-    }
-  }
-
-  for (const std::pair<const Tile*, TileSelectionState>& pair :
-       this->_currentSelectionStates) {
-    if (pair.first->releaseViewGroupReference()) {
-      this->_pTilesetContentManager->markTileNowUnused(*pair.first);
-    }
-  }
-}
+TilesetViewGroup::~TilesetViewGroup() noexcept = default;
 
 TileSelectionState
 TilesetViewGroup::getPreviousSelectionState(const Tile& tile) const noexcept {
@@ -67,14 +36,7 @@ TilesetViewGroup::getCurrentSelectionState(const Tile& tile) const noexcept {
 void TilesetViewGroup::setCurrentSelectionState(
     const Tile& tile,
     const TileSelectionState& newState) noexcept {
-  bool inserted =
-      this->_currentSelectionStates.insert_or_assign(&tile, newState).second;
-  if (inserted) {
-    if (tile.addViewGroupReference()) {
-      // Tile was previously unused.
-      this->_pTilesetContentManager->markTileNowUsed(tile);
-    }
-  }
+  this->_currentSelectionStates[&tile] = newState;
 }
 
 void TilesetViewGroup::kick(const Tile& tile) noexcept {
@@ -90,15 +52,6 @@ void TilesetViewGroup::kick(const Tile& tile) noexcept {
 }
 
 void TilesetViewGroup::finishFrame() {
-  // Remove references from last frame's tiles, marking them unused if
-  // appropriate.
-  for (const std::pair<const Tile*, TileSelectionState>& pair :
-       this->_previousSelectionStates) {
-    if (pair.first->releaseViewGroupReference()) {
-      this->_pTilesetContentManager->markTileNowUnused(*pair.first);
-    }
-  }
-
   std::swap(this->_previousSelectionStates, this->_currentSelectionStates);
   this->_currentSelectionStates.clear();
 }

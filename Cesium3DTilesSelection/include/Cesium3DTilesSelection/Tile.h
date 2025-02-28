@@ -532,8 +532,8 @@ public:
    */
   void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
 
-  bool addViewGroupReference() const noexcept;
-  bool releaseViewGroupReference() const noexcept;
+  void addReference() const noexcept;
+  void releaseReference() const noexcept;
 
 private:
   void incrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;

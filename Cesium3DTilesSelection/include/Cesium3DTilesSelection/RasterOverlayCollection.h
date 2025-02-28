@@ -36,7 +36,7 @@ public:
    *
    * @param loadedTiles The list of loaded tiles. The collection does not own
    * this list, so the list needs to be kept alive as long as the collection's
-   * lifetime
+   * lifetime.
    * @param externals A collection of loading system to load a raster overlay
    * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
@@ -45,6 +45,14 @@ public:
       const TilesetExternals& externals,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
+
+  /**
+   * @brief Provides a new {@link LoadedTileEnumerator} to use to update
+   * loaded tiles when a raster overlay is added or remove.
+   *
+   * @param loadedTiles The new loaded tile enumerator.
+   */
+  void setLoadedTileEnumerator(const LoadedTileEnumerator& loadedTiles);
 
   /**
    * @brief Deleted Copy constructor.

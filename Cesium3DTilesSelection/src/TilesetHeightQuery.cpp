@@ -118,18 +118,18 @@ TilesetHeightQuery::TilesetHeightQuery(
       previousCandidateTiles() {}
 
 Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() {
-  for (Tile* pTile : candidateTiles) {
+  for (const IntrusivePointer<Tile>& pTile : candidateTiles) {
     pTile->decrementDoNotUnloadSubtreeCount(
         "TilesetHeightQuery::~TilesetHeightQuery destructing candidateTiles");
   }
 
-  for (Tile* pTile : additiveCandidateTiles) {
+  for (const IntrusivePointer<Tile>& pTile : additiveCandidateTiles) {
     pTile->decrementDoNotUnloadSubtreeCount(
         "TilesetHeightQuery::~TilesetHeightQuery "
         "destructing additiveCandidateTiles");
   }
 
-  for (Tile* pTile : previousCandidateTiles) {
+  for (const IntrusivePointer<Tile>& pTile : previousCandidateTiles) {
     pTile->decrementDoNotUnloadSubtreeCount(
         "TilesetHeightQuery::~TilesetHeightQuery "
         "destructing previousCandidateTiles");
@@ -168,29 +168,10 @@ void TilesetHeightQuery::intersectVisibleTile(
   }
 }
 
-namespace {
-
-void markTileVisited(const LoadedTileEnumerator& /*loadedTiles*/, Tile* pTile) {
-  // Don't move the root tile to the tail, because this tile is used to mark the
-  // beginning of the tiles used in the current frame. If we move it, some tiles
-  // may be deemed to have most recently been used last frame, and so will be
-  // unloaded.
-  if (pTile == nullptr || pTile->getParent() == nullptr)
-    return;
-
-  // TODO
-  // loadedTiles.insertAtTail(*pTile);
-}
-
-} // namespace
-
 void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
     const LoadedTileEnumerator& loadedTiles,
     std::vector<std::string>& warnings) {
-  // Make sure this tile is not unloaded until we're done with it.
-  markTileVisited(loadedTiles, pTile);
-
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
     warnings.emplace_back("Tile load failed during query. Ignoring.");
@@ -372,7 +353,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       // frame.
       std::swap(query.candidateTiles, query.previousCandidateTiles);
 
-      for (Tile* pTile : query.candidateTiles) {
+      for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
         pTile->decrementDoNotUnloadSubtreeCount(
             "TilesetHeightRequest::tryCompleteHeightRequest clear "
             "candidateTiles");
@@ -380,15 +361,13 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
       query.candidateTiles.clear();
 
-      for (Tile* pCandidate : query.previousCandidateTiles) {
+      for (const IntrusivePointer<Tile>& pCandidate :
+           query.previousCandidateTiles) {
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
-          query.findCandidateTiles(pCandidate, loadedTiles, warnings);
+          query.findCandidateTiles(pCandidate.get(), loadedTiles, warnings);
         } else {
-          // Make sure this tile stays loaded.
-          markTileVisited(loadedTiles, pCandidate);
-
           // Check again next frame to see if this tile has children.
           pCandidate->incrementDoNotUnloadSubtreeCount(
               "TilesetHeightRequest::tryCompleteHeightRequest add to "
@@ -417,16 +396,11 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     };
 
     // If any candidates need loading, add to return set
-    for (Tile* pTile : query.additiveCandidateTiles) {
-      // Additive tiles are only enumerated once in findCandidateTiles, so we
-      // need to continue every frame to make sure they're not unloaded before
-      // we're done with them.
-      markTileVisited(loadedTiles, pTile);
-
-      checkTile(pTile);
+    for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {
+      checkTile(pTile.get());
     }
-    for (Tile* pTile : query.candidateTiles) {
-      checkTile(pTile);
+    for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
+      checkTile(pTile.get());
     }
   }
 
@@ -436,11 +410,11 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
   // Do the intersect tests
   for (TilesetHeightQuery& query : this->queries) {
-    for (Tile* pTile : query.additiveCandidateTiles) {
-      query.intersectVisibleTile(pTile, warnings);
+    for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {
+      query.intersectVisibleTile(pTile.get(), warnings);
     }
-    for (Tile* pTile : query.candidateTiles) {
-      query.intersectVisibleTile(pTile, warnings);
+    for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
+      query.intersectVisibleTile(pTile.get(), warnings);
     }
   }
 
