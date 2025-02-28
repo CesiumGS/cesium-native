@@ -83,8 +83,6 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
        glm::dvec3(outerRadius * max, zScale)});
 
   OrientedBoundingBox obb = OrientedBoundingBox::fromAxisAligned(aab);
-  glm::dvec3 center = obb.getCenter();
-
   glm::dmat4 transform =
       CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
           translation,

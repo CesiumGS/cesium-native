@@ -247,7 +247,8 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
       CesiumGeometry::OrientedBoundingBox box =
           transformedRegion.toOrientedBoundingBox();
       glm::dvec3 expectedCenter(0.0, 4.0, 2.0);
-      glm::dmat3 expectedHalfAxes(0.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.5, 0.0, 0.0);
+      glm::dmat3
+          expectedHalfAxes(0.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.5, 0.0, 0.0);
 
       CHECK(CesiumUtility::Math::equalsEpsilon(
           box.getCenter(),
