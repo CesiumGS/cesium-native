@@ -1376,10 +1376,24 @@ TEST_CASE("Enum PropertyView") {
     classProperty.noData = "null";
     view = PropertyView<uint8_t>(classProperty, &enumDef);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
 
+  SUBCASE("Reports errors for noData and defaultProperty when they are not "
+          "present in the enum") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.required = false;
+    classProperty.defaultProperty = "Bar";
     classProperty.noData = "Qux";
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
     view = PropertyView<uint8_t>(classProperty, &enumDef);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.defaultProperty = "Qux";
+    classProperty.noData = "Bar";
+    view = PropertyView<uint8_t>(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
   }
 
   SUBCASE("Reports errors for invalid types") {
