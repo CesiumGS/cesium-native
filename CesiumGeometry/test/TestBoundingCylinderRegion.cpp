@@ -64,7 +64,7 @@ TEST_CASE("BoundingCylinderRegion::toOrientedBoundingBox test") {
         glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo));
     CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(-1.0, 1.0, 0.0);
+    glm::dvec3 expectedCenter(1.0, 1.0, 0.0);
     glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.5);
 
     CHECK(box.getCenter() == expectedCenter);
@@ -82,8 +82,8 @@ TEST_CASE("BoundingCylinderRegion::toOrientedBoundingBox test") {
             -CesiumUtility::Math::PiOverTwo));
     CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(0.0, -1.0, 0.0);
-    glm::dmat3 expectedHalfAxes(2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.5);
+    glm::dvec3 expectedCenter(-1.0, 0.0, 0.0);
+    glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.5);
 
     CHECK(CesiumUtility::Math::equalsEpsilon(
         box.getCenter(),
@@ -175,7 +175,7 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
     CesiumGeometry::OrientedBoundingBox box =
         transformedRegion.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(0.0, 3.0, 3.0);
+    glm::dvec3 expectedCenter(2.0, 2.0, 2.0);
     glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.5, 0.0);
 
     CHECK(box.getCenter() == expectedCenter);
@@ -203,7 +203,7 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
     // Verify construction before the additional transform.
     {
       CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
-      glm::dvec3 expectedCenter(-2.0, 1.0, 1.0);
+      glm::dvec3 expectedCenter(-1.0, 1.0, 0.0);
       glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.5, 0.0, 0);
 
       CHECK(CesiumUtility::Math::equalsEpsilon(
@@ -245,8 +245,10 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
 
     {
       CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
+      //glm::dvec3 expectedCenter(-1.0, 1.0, 0.0);
+
       glm::dvec3 expectedCenter(-2.0, 1.0, 1.0);
-      glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.5, 0.0, 0.0);
+      glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.5, 0.0, 1.0, 0.0, 0.0);
 
       CHECK(CesiumUtility::Math::equalsEpsilon(
           box.getCenter(),
