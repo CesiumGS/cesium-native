@@ -711,3 +711,138 @@ TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
     CHECK(m.bufferViews[2].byteLength == 100);
   }
 }
+
+TEST_CASE("GltfUtilities::parseGltfCopyright") {
+  SUBCASE("properly parses multiple copyright entries") {
+    Model model;
+    model.asset.copyright = "Test;a;b;c";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "Test");
+    CHECK(result[1] == "a");
+    CHECK(result[2] == "b");
+    CHECK(result[3] == "c");
+  }
+
+  SUBCASE("properly parses a single copyright entry") {
+    Model model;
+    model.asset.copyright = "Test";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 1);
+    CHECK(result[0] == "Test");
+  }
+
+  SUBCASE("properly parses an entry with a trailing semicolon") {
+    Model model;
+    model.asset.copyright = "Test;a;b;c;";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "Test");
+    CHECK(result[1] == "a");
+    CHECK(result[2] == "b");
+    CHECK(result[3] == "c");
+  }
+
+  SUBCASE("properly parses entries with whitespace") {
+    Model model;
+    model.asset.copyright = "\tTest;a\t ;\tb;\t \tc\t;\t ";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "Test");
+    CHECK(result[1] == "a");
+    CHECK(result[2] == "b");
+    CHECK(result[3] == "c");
+  }
+
+  SUBCASE("properly parses an empty string") {
+    Model model;
+    model.asset.copyright = "";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 0);
+  }
+
+  SUBCASE("properly parses whitespace only") {
+    Model model;
+    model.asset.copyright = " \t  \t";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 0);
+  }
+
+  SUBCASE("properly parses empty parts in the middle") {
+    Model model;
+    model.asset.copyright = "a;;b";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+  }
+
+  SUBCASE("properly parses whitespace parts in the middle") {
+    Model model;
+    model.asset.copyright = "a;\t;b";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+  }
+
+  SUBCASE("properly parses empty parts at the start") {
+    Model model;
+    model.asset.copyright = ";a;b";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+  }
+
+  SUBCASE("properly parses whitespace parts at the start") {
+    Model model;
+    model.asset.copyright = "\t;a;b";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+  }
+
+  SUBCASE("properly parses empty parts at the end") {
+    Model model;
+    model.asset.copyright = "a;b;";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+  }
+
+  SUBCASE("properly parses whitespace parts at the end") {
+    Model model;
+    model.asset.copyright = "a;b;\t";
+    std::vector<std::string_view> result =
+        GltfUtilities::parseGltfCopyright(model);
+
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+  }
+}

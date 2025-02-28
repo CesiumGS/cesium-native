@@ -2,6 +2,7 @@
 
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -15,7 +16,8 @@
 namespace Cesium3DTilesSelection {
 using ImplicitOctreeBoundingVolume = std::variant<
     CesiumGeospatial::BoundingRegion,
-    CesiumGeometry::OrientedBoundingBox>;
+    CesiumGeometry::OrientedBoundingBox,
+    CesiumGeometry::BoundingCylinderRegion>;
 
 class ImplicitOctreeLoader : public TilesetContentLoader {
 public:

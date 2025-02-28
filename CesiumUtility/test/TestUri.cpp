@@ -22,6 +22,9 @@ TEST_CASE("Uri::getPath") {
     CHECK(
         Uri::getPath("https://example.com/foo/bar/?some=parameter") ==
         "/foo/bar/");
+    CHECK(
+        Uri::getPath("geopackage:/home/courtyard_imagery.gpkg") ==
+        "/home/courtyard_imagery.gpkg");
   }
 
   SUBCASE("returns / path for nonexistent paths") {

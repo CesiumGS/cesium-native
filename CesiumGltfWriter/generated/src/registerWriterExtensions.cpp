@@ -15,6 +15,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/Shape.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
@@ -25,11 +26,15 @@
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
+#include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapes.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
@@ -58,6 +63,9 @@ void registerWriterExtensions(
       CesiumGltf::Model,
       ExtensionModelMaxarMeshVariantsJsonWriter>();
   context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionKhrImplicitShapesJsonWriter>();
+  context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();
   context.registerExtension<
@@ -75,6 +83,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumPrimitiveOutlineJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionExtPrimitiveVoxelsJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtInstanceFeaturesJsonWriter>();
@@ -119,5 +130,11 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Shape,
+      ExtensionExtImplicitEllipsoidRegionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Shape,
+      ExtensionExtImplicitCylinderRegionJsonWriter>();
 }
 } // namespace CesiumGltfWriter

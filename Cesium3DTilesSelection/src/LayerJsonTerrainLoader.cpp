@@ -690,7 +690,8 @@ std::string resolveTileUrl(
             }
 
             return placeholder;
-          }));
+          }),
+      true);
 
   if (!layer.extensionsToRequest.empty()) {
     UriQuery params(uri);

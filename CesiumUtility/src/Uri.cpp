@@ -28,7 +28,9 @@ using UrlResult = ada::result<ada::url_aggregator>;
 bool isAsciiAlpha(unsigned char c) {
   return c >= 0x41 && c <= 0x7a && (c <= 0x5a || c >= 0x61);
 }
-bool isAscii(unsigned char c) { return c <= 0x7f; }
+bool isAsciiAlphanumeric(unsigned char c) {
+  return isAsciiAlpha(c) || (c >= '0' && c <= '9');
+}
 
 /**
  * A URI has a valid scheme if it starts with an ASCII alpha character and has a
@@ -38,9 +40,12 @@ bool urlHasScheme(const std::string& uri) {
   for (size_t i = 0; i < uri.length(); i++) {
     unsigned char c = static_cast<unsigned char>(uri[i]);
     if (c == ':') {
-      return uri.length() > i + 2 && uri[i + 1] == '/' && uri[i + 2] == '/';
-    } else if ((i == 0 && !isAsciiAlpha(c)) || !isAscii(c)) {
-      // Scheme must start with an ASCII alpha character and be an ASCII string
+      return true;
+    } else if (
+        (i == 0 && !isAsciiAlpha(c)) ||
+        (!isAsciiAlphanumeric(c) && c != '+' && c != '-' && c != '.')) {
+      // Scheme must start with an ASCII alpha character and be a string
+      // containing only alphanumeric ASCII or the characters '+', '-', and '.'.
       return false;
     }
   }

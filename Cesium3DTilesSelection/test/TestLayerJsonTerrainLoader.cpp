@@ -496,6 +496,42 @@ TEST_CASE("Test load layer json tile content") {
     CHECK(!layer.contentAvailability.isTileAvailable(QuadtreeTileID(9, 0, 0)));
   }
 
+  SUBCASE("Load tile with query parameters from base URL") {
+    // create loader
+    std::vector<LayerJsonTerrainLoader::Layer> layers;
+    layers.emplace_back(
+        "layer.json?param=some_parameter_here",
+        "1.0.0",
+        std::vector<std::string>{"{level}.{x}.{y}/{version}.terrain"},
+        "one-two",
+        std::move(contentAvailability),
+        maxZoom,
+        10);
+
+    LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
+
+    // mock tile content request
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {"0.0.0/1.0.0.terrain?param=some_parameter_here&extensions=one-two",
+         createMockAssetRequest(
+             testDataPath / "CesiumTerrainTileJson" /
+             "tile.metadataavailability.terrain")});
+
+    // check the load result
+    auto tileLoadResultFuture = loadTile(
+        QuadtreeTileID(0, 0, 0),
+        loader,
+        asyncSystem,
+        pMockedAssetAccessor);
+    auto tileLoadResult = tileLoadResultFuture.wait();
+    CHECK(
+        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+    CHECK(tileLoadResult.updatedBoundingVolume);
+    CHECK(!tileLoadResult.updatedContentBoundingVolume);
+    CHECK(!tileLoadResult.tileInitializer);
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+  }
+
   SUBCASE("Load tile when layer have no availabilityLevels field") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;

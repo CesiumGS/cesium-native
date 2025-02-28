@@ -6,10 +6,31 @@
 
 - Removed `TilesetOptions::maximumSimultaneousSubtreeLoads` because it was unused.
 
-### Additions :tada:
+##### Additions :tada:
 
 - Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
+- `LayerJsonTerrainLoader` now includes the query parameters from the base URL in the requests for each `.terrain` file loaded.
 - Added support for `3DTILES_ellipsoid` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+- Added support for `3DTILES_content_voxels` in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+- Added generated classes for `EXT_primitive_voxels` and its dependencies in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added `AxisAlignedBox::fromPositions`, which creates an `AxisAlignedBox` from an input vector of positions.
+
+##### Fixes :wrench:
+
+- Fixed parsing URIs that have a scheme followed by `:` instead of `://`.
+- Fixed decoding of KHR_mesh_quantization normalized values.
+
+### v0.44.3 - 2025-02-12
+
+##### Fixes :wrench:
+
+- Fixed another bug in `GltfUtilities::parseGltfCopyright` that could cause it to crash or produce incorrect results.
+
+### v0.44.2 - 2025-02-10
+
+##### Fixes :wrench:
+
+- Fixed a bug in `GltfUtilities::parseGltfCopyright` that could cause a crash when the copyright ends with a semicolon.
 
 ### v0.44.1 - 2025-02-03
 
