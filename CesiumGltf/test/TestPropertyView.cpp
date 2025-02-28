@@ -1,3 +1,5 @@
+#include "makeEnumValue.h"
+
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyView.h>
@@ -26,6 +28,7 @@
 
 using namespace CesiumGltf;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 TEST_CASE("Boolean PropertyView") {
   SUBCASE("Constructs empty PropertyView") {
@@ -40,6 +43,13 @@ TEST_CASE("Boolean PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    PropertyView<bool> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Boolean);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -105,6 +115,13 @@ TEST_CASE("Scalar PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Scalar);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -259,6 +276,13 @@ TEST_CASE("Scalar PropertyView (normalized)") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    PropertyView<uint8_t, true> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Scalar);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -394,6 +418,13 @@ TEST_CASE("VecN PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    PropertyView<glm::dvec2> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Vec2);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -555,6 +586,13 @@ TEST_CASE("VecN PropertyView (normalized)") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC4;
+    PropertyView<glm::i8vec4, true> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Vec4);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::VEC2;
@@ -699,6 +737,13 @@ TEST_CASE("MatN PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    PropertyView<glm::mat2> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Mat2);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -967,6 +1012,13 @@ TEST_CASE("MatN PropertyView (normalized)") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT4;
+    PropertyView<glm::imat4x4, true> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Mat4);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::MAT4;
@@ -1182,6 +1234,13 @@ TEST_CASE("String PropertyView") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    PropertyView<std::string_view> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::String);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
@@ -1242,6 +1301,115 @@ TEST_CASE("String PropertyView") {
   }
 }
 
+TEST_CASE("Enum PropertyView") {
+  CesiumGltf::Enum enumDef;
+  enumDef.name = "TestEnum";
+  enumDef.valueType =
+      convertPropertyComponentTypeToString(PropertyComponentType::Uint8);
+  enumDef.values = {
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2)};
+
+  SUBCASE("Constructs empty PropertyView") {
+    PropertyView<uint8_t> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    PropertyView<uint8_t> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Enum);
+  }
+
+  SUBCASE("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SUBCASE("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = true;
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SUBCASE("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.required = false;
+    classProperty.noData = "Baz";
+    classProperty.defaultProperty = "Bar";
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+
+    REQUIRE(view.noData().value() == 2);
+    REQUIRE(view.defaultValue().value() == 1);
+  }
+
+  SUBCASE("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.required = true;
+    classProperty.defaultProperty = "Bar";
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = "null";
+    view = PropertyView<uint8_t>(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SUBCASE("Reports errors for noData and defaultProperty when they are not "
+          "present in the enum") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.required = false;
+    classProperty.defaultProperty = "Bar";
+    classProperty.noData = "Qux";
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
+    view = PropertyView<uint8_t>(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+
+    classProperty.defaultProperty = "Qux";
+    classProperty.noData = "Bar";
+    view = PropertyView<uint8_t>(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+  }
+
+  SUBCASE("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.defaultProperty = true;
+
+    PropertyView<uint8_t> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = JsonValue::Array{"null"};
+    view = PropertyView<uint8_t>(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+}
+
 TEST_CASE("Boolean Array PropertyView") {
   SUBCASE("Constructs empty PropertyView") {
     PropertyView<PropertyArrayView<bool>> view;
@@ -1255,6 +1423,14 @@ TEST_CASE("Boolean Array PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<bool>> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Boolean);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -1339,6 +1515,14 @@ TEST_CASE("Scalar Array PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<uint32_t>> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Scalar);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -1588,6 +1772,14 @@ TEST_CASE("Scalar Array PropertyView (normalized)") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::SCALAR;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<int64_t>, true> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Scalar);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -1813,6 +2005,14 @@ TEST_CASE("VecN Array PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC2;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<glm::ivec2>> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Vec2);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -2058,6 +2258,14 @@ TEST_CASE("VecN Array PropertyView (normalized)") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::VEC4;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<glm::dvec4>, true> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Vec4);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::VEC2;
@@ -2279,6 +2487,14 @@ TEST_CASE("MatN Array PropertyView") {
     REQUIRE(!view.required());
     REQUIRE(!view.noData());
     REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT2;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<glm::mat2>> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Mat2);
   }
 
   SUBCASE("Reports type mismatch") {
@@ -2662,6 +2878,14 @@ TEST_CASE("MatN Array PropertyView (normalized)") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::MAT4;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<glm::imat4x4>, true> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Mat4);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::MAT4;
@@ -2975,6 +3199,14 @@ TEST_CASE("String Array PropertyView") {
     REQUIRE(!view.defaultValue());
   }
 
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::STRING;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<std::string_view>> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::String);
+  }
+
   SUBCASE("Reports type mismatch") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::BOOLEAN;
@@ -3055,6 +3287,122 @@ TEST_CASE("String Array PropertyView") {
 
     classProperty.noData = JsonValue::Array{"null", 0};
     view = PropertyView<PropertyArrayView<std::string_view>>(classProperty);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+}
+
+TEST_CASE("Enum Array PropertyView") {
+  CesiumGltf::Enum enumDef;
+  enumDef.name = "TestEnum";
+  enumDef.valueType =
+      convertPropertyComponentTypeToString(PropertyComponentType::Uint8);
+  enumDef.values = {
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2)};
+
+  SUBCASE("Constructs empty PropertyView") {
+    PropertyView<PropertyArrayView<uint8_t>> view;
+    REQUIRE(view.status() == PropertyViewStatus::ErrorNonexistentProperty);
+    REQUIRE(view.arrayCount() == 0);
+    REQUIRE(!view.normalized());
+    REQUIRE(!view.offset());
+    REQUIRE(!view.scale());
+    REQUIRE(!view.max());
+    REQUIRE(!view.min());
+    REQUIRE(!view.required());
+    REQUIRE(!view.noData());
+    REQUIRE(!view.defaultValue());
+  }
+
+  SUBCASE("Correct property type") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = true;
+    PropertyView<PropertyArrayView<int32_t>> view(classProperty);
+    REQUIRE(view.propertyType() == PropertyType::Enum);
+  }
+
+  SUBCASE("Reports type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::BOOLEAN;
+    classProperty.array = true;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorTypeMismatch);
+  }
+
+  SUBCASE("Reports array type mismatch") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = false;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SUBCASE("Constructs with count") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = true;
+    classProperty.count = 5;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(view.arrayCount() == classProperty.count);
+  }
+
+  SUBCASE("Constructs with noData and defaultProperty") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = true;
+    classProperty.required = false;
+    classProperty.noData = {"Foo", "Bar"};
+    classProperty.defaultProperty = {"Bar", "Baz"};
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::Valid);
+    REQUIRE(!view.required());
+    REQUIRE(view.noData());
+    REQUIRE(view.defaultValue());
+
+    const auto noData = *view.noData();
+    REQUIRE(noData.size() == 2);
+    REQUIRE(noData[0] == 0);
+    REQUIRE(noData[1] == 1);
+
+    const auto defaultValue = *view.defaultValue();
+    REQUIRE(defaultValue.size() == 2);
+    REQUIRE(defaultValue[0] == 1);
+    REQUIRE(defaultValue[1] == 2);
+  }
+
+  SUBCASE("Reports errors for incorrectly defined properties") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = true;
+    classProperty.required = true;
+    classProperty.defaultProperty = {"default1", "default2"};
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = {"null", "0"};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
+  }
+
+  SUBCASE("Reports errors for invalid types") {
+    ClassProperty classProperty;
+    classProperty.type = ClassProperty::Type::ENUM;
+    classProperty.array = true;
+    classProperty.defaultProperty = true;
+
+    PropertyView<PropertyArrayView<uint8_t>> view(classProperty, &enumDef);
+    REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidDefaultValue);
+
+    classProperty.noData = JsonValue::Array{"null", 0};
+    view = PropertyView<PropertyArrayView<uint8_t>>(classProperty, &enumDef);
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
   }
 }
