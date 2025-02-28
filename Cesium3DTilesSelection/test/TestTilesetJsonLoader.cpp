@@ -18,7 +18,10 @@
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyTableView.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -43,9 +46,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltf/PropertyTableView.h>
-#include <CesiumGltf/PropertyTablePropertyView.h>
 
 using namespace doctest;
 using namespace CesiumAsync;
@@ -106,7 +106,6 @@ TileLoadResult loadTileContent(
   return tileLoadResultFuture.wait();
 }
 } // namespace
-
 
 Cesium3DTilesSelection::TilesetContentLoaderResult<TilesetJsonLoader>
 Cesium3DTilesSelection::createTilesetJsonLoader(
@@ -720,8 +719,8 @@ TEST_CASE("Test loading individual tile of tileset json") {
   }
 
   SUBCASE("Tile with complex structural metadata") {
-    auto loaderResult = createTilesetJsonLoader(
-        testDataPath / "ComplexTypes" / "tileset.json");
+    auto loaderResult =
+        createTilesetJsonLoader(testDataPath / "ComplexTypes" / "tileset.json");
     REQUIRE(loaderResult.pRootTile);
     REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
 
@@ -754,35 +753,129 @@ TEST_CASE("Test loading individual tile of tileset json") {
     PropertyTableView view(*pModel, propertyTable);
     REQUIRE(view.status() == PropertyTableViewStatus::Valid);
 
-    const PropertyTablePropertyView<PropertyArrayView<uint8_t>, true> pVarLenUintPropertyView =
+    const std::array<std::vector<uint8_t>, 4> expectedUint8{
+        std::vector<uint8_t>{0, 255},
+        std::vector<uint8_t>{0, 128, 255},
+        std::vector<uint8_t>{0, 85, 170, 255},
+        std::vector<uint8_t>{0, 64, 128, 192, 255}};
+    const PropertyTablePropertyView<PropertyArrayView<uint8_t>, true>
+        varLenUintPropertyView =
             view.getPropertyView<PropertyArrayView<uint8_t>, true>(
-            "example_variable_length_ARRAY_normalized_UINT8");
+                "example_variable_length_ARRAY_normalized_UINT8");
     REQUIRE(
-        pVarLenUintPropertyView.status() ==
+        varLenUintPropertyView.status() ==
         PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(varLenUintPropertyView.size() == expectedUint8.size());
+    for (size_t i = 0; i < expectedUint8.size(); i++) {
+      const auto& value =
+          varLenUintPropertyView.getRaw(static_cast<int64_t>(i));
+      for (int64_t j = 0; j < value.size(); j++) {
+        CHECK(expectedUint8[i][static_cast<size_t>(j)] == value[j]);
+      }
+    }
 
+    const std::array<std::vector<bool>, 4> expectedBool{
+        std::vector<bool>{
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false},
+        std::vector<bool>{
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true},
+        std::vector<bool>{
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false},
+        std::vector<bool>{
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true}};
     const PropertyTablePropertyView<PropertyArrayView<bool>, false>
-        pFixedLenBoolPropertyView =
+        fixedLenBoolPropertyView =
             view.getPropertyView<PropertyArrayView<bool>, false>(
-            "example_fixed_length_ARRAY_BOOLEAN");
+                "example_fixed_length_ARRAY_BOOLEAN");
     REQUIRE(
-        pFixedLenBoolPropertyView.status() ==
+        fixedLenBoolPropertyView.status() ==
         PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(fixedLenBoolPropertyView.size() == expectedBool.size());
+    for (size_t i = 0; i < expectedBool.size(); i++) {
+      const auto& value = fixedLenBoolPropertyView.get(static_cast<int64_t>(i));
+      REQUIRE(value);
+      for (int64_t j = 0; j < value->size(); j++) {
+        CHECK(expectedBool[i][static_cast<size_t>(j)] == (*value)[j]);
+      }
+    }
 
+    const std::array<std::vector<std::string>, 4> expectedString{
+        std::vector<std::string>{"One"},
+        std::vector<std::string>{"One", "Two"},
+        std::vector<std::string>{"One", "Two", "Three"},
+        std::vector<std::string>{"One", "Two", "Theee", "Four"}};
     const PropertyTablePropertyView<PropertyArrayView<std::string_view>, false>
-        pVarLenStringPropertyView =
+        varLenStringPropertyView =
             view.getPropertyView<PropertyArrayView<std::string_view>, false>(
-            "example_variable_length_ARRAY_STRING");
+                "example_variable_length_ARRAY_STRING");
     REQUIRE(
-        pVarLenStringPropertyView.status() ==
+        varLenStringPropertyView.status() ==
         PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(varLenStringPropertyView.size() == expectedString.size());
+    for (size_t i = 0; i < expectedString.size(); i++) {
+      const auto& value = varLenStringPropertyView.get(static_cast<int64_t>(i));
+      REQUIRE(value);
+      for (int64_t j = 0; j < value->size(); j++) {
+        CHECK(expectedString[i][static_cast<size_t>(j)] == (*value)[j]);
+      }
+    }
 
+    const std::array<std::vector<uint16_t>, 4> expectedEnum{
+        std::vector<uint16_t>{0, 1},
+        std::vector<uint16_t>{1, 2},
+        std::vector<uint16_t>{2, 0},
+        std::vector<uint16_t>{1, 2},
+    };
     const PropertyTablePropertyView<PropertyArrayView<uint16_t>, false>
-        pFixedLenArrayPropertyView =
+        fixenLenEnumPropertyView =
             view.getPropertyView<PropertyArrayView<uint16_t>, false>(
                 "example_fixed_length_ARRAY_ENUM");
     REQUIRE(
-        pFixedLenArrayPropertyView.status() ==
+        fixenLenEnumPropertyView.status() ==
         PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(fixenLenEnumPropertyView.size() == expectedEnum.size());
+    for (size_t i = 0; i < expectedEnum.size(); i++) {
+      const auto& value = fixenLenEnumPropertyView.get(static_cast<int64_t>(i));
+      REQUIRE(value);
+      for (int64_t j = 0; j < value->size(); j++) {
+        CHECK(expectedEnum[i][static_cast<size_t>(j)] == (*value)[j]);
+      }
+    }
   }
 }

@@ -3517,11 +3517,11 @@ TEST_CASE("Test variable-length arrays of strings") {
   }
 
   std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint32_t));
-  std::vector<std::byte> stringOffsets((numOfElements + 1) * sizeof(uint32_t));
+  std::vector<std::byte> stringOffsets((numOfElements + 1) * sizeof(uint16_t));
   std::vector<std::byte> values(totalBytes);
   uint32_t* offsetValue = reinterpret_cast<uint32_t*>(offsets.data());
-  uint32_t* stringOffsetValue =
-      reinterpret_cast<uint32_t*>(stringOffsets.data());
+  uint16_t* stringOffsetValue =
+      reinterpret_cast<uint16_t*>(stringOffsets.data());
   size_t strOffsetIdx = 0;
   for (size_t i = 0; i < expected.size(); ++i) {
     for (size_t j = 0; j < expected[i].size(); ++j) {
@@ -3533,13 +3533,12 @@ TEST_CASE("Test variable-length arrays of strings") {
 
       stringOffsetValue[strOffsetIdx + 1] =
           stringOffsetValue[strOffsetIdx] +
-          static_cast<uint32_t>(expectedValue.size());
+          static_cast<uint16_t>(expectedValue.size());
       ++strOffsetIdx;
     }
 
     offsetValue[i + 1] =
-        offsetValue[i] +
-        static_cast<uint32_t>(expected[i].size() * sizeof(uint32_t));
+        offsetValue[i] + static_cast<uint32_t>(expected[i].size());
   }
 
   addBufferToModel(model, values);
@@ -3571,7 +3570,7 @@ TEST_CASE("Test variable-length arrays of strings") {
   propertyTableProperty.arrayOffsetType =
       PropertyTableProperty::ArrayOffsetType::UINT32;
   propertyTableProperty.stringOffsetType =
-      PropertyTableProperty::StringOffsetType::UINT32;
+      PropertyTableProperty::StringOffsetType::UINT16;
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
   propertyTableProperty.arrayOffsets =
       static_cast<int32_t>(arrayOffsetBufferView);
@@ -3653,13 +3652,13 @@ TEST_CASE("Test variable-length arrays of strings") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT16;
+        PropertyTableProperty::StringOffsetType::UINT32;
     arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+            ErrorBufferViewSizeNotDivisibleByTypeSize);
 
     propertyTableProperty.stringOffsetType = "NONSENSE";
     arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
@@ -3668,7 +3667,7 @@ TEST_CASE("Test variable-length arrays of strings") {
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType);
     propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT32;
+        PropertyTableProperty::StringOffsetType::UINT16;
   }
 
   SUBCASE("Array offset values are not sorted ascending") {
@@ -3715,10 +3714,10 @@ TEST_CASE("Test variable-length arrays of strings") {
   }
 
   SUBCASE("String offset value points outside of value buffer") {
-    uint32_t* offset = reinterpret_cast<uint32_t*>(
+    uint16_t* offset = reinterpret_cast<uint16_t*>(
         model.buffers[stringOffsetBuffer].cesium.data.data());
-    uint32_t previousValue = offset[6];
-    offset[6] = static_cast<uint32_t>(100000);
+    uint16_t previousValue = offset[6];
+    offset[6] = static_cast<uint16_t>(10000);
     PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
             view.getPropertyView<PropertyArrayView<std::string_view>>(
