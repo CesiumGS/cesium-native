@@ -69,8 +69,7 @@ public:
    * @brief Initializes a new instance with
    * {@link TileSelectionState::Result::None}
    */
-  constexpr TileSelectionState() noexcept
-      : _frameNumber(0), _result(Result::None) {}
+  constexpr TileSelectionState() noexcept : _result(Result::None) {}
 
   /**
    * @brief Initializes a new instance with a given
@@ -79,15 +78,7 @@ public:
    * @param frameNumber The frame number in which the selection took place.
    * @param result The result of the selection.
    */
-  constexpr TileSelectionState(int32_t frameNumber, Result result) noexcept
-      : _frameNumber(frameNumber), _result(result) {}
-
-  /**
-   * @brief Gets the frame number in which selection took place.
-   */
-  constexpr int32_t getFrameNumber() const noexcept {
-    return this->_frameNumber;
-  }
+  constexpr TileSelectionState(Result result) noexcept : _result(result) {}
 
   /**
    * @brief Gets the result of selection.
@@ -99,12 +90,7 @@ public:
    * @param frameNumber The previous frame number.
    * @return The {@link TileSelectionState::Result}
    */
-  constexpr Result getResult(int32_t /* frameNumber */) const noexcept {
-    // if (this->_frameNumber != frameNumber) {
-    //   return Result::None;
-    // }
-    return this->_result;
-  }
+  constexpr Result getResult() const noexcept { return this->_result; }
 
   /**
    * @brief Determines if this tile or its descendents were kicked from the
@@ -114,11 +100,10 @@ public:
    * {@link TileSelectionState::Result::RenderedAndKicked} or
    * {@link TileSelectionState::Result::RefinedAndKicked}.
    *
-   * @param frameNumber The previous frame number.
    * @return `true` if the tile was kicked, and `false` otherwise
    */
-  constexpr bool wasKicked(int32_t frameNumber) const noexcept {
-    const Result result = this->getResult(frameNumber);
+  constexpr bool wasKicked() const noexcept {
+    const Result result = this->getResult();
     return result == Result::RenderedAndKicked ||
            result == Result::RefinedAndKicked;
   }
@@ -128,11 +113,10 @@ public:
    *
    * If the tile wasn't kicked, the original value is returned.
    *
-   * @param frameNumber The previous frame number.
    * @return The {@link TileSelectionState::Result} prior to being kicked.
    */
-  constexpr Result getOriginalResult(int32_t frameNumber) const noexcept {
-    const Result result = this->getResult(frameNumber);
+  constexpr Result getOriginalResult() const noexcept {
+    const Result result = this->getResult();
 
     switch (result) {
     case Result::RefinedAndKicked:
@@ -161,7 +145,6 @@ public:
   }
 
 private:
-  int32_t _frameNumber;
   Result _result;
 };
 
