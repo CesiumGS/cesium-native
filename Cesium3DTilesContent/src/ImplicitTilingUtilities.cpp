@@ -374,15 +374,16 @@ ImplicitTilingUtilities::computeBoundingVolume(
 
   double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
   double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
+  double maxAngle = minAngle + angleDim;
 
-  // Ensure that the angular bounds stay within the [-pi, pi] range.
-  minAngle = CesiumUtility::Math::convertLongitudeRange(minAngle);
-  double maxAngle =
-      CesiumUtility::Math::convertLongitudeRange(minAngle + angleDim);
+  // Ensure that the angular bounds stay within the [-pi, pi] range, but don't
+  // accidentally wrap pi to -pi.
+  if (minAngle >= CesiumUtility::Math::OnePi) {
+    minAngle = CesiumUtility::Math::convertLongitudeRange(minAngle);
+  }
 
-  // ...But make sure maxAngle doesn't wrap around to -pi.
-  if (maxAngle == -CesiumUtility::Math::OnePi) {
-    maxAngle = CesiumUtility::Math::OnePi;
+  if (maxAngle > CesiumUtility::Math::OnePi) {
+    maxAngle = CesiumUtility::Math::convertLongitudeRange(maxAngle);
   }
 
   return CesiumGeometry::BoundingCylinderRegion(
