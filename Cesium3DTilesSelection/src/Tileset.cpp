@@ -663,7 +663,6 @@ void markTileNonRendered(
 
 void markTileNonRendered(
     TilesetViewGroup& viewGroup,
-    int32_t /* lastFrameNumber */,
     Tile& tile,
     ViewUpdateResult& result) {
   const TileSelectionState::Result lastResult =
@@ -673,7 +672,6 @@ void markTileNonRendered(
 
 void markChildrenNonRendered(
     TilesetViewGroup& viewGroup,
-    int32_t lastFrameNumber,
     TileSelectionState::Result lastResult,
     Tile& tile,
     ViewUpdateResult& result) {
@@ -682,35 +680,28 @@ void markChildrenNonRendered(
       const TileSelectionState::Result childLastResult =
           viewGroup.getPreviousSelectionState(child).getResult();
       markTileNonRendered(childLastResult, child, result);
-      markChildrenNonRendered(
-          viewGroup,
-          lastFrameNumber,
-          childLastResult,
-          child,
-          result);
+      markChildrenNonRendered(viewGroup, childLastResult, child, result);
     }
   }
 }
 
 void markChildrenNonRendered(
     TilesetViewGroup& viewGroup,
-    int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
   const TileSelectionState::Result lastResult =
       viewGroup.getPreviousSelectionState(tile).getResult();
-  markChildrenNonRendered(viewGroup, lastFrameNumber, lastResult, tile, result);
+  markChildrenNonRendered(viewGroup, lastResult, tile, result);
 }
 
 void markTileAndChildrenNonRendered(
     TilesetViewGroup& viewGroup,
-    int32_t lastFrameNumber,
     Tile& tile,
     ViewUpdateResult& result) {
   const TileSelectionState::Result lastResult =
       viewGroup.getPreviousSelectionState(tile).getResult();
   markTileNonRendered(lastResult, tile, result);
-  markChildrenNonRendered(viewGroup, lastFrameNumber, lastResult, tile, result);
+  markChildrenNonRendered(viewGroup, lastResult, tile, result);
 }
 
 /**
@@ -1007,11 +998,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     const TileSelectionState lastFrameSelectionState =
         frameState.viewGroup.getPreviousSelectionState(tile);
 
-    markTileAndChildrenNonRendered(
-        frameState.viewGroup,
-        frameState.lastFrameNumber,
-        tile,
-        result);
+    markTileAndChildrenNonRendered(frameState.viewGroup, tile, result);
     frameState.viewGroup.setCurrentSelectionState(
         tile,
         TileSelectionState(TileSelectionState::Result::Culled));
@@ -1096,14 +1083,12 @@ namespace {
  * @param tile The tile to check, which is assumed to meet the SSE for
  * rendering.
  * @param lastFrameSelectionState The selection state of this tile last frame.
- * @param lastFrameNumber The previous frame number.
  * @return True if this tile must be refined instead of rendered, so that we can
  * continue rendering deeper tiles.
  */
 bool mustContinueRefiningToDeeperTiles(
     const Tile& tile,
-    const TileSelectionState& lastFrameSelectionState,
-    int32_t /* lastFrameNumber */) noexcept {
+    const TileSelectionState& lastFrameSelectionState) noexcept {
   const TileSelectionState::Result originalResult =
       lastFrameSelectionState.getOriginalResult();
 
@@ -1121,11 +1106,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
   const TileSelectionState lastFrameSelectionState =
       frameState.viewGroup.getPreviousSelectionState(tile);
 
-  markChildrenNonRendered(
-      frameState.viewGroup,
-      frameState.lastFrameNumber,
-      tile,
-      result);
+  markChildrenNonRendered(frameState.viewGroup, tile, result);
   frameState.viewGroup.setCurrentSelectionState(
       tile,
       TileSelectionState(TileSelectionState::Result::Rendered));
@@ -1435,10 +1416,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if (action == VisitTileAction::Render) {
     // This tile meets the screen-space error requirement, so we'd like to
     // render it, if we can.
-    bool mustRefine = mustContinueRefiningToDeeperTiles(
-        tile,
-        lastFrameSelectionState,
-        frameState.lastFrameNumber);
+    bool mustRefine =
+        mustContinueRefiningToDeeperTiles(tile, lastFrameSelectionState);
     if (mustRefine) {
       // // We must refine even though this tile meets the SSE.
       action = VisitTileAction::Refine;
@@ -1531,11 +1510,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         tilePriority);
   } else {
     if (tile.getRefine() != TileRefine::Add) {
-      markTileNonRendered(
-          frameState.viewGroup,
-          frameState.lastFrameNumber,
-          tile,
-          result);
+      markTileNonRendered(frameState.viewGroup, tile, result);
     }
 
     frameState.viewGroup.setCurrentSelectionState(
