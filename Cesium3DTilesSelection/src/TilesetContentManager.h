@@ -156,7 +156,7 @@ public:
   unloadCachedBytes(int64_t maximumCachedBytes, double timeBudgetMilliseconds);
   void clearChildrenRecursively(Tile* pTile) noexcept;
 
-  const LoadedTileEnumerator& getLoadedTileEnumerator() const;
+  LoadedTileEnumerator createLoadedTileEnumerator() const;
 
 private:
   static void setTileContent(
@@ -206,8 +206,6 @@ private:
 
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
-
-  LoadedTileEnumerator _loadedTileEnumerator;
 
   Tile::UnusedLinkedList _unusedTiles;
 };

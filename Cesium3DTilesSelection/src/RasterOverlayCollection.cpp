@@ -53,7 +53,7 @@ RasterOverlayCollection::RasterOverlayCollection(
     const LoadedTileEnumerator& loadedTiles,
     const TilesetExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
-    : _pLoadedTiles(&loadedTiles),
+    : _loadedTiles(loadedTiles),
       _externals{externals},
       _ellipsoid(ellipsoid),
       _pOverlays(nullptr) {}
@@ -102,7 +102,7 @@ void RasterOverlayCollection::add(
           nullptr);
 
   // Add a placeholder for this overlay to existing geometry tiles.
-  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
+  forEachTile(this->_loadedTiles, [&](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     // - When a tile is transitioned from Unloaded to Loading, raster overlay
     // tiles will be mapped to the tile automatically by TilesetContentManager,
@@ -186,7 +186,7 @@ void RasterOverlayCollection::remove(
   auto pPrepareRenderResources =
       this->_externals.pPrepareRendererResources.get();
   forEachTile(
-      *this->_pLoadedTiles,
+      this->_loadedTiles,
       [&removeCondition, pPrepareRenderResources](Tile& tile) {
         std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 

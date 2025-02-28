@@ -548,7 +548,7 @@ float Tileset::computeLoadProgress() noexcept {
 void Tileset::forEachLoadedTile(
     const std::function<void(Tile& tile)>& callback) {
   for (const Tile& tile :
-       this->_pTilesetContentManager->getLoadedTileEnumerator()) {
+       this->_pTilesetContentManager->createLoadedTileEnumerator()) {
     callback(const_cast<Tile&>(tile));
   }
 }
@@ -556,7 +556,7 @@ void Tileset::forEachLoadedTile(
 void Tileset::forEachLoadedTile(
     const std::function<void(const Tile& tile)>& callback) const {
   for (const Tile& tile :
-       this->_pTilesetContentManager->getLoadedTileEnumerator()) {
+       this->_pTilesetContentManager->createLoadedTileEnumerator()) {
     callback(tile);
   }
 }

@@ -352,6 +352,9 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     }
   }
 
+  LoadedTileEnumerator loadedTiles =
+      contentManager.createLoadedTileEnumerator();
+
   // No direct height query possible, so download and sample tiles.
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
@@ -361,7 +364,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       // the query ray.
       query.findCandidateTiles(
           contentManager.getRootTile(),
-          contentManager.getLoadedTileEnumerator(),
+          loadedTiles,
           warnings);
     } else {
       // Refine the current set of candidate tiles, in case further tiles from
@@ -381,13 +384,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
-          query.findCandidateTiles(
-              pCandidate,
-              contentManager.getLoadedTileEnumerator(),
-              warnings);
+          query.findCandidateTiles(pCandidate, loadedTiles, warnings);
         } else {
           // Make sure this tile stays loaded.
-          markTileVisited(contentManager.getLoadedTileEnumerator(), pCandidate);
+          markTileVisited(loadedTiles, pCandidate);
 
           // Check again next frame to see if this tile has children.
           pCandidate->incrementDoNotUnloadSubtreeCount(
@@ -421,7 +421,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       // Additive tiles are only enumerated once in findCandidateTiles, so we
       // need to continue every frame to make sure they're not unloaded before
       // we're done with them.
-      markTileVisited(contentManager.getLoadedTileEnumerator(), pTile);
+      markTileVisited(loadedTiles, pTile);
 
       checkTile(pTile);
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -208,7 +209,7 @@ private:
         placeholders{};
   };
 
-  const LoadedTileEnumerator* _pLoadedTiles;
+  LoadedTileEnumerator _loadedTiles;
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;
