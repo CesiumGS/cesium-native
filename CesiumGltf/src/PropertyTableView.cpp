@@ -94,7 +94,7 @@ PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint8_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -102,7 +102,7 @@ PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint16_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -110,7 +110,7 @@ PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint32_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -118,7 +118,7 @@ PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint64_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);

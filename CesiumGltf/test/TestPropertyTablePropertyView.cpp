@@ -3400,10 +3400,10 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
   // clang-format off
   std::vector<uint32_t> arrayOffsets{
     0,
-    4 * sizeof(uint32_t),
-    7 * sizeof(uint32_t),
-    8 * sizeof(uint32_t),
-    12 * sizeof(uint32_t)
+    4,
+    7,
+    8,
+    12
   };
 
   std::vector<std::string> strings{
