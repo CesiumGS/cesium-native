@@ -64,7 +64,7 @@ TEST_CASE("BoundingCylinderRegion::toOrientedBoundingBox test") {
         glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo));
     CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(-1.0, 1.0, 0.0);
+    glm::dvec3 expectedCenter(1.0, 1.0, 0.0);
     glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.5);
 
     CHECK(box.getCenter() == expectedCenter);
@@ -82,8 +82,8 @@ TEST_CASE("BoundingCylinderRegion::toOrientedBoundingBox test") {
             -CesiumUtility::Math::PiOverTwo));
     CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(0.0, -1.0, 0.0);
-    glm::dmat3 expectedHalfAxes(2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.5);
+    glm::dvec3 expectedCenter(-1.0, 0.0, 0.0);
+    glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.5);
 
     CHECK(CesiumUtility::Math::equalsEpsilon(
         box.getCenter(),
@@ -175,7 +175,7 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
     CesiumGeometry::OrientedBoundingBox box =
         transformedRegion.toOrientedBoundingBox();
 
-    glm::dvec3 expectedCenter(0.0, 3.0, 3.0);
+    glm::dvec3 expectedCenter(2.0, 2.0, 2.0);
     glm::dmat3 expectedHalfAxes(1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.5, 0.0);
 
     CHECK(box.getCenter() == expectedCenter);
@@ -203,7 +203,7 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
     // Verify construction before the additional transform.
     {
       CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
-      glm::dvec3 expectedCenter(-2.0, 1.0, 1.0);
+      glm::dvec3 expectedCenter(-1.0, 1.0, 2.0);
       glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.5, 0.0, 0);
 
       CHECK(CesiumUtility::Math::equalsEpsilon(
@@ -221,32 +221,34 @@ TEST_CASE("BoundingCylinderRegion::transform test") {
     }
 
     BoundingCylinderRegion transformedRegion = region.transform(transform);
-    glm::dmat4 finalTransform =
-        transform * glm::translate(glm::dmat4(1.0), translation) *
-        glm::dmat4(CesiumGeometry::Transforms::X_UP_TO_Z_UP);
-
-    glm::dvec3 expectedTranslation(0.0);
-    glm::dquat expectedRotation(1.0, 0.0, 0.0, 0.0);
-
-    CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
-        finalTransform,
-        &expectedTranslation,
-        &expectedRotation,
-        nullptr);
-
-    CHECK(transformedRegion.getTranslation() == expectedTranslation);
-    glm::dquat transformedRotation = transformedRegion.getRotation();
-    for (glm::length_t i = 0; i < 3; i++) {
-      CHECK(CesiumUtility::Math::equalsEpsilon(
-          transformedRotation[i],
-          expectedRotation[i],
-          CesiumUtility::Math::Epsilon6));
-    }
 
     {
-      CesiumGeometry::OrientedBoundingBox box = region.toOrientedBoundingBox();
-      glm::dvec3 expectedCenter(-2.0, 1.0, 1.0);
-      glm::dmat3 expectedHalfAxes(0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.5, 0.0, 0.0);
+      glm::dmat4 finalTransform =
+          transform * glm::translate(glm::dmat4(1.0), translation) *
+          glm::dmat4(CesiumGeometry::Transforms::X_UP_TO_Z_UP);
+
+      glm::dvec3 expectedTranslation(0.0);
+      glm::dquat expectedRotation(1.0, 0.0, 0.0, 0.0);
+
+      CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
+          finalTransform,
+          &expectedTranslation,
+          &expectedRotation,
+          nullptr);
+
+      CHECK(transformedRegion.getTranslation() == expectedTranslation);
+      glm::dquat transformedRotation = transformedRegion.getRotation();
+      for (glm::length_t i = 0; i < 3; i++) {
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            transformedRotation[i],
+            expectedRotation[i],
+            CesiumUtility::Math::Epsilon6));
+      }
+      CesiumGeometry::OrientedBoundingBox box =
+          transformedRegion.toOrientedBoundingBox();
+      glm::dvec3 expectedCenter(0.0, 4.0, 2.0);
+      glm::dmat3
+          expectedHalfAxes(0.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.5, 0.0, 0.0);
 
       CHECK(CesiumUtility::Math::equalsEpsilon(
           box.getCenter(),
