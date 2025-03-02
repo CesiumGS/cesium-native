@@ -8,7 +8,6 @@
 
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
