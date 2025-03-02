@@ -11,8 +11,10 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
+#include <glm/common.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -367,20 +369,31 @@ ImplicitTilingUtilities::computeBoundingVolume(
   const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
 
   double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
-  double rootAngularRange = rootAngularBounds.y - rootAngularBounds.x;
+  double rootAngularRange = glm::abs(rootAngularBounds.y - rootAngularBounds.x);
 
   double radiusDim = rootRadiusRange / denominator;
   double angleDim = rootAngularRange / denominator;
 
   double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
   double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
+  double maxAngle = minAngle + angleDim;
+
+  // Ensure that the angular bounds stay within the [-pi, pi] range, but don't
+  // accidentally wrap pi to -pi.
+  if (minAngle >= CesiumUtility::Math::OnePi) {
+    minAngle = CesiumUtility::Math::convertLongitudeRange(minAngle);
+  }
+
+  if (maxAngle > CesiumUtility::Math::OnePi) {
+    maxAngle = CesiumUtility::Math::convertLongitudeRange(maxAngle);
+  }
 
   return CesiumGeometry::BoundingCylinderRegion(
       rootBoundingVolume.getTranslation(),
       rootBoundingVolume.getRotation(),
       rootBoundingVolume.getHeight(),
       glm::dvec2(minRadius, minRadius + radiusDim),
-      glm::dvec2(minAngle, minAngle + angleDim));
+      glm::dvec2(minAngle, maxAngle));
 }
 
 CesiumGeometry::BoundingCylinderRegion
@@ -393,7 +406,7 @@ ImplicitTilingUtilities::computeBoundingVolume(
   const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
 
   double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
-  double rootAngularRange = rootAngularBounds.y - rootAngularBounds.x;
+  double rootAngularRange = glm::abs(rootAngularBounds.y - rootAngularBounds.x);
   double rootHeight = rootBoundingVolume.getHeight();
 
   double radiusDim = rootRadiusRange / denominator;
@@ -402,6 +415,17 @@ ImplicitTilingUtilities::computeBoundingVolume(
 
   double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
   double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
+  double maxAngle = minAngle + angleDim;
+
+  // Ensure that the angular bounds stay within the [-pi, pi] range, but don't
+  // accidentally wrap pi to -pi.
+  if (minAngle >= CesiumUtility::Math::OnePi) {
+    minAngle = CesiumUtility::Math::convertLongitudeRange(minAngle);
+  }
+
+  if (maxAngle > CesiumUtility::Math::OnePi) {
+    maxAngle = CesiumUtility::Math::convertLongitudeRange(maxAngle);
+  }
 
   // Due to the smaller height, the region has to be translated along its local
   // height axis.
@@ -433,7 +457,7 @@ ImplicitTilingUtilities::computeBoundingVolume(
       rotation,
       heightDim,
       glm::dvec2(minRadius, minRadius + radiusDim),
-      glm::dvec2(minAngle, minAngle + angleDim));
+      glm::dvec2(minAngle, maxAngle));
 }
 
 double
