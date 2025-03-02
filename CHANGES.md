@@ -25,6 +25,7 @@
 - `Tile` children of external tilesets will now be cleared when the external tileset is unloaded, fixing a memory leak that happened as a result of these `Tile` skeletons accumulating over time.
 - Requests headers specified in `TilesetOptions` are now included in tile content requests. Previously they were only included in the root tileset.json / layer.json request.
 - Fixed a crash when loading a `tileset.json` without a valid root tile.
+- Fixed a bug that could cause variable length string arrays in `EXT_structural_metadata` to be interpreted incorrectly.
 
 ### v0.44.3 - 2025-02-12
 
