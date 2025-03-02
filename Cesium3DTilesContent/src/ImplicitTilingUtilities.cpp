@@ -406,7 +406,7 @@ ImplicitTilingUtilities::computeBoundingVolume(
   const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
 
   double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
-  double rootAngularRange = abs(rootAngularBounds.y - rootAngularBounds.x);
+  double rootAngularRange = glm::abs(rootAngularBounds.y - rootAngularBounds.x);
   double rootHeight = rootBoundingVolume.getHeight();
 
   double radiusDim = rootRadiusRange / denominator;
