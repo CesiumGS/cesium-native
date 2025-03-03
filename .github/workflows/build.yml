@@ -16,11 +16,16 @@ jobs:
   Linting:
     name: "Linting"
     runs-on: ubuntu-24.04
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
-      AWS_REGION: us-east-1
     steps:
+     - name: Capture AWS secrets
+        uses: aws-actions/configure-aws-credentials@v2
+        env:
+          AWS_S3_USERNAME: ${{ secrets.NATIVE_ACCESS_KEY }}
+          AWS_S3_PASSWORD: ${{ secrets.NATIVE_SECRET_KEY }}
+        with:
+          aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
+          aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
+          aws-region: us-east-1
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Install latest ninja and cmake
