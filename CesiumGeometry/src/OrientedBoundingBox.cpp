@@ -1,9 +1,8 @@
-#include "CesiumGeometry/OrientedBoundingBox.h"
-
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/BoundingSphere.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/Plane.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double3x3.hpp>

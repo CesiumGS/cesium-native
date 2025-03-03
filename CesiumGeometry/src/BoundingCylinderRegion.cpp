@@ -1,19 +1,17 @@
-#include "CesiumGeometry/BoundingCylinderRegion.h"
-
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/CullingResult.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-#include "CesiumGeometry/Plane.h"
-#include "CesiumGeometry/Transforms.h"
-#include "CesiumUtility/Math.h"
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
+#include <CesiumGeometry/Transforms.h>
+#include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
-#include <glm/matrix.hpp>
+#include <glm/trigonometric.hpp>
 
 #include <cmath>
 
@@ -27,32 +25,23 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
     double height,
     const glm::dvec2& radialBounds,
     const glm::dvec2& angularBounds) {
-  // The radial and angular bounds must be resolved to the scale of a box.
   double innerRadius = radialBounds.x;
   double outerRadius = radialBounds.y;
   double angleMin = angularBounds.x;
   double angleMax = angularBounds.y;
 
+  // The radial and angular bounds must be resolved to the scale of a box.
+  //
   // First, compute the min and max points (x, y) on the arc drawn by the given
   // angles. Recall that the angle opens counter-clockwise, such that 0 aligns
-  // with the +y axis. The -pi/pi discontinuity happens along -y.
+  // with the +x axis. The -pi/pi discontinuity happens along -x.
   //
-  // In polar coordinates, x = r * cos(a) and y = r * sin(a), but this is
-  // complicated by the angle starting along the y-axis. Here,
-  // x = r * -sin(a) and y = r * cos(a).
+  // The cartesian positions can resolved from the polar coordinates, where
+  // x = r * cos(a) and y = r * sin(a).
 
   // When the angle range is "reversed", the region sweeps over the -pi / pi
   // discontinuity line.
   bool angleReversed = angleMax < angleMin;
-  int angleMaxSign = int(glm::sign(angleMax));
-  int angleMinSign = int(glm::sign(angleMin));
-
-  bool angleCrossesZero = angleReversed ? angleMinSign == angleMaxSign
-                                        : angleMinSign != angleMaxSign;
-  angleCrossesZero |= angleMinSign == 0 || angleMaxSign == 0;
-
-  double yMin = angleReversed ? -1.0 : glm::min(cos(angleMin), cos(angleMax));
-  double yMax = angleCrossesZero ? 1.0 : glm::max(cos(angleMin), cos(angleMax));
 
   constexpr double piOverTwo = CesiumUtility::Math::PiOverTwo;
   bool angleCrossesNegativePiOverTwo =
@@ -62,11 +51,21 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
       angleReversed ? angleMin <= piOverTwo || angleMax >= piOverTwo
                     : angleMin <= piOverTwo && piOverTwo <= angleMax;
 
-  double xMin =
-      angleCrossesPiOverTwo ? -1.0 : glm::min(-sin(angleMin), -sin(angleMax));
-  double xMax = angleCrossesNegativePiOverTwo
+  double yMin = angleCrossesNegativePiOverTwo
+                    ? -1.0
+                    : glm::min(glm::sin(angleMin), glm::sin(angleMax));
+  double yMax = angleCrossesPiOverTwo
                     ? 1.0
-                    : glm::max(-sin(angleMin), -sin(angleMax));
+                    : glm::max(glm::sin(angleMin), glm::sin(angleMax));
+
+  int angleMaxSign = int(glm::sign(angleMax));
+  int angleMinSign = int(glm::sign(angleMin));
+  bool angleCrossesZero = angleReversed ? angleMinSign == angleMaxSign
+                                        : angleMinSign != angleMaxSign;
+  angleCrossesZero |= angleMinSign == 0 || angleMaxSign == 0;
+
+  double xMin = angleReversed ? -1.0 : glm::min(cos(angleMin), cos(angleMax));
+  double xMax = angleCrossesZero ? 1.0 : glm::max(cos(angleMin), cos(angleMax));
 
   glm::dvec2 min(xMin, yMin);
   glm::dvec2 max(xMax, yMax);
@@ -83,20 +82,13 @@ OrientedBoundingBox computeBoxFromCylinderRegion(
        glm::dvec3(outerRadius * max, zScale)});
 
   OrientedBoundingBox obb = OrientedBoundingBox::fromAxisAligned(aab);
-  glm::dvec3 center = obb.getCenter();
-
-  // If the input transform has a rotation, then it must be applied relative to
-  // the reference cylinder's origin (instead of the region's center).
-  glm::dmat4 centerCylinder = glm::translate(glm::dmat4(1.0), -center);
-  glm::dmat4 transformCylinder =
+  glm::dmat4 transform =
       CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
           translation,
           rotation,
           glm::dvec3(1.0));
-  glm::dmat4 finalTransform =
-      glm::inverse(centerCylinder) * transformCylinder * centerCylinder;
 
-  return obb.transform(finalTransform);
+  return obb.transform(transform);
 }
 
 } // namespace

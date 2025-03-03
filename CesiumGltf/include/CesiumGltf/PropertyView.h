@@ -1,11 +1,14 @@
 #pragma once
 
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 
+#include <algorithm>
 #include <cstring>
 #include <optional>
 
@@ -108,34 +111,60 @@ public:
    * @brief The property provided an invalid default value.
    */
   static const PropertyViewStatusType ErrorInvalidDefaultValue = 13;
+
+  /**
+   * @brief The property provided an invalid enum value.
+   */
+  static const PropertyViewStatusType ErrorInvalidEnum = 14;
 };
 
 /**
- * @brief Validates a \ref ClassProperty, checking for any type mismatches.
+ * @brief Validates a \ref ClassProperty representing a property, checking for
+ * any type mismatches.
+ *
+ * @tparam T The value type of the PropertyView that was constructed for this
+ * ClassProperty.
+ * @param classProperty The class property to validate.
+ * @param pEnumDefinition If the class property is an enum, this should be the
+ * enum definition. If not, this should be nullptr.
  *
  * @returns A \ref PropertyViewStatus value representing the error found while
  * validating, or \ref PropertyViewStatus::Valid if no errors were found.
  */
 template <typename T>
-PropertyViewStatusType
-validatePropertyType(const ClassProperty& classProperty) {
-  if (TypeToPropertyType<T>::value !=
-      convertStringToPropertyType(classProperty.type)) {
+PropertyViewStatusType validatePropertyType(
+    const ClassProperty& classProperty,
+    const CesiumGltf::Enum* pEnumDefinition = nullptr) {
+
+  if (!canRepresentPropertyType<T>(
+          convertStringToPropertyType(classProperty.type))) {
     return PropertyViewStatus::ErrorTypeMismatch;
+  }
+
+  const bool isEnum = classProperty.type == ClassProperty::Type::ENUM;
+  const bool hasEnumDefinition = pEnumDefinition != nullptr;
+  if (isEnum != hasEnumDefinition) {
+    return PropertyViewStatus::ErrorInvalidEnum;
   }
 
   PropertyComponentType expectedComponentType =
       TypeToPropertyType<T>::component;
+  if (isEnum) {
+    if (expectedComponentType !=
+        convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
+  } else {
+    if (!classProperty.componentType &&
+        expectedComponentType != PropertyComponentType::None) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
 
-  if (!classProperty.componentType &&
-      expectedComponentType != PropertyComponentType::None) {
-    return PropertyViewStatus::ErrorComponentTypeMismatch;
-  }
-
-  if (classProperty.componentType &&
-      expectedComponentType !=
-          convertStringToPropertyComponentType(*classProperty.componentType)) {
-    return PropertyViewStatus::ErrorComponentTypeMismatch;
+    if (classProperty.componentType &&
+        expectedComponentType != convertStringToPropertyComponentType(
+                                     *classProperty.componentType)) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
   }
 
   if (classProperty.array) {
@@ -146,33 +175,53 @@ validatePropertyType(const ClassProperty& classProperty) {
 }
 
 /**
- * @brief Validates a \ref ClassProperty representing an array, checking for any
- * type mismatches.
+ * @brief Validates a \ref ClassProperty representing an array of values,
+ * checking for any type mismatches.
+ *
+ * @tparam T The array type of the PropertyView that was constructed for this
+ * ClassProperty.
+ * @param classProperty The class property to validate.
+ * @param pEnumDefinition If the class property is an enum array, this should be
+ * the enum definition. If not, this should be nullptr.
  *
  * @returns A \ref PropertyViewStatus value representing the error found while
  * validating, or \ref PropertyViewStatus::Valid if no errors were found.
  */
 template <typename T>
-PropertyViewStatusType
-validateArrayPropertyType(const ClassProperty& classProperty) {
+PropertyViewStatusType validateArrayPropertyType(
+    const ClassProperty& classProperty,
+    const CesiumGltf::Enum* pEnumDefinition = nullptr) {
   using ElementType = typename MetadataArrayType<T>::type;
-  if (TypeToPropertyType<ElementType>::value !=
-      convertStringToPropertyType(classProperty.type)) {
+
+  if (!canRepresentPropertyType<ElementType>(
+          convertStringToPropertyType(classProperty.type))) {
     return PropertyViewStatus::ErrorTypeMismatch;
+  }
+
+  const bool isEnum = classProperty.type == ClassProperty::Type::ENUM;
+  const bool hasEnumDefinition = pEnumDefinition != nullptr;
+  if (isEnum != hasEnumDefinition) {
+    return PropertyViewStatus::ErrorInvalidEnum;
   }
 
   PropertyComponentType expectedComponentType =
       TypeToPropertyType<ElementType>::component;
+  if (isEnum) {
+    if (expectedComponentType !=
+        convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
+  } else {
+    if (!classProperty.componentType &&
+        expectedComponentType != PropertyComponentType::None) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
 
-  if (!classProperty.componentType &&
-      expectedComponentType != PropertyComponentType::None) {
-    return PropertyViewStatus::ErrorComponentTypeMismatch;
-  }
-
-  if (classProperty.componentType &&
-      expectedComponentType !=
-          convertStringToPropertyComponentType(*classProperty.componentType)) {
-    return PropertyViewStatus::ErrorComponentTypeMismatch;
+    if (classProperty.componentType &&
+        expectedComponentType != convertStringToPropertyComponentType(
+                                     *classProperty.componentType)) {
+      return PropertyViewStatus::ErrorComponentTypeMismatch;
+    }
   }
 
   if (!classProperty.array) {
@@ -323,13 +372,24 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _status(validatePropertyType<ElementType>(classProperty)),
+      : PropertyView(classProperty, nullptr) {}
+
+  /**
+   * @brief Constructs a property instance from a class definition and enum
+   * definition.
+   */
+  PropertyView(
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition)
+      : _status(
+            validatePropertyType<ElementType>(classProperty, pEnumDefinition)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -339,7 +399,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -349,14 +410,20 @@ public:
       return;
     }
 
-    getNumericPropertyValues(classProperty);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(classProperty);
+    }
+
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
-      if (!_required) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
         // "noData" can only be defined if the property is not required.
+        _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
+      } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getValue(*classProperty.noData);
       }
 
@@ -368,8 +435,12 @@ public:
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
         // "default" can only be defined if the property is not required.
+        _defaultValue =
+            getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
+      } else if (!_required && _propertyType != PropertyType::Enum) {
         _defaultValue = getValue(*classProperty.defaultProperty);
       }
 
@@ -399,54 +470,63 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
-   * its class definition.
+   * its class definition, with an optional associated enum definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
-      : PropertyView(classProperty) {
+      const PropertyTableProperty& property,
+      const CesiumGltf::Enum* pEnumDefinition = nullptr)
+      : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    getNumericPropertyValues(property);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(property);
+    }
   }
 
   /**
-   * @brief Constructs a property instance from a property texture property and
-   * its class definition.
+   * @brief Constructs a property instance from a property texture property,
+   * class definition, and an optional associated enum definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
-      : PropertyView(classProperty) {
+      const PropertyTextureProperty& property,
+      const CesiumGltf::Enum* pEnumDefinition = nullptr)
+      : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
-    // If the property has its own values, override the class-provided values.
-    getNumericPropertyValues(property);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(property);
+    }
   }
 
   /**
    * @brief Constructs a property instance from a property attribute property
-   * and its class definition.
+   * and its class definition, along with an optional enum definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyAttributeProperty& property)
-      : PropertyView(classProperty) {
+      const PropertyAttributeProperty& property,
+      const CesiumGltf::Enum* pEnumDefinition = nullptr)
+      : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    getNumericPropertyValues(property);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(property);
+    }
   }
 
 public:
@@ -565,6 +645,12 @@ public:
     return _defaultValue;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -582,6 +668,7 @@ private:
   bool _required;
   std::optional<ElementType> _noData;
   std::optional<ElementType> _defaultValue;
+  PropertyType _propertyType;
 
   /**
    * @brief Attempts to parse an ElementType from the given json value.
@@ -606,6 +693,28 @@ private:
     if constexpr (IsMetadataMatN<ElementType>::value) {
       return getMatN<ElementType>(jsonValue);
     }
+  }
+
+  static std::optional<ElementType> getEnumValue(
+      const CesiumUtility::JsonValue& value,
+      const CesiumGltf::Enum& enumDefinition) {
+    if (!value.isString()) {
+      return std::nullopt;
+    }
+
+    const CesiumUtility::JsonValue::String& valueStr = value.getString();
+    const auto foundValue = std::find_if(
+        enumDefinition.values.begin(),
+        enumDefinition.values.end(),
+        [&valueStr](const CesiumGltf::EnumValue& value) {
+          return value.name == valueStr;
+        });
+
+    if (foundValue == enumDefinition.values.end()) {
+      return std::nullopt;
+    }
+
+    return static_cast<ElementType>(foundValue->value);
   }
 
   using PropertyDefinitionType = std::variant<
@@ -709,7 +818,8 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -725,7 +835,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -782,7 +893,8 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -904,6 +1016,12 @@ public:
     return _defaultValue;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -921,6 +1039,7 @@ private:
   bool _required;
   std::optional<ElementType> _noData;
   std::optional<NormalizedType> _defaultValue;
+  PropertyType _propertyType;
 
   /**
    * @brief Attempts to parse from the given json value.
@@ -1063,7 +1182,8 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
 public:
@@ -1135,6 +1255,12 @@ public:
    * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
+
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -1237,7 +1363,8 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
 public:
@@ -1324,6 +1451,12 @@ public:
     return std::nullopt;
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::String; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1378,14 +1511,25 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
+      : PropertyView(classProperty, nullptr) {}
+
+  /**
+   * @brief Constructs a property instance from a class definition and enum
+   * definition.
+   */
+  PropertyView(
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition)
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
-            classProperty)),
+            classProperty,
+            pEnumDefinition)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -1396,7 +1540,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -1406,13 +1551,19 @@ public:
       return;
     }
 
-    getNumericPropertyValues(classProperty);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(classProperty);
+    }
+
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
-      if (!_required) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
+        _noData = getEnumArrayValue(*classProperty.noData, *pEnumDefinition);
+      } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getArrayValue(*classProperty.noData);
       }
 
@@ -1423,7 +1574,11 @@ public:
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required) {
+      if (!_required && _propertyType == PropertyType::Enum) {
+        CESIUM_ASSERT(pEnumDefinition != nullptr);
+        _defaultValue =
+            getEnumArrayValue(*classProperty.defaultProperty, *pEnumDefinition);
+      } else if (!_required && _propertyType != PropertyType::Enum) {
         _defaultValue = getArrayValue(*classProperty.defaultProperty);
       }
 
@@ -1453,38 +1608,45 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
-   * @brief Constructs a property instance from a property table property and
-   * its class definition.
+   * @brief Constructs a property instance from a property table property,
+   * its class definition, and an optional enum definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
-      : PropertyView(classProperty) {
+      const PropertyTableProperty& property,
+      const CesiumGltf::Enum* pEnumDefinition = nullptr)
+      : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    getNumericPropertyValues(property);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(property);
+    }
   }
 
   /**
-   * @brief Constructs a property instance from a property texture property and
-   * its class definition.
+   * @brief Constructs a property instance from a property texture property,
+   * its class definition, and an optional enum definition.
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
-      : PropertyView(classProperty) {
+      const PropertyTextureProperty& property,
+      const CesiumGltf::Enum* pEnumDefinition = nullptr)
+      : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    getNumericPropertyValues(property);
+    if (classProperty.type != ClassProperty::Type::ENUM) {
+      getNumericPropertyValues(property);
+    }
   }
 
 public:
@@ -1600,6 +1762,12 @@ public:
         _defaultValue->size()));
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property that this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -1619,6 +1787,7 @@ private:
   bool _required;
   std::optional<std::vector<std::byte>> _noData;
   std::optional<std::vector<std::byte>> _defaultValue;
+  PropertyType _propertyType;
 
   using PropertyDefinitionType = std::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
@@ -1739,6 +1908,44 @@ private:
 
     return result;
   }
+
+  static std::optional<std::vector<std::byte>> getEnumArrayValue(
+      const CesiumUtility::JsonValue& jsonValue,
+      const CesiumGltf::Enum& enumDefinition) {
+    if (!jsonValue.isArray()) {
+      return std::nullopt;
+    }
+
+    const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
+    std::vector<ElementType> values;
+    values.reserve(array.size());
+
+    for (size_t i = 0; i < array.size(); i++) {
+      if (!array[i].isString()) {
+        return std::nullopt;
+      }
+
+      // default and noData values for enums contain the name of the enum as a
+      // string
+      CesiumUtility::JsonValue::String str = array[i].getString();
+      auto foundValue = std::find_if(
+          enumDefinition.values.begin(),
+          enumDefinition.values.end(),
+          [&str](const CesiumGltf::EnumValue& value) {
+            return value.name == str;
+          });
+
+      if (foundValue == enumDefinition.values.end()) {
+        return std::nullopt;
+      }
+
+      values.push_back(static_cast<ElementType>(foundValue->value));
+    }
+
+    std::vector<std::byte> result(values.size() * sizeof(ElementType));
+    std::memcpy(result.data(), values.data(), result.size());
+    return result;
+  }
 };
 
 /**
@@ -1775,7 +1982,8 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -1793,7 +2001,8 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {
+        _defaultValue(std::nullopt),
+        _propertyType(convertStringToPropertyType(classProperty.type)) {
     if (_status != PropertyViewStatus::Valid) {
       return;
     }
@@ -1850,7 +2059,8 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt) {}
+        _defaultValue(std::nullopt),
+        _propertyType(PropertyType::Invalid) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -1998,6 +2208,12 @@ public:
         _defaultValue->size()));
   }
 
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return _propertyType; }
+
 protected:
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
@@ -2017,6 +2233,7 @@ private:
   bool _required;
   std::optional<std::vector<std::byte>> _noData;
   std::optional<std::vector<std::byte>> _defaultValue;
+  PropertyType _propertyType;
 
   using PropertyDefinitionType = std::
       variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
@@ -2192,7 +2409,8 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
 public:
@@ -2285,6 +2503,12 @@ public:
 
     return std::nullopt;
   }
+
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -2424,7 +2648,8 @@ protected:
    */
   PropertyView(
       const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/)
+      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
 public:
@@ -2531,6 +2756,12 @@ public:
 
     return std::nullopt;
   }
+
+  /**
+   * @brief Returns the \ref PropertyType of the property this view is
+   * accessing.
+   */
+  PropertyType propertyType() const noexcept { return PropertyType::String; }
 
 protected:
   /** @copydoc PropertyViewStatus */

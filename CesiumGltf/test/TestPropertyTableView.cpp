@@ -1,7 +1,10 @@
+#include "makeEnumValue.h"
+
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyArrayView.h>
@@ -34,6 +37,9 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumNativeTests;
+
+namespace {
 
 template <typename T>
 void addBufferToModel(Model& model, const std::vector<T>& values) {
@@ -50,6 +56,7 @@ void addBufferToModel(Model& model, const std::vector<T>& values) {
   valueBufferView.byteOffset = 0;
   valueBufferView.byteLength = valueBuffer.byteLength;
 }
+} // namespace
 
 TEST_CASE("Test PropertyTableView on model without EXT_structural_metadata "
           "extension") {
@@ -1193,6 +1200,234 @@ TEST_CASE("Test string PropertyTableProperty") {
     REQUIRE(
         stringProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
+  }
+}
+
+TEST_CASE("Test enum PropertyTableProperty") {
+  Model model;
+
+  const uint64_t expectedUint = 0xABADCAFEDEADBEEF;
+  std::vector<int64_t> expected{0, 1, 2, static_cast<int64_t>(expectedUint)};
+  std::vector<std::string> expectedNames{"Foo", "Bar", "Baz", "Uint64"};
+
+  addBufferToModel(model, expected);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+
+  schema.enums.emplace("TestEnum", Enum{});
+  Enum& enumDef = schema.enums["TestEnum"];
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2),
+      makeEnumValue("Uint64", static_cast<int64_t>(expectedUint))};
+  enumDef.valueType = Enum::ValueType::UINT64;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(expected.size());
+
+  PropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::ENUM;
+  testClassProperty.enumType = "TestEnum";
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::ENUM);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->enumType == "TestEnum");
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+  REQUIRE(!classProperty->normalized);
+
+  SUBCASE("Access correct type") {
+    PropertyTablePropertyView<uint64_t> enumProperty =
+        view.getPropertyView<uint64_t>("TestClassProperty");
+    REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
+    for (size_t i = 0; i < expected.size(); ++i) {
+      REQUIRE(enumProperty.getRaw(static_cast<int64_t>(i)) == expected[i]);
+      REQUIRE(enumProperty.get(static_cast<int64_t>(i)) == expected[i]);
+      REQUIRE(
+          enumDef.getName(*enumProperty.get(static_cast<int64_t>(i))) ==
+          expectedNames[i]);
+    }
+  }
+
+  SUBCASE("Wrong type") {
+    PropertyTablePropertyView<int64_t> enumProperty =
+        view.getPropertyView<int64_t>("TestClassProperty");
+    REQUIRE(
+        enumProperty.status() ==
+        PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SUBCASE("Wrong array type") {
+    PropertyTablePropertyView<PropertyArrayView<uint64_t>> enumArrayInvalid =
+        view.getPropertyView<PropertyArrayView<uint64_t>>("TestClassProperty");
+    REQUIRE(
+        enumArrayInvalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SUBCASE("Valid uint64_t -> int64_t -> uint64_t round trip") {
+    PropertyTablePropertyView<uint64_t> enumProperty =
+        view.getPropertyView<uint64_t>("TestClassProperty");
+    REQUIRE(enumProperty.status() == PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(enumProperty.getRaw(3) == static_cast<int64_t>(expectedUint));
+    REQUIRE(static_cast<uint64_t>(enumProperty.getRaw(3)) == expectedUint);
+  }
+}
+
+TEST_CASE("Test fixed-length enum array") {
+  Model model;
+  std::vector<uint16_t> values = {0, 1, 2, 1, 2, 3, 3, 4, 5, 5, 0, 1};
+  std::vector<std::string> names = {
+      "Scarlet",
+      "Mustard",
+      "Green",
+      "Mustard",
+      "Green",
+      "White",
+      "White",
+      "Peacock",
+      "Plum",
+      "Plum",
+      "Scarlet",
+      "Mustard"};
+
+  addBufferToModel(model, values);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+
+  schema.enums.emplace("TestEnum", Enum{});
+  Enum& enumDef = schema.enums["TestEnum"];
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      makeEnumValue("Scarlet", 0),
+      makeEnumValue("Mustard", 1),
+      makeEnumValue("Green", 2),
+      makeEnumValue("White", 3),
+      makeEnumValue("Peacock", 4),
+      makeEnumValue("Plum", 5)};
+  enumDef.valueType = Enum::ValueType::UINT16;
+
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::ENUM;
+  testClassProperty.enumType = "TestEnum";
+  testClassProperty.array = true;
+  testClassProperty.count = 3;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(
+      values.size() / static_cast<size_t>(testClassProperty.count.value()));
+
+  PropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::ENUM);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->array);
+  REQUIRE(classProperty->count == 3);
+  REQUIRE(!classProperty->normalized);
+
+  SUBCASE("Access the right type") {
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
+    REQUIRE(arrayProperty.status() == PropertyTablePropertyViewStatus::Valid);
+
+    for (int64_t i = 0; i < arrayProperty.size(); ++i) {
+      PropertyArrayView<uint16_t> array = arrayProperty.getRaw(i);
+      auto maybeArray = arrayProperty.get(i);
+      REQUIRE(maybeArray);
+
+      for (int64_t j = 0; j < array.size(); ++j) {
+        REQUIRE(array[j] == values[static_cast<size_t>(i * 3 + j)]);
+        REQUIRE((*maybeArray)[j] == array[j]);
+      }
+    }
+  }
+
+  SUBCASE("Wrong type") {
+    PropertyTablePropertyView<PropertyArrayView<bool>> boolArrayInvalid =
+        view.getPropertyView<PropertyArrayView<bool>>("TestClassProperty");
+    REQUIRE(
+        boolArrayInvalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorTypeMismatch);
+
+    PropertyTablePropertyView<PropertyArrayView<int8_t>> uvec2ArrayInvalid =
+        view.getPropertyView<PropertyArrayView<int8_t>>("TestClassProperty");
+    REQUIRE(
+        uvec2ArrayInvalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
+  }
+
+  SUBCASE("Not an array type") {
+    PropertyTablePropertyView<uint32_t> uint32Invalid =
+        view.getPropertyView<uint32_t>("TestClassProperty");
+    REQUIRE(
+        uint32Invalid.status() ==
+        PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
+  }
+
+  SUBCASE("Buffer size is not a multiple of type size") {
+    model.bufferViews[valueBufferViewIndex].byteLength = 13;
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
+    REQUIRE(
+        arrayProperty.status() ==
+        PropertyTablePropertyViewStatus::
+            ErrorBufferViewSizeNotDivisibleByTypeSize);
+  }
+
+  SUBCASE("Negative count") {
+    testClassProperty.count = -1;
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
+    REQUIRE(
+        arrayProperty.status() == PropertyTablePropertyViewStatus::
+                                      ErrorArrayCountAndOffsetBufferDontExist);
+  }
+
+  SUBCASE("Value buffer doesn't fit into property table count") {
+    testClassProperty.count = 55;
+    PropertyTablePropertyView<PropertyArrayView<uint16_t>> arrayProperty =
+        view.getPropertyView<PropertyArrayView<uint16_t>>("TestClassProperty");
+    REQUIRE(
+        arrayProperty.status() ==
+        PropertyTablePropertyViewStatus::
+            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
   }
 }
 
@@ -3282,11 +3517,11 @@ TEST_CASE("Test variable-length arrays of strings") {
   }
 
   std::vector<std::byte> offsets((expected.size() + 1) * sizeof(uint32_t));
-  std::vector<std::byte> stringOffsets((numOfElements + 1) * sizeof(uint32_t));
+  std::vector<std::byte> stringOffsets((numOfElements + 1) * sizeof(uint16_t));
   std::vector<std::byte> values(totalBytes);
   uint32_t* offsetValue = reinterpret_cast<uint32_t*>(offsets.data());
-  uint32_t* stringOffsetValue =
-      reinterpret_cast<uint32_t*>(stringOffsets.data());
+  uint16_t* stringOffsetValue =
+      reinterpret_cast<uint16_t*>(stringOffsets.data());
   size_t strOffsetIdx = 0;
   for (size_t i = 0; i < expected.size(); ++i) {
     for (size_t j = 0; j < expected[i].size(); ++j) {
@@ -3298,13 +3533,12 @@ TEST_CASE("Test variable-length arrays of strings") {
 
       stringOffsetValue[strOffsetIdx + 1] =
           stringOffsetValue[strOffsetIdx] +
-          static_cast<uint32_t>(expectedValue.size());
+          static_cast<uint16_t>(expectedValue.size());
       ++strOffsetIdx;
     }
 
     offsetValue[i + 1] =
-        offsetValue[i] +
-        static_cast<uint32_t>(expected[i].size() * sizeof(uint32_t));
+        offsetValue[i] + static_cast<uint32_t>(expected[i].size());
   }
 
   addBufferToModel(model, values);
@@ -3336,7 +3570,7 @@ TEST_CASE("Test variable-length arrays of strings") {
   propertyTableProperty.arrayOffsetType =
       PropertyTableProperty::ArrayOffsetType::UINT32;
   propertyTableProperty.stringOffsetType =
-      PropertyTableProperty::StringOffsetType::UINT32;
+      PropertyTableProperty::StringOffsetType::UINT16;
   propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
   propertyTableProperty.arrayOffsets =
       static_cast<int32_t>(arrayOffsetBufferView);
@@ -3418,13 +3652,13 @@ TEST_CASE("Test variable-length arrays of strings") {
             ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
 
     propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT16;
+        PropertyTableProperty::StringOffsetType::UINT32;
     arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
         "TestClassProperty");
     REQUIRE(
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::
-            ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
+            ErrorBufferViewSizeNotDivisibleByTypeSize);
 
     propertyTableProperty.stringOffsetType = "NONSENSE";
     arrayProperty = view.getPropertyView<PropertyArrayView<std::string_view>>(
@@ -3433,7 +3667,7 @@ TEST_CASE("Test variable-length arrays of strings") {
         arrayProperty.status() ==
         PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType);
     propertyTableProperty.stringOffsetType =
-        PropertyTableProperty::StringOffsetType::UINT32;
+        PropertyTableProperty::StringOffsetType::UINT16;
   }
 
   SUBCASE("Array offset values are not sorted ascending") {
@@ -3480,10 +3714,10 @@ TEST_CASE("Test variable-length arrays of strings") {
   }
 
   SUBCASE("String offset value points outside of value buffer") {
-    uint32_t* offset = reinterpret_cast<uint32_t*>(
+    uint16_t* offset = reinterpret_cast<uint16_t*>(
         model.buffers[stringOffsetBuffer].cesium.data.data());
-    uint32_t previousValue = offset[6];
-    offset[6] = static_cast<uint32_t>(100000);
+    uint16_t previousValue = offset[6];
+    offset[6] = static_cast<uint16_t>(10000);
     PropertyTablePropertyView<PropertyArrayView<std::string_view>>
         arrayProperty =
             view.getPropertyView<PropertyArrayView<std::string_view>>(
@@ -4691,6 +4925,89 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
   REQUIRE(invokedCallbackCount == 1);
 }
 
+TEST_CASE("Test callback for enum PropertyTableProperty") {
+
+  Model model;
+
+  const uint64_t expectedUint = 0xABADCAFEDEADBEEF;
+  std::vector<int64_t> expected{0, 1, 2, static_cast<int64_t>(expectedUint)};
+  std::vector<std::string> expectedNames{"Foo", "Bar", "Baz", "Uint64"};
+
+  addBufferToModel(model, expected);
+  size_t valueBufferViewIndex = model.bufferViews.size() - 1;
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+
+  schema.enums.emplace("TestEnum", Enum{});
+  Enum& enumDef = schema.enums["TestEnum"];
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      makeEnumValue("Foo", 0),
+      makeEnumValue("Bar", 1),
+      makeEnumValue("Baz", 2),
+      makeEnumValue("Uint64", static_cast<int64_t>(expectedUint))};
+  enumDef.valueType = Enum::ValueType::UINT64;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(expected.size());
+
+  PropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values = static_cast<int32_t>(valueBufferViewIndex);
+
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::ENUM;
+  testClassProperty.enumType = "TestEnum";
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::ENUM);
+  REQUIRE(classProperty->componentType == std::nullopt);
+  REQUIRE(classProperty->count == std::nullopt);
+  REQUIRE(!classProperty->array);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&expected, &expectedNames, &enumDef, &invokedCallbackCount](
+          const std::string& /*propertyId*/,
+          auto propertyValue) mutable {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() > 0);
+
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<uint64_t>,
+                          decltype(propertyValue)>) {
+          for (int64_t i = 0; i < propertyValue.size(); ++i) {
+            auto expectedValue = expected[static_cast<size_t>(i)];
+            REQUIRE(propertyValue.getRaw(i) == expectedValue);
+            REQUIRE(propertyValue.get(i).value() == expectedValue);
+            REQUIRE(
+                enumDef.getName(*propertyValue.get(i)) ==
+                expectedNames[static_cast<size_t>(i)]);
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
 TEST_CASE("Test callback for scalar array PropertyTableProperty") {
   Model model;
   std::vector<uint32_t> values =
@@ -5290,6 +5607,129 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
           REQUIRE(v2.size() == 2);
           REQUIRE(v2[0] == "I love you, meat bags! ❤️");
           REQUIRE(v2[1] == "Book in the freezer");
+
+          for (int64_t i = 0; i < propertyValue.size(); i++) {
+            auto maybeValue = propertyValue.get(i);
+            REQUIRE(maybeValue);
+
+            auto value = propertyValue.getRaw(i);
+            REQUIRE(maybeValue->size() == value.size());
+            for (int64_t j = 0; j < value.size(); j++) {
+              REQUIRE((*maybeValue)[j] == value[j]);
+            }
+          }
+        } else {
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
+        }
+      });
+
+  REQUIRE(invokedCallbackCount == 1);
+}
+
+TEST_CASE("Test callback for enum array PropertyTableProperty") {
+  Model model;
+  std::vector<uint16_t> values = {0, 1, 2, 1, 2, 3, 3, 4, 5, 5, 0, 1};
+  std::vector<std::string> names = {
+      "Scarlet",
+      "Mustard",
+      "Green",
+      "Mustard",
+      "Green",
+      "White",
+      "White",
+      "Peacock",
+      "Plum",
+      "Plum",
+      "Scarlet",
+      "Mustard"};
+
+  addBufferToModel(model, values);
+
+  ExtensionModelExtStructuralMetadata& metadata =
+      model.addExtension<ExtensionModelExtStructuralMetadata>();
+
+  Schema& schema = metadata.schema.emplace();
+
+  schema.enums.emplace("TestEnum", Enum{});
+  Enum& enumDef = schema.enums["TestEnum"];
+  enumDef.name = "Test";
+  enumDef.description = "An example enum";
+  enumDef.values = std::vector<EnumValue>{
+      makeEnumValue("Scarlet", 0),
+      makeEnumValue("Mustard", 1),
+      makeEnumValue("Green", 2),
+      makeEnumValue("White", 3),
+      makeEnumValue("Peacock", 4),
+      makeEnumValue("Plum", 5)};
+  enumDef.valueType = Enum::ValueType::UINT16;
+
+  Class& testClass = schema.classes["TestClass"];
+  ClassProperty& testClassProperty = testClass.properties["TestClassProperty"];
+  testClassProperty.type = ClassProperty::Type::ENUM;
+  testClassProperty.enumType = "TestEnum";
+  testClassProperty.array = true;
+  testClassProperty.count = 3;
+
+  PropertyTable& propertyTable = metadata.propertyTables.emplace_back();
+  propertyTable.classProperty = "TestClass";
+  propertyTable.count = static_cast<int64_t>(
+      values.size() / static_cast<size_t>(testClassProperty.count.value()));
+
+  PropertyTableProperty& propertyTableProperty =
+      propertyTable.properties["TestClassProperty"];
+  propertyTableProperty.values =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+
+  PropertyTableView view(model, propertyTable);
+  REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+  REQUIRE(view.size() == propertyTable.count);
+
+  const ClassProperty* classProperty =
+      view.getClassProperty("TestClassProperty");
+  REQUIRE(classProperty);
+  REQUIRE(classProperty->type == ClassProperty::Type::ENUM);
+  REQUIRE(classProperty->array);
+  REQUIRE(classProperty->count == 3);
+
+  uint32_t invokedCallbackCount = 0;
+  view.getPropertyView(
+      "TestClassProperty",
+      [&invokedCallbackCount](
+          const std::string& /*propertyId*/,
+          auto propertyValue) {
+        invokedCallbackCount++;
+        REQUIRE(
+            propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
+        REQUIRE(propertyValue.size() == 4);
+
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<
+                              PropertyArrayView<uint16_t>>,
+                          decltype(propertyValue)>) {
+          PropertyArrayView<uint16_t> v0 = propertyValue.getRaw(0);
+          REQUIRE(v0.size() == 3);
+          REQUIRE(v0[0] == 0);
+          REQUIRE(v0[1] == 1);
+          REQUIRE(v0[2] == 2);
+
+          PropertyArrayView<uint16_t> v1 = propertyValue.getRaw(1);
+          REQUIRE(v1.size() == 3);
+          REQUIRE(v1[0] == 1);
+          REQUIRE(v1[1] == 2);
+          REQUIRE(v1[2] == 3);
+
+          PropertyArrayView<uint16_t> v2 = propertyValue.getRaw(2);
+          REQUIRE(v2.size() == 3);
+          REQUIRE(v2[0] == 3);
+          REQUIRE(v2[1] == 4);
+          REQUIRE(v2[2] == 5);
+
+          PropertyArrayView<uint16_t> v3 = propertyValue.getRaw(3);
+          REQUIRE(v3.size() == 3);
+          REQUIRE(v3[0] == 5);
+          REQUIRE(v3[1] == 0);
+          REQUIRE(v3[2] == 1);
 
           for (int64_t i = 0; i < propertyValue.size(); i++) {
             auto maybeValue = propertyValue.get(i);

@@ -25,7 +25,7 @@ namespace Cesium3DTilesSelection {
  * @see CesiumGeospatial::BoundingRegion
  * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
  * @see CesiumGeospatial::S2CellBoundingVolume
- * @see CesiumGeometry::BoundingCylinder
+ * @see CesiumGeometry::BoundingCylinderRegion
  */
 typedef std::variant<
     CesiumGeometry::BoundingSphere,

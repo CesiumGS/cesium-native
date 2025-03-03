@@ -76,7 +76,8 @@
       "overrideName": "Class"
     },
     "Enum in EXT_structural_metadata": {
-      "overrideName": "Enum"
+      "overrideName": "Enum",
+      "toBeInherited": true
     },
     "Enum Value in EXT_structural_metadata": {
       "overrideName": "EnumValue"

@@ -243,10 +243,7 @@ Cesium Native supports implicit tiling by lazily transforming the implicit repre
 
 Implicit [loaders](#tileset-content-loader), such as `ImplicitQuadtreeLoader`, `ImplicitOctreeLoader`, and `LayerJsonTerrainLoader`, implement this method by determining in their own way whether this tile has any children, and creating them if it does. In some cases, extra asynchronous work, like downloading subtree availability files, may be necessary to determine if children exist. In that case, the `createTileChildren` will return [TileLoadResultState::RetryLater](\ref Cesium3DTilesSelection::TileLoadResultState::RetryLater) to signal that children may exist, but they can't be created yet. The selection algorithm will try again next frame if the tile's children are still needed.
 
-Currently, a `Tile` instance, once created, will not be destroyed until the entire [Tileset](\ref Cesium3DTilesSelection::Tileset) is destroyed. This is true for `Tile` instances created explicitly from `tileset.json` as well as `Tile` instances created lazily by the implicit loaders. This is convenient because we don't need to worry about a `Tile` instance vanishing unexpectedly, but it can cause a slow increase in memory usage over time.
-
-> [!note]
-> The above refers to `Tile` instances, _not_ their content. Content is unloaded when it is no longer needed. This is important because content is by far the largest portion of a tile.
+These `Tile` instances may be destroyed in the future, so it is important not to hold onto pointers to them. However, a `Tile` instance will not be destroyed if it was returned in `ViewUpdateResult` in the last call to `updateView`, nor if it is currently being used for any height queries. Before a `Tile` is destroyed, its [renderer resources](#rendering-3d-tiles) will be freed.
 
 ## Additional Topics Not Yet Covered {#additional-topics}
 
