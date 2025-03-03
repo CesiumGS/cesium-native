@@ -633,31 +633,17 @@ std::optional<Tile> parseTileJsonRecursively(
     }
   }
 
-  if (contentUri) {
-    Tile tile{&currentLoader};
-    tile.setTileID(contentUri);
-    tile.setTransform(tileTransform);
-    tile.setBoundingVolume(tileBoundingVolume);
-    tile.setViewerRequestVolume(tileViewerRequestVolume);
-    tile.setGeometricError(tileGeometricError);
-    tile.setRefine(tileRefine);
-    tile.setContentBoundingVolume(tileContentBoundingVolume);
-    tile.createChildTiles(std::move(childTiles));
+  Tile tile{&currentLoader};
+  tile.setTileID(contentUri ? contentUri : std::string{});
+  tile.setTransform(tileTransform);
+  tile.setBoundingVolume(tileBoundingVolume);
+  tile.setViewerRequestVolume(tileViewerRequestVolume);
+  tile.setGeometricError(tileGeometricError);
+  tile.setRefine(tileRefine);
+  tile.setContentBoundingVolume(tileContentBoundingVolume);
+  tile.createChildTiles(std::move(childTiles));
 
-    return tile;
-  } else {
-    Tile tile{&currentLoader, TileEmptyContent{}};
-    tile.setTileID("");
-    tile.setTransform(tileTransform);
-    tile.setBoundingVolume(tileBoundingVolume);
-    tile.setViewerRequestVolume(tileViewerRequestVolume);
-    tile.setGeometricError(tileGeometricError);
-    tile.setRefine(tileRefine);
-    tile.setContentBoundingVolume(tileContentBoundingVolume);
-    tile.createChildTiles(std::move(childTiles));
-
-    return tile;
-  }
+  return tile;
 }
 
 TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
@@ -960,6 +946,25 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& pLogger = loadInput.pLogger;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+
+  // If the URL is empty, this tile is empty content and we don't need to make a
+  // web request to complete the loading process (in fact, a web request would
+  // produce incorrect results as it would just be a request for _baseUrl).
+  if (url->empty()) {
+    return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
+        TileLoadResult{
+            TileEmptyContent{},
+            this->_upAxis,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            pAssetAccessor,
+            nullptr,
+            {},
+            TileLoadResultState::Success,
+            ellipsoid});
+  }
+
   std::string resolvedUrl =
       CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
   return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)

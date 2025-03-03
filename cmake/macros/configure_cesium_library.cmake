@@ -26,6 +26,14 @@ function(configure_cesium_library targetName)
         )
     endif()
 
+    if (CESIUM_DEBUG_TILE_UNLOADING)
+        target_compile_definitions(
+            ${targetName}
+            PUBLIC
+                CESIUM_DEBUG_TILE_UNLOADING
+        )
+    endif()
+
     if (BUILD_SHARED_LIBS)
         target_compile_definitions(
             ${targetName}
