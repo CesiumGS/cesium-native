@@ -4,6 +4,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <glm/common.hpp>
 
@@ -194,13 +195,45 @@ public:
 
     PropertyType type = convertStringToPropertyType(pClassProperty->type);
     PropertyComponentType componentType = PropertyComponentType::None;
-    if (pClassProperty->componentType) {
+
+    // Handle enum component type indirection
+    if (type == PropertyType::Enum && pClassProperty->enumType) {
+      const auto& enumDefinitionIt =
+          this->_pEnumDefinitions->find(*pClassProperty->enumType);
+      if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+        callback(
+            propertyId,
+            PropertyTablePropertyView<uint8_t>(
+                PropertyTablePropertyViewStatus::ErrorInvalidEnum));
+        return;
+      }
+
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        callback(
+            propertyId,
+            PropertyTablePropertyView<uint8_t>(
+                PropertyTablePropertyViewStatus::ErrorInvalidEnum));
+        return;
+      }
+
+    } else if (type == PropertyType::Enum) {
+      callback(
+          propertyId,
+          PropertyTablePropertyView<uint8_t>(
+              PropertyTablePropertyViewStatus::ErrorInvalidEnum));
+      return;
+    } else if (pClassProperty->componentType) {
       componentType =
           convertStringToPropertyComponentType(*pClassProperty->componentType);
     }
 
     bool normalized = pClassProperty->normalized;
-    if (normalized && !isPropertyComponentTypeInteger(componentType)) {
+    if (normalized && (!isPropertyComponentTypeInteger(componentType) ||
+                       type == PropertyType::Enum)) {
       // Only integer components may be normalized.
       callback(
           propertyId,
@@ -228,7 +261,7 @@ public:
       return;
     }
 
-    if (type == PropertyType::Scalar) {
+    if (type == PropertyType::Scalar || type == PropertyType::Enum) {
       if (normalized) {
         getScalarPropertyViewImpl<Callback, true>(
             propertyId,
@@ -676,7 +709,7 @@ private:
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
-    if (type == PropertyType::Scalar) {
+    if (type == PropertyType::Scalar || type == PropertyType::Enum) {
       getScalarArrayPropertyViewImpl<Callback, Normalized>(
           propertyId,
           classProperty,
@@ -1095,19 +1128,42 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
-    const PropertyComponentType componentType =
-        convertStringToPropertyComponentType(
-            classProperty.componentType.value_or(""));
+
+    PropertyComponentType componentType = convertStringToPropertyComponentType(
+        classProperty.componentType.value_or(""));
+    const CesiumGltf::Enum* pEnumDefinition = nullptr;
+    if (type == PropertyType::Enum && classProperty.enumType) {
+      const auto& enumDefinitionIt =
+          this->_pEnumDefinitions->find(*classProperty.enumType);
+      if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+        return PropertyTablePropertyView<T, Normalized>(
+            PropertyTablePropertyViewStatus::ErrorInvalidEnum);
+      }
+
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        return PropertyTablePropertyView<T, Normalized>(
+            PropertyTablePropertyViewStatus::ErrorInvalidEnum);
+      }
+      pEnumDefinition = &enumDefinitionIt->second;
+    } else if (type == PropertyType::Enum) {
+      return PropertyTablePropertyView<T, Normalized>(
+          PropertyTablePropertyViewStatus::ErrorInvalidEnum);
+    }
+
     if (TypeToPropertyType<T>::component != componentType) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
     }
 
-    if (classProperty.normalized != Normalized) {
+    if (classProperty.normalized != Normalized ||
+        (classProperty.normalized && type == PropertyType::Enum)) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorNormalizationMismatch);
     }
@@ -1138,11 +1194,20 @@ private:
               ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
     }
 
-    return PropertyTablePropertyView<T, Normalized>(
-        propertyTableProperty,
-        classProperty,
-        _pPropertyTable->count,
-        values);
+    if constexpr (!Normalized) {
+      return PropertyTablePropertyView<T, Normalized>(
+          propertyTableProperty,
+          classProperty,
+          pEnumDefinition,
+          _pPropertyTable->count,
+          values);
+    } else {
+      return PropertyTablePropertyView<T, Normalized>(
+          propertyTableProperty,
+          classProperty,
+          _pPropertyTable->count,
+          values);
+    }
   }
 
   PropertyTablePropertyView<std::string_view> getStringPropertyValues(
@@ -1165,14 +1230,36 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTablePropertyViewStatus::ErrorTypeMismatch);
     }
 
-    const PropertyComponentType componentType =
-        convertStringToPropertyComponentType(
-            classProperty.componentType.value_or(""));
+    PropertyComponentType componentType = convertStringToPropertyComponentType(
+        classProperty.componentType.value_or(""));
+    const CesiumGltf::Enum* pEnumDefinition = nullptr;
+    if (type == PropertyType::Enum && classProperty.enumType) {
+      const auto& enumDefinitionIt =
+          this->_pEnumDefinitions->find(*classProperty.enumType);
+      if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+        return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+            PropertyTablePropertyViewStatus::ErrorInvalidEnum);
+      }
+
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+            PropertyTablePropertyViewStatus::ErrorInvalidEnum);
+      }
+      pEnumDefinition = &enumDefinitionIt->second;
+    } else if (type == PropertyType::Enum) {
+      return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+          PropertyTablePropertyViewStatus::ErrorInvalidEnum);
+    }
+
     if (TypeToPropertyType<T>::component != componentType) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTablePropertyViewStatus::ErrorComponentTypeMismatch);
@@ -1220,11 +1307,20 @@ private:
                 ErrorBufferViewSizeDoesNotMatchPropertyTableCount);
       }
 
-      return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
-          propertyTableProperty,
-          classProperty,
-          _pPropertyTable->count,
-          values);
+      if constexpr (!Normalized) {
+        return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+            propertyTableProperty,
+            classProperty,
+            pEnumDefinition,
+            _pPropertyTable->count,
+            values);
+      } else {
+        return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
+            propertyTableProperty,
+            classProperty,
+            _pPropertyTable->count,
+            values);
+      }
     }
 
     // Handle variable-length arrays
@@ -1262,6 +1358,7 @@ private:
       return PropertyTablePropertyView<PropertyArrayView<T>, false>(
           propertyTableProperty,
           classProperty,
+          pEnumDefinition,
           _pPropertyTable->count,
           values,
           arrayOffsets,
@@ -1298,6 +1395,7 @@ private:
   const Model* _pModel;
   const PropertyTable* _pPropertyTable;
   const Class* _pClass;
+  const std::unordered_map<std::string, CesiumGltf::Enum>* _pEnumDefinitions;
   PropertyTableViewStatus _status;
 };
 } // namespace CesiumGltf

@@ -6,6 +6,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/PropertyTexturePropertyView.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/TextureView.h>
 
 namespace CesiumGltf {
@@ -595,14 +596,37 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
 
-    const PropertyComponentType componentType =
-        convertStringToPropertyComponentType(
-            classProperty.componentType.value_or(""));
+    PropertyComponentType componentType = convertStringToPropertyComponentType(
+        classProperty.componentType.value_or(""));
+    const CesiumGltf::Enum* pEnumDefinition = nullptr;
+
+    if (type == PropertyType::Enum && classProperty.enumType) {
+      const auto& enumDefinitionIt =
+          this->_pEnumDefinitions->find(*classProperty.enumType);
+      if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+        return PropertyTexturePropertyView<T, Normalized>(
+            PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
+      }
+
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+      pEnumDefinition = &enumDefinitionIt->second;
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        return PropertyTexturePropertyView<T, Normalized>(
+            PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
+      }
+    } else if (type == PropertyType::Enum) {
+      return PropertyTexturePropertyView<T, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
+    }
+
     if (TypeToPropertyType<T>::component != componentType) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
@@ -619,7 +643,8 @@ private:
           classProperty,
           propertyTextureProperty,
           sizeof(T),
-          propertyOptions);
+          propertyOptions,
+          pEnumDefinition);
     } else {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
@@ -637,7 +662,7 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
@@ -661,7 +686,8 @@ private:
           classProperty,
           propertyTextureProperty,
           sizeof(T),
-          propertyOptions);
+          propertyOptions,
+          nullptr);
     } else {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
@@ -680,14 +706,37 @@ private:
     }
 
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorTypeMismatch);
     }
 
-    const PropertyComponentType componentType =
-        convertStringToPropertyComponentType(
-            classProperty.componentType.value_or(""));
+    PropertyComponentType componentType = convertStringToPropertyComponentType(
+        classProperty.componentType.value_or(""));
+    const CesiumGltf::Enum* pEnumDefinition = nullptr;
+
+    if (type == PropertyType::Enum && classProperty.enumType) {
+      const auto& enumDefinitionIt =
+          this->_pEnumDefinitions->find(*classProperty.enumType);
+      if (enumDefinitionIt == this->_pEnumDefinitions->end()) {
+        return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
+            PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
+      }
+
+      componentType = convertStringToPropertyComponentType(
+          enumDefinitionIt->second.valueType);
+      pEnumDefinition = &enumDefinitionIt->second;
+
+      if (componentType == PropertyComponentType::Float32 ||
+          componentType == PropertyComponentType::Float64) {
+        return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
+            PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
+      }
+    } else if (type == PropertyType::Enum) {
+      return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
+          PropertyTexturePropertyViewStatus::ErrorInvalidEnum);
+    }
+
     if (TypeToPropertyType<T>::component != componentType) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorComponentTypeMismatch);
@@ -717,7 +766,8 @@ private:
           classProperty,
           propertyTextureProperty,
           count * sizeof(T),
-          propertyOptions);
+          propertyOptions,
+          pEnumDefinition);
     } else {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
@@ -729,7 +779,8 @@ private:
       const ClassProperty& classProperty,
       const PropertyTextureProperty& propertyTextureProperty,
       size_t elementSize,
-      const TextureViewOptions& propertyOptions) const {
+      const TextureViewOptions& propertyOptions,
+      const CesiumGltf::Enum* pEnumDefinition) const {
     int32_t samplerIndex;
     int32_t imageIndex;
 
@@ -763,6 +814,18 @@ private:
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
+    if constexpr (!Normalized) {
+      if (pEnumDefinition != nullptr) {
+        return PropertyTexturePropertyView<T, Normalized>(
+            propertyTextureProperty,
+            classProperty,
+            pEnumDefinition,
+            _pModel->samplers[samplerIndex],
+            *pImage,
+            propertyOptions);
+      }
+    }
+
     return PropertyTexturePropertyView<T, Normalized>(
         propertyTextureProperty,
         classProperty,
@@ -788,6 +851,7 @@ private:
   const Model* _pModel;
   const PropertyTexture* _pPropertyTexture;
   const Class* _pClass;
+  const std::unordered_map<std::string, CesiumGltf::Enum>* _pEnumDefinitions;
 
   PropertyTextureViewStatus _status;
 };

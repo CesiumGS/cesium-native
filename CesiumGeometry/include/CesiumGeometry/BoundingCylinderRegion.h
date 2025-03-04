@@ -33,8 +33,8 @@ public:
    * centered at the local origin. The height aligns with the z-axis, and the
    * cylinder extends to half the height in each direction. The angular bounds
    * are in the range [-pi, pi], and are oriented such that an angle of -pi
-   * aligns with the negative y-axis, while an angle of 0 aligns with the
-   * positive y-axis. The angular range opens counter-clockwise.
+   * aligns with the negative x-axis, while an angle of 0 aligns with the
+   * positive x-axis. The angular range opens counter-clockwise.
    *
    * It is possible for the region to only occupy part of the cylinder, and if
    * that is the case, the region's center may not necessarily equal the

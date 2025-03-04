@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumGltf/Enum.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
@@ -247,7 +248,31 @@ public:
       const ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values) noexcept
-      : PropertyView<ElementType>(classProperty, property),
+      : PropertyTablePropertyView(
+            property,
+            classProperty,
+            nullptr,
+            size,
+            values) {}
+
+  /**
+   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}, with an enum definition attached.
+   * Used for non-array or fixed-length array data.
+   *
+   * @param property The {@link PropertyTableProperty}.
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param pEnumDefinition A pointer to the enum definition used for this
+   * value.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}.
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}.
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
+      int64_t size,
+      std::span<const std::byte> values) noexcept
+      : PropertyView<ElementType>(classProperty, property, pEnumDefinition),
         _values{values},
         _size{
             this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
@@ -279,7 +304,42 @@ public:
       std::span<const std::byte> stringOffsets,
       PropertyComponentType arrayOffsetType,
       PropertyComponentType stringOffsetType) noexcept
-      : PropertyView<ElementType>(classProperty, property),
+      : PropertyTablePropertyView(
+            property,
+            classProperty,
+            nullptr,
+            size,
+            values,
+            arrayOffsets,
+            stringOffsets,
+            arrayOffsetType,
+            stringOffsetType) {}
+
+  /**
+   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}, with an enum definition attached.
+   *
+   * @param property The {@link PropertyTableProperty}.
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param pEnumDefinition A pointer to the enum definition used for this
+   * value.
+   * @param size The number of elements in the property table specified by {@link PropertyTable::count}.
+   * @param values The raw buffer specified by {@link PropertyTableProperty::values}.
+   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}.
+   * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}.
+   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}.
+   * @param stringOffsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}.
+   */
+  PropertyTablePropertyView(
+      const PropertyTableProperty& property,
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
+      int64_t size,
+      std::span<const std::byte> values,
+      std::span<const std::byte> arrayOffsets,
+      std::span<const std::byte> stringOffsets,
+      PropertyComponentType arrayOffsetType,
+      PropertyComponentType stringOffsetType) noexcept
+      : PropertyView<ElementType>(classProperty, property, pEnumDefinition),
         _values{values},
         _size{
             this->_status == PropertyTablePropertyViewStatus::Valid ? size : 0},
@@ -452,18 +512,20 @@ private:
 
     // Handle variable-length arrays
     const size_t currentArrayOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
+        _stringOffsetTypeSize;
     const size_t nextArrayOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
+        _stringOffsetTypeSize;
     const size_t arraySize = nextArrayOffset - currentArrayOffset;
     const std::span<const std::byte> stringOffsetValues(
         _stringOffsets.data() + currentArrayOffset,
-        arraySize + _arrayOffsetTypeSize);
+        arraySize + _stringOffsetTypeSize);
     return PropertyArrayView<std::string_view>(
         _values,
         stringOffsetValues,
         _stringOffsetType,
-        arraySize / _arrayOffsetTypeSize);
+        arraySize / _stringOffsetTypeSize);
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {

@@ -201,8 +201,14 @@ struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
   using type = T;
 };
 
-/**
- * @brief Convert a C++ type to PropertyType and PropertyComponentType
+/** @brief Infer the best-fitting PropertyType and PropertyComponentType for a
+ * C++ type.
+ *
+ * Note that this cannot infer whether an integer is actually an
+ * \ref PropertyType::Enum, since the enum definition is separate from the
+ * PropertyType. It is on the runtime to refer to the original class property
+ * definition, and check whether there is an associated \ref
+ * CesiumGltf::ClassProperty::enumType.
  */
 template <typename T> struct TypeToPropertyType;
 
@@ -391,6 +397,48 @@ template <> struct TypeToPropertyType<std::string_view> {
   /** @brief The \ref PropertyType corresponding to a `std::string_view`. */
   static constexpr PropertyType value = PropertyType::String;
 };
+
+/**
+ * @brief The number of dimensions that this type contains.
+ */
+template <typename T> struct TypeToDimensions;
+
+/** @copydoc TypeToDimensions */
+template <glm::length_t n, typename T, glm::qualifier P>
+struct TypeToDimensions<glm::vec<n, T, P>> {
+  /**
+   * @brief The number of dimensions present in this `glm::vec` type.
+   *
+   * For example, for a `glm::dvec3` this value would be 3.
+   */
+  static constexpr glm::length_t dimensions = n;
+};
+
+/** @copydoc TypeToDimensions */
+template <glm::length_t n, typename T, glm::qualifier P>
+struct TypeToDimensions<glm::mat<n, n, T, P>> {
+  /**
+   * @brief The number of dimensions present in this `glm::mat` type.
+   *
+   * For example, for a `glm::dmat4x4` this value would be 4.
+   */
+  static constexpr glm::length_t dimensions = n;
+};
+
+/**
+ * @brief Returns whether the type `T` can represent the given \ref
+ * PropertyType.
+ *
+ * @tparam T The type to check.
+ * @param type The \ref PropertyType to compare to `T`.
+ */
+template <typename T> bool canRepresentPropertyType(PropertyType type) {
+  if constexpr (IsMetadataScalar<T>::value) {
+    return type == PropertyType::Scalar || type == PropertyType::Enum;
+  } else {
+    return TypeToPropertyType<T>::value == type;
+  }
+}
 
 /**
  * @brief Check if a C++ type can be normalized.
