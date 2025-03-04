@@ -1,12 +1,12 @@
 #include "CesiumIonTilesetLoader.h"
 
 #include "LayerJsonTerrainLoader.h"
-#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
@@ -49,6 +49,10 @@ public:
         ionAssetEndpointUrl,
         ionAssetID,
         ionAccessToken);
+  }
+
+  virtual bool needsAuthHeaderOnInitialRequest() const override {
+    return false;
   }
 };
 
@@ -743,7 +747,12 @@ CesiumIonTilesetLoader::createLoader(
         endpoint.type));
     return externals.asyncSystem.createResolvedFuture(std::move(result));
   } else {
-    return externals.pAssetAccessor->get(externals.asyncSystem, ionUrl)
+    std::vector<CesiumAsync::IAssetAccessor::THeader> headers;
+    if (endpointResource.needsAuthHeaderOnInitialRequest()) {
+      headers.emplace_back("Authorization", "Bearer " + ionAccessToken);
+    }
+
+    return externals.pAssetAccessor->get(externals.asyncSystem, ionUrl, headers)
         .thenInMainThread(
             [externals,
              ellipsoid,

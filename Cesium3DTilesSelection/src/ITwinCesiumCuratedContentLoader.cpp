@@ -15,6 +15,8 @@ public:
         ionAssetEndpointUrl,
         ionAssetID);
   }
+
+  virtual bool needsAuthHeaderOnInitialRequest() const override { return true; }
 };
 
 CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
@@ -23,7 +25,6 @@ ITwinCesiumCuratedContentLoader::createLoader(
     const TilesetContentOptions& contentOptions,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl,
     const AuthorizationHeaderChangeListener& headerChangeListener,
     bool showCreditsOnScreen,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
@@ -32,7 +33,7 @@ ITwinCesiumCuratedContentLoader::createLoader(
       contentOptions,
       ionAssetID,
       ionAccessToken,
-      ionAssetEndpointUrl,
+      "",
       ITwinCesiumCuratedContentEndpointResource{},
       headerChangeListener,
       showCreditsOnScreen,
@@ -45,7 +46,6 @@ ITwinCesiumCuratedContentLoader::refreshTokenIfNeeded(
     const TilesetContentOptions& contentOptions,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl,
     const AuthorizationHeaderChangeListener& headerChangeListener,
     bool showCreditsOnScreen,
     TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result,
@@ -55,7 +55,7 @@ ITwinCesiumCuratedContentLoader::refreshTokenIfNeeded(
       contentOptions,
       ionAssetID,
       ionAccessToken,
-      ionAssetEndpointUrl,
+      "",
       ITwinCesiumCuratedContentEndpointResource{},
       headerChangeListener,
       showCreditsOnScreen,

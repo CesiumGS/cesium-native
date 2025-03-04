@@ -1,12 +1,13 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/TilesetLoaderFactory.h"
 #include "RasterOverlayUpsampler.h"
-#include "TilesetContentLoaderResult.h"
 
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -61,9 +62,23 @@ public:
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       RasterOverlayCollection&& overlayCollection,
+      const TilesetLoaderFactory& loaderFactory);
+
+  TilesetContentManager(
+      const TilesetExternals& externals,
+      const TilesetOptions& tilesetOptions,
+      RasterOverlayCollection&& overlayCollection,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
-      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/")
+      : TilesetContentManager(
+            externals,
+            tilesetOptions,
+            std::move(overlayCollection),
+            CesiumIonTilesetLoaderFactory(
+                static_cast<uint32_t>(ionAssetID),
+                ionAccessToken,
+                ionAssetEndpointUrl)) {}
 
   /**
    * @brief A future that resolves after all async operations initiated by this

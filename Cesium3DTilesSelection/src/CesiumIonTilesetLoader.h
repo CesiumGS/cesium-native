@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CesiumAsync/IAssetAccessor.h"
-#include "TilesetContentLoaderResult.h"
 
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 
 #include <functional>
@@ -15,6 +15,8 @@ class CesiumIonTilesetLoader;
 
 class EndpointResource {
 public:
+  virtual bool needsAuthHeaderOnInitialRequest() const = 0;
+
   virtual std::string getUrl(
       int64_t assetID,
       const std::string& accessToken,

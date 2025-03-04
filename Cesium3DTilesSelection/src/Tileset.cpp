@@ -1,3 +1,4 @@
+#include "Cesium3DTilesSelection/TilesetLoaderFactory.h"
 #include "TilesetContentManager.h"
 #include "TilesetHeightQuery.h"
 
@@ -118,6 +119,22 @@ Tileset::Tileset(
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)} {}
+
+Tileset::Tileset(
+    const TilesetExternals& externals,
+    const TilesetLoaderFactory& loaderFactory,
+    const TilesetOptions& options)
+    : _externals(externals),
+      _asyncSystem(externals.asyncSystem),
+      _options(options),
+      _previousFrameNumber(0),
+      _distances(),
+      _childOcclusionProxies(),
+      _pTilesetContentManager{new TilesetContentManager(
+          _externals,
+          _options,
+          RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
+          loaderFactory)} {}
 
 Tileset::~Tileset() noexcept {
   TilesetHeightRequest::failHeightRequests(

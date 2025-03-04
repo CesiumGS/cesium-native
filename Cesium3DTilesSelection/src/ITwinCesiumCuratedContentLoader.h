@@ -2,9 +2,9 @@
 
 #include "CesiumAsync/IAssetAccessor.h"
 #include "CesiumIonTilesetLoader.h"
-#include "TilesetContentLoaderResult.h"
 
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 
 #include <functional>
@@ -23,7 +23,6 @@ public:
       const TilesetContentOptions& contentOptions,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
-      const std::string& ionAssetEndpointUrl,
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
@@ -34,7 +33,6 @@ public:
       const TilesetContentOptions& contentOptions,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
-      const std::string& ionAssetEndpointUrl,
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen,
       TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result,
