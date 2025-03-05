@@ -2,6 +2,20 @@
 
 #include "CesiumIonTilesetLoader.h"
 
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+
+#include <fmt/format.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+
 namespace Cesium3DTilesSelection {
 
 class ITwinCesiumCuratedContentEndpointResource : public EndpointResource {

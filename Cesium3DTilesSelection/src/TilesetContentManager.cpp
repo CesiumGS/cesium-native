@@ -1,7 +1,5 @@
 #include "TilesetContentManager.h"
 
-#include "CesiumIonTilesetLoader.h"
-#include "ITwinCesiumCuratedContentLoader.h"
 #include "LayerJsonTerrainLoader.h"
 #include "RasterOverlayUpsampler.h"
 #include "TileContentLoadInfo.h"
@@ -19,6 +17,7 @@
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
+#include <Cesium3DTilesSelection/TilesetLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
