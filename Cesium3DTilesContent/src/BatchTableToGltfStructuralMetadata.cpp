@@ -2034,16 +2034,10 @@ template <> int32_t componentTypeFromCpp<uint32_t>() {
   return Accessor::ComponentType::UNSIGNED_INT;
 }
 
-template <class... Ts> struct overloaded : Ts... {
-  using Ts::operator()...;
-};
-template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-
 // encapsulation of the binary batch id data in an I3dm. If byteSize is 0, then
 // the semantic is invalid for some reason.
 struct BatchIdSemantic {
   std::variant<
-      std::monostate,
       std::span<const uint8_t>,
       std::span<const uint16_t>,
       std::span<const uint32_t>>
@@ -2064,7 +2058,10 @@ struct BatchIdSemantic {
       const rapidjson::Document& featureTableJson,
       uint32_t numInstances,
       const std::span<const std::byte>& featureTableJsonData)
-      : rawData(nullptr), numElements(0), byteSize(0) {
+      : batchSpan(makeSpan<uint8_t>(nullptr, 0, 0)),
+        rawData(nullptr),
+        numElements(0),
+        byteSize(0) {
     const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
     if (batchIdIt == featureTableJson.MemberEnd() ||
         !batchIdIt->value.IsObject()) {
@@ -2090,48 +2087,48 @@ struct BatchIdSemantic {
               componentTypeString);
       rawData = featureTableJsonData.data();
       numElements = numInstances;
-      if (componentType == MetadataProperty::ComponentType::UNSIGNED_BYTE) {
+      switch (componentType) {
+      case MetadataProperty::ComponentType::UNSIGNED_BYTE:
         batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
         byteSize = numElements * sizeof(uint8_t);
-      } else if (
-          componentType == MetadataProperty::ComponentType::UNSIGNED_SHORT) {
+        break;
+      case MetadataProperty::ComponentType::UNSIGNED_SHORT:
         batchSpan = makeSpan<uint16_t>(rawData, byteOffset, numInstances);
         byteSize = numElements * sizeof(uint16_t);
-      } else if (
-          componentType == MetadataProperty::ComponentType::UNSIGNED_INT) {
+        break;
+      case MetadataProperty::ComponentType::UNSIGNED_INT:
         batchSpan = makeSpan<uint32_t>(rawData, byteOffset, numInstances);
         byteSize = numElements * sizeof(uint32_t);
-      }
+        break;
+      default:
+        break;
+        // Shouldn't happen, but batchSpan and byteSize are already in an error
+        // state.
+      };
     }
   }
 
   size_t idSize() const {
     return std::visit(
-        overloaded(
-            [](const std::monostate&) -> size_t { return 0; },
-            [](auto&& batchIds) -> size_t { return sizeof(batchIds[0]); }),
+        [](auto&& batchIds) -> size_t { return sizeof(batchIds[0]); },
         batchSpan);
   }
 
   uint32_t maxBatchId() const {
     return std::visit(
-        overloaded(
-            [](const std::monostate&) -> uint32_t { return 0; },
-            [](auto&& batchIds) -> uint32_t {
-              auto itr = std::max_element(batchIds.begin(), batchIds.end());
-              return *itr;
-            }),
+        [](auto&& batchIds) -> uint32_t {
+          auto itr = std::max_element(batchIds.begin(), batchIds.end());
+          return *itr;
+        },
         batchSpan);
   }
 
   int32_t componentType() const {
     return std::visit(
-        overloaded(
-            [](const std::monostate&) { return -1; },
-            [](auto&& batchIds) {
-              using span_type = std::remove_reference_t<decltype(batchIds)>;
-              return componentTypeFromCpp<typename span_type::value_type>();
-            }),
+        [](auto&& batchIds) {
+          using span_type = std::remove_reference_t<decltype(batchIds)>;
+          return componentTypeFromCpp<typename span_type::value_type>();
+        },
         batchSpan);
   }
 };
