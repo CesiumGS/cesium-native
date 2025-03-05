@@ -1,7 +1,6 @@
 # Yes, on non-windows platforms the name of the library really is liblibmodpbase64.a
 # Don't ask me, I didn't do it.
 
-find_library(modp_b64_LIBRARIES NAMES modpbase64 libmodpbase64)
 find_library(modp_b64_DEBUG_LIBRARIES
   NAMES
   modpbase64d
@@ -18,6 +17,12 @@ find_library(modp_b64_DEBUG_LIBRARIES
   )
 set(CMAKE_PREFIX_PATH ${modpbase64SavePrefixPath})
 
+set(modpbase64SavePrefixPath ${CMAKE_PREFIX_PATH})
+list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "/debug")
+find_library(modp_b64_LIBRARIES NAMES modpbase64 libmodpbase64)
+set(CMAKE_PREFIX_PATH ${modpbase64SavePrefixPath})
+
+message(WARNING "modp_b64_LIBRARIES: ${modp_b64_LIBRARIES}")
 find_path(modp_b64_INCLUDE_DIRS NAMES modp_b64.h)
 
 include(FindPackageHandleStandardArgs)
