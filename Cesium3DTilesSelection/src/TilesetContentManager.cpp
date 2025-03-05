@@ -931,12 +931,7 @@ TilesetContentManager::TilesetContentManager(
     CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
     loaderFactory
-        .createLoader(
-            externals,
-            tilesetOptions.contentOptions,
-            authorizationChangeListener,
-            tilesetOptions.showCreditsOnScreen,
-            tilesetOptions.ellipsoid)
+        .createLoader(externals, tilesetOptions, authorizationChangeListener)
         .thenInMainThread(
             [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {

@@ -8,19 +8,17 @@ namespace Cesium3DTilesSelection {
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 CesiumIonTilesetLoaderFactory::createLoader(
     const TilesetExternals& externals,
-    const TilesetContentOptions& contentOptions,
-    const AuthorizationHeaderChangeListener& headerChangeListener,
-    bool showCreditsOnScreen,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) const {
+    const TilesetOptions& tilesetOptions,
+    const AuthorizationHeaderChangeListener& headerChangeListener) const {
   return CesiumIonTilesetLoader::createLoader(
              externals,
-             contentOptions,
+             tilesetOptions.contentOptions,
              this->_ionAssetID,
              this->_ionAccessToken,
              this->_ionAssetEndpointUrl,
              headerChangeListener,
-             showCreditsOnScreen,
-             ellipsoid)
+             tilesetOptions.showCreditsOnScreen,
+             tilesetOptions.ellipsoid)
       .thenImmediately([](Cesium3DTilesSelection::TilesetContentLoaderResult<
                            CesiumIonTilesetLoader>&& result) {
         return TilesetContentLoaderResult<TilesetContentLoader>(
@@ -31,18 +29,16 @@ CesiumIonTilesetLoaderFactory::createLoader(
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 ITwinCesiumCuratedContentLoaderFactory::createLoader(
     const TilesetExternals& externals,
-    const TilesetContentOptions& contentOptions,
-    const AuthorizationHeaderChangeListener& headerChangeListener,
-    bool showCreditsOnScreen,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) const {
+    const TilesetOptions& tilesetOptions,
+    const AuthorizationHeaderChangeListener& headerChangeListener) const {
   return ITwinCesiumCuratedContentLoader::createLoader(
              externals,
-             contentOptions,
+             tilesetOptions.contentOptions,
              this->_iTwinCesiumContentID,
              this->_iTwinAccessToken,
              headerChangeListener,
-             showCreditsOnScreen,
-             ellipsoid)
+             tilesetOptions.showCreditsOnScreen,
+             tilesetOptions.ellipsoid)
       .thenImmediately([](Cesium3DTilesSelection::TilesetContentLoaderResult<
                            CesiumIonTilesetLoader>&& result) {
         return TilesetContentLoaderResult<TilesetContentLoader>(
