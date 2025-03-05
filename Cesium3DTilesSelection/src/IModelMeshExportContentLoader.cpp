@@ -40,7 +40,7 @@ parseGetExportsResponse(const rapidjson::Document& response) {
         if (meshLink != links->value.MemberEnd() &&
             meshLink->value.IsObject()) {
           meshHref = CesiumUtility::JsonHelpers::getStringOrDefault(
-              parsedExport,
+              meshLink->value,
               "href",
               "");
         }
