@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -24,13 +25,15 @@ namespace Cesium3DTilesSelection {
  * @see CesiumGeospatial::BoundingRegion
  * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
  * @see CesiumGeospatial::S2CellBoundingVolume
+ * @see CesiumGeometry::BoundingCylinderRegion
  */
 typedef std::variant<
     CesiumGeometry::BoundingSphere,
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeospatial::BoundingRegion,
     CesiumGeospatial::BoundingRegionWithLooseFittingHeights,
-    CesiumGeospatial::S2CellBoundingVolume>
+    CesiumGeospatial::S2CellBoundingVolume,
+    CesiumGeometry::BoundingCylinderRegion>
     BoundingVolume;
 
 /**

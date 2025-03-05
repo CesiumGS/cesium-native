@@ -663,6 +663,68 @@ TEST_CASE("CanBeNormalized") {
   }
 }
 
+TEST_CASE("Test canRepresentPropertyType") {
+  SUBCASE("Works for scalars") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Scalar));
+  }
+
+  SUBCASE("Works for enums") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Enum));
+  }
+
+  SUBCASE("Works for vecNs") {
+    REQUIRE(canRepresentPropertyType<glm::vec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::dvec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::vec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::dvec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::vec4>(PropertyType::Vec4));
+    REQUIRE(canRepresentPropertyType<glm::dvec4>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Vec4));
+  }
+
+  SUBCASE("Works for matNs") {
+    REQUIRE(canRepresentPropertyType<glm::mat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::dmat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::mat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::dmat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::mat4>(PropertyType::Mat4));
+    REQUIRE(canRepresentPropertyType<glm::dmat4>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Mat4));
+  }
+
+  SUBCASE("Works for strings") {
+    REQUIRE(canRepresentPropertyType<std::string_view>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::String));
+  }
+
+  SUBCASE("Works for booleans") {
+    REQUIRE(canRepresentPropertyType<bool>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Boolean));
+  }
+}
+
 TEST_CASE("TypeToNormalizedType") {
   SUBCASE("Works for scalars") {
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint8_t>::type, double>);
