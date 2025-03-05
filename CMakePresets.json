@@ -20,6 +20,16 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CESIUM_USE_EZVCPKG": "OFF"
       }
+    },
+    {
+      "name": "vcpkg-windows",
+      "binaryDir": "${sourceDir}/build",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "CESIUM_USE_EZVCPKG": "OFF"
+      }
     }
   ]
 }
