@@ -59,12 +59,18 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
         errors{std::move(errors_)} {}
 
   TilesetContentLoaderResult(const TilesetContentLoaderResult&) = delete;
+  /** @brief Move constructor for @ref TilesetContentLoaderResult */
   TilesetContentLoaderResult(TilesetContentLoaderResult&&) noexcept = default;
   TilesetContentLoaderResult&
   operator=(const TilesetContentLoaderResult&) = delete;
+  /** @brief Move assignment operator for @ref TilesetContentLoaderResult */
   TilesetContentLoaderResult&
   operator=(TilesetContentLoaderResult&&) noexcept = default;
 
+  /**
+   * @brief Move constructor for creating a `TilesetContentLoaderResult<T>` from
+   * a `TilesetContentLoaderResult<U>` where `U` can be converted to `T`.
+   */
   template <
       class OtherLoaderType,
       typename Enable_Type = std::enable_if_t<
@@ -81,6 +87,11 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
         requestHeaders{std::move(rhs.requestHeaders)},
         errors{std::move(rhs.errors)} {}
 
+  /**
+   * @brief Move assignment operator for creating a
+   * `TilesetContentLoaderResult<T>` from a `TilesetContentLoaderResult<U>`
+   * where `U` can be converted to `T`.
+   */
   template <
       class OtherLoaderType,
       typename Enable_Type = std::enable_if_t<
