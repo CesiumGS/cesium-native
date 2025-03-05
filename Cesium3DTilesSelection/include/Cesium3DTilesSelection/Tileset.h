@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/TilesetLoaderFactory.h"
+
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
@@ -79,6 +81,19 @@ public:
       const std::string& ionAccessToken,
       const TilesetOptions& options = TilesetOptions(),
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
+
+  /**
+   * @brief Constructs a new instance with the given @ref TilesetLoaderFactory.
+   *
+   * @param externals The external interfaces to use.
+   * @param loaderFactory The factory to use to create the @ref
+   * TilesetContentLoader.
+   * @param options Additional options for the tileset.
+   */
+  Tileset(
+      const TilesetExternals& externals,
+      const TilesetLoaderFactory& loaderFactory,
+      const TilesetOptions& options = TilesetOptions());
 
   /**
    * @brief Destroys this tileset.
