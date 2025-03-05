@@ -1,5 +1,3 @@
-#pragma once
-
 #include "CesiumIonTilesetLoader.h"
 #include "ITwinCesiumCuratedContentLoader.h"
 

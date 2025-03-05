@@ -9,10 +9,9 @@ public:
   virtual std::string getUrl(
       int64_t ionAssetID,
       const std::string& /*ionAccessToken*/,
-      const std::string& ionAssetEndpointUrl) const override {
+      const std::string& /*ionAssetEndpointUrl*/) const override {
     return fmt::format(
-        "{}curated-content/cesium/{}/tiles",
-        ionAssetEndpointUrl,
+        "https://api.bentley.com/curated-content/cesium/{}/tiles",
         ionAssetID);
   }
 
@@ -70,7 +69,7 @@ ITwinCesiumCuratedContentLoader::createAssetAccessor(
   return std::make_shared<CesiumIonAssetAccessor>(
       tilesetLoader,
       pAggregatedAccessor,
-      ITwinCesiumCuratedContentEndpointResource{});
+      std::make_shared<ITwinCesiumCuratedContentEndpointResource>());
 }
 
 } // namespace Cesium3DTilesSelection

@@ -8,6 +8,8 @@
 namespace Cesium3DTilesSelection {
 class TilesetLoaderFactory {
 public:
+  virtual ~TilesetLoaderFactory() = default;
+
   using AuthorizationHeaderChangeListener = std::function<
       void(const std::string& header, const std::string& headerValue)>;
 
