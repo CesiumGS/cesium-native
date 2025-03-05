@@ -256,7 +256,7 @@ void validateI3dmDataSections(
     return;
   }
   dataSectionOffset += header.batchTableJsonByteLength;
-  if (dataSectionOffset + header.batchTableBinaryByteLength >
+  if (dataSectionOffset + header.batchTableJsonByteLength >
       instancesBinary.size()) {
     errors.emplaceError(fmt::format(
         "Invalid I3dm batch table binary offset {} length {} "
