@@ -1,4 +1,4 @@
-build
+build*/*
 doxygen
 Testing
 node_modules
@@ -8,7 +8,5 @@ CMakeSettings.json
 .cache
 *.DS_Store
 test.db
-build-wsl
 .idea
-build-debug
 clang-tidy.log
