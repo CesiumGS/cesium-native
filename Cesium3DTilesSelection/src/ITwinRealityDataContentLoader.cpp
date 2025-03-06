@@ -1,12 +1,29 @@
 #include "ITwinRealityDataContentLoader.h"
 
-#include "CesiumAsync/Future.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumUtility/JsonHelpers.h"
-#include "CesiumUtility/Uri.h"
 #include "ITwinUtilities.h"
-#include "TilesetJsonLoader.h"
+
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Uri.h>
+
+#include <fmt/format.h>
+#include <rapidjson/rapidjson.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 
