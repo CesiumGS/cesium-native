@@ -162,17 +162,13 @@ requestRealityDataContainer(
         containerUri.setPath(
             fmt::format("{}/{}", containerUri.getPath(), details.rootDocument));
 
-        std::vector<CesiumAsync::IAssetAccessor::THeader> tilesetHeaders{
-            {"Authorization", "Bearer " + iTwinAccessToken}};
-
         return TilesetJsonLoader::createLoader(
                    externals,
                    std::string{containerUri.toString()},
-                   tilesetHeaders,
+                   std::vector<CesiumAsync::IAssetAccessor::THeader>{},
                    ellipsoid)
-            .thenImmediately([tilesetHeaders](
-                                 TilesetContentLoaderResult<TilesetJsonLoader>&&
-                                     tilesetJsonResult) mutable {
+            .thenImmediately([](TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                    tilesetJsonResult) mutable {
               TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
               if (!tilesetJsonResult.errors) {
                 result.pLoader =
@@ -180,7 +176,6 @@ requestRealityDataContainer(
                         std::move(tilesetJsonResult.pLoader));
                 result.pRootTile = std::move(tilesetJsonResult.pRootTile);
                 result.credits = std::move(tilesetJsonResult.credits);
-                result.requestHeaders = std::move(tilesetHeaders);
               }
               result.errors = std::move(tilesetJsonResult.errors);
               result.statusCode = tilesetJsonResult.statusCode;
