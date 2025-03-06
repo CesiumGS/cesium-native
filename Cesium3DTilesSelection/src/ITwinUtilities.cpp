@@ -1,8 +1,15 @@
 #include "ITwinUtilities.h"
 
-#include "CesiumUtility/JsonHelpers.h"
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/JsonHelpers.h>
 
+#include <fmt/format.h>
 #include <rapidjson/document.h>
+
+#include <cstddef>
+#include <span>
+#include <string>
 
 namespace Cesium3DTilesSelection {
 void parseITwinErrorResponseIntoErrorList(

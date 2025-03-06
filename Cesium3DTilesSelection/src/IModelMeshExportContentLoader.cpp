@@ -1,16 +1,31 @@
 #include "IModelMeshExportContentLoader.h"
 
 #include "ITwinUtilities.h"
+#include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
 
-#include <TilesetJsonLoader.h>
+#include <fmt/format.h>
+#include <rapidjson/rapidjson.h>
 
 #include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 
@@ -48,7 +63,7 @@ parseGetExportsResponse(const rapidjson::Document& response) {
 
       // We only want to return exports that have the required values
       if (!exportId.empty() && !meshHref.empty()) {
-        exports.emplace_back(exportId, meshHref);
+        exports.emplace_back(IModelMeshExport{exportId, meshHref});
       }
     }
   }
