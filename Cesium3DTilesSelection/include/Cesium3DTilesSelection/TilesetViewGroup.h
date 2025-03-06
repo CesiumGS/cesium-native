@@ -1,9 +1,11 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <unordered_map>
+#include <vector>
 
 namespace Cesium3DTilesSelection {
 
@@ -82,6 +84,9 @@ private:
       CesiumUtility::IntrusivePointer<const Tile>,
       TileSelectionState>
       _currentSelectionStates;
+
+  std::vector<TileLoadTask> _mainThreadLoadQueue;
+  std::vector<TileLoadTask> _workerThreadLoadQueue;
 
   // So that the Tileset can create instances of this class.
   friend class Tileset;

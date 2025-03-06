@@ -218,11 +218,6 @@ public:
   const ViewUpdateResult&
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
-  const ViewUpdateResult& updateView(
-      TilesetViewGroup& viewGroup,
-      const std::vector<ViewState>& frustums,
-      float deltaTime = 0.0f);
-
   /**
    * @brief Gets the total number of tiles that are currently loaded.
    */
@@ -320,6 +315,13 @@ public:
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
   TilesetViewGroup createViewGroup();
+
+  const ViewUpdateResult& updateViewGroup(
+      TilesetViewGroup& viewGroup,
+      const std::vector<ViewState>& frustums,
+      float deltaTime = 0.0f);
+
+  void processViewGroupLoads();
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
@@ -473,13 +475,14 @@ private:
    * @return false The non-additive-refined tile was ignored.
    */
   bool _loadAndRenderAdditiveRefinedTile(
+      const FrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result,
       double tilePriority,
       bool queuedForLoad);
 
-  void _processWorkerThreadLoadQueue();
-  void _processMainThreadLoadQueue();
+  void _processWorkerThreadLoadQueue(const FrameState& frameState);
+  void _processMainThreadLoadQueue(const FrameState& frameState);
 
   void _unloadCachedTiles(double timeBudget) noexcept;
 
@@ -496,59 +499,6 @@ private:
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
 
-  enum class TileLoadPriorityGroup {
-    /**
-     * @brief Low priority tiles that aren't needed right now, but
-     * are being preloaded for the future.
-     */
-    Preload = 0,
-
-    /**
-     * @brief Medium priority tiles that are needed to render the current view
-     * at the appropriate level-of-detail.
-     */
-    Normal = 1,
-
-    /**
-     * @brief High priority tiles whose absence is causing extra detail to be
-     * rendered in the scene, potentially creating a performance problem and
-     * aliasing artifacts.
-     */
-    Urgent = 2
-  };
-
-  struct TileLoadTask {
-    /**
-     * @brief The tile to be loaded.
-     */
-    Tile* pTile;
-
-    /**
-     * @brief The priority group (low / medium / high) in which to load this
-     * tile.
-     *
-     * All tiles in a higher priority group are given a chance to load before
-     * any tiles in a lower priority group.
-     */
-    TileLoadPriorityGroup group;
-
-    /**
-     * @brief The priority of this tile within its priority group.
-     *
-     * Tiles with a _lower_ value for this property load sooner!
-     */
-    double priority;
-
-    bool operator<(const TileLoadTask& rhs) const noexcept {
-      if (this->group == rhs.group)
-        return this->priority < rhs.priority;
-      else
-        return this->group > rhs.group;
-    }
-  };
-
-  std::vector<TileLoadTask> _mainThreadLoadQueue;
-  std::vector<TileLoadTask> _workerThreadLoadQueue;
   std::vector<Tile*> _heightQueryLoadQueue;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
@@ -567,6 +517,7 @@ private:
   TilesetViewGroup _defaultViewGroup;
 
   void addTileToLoadQueue(
+      const FrameState& frameState,
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);

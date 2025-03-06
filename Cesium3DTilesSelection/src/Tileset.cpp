@@ -351,10 +351,10 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
-  return this->updateView(this->_defaultViewGroup, frustums, deltaTime);
+  return this->updateViewGroup(this->_defaultViewGroup, frustums, deltaTime);
 }
 
-const ViewUpdateResult& Tileset::updateView(
+const ViewUpdateResult& Tileset::updateViewGroup(
     TilesetViewGroup& viewGroup,
     const std::vector<ViewState>& frustums,
     float deltaTime) {
@@ -409,8 +409,8 @@ const ViewUpdateResult& Tileset::updateView(
     pExcluder->startNewFrame();
   }
 
-  this->_workerThreadLoadQueue.clear();
-  this->_mainThreadLoadQueue.clear();
+  viewGroup._workerThreadLoadQueue.clear();
+  viewGroup._mainThreadLoadQueue.clear();
 
   std::vector<double> fogDensities(frustums.size());
   std::transform(
@@ -443,9 +443,9 @@ const ViewUpdateResult& Tileset::updateView(
       this->_heightQueryLoadQueue);
 
   result.workerThreadTileLoadQueueLength =
-      static_cast<int32_t>(this->_workerThreadLoadQueue.size());
+      static_cast<int32_t>(viewGroup._workerThreadLoadQueue.size());
   result.mainThreadTileLoadQueueLength =
-      static_cast<int32_t>(this->_mainThreadLoadQueue.size());
+      static_cast<int32_t>(viewGroup._mainThreadLoadQueue.size());
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->_externals.pTileOcclusionProxyPool;
@@ -458,8 +458,8 @@ const ViewUpdateResult& Tileset::updateView(
   this->_pTilesetContentManager->unloadCachedBytes(
       this->getOptions().maximumCachedBytes,
       this->_options.tileCacheUnloadTimeLimit);
-  this->_processWorkerThreadLoadQueue();
-  this->_processMainThreadLoadQueue();
+  this->_processWorkerThreadLoadQueue(frameState);
+  this->_processMainThreadLoadQueue(frameState);
   this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -1011,7 +1011,11 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       // In order to prevent holes, we need to load this tile and also not
       // render any siblings until it is ready. We don't actually need to
       // render it, though.
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+      addTileToLoadQueue(
+          frameState,
+          tile,
+          TileLoadPriorityGroup::Normal,
+          tilePriority);
 
       traversalDetails = Tileset::createTraversalDetailsForSingleTile(
           frameState,
@@ -1019,7 +1023,11 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
           lastFrameSelectionState);
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
+      addTileToLoadQueue(
+          frameState,
+          tile,
+          TileLoadPriorityGroup::Preload,
+          tilePriority);
     }
 
     return traversalDetails;
@@ -1060,7 +1068,11 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileSelectionState(TileSelectionState::Result::Rendered));
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+  addTileToLoadQueue(
+      frameState,
+      tile,
+      TileLoadPriorityGroup::Normal,
+      tilePriority);
 
   return Tileset::createTraversalDetailsForSingleTile(
       frameState,
@@ -1119,6 +1131,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
+    const FrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result,
     double tilePriority,
@@ -1128,7 +1141,11 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   if (tile.getRefine() == TileRefine::Add) {
     result.tilesToRenderThisFrame.push_back(&tile);
     if (!queuedForLoad)
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+      addTileToLoadQueue(
+          frameState,
+          tile,
+          TileLoadPriorityGroup::Normal,
+          tilePriority);
     return true;
   }
 
@@ -1197,25 +1214,32 @@ bool Tileset::_kickDescendantsAndRenderTile(
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     // Remove all descendants from the load queues.
-    size_t allQueueStartSize =
-        _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
-    this->_workerThreadLoadQueue.erase(
-        this->_workerThreadLoadQueue.begin() +
+    std::vector<TileLoadTask>& workerQueue =
+        frameState.viewGroup._workerThreadLoadQueue;
+    std::vector<TileLoadTask>& mainQueue =
+        frameState.viewGroup._mainThreadLoadQueue;
+
+    size_t allQueueStartSize = workerQueue.size() + mainQueue.size();
+    workerQueue.erase(
+        workerQueue.begin() +
             static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
                 workerThreadLoadQueueIndex),
-        this->_workerThreadLoadQueue.end());
-    this->_mainThreadLoadQueue.erase(
-        this->_mainThreadLoadQueue.begin() +
+        workerQueue.end());
+    mainQueue.erase(
+        mainQueue.begin() +
             static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
                 mainThreadLoadQueueIndex),
-        this->_mainThreadLoadQueue.end());
-    size_t allQueueEndSize =
-        _workerThreadLoadQueue.size() + _mainThreadLoadQueue.size();
+        mainQueue.end());
+    size_t allQueueEndSize = workerQueue.size() + mainQueue.size();
     result.tilesKicked +=
         static_cast<uint32_t>(allQueueStartSize - allQueueEndSize);
 
     if (!queuedForLoad) {
-      addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+      addTileToLoadQueue(
+          frameState,
+          tile,
+          TileLoadPriorityGroup::Normal,
+          tilePriority);
     }
 
     traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
@@ -1430,7 +1454,11 @@ Tileset::TraversalDetails Tileset::_visitTile(
       // because it is closest to the actual desired LOD and because up the tree
       // there can only be fewer tiles that need loading.
       if (!ancestorMeetsSse) {
-        addTileToLoadQueue(tile, TileLoadPriorityGroup::Urgent, tilePriority);
+        addTileToLoadQueue(
+            frameState,
+            tile,
+            TileLoadPriorityGroup::Urgent,
+            tilePriority);
         queuedForLoad = true;
       }
 
@@ -1441,7 +1469,11 @@ Tileset::TraversalDetails Tileset::_visitTile(
       // Render this tile and return without visiting children.
       // Only load this tile if it (not just an ancestor) meets the SSE.
       if (!ancestorMeetsSse) {
-        addTileToLoadQueue(tile, TileLoadPriorityGroup::Normal, tilePriority);
+        addTileToLoadQueue(
+            frameState,
+            tile,
+            TileLoadPriorityGroup::Normal,
+            tilePriority);
       }
       return _renderInnerTile(frameState, tile, result);
     }
@@ -1450,6 +1482,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // Refine!
 
   queuedForLoad = _loadAndRenderAdditiveRefinedTile(
+                      frameState,
                       tile,
                       result,
                       tilePriority,
@@ -1458,8 +1491,10 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
-  const size_t workerThreadLoadQueueIndex = this->_workerThreadLoadQueue.size();
-  const size_t mainThreadLoadQueueIndex = this->_mainThreadLoadQueue.size();
+  const size_t workerThreadLoadQueueIndex =
+      frameState.viewGroup._workerThreadLoadQueue.size();
+  const size_t mainThreadLoadQueueIndex =
+      frameState.viewGroup._mainThreadLoadQueue.size();
 
   TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(
       frameState,
@@ -1519,7 +1554,11 @@ Tileset::TraversalDetails Tileset::_visitTile(
   }
 
   if (this->_options.preloadAncestors && !queuedForLoad) {
-    addTileToLoadQueue(tile, TileLoadPriorityGroup::Preload, tilePriority);
+    addTileToLoadQueue(
+        frameState,
+        tile,
+        TileLoadPriorityGroup::Preload,
+        tilePriority);
   }
 
   return traversalDetails;
@@ -1553,7 +1592,7 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   return traversalDetails;
 }
 
-void Tileset::_processWorkerThreadLoadQueue() {
+void Tileset::_processWorkerThreadLoadQueue(const FrameState& frameState) {
   CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
 
   int32_t maximumSimultaneousTileLoads =
@@ -1565,13 +1604,13 @@ void Tileset::_processWorkerThreadLoadQueue() {
   }
 
   std::sort(
-      this->_workerThreadLoadQueue.begin(),
-      this->_workerThreadLoadQueue.end());
+      frameState.viewGroup._workerThreadLoadQueue.begin(),
+      frameState.viewGroup._workerThreadLoadQueue.end());
 
   // Select tiles alternately from the two queues. Each frame, switch which
   // queue we pull the first tile from. The goal is to schedule both height
   // query and visualization tile loads fairly.
-  auto visIt = this->_workerThreadLoadQueue.begin();
+  auto visIt = frameState.viewGroup._workerThreadLoadQueue.begin();
   auto queryIt = this->_heightQueryLoadQueue.begin();
 
   bool nextIsVis = (this->_previousFrameNumber % 2) == 0;
@@ -1584,7 +1623,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
     int32_t originalNumberOfTilesLoading =
         this->_pTilesetContentManager->getNumberOfTilesLoading();
     if (nextIsVis) {
-      while (visIt != this->_workerThreadLoadQueue.end() &&
+      while (visIt != frameState.viewGroup._workerThreadLoadQueue.end() &&
              originalNumberOfTilesLoading ==
                  this->_pTilesetContentManager->getNumberOfTilesLoading()) {
         this->_pTilesetContentManager->loadTileContent(*visIt->pTile, _options);
@@ -1599,7 +1638,7 @@ void Tileset::_processWorkerThreadLoadQueue() {
       }
     }
 
-    if (visIt == this->_workerThreadLoadQueue.end() &&
+    if (visIt == frameState.viewGroup._workerThreadLoadQueue.end() &&
         queryIt == this->_heightQueryLoadQueue.end()) {
       // No more work in either queue
       break;
@@ -1610,20 +1649,20 @@ void Tileset::_processWorkerThreadLoadQueue() {
   }
 }
 
-void Tileset::_processMainThreadLoadQueue() {
+void Tileset::_processMainThreadLoadQueue(const FrameState& frameState) {
   CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
   // Process deferred main-thread load tasks with a time budget.
 
   std::sort(
-      this->_mainThreadLoadQueue.begin(),
-      this->_mainThreadLoadQueue.end());
+      frameState.viewGroup._mainThreadLoadQueue.begin(),
+      frameState.viewGroup._mainThreadLoadQueue.end());
 
   double timeBudget = this->_options.mainThreadLoadingTimeLimit;
 
   auto start = std::chrono::system_clock::now();
   auto end = start + std::chrono::microseconds(
                          static_cast<int64_t>(1000.0 * timeBudget));
-  for (TileLoadTask& task : this->_mainThreadLoadQueue) {
+  for (TileLoadTask& task : frameState.viewGroup._mainThreadLoadQueue) {
     // We double-check that the tile is still in the ContentLoaded state here,
     // in case something (such as a child that needs to upsample from this
     // parent) already pushed the tile into the Done state. Because in that
@@ -1638,31 +1677,34 @@ void Tileset::_processMainThreadLoadQueue() {
     }
   }
 
-  this->_mainThreadLoadQueue.clear();
+  frameState.viewGroup._mainThreadLoadQueue.clear();
 }
 
 void Tileset::addTileToLoadQueue(
+    const FrameState& frameState,
     Tile& tile,
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   // Assert that this tile hasn't been added to a queue already.
   CESIUM_ASSERT(
       std::find_if(
-          this->_workerThreadLoadQueue.begin(),
-          this->_workerThreadLoadQueue.end(),
+          frameState.viewGroup._workerThreadLoadQueue.begin(),
+          frameState.viewGroup._workerThreadLoadQueue.end(),
           [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
-      this->_workerThreadLoadQueue.end());
+      frameState.viewGroup._workerThreadLoadQueue.end());
   CESIUM_ASSERT(
       std::find_if(
-          this->_mainThreadLoadQueue.begin(),
-          this->_mainThreadLoadQueue.end(),
+          frameState.viewGroup._mainThreadLoadQueue.begin(),
+          frameState.viewGroup._mainThreadLoadQueue.end(),
           [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
-      this->_mainThreadLoadQueue.end());
+      frameState.viewGroup._mainThreadLoadQueue.end());
 
   if (this->_pTilesetContentManager->tileNeedsWorkerThreadLoading(tile)) {
-    this->_workerThreadLoadQueue.push_back({&tile, priorityGroup, priority});
+    frameState.viewGroup._workerThreadLoadQueue.push_back(
+        {&tile, priorityGroup, priority});
   } else if (this->_pTilesetContentManager->tileNeedsMainThreadLoading(tile)) {
-    this->_mainThreadLoadQueue.push_back({&tile, priorityGroup, priority});
+    frameState.viewGroup._mainThreadLoadQueue.push_back(
+        {&tile, priorityGroup, priority});
   }
 }
 
