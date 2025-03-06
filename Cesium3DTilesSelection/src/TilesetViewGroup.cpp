@@ -88,6 +88,10 @@ TilesetViewGroup::TilesetViewGroup(
       _previousSelectionStates(),
       _currentSelectionStates(),
       _mainThreadLoadQueue(),
-      _workerThreadLoadQueue() {}
+      _workerThreadLoadQueue() {
+  if (this->_pTilesetContentManager) {
+    this->_pTilesetContentManager->registerTileRequester(*this);
+  }
+}
 
 } // namespace Cesium3DTilesSelection
