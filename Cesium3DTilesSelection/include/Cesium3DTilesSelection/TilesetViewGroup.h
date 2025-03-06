@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/ITileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -19,11 +20,12 @@ class TilesetContentManager;
  *
  * Create an instance of this class by calling {@link Tileset::createViewGroup}.
  */
-class CESIUM3DTILESSELECTION_API TilesetViewGroup final {
+class CESIUM3DTILESSELECTION_API TilesetViewGroup final
+    : public ITileLoadRequester {
 public:
   TilesetViewGroup(const TilesetViewGroup& rhs) noexcept;
   TilesetViewGroup(TilesetViewGroup&& rhs) noexcept;
-  ~TilesetViewGroup() noexcept;
+  virtual ~TilesetViewGroup() noexcept;
 
   /**
    * @brief Returns the previous {@link TileSelectionState} of this tile last
@@ -64,6 +66,9 @@ public:
    * previous one.
    */
   void finishFrame();
+
+  bool hasMoreTilesToLoad() const override;
+  Tile* getNextTileToLoad() override;
 
 private:
   /**

@@ -6,12 +6,33 @@
 
 namespace Cesium3DTilesSelection {
 
-TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept =
-    default;
+TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept
+    : _pTilesetContentManager(rhs._pTilesetContentManager),
+      _previousSelectionStates(rhs._previousSelectionStates),
+      _currentSelectionStates(rhs._currentSelectionStates),
+      _mainThreadLoadQueue(rhs._mainThreadLoadQueue),
+      _workerThreadLoadQueue(rhs._workerThreadLoadQueue) {
+  if (this->_pTilesetContentManager) {
+    this->_pTilesetContentManager->registerTileRequester(*this);
+  }
+}
 
-TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept = default;
+TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept
+    : _pTilesetContentManager(rhs._pTilesetContentManager),
+      _previousSelectionStates(std::move(rhs._previousSelectionStates)),
+      _currentSelectionStates(std::move(rhs._currentSelectionStates)),
+      _mainThreadLoadQueue(std::move(rhs._mainThreadLoadQueue)),
+      _workerThreadLoadQueue(std::move(rhs._workerThreadLoadQueue)) {
+  if (this->_pTilesetContentManager) {
+    this->_pTilesetContentManager->registerTileRequester(*this);
+  }
+}
 
-TilesetViewGroup::~TilesetViewGroup() noexcept = default;
+TilesetViewGroup::~TilesetViewGroup() noexcept {
+  if (this->_pTilesetContentManager) {
+    this->_pTilesetContentManager->unregisterTileRequester(*this);
+  }
+}
 
 TileSelectionState
 TilesetViewGroup::getPreviousSelectionState(const Tile& tile) const noexcept {
@@ -56,11 +77,17 @@ void TilesetViewGroup::finishFrame() {
   this->_currentSelectionStates.clear();
 }
 
+bool TilesetViewGroup::hasMoreTilesToLoad() const { return false; }
+
+Tile* TilesetViewGroup::getNextTileToLoad() { return nullptr; }
+
 TilesetViewGroup::TilesetViewGroup(
     const CesiumUtility::IntrusivePointer<TilesetContentManager>&
         pTilesetContentManager)
     : _pTilesetContentManager(pTilesetContentManager),
       _previousSelectionStates(),
-      _currentSelectionStates() {}
+      _currentSelectionStates(),
+      _mainThreadLoadQueue(),
+      _workerThreadLoadQueue() {}
 
 } // namespace Cesium3DTilesSelection

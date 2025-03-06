@@ -1501,6 +1501,26 @@ LoadedTileEnumerator TilesetContentManager::createLoadedTileEnumerator() const {
   return LoadedTileEnumerator(this->getRootTile());
 }
 
+void TilesetContentManager::registerTileRequester(
+    ITileLoadRequester& requester) {
+  CESIUM_ASSERT(
+      std::find(
+          this->_requesters.begin(),
+          this->_requesters.end(),
+          &requester) == this->_requesters.end());
+  this->_requesters.emplace_back(&requester);
+}
+
+void TilesetContentManager::unregisterTileRequester(
+    ITileLoadRequester& requester) {
+  auto it =
+      std::find(this->_requesters.begin(), this->_requesters.end(), &requester);
+  CESIUM_ASSERT(it != this->_requesters.end());
+  if (it != this->_requesters.end()) {
+    this->_requesters.erase(it);
+  }
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,

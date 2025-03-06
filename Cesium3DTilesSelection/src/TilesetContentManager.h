@@ -40,6 +40,7 @@ enum class UnloadTileContentResult : uint8_t {
 };
 
 class TilesetSharedAssetSystem;
+class ITileLoadRequester;
 
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
@@ -158,6 +159,9 @@ public:
 
   LoadedTileEnumerator createLoadedTileEnumerator() const;
 
+  void registerTileRequester(ITileLoadRequester& requester);
+  void unregisterTileRequester(ITileLoadRequester& requester);
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -208,5 +212,7 @@ private:
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
 
   Tile::UnusedLinkedList _unusedTiles;
+
+  std::vector<ITileLoadRequester*> _requesters;
 };
 } // namespace Cesium3DTilesSelection
