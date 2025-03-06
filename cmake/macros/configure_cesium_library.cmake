@@ -13,7 +13,8 @@ function(configure_cesium_library targetName)
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
         # Disable dangling-reference warning due to amount of false positives: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109642
-        target_compile_options(${targetName} PRIVATE -Wno-dangling-reference)
+        # Also disable stringop-overflow warning which causes false positives when building with aarch64-linux-gnu-g++-13
+        target_compile_options(${targetName} PRIVATE -Wno-dangling-reference -Wno-stringop-overflow)
     endif()
 
     if (CESIUM_GLM_STRICT_ENABLED)
