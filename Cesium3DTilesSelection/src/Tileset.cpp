@@ -458,9 +458,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   this->_pTilesetContentManager->unloadCachedBytes(
       this->getOptions().maximumCachedBytes,
       this->_options.tileCacheUnloadTimeLimit);
-  // this->_pTilesetContentManager->processWorkerThreadLoadRequests(
-  //     this->_options);
-  this->_processMainThreadLoadQueue(frameState);
   this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -522,6 +519,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 void Tileset::processViewGroupLoads() {
   this->_pTilesetContentManager->processWorkerThreadLoadRequests(
       this->_options);
+  this->_pTilesetContentManager->processMainThreadLoadRequests(this->_options);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {
@@ -1597,37 +1595,6 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   }
 
   return traversalDetails;
-}
-
-void Tileset::_processMainThreadLoadQueue(const FrameState& frameState) {
-  CESIUM_TRACE("Tileset::_processMainThreadLoadQueue");
-  // Process deferred main-thread load tasks with a time budget.
-
-  std::sort(
-      frameState.viewGroup._mainThreadLoadQueue.begin(),
-      frameState.viewGroup._mainThreadLoadQueue.end());
-
-  double timeBudget = this->_options.mainThreadLoadingTimeLimit;
-
-  auto start = std::chrono::system_clock::now();
-  auto end = start + std::chrono::microseconds(
-                         static_cast<int64_t>(1000.0 * timeBudget));
-  for (TileLoadTask& task : frameState.viewGroup._mainThreadLoadQueue) {
-    // We double-check that the tile is still in the ContentLoaded state here,
-    // in case something (such as a child that needs to upsample from this
-    // parent) already pushed the tile into the Done state. Because in that
-    // case, calling finishLoading here would assert or crash.
-    if (task.pTile->getState() == TileLoadState::ContentLoaded &&
-        task.pTile->isRenderContent()) {
-      this->_pTilesetContentManager->finishLoading(*task.pTile, this->_options);
-    }
-    auto time = std::chrono::system_clock::now();
-    if (timeBudget > 0.0 && time >= end) {
-      break;
-    }
-  }
-
-  frameState.viewGroup._mainThreadLoadQueue.clear();
 }
 
 void Tileset::addTileToLoadQueue(

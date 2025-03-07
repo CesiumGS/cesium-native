@@ -163,6 +163,7 @@ public:
   void unregisterTileRequester(ITileLoadRequester& requester);
 
   void processWorkerThreadLoadRequests(const TilesetOptions& options);
+  void processMainThreadLoadRequests(const TilesetOptions& options);
 
 private:
   static void setTileContent(

@@ -86,6 +86,15 @@ void TilesetViewGroup::finishFrame() {
   std::reverse(
       this->_workerThreadLoadQueue.begin(),
       this->_workerThreadLoadQueue.end());
+
+  std::sort(
+      this->_mainThreadLoadQueue.begin(),
+      this->_mainThreadLoadQueue.end());
+
+  // TODO: reverse the sort order instead?
+  std::reverse(
+      this->_mainThreadLoadQueue.begin(),
+      this->_mainThreadLoadQueue.end());
 }
 
 double TilesetViewGroup::getWeight() const { return this->_weight; }
@@ -108,9 +117,19 @@ Tile* TilesetViewGroup::getNextTileToLoadInWorkerThread() {
   return pResult;
 }
 
-bool TilesetViewGroup::hasMoreTilesToLoadInMainThread() const { return false; }
+bool TilesetViewGroup::hasMoreTilesToLoadInMainThread() const {
+  return !this->_mainThreadLoadQueue.empty();
+}
 
-Tile* TilesetViewGroup::getNextTileToLoadInMainThread() { return nullptr; }
+Tile* TilesetViewGroup::getNextTileToLoadInMainThread() {
+  CESIUM_ASSERT(!this->_mainThreadLoadQueue.empty());
+  if (this->_mainThreadLoadQueue.empty())
+    return nullptr;
+
+  Tile* pResult = this->_mainThreadLoadQueue.back().pTile;
+  this->_mainThreadLoadQueue.pop_back();
+  return pResult;
+}
 
 TilesetViewGroup::TilesetViewGroup(
     const CesiumUtility::IntrusivePointer<TilesetContentManager>&

@@ -1539,42 +1539,101 @@ void TilesetContentManager::unregisterTileRequester(
 
 namespace {
 
-void computeRequesterFractions(
-    const std::vector<ITileLoadRequester*>& allRequesters,
-    std::vector<ITileLoadRequester*>& requestersWithRequests,
-    std::vector<double>& fractions) {
-  fractions.reserve(allRequesters.size());
-  requestersWithRequests.reserve(allRequesters.size());
+template <typename HasMoreTilesToLoadFunc, typename GetNextTileToLoadFunc>
+class WeightedRoundRobin {
+public:
+  WeightedRoundRobin(
+      double& roundRobinValue,
+      const std::vector<ITileLoadRequester*>& allRequesters,
+      std::vector<ITileLoadRequester*>& requestersWithRequests,
+      std::vector<double>& fractions,
+      const HasMoreTilesToLoadFunc& hasMoreTilesToLoad,
+      const GetNextTileToLoadFunc& getNextTileToLoad)
+      : _roundRobinValue(roundRobinValue),
+        _allRequesters(allRequesters),
+        _requestersWithRequests(requestersWithRequests),
+        _fractions(fractions),
+        _hasMoreTilesToLoad(hasMoreTilesToLoad),
+        _getNextTileToLoad(getNextTileToLoad) {
+    this->recomputeRequesterFractions();
+  }
 
-  fractions.clear();
-  requestersWithRequests.clear();
+  Tile* getNextTileToLoad() {
+    if (this->_requestersWithRequests.empty())
+      return nullptr;
 
-  double sum = 0.0;
+    // Use the golden ratio to move to the next requester so that we give each a
+    // chance to load tiles in proportion to its weight.
+    // Inspired by:
+    // https://blog.demofox.org/2020/06/23/weighted-round-robin-using-the-golden-ratio-low-discrepancy-sequence/
+    this->_roundRobinValue =
+        glm::fract(this->_roundRobinValue + Math::GoldenRatio);
+    auto it = std::lower_bound(
+        this->_fractions.begin(),
+        this->_fractions.end(),
+        this->_roundRobinValue);
 
-  for (size_t i = 0; i < allRequesters.size(); ++i) {
-    ITileLoadRequester* pRequester = allRequesters[i];
-    CESIUM_ASSERT(pRequester);
+    size_t index = it - this->_fractions.begin();
+    CESIUM_ASSERT(index < this->_requestersWithRequests.size());
+    if (index >= this->_requestersWithRequests.size())
+      return nullptr;
 
-    if (pRequester && pRequester->hasMoreTilesToLoadInWorkerThread()) {
-      double weight = pRequester->getWeight();
-      CESIUM_ASSERT(weight > 0.0);
+    ITileLoadRequester& requester = *this->_requestersWithRequests[index];
 
-      sum += weight;
-      fractions.emplace_back(sum);
-      requestersWithRequests.emplace_back(pRequester);
+    Tile* pToLoad = this->_getNextTileToLoad(requester);
+    CESIUM_ASSERT(pToLoad);
+
+    if (!pToLoad || !this->_hasMoreTilesToLoad(requester)) {
+      // If this was the last tile from this requester, we'll need to remove the
+      // requester from the weighting.
+      this->recomputeRequesterFractions();
+    }
+
+    return pToLoad;
+  }
+
+private:
+  void recomputeRequesterFractions() {
+    this->_fractions.reserve(this->_allRequesters.size());
+    this->_requestersWithRequests.reserve(this->_allRequesters.size());
+
+    this->_fractions.clear();
+    this->_requestersWithRequests.clear();
+
+    double sum = 0.0;
+
+    for (size_t i = 0; i < this->_allRequesters.size(); ++i) {
+      ITileLoadRequester* pRequester = this->_allRequesters[i];
+      CESIUM_ASSERT(pRequester);
+
+      if (pRequester && _hasMoreTilesToLoad(*pRequester)) {
+        double weight = pRequester->getWeight();
+        CESIUM_ASSERT(weight > 0.0);
+
+        sum += weight;
+        this->_fractions.emplace_back(sum);
+        this->_requestersWithRequests.emplace_back(pRequester);
+      }
+    }
+
+    // Normalize to [0.0, 1.0].
+    for (size_t i = 0; i < this->_fractions.size(); ++i) {
+      this->_fractions[i] /= sum;
+    }
+
+    // The last fraction should always be exactly 1.0.
+    if (!this->_fractions.empty()) {
+      this->_fractions.back() = 1.0;
     }
   }
 
-  // Normalize to [0.0, 1.0].
-  for (size_t i = 0; i < fractions.size(); ++i) {
-    fractions[i] /= sum;
-  }
-
-  // The last fraction should always be exactly 1.0.
-  if (!fractions.empty()) {
-    fractions.back() = 1.0;
-  }
-}
+  double& _roundRobinValue;
+  const std::vector<ITileLoadRequester*>& _allRequesters;
+  std::vector<ITileLoadRequester*>& _requestersWithRequests;
+  std::vector<double>& _fractions;
+  const HasMoreTilesToLoadFunc& _hasMoreTilesToLoad;
+  const GetNextTileToLoadFunc& _getNextTileToLoad;
+};
 
 } // namespace
 
@@ -1586,45 +1645,65 @@ void TilesetContentManager::processWorkerThreadLoadRequests(
     return;
   }
 
-  // Use a weighted round robin algorithm to give different requesters the
-  // opportunity to nominate tiles to load.
-  // The approach here is inspired by:
-  // https://blog.demofox.org/2020/06/23/weighted-round-robin-using-the-golden-ratio-low-discrepancy-sequence/
-  const std::vector<ITileLoadRequester*>& allRequesters = this->_requesters;
-  std::vector<ITileLoadRequester*>& requesters = this->_requestersWithRequests;
-  std::vector<double>& fractions = this->_requesterFractions;
+  WeightedRoundRobin wrr{
+      this->_roundRobinValueWorker,
+      this->_requesters,
+      this->_requestersWithRequests,
+      this->_requesterFractions,
+      [](const ITileLoadRequester& requester) {
+        return requester.hasMoreTilesToLoadInWorkerThread();
+      },
+      [](ITileLoadRequester& requester) {
+        return requester.getNextTileToLoadInWorkerThread();
+      }};
 
-  computeRequesterFractions(allRequesters, requesters, fractions);
+  while (this->getNumberOfTilesLoading() <
+         int32_t(options.maximumSimultaneousTileLoads)) {
+    Tile* pToLoad = wrr.getNextTileToLoad();
+    if (pToLoad == nullptr)
+      break;
 
-  while (!requesters.empty() &&
-         this->getNumberOfTilesLoading() <
-             int32_t(options.maximumSimultaneousTileLoads)) {
-    // Use the golden ratio to move to the next requester so that we give each a
-    // chance to load tiles in proportion to its weight.
-    this->_roundRobinValueWorker =
-        glm::fract(this->_roundRobinValueWorker + Math::GoldenRatio);
-    auto it = std::lower_bound(
-        fractions.begin(),
-        fractions.end(),
-        this->_roundRobinValueWorker);
+    this->loadTileContent(*pToLoad, options);
+  }
+}
 
-    size_t index = it - fractions.begin();
-    if (index >= requesters.size())
-      continue;
+void TilesetContentManager::processMainThreadLoadRequests(
+    const TilesetOptions& options) {
+  WeightedRoundRobin wrr{
+      this->_roundRobinValueMain,
+      this->_requesters,
+      this->_requestersWithRequests,
+      this->_requesterFractions,
+      [](const ITileLoadRequester& requester) {
+        return requester.hasMoreTilesToLoadInMainThread();
+      },
+      [](ITileLoadRequester& requester) {
+        return requester.getNextTileToLoadInMainThread();
+      }};
 
-    CESIUM_ASSERT(requesters[index] != nullptr);
-    ITileLoadRequester& requester = *requesters[index];
-    Tile* pToLoad = requester.getNextTileToLoadInWorkerThread();
-    CESIUM_ASSERT(pToLoad);
+  double timeBudget = options.mainThreadLoadingTimeLimit;
 
-    if (pToLoad) {
-      this->loadTileContent(*pToLoad, options);
+  auto start = std::chrono::system_clock::now();
+  auto end = start + std::chrono::microseconds(
+                         static_cast<int64_t>(1000.0 * timeBudget));
+
+  while (true) {
+    Tile* pToLoad = wrr.getNextTileToLoad();
+    if (pToLoad == nullptr)
+      break;
+
+    // We double-check that the tile is still in the ContentLoaded state here,
+    // in case something (such as a child that needs to upsample from this
+    // parent) already pushed the tile into the Done state. Because in that
+    // case, calling finishLoading here would assert or crash.
+    if (pToLoad->getState() == TileLoadState::ContentLoaded &&
+        pToLoad->isRenderContent()) {
+      this->finishLoading(*pToLoad, options);
     }
 
-    if (!pToLoad || !requester.hasMoreTilesToLoadInWorkerThread()) {
-      // If this was the last tile from this requester, we'll need to remove it
-      // from the weighting.
-      computeRequesterFractions(allRequesters, requesters, fractions);
+    auto time = std::chrono::system_clock::now();
+    if (timeBudget > 0.0 && time >= end) {
+      break;
     }
   }
 }
