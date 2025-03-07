@@ -1,6 +1,7 @@
 #include "ITwinRealityDataContentLoader.h"
 
 #include "ITwinUtilities.h"
+#include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
