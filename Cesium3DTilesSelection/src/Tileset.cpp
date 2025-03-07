@@ -351,7 +351,10 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
 
 const ViewUpdateResult&
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
-  return this->updateViewGroup(this->_defaultViewGroup, frustums, deltaTime);
+  const ViewUpdateResult& result =
+      this->updateViewGroup(this->_defaultViewGroup, frustums, deltaTime);
+  this->loadTiles();
+  return result;
 }
 
 const ViewUpdateResult& Tileset::updateViewGroup(
@@ -435,12 +438,12 @@ const ViewUpdateResult& Tileset::updateViewGroup(
     result = ViewUpdateResult();
   }
 
+  // TODO: don't do this for every view update
   TilesetHeightRequest::processHeightRequests(
       this->getAsyncSystem(),
       *this->_pTilesetContentManager,
       this->_options,
-      this->_heightRequests,
-      this->_heightQueryLoadQueue);
+      this->_heightRequests);
 
   result.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(viewGroup._workerThreadLoadQueue.size());
@@ -455,9 +458,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   viewGroup.finishFrame();
 
-  this->_pTilesetContentManager->unloadCachedBytes(
-      this->getOptions().maximumCachedBytes,
-      this->_options.tileCacheUnloadTimeLimit);
   this->_updateLodTransitions(frameState, deltaTime, result);
 
   // aggregate all the credits needed from this tileset for the current frame
@@ -516,7 +516,10 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   return result;
 }
 
-void Tileset::processViewGroupLoads() {
+void Tileset::loadTiles() {
+  this->_pTilesetContentManager->unloadCachedBytes(
+      this->_options.maximumCachedBytes,
+      this->_options.tileCacheUnloadTimeLimit);
   this->_pTilesetContentManager->processWorkerThreadLoadRequests(
       this->_options);
   this->_pTilesetContentManager->processMainThreadLoadRequests(this->_options);
@@ -640,7 +643,9 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   }
 
   this->_heightRequests.emplace_back(
-      TilesetHeightRequest{std::move(queries), promise});
+      this->_pTilesetContentManager,
+      std::move(queries),
+      promise);
 
   return promise.getFuture();
 }

@@ -241,25 +241,48 @@ void TilesetHeightQuery::findCandidateTiles(
   }
 }
 
+TilesetHeightRequest::TilesetHeightRequest(
+    const CesiumUtility::IntrusivePointer<TilesetContentManager>&
+        pTilesetContentManager_,
+    std::vector<TilesetHeightQuery>&& queries_,
+    const CesiumAsync::Promise<SampleHeightResult>& promise_) noexcept
+    : pTilesetContentManager(pTilesetContentManager_),
+      queries(std::move(queries_)),
+      promise(promise_) {
+  if (this->pTilesetContentManager) {
+    this->pTilesetContentManager->registerTileRequester(*this);
+  }
+}
+
+TilesetHeightRequest::TilesetHeightRequest(TilesetHeightRequest&& rhs) noexcept
+    : pTilesetContentManager(rhs.pTilesetContentManager),
+      queries(std::move(rhs.queries)),
+      promise(std::move(rhs.promise)) {
+  if (this->pTilesetContentManager) {
+    this->pTilesetContentManager->registerTileRequester(*this);
+  }
+}
+
+TilesetHeightRequest::~TilesetHeightRequest() noexcept {
+  if (this->pTilesetContentManager) {
+    this->pTilesetContentManager->unregisterTileRequester(*this);
+  }
+}
+
 /*static*/ void TilesetHeightRequest::processHeightRequests(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
-    std::list<TilesetHeightRequest>& heightRequests,
-    std::vector<Tile*>& heightQueryLoadQueue) {
+    std::list<TilesetHeightRequest>& heightRequests) {
   if (heightRequests.empty())
     return;
 
   // Go through all requests, either complete them, or gather the tiles they
   // need for completion
-  std::set<Tile*> tileLoadSet;
   for (auto it = heightRequests.begin(); it != heightRequests.end();) {
     TilesetHeightRequest& request = *it;
-    if (!request.tryCompleteHeightRequest(
-            asyncSystem,
-            contentManager,
-            options,
-            tileLoadSet)) {
+    if (!request
+             .tryCompleteHeightRequest(asyncSystem, contentManager, options)) {
       ++it;
     } else {
       auto deleteIt = it;
@@ -267,24 +290,32 @@ void TilesetHeightQuery::findCandidateTiles(
       heightRequests.erase(deleteIt);
     }
   }
-
-  // Decrement doNotUnloadCount for tiles currently in the queue, as the queue
-  // will be overwritten after this.
-  for (Tile* pTile : heightQueryLoadQueue) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightRequest::processHeightRequests clear from "
-        "heightQueryLoadQueue");
-  }
-
-  heightQueryLoadQueue.assign(tileLoadSet.begin(), tileLoadSet.end());
-
-  // Track the pointers in the load queue in doNotUnloadCount
-  for (Tile* pTile : heightQueryLoadQueue) {
-    pTile->incrementDoNotUnloadSubtreeCount(
-        "TilesetHeightRequest::processHeightRequests assign to "
-        "heightQueryLoadQueue");
-  }
 }
+
+double TilesetHeightRequest::getWeight() const { return 1.0; }
+
+bool TilesetHeightRequest::hasMoreTilesToLoadInWorkerThread() const {
+  return !this->tilesToLoad.empty();
+}
+
+Tile* TilesetHeightRequest::getNextTileToLoadInWorkerThread() {
+  Tile* pResult = nullptr;
+
+  auto it = this->tilesToLoad.begin();
+  if (it != this->tilesToLoad.end()) {
+    pResult = *it;
+    this->tilesToLoad.erase(it);
+  }
+
+  return pResult;
+}
+
+bool TilesetHeightRequest::hasMoreTilesToLoadInMainThread() const {
+  // We don't need to do any main thread loading for height queries.
+  return false;
+}
+
+Tile* TilesetHeightRequest::getNextTileToLoadInMainThread() { return nullptr; }
 
 void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
     std::list<TilesetHeightRequest>& heightRequests,
@@ -308,8 +339,9 @@ void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
 bool TilesetHeightRequest::tryCompleteHeightRequest(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
-    const TilesetOptions& options,
-    std::set<Tile*>& tileLoadSet) {
+    const TilesetOptions& options) {
+  this->tilesToLoad.clear();
+
   // If this TilesetContentLoader supports direct height queries, use that
   // instead of downloading tiles.
   if (contentManager.getRootTile() &&
@@ -333,10 +365,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     }
   }
 
+  // No direct height query possible, so download and sample tiles.
   LoadedTileEnumerator loadedTiles =
       contentManager.createLoadedTileEnumerator();
 
-  // No direct height query possible, so download and sample tiles.
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
   for (TilesetHeightQuery& query : this->queries) {
@@ -377,23 +409,21 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       }
     }
 
-    auto checkTile = [&contentManager,
-                      &options,
-                      &tileLoadSet,
-                      &tileStillNeedsLoading](Tile* pTile) {
-      contentManager.createLatentChildrenIfNecessary(*pTile, options);
+    auto checkTile =
+        [this, &contentManager, &options, &tileStillNeedsLoading](Tile* pTile) {
+          contentManager.createLatentChildrenIfNecessary(*pTile, options);
 
-      TileLoadState state = pTile->getState();
-      if (state == TileLoadState::Unloading) {
-        // This tile is in the process of unloading, which must complete
-        // before we can load it again.
-        contentManager.unloadTileContent(*pTile);
-        tileStillNeedsLoading = true;
-      } else if (state <= TileLoadState::ContentLoading) {
-        tileLoadSet.insert(pTile);
-        tileStillNeedsLoading = true;
-      }
-    };
+          TileLoadState state = pTile->getState();
+          if (state == TileLoadState::Unloading) {
+            // This tile is in the process of unloading, which must complete
+            // before we can load it again.
+            contentManager.unloadTileContent(*pTile);
+            tileStillNeedsLoading = true;
+          } else if (state <= TileLoadState::ContentLoading) {
+            this->tilesToLoad.insert(pTile);
+            tileStillNeedsLoading = true;
+          }
+        };
 
     // If any candidates need loading, add to return set
     for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {

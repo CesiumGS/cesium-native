@@ -321,7 +321,7 @@ public:
       const std::vector<ViewState>& frustums,
       float deltaTime = 0.0f);
 
-  void processViewGroupLoads();
+  void loadTiles();
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
@@ -495,8 +495,6 @@ private:
 
   int32_t _previousFrameNumber;
   ViewUpdateResult _updateResult;
-
-  std::vector<Tile*> _heightQueryLoadQueue;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.
