@@ -20,8 +20,8 @@ jobs:
       - name: Capture AWS secrets
         uses: aws-actions/configure-aws-credentials@v2
         env:
-          AWS_S3_USERNAME: ${{ secrets.NATIVE_ACCESS_KEY }}
-          AWS_S3_PASSWORD: ${{ secrets.NATIVE_SECRET_KEY }}
+          AWS_S3_USERNAME: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
+          AWS_S3_PASSWORD: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
         with:
           aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
           aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
@@ -111,8 +111,8 @@ jobs:
     name: "${{matrix.platform}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}"
-      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
       AWS_REGION: us-east-1
     runs-on: ${{ matrix.platform }}
     steps:
@@ -157,8 +157,8 @@ jobs:
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
-      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
       AWS_REGION: us-east-1
     runs-on: ${{ matrix.platform }}
     steps:
