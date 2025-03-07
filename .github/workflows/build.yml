@@ -70,8 +70,8 @@ jobs:
   Documentation:
     runs-on: ubuntu-22.04
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.NATIVE_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.NATIVE_SECRET_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
       AWS_REGION: us-east-1
     steps:
       - name: Install Doxygen
