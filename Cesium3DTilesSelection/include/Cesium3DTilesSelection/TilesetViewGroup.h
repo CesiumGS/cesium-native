@@ -68,6 +68,7 @@ public:
   void finishFrame();
 
   double getWeight() const override;
+  void setWeight(double weight) noexcept;
 
   bool hasMoreTilesToLoadInWorkerThread() const override;
   Tile* getNextTileToLoadInWorkerThread() override;
@@ -86,6 +87,7 @@ private:
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
+  double _weight;
   std::unordered_map<
       CesiumUtility::IntrusivePointer<const Tile>,
       TileSelectionState>

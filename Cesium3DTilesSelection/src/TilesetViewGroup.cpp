@@ -8,6 +8,7 @@ namespace Cesium3DTilesSelection {
 
 TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept
     : _pTilesetContentManager(rhs._pTilesetContentManager),
+      _weight(rhs._weight),
       _previousSelectionStates(rhs._previousSelectionStates),
       _currentSelectionStates(rhs._currentSelectionStates),
       _mainThreadLoadQueue(rhs._mainThreadLoadQueue),
@@ -19,6 +20,7 @@ TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept
 
 TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept
     : _pTilesetContentManager(rhs._pTilesetContentManager),
+      _weight(rhs._weight),
       _previousSelectionStates(std::move(rhs._previousSelectionStates)),
       _currentSelectionStates(std::move(rhs._currentSelectionStates)),
       _mainThreadLoadQueue(std::move(rhs._mainThreadLoadQueue)),
@@ -86,7 +88,11 @@ void TilesetViewGroup::finishFrame() {
       this->_workerThreadLoadQueue.end());
 }
 
-double TilesetViewGroup::getWeight() const { return 1.0; }
+double TilesetViewGroup::getWeight() const { return this->_weight; }
+
+void TilesetViewGroup::setWeight(double weight) noexcept {
+  this->_weight = weight;
+}
 
 bool TilesetViewGroup::hasMoreTilesToLoadInWorkerThread() const {
   return !this->_workerThreadLoadQueue.empty();
@@ -110,6 +116,7 @@ TilesetViewGroup::TilesetViewGroup(
     const CesiumUtility::IntrusivePointer<TilesetContentManager>&
         pTilesetContentManager)
     : _pTilesetContentManager(pTilesetContentManager),
+      _weight(1.0),
       _previousSelectionStates(),
       _currentSelectionStates(),
       _mainThreadLoadQueue(),
