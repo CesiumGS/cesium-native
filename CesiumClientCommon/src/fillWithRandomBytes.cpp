@@ -6,7 +6,7 @@
 #include <span>
 #include <stdexcept>
 
-namespace CesiumIonClient {
+namespace CesiumClientCommon {
 
 void fillWithRandomBytes(const std::span<uint8_t>& buffer) {
   if (buffer.empty()) {

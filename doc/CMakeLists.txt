@@ -19,7 +19,9 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/include
         ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
+        ../CesiumClientCommon/include
         ../CesiumIonClient/include
+        ../CesiumITwinnClient/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include

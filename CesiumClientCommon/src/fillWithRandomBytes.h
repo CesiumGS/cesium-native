@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <span>
 
-namespace CesiumIonClient {
+namespace CesiumClientCommon {
 
 void fillWithRandomBytes(const std::span<uint8_t>& buffer);
 
