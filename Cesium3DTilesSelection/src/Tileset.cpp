@@ -458,7 +458,8 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   this->_pTilesetContentManager->unloadCachedBytes(
       this->getOptions().maximumCachedBytes,
       this->_options.tileCacheUnloadTimeLimit);
-  this->_processWorkerThreadLoadQueue(frameState);
+  // this->_pTilesetContentManager->processWorkerThreadLoadRequests(
+  //     this->_options);
   this->_processMainThreadLoadQueue(frameState);
   this->_updateLodTransitions(frameState, deltaTime, result);
 
@@ -517,6 +518,12 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   return result;
 }
+
+void Tileset::processViewGroupLoads() {
+  this->_pTilesetContentManager->processWorkerThreadLoadRequests(
+      this->_options);
+}
+
 int32_t Tileset::getNumberOfTilesLoaded() const {
   return this->_pTilesetContentManager->getNumberOfTilesLoaded();
 }
@@ -1590,63 +1597,6 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
   }
 
   return traversalDetails;
-}
-
-void Tileset::_processWorkerThreadLoadQueue(const FrameState& frameState) {
-  CESIUM_TRACE("Tileset::_processWorkerThreadLoadQueue");
-
-  int32_t maximumSimultaneousTileLoads =
-      static_cast<int32_t>(this->_options.maximumSimultaneousTileLoads);
-
-  if (this->_pTilesetContentManager->getNumberOfTilesLoading() >=
-      maximumSimultaneousTileLoads) {
-    return;
-  }
-
-  std::sort(
-      frameState.viewGroup._workerThreadLoadQueue.begin(),
-      frameState.viewGroup._workerThreadLoadQueue.end());
-
-  // Select tiles alternately from the two queues. Each frame, switch which
-  // queue we pull the first tile from. The goal is to schedule both height
-  // query and visualization tile loads fairly.
-  auto visIt = frameState.viewGroup._workerThreadLoadQueue.begin();
-  auto queryIt = this->_heightQueryLoadQueue.begin();
-
-  bool nextIsVis = (this->_previousFrameNumber % 2) == 0;
-
-  while (this->_pTilesetContentManager->getNumberOfTilesLoading() <
-         maximumSimultaneousTileLoads) {
-    // Tell tiles from the current queue to load until one of them actually
-    // does. Calling loadTileContent might not actually start the loading
-    // process
-    int32_t originalNumberOfTilesLoading =
-        this->_pTilesetContentManager->getNumberOfTilesLoading();
-    if (nextIsVis) {
-      while (visIt != frameState.viewGroup._workerThreadLoadQueue.end() &&
-             originalNumberOfTilesLoading ==
-                 this->_pTilesetContentManager->getNumberOfTilesLoading()) {
-        this->_pTilesetContentManager->loadTileContent(*visIt->pTile, _options);
-        ++visIt;
-      }
-    } else {
-      while (queryIt != this->_heightQueryLoadQueue.end() &&
-             originalNumberOfTilesLoading ==
-                 this->_pTilesetContentManager->getNumberOfTilesLoading()) {
-        this->_pTilesetContentManager->loadTileContent(**queryIt, _options);
-        ++queryIt;
-      }
-    }
-
-    if (visIt == frameState.viewGroup._workerThreadLoadQueue.end() &&
-        queryIt == this->_heightQueryLoadQueue.end()) {
-      // No more work in either queue
-      break;
-    }
-
-    // Get the next tile from the other queue.
-    nextIsVis = !nextIsVis;
-  }
 }
 
 void Tileset::_processMainThreadLoadQueue(const FrameState& frameState) {

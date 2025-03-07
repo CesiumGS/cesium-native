@@ -481,7 +481,6 @@ private:
       double tilePriority,
       bool queuedForLoad);
 
-  void _processWorkerThreadLoadQueue(const FrameState& frameState);
   void _processMainThreadLoadQueue(const FrameState& frameState);
 
   void _unloadCachedTiles(double timeBudget) noexcept;

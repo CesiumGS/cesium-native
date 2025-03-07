@@ -95,6 +95,11 @@ public:
   static constexpr double PiOverFour = OnePi / 4.0;
 
   /**
+   * @brief The golden ratio, (1.0 + sqrt(5.0)) / 2.0.
+   */
+  static constexpr double GoldenRatio = 1.61803398874989484;
+
+  /**
    * @brief Converts a relative to an absolute epsilon, for the epsilon-equality
    * check between two values.
    *

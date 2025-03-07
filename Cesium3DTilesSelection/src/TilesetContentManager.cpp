@@ -9,6 +9,7 @@
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/ITileLoadRequester.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -731,7 +732,12 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _unusedTiles() {
+      _unusedTiles(),
+      _requesters(),
+      _roundRobinValueWorker(0.0),
+      _roundRobinValueMain(0.0),
+      _requesterFractions(),
+      _requestersWithRequests() {
   this->_upsampler.setOwner(*this);
 
   CESIUM_ASSERT(this->_pLoader != nullptr);
@@ -768,7 +774,12 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _unusedTiles() {
+      _unusedTiles(),
+      _requesters(),
+      _roundRobinValueWorker(0.0),
+      _roundRobinValueMain(0.0),
+      _requesterFractions(),
+      _requestersWithRequests() {
   this->_upsampler.setOwner(*this);
 
   if (!url.empty()) {
@@ -925,7 +936,12 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _unusedTiles() {
+      _unusedTiles(),
+      _requesters(),
+      _roundRobinValueWorker(0.0),
+      _roundRobinValueMain(0.0),
+      _requesterFractions(),
+      _requestersWithRequests() {
   this->_upsampler.setOwner(*this);
 
   if (ionAssetID > 0) {
@@ -1518,6 +1534,98 @@ void TilesetContentManager::unregisterTileRequester(
   CESIUM_ASSERT(it != this->_requesters.end());
   if (it != this->_requesters.end()) {
     this->_requesters.erase(it);
+  }
+}
+
+namespace {
+
+void computeRequesterFractions(
+    const std::vector<ITileLoadRequester*>& allRequesters,
+    std::vector<ITileLoadRequester*>& requestersWithRequests,
+    std::vector<double>& fractions) {
+  fractions.reserve(allRequesters.size());
+  requestersWithRequests.reserve(allRequesters.size());
+
+  fractions.clear();
+  requestersWithRequests.clear();
+
+  double sum = 0.0;
+
+  for (size_t i = 0; i < allRequesters.size(); ++i) {
+    ITileLoadRequester* pRequester = allRequesters[i];
+    CESIUM_ASSERT(pRequester);
+
+    if (pRequester && pRequester->hasMoreTilesToLoadInWorkerThread()) {
+      double weight = pRequester->getWeight();
+      CESIUM_ASSERT(weight > 0.0);
+
+      sum += weight;
+      fractions.emplace_back(sum);
+      requestersWithRequests.emplace_back(pRequester);
+    }
+  }
+
+  // Normalize to [0.0, 1.0].
+  for (size_t i = 0; i < fractions.size(); ++i) {
+    fractions[i] /= sum;
+  }
+
+  // The last fraction should always be exactly 1.0.
+  if (!fractions.empty()) {
+    fractions.back() = 1.0;
+  }
+}
+
+} // namespace
+
+void TilesetContentManager::processWorkerThreadLoadRequests(
+    const TilesetOptions& options) {
+  // Exit early if there are no loading slots available.
+  if (this->getNumberOfTilesLoading() >=
+      int32_t(options.maximumSimultaneousTileLoads)) {
+    return;
+  }
+
+  // Use a weighted round robin algorithm to give different requesters the
+  // opportunity to nominate tiles to load.
+  // The approach here is inspired by:
+  // https://blog.demofox.org/2020/06/23/weighted-round-robin-using-the-golden-ratio-low-discrepancy-sequence/
+  const std::vector<ITileLoadRequester*>& allRequesters = this->_requesters;
+  std::vector<ITileLoadRequester*>& requesters = this->_requestersWithRequests;
+  std::vector<double>& fractions = this->_requesterFractions;
+
+  computeRequesterFractions(allRequesters, requesters, fractions);
+
+  while (!requesters.empty() &&
+         this->getNumberOfTilesLoading() <
+             int32_t(options.maximumSimultaneousTileLoads)) {
+    // Use the golden ratio to move to the next requester so that we give each a
+    // chance to load tiles in proportion to its weight.
+    this->_roundRobinValueWorker =
+        glm::fract(this->_roundRobinValueWorker + Math::GoldenRatio);
+    auto it = std::lower_bound(
+        fractions.begin(),
+        fractions.end(),
+        this->_roundRobinValueWorker);
+
+    size_t index = it - fractions.begin();
+    if (index >= requesters.size())
+      continue;
+
+    CESIUM_ASSERT(requesters[index] != nullptr);
+    ITileLoadRequester& requester = *requesters[index];
+    Tile* pToLoad = requester.getNextTileToLoadInWorkerThread();
+    CESIUM_ASSERT(pToLoad);
+
+    if (pToLoad) {
+      this->loadTileContent(*pToLoad, options);
+    }
+
+    if (!pToLoad || !requester.hasMoreTilesToLoadInWorkerThread()) {
+      // If this was the last tile from this requester, we'll need to remove it
+      // from the weighting.
+      computeRequesterFractions(allRequesters, requesters, fractions);
+    }
   }
 }
 

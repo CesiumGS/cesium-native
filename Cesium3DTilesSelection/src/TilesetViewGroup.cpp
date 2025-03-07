@@ -75,11 +75,36 @@ void TilesetViewGroup::kick(const Tile& tile) noexcept {
 void TilesetViewGroup::finishFrame() {
   std::swap(this->_previousSelectionStates, this->_currentSelectionStates);
   this->_currentSelectionStates.clear();
+
+  std::sort(
+      this->_workerThreadLoadQueue.begin(),
+      this->_workerThreadLoadQueue.end());
+
+  // TODO: reverse the sort order instead?
+  std::reverse(
+      this->_workerThreadLoadQueue.begin(),
+      this->_workerThreadLoadQueue.end());
 }
 
-bool TilesetViewGroup::hasMoreTilesToLoad() const { return false; }
+double TilesetViewGroup::getWeight() const { return 1.0; }
 
-Tile* TilesetViewGroup::getNextTileToLoad() { return nullptr; }
+bool TilesetViewGroup::hasMoreTilesToLoadInWorkerThread() const {
+  return !this->_workerThreadLoadQueue.empty();
+}
+
+Tile* TilesetViewGroup::getNextTileToLoadInWorkerThread() {
+  CESIUM_ASSERT(!this->_workerThreadLoadQueue.empty());
+  if (this->_workerThreadLoadQueue.empty())
+    return nullptr;
+
+  Tile* pResult = this->_workerThreadLoadQueue.back().pTile;
+  this->_workerThreadLoadQueue.pop_back();
+  return pResult;
+}
+
+bool TilesetViewGroup::hasMoreTilesToLoadInMainThread() const { return false; }
+
+Tile* TilesetViewGroup::getNextTileToLoadInMainThread() { return nullptr; }
 
 TilesetViewGroup::TilesetViewGroup(
     const CesiumUtility::IntrusivePointer<TilesetContentManager>&

@@ -14,8 +14,13 @@ class ITileLoadRequester {
 public:
   virtual ~ITileLoadRequester() = default;
 
-  virtual bool hasMoreTilesToLoad() const = 0;
-  virtual Tile* getNextTileToLoad() = 0;
+  virtual double getWeight() const = 0;
+
+  virtual bool hasMoreTilesToLoadInWorkerThread() const = 0;
+  virtual Tile* getNextTileToLoadInWorkerThread() = 0;
+
+  virtual bool hasMoreTilesToLoadInMainThread() const = 0;
+  virtual Tile* getNextTileToLoadInMainThread() = 0;
 };
 
 } // namespace Cesium3DTilesSelection

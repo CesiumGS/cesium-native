@@ -67,8 +67,13 @@ public:
    */
   void finishFrame();
 
-  bool hasMoreTilesToLoad() const override;
-  Tile* getNextTileToLoad() override;
+  double getWeight() const override;
+
+  bool hasMoreTilesToLoadInWorkerThread() const override;
+  Tile* getNextTileToLoadInWorkerThread() override;
+
+  bool hasMoreTilesToLoadInMainThread() const override;
+  Tile* getNextTileToLoadInMainThread() override;
 
 private:
   /**

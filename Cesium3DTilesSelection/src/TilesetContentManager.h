@@ -162,6 +162,8 @@ public:
   void registerTileRequester(ITileLoadRequester& requester);
   void unregisterTileRequester(ITileLoadRequester& requester);
 
+  void processWorkerThreadLoadRequests(const TilesetOptions& options);
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -214,5 +216,11 @@ private:
   Tile::UnusedLinkedList _unusedTiles;
 
   std::vector<ITileLoadRequester*> _requesters;
+  double _roundRobinValueWorker;
+  double _roundRobinValueMain;
+
+  // These are scratch space, stored here to avoid heap allocations.
+  std::vector<double> _requesterFractions;
+  std::vector<ITileLoadRequester*> _requestersWithRequests;
 };
 } // namespace Cesium3DTilesSelection
