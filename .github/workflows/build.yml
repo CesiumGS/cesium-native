@@ -1,7 +1,7 @@
 name: cesium-native
 on: [push, pull_request]
 env:
-  VCPKG_BINARY_SOURCES: 'clear;x-aws,s3://cesium-builds/native-vcpkg-cache/,readwrite'
+  VCPKG_BINARY_SOURCES: 'clear;x-aws,s3://cesium-builds/vcpkg/cesium-native-cache/,readwrite'
 jobs:
   QuickChecks:
     name: "Quick Checks"
