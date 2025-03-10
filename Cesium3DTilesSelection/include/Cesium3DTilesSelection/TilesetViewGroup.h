@@ -21,7 +21,7 @@ class TilesetContentManager;
  * Create an instance of this class by calling {@link Tileset::createViewGroup}.
  */
 class CESIUM3DTILESSELECTION_API TilesetViewGroup final
-    : public ITileLoadRequester {
+    : public TileLoadRequester {
 public:
   TilesetViewGroup(const TilesetViewGroup& rhs) noexcept;
   TilesetViewGroup(TilesetViewGroup&& rhs) noexcept;

@@ -116,7 +116,7 @@ public:
  * @brief A request for a batch of height queries. When all of the queries are
  * complete, they will be delivered to the requestor via resolving a promise.
  */
-struct TilesetHeightRequest : public ITileLoadRequester {
+struct TilesetHeightRequest : public TileLoadRequester {
   TilesetHeightRequest(
       const CesiumUtility::IntrusivePointer<TilesetContentManager>&
           pTilesetContentManager,

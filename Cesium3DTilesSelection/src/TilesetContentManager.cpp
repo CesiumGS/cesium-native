@@ -1492,7 +1492,7 @@ LoadedTileEnumerator TilesetContentManager::createLoadedTileEnumerator() const {
 }
 
 void TilesetContentManager::registerTileRequester(
-    ITileLoadRequester& requester) {
+    TileLoadRequester& requester) {
   CESIUM_ASSERT(
       std::find(
           this->_requesters.begin(),
@@ -1502,7 +1502,7 @@ void TilesetContentManager::registerTileRequester(
 }
 
 void TilesetContentManager::unregisterTileRequester(
-    ITileLoadRequester& requester) {
+    TileLoadRequester& requester) {
   auto it =
       std::find(this->_requesters.begin(), this->_requesters.end(), &requester);
   CESIUM_ASSERT(it != this->_requesters.end());
@@ -1518,8 +1518,8 @@ class WeightedRoundRobin {
 public:
   WeightedRoundRobin(
       double& roundRobinValue,
-      const std::vector<ITileLoadRequester*>& allRequesters,
-      std::vector<ITileLoadRequester*>& requestersWithRequests,
+      const std::vector<TileLoadRequester*>& allRequesters,
+      std::vector<TileLoadRequester*>& requestersWithRequests,
       std::vector<double>& fractions,
       const HasMoreTilesToLoadFunc& hasMoreTilesToLoad,
       const GetNextTileToLoadFunc& getNextTileToLoad)
@@ -1552,7 +1552,7 @@ public:
     if (index >= this->_requestersWithRequests.size())
       return nullptr;
 
-    ITileLoadRequester& requester = *this->_requestersWithRequests[index];
+    TileLoadRequester& requester = *this->_requestersWithRequests[index];
 
     Tile* pToLoad = this->_getNextTileToLoad(requester);
     CESIUM_ASSERT(pToLoad);
@@ -1577,7 +1577,7 @@ private:
     double sum = 0.0;
 
     for (size_t i = 0; i < this->_allRequesters.size(); ++i) {
-      ITileLoadRequester* pRequester = this->_allRequesters[i];
+      TileLoadRequester* pRequester = this->_allRequesters[i];
       CESIUM_ASSERT(pRequester);
 
       if (pRequester && _hasMoreTilesToLoad(*pRequester)) {
@@ -1602,8 +1602,8 @@ private:
   }
 
   double& _roundRobinValue;
-  const std::vector<ITileLoadRequester*>& _allRequesters;
-  std::vector<ITileLoadRequester*>& _requestersWithRequests;
+  const std::vector<TileLoadRequester*>& _allRequesters;
+  std::vector<TileLoadRequester*>& _requestersWithRequests;
   std::vector<double>& _fractions;
   const HasMoreTilesToLoadFunc& _hasMoreTilesToLoad;
   const GetNextTileToLoadFunc& _getNextTileToLoad;
@@ -1624,10 +1624,10 @@ void TilesetContentManager::processWorkerThreadLoadRequests(
       this->_requesters,
       this->_requestersWithRequests,
       this->_requesterFractions,
-      [](const ITileLoadRequester& requester) {
+      [](const TileLoadRequester& requester) {
         return requester.hasMoreTilesToLoadInWorkerThread();
       },
-      [](ITileLoadRequester& requester) {
+      [](TileLoadRequester& requester) {
         return requester.getNextTileToLoadInWorkerThread();
       }};
 
@@ -1648,10 +1648,10 @@ void TilesetContentManager::processMainThreadLoadRequests(
       this->_requesters,
       this->_requestersWithRequests,
       this->_requesterFractions,
-      [](const ITileLoadRequester& requester) {
+      [](const TileLoadRequester& requester) {
         return requester.hasMoreTilesToLoadInMainThread();
       },
-      [](ITileLoadRequester& requester) {
+      [](TileLoadRequester& requester) {
         return requester.getNextTileToLoadInMainThread();
       }};
 

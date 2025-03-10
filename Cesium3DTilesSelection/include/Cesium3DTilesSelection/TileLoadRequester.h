@@ -9,16 +9,16 @@ class Tile;
  * a 3D Tiles {@link Tileset}.
  *
  * When multiple requesters are active, each is given a fair chance to load
- * tiles in proportion with its {@link ITileLoadRequester::getWeight}.
+ * tiles in proportion with its {@link TileLoadRequester::getWeight}.
  *
  * Methods of this class may only be called from the main thread.
  *
  * @see TilesetViewGroup
  * @see TilesetHeightRequest
  */
-class ITileLoadRequester {
+class TileLoadRequester {
 public:
-  virtual ~ITileLoadRequester() = default;
+  virtual ~TileLoadRequester() = default;
 
   /**
    * @brief Gets the weight of this requester relative to others.

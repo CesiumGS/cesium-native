@@ -40,7 +40,7 @@ enum class UnloadTileContentResult : uint8_t {
 };
 
 class TilesetSharedAssetSystem;
-class ITileLoadRequester;
+class TileLoadRequester;
 
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
@@ -156,8 +156,8 @@ public:
 
   LoadedTileEnumerator createLoadedTileEnumerator() const;
 
-  void registerTileRequester(ITileLoadRequester& requester);
-  void unregisterTileRequester(ITileLoadRequester& requester);
+  void registerTileRequester(TileLoadRequester& requester);
+  void unregisterTileRequester(TileLoadRequester& requester);
 
   void processWorkerThreadLoadRequests(const TilesetOptions& options);
   void processMainThreadLoadRequests(const TilesetOptions& options);
@@ -213,12 +213,12 @@ private:
 
   Tile::UnusedLinkedList _unusedTiles;
 
-  std::vector<ITileLoadRequester*> _requesters;
+  std::vector<TileLoadRequester*> _requesters;
   double _roundRobinValueWorker;
   double _roundRobinValueMain;
 
   // These are scratch space, stored here to avoid heap allocations.
   std::vector<double> _requesterFractions;
-  std::vector<ITileLoadRequester*> _requestersWithRequests;
+  std::vector<TileLoadRequester*> _requestersWithRequests;
 };
 } // namespace Cesium3DTilesSelection
