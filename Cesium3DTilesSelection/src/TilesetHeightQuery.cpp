@@ -242,32 +242,14 @@ void TilesetHeightQuery::findCandidateTiles(
 }
 
 TilesetHeightRequest::TilesetHeightRequest(
-    const CesiumUtility::IntrusivePointer<TilesetContentManager>&
-        pTilesetContentManager_,
     std::vector<TilesetHeightQuery>&& queries_,
     const CesiumAsync::Promise<SampleHeightResult>& promise_) noexcept
-    : pTilesetContentManager(pTilesetContentManager_),
-      queries(std::move(queries_)),
-      promise(promise_) {
-  if (this->pTilesetContentManager) {
-    this->pTilesetContentManager->registerTileRequester(*this);
-  }
-}
+    : queries(std::move(queries_)), promise(promise_) {}
 
-TilesetHeightRequest::TilesetHeightRequest(TilesetHeightRequest&& rhs) noexcept
-    : pTilesetContentManager(rhs.pTilesetContentManager),
-      queries(std::move(rhs.queries)),
-      promise(std::move(rhs.promise)) {
-  if (this->pTilesetContentManager) {
-    this->pTilesetContentManager->registerTileRequester(*this);
-  }
-}
+TilesetHeightRequest::TilesetHeightRequest(
+    TilesetHeightRequest&& rhs) noexcept = default;
 
-TilesetHeightRequest::~TilesetHeightRequest() noexcept {
-  if (this->pTilesetContentManager) {
-    this->pTilesetContentManager->unregisterTileRequester(*this);
-  }
-}
+TilesetHeightRequest::~TilesetHeightRequest() noexcept = default;
 
 /*static*/ void TilesetHeightRequest::processHeightRequests(
     const AsyncSystem& asyncSystem,

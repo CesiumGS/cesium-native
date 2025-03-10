@@ -118,15 +118,11 @@ public:
  */
 struct TilesetHeightRequest : public TileLoadRequester {
   TilesetHeightRequest(
-      const CesiumUtility::IntrusivePointer<TilesetContentManager>&
-          pTilesetContentManager,
       std::vector<TilesetHeightQuery>&& queries,
       const CesiumAsync::Promise<SampleHeightResult>& promise) noexcept;
   TilesetHeightRequest(const TilesetHeightRequest& rhs) noexcept = delete;
   TilesetHeightRequest(TilesetHeightRequest&& rhs) noexcept;
   virtual ~TilesetHeightRequest() noexcept;
-
-  CesiumUtility::IntrusivePointer<TilesetContentManager> pTilesetContentManager;
 
   /**
    * @brief The individual height queries in this request.

@@ -75,7 +75,7 @@ Tileset::Tileset(
               std::move(pRootTile)),
       },
       _heightRequests(),
-      _defaultViewGroup(this->_pTilesetContentManager) {}
+      _defaultViewGroup() {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -91,7 +91,7 @@ Tileset::Tileset(
           new TilesetContentManager(_externals, _options, url),
       },
       _heightRequests(),
-      _defaultViewGroup(this->_pTilesetContentManager) {}
+      _defaultViewGroup() {}
 
 Tileset::Tileset(
     const TilesetExternals& externals,
@@ -112,7 +112,7 @@ Tileset::Tileset(
           ionAccessToken,
           ionAssetEndpointUrl)},
       _heightRequests(),
-      _defaultViewGroup(this->_pTilesetContentManager) {}
+      _defaultViewGroup() {}
 
 Tileset::~Tileset() noexcept {
   TilesetHeightRequest::failHeightRequests(
@@ -363,6 +363,8 @@ const ViewUpdateResult& Tileset::updateViewGroup(
     float deltaTime) {
   CESIUM_TRACE("Tileset::updateView");
 
+  this->registerLoadRequester(viewGroup);
+
   // Fixup TilesetOptions to ensure lod transitions works correctly.
   _options.enableFrustumCulling =
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
@@ -525,6 +527,21 @@ void Tileset::loadTiles() {
   this->_pTilesetContentManager->processMainThreadLoadRequests(this->_options);
 }
 
+void Tileset::registerLoadRequester(TileLoadRequester& requester) {
+  if (requester._pTilesetContentManager == this->_pTilesetContentManager) {
+    return;
+  }
+
+  if (requester._pTilesetContentManager != nullptr) {
+    requester._pTilesetContentManager->unregisterTileRequester(requester);
+  }
+
+  requester._pTilesetContentManager = this->_pTilesetContentManager;
+  if (requester._pTilesetContentManager != nullptr) {
+    requester._pTilesetContentManager->registerTileRequester(requester);
+  }
+}
+
 int32_t Tileset::getNumberOfTilesLoaded() const {
   return this->_pTilesetContentManager->getNumberOfTilesLoaded();
 }
@@ -642,16 +659,10 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
     queries.emplace_back(position, this->_options.ellipsoid);
   }
 
-  this->_heightRequests.emplace_back(
-      this->_pTilesetContentManager,
-      std::move(queries),
-      promise);
+  this->_heightRequests.emplace_back(std::move(queries), promise);
+  this->registerLoadRequester(this->_heightRequests.back());
 
   return promise.getFuture();
-}
-
-TilesetViewGroup Tileset::createViewGroup() {
-  return TilesetViewGroup(this->_pTilesetContentManager);
 }
 
 namespace {

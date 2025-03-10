@@ -6,35 +6,14 @@
 
 namespace Cesium3DTilesSelection {
 
-TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept
-    : _pTilesetContentManager(rhs._pTilesetContentManager),
-      _weight(rhs._weight),
-      _previousSelectionStates(rhs._previousSelectionStates),
-      _currentSelectionStates(rhs._currentSelectionStates),
-      _mainThreadLoadQueue(rhs._mainThreadLoadQueue),
-      _workerThreadLoadQueue(rhs._workerThreadLoadQueue) {
-  if (this->_pTilesetContentManager) {
-    this->_pTilesetContentManager->registerTileRequester(*this);
-  }
-}
+TilesetViewGroup::TilesetViewGroup() noexcept = default;
 
-TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept
-    : _pTilesetContentManager(rhs._pTilesetContentManager),
-      _weight(rhs._weight),
-      _previousSelectionStates(std::move(rhs._previousSelectionStates)),
-      _currentSelectionStates(std::move(rhs._currentSelectionStates)),
-      _mainThreadLoadQueue(std::move(rhs._mainThreadLoadQueue)),
-      _workerThreadLoadQueue(std::move(rhs._workerThreadLoadQueue)) {
-  if (this->_pTilesetContentManager) {
-    this->_pTilesetContentManager->registerTileRequester(*this);
-  }
-}
+TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept =
+    default;
 
-TilesetViewGroup::~TilesetViewGroup() noexcept {
-  if (this->_pTilesetContentManager) {
-    this->_pTilesetContentManager->unregisterTileRequester(*this);
-  }
-}
+TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept = default;
+
+TilesetViewGroup::~TilesetViewGroup() noexcept = default;
 
 TileSelectionState
 TilesetViewGroup::getPreviousSelectionState(const Tile& tile) const noexcept {
@@ -129,20 +108,6 @@ Tile* TilesetViewGroup::getNextTileToLoadInMainThread() {
   Tile* pResult = this->_mainThreadLoadQueue.back().pTile;
   this->_mainThreadLoadQueue.pop_back();
   return pResult;
-}
-
-TilesetViewGroup::TilesetViewGroup(
-    const CesiumUtility::IntrusivePointer<TilesetContentManager>&
-        pTilesetContentManager)
-    : _pTilesetContentManager(pTilesetContentManager),
-      _weight(1.0),
-      _previousSelectionStates(),
-      _currentSelectionStates(),
-      _mainThreadLoadQueue(),
-      _workerThreadLoadQueue() {
-  if (this->_pTilesetContentManager) {
-    this->_pTilesetContentManager->registerTileRequester(*this);
-  }
 }
 
 } // namespace Cesium3DTilesSelection

@@ -23,6 +23,7 @@ class TilesetContentManager;
 class CESIUM3DTILESSELECTION_API TilesetViewGroup final
     : public TileLoadRequester {
 public:
+  TilesetViewGroup() noexcept;
   TilesetViewGroup(const TilesetViewGroup& rhs) noexcept;
   TilesetViewGroup(TilesetViewGroup&& rhs) noexcept;
   virtual ~TilesetViewGroup() noexcept;
@@ -77,16 +78,6 @@ public:
   Tile* getNextTileToLoadInMainThread() override;
 
 private:
-  /**
-   * @brief Constructs a new instance.
-   *
-   * @param tileset The tileset that this view group views.
-   */
-  TilesetViewGroup(const CesiumUtility::IntrusivePointer<TilesetContentManager>&
-                       pTilesetContentManager);
-
-  CesiumUtility::IntrusivePointer<TilesetContentManager>
-      _pTilesetContentManager;
   double _weight;
   std::unordered_map<
       CesiumUtility::IntrusivePointer<const Tile>,

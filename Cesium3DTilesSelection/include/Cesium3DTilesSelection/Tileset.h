@@ -323,6 +323,18 @@ public:
 
   void loadTiles();
 
+  /**
+   * @brief Registers a tile load requester with this Tileset. Registered tile
+   * load requesters get to influence which tiles are loaded when
+   * {@link loadTiles} is called.
+   *
+   * If the given requester is already registered with this Tileset, this method
+   * does nothing.
+   *
+   * @param requester The requester to register.
+   */
+  void registerLoadRequester(TileLoadRequester& requester);
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 

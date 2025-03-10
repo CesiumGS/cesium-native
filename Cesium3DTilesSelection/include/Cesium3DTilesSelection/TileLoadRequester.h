@@ -1,14 +1,17 @@
 #pragma once
 
+#include <CesiumUtility/IntrusivePointer.h>
+
 namespace Cesium3DTilesSelection {
 
 class Tile;
+class TilesetContentManager;
 
 /**
  * @brief An interface to something that requests loading of specific tiles from
  * a 3D Tiles {@link Tileset}.
  *
- * When multiple requesters are active, each is given a fair chance to load
+ * When multiple requesters are registered, each is given a fair chance to load
  * tiles in proportion with its {@link TileLoadRequester::getWeight}.
  *
  * Methods of this class may only be called from the main thread.
@@ -18,8 +21,6 @@ class Tile;
  */
 class TileLoadRequester {
 public:
-  virtual ~TileLoadRequester() = default;
-
   /**
    * @brief Gets the weight of this requester relative to others.
    *
@@ -82,6 +83,27 @@ public:
    * @return The next tile to load in the main thread.
    */
   virtual Tile* getNextTileToLoadInMainThread() = 0;
+
+  /**
+   * @brief Unregister this requester with the {link Tileset} with which it is
+   * currently registered. Once unregistered, it will not influence tile loads
+   * until registered again.
+   *
+   * If this instance is not currently registered, this method does nothing.
+   */
+  void unregister() noexcept;
+
+protected:
+  TileLoadRequester() noexcept;
+  TileLoadRequester(const TileLoadRequester& rhs) noexcept;
+  TileLoadRequester(TileLoadRequester&& rhs) noexcept;
+  virtual ~TileLoadRequester() noexcept;
+
+private:
+  CesiumUtility::IntrusivePointer<TilesetContentManager>
+      _pTilesetContentManager;
+
+  friend class Tileset;
 };
 
 } // namespace Cesium3DTilesSelection
