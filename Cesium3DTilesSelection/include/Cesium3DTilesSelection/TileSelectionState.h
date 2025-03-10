@@ -75,7 +75,6 @@ public:
    * @brief Initializes a new instance with a given
    * {@link TileSelectionState::Result}.
    *
-   * @param frameNumber The frame number in which the selection took place.
    * @param result The result of the selection.
    */
   constexpr TileSelectionState(Result result) noexcept : _result(result) {}
@@ -87,7 +86,6 @@ public:
    * took place. Otherwise, {@link TileSelectionState::Result::None} is
    * returned.
    *
-   * @param frameNumber The previous frame number.
    * @return The {@link TileSelectionState::Result}
    */
   constexpr Result getResult() const noexcept { return this->_result; }

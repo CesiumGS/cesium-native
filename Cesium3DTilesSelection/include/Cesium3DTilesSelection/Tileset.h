@@ -327,11 +327,30 @@ public:
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
+  /**
+   * @brief Updates a view group, returning the set of tiles to render in this
+   * view.
+   *
+   * @param viewGroup The view group to update. The first time `updateViewGroup`
+   * is called, simply create a new `TilesetViewGroup` to pass as this
+   * parameter. For successive calls to `updateViewGroup`, pass this same
+   * instance.
+   * @param frustums The {@link ViewState} instances that the view should be updated for.
+   * @param deltaTime The amount of time that has passed since the last call to
+   * updateView, in seconds.
+   * @returns The set of tiles to render in the updated view. This value is only
+   * valid until the next call to `updateView` or until the tileset is
+   * destroyed, whichever comes first.
+   */
   const ViewUpdateResult& updateViewGroup(
       TilesetViewGroup& viewGroup,
       const std::vector<ViewState>& frustums,
       float deltaTime = 0.0f);
 
+  /**
+   * @brief Loads the tiles that are currently deemed the most important,
+   * across all height queries and {@link TilesetViewGroup} instances.
+   */
   void loadTiles();
 
   /**

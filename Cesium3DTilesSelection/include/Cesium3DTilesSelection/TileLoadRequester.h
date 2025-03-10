@@ -30,7 +30,7 @@ public:
    * twice as many opportunities to load tiles as the others.
    *
    * A very high weight will prevent all other requesters from loading tiles
-   * until this requester has none lef to load. A very low weight (but above
+   * until this requester has none left to load. A very low weight (but above
    * 0.0!) will allow all other requesters to finish loading tiles before this
    * one starts.
    *
@@ -94,9 +94,35 @@ public:
   void unregister() noexcept;
 
 protected:
+  /**
+   * @brief Constructs a new instance.
+   */
   TileLoadRequester() noexcept;
+
+  /**
+   * @brief Constructs a new instance as a copy of an existing one.
+   *
+   * The copy will not be registed with any
+   * {@link Cesium3DTilesSelection::Tileset}.
+   *
+   * @param rhs The existing instance to copy.
+   */
   TileLoadRequester(const TileLoadRequester& rhs) noexcept;
+
+  /**
+   * @brief Moves an existing instance into a new one.
+   *
+   * The newly-constructed instance will be registered with the same
+   * {@link Cesium3DTilesSelection::Tileset} as the `rhs`. After the
+   * constructor returns, the `rhs` will not longer be registered.
+   *
+   * @param rhs The existing instance to move into this one.
+   */
   TileLoadRequester(TileLoadRequester&& rhs) noexcept;
+
+  /**
+   * @brief Destroys this instance.
+   */
   virtual ~TileLoadRequester() noexcept;
 
 private:

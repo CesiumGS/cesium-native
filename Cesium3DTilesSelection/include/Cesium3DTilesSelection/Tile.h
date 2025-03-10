@@ -548,7 +548,17 @@ public:
    */
   void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
 
+  /**
+   * @brief Adds a reference to this tile. While the reference count is greater
+   * than zero, the tile and its content will not be unloaded.
+   */
   void addReference() const noexcept;
+
+  /**
+   * @brief Removes a reference from this tile. When the tile's reference count
+   * goes to zero, its content is eligible for unloading, and in some cases the
+   * `Tile` instance itself may eventually be deleted.
+   */
   void releaseReference() const noexcept;
 
 private:

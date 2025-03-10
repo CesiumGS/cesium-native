@@ -14,10 +14,9 @@ class Tile;
  *
  * Users of a {@link Tileset} will call {@link Tileset::updateView} and receive
  * this structure so that they can update the state of their rendering system
- * accordingly. The tileset will internally keep track the current state of the
- * tiles as their {@link Tile::getLastSelectionState} throughout the rendering
- * process, and use this structure to provide information about the state
- * changes of tiles to clients.
+ * accordingly. The tileset will internally keep track the state of the
+ * tiles throughout the selection process, and use this structure to provide
+ * information about the state changes of tiles to clients.
  */
 class CESIUM3DTILESSELECTION_API ViewUpdateResult final {
 public:

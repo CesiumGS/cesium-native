@@ -169,8 +169,19 @@ public:
    */
   virtual ITilesetHeightSampler* getHeightSampler() { return nullptr; }
 
+  /**
+   * @brief Gets the `TilesetContentManager` that owns this loader.
+   */
   const TilesetContentManager* getOwner() const noexcept;
+
+  /**
+   * @brief Gets the `TilesetContentManager` that owns this loader.
+   */
   TilesetContentManager* getOwner() noexcept;
+
+  /**
+   * @brief Sets the `TilesetContentManager` that owns this loader.
+   */
   void setOwner(TilesetContentManager& owner) noexcept;
 
 protected:

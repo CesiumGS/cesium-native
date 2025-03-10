@@ -4,6 +4,10 @@ namespace Cesium3DTilesSelection {
 
 class Tile;
 
+/**
+ * @brief A broad category of priority for loading a
+ * {@link Cesium3DTilesSelection::Tile}.
+ */
 enum class TileLoadPriorityGroup {
   /**
    * @brief Low priority tiles that aren't needed right now, but
@@ -25,6 +29,10 @@ enum class TileLoadPriorityGroup {
   Urgent = 2
 };
 
+/**
+ * @brief Represents the need to load a particular
+ * {@link Cesium3DTilesSelection::Tile} with a particular priority.
+ */
 struct TileLoadTask {
   /**
    * @brief The tile to be loaded.
@@ -47,6 +55,14 @@ struct TileLoadTask {
    */
   double priority;
 
+  /**
+   * @brief Determines whether this task has a high priority (lower numerical
+   * value) than another one.
+   *
+   * @param rhs The other task to compare.
+   * @returns true if this task has the higher priority, or false if `rhs` has
+   * the higher priority.
+   */
   bool operator<(const TileLoadTask& rhs) const noexcept {
     if (this->group == rhs.group)
       return this->priority < rhs.priority;
