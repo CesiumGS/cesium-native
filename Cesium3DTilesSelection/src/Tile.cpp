@@ -303,6 +303,36 @@ TilesetContentLoader* Tile::getLoader() const noexcept {
 
 TileLoadState Tile::getState() const noexcept { return this->_loadState; }
 
+namespace {
+
+bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
+  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    const CesiumRasterOverlays::RasterOverlayTile* pLoading =
+        mapped.getLoadingTile();
+    if (pLoading &&
+        pLoading->getState() ==
+            CesiumRasterOverlays::RasterOverlayTile::LoadState::Unloaded) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+} // namespace
+
+bool Tile::needsWorkerThreadLoading() const noexcept {
+  TileLoadState state = this->getState();
+  return state == TileLoadState::Unloaded ||
+         state == TileLoadState::FailedTemporarily ||
+         anyRasterOverlaysNeedLoading(*this);
+}
+
+bool Tile::needsMainThreadLoading() const noexcept {
+  return this->getState() == TileLoadState::ContentLoaded &&
+         this->isRenderContent();
+}
+
 void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
 void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }

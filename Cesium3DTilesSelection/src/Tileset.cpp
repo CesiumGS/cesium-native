@@ -1621,10 +1621,10 @@ void Tileset::addTileToLoadQueue(
           [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
       frameState.viewGroup._mainThreadLoadQueue.end());
 
-  if (this->_pTilesetContentManager->tileNeedsWorkerThreadLoading(tile)) {
+  if (tile.needsWorkerThreadLoading()) {
     frameState.viewGroup._workerThreadLoadQueue.push_back(
         {&tile, priorityGroup, priority});
-  } else if (this->_pTilesetContentManager->tileNeedsMainThreadLoading(tile)) {
+  } else if (tile.needsMainThreadLoading()) {
     frameState.viewGroup._mainThreadLoadQueue.push_back(
         {&tile, priorityGroup, priority});
   }

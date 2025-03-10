@@ -133,18 +133,6 @@ void unloadTileRecursively(
   }
 }
 
-bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
-  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
-    const RasterOverlayTile* pLoading = mapped.getLoadingTile();
-    if (pLoading &&
-        pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 std::optional<RegionAndCenter>
 getTileBoundingRegionForUpsampling(const Tile& parent) {
   // To create subdivided children, we need to know a bounding region for each.
@@ -1382,20 +1370,6 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   }
 
   return bytes;
-}
-
-bool TilesetContentManager::tileNeedsWorkerThreadLoading(
-    const Tile& tile) const noexcept {
-  auto state = tile.getState();
-  return state == TileLoadState::Unloaded ||
-         state == TileLoadState::FailedTemporarily ||
-         anyRasterOverlaysNeedLoading(tile);
-}
-
-bool TilesetContentManager::tileNeedsMainThreadLoading(
-    const Tile& tile) const noexcept {
-  return tile.getState() == TileLoadState::ContentLoaded &&
-         tile.isRenderContent();
 }
 
 void TilesetContentManager::finishLoading(
