@@ -1573,7 +1573,7 @@ public:
         this->_fractions.end(),
         this->_roundRobinValue);
 
-    size_t index = it - this->_fractions.begin();
+    size_t index = size_t(it - this->_fractions.begin());
     CESIUM_ASSERT(index < this->_requestersWithRequests.size());
     if (index >= this->_requestersWithRequests.size())
       return nullptr;
