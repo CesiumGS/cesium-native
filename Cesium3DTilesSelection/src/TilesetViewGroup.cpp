@@ -1,8 +1,8 @@
-#include "TilesetContentManager.h"
-
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <CesiumUtility/Assert.h>
+
+#include <algorithm>
 
 namespace Cesium3DTilesSelection {
 

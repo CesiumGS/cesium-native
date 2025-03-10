@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
+#include <CesiumAsync/Promise.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -192,12 +193,12 @@ void TilesetHeightQuery::findCandidateTiles(
               this->ellipsoid)) {
         pTile->incrementDoNotUnloadSubtreeCount(
             "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
-        this->candidateTiles.push_back(pTile);
+        this->candidateTiles.emplace_back(pTile);
       }
     } else {
       pTile->incrementDoNotUnloadSubtreeCount(
           "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
-      this->candidateTiles.push_back(pTile);
+      this->candidateTiles.emplace_back(pTile);
     }
   } else {
     // We have children
@@ -214,13 +215,13 @@ void TilesetHeightQuery::findCandidateTiles(
           pTile->incrementDoNotUnloadSubtreeCount(
               "TilesetHeightQuery::findCandidateTiles add to "
               "additiveCandidateTiles");
-          this->additiveCandidateTiles.push_back(pTile);
+          this->additiveCandidateTiles.emplace_back(pTile);
         }
       } else {
         pTile->incrementDoNotUnloadSubtreeCount(
             "TilesetHeightQuery::findCandidateTiles add to "
             "additiveCandidateTiles");
-        this->additiveCandidateTiles.push_back(pTile);
+        this->additiveCandidateTiles.emplace_back(pTile);
       }
     }
 

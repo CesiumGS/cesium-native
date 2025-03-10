@@ -3,6 +3,8 @@
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <CesiumUtility/Assert.h>
 
+#include <utility>
+
 namespace Cesium3DTilesSelection {
 
 void TileLoadRequester::unregister() noexcept {

@@ -49,6 +49,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
+#include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
@@ -56,6 +57,7 @@
 #include <algorithm>
 #include <any>
 #include <cassert>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>

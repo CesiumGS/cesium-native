@@ -1,7 +1,8 @@
-#include "TilesetContentManager.h"
-
 #include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <CesiumUtility/Assert.h>
+
+#include <span>
 
 namespace Cesium3DTilesSelection {
 
