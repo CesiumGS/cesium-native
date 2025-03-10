@@ -130,7 +130,7 @@ bool LoadedTileEnumerator::iterator::operator!=(
 }
 
 template <typename TIterator>
-static TIterator& LoadedConstTileEnumerator::increment(TIterator& it) {
+/*static*/ TIterator& LoadedConstTileEnumerator::increment(TIterator& it) {
   if (it._traversalStack.empty())
     return it;
 
