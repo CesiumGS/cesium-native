@@ -14,6 +14,7 @@ using namespace CesiumUtility;
 const std::string ITWIN_AUTHORIZE_URL =
     "https://ims.bentley.com/connect/authorize";
 const std::string ITWIN_TOKEN_URL = "https://ims.bentley.com/connect/token";
+const int REDIRECT_URI_PORT = 5081;
 
 namespace CesiumITwinClient {
 CesiumAsync::Future<Connection> Connection::authorize(
@@ -33,6 +34,7 @@ CesiumAsync::Future<Connection> Connection::authorize(
       friendlyApplicationName,
       clientID,
       redirectPath,
+      REDIRECT_URI_PORT,
       scopes,
       std::move(openUrlCallback),
       ITWIN_TOKEN_URL,

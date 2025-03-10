@@ -89,6 +89,7 @@ using namespace CesiumUtility;
       friendlyApplicationName,
       std::to_string(clientID),
       redirectPath,
+      std::nullopt,
       scopes,
       std::move(openUrlCallback),
       tokenUrl,
