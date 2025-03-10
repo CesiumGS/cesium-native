@@ -3,7 +3,6 @@
 #include "RasterOverlayUpsampler.h"
 #include "TilesetContentLoaderResult.h"
 
-#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -153,8 +152,6 @@ public:
   void
   unloadCachedBytes(int64_t maximumCachedBytes, double timeBudgetMilliseconds);
   void clearChildrenRecursively(Tile* pTile) noexcept;
-
-  LoadedTileEnumerator createLoadedTileEnumerator() const;
 
   void registerTileRequester(TileLoadRequester& requester);
   void unregisterTileRequester(TileLoadRequester& requester);

@@ -5,79 +5,51 @@
 
 namespace Cesium3DTilesSelection {
 
-LoadedTileEnumerator::LoadedTileEnumerator(const Tile* pRootTile) noexcept
+LoadedConstTileEnumerator::LoadedConstTileEnumerator(
+    const Tile* pRootTile) noexcept
     : _pRootTile(pRootTile) {}
 
-LoadedTileEnumerator::const_iterator LoadedTileEnumerator::begin() const {
+LoadedConstTileEnumerator::const_iterator
+LoadedConstTileEnumerator::begin() const noexcept {
   return const_iterator(this->_pRootTile);
 }
 
-LoadedTileEnumerator::const_iterator LoadedTileEnumerator::end() const {
+LoadedConstTileEnumerator::const_iterator
+LoadedConstTileEnumerator::end() const noexcept {
   return const_iterator(nullptr);
 }
 
-LoadedTileEnumerator::const_iterator::const_iterator(const Tile* pRootTile)
+LoadedConstTileEnumerator::const_iterator::const_iterator(
+    const Tile* pRootTile) noexcept
     : _traversalStack() {
   if (pRootTile) {
     this->_traversalStack.push_back(pRootTile);
   }
 }
 
-LoadedTileEnumerator::const_iterator&
-LoadedTileEnumerator::const_iterator::operator++() {
-  if (this->_traversalStack.empty())
-    return *this;
-
-  const Tile* pCurrent = this->_traversalStack.back();
-
-  // See if we can traverse down into a child tile.
-  std::span<const Tile> children = pCurrent->getChildren();
-  for (const Tile& child : children) {
-    if (child.getDoNotUnloadSubtreeCount() > 0 ||
-        child.getState() != TileLoadState::Unloaded) {
-      this->_traversalStack.push_back(&child);
-      return *this;
-    }
-  }
-
-  // The current tile has no relevant children, so the next
-  // tile in the traversal is this tile's sibling, if any.
-  while (true) {
-    this->_traversalStack.pop_back();
-
-    if (!this->_traversalStack.empty()) {
-      const Tile* pParentOfCurrent = this->_traversalStack.back();
-      std::span<const Tile> childrenOfParent = pParentOfCurrent->getChildren();
-
-      CESIUM_ASSERT(!childrenOfParent.empty());
-      CESIUM_ASSERT(pCurrent >= &childrenOfParent.front());
-
-      for (++pCurrent; pCurrent <= &childrenOfParent.back(); ++pCurrent) {
-        if (pCurrent->getDoNotUnloadSubtreeCount() > 0 ||
-            pCurrent->getState() != TileLoadState::Unloaded) {
-          this->_traversalStack.push_back(pCurrent);
-          return *this;
-        }
-      }
-
-      // The current tile has no relevant siblings, so see if its parent does.
-      pCurrent = pParentOfCurrent;
-    } else {
-      break;
-    }
-  }
-
-  return *this;
+const Tile&
+LoadedConstTileEnumerator::const_iterator::operator*() const noexcept {
+  return *this->_traversalStack.back();
 }
 
-LoadedTileEnumerator::const_iterator
-LoadedTileEnumerator::const_iterator::operator++(int) {
+const Tile*
+LoadedConstTileEnumerator::const_iterator::operator->() const noexcept {
+  return this->_traversalStack.back();
+}
+
+LoadedConstTileEnumerator::const_iterator&
+LoadedConstTileEnumerator::const_iterator::operator++() noexcept {
+  return LoadedConstTileEnumerator::increment(*this);
+}
+
+LoadedConstTileEnumerator::const_iterator
+LoadedConstTileEnumerator::const_iterator::operator++(int) noexcept {
   const_iterator copy = *this;
   ++copy;
   return copy;
 }
 
-bool LoadedTileEnumerator::const_iterator::operator==(
+bool LoadedConstTileEnumerator::const_iterator::operator==(
     const const_iterator& rhs) const noexcept {
   if (this->_traversalStack.size() != rhs._traversalStack.size()) {
     return false;
@@ -88,9 +60,121 @@ bool LoadedTileEnumerator::const_iterator::operator==(
   }
 }
 
-bool LoadedTileEnumerator::const_iterator::operator!=(
+bool LoadedConstTileEnumerator::const_iterator::operator!=(
     const const_iterator& rhs) const noexcept {
   return !(*this == rhs);
+}
+
+LoadedTileEnumerator::LoadedTileEnumerator(Tile* pRootTile) noexcept
+    : _pRootTile(pRootTile) {}
+
+LoadedTileEnumerator::const_iterator
+LoadedTileEnumerator::begin() const noexcept {
+  return const_iterator(this->_pRootTile);
+}
+
+LoadedTileEnumerator::const_iterator
+LoadedTileEnumerator::end() const noexcept {
+  return const_iterator(nullptr);
+}
+
+LoadedTileEnumerator::iterator LoadedTileEnumerator::begin() noexcept {
+  return iterator(this->_pRootTile);
+}
+
+LoadedTileEnumerator::iterator LoadedTileEnumerator::end() noexcept {
+  return iterator(nullptr);
+}
+
+LoadedTileEnumerator::iterator::iterator(Tile* pRootTile) noexcept
+    : _traversalStack() {
+  if (pRootTile) {
+    this->_traversalStack.push_back(pRootTile);
+  }
+}
+
+Tile& LoadedTileEnumerator::iterator::operator*() const noexcept {
+  return *this->_traversalStack.back();
+}
+
+Tile* LoadedTileEnumerator::iterator::operator->() const noexcept {
+  return this->_traversalStack.back();
+}
+
+LoadedTileEnumerator::iterator&
+LoadedTileEnumerator::iterator::operator++() noexcept {
+  return LoadedConstTileEnumerator::increment(*this);
+}
+
+LoadedTileEnumerator::iterator
+LoadedTileEnumerator::iterator::operator++(int) noexcept {
+  iterator copy = *this;
+  ++copy;
+  return copy;
+}
+
+bool LoadedTileEnumerator::iterator::operator==(
+    const iterator& rhs) const noexcept {
+  if (this->_traversalStack.size() != rhs._traversalStack.size()) {
+    return false;
+  } else if (this->_traversalStack.empty() && rhs._traversalStack.empty()) {
+    return true;
+  } else {
+    return this->_traversalStack.back() == rhs._traversalStack.back();
+  }
+}
+
+bool LoadedTileEnumerator::iterator::operator!=(
+    const iterator& rhs) const noexcept {
+  return !(*this == rhs);
+}
+
+template <typename TIterator>
+static TIterator& LoadedConstTileEnumerator::increment(TIterator& it) {
+  if (it._traversalStack.empty())
+    return it;
+
+  typename TIterator::pointer pCurrent = it._traversalStack.back();
+
+  // See if we can traverse down into a child tile.
+  std::span<typename TIterator::value_type> children = pCurrent->getChildren();
+  for (typename TIterator::reference child : children) {
+    if (child.getDoNotUnloadSubtreeCount() > 0 ||
+        child.getState() != TileLoadState::Unloaded) {
+      it._traversalStack.push_back(&child);
+      return it;
+    }
+  }
+
+  // The current tile has no relevant children, so the next
+  // tile in the traversal is this tile's sibling, if any.
+  while (true) {
+    it._traversalStack.pop_back();
+
+    if (!it._traversalStack.empty()) {
+      typename TIterator::pointer pParentOfCurrent = it._traversalStack.back();
+      std::span<typename TIterator::value_type> childrenOfParent =
+          pParentOfCurrent->getChildren();
+
+      CESIUM_ASSERT(!childrenOfParent.empty());
+      CESIUM_ASSERT(pCurrent >= &childrenOfParent.front());
+
+      for (++pCurrent; pCurrent <= &childrenOfParent.back(); ++pCurrent) {
+        if (pCurrent->getDoNotUnloadSubtreeCount() > 0 ||
+            pCurrent->getState() != TileLoadState::Unloaded) {
+          it._traversalStack.push_back(pCurrent);
+          return it;
+        }
+      }
+
+      // The current tile has no relevant siblings, so see if its parent does.
+      pCurrent = pParentOfCurrent;
+    } else {
+      break;
+    }
+  }
+
+  return it;
 }
 
 } // namespace Cesium3DTilesSelection

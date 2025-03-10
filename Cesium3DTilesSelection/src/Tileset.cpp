@@ -572,18 +572,30 @@ float Tileset::computeLoadProgress() noexcept {
   return (percentage * 100.f);
 }
 
+LoadedConstTileEnumerator Tileset::loadedTiles() const {
+  return LoadedConstTileEnumerator(
+      this->_pTilesetContentManager
+          ? this->_pTilesetContentManager->getRootTile()
+          : nullptr);
+}
+
+LoadedTileEnumerator Tileset::loadedTiles() {
+  return LoadedTileEnumerator(
+      this->_pTilesetContentManager
+          ? this->_pTilesetContentManager->getRootTile()
+          : nullptr);
+}
+
 void Tileset::forEachLoadedTile(
     const std::function<void(Tile& tile)>& callback) {
-  for (const Tile& tile :
-       this->_pTilesetContentManager->createLoadedTileEnumerator()) {
-    callback(const_cast<Tile&>(tile));
+  for (Tile& tile : this->loadedTiles()) {
+    callback(tile);
   }
 }
 
 void Tileset::forEachLoadedTile(
     const std::function<void(const Tile& tile)>& callback) const {
-  for (const Tile& tile :
-       this->_pTilesetContentManager->createLoadedTileEnumerator()) {
+  for (const Tile& tile : this->loadedTiles()) {
     callback(tile);
   }
 }

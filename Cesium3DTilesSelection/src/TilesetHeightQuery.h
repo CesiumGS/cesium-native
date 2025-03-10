@@ -19,7 +19,6 @@ namespace Cesium3DTilesSelection {
 class TilesetContentManager;
 struct TilesetOptions;
 struct SampleHeightResult;
-class LoadedTileEnumerator;
 
 class TilesetHeightQuery {
 public:
@@ -100,15 +99,11 @@ public:
    * {@link TilesetHeightQuery::additiveCandidateTiles}.
    *
    * @param pTile The tile at which to start traversal.
-   * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded just long enough to complete
-   * the query, and no longer.
    * @param outWarnings On return, reports any warnings that occurred during
    * candidate search.
    */
   void findCandidateTiles(
       Tile* pTile,
-      const LoadedTileEnumerator& loadedTiles,
       std::vector<std::string>& outWarnings);
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -228,6 +229,18 @@ public:
    * been loaded.
    */
   float computeLoadProgress() noexcept;
+
+  /**
+   * @brief Gets an object that can be used to enumerate the loaded tiles of
+   * this tileset.
+   */
+  LoadedConstTileEnumerator loadedTiles() const;
+
+  /**
+   * @brief Gets an object that can be used to enumerate the loaded tiles of
+   * this tileset.
+   */
+  LoadedTileEnumerator loadedTiles();
 
   /**
    * @brief Invokes a function for each tile that is currently loaded.

@@ -170,7 +170,6 @@ void TilesetHeightQuery::intersectVisibleTile(
 
 void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
-    const LoadedTileEnumerator& loadedTiles,
     std::vector<std::string>& warnings) {
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
@@ -236,7 +235,7 @@ void TilesetHeightQuery::findCandidateTiles(
         continue;
 
       // Child is a candidate, traverse it and its children
-      findCandidateTiles(&child, loadedTiles, warnings);
+      findCandidateTiles(&child, warnings);
     }
   }
 }
@@ -348,19 +347,13 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
   }
 
   // No direct height query possible, so download and sample tiles.
-  LoadedTileEnumerator loadedTiles =
-      contentManager.createLoadedTileEnumerator();
-
   bool tileStillNeedsLoading = false;
   std::vector<std::string> warnings;
   for (TilesetHeightQuery& query : this->queries) {
     if (query.candidateTiles.empty() && query.additiveCandidateTiles.empty()) {
       // Find the initial set of tiles whose bounding volume is intersected by
       // the query ray.
-      query.findCandidateTiles(
-          contentManager.getRootTile(),
-          loadedTiles,
-          warnings);
+      query.findCandidateTiles(contentManager.getRootTile(), warnings);
     } else {
       // Refine the current set of candidate tiles, in case further tiles from
       // implicit tiling, external tilesets, etc. having been loaded since last
@@ -380,7 +373,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
-          query.findCandidateTiles(pCandidate.get(), loadedTiles, warnings);
+          query.findCandidateTiles(pCandidate.get(), warnings);
         } else {
           // Check again next frame to see if this tile has children.
           pCandidate->incrementDoNotUnloadSubtreeCount(

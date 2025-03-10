@@ -8,71 +8,87 @@ namespace Cesium3DTilesSelection {
 class Tile;
 class TilesetContentManager;
 
-class LoadedTileEnumerator {
+// The LoadedConstTileEnumerator and LoadedTileEnumerator could probably be
+// replaced with ranges, except that we need to support Android and range
+// support prior to NDK r26 is shaky. Unreal Engine 5.5 uses r25b and Unity
+// 2022.3 uses r23b. See here: https://github.com/android/ndk/issues/1530
+
+class LoadedConstTileEnumerator {
 public:
   class const_iterator {
   public:
-    /**
-     * @brief The iterator category tag denoting this is a forward iterator.
-     */
     using iterator_category = std::forward_iterator_tag;
-    /**
-     * @brief The type of value that is being iterated over.
-     */
-    using value_type = Tile;
-    /**
-     * @brief The type used to identify distance between iterators.
-     *
-     * This is `void` as the distance between two tiles isn't
-     * particularly useful.
-     */
+    using value_type = const Tile;
     using difference_type = void;
-    /**
-     * @brief A pointer to the type being iterated over.
-     */
-    using pointer = Tile*;
-    /**
-     * @brief A reference to the type being iterated over.
-     */
-    using reference = Tile&;
+    using pointer = const Tile*;
+    using reference = const Tile&;
 
-    explicit const_iterator(const Tile* pRootTile);
+    explicit const_iterator(const Tile* pRootTile) noexcept;
 
-    /**
-     * @brief Returns a reference to the current \ref
-     * CesiumGeometry::QuadtreeTileID being iterated.
-     */
-    const Tile& operator*() const { return *this->_traversalStack.back(); }
-    /**
-     * @brief Returns a pointer to the current \ref
-     * CesiumGeometry::QuadtreeTileID being iterated.
-     */
-    const Tile* operator->() const { return this->_traversalStack.back(); }
-    /**
-     * @brief Advances the iterator to the next child.
-     */
-    const_iterator& operator++();
-    /**
-     * @brief Advances the iterator to the next child.
-     */
-    const_iterator operator++(int);
+    const Tile& operator*() const noexcept;
+    const Tile* operator->() const noexcept;
 
-    /** @brief Checks if two iterators are at the same child. */
+    const_iterator& operator++() noexcept;
+    const_iterator operator++(int) noexcept;
+
     bool operator==(const const_iterator& rhs) const noexcept;
-    /** @brief Checks if two iterators are NOT at the same child. */
     bool operator!=(const const_iterator& rhs) const noexcept;
 
   private:
     std::vector<const Tile*> _traversalStack;
+    friend class LoadedConstTileEnumerator;
   };
 
-  explicit LoadedTileEnumerator(const Tile* pRootTile) noexcept;
+  explicit LoadedConstTileEnumerator(const Tile* pRootTile) noexcept;
 
-  const_iterator begin() const;
-  const_iterator end() const;
+  const_iterator begin() const noexcept;
+  const_iterator end() const noexcept;
 
 private:
   const Tile* _pRootTile;
+
+  template <typename TIterator> static TIterator& increment(TIterator& it);
+  friend class LoadedTileEnumerator;
+};
+
+class LoadedTileEnumerator {
+public:
+  using const_iterator = LoadedConstTileEnumerator::const_iterator;
+
+  class iterator {
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = Tile;
+    using difference_type = void;
+    using pointer = Tile*;
+    using reference = Tile&;
+
+    explicit iterator(Tile* pRootTile) noexcept;
+
+    Tile& operator*() const noexcept;
+    Tile* operator->() const noexcept;
+
+    iterator& operator++() noexcept;
+    iterator operator++(int) noexcept;
+
+    bool operator==(const iterator& rhs) const noexcept;
+    bool operator!=(const iterator& rhs) const noexcept;
+
+  private:
+    std::vector<Tile*> _traversalStack;
+    friend class LoadedConstTileEnumerator;
+  };
+
+  explicit LoadedTileEnumerator(Tile* pRootTile) noexcept;
+
+  const_iterator begin() const noexcept;
+  const_iterator end() const noexcept;
+
+  iterator begin() noexcept;
+  iterator end() noexcept;
+
+private:
+  Tile* _pRootTile;
 };
 
 } // namespace Cesium3DTilesSelection

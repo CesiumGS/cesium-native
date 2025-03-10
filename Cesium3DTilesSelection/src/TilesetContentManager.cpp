@@ -1487,10 +1487,6 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
   pTile->clearChildren();
 }
 
-LoadedTileEnumerator TilesetContentManager::createLoadedTileEnumerator() const {
-  return LoadedTileEnumerator(this->getRootTile());
-}
-
 void TilesetContentManager::registerTileRequester(
     TileLoadRequester& requester) {
   CESIUM_ASSERT(
