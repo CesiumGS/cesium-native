@@ -254,12 +254,8 @@ template <typename T> struct std::hash<CesiumUtility::IntrusivePointer<T>> {
   /** @brief Returns a `size_t` hash of the provided \ref
    * CesiumUtility::IntrusivePointer<T>. */
   std::size_t
-  operator()(const CesiumUtility::IntrusivePointer<T>& key) const noexcept;
+  operator()(const CesiumUtility::IntrusivePointer<T>& key) const noexcept {
+    std::hash<T*> hash{};
+    return hash(key.get());
+  }
 };
-
-template <typename T>
-std::size_t std::hash<CesiumUtility::IntrusivePointer<T>>::operator()(
-    const CesiumUtility::IntrusivePointer<T>& key) const noexcept {
-  std::hash<T*> hash{};
-  return hash(key.get());
-}
