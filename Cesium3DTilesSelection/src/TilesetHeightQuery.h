@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/ITileLoadRequester.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumGeometry/Ray.h>

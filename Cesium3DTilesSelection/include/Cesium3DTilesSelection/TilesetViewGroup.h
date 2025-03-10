@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/ITileLoadRequester.h>
+#include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/IntrusivePointer.h>
