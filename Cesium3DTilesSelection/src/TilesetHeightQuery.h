@@ -102,9 +102,7 @@ public:
    * @param outWarnings On return, reports any warnings that occurred during
    * candidate search.
    */
-  void findCandidateTiles(
-      Tile* pTile,
-      std::vector<std::string>& outWarnings);
+  void findCandidateTiles(Tile* pTile, std::vector<std::string>& outWarnings);
 };
 
 /**
