@@ -4,6 +4,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumClientCommon/ErrorResponse.h>
 #include <CesiumClientCommon/OAuth2PKE.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
@@ -25,22 +26,6 @@ using namespace CesiumUtility;
 namespace CesiumClientCommon {
 
 namespace {
-bool parseErrorResponse(
-    const std::span<const std::byte>& body,
-    std::string& outError,
-    std::string& outErrorDesc) {
-  rapidjson::Document doc;
-  doc.Parse(reinterpret_cast<const char*>(body.data()), body.size());
-
-  if (doc.HasParseError() || !doc.IsObject()) {
-    return false;
-  }
-
-  outError = JsonHelpers::getStringOrDefault(doc, "error", "");
-  outErrorDesc = JsonHelpers::getStringOrDefault(doc, "error_description", "");
-  return true;
-}
-
 std::string encodeBase64(const std::vector<uint8_t>& bytes) {
   const size_t count = modp_b64_encode_len(bytes.size());
   std::string result(count, 0);

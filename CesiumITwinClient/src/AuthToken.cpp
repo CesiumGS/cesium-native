@@ -63,6 +63,7 @@ Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
   int64_t expired = JsonHelpers::getInt64OrDefault(json, "exp", 0);
 
   return Result<AuthToken>(AuthToken(
+      tokenStr,
       std::move(name),
       std::move(userName),
       std::move(scopes),

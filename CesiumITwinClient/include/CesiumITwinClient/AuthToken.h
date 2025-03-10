@@ -30,19 +30,23 @@ public:
    */
   int64_t getExpirationTime() const { return _expires; }
 
+  const std::string& getToken() const { return _token; }
+
 private:
   AuthToken(
+      const std::string& token,
       std::string&& name,
       std::string&& userName,
       std::vector<std::string>&& scopes,
       int64_t notValidBefore,
       int64_t expires)
-      : _name(std::move(name)),
+      : _token(token), _name(std::move(name)),
         _userName(std::move(userName)),
         _scopes(std::move(scopes)),
         _notValidBefore(notValidBefore),
         _expires(expires) {}
 
+  std::string _token;
   std::string _name;
   std::string _userName;
   std::vector<std::string> _scopes;

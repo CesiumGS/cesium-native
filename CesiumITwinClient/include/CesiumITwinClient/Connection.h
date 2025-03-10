@@ -1,17 +1,34 @@
 #pragma once
 
 #include "AuthToken.h"
+#include "CesiumClientCommon/OAuth2PKE.h"
 #include "Library.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumITwinClient/PagedList.h>
+#include <CesiumITwinClient/Resources.h>
+#include <CesiumUtility/Result.h>
+#include <CesiumUtility/Uri.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace CesiumITwinClient {
+struct QueryParameters {
+public:
+  std::optional<std::string> search;
+  std::optional<std::string> orderBy;
+  std::optional<uint32_t> top;
+  std::optional<uint32_t> skip;
+
+  void addToQuery(CesiumUtility::UriQuery& uriQuery) const;
+  void addToUri(CesiumUtility::Uri& uri) const;
+};
+
 class CESIUMITWINCLIENT_API Connection {
 public:
   /**
@@ -52,20 +69,34 @@ public:
       const std::vector<std::string>& scopes,
       std::function<void(const std::string&)>&& openUrlCallback);
 
+  CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>> listITwins(const QueryParameters& params);
+
 private:
+  CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>> listITwins(const std::string& url);
+
+  CesiumAsync::Future<
+      CesiumUtility::Result<std::vector<ITwinCesiumCuratedContentItem>>>
+  listCesiumCuratedContent();
+
+  CesiumAsync::Future<CesiumUtility::Result<std::string_view>>
+  ensureValidToken();
+
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const AuthToken& authToken,
-      const std::optional<std::string>& refreshToken)
+      const std::optional<std::string>& refreshToken,
+      const CesiumClientCommon::OAuth2ClientOptions& clientOptions)
       : _asyncSystem(asyncSystem),
         _pAssetAccessor(pAssetAccessor),
         _authToken(authToken),
-        _refreshToken(refreshToken) {}
+        _refreshToken(refreshToken),
+        _clientOptions(clientOptions) {}
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
   AuthToken _authToken;
   std::optional<std::string> _refreshToken;
+  CesiumClientCommon::OAuth2ClientOptions _clientOptions;
 };
 } // namespace CesiumITwinClient
