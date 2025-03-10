@@ -397,15 +397,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
-    // If the root tile is marked as ready, but doesn't actually exist, then
-    // the tileset couldn't load. Fail any outstanding height requests.
-    if (!this->_heightRequests.empty() && this->_pTilesetContentManager &&
-        this->_pTilesetContentManager->getRootTileAvailableEvent().isReady()) {
-      TilesetHeightRequest::failHeightRequests(
-          this->_heightRequests,
-          "Height requests could not complete because the tileset failed to "
-          "load.");
-    }
     return result;
   }
 
@@ -439,13 +430,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   } else {
     result = ViewUpdateResult();
   }
-
-  // TODO: don't do this for every view update
-  TilesetHeightRequest::processHeightRequests(
-      this->getAsyncSystem(),
-      *this->_pTilesetContentManager,
-      this->_options,
-      this->_heightRequests);
 
   result.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(viewGroup._workerThreadLoadQueue.size());
@@ -519,6 +503,25 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 }
 
 void Tileset::loadTiles() {
+  Tile* pRootTile = this->getRootTile();
+  if (!pRootTile) {
+    // If the root tile is marked as ready, but doesn't actually exist, then
+    // the tileset couldn't load. Fail any outstanding height requests.
+    if (!this->_heightRequests.empty() && this->_pTilesetContentManager &&
+        this->_pTilesetContentManager->getRootTileAvailableEvent().isReady()) {
+      TilesetHeightRequest::failHeightRequests(
+          this->_heightRequests,
+          "Height requests could not complete because the tileset failed to "
+          "load.");
+    }
+  } else {
+    TilesetHeightRequest::processHeightRequests(
+        this->getAsyncSystem(),
+        *this->_pTilesetContentManager,
+        this->_options,
+        this->_heightRequests);
+  }
+
   this->_pTilesetContentManager->unloadCachedBytes(
       this->_options.maximumCachedBytes,
       this->_options.tileCacheUnloadTimeLimit);
