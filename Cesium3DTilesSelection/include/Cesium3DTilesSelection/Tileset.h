@@ -314,8 +314,6 @@ public:
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
-  TilesetViewGroup createViewGroup();
-
   const ViewUpdateResult& updateViewGroup(
       TilesetViewGroup& viewGroup,
       const std::vector<ViewState>& frustums,
