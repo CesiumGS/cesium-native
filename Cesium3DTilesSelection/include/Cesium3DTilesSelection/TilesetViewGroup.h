@@ -83,18 +83,72 @@ public:
    */
   void kick(const Tile& tile) noexcept;
 
-  struct LoadQueueState {
+  /**
+   * @brief Adds a tile load task to this view group's load queue.
+   *
+   * Each tile may only be added once per call to {@link startNewFrame}. Adding
+   * a tile multiple times will lead to an assertion in debug builds and
+   * undefined behavior in release builds.
+   *
+   * @param task The tile load task to add to the queue.
+   */
+  void addToLoadQueue(const TileLoadTask& task);
+
+  /**
+   * @brief A checkpoint within this view groups load queue.
+   *
+   * A checkpoint can be created by calling {@link saveTileLoadQueueCheckpoint}.
+   * Later, calling {@link restoreTileLoadQueueCheckpoint} will remove all
+   * tiles from the queue that were added since the checkpoint was saved.
+   */
+  struct LoadQueueCheckpoint {
   private:
-    size_t mainThreadQueueSize;
-    size_t workerThreadQueueSize;
+    size_t mainThread;
+    size_t workerThread;
     friend class TilesetViewGroup;
   };
 
-  void addToLoadQueue(const TileLoadTask& task);
-  LoadQueueState saveLoadQueueState();
-  size_t restoreLoadQueueState(const LoadQueueState& state);
+  /**
+   * @brief Saves a checkpoint of the tile load queue associated with this view
+   * group.
+   *
+   * The saved checkpoint can later be restored by calling
+   * {@link restoreTileLoadQueueCheckpoint}.
+   *
+   * This method should only be called in between calls to {@link startNewFrame}
+   * and {@link finishFrame}.
+   *
+   * @return The checkpoint.
+   */
+  LoadQueueCheckpoint saveTileLoadQueueCheckpoint();
 
+  /**
+   * @brief Restores a previously-saved checkpoint of the tile load queue
+   * associated with this view group.
+   *
+   * Restoring a checkpoint discards all tiles from the queue that were
+   * requested, with a call to {@link addToLoadQueue}, since the checkpoint was
+   * created.
+   *
+   * This method should only be called in between calls to {@link startNewFrame}
+   * and {@link finishFrame}.
+   *
+   * @param checkpoint The previously-created checkpoint.
+   * @return The number of tiles that were discarded from the queue as a result
+   * of restoring the checkpoint.
+   */
+  size_t restoreTileLoadQueueCheckpoint(const LoadQueueCheckpoint& checkpoint);
+
+  /**
+   * @brief Gets the number of tiles that are currently in the queue waiting to
+   * be loaded in the worker thread.
+   */
   size_t getWorkerThreadLoadQueueLength() const;
+
+  /**
+   * @brief Gets the number of tiles that are currently in the queue waiting to
+   * be loaded in the main thread.
+   */
   size_t getMainThreadLoadQueueLength() const;
 
   /**

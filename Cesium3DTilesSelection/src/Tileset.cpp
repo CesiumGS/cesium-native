@@ -1197,7 +1197,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
     size_t firstRenderedDescendantIndex,
-    const TilesetViewGroup::LoadQueueState& loadQueueStateBeforeChildren,
+    const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
     bool queuedForLoad,
     double tilePriority) {
   const TileSelectionState lastFrameSelectionState =
@@ -1250,9 +1250,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     // Remove all descendants from the load queues.
-    result.tilesKicked +=
-        static_cast<uint32_t>(frameState.viewGroup.restoreLoadQueueState(
-            loadQueueStateBeforeChildren));
+    result.tilesKicked += static_cast<uint32_t>(
+        frameState.viewGroup.restoreTileLoadQueueCheckpoint(
+            loadQueueBeforeChildren));
 
     if (!queuedForLoad) {
       addTileToLoadQueue(
@@ -1511,8 +1511,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
-  TilesetViewGroup::LoadQueueState loadQueueState =
-      frameState.viewGroup.saveLoadQueueState();
+  TilesetViewGroup::LoadQueueCheckpoint loadQueueBeforeChildren =
+      frameState.viewGroup.saveTileLoadQueueCheckpoint();
 
   TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(
       frameState,
@@ -1557,7 +1557,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         result,
         traversalDetails,
         firstRenderedDescendantIndex,
-        loadQueueState,
+        loadQueueBeforeChildren,
         queuedForLoad,
         tilePriority);
   } else {

@@ -485,7 +485,7 @@ private:
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
-      const TilesetViewGroup::LoadQueueState& loadQueueStateBeforeChildren,
+      const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
       bool queuedForLoad,
       double tilePriority);
   TileOcclusionState

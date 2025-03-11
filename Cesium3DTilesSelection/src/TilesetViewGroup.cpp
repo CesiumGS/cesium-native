@@ -79,23 +79,24 @@ void TilesetViewGroup::addToLoadQueue(const TileLoadTask& task) {
   }
 }
 
-TilesetViewGroup::LoadQueueState TilesetViewGroup::saveLoadQueueState() {
-  LoadQueueState result;
-  result.mainThreadQueueSize = this->_mainThreadLoadQueue.size();
-  result.workerThreadQueueSize = this->_workerThreadLoadQueue.size();
+TilesetViewGroup::LoadQueueCheckpoint
+TilesetViewGroup::saveTileLoadQueueCheckpoint() {
+  LoadQueueCheckpoint result;
+  result.mainThread = this->_mainThreadLoadQueue.size();
+  result.workerThread = this->_workerThreadLoadQueue.size();
   return result;
 }
 
-size_t TilesetViewGroup::restoreLoadQueueState(const LoadQueueState& state) {
-  CESIUM_ASSERT(
-      this->_workerThreadLoadQueue.size() >= state.workerThreadQueueSize);
-  CESIUM_ASSERT(this->_mainThreadLoadQueue.size() >= state.mainThreadQueueSize);
+size_t TilesetViewGroup::restoreTileLoadQueueCheckpoint(
+    const LoadQueueCheckpoint& checkpoint) {
+  CESIUM_ASSERT(this->_workerThreadLoadQueue.size() >= checkpoint.workerThread);
+  CESIUM_ASSERT(this->_mainThreadLoadQueue.size() >= checkpoint.mainThread);
 
   size_t before =
       this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size();
 
-  this->_workerThreadLoadQueue.resize(state.workerThreadQueueSize);
-  this->_mainThreadLoadQueue.resize(state.mainThreadQueueSize);
+  this->_workerThreadLoadQueue.resize(checkpoint.workerThread);
+  this->_mainThreadLoadQueue.resize(checkpoint.mainThread);
 
   size_t after =
       this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size();
