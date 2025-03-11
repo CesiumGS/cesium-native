@@ -26,7 +26,8 @@ struct OAuth2ClientOptions {
 
 class CESIUMCLIENTCOMMON_API OAuth2PKE {
 public:
-  static CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>> authorize(
+  static CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>>
+  authorize(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& friendlyApplicationName,
@@ -36,13 +37,14 @@ public:
       const std::string& tokenEndpointUrl,
       const std::string& authorizeBaseUrl);
 
-  static CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>> refresh(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const OAuth2ClientOptions& clientOptions,
-    const std::string& refreshBaseUrl,
-    const std::string& refreshToken
-  );
+  static CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>>
+  refresh(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const OAuth2ClientOptions& clientOptions,
+      const std::string& refreshBaseUrl,
+      const std::string& refreshToken);
+
 private:
   static CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>>
   completeTokenExchange(

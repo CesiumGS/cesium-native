@@ -21,7 +21,7 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfWriter/include
         ../CesiumClientCommon/include
         ../CesiumIonClient/include
-        ../CesiumITwinnClient/include
+        ../CesiumITwinClient/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include
@@ -53,12 +53,14 @@ if(DOXYGEN_FOUND)
         "CESIUM3DTILESSELECTION_API"
         "CESIUM3DTILESWRITER_API"
         "CESIUMASYNC_API"
+        "CESIUMCLIENTCOMMOn_API"
         "CESIUMGEOMETRY_API"
         "CESIUMGEOSPATIAL_API"
         "CESIUMGLTF_API"
         "CESIUMGLTFCONTENT_API"
         "CESIUMGLTFREADER_API"
         "CESIUMGLTFWRITER_API"
+        "CESIUMIWINCLIENT_API"
         "CESIUMIONCLIENT_API"
         "CESIUMJSONREADER_API"
         "CESIUMJSONWRITER_API"

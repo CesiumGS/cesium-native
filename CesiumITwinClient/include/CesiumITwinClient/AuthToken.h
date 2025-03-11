@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Library.h"
-
 #include "CesiumUtility/Result.h"
+#include "Library.h"
 
 #include <cstdint>
 #include <string>
@@ -32,7 +31,6 @@ public:
 
   const std::string& getToken() const { return _token; }
 
-private:
   AuthToken(
       const std::string& token,
       std::string&& name,
@@ -40,12 +38,14 @@ private:
       std::vector<std::string>&& scopes,
       int64_t notValidBefore,
       int64_t expires)
-      : _token(token), _name(std::move(name)),
+      : _token(token),
+        _name(std::move(name)),
         _userName(std::move(userName)),
         _scopes(std::move(scopes)),
         _notValidBefore(notValidBefore),
         _expires(expires) {}
 
+private:
   std::string _token;
   std::string _name;
   std::string _userName;

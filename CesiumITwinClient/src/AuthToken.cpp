@@ -26,8 +26,8 @@ Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
   }
 
   const std::string_view payloadSegment = std::string_view(tokenStr).substr(
-      firstPeriod,
-      secondPeriod - firstPeriod);
+      firstPeriod + 1,
+      secondPeriod - firstPeriod - 1);
 
   const size_t b64Len = modp_b64_decode_len(payloadSegment.length());
   std::string decodedPayload;

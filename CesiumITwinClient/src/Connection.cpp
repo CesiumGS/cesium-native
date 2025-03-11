@@ -28,7 +28,6 @@ using namespace CesiumUtility;
 const std::string ITWIN_AUTHORIZE_URL =
     "https://ims.bentley.com/connect/authorize";
 const std::string ITWIN_TOKEN_URL = "https://ims.bentley.com/connect/token";
-const int REDIRECT_URI_PORT = 5081;
 
 namespace CesiumITwinClient {
 namespace {
@@ -123,6 +122,7 @@ CesiumAsync::Future<Connection> Connection::authorize(
     const std::string& friendlyApplicationName,
     const std::string& clientID,
     const std::string& redirectPath,
+    const std::optional<int>& redirectPort,
     const std::vector<std::string>& scopes,
     std::function<void(const std::string&)>&& openUrlCallback) {
   Promise<Connection> connectionPromise =
@@ -131,7 +131,7 @@ CesiumAsync::Future<Connection> Connection::authorize(
   CesiumClientCommon::OAuth2ClientOptions clientOptions{
       clientID,
       redirectPath,
-      REDIRECT_URI_PORT,
+      redirectPort,
       false};
 
   CesiumClientCommon::OAuth2PKE::authorize(
@@ -176,42 +176,54 @@ const std::string ME_URL = "https://api.bentley.com/users/me";
 
 CesiumAsync::Future<CesiumUtility::Result<UserProfile>> Connection::me() {
   return this->ensureValidToken().thenInWorkerThread(
-    [
-     asyncSystem = this->_asyncSystem,
-     pAssetAccessor =
-         this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
-      if (!tokenResult.value) {
-        return asyncSystem.createResolvedFuture<Result<UserProfile>>(
-            tokenResult.errors);
-      }
+      [asyncSystem = this->_asyncSystem,
+       pAssetAccessor =
+           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+        if (!tokenResult.value) {
+          return asyncSystem.createResolvedFuture<Result<UserProfile>>(
+              tokenResult.errors);
+        }
 
-      const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-          {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
-          {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
-          {"Prefer", "return=representation"}};
+        const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
+            {"Prefer", "return=representation"}};
 
-      return pAssetAccessor->get(asyncSystem, ME_URL, headers)
-          .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
-            Result<rapidjson::Document> docResult =
-                handleJsonResponse(request, "listing iModels");
-            if (!docResult.value) {
-              return Result<UserProfile>(docResult.errors);
-            }
+        return pAssetAccessor->get(asyncSystem, ME_URL, headers)
+            .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+              Result<rapidjson::Document> docResult =
+                  handleJsonResponse(request, "listing iModels");
+              if (!docResult.value) {
+                return Result<UserProfile>(docResult.errors);
+              }
 
-            const auto& userMember = docResult.value->FindMember("user");
-            if(userMember == docResult.value->MemberEnd() || !userMember->value.IsObject()) {
-              return Result<UserProfile>(ErrorList::error("Missing `user` property in response."));
-            }
+              const auto& userMember = docResult.value->FindMember("user");
+              if (userMember == docResult.value->MemberEnd() ||
+                  !userMember->value.IsObject()) {
+                return Result<UserProfile>(
+                    ErrorList::error("Missing `user` property in response."));
+              }
 
-            return Result<UserProfile>(UserProfile {
-              JsonHelpers::getStringOrDefault(userMember->value, "id", ""),
-              JsonHelpers::getStringOrDefault(userMember->value, "displayName", ""),
-              JsonHelpers::getStringOrDefault(userMember->value, "givenName", ""),
-              JsonHelpers::getStringOrDefault(userMember->value, "surname", ""),
-              JsonHelpers::getStringOrDefault(userMember->value, "email", "")
+              return Result<UserProfile>(UserProfile{
+                  JsonHelpers::getStringOrDefault(userMember->value, "id", ""),
+                  JsonHelpers::getStringOrDefault(
+                      userMember->value,
+                      "displayName",
+                      ""),
+                  JsonHelpers::getStringOrDefault(
+                      userMember->value,
+                      "givenName",
+                      ""),
+                  JsonHelpers::getStringOrDefault(
+                      userMember->value,
+                      "surname",
+                      ""),
+                  JsonHelpers::getStringOrDefault(
+                      userMember->value,
+                      "email",
+                      "")});
             });
-          });
-        });
+      });
 }
 
 const std::string LIST_ITWINS_URL = "https://api.bentley.com/itwins/";

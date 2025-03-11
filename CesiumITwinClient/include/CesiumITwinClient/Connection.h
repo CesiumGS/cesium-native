@@ -88,6 +88,9 @@ public:
    * redirected to once they authorize your application. This must match the URI
    * provided when you registered your application, without the protocol,
    * hostname, or port.
+   * @param redirectPort If provided, this will be the port that the internal
+   * web server will attempt to bind to. If no port is specified, the server
+   * will bind to a random available port.
    * @param scopes The list of scopes that the eventually-granted token should
    * allow access to.
    * @param openUrlCallback A function that is invoked to launch the user's web
@@ -101,6 +104,7 @@ public:
       const std::string& friendlyApplicationName,
       const std::string& clientID,
       const std::string& redirectPath,
+      const std::optional<int>& redirectPort,
       const std::vector<std::string>& scopes,
       std::function<void(const std::string&)>&& openUrlCallback);
 
@@ -168,6 +172,28 @@ public:
       CesiumUtility::Result<std::vector<ITwinCesiumCuratedContentItem>>>
   listCesiumCuratedContent();
 
+  Connection(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const AuthToken& authToken,
+      const std::optional<std::string>& refreshToken,
+      const CesiumClientCommon::OAuth2ClientOptions& clientOptions)
+      : _asyncSystem(asyncSystem),
+        _pAssetAccessor(pAssetAccessor),
+        _authToken(authToken),
+        _refreshToken(refreshToken),
+        _clientOptions(clientOptions) {}
+
+  const AuthToken& getAccessToken() const { return _authToken; }
+  void setAccessToken(const AuthToken& authToken) { _authToken = authToken; }
+
+  const std::optional<std::string>& getRefreshToken() const {
+    return _refreshToken;
+  }
+  void setRefreshToken(const std::optional<std::string>& refreshToken) {
+    _refreshToken = refreshToken;
+  }
+
 private:
   CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>>
   listITwins(const std::string& url);
@@ -180,18 +206,6 @@ private:
 
   CesiumAsync::Future<CesiumUtility::Result<std::string_view>>
   ensureValidToken();
-
-  Connection(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const AuthToken& authToken,
-      const std::optional<std::string>& refreshToken,
-      const CesiumClientCommon::OAuth2ClientOptions& clientOptions)
-      : _asyncSystem(asyncSystem),
-        _pAssetAccessor(pAssetAccessor),
-        _authToken(authToken),
-        _refreshToken(refreshToken),
-        _clientOptions(clientOptions) {}
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;

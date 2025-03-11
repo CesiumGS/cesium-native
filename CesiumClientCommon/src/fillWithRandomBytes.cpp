@@ -1,4 +1,4 @@
-#include "fillWithRandomBytes.h"
+#include <CesiumClientCommon/fillWithRandomBytes.h>
 
 #include <openssl/rand.h>
 
@@ -20,4 +20,4 @@ void fillWithRandomBytes(const std::span<uint8_t>& buffer) {
   }
 }
 
-} // namespace CesiumIonClient
+} // namespace CesiumClientCommon

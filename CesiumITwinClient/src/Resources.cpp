@@ -1,20 +1,21 @@
 #include <CesiumITwinClient/Resources.h>
 
 namespace CesiumITwinClient {
-ITwinCesiumCuratedContentType cesiumCuratedContentTypeFromString(const std::string &str) {
-  if(str == "3DTILES") {
+ITwinCesiumCuratedContentType
+cesiumCuratedContentTypeFromString(const std::string& str) {
+  if (str == "3DTILES") {
     return ITwinCesiumCuratedContentType::Cesium3DTiles;
-  } else if(str == "GLTF") {
+  } else if (str == "GLTF") {
     return ITwinCesiumCuratedContentType::Gltf;
-  } else if(str == "IMAGERY") {
+  } else if (str == "IMAGERY") {
     return ITwinCesiumCuratedContentType::Imagery;
-  } else if(str == "TERRAIN") {
+  } else if (str == "TERRAIN") {
     return ITwinCesiumCuratedContentType::Terrain;
-  } else if(str == "KML") {
+  } else if (str == "KML") {
     return ITwinCesiumCuratedContentType::Kml;
-  } else if(str == "CZML") {
+  } else if (str == "CZML") {
     return ITwinCesiumCuratedContentType::Czml;
-  } else if(str == "GEOJSON") {
+  } else if (str == "GEOJSON") {
     return ITwinCesiumCuratedContentType::GeoJson;
   }
 
