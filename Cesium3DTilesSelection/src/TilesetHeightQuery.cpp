@@ -18,6 +18,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/exponential.hpp>
 
