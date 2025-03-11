@@ -5,6 +5,7 @@
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
+#include <cstddef>
 #include <unordered_map>
 #include <vector>
 
