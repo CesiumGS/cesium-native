@@ -28,6 +28,9 @@ public:
    * @brief Records the state of all tiles that are currently loaded by the
    * given tileset.
    *
+   * The state is obtained from
+   * {@link TilesetViewGroup::getPreviousSelectionState}.
+   *
    * @param frameNumber The current frame number.
    * @param tileset The tileset.
    * @param viewGroup The view group.
@@ -39,6 +42,9 @@ public:
 
   /**
    * @brief Records the state of a given tile.
+   *
+   * The state is obtained from
+   * {@link TilesetViewGroup::getPreviousSelectionState}.
    *
    * @param frameNumber The current frame number.
    * @param viewGroup The view group.
