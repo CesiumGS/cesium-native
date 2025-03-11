@@ -425,17 +425,17 @@ void Tile::decrementDoNotUnloadSubtreeCount(
 }
 
 void Tile::addReference() const noexcept {
-  ++this->_viewGroupReferences;
-  if (this->_viewGroupReferences == 1 && this->_pLoader &&
+  ++this->_referenceCount;
+  if (this->_referenceCount == 1 && this->_pLoader &&
       this->_pLoader->getOwner()) {
     this->_pLoader->getOwner()->markTileNowUsed(*this);
   }
 }
 
 void Tile::releaseReference() const noexcept {
-  CESIUM_ASSERT(this->_viewGroupReferences > 0);
-  --this->_viewGroupReferences;
-  if (this->_viewGroupReferences == 0 && this->_pLoader &&
+  CESIUM_ASSERT(this->_referenceCount > 0);
+  --this->_referenceCount;
+  if (this->_referenceCount == 0 && this->_pLoader &&
       this->_pLoader->getOwner()) {
     this->_pLoader->getOwner()->markTileNowUnused(*this);
   }

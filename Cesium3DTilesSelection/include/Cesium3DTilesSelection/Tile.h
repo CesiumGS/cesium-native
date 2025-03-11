@@ -626,13 +626,18 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   // Number of existing claims on this tile preventing it and its parent
-  // external tileset (if any) from being unloaded from the tree.
+  // external tileset (if any) from being unloaded from the tree. A non-zero
+  // count here prevents this Tile instance from being destroyed, but it does
+  // not prevent its content from being unloaded.
   int32_t _doNotUnloadSubtreeCount = 0;
 
-  // The number of ViewGroups that currently reference this tile. While a tile
-  // is referenced by a view group, its content may not be unloaded, nor can the
-  // external tileset that contains this tile be unloaded.
-  mutable int32_t _viewGroupReferences = 0;
+  // The number of TilesetViewGroups and potentially others that currently
+  // reference this tile. While a tile is referenced, its content may not be
+  // unloaded, nor can the external tileset that contains this tile be unloaded.
+  // Tile instances are not automatically destroyed when their reference count
+  // goes to zero, but they become eligible for destruction (e.g., when the
+  // external tileset that owns them is unloaded).
+  mutable int32_t _referenceCount = 0;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
