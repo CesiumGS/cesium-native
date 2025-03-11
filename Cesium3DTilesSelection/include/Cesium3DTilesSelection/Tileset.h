@@ -571,7 +571,6 @@ private:
   TilesetOptions _options;
 
   int32_t _previousFrameNumber;
-  ViewUpdateResult _updateResult;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.

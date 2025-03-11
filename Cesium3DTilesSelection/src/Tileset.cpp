@@ -312,43 +312,45 @@ void Tileset::_updateLodTransitions(
 
 const ViewUpdateResult&
 Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
+  ViewUpdateResult& updateResult =
+      this->_defaultViewGroup.getViewUpdateResult();
   std::vector<Tile*> tilesSelectedPrevFrame =
-      this->_updateResult.tilesToRenderThisFrame;
+      updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
   this->updateView(frustums, 0.0f);
   while (this->_pTilesetContentManager->getNumberOfTilesLoading() > 0 ||
-         this->_updateResult.mainThreadTileLoadQueueLength > 0 ||
-         this->_updateResult.workerThreadTileLoadQueueLength > 0) {
+         updateResult.mainThreadTileLoadQueueLength > 0 ||
+         updateResult.workerThreadTileLoadQueueLength > 0) {
     this->_externals.pAssetAccessor->tick();
     this->updateView(frustums, 0.0f);
   }
 
-  for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+  for (Tile* pTile : updateResult.tilesFadingOut) {
     pTile->decrementDoNotUnloadSubtreeCount(
         "Tileset::updateViewOffline clear tilesFadingOut");
   }
 
-  this->_updateResult.tilesFadingOut.clear();
+  updateResult.tilesFadingOut.clear();
 
   std::unordered_set<Tile*> uniqueTilesToRenderThisFrame(
-      this->_updateResult.tilesToRenderThisFrame.begin(),
-      this->_updateResult.tilesToRenderThisFrame.end());
+      updateResult.tilesToRenderThisFrame.begin(),
+      updateResult.tilesToRenderThisFrame.end());
   for (Tile* tile : tilesSelectedPrevFrame) {
     if (uniqueTilesToRenderThisFrame.find(tile) ==
         uniqueTilesToRenderThisFrame.end()) {
       TileRenderContent* pRenderContent = tile->getContent().getRenderContent();
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
-        this->_updateResult.tilesFadingOut.insert(tile);
+        updateResult.tilesFadingOut.insert(tile);
         tile->incrementDoNotUnloadSubtreeCount(
             "Tileset::updateViewOffline start fading out");
       }
     }
   }
 
-  return this->_updateResult;
+  return updateResult;
 }
 
 const ViewUpdateResult&
@@ -378,7 +380,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   const int32_t previousFrameNumber = this->_previousFrameNumber;
   const int32_t currentFrameNumber = previousFrameNumber + 1;
 
-  ViewUpdateResult& result = this->_updateResult;
+  ViewUpdateResult& result = viewGroup.getViewUpdateResult();
   result.frameNumber = currentFrameNumber;
   result.tilesToRenderThisFrame.clear();
   result.tilesVisited = 0;
@@ -390,7 +392,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   result.maxDepthVisited = 0;
 
   if (!_options.enableLodTransitionPeriod) {
-    for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+    for (Tile* pTile : result.tilesFadingOut) {
       pTile->decrementDoNotUnloadSubtreeCount(
           "Tileset::updateView clear tilesFadingOut");
     }
@@ -551,15 +553,18 @@ int32_t Tileset::getNumberOfTilesLoaded() const {
 }
 
 float Tileset::computeLoadProgress() noexcept {
+  // TODO: report progress across all view groups, not just the default one.
+  const ViewUpdateResult& updateResult =
+      this->_defaultViewGroup.getViewUpdateResult();
+
   int32_t queueSizeSum = static_cast<int32_t>(
-      this->_updateResult.workerThreadTileLoadQueueLength +
-      this->_updateResult.mainThreadTileLoadQueueLength);
+      updateResult.workerThreadTileLoadQueueLength +
+      updateResult.mainThreadTileLoadQueueLength);
   int32_t numOfTilesLoading =
       this->_pTilesetContentManager->getNumberOfTilesLoading();
   int32_t numOfTilesLoaded =
       this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  int32_t numOfTilesKicked =
-      static_cast<int32_t>(this->_updateResult.tilesKicked);
+  int32_t numOfTilesKicked = static_cast<int32_t>(updateResult.tilesKicked);
 
   // Amount of work actively being done
   int32_t inProgressSum = numOfTilesLoading + queueSizeSum;

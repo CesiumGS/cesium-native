@@ -2,6 +2,7 @@
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
+#include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumUtility/Assert.h>
 
 #include <algorithm>
@@ -17,6 +18,15 @@ TilesetViewGroup::TilesetViewGroup(const TilesetViewGroup& rhs) noexcept =
 TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept = default;
 
 TilesetViewGroup::~TilesetViewGroup() noexcept = default;
+
+const ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() const {
+  return this->_updateResult;
+}
+
+/** @copydoc getViewUpdateResult */
+ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() {
+  return this->_updateResult;
+}
 
 TileSelectionState
 TilesetViewGroup::getPreviousSelectionState(const Tile& tile) const noexcept {

@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
+#include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <cstddef>
@@ -48,6 +49,15 @@ public:
    */
   TilesetViewGroup(TilesetViewGroup&& rhs) noexcept;
   virtual ~TilesetViewGroup() noexcept;
+
+  /**
+   * @brief Gets the result from that last time this view group was updated by
+   * calling {@link Tileset::updateViewGroup}.
+   */
+  const ViewUpdateResult& getViewUpdateResult() const;
+
+  /** @copydoc getViewUpdateResult */
+  ViewUpdateResult& getViewUpdateResult();
 
   /**
    * @brief Returns the previous {@link TileSelectionState} of this tile last
@@ -201,6 +211,8 @@ private:
 
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
+
+  ViewUpdateResult _updateResult;
 };
 
 } // namespace Cesium3DTilesSelection
