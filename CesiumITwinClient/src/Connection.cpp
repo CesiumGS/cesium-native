@@ -1,4 +1,6 @@
 #include "CesiumAsync/IAssetRequest.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/ErrorList.h"
 
 #include <CesiumAsync/Future.h>
@@ -71,6 +73,26 @@ Result<rapidjson::Document> handleJsonResponse(
   }
 
   return Result<rapidjson::Document>(std::move(d));
+}
+
+CesiumGeospatial::Cartographic parsePoint(const rapidjson::Value& jsonValue) {
+  double latitudeDegrees = 0, longitudeDegrees = 0;
+
+  const auto& latitudeMember = jsonValue.FindMember("latitude");
+  if (latitudeMember != jsonValue.MemberEnd() &&
+      latitudeMember->value.IsDouble()) {
+    latitudeDegrees = latitudeMember->value.GetDouble();
+  }
+
+  const auto& longitudeMember = jsonValue.FindMember("longitude");
+  if (longitudeMember != jsonValue.MemberEnd() &&
+      longitudeMember->value.IsDouble()) {
+    longitudeDegrees = longitudeMember->value.GetDouble();
+  }
+
+  return CesiumGeospatial::Cartographic::fromDegrees(
+      longitudeDegrees,
+      latitudeDegrees);
 }
 } // namespace
 
@@ -150,6 +172,48 @@ CesiumAsync::Future<Connection> Connection::authorize(
   return connectionPromise.getFuture();
 }
 
+const std::string ME_URL = "https://api.bentley.com/users/me";
+
+CesiumAsync::Future<CesiumUtility::Result<UserProfile>> Connection::me() {
+  return this->ensureValidToken().thenInWorkerThread(
+    [
+     asyncSystem = this->_asyncSystem,
+     pAssetAccessor =
+         this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+      if (!tokenResult.value) {
+        return asyncSystem.createResolvedFuture<Result<UserProfile>>(
+            tokenResult.errors);
+      }
+
+      const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+          {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+          {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
+          {"Prefer", "return=representation"}};
+
+      return pAssetAccessor->get(asyncSystem, ME_URL, headers)
+          .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+            Result<rapidjson::Document> docResult =
+                handleJsonResponse(request, "listing iModels");
+            if (!docResult.value) {
+              return Result<UserProfile>(docResult.errors);
+            }
+
+            const auto& userMember = docResult.value->FindMember("user");
+            if(userMember == docResult.value->MemberEnd() || !userMember->value.IsObject()) {
+              return Result<UserProfile>(ErrorList::error("Missing `user` property in response."));
+            }
+
+            return Result<UserProfile>(UserProfile {
+              JsonHelpers::getStringOrDefault(userMember->value, "id", ""),
+              JsonHelpers::getStringOrDefault(userMember->value, "displayName", ""),
+              JsonHelpers::getStringOrDefault(userMember->value, "givenName", ""),
+              JsonHelpers::getStringOrDefault(userMember->value, "surname", ""),
+              JsonHelpers::getStringOrDefault(userMember->value, "email", "")
+            });
+          });
+        });
+}
+
 const std::string LIST_ITWINS_URL = "https://api.bentley.com/itwins/";
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>>
@@ -216,6 +280,291 @@ Connection::listITwins(const std::string& url) {
       });
 }
 
+const std::string LIST_IMODELS_URL = "https://api.bentley.com/imodels/";
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<IModel>>>
+Connection::listIModels(
+    const std::string& iTwinId,
+    const QueryParameters& params) {
+  CesiumUtility::Uri uri(LIST_IMODELS_URL);
+  CesiumUtility::UriQuery query(uri.getQuery());
+  query.setValue("iTwinId", iTwinId);
+  params.addToQuery(query);
+  uri.setQuery(query.toQueryString());
+  return this->listIModels(std::string(uri.toString()));
+}
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<IModel>>>
+Connection::listIModels(const std::string& url) {
+  return this->ensureValidToken().thenInWorkerThread(
+      [url,
+       asyncSystem = this->_asyncSystem,
+       pAssetAccessor =
+           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+        if (!tokenResult.value) {
+          return asyncSystem.createResolvedFuture<Result<PagedList<IModel>>>(
+              tokenResult.errors);
+        }
+
+        const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
+            {"Prefer", "return=representation"}};
+
+        return pAssetAccessor->get(asyncSystem, url, headers)
+            .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+              Result<rapidjson::Document> docResult =
+                  handleJsonResponse(request, "listing iModels");
+              if (!docResult.value) {
+                return Result<PagedList<IModel>>(docResult.errors);
+              }
+
+              const auto& itemsMember = docResult.value->FindMember("iModels");
+              if (itemsMember == docResult.value->MemberEnd() ||
+                  !itemsMember->value.IsArray()) {
+                return Result<PagedList<IModel>>(ErrorList::error(
+                    "List result missing `iModels` property."));
+              }
+
+              std::vector<IModel> items;
+              items.reserve(itemsMember->value.Size());
+
+              for (const auto& item : itemsMember->value.GetArray()) {
+                CesiumGeospatial::Cartographic northEast(0, 0);
+                CesiumGeospatial::Cartographic southWest(0, 0);
+
+                // Parse extents rectangle from northEast and southWest
+                // coordinates.
+                const auto& extentMember = item.FindMember("extent");
+                if (extentMember != item.MemberEnd() &&
+                    extentMember->value.IsObject()) {
+                  const auto& southWestMember =
+                      extentMember->value.FindMember("southWest");
+                  if (southWestMember != extentMember->value.MemberBegin() &&
+                      southWestMember->value.IsObject()) {
+                    southWest = parsePoint(southWestMember->value);
+                  }
+
+                  const auto& northEastMember =
+                      extentMember->value.FindMember("northEast");
+                  if (northEastMember != extentMember->value.MemberBegin() &&
+                      northEastMember->value.IsObject()) {
+                    northEast = parsePoint(northEastMember->value);
+                  }
+                }
+
+                items.emplace_back(
+                    JsonHelpers::getStringOrDefault(item, "id", ""),
+                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
+                    JsonHelpers::getStringOrDefault(item, "name", ""),
+                    JsonHelpers::getStringOrDefault(item, "description", ""),
+                    iModelStateFromString(
+                        JsonHelpers::getStringOrDefault(item, "state", "")),
+                    CesiumGeospatial::GlobeRectangle(
+                        southWest.longitude,
+                        southWest.latitude,
+                        northEast.longitude,
+                        northEast.latitude));
+              }
+
+              return Result<PagedList<IModel>>(PagedList<IModel>(
+                  *docResult.value,
+                  std::move(items),
+                  [](Connection& connection, const std::string& url) {
+                    return connection.listIModels(url);
+                  }));
+            });
+      });
+}
+
+const std::string LIST_IMODEL_MESH_EXPORTS_URL =
+    "https://api.bentley.com/mesh-export/";
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<IModelMeshExport>>>
+Connection::listIModelMeshExports(
+    const std::string& iModelId,
+    const QueryParameters& params) {
+  CesiumUtility::Uri uri(LIST_IMODEL_MESH_EXPORTS_URL);
+  CesiumUtility::UriQuery query(uri.getQuery());
+  query.setValue("iModelId", iModelId);
+  params.addToQuery(query);
+  uri.setQuery(query.toQueryString());
+  return this->listIModelMeshExports(std::string(uri.toString()));
+}
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<IModelMeshExport>>>
+Connection::listIModelMeshExports(const std::string& url) {
+  return this->ensureValidToken().thenInWorkerThread(
+      [url,
+       asyncSystem = this->_asyncSystem,
+       pAssetAccessor =
+           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+        if (!tokenResult.value) {
+          return asyncSystem
+              .createResolvedFuture<Result<PagedList<IModelMeshExport>>>(
+                  tokenResult.errors);
+        }
+
+        const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
+            {"Prefer", "return=representation"}};
+
+        return pAssetAccessor->get(asyncSystem, url, headers)
+            .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+              Result<rapidjson::Document> docResult =
+                  handleJsonResponse(request, "listing iModel mesh exports");
+              if (!docResult.value) {
+                return Result<PagedList<IModelMeshExport>>(docResult.errors);
+              }
+
+              const auto& itemsMember = docResult.value->FindMember("exports");
+              if (itemsMember == docResult.value->MemberEnd() ||
+                  !itemsMember->value.IsArray()) {
+                return Result<PagedList<IModelMeshExport>>(ErrorList::error(
+                    "List result missing `exports` property."));
+              }
+
+              std::vector<IModelMeshExport> items;
+              items.reserve(itemsMember->value.Size());
+
+              for (const auto& item : itemsMember->value.GetArray()) {
+                IModelMeshExportType exportType = IModelMeshExportType::Unknown;
+
+                const auto& requestMember = item.FindMember("request");
+                if (requestMember != item.MemberEnd() &&
+                    requestMember->value.IsObject()) {
+                  exportType = iModelMeshExportTypeFromString(
+                      JsonHelpers::getStringOrDefault(
+                          requestMember->value,
+                          "exportType",
+                          ""));
+                }
+
+                items.emplace_back(
+                    JsonHelpers::getStringOrDefault(item, "id", ""),
+                    JsonHelpers::getStringOrDefault(item, "value", ""),
+                    iModelMeshExportStatusFromString(
+                        JsonHelpers::getStringOrDefault(item, "status", "")),
+                    exportType);
+              }
+
+              return Result<PagedList<IModelMeshExport>>(
+                  PagedList<IModelMeshExport>(
+                      *docResult.value,
+                      std::move(items),
+                      [](Connection& connection, const std::string& url) {
+                        return connection.listIModelMeshExports(url);
+                      }));
+            });
+      });
+}
+
+const std::string LIST_ITWIN_REALITY_DATA_URL =
+    "https://api.bentley.com/reality-management/reality-data/";
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
+Connection::listITwinRealityData(
+    const std::string& iTwinId,
+    const QueryParameters& params) {
+  CesiumUtility::Uri uri(LIST_ITWIN_REALITY_DATA_URL);
+  CesiumUtility::UriQuery query(uri.getQuery());
+  query.setValue("iTwinId", iTwinId);
+  params.addToQuery(query);
+  uri.setQuery(query.toQueryString());
+  return this->listITwinRealityData(std::string(uri.toString()));
+}
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
+Connection::listITwinRealityData(const std::string& url) {
+  return this->ensureValidToken().thenInWorkerThread(
+      [url,
+       asyncSystem = this->_asyncSystem,
+       pAssetAccessor =
+           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+        if (!tokenResult.value) {
+          return asyncSystem
+              .createResolvedFuture<Result<PagedList<ITwinRealityData>>>(
+                  tokenResult.errors);
+        }
+
+        const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
+            {"Prefer", "return=representation"}};
+
+        return pAssetAccessor->get(asyncSystem, url, headers)
+            .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+              Result<rapidjson::Document> docResult =
+                  handleJsonResponse(request, "listing iTwin reality data");
+              if (!docResult.value) {
+                return Result<PagedList<ITwinRealityData>>(docResult.errors);
+              }
+
+              const auto& itemsMember =
+                  docResult.value->FindMember("realityData");
+              if (itemsMember == docResult.value->MemberEnd() ||
+                  !itemsMember->value.IsArray()) {
+                return Result<PagedList<ITwinRealityData>>(ErrorList::error(
+                    "List result missing `realityData` property."));
+              }
+
+              std::vector<ITwinRealityData> items;
+              items.reserve(itemsMember->value.Size());
+
+              for (const auto& item : itemsMember->value.GetArray()) {
+                CesiumGeospatial::Cartographic northEast(0, 0);
+                CesiumGeospatial::Cartographic southWest(0, 0);
+
+                // Parse extents rectangle from northEast and southWest
+                // coordinates.
+                const auto& extentMember = item.FindMember("extent");
+                if (extentMember != item.MemberEnd() &&
+                    extentMember->value.IsObject()) {
+                  const auto& southWestMember =
+                      extentMember->value.FindMember("southWest");
+                  if (southWestMember != extentMember->value.MemberBegin() &&
+                      southWestMember->value.IsObject()) {
+                    southWest = parsePoint(southWestMember->value);
+                  }
+
+                  const auto& northEastMember =
+                      extentMember->value.FindMember("northEast");
+                  if (northEastMember != extentMember->value.MemberBegin() &&
+                      northEastMember->value.IsObject()) {
+                    northEast = parsePoint(northEastMember->value);
+                  }
+                }
+
+                items.emplace_back(
+                    JsonHelpers::getStringOrDefault(item, "id", ""),
+                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
+                    JsonHelpers::getStringOrDefault(item, "description", ""),
+                    iTwinRealityDataClassificationFromString(
+                        JsonHelpers::getStringOrDefault(
+                            item,
+                            "classification",
+                            "")),
+                    JsonHelpers::getStringOrDefault(item, "type", ""),
+                    CesiumGeospatial::GlobeRectangle(
+                        southWest.longitude,
+                        southWest.latitude,
+                        northEast.longitude,
+                        northEast.latitude),
+                    JsonHelpers::getBoolOrDefault(item, "authoring", false));
+              }
+
+              return Result<PagedList<ITwinRealityData>>(
+                  PagedList<ITwinRealityData>(
+                      *docResult.value,
+                      std::move(items),
+                      [](Connection& connection, const std::string& url) {
+                        return connection.listITwinRealityData(url);
+                      }));
+            });
+      });
+}
+
 const std::string LIST_CCC_ENDPOINT_URL =
     "https://api.bentley.com/curated-content/cesium/";
 using ITwinCCCListResponse = std::vector<ITwinCesiumCuratedContentItem>;
@@ -263,6 +612,7 @@ Connection::listCesiumCuratedContent() {
             return Result<ITwinCCCListResponse>(std::move(items));
           });
 }
+
 CesiumAsync::Future<CesiumUtility::Result<std::string_view>>
 Connection::ensureValidToken() {
   if (this->_authToken.isValid()) {
