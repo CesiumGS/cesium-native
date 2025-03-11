@@ -1442,9 +1442,7 @@ void TilesetContentManager::unloadCachedBytes(
 
   while (this->getTotalDataUsed() > maximumCachedBytes) {
     if (pTile == nullptr) {
-      // We've either removed all tiles or the next tile is the root.
-      // The root tile marks the beginning of the tiles that were used
-      // for rendering last frame.
+      // We've removed all unused tiles.
       break;
     }
 
