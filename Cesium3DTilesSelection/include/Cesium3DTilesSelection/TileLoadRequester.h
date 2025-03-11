@@ -8,8 +8,8 @@ class Tile;
 class TilesetContentManager;
 
 /**
- * @brief An interface to something that requests loading of specific tiles from
- * a 3D Tiles {@link Tileset}.
+ * @brief The base class for something that requests loading of specific tiles
+ * from a 3D Tiles {@link Tileset}.
  *
  * When multiple requesters are registered, each is given a fair chance to load
  * tiles in proportion with its {@link TileLoadRequester::getWeight}.
