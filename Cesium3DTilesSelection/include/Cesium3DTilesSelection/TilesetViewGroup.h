@@ -52,8 +52,6 @@ public:
    * @brief Returns the previous {@link TileSelectionState} of this tile last
    * time this view group was updated.
    *
-   * This function is not supposed to be called by clients.
-   *
    * @param tile The tile for which to get the selection state.
    * @return The previous selection state
    */
@@ -63,17 +61,13 @@ public:
    * @brief Returns the current {@link TileSelectionState} of this tile during
    * the current update of this view group.
    *
-   * This function is not supposed to be called by clients.
-   *
    * @param tile The tile for which to get the selection state.
    * @return The current selection state
    */
   TileSelectionState getCurrentSelectionState(const Tile& tile) const noexcept;
 
   /**
-   * @brief Set the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
+   * @brief Sets the {@link TileSelectionState} of this tile.
    *
    * @param tile The tile for which to set the selection state.
    * @param newState The new state
@@ -89,6 +83,26 @@ public:
    */
   void kick(const Tile& tile) noexcept;
 
+  struct LoadQueueState {
+  private:
+    size_t mainThreadQueueSize;
+    size_t workerThreadQueueSize;
+    friend class TilesetViewGroup;
+  };
+
+  void addToLoadQueue(const TileLoadTask& task);
+  LoadQueueState saveLoadQueueState();
+  size_t restoreLoadQueueState(const LoadQueueState& state);
+
+  size_t getWorkerThreadLoadQueueLength() const;
+  size_t getMainThreadLoadQueueLength() const;
+
+  /**
+   * @brief Starts a new frame, clearing the set of tiles to be loaded so that a
+   * new set can be selected.
+   */
+  void startNewFrame();
+
   /**
    * @brief Finishes the current frame by making the current tile selection
    * state the previous one and releasing references to tiles in the old
@@ -96,39 +110,14 @@ public:
    */
   void finishFrame();
 
-  /**
-   * @brief Gets the weight of this view group relative to other tile
-   * requesters.
-   *
-   * See {@link setWeight} for information about the meaning of this value.
-   *
-   * Most requesters should return a weight of 1.0. When all requesters have the
-   * same weight, they will all have an equal opportunity to load tiles. If one
-   * requester's weight is 2.0 and the rest are 1.0, that requester will have
-   * twice as many opportunities to load tiles as the others.
-   *
-   * A very high weight will prevent all other requesters from loading tiles
-   * until this requester has none left to load. A very low weight (but above
-   * 0.0!) will allow all other requesters to finish loading tiles before this
-   * one starts.
-   *
-   * @return The weight of this requester, which must be greater than 0.0.
-   */
+  /** @inheritdoc */
   double getWeight() const override;
 
   /**
    * @brief Sets the weight of this view group relative to other tile
    * requesters.
    *
-   * Most requesters should return a weight of 1.0. When all requesters have the
-   * same weight, they will all have an equal opportunity to load tiles. If one
-   * requester's weight is 2.0 and the rest are 1.0, that requester will have
-   * twice as many opportunities to load tiles as the others.
-   *
-   * A very high weight will prevent all other requesters from loading tiles
-   * until this requester has none left to load. A very low weight (but above
-   * 0.0!) will allow all other requesters to finish loading tiles before this
-   * one starts.
+   * See {@link getWeight} for an explanation of the meaning of the weight.
    *
    * @param weight The new weight for this view group.
    */
@@ -157,9 +146,6 @@ private:
 
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
-
-  // So that the Tileset can create instances of this class.
-  friend class Tileset;
 };
 
 } // namespace Cesium3DTilesSelection

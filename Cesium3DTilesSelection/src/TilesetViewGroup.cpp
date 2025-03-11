@@ -54,6 +54,68 @@ void TilesetViewGroup::kick(const Tile& tile) noexcept {
   }
 }
 
+void TilesetViewGroup::addToLoadQueue(const TileLoadTask& task) {
+  Tile* pTile = task.pTile;
+  CESIUM_ASSERT(pTile != nullptr);
+
+  // Assert that this tile hasn't been added to a queue already.
+  CESIUM_ASSERT(
+      std::find_if(
+          this->_workerThreadLoadQueue.begin(),
+          this->_workerThreadLoadQueue.end(),
+          [&](const TileLoadTask& task) { return task.pTile == pTile; }) ==
+      this->_workerThreadLoadQueue.end());
+  CESIUM_ASSERT(
+      std::find_if(
+          this->_mainThreadLoadQueue.begin(),
+          this->_mainThreadLoadQueue.end(),
+          [&](const TileLoadTask& task) { return task.pTile == pTile; }) ==
+      this->_mainThreadLoadQueue.end());
+
+  if (pTile->needsWorkerThreadLoading()) {
+    this->_workerThreadLoadQueue.emplace_back(task);
+  } else if (pTile->needsMainThreadLoading()) {
+    this->_mainThreadLoadQueue.emplace_back(task);
+  }
+}
+
+TilesetViewGroup::LoadQueueState TilesetViewGroup::saveLoadQueueState() {
+  LoadQueueState result;
+  result.mainThreadQueueSize = this->_mainThreadLoadQueue.size();
+  result.workerThreadQueueSize = this->_workerThreadLoadQueue.size();
+  return result;
+}
+
+size_t TilesetViewGroup::restoreLoadQueueState(const LoadQueueState& state) {
+  CESIUM_ASSERT(
+      this->_workerThreadLoadQueue.size() >= state.workerThreadQueueSize);
+  CESIUM_ASSERT(this->_mainThreadLoadQueue.size() >= state.mainThreadQueueSize);
+
+  size_t before =
+      this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size();
+
+  this->_workerThreadLoadQueue.resize(state.workerThreadQueueSize);
+  this->_mainThreadLoadQueue.resize(state.mainThreadQueueSize);
+
+  size_t after =
+      this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size();
+
+  return after - before;
+}
+
+size_t TilesetViewGroup::getWorkerThreadLoadQueueLength() const {
+  return this->_workerThreadLoadQueue.size();
+}
+
+size_t TilesetViewGroup::getMainThreadLoadQueueLength() const {
+  return this->_mainThreadLoadQueue.size();
+}
+
+void TilesetViewGroup::startNewFrame() {
+  this->_workerThreadLoadQueue.clear();
+  this->_mainThreadLoadQueue.clear();
+}
+
 void TilesetViewGroup::finishFrame() {
   std::swap(this->_previousSelectionStates, this->_currentSelectionStates);
   this->_currentSelectionStates.clear();

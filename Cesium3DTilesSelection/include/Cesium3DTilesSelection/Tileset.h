@@ -209,6 +209,11 @@ public:
   /**
    * @brief Updates this view, returning the set of tiles to render in this
    * view.
+   *
+   * Calling this method is equivalent to calling {@link updateViewGroup} with
+   * the default view group ({@link getDefaultViewGroup}) and then calling
+   * {@link loadTiles}.
+   *
    * @param frustums The {@link ViewState}s that the view should be updated for
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
@@ -233,13 +238,22 @@ public:
   /**
    * @brief Gets an object that can be used to enumerate the loaded tiles of
    * this tileset.
+   *
+   * Before the root tile is available, this method will return an enumerator
+   * that is empty, and that instance will remain empty even after the root tile
+   * is available.
+
+   * Once the root tile is available (see {@link getRootTile} and
+   * {@link getRootTileAvailableEvent}), the returned instance will remain
+   * valid until the tileset is destroyed.
+   *
+   * While the returned enumerator itself will remain valid as long as the
+   * `Tileset` does, a given iteration may be invalidated by any operation that
+   * modifies the {@link Tile} hierarchy.
    */
   LoadedConstTileEnumerator loadedTiles() const;
 
-  /**
-   * @brief Gets an object that can be used to enumerate the loaded tiles of
-   * this tileset.
-   */
+  /** @copydoc loadedTiles */
   LoadedTileEnumerator loadedTiles();
 
   /**
@@ -328,8 +342,26 @@ public:
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
   /**
+   * @brief Gets the default view group that is used when calling
+   * {@link updateView}.
+   *
+   * @return The view group.
+   */
+  TilesetViewGroup& getDefaultViewGroup();
+
+  /** @copydoc getDefaultViewGroup */
+  const TilesetViewGroup& getDefaultViewGroup() const;
+
+  /**
    * @brief Updates a view group, returning the set of tiles to render in this
    * view.
+   *
+   * This method should typically be called once per "render frame", but it may
+   * be called at different rates for different view groups.
+   *
+   * Users must also periodically called {@link loadTiles}, which will start or
+   * continue the asynchronous process of loading tiles that are needed across
+   * all view groups.
    *
    * @param viewGroup The view group to update. The first time `updateViewGroup`
    * is called, simply create a new `TilesetViewGroup` to pass as this
@@ -350,6 +382,10 @@ public:
   /**
    * @brief Loads the tiles that are currently deemed the most important,
    * across all height queries and {@link TilesetViewGroup} instances.
+   *
+   * In order to minimize tile load latency, this method should be called
+   * frequently, such as once per render frame. It will return quickly when
+   * there is no work to do.
    */
   void loadTiles();
 
@@ -449,8 +485,7 @@ private:
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
-      size_t workerThreadLoadQueueIndex,
-      size_t mainThreadLoadQueueIndex,
+      const TilesetViewGroup::LoadQueueState& loadQueueStateBeforeChildren,
       bool queuedForLoad,
       double tilePriority);
   TileOcclusionState

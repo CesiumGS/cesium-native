@@ -407,8 +407,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
     pExcluder->startNewFrame();
   }
 
-  viewGroup._workerThreadLoadQueue.clear();
-  viewGroup._mainThreadLoadQueue.clear();
+  viewGroup.startNewFrame();
 
   std::vector<double> fogDensities(frustums.size());
   std::transform(
@@ -434,9 +433,9 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   }
 
   result.workerThreadTileLoadQueueLength =
-      static_cast<int32_t>(viewGroup._workerThreadLoadQueue.size());
+      static_cast<int32_t>(viewGroup.getWorkerThreadLoadQueueLength());
   result.mainThreadTileLoadQueueLength =
-      static_cast<int32_t>(viewGroup._mainThreadLoadQueue.size());
+      static_cast<int32_t>(viewGroup.getMainThreadLoadQueueLength());
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->_externals.pTileOcclusionProxyPool;
@@ -1198,8 +1197,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
     size_t firstRenderedDescendantIndex,
-    size_t workerThreadLoadQueueIndex,
-    size_t mainThreadLoadQueueIndex,
+    const TilesetViewGroup::LoadQueueState& loadQueueStateBeforeChildren,
     bool queuedForLoad,
     double tilePriority) {
   const TileSelectionState lastFrameSelectionState =
@@ -1252,25 +1250,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     // Remove all descendants from the load queues.
-    std::vector<TileLoadTask>& workerQueue =
-        frameState.viewGroup._workerThreadLoadQueue;
-    std::vector<TileLoadTask>& mainQueue =
-        frameState.viewGroup._mainThreadLoadQueue;
-
-    size_t allQueueStartSize = workerQueue.size() + mainQueue.size();
-    workerQueue.erase(
-        workerQueue.begin() +
-            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
-                workerThreadLoadQueueIndex),
-        workerQueue.end());
-    mainQueue.erase(
-        mainQueue.begin() +
-            static_cast<std::vector<TileLoadTask>::iterator::difference_type>(
-                mainThreadLoadQueueIndex),
-        mainQueue.end());
-    size_t allQueueEndSize = workerQueue.size() + mainQueue.size();
     result.tilesKicked +=
-        static_cast<uint32_t>(allQueueStartSize - allQueueEndSize);
+        static_cast<uint32_t>(frameState.viewGroup.restoreLoadQueueState(
+            loadQueueStateBeforeChildren));
 
     if (!queuedForLoad) {
       addTileToLoadQueue(
@@ -1529,10 +1511,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
-  const size_t workerThreadLoadQueueIndex =
-      frameState.viewGroup._workerThreadLoadQueue.size();
-  const size_t mainThreadLoadQueueIndex =
-      frameState.viewGroup._mainThreadLoadQueue.size();
+  TilesetViewGroup::LoadQueueState loadQueueState =
+      frameState.viewGroup.saveLoadQueueState();
 
   TraversalDetails traversalDetails = this->_visitVisibleChildrenNearToFar(
       frameState,
@@ -1577,8 +1557,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
         result,
         traversalDetails,
         firstRenderedDescendantIndex,
-        workerThreadLoadQueueIndex,
-        mainThreadLoadQueueIndex,
+        loadQueueState,
         queuedForLoad,
         tilePriority);
   } else {
@@ -1635,27 +1614,8 @@ void Tileset::addTileToLoadQueue(
     Tile& tile,
     TileLoadPriorityGroup priorityGroup,
     double priority) {
-  // Assert that this tile hasn't been added to a queue already.
-  CESIUM_ASSERT(
-      std::find_if(
-          frameState.viewGroup._workerThreadLoadQueue.begin(),
-          frameState.viewGroup._workerThreadLoadQueue.end(),
-          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
-      frameState.viewGroup._workerThreadLoadQueue.end());
-  CESIUM_ASSERT(
-      std::find_if(
-          frameState.viewGroup._mainThreadLoadQueue.begin(),
-          frameState.viewGroup._mainThreadLoadQueue.end(),
-          [&](const TileLoadTask& task) { return task.pTile == &tile; }) ==
-      frameState.viewGroup._mainThreadLoadQueue.end());
-
-  if (tile.needsWorkerThreadLoading()) {
-    frameState.viewGroup._workerThreadLoadQueue.push_back(
-        {&tile, priorityGroup, priority});
-  } else if (tile.needsMainThreadLoading()) {
-    frameState.viewGroup._mainThreadLoadQueue.push_back(
-        {&tile, priorityGroup, priority});
-  }
+  frameState.viewGroup.addToLoadQueue(
+      TileLoadTask{&tile, priorityGroup, priority});
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(

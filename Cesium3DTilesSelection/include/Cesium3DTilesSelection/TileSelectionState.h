@@ -7,16 +7,14 @@
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief A description of the state of a {@link Tile} during the rendering
- * process
+ * @brief A description of the selection state of a {@link Tile} during the
+ * rendering process
  *
- * Instances of this class combine a frame number and a
- * {@link TileSelectionState::Result} that describes the actual state of the
- * tile.
- * Instances of this class are stored in a {@link Tile}, and are used to track
- * the state of the tile during the rendering process. The {@link Tileset}
- * updates this state while traversing the tile hierarchy, tracking whether a
- * tile was rendered, culled, or refined in the last frame.
+ * Instances of this class are stored in a {@link TilesetViewGroup} for each
+ * visited {@link Tile}, and are used to track the state of the tile during the
+ * proces of selecting tiles for rendering. The {@link Tileset} updates this
+ * state while traversing the tile hierarchy, tracking whether a tile was
+ * rendered, culled, or refined in the last frame.
  */
 class TileSelectionState final {
 public:
@@ -51,7 +49,8 @@ public:
      * @brief This tile was rendered but then removed from the render list
      *
      * This tile was originally rendered, but it got kicked out of the render
-     * list in favor of an ancestor because it is not yet renderable.
+     * list in favor of an ancestor because some tiles in its subtree were not
+     * yet renderable.
      */
     RenderedAndKicked = 4,
 
@@ -59,8 +58,8 @@ public:
      * @brief This tile was refined but then removed from the render list
      *
      * This tile was originally refined, but its rendered descendants got kicked
-     * out of the render list in favor of an ancestor because it is not yet
-     * renderable.
+     * out of the render list in favor of an ancestor because some tiles in its
+     * subtree were not yet renderable.
      */
     RefinedAndKicked = 5
   };
@@ -81,10 +80,6 @@ public:
 
   /**
    * @brief Gets the result of selection.
-   *
-   * The given frame number must match the frame number in which selection last
-   * took place. Otherwise, {@link TileSelectionState::Result::None} is
-   * returned.
    *
    * @return The {@link TileSelectionState::Result}
    */
