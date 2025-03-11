@@ -5,6 +5,7 @@
 #include <CesiumUtility/Assert.h>
 
 #include <algorithm>
+#include <cstddef>
 
 namespace Cesium3DTilesSelection {
 
