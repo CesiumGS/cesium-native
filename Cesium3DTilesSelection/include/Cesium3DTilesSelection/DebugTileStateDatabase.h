@@ -1,5 +1,4 @@
 #pragma once
-#if false
 
 #include <memory>
 #include <string>
@@ -8,6 +7,7 @@ namespace Cesium3DTilesSelection {
 
 class Tile;
 class Tileset;
+class TilesetViewGroup;
 
 /**
  * @brief Helps debug the tile selection algorithm by recording the state of
@@ -30,16 +30,24 @@ public:
    *
    * @param frameNumber The current frame number.
    * @param tileset The tileset.
+   * @param viewGroup The view group.
    */
-  void recordAllTileStates(int32_t frameNumber, const Tileset& tileset);
+  void recordAllTileStates(
+      int32_t frameNumber,
+      const Tileset& tileset,
+      const TilesetViewGroup& viewGroup);
 
   /**
    * @brief Records the state of a given tile.
    *
    * @param frameNumber The current frame number.
+   * @param viewGroup The view group.
    * @param tile The tile.
    */
-  void recordTileState(int32_t frameNumber, const Tile& tile);
+  void recordTileState(
+      int32_t frameNumber,
+      const TilesetViewGroup& viewGroup,
+      const Tile& tile);
 
 private:
   struct Impl;
@@ -47,4 +55,3 @@ private:
 };
 
 } // namespace Cesium3DTilesSelection
-#endif
