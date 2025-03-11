@@ -1,4 +1,3 @@
-#if false
 #include "SimplePrepareRendererResource.h"
 
 #include <Cesium3DTiles/GroupMetadata.h>
@@ -1587,22 +1586,21 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       pRawLoader->createRootTile(),
       options);
 
+  TilesetViewGroup& viewGroup = tileset.getDefaultViewGroup();
+
   // On the first update, we should refine down to the grandchild tile, even
   // though no tiles are loaded yet.
   initializeTileset(tileset);
   const Tile& child = tileset.getRootTile()->getChildren()[0];
   const Tile& grandchild = child.getChildren()[0];
   CHECK(
-      tileset.getRootTile()->getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      viewGroup.getPreviousSelectionState(*tileset.getRootTile()).getResult() ==
       TileSelectionState::Result::Refined);
   CHECK(
-      child.getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      viewGroup.getPreviousSelectionState(child).getResult() ==
       TileSelectionState::Result::Refined);
   CHECK(
-      grandchild.getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      viewGroup.getPreviousSelectionState(grandchild).getResult() ==
       TileSelectionState::Result::Rendered);
 
   // After the third update, the root and child tiles have been loaded, while
@@ -1612,16 +1610,13 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   initializeTileset(tileset);
   initializeTileset(tileset);
   CHECK(
-      tileset.getRootTile()->getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      viewGroup.getPreviousSelectionState(*tileset.getRootTile()).getResult() ==
       TileSelectionState::Result::Rendered);
   CHECK(
-      child.getLastSelectionState().getResult(
-          child.getLastSelectionState().getFrameNumber()) !=
+      viewGroup.getPreviousSelectionState(child).getResult() !=
       TileSelectionState::Result::Rendered);
   CHECK(
-      grandchild.getLastSelectionState().getResult(
-          grandchild.getLastSelectionState().getFrameNumber()) !=
+      viewGroup.getPreviousSelectionState(grandchild).getResult() !=
       TileSelectionState::Result::Rendered);
 
   REQUIRE(pRawLoader->_grandchildPromise);
@@ -1634,8 +1629,7 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   initializeTileset(tileset);
 
   CHECK(
-      grandchild.getLastSelectionState().getResult(
-          grandchild.getLastSelectionState().getFrameNumber()) ==
+      viewGroup.getPreviousSelectionState(grandchild).getResult() ==
       TileSelectionState::Result::Rendered);
 }
 
@@ -1721,4 +1715,3 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   CHECK(updateResult.tilesFadingOut.size() == 2);
 }
-#endif

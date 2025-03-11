@@ -686,6 +686,14 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   return promise.getFuture();
 }
 
+TilesetViewGroup& Tileset::getDefaultViewGroup() {
+  return this->_defaultViewGroup;
+}
+
+const TilesetViewGroup& Tileset::getDefaultViewGroup() const {
+  return this->_defaultViewGroup;
+}
+
 namespace {
 void markTileNonRendered(
     TileSelectionState::Result lastResult,

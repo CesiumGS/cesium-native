@@ -199,7 +199,7 @@ public:
   Tile* getNextTileToLoadInMainThread() override;
 
 private:
-  double _weight;
+  double _weight = 1.0;
   std::unordered_map<
       CesiumUtility::IntrusivePointer<const Tile>,
       TileSelectionState>
