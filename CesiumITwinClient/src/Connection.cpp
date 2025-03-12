@@ -118,7 +118,7 @@ void QueryParameters::addToUri(CesiumUtility::Uri& uri) const {
   uri.setQuery(query.toQueryString());
 }
 
-CesiumAsync::Future<Connection> Connection::authorize(
+CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& friendlyApplicationName,
@@ -127,8 +127,8 @@ CesiumAsync::Future<Connection> Connection::authorize(
     const std::optional<int>& redirectPort,
     const std::vector<std::string>& scopes,
     std::function<void(const std::string&)>&& openUrlCallback) {
-  Promise<Connection> connectionPromise =
-      asyncSystem.createPromise<Connection>();
+  Promise<Result<Connection>> connectionPromise =
+      asyncSystem.createPromise<Result<Connection>>();
 
   CesiumClientCommon::OAuth2ClientOptions clientOptions{
       clientID,
@@ -149,17 +149,13 @@ CesiumAsync::Future<Connection> Connection::authorize(
           [asyncSystem, pAssetAccessor, connectionPromise, clientOptions](
               const Result<CesiumClientCommon::OAuth2TokenResponse>& result) {
             if (!result.value.has_value()) {
-              connectionPromise.reject(std::runtime_error(fmt::format(
-                  "Failed to complete authorization: {}",
-                  joinToString(result.errors.errors, ", "))));
+              connectionPromise.resolve({result.errors});
             } else {
               Result<AuthToken> authTokenResult =
                   AuthToken::parse(result.value->accessToken);
               if (!authTokenResult.value.has_value() ||
                   !authTokenResult.value->isValid()) {
-                connectionPromise.reject(std::runtime_error(fmt::format(
-                    "Invalid auth token obtained: {}",
-                    joinToString(authTokenResult.errors.errors, ", "))));
+                connectionPromise.resolve({authTokenResult.errors});
               } else {
                 connectionPromise.resolve(Connection(
                     asyncSystem,
