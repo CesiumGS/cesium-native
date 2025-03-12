@@ -1,3 +1,4 @@
+#if false
 #include <Cesium3DTilesSelection/DebugTileStateDatabase.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
@@ -267,3 +268,4 @@ void DebugTileStateDatabase::recordTileState(
 }
 
 } // namespace Cesium3DTilesSelection
+#endif
