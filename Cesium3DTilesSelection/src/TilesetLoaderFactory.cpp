@@ -1,6 +1,7 @@
 #include "CesiumIonTilesetLoader.h"
 #include "IModelMeshExportContentLoader.h"
 #include "ITwinCesiumCuratedContentLoader.h"
+#include "ITwinRealityDataContentLoader.h"
 
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
@@ -66,6 +67,24 @@ IModelMeshExportContentLoaderFactory::createLoader(
              tilesetOptions.ellipsoid)
       .thenImmediately([](Cesium3DTilesSelection::TilesetContentLoaderResult<
                            IModelMeshExportContentLoader>&& result) {
+        return TilesetContentLoaderResult<TilesetContentLoader>(
+            std::move(result));
+      });
+}
+CesiumAsync::Future<Cesium3DTilesSelection::TilesetContentLoaderResult<
+    Cesium3DTilesSelection::TilesetContentLoader>>
+ITwinRealityDataContentLoaderFactory::createLoader(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    const AuthorizationHeaderChangeListener& /*headerChangeListener*/) const {
+  return ITwinRealityDataContentLoader::createLoader(
+             externals,
+             this->_realityDataId,
+             this->_iTwinId,
+             this->_iTwinAccessToken,
+             tilesetOptions.ellipsoid)
+      .thenImmediately([](Cesium3DTilesSelection::TilesetContentLoaderResult<
+                           ITwinRealityDataContentLoader>&& result) {
         return TilesetContentLoaderResult<TilesetContentLoader>(
             std::move(result));
       });
