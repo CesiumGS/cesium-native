@@ -99,7 +99,7 @@ public:
    * @return A future that resolves to an iTwin {@link Connection} once the
    * user authorizes the application and the token handshake completes.
    */
-  static CesiumAsync::Future<Connection> authorize(
+  static CesiumAsync::Future<CesiumUtility::Result<Connection>> authorize(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& friendlyApplicationName,
