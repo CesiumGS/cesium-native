@@ -2,6 +2,7 @@
 #include "CesiumGeospatial/Cartographic.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/ErrorList.h"
+#include "CesiumUtility/Result.h"
 
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -19,6 +20,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+#include <atomic>
 #include <limits>
 #include <string>
 
@@ -584,7 +586,7 @@ using ITwinCCCListResponse = std::vector<ITwinCesiumCuratedContentItem>;
 CesiumAsync::Future<Result<ITwinCCCListResponse>>
 Connection::listCesiumCuratedContent() {
   const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-      {"Authorization", "Bearer " + this->_authToken.getToken()},
+      {"Authorization", "Bearer " + this->_accessToken.getToken()},
       {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
   return this->_pAssetAccessor
       ->get(this->_asyncSystem, LIST_CCC_ENDPOINT_URL, headers)
@@ -627,9 +629,9 @@ Connection::listCesiumCuratedContent() {
 
 CesiumAsync::Future<CesiumUtility::Result<std::string_view>>
 Connection::ensureValidToken() {
-  if (this->_authToken.isValid()) {
+  if (this->_accessToken.isValid()) {
     return _asyncSystem.createResolvedFuture(
-        Result<std::string_view>(this->_authToken.getToken()));
+        Result<std::string_view>(this->_accessToken.getToken()));
   }
 
   if (!this->_refreshToken) {
@@ -655,10 +657,271 @@ Connection::ensureValidToken() {
               return Result<std::string_view>(tokenResult.errors);
             }
 
-            this->_authToken = std::move(*tokenResult.value);
+            this->_accessToken = std::move(*tokenResult.value);
             this->_refreshToken = std::move(response.value->refreshToken);
 
-            return Result<std::string_view>(this->_authToken.getToken());
+            return Result<std::string_view>(this->_accessToken.getToken());
           });
+}
+
+namespace {
+struct ProgressTracker {
+public:
+  ProgressTracker(std::function<void(
+                      const std::atomic<int32_t>&,
+                      const std::atomic<int32_t>&)>&& statusCallback)
+      : _finishedCount(0),
+        _totalCount(0),
+        _callback(std::move(statusCallback)) {}
+
+  void incrementFinished() {
+    _finishedCount++;
+    _callback(_finishedCount, _totalCount);
+  }
+
+  void incrementTotal() {
+    _totalCount++;
+    _callback(_finishedCount, _totalCount);
+  }
+
+private:
+  std::atomic<int32_t> _finishedCount;
+  std::atomic<int32_t> _totalCount;
+  std::function<void(const std::atomic<int32_t>&, const std::atomic<int32_t>&)>
+      _callback;
+};
+
+Result<std::vector<ITwinResource>>
+flattenResults(std::vector<Result<std::vector<ITwinResource>>>&& results) {
+  ErrorList errorList;
+  std::vector<ITwinResource> resources;
+  for (Result<std::vector<ITwinResource>>& result : results) {
+    errorList.merge(result.errors);
+    if (result.value) {
+      resources.insert(
+          resources.end(),
+          result.value->begin(),
+          result.value->end());
+    }
+  }
+
+  if (errorList.hasErrors() && resources.empty()) {
+    return {errorList};
+  }
+
+  return {std::move(resources), errorList};
+}
+
+CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+fetchCCCResources(
+    Connection& connection,
+    std::shared_ptr<ProgressTracker>& progress) {
+  progress->incrementTotal();
+  return connection.listCesiumCuratedContent().thenInWorkerThread(
+      [progress](
+          CesiumUtility::Result<std::vector<ITwinCesiumCuratedContentItem>>&&
+              result) -> Result<std::vector<ITwinResource>> {
+        progress->incrementFinished();
+        if (!result.value) {
+          return {result.errors};
+        }
+
+        std::vector<ITwinResource> cccResources;
+        cccResources.reserve(result.value->size());
+
+        for (const ITwinCesiumCuratedContentItem& cccItem : *result.value) {
+          ResourceType type;
+          if (cccItem.type == ITwinCesiumCuratedContentType::Cesium3DTiles) {
+            type = ResourceType::Tileset;
+          } else if (cccItem.type == ITwinCesiumCuratedContentType::Imagery) {
+            type = ResourceType::Imagery;
+          } else if (cccItem.type == ITwinCesiumCuratedContentType::Terrain) {
+            type = ResourceType::Terrain;
+          } else {
+            continue;
+          }
+
+          cccResources.emplace_back(
+              std::to_string(cccItem.id),
+              std::nullopt,
+              ResourceSource::CesiumCuratedContent,
+              cccItem.name,
+              type);
+        }
+
+        return cccResources;
+      });
+}
+
+CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+fetchIModelMeshExports(
+    Connection& connection,
+    std::shared_ptr<ProgressTracker>& progress,
+    const std::string& iModelId) {
+  progress->incrementTotal();
+  return connection
+      .listIModelMeshExports(
+          iModelId,
+          QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
+      .thenInWorkerThread(
+          [iModelId, progress](Result<PagedList<IModelMeshExport>>&& result) {
+            progress->incrementFinished();
+            if (!result.value) {
+              return Result<std::vector<ITwinResource>>(result.errors);
+            }
+
+            std::vector<ITwinResource> resources;
+            resources.reserve(result.value->size());
+
+            for (const IModelMeshExport& exp : *result.value) {
+              if (exp.exportType != IModelMeshExportType::Cesium &&
+                  exp.exportType != IModelMeshExportType::Cesium3DTiles) {
+                continue;
+              }
+
+              resources.emplace_back(
+                  exp.id,
+                  iModelId,
+                  ResourceSource::MeshExport,
+                  exp.displayName,
+                  ResourceType::Tileset);
+            }
+
+            return Result<std::vector<ITwinResource>>(std::move(resources));
+          });
+}
+
+CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+fetchIModelResources(
+    AsyncSystem& asyncSystem,
+    Connection& connection,
+    std::shared_ptr<ProgressTracker>& progress,
+    const std::string& iTwinId) {
+  progress->incrementTotal();
+  return connection
+      .listIModels(
+          iTwinId,
+          QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
+      .thenInWorkerThread([asyncSystem, progress, connection](
+                              Result<PagedList<IModel>>&& result) mutable {
+        progress->incrementFinished();
+        if (!result.value) {
+          return asyncSystem
+              .createResolvedFuture<Result<std::vector<ITwinResource>>>(
+                  {result.errors});
+        }
+
+        std::vector<CesiumAsync::Future<
+            CesiumUtility::Result<std::vector<ITwinResource>>>>
+            resourcesFutures;
+        for (const IModel& iModel : *result.value) {
+          resourcesFutures.emplace_back(
+              fetchIModelMeshExports(connection, progress, iModel.id));
+        }
+
+        return asyncSystem.all(std::move(resourcesFutures))
+            .thenImmediately(flattenResults);
+      });
+}
+
+CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+fetchRealityDataResources(
+    Connection& connection,
+    std::shared_ptr<ProgressTracker>& progress,
+    const std::string& iTwinId) {
+  progress->incrementTotal();
+  return connection
+      .listITwinRealityData(
+          iTwinId,
+          QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
+      .thenInWorkerThread(
+          [progress, iTwinId](Result<PagedList<ITwinRealityData>>&& result) {
+            progress->incrementFinished();
+            if (!result.value) {
+              return Result<std::vector<ITwinResource>>{result.errors};
+            }
+            std::vector<ITwinResource> resources;
+            resources.reserve(result.value->size());
+
+            for (const ITwinRealityData& data : *result.value) {
+              ResourceType type;
+              if (data.type == "Cesium3DTiles" ||
+                  data.type == "RealityMesh3DTiles" || data.type == "PNTS") {
+                type = ResourceType::Tileset;
+              } else if (data.type == "Terrain3DTiles") {
+                type = ResourceType::Terrain;
+              } else {
+                continue;
+              }
+
+              resources.emplace_back(
+                  data.id,
+                  iTwinId,
+                  ResourceSource::RealityData,
+                  data.displayName,
+                  type);
+            }
+
+            return Result<std::vector<ITwinResource>>{resources};
+          });
+}
+
+CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+fetchITwinResources(
+    AsyncSystem& asyncSystem,
+    Connection& connection,
+    std::shared_ptr<ProgressTracker>& progress) {
+  progress->incrementTotal();
+  // TODO: it's *possible* they have more than 1,000 total iTwins, or 1,000
+  // total iModels per iTwin, etc. We should really enumerate each page...
+  return connection
+      .listITwins(
+          QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
+      .thenInWorkerThread([progress, connection, asyncSystem](
+                              Result<PagedList<ITwin>>&& result) mutable {
+        progress->incrementFinished();
+        if (!result.value) {
+          return asyncSystem
+              .createResolvedFuture<Result<std::vector<ITwinResource>>>(
+                  {result.errors});
+        }
+
+        std::vector<CesiumAsync::Future<
+            CesiumUtility::Result<std::vector<ITwinResource>>>>
+            resourcesFutures;
+        for (const ITwin& iTwin : *result.value) {
+          resourcesFutures.emplace_back(
+              fetchRealityDataResources(connection, progress, iTwin.id));
+          resourcesFutures.emplace_back(fetchIModelResources(
+              asyncSystem,
+              connection,
+              progress,
+              iTwin.id));
+        }
+
+        return asyncSystem.all(std::move(resourcesFutures))
+            .thenImmediately(flattenResults);
+      });
+}
+} // namespace
+
+CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+Connection::listAllAvailableResources(
+    std::function<
+        void(const std::atomic<int32_t>&, const std::atomic<int32_t>&)>&&
+        statusCallback) {
+  std::shared_ptr<ProgressTracker> progress =
+      std::make_shared<ProgressTracker>(statusCallback);
+
+  std::vector<
+      CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>>
+      futures;
+
+  futures.emplace_back(fetchCCCResources(*this, progress));
+  futures.emplace_back(
+      fetchITwinResources(this->_asyncSystem, *this, progress));
+
+  return this->_asyncSystem.all(std::move(futures))
+      .thenImmediately(flattenResults);
 }
 } // namespace CesiumITwinClient

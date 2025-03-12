@@ -12,6 +12,7 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 
+#include <atomic>
 #include <memory>
 #include <optional>
 #include <string>
@@ -172,24 +173,70 @@ public:
       CesiumUtility::Result<std::vector<ITwinCesiumCuratedContentItem>>>
   listCesiumCuratedContent();
 
+  /**
+   * @brief Obtains all available resources that can be loaded by Native from
+   * Cesium Curated Content, iTwin Reality Data, and iModel Mesh Exports.
+   *
+   * This can produce a lot of API calls.
+   *
+   * @param statusCallback A callback that will be called with (finishedCount,
+   * totalCount) each time an API call completes.
+   */
+  CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
+  listAllAvailableResources(std::function<void(
+                                const std::atomic<int32_t>&,
+                                const std::atomic<int32_t>&)>&& statusCallback);
+
+  /**
+   * @brief Creates a new `Connection` with the provided tokens.
+   *
+   * It's recommended to use the \ref Connection::authorize method to create a
+   * token instead of calling this constructor directly as the `authorize`
+   * method will handle the OAuth2 authentication flow with iTwin.
+   *
+   * @param asyncSystem The \ref CesiumAsync::AsyncSystem to use.
+   * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor to use for
+   * making requests to the iTwin API.
+   * @param accessToken An \ref AuthToken object created from parsing the
+   * obtained iTwin access token.
+   * @param refreshToken A refresh token to use to fetch new access tokens as
+   * needed, if any.
+   * @param clientOptions The set of options to use when interacting with the
+   * iTwin OAuth2 API.
+   */
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const AuthToken& authToken,
+      const AuthToken& accessToken,
       const std::optional<std::string>& refreshToken,
       const CesiumClientCommon::OAuth2ClientOptions& clientOptions)
       : _asyncSystem(asyncSystem),
         _pAssetAccessor(pAssetAccessor),
-        _authToken(authToken),
+        _accessToken(accessToken),
         _refreshToken(refreshToken),
         _clientOptions(clientOptions) {}
 
-  const AuthToken& getAccessToken() const { return _authToken; }
-  void setAccessToken(const AuthToken& authToken) { _authToken = authToken; }
+  /**
+   * @brief Returns the \ref AuthToken object representing the parsed JWT access
+   * token.
+   */
+  const AuthToken& getAccessToken() const { return _accessToken; }
+  /**
+   * @brief Sets the access token that will be used for API calls.
+   *
+   * @param authToken The new auth token.
+   */
+  void setAccessToken(const AuthToken& authToken) { _accessToken = authToken; }
 
+  /**
+   * @brief Returns the refresh token used to obtain new access tokens, if any.
+   */
   const std::optional<std::string>& getRefreshToken() const {
     return _refreshToken;
   }
+  /**
+   * @brief Sets the refresh token used to obtain new access tokens, if any.
+   */
   void setRefreshToken(const std::optional<std::string>& refreshToken) {
     _refreshToken = refreshToken;
   }
@@ -209,7 +256,7 @@ private:
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  AuthToken _authToken;
+  AuthToken _accessToken;
   std::optional<std::string> _refreshToken;
   CesiumClientCommon::OAuth2ClientOptions _clientOptions;
 };
