@@ -911,7 +911,7 @@ Connection::listAllAvailableResources(
         void(const std::atomic<int32_t>&, const std::atomic<int32_t>&)>&&
         statusCallback) {
   std::shared_ptr<ProgressTracker> progress =
-      std::make_shared<ProgressTracker>(statusCallback);
+      std::make_shared<ProgressTracker>(std::move(statusCallback));
 
   std::vector<
       CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>>
