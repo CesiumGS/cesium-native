@@ -4,6 +4,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumClientCommon/ErrorResponse.h>
 #include <CesiumClientCommon/OAuth2PKE.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
@@ -142,8 +143,7 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& friendlyApplicationName,
-    const std::string& clientID,
-    const std::string& redirectPath,
+    const OAuth2ClientOptions& clientOptions,
     const std::vector<std::string>& scopes,
     std::function<void(const std::string&)>&& openUrlCallback,
     const std::string& tokenEndpointUrl,
@@ -152,10 +152,15 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
 
   std::shared_ptr<httplib::Server> pServer =
       std::make_shared<httplib::Server>();
-  const int port = pServer->bind_to_any_port("127.0.0.1");
+  int port;
+  if (clientOptions.redirectPort) {
+    port = pServer->bind_to_port("127.0.0.1", *clientOptions.redirectPort);
+  } else {
+    port = pServer->bind_to_any_port("127.0.0.1");
+  }
 
   std::string redirectUrl =
-      Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
+      Uri::resolve("http://127.0.0.1:" + std::to_string(port), clientOptions.redirectPath);
 
   std::vector<uint8_t> stateBytes(32, 0);
   fillWithRandomBytes(stateBytes);
@@ -174,7 +179,7 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
   Uri authorizeUri(authorizeBaseUrl);
   UriQuery authorizeUriQuery(authorizeUri.getQuery());
   authorizeUriQuery.setValue("response_type", "code");
-  authorizeUriQuery.setValue("client_id", clientID);
+  authorizeUriQuery.setValue("client_id", clientOptions.clientID);
   authorizeUriQuery.setValue("scope", joinToString(scopes, " "));
   authorizeUriQuery.setValue("redirect_uri", redirectUrl);
   authorizeUriQuery.setValue("state", state);
@@ -185,13 +190,13 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
   const std::string authorizeUrl = std::string(authorizeUri.toString());
 
   pServer->Get(
-      redirectPath,
+      redirectUrl,
       [promise,
        pServer,
        asyncSystem,
        pAssetAccessor,
        friendlyApplicationName,
-       clientID,
+       clientOptions,
        tokenEndpointUrl,
        redirectUrl,
        expectedState = state,
@@ -242,7 +247,7 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
               completeTokenExchange(
                   asyncSystem,
                   pAssetAccessor,
-                  clientID,
+                  clientOptions,
                   tokenEndpointUrl,
                   code,
                   redirectUrl,
@@ -293,37 +298,55 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>>
 OAuth2PKE::completeTokenExchange(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::string& clientID,
+    const OAuth2ClientOptions& clientOptions,
     const std::string& tokenEndpointUrl,
     const std::string& code,
     const std::string& redirectUrl,
     const std::string& codeVerifier) {
-  rapidjson::StringBuffer postBuffer;
-  rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
+  std::string endpointUrl = tokenEndpointUrl;
+  std::string contentType = "application/json";
+  std::span<const std::byte> payload;
 
-  writer.StartObject();
-  writer.Key("grant_type");
-  writer.String("authorization_code");
-  writer.Key("client_id");
-  writer.String(clientID.c_str());
-  writer.Key("code");
-  writer.String(code.c_str(), rapidjson::SizeType(code.size()));
-  writer.Key("redirect_uri");
-  writer.String(redirectUrl.c_str(), rapidjson::SizeType(redirectUrl.size()));
-  writer.Key("code_verifier");
-  writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
-  writer.EndObject();
+  if(clientOptions.useJsonBody) {
+    rapidjson::StringBuffer postBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
+  
+    writer.StartObject();
+    writer.Key("grant_type");
+    writer.String("authorization_code");
+    writer.Key("client_id");
+    writer.String(clientOptions.clientID.c_str());
+    writer.Key("code");
+    writer.String(code.c_str(), rapidjson::SizeType(code.size()));
+    writer.Key("redirect_uri");
+    writer.String(redirectUrl.c_str(), rapidjson::SizeType(redirectUrl.size()));
+    writer.Key("code_verifier");
+    writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
+    writer.EndObject();
+  
+    payload = std::span<const std::byte>(
+        reinterpret_cast<const std::byte*>(postBuffer.GetString()),
+        postBuffer.GetSize());
+  } else {
+    CesiumUtility::Uri tokenEndpointUri(tokenEndpointUrl);
+    CesiumUtility::UriQuery tokenEndpointQuery(tokenEndpointUri.getQuery());
+    tokenEndpointQuery.setValue("grant_type", "authorization_code");
+    tokenEndpointQuery.setValue("client_id", clientOptions.clientID);
+    tokenEndpointQuery.setValue("code", code);
+    tokenEndpointQuery.setValue("redirect_uri", redirectUrl);
+    tokenEndpointQuery.setValue("code_verifier", codeVerifier);
+    tokenEndpointUri.setQuery(tokenEndpointQuery.toQueryString());
 
-  const std::span<const std::byte> payload(
-      reinterpret_cast<const std::byte*>(postBuffer.GetString()),
-      postBuffer.GetSize());
+    endpointUrl = tokenEndpointUri.toString();
+    contentType = "application/x-www-form-urlencoded";
+  }
 
   return pAssetAccessor
       ->request(
           asyncSystem,
           "POST",
-          tokenEndpointUrl,
-          {{"Content-Type", "application/json"},
+          endpointUrl,
+          {{"Content-Type", contentType},
            {"Accept", "application/json"}},
           payload)
       .thenInWorkerThread(
@@ -337,6 +360,14 @@ OAuth2PKE::completeTokenExchange(
 
             if (pResponse->statusCode() < 200 ||
                 pResponse->statusCode() >= 300) {
+              std::string error, errorDesc;
+              if (parseErrorResponse(pResponse->data(), error, errorDesc)) {
+                return Result<OAuth2TokenResponse>(ErrorList::error(fmt::format(
+                    "Received error '{}' while obtaining token: {}",
+                    error,
+                    errorDesc)));
+              }
+
               return Result<OAuth2TokenResponse>(ErrorList{
                   {fmt::format(
                       "The server returned an error code: {}",
@@ -369,6 +400,119 @@ OAuth2PKE::completeTokenExchange(
             if (refreshTokenMember != d.MemberEnd() &&
                 refreshTokenMember->value.IsString()) {
               refreshToken = refreshTokenMember->value.GetString();
+            }
+
+            return Result<OAuth2TokenResponse>(
+                OAuth2TokenResponse{accessToken, refreshToken});
+          });
+}
+
+CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>> OAuth2PKE::refresh(
+  const CesiumAsync::AsyncSystem& asyncSystem,
+  const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+  const OAuth2ClientOptions& clientOptions,
+  const std::string& refreshBaseUrl,
+  const std::string& refreshToken
+) {
+  const std::string redirectUrl = clientOptions.redirectPort ? 
+    Uri::resolve("http://127.0.0.1:" + std::to_string(*clientOptions.redirectPort), clientOptions.redirectPath) :
+    Uri::resolve("http://127.0.0.1", clientOptions.redirectPath);
+
+  std::string endpointUrl = refreshBaseUrl;
+  std::string contentType = "application/json";
+  std::span<const std::byte> payload;
+
+  if(clientOptions.useJsonBody) {
+    rapidjson::StringBuffer postBuffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
+  
+    writer.StartObject();
+    writer.Key("grant_type");
+    writer.String("refresh_token");
+    writer.Key("client_id");
+    writer.String(clientOptions.clientID.c_str());
+    writer.Key("redirect_uri");
+    writer.String(redirectUrl.c_str(), rapidjson::SizeType(redirectUrl.size()));
+    writer.Key("refresh_token");
+    writer.String(refreshToken.c_str(), rapidjson::SizeType(refreshToken.size()));
+    writer.EndObject();
+  
+    payload = std::span<const std::byte>(
+        reinterpret_cast<const std::byte*>(postBuffer.GetString()),
+        postBuffer.GetSize());
+  } else {
+    CesiumUtility::Uri refreshEndpointUri(refreshBaseUrl);
+    CesiumUtility::UriQuery refreshEndpointQuery(refreshEndpointUri.getQuery());
+    refreshEndpointQuery.setValue("grant_type", "refresh_token");
+    refreshEndpointQuery.setValue("client_id", clientOptions.clientID);
+    refreshEndpointQuery.setValue("redirect_uri", redirectUrl);
+    refreshEndpointQuery.setValue("refresh_token", refreshToken);
+    refreshEndpointUri.setQuery(refreshEndpointQuery.toQueryString());
+
+    endpointUrl = refreshEndpointUri.toString();
+    contentType = "application/x-www-form-urlencoded";
+  }
+
+  return pAssetAccessor
+      ->request(
+          asyncSystem,
+          "POST",
+          endpointUrl,
+          {{"Content-Type", contentType},
+           {"Accept", "application/json"}},
+          payload)
+      .thenInWorkerThread(
+          [asyncSystem, pAssetAccessor](
+              std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+            const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+            if (!pResponse) {
+              return Result<OAuth2TokenResponse>(
+                  ErrorList{{"The server did not return a response."}, {}});
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              std::string error, errorDesc;
+              if (parseErrorResponse(pResponse->data(), error, errorDesc)) {
+                return Result<OAuth2TokenResponse>(ErrorList::error(fmt::format(
+                    "Received error '{}' while refreshing token: {}",
+                    error,
+                    errorDesc)));
+              }
+
+              return Result<OAuth2TokenResponse>(ErrorList{
+                  {fmt::format(
+                      "The server returned an error code: {}",
+                      pResponse->statusCode())},
+                  {}});
+            }
+
+            rapidjson::Document d;
+            d.Parse(
+                reinterpret_cast<const char*>(pResponse->data().data()),
+                pResponse->data().size());
+            if (d.HasParseError()) {
+              return Result<OAuth2TokenResponse>(ErrorList{
+                  {fmt::format(
+                      "Failed to parse JSON response: {}",
+                      rapidjson::GetParseError_En(d.GetParseError()))},
+                  {}});
+            }
+
+            std::string accessToken =
+                JsonHelpers::getStringOrDefault(d, "access_token", "");
+            if (accessToken.empty()) {
+              return Result<OAuth2TokenResponse>(ErrorList{
+                  {"Server response does not include a valid access token."},
+                  {}});
+            }
+
+            std::string refreshToken =
+                JsonHelpers::getStringOrDefault(d, "refresh_token", "");
+            if (accessToken.empty()) {
+              return Result<OAuth2TokenResponse>(ErrorList{
+                  {"Server response does not include a valid refresh token."},
+                  {}});
             }
 
             return Result<OAuth2TokenResponse>(

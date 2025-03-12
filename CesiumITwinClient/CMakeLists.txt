@@ -41,6 +41,7 @@ target_link_libraries(CesiumITwinClient
         CesiumAsync
         CesiumUtility
         CesiumClientCommon
+        CesiumGeospatial
     PRIVATE
         modp_b64::modp_b64
 )
