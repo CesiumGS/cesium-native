@@ -139,4 +139,20 @@ struct ITwinRealityData {
   bool authoring;
 };
 
+enum class ResourceSource : uint8_t {
+  CesiumCuratedContent = 1,
+  MeshExport = 2,
+  RealityData = 3
+};
+
+enum class ResourceType : uint8_t { Tileset = 1, Imagery = 2, Terrain = 3 };
+
+struct ITwinResource {
+  std::string id;
+  std::optional<std::string> parentId;
+  ResourceSource source;
+  std::string displayName;
+  ResourceType resourceType;
+};
+
 } // namespace CesiumITwinClient

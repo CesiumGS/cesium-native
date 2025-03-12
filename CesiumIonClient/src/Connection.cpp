@@ -87,7 +87,11 @@ using namespace CesiumUtility;
       asyncSystem,
       pAssetAccessor,
       friendlyApplicationName,
-      CesiumClientCommon::OAuth2ClientOptions{std::to_string(clientID), redirectPath, std::nullopt, true},
+      CesiumClientCommon::OAuth2ClientOptions{
+          std::to_string(clientID),
+          redirectPath,
+          std::nullopt,
+          true},
       scopes,
       std::move(openUrlCallback),
       tokenUrl,

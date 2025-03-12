@@ -90,6 +90,24 @@ public:
   size_t size() const { return _items.size(); }
 
   /**
+   * @brief The `begin` iterator of the underlying vector.
+   */
+  auto begin() { return _items.begin(); }
+  /**
+   * @brief The `begin` iterator of the underlying vector.
+   */
+  auto begin() const { return _items.begin(); }
+
+  /**
+   * @brief The `end` iterator of the underlying vector.
+   */
+  auto end() { return _items.end(); }
+  /**
+   * @brief The `end` iterator of the underlying vector.
+   */
+  auto end() const { return _items.end(); }
+
+  /**
    * @brief Returns a future that will return the next page of items.
    *
    * @param asyncSystem The `AsyncSystem` to use.
