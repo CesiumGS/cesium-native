@@ -154,7 +154,10 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
   int port;
   if (clientOptions.redirectPort) {
     port = *clientOptions.redirectPort;
-    pServer->bind_to_port("127.0.0.1", port);
+    if (!pServer->bind_to_port("127.0.0.1", port)) {
+      promise.resolve(Result<OAuth2TokenResponse>(ErrorList::error(fmt::format("Internal HTTP server failed to bind to port {}.", port))));
+      return promise.getFuture();
+    }
   } else {
     port = pServer->bind_to_any_port("127.0.0.1");
   }
@@ -191,7 +194,7 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
   const std::string authorizeUrl = std::string(authorizeUri.toString());
 
   pServer->Get(
-      redirectUrl,
+      clientOptions.redirectPath,
       [promise,
        pServer,
        asyncSystem,
@@ -306,11 +309,11 @@ OAuth2PKE::completeTokenExchange(
     const std::string& codeVerifier) {
   std::string contentType = "application/json";
   std::span<const std::byte> payload;
+  rapidjson::StringBuffer postBuffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
+  std::string queryStr;
 
   if (clientOptions.useJsonBody) {
-    rapidjson::StringBuffer postBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
-
     writer.StartObject();
     writer.Key("grant_type");
     writer.String("authorization_code");
@@ -337,7 +340,7 @@ OAuth2PKE::completeTokenExchange(
     tokenEndpointQuery.setValue("code", code);
     tokenEndpointQuery.setValue("redirect_uri", redirectUrl);
     tokenEndpointQuery.setValue("code_verifier", codeVerifier);
-    const std::string queryStr = tokenEndpointQuery.toQueryString();
+    queryStr = tokenEndpointQuery.toQueryString();
     payload = std::span<const std::byte>(
         reinterpret_cast<const std::byte*>(queryStr.data()),
         reinterpret_cast<const std::byte*>(queryStr.data() + queryStr.size()));
