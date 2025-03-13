@@ -153,7 +153,8 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
       std::make_shared<httplib::Server>();
   int port;
   if (clientOptions.redirectPort) {
-    port = pServer->bind_to_port("127.0.0.1", *clientOptions.redirectPort);
+    port = *clientOptions.redirectPort;
+    pServer->bind_to_port("127.0.0.1", port);
   } else {
     port = pServer->bind_to_any_port("127.0.0.1");
   }
