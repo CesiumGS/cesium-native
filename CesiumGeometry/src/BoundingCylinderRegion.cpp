@@ -11,6 +11,7 @@
 #include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/trigonometric.hpp>
 
 #include <cmath>
@@ -139,12 +140,10 @@ BoundingCylinderRegion BoundingCylinderRegion::transform(
   glm::dvec3 translation(0.0);
   glm::dquat rotation(1.0, 0.0, 0.0, 0.0);
   glm::dvec3 scale(1.0);
+  glm::dvec3 skew(0.0);
+  glm::dvec4 perspective(0.0);
 
-  CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
-      transform,
-      &translation,
-      &rotation,
-      &scale);
+  glm::decompose(transform, scale, rotation, translation, skew, perspective);
 
   // The scale of the cylinder region is meant to be captured by the height and
   // radius properties, but it's possible that the region has been scaled.
