@@ -1,4 +1,3 @@
-#if false
 #include <Cesium3DTilesSelection/DebugTileStateDatabase.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
@@ -177,6 +176,30 @@ DebugTileStateDatabase::DebugTileStateDatabase(
 
 DebugTileStateDatabase::~DebugTileStateDatabase() noexcept = default;
 
+namespace {
+
+std::unordered_map<const Tile*, TileSelectionState::Result>
+getMap(const TilesetViewGroup& viewGroup, const Tile* pRootTile) {
+  std::unordered_map<const Tile*, TileSelectionState::Result> result;
+  TilesetViewGroup::TraversalState copy = viewGroup.getTraversalState();
+  copy.beginTraversal();
+
+  copy.beginNode(pRootTile);
+
+  copy.forEachPreviousDescendant(
+      [&result](
+          const CesiumUtility::IntrusivePointer<const Tile>& pTile,
+          const TileSelectionState& state) {
+        result[pTile.get()] = state.getResult();
+      });
+
+  copy.finishNode(pRootTile);
+
+  return result;
+}
+
+} // namespace
+
 void DebugTileStateDatabase::recordAllTileStates(
     int32_t frameNumber,
     const Tileset& tileset,
@@ -191,8 +214,11 @@ void DebugTileStateDatabase::recordAllTileStates(
     return;
   }
 
+  std::unordered_map<const Tile*, TileSelectionState::Result> map =
+      getMap(viewGroup, tileset.getRootTile());
+
   for (const Tile& tile : tileset.loadedTiles()) {
-    this->recordTileState(frameNumber, viewGroup, tile);
+    this->recordTileState(frameNumber, tile, map);
   }
 
   status = CESIUM_SQLITE(sqlite3_exec)(
@@ -207,6 +233,17 @@ void DebugTileStateDatabase::recordTileState(
     int32_t frameNumber,
     const TilesetViewGroup& viewGroup,
     const Tile& tile) {
+  const Tile* pCurrent = &tile;
+  while (pCurrent->getParent()) {
+    pCurrent = pCurrent->getParent();
+  }
+  this->recordTileState(frameNumber, tile, getMap(viewGroup, pCurrent));
+}
+
+void DebugTileStateDatabase::recordTileState(
+    int32_t frameNumber,
+    const Tile& tile,
+    const std::unordered_map<const Tile*, TileSelectionState::Result>& states) {
   int status = CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->writeTileState.get());
   if (status != SQLITE_OK) {
     return;
@@ -245,10 +282,14 @@ void DebugTileStateDatabase::recordTileState(
     return;
   }
 
+  auto it = states.find(&tile);
+  TileSelectionState::Result selectionState =
+      it == states.end() ? TileSelectionState::Result::None : it->second;
+
   status = CESIUM_SQLITE(sqlite3_bind_int)(
       this->_pImpl->writeTileState.get(),
       4, // SelectionState
-      static_cast<int>(viewGroup.getPreviousSelectionState(tile).getResult()));
+      static_cast<int>(selectionState));
   if (status != SQLITE_OK) {
     return;
   }
@@ -268,4 +309,3 @@ void DebugTileStateDatabase::recordTileState(
 }
 
 } // namespace Cesium3DTilesSelection
-#endif
