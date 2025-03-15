@@ -230,76 +230,66 @@ double computeFogDensity(
 
 void Tileset::_updateLodTransitions(
     const FrameState& /* frameState */,
-    float /* deltaTime */,
+    float deltaTime,
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
-    // TODO
-    // // We always fade tiles from 0.0 --> 1.0. Whether the tile is fading in
-    // or
-    // // out is determined by whether the tile is in the tilesToRenderThisFrame
-    // // or tilesFadingOut list.
-    // float deltaTransitionPercentage =
-    //     deltaTime / this->_options.lodTransitionLength;
+    // We always fade tiles from 0.0 --> 1.0. Whether the tile is fading in or
+    // out is determined by whether the tile is in the
+    // tilesToRenderThisFrame or tilesFadingOut list.
+    float deltaTransitionPercentage =
+        deltaTime / this->_options.lodTransitionLength;
 
-    // // Update fade out
-    // for (auto tileIt = result.tilesFadingOut.begin();
-    //      tileIt != result.tilesFadingOut.end();) {
-    //   TileRenderContent* pRenderContent =
-    //       (*tileIt)->getContent().getRenderContent();
+    // Update fade out
+    for (auto tileIt = result.tilesFadingOut.begin();
+         tileIt != result.tilesFadingOut.end();) {
+      TileRenderContent* pRenderContent =
+          (*tileIt)->getContent().getRenderContent();
 
-    //   if (!pRenderContent) {
-    //     // This tile is done fading out and was immediately kicked from the
-    //     // cache.
-    //     (*tileIt)->decrementDoNotUnloadSubtreeCount(
-    //         "Tileset::_updateLodTransitions done fading out");
-    //     tileIt = result.tilesFadingOut.erase(tileIt);
-    //     continue;
-    //   }
+      if (!pRenderContent) {
+        // This tile is done fading out and was immediately kicked from the
+        // cache.
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions done fading out");
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
 
-    //   // Remove tile from fade-out list if it is back on the render list.
-    //   TileSelectionState::Result selectionResult =
-    //       frameState.viewGroup.getCurrentSelectionState(**tileIt).getResult();
-    //   if (selectionResult == TileSelectionState::Result::Rendered) {
-    //     // This tile will already be on the render list.
-    //     pRenderContent->setLodTransitionFadePercentage(0.0f);
-    //     (*tileIt)->decrementDoNotUnloadSubtreeCount(
-    //         "Tileset::_updateLodTransitions in render list");
-    //     tileIt = result.tilesFadingOut.erase(tileIt);
-    //     continue;
-    //   }
+      float currentPercentage =
+          pRenderContent->getLodTransitionFadePercentage();
+      if (currentPercentage >= 1.0f) {
+        // Remove this tile from the fading out list if it is already done.
+        // The client will already have had a chance to stop rendering the tile
+        // last frame.
+        pRenderContent->setLodTransitionFadePercentage(0.0f);
+        (*tileIt)->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions done fading out");
+        tileIt = result.tilesFadingOut.erase(tileIt);
+        continue;
+      }
 
-    //   float currentPercentage =
-    //       pRenderContent->getLodTransitionFadePercentage();
-    //   if (currentPercentage >= 1.0f) {
-    //     // Remove this tile from the fading out list if it is already done.
-    //     // The client will already have had a chance to stop rendering the
-    //     tile
-    //     // last frame.
-    //     pRenderContent->setLodTransitionFadePercentage(0.0f);
-    //     (*tileIt)->decrementDoNotUnloadSubtreeCount(
-    //         "Tileset::_updateLodTransitions done fading out");
-    //     tileIt = result.tilesFadingOut.erase(tileIt);
-    //     continue;
-    //   }
+      float newPercentage =
+          glm::min(currentPercentage + deltaTransitionPercentage, 1.0f);
+      pRenderContent->setLodTransitionFadePercentage(newPercentage);
+      ++tileIt;
+    }
 
-    //   float newPercentage =
-    //       glm::min(currentPercentage + deltaTransitionPercentage, 1.0f);
-    //   pRenderContent->setLodTransitionFadePercentage(newPercentage);
-    //   ++tileIt;
-    // }
+    // Update fade in
+    for (Tile* pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        float transitionPercentage =
+            pRenderContent->getLodTransitionFadePercentage();
+        float newTransitionPercentage =
+            glm::min(transitionPercentage + deltaTransitionPercentage, 1.0f);
+        pRenderContent->setLodTransitionFadePercentage(newTransitionPercentage);
+      }
 
-    // // Update fade in
-    // for (Tile* pTile : result.tilesToRenderThisFrame) {
-    //   TileRenderContent* pRenderContent =
-    //       pTile->getContent().getRenderContent();
-    //   if (pRenderContent) {
-    //     float transitionPercentage =
-    //         pRenderContent->getLodTransitionFadePercentage();
-    //     float newTransitionPercentage =
-    //         glm::min(transitionPercentage + deltaTransitionPercentage, 1.0f);
-    //     pRenderContent->setLodTransitionFadePercentage(newTransitionPercentage);
-    //   }
-    // }
+      // Remove a tile from fade-out list if it is back on the render list.
+      pTile->decrementDoNotUnloadSubtreeCount(
+          "Tileset::_updateLodTransitions in render list");
+      result.tilesFadingOut.erase(pTile);
+    }
   } else {
     // If there are any tiles still fading in, set them to fully visible right
     // away.
