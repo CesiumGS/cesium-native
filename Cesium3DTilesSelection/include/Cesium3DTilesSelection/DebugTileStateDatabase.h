@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/TileSelectionState.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
 #include <string>
@@ -31,7 +32,9 @@ public:
    * @brief Records the state of all tiles that are currently loaded by the
    * given tileset.
    *
-   * The state is obtained from the view group's "previous" results.
+   * The state is obtained from the view group's
+   * {@link TilesetViewGroup::getTraversalState} by calling
+   * {@link TreeTraversalState::slowlyGetPreviousStates}.
    *
    * @param frameNumber The current frame number.
    * @param tileset The tileset.
@@ -45,7 +48,9 @@ public:
   /**
    * @brief Records the state of a given tile.
    *
-   * The state is obtained from the view group's "previous" results.
+   * The state is obtained from the view group's
+   * {@link TilesetViewGroup::getTraversalState} by calling
+   * {@link TreeTraversalState::slowlyGetPreviousStates}.
    *
    * @param frameNumber The current frame number.
    * @param viewGroup The view group.
@@ -68,8 +73,9 @@ public:
   void recordTileState(
       int32_t frameNumber,
       const Tile& tile,
-      const std::unordered_map<const Tile*, TileSelectionState::Result>&
-          states);
+      const std::unordered_map<
+          CesiumUtility::IntrusivePointer<const Tile>,
+          TileSelectionState>& states);
 
 private:
   struct Impl;

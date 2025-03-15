@@ -33,6 +33,10 @@ namespace CesiumUtility {
  */
 template <typename TNodePointer, typename TState> class TreeTraversalState {
 public:
+  /**
+   * @brief Begins a new traversal of the tree. The "current" and "previous"
+   * traversals are swapped, and then the new "current" traversal is cleared.
+   */
   void beginTraversal() {
     // If this assertion fails, it indicates a traversal is already in progress.
     CESIUM_ASSERT(this->_parentIndices.empty());
@@ -42,6 +46,15 @@ public:
     this->_previousTraversalNextNodeIndex = 0;
   }
 
+  /**
+   * @brief Begins traversing a node in the tree. This node becomes the
+   * "current" node.
+   *
+   * When `beginNode` is called for node A, and then for node B, without an
+   * intervening call to `finishNode`, that indicates that B is a child of A.
+   *
+   * @param pNode The node traversed.
+   */
   void beginNode(TNodePointer pNode) {
     int64_t currentTraversalIndex = this->_currentTraversal.size();
     int64_t previousTraversalIndex = this->_previousTraversalNextNodeIndex;
@@ -66,16 +79,57 @@ public:
     this->_currentTraversal.emplace_back(TraversalData{pNode, -1, TState()});
   }
 
+  /**
+   * @brief Gets the state of the current node on the previous traversal. The
+   * current node is the one for which {@link beginNode} was most recently
+   * called.
+   *
+   * @return The state on the previous traversal, or `nullptr` if the current
+   * node was not traversed during the previous traversal.
+   */
   const TState* previousState() {
     const TraversalData* pData = this->previousData();
     return pData ? &pData->state : nullptr;
   }
 
+  /**
+   * @brief Gets the state of the current node during the current traversal. The
+   * current node is the one for which {@link beginNode} was most recently
+   * called.
+   *
+   * @return The state object for this node on the current traversal. It may be
+   * both read and written.
+   */
   TState& currentState() {
     TraversalData& data = this->currentData();
     return data.state;
   }
 
+  /**
+   * @brief Gets the state of the current node during the current traversal. The
+   * current node is the one for which {@link beginNode} was most recently
+   * called.
+   *
+   * @return The state object for this node on the current traversal.
+   */
+  const TState& currentState() const {
+    const TraversalData& data = this->currentData();
+    return data.state;
+  }
+
+  /**
+   * @brief Ends traversal of the given node.
+   *
+   * This method must be called in the opposite order of calls to
+   * {@link finishNode}.
+   *
+   * After `finishNode`, this node's parent node becomes the "current" node.
+   * {@link previousState} and {@link nextState} will return
+   * previous the states of this node's parent. A call to {@link beginNode}
+   * will delineate a new child of that same parent.
+   *
+   * @param pNode The node that is done being traversed.
+   */
   void finishNode([[maybe_unused]] TNodePointer pNode) {
     // An assertion failure here indicates mismatched calls to beginNode /
     // finishNode.
@@ -98,6 +152,17 @@ public:
     this->_parentIndices.pop_back();
   }
 
+  /**
+   * @brief Invokes a callback for each child of the current node that was
+   * traversed in the previous traversal.
+   *
+   * If the current node or its children were not traversed in the previous
+   * traversal, this method returns without invoking the callback at all.
+   *
+   * @tparam Func The type of the function to invoke.
+   * @param callback The function to invoke for each previously-traversed child.
+   * The function is passed the `TNodePointer` and the `TState`.
+   */
   template <typename Func> void forEachPreviousChild(Func&& callback) const {
     int64_t parentPreviousIndex = this->previousDataIndex();
     if (parentPreviousIndex < 0) {
@@ -119,6 +184,17 @@ public:
     }
   }
 
+  /**
+   * @brief Invokes a callback for each descendant (children, grandchildren,
+   * etc.) of the current node that was traversed in the previous traversal.
+   *
+   * If the current node or its children were not traversed in the previous
+   * traversal, this method returns without invoking the callback at all.
+   *
+   * @tparam Func The type of the function to invoke.
+   * @param callback The function to invoke for each previously-traversed
+   * descendant. The function is passed the `TNodePointer` and the `TState`.
+   */
   template <typename Func>
   void forEachPreviousDescendant(Func&& callback) const {
     int64_t parentPreviousIndex = this->previousDataIndex();
@@ -139,6 +215,19 @@ public:
     }
   }
 
+  /**
+   * @brief Invokes a callback for each descendant (children, grandchildren,
+   * etc.) of the current node that has been traversed so far in the current
+   * traversal.
+   *
+   * If the current node's children were not traversed in the previous
+   * traversal, this method returns without invoking the callback at all.
+   *
+   * @tparam Func The type of the function to invoke.
+   * @param callback The function to invoke for each descendant of the current
+   * tile that has been traversed in the current traversal. The function is
+   * passed the `TNodePointer` and the `TState`.
+   */
   template <typename Func> void forEachCurrentDescendant(Func&& callback) {
     int64_t parentCurrentIndex = this->currentDataIndex();
     CESIUM_ASSERT(parentCurrentIndex >= 0);
@@ -156,10 +245,26 @@ public:
     }
   }
 
+  /**
+   * @brief Gets a mapping of nodes to states for the current traversal.
+   *
+   * This is an inherently slow operation that should only be used in debug and
+   * test code.
+   *
+   * @return The mapping of nodes to current traversal states.
+   */
   std::unordered_map<TNodePointer, TState> slowlyGetCurrentStates() const {
     return this->slowlyGetStates(this->_currentTraversal);
   }
 
+  /**
+   * @brief Gets a mapping of nodes to states for the previous traversal.
+   *
+   * This is an inherently slow operation that should only be used in debug and
+   * test code.
+   *
+   * @return The mapping of nodes to previous traversal states.
+   */
   std::unordered_map<TNodePointer, TState> slowlyGetPreviousStates() const {
     return this->slowlyGetStates(this->_previousTraversal);
   }
@@ -242,7 +347,7 @@ private:
   // pushed onto the end of this vector. This is always the index of the _last_
   // node in the `_currentTraversal`, because `beginNode` always adds a new
   // entry to the end of the `currentTraversal`. The previous traversal index
-  // may be -1 the current node was not visited at all in the previous
+  // may be -1 if the current node was not visited at all in the previous
   // traversal. `finishNode` pops the last entry off the end of this array.
   std::vector<TraversalIndices> _parentIndices;
 

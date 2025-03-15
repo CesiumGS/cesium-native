@@ -4,6 +4,7 @@
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumAsync/SqliteHelper.h>
 #include <CesiumAsync/cesium-sqlite3.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <fmt/format.h>
 #include <sqlite3.h>
@@ -16,6 +17,7 @@
 #include <vector>
 
 using namespace CesiumAsync;
+using namespace CesiumUtility;
 
 namespace {
 
@@ -176,30 +178,6 @@ DebugTileStateDatabase::DebugTileStateDatabase(
 
 DebugTileStateDatabase::~DebugTileStateDatabase() noexcept = default;
 
-namespace {
-
-std::unordered_map<const Tile*, TileSelectionState::Result>
-getMap(const TilesetViewGroup& viewGroup, const Tile* pRootTile) {
-  std::unordered_map<const Tile*, TileSelectionState::Result> result;
-  TilesetViewGroup::TraversalState copy = viewGroup.getTraversalState();
-  copy.beginTraversal();
-
-  copy.beginNode(pRootTile);
-
-  copy.forEachPreviousDescendant(
-      [&result](
-          const CesiumUtility::IntrusivePointer<const Tile>& pTile,
-          const TileSelectionState& state) {
-        result[pTile.get()] = state.getResult();
-      });
-
-  copy.finishNode(pRootTile);
-
-  return result;
-}
-
-} // namespace
-
 void DebugTileStateDatabase::recordAllTileStates(
     int32_t frameNumber,
     const Tileset& tileset,
@@ -214,8 +192,7 @@ void DebugTileStateDatabase::recordAllTileStates(
     return;
   }
 
-  std::unordered_map<const Tile*, TileSelectionState::Result> map =
-      getMap(viewGroup, tileset.getRootTile());
+  auto map = viewGroup.getTraversalState().slowlyGetPreviousStates();
 
   for (const Tile& tile : tileset.loadedTiles()) {
     this->recordTileState(frameNumber, tile, map);
@@ -233,17 +210,17 @@ void DebugTileStateDatabase::recordTileState(
     int32_t frameNumber,
     const TilesetViewGroup& viewGroup,
     const Tile& tile) {
-  const Tile* pCurrent = &tile;
-  while (pCurrent->getParent()) {
-    pCurrent = pCurrent->getParent();
-  }
-  this->recordTileState(frameNumber, tile, getMap(viewGroup, pCurrent));
+  this->recordTileState(
+      frameNumber,
+      tile,
+      viewGroup.getTraversalState().slowlyGetPreviousStates());
 }
 
 void DebugTileStateDatabase::recordTileState(
     int32_t frameNumber,
     const Tile& tile,
-    const std::unordered_map<const Tile*, TileSelectionState::Result>& states) {
+    const std::unordered_map<IntrusivePointer<const Tile>, TileSelectionState>&
+        states) {
   int status = CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->writeTileState.get());
   if (status != SQLITE_OK) {
     return;
@@ -284,7 +261,8 @@ void DebugTileStateDatabase::recordTileState(
 
   auto it = states.find(&tile);
   TileSelectionState::Result selectionState =
-      it == states.end() ? TileSelectionState::Result::None : it->second;
+      it == states.end() ? TileSelectionState::Result::None
+                         : it->second.getResult();
 
   status = CESIUM_SQLITE(sqlite3_bind_int)(
       this->_pImpl->writeTileState.get(),
