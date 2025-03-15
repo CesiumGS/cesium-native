@@ -80,6 +80,33 @@ public:
   }
 
   /**
+   * @brief Gets the current node in the traversal.beginNode
+   *
+   * When {@link beginNode} is called, the node passed to it becomes the
+   * current one. When {@link finishNode} is called, the parent node of the
+   * one passed to it becomes the current one.
+   *
+   * @return The current node, or nullptr if no traversal is in progress.
+   */
+  TNodePointer getCurrentNode() const noexcept {
+    if (this->_parentIndices.empty())
+      return nullptr;
+
+    return this->currentData().pNode;
+  }
+
+  /**
+   * @brief Determines if the current node was visited in the previous
+   * traversal.
+   *
+   * @return true if the current node was visited in the previous traversal;
+   * otherwise, false.
+   */
+  bool wasCurrentNodePreviouslyTraversed() const noexcept {
+    return this->previousState() != nullptr;
+  }
+
+  /**
    * @brief Gets the state of the current node on the previous traversal. The
    * current node is the one for which {@link beginNode} was most recently
    * called.
@@ -87,7 +114,7 @@ public:
    * @return The state on the previous traversal, or `nullptr` if the current
    * node was not traversed during the previous traversal.
    */
-  const TState* previousState() {
+  const TState* previousState() const {
     const TraversalData* pData = this->previousData();
     return pData ? &pData->state : nullptr;
   }
