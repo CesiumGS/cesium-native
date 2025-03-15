@@ -34,76 +34,36 @@ namespace CesiumUtility {
 template <typename TNodePointer, typename TState> class TreeTraversalState {
 public:
   void beginTraversal() {
+    // If this assertion fails, it indicates a traversal is already in progress.
+    CESIUM_ASSERT(this->_parentIndices.empty());
+
     std::swap(this->_previousTraversal, this->_currentTraversal);
     this->_currentTraversal.clear();
-    this->_previousTraversalIndex = -1;
-    this->_currentTraversalIndex = -1;
     this->_previousTraversalNextNodeIndex = 0;
   }
 
   void beginNode(TNodePointer pNode) {
-    this->_currentTraversalIndex = this->_currentTraversal.size();
+    int64_t currentTraversalIndex = this->_currentTraversal.size();
+    int64_t previousTraversalIndex = this->_previousTraversalNextNodeIndex;
 
-    int64_t parentPreviousTraversalIndex = this->_previousTraversalIndex;
-    this->_previousTraversalIndex = this->_previousTraversalNextNodeIndex;
-    ++this->_previousTraversalNextNodeIndex;
-
-    CESIUM_ASSERT(this->_previousTraversalIndex >= 0);
+    if (previousTraversalIndex >= 0 &&
+        previousTraversalIndex < int64_t(this->_previousTraversal.size())) {
+      const TraversalData& previousData =
+          this->_previousTraversal[previousTraversalIndex];
+      if (previousData.pNode == pNode) {
+        ++this->_previousTraversalNextNodeIndex;
+      } else {
+        previousTraversalIndex = -1;
+      }
+    } else {
+      previousTraversalIndex = -1;
+    }
 
     this->_parentIndices.emplace_back(TraversalIndices{
-        .previous = size_t(this->_previousTraversalIndex),
-        .current = size_t(this->_currentTraversalIndex)});
+        .previous = previousTraversalIndex,
+        .current = currentTraversalIndex});
 
     this->_currentTraversal.emplace_back(TraversalData{pNode, -1, TState()});
-
-    // Find this node in the previous traversal, if it exists.
-    if (size_t(this->_previousTraversalIndex) <
-        this->_previousTraversal.size()) {
-      TraversalData& previousData =
-          this->_previousTraversal[this->_previousTraversalIndex];
-      if (previousData.pNode != pNode) {
-        // The node we're currently visiting does not match the one that was
-        // visited here in the previous traversal. There are two
-        // possibilities:
-        //
-        // 1. We're visiting the first child of the previous node, and in the
-        // previous traversal the previous node either didn't have any
-        // children or they weren't visited.
-        // 2. We're visiting the next sibling of the previous node, because
-        // the previous node either doesn't have any children or they're not
-        // being visited. In the previous traversal, the previous node had
-        // children and we visited them.
-        //
-        // We can distinguish these cases by looking at the previous entry's
-        // `nextSiblingIndex`. In case (1), the `nextSiblingIndex` will equal
-        // the current `previousTraversalIndex`. In case (2), it will tell us
-        // how many nodes in the previous traversal to skip.
-        if (parentPreviousTraversalIndex < 0) {
-          // If we get here, it means the root tile changed since the last
-          // traversal. None of the previous results are useful.
-          --this->_previousTraversalNextNodeIndex;
-        } else {
-          TraversalData& parentData =
-              this->_previousTraversal[parentPreviousTraversalIndex];
-          if (parentData.nextSiblingIndex == parentPreviousTraversalIndex + 1) {
-            // Case 1 - visiting a child that was previous unvisited.
-            // Hold the position in the previous traversal.
-            --this->_previousTraversalNextNodeIndex;
-          } else {
-            // Case 2 - skipping children that were previously visited.
-            this->_previousTraversalIndex = parentData.nextSiblingIndex;
-            this->_previousTraversalNextNodeIndex =
-                this->_previousTraversalIndex + 1;
-            CESIUM_ASSERT(
-                this->_previousTraversalIndex >= 0 &&
-                size_t(this->_previousTraversalIndex) <
-                    this->_previousTraversal.size() &&
-                this->_previousTraversal[this->_previousTraversalIndex].pNode ==
-                    pNode);
-          }
-        }
-      }
-    }
   }
 
   const TState* previousState() {
@@ -117,50 +77,40 @@ public:
   }
 
   void finishNode([[maybe_unused]] TNodePointer pNode) {
+    // An assertion failure here indicates mismatched calls to beginNode /
+    // finishNode.
     CESIUM_ASSERT(!this->_currentTraversal.empty());
     CESIUM_ASSERT(!this->_parentIndices.empty());
-    CESIUM_ASSERT(
-        int64_t(this->_parentIndices.back().current) ==
-        this->_currentTraversalIndex);
-    CESIUM_ASSERT(
-        int64_t(this->_parentIndices.back().previous) ==
-        this->_previousTraversalIndex);
-    CESIUM_ASSERT(
-        this->_currentTraversalIndex >= 0 &&
-        size_t(this->_currentTraversalIndex) < this->_currentTraversal.size());
+    CESIUM_ASSERT(this->currentData().pNode == pNode);
+
+    this->currentData().nextSiblingIndex =
+        int64_t(this->_currentTraversal.size());
 
     // Now that this node is done, skip its subtree, if any, in the previous
     // traversal. If this finished node doesn't exist in the previous traversal,
     // look for the next previous node at the current position.
     const TraversalData* pPreviousData = this->previousData();
     if (pPreviousData) {
+      CESIUM_ASSERT(pPreviousData->nextSiblingIndex >= 0);
       this->_previousTraversalNextNodeIndex = pPreviousData->nextSiblingIndex;
     }
 
     this->_parentIndices.pop_back();
-
-    CESIUM_ASSERT(
-        this->_currentTraversal[this->_currentTraversalIndex].pNode == pNode);
-    this->_currentTraversal[this->_currentTraversalIndex].nextSiblingIndex =
-        int64_t(this->_currentTraversal.size());
-
-    this->_currentTraversalIndex = -1;
-    this->_previousTraversalIndex = -1;
-
-    if (!this->_parentIndices.empty()) {
-      const TraversalIndices& indices = this->_parentIndices.back();
-      this->_currentTraversalIndex = indices.current;
-      this->_previousTraversalIndex = indices.previous;
-    }
   }
 
   template <typename Func> void forEachPreviousChild(Func&& callback) const {
-    const TraversalData* pPrevious = this->previousData();
-    if (!pPrevious)
+    int64_t parentPreviousIndex = this->previousDataIndex();
+    if (parentPreviousIndex < 0) {
+      // Current node was not previously traversed.
       return;
+    }
 
-    for (size_t i = size_t(this->_previousTraversalIndex + 1);
-         i < size_t(pPrevious->nextSiblingIndex);) {
+    const TraversalData& parentPreviousData =
+        this->_previousTraversal[parentPreviousIndex];
+
+    for (size_t i = parentPreviousIndex + 1;
+         i < size_t(parentPreviousData.nextSiblingIndex);) {
+      CESIUM_ASSERT(i < this->_previousTraversal.size());
       const TraversalData& data = this->_previousTraversal[i];
       callback(data.pNode, data.state);
       CESIUM_ASSERT(
@@ -171,22 +121,36 @@ public:
 
   template <typename Func>
   void forEachPreviousDescendant(Func&& callback) const {
-    const TraversalData* pPrevious = this->previousData();
-    if (!pPrevious)
+    int64_t parentPreviousIndex = this->previousDataIndex();
+    if (parentPreviousIndex < 0) {
+      // Current node was not previously traversed.
       return;
+    }
 
-    for (size_t i = size_t(this->_previousTraversalIndex + 1);
-         i < size_t(pPrevious->nextSiblingIndex);
+    const TraversalData& parentPreviousData =
+        this->_previousTraversal[parentPreviousIndex];
+
+    for (size_t i = parentPreviousIndex + 1;
+         i < size_t(parentPreviousData.nextSiblingIndex);
          ++i) {
+      CESIUM_ASSERT(i < this->_previousTraversal.size());
       const TraversalData& data = this->_previousTraversal[i];
       callback(data.pNode, data.state);
     }
   }
 
   template <typename Func> void forEachCurrentDescendant(Func&& callback) {
-    for (size_t i = size_t(this->_currentTraversalIndex + 1);
-         i < this->_currentTraversal.size();
-         ++i) {
+    int64_t parentCurrentIndex = this->currentDataIndex();
+    CESIUM_ASSERT(parentCurrentIndex >= 0);
+
+    const TraversalData& parentCurrentData =
+        this->_currentTraversal[parentCurrentIndex];
+
+    size_t endIndex = parentCurrentData.nextSiblingIndex >= 0
+                          ? parentCurrentData.nextSiblingIndex
+                          : this->_currentTraversal.size();
+
+    for (size_t i = size_t(parentCurrentIndex + 1); i < endIndex; ++i) {
       TraversalData& data = this->_currentTraversal[i];
       callback(data.pNode, data.state);
     }
@@ -208,35 +172,55 @@ private:
   };
 
   struct TraversalIndices {
-    size_t previous;
-    size_t current;
+    int64_t previous;
+    int64_t current;
   };
 
-  const TraversalData* previousData() const {
-    if (this->_previousTraversalIndex >= 0 &&
-        size_t(this->_previousTraversalIndex) <
-            this->_previousTraversal.size()) {
-      CESIUM_ASSERT(
-          this->_currentTraversalIndex >= 0 &&
-          size_t(this->_currentTraversalIndex) <
-              this->_currentTraversal.size());
-      TNodePointer pCurrentNode =
-          this->_currentTraversal[this->_currentTraversalIndex].pNode;
-      const TraversalData& previousData =
-          this->_previousTraversal[this->_previousTraversalIndex];
-      if (previousData.pNode == pCurrentNode) {
-        return &previousData;
-      }
-    }
+  int64_t previousDataIndex() const {
+    CESIUM_ASSERT(!this->_parentIndices.empty());
 
-    return nullptr;
+    int64_t result = this->_parentIndices.back().previous;
+
+    CESIUM_ASSERT(
+        result == -1 ||
+        (result >= 0 && size_t(result) < this->_previousTraversal.size()));
+
+    return result;
+  }
+
+  int64_t currentDataIndex() const {
+    CESIUM_ASSERT(!this->_parentIndices.empty());
+
+    // An assertion failure here may indicate beginTraversal wasn't called.
+    CESIUM_ASSERT(
+        this->_parentIndices.back().current >= 0 &&
+        this->_parentIndices.back().current <
+            static_cast<int64_t>(this->_currentTraversal.size()));
+
+    return this->_parentIndices.back().current;
+  }
+
+  const TraversalData* previousData() const {
+    int64_t previousIndex = this->previousDataIndex();
+    if (previousIndex < 0)
+      return nullptr;
+
+    const TraversalData& previousData =
+        this->_previousTraversal[size_t(previousIndex)];
+
+    CESIUM_ASSERT(previousData.pNode == this->currentData().pNode);
+
+    return &previousData;
   }
 
   TraversalData& currentData() {
-    CESIUM_ASSERT(
-        this->_currentTraversalIndex >= 0 &&
-        size_t(this->_currentTraversalIndex) < this->_currentTraversal.size());
-    return this->_currentTraversal[this->_currentTraversalIndex];
+    int64_t currentIndex = this->currentDataIndex();
+    return this->_currentTraversal[currentIndex];
+  }
+
+  const TraversalData& currentData() const {
+    int64_t currentIndex = this->currentDataIndex();
+    return this->_currentTraversal[currentIndex];
   }
 
   std::unordered_map<TNodePointer, TState>
@@ -252,10 +236,20 @@ private:
 
   std::vector<TraversalData> _previousTraversal;
   std::vector<TraversalData> _currentTraversal;
+
+  // A stack of indices into the previous and current traversals. When
+  // `beginNode` is called, the index of that node within each traversal is
+  // pushed onto the end of this vector. This is always the index of the _last_
+  // node in the `_currentTraversal`, because `beginNode` always adds a new
+  // entry to the end of the `currentTraversal`. The previous traversal index
+  // may be -1 the current node was not visited at all in the previous
+  // traversal. `finishNode` pops the last entry off the end of this array.
   std::vector<TraversalIndices> _parentIndices;
-  int64_t _previousTraversalIndex = -1;
+
+  // The index of the next node in the previous traversal. In `beginNode`, this
+  // new node is added to the end of `_currentTraversal`. In
+  // `_previousTraversal`, if it exists at all, it will be found at this index.
   int64_t _previousTraversalNextNodeIndex = 0;
-  int64_t _currentTraversalIndex = -1;
 };
 
 } // namespace CesiumUtility
