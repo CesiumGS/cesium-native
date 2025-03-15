@@ -24,6 +24,10 @@ class TilesetContentManager;
 class CESIUM3DTILESSELECTION_API TilesetViewGroup final
     : public TileLoadRequester {
 public:
+  /**
+   * @brief The type of the {@link TreeTraversalState} used to track tile
+   * selection states for this view group.
+   */
   using TraversalState = CesiumUtility::TreeTraversalState<
       CesiumUtility::IntrusivePointer<const Tile>,
       TileSelectionState>;
@@ -64,47 +68,16 @@ public:
   /** @copydoc getViewUpdateResult */
   ViewUpdateResult& getViewUpdateResult();
 
+  /**
+   * @brief Gets an object used to track the selection state of tiles as they
+   * are traversed for this view group.
+   */
   TraversalState& getTraversalState() noexcept { return this->_traversalState; }
+
+  /** @copydoc getTraversalState */
   const TraversalState& getTraversalState() const noexcept {
     return this->_traversalState;
   }
-
-  // /**
-  //  * @brief Returns the previous {@link TileSelectionState} of this tile last
-  //  * time this view group was updated.
-  //  *
-  //  * @param tile The tile for which to get the selection state.
-  //  * @return The previous selection state
-  //  */
-  // TileSelectionState getPreviousSelectionState(const Tile& tile) const
-  // noexcept;
-
-  // /**
-  //  * @brief Returns the current {@link TileSelectionState} of this tile during
-  //  * the current update of this view group.
-  //  *
-  //  * @param tile The tile for which to get the selection state.
-  //  * @return The current selection state
-  //  */
-  // TileSelectionState getCurrentSelectionState(const Tile& tile) const
-  // noexcept;
-
-  // /**
-  //  * @brief Sets the {@link TileSelectionState} of this tile.
-  //  *
-  //  * @param tile The tile for which to set the selection state.
-  //  * @param newState The new state
-  //  */
-  // void setCurrentSelectionState(
-  //     const Tile& tile,
-  //     const TileSelectionState& newState) noexcept;
-
-  // /**
-  //  * @brief Marks a tile as "kicked".
-  //  *
-  //  * @param tile The tile to "kick".
-  //  */
-  // void kick(const Tile& tile) noexcept;
 
   /**
    * @brief Adds a tile load task to this view group's load queue.
