@@ -29,6 +29,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -229,13 +230,13 @@ double computeFogDensity(
 } // namespace
 
 void Tileset::_updateLodTransitions(
-    const FrameState& frameState,
+    const FrameState& /* frameState */,
     float deltaTime,
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
     // We always fade tiles from 0.0 --> 1.0. Whether the tile is fading in or
-    // out is determined by whether the tile is in the tilesToRenderThisFrame
-    // or tilesFadingOut list.
+    // out is determined by whether the tile is in the
+    // tilesToRenderThisFrame or tilesFadingOut list.
     float deltaTransitionPercentage =
         deltaTime / this->_options.lodTransitionLength;
 
@@ -250,18 +251,6 @@ void Tileset::_updateLodTransitions(
         // cache.
         (*tileIt)->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions done fading out");
-        tileIt = result.tilesFadingOut.erase(tileIt);
-        continue;
-      }
-
-      // Remove tile from fade-out list if it is back on the render list.
-      TileSelectionState::Result selectionResult =
-          frameState.viewGroup.getCurrentSelectionState(**tileIt).getResult();
-      if (selectionResult == TileSelectionState::Result::Rendered) {
-        // This tile will already be on the render list.
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
-        (*tileIt)->decrementDoNotUnloadSubtreeCount(
-            "Tileset::_updateLodTransitions in render list");
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
@@ -295,6 +284,12 @@ void Tileset::_updateLodTransitions(
         float newTransitionPercentage =
             glm::min(transitionPercentage + deltaTransitionPercentage, 1.0f);
         pRenderContent->setLodTransitionFadePercentage(newTransitionPercentage);
+      }
+
+      // Remove a tile from fade-out list if it is back on the render list.
+      if (result.tilesFadingOut.erase(pTile) > 0) {
+        pTile->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions in render list");
       }
     }
   } else {
@@ -429,6 +424,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       currentFrameNumber};
 
   if (!frustums.empty()) {
+    viewGroup.getTraversalState().beginTraversal();
     this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
   } else {
     result = ViewUpdateResult();
@@ -695,7 +691,18 @@ const TilesetViewGroup& Tileset::getDefaultViewGroup() const {
 }
 
 namespace {
-void markTileNonRendered(
+
+TileSelectionState getPreviousState(
+    const TilesetViewGroup& viewGroup,
+    [[maybe_unused]] const Tile& tile) {
+  const TilesetViewGroup::TraversalState& traversalState =
+      viewGroup.getTraversalState();
+  CESIUM_ASSERT(traversalState.getCurrentNode() == &tile);
+  const TileSelectionState* pState = traversalState.previousState();
+  return pState == nullptr ? TileSelectionState() : *pState;
+}
+
+void addToTilesFadingOutIfPreviouslyRendered(
     TileSelectionState::Result lastResult,
     Tile& tile,
     ViewUpdateResult& result) {
@@ -703,7 +710,8 @@ void markTileNonRendered(
       (lastResult == TileSelectionState::Result::Refined &&
        tile.getRefine() == TileRefine::Add)) {
     result.tilesFadingOut.insert(&tile);
-    tile.incrementDoNotUnloadSubtreeCount("markTileNonRendered fading out");
+    tile.incrementDoNotUnloadSubtreeCount(
+        "addToTilesFadingOutIfPreviouslyRendered fading out");
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);
@@ -711,47 +719,41 @@ void markTileNonRendered(
   }
 }
 
-void markTileNonRendered(
+void addCurrentTileToTilesFadingOutIfPreviouslyRendered(
     TilesetViewGroup& viewGroup,
     Tile& tile,
     ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      viewGroup.getPreviousSelectionState(tile).getResult();
-  markTileNonRendered(lastResult, tile, result);
+  TileSelectionState::Result lastResult =
+      getPreviousState(viewGroup, tile).getResult();
+  addToTilesFadingOutIfPreviouslyRendered(lastResult, tile, result);
 }
 
-void markChildrenNonRendered(
+void addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
     TilesetViewGroup& viewGroup,
-    TileSelectionState::Result lastResult,
-    Tile& tile,
+    [[maybe_unused]] Tile& tile,
     ViewUpdateResult& result) {
-  if (lastResult == TileSelectionState::Result::Refined) {
-    for (Tile& child : tile.getChildren()) {
-      const TileSelectionState::Result childLastResult =
-          viewGroup.getPreviousSelectionState(child).getResult();
-      markTileNonRendered(childLastResult, child, result);
-      markChildrenNonRendered(viewGroup, childLastResult, child, result);
-    }
+  if (getPreviousState(viewGroup, tile).getResult() ==
+      TileSelectionState::Result::Refined) {
+    viewGroup.getTraversalState().forEachPreviousDescendant(
+        [&](const IntrusivePointer<const Tile>& pTile,
+            const TileSelectionState& state) {
+          addToTilesFadingOutIfPreviouslyRendered(
+              state.getResult(),
+              const_cast<Tile&>(*pTile),
+              result);
+        });
   }
 }
 
-void markChildrenNonRendered(
+void addCurrentTileAndDescendantsToTilesFadingOutIfPreviouslyRendered(
     TilesetViewGroup& viewGroup,
     Tile& tile,
     ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      viewGroup.getPreviousSelectionState(tile).getResult();
-  markChildrenNonRendered(viewGroup, lastResult, tile, result);
-}
-
-void markTileAndChildrenNonRendered(
-    TilesetViewGroup& viewGroup,
-    Tile& tile,
-    ViewUpdateResult& result) {
-  const TileSelectionState::Result lastResult =
-      viewGroup.getPreviousSelectionState(tile).getResult();
-  markTileNonRendered(lastResult, tile, result);
-  markChildrenNonRendered(viewGroup, lastResult, tile, result);
+  addCurrentTileToTilesFadingOutIfPreviouslyRendered(viewGroup, tile, result);
+  addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
+      viewGroup,
+      tile,
+      result);
 }
 
 /**
@@ -997,6 +999,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
+  TilesetViewGroup::TraversalState& traversalState =
+      frameState.viewGroup.getTraversalState();
+
+  traversalState.beginNode(&tile);
 
   std::vector<double>& distances = this->_distances;
   computeDistances(tile, frameState.frustums, distances);
@@ -1045,13 +1051,13 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   }
 
   if (!cullResult.shouldVisit) {
-    const TileSelectionState lastFrameSelectionState =
-        frameState.viewGroup.getPreviousSelectionState(tile);
-
-    markTileAndChildrenNonRendered(frameState.viewGroup, tile, result);
-    frameState.viewGroup.setCurrentSelectionState(
+    addCurrentTileAndDescendantsToTilesFadingOutIfPreviouslyRendered(
+        frameState.viewGroup,
         tile,
-        TileSelectionState(TileSelectionState::Result::Culled));
+        result);
+
+    frameState.viewGroup.getTraversalState().currentState() =
+        TileSelectionState(TileSelectionState::Result::Culled);
 
     ++result.tilesCulled;
 
@@ -1067,10 +1073,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
           TileLoadPriorityGroup::Normal,
           tilePriority);
 
-      traversalDetails = Tileset::createTraversalDetailsForSingleTile(
-          frameState,
-          tile,
-          lastFrameSelectionState);
+      traversalDetails =
+          Tileset::createTraversalDetailsForSingleTile(frameState, tile);
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(
@@ -1079,6 +1083,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
           TileLoadPriorityGroup::Preload,
           tilePriority);
     }
+
+    traversalState.finishNode(&tile);
 
     return traversalDetails;
   }
@@ -1090,7 +1096,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   bool meetsSse =
       this->_meetsSse(frameState.frustums, tile, distances, cullResult.culled);
 
-  return this->_visitTile(
+  TraversalDetails details = this->_visitTile(
       frameState,
       depth,
       meetsSse,
@@ -1098,6 +1104,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       tile,
       tilePriority,
       result);
+
+  traversalState.finishNode(&tile);
+
+  return details;
 }
 
 namespace {
@@ -1109,13 +1119,8 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     Tile& tile,
     double tilePriority,
     ViewUpdateResult& result) {
-
-  const TileSelectionState lastFrameSelectionState =
-      frameState.viewGroup.getPreviousSelectionState(tile);
-
-  frameState.viewGroup.setCurrentSelectionState(
-      tile,
-      TileSelectionState(TileSelectionState::Result::Rendered));
+  frameState.viewGroup.getTraversalState().currentState() =
+      TileSelectionState(TileSelectionState::Result::Rendered);
   result.tilesToRenderThisFrame.push_back(&tile);
 
   addTileToLoadQueue(
@@ -1124,10 +1129,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileLoadPriorityGroup::Normal,
       tilePriority);
 
-  return Tileset::createTraversalDetailsForSingleTile(
-      frameState,
-      tile,
-      lastFrameSelectionState);
+  return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
 
 namespace {
@@ -1164,20 +1166,15 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
     const FrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result) {
-
-  const TileSelectionState lastFrameSelectionState =
-      frameState.viewGroup.getPreviousSelectionState(tile);
-
-  markChildrenNonRendered(frameState.viewGroup, tile, result);
-  frameState.viewGroup.setCurrentSelectionState(
+  addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
+      frameState.viewGroup,
       tile,
-      TileSelectionState(TileSelectionState::Result::Rendered));
+      result);
+  frameState.viewGroup.getTraversalState().currentState() =
+      TileSelectionState(TileSelectionState::Result::Rendered);
   result.tilesToRenderThisFrame.push_back(&tile);
 
-  return Tileset::createTraversalDetailsForSingleTile(
-      frameState,
-      tile,
-      lastFrameSelectionState);
+  return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1213,25 +1210,15 @@ bool Tileset::_kickDescendantsAndRenderTile(
     const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
     bool queuedForLoad,
     double tilePriority) {
-  const TileSelectionState lastFrameSelectionState =
-      frameState.viewGroup.getPreviousSelectionState(tile);
-
-  std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
-
-  // Mark the rendered descendants and their ancestors - up to this tile - as
-  // kicked.
-  for (size_t i = firstRenderedDescendantIndex; i < renderList.size(); ++i) {
-    Tile* pWorkTile = renderList[i];
-    while (pWorkTile != nullptr &&
-           !frameState.viewGroup.getCurrentSelectionState(*pWorkTile)
-                .wasKicked() &&
-           pWorkTile != &tile) {
-      frameState.viewGroup.kick(*pWorkTile);
-      pWorkTile = pWorkTile->getParent();
-    }
-  }
+  // Mark all visited descendants of this tile as kicked.
+  TilesetViewGroup::TraversalState& traversalState =
+      frameState.viewGroup.getTraversalState();
+  traversalState.forEachCurrentDescendant(
+      [](const IntrusivePointer<const Tile>& /*pTile*/,
+         TileSelectionState& selectionState) { selectionState.kick(); });
 
   // Remove all descendants from the render list and add this tile.
+  std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
   renderList.erase(
       renderList.begin() +
           static_cast<std::vector<Tile*>::iterator::difference_type>(
@@ -1242,9 +1229,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
     renderList.push_back(&tile);
   }
 
-  frameState.viewGroup.setCurrentSelectionState(
-      tile,
-      TileSelectionState(TileSelectionState::Result::Rendered));
+  traversalState.currentState() =
+      TileSelectionState(TileSelectionState::Result::Rendered);
 
   // If we're waiting on heaps of descendants, the above will take too long. So
   // in that case, load this tile INSTEAD of loading any of the descendants, and
@@ -1252,8 +1238,10 @@ bool Tileset::_kickDescendantsAndRenderTile(
   // actually manage to render this tile.
   // Make sure we don't end up waiting on a tile that will _never_ be
   // renderable.
-  const bool wasRenderedLastFrame = lastFrameSelectionState.getResult() ==
-                                    TileSelectionState::Result::Rendered;
+  TileSelectionState::Result lastFrameSelectionState =
+      getPreviousState(frameState.viewGroup, tile).getResult();
+  const bool wasRenderedLastFrame =
+      lastFrameSelectionState == TileSelectionState::Result::Rendered;
   const bool wasReallyRenderedLastFrame =
       wasRenderedLastFrame && tile.isRenderable();
 
@@ -1400,12 +1388,15 @@ Tileset::TraversalDetails Tileset::_visitTile(
     Tile& tile,
     double tilePriority,
     ViewUpdateResult& result) {
+  TilesetViewGroup::TraversalState& traversalState =
+      frameState.viewGroup.getTraversalState();
+
   ++result.tilesVisited;
   result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    return _renderLeaf(frameState, tile, tilePriority, result);
+    return this->_renderLeaf(frameState, tile, tilePriority, result);
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
@@ -1420,9 +1411,9 @@ Tileset::TraversalDetails Tileset::_visitTile(
   else
     action = VisitTileAction::Render;
 
-  const TileSelectionState lastFrameSelectionState =
-      frameState.viewGroup.getPreviousSelectionState(tile);
-  const TileSelectionState::Result lastFrameSelectionResult =
+  TileSelectionState lastFrameSelectionState =
+      getPreviousState(frameState.viewGroup, tile);
+  TileSelectionState::Result lastFrameSelectionResult =
       lastFrameSelectionState.getResult();
 
   // If occlusion culling is enabled, we may not want to refine for two
@@ -1435,14 +1426,15 @@ Tileset::TraversalDetails Tileset::_visitTile(
   //   kicking off descendant loads that we later find to be unnecessary.
   bool tileLastRefined =
       lastFrameSelectionResult == TileSelectionState::Result::Refined;
+
   bool childLastRefined = false;
-  for (const Tile& child : tile.getChildren()) {
-    if (frameState.viewGroup.getPreviousSelectionState(child).getResult() ==
-        TileSelectionState::Result::Refined) {
-      childLastRefined = true;
-      break;
-    }
-  }
+  traversalState.forEachPreviousChild(
+      [&](const IntrusivePointer<const Tile>& /*pTile*/,
+          const TileSelectionState& state) {
+        if (state.getResult() == TileSelectionState::Result::Refined) {
+          childLastRefined = true;
+        }
+      });
 
   // If this tile and a child were both refined last frame, this tile does not
   // need occlusion results.
@@ -1460,8 +1452,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
     } else if (
         occlusion == TileOcclusionState::OcclusionUnavailable &&
         this->_options.delayRefinementForOcclusion &&
-        frameState.viewGroup.getPreviousSelectionState(tile)
-                .getOriginalResult() != TileSelectionState::Result::Refined) {
+        lastFrameSelectionState.getOriginalResult() !=
+            TileSelectionState::Result::Refined) {
       ++result.tilesWaitingForOcclusionResults;
       action = VisitTileAction::Render;
       meetsSse = true;
@@ -1508,7 +1500,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
             TileLoadPriorityGroup::Normal,
             tilePriority);
       }
-      return _renderInnerTile(frameState, tile, result);
+
+      return this->_renderInnerTile(frameState, tile, result);
     }
   }
 
@@ -1575,12 +1568,14 @@ Tileset::TraversalDetails Tileset::_visitTile(
         tilePriority);
   } else {
     if (tile.getRefine() != TileRefine::Add) {
-      markTileNonRendered(frameState.viewGroup, tile, result);
+      addCurrentTileToTilesFadingOutIfPreviouslyRendered(
+          frameState.viewGroup,
+          tile,
+          result);
     }
 
-    frameState.viewGroup.setCurrentSelectionState(
-        tile,
-        TileSelectionState(TileSelectionState::Result::Refined));
+    traversalState.currentState() =
+        TileSelectionState(TileSelectionState::Result::Refined);
   }
 
   if (this->_options.preloadAncestors && !queuedForLoad) {
@@ -1633,10 +1628,10 @@ void Tileset::addTileToLoadQueue(
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const FrameState& frameState,
-    const Tile& tile,
-    const TileSelectionState& lastFrameSelectionState) {
+    const Tile& tile) {
   TileSelectionState::Result lastFrameResult =
-      lastFrameSelectionState.getResult();
+      getPreviousState(frameState.viewGroup, tile).getResult();
+
   bool isRenderable = tile.isRenderable();
 
   bool wasRenderedLastFrame =
@@ -1653,13 +1648,13 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
       // last frame, too. This is necessary to prevent this tile from being
       // kicked just because _it_ wasn't rendered last frame (which could cause
       // a new hole to appear).
-      for (const Tile& child : tile.getChildren()) {
-        TraversalDetails childDetails = createTraversalDetailsForSingleTile(
-            frameState,
-            child,
-            frameState.viewGroup.getPreviousSelectionState(child));
-        wasRenderedLastFrame |= childDetails.anyWereRenderedLastFrame;
-      }
+      frameState.viewGroup.getTraversalState().forEachPreviousDescendant(
+          [&](const IntrusivePointer<const Tile>& /* pTile */,
+              const TileSelectionState& state) {
+            if (state.getResult() == TileSelectionState::Result::Rendered) {
+              wasRenderedLastFrame = true;
+            }
+          });
     }
   }
 

@@ -1593,15 +1593,15 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   initializeTileset(tileset);
   const Tile& child = tileset.getRootTile()->getChildren()[0];
   const Tile& grandchild = child.getChildren()[0];
+
+  auto states = viewGroup.getTraversalState().slowlyGetCurrentStates();
+
   CHECK(
-      viewGroup.getPreviousSelectionState(*tileset.getRootTile()).getResult() ==
+      states[tileset.getRootTile()].getResult() ==
       TileSelectionState::Result::Refined);
+  CHECK(states[&child].getResult() == TileSelectionState::Result::Refined);
   CHECK(
-      viewGroup.getPreviousSelectionState(child).getResult() ==
-      TileSelectionState::Result::Refined);
-  CHECK(
-      viewGroup.getPreviousSelectionState(grandchild).getResult() ==
-      TileSelectionState::Result::Rendered);
+      states[&grandchild].getResult() == TileSelectionState::Result::Rendered);
 
   // After the third update, the root and child tiles have been loaded, while
   // the grandchild has not. But the child is unconditionally refined, so we
@@ -1609,15 +1609,15 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   // the child and grandchild are kicked.
   initializeTileset(tileset);
   initializeTileset(tileset);
+
+  states = viewGroup.getTraversalState().slowlyGetCurrentStates();
+
   CHECK(
-      viewGroup.getPreviousSelectionState(*tileset.getRootTile()).getResult() ==
+      states[tileset.getRootTile()].getResult() ==
       TileSelectionState::Result::Rendered);
+  CHECK(states[&child].getResult() != TileSelectionState::Result::Rendered);
   CHECK(
-      viewGroup.getPreviousSelectionState(child).getResult() !=
-      TileSelectionState::Result::Rendered);
-  CHECK(
-      viewGroup.getPreviousSelectionState(grandchild).getResult() !=
-      TileSelectionState::Result::Rendered);
+      states[&grandchild].getResult() != TileSelectionState::Result::Rendered);
 
   REQUIRE(pRawLoader->_grandchildPromise);
 
@@ -1628,9 +1628,10 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
 
   initializeTileset(tileset);
 
+  states = viewGroup.getTraversalState().slowlyGetCurrentStates();
+
   CHECK(
-      viewGroup.getPreviousSelectionState(grandchild).getResult() ==
-      TileSelectionState::Result::Rendered);
+      states[&grandchild].getResult() == TileSelectionState::Result::Rendered);
 }
 
 } // namespace

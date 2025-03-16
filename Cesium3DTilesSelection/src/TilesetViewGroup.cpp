@@ -1,5 +1,4 @@
 #include <Cesium3DTilesSelection/TileLoadTask.h>
-#include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
@@ -26,44 +25,6 @@ const ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() const {
 /** @copydoc getViewUpdateResult */
 ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() {
   return this->_updateResult;
-}
-
-TileSelectionState
-TilesetViewGroup::getPreviousSelectionState(const Tile& tile) const noexcept {
-  auto it = this->_previousSelectionStates.find(&tile);
-  if (it == this->_previousSelectionStates.end()) {
-    return TileSelectionState();
-  } else {
-    return it->second;
-  }
-}
-
-TileSelectionState
-TilesetViewGroup::getCurrentSelectionState(const Tile& tile) const noexcept {
-  auto it = this->_currentSelectionStates.find(&tile);
-  if (it == this->_currentSelectionStates.end()) {
-    return TileSelectionState();
-  } else {
-    return it->second;
-  }
-}
-
-void TilesetViewGroup::setCurrentSelectionState(
-    const Tile& tile,
-    const TileSelectionState& newState) noexcept {
-  this->_currentSelectionStates[&tile] = newState;
-}
-
-void TilesetViewGroup::kick(const Tile& tile) noexcept {
-  auto it = this->_currentSelectionStates.find(&tile);
-  if (it == this->_currentSelectionStates.end()) {
-    // There should already be a selection result for this tile prior to
-    // kicking.
-    CESIUM_ASSERT(false);
-    return;
-  } else {
-    it->second.kick();
-  }
 }
 
 void TilesetViewGroup::addToLoadQueue(const TileLoadTask& task) {
@@ -113,7 +74,7 @@ size_t TilesetViewGroup::restoreTileLoadQueueCheckpoint(
   size_t after =
       this->_workerThreadLoadQueue.size() + this->_mainThreadLoadQueue.size();
 
-  return after - before;
+  return before - after;
 }
 
 size_t TilesetViewGroup::getWorkerThreadLoadQueueLength() const {

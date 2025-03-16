@@ -595,8 +595,7 @@ private:
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const FrameState& frameState,
-      const Tile& tile,
-      const TileSelectionState& lastFrameSelectionState);
+      const Tile& tile);
 };
 
 } // namespace Cesium3DTilesSelection
