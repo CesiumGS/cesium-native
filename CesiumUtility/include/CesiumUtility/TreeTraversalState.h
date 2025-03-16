@@ -231,7 +231,7 @@ public:
     }
 
     const TraversalData& parentPreviousData =
-        this->_previousTraversal[parentPreviousIndex];
+        this->_previousTraversal[size_t(parentPreviousIndex)];
 
     for (size_t i = size_t(parentPreviousIndex + 1);
          i < size_t(parentPreviousData.nextSiblingIndex);
@@ -260,7 +260,7 @@ public:
     CESIUM_ASSERT(parentCurrentIndex >= 0);
 
     const TraversalData& parentCurrentData =
-        this->_currentTraversal[parentCurrentIndex];
+        this->_currentTraversal[size_t(parentCurrentIndex)];
 
     size_t endIndex = parentCurrentData.nextSiblingIndex >= 0
                           ? parentCurrentData.nextSiblingIndex
@@ -353,7 +353,8 @@ private:
 
   const TraversalData& currentData() const {
     int64_t currentIndex = this->currentDataIndex();
-    return this->_currentTraversal[currentIndex];
+    CESIUM_ASSERT(currentIndex >= 0);
+    return this->_currentTraversal[size_t(currentIndex)];
   }
 
   std::unordered_map<TNodePointer, TState>
