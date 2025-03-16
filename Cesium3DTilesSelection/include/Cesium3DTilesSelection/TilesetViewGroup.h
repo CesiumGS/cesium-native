@@ -25,8 +25,8 @@ class CESIUM3DTILESSELECTION_API TilesetViewGroup final
     : public TileLoadRequester {
 public:
   /**
-   * @brief The type of the {@link TreeTraversalState} used to track tile
-   * selection states for this view group.
+   * @brief The type of the {@link CesiumUtility::TreeTraversalState}
+   * used to track tile selection states for this view group.
    */
   using TraversalState = CesiumUtility::TreeTraversalState<
       CesiumUtility::IntrusivePointer<const Tile>,

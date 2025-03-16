@@ -151,9 +151,9 @@ public:
    * {@link finishNode}.
    *
    * After `finishNode`, this node's parent node becomes the "current" node.
-   * {@link previousState} and {@link nextState} will return
-   * previous the states of this node's parent. A call to {@link beginNode}
-   * will delineate a new child of that same parent.
+   * {@link previousState} and {@link currentState} will return
+   * the states of this node's parent. A call to {@link beginNode} will
+   * delineate a new child of that same parent.
    *
    * @param pNode The node that is done being traversed.
    */
