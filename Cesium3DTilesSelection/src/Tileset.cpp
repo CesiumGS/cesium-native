@@ -690,8 +690,9 @@ const TilesetViewGroup& Tileset::getDefaultViewGroup() const {
 
 namespace {
 
-TileSelectionState
-getPreviousState(const TilesetViewGroup& viewGroup, [[maybe_unused]] const Tile& tile) {
+TileSelectionState getPreviousState(
+    const TilesetViewGroup& viewGroup,
+    [[maybe_unused]] const Tile& tile) {
   const TilesetViewGroup::TraversalState& traversalState =
       viewGroup.getTraversalState();
   CESIUM_ASSERT(traversalState.getCurrentNode() == &tile);
