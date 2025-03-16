@@ -56,7 +56,7 @@ public:
    * @param pNode The node traversed.
    */
   void beginNode(const TNodePointer& pNode) {
-    int64_t currentTraversalIndex = this->_currentTraversal.size();
+    int64_t currentTraversalIndex = int64_t(this->_currentTraversal.size());
     int64_t previousTraversalIndex = this->_previousTraversalNextNodeIndex;
 
     if (previousTraversalIndex >= 0 &&
@@ -198,7 +198,7 @@ public:
     }
 
     const TraversalData& parentPreviousData =
-        this->_previousTraversal[parentPreviousIndex];
+        this->_previousTraversal[size_t(parentPreviousIndex)];
 
     for (size_t i = size_t(parentPreviousIndex + 1);
          i < size_t(parentPreviousData.nextSiblingIndex);) {
@@ -263,7 +263,7 @@ public:
         this->_currentTraversal[size_t(parentCurrentIndex)];
 
     size_t endIndex = parentCurrentData.nextSiblingIndex >= 0
-                          ? parentCurrentData.nextSiblingIndex
+                          ? size_t(parentCurrentData.nextSiblingIndex)
                           : this->_currentTraversal.size();
 
     for (size_t i = size_t(parentCurrentIndex + 1); i < endIndex; ++i) {
