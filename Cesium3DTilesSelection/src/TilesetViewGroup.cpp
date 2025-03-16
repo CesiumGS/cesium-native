@@ -1,5 +1,4 @@
 #include <Cesium3DTilesSelection/TileLoadTask.h>
-#include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>

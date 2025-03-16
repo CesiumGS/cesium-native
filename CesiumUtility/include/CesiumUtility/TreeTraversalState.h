@@ -55,14 +55,14 @@ public:
    *
    * @param pNode The node traversed.
    */
-  void beginNode(TNodePointer pNode) {
+  void beginNode(const TNodePointer& pNode) {
     int64_t currentTraversalIndex = this->_currentTraversal.size();
     int64_t previousTraversalIndex = this->_previousTraversalNextNodeIndex;
 
     if (previousTraversalIndex >= 0 &&
-        previousTraversalIndex < int64_t(this->_previousTraversal.size())) {
+        size_t(previousTraversalIndex) < this->_previousTraversal.size()) {
       const TraversalData& previousData =
-          this->_previousTraversal[previousTraversalIndex];
+          this->_previousTraversal[size_t(previousTraversalIndex)];
       if (previousData.pNode == pNode) {
         ++this->_previousTraversalNextNodeIndex;
       } else {
@@ -157,7 +157,7 @@ public:
    *
    * @param pNode The node that is done being traversed.
    */
-  void finishNode([[maybe_unused]] TNodePointer pNode) {
+  void finishNode([[maybe_unused]] const TNodePointer& pNode) {
     // An assertion failure here indicates mismatched calls to beginNode /
     // finishNode.
     CESIUM_ASSERT(!this->_currentTraversal.empty());
@@ -200,7 +200,7 @@ public:
     const TraversalData& parentPreviousData =
         this->_previousTraversal[parentPreviousIndex];
 
-    for (size_t i = parentPreviousIndex + 1;
+    for (size_t i = size_t(parentPreviousIndex + 1);
          i < size_t(parentPreviousData.nextSiblingIndex);) {
       CESIUM_ASSERT(i < this->_previousTraversal.size());
       const TraversalData& data = this->_previousTraversal[i];
@@ -233,7 +233,7 @@ public:
     const TraversalData& parentPreviousData =
         this->_previousTraversal[parentPreviousIndex];
 
-    for (size_t i = parentPreviousIndex + 1;
+    for (size_t i = size_t(parentPreviousIndex + 1);
          i < size_t(parentPreviousData.nextSiblingIndex);
          ++i) {
       CESIUM_ASSERT(i < this->_previousTraversal.size());
@@ -347,7 +347,8 @@ private:
 
   TraversalData& currentData() {
     int64_t currentIndex = this->currentDataIndex();
-    return this->_currentTraversal[currentIndex];
+    CESIUM_ASSERT(currentIndex >= 0);
+    return this->_currentTraversal[size_t(currentIndex)];
   }
 
   const TraversalData& currentData() const {
