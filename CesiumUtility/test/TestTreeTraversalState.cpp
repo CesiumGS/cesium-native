@@ -19,11 +19,13 @@ TEST_CASE("TreeTraversalState") {
     Node a{"a"}, b{"b"}, c{"c"}, d{"d"}, e{"e"}, f{"f"};
     TreeTraversalState<Node*, int> traversalState;
 
-    //           a
-    //         / | \
-    //        b  c  d
-    //          / \
-    //         e   f
+    /*
+     *       a
+     *     / | \
+     *    b  c  d
+     *      / \
+     *     e   f
+     */
     // clang-format off
     traversalState.beginNode(&a);
       traversalState.currentState() = 1;
@@ -304,13 +306,15 @@ TEST_CASE("TreeTraversalState") {
     Node a{"a"}, b{"b"}, c{"c"}, d{"d"}, e{"e"}, f{"f"}, g{"g"}, h{"h"};
     TreeTraversalState<Node*, int> traversalState;
 
-    //           a
-    //         / | \
-    //        b  c  d
-    //          / \
-    //         e   f
-    //        / \
-    //       g   h
+    /*
+     *       a
+     *     / | \
+     *    b  c  d
+     *      / \
+     *     e   f
+     *    / \
+     *   g   h
+     */
     // clang-format off
     traversalState.beginNode(&a);
       traversalState.currentState() = 1;
@@ -381,21 +385,25 @@ TEST_CASE("TreeTraversalState") {
     Node a{"a"}, b{"b"}, c{"c"}, d{"d"}, e{"e"}, f{"f"}, g{"g"};
     TreeTraversalState<Node*, int> traversalState;
 
-    // First traversal:
-    //           a
-    //         /  \
-    //        b    c
-    //            / \
-    //           d   e
+    /*
+     * First traversal:
+     *      a
+     *    /  \
+     *   b    c
+     *       / \
+     *      d   e
+     */
 
-    // Second traversal:
-    //           a
-    //         /  \
-    //        b    c
-    //       /    / \
-    //      f    d   e
-    //     /
-    //    g
+    /*
+     * Second traversal:
+     *         a
+     *       /  \
+     *      b    c
+     *     /    / \
+     *    f    d   e
+     *   /
+     *  g
+     */
 
     traversalState.beginTraversal();
 
