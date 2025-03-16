@@ -287,9 +287,10 @@ void Tileset::_updateLodTransitions(
       }
 
       // Remove a tile from fade-out list if it is back on the render list.
-      pTile->decrementDoNotUnloadSubtreeCount(
-          "Tileset::_updateLodTransitions in render list");
-      result.tilesFadingOut.erase(pTile);
+      if (result.tilesFadingOut.erase(pTile) > 0) {
+        pTile->decrementDoNotUnloadSubtreeCount(
+            "Tileset::_updateLodTransitions in render list");
+      }
     }
   } else {
     // If there are any tiles still fading in, set them to fully visible right
