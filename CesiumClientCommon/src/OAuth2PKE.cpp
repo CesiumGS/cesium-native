@@ -155,7 +155,9 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
   if (clientOptions.redirectPort) {
     port = *clientOptions.redirectPort;
     if (!pServer->bind_to_port("127.0.0.1", port)) {
-      promise.resolve(Result<OAuth2TokenResponse>(ErrorList::error(fmt::format("Internal HTTP server failed to bind to port {}.", port))));
+      promise.resolve(Result<OAuth2TokenResponse>(ErrorList::error(fmt::format(
+          "Internal HTTP server failed to bind to port {}.",
+          port))));
       return promise.getFuture();
     }
   } else {

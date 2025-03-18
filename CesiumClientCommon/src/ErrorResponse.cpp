@@ -22,6 +22,10 @@ bool parseErrorResponse(
       "error_description",
       "");
 
+  if (outError.empty() && outErrorDesc.empty()) {
+    return false;
+  }
+
   const auto& detailsMember = doc.FindMember("details");
   if (detailsMember != doc.MemberEnd() && detailsMember->value.IsArray()) {
     for (const auto& value : detailsMember->value.GetArray()) {

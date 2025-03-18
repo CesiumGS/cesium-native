@@ -318,7 +318,7 @@ Connection::listIModels(const std::string& url) {
 
         const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
             {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
-            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
+            {"Accept", "application/vnd.bentley.itwin-platform.v2+json"},
             {"Prefer", "return=representation"}};
 
         return pAssetAccessor->get(asyncSystem, url, headers)
@@ -453,7 +453,7 @@ Connection::listIModelMeshExports(const std::string& url) {
 
                 items.emplace_back(
                     JsonHelpers::getStringOrDefault(item, "id", ""),
-                    JsonHelpers::getStringOrDefault(item, "value", ""),
+                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
                     iModelMeshExportStatusFromString(
                         JsonHelpers::getStringOrDefault(item, "status", "")),
                     exportType);
