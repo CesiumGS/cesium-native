@@ -10,10 +10,21 @@
 
 namespace CesiumRasterOverlays {
 
+class EndpointResource {
+public:
+  virtual bool needsAuthHeaderOnInitialRequest() const = 0;
+
+  virtual std::string getUrl(
+      int64_t assetID,
+      const std::string& accessToken,
+      const std::string& assetEndpointUrl) const = 0;
+  virtual ~EndpointResource() = default;
+};
+
 /**
  * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
  */
-class CESIUMRASTEROVERLAYS_API IonRasterOverlay final : public RasterOverlay {
+class CESIUMRASTEROVERLAYS_API IonRasterOverlay : public RasterOverlay {
 public:
   /**
    * @brief Creates a new instance.
@@ -47,10 +58,20 @@ public:
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
       const override;
 
+protected:
+  IonRasterOverlay(
+      const std::string& name,
+      int64_t ionAssetID,
+      const std::string& ionAccessToken,
+      std::unique_ptr<EndpointResource>&& endpointResource,
+      const RasterOverlayOptions& overlayOptions = {},
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
+
 private:
   int64_t _ionAssetID;
   std::string _ionAccessToken;
   std::string _ionAssetEndpointUrl;
+  std::unique_ptr<EndpointResource> _endpointResource;
 
   struct AssetEndpointAttribution {
     std::string html;

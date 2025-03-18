@@ -30,16 +30,50 @@ using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
 
+class CesiumIonEndpointResource : public EndpointResource {
+public:
+  virtual std::string getUrl(
+      int64_t ionAssetID,
+      const std::string& ionAccessToken,
+      const std::string& ionAssetEndpointUrl) const override {
+    return fmt::format(
+        "{}v1/assets/{}/endpoint?access_token={}",
+        ionAssetEndpointUrl,
+        ionAssetID,
+        ionAccessToken);
+  }
+
+  virtual bool needsAuthHeaderOnInitialRequest() const override {
+    return false;
+  }
+};
+
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const RasterOverlayOptions& overlayOptions,
     const std::string& ionAssetEndpointUrl)
+    : IonRasterOverlay(
+          name,
+          ionAssetID,
+          ionAccessToken,
+          std::make_unique<CesiumIonEndpointResource>(),
+          overlayOptions,
+          ionAssetEndpointUrl) {}
+
+IonRasterOverlay::IonRasterOverlay(
+    const std::string& name,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    std::unique_ptr<EndpointResource>&& endpointResource,
+    const RasterOverlayOptions& overlayOptions,
+    const std::string& ionAssetEndpointUrl)
     : RasterOverlay(name, overlayOptions),
       _ionAssetID(ionAssetID),
       _ionAccessToken(ionAccessToken),
-      _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
+      _ionAssetEndpointUrl(ionAssetEndpointUrl),
+      _endpointResource(std::move(endpointResource)) {}
 
 IonRasterOverlay::~IonRasterOverlay() = default;
 
@@ -102,12 +136,10 @@ IonRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-  std::string ionUrl = this->_ionAssetEndpointUrl + "v1/assets/" +
-                       std::to_string(this->_ionAssetID) + "/endpoint";
-  ionUrl = CesiumUtility::Uri::addQuery(
-      ionUrl,
-      "access_token",
-      this->_ionAccessToken);
+  const std::string ionUrl = this->_endpointResource->getUrl(
+      this->_ionAssetID,
+      this->_ionAccessToken,
+      this->_ionAssetEndpointUrl);
 
   pOwner = pOwner ? pOwner : this;
 
@@ -123,7 +155,15 @@ IonRasterOverlay::createTileProvider(
         pOwner);
   }
 
-  return pAssetAccessor->get(asyncSystem, ionUrl)
+  std::vector<IAssetAccessor::THeader> headers;
+
+  if (this->_endpointResource->needsAuthHeaderOnInitialRequest()) {
+    headers.emplace_back(
+        "Authorization",
+        fmt::format("Bearer {}", this->_ionAccessToken));
+  }
+
+  return pAssetAccessor->get(asyncSystem, ionUrl, headers)
       .thenImmediately(
           [](std::shared_ptr<IAssetRequest>&& pRequest)
               -> nonstd::expected<
