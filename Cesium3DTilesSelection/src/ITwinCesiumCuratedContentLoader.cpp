@@ -47,7 +47,7 @@ ITwinCesiumCuratedContentLoader::createLoader(
       ionAssetID,
       ionAccessToken,
       "",
-      ITwinCesiumCuratedContentEndpointResource{},
+      std::make_unique<ITwinCesiumCuratedContentEndpointResource>(),
       headerChangeListener,
       showCreditsOnScreen,
       ellipsoid);
@@ -69,7 +69,7 @@ ITwinCesiumCuratedContentLoader::refreshTokenIfNeeded(
       ionAssetID,
       ionAccessToken,
       "",
-      ITwinCesiumCuratedContentEndpointResource{},
+      std::make_unique<ITwinCesiumCuratedContentEndpointResource>(),
       headerChangeListener,
       showCreditsOnScreen,
       std::move(result),

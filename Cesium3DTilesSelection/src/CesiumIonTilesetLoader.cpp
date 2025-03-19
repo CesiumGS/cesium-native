@@ -650,7 +650,7 @@ CesiumIonTilesetLoader::createLoader(
       ionAssetID,
       ionAccessToken,
       ionAssetEndpointUrl,
-      CesiumIonEndpointResource{},
+      std::make_unique<CesiumIonEndpointResource>(),
       headerChangeListener,
       showCreditsOnScreen,
       ellipsoid);
@@ -663,12 +663,12 @@ CesiumIonTilesetLoader::createLoader(
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl,
-    const EndpointResource& endpointResource,
+    std::unique_ptr<EndpointResource>&& endpointResource,
     const AuthorizationHeaderChangeListener& headerChangeListener,
     bool showCreditsOnScreen,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::string ionUrl =
-      endpointResource.getUrl(ionAssetID, ionAccessToken, ionAssetEndpointUrl);
+      endpointResource->getUrl(ionAssetID, ionAccessToken, ionAssetEndpointUrl);
   auto cacheIt = endpointCache.find(ionUrl);
   if (cacheIt != endpointCache.end()) {
     const auto& endpoint = cacheIt->second;
@@ -690,17 +690,18 @@ CesiumIonTilesetLoader::createLoader(
                ionAssetID,
                ionAccessToken,
                ionAssetEndpointUrl,
-               &endpointResource,
+               endpointResource = std::move(endpointResource),
                headerChangeListener,
                showCreditsOnScreen](
-                  TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+                  TilesetContentLoaderResult<CesiumIonTilesetLoader>&&
+                      result) mutable {
                 return refreshTokenIfNeeded(
                     externals,
                     contentOptions,
                     ionAssetID,
                     ionAccessToken,
                     ionAssetEndpointUrl,
-                    endpointResource,
+                    std::move(endpointResource),
                     headerChangeListener,
                     showCreditsOnScreen,
                     std::move(result),
@@ -722,18 +723,18 @@ CesiumIonTilesetLoader::createLoader(
                ionAssetID,
                ionAccessToken,
                ionAssetEndpointUrl,
-               &endpointResource,
+               endpointResource = std::move(endpointResource),
                headerChangeListener,
                showCreditsOnScreen,
-               ellipsoid](
-                  TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+               ellipsoid](TilesetContentLoaderResult<CesiumIonTilesetLoader>&&
+                              result) mutable {
                 return refreshTokenIfNeeded(
                     externals,
                     contentOptions,
                     ionAssetID,
                     ionAccessToken,
                     ionAssetEndpointUrl,
-                    endpointResource,
+                    std::move(endpointResource),
                     headerChangeListener,
                     showCreditsOnScreen,
                     std::move(result),
@@ -748,7 +749,7 @@ CesiumIonTilesetLoader::createLoader(
     return externals.asyncSystem.createResolvedFuture(std::move(result));
   } else {
     std::vector<CesiumAsync::IAssetAccessor::THeader> headers;
-    if (endpointResource.needsAuthHeaderOnInitialRequest()) {
+    if (endpointResource->needsAuthHeaderOnInitialRequest()) {
       headers.emplace_back("Authorization", "Bearer " + ionAccessToken);
     }
 
@@ -794,7 +795,7 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
       ionAssetID,
       ionAccessToken,
       ionAssetEndpointUrl,
-      CesiumIonEndpointResource{},
+      std::make_unique<CesiumIonEndpointResource>(),
       headerChangeListener,
       showCreditsOnScreen,
       std::move(result),
@@ -808,14 +809,14 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl,
-    const EndpointResource& endpointResource,
+    std::unique_ptr<EndpointResource>&& endpointResource,
     const AuthorizationHeaderChangeListener& headerChangeListener,
     bool showCreditsOnScreen,
     TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (result.errors.hasErrors()) {
     if (result.statusCode == 401) {
-      endpointCache.erase(endpointResource.getUrl(
+      endpointCache.erase(endpointResource->getUrl(
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl));
@@ -825,6 +826,7 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl,
+          std::move(endpointResource),
           headerChangeListener,
           showCreditsOnScreen,
           ellipsoid);

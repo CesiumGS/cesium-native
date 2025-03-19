@@ -122,7 +122,7 @@ protected:
       int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl,
-      const EndpointResource& endpointResource,
+      std::unique_ptr<EndpointResource>&& endpointResource,
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
@@ -134,7 +134,7 @@ protected:
       int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl,
-      const EndpointResource& endpointResource,
+      std::unique_ptr<EndpointResource>&& endpointResource,
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen,
       TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result,
