@@ -4,6 +4,10 @@
 #include <fmt/format.h>
 #include <rapidjson/document.h>
 
+#include <cstddef>
+#include <span>
+#include <string>
+
 namespace CesiumClientCommon {
 bool parseErrorResponse(
     const std::span<const std::byte>& body,

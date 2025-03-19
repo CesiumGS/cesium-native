@@ -1,28 +1,34 @@
-#include "CesiumAsync/IAssetRequest.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumUtility/ErrorList.h"
-#include "CesiumUtility/Result.h"
-
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumClientCommon/ErrorResponse.h>
 #include <CesiumClientCommon/OAuth2PKE.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumITwinClient/AuthToken.h>
 #include <CesiumITwinClient/Connection.h>
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Resources.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 
+#include <fmt/format.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
 #include <atomic>
-#include <limits>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -269,7 +275,7 @@ Connection::listITwins(const std::string& url) {
               items.reserve(itemsMember->value.Size());
 
               for (const auto& item : itemsMember->value.GetArray()) {
-                items.emplace_back(
+                items.emplace_back(ITwin{
                     JsonHelpers::getStringOrDefault(item, "id", ""),
                     JsonHelpers::getStringOrDefault(item, "class", ""),
                     JsonHelpers::getStringOrDefault(item, "subClass", ""),
@@ -277,7 +283,7 @@ Connection::listITwins(const std::string& url) {
                     JsonHelpers::getStringOrDefault(item, "number", ""),
                     JsonHelpers::getStringOrDefault(item, "displayName", ""),
                     iTwinStatusFromString(
-                        JsonHelpers::getStringOrDefault(item, "status", "")));
+                        JsonHelpers::getStringOrDefault(item, "status", ""))});
               }
 
               return Result<PagedList<ITwin>>(PagedList<ITwin>(
@@ -363,7 +369,7 @@ Connection::listIModels(const std::string& url) {
                   }
                 }
 
-                items.emplace_back(
+                items.emplace_back(IModel{
                     JsonHelpers::getStringOrDefault(item, "id", ""),
                     JsonHelpers::getStringOrDefault(item, "displayName", ""),
                     JsonHelpers::getStringOrDefault(item, "name", ""),
@@ -374,7 +380,7 @@ Connection::listIModels(const std::string& url) {
                         southWest.longitude,
                         southWest.latitude,
                         northEast.longitude,
-                        northEast.latitude));
+                        northEast.latitude)});
               }
 
               return Result<PagedList<IModel>>(PagedList<IModel>(
@@ -451,12 +457,12 @@ Connection::listIModelMeshExports(const std::string& url) {
                           ""));
                 }
 
-                items.emplace_back(
+                items.emplace_back(IModelMeshExport{
                     JsonHelpers::getStringOrDefault(item, "id", ""),
                     JsonHelpers::getStringOrDefault(item, "displayName", ""),
                     iModelMeshExportStatusFromString(
                         JsonHelpers::getStringOrDefault(item, "status", "")),
-                    exportType);
+                    exportType});
               }
 
               return Result<PagedList<IModelMeshExport>>(
@@ -546,7 +552,7 @@ Connection::listITwinRealityData(const std::string& url) {
                   }
                 }
 
-                items.emplace_back(
+                items.emplace_back(ITwinRealityData{
                     JsonHelpers::getStringOrDefault(item, "id", ""),
                     JsonHelpers::getStringOrDefault(item, "displayName", ""),
                     JsonHelpers::getStringOrDefault(item, "description", ""),
@@ -561,7 +567,7 @@ Connection::listITwinRealityData(const std::string& url) {
                         southWest.latitude,
                         northEast.longitude,
                         northEast.latitude),
-                    JsonHelpers::getBoolOrDefault(item, "authoring", false));
+                    JsonHelpers::getBoolOrDefault(item, "authoring", false)});
               }
 
               return Result<PagedList<ITwinRealityData>>(
@@ -608,7 +614,7 @@ Connection::listCesiumCuratedContent() {
             items.reserve(itemsMember->value.Size());
 
             for (const auto& value : itemsMember->value.GetArray()) {
-              items.emplace_back(
+              items.emplace_back(ITwinCesiumCuratedContentItem{
                   JsonHelpers::getUint64OrDefault(value, "id", 0),
                   cesiumCuratedContentTypeFromString(
                       JsonHelpers::getStringOrDefault(value, "type", "")),
@@ -616,7 +622,7 @@ Connection::listCesiumCuratedContent() {
                   JsonHelpers::getStringOrDefault(value, "description", ""),
                   JsonHelpers::getStringOrDefault(value, "attribution", ""),
                   cesiumCuratedContentStatusFromString(
-                      JsonHelpers::getStringOrDefault(value, "status", "")));
+                      JsonHelpers::getStringOrDefault(value, "status", ""))});
             }
 
             return Result<ITwinCCCListResponse>(std::move(items));
@@ -737,12 +743,12 @@ fetchCCCResources(
             continue;
           }
 
-          cccResources.emplace_back(
+          cccResources.emplace_back(ITwinResource{
               std::to_string(cccItem.id),
               std::nullopt,
               ResourceSource::CesiumCuratedContent,
               cccItem.name,
-              type);
+              type});
         }
 
         return cccResources;
@@ -775,12 +781,12 @@ fetchIModelMeshExports(
                 continue;
               }
 
-              resources.emplace_back(
+              resources.emplace_back(ITwinResource{
                   exp.id,
                   iModelId,
                   ResourceSource::MeshExport,
                   exp.displayName,
-                  ResourceType::Tileset);
+                  ResourceType::Tileset});
             }
 
             return Result<std::vector<ITwinResource>>(std::move(resources));
@@ -850,12 +856,12 @@ fetchRealityDataResources(
                 continue;
               }
 
-              resources.emplace_back(
+              resources.emplace_back(ITwinResource{
                   data.id,
                   iTwinId,
                   ResourceSource::RealityData,
                   data.displayName,
-                  type);
+                  type});
             }
 
             return Result<std::vector<ITwinResource>>{resources};

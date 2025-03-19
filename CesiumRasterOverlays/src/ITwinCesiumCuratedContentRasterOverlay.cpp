@@ -1,4 +1,11 @@
 #include <CesiumRasterOverlays/ITwinCesiumCuratedContentRasterOverlay.h>
+#include <CesiumRasterOverlays/IonRasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+
+#include <fmt/format.h>
+
+#include <cstdint>
+#include <memory>
 
 namespace CesiumRasterOverlays {
 class ITwinCesiumCuratedContentEndpointResource : public EndpointResource {

@@ -1,5 +1,7 @@
 #include <CesiumITwinClient/Resources.h>
 
+#include <string>
+
 namespace CesiumITwinClient {
 ITwinCesiumCuratedContentType
 cesiumCuratedContentTypeFromString(const std::string& str) {

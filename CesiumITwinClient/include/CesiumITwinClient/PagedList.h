@@ -1,7 +1,6 @@
 #pragma once
 
-#include "CesiumAsync/AsyncSystem.h"
-
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>

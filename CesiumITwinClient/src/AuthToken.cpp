@@ -1,13 +1,20 @@
 #include <CesiumITwinClient/AuthToken.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 
+#include <fmt/format.h>
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
-#include <rapidjson/rapidjson.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 using namespace CesiumUtility;
 

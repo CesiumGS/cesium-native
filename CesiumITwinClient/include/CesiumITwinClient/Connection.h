@@ -1,12 +1,12 @@
 #pragma once
 
 #include "AuthToken.h"
-#include "CesiumClientCommon/OAuth2PKE.h"
 #include "Library.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumClientCommon/OAuth2PKE.h>
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Resources.h>
 #include <CesiumUtility/Result.h>

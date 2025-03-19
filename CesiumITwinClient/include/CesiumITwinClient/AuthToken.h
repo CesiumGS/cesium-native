@@ -1,7 +1,8 @@
 #pragma once
 
-#include "CesiumUtility/Result.h"
 #include "Library.h"
+
+#include <CesiumUtility/Result.h>
 
 #include <cstdint>
 #include <string>

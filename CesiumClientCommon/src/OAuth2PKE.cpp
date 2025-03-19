@@ -1,6 +1,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumClientCommon/ErrorResponse.h>
 #include <CesiumClientCommon/OAuth2PKE.h>
@@ -8,17 +9,49 @@
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
+#include <fmt/format.h>
 #include <httplib.h>
 #include <modp_b64.h>
-#include <picosha2.h>
+#include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
+#include <picosha2.h>
+
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)
+#pragma GCC diagnostic pop
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 using namespace CesiumUtility;
 
