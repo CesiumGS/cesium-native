@@ -384,7 +384,7 @@ TEST_CASE("AsyncSystem Examples") {
                       processDownloadedContent(pResponse->data());
                   std::optional<std::string> maybeUrl =
                       findReferencedImageUrl(processed);
-                  if (maybeUrl) {
+                  if (!maybeUrl) {
                     return asyncSystem.createResolvedFuture<
                         std::shared_ptr<CesiumAsync::IAssetRequest>>(nullptr);
                   } else {

@@ -91,8 +91,8 @@ public:
     return this->_objectHandler->readObjectStart();
   }
 
-  virtual IJsonHandler*
-  readObjectKey(const std::string_view& /*str*/) noexcept override {
+  virtual IJsonHandler* readObjectKey(
+      [[maybe_unused]] const std::string_view& str) noexcept override {
     return nullptr;
   }
 

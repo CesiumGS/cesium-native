@@ -27,10 +27,10 @@ template <> float intToFloat(std::int8_t c) {
   return std::max(c / 127.0f, -1.0f);
 }
 
-template <> float intToFloat(std::uint8_t c) { return c / 127.0f; }
+template <> float intToFloat(std::uint8_t c) { return c / 255.0f; }
 
 template <> float intToFloat(std::int16_t c) {
-  return std::max(c / 65535.0f, -1.0f);
+  return std::max(c / 32767.0f, -1.0f);
 }
 
 template <> float intToFloat(std::uint16_t c) { return c / 65535.0f; }

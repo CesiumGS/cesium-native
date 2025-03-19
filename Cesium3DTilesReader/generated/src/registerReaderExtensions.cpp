@@ -24,6 +24,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       Cesium3DTiles::BoundingVolume,
       Extension3dTilesBoundingVolumeCylinderJsonHandler>();
   options.registerExtension<
+      Cesium3DTiles::BoundingVolume,
+      Extension3dTilesBoundingVolumeCylinderJsonHandler>();
+  options.registerExtension<
       Cesium3DTiles::Tileset,
       Extension3dTilesEllipsoidJsonHandler>();
   options.registerExtension<

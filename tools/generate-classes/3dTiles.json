@@ -52,8 +52,12 @@
       ]
     },
     {
+      "extensionName": "3DTILES_bounding_volume_cylinder",
+      "schema": "3DTILES_bounding_volume_cylinder/schema/boundingVolume.3DTILES_bounding_volume_cylinder.schema.json"
+    },
+    {
       "extensionName": "3DTILES_content_voxels",
-      "schema": "https://raw.githubusercontent.com/CesiumGS/3d-tiles/voxels/extensions/3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
+      "schema": "3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
     }
   ]
 }

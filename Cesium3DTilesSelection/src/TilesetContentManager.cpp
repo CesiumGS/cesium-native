@@ -1037,6 +1037,9 @@ void TilesetContentManager::loadTileContent(
     }
   }
 
+  tile.incrementDoNotUnloadSubtreeCount(
+      "TilesetContentManager::loadTileContent begin");
+
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
       mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
@@ -1108,15 +1111,22 @@ void TilesetContentManager::loadTileContent(
       })
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
+        tile.decrementDoNotUnloadSubtreeCount(
+            "TilesetContentManager::loadTileContent done loading");
 
         thiz->notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
+        tile.getMappedRasterTiles().clear();
+        tile.setState(TileLoadState::Failed);
+
+        tile.decrementDoNotUnloadSubtreeCount(
+            "TilesetContentManager::loadTileContent error while loading");
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
-            "An unexpected error occurs when loading tile: {}",
+            "An unexpected error occurred when loading tile: {}",
             e.what());
       });
 }
@@ -1162,21 +1172,42 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
   }
 }
 
-bool TilesetContentManager::unloadTileContent(Tile& tile) {
+UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
-    return true;
+    return UnloadTileContentResult::Remove;
   }
 
   if (state == TileLoadState::ContentLoading) {
-    return false;
+    return UnloadTileContentResult::Keep;
   }
 
   TileContent& content = tile.getContent();
 
-  // don't unload external or empty tile
-  if (content.isExternalContent() || content.isEmptyContent()) {
-    return false;
+  // We can unload empty content at any time.
+  if (content.isEmptyContent()) {
+    notifyTileUnloading(&tile);
+    content.setContentKind(TileUnknownContent{});
+    tile.setState(TileLoadState::Unloaded);
+    tile.decrementDoNotUnloadSubtreeCountOnParent(
+        "TilesetContentManager::unloadTileContent unload empty content");
+    return UnloadTileContentResult::Remove;
+  }
+
+  if (content.isExternalContent()) {
+    // Tile with external content that still has references to its pointer or to
+    // its children's pointers - we can't unload.
+    // We also, of course, don't want to unload the root tile.
+    if (tile.getParent() == nullptr || tile.getDoNotUnloadSubtreeCount() > 0) {
+      return UnloadTileContentResult::Keep;
+    }
+
+    notifyTileUnloading(&tile);
+    content.setContentKind(TileUnknownContent{});
+    tile.setState(TileLoadState::Unloaded);
+    tile.decrementDoNotUnloadSubtreeCountOnParent(
+        "TilesetContentManager::unloadTileContent unload external content");
+    return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
   // Detach raster tiles first so that the renderer's tile free
@@ -1210,15 +1241,19 @@ bool TilesetContentManager::unloadTileContent(Tile& tile) {
       // it right now. So mark the tile as in the process of unloading and stop
       // here.
       tile.setState(TileLoadState::Unloading);
-      return false;
+      return UnloadTileContentResult::Keep;
     }
   }
 
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
+  if (!content.isUnknownContent()) {
+    tile.decrementDoNotUnloadSubtreeCountOnParent(
+        "TilesetContentManager::unloadTileContent unload render content");
+  }
   content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
-  return true;
+  return UnloadTileContentResult::Remove;
 }
 
 void TilesetContentManager::unloadAll() {
@@ -1400,6 +1435,11 @@ void TilesetContentManager::setTileContent(
             std::move(result.rasterOverlayDetails),
             pWorkerRenderResources},
         std::move(result.contentKind));
+
+    if (!tile.getContent().isUnknownContent()) {
+      tile.incrementDoNotUnloadSubtreeCountOnParent(
+          "TilesetContentManager::setTileContent");
+    }
 
     if (result.tileInitializer) {
       result.tileInitializer(tile);

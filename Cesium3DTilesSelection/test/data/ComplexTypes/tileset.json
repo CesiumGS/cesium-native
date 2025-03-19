@@ -1,0 +1,19 @@
+{
+  "asset" : {
+    "version" : "1.1"
+  },
+  "geometricError" : 100.0,
+  "root" : {
+    "content" : {
+      "uri" : "ComplexTypes.gltf"
+    },
+    "boundingVolume" : {
+      "box" : [ 
+        0.5, 0.0, 0.5,
+        0.5, 0.0, 0.0, 
+        0.0, 0.01, 0.0, 
+        0.0, 0.0, 0.5]
+    },
+    "geometricError" : 0.0
+  }
+}

@@ -61,6 +61,13 @@ struct BoundingVolumeSubdivision {
     return ImplicitTilingUtilities::computeBoundingVolume(obb, this->tileID);
   }
 
+  BoundingVolume
+  operator()(const CesiumGeometry::BoundingCylinderRegion& cylinder) {
+    return ImplicitTilingUtilities::computeBoundingVolume(
+        cylinder,
+        this->tileID);
+  }
+
   const CesiumGeometry::QuadtreeTileID& tileID;
   const CesiumGeospatial::Ellipsoid& ellipsoid;
 };

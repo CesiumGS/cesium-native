@@ -44,8 +44,16 @@ protected:
 
 private:
   Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder* _pObject = nullptr;
+  CesiumJsonReader::DoubleJsonHandler _minRadius;
+  CesiumJsonReader::DoubleJsonHandler _maxRadius;
+  CesiumJsonReader::DoubleJsonHandler _height;
+  CesiumJsonReader::DoubleJsonHandler _minAngle;
+  CesiumJsonReader::DoubleJsonHandler _maxAngle;
   CesiumJsonReader::
       ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
-          _cylinder;
+          _translation;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _rotation;
 };
 } // namespace Cesium3DTilesReader

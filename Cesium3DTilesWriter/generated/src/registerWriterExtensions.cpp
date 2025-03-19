@@ -29,6 +29,9 @@ void registerWriterExtensions(
       Cesium3DTiles::BoundingVolume,
       Extension3dTilesBoundingVolumeCylinderJsonWriter>();
   context.registerExtension<
+      Cesium3DTiles::BoundingVolume,
+      Extension3dTilesBoundingVolumeCylinderJsonWriter>();
+  context.registerExtension<
       Cesium3DTiles::Tileset,
       Extension3dTilesEllipsoidJsonWriter>();
   context.registerExtension<

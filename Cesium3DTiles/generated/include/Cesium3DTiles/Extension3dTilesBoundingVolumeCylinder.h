@@ -9,7 +9,7 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief 3D Tiles extension for cylinder bounding volumes.
+ * @brief 3D Tiles extension for cylinder region bounding volumes.
  */
 struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeCylinder final
     : public CesiumUtility::ExtensibleObject {
@@ -24,15 +24,46 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeCylinder final
       "3DTILES_bounding_volume_cylinder";
 
   /**
-   * @brief An array of 12 numbers that define a cylinder. The first three
-   * elements define the x, y, and z values for the center of the cylinder. The
-   * next three elements (with indices 3, 4, and 5) define the x axis direction
-   * and half-length. The next three elements (indices 6, 7, and 8) define the y
-   * axis direction and half-length. The last three elements (indices 9, 10, and
-   * 11) define the z axis direction and half-length. The axes must be
-   * orthogonal to each other.
+   * @brief The inner radius of the cylinder region along the x and y axes, in
+   * meters.
    */
-  std::vector<double> cylinder;
+  double minRadius = double();
+
+  /**
+   * @brief The outer radius of the cylinder region along the x and y axes, in
+   * meters.
+   */
+  double maxRadius = double();
+
+  /**
+   * @brief The height of the cylinder in meters along the z-axis, in meters.
+   */
+  double height = double();
+
+  /**
+   * @brief The minimum angle of the cylinder region in radians. In other words,
+   * this is the angle where the cylinder region starts. Must be in the range
+   * [-pi, pi].
+   */
+  double minAngle = -3.14159265359;
+
+  /**
+   * @brief The maximum angle of the cylinder region in radians. In other words,
+   * this is the angle where the cylinder region ends. Must be in the range
+   * [-pi, pi].
+   */
+  double maxAngle = 3.14159265359;
+
+  /**
+   * @brief The cylinder's translation along the x, y, and z axes.
+   */
+  std::vector<double> translation = {0, 0, 0};
+
+  /**
+   * @brief The cylinder's rotation, represented by a unit quaternion in the
+   * order (x, y, z, w), where w is the scalar.
+   */
+  std::vector<double> rotation = {0, 0, 0, 1};
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -45,7 +76,8 @@ struct CESIUM3DTILES_API Extension3dTilesBoundingVolumeCylinder final
     accum += int64_t(sizeof(Extension3dTilesBoundingVolumeCylinder));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(sizeof(double) * this->cylinder.capacity());
+    accum += int64_t(sizeof(double) * this->translation.capacity());
+    accum += int64_t(sizeof(double) * this->rotation.capacity());
     return accum;
   }
 };
