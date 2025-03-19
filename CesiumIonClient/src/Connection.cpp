@@ -4,7 +4,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/Promise.h>
-#include <CesiumClientCommon/OAuth2PKE.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -65,7 +65,7 @@ using namespace CesiumUtility;
   Promise<Connection> connectionPromise =
       asyncSystem.createPromise<Connection>();
 
-  CesiumClientCommon::OAuth2PKE::authorize(
+  CesiumClientCommon::OAuth2PKCE::authorize(
       asyncSystem,
       pAssetAccessor,
       friendlyApplicationName,

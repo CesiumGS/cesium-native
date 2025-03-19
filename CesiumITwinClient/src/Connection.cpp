@@ -4,7 +4,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumClientCommon/ErrorResponse.h>
-#include <CesiumClientCommon/OAuth2PKE.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumITwinClient/AuthToken.h>
@@ -142,7 +142,7 @@ CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
       redirectPort,
       false};
 
-  CesiumClientCommon::OAuth2PKE::authorize(
+  CesiumClientCommon::OAuth2PKCE::authorize(
       asyncSystem,
       pAssetAccessor,
       friendlyApplicationName,
@@ -641,7 +641,7 @@ Connection::ensureValidToken() {
         ErrorList::error("No valid auth token or refresh token.")));
   }
 
-  return CesiumClientCommon::OAuth2PKE::refresh(
+  return CesiumClientCommon::OAuth2PKCE::refresh(
              this->_asyncSystem,
              this->_pAssetAccessor,
              this->_clientOptions,

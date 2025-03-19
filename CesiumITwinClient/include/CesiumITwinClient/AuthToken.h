@@ -14,6 +14,14 @@ namespace CesiumITwinClient {
  */
 class CESIUMITWINCLIENT_API AuthToken {
 public:
+  /**
+   * @brief Creates a new \ref AuthToken by parsing the provided JWT
+   * authentication token.
+   *
+   * @param tokenStr The JWT authentication token.
+   * @returns A `Result` containing either the parsed \ref AuthToken or error
+   * messages.
+   */
   static CesiumUtility::Result<AuthToken> parse(const std::string& tokenStr);
 
   /**
@@ -30,8 +38,26 @@ public:
    */
   int64_t getExpirationTime() const { return _expires; }
 
+  /**
+   * @brief Returns the contained token string.
+   */
   const std::string& getToken() const { return _token; }
 
+  /**
+   * @brief Creates a new `AuthToken`.
+   *
+   * This constructor assumes all the data in the provided token has already
+   * been parsed. If not, you should call \ref parse instead.
+   *
+   * @param token The full token string.
+   * @param name The name of the token.
+   * @param userName The name of the user this token belongs to.
+   * @param scopes The set of scopes this token is valid for.
+   * @param notValidBefore A UNIX timestamp representing the point in time that
+   * this token starts to be valid.
+   * @param expires A UNIX timestamp representing the point in time that this
+   * token stops being valid.
+   */
   AuthToken(
       const std::string& token,
       std::string&& name,

@@ -4,8 +4,9 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumClientCommon/ErrorResponse.h>
-#include <CesiumClientCommon/OAuth2PKE.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumClientCommon/fillWithRandomBytes.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
@@ -171,7 +172,7 @@ std::string createAuthorizationErrorHtml(
 }
 } // namespace
 
-CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
+CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& friendlyApplicationName,
@@ -334,7 +335,7 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKE::authorize(
 }
 
 CesiumAsync::Future<Result<OAuth2TokenResponse>>
-OAuth2PKE::completeTokenExchange(
+OAuth2PKCE::completeTokenExchange(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const OAuth2ClientOptions& clientOptions,
@@ -449,7 +450,7 @@ OAuth2PKE::completeTokenExchange(
 }
 
 CesiumAsync::Future<CesiumUtility::Result<OAuth2TokenResponse>>
-OAuth2PKE::refresh(
+OAuth2PKCE::refresh(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const OAuth2ClientOptions& clientOptions,

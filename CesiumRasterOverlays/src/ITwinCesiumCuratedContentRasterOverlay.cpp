@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 namespace CesiumRasterOverlays {
 class ITwinCesiumCuratedContentEndpointResource : public EndpointResource {

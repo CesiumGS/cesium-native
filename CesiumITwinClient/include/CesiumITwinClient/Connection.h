@@ -6,7 +6,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumClientCommon/OAuth2PKE.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Resources.h>
 #include <CesiumUtility/Result.h>
@@ -65,6 +65,9 @@ public:
   void addToUri(CesiumUtility::Uri& uri) const;
 };
 
+/**
+ * @brief Represents a connection to the Bentley iTwin API.
+ */
 class CESIUMITWINCLIENT_API Connection {
 public:
   /**

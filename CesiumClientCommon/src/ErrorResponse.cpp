@@ -20,18 +20,30 @@ bool parseErrorResponse(
     return false;
   }
 
-  outError = CesiumUtility::JsonHelpers::getStringOrDefault(doc, "error", "");
-  outErrorDesc = CesiumUtility::JsonHelpers::getStringOrDefault(
-      doc,
-      "error_description",
-      "");
+  rapidjson::Value::Object rootObj = doc.GetObject();
+
+  const auto errorMember = doc.FindMember("error");
+  if (errorMember != doc.MemberEnd() && errorMember->value.IsObject()) {
+    rootObj = errorMember->value.GetObject();
+    outError =
+        CesiumUtility::JsonHelpers::getStringOrDefault(rootObj, "code", "");
+    outErrorDesc =
+        CesiumUtility::JsonHelpers::getStringOrDefault(rootObj, "message", "");
+  } else {
+    outError =
+        CesiumUtility::JsonHelpers::getStringOrDefault(rootObj, "error", "");
+    outErrorDesc = CesiumUtility::JsonHelpers::getStringOrDefault(
+        rootObj,
+        "error_description",
+        "");
+  }
 
   if (outError.empty() && outErrorDesc.empty()) {
     return false;
   }
 
-  const auto& detailsMember = doc.FindMember("details");
-  if (detailsMember != doc.MemberEnd() && detailsMember->value.IsArray()) {
+  const auto& detailsMember = rootObj.FindMember("details");
+  if (detailsMember != rootObj.MemberEnd() && detailsMember->value.IsArray()) {
     for (const auto& value : detailsMember->value.GetArray()) {
       const std::string code =
           CesiumUtility::JsonHelpers::getStringOrDefault(value, "code", "");

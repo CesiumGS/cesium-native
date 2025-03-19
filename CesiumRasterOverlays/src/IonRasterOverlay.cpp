@@ -11,7 +11,6 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
