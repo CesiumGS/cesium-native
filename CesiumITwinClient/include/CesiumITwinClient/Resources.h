@@ -380,9 +380,9 @@ struct ITwinRealityData {
    * reality data. Given a type, the consuming software should be able to
    * determine if it has the capacity to open the reality data. Although the
    * type field is a free string some specific values are reserved and other
-   * values should be selected judiciously. Look at the documentation for [an
-   * exhaustive list of reserved reality data
-   * types](https://developer.bentley.com/apis/reality-management/rm-rd-details/#types).
+   * values should be selected judiciously. Look at the documentation for <a
+   * href="https://developer.bentley.com/apis/reality-management/rm-rd-details/#types">an
+   * exhaustive list of reserved reality data types</a>.
    */
   std::string type;
   /**
