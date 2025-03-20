@@ -2,6 +2,16 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added new TilesetContentLoaders constructible using the new `TilesetLoaderFactory` constructor on `Cesium3DTilesSelection::Tileset`.
+  - `ITwinCesiumCuratedContentLoader` can load tilesets from the [iTwin Cesium Curated Content API](https://developer.bentley.com/apis/cesium-curated-content/).
+  - `IModelMeshExportContentLoader` can load [iModels](https://www.itwinjs.org/learning/imodels/) exported to the 3D Tiles format through the [Mesh Export API](https://developer.bentley.com/apis/mesh-export/).
+  - `ITwinRealityDataContentLoader` can load 3D Tiles iTwin Reality Data through the [Reality Management API](https://developer.bentley.com/apis/reality-management/overview/).
+- `ITwinCesiumCuratedContentRasterOverlay` can load imagery from the iTwin Cesium Curated Content API.
+- Added `CesiumITwinClient` library for authorizing with and making requests to the iTwin API.
+- Added `CesiumClientCommon` to hold shared code between `CesiumIonClient` and `CesiumITwinClient`.
+
 ##### Fixes :wrench:
 
 - Fixed missing URI query part when downloading glTF textures or buffers.
