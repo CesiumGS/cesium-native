@@ -150,20 +150,20 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
     CESIUM_ASSERT(
         N == 2 && "Only vec2s can contain two-byte integer components.");
     result[0] = static_cast<uint16_t>(bytes[0]) |
-                (static_cast<uint16_t>(bytes[1]) << 8);
+                static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     result[1] = static_cast<uint16_t>(bytes[2]) |
-                (static_cast<uint16_t>(bytes[3]) << 8);
+                static_cast<uint16_t>(static_cast<uint16_t>(bytes[3]) << 8);
   }
 
   if constexpr (std::is_same_v<T, int8_t>) {
     for (size_t i = 0; i < bytes.size(); i++) {
-      result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
+      result[int32_t(i)] = *reinterpret_cast<const int8_t*>(&bytes[i]);
     }
   }
 
   if constexpr (std::is_same_v<T, uint8_t>) {
     for (size_t i = 0; i < bytes.size(); i++) {
-      result[i] = bytes[i];
+      result[int32_t(i)] = bytes[i];
     }
   }
 
@@ -183,10 +183,10 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   std::vector<T> result(bytes.size() / sizeof(T));
 
   if constexpr (sizeof(T) == 2) {
-    for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
+    for (size_t i = 0, b = 0; i < result.size(); i++, b += 2) {
       using UintType = std::make_unsigned_t<T>;
       UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-                              (static_cast<UintType>(bytes[b + 1]) << 8);
+      static_cast<UintType>(static_cast<UintType>(bytes[b + 1]) << 8);
       result[i] = *reinterpret_cast<T*>(&resultAsUint);
     }
   } else {

@@ -423,8 +423,10 @@ public:
     if (classProperty.noData) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        // "noData" can only be defined if the property is not required.
-        _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          // "noData" can only be defined if the property is not required.
+          _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getValue(*classProperty.noData);
       }
@@ -439,9 +441,11 @@ public:
     if (classProperty.defaultProperty) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        // "default" can only be defined if the property is not required.
-        _defaultValue =
-            getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          // "default" can only be defined if the property is not required.
+          _defaultValue =
+              getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _defaultValue = getValue(*classProperty.defaultProperty);
       }
@@ -1564,7 +1568,9 @@ public:
     if (classProperty.noData) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        _noData = getEnumArrayValue(*classProperty.noData, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          _noData = getEnumArrayValue(*classProperty.noData, *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getArrayValue(*classProperty.noData);
       }
@@ -1578,8 +1584,11 @@ public:
     if (classProperty.defaultProperty) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        _defaultValue =
-            getEnumArrayValue(*classProperty.defaultProperty, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          _defaultValue = getEnumArrayValue(
+              *classProperty.defaultProperty,
+              *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _defaultValue = getArrayValue(*classProperty.defaultProperty);
       }
