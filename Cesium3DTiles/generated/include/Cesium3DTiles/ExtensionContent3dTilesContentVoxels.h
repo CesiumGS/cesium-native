@@ -27,7 +27,7 @@ struct CESIUM3DTILES_API ExtensionContent3dTilesContentVoxels final
   static constexpr const char* ExtensionName = "3DTILES_content_voxels";
 
   /**
-   * @brief Dimensions of the voxel grid. x/y/z for a box, r/z/theta for a
+   * @brief Dimensions of the voxel grid. x/y/z for a box, r/theta/z for a
    * cylinder, lon/lat/height for an ellipsoid.
    */
   std::vector<int64_t> dimensions;

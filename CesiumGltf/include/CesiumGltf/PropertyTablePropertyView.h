@@ -519,23 +519,21 @@ private:
     }
 
     // Handle variable-length arrays
-    const size_t currentArrayOffset = getOffsetFromOffsetsBuffer(
-        static_cast<size_t>(index),
-        _arrayOffsets,
-        _arrayOffsetType);
-    const size_t nextArrayOffset = getOffsetFromOffsetsBuffer(
-        static_cast<size_t>(index + 1),
-        _arrayOffsets,
-        _arrayOffsetType);
+    const size_t currentArrayOffset =
+        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
+        _stringOffsetTypeSize;
+    const size_t nextArrayOffset =
+        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
+        _stringOffsetTypeSize;
     const size_t arraySize = nextArrayOffset - currentArrayOffset;
     const std::span<const std::byte> stringOffsetValues(
         _stringOffsets.data() + currentArrayOffset,
-        arraySize + static_cast<size_t>(_arrayOffsetTypeSize));
+        arraySize + _stringOffsetTypeSize);
     return PropertyArrayView<std::string_view>(
         _values,
         stringOffsetValues,
         _stringOffsetType,
-        arraySize / static_cast<size_t>(_arrayOffsetTypeSize));
+        arraySize / _stringOffsetTypeSize);
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {

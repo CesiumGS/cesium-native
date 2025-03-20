@@ -464,7 +464,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SUBCASE("BoundingCylinderRegion") {
+  SUBCASE("BoundingCylinderRegion (whole)") {
     BoundingCylinderRegion root(
         glm::dvec3(1.0, 2.0, 3.0),
         glm::dquat(CesiumGeometry::Transforms::Z_UP_TO_Y_UP),
@@ -579,6 +579,152 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
 
         glm::dvec3 expectedTranslation =
             root.getTranslation() + glm::dvec3(0.0, 0.5 * expectedHeight, 0.0);
+        CHECK(l1x0y0z1.getTranslation() == expectedTranslation);
+      }
+    }
+  }
+
+  SUBCASE("BoundingCylinderRegion (partial)") {
+    // This also tests for angular bounds that cross over the -pi/pi
+    // discontinuity line.
+    BoundingCylinderRegion root(
+        glm::dvec3(-1.0, 1.0, 2.0),
+        glm::dquat(1.0, 0.0, 0.0, 0.0),
+        2.0,
+        glm::dvec2(0.0, 1.0),
+        glm::dvec2(
+            CesiumUtility::Math::PiOverTwo,
+            -CesiumUtility::Math::PiOverTwo));
+
+    SUBCASE("quadtree") {
+      BoundingCylinderRegion l1x0y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 0));
+
+      CHECK(l1x0y0.getHeight() == root.getHeight());
+      CHECK(l1x0y0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y0.getAngularBounds(),
+          glm::dvec2(
+              CesiumUtility::Math::PiOverTwo,
+              CesiumUtility::Math::OnePi),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x0y0.getRotation() == root.getRotation());
+      CHECK(l1x0y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x1y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 1, 0));
+
+      CHECK(l1x1y0.getHeight() == root.getHeight());
+      CHECK(l1x1y0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x1y0.getAngularBounds(),
+          glm::dvec2(
+              CesiumUtility::Math::PiOverTwo,
+              CesiumUtility::Math::OnePi),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x1y0.getRotation() == root.getRotation());
+      CHECK(l1x1y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x0y1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 1));
+      CHECK(l1x0y1.getHeight() == root.getHeight());
+      CHECK(l1x0y1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y1.getAngularBounds(),
+          glm::dvec2(
+              -CesiumUtility::Math::OnePi,
+              -CesiumUtility::Math::PiOverTwo),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x0y1.getRotation() == root.getRotation());
+      CHECK(l1x0y1.getTranslation() == root.getTranslation());
+    }
+
+    SUBCASE("octree") {
+      double expectedHeight = 0.5 * root.getHeight();
+
+      BoundingCylinderRegion l1x0y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 0));
+      {
+        CHECK(l1x0y0z0.getHeight() == expectedHeight);
+        CHECK(l1x0y0z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y0z0.getAngularBounds(),
+            glm::dvec2(
+                CesiumUtility::Math::PiOverTwo,
+                CesiumUtility::Math::OnePi),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x0y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x1y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 1, 0, 0));
+      {
+        CHECK(l1x1y0z0.getHeight() == expectedHeight);
+        CHECK(l1x1y0z0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x1y0z0.getAngularBounds(),
+            glm::dvec2(
+                CesiumUtility::Math::PiOverTwo,
+                CesiumUtility::Math::OnePi),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x1y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x1y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y1z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 1, 0));
+      {
+        CHECK(l1x0y1z0.getHeight() == expectedHeight);
+        CHECK(l1x0y1z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y1z0.getAngularBounds(),
+            glm::dvec2(
+                -CesiumUtility::Math::OnePi,
+                -CesiumUtility::Math::PiOverTwo),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y1z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x0y1z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y0z1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 1));
+      {
+        CHECK(l1x0y0z1.getHeight() == expectedHeight);
+        CHECK(l1x0y0z1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y0z1.getAngularBounds(),
+            glm::dvec2(
+                CesiumUtility::Math::PiOverTwo,
+                CesiumUtility::Math::OnePi),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y0z1.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, 0.5 * expectedHeight);
         CHECK(l1x0y0z1.getTranslation() == expectedTranslation);
       }
     }
