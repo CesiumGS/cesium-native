@@ -185,8 +185,9 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   if constexpr (sizeof(T) == 2) {
     for (size_t i = 0, b = 0; i < result.size(); i++, b += 2) {
       using UintType = std::make_unsigned_t<T>;
-      UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-      static_cast<UintType>(static_cast<UintType>(bytes[b + 1]) << 8);
+      UintType resultAsUint =
+          static_cast<UintType>(bytes[b]) |
+          static_cast<UintType>(static_cast<UintType>(bytes[b + 1]) << 8);
       result[i] = *reinterpret_cast<T*>(&resultAsUint);
     }
   } else {
