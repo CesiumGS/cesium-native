@@ -77,12 +77,6 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool resolveExternalImages = true;
 
   /**
-   * @brief Whether to use the query parameters from the base URL when
-   * requesting external glTF assets.
-   */
-  bool useBaseQuery = true;
-
-  /**
    * @brief Whether geometry compressed using the `KHR_draco_mesh_compression`
    * extension should be automatically decoded as part of the load process.
    */

@@ -537,10 +537,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
     if (buffer.uri && buffer.uri->substr(0, dataPrefixLength) != dataPrefix) {
       resolvedBuffers.push_back(
           pAssetAccessor
-              ->get(
-                  asyncSystem,
-                  Uri::resolve(baseUrl, *buffer.uri, options.useBaseQuery),
-                  tHeaders)
+              ->get(asyncSystem, Uri::resolve(baseUrl, *buffer.uri, true), tHeaders)
               .thenInWorkerThread([pBuffer =
                                        &buffer](std::shared_ptr<IAssetRequest>&&
                                                     pRequest) {
@@ -576,8 +573,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
   if (options.resolveExternalImages) {
     for (Image& image : pResult->model->images) {
       if (image.uri && image.uri->substr(0, dataPrefixLength) != dataPrefix) {
-        const std::string uri =
-            Uri::resolve(baseUrl, *image.uri, options.useBaseQuery);
+        const std::string uri = Uri::resolve(baseUrl, *image.uri, true);
 
         auto getAsset =
             [&options](
@@ -650,10 +646,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       }
     };
 
-    std::string uri = Uri::resolve(
-        baseUrl,
-        *pStructuralMetadata->schemaUri,
-        options.useBaseQuery);
+    std::string uri = Uri::resolve(baseUrl, *pStructuralMetadata->schemaUri, true);
 
     SharedFuture<ResultPointer<Schema>> future =
         getAsset(asyncSystem, pAssetAccessor, uri, tHeaders);
