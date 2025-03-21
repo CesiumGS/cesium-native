@@ -32,7 +32,8 @@ private:
   size_t id;
   int32_t priority = -1;
 
-  Credit(size_t id_, int32_t priority_ = -1) noexcept : id(id_), priority(priority_) {}
+  Credit(size_t id_, int32_t priority_ = -1) noexcept
+      : id(id_), priority(priority_) {}
 
   friend class CreditSystem;
 };

@@ -9,11 +9,17 @@
 
 namespace CesiumUtility {
 
-Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen, int32_t priority) {
+Credit CreditSystem::createCredit(
+    const std::string& html,
+    bool showOnScreen,
+    int32_t priority) {
   return this->createCredit(std::string(html), showOnScreen, priority);
 }
 
-Credit CreditSystem::createCredit(std::string&& html, bool showOnScreen, int32_t priority) {
+Credit CreditSystem::createCredit(
+    std::string&& html,
+    bool showOnScreen,
+    int32_t priority) {
   // if this credit already exists, return a Credit handle to it
   for (size_t id = 0; id < _credits.size(); ++id) {
     if (_credits[id].html == html) {
