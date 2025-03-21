@@ -26,6 +26,10 @@ function(configure_cesium_library targetName)
         )
     endif()
 
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CESIUM_CLANG_TIME_TRACE)
+        target_compile_options(${targetName} PRIVATE -ftime-trace)
+    endif()
+
     if (CESIUM_DEBUG_TILE_UNLOADING)
         target_compile_definitions(
             ${targetName}
