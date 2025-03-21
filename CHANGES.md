@@ -18,6 +18,7 @@
 - Added `TypeToDimensions` class in `PropertyTypeTraits` to obtain the dimension count of a glm vector or matrix.
 - Added `canRepresentPropertyType<T>` to `PropertyTypeTraits` to check if a C++ type can represent the given `PropertyType`.
 - Added `getName` method to `CesiumGltf::Enum`, allowing a scalar enum value to be resolved into its corresponding name in the enum.
+- Added `priority` member to `CesiumUtility::Credit`, allowing to prioritize user-defined credit text.
 
 ##### Fixes :wrench:
 
