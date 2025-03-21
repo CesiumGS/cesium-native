@@ -8,9 +8,11 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 
 #include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include <optional>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -25,7 +27,8 @@ class CESIUM3DTILESSELECTION_API ViewState final {
   // TODO: Add support for orthographic and off-center perspective frustums
 public:
   /**
-   * @brief Creates a new instance of a view state.
+   * @brief Creates a new instance of a view state with a symmetric perspective
+   * projection.
    *
    * @param position The position of the eye point of the camera.
    * @param direction The view direction vector of the camera.
@@ -47,6 +50,24 @@ public:
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance of a view state with a general projection,
+   * including skewed perspective and orthographic projections.
+   *
+   * @param viewMatrix The view's view matrix i.e., the inverse of its pose
+   * @param projectionMatrix The view's Vulkan style reversed Z projection matrix
+   * @param viewportSize The size of the viewport, in pixels.
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position}
+   * from the cartesian position.
+   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   */
+  static ViewState create(
+      const glm::dmat4& viewMatrix,
+      const glm::dmat4& projectionMatrix,
+      const glm::dvec2& viewportSize,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -164,6 +185,13 @@ private:
       const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
       const CesiumGeospatial::Ellipsoid& ellipsoid);
 
+  ViewState(
+      const glm::dmat4& viewMatrix,
+      const glm::dmat4& _projectionMatrix,
+      const glm::dvec2& viewportSize,
+      const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
+      const CesiumGeospatial::Ellipsoid& ellipsoid);
+
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
   const glm::dvec3 _up;
@@ -176,6 +204,7 @@ private:
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
   const CesiumGeometry::CullingVolume _cullingVolume;
+  std::optional<const glm::dmat4> _projectionMatrix;
 };
 
 } // namespace Cesium3DTilesSelection
