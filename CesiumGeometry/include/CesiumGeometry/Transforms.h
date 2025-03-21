@@ -95,6 +95,83 @@ struct CESIUMGEOMETRY_API Transforms final {
    */
   static const glm::dmat4&
   getUpAxisTransform(CesiumGeometry::Axis from, CesiumGeometry::Axis to);
+
+  /**
+   * @brief Create a view matrix.
+   *
+   * This is similar to glm::lookAt(), but uses the pose of viewer to create the
+   * view matrix. The view matrix is the inverse of the pose matrix.
+   *
+   * @param position position of the eye
+   * @param direction view vector i.e., -z axis of the viewer's pose.
+   * @param up up vector of viewer i.e., y axis of the viewer's pose.
+   *
+   * @returns The view matrix.
+   */
+  static glm::dmat4 createViewMatrix(
+      const glm::dvec3& position,
+      const glm::dvec3& direction,
+      const glm::dvec3& up);
+
+  /**
+   * The projection matrix returned by the following functions uses the Vulkan
+   * conventions:
+   *   X maps from -1 to 1 left to right
+   *   Y maps from 1 to -1 bottom to top
+   *   Z maps from 1 to 0 near to far (known as "reverse Z")
+   */
+
+  /**
+   * @brief Compute a Vulkan-style perspective projection matrix with reversed Z.
+   *
+   * @param fovx horizontal field of view in radians
+   * @param fovy horizontal field of view in radians
+   * @param zNear distance to near plane
+   * @param zFar distance to far plane
+   */
+  static glm::dmat4 createPerspectiveMatrix(
+      double fovx,
+      double fovy,
+      double zNear,
+      double zFar);
+
+  /**
+   * @brief Compute a Vulkan-style perspective projection matrix with reversed Z.
+   *
+   * @param left left distance of near plane edge from center
+   * @param right right distance of near plane edge
+   * @param bottom bottom distance of near plane edge
+   * @param top top distance of near plane edge
+   * @param zNear distance of near plane
+   * @param zFar distance of far plane. This can be infinite
+   */
+  static glm::dmat4 createPerspectiveMatrix(
+      double left,
+      double right,
+      double bottom,
+      double top,
+      double zNear,
+      double zFar);
+
+  /**
+   * @brief Compute a Vulkan-style orthographic projection matrix with reversed Z.
+   *
+   * X maps from -1 to 1, Y maps from 1 to -1, Z maps from 1 to 0.
+   *
+   * @param left left distance of near plane edge from center
+   * @param right right distance of near plane edge
+   * @param bottom bottom distance of near plane edge
+   * @param top top distance of near plane edge
+   * @param zNear distance of near plane
+   * @param zFar distance of far plane. This can be infinite
+   */
+  static glm::dmat4 createOrthographicMatrix(
+      double left,
+      double right,
+      double bottom,
+      double top,
+      double zNear,
+      double zFar);
 };
 
 } // namespace CesiumGeometry
