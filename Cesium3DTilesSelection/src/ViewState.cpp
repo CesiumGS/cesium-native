@@ -55,15 +55,16 @@ glm::dvec3 positionFromView(const glm::dmat4& viewMatrix) {
 }
 
 glm::dvec3 directionFromView(const glm::dmat4& viewMatrix) {
-  return glm::dvec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]) * -1.0;
+  return glm::dvec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]) *
+         -1.0;
 }
-}
+} // namespace
 
 /* static */ ViewState ViewState::create(
-      const glm::dmat4& viewMatrix,
-      const glm::dmat4& projectionMatrix,
-      const glm::dvec2& viewportSize,
-      const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const glm::dmat4& viewMatrix,
+    const glm::dmat4& projectionMatrix,
+    const glm::dvec2& viewportSize,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return ViewState(
       viewMatrix,
       projectionMatrix,
@@ -254,15 +255,16 @@ double ViewState::computeScreenSpaceError(
   distance = glm::max(distance, 1e-7);
   if (this->_projectionMatrix) {
     // This is a simplified version of the projection transform and homogeneous
-    // division. We transform the coordinate (0.0, geometric error, -distance, 1)
-    // and use the resulting NDC to find the screen space error.  That's not
+    // division. We transform the coordinate (0.0, geometric error, -distance,
+    // 1) and use the resulting NDC to find the screen space error.  That's not
     // quite right: the distance is actually the slant distance, and the real
     // transform contains a term for an offset due to a skewed projection which
     // is ignored here.
     const glm::dmat4& projMat = *this->_projectionMatrix;
     glm::dvec4 centerNdc = projMat * glm::dvec4(0.0, 0.0, -distance, 1.0);
     centerNdc /= centerNdc.w;
-    glm::dvec4 errorOffsetNdc = projMat * glm::dvec4(0.0, geometricError, -distance, 1.0);
+    glm::dvec4 errorOffsetNdc =
+        projMat * glm::dvec4(0.0, geometricError, -distance, 1.0);
     errorOffsetNdc /= errorOffsetNdc.w;
 
     double ndcError = (errorOffsetNdc - centerNdc).y;
@@ -271,7 +273,8 @@ double ViewState::computeScreenSpaceError(
     return -ndcError * this->_viewportSize.y / 2.0;
   } else {
     const double sseDenominator = this->_sseDenominator;
-    return (geometricError * this->_viewportSize.y) / (distance * sseDenominator);
+    return (geometricError * this->_viewportSize.y) /
+           (distance * sseDenominator);
   }
 }
 } // namespace Cesium3DTilesSelection

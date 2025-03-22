@@ -75,14 +75,14 @@ CullingVolume createCullingVolume(
 
   const CesiumGeometry::Plane topPlane(normal, -glm::dot(normal, position));
 
-  return {leftPlane, rightPlane, topPlane , bottomPlane};
+  return {leftPlane, rightPlane, topPlane, bottomPlane};
 }
 
 CullingVolume createCullingVolume(const glm::dmat4& clipMatrix) {
   // Gribb / Hartmann method.
-  // See https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
-  auto normalizePlane = [](double a, double b, double c, double d)
-  {
+  // See
+  // https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
+  auto normalizePlane = [](double a, double b, double c, double d) {
     double len = sqrt(a * a + b * b + c * c);
     return Plane(glm::dvec3(a / len, b / len, c / len), d / len);
   };
@@ -117,8 +117,7 @@ CullingVolume createCullingVolume(
     double r,
     double b,
     double t,
-    double n) noexcept
-{
+    double n) noexcept {
   glm::dmat4 projMatrix = Transforms::createPerspectiveMatrix(
       l,
       r,

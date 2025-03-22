@@ -122,21 +122,20 @@ struct CESIUMGEOMETRY_API Transforms final {
    */
 
   /**
-   * @brief Compute a Vulkan-style perspective projection matrix with reversed Z.
+   * @brief Compute a Vulkan-style perspective projection matrix with reversed
+   * Z.
    *
    * @param fovx horizontal field of view in radians
    * @param fovy horizontal field of view in radians
    * @param zNear distance to near plane
    * @param zFar distance to far plane
    */
-  static glm::dmat4 createPerspectiveMatrix(
-      double fovx,
-      double fovy,
-      double zNear,
-      double zFar);
+  static glm::dmat4
+  createPerspectiveMatrix(double fovx, double fovy, double zNear, double zFar);
 
   /**
-   * @brief Compute a Vulkan-style perspective projection matrix with reversed Z.
+   * @brief Compute a Vulkan-style perspective projection matrix with reversed
+   * Z.
    *
    * @param left left distance of near plane edge from center
    * @param right right distance of near plane edge
@@ -154,7 +153,8 @@ struct CESIUMGEOMETRY_API Transforms final {
       double zFar);
 
   /**
-   * @brief Compute a Vulkan-style orthographic projection matrix with reversed Z.
+   * @brief Compute a Vulkan-style orthographic projection matrix with reversed
+   * Z.
    *
    * X maps from -1 to 1, Y maps from 1 to -1, Z maps from 1 to 0.
    *

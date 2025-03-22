@@ -15,29 +15,27 @@ using namespace CesiumGeometry;
 using namespace CesiumUtility;
 
 namespace {
-constexpr bool equalsEpsilon(
-    const Plane& left,
-    const Plane& right,
-    double relativeEpsilon) {
+constexpr bool
+equalsEpsilon(const Plane& left, const Plane& right, double relativeEpsilon) {
   return Math::equalsEpsilon(
-      left.getNormal(),
-      right.getNormal(),
-      relativeEpsilon)
-      && Math::equalsEpsilon(
-          left.getDistance(),
-          right.getDistance(),
-          relativeEpsilon);
+             left.getNormal(),
+             right.getNormal(),
+             relativeEpsilon) &&
+         Math::equalsEpsilon(
+             left.getDistance(),
+             right.getDistance(),
+             relativeEpsilon);
 }
-}
+} // namespace
 
 constexpr bool equalsEpsilon(
     const CullingVolume& left,
     const CullingVolume& right,
     double relativeEpsilon) {
-  return equalsEpsilon(left.leftPlane, right.leftPlane, relativeEpsilon)
-      && equalsEpsilon(left.rightPlane, right.rightPlane, relativeEpsilon)
-      && equalsEpsilon(left.topPlane, right.topPlane, relativeEpsilon)
-      && equalsEpsilon(left.bottomPlane, right.bottomPlane, relativeEpsilon);
+  return equalsEpsilon(left.leftPlane, right.leftPlane, relativeEpsilon) &&
+         equalsEpsilon(left.rightPlane, right.rightPlane, relativeEpsilon) &&
+         equalsEpsilon(left.topPlane, right.topPlane, relativeEpsilon) &&
+         equalsEpsilon(left.bottomPlane, right.bottomPlane, relativeEpsilon);
 }
 
 TEST_CASE("CullingVolume::createCullingVolume") {
@@ -71,15 +69,13 @@ TEST_CASE("CullingVolume construction") {
         up,
         Math::PiOverTwo,
         Math::PiOverTwo);
-    CullingVolume rad = createCullingVolume(Transforms::createPerspectiveMatrix(
-                                                Math::PiOverTwo,
-                                                Math::PiOverTwo,
-                                                10,
-                                                200000)
-                                            * Transforms::createViewMatrix(
-                                                position,
-                                                direction,
-                                                up));
+    CullingVolume rad = createCullingVolume(
+        Transforms::createPerspectiveMatrix(
+            Math::PiOverTwo,
+            Math::PiOverTwo,
+            10,
+            200000) *
+        Transforms::createViewMatrix(position, direction, up));
     CHECK(equalsEpsilon(traditional, rad, 1e-10));
   }
 }

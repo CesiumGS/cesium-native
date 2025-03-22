@@ -57,7 +57,8 @@ public:
    * including skewed perspective and orthographic projections.
    *
    * @param viewMatrix The view's view matrix i.e., the inverse of its pose
-   * @param projectionMatrix The view's Vulkan style reversed Z projection matrix
+   * @param projectionMatrix The view's Vulkan style reversed Z projection
+   * matrix
    * @param viewportSize The size of the viewport, in pixels.
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position}

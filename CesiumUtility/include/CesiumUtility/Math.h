@@ -234,7 +234,7 @@ public:
                glm::vec<L, bool, Q>(true);
   }
 
-    /**
+  /**
    * @brief Determines if two values are equal using an absolute or relative
    * tolerance test.
    *

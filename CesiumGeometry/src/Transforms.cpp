@@ -185,17 +185,16 @@ glm::dmat4 Transforms::createViewMatrix(
 }
 
 glm::dmat4 Transforms::createPerspectiveMatrix(
-      double fovx,
-      double fovy,
-      double zNear,
-      double zFar) {
+    double fovx,
+    double fovy,
+    double zNear,
+    double zFar) {
   double m22;
   double m32;
   if (zFar == std::numeric_limits<double>::infinity()) {
     m22 = 0.0;
     m32 = zNear;
-  }
-  else {
+  } else {
     m22 = zNear / (zFar - zNear);
     m32 = zNear * zFar / (zFar - zNear);
   }
@@ -207,45 +206,45 @@ glm::dmat4 Transforms::createPerspectiveMatrix(
 }
 
 glm::dmat4 Transforms::createPerspectiveMatrix(
-      double left,
-      double right,
-      double bottom,
-      double top,
-      double zNear,
-      double zFar)
-{
+    double left,
+    double right,
+    double bottom,
+    double top,
+    double zNear,
+    double zFar) {
   double m22;
   double m32;
   if (zFar == std::numeric_limits<double>::infinity()) {
     m22 = 0.0;
     m32 = zNear;
-  }
-  else {
+  } else {
     m22 = zNear / (zFar - zNear);
     m32 = zNear * zFar / (zFar - zNear);
   }
   return glm::dmat4(
       glm::dvec4(2.0 * zNear / (right - left), 0.0, 0.0, 0.0),
       glm::dvec4(0.0, 2.0 * zNear / (bottom - top), 0.0, 0.0),
-      glm::dvec4((right + left) / (right - left), (bottom + top) / (bottom - top), m22, -1.0),
+      glm::dvec4(
+          (right + left) / (right - left),
+          (bottom + top) / (bottom - top),
+          m22,
+          -1.0),
       glm::dvec4(0.0, 0.0, m32, 0.0));
 }
 
 glm::dmat4 Transforms::createOrthographicMatrix(
-      double left,
-      double right,
-      double bottom,
-      double top,
-      double zNear,
-      double zFar)
-{
+    double left,
+    double right,
+    double bottom,
+    double top,
+    double zNear,
+    double zFar) {
   double m22;
   double m32;
   if (zFar == std::numeric_limits<double>::infinity()) {
     m22 = 0.0;
     m32 = 1.0;
-  }
-  else {
+  } else {
     m22 = 1.0 / (zFar - zNear);
     m32 = zFar / (zFar - zNear);
   }
@@ -253,7 +252,11 @@ glm::dmat4 Transforms::createOrthographicMatrix(
       glm::dvec4(2.0 * zNear / (right - left), 0.0, 0.0, 0.0),
       glm::dvec4(0.0, 2.0 * zNear / (bottom - top), 0.0, 0.0),
       glm::dvec4(0.0, 0.0, m22, 0.0),
-      glm::dvec4(-(right + left) / (right - left), -(bottom + top) / (bottom - top), m32, 1.0));
+      glm::dvec4(
+          -(right + left) / (right - left),
+          -(bottom + top) / (bottom - top),
+          m32,
+          1.0));
 }
 
 } // namespace CesiumGeometry
