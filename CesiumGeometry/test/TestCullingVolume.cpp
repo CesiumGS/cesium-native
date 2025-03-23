@@ -15,8 +15,10 @@ using namespace CesiumGeometry;
 using namespace CesiumUtility;
 
 namespace {
-constexpr bool
-equalsEpsilon(const Plane& left, const Plane& right, double relativeEpsilon) {
+bool equalsEpsilon(
+    const Plane& left,
+    const Plane& right,
+    double relativeEpsilon) {
   return Math::equalsEpsilon(
              left.getNormal(),
              right.getNormal(),
@@ -28,7 +30,7 @@ equalsEpsilon(const Plane& left, const Plane& right, double relativeEpsilon) {
 }
 } // namespace
 
-constexpr bool equalsEpsilon(
+bool equalsEpsilon(
     const CullingVolume& left,
     const CullingVolume& right,
     double relativeEpsilon) {
