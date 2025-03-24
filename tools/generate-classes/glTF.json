@@ -135,6 +135,12 @@
     },
     "KHR_gaussian_splatting glTF primitive extension": {
       "overrideName": "ExtensionKhrGaussianSplatting"
+    },
+    "KHR_spz_compression buffer extension": {
+      "overrideName": "ExtensionBufferKhrSpzCompression"
+    },
+    "KHR_spz_compression bufferView extension": {
+      "overrideName": "ExtensionBufferViewKhrSpzCompression"
     }
   },
   "extensions": [
@@ -239,6 +245,14 @@
       "attachTo": [
         "mesh.primitive"
       ]
+    },
+    {
+      "extensionName": "KHR_spz_compression",
+      "schema": "Khronos/KHR_spz_compression/schema/buffer.KHR_spz_compression.schema.json"
+    },
+    {
+      "extensionName": "KHR_spz_compression",
+      "schema": "Khronos/KHR_spz_compression/schema/bufferView.KHR_spz_compression.schema.json"
     }
   ]
 }
