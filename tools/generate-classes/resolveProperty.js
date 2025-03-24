@@ -149,6 +149,7 @@ function resolveProperty(
       innerKeyIndex != -1 &&
       innerKeyIndex + innerKeyMarker.length < propertyDetails.$ref.length
     ) {
+
       const innerKeys = propertyDetails.$ref
         .slice(innerKeyIndex + innerKeyMarker.length)
         .split("/");

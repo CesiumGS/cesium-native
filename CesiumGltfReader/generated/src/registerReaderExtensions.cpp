@@ -33,7 +33,9 @@
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
+#include "ExtensionBufferKhrSpzCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
+#include "ExtensionBufferViewKhrSpzCompressionJsonHandler.h"
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionTextureWebpJsonHandler.h"
@@ -62,7 +64,9 @@ options.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonHand
 options.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionNodeMaxarMeshVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::Buffer, ExtensionBufferExtMeshoptCompressionJsonHandler>();
+options.registerExtension<CesiumGltf::Buffer, ExtensionBufferKhrSpzCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::BufferView, ExtensionBufferViewExtMeshoptCompressionJsonHandler>();
+options.registerExtension<CesiumGltf::BufferView, ExtensionBufferViewKhrSpzCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::Material, ExtensionKhrMaterialsUnlitJsonHandler>();
 options.registerExtension<CesiumGltf::Texture, ExtensionKhrTextureBasisuJsonHandler>();
 options.registerExtension<CesiumGltf::Texture, ExtensionTextureWebpJsonHandler>();

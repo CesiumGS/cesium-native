@@ -98,10 +98,10 @@ class SchemaCache {
   }
 
   resolveRelativePath(name) {
+
     if (this.contextStack.length === 0) {
       return name;
     }
-
     const base = this.contextStack[this.contextStack.length - 1].sourcePath;
     return this.resolvePath(base, name);
   }
