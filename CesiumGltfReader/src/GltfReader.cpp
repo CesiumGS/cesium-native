@@ -699,7 +699,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               }
             }
 
-            return std::move(*pResult.release());
+            return std::move(*pResult);
           });
 }
 
