@@ -5,6 +5,7 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <cmath>
 #include <limits>
 
 namespace CesiumGeometry {

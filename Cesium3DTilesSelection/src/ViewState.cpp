@@ -12,8 +12,11 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
 #include <optional>
