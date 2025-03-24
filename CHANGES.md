@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - Fixed missing URI query part when downloading glTF textures or buffers.
+- Fixed memory leak in `CesiumGltfReader`.
 
 ### v0.45.0 - 2025-03-03
 
