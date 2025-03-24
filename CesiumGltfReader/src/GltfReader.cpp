@@ -672,7 +672,7 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
   return asyncSystem.all(std::move(resolvedBuffers))
       .thenInWorkerThread(
           [pResult = std::move(pResult)](
-              std::vector<ExternalBufferLoadResult>&& loadResults) mutable {
+              std::vector<ExternalBufferLoadResult>&& loadResults) {
             for (auto& bufferResult : loadResults) {
               if (!bufferResult.success) {
                 pResult->warnings.push_back(
