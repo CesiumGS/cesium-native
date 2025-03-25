@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed missing URI query part when downloading glTF textures or buffers.
+
 ### v0.45.0 - 2025-03-03
 
 ##### Breaking Changes :mega:
