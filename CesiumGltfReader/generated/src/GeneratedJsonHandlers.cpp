@@ -2468,7 +2468,7 @@ CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::ExtensionBufferKhrSpzCo
 
 namespace CesiumGltfReader {
 
-ExtensionBufferViewKhrSpzCompressionJsonHandler::ExtensionBufferViewKhrSpzCompressionJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _buffer(), _byteOffset(), _byteLength(), _byteStride(), _count() {}
+ExtensionBufferViewKhrSpzCompressionJsonHandler::ExtensionBufferViewKhrSpzCompressionJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _buffer(), _byteOffset(), _byteLength(), _byteStride(), _numPoints(), _shDegree(), _fractionalBits(), _flags() {}
 
 void ExtensionBufferViewKhrSpzCompressionJsonHandler::reset(CesiumJsonReader::IJsonHandler* pParentHandler, CesiumGltf::ExtensionBufferViewKhrSpzCompression* pObject) {
   CesiumJsonReader::ExtensibleObjectJsonHandler::reset(pParentHandler, pObject);
@@ -2496,7 +2496,10 @@ CesiumJsonReader::IJsonHandler* ExtensionBufferViewKhrSpzCompressionJsonHandler:
   if ("byteOffset"s == str) return property("byteOffset", this->_byteOffset, o.byteOffset);
   if ("byteLength"s == str) return property("byteLength", this->_byteLength, o.byteLength);
   if ("byteStride"s == str) return property("byteStride", this->_byteStride, o.byteStride);
-  if ("count"s == str) return property("count", this->_count, o.count);
+  if ("numPoints"s == str) return property("numPoints", this->_numPoints, o.numPoints);
+  if ("shDegree"s == str) return property("shDegree", this->_shDegree, o.shDegree);
+  if ("fractionalBits"s == str) return property("fractionalBits", this->_fractionalBits, o.fractionalBits);
+  if ("flags"s == str) return property("flags", this->_flags, o.flags);
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
 }

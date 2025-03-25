@@ -1031,8 +1031,23 @@ void writeJson(
   jsonWriter.Key("byteStride");
   writeJson(obj.byteStride, jsonWriter, context);
 
-  jsonWriter.Key("count");
-  writeJson(obj.count, jsonWriter, context);
+  jsonWriter.Key("numPoints");
+  writeJson(obj.numPoints, jsonWriter, context);
+
+  if (obj.shDegree != 0) {
+  jsonWriter.Key("shDegree");
+  writeJson(obj.shDegree, jsonWriter, context);
+  }
+
+  if (obj.fractionalBits != 12) {
+  jsonWriter.Key("fractionalBits");
+  writeJson(obj.fractionalBits, jsonWriter, context);
+  }
+
+  if (obj.flags != 0) {
+  jsonWriter.Key("flags");
+  writeJson(obj.flags, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
