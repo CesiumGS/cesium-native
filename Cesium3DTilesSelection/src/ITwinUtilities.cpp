@@ -13,10 +13,10 @@
 
 namespace Cesium3DTilesSelection {
 void parseITwinErrorResponseIntoErrorList(
-    const CesiumAsync::IAssetResponse* pResponse,
+    const CesiumAsync::IAssetResponse& response,
     CesiumUtility::ErrorList& errors) {
   rapidjson::Document jsonResponse;
-  const std::span<const std::byte> data = pResponse->data();
+  const std::span<const std::byte> data = response.data();
   jsonResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
   if (jsonResponse.HasParseError()) {

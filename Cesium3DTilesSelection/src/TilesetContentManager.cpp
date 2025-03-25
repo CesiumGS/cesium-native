@@ -14,10 +14,10 @@
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
-#include <Cesium3DTilesSelection/TilesetLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
@@ -886,7 +886,7 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
-    const TilesetLoaderFactory& loaderFactory)
+    const TilesetContentLoaderFactory& loaderFactory)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
@@ -952,6 +952,22 @@ TilesetContentManager::TilesetContentManager(
         });
   }
 }
+
+TilesetContentManager::TilesetContentManager(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    RasterOverlayCollection&& overlayCollection,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl)
+    : TilesetContentManager(
+          externals,
+          tilesetOptions,
+          std::move(overlayCollection),
+          CesiumIonTilesetContentLoaderFactory(
+              static_cast<uint32_t>(ionAssetID),
+              ionAccessToken,
+              ionAssetEndpointUrl)) {}
 
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {

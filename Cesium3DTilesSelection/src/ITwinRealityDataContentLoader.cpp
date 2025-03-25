@@ -154,7 +154,7 @@ requestRealityDataContainer(
               statusCode,
               requestUrl));
           result.statusCode = statusCode;
-          parseITwinErrorResponseIntoErrorList(pResponse, result.errors);
+          parseITwinErrorResponseIntoErrorList(*pResponse, result.errors);
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
@@ -255,7 +255,7 @@ ITwinRealityDataContentLoader::createLoader(
               statusCode,
               requestUrl));
           result.statusCode = statusCode;
-          parseITwinErrorResponseIntoErrorList(pResponse, result.errors);
+          parseITwinErrorResponseIntoErrorList(*pResponse, result.errors);
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 

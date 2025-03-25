@@ -12,17 +12,18 @@ namespace CesiumITwinClient {
 /**
  * @brief An authentication token obtained from the iTwin OAuth2 flow.
  */
-class CESIUMITWINCLIENT_API AuthToken {
+class CESIUMITWINCLIENT_API AuthenticationToken {
 public:
   /**
-   * @brief Creates a new \ref AuthToken by parsing the provided JWT
+   * @brief Creates a new \ref AuthenticationToken by parsing the provided JWT
    * authentication token.
    *
    * @param tokenStr The JWT authentication token.
-   * @returns A `Result` containing either the parsed \ref AuthToken or error
-   * messages.
+   * @returns A `Result` containing either the parsed \ref AuthenticationToken
+   * or error messages.
    */
-  static CesiumUtility::Result<AuthToken> parse(const std::string& tokenStr);
+  static CesiumUtility::Result<AuthenticationToken>
+  parse(const std::string& tokenStr);
 
   /**
    * @brief Is this token currently valid?
@@ -44,7 +45,7 @@ public:
   const std::string& getToken() const { return _token; }
 
   /**
-   * @brief Creates a new `AuthToken`.
+   * @brief Creates a new `AuthenticationToken`.
    *
    * This constructor assumes all the data in the provided token has already
    * been parsed. If not, you should call \ref parse instead.
@@ -58,7 +59,7 @@ public:
    * @param expires A UNIX timestamp representing the point in time that this
    * token stops being valid.
    */
-  AuthToken(
+  AuthenticationToken(
       const std::string& token,
       std::string&& name,
       std::string&& userName,

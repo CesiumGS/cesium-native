@@ -1,4 +1,4 @@
-#include <CesiumITwinClient/AuthToken.h>
+#include <CesiumITwinClient/AuthenticationToken.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
@@ -19,16 +19,17 @@
 using namespace CesiumUtility;
 
 namespace CesiumITwinClient {
-Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
+Result<AuthenticationToken>
+AuthenticationToken::parse(const std::string& tokenStr) {
   const size_t firstPeriod = tokenStr.find('.');
   if (firstPeriod == std::string::npos) {
-    return Result<AuthToken>(ErrorList::error(
+    return Result<AuthenticationToken>(ErrorList::error(
         "Invalid JWT token, format must be `header.payload.signature`."));
   }
 
   const size_t secondPeriod = tokenStr.find('.', firstPeriod + 1);
   if (secondPeriod == std::string::npos) {
-    return Result<AuthToken>(ErrorList::error(
+    return Result<AuthenticationToken>(ErrorList::error(
         "Invalid JWT token, format must be `header.payload.signature`."));
   }
 
@@ -44,7 +45,7 @@ Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
           decodedPayload.data(),
           payloadSegment.data(),
           payloadSegment.length()) == size_t(-1)) {
-    return Result<AuthToken>(
+    return Result<AuthenticationToken>(
         ErrorList::error("Unable to decode base64 payload."));
   }
 
@@ -52,14 +53,15 @@ Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
   json.Parse(decodedPayload.data(), decodedPayload.size());
 
   if (json.HasParseError()) {
-    return Result<AuthToken>(ErrorList::error(fmt::format(
+    return Result<AuthenticationToken>(ErrorList::error(fmt::format(
         "Failed to parse payload JSON, parse error {} at byte offset {}.",
         rapidjson::GetParseError_En(json.GetParseError()),
         json.GetErrorOffset())));
   }
 
   if (!json.IsObject()) {
-    return Result<AuthToken>(ErrorList::error("Missing payload contents."));
+    return Result<AuthenticationToken>(
+        ErrorList::error("Missing payload contents."));
   }
 
   std::string name = JsonHelpers::getStringOrDefault(json, "name", "");
@@ -69,7 +71,7 @@ Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
   int64_t notValidBefore = JsonHelpers::getInt64OrDefault(json, "nbf", 0);
   int64_t expired = JsonHelpers::getInt64OrDefault(json, "exp", 0);
 
-  return Result<AuthToken>(AuthToken(
+  return Result<AuthenticationToken>(AuthenticationToken(
       tokenStr,
       std::move(name),
       std::move(userName),
@@ -78,7 +80,7 @@ Result<AuthToken> AuthToken::parse(const std::string& tokenStr) {
       expired));
 }
 
-bool AuthToken::isValid() const {
+bool AuthenticationToken::isValid() const {
   const int64_t currentTimeSinceEpoch =
       std::chrono::duration_cast<std::chrono::seconds>(
           std::chrono::system_clock::now().time_since_epoch())

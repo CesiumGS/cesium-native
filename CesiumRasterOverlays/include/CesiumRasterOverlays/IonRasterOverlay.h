@@ -81,27 +81,24 @@ protected:
    * with the given ID, accessed with the given access token.
    *
    * @param name The user-given name of this overlay layer.
-   * @param ionAssetID The asset ID.
+   * @param overlayUrl The URL that the raster overlay requests will be made to.
    * @param ionAccessToken The access token.
-   * @param endpointResource The \ref EndpointResource to use to access the ion
-   * API or an ion-compatible API.
+   * @param needsAuthHeader If true, the access token will be passed through the
+   * Authorization header. If false, it will be assumed to be in the provided
+   * `overlayUrl`.
    * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
-   * @param ionAssetEndpointUrl The URL of the ion endpoint to make our requests
-   * to.
    */
   IonRasterOverlay(
       const std::string& name,
-      int64_t ionAssetID,
+      const std::string& overlayUrl,
       const std::string& ionAccessToken,
-      std::unique_ptr<EndpointResource>&& endpointResource,
-      const RasterOverlayOptions& overlayOptions = {},
-      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
+      bool needsAuthHeader,
+      const RasterOverlayOptions& overlayOptions = {});
 
 private:
-  int64_t _ionAssetID;
+  std::string _overlayUrl;
   std::string _ionAccessToken;
-  std::string _ionAssetEndpointUrl;
-  std::unique_ptr<EndpointResource> _endpointResource;
+  bool _needsAuthHeader = false;
 
   struct AssetEndpointAttribution {
     std::string html;

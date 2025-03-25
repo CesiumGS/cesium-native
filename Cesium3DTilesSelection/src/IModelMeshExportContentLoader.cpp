@@ -83,7 +83,7 @@ IModelMeshExportContentLoader::createLoader(
     const std::string& iTwinAccessToken,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CesiumUtility::Uri getExportsUri("https://api.bentley.com/mesh-export/");
-  CesiumUtility::UriQuery getExportsQueryParams("");
+  CesiumUtility::UriQuery getExportsQueryParams;
   getExportsQueryParams.setValue("iModelId", iModelId);
   getExportsQueryParams.setValue("exportType", "3DTiles");
   getExportsQueryParams.setValue("$orderBy", "date:desc");
@@ -123,7 +123,7 @@ IModelMeshExportContentLoader::createLoader(
               statusCode,
               requestUrl));
           result.statusCode = statusCode;
-          parseITwinErrorResponseIntoErrorList(pResponse, result.errors);
+          parseITwinErrorResponseIntoErrorList(*pResponse, result.errors);
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
@@ -209,14 +209,20 @@ IModelMeshExportContentLoader::createLoader(
             });
       });
 }
+
 CesiumAsync::Future<TileLoadResult>
 IModelMeshExportContentLoader::loadTileContent(const TileLoadInput& loadInput) {
   return this->_pAggregatedLoader->loadTileContent(loadInput);
 }
+
 TileChildrenResult IModelMeshExportContentLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   auto pLoader = tile.getLoader();
   return pLoader->createTileChildren(tile, ellipsoid);
 }
+
+IModelMeshExportContentLoader::IModelMeshExportContentLoader(
+    std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader)
+    : _pAggregatedLoader(std::move(pAggregatedLoader)) {}
 } // namespace Cesium3DTilesSelection

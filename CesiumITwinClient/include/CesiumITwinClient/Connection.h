@@ -1,14 +1,20 @@
 #pragma once
 
-#include "AuthToken.h"
+#include "AuthenticationToken.h"
+#include "CesiumCuratedContent.h"
+#include "IModel.h"
+#include "IModelMeshExport.h"
+#include "ITwin.h"
+#include "ITwinRealityData.h"
 #include "Library.h"
+#include "Profile.h"
+#include "Resources.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumITwinClient/PagedList.h>
-#include <CesiumITwinClient/Resources.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 
@@ -126,7 +132,7 @@ public:
    * @see https://developer.bentley.com/apis/itwins/operations/get-my-itwins/
    */
   CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>>
-  listITwins(const QueryParameters& params);
+  itwins(const QueryParameters& params);
 
   /**
    * @brief Returns a list of iModels belonging to the specified iTwin.
@@ -137,7 +143,7 @@ public:
    * https://developer.bentley.com/apis/imodels-v2/operations/get-itwin-imodels/
    */
   CesiumAsync::Future<CesiumUtility::Result<PagedList<IModel>>>
-  listIModels(const std::string& iTwinId, const QueryParameters& params);
+  imodels(const std::string& iTwinId, const QueryParameters& params);
 
   /**
    * @brief Returns a list of mesh export tasks for the specified iModel.
@@ -147,9 +153,7 @@ public:
    * @see https://developer.bentley.com/apis/mesh-export/operations/get-exports/
    */
   CesiumAsync::Future<CesiumUtility::Result<PagedList<IModelMeshExport>>>
-  listIModelMeshExports(
-      const std::string& iModelId,
-      const QueryParameters& params);
+  meshExports(const std::string& iModelId, const QueryParameters& params);
 
   /**
    * @brief Returns a list of reality data instances belonging to the specified
@@ -162,9 +166,7 @@ public:
    * https://developer.bentley.com/apis/reality-management/operations/get-all-reality-data/
    */
   CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
-  listITwinRealityData(
-      const std::string& iTwinId,
-      const QueryParameters& params);
+  realityData(const std::string& iTwinId, const QueryParameters& params);
 
   /**
    * @brief Returns all available iTwin Cesium Curated Content items.
@@ -173,8 +175,8 @@ public:
    * https://developer.bentley.com/apis/cesium-curated-content/operations/list-content/
    */
   CesiumAsync::Future<
-      CesiumUtility::Result<std::vector<ITwinCesiumCuratedContentItem>>>
-  listCesiumCuratedContent();
+      CesiumUtility::Result<std::vector<CesiumCuratedContentAsset>>>
+  cesiumCuratedContent();
 
   /**
    * @brief Obtains all available resources that can be loaded by Native from
@@ -210,7 +212,7 @@ public:
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const AuthToken& accessToken,
+      const AuthenticationToken& accessToken,
       const std::optional<std::string>& refreshToken,
       const CesiumClientCommon::OAuth2ClientOptions& clientOptions)
       : _asyncSystem(asyncSystem),
@@ -223,13 +225,15 @@ public:
    * @brief Returns the \ref AuthToken object representing the parsed JWT access
    * token.
    */
-  const AuthToken& getAccessToken() const { return _accessToken; }
+  const AuthenticationToken& getAccessToken() const { return _accessToken; }
   /**
    * @brief Sets the access token that will be used for API calls.
    *
    * @param authToken The new auth token.
    */
-  void setAccessToken(const AuthToken& authToken) { _accessToken = authToken; }
+  void setAccessToken(const AuthenticationToken& authToken) {
+    _accessToken = authToken;
+  }
 
   /**
    * @brief Returns the refresh token used to obtain new access tokens, if any.
@@ -259,7 +263,7 @@ private:
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  AuthToken _accessToken;
+  AuthenticationToken _accessToken;
   std::optional<std::string> _refreshToken;
   CesiumClientCommon::OAuth2ClientOptions _clientOptions;
 };

@@ -7,9 +7,15 @@
 #include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumITwinClient/AuthToken.h>
+#include <CesiumITwinClient/AuthenticationToken.h>
+#include <CesiumITwinClient/CesiumCuratedContent.h>
 #include <CesiumITwinClient/Connection.h>
+#include <CesiumITwinClient/IModel.h>
+#include <CesiumITwinClient/IModelMeshExport.h>
+#include <CesiumITwinClient/ITwin.h>
+#include <CesiumITwinClient/ITwinRealityData.h>
 #include <CesiumITwinClient/PagedList.h>
+#include <CesiumITwinClient/Profile.h>
 #include <CesiumITwinClient/Resources.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
@@ -133,47 +139,45 @@ CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
     const std::optional<int>& redirectPort,
     const std::vector<std::string>& scopes,
     std::function<void(const std::string&)>&& openUrlCallback) {
-  Promise<Result<Connection>> connectionPromise =
-      asyncSystem.createPromise<Result<Connection>>();
-
   CesiumClientCommon::OAuth2ClientOptions clientOptions{
       clientID,
       redirectPath,
       redirectPort,
       false};
 
-  CesiumClientCommon::OAuth2PKCE::authorize(
-      asyncSystem,
-      pAssetAccessor,
-      friendlyApplicationName,
-      clientOptions,
-      scopes,
-      std::move(openUrlCallback),
-      ITWIN_TOKEN_URL,
-      ITWIN_AUTHORIZE_URL)
+  return CesiumClientCommon::OAuth2PKCE::authorize(
+             asyncSystem,
+             pAssetAccessor,
+             friendlyApplicationName,
+             clientOptions,
+             scopes,
+             std::move(openUrlCallback),
+             ITWIN_TOKEN_URL,
+             ITWIN_AUTHORIZE_URL)
       .thenImmediately(
-          [asyncSystem, pAssetAccessor, connectionPromise, clientOptions](
+          [asyncSystem, pAssetAccessor, clientOptions](
               const Result<CesiumClientCommon::OAuth2TokenResponse>& result) {
             if (!result.value.has_value()) {
-              connectionPromise.resolve({result.errors});
+              return asyncSystem.createResolvedFuture<Result<Connection>>(
+                  {result.errors});
             } else {
-              Result<AuthToken> authTokenResult =
-                  AuthToken::parse(result.value->accessToken);
+              Result<AuthenticationToken> authTokenResult =
+                  AuthenticationToken::parse(result.value->accessToken);
               if (!authTokenResult.value.has_value() ||
                   !authTokenResult.value->isValid()) {
-                connectionPromise.resolve({authTokenResult.errors});
+                return asyncSystem.createResolvedFuture<Result<Connection>>(
+                    {authTokenResult.errors});
               } else {
-                connectionPromise.resolve(Connection(
-                    asyncSystem,
-                    pAssetAccessor,
-                    *authTokenResult.value,
-                    result.value->refreshToken,
-                    clientOptions));
+                return asyncSystem.createResolvedFuture<Result<Connection>>(
+                    Connection(
+                        asyncSystem,
+                        pAssetAccessor,
+                        *authTokenResult.value,
+                        result.value->refreshToken,
+                        clientOptions));
               }
             }
           });
-
-  return connectionPromise.getFuture();
 }
 
 const std::string ME_URL = "https://api.bentley.com/users/me";
@@ -233,7 +237,7 @@ CesiumAsync::Future<CesiumUtility::Result<UserProfile>> Connection::me() {
 const std::string LIST_ITWINS_URL = "https://api.bentley.com/itwins/";
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>>
-Connection::listITwins(const QueryParameters& params) {
+Connection::itwins(const QueryParameters& params) {
   CesiumUtility::Uri uri(LIST_ITWINS_URL);
   params.addToUri(uri);
   return this->listITwins(std::string(uri.toString()));
@@ -299,9 +303,7 @@ Connection::listITwins(const std::string& url) {
 const std::string LIST_IMODELS_URL = "https://api.bentley.com/imodels/";
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<IModel>>>
-Connection::listIModels(
-    const std::string& iTwinId,
-    const QueryParameters& params) {
+Connection::imodels(const std::string& iTwinId, const QueryParameters& params) {
   CesiumUtility::Uri uri(LIST_IMODELS_URL);
   CesiumUtility::UriQuery query(uri.getQuery());
   query.setValue("iTwinId", iTwinId);
@@ -397,7 +399,7 @@ const std::string LIST_IMODEL_MESH_EXPORTS_URL =
     "https://api.bentley.com/mesh-export/";
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<IModelMeshExport>>>
-Connection::listIModelMeshExports(
+Connection::meshExports(
     const std::string& iModelId,
     const QueryParameters& params) {
   CesiumUtility::Uri uri(LIST_IMODEL_MESH_EXPORTS_URL);
@@ -480,7 +482,7 @@ const std::string LIST_ITWIN_REALITY_DATA_URL =
     "https://api.bentley.com/reality-management/reality-data/";
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
-Connection::listITwinRealityData(
+Connection::realityData(
     const std::string& iTwinId,
     const QueryParameters& params) {
   CesiumUtility::Uri uri(LIST_ITWIN_REALITY_DATA_URL);
@@ -583,10 +585,10 @@ Connection::listITwinRealityData(const std::string& url) {
 
 const std::string LIST_CCC_ENDPOINT_URL =
     "https://api.bentley.com/curated-content/cesium/";
-using ITwinCCCListResponse = std::vector<ITwinCesiumCuratedContentItem>;
+using ITwinCCCListResponse = std::vector<CesiumCuratedContentAsset>;
 
 CesiumAsync::Future<Result<ITwinCCCListResponse>>
-Connection::listCesiumCuratedContent() {
+Connection::cesiumCuratedContent() {
   const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
       {"Authorization", "Bearer " + this->_accessToken.getToken()},
       {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
@@ -610,11 +612,11 @@ Connection::listCesiumCuratedContent() {
                                    "content list response."));
             }
 
-            std::vector<ITwinCesiumCuratedContentItem> items;
+            std::vector<CesiumCuratedContentAsset> items;
             items.reserve(itemsMember->value.Size());
 
             for (const auto& value : itemsMember->value.GetArray()) {
-              items.emplace_back(ITwinCesiumCuratedContentItem{
+              items.emplace_back(CesiumCuratedContentAsset{
                   JsonHelpers::getUint64OrDefault(value, "id", 0),
                   cesiumCuratedContentTypeFromString(
                       JsonHelpers::getStringOrDefault(value, "type", "")),
@@ -653,8 +655,8 @@ Connection::ensureValidToken() {
               return Result<std::string_view>(response.errors);
             }
 
-            Result<AuthToken> tokenResult =
-                AuthToken::parse(response.value->accessToken);
+            Result<AuthenticationToken> tokenResult =
+                AuthenticationToken::parse(response.value->accessToken);
             if (!tokenResult.value) {
               return Result<std::string_view>(tokenResult.errors);
             }
@@ -719,10 +721,9 @@ fetchCCCResources(
     Connection& connection,
     std::shared_ptr<ProgressTracker>& progress) {
   progress->incrementTotal();
-  return connection.listCesiumCuratedContent().thenInWorkerThread(
-      [progress](
-          CesiumUtility::Result<std::vector<ITwinCesiumCuratedContentItem>>&&
-              result) -> Result<std::vector<ITwinResource>> {
+  return connection.cesiumCuratedContent().thenInWorkerThread(
+      [progress](CesiumUtility::Result<std::vector<CesiumCuratedContentAsset>>&&
+                     result) -> Result<std::vector<ITwinResource>> {
         progress->incrementFinished();
         if (!result.value) {
           return {result.errors};
@@ -731,13 +732,13 @@ fetchCCCResources(
         std::vector<ITwinResource> cccResources;
         cccResources.reserve(result.value->size());
 
-        for (const ITwinCesiumCuratedContentItem& cccItem : *result.value) {
+        for (const CesiumCuratedContentAsset& cccItem : *result.value) {
           ResourceType type;
-          if (cccItem.type == ITwinCesiumCuratedContentType::Cesium3DTiles) {
+          if (cccItem.type == CesiumCuratedContentType::Cesium3DTiles) {
             type = ResourceType::Tileset;
-          } else if (cccItem.type == ITwinCesiumCuratedContentType::Imagery) {
+          } else if (cccItem.type == CesiumCuratedContentType::Imagery) {
             type = ResourceType::Imagery;
-          } else if (cccItem.type == ITwinCesiumCuratedContentType::Terrain) {
+          } else if (cccItem.type == CesiumCuratedContentType::Terrain) {
             type = ResourceType::Terrain;
           } else {
             continue;
@@ -762,7 +763,7 @@ fetchIModelMeshExports(
     const std::string& iModelId) {
   progress->incrementTotal();
   return connection
-      .listIModelMeshExports(
+      .meshExports(
           iModelId,
           QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
       .thenInWorkerThread(
@@ -801,7 +802,7 @@ fetchIModelResources(
     const std::string& iTwinId) {
   progress->incrementTotal();
   return connection
-      .listIModels(
+      .imodels(
           iTwinId,
           QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
       .thenInWorkerThread([asyncSystem, progress, connection](
@@ -833,7 +834,7 @@ fetchRealityDataResources(
     const std::string& iTwinId) {
   progress->incrementTotal();
   return connection
-      .listITwinRealityData(
+      .realityData(
           iTwinId,
           QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
       .thenInWorkerThread(
@@ -877,8 +878,7 @@ fetchITwinResources(
   // TODO: it's *possible* they have more than 1,000 total iTwins, or 1,000
   // total iModels per iTwin, etc. We should really enumerate each page...
   return connection
-      .listITwins(
-          QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
+      .itwins(QueryParameters{std::nullopt, std::nullopt, 1000, std::nullopt})
       .thenInWorkerThread([progress, connection, asyncSystem](
                               Result<PagedList<ITwin>>&& result) mutable {
         progress->incrementFinished();

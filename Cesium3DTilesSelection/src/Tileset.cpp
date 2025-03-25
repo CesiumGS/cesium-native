@@ -1,4 +1,3 @@
-#include "Cesium3DTilesSelection/TilesetLoaderFactory.h"
 #include "TilesetContentManager.h"
 #include "TilesetHeightQuery.h"
 
@@ -12,6 +11,7 @@
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -122,7 +122,7 @@ Tileset::Tileset(
 
 Tileset::Tileset(
     const TilesetExternals& externals,
-    const TilesetLoaderFactory& loaderFactory,
+    const TilesetContentLoaderFactory& loaderFactory,
     const TilesetOptions& options)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),

@@ -29,24 +29,6 @@ using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
 
-class CesiumIonEndpointResource : public EndpointResource {
-public:
-  virtual std::string getUrl(
-      int64_t ionAssetID,
-      const std::string& ionAccessToken,
-      const std::string& ionAssetEndpointUrl) const override {
-    return fmt::format(
-        "{}v1/assets/{}/endpoint?access_token={}",
-        ionAssetEndpointUrl,
-        ionAssetID,
-        ionAccessToken);
-  }
-
-  virtual bool needsAuthHeaderOnInitialRequest() const override {
-    return false;
-  }
-};
-
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
     int64_t ionAssetID,
@@ -55,24 +37,25 @@ IonRasterOverlay::IonRasterOverlay(
     const std::string& ionAssetEndpointUrl)
     : IonRasterOverlay(
           name,
-          ionAssetID,
+          fmt::format(
+              "{}v1/assets/{}/endpoint?access_token={}",
+              ionAssetEndpointUrl,
+              ionAssetID,
+              ionAccessToken),
           ionAccessToken,
-          std::make_unique<CesiumIonEndpointResource>(),
-          overlayOptions,
-          ionAssetEndpointUrl) {}
+          false,
+          overlayOptions) {}
 
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
-    int64_t ionAssetID,
+    const std::string& overlayUrl,
     const std::string& ionAccessToken,
-    std::unique_ptr<EndpointResource>&& endpointResource,
-    const RasterOverlayOptions& overlayOptions,
-    const std::string& ionAssetEndpointUrl)
+    bool needsAuthHeader,
+    const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _ionAssetID(ionAssetID),
+      _overlayUrl(overlayUrl),
       _ionAccessToken(ionAccessToken),
-      _ionAssetEndpointUrl(ionAssetEndpointUrl),
-      _endpointResource(std::move(endpointResource)) {}
+      _needsAuthHeader(needsAuthHeader) {}
 
 IonRasterOverlay::~IonRasterOverlay() = default;
 
@@ -135,14 +118,9 @@ IonRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-  const std::string ionUrl = this->_endpointResource->getUrl(
-      this->_ionAssetID,
-      this->_ionAccessToken,
-      this->_ionAssetEndpointUrl);
-
   pOwner = pOwner ? pOwner : this;
 
-  auto cacheIt = IonRasterOverlay::endpointCache.find(ionUrl);
+  auto cacheIt = IonRasterOverlay::endpointCache.find(_overlayUrl);
   if (cacheIt != IonRasterOverlay::endpointCache.end()) {
     return createTileProvider(
         cacheIt->second,
@@ -156,13 +134,13 @@ IonRasterOverlay::createTileProvider(
 
   std::vector<IAssetAccessor::THeader> headers;
 
-  if (this->_endpointResource->needsAuthHeaderOnInitialRequest()) {
+  if (this->_needsAuthHeader) {
     headers.emplace_back(
         "Authorization",
         fmt::format("Bearer {}", this->_ionAccessToken));
   }
 
-  return pAssetAccessor->get(asyncSystem, ionUrl, headers)
+  return pAssetAccessor->get(asyncSystem, this->_overlayUrl, headers)
       .thenImmediately(
           [](std::shared_ptr<IAssetRequest>&& pRequest)
               -> nonstd::expected<
@@ -263,14 +241,13 @@ IonRasterOverlay::createTileProvider(
            pAssetAccessor,
            pCreditSystem,
            pPrepareRendererResources,
-           ionUrl,
            this,
            pLogger](nonstd::expected<
                     ExternalAssetEndpoint,
                     RasterOverlayLoadFailureDetails>&& result)
               -> Future<CreateTileProviderResult> {
             if (result) {
-              IonRasterOverlay::endpointCache[ionUrl] = *result;
+              IonRasterOverlay::endpointCache[this->_overlayUrl] = *result;
               return this->createTileProvider(
                   *result,
                   asyncSystem,

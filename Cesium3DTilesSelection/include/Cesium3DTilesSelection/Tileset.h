@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Cesium3DTilesSelection/TilesetLoaderFactory.h"
-
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -19,7 +18,6 @@
 
 #include <list>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -83,7 +81,8 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
-   * @brief Constructs a new instance with the given @ref TilesetLoaderFactory.
+   * @brief Constructs a new instance with the given @ref
+   * TilesetContentLoaderFactory.
    *
    * @param externals The external interfaces to use.
    * @param loaderFactory The factory to use to create the @ref
@@ -92,7 +91,7 @@ public:
    */
   Tileset(
       const TilesetExternals& externals,
-      const TilesetLoaderFactory& loaderFactory,
+      const TilesetContentLoaderFactory& loaderFactory,
       const TilesetOptions& options = TilesetOptions());
 
   /**

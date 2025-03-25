@@ -62,31 +62,28 @@ using namespace CesiumUtility;
     const std::string& ionAuthorizeUrl) {
   const std::string tokenUrl = Uri::resolve(ionApiUrl, "oauth/token");
 
-  Promise<Connection> connectionPromise =
-      asyncSystem.createPromise<Connection>();
-
-  CesiumClientCommon::OAuth2PKCE::authorize(
-      asyncSystem,
-      pAssetAccessor,
-      friendlyApplicationName,
-      CesiumClientCommon::OAuth2ClientOptions{
-          std::to_string(clientID),
-          redirectPath,
-          std::nullopt,
-          true},
-      scopes,
-      std::move(openUrlCallback),
-      tokenUrl,
-      ionAuthorizeUrl)
+  return CesiumClientCommon::OAuth2PKCE::authorize(
+             asyncSystem,
+             pAssetAccessor,
+             friendlyApplicationName,
+             CesiumClientCommon::OAuth2ClientOptions{
+                 std::to_string(clientID),
+                 redirectPath,
+                 std::nullopt,
+                 true},
+             scopes,
+             std::move(openUrlCallback),
+             tokenUrl,
+             ionAuthorizeUrl)
       .thenImmediately(
-          [asyncSystem, pAssetAccessor, ionApiUrl, appData, connectionPromise](
+          [asyncSystem, pAssetAccessor, ionApiUrl, appData](
               const Result<CesiumClientCommon::OAuth2TokenResponse>& result) {
             if (!result.value.has_value()) {
-              connectionPromise.reject(std::runtime_error(fmt::format(
+              throw std::runtime_error(fmt::format(
                   "Failed to complete authorization: {}",
-                  joinToString(result.errors.errors, ", "))));
+                  joinToString(result.errors.errors, ", ")));
             } else {
-              connectionPromise.resolve(Connection(
+              return asyncSystem.createResolvedFuture<Connection>(Connection(
                   asyncSystem,
                   pAssetAccessor,
                   result.value->accessToken,
@@ -94,8 +91,6 @@ using namespace CesiumUtility;
                   ionApiUrl));
             }
           });
-
-  return connectionPromise.getFuture();
 }
 
 Connection::Connection(

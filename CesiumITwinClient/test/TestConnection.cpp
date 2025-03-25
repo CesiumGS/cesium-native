@@ -22,7 +22,8 @@ std::shared_ptr<Connection> createConnection(const AsyncSystem& asyncSystem) {
   std::shared_ptr<MockITwinAssetAccessor> pAccessor =
       std::make_shared<MockITwinAssetAccessor>();
 
-  Result<AuthToken> tokenResult = AuthToken::parse(pAccessor->authToken);
+  Result<AuthenticationToken> tokenResult =
+      AuthenticationToken::parse(pAccessor->authToken);
   REQUIRE(tokenResult.value);
 
   return std::make_shared<Connection>(
@@ -38,7 +39,7 @@ std::shared_ptr<Connection> createConnection(const AsyncSystem& asyncSystem) {
 }
 } // namespace
 
-TEST_CASE("Connection::me") {
+TEST_CASE("CesiumITwinClient::Connection::me") {
   AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
   std::shared_ptr<Connection> pConn = createConnection(asyncSystem);
 
@@ -55,13 +56,13 @@ TEST_CASE("Connection::me") {
   }
 
   SUBCASE("Handles refreshing token") {
-    const AuthToken prevToken = pConn->getAccessToken();
+    const AuthenticationToken prevToken = pConn->getAccessToken();
     const std::optional<std::string> prevRefreshToken =
         pConn->getRefreshToken();
     REQUIRE(prevRefreshToken);
 
     // Set an invalid access token.
-    pConn->setAccessToken(AuthToken("", "", "", {}, 0, 0));
+    pConn->setAccessToken(AuthenticationToken("", "", "", {}, 0, 0));
 
     CesiumAsync::Future<Result<UserProfile>> future = pConn->me();
     Result<UserProfile> profileResult = future.waitInMainThread();

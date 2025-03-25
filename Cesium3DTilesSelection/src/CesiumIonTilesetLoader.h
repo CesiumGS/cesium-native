@@ -93,6 +93,7 @@ public:
       bool showCreditsOnScreen,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+private:
   static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
   refreshTokenIfNeeded(
       const TilesetExternals& externals,

@@ -9,20 +9,6 @@
 #include <string>
 
 namespace CesiumRasterOverlays {
-class ITwinCesiumCuratedContentEndpointResource : public EndpointResource {
-public:
-  virtual std::string getUrl(
-      int64_t ionAssetID,
-      const std::string& /*ionAccessToken*/,
-      const std::string& /*ionAssetEndpointUrl*/) const override {
-    return fmt::format(
-        "https://api.bentley.com/curated-content/cesium/{}/tiles",
-        ionAssetID);
-  }
-
-  virtual bool needsAuthHeaderOnInitialRequest() const override { return true; }
-};
-
 ITwinCesiumCuratedContentRasterOverlay::ITwinCesiumCuratedContentRasterOverlay(
     const std::string& name,
     int64_t assetID,
@@ -30,9 +16,10 @@ ITwinCesiumCuratedContentRasterOverlay::ITwinCesiumCuratedContentRasterOverlay(
     const RasterOverlayOptions& overlayOptions)
     : IonRasterOverlay(
           name,
-          assetID,
+          fmt::format(
+              "https://api.bentley.com/curated-content/cesium/{}/tiles",
+              assetID),
           iTwinAccessToken,
-          std::make_unique<ITwinCesiumCuratedContentEndpointResource>(),
-          overlayOptions,
-          {}) {}
+          true,
+          overlayOptions) {}
 } // namespace CesiumRasterOverlays

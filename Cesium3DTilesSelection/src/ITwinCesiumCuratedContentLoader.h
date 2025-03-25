@@ -42,8 +42,5 @@ protected:
   virtual std::shared_ptr<CesiumIonAssetAccessor> createAssetAccessor(
       CesiumIonTilesetLoader& tilesetLoader,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAggregatedAccessor);
-
-private:
-  friend class ITwinCesiumCuratedContentAssetAccessor;
 };
 } // namespace Cesium3DTilesSelection

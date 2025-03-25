@@ -5,6 +5,6 @@
 
 namespace Cesium3DTilesSelection {
 void parseITwinErrorResponseIntoErrorList(
-    const CesiumAsync::IAssetResponse* pResponse,
+    const CesiumAsync::IAssetResponse& response,
     CesiumUtility::ErrorList& errors);
 }

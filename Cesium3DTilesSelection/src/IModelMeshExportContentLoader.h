@@ -13,8 +13,7 @@ namespace Cesium3DTilesSelection {
 class IModelMeshExportContentLoader : public TilesetContentLoader {
 public:
   IModelMeshExportContentLoader(
-      std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader)
-      : _pAggregatedLoader(std::move(pAggregatedLoader)) {}
+      std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader);
 
   static CesiumAsync::Future<
       TilesetContentLoaderResult<IModelMeshExportContentLoader>>
