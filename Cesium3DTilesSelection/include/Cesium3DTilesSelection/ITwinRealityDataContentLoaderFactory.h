@@ -17,6 +17,10 @@ namespace Cesium3DTilesSelection {
 class ITwinRealityDataContentLoaderFactory
     : public TilesetContentLoaderFactory {
 public:
+  /**
+   * @brief Callback to obtain a new access token for the iTwin API. Receives
+   * the previous access token as parameter.
+   */
   using TokenRefreshCallback =
       std::function<CesiumAsync::Future<CesiumUtility::Result<std::string>>(
           const std::string&)>;

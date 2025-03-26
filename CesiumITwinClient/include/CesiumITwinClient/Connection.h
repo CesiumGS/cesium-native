@@ -186,8 +186,8 @@ public:
    * @param asyncSystem The \ref CesiumAsync::AsyncSystem to use.
    * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor to use for
    * making requests to the iTwin API.
-   * @param accessToken An \ref AuthToken object created from parsing the
-   * obtained iTwin access token.
+   * @param accessToken An \ref AuthenticationToken object created from parsing
+   * the obtained iTwin access token.
    * @param refreshToken A refresh token to use to fetch new access tokens as
    * needed, if any.
    * @param clientOptions The set of options to use when interacting with the
@@ -206,8 +206,8 @@ public:
         _clientOptions(clientOptions) {}
 
   /**
-   * @brief Returns the \ref AuthToken object representing the parsed JWT access
-   * token.
+   * @brief Returns the \ref AuthenticationToken object representing the parsed
+   * JWT access token.
    */
   const AuthenticationToken& getAccessToken() const { return _accessToken; }
   /**

@@ -41,7 +41,7 @@ enum class CesiumCuratedContentType : uint8_t {
 };
 
 /**
- * @brief Obtains a \ref ITwinCesiumCuratedContentType value from the provided
+ * @brief Obtains a \ref CesiumCuratedContentType value from the provided
  * string.
  *
  * See
@@ -70,7 +70,7 @@ enum class CesiumCuratedContentStatus : uint8_t {
 };
 
 /**
- * @brief Obtains a \ref ITwinCesiumCuratedContentStatus value from the provided
+ * @brief Obtains a \ref CesiumCuratedContentStatus value from the provided
  * string.
  *
  * See
