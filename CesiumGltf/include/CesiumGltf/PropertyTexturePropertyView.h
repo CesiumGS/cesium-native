@@ -140,9 +140,8 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
       sizeof(T) <= 2 && "Components cannot be larger than two bytes in size.");
 
   if constexpr (std::is_same_v<T, int16_t>) {
-    static_assert(
-        N == 2,
-        "Only vec2s can contain two-byte integer components.");
+    CESIUM_ASSERT(
+        N == 2 && "Only vec2s can contain two-byte integer components.");
     uint16_t x = static_cast<uint16_t>(bytes[0]) |
                  static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     uint16_t y = static_cast<uint16_t>(bytes[2]) |
@@ -153,9 +152,8 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   }
 
   if constexpr (std::is_same_v<T, uint16_t>) {
-    static_assert(
-        N == 2,
-        "Only vec2s can contain two-byte integer components.");
+    CESIUM_ASSERT(
+        N == 2 && "Only vec2s can contain two-byte integer components.");
     result[0] = static_cast<uint16_t>(bytes[0]) |
                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     result[1] = static_cast<uint16_t>(bytes[2]) |
