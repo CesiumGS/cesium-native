@@ -133,7 +133,8 @@ template <typename ElementType>
 ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
 
-  constexpr glm::length_t N = TypeToDimensions<ElementType>::dimensions;
+  [[maybe_unused]] constexpr glm::length_t N =
+      TypeToDimensions<ElementType>::dimensions;
   using T = typename ElementType::value_type;
 
   CESIUM_ASSERT(
