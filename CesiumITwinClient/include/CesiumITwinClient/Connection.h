@@ -8,7 +8,6 @@
 #include "ITwinRealityData.h"
 #include "Library.h"
 #include "Profile.h"
-#include "Resources.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
@@ -18,7 +17,6 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 
-#include <atomic>
 #include <memory>
 #include <optional>
 #include <string>
@@ -177,20 +175,6 @@ public:
   CesiumAsync::Future<
       CesiumUtility::Result<std::vector<CesiumCuratedContentAsset>>>
   cesiumCuratedContent();
-
-  /**
-   * @brief Obtains all available resources that can be loaded by Native from
-   * Cesium Curated Content, iTwin Reality Data, and iModel Mesh Exports.
-   *
-   * This can produce a lot of API calls.
-   *
-   * @param statusCallback A callback that will be called with (finishedCount,
-   * totalCount) each time an API call completes.
-   */
-  CesiumAsync::Future<CesiumUtility::Result<std::vector<ITwinResource>>>
-  listAllAvailableResources(std::function<void(
-                                const std::atomic<int32_t>&,
-                                const std::atomic<int32_t>&)>&& statusCallback);
 
   /**
    * @brief Creates a new `Connection` with the provided tokens.

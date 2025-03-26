@@ -7,7 +7,7 @@ CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 IModelMeshExportContentLoaderFactory::createLoader(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    const AuthorizationHeaderChangeListener& /*headerChangeListener*/) const {
+    const AuthorizationHeaderChangeListener& /*headerChangeListener*/) {
   return IModelMeshExportContentLoader::createLoader(
              externals,
              this->_iModelId,

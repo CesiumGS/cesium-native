@@ -91,7 +91,7 @@ public:
    */
   Tileset(
       const TilesetExternals& externals,
-      const TilesetContentLoaderFactory& loaderFactory,
+      TilesetContentLoaderFactory&& loaderFactory,
       const TilesetOptions& options = TilesetOptions());
 
   /**

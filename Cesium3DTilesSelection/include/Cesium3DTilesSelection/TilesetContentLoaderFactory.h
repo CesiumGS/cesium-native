@@ -40,7 +40,7 @@ public:
   createLoader(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      const AuthorizationHeaderChangeListener& headerChangeListener) const = 0;
+      const AuthorizationHeaderChangeListener& headerChangeListener) = 0;
 
   /**
    * @brief Returns true if a valid @ref TilesetContentLoader can be constructed

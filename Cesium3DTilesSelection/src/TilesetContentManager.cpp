@@ -886,7 +886,7 @@ TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     RasterOverlayCollection&& overlayCollection,
-    const TilesetContentLoaderFactory& loaderFactory)
+    TilesetContentLoaderFactory&& loaderFactory)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},

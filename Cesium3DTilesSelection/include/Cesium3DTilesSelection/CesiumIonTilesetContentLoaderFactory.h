@@ -41,8 +41,7 @@ public:
   createLoader(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      const AuthorizationHeaderChangeListener& headerChangeListener)
-      const override;
+      const AuthorizationHeaderChangeListener& headerChangeListener) override;
 
   virtual bool isValid() const override { return this->_ionAssetID > 0; }
 

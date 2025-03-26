@@ -122,7 +122,7 @@ Tileset::Tileset(
 
 Tileset::Tileset(
     const TilesetExternals& externals,
-    const TilesetContentLoaderFactory& loaderFactory,
+    TilesetContentLoaderFactory&& loaderFactory,
     const TilesetOptions& options)
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
@@ -134,7 +134,7 @@ Tileset::Tileset(
           _externals,
           _options,
           RasterOverlayCollection{_loadedTiles, externals, options.ellipsoid},
-          loaderFactory)} {}
+          std::move(loaderFactory))} {}
 
 Tileset::~Tileset() noexcept {
   TilesetHeightRequest::failHeightRequests(

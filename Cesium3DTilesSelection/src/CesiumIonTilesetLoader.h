@@ -21,14 +21,12 @@ public:
   CesiumIonTilesetLoader(
       std::string&& url,
       std::string&& ionAccessToken,
-      bool needsAuthHeader,
       std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
       AuthorizationHeaderChangeListener&& headerChangeListener,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID)
       : _ellipsoid(ellipsoid),
         _url(std::move(url)),
         _ionAccessToken(std::move(ionAccessToken)),
-        _needsAuthHeader(needsAuthHeader),
         _pAggregatedLoader(std::move(pAggregatedLoader)),
         _headerChangeListener(std::move(headerChangeListener)),
         _pLogger(nullptr),
@@ -89,7 +87,6 @@ private:
   CesiumGeospatial::Ellipsoid _ellipsoid;
   std::string _url;
   std::string _ionAccessToken;
-  bool _needsAuthHeader;
   std::unique_ptr<TilesetContentLoader> _pAggregatedLoader;
   AuthorizationHeaderChangeListener _headerChangeListener;
   std::shared_ptr<spdlog::logger> _pLogger;

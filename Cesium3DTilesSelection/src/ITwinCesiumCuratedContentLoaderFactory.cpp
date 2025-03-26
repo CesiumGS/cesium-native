@@ -7,7 +7,7 @@ CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 ITwinCesiumCuratedContentLoaderFactory::createLoader(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    const AuthorizationHeaderChangeListener& headerChangeListener) const {
+    const AuthorizationHeaderChangeListener& headerChangeListener) {
   return ITwinCesiumCuratedContentLoader::createLoader(
              externals,
              tilesetOptions.contentOptions,

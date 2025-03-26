@@ -30,7 +30,97 @@
 
 namespace Cesium3DTilesSelection {
 
+// This is an IAssetAccessor decorator that handles token refresh for any asset
+// that returns a 403 error.
+class RealityDataAssetAccessor
+    : public std::enable_shared_from_this<RealityDataAssetAccessor>,
+      public CesiumAsync::IAssetAccessor {
+public:
+  RealityDataAssetAccessor(
+      ITwinRealityDataContentLoader& tilesetLoader,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAggregatedAccessor)
+      : _pTilesetLoader(&tilesetLoader),
+        _pAggregatedAccessor(pAggregatedAccessor) {}
+
+  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
+  get(const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::string& url,
+      const std::vector<THeader>& headers = {}) override {
+    // If token refresh is needed, this lambda will be called in the main thread
+    // so that it can safely use the tileset loader.
+    auto refreshToken =
+        [pThis = this->shared_from_this()](
+            const CesiumAsync::AsyncSystem& asyncSystem,
+            std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+          if (!pThis->_pTilesetLoader) {
+            // The tileset loader has been destroyed, so just return the
+            // original (failed) request.
+            return asyncSystem.createResolvedFuture(std::move(pRequest));
+          }
+
+          return pThis->_pTilesetLoader->obtainNewAccessToken().thenImmediately(
+              [pThis, asyncSystem, pRequest = std::move(pRequest)](
+                  const std::string& newAuthorizationHeader) mutable {
+                if (newAuthorizationHeader.empty()) {
+                  // Could not refresh the token, so just return the
+                  // original (failed) request.
+                  return asyncSystem.createResolvedFuture(std::move(pRequest));
+                }
+
+                // Repeat the request using the new token.
+                CesiumAsync::HttpHeaders headers = pRequest->headers();
+                headers["Authorization"] = newAuthorizationHeader;
+                std::vector<THeader> vecHeaders(
+                    std::make_move_iterator(headers.begin()),
+                    std::make_move_iterator(headers.end()));
+                return pThis->get(asyncSystem, pRequest->url(), vecHeaders);
+              });
+        };
+
+    return this->_pAggregatedAccessor->get(asyncSystem, url, headers)
+        .thenImmediately([asyncSystem, refreshToken = std::move(refreshToken)](
+                             std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                 pRequest) mutable {
+          const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+          if (!pResponse) {
+            return asyncSystem.createResolvedFuture(std::move(pRequest));
+          }
+
+          if (pResponse->statusCode() == 403) {
+            // We need to refresh the iTwin access token.
+            return asyncSystem.runInMainThread(
+                [asyncSystem,
+                 pRequest = std::move(pRequest),
+                 refreshToken = std::move(refreshToken)]() mutable {
+                  return refreshToken(asyncSystem, std::move(pRequest));
+                });
+          }
+
+          return asyncSystem.createResolvedFuture(std::move(pRequest));
+        });
+  }
+
+  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>> request(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::string& verb,
+      const std::string& url,
+      const std::vector<THeader>& headers = std::vector<THeader>(),
+      const std::span<const std::byte>& contentPayload = {}) override {
+    return this->_pAggregatedAccessor
+        ->request(asyncSystem, verb, url, headers, contentPayload);
+  }
+
+  void tick() noexcept override { this->_pAggregatedAccessor->tick(); }
+
+  void notifyLoaderIsBeingDestroyed() { this->_pTilesetLoader = nullptr; }
+
+private:
+  ITwinRealityDataContentLoader* _pTilesetLoader;
+  std::shared_ptr<CesiumAsync::IAssetAccessor> _pAggregatedAccessor;
+};
+
 namespace {
+
 enum class RealityDataType {
   Cesium3DTiles,
   RealityMesh3DTiles,
@@ -110,6 +200,7 @@ requestRealityDataContainer(
     const RealityDataDetails& details,
     const std::optional<std::string>& iTwinId,
     const std::string& iTwinAccessToken,
+    ITwinRealityDataContentLoader::TokenRefreshCallback&& tokenRefreshCallback,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CesiumUtility::Uri readAccessUri(fmt::format(
       "https://api.bentley.com/reality-management/reality-data/{}/readaccess",
@@ -133,8 +224,9 @@ requestRealityDataContainer(
                         details,
                         iTwinId,
                         iTwinAccessToken,
+                        tokenRefreshCallback = std::move(tokenRefreshCallback),
                         ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                       pRequest) {
+                                       pRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
         const std::string& requestUrl = pRequest->url();
         if (!pResponse) {
@@ -187,12 +279,17 @@ requestRealityDataContainer(
                    std::string{containerUri.toString()},
                    std::vector<CesiumAsync::IAssetAccessor::THeader>{},
                    ellipsoid)
-            .thenImmediately([](TilesetContentLoaderResult<TilesetJsonLoader>&&
-                                    tilesetJsonResult) mutable {
+            .thenImmediately([tokenRefreshCallback =
+                                  std::move(tokenRefreshCallback),
+                              iTwinAccessToken](
+                                 TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                     tilesetJsonResult) mutable {
               TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
               if (!tilesetJsonResult.errors) {
                 result.pLoader =
                     std::make_unique<ITwinRealityDataContentLoader>(
+                        iTwinAccessToken,
+                        std::move(tokenRefreshCallback),
                         std::move(tilesetJsonResult.pLoader));
                 result.pRootTile = std::move(tilesetJsonResult.pRootTile);
                 result.credits = std::move(tilesetJsonResult.credits);
@@ -212,6 +309,7 @@ ITwinRealityDataContentLoader::createLoader(
     const std::string& realityDataId,
     const std::optional<std::string>& iTwinId,
     const std::string& iTwinAccessToken,
+    TokenRefreshCallback&& tokenRefreshCallback,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CesiumUtility::Uri realityMetadataUri(
       "https://api.bentley.com/reality-management/reality-data/" +
@@ -235,8 +333,9 @@ ITwinRealityDataContentLoader::createLoader(
                         realityDataId,
                         iTwinId,
                         iTwinAccessToken,
+                        tokenRefreshCallback = std::move(tokenRefreshCallback),
                         ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                       pRequest) {
+                                       pRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
         const std::string& requestUrl = pRequest->url();
         if (!pResponse) {
@@ -281,17 +380,74 @@ ITwinRealityDataContentLoader::createLoader(
             *details,
             iTwinId,
             iTwinAccessToken,
+            std::move(tokenRefreshCallback),
             ellipsoid);
       });
 }
 CesiumAsync::Future<TileLoadResult>
 ITwinRealityDataContentLoader::loadTileContent(const TileLoadInput& loadInput) {
-  return this->_pAggregatedLoader->loadTileContent(loadInput);
+  if (this->_pTilesetAccessor == nullptr) {
+    this->_pTilesetAccessor = loadInput.pAssetAccessor;
+    this->_pRealityDataAccessor = std::make_shared<RealityDataAssetAccessor>(
+        *this,
+        this->_pTilesetAccessor);
+  }
+
+  if (this->_pTilesetAccessor != loadInput.pAssetAccessor) {
+    // CesiumIonTilesetLoader requires this method to be called with the same
+    // asset accessor instance every time.
+    CESIUM_ASSERT(false);
+    return loadInput.asyncSystem.createResolvedFuture(
+        TileLoadResult::createFailedResult(loadInput.pAssetAccessor, nullptr));
+  }
+
+  this->_pLogger = loadInput.pLogger;
+
+  TileLoadInput aggregatedInput(
+      loadInput.tile,
+      loadInput.contentOptions,
+      loadInput.asyncSystem,
+      this->_pRealityDataAccessor,
+      this->_pLogger,
+      loadInput.requestHeaders,
+      loadInput.ellipsoid);
+
+  return this->_pAggregatedLoader->loadTileContent(aggregatedInput);
 }
 TileChildrenResult ITwinRealityDataContentLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   auto pLoader = tile.getLoader();
   return pLoader->createTileChildren(tile, ellipsoid);
+}
+
+ITwinRealityDataContentLoader::ITwinRealityDataContentLoader(
+    const std::string& accessToken,
+    TokenRefreshCallback&& tokenRefreshCallback,
+    std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader)
+    : _pAggregatedLoader(std::move(pAggregatedLoader)),
+      _iTwinAccessToken(accessToken),
+      _tokenRefreshCallback(std::move(tokenRefreshCallback)) {}
+
+ITwinRealityDataContentLoader::~ITwinRealityDataContentLoader() {
+  this->_pRealityDataAccessor->notifyLoaderIsBeingDestroyed();
+}
+
+CesiumAsync::Future<std::string>
+ITwinRealityDataContentLoader::obtainNewAccessToken() {
+  return this->_tokenRefreshCallback(this->_iTwinAccessToken)
+      .thenInMainThread(
+          [this](CesiumUtility::Result<std::string>&& result) -> std::string {
+            if (!result.value) {
+              result.errors.logError(
+                  this->_pLogger ? this->_pLogger : spdlog::default_logger(),
+                  "Errors while trying to obtain new iTwin access token:");
+              return {};
+            }
+
+            this->_iTwinAccessToken = *result.value;
+
+            return *result.value;
+          });
 }
 } // namespace Cesium3DTilesSelection

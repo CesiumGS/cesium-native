@@ -17,6 +17,10 @@ namespace Cesium3DTilesSelection {
 class ITwinRealityDataContentLoaderFactory
     : public TilesetContentLoaderFactory {
 public:
+  using TokenRefreshCallback =
+      std::function<CesiumAsync::Future<CesiumUtility::Result<std::string>>(
+          const std::string&)>;
+
   /**
    * @brief Creates a new factory for loading iTwin reality data.
    *
@@ -36,14 +40,18 @@ public:
    *
    * @endparblock
    * @param iTwinAccessToken The access token to use to access the API.
+   * @param tokenRefreshCallback Callback that will be called to obtain a new
+   * access token when the provided one has expired.
    */
   ITwinRealityDataContentLoaderFactory(
       const std::string& realityDataId,
       const std::optional<std::string>& iTwinId,
-      const std::string& iTwinAccessToken)
+      const std::string& iTwinAccessToken,
+      TokenRefreshCallback&& tokenRefreshCallback)
       : _realityDataId(realityDataId),
         _iTwinId(iTwinId),
-        _iTwinAccessToken(iTwinAccessToken) {}
+        _iTwinAccessToken(iTwinAccessToken),
+        _tokenRefreshCallback(std::move(tokenRefreshCallback)) {}
 
   virtual CesiumAsync::Future<
       Cesium3DTilesSelection::TilesetContentLoaderResult<
@@ -51,8 +59,7 @@ public:
   createLoader(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      const AuthorizationHeaderChangeListener& headerChangeListener)
-      const override;
+      const AuthorizationHeaderChangeListener& headerChangeListener) override;
 
   virtual bool isValid() const override {
     return !this->_realityDataId.empty() && !this->_iTwinAccessToken.empty();
@@ -62,5 +69,6 @@ private:
   std::string _realityDataId;
   std::optional<std::string> _iTwinId;
   std::string _iTwinAccessToken;
+  TokenRefreshCallback _tokenRefreshCallback;
 };
 } // namespace Cesium3DTilesSelection

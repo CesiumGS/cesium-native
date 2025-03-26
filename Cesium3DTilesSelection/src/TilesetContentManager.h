@@ -63,7 +63,7 @@ public:
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       RasterOverlayCollection&& overlayCollection,
-      const TilesetContentLoaderFactory& loaderFactory);
+      TilesetContentLoaderFactory&& loaderFactory);
 
   TilesetContentManager(
       const TilesetExternals& externals,

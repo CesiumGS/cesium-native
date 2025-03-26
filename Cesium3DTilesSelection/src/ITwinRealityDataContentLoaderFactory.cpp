@@ -7,12 +7,13 @@ CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 ITwinRealityDataContentLoaderFactory::createLoader(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    const AuthorizationHeaderChangeListener& /*headerChangeListener*/) const {
+    const AuthorizationHeaderChangeListener& /*headerChangeListener*/) {
   return ITwinRealityDataContentLoader::createLoader(
              externals,
              this->_realityDataId,
              this->_iTwinId,
              this->_iTwinAccessToken,
+             std::move(this->_tokenRefreshCallback),
              tilesetOptions.ellipsoid)
       .thenImmediately(
           [](TilesetContentLoaderResult<ITwinRealityDataContentLoader>&&
