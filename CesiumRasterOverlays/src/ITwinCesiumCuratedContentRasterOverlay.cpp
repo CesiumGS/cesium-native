@@ -5,7 +5,6 @@
 #include <fmt/format.h>
 
 #include <cstdint>
-#include <memory>
 #include <string>
 
 namespace CesiumRasterOverlays {

@@ -1,5 +1,7 @@
 #include <CesiumITwinClient/IModelMeshExport.h>
 
+#include <string>
+
 namespace CesiumITwinClient {
 IModelMeshExportStatus
 iModelMeshExportStatusFromString(const std::string& str) {

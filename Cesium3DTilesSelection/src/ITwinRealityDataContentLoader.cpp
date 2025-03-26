@@ -9,18 +9,23 @@
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <span>

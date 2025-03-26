@@ -6,7 +6,6 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
-#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 
 #include <fmt/format.h>

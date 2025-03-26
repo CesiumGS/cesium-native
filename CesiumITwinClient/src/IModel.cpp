@@ -1,5 +1,7 @@
 #include <CesiumITwinClient/IModel.h>
 
+#include <string>
+
 namespace CesiumITwinClient {
 IModelState iModelStateFromString(const std::string& str) {
   if (str == "initialized") {
