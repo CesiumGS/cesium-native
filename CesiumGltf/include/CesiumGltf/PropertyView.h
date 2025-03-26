@@ -9,6 +9,7 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <optional>
 
@@ -269,7 +270,7 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
 
   VecType result;
   for (glm::length_t i = 0; i < N; i++) {
-    std::optional<T> value = getScalar<T>(array[i]);
+    std::optional<T> value = getScalar<T>(array[static_cast<size_t>(i)]);
     if (!value) {
       return std::nullopt;
     }
@@ -299,7 +300,7 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
 
   const CesiumUtility::JsonValue::Array& array = jsonValue.getArray();
   constexpr glm::length_t N = MatType::length();
-  if (array.size() != N * N) {
+  if (array.size() != static_cast<size_t>(N * N)) {
     return std::nullopt;
   }
 
@@ -309,7 +310,8 @@ getMatN(const CesiumUtility::JsonValue& jsonValue) {
   for (glm::length_t i = 0; i < N; i++) {
     // Try to parse each value in the column.
     for (glm::length_t j = 0; j < N; j++) {
-      std::optional<T> value = getScalar<T>(array[i * N + j]);
+      std::optional<T> value =
+          getScalar<T>(array[static_cast<size_t>(i * N + j)]);
       if (!value) {
         return std::nullopt;
       }
@@ -421,8 +423,10 @@ public:
     if (classProperty.noData) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        // "noData" can only be defined if the property is not required.
-        _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          // "noData" can only be defined if the property is not required.
+          _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getValue(*classProperty.noData);
       }
@@ -437,9 +441,11 @@ public:
     if (classProperty.defaultProperty) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        // "default" can only be defined if the property is not required.
-        _defaultValue =
-            getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          // "default" can only be defined if the property is not required.
+          _defaultValue =
+              getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _defaultValue = getValue(*classProperty.defaultProperty);
       }
@@ -706,8 +712,8 @@ private:
     const auto foundValue = std::find_if(
         enumDefinition.values.begin(),
         enumDefinition.values.end(),
-        [&valueStr](const CesiumGltf::EnumValue& value) {
-          return value.name == valueStr;
+        [&valueStr](const CesiumGltf::EnumValue& enumValue) {
+          return enumValue.name == valueStr;
         });
 
     if (foundValue == enumDefinition.values.end()) {
@@ -1533,7 +1539,7 @@ public:
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
-        _count(_count = classProperty.count ? *classProperty.count : 0),
+        _count(classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -1562,7 +1568,9 @@ public:
     if (classProperty.noData) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        _noData = getEnumArrayValue(*classProperty.noData, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          _noData = getEnumArrayValue(*classProperty.noData, *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _noData = getArrayValue(*classProperty.noData);
       }
@@ -1576,8 +1584,11 @@ public:
     if (classProperty.defaultProperty) {
       if (!_required && _propertyType == PropertyType::Enum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
-        _defaultValue =
-            getEnumArrayValue(*classProperty.defaultProperty, *pEnumDefinition);
+        if constexpr (IsMetadataInteger<ElementType>::value) {
+          _defaultValue = getEnumArrayValue(
+              *classProperty.defaultProperty,
+              *pEnumDefinition);
+        }
       } else if (!_required && _propertyType != PropertyType::Enum) {
         _defaultValue = getArrayValue(*classProperty.defaultProperty);
       }
@@ -1931,8 +1942,8 @@ private:
       auto foundValue = std::find_if(
           enumDefinition.values.begin(),
           enumDefinition.values.end(),
-          [&str](const CesiumGltf::EnumValue& value) {
-            return value.name == str;
+          [&str](const CesiumGltf::EnumValue& enumValue) {
+            return enumValue.name == str;
           });
 
       if (foundValue == enumDefinition.values.end()) {
@@ -1994,7 +2005,7 @@ public:
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
-        _count(_count = classProperty.count ? *classProperty.count : 0),
+        _count(classProperty.count ? *classProperty.count : 0),
         _offset(std::nullopt),
         _scale(std::nullopt),
         _max(std::nullopt),
@@ -2795,7 +2806,7 @@ private:
     std::vector<std::string> strings;
     std::vector<uint64_t> stringOffsets;
 
-    const auto array = jsonValue.getArray();
+    const auto& array = jsonValue.getArray();
     strings.reserve(array.size());
     stringOffsets.reserve(array.size() + 1);
     stringOffsets.push_back(static_cast<uint64_t>(0));
