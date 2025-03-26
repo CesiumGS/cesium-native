@@ -2,7 +2,7 @@ function(configure_cesium_library targetName)
     if (MSVC)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj /w45038 /w44254 /w44242 /w44191 /w45220)
     else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
+        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
     endif()
 
     set_target_properties(${targetName} PROPERTIES
@@ -24,6 +24,10 @@ function(configure_cesium_library targetName)
                 GLM_FORCE_EXPLICIT_CTOR # Disallow implicit conversions between dvec3 <-> dvec4, dvec3 <-> fvec3, etc
                 GLM_ENABLE_EXPERIMENTAL # Allow use of experimental extensions
         )
+    endif()
+
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CESIUM_CLANG_TIME_TRACE)
+        target_compile_options(${targetName} PRIVATE -ftime-trace)
     endif()
 
     if (CESIUM_DEBUG_TILE_UNLOADING)
