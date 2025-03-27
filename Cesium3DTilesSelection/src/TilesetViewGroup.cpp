@@ -130,7 +130,7 @@ void TilesetViewGroup::finishFrame() {
     this->_loadProgressPercentage = 100.0f;
   } else {
     this->_loadProgressPercentage =
-        100.0f * (totalTiles - tilesLoading) / totalTiles;
+        100.0f * float(totalTiles - tilesLoading) / float(totalTiles);
   }
 }
 
