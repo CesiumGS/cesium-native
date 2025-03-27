@@ -1,3 +1,4 @@
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
@@ -6,6 +7,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 
 namespace Cesium3DTilesSelection {
 
