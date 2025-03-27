@@ -34,6 +34,22 @@ namespace CesiumUtility {
 template <typename TNodePointer, typename TState> class TreeTraversalState {
 public:
   /**
+   * @brief Gets the total number of nodes that were visited in the previous
+   * traversal.
+   */
+  size_t getNodeCountInPreviousTraversal() const {
+    return this->_previousTraversal.size();
+  }
+
+  /**
+   * @brief Gets the total number of nodes that have been visited so far in the
+   * current traversal.
+   */
+  size_t getNodeCountInCurrentTraversal() const {
+    return this->_currentTraversal.size();
+  }
+
+  /**
    * @brief Begins a new traversal of the tree. The "current" and "previous"
    * traversals are swapped, and then the new "current" traversal is cleared.
    */

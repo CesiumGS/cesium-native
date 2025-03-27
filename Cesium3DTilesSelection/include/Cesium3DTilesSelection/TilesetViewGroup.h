@@ -157,8 +157,25 @@ public:
    * @brief Finishes the current frame by making the current tile selection
    * state the previous one and releasing references to tiles in the old
    * previous one.
+   *
+   * This method also updates the load progress percentage returned by
+   * {@link getPreviousLoadProgressPercentage}.
    */
   void finishFrame();
+
+  /**
+   * @brief Gets the previous load progress percentage for this view group as
+   * of the last time it was updated.
+   *
+   * This method reports the progress as of the last call to {@link finishFrame}.
+   *
+   * The reported percentage is computed as:
+   *
+   * \f$100.0\frac{totalTilesVisited - tilesNeedingLoading}{totalTilesVisited}\f$
+   *
+   * When loading is complete, this method will return exactly 100.0.
+   */
+  float getPreviousLoadProgressPercentage() const;
 
   /** @inheritdoc */
   double getWeight() const override;
@@ -185,20 +202,11 @@ public:
 
 private:
   double _weight = 1.0;
-  std::unordered_map<
-      CesiumUtility::IntrusivePointer<const Tile>,
-      TileSelectionState>
-      _previousSelectionStates;
-  std::unordered_map<
-      CesiumUtility::IntrusivePointer<const Tile>,
-      TileSelectionState>
-      _currentSelectionStates;
-
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
-
+  size_t _tilesAlreadyLoading = 0;
+  float _loadProgressPercentage = 100.0f;
   ViewUpdateResult _updateResult;
-
   TraversalState _traversalState;
 };
 

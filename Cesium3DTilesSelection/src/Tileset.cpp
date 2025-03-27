@@ -404,8 +404,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
     pExcluder->startNewFrame();
   }
 
-  viewGroup.startNewFrame();
-
   std::vector<double> fogDensities(frustums.size());
   std::transform(
       frustums.begin(),
@@ -424,24 +422,18 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       currentFrameNumber};
 
   if (!frustums.empty()) {
-    viewGroup.getTraversalState().beginTraversal();
+    viewGroup.startNewFrame();
     this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
+    viewGroup.finishFrame();
   } else {
     result = ViewUpdateResult();
   }
-
-  result.workerThreadTileLoadQueueLength =
-      static_cast<int32_t>(viewGroup.getWorkerThreadLoadQueueLength());
-  result.mainThreadTileLoadQueueLength =
-      static_cast<int32_t>(viewGroup.getMainThreadLoadQueueLength());
 
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
     pOcclusionPool->pruneOcclusionProxyMappings();
   }
-
-  viewGroup.finishFrame();
 
   this->_updateLodTransitions(frameState, deltaTime, result);
 
@@ -549,29 +541,7 @@ int32_t Tileset::getNumberOfTilesLoaded() const {
 }
 
 float Tileset::computeLoadProgress() noexcept {
-  // TODO: report progress across all view groups, not just the default one.
-  const ViewUpdateResult& updateResult =
-      this->_defaultViewGroup.getViewUpdateResult();
-
-  int32_t queueSizeSum = static_cast<int32_t>(
-      updateResult.workerThreadTileLoadQueueLength +
-      updateResult.mainThreadTileLoadQueueLength);
-  int32_t numOfTilesLoading =
-      this->_pTilesetContentManager->getNumberOfTilesLoading();
-  int32_t numOfTilesLoaded =
-      this->_pTilesetContentManager->getNumberOfTilesLoaded();
-  int32_t numOfTilesKicked = static_cast<int32_t>(updateResult.tilesKicked);
-
-  // Amount of work actively being done
-  int32_t inProgressSum = numOfTilesLoading + queueSizeSum;
-
-  // Total work so far. Add already loaded tiles and kicked tiles.
-  // Kicked tiles are transient, and never in progress, but are an indicator
-  // that there is more work to do next frame.
-  int32_t totalNum = inProgressSum + numOfTilesLoaded + numOfTilesKicked;
-  float percentage =
-      static_cast<float>(numOfTilesLoaded) / static_cast<float>(totalNum);
-  return (percentage * 100.f);
+  return this->_defaultViewGroup.getPreviousLoadProgressPercentage();
 }
 
 LoadedConstTileEnumerator Tileset::loadedTiles() const {

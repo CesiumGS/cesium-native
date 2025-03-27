@@ -230,8 +230,11 @@ public:
   int32_t getNumberOfTilesLoaded() const;
 
   /**
-   * @brief Estimate the percentage of the tiles for the current view that have
-   * been loaded.
+   * @brief Gets the percentage of tiles that had been loaded for the default
+   * view group as of the last time it was updated.
+   *
+   * To get the load progress of a view group other than the default, call
+   * {@link TilesetViewGroup::getPreviousLoadProgressPercentage}.
    */
   float computeLoadProgress() noexcept;
 

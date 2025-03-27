@@ -49,6 +49,10 @@ void TilesetViewGroup::addToLoadQueue(const TileLoadTask& task) {
     this->_workerThreadLoadQueue.emplace_back(task);
   } else if (pTile->needsMainThreadLoading()) {
     this->_mainThreadLoadQueue.emplace_back(task);
+  } else if (
+      pTile->getState() == TileLoadState::ContentLoading ||
+      pTile->getState() == TileLoadState::Unloading) {
+    ++this->_tilesAlreadyLoading;
   }
 }
 
@@ -88,12 +92,11 @@ size_t TilesetViewGroup::getMainThreadLoadQueueLength() const {
 void TilesetViewGroup::startNewFrame() {
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
+  this->_tilesAlreadyLoading = 0;
+  this->_traversalState.beginTraversal();
 }
 
 void TilesetViewGroup::finishFrame() {
-  std::swap(this->_previousSelectionStates, this->_currentSelectionStates);
-  this->_currentSelectionStates.clear();
-
   std::sort(
       this->_workerThreadLoadQueue.begin(),
       this->_workerThreadLoadQueue.end());
@@ -111,6 +114,28 @@ void TilesetViewGroup::finishFrame() {
   std::reverse(
       this->_mainThreadLoadQueue.begin(),
       this->_mainThreadLoadQueue.end());
+
+  this->_updateResult.workerThreadTileLoadQueueLength =
+      static_cast<int32_t>(this->getWorkerThreadLoadQueueLength());
+  this->_updateResult.mainThreadTileLoadQueueLength =
+      static_cast<int32_t>(this->getMainThreadLoadQueueLength());
+
+  size_t totalTiles = this->_traversalState.getNodeCountInCurrentTraversal();
+  size_t tilesLoading =
+      size_t(this->_updateResult.workerThreadTileLoadQueueLength) +
+      size_t(this->_updateResult.mainThreadTileLoadQueueLength) +
+      this->_updateResult.tilesKicked + this->_tilesAlreadyLoading;
+
+  if (tilesLoading == 0) {
+    this->_loadProgressPercentage = 100.0f;
+  } else {
+    this->_loadProgressPercentage =
+        100.0f * (totalTiles - tilesLoading) / totalTiles;
+  }
+}
+
+float TilesetViewGroup::getPreviousLoadProgressPercentage() const {
+  return this->_loadProgressPercentage;
 }
 
 double TilesetViewGroup::getWeight() const { return this->_weight; }
