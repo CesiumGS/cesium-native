@@ -374,7 +374,7 @@ public:
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
    * @returns The set of tiles to render in the updated view. This value is only
-   * valid until the next call to `updateView` or until the tileset is
+   * valid until the next call to `updateViewGroup` or until the view group is
    * destroyed, whichever comes first.
    */
   const ViewUpdateResult& updateViewGroup(

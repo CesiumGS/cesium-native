@@ -437,6 +437,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   this->_updateLodTransitions(frameState, deltaTime, result);
 
+#if false
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       this->_externals.pCreditSystem;
@@ -487,6 +488,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       }
     }
   }
+#endif
 
   this->_previousFrameNumber = currentFrameNumber;
 
