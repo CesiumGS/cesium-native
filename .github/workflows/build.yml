@@ -61,7 +61,8 @@ jobs:
       - name: Print vcpkg problems
         if: ${{ failure() }}
         run: |
-          cat "/usr/local/share/vcpkg/buildtrees/asyncplusplus/config-x64-linux-out.log"
+          cat "/usr/local/share/vcpkg/buildtrees/doctest/config-x64-linux-dbg-out.log"
+          cat "/usr/local/share/vcpkg/buildtrees/doctest/config-x64-linux-dbg-err.log"
       - name: List clang-tidy warnings & errors
         if: ${{ !cancelled() }}
         run: |
