@@ -22,7 +22,6 @@ list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "/debug")
 find_library(modp_b64_LIBRARIES NAMES modpbase64 libmodpbase64)
 set(CMAKE_PREFIX_PATH ${modpbase64SavePrefixPath})
 
-message(WARNING "modp_b64_LIBRARIES: ${modp_b64_LIBRARIES}")
 find_path(modp_b64_INCLUDE_DIRS NAMES modp_b64.h)
 
 include(FindPackageHandleStandardArgs)
