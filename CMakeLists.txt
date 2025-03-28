@@ -35,7 +35,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
 
 # Note: VCPKG_TRIPLET is not used by vcpkg! The relevant variables are
 # VCPKG_TARGET_TRIPLET and VCPKG_HOST_TRIPLET. ezvcpkg and our custom
-# installation code use VCPKG_TRIPLET, so we initialize it.
+# installation code use VCPKG_TRIPLET, so initialize it here.
 
 if (VCPKG_TARGET_TRIPLET)
     set(VCPKG_TRIPLET "${VCPKG_TARGET_TRIPLET}")
