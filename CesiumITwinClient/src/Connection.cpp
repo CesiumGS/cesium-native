@@ -36,12 +36,12 @@
 using namespace CesiumAsync;
 using namespace CesiumUtility;
 
+namespace CesiumITwinClient {
+namespace {
 const std::string ITWIN_AUTHORIZE_URL =
     "https://ims.bentley.com/connect/authorize";
 const std::string ITWIN_TOKEN_URL = "https://ims.bentley.com/connect/token";
 
-namespace CesiumITwinClient {
-namespace {
 Result<rapidjson::Document> handleJsonResponse(
     std::shared_ptr<CesiumAsync::IAssetRequest>& pRequest,
     const std::string& operation) {
@@ -153,31 +153,31 @@ CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
              ITWIN_AUTHORIZE_URL)
       .thenImmediately(
           [asyncSystem, pAssetAccessor, clientOptions](
-              const Result<CesiumClientCommon::OAuth2TokenResponse>& result) {
+              const Result<CesiumClientCommon::OAuth2TokenResponse>& result)
+              -> Result<Connection> {
             if (!result.value.has_value()) {
-              return asyncSystem.createResolvedFuture<Result<Connection>>(
-                  {result.errors});
+              return {result.errors};
             } else {
               Result<AuthenticationToken> authTokenResult =
                   AuthenticationToken::parse(result.value->accessToken);
               if (!authTokenResult.value.has_value() ||
                   !authTokenResult.value->isValid()) {
-                return asyncSystem.createResolvedFuture<Result<Connection>>(
-                    {authTokenResult.errors});
+                return {authTokenResult.errors};
               } else {
-                return asyncSystem.createResolvedFuture<Result<Connection>>(
-                    Connection(
-                        asyncSystem,
-                        pAssetAccessor,
-                        *authTokenResult.value,
-                        result.value->refreshToken,
-                        clientOptions));
+                return Connection(
+                    asyncSystem,
+                    pAssetAccessor,
+                    *authTokenResult.value,
+                    result.value->refreshToken,
+                    clientOptions);
               }
             }
           });
 }
 
+namespace {
 const std::string ME_URL = "https://api.bentley.com/users/me";
+}
 
 CesiumAsync::Future<CesiumUtility::Result<UserProfile>> Connection::me() {
   return this->ensureValidToken().thenInWorkerThread(
@@ -231,7 +231,9 @@ CesiumAsync::Future<CesiumUtility::Result<UserProfile>> Connection::me() {
       });
 }
 
+namespace {
 const std::string LIST_ITWINS_URL = "https://api.bentley.com/itwins/";
+}
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwin>>>
 Connection::itwins(const QueryParameters& params) {
@@ -297,7 +299,9 @@ Connection::listITwins(const std::string& url) {
       });
 }
 
+namespace {
 const std::string LIST_IMODELS_URL = "https://api.bentley.com/imodels/";
+}
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<IModel>>>
 Connection::imodels(const std::string& iTwinId, const QueryParameters& params) {
@@ -392,8 +396,10 @@ Connection::listIModels(const std::string& url) {
       });
 }
 
+namespace {
 const std::string LIST_IMODEL_MESH_EXPORTS_URL =
     "https://api.bentley.com/mesh-export/";
+}
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<IModelMeshExport>>>
 Connection::meshExports(
@@ -475,8 +481,10 @@ Connection::listIModelMeshExports(const std::string& url) {
       });
 }
 
+namespace {
 const std::string LIST_ITWIN_REALITY_DATA_URL =
     "https://api.bentley.com/reality-management/reality-data/";
+}
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
 Connection::realityData(
@@ -580,8 +588,11 @@ Connection::listITwinRealityData(const std::string& url) {
       });
 }
 
+namespace {
 const std::string LIST_CCC_ENDPOINT_URL =
     "https://api.bentley.com/curated-content/cesium/";
+}
+
 using ITwinCCCListResponse = std::vector<CesiumCuratedContentAsset>;
 
 CesiumAsync::Future<Result<ITwinCCCListResponse>>

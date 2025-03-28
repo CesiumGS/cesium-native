@@ -28,4 +28,16 @@ IModelMeshExportContentLoaderFactory::createLoader(
                 std::move(result));
           });
 }
+
+IModelMeshExportContentLoaderFactory::IModelMeshExportContentLoaderFactory(
+    const std::string& iModelId,
+    const std::optional<std::string>& exportId,
+    const std::string& iTwinAccessToken)
+    : _iModelId(iModelId),
+      _exportId(exportId),
+      _iTwinAccessToken(iTwinAccessToken) {}
+
+bool IModelMeshExportContentLoaderFactory::isValid() const {
+  return !this->_iModelId.empty() && !this->_iTwinAccessToken.empty();
+}
 } // namespace Cesium3DTilesSelection

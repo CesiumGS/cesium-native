@@ -29,4 +29,18 @@ ITwinRealityDataContentLoaderFactory::createLoader(
                 std::move(result));
           });
 }
+
+ITwinRealityDataContentLoaderFactory::ITwinRealityDataContentLoaderFactory(
+    const std::string& realityDataId,
+    const std::optional<std::string>& iTwinId,
+    const std::string& iTwinAccessToken,
+    TokenRefreshCallback&& tokenRefreshCallback)
+    : _realityDataId(realityDataId),
+      _iTwinId(iTwinId),
+      _iTwinAccessToken(iTwinAccessToken),
+      _tokenRefreshCallback(std::move(tokenRefreshCallback)) {}
+
+bool ITwinRealityDataContentLoaderFactory::isValid() const {
+  return !this->_realityDataId.empty() && !this->_iTwinAccessToken.empty();
+}
 } // namespace Cesium3DTilesSelection

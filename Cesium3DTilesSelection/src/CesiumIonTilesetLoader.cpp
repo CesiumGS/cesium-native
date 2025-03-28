@@ -745,4 +745,20 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
   return externals.asyncSystem.createResolvedFuture(std::move(result));
 }
 
+CesiumIonTilesetLoader::CesiumIonTilesetLoader(
+    std::string&& url,
+    std::string&& ionAccessToken,
+    std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
+    AuthorizationHeaderChangeListener&& headerChangeListener,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
+    : _ellipsoid(ellipsoid),
+      _url(std::move(url)),
+      _ionAccessToken(std::move(ionAccessToken)),
+      _pAggregatedLoader(std::move(pAggregatedLoader)),
+      _headerChangeListener(std::move(headerChangeListener)),
+      _pLogger(nullptr),
+      _pTilesetAccessor(nullptr),
+      _pIonAccessor(nullptr),
+      _tokenRefreshInProgress() {}
+
 } // namespace Cesium3DTilesSelection

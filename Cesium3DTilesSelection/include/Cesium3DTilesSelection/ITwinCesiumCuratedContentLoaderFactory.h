@@ -27,9 +27,7 @@ public:
    */
   ITwinCesiumCuratedContentLoaderFactory(
       uint32_t iTwinCesiumContentID,
-      const std::string& iTwinAccessToken)
-      : _iTwinCesiumContentID(iTwinCesiumContentID),
-        _iTwinAccessToken(iTwinAccessToken) {}
+      const std::string& iTwinAccessToken);
 
   virtual CesiumAsync::Future<
       Cesium3DTilesSelection::TilesetContentLoaderResult<
@@ -39,9 +37,7 @@ public:
       const TilesetOptions& tilesetOptions,
       const AuthorizationHeaderChangeListener& headerChangeListener) override;
 
-  virtual bool isValid() const override {
-    return this->_iTwinCesiumContentID > 0;
-  }
+  virtual bool isValid() const override;
 
 private:
   uint32_t _iTwinCesiumContentID;

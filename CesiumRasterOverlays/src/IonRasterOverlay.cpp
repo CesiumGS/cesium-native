@@ -120,7 +120,7 @@ IonRasterOverlay::createTileProvider(
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
   pOwner = pOwner ? pOwner : this;
 
-  auto cacheIt = IonRasterOverlay::endpointCache.find(_overlayUrl);
+  auto cacheIt = IonRasterOverlay::endpointCache.find(this->_overlayUrl);
   if (cacheIt != IonRasterOverlay::endpointCache.end()) {
     return createTileProvider(
         cacheIt->second,

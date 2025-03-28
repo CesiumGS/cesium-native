@@ -83,12 +83,12 @@ using namespace CesiumUtility;
                   "Failed to complete authorization: {}",
                   joinToString(result.errors.errors, ", ")));
             } else {
-              return asyncSystem.createResolvedFuture<Connection>(Connection(
+              return Connection(
                   asyncSystem,
                   pAssetAccessor,
                   result.value->accessToken,
                   appData,
-                  ionApiUrl));
+                  ionApiUrl);
             }
           });
 }

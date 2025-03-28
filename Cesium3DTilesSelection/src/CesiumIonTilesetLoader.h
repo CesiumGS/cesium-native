@@ -23,16 +23,7 @@ public:
       std::string&& ionAccessToken,
       std::unique_ptr<TilesetContentLoader>&& pAggregatedLoader,
       AuthorizationHeaderChangeListener&& headerChangeListener,
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID)
-      : _ellipsoid(ellipsoid),
-        _url(std::move(url)),
-        _ionAccessToken(std::move(ionAccessToken)),
-        _pAggregatedLoader(std::move(pAggregatedLoader)),
-        _headerChangeListener(std::move(headerChangeListener)),
-        _pLogger(nullptr),
-        _pTilesetAccessor(nullptr),
-        _pIonAccessor(nullptr),
-        _tokenRefreshInProgress() {}
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   virtual ~CesiumIonTilesetLoader() noexcept;
 
@@ -53,11 +44,6 @@ public:
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
-
-private:
-  CesiumAsync::SharedFuture<std::string> refreshTokenInMainThread(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::string& currentAuthorizationHeader);
 
 protected:
   static CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
@@ -84,6 +70,10 @@ protected:
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 private:
+  CesiumAsync::SharedFuture<std::string> refreshTokenInMainThread(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::string& currentAuthorizationHeader);
+
   CesiumGeospatial::Ellipsoid _ellipsoid;
   std::string _url;
   std::string _ionAccessToken;

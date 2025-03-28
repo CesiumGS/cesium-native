@@ -31,4 +31,16 @@ CesiumIonTilesetContentLoaderFactory::createLoader(
             std::move(result));
       });
 }
+
+CesiumIonTilesetContentLoaderFactory::CesiumIonTilesetContentLoaderFactory(
+    uint32_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl)
+    : _ionAssetID(ionAssetID),
+      _ionAccessToken(ionAccessToken),
+      _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
+
+bool CesiumIonTilesetContentLoaderFactory::isValid() const {
+  return this->_ionAssetID > 0;
+}
 } // namespace Cesium3DTilesSelection

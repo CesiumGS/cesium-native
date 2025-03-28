@@ -5,35 +5,9 @@
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 
-#include <functional>
 #include <memory>
 
 namespace CesiumRasterOverlays {
-
-/**
- * @brief A class specifying how an endpoint should be accessed.
- */
-class EndpointResource {
-public:
-  /**
-   * @brief If this method returns true, the access token should be included in
-   * the `Authorization` header of the initial request.
-   */
-  virtual bool needsAuthHeaderOnInitialRequest() const = 0;
-
-  /**
-   * @brief Returns the endpoint URL for the given asset.
-   *
-   * @param assetID The ID of the asset to obtain.
-   * @param accessToken The access token to use to obtain the asset.
-   * @param assetEndpointUrl The base URL of the asset endpoint.
-   */
-  virtual std::string getUrl(
-      int64_t assetID,
-      const std::string& accessToken,
-      const std::string& assetEndpointUrl) const = 0;
-  virtual ~EndpointResource() = default;
-};
 
 /**
  * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.

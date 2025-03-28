@@ -51,11 +51,7 @@ public:
       const std::string& realityDataId,
       const std::optional<std::string>& iTwinId,
       const std::string& iTwinAccessToken,
-      TokenRefreshCallback&& tokenRefreshCallback)
-      : _realityDataId(realityDataId),
-        _iTwinId(iTwinId),
-        _iTwinAccessToken(iTwinAccessToken),
-        _tokenRefreshCallback(std::move(tokenRefreshCallback)) {}
+      TokenRefreshCallback&& tokenRefreshCallback);
 
   virtual CesiumAsync::Future<
       Cesium3DTilesSelection::TilesetContentLoaderResult<
@@ -65,9 +61,7 @@ public:
       const TilesetOptions& tilesetOptions,
       const AuthorizationHeaderChangeListener& headerChangeListener) override;
 
-  virtual bool isValid() const override {
-    return !this->_realityDataId.empty() && !this->_iTwinAccessToken.empty();
-  }
+  virtual bool isValid() const override;
 
 private:
   std::string _realityDataId;

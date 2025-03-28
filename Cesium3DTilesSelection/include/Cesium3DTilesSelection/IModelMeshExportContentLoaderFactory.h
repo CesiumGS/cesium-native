@@ -29,10 +29,7 @@ public:
   IModelMeshExportContentLoaderFactory(
       const std::string& iModelId,
       const std::optional<std::string>& exportId,
-      const std::string& iTwinAccessToken)
-      : _iModelId(iModelId),
-        _exportId(exportId),
-        _iTwinAccessToken(iTwinAccessToken) {}
+      const std::string& iTwinAccessToken);
 
   virtual CesiumAsync::Future<
       Cesium3DTilesSelection::TilesetContentLoaderResult<
@@ -42,9 +39,7 @@ public:
       const TilesetOptions& tilesetOptions,
       const AuthorizationHeaderChangeListener& headerChangeListener) override;
 
-  virtual bool isValid() const override {
-    return !this->_iModelId.empty() && !this->_iTwinAccessToken.empty();
-  }
+  virtual bool isValid() const override;
 
 private:
   std::string _iModelId;

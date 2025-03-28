@@ -30,10 +30,7 @@ public:
   CesiumIonTilesetContentLoaderFactory(
       uint32_t ionAssetID,
       const std::string& ionAccessToken,
-      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/")
-      : _ionAssetID(ionAssetID),
-        _ionAccessToken(ionAccessToken),
-        _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   virtual CesiumAsync::Future<
       Cesium3DTilesSelection::TilesetContentLoaderResult<
@@ -43,7 +40,7 @@ public:
       const TilesetOptions& tilesetOptions,
       const AuthorizationHeaderChangeListener& headerChangeListener) override;
 
-  virtual bool isValid() const override { return this->_ionAssetID > 0; }
+  virtual bool isValid() const override;
 
 private:
   uint32_t _ionAssetID;
