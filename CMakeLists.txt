@@ -4,12 +4,14 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-# Don't use ezvcpkg if it appears that this configuration is using
-# vcpkg already, either by building cesium-native directly,
+# By default, Use ezvcpkg to install dependencies. But don't use
+# ezvcpkg if it appears that this configuration is using vcpkg
+# manifest mode already, either by building cesium-native directly,
 # or via a higher level project that has added cesium-native as a
-# subdirectory and using vcpkg to statisfy its dependencies,
-# presumably in manifest mode.
+# subdirectory and is using vcpkg to statisfy its dependencies.
 
+#In a fresh build, before CMakeCache.txt exists, determine whether to
+#use ezvcpkg. After this, CESIUM_USE_EZVCPG will be in the cache.
 set(CESIUM_USE_EZVCPKG_DEFAULT ON)
 if (VCPKG_MANIFEST_MODE)
     set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
@@ -23,6 +25,9 @@ endif()
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 
 if(CESIUM_USE_EZVCPKG)
+  # Keep vcpkg from running in manifset mode. It will try to because
+  # this directory contains a vcpkg.json manifest.
+  set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "vcpkg manifest mode should not be enabled with ezvcpg!")
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 endif()
 
