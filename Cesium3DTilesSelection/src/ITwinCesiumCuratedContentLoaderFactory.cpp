@@ -8,6 +8,8 @@
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
 
+#include <cstdint>
+#include <string>
 #include <utility>
 
 namespace Cesium3DTilesSelection {
