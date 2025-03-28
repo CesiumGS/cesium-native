@@ -39,6 +39,7 @@ enum class UnloadTileContentResult : uint8_t {
 };
 
 class TilesetSharedAssetSystem;
+class TileLoadRequester;
 
 class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
@@ -47,20 +48,17 @@ public:
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      RasterOverlayCollection&& overlayCollection,
       std::unique_ptr<TilesetContentLoader>&& pLoader,
       std::unique_ptr<Tile>&& pRootTile);
 
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      RasterOverlayCollection&& overlayCollection,
       const std::string& url);
 
   TilesetContentManager(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
-      RasterOverlayCollection&& overlayCollection,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
@@ -145,11 +143,21 @@ public:
 
   int64_t getTotalDataUsed() const noexcept;
 
-  bool tileNeedsWorkerThreadLoading(const Tile& tile) const noexcept;
-  bool tileNeedsMainThreadLoading(const Tile& tile) const noexcept;
-
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
+
+  void markTileNowUsed(const Tile& tile);
+  void markTileNowUnused(const Tile& tile);
+
+  void
+  unloadCachedBytes(int64_t maximumCachedBytes, double timeBudgetMilliseconds);
+  void clearChildrenRecursively(Tile* pTile) noexcept;
+
+  void registerTileRequester(TileLoadRequester& requester);
+  void unregisterTileRequester(TileLoadRequester& requester);
+
+  void processWorkerThreadLoadRequests(const TilesetOptions& options);
+  void processMainThreadLoadRequests(const TilesetOptions& options);
 
 private:
   static void setTileContent(
@@ -199,5 +207,15 @@ private:
 
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
+
+  Tile::UnusedLinkedList _unusedTiles;
+
+  std::vector<TileLoadRequester*> _requesters;
+  double _roundRobinValueWorker;
+  double _roundRobinValueMain;
+
+  // These are scratch space, stored here to avoid heap allocations.
+  std::vector<double> _requesterFractions;
+  std::vector<TileLoadRequester*> _requestersWithRequests;
 };
 } // namespace Cesium3DTilesSelection

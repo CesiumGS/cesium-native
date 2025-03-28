@@ -768,4 +768,11 @@ CesiumIonTilesetLoader::refreshTokenIfNeeded(
   return externals.asyncSystem.createResolvedFuture(std::move(result));
 }
 
+void CesiumIonTilesetLoader::setOwnerOfNestedLoaders(
+    TilesetContentManager& owner) noexcept {
+  if (this->_pAggregatedLoader) {
+    this->_pAggregatedLoader->setOwner(owner);
+  }
+}
+
 } // namespace Cesium3DTilesSelection

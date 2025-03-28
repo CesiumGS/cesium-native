@@ -1,11 +1,15 @@
+#include "TilesetContentManager.h"
+
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Math.h>
 
@@ -88,8 +92,6 @@ Tile::Tile(
       _geometricError(0.0),
       _refine(TileRefine::Replace),
       _transform(1.0),
-      _lastSelectionState(),
-      _loadedTilesLinks(),
       _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
       _loadState{loadState},
@@ -105,8 +107,6 @@ Tile::Tile(Tile&& rhs) noexcept
       _geometricError(rhs._geometricError),
       _refine(rhs._refine),
       _transform(rhs._transform),
-      _lastSelectionState(rhs._lastSelectionState),
-      _loadedTilesLinks(),
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
@@ -124,7 +124,7 @@ Tile::Tile(Tile&& rhs) noexcept
 
 Tile& Tile::operator=(Tile&& rhs) noexcept {
   if (this != &rhs) {
-    this->_loadedTilesLinks = rhs._loadedTilesLinks;
+    this->_unusedTilesLinks = rhs._unusedTilesLinks;
 
     // since children of rhs will have the parent pointed to rhs,
     // we will reparent them to this tile as rhs will be destroyed after this
@@ -141,7 +141,6 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_geometricError = rhs._geometricError;
     this->_refine = rhs._refine;
     this->_transform = rhs._transform;
-    this->_lastSelectionState = rhs._lastSelectionState;
     this->_content = std::move(rhs._content);
     this->_pLoader = rhs._pLoader;
     this->_loadState = rhs._loadState;
@@ -305,6 +304,36 @@ TilesetContentLoader* Tile::getLoader() const noexcept {
 
 TileLoadState Tile::getState() const noexcept { return this->_loadState; }
 
+namespace {
+
+bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
+  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    const CesiumRasterOverlays::RasterOverlayTile* pLoading =
+        mapped.getLoadingTile();
+    if (pLoading &&
+        pLoading->getState() ==
+            CesiumRasterOverlays::RasterOverlayTile::LoadState::Unloaded) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+} // namespace
+
+bool Tile::needsWorkerThreadLoading() const noexcept {
+  TileLoadState state = this->getState();
+  return state == TileLoadState::Unloaded ||
+         state == TileLoadState::FailedTemporarily ||
+         anyRasterOverlaysNeedLoading(*this);
+}
+
+bool Tile::needsMainThreadLoading() const noexcept {
+  return this->getState() == TileLoadState::ContentLoaded &&
+         this->isRenderContent();
+}
+
 void Tile::setParent(Tile* pParent) noexcept { this->_pParent = pParent; }
 
 void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
@@ -392,6 +421,23 @@ void Tile::decrementDoNotUnloadSubtreeCount(
         pTile->_doNotUnloadSubtreeCount);
 #endif
     pTile = pTile->getParent();
+  }
+}
+
+void Tile::addReference() const noexcept {
+  ++this->_referenceCount;
+  if (this->_referenceCount == 1 && this->_pLoader &&
+      this->_pLoader->getOwner()) {
+    this->_pLoader->getOwner()->markTileNowUsed(*this);
+  }
+}
+
+void Tile::releaseReference() const noexcept {
+  CESIUM_ASSERT(this->_referenceCount > 0);
+  --this->_referenceCount;
+  if (this->_referenceCount == 0 && this->_pLoader &&
+      this->_pLoader->getOwner()) {
+    this->_pLoader->getOwner()->markTileNowUnused(*this);
   }
 }
 
