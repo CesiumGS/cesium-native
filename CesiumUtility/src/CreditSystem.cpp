@@ -99,8 +99,8 @@ const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
       currentCredits.begin(),
       currentCredits.end(),
       [this](const Credit& a, const Credit& b) {
-        int32_t aCounts = _credits[a.id].referenceCount;
-        int32_t bCounts = _credits[b.id].referenceCount;
+        int32_t aCounts = this->_credits[a.id].referenceCount;
+        int32_t bCounts = this->_credits[b.id].referenceCount;
         if (aCounts == bCounts)
           return a.id < b.id;
         else
