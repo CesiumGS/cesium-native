@@ -129,14 +129,15 @@ PropertyArrayCopy<T> transformArray(
     const std::optional<PropertyArrayView<T>>& scale) {
   std::vector<T> result(static_cast<size_t>(value.size()));
   for (int64_t i = 0; i < value.size(); i++) {
-    result[i] = value[i];
+    const size_t ui = static_cast<size_t>(i);
+    result[ui] = value[i];
 
     if (scale) {
-      result[i] = applyScale<T>(result[i], (*scale)[i]);
+      result[ui] = applyScale<T>(result[ui], (*scale)[i]);
     }
 
     if (offset) {
-      result[i] = result[i] + (*offset)[i];
+      result[ui] = result[ui] + (*offset)[i];
     }
   }
 
@@ -164,14 +165,15 @@ PropertyArrayCopy<NormalizedType> transformNormalizedArray(
     const std::optional<PropertyArrayView<NormalizedType>>& scale) {
   std::vector<NormalizedType> result(static_cast<size_t>(value.size()));
   for (int64_t i = 0; i < value.size(); i++) {
-    result[i] = normalize<T>(value[i]);
+    const size_t ui = static_cast<size_t>(i);
+    result[ui] = normalize<T>(value[i]);
 
     if (scale) {
-      result[i] = result[i] * (*scale)[i];
+      result[ui] = result[ui] * (*scale)[i];
     }
 
     if (offset) {
-      result[i] = result[i] + (*offset)[i];
+      result[ui] = result[ui] + (*offset)[i];
     }
   }
 
@@ -196,14 +198,15 @@ PropertyArrayCopy<glm::vec<N, double>> transformNormalizedVecNArray(
     const std::optional<PropertyArrayView<glm::vec<N, double>>>& scale) {
   std::vector<glm::vec<N, double>> result(static_cast<size_t>(value.size()));
   for (int64_t i = 0; i < value.size(); i++) {
-    result[i] = normalize<N, T>(value[i]);
+    const size_t ui = static_cast<size_t>(i);
+    result[ui] = normalize<N, T>(value[i]);
 
     if (scale) {
-      result[i] = result[i] * (*scale)[i];
+      result[ui] = result[ui] * (*scale)[i];
     }
 
     if (offset) {
-      result[i] = result[i] + (*offset)[i];
+      result[ui] = result[ui] + (*offset)[i];
     }
   }
 
@@ -228,14 +231,15 @@ PropertyArrayCopy<glm::mat<N, N, double>> transformNormalizedMatNArray(
     const std::optional<PropertyArrayView<glm::mat<N, N, double>>>& scale) {
   std::vector<glm::mat<N, N, double>> result(static_cast<size_t>(value.size()));
   for (int64_t i = 0; i < value.size(); i++) {
-    result[i] = normalize<N, T>(value[i]);
+    const size_t ui = static_cast<size_t>(i);
+    result[ui] = normalize<N, T>(value[i]);
 
     if (scale) {
-      result[i] = applyScale<glm::mat<N, N, double>>(result[i], (*scale)[i]);
+      result[ui] = applyScale<glm::mat<N, N, double>>(result[ui], (*scale)[i]);
     }
 
     if (offset) {
-      result[i] = result[i] + (*offset)[i];
+      result[ui] = result[ui] + (*offset)[i];
     }
   }
 

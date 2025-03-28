@@ -101,14 +101,20 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
     }
 
     // Reinterpret the bits as a float.
-    return *reinterpret_cast<float*>(&resultAsUint);
+    // We need to memcpy to avoid a "dereferencing type-punned pointer will
+    // break strict-aliasing rules" error on GCC. See:
+    // https://gist.github.com/shafik/848ae25ee209f698763cffee272a58f8#how-do-we-type-pun-correctly
+    float resultAsFloat;
+    std::memcpy(&resultAsFloat, &resultAsUint, sizeof(float));
+    return resultAsFloat;
   }
 
   if constexpr (IsMetadataInteger<ElementType>::value) {
     using UintType = std::make_unsigned_t<ElementType>;
     UintType resultAsUint = 0;
     for (size_t i = 0; i < bytes.size(); i++) {
-      resultAsUint |= static_cast<UintType>(bytes[i]) << i * 8;
+      resultAsUint |=
+          static_cast<UintType>(static_cast<UintType>(bytes[i]) << i * 8);
     }
 
     // Reinterpret the bits with the correct signedness.
@@ -127,7 +133,8 @@ template <typename ElementType>
 ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
 
-  const glm::length_t N = TypeToDimensions<ElementType>::dimensions;
+  [[maybe_unused]] constexpr glm::length_t N =
+      TypeToDimensions<ElementType>::dimensions;
   using T = typename ElementType::value_type;
 
   CESIUM_ASSERT(
@@ -137,9 +144,9 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
     CESIUM_ASSERT(
         N == 2 && "Only vec2s can contain two-byte integer components.");
     uint16_t x = static_cast<uint16_t>(bytes[0]) |
-                 (static_cast<uint16_t>(bytes[1]) << 8);
+                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     uint16_t y = static_cast<uint16_t>(bytes[2]) |
-                 (static_cast<uint16_t>(bytes[3]) << 8);
+                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[3]) << 8);
 
     result[0] = *reinterpret_cast<int16_t*>(&x);
     result[1] = *reinterpret_cast<int16_t*>(&y);
@@ -149,20 +156,20 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
     CESIUM_ASSERT(
         N == 2 && "Only vec2s can contain two-byte integer components.");
     result[0] = static_cast<uint16_t>(bytes[0]) |
-                (static_cast<uint16_t>(bytes[1]) << 8);
+                static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     result[1] = static_cast<uint16_t>(bytes[2]) |
-                (static_cast<uint16_t>(bytes[3]) << 8);
+                static_cast<uint16_t>(static_cast<uint16_t>(bytes[3]) << 8);
   }
 
   if constexpr (std::is_same_v<T, int8_t>) {
     for (size_t i = 0; i < bytes.size(); i++) {
-      result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
+      result[int32_t(i)] = *reinterpret_cast<const int8_t*>(&bytes[i]);
     }
   }
 
   if constexpr (std::is_same_v<T, uint8_t>) {
     for (size_t i = 0; i < bytes.size(); i++) {
-      result[i] = bytes[i];
+      result[int32_t(i)] = bytes[i];
     }
   }
 
@@ -182,10 +189,11 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   std::vector<T> result(bytes.size() / sizeof(T));
 
   if constexpr (sizeof(T) == 2) {
-    for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
+    for (size_t i = 0, b = 0; i < result.size(); i++, b += 2) {
       using UintType = std::make_unsigned_t<T>;
-      UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-                              (static_cast<UintType>(bytes[b + 1]) << 8);
+      UintType resultAsUint =
+          static_cast<UintType>(bytes[b]) |
+          static_cast<UintType>(static_cast<UintType>(bytes[b + 1]) << 8);
       result[i] = *reinterpret_cast<T*>(&resultAsUint);
     }
   } else {
