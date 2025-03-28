@@ -1,0 +1,13 @@
+diff --git i/CMakeLists.txt w/CMakeLists.txt
+index bb2de4d..a0ff1c5 100644
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -18,7 +18,7 @@
+ # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ # THE SOFTWARE.
+ 
+-cmake_minimum_required(VERSION 3.1)
++cmake_minimum_required(VERSION 3.5)
+ project(Async++ C CXX)
+ 
+ option(BUILD_SHARED_LIBS "Build Async++ as a shared library" ON)
