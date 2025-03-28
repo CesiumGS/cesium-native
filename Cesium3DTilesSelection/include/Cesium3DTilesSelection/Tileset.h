@@ -5,6 +5,7 @@
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -17,7 +18,6 @@
 
 #include <list>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -79,6 +79,20 @@ public:
       const std::string& ionAccessToken,
       const TilesetOptions& options = TilesetOptions(),
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
+
+  /**
+   * @brief Constructs a new instance with the given @ref
+   * TilesetContentLoaderFactory.
+   *
+   * @param externals The external interfaces to use.
+   * @param loaderFactory The factory to use to create the @ref
+   * TilesetContentLoader.
+   * @param options Additional options for the tileset.
+   */
+  Tileset(
+      const TilesetExternals& externals,
+      TilesetContentLoaderFactory&& loaderFactory,
+      const TilesetOptions& options = TilesetOptions());
 
   /**
    * @brief Destroys this tileset.

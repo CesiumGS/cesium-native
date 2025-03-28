@@ -7,11 +7,7 @@ graph TD
   classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
   classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
   CesiumIonClient[CesiumIonClient] --> CesiumAsync[CesiumAsync]
+  CesiumIonClient[CesiumIonClient] --> CesiumClientCommon[CesiumClientCommon]
   CesiumIonClient[CesiumIonClient] --> CesiumGeospatial[CesiumGeospatial]
   CesiumIonClient[CesiumIonClient] --> CesiumUtility[CesiumUtility]
-  CesiumIonClient[CesiumIonClient] --> OpenSSL_Crypto{{OpenSSL::Crypto}}
-  CesiumIonClient[CesiumIonClient] --> httplib_httplib{{httplib::httplib}}
-  CesiumIonClient[CesiumIonClient] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
-  CesiumIonClient[CesiumIonClient] --> picosha2_picosha2{{picosha2::picosha2}}
-  class OpenSSL_Crypto,httplib_httplib,modp_b64_modp_b64,picosha2_picosha2 dependencyNode
-  class CesiumAsync,CesiumGeospatial,CesiumUtility,CesiumIonClient libraryNode
+  class CesiumAsync,CesiumClientCommon,CesiumGeospatial,CesiumUtility,CesiumIonClient libraryNode

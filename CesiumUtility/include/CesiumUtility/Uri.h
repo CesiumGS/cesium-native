@@ -354,6 +354,10 @@ public:
    * @param uri The URI instance to obtain the query params from.
    */
   UriQuery(const Uri& uri) : _params(uri.getQuery()) {}
+  /**
+   * @brief Creates an empty \ref UriQuery object.
+   */
+  UriQuery() = default;
 
   /**
    * @brief Obtains the value of the given key from the query parameters,
