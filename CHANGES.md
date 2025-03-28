@@ -7,6 +7,7 @@
 - Fixed missing URI query part when downloading glTF textures or buffers.
 - Fixed bugs in I3dm metadata parsing.
 - Fixed memory leak in `CesiumGltfReader`.
+- Fixed a bug in `ImplicitTilingUtilities::computeBoundingVolume` that incorrectly subdivided a `BoundingCylinderRegion` across the discontinuity line.
 
 ### v0.45.0 - 2025-03-03
 
@@ -20,6 +21,8 @@
 - Added support for the following 3D Tiles extensions to `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`:
   - `3DTILES_ellipsoid`
   - `3DTILES_content_voxels`
+  - `3DTILES_bounding_volume_cylinder`
+- Added `BoundingCylinderRegion` to represent `3DTILES_bounding_volume_cylinder` in the `BoundingVolume` variant.
 - Added generated classes for `EXT_primitive_voxels` and its dependencies in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added `AxisAlignedBox::fromPositions`, which creates an `AxisAlignedBox` from an input vector of positions.
 - `PropertyView`, `PropertyTableView`, `PropertyTablePropertyView`, `PropertyTextureView`, and `PropertyTexturePropertyView` now support the enum metadata type in `EXT_structural_metadata`.
