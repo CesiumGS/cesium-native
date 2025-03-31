@@ -2,6 +2,12 @@
   "version": 3,
   "configurePresets": [
     {
+      "name": "default",
+      "cacheVariables": {
+        "CESIUM_USE_EZVCPKG": "ON"
+      }
+    },
+    {
       "name": "vcpkg",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
