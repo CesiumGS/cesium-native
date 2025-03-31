@@ -19,12 +19,9 @@ jobs:
     steps:
       - name: Capture AWS secrets
         uses: aws-actions/configure-aws-credentials@v2
-        env:
-          AWS_S3_USERNAME: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
-          AWS_S3_PASSWORD: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
         with:
-          aws-access-key-id: ${{ env.AWS_S3_USERNAME }}
-          aws-secret-access-key: ${{ env.AWS_S3_PASSWORD }}
+          aws-access-key-id: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
           aws-region: us-east-1
       - name: Check out repository code
         uses: actions/checkout@v4
