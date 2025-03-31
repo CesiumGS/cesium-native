@@ -40,7 +40,6 @@ cesium_target_include_directories(
     TARGET
         CesiumJsonWriter
     PUBLIC
-        $<BUILD_INTERFACE:${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
