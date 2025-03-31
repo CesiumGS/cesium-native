@@ -1,10 +1,10 @@
-#include "fillWithRandomBytes.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/Promise.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -18,10 +18,11 @@
 #include <CesiumIonClient/Token.h>
 #include <CesiumIonClient/TokenList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
-#include <httplib.h>
+#include <fmt/format.h>
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -41,95 +42,12 @@
 #include <span>
 #include <stdexcept>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4244)
-#endif
-
-#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-
-#include <picosha2.h>
-
-#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 using namespace CesiumAsync;
 using namespace CesiumIonClient;
 using namespace CesiumUtility;
-
-namespace {
-std::string encodeBase64(const std::vector<uint8_t>& bytes) {
-  const size_t count = modp_b64_encode_len(bytes.size());
-  std::string result(count, 0);
-  const size_t actualLength = modp_b64_encode(
-      result.data(),
-      reinterpret_cast<const char*>(bytes.data()),
-      bytes.size());
-  result.resize(actualLength);
-
-  // Convert to a URL-friendly form of Base64 according to the algorithm
-  // in [RFC7636 Appendix A](https://tools.ietf.org/html/rfc7636#appendix-A)
-  const size_t firstPaddingIndex = result.find('=');
-  if (firstPaddingIndex != std::string::npos) {
-    result.erase(result.begin() + int64_t(firstPaddingIndex), result.end());
-  }
-  std::replace(result.begin(), result.end(), '+', '-');
-  std::replace(result.begin(), result.end(), '/', '_');
-
-  return result;
-}
-
-std::string createSuccessHtml(const std::string& applicationName) {
-  return std::string("<html>") +
-         "<h2 style=\"text-align: center;\">Successfully "
-         "authorized!</h2><br/>" +
-         "<div style=\"text-align: center;\">Please close this window and "
-         "return to " +
-         applicationName + ".</div>" + "<html>";
-}
-
-std::string createGenericErrorHtml(
-    const std::string& applicationName,
-    const std::string& errorMessage,
-    const std::string& errorDescription) {
-  return std::string("<html>") + "<h2 style=\"text-align: center;\">" +
-         errorMessage + "</h2><br/>" + "<div style=\"text-align: center;\">" +
-         errorDescription + ".</div><br/>" +
-         "<div style=\"text-align: center;\">Please close this window and "
-         "return to " +
-         applicationName + " to try again.</div>" + "<html>";
-}
-
-std::string createAuthorizationErrorHtml(
-    const std::string& applicationName,
-    const std::exception& exception) {
-  return std::string("<html>") +
-         "<h2 style=\"text-align: center;\">Not authorized!</h2><br/>" +
-         "<div style=\"text-align: center;\">The authorization failed with the "
-         "following error message: " +
-         exception.what() + ".</div><br/>" +
-         "<div style=\"text-align: center;\">Please close this window and "
-         "return to " +
-         applicationName + ".</div><br/>" +
-         "<div style=\"text-align: center;\">If the problem persists, contact "
-         "our support at <a "
-         "href=\"mailto:support@cesium.com\">support@cesium.com</a>.</div>" +
-         "<html>";
-}
-
-} // namespace
 
 /*static*/ CesiumAsync::Future<Connection> Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -142,131 +60,37 @@ std::string createAuthorizationErrorHtml(
     const CesiumIonClient::ApplicationData& appData,
     const std::string& ionApiUrl,
     const std::string& ionAuthorizeUrl) {
+  const std::string tokenUrl = Uri::resolve(ionApiUrl, "oauth/token");
 
-  auto promise = asyncSystem.createPromise<Connection>();
-
-  std::shared_ptr<httplib::Server> pServer =
-      std::make_shared<httplib::Server>();
-  const int port = pServer->bind_to_any_port("127.0.0.1");
-
-  std::string redirectUrl =
-      Uri::resolve("http://127.0.0.1:" + std::to_string(port), redirectPath);
-
-  std::vector<uint8_t> stateBytes(32, 0);
-  fillWithRandomBytes(stateBytes);
-
-  std::string state = encodeBase64(stateBytes);
-
-  std::vector<uint8_t> codeVerifierBytes(32, 0);
-  fillWithRandomBytes(codeVerifierBytes);
-
-  std::string codeVerifier = encodeBase64(codeVerifierBytes);
-
-  std::vector<uint8_t> hashedChallengeBytes(picosha2::k_digest_size);
-  picosha2::hash256(codeVerifier, hashedChallengeBytes);
-  std::string hashedChallenge = encodeBase64(hashedChallengeBytes);
-
-  std::string authorizeUrl = ionAuthorizeUrl;
-  authorizeUrl = Uri::addQuery(authorizeUrl, "response_type", "code");
-  authorizeUrl =
-      Uri::addQuery(authorizeUrl, "client_id", std::to_string(clientID));
-  authorizeUrl =
-      Uri::addQuery(authorizeUrl, "scope", joinToString(scopes, " "));
-  authorizeUrl = Uri::addQuery(authorizeUrl, "redirect_uri", redirectUrl);
-  authorizeUrl = Uri::addQuery(authorizeUrl, "state", state);
-  authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge_method", "S256");
-  authorizeUrl = Uri::addQuery(authorizeUrl, "code_challenge", hashedChallenge);
-
-  pServer->Get(
-      redirectPath,
-      [promise,
-       pServer,
-       asyncSystem,
-       pAssetAccessor,
-       friendlyApplicationName,
-       clientID,
-       ionApiUrl,
-       redirectUrl,
-       expectedState = state,
-       codeVerifier,
-       appData](const httplib::Request& request, httplib::Response& response) {
-        pServer->stop();
-
-        std::string error = request.get_param_value("error");
-        std::string errorDescription =
-            request.get_param_value("error_description");
-        if (!error.empty()) {
-          std::string errorMessage = "Error";
-          std::string errorDescriptionMessage = "An unknown error occurred";
-          if (error == "access_denied") {
-            errorMessage = "Access denied";
-          }
-          if (!errorDescription.empty()) {
-            errorDescriptionMessage = errorDescription;
-          }
-          response.set_content(
-              createGenericErrorHtml(
-                  friendlyApplicationName,
-                  errorMessage,
-                  errorDescriptionMessage),
-              "text/html");
-          promise.reject(std::runtime_error("Received an error message"));
-          return;
-        }
-
-        std::string code = request.get_param_value("code");
-        std::string state = request.get_param_value("state");
-        if (state != expectedState) {
-          response.set_content(
-              createGenericErrorHtml(
-                  friendlyApplicationName,
-                  "Invalid state",
-                  "The redirection received an invalid state"),
-              "text/html");
-          promise.reject(std::runtime_error("Received an invalid state."));
-          return;
-        }
-
-        try {
-          Connection connection = Connection::completeTokenExchange(
-                                      asyncSystem,
-                                      pAssetAccessor,
-                                      clientID,
-                                      ionApiUrl,
-                                      appData,
-                                      code,
-                                      redirectUrl,
-                                      codeVerifier)
-                                      .wait();
-
-          response.set_content(
-              createSuccessHtml(friendlyApplicationName),
-              "text/html");
-          promise.resolve(std::move(connection));
-        } catch (const std::exception& exception) {
-          response.set_content(
-              createAuthorizationErrorHtml(friendlyApplicationName, exception),
-              "text/html");
-          promise.reject(std::current_exception());
-        } catch (...) {
-          response.set_content(
-              createAuthorizationErrorHtml(
-                  friendlyApplicationName,
-                  std::runtime_error("Unknown error")),
-              "text/html");
-          promise.reject(std::current_exception());
-        }
-      });
-
-  // TODO: Make this process cancelable, and shut down the server when it's
-  // canceled.
-  std::thread([pServer, authorizeUrl]() {
-    pServer->listen_after_bind();
-  }).detach();
-
-  openUrlCallback(authorizeUrl);
-
-  return promise.getFuture();
+  return CesiumClientCommon::OAuth2PKCE::authorize(
+             asyncSystem,
+             pAssetAccessor,
+             friendlyApplicationName,
+             CesiumClientCommon::OAuth2ClientOptions{
+                 std::to_string(clientID),
+                 redirectPath,
+                 std::nullopt,
+                 true},
+             scopes,
+             std::move(openUrlCallback),
+             tokenUrl,
+             ionAuthorizeUrl)
+      .thenImmediately(
+          [asyncSystem, pAssetAccessor, ionApiUrl, appData](
+              const Result<CesiumClientCommon::OAuth2TokenResponse>& result) {
+            if (!result.value.has_value()) {
+              throw std::runtime_error(fmt::format(
+                  "Failed to complete authorization: {}",
+                  joinToString(result.errors.errors, ", ")));
+            } else {
+              return Connection(
+                  asyncSystem,
+                  pAssetAccessor,
+                  result.value->accessToken,
+                  appData,
+                  ionApiUrl);
+            }
+          });
 }
 
 Connection::Connection(
@@ -1164,82 +988,6 @@ Connection::getIdFromToken(const std::string& token) {
   }
 
   return jtiIt->value.GetString();
-}
-
-/*static*/ CesiumAsync::Future<Connection> Connection::completeTokenExchange(
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    int64_t clientID,
-    const std::string& ionApiUrl,
-    const CesiumIonClient::ApplicationData& appData,
-    const std::string& code,
-    const std::string& redirectUrl,
-    const std::string& codeVerifier) {
-  rapidjson::StringBuffer postBuffer;
-  rapidjson::Writer<rapidjson::StringBuffer> writer(postBuffer);
-
-  writer.StartObject();
-  writer.Key("grant_type");
-  writer.String("authorization_code");
-  writer.Key("client_id");
-  writer.String(std::to_string(clientID).c_str());
-  writer.Key("code");
-  writer.String(code.c_str(), rapidjson::SizeType(code.size()));
-  writer.Key("redirect_uri");
-  writer.String(redirectUrl.c_str(), rapidjson::SizeType(redirectUrl.size()));
-  writer.Key("code_verifier");
-  writer.String(codeVerifier.c_str(), rapidjson::SizeType(codeVerifier.size()));
-  writer.EndObject();
-
-  const std::span<const std::byte> payload(
-      reinterpret_cast<const std::byte*>(postBuffer.GetString()),
-      postBuffer.GetSize());
-
-  return pAssetAccessor
-      ->request(
-          asyncSystem,
-          "POST",
-          Uri::resolve(ionApiUrl, "oauth/token"),
-          {{"Content-Type", "application/json"},
-           {"Accept", "application/json"}},
-          payload)
-      .thenInWorkerThread([asyncSystem, pAssetAccessor, ionApiUrl, appData](
-                              std::shared_ptr<IAssetRequest>&& pRequest) {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          throw std::runtime_error("The server did not return a response.");
-        }
-
-        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          throw std::runtime_error(
-              "The server returned an error code: " +
-              std::to_string(pResponse->statusCode()));
-        }
-
-        rapidjson::Document d;
-        d.Parse(
-            reinterpret_cast<const char*>(pResponse->data().data()),
-            pResponse->data().size());
-        if (d.HasParseError()) {
-          throw std::runtime_error(
-              std::string("Failed to parse JSON response: ") +
-              rapidjson::GetParseError_En(d.GetParseError()));
-        }
-
-        std::string accessToken =
-            JsonHelpers::getStringOrDefault(d, "access_token", "");
-        if (accessToken.empty()) {
-          throw std::runtime_error(
-              "Server response does not include a valid token.");
-        }
-
-        return Connection(
-            asyncSystem,
-            pAssetAccessor,
-            accessToken,
-            appData,
-            ionApiUrl);
-      });
 }
 
 CesiumAsync::Future<Response<TokenList>>

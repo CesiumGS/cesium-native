@@ -41,9 +41,5 @@ target_link_libraries(CesiumIonClient
         CesiumAsync
         CesiumUtility
         CesiumGeospatial
-    PRIVATE
-        picosha2::picosha2
-        modp_b64::modp_b64
-        httplib::httplib
-        OpenSSL::Crypto
+        CesiumClientCommon
 )
