@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
