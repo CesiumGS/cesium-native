@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
 
@@ -14,9 +14,9 @@
 
 ##### Fixes :wrench:
 
-- Fixed missing URI query part when downloading glTF textures or buffers.
-- Fixed bugs in I3dm metadata parsing.
-- Fixed memory leak in `CesiumGltfReader`.
+- `GltfReader::resolveExternalData` now includes query parameters from the parent URL when resolving relative URLs for external buffers and textures.
+- Fixed bugs that could prevent valid metadata in Instanced 3D Model (i3dm) files from being parsed correctly.
+- Fixed a memory leak in `CesiumGltfReader`.
 - Fixed a bug in `ImplicitTilingUtilities::computeBoundingVolume` that incorrectly subdivided a `BoundingCylinderRegion` across the discontinuity line.
 
 ### v0.45.0 - 2025-03-03
