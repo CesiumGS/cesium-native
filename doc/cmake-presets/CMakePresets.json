@@ -2,12 +2,6 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "default",
-      "cacheVariables": {
-        "CESIUM_USE_EZVCPKG": "ON"
-      }
-    },
-    {
       "name": "vcpkg",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
@@ -38,7 +32,7 @@
       "inherits": ["vcpkg"],
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
-        "VCPKG_TRIPLET": "x64-windows-static-md"
+        "VCPKG_HOST_TRIPLET": "x64-windows-static-md"
       }
     },
     {

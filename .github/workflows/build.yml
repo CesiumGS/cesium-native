@@ -52,6 +52,7 @@ jobs:
       - name: Run clang-tidy
         run: |
           echo `$CC --version | head -n 1`, `cmake --version | head -n 1`
+          cp doc/cmake-presets/CMakeUserPresets.json .
           cmake --preset=vcpkg-linux -DCMAKE_BUILD_TYPE=Debug -DCESIUM_CLANG_TIDY_USE_THREADS=4
           cmake --build build --target clang-tidy > output.log
       - name: Print vcpkg problems
@@ -95,6 +96,7 @@ jobs:
       - name: Generate Documentation
         run: |
           npm install
+          cp doc/cmake-presets/CMakeUserPresets.json .
           cmake --preset=vcpkg-linux
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
@@ -132,6 +134,7 @@ jobs:
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
+          Copy .\doc\cmake-presets\CMakeUserPresets.json .\
           cmake --preset=vcpkg-windows -G Ninja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build build
       - name: Test ${{matrix.build_type}} Configuration
@@ -207,6 +210,7 @@ jobs:
           echo "EXTRA_CMAKE_OPTIONS=-DVCPKG_OVERLAY_TRIPLETS=$PWD/vcpkg/triplets -DVCPKG_TRIPLET=x64-macos-10-15 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=x86_64 -DVCPKG_TARGET_TRIPLET=x64-macos-10-15" >> "$GITHUB_ENV"
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
+          cp doc/cmake-presets/CMakeUserPresets.json .
           cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} $EXTRA_CMAKE_OPTIONS
           cmake --build build --parallel
       - name: Test ${{matrix.build_type}} Configuration
