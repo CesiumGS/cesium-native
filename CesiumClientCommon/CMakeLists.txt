@@ -25,7 +25,6 @@ target_sources(
     PRIVATE
         ${CESIUM_CLIENT_COMMON_SOURCES}
         ${CESIUM_CLIENT_COMMON_HEADERS}
-    PUBLIC
         ${CESIUM_CLIENT_COMMON_PUBLIC_HEADERS}
 )
 
@@ -33,7 +32,9 @@ cesium_target_include_directories(
     TARGET
         CesiumClientCommon
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(CesiumClientCommon

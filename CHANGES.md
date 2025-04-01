@@ -11,6 +11,7 @@
 - `ITwinCesiumCuratedContentRasterOverlay` can load imagery from the iTwin Cesium Curated Content API.
 - Added `CesiumITwinClient` library for authorizing with and making requests to the iTwin API.
 - Added `CesiumClientCommon` to hold shared code between `CesiumIonClient` and `CesiumITwinClient`.
+- Added support for building in `vcpkg` manifest mode.
 
 ##### Fixes :wrench:
 

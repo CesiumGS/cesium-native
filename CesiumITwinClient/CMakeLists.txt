@@ -25,7 +25,6 @@ target_sources(
     PRIVATE
         ${CESIUM_ITWIN_CLIENT_SOURCES}
         ${CESIUM_ITWIN_CLIENT_HEADERS}
-    PUBLIC
         ${CESIUM_ITWIN_CLIENT_PUBLIC_HEADERS}
 )
 
@@ -33,7 +32,9 @@ cesium_target_include_directories(
     TARGET
         CesiumITwinClient
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(CesiumITwinClient

@@ -30,18 +30,27 @@ This guide contains the basic setup information for developers looking to work w
 Check out the repo with:
 
 ```bash
-git clone git@github.com:CesiumGS/cesium-native.git --recurse-submodules
+git clone git@github.com:CesiumGS/cesium-native.git
 ```
 
-If you forget the `--recurse-submodules`, nothing will work because the git submodules will be missing. You should be able to fix it with:
+## Dependencies
 
-```bash
-git submodule update --init --recursive
-```
+Cesium Native manages its many dependencies using
+[vcpkg](https://github.com/microsoft/vcpkg). There are two ways of
+building Cesium Native with `vcpkg`:
+* Using a user-contributed package called `ezvcpkg` which insulates the
+  user from `vcpkg` and makes the build behave, more or less, like it
+  did when Cesium Native included all its dependencies in the same Git
+  repository;
+* manifest mode, in which vcpkg reads the list of Cesium Native's
+  dependencies and installs them. This requires a local installation
+  of `vcpkg` and some extra arguments to CMake.
 
 ## Compiling Cesium Native
 
 ### Compile from command line
+
+Using `ezvcpkg`:
 
 ```bash
 ## Windows compilation using Visual Studio
@@ -51,6 +60,15 @@ cmake --build build --config Release
 
 ## Linux compilation
 cmake -B build -S .
+cmake --build build
+```
+
+For building in `vcpkg` manifest mode, it's easiest to use one of the
+CMake presets defined in CMakePresets.json. For example, configuring
+and building under Linux:
+
+```bash
+cmake --preset=vcpkg-linux -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ```
 
