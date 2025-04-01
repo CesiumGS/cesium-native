@@ -6,7 +6,9 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CESIUM_USE_EZVCPKG": "OFF"
+        "CESIUM_USE_EZVCPKG": "OFF",
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+        "VCPKG_KEEP_ENV_VARS": "CMAKE_POLICY_VERSION_MINIMUM"
       }
     },
     {
