@@ -2,7 +2,6 @@
 
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
-#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTiles/Schema.h>
@@ -12,6 +11,7 @@
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/Axis.h>

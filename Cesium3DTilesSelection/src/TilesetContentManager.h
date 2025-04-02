@@ -1,12 +1,14 @@
 #pragma once
 
 #include "RasterOverlayUpsampler.h"
-#include "TilesetContentLoaderResult.h"
 
+#include <Cesium3DTilesSelection/CesiumIonTilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -55,6 +57,11 @@ public:
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       const std::string& url);
+
+  TilesetContentManager(
+      const TilesetExternals& externals,
+      const TilesetOptions& tilesetOptions,
+      TilesetContentLoaderFactory&& loaderFactory);
 
   TilesetContentManager(
       const TilesetExternals& externals,

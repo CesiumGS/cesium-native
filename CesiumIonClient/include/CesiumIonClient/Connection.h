@@ -336,16 +336,6 @@ public:
   static std::optional<std::string> getIdFromToken(const std::string& token);
 
 private:
-  static CesiumAsync::Future<Connection> completeTokenExchange(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      int64_t clientID,
-      const std::string& ionApiUrl,
-      const CesiumIonClient::ApplicationData& appData,
-      const std::string& code,
-      const std::string& redirectUrl,
-      const std::string& codeVerifier);
-
   CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
 
   CesiumAsync::AsyncSystem _asyncSystem;
