@@ -147,15 +147,15 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-22.04, ubuntu-20.04, macos-13 ]
+        platform: [ ubuntu-24.04, ubuntu-22.04, macos-13 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-22.04
+            platform: ubuntu-24.04
           - compiler: gcc
             platform: macos-13
           - compiler: gcc
-            platform: ubuntu-20.04
+            platform: ubuntu-22.04
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
