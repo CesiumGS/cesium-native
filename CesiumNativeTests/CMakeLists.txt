@@ -19,6 +19,7 @@ set(cesium_native_targets
     CesiumGltfWriter
     CesiumIonClient
     CesiumITwinClient
+    CesiumVectorData
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
     CesiumUtility
