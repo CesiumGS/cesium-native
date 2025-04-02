@@ -186,8 +186,8 @@ jobs:
       - name: Set CC and CXX
         if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-13'}}
         run: |
-          echo "CC=clang-18" >> "$GITHUB_ENV"
-          echo "CXX=clang++-18" >> "$GITHUB_ENV"
+          echo "CC=clang" >> "$GITHUB_ENV"
+          echo "CXX=clang++" >> "$GITHUB_ENV"
       - name: Make more swap space available
         if: ${{ matrix.platform != 'macos-13'}}
         run: |
