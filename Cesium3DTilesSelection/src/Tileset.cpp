@@ -14,6 +14,7 @@
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -116,6 +117,21 @@ Tileset::Tileset(
           ionAssetEndpointUrl)},
       _heightRequests(),
       _defaultViewGroup() {}
+
+Tileset::Tileset(
+    const TilesetExternals& externals,
+    TilesetContentLoaderFactory&& loaderFactory,
+    const TilesetOptions& options)
+    : _externals(externals),
+      _asyncSystem(externals.asyncSystem),
+      _options(options),
+      _previousFrameNumber(0),
+      _distances(),
+      _childOcclusionProxies(),
+      _pTilesetContentManager{new TilesetContentManager(
+          _externals,
+          _options,
+          std::move(loaderFactory))} {}
 
 Tileset::~Tileset() noexcept {
   TilesetHeightRequest::failHeightRequests(

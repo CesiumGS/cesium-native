@@ -1,10 +1,8 @@
 #include "TilesetContentManager.h"
 
-#include "CesiumIonTilesetLoader.h"
 #include "LayerJsonTerrainLoader.h"
 #include "RasterOverlayUpsampler.h"
 #include "TileContentLoadInfo.h"
-#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
@@ -17,6 +15,8 @@
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -898,9 +898,7 @@ TilesetContentManager::TilesetContentManager(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    int64_t ionAssetID,
-    const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl)
+    TilesetContentLoaderFactory&& loaderFactory)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
@@ -934,7 +932,7 @@ TilesetContentManager::TilesetContentManager(
       _requestersWithRequests() {
   this->_upsampler.setOwner(*this);
 
-  if (ionAssetID > 0) {
+  if (loaderFactory.isValid()) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
                                            const std::string& headerValue) {
@@ -954,18 +952,11 @@ TilesetContentManager::TilesetContentManager(
 
     CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
-    CesiumIonTilesetLoader::createLoader(
-        externals,
-        tilesetOptions.contentOptions,
-        static_cast<uint32_t>(ionAssetID),
-        ionAccessToken,
-        ionAssetEndpointUrl,
-        authorizationChangeListener,
-        tilesetOptions.showCreditsOnScreen,
-        tilesetOptions.ellipsoid)
+    loaderFactory
+        .createLoader(externals, tilesetOptions, authorizationChangeListener)
         .thenInMainThread(
             [thiz, errorCallback = tilesetOptions.loadErrorCallback](
-                TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result) {
+                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
               thiz->notifyTileDoneLoading(result.pRootTile.get());
               thiz->propagateTilesetContentLoaderResult(
                   TilesetLoadType::CesiumIon,
@@ -984,6 +975,20 @@ TilesetContentManager::TilesetContentManager(
         });
   }
 }
+
+TilesetContentManager::TilesetContentManager(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl)
+    : TilesetContentManager(
+          externals,
+          tilesetOptions,
+          CesiumIonTilesetContentLoaderFactory(
+              static_cast<uint32_t>(ionAssetID),
+              ionAccessToken,
+              ionAssetEndpointUrl)) {}
 
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {

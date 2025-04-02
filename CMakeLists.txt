@@ -87,7 +87,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.45.0
+    VERSION 0.46.0
     LANGUAGES CXX C
 )
 
@@ -283,7 +283,9 @@ add_subdirectory(Cesium3DTilesWriter)
 add_subdirectory(Cesium3DTilesContent)
 add_subdirectory(CesiumRasterOverlays)
 add_subdirectory(Cesium3DTilesSelection)
+add_subdirectory(CesiumClientCommon)
 add_subdirectory(CesiumIonClient)
+add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 
 # Private Targets
