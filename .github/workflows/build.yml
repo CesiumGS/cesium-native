@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install latest ninja and cmake
+      - name: Install latest CMake 3 and Ninja
         uses: lukka/get-cmake@latest
         with:
           cmakeVersion: "3.31.6"
@@ -161,8 +161,10 @@ jobs:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
       - name: Check out repository code
@@ -184,8 +186,8 @@ jobs:
       - name: Set CC and CXX
         if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-13'}}
         run: |
-          echo "CC=clang-12" >> "$GITHUB_ENV"
-          echo "CXX=clang++-12" >> "$GITHUB_ENV"
+          echo "CC=clang-18" >> "$GITHUB_ENV"
+          echo "CXX=clang++-18" >> "$GITHUB_ENV"
       - name: Make more swap space available
         if: ${{ matrix.platform != 'macos-13'}}
         run: |
