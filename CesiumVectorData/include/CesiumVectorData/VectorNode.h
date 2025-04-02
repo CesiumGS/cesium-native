@@ -19,7 +19,7 @@ enum class VectorPrimitiveType : uint8_t {
   MultiPolygon = 6,
   GeometryCollection = 7,
   Feature = 8,
-  FeatureCollection = 8
+  FeatureCollection = 9
 };
 
 std::string vectorPrimitiveTypeToString(VectorPrimitiveType type);

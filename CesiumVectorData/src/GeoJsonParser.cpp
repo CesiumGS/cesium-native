@@ -2,10 +2,8 @@
 
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumUtility/JsonHelpers.h>
-#include <CesiumVectorData/VectorNode.h>
-
 #include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/VectorDocument.h>
 #include <CesiumVectorData/VectorNode.h>
@@ -550,7 +548,7 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
 }
 } // namespace
 
-Result<VectorNode> parseGeoJson(const std::span<std::byte>& bytes) {
+Result<VectorNode> parseGeoJson(const std::span<const std::byte>& bytes) {
   rapidjson::Document d;
   d.Parse(reinterpret_cast<const char*>(bytes.data()), bytes.size());
   if (d.HasParseError()) {

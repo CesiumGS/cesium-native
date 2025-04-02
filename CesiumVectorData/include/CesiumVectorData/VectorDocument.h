@@ -8,9 +8,11 @@ namespace CesiumVectorData {
 class CESIUMVECTORDATA_API VectorDocument {
 public:
   static CesiumUtility::Result<VectorDocument>
-  fromGeoJson(const std::span<std::byte>& bytes);
+  fromGeoJson(const std::span<const std::byte>& bytes);
 
-  VectorDocument(VectorNode&& rootNode) : _rootNode(std::move(rootNode)) {}
+  VectorDocument(VectorNode&& rootNode);
+
+  const VectorNode& getRootNode() const;
 
 private:
   VectorNode _rootNode;
