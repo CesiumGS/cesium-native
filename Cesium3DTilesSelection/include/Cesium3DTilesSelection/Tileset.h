@@ -31,6 +31,7 @@ class TilesetHeightQuery;
 struct TilesetHeightRequest;
 class TilesetSharedAssetSystem;
 class TilesetViewGroup;
+class TilesetFrameState;
 
 /**
  * @brief A <a
@@ -414,6 +415,8 @@ public:
    * If the given requester is already registered with this Tileset, this method
    * does nothing.
    *
+   * To unregister a load requester, call {@link TileLoadRequester::unregister}.
+   *
    * @param requester The requester to register.
    */
   void registerLoadRequester(TileLoadRequester& requester);
@@ -472,32 +475,17 @@ private:
     uint32_t notYetRenderableCount = 0;
   };
 
-  /**
-   * @brief Input information that is constant throughout the traversal.
-   *
-   * An instance of this structure is created upon entry of the top-level
-   * `_visitTile` function, for the traversal for a certain frame, and
-   * passed on through the traversal.
-   */
-  struct FrameState {
-    TilesetViewGroup& viewGroup;
-    const std::vector<ViewState>& frustums;
-    std::vector<double> fogDensities;
-    int32_t lastFrameNumber;
-    int32_t currentFrameNumber;
-  };
-
   TraversalDetails _renderLeaf(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       double tilePriority,
       ViewUpdateResult& result);
   TraversalDetails _renderInnerTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result);
   bool _kickDescendantsAndRenderTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
@@ -506,10 +494,10 @@ private:
       bool queuedForLoad,
       double tilePriority);
   TileOcclusionState
-  _checkOcclusion(const Tile& tile, const FrameState& frameState);
+  _checkOcclusion(const Tile& tile, const TilesetFrameState& frameState);
 
   TraversalDetails _visitTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       uint32_t depth,
       bool meetsSse,
       bool ancestorMeetsSse,
@@ -527,11 +515,11 @@ private:
   // TODO: abstract these into a composable culling interface.
   void _frustumCull(
       const Tile& tile,
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       bool cullWithChildrenBounds,
       CullResult& cullResult);
   void _fogCull(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       const std::vector<double>& distances,
       CullResult& cullResult);
   bool _meetsSse(
@@ -541,13 +529,13 @@ private:
       bool culled) const noexcept;
 
   TraversalDetails _visitTileIfNeeded(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -569,7 +557,7 @@ private:
    * @return false The non-additive-refined tile was ignored.
    */
   bool _loadAndRenderAdditiveRefinedTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result,
       double tilePriority,
@@ -578,7 +566,7 @@ private:
   void _unloadCachedTiles(double timeBudget) noexcept;
 
   void _updateLodTransitions(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
 
@@ -605,13 +593,13 @@ private:
   TilesetViewGroup _defaultViewGroup;
 
   void addTileToLoadQueue(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       const Tile& tile);
 };
 

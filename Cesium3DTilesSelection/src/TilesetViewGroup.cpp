@@ -1,13 +1,18 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetFrameState.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/CreditSystem.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+
+using namespace CesiumRasterOverlays;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
@@ -91,14 +96,39 @@ size_t TilesetViewGroup::getMainThreadLoadQueueLength() const {
   return this->_mainThreadLoadQueue.size();
 }
 
-void TilesetViewGroup::startNewFrame() {
+void TilesetViewGroup::startNewFrame(
+    const Tileset& tileset,
+    const TilesetFrameState& frameState) {
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
   this->_tilesAlreadyLoading = 0;
   this->_traversalState.beginTraversal();
+
+  this->_updateResult.frameNumber = frameState.currentFrameNumber;
+  this->_updateResult.tilesVisited = 0;
+  this->_updateResult.culledTilesVisited = 0;
+  this->_updateResult.tilesCulled = 0;
+  this->_updateResult.tilesOccluded = 0;
+  this->_updateResult.tilesWaitingForOcclusionResults = 0;
+  this->_updateResult.tilesKicked = 0;
+  this->_updateResult.maxDepthVisited = 0;
+
+  this->_tilesRenderedLastFrame.swap(
+      this->_updateResult.tilesToRenderThisFrame);
+  this->_updateResult.tilesToRenderThisFrame.clear();
+
+  if (!tileset.getOptions().enableLodTransitionPeriod) {
+    for (Tile* pTile : this->_updateResult.tilesFadingOut) {
+      pTile->decrementDoNotUnloadSubtreeCount(
+          "Tileset::updateView clear tilesFadingOut");
+    }
+    this->_updateResult.tilesFadingOut.clear();
+  }
 }
 
-void TilesetViewGroup::finishFrame() {
+void TilesetViewGroup::finishFrame(
+    const Tileset& tileset,
+    const TilesetFrameState& /*frameState*/) {
   std::sort(
       this->_workerThreadLoadQueue.begin(),
       this->_workerThreadLoadQueue.end());
@@ -117,22 +147,78 @@ void TilesetViewGroup::finishFrame() {
       this->_mainThreadLoadQueue.begin(),
       this->_mainThreadLoadQueue.end());
 
-  this->_updateResult.workerThreadTileLoadQueueLength =
+  ViewUpdateResult& updateResult = this->_updateResult;
+
+  updateResult.workerThreadTileLoadQueueLength =
       static_cast<int32_t>(this->getWorkerThreadLoadQueueLength());
-  this->_updateResult.mainThreadTileLoadQueueLength =
+  updateResult.mainThreadTileLoadQueueLength =
       static_cast<int32_t>(this->getMainThreadLoadQueueLength());
 
   size_t totalTiles = this->_traversalState.getNodeCountInCurrentTraversal();
-  size_t tilesLoading =
-      size_t(this->_updateResult.workerThreadTileLoadQueueLength) +
-      size_t(this->_updateResult.mainThreadTileLoadQueueLength) +
-      this->_updateResult.tilesKicked + this->_tilesAlreadyLoading;
+  size_t tilesLoading = size_t(updateResult.workerThreadTileLoadQueueLength) +
+                        size_t(updateResult.mainThreadTileLoadQueueLength) +
+                        updateResult.tilesKicked + this->_tilesAlreadyLoading;
 
   if (tilesLoading == 0) {
     this->_loadProgressPercentage = 100.0f;
   } else {
     this->_loadProgressPercentage =
         100.0f * float(totalTiles - tilesLoading) / float(totalTiles);
+  }
+
+  // aggregate all the credits needed from this tileset for the current frame
+  const std::shared_ptr<CreditSystem>& pCreditSystem =
+      tileset.getExternals().pCreditSystem;
+  if (pCreditSystem) {
+    // Add per-tile credits for tiles selected this frame.
+    for (Tile* pTile : updateResult.tilesToRenderThisFrame) {
+      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+          pTile->getMappedRasterTiles();
+      // raster overlay tile credits
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile.getReadyTile();
+        if (pRasterOverlayTile != nullptr) {
+          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
+            pCreditSystem->addCreditReference(credit);
+          }
+        }
+      }
+
+      // content credits like gltf copyrights
+      const TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        for (const Credit& credit : pRenderContent->getCredits()) {
+          pCreditSystem->addCreditReference(credit);
+        }
+      }
+    }
+
+    // Remove per-tile credits for tiles selected last frame.
+    for (Tile* pTile : this->_tilesRenderedLastFrame) {
+      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+          pTile->getMappedRasterTiles();
+      // raster overlay tile credits
+      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+        const RasterOverlayTile* pRasterOverlayTile =
+            mappedRasterTile.getReadyTile();
+        if (pRasterOverlayTile != nullptr) {
+          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
+            pCreditSystem->removeCreditReference(credit);
+          }
+        }
+      }
+
+      // content credits like gltf copyrights
+      const TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
+      if (pRenderContent) {
+        for (const Credit& credit : pRenderContent->getCredits()) {
+          pCreditSystem->removeCreditReference(credit);
+        }
+      }
+    }
   }
 }
 
