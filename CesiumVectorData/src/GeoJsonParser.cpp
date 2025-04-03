@@ -1,11 +1,13 @@
 #include "GeoJsonParser.h"
 
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/JsonValue.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
-#include <CesiumVectorData/VectorDocument.h>
 #include <CesiumVectorData/VectorNode.h>
 
 #include <fmt/format.h>
@@ -13,8 +15,12 @@
 #include <rapidjson/error/en.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <optional>
 #include <span>
+#include <string>
+#include <utility>
 #include <variant>
 
 using namespace CesiumUtility;
@@ -242,7 +248,9 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
     Result<std::optional<BoundingRegion>> regionResult =
         parseBoundingBox(bboxMember->value);
     errorList.merge(regionResult.errors);
-    boundingBox = std::move(*regionResult.value);
+    if (regionResult.value) {
+      boundingBox = std::move(*regionResult.value);
+    }
   }
 
   if (type == "Feature") {

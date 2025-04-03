@@ -1,6 +1,11 @@
 #include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/VectorNode.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;

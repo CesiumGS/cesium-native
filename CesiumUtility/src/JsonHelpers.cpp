@@ -5,9 +5,9 @@
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

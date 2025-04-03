@@ -1,6 +1,11 @@
 #include "GeoJsonParser.h"
 
+#include <CesiumUtility/Result.h>
 #include <CesiumVectorData/VectorDocument.h>
+
+#include <cstddef>
+#include <span>
+#include <utility>
 
 using namespace CesiumUtility;
 
