@@ -28,24 +28,27 @@ struct Point {
   static constexpr VectorPrimitiveType Type = VectorPrimitiveType::Point;
 
   CesiumGeospatial::Cartographic coordinates;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct MultiPoint {
   static constexpr VectorPrimitiveType Type = VectorPrimitiveType::MultiPoint;
 
   std::vector<CesiumGeospatial::Cartographic> coordinates;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct LineString {
   static constexpr VectorPrimitiveType Type = VectorPrimitiveType::LineString;
 
   std::vector<CesiumGeospatial::Cartographic> coordinates;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct MultiLineString {
@@ -53,16 +56,18 @@ struct MultiLineString {
       VectorPrimitiveType::MultiLineString;
 
   std::vector<std::vector<CesiumGeospatial::Cartographic>> coordinates;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct Polygon {
   static constexpr VectorPrimitiveType Type = VectorPrimitiveType::Polygon;
 
   std::vector<std::vector<CesiumGeospatial::Cartographic>> coordinates;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct MultiPolygon {
@@ -70,8 +75,9 @@ struct MultiPolygon {
 
   std::vector<std::vector<std::vector<CesiumGeospatial::Cartographic>>>
       coordinates;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct GeometryCollection;
@@ -90,18 +96,20 @@ struct GeometryCollection {
       VectorPrimitiveType::GeometryCollection;
 
   std::vector<GeometryPrimitive> geometries;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct Feature {
   static constexpr VectorPrimitiveType Type = VectorPrimitiveType::Feature;
 
-  std::variant<std::string, int64_t, std::monostate> id;
+  std::variant<std::string, int64_t, std::monostate> id = std::monostate();
   std::optional<GeometryPrimitive> geometry;
   std::optional<CesiumUtility::JsonValue::Object> properties;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 struct FeatureCollection {
@@ -109,8 +117,9 @@ struct FeatureCollection {
       VectorPrimitiveType::FeatureCollection;
 
   std::vector<Feature> features;
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox;
-  CesiumUtility::JsonValue::Object foreignMembers;
+  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  CesiumUtility::JsonValue::Object foreignMembers =
+      CesiumUtility::JsonValue::Object();
 };
 
 using VectorNode = std::variant<
@@ -123,4 +132,19 @@ using VectorNode = std::variant<
     GeometryCollection,
     Feature,
     FeatureCollection>;
+
+VectorNode geometryPrimitiveToVectorNode(const GeometryPrimitive& geometry);
+
+bool operator==(const VectorNode& lhs, const VectorNode& rhs);
+bool operator==(const GeometryPrimitive& lhs, const GeometryPrimitive& rhs);
+bool operator==(const Point& lhs, const VectorNode& rhs);
+bool operator==(const MultiPoint& lhs, const VectorNode& rhs);
+bool operator==(const LineString& lhs, const VectorNode& rhs);
+bool operator==(const MultiLineString& lhs, const VectorNode& rhs);
+bool operator==(const Polygon& lhs, const VectorNode& rhs);
+bool operator==(const MultiPolygon& lhs, const VectorNode& rhs);
+bool operator==(const GeometryCollection& lhs, const VectorNode& rhs);
+bool operator==(const Feature& lhs, const Feature& rhs);
+bool operator==(const Feature& lhs, const VectorNode& rhs);
+bool operator==(const FeatureCollection& lhs, const VectorNode& rhs);
 } // namespace CesiumVectorData

@@ -13,7 +13,9 @@ VectorDocument::fromGeoJson(const std::span<const std::byte>& bytes) {
     return Result<VectorDocument>(std::move(parseResult.errors));
   }
 
-  return Result<VectorDocument>(VectorDocument(std::move(*parseResult.value)));
+  return Result<VectorDocument>(
+      VectorDocument(std::move(*parseResult.value)),
+      std::move(parseResult.errors));
 }
 
 VectorDocument::VectorDocument(VectorNode&& rootNode)

@@ -49,8 +49,7 @@ JsonValue::Object collectForeignMembers(
 // GeoJSON position is an array of two or three components, representing
 // [longitude, latitude, (height)]
 Result<Cartographic> parsePosition(const rapidjson::Value& pos) {
-  if (!pos.IsArray() || pos.GetArray().Size() < 2 ||
-      pos.GetArray().Size() > 3) {
+  if (!pos.IsArray()) {
     return Result<Cartographic>(
         ErrorList::error("Position value must be an array."));
   }
@@ -235,7 +234,7 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
 
   if (type == "Feature") {
     // Feature has a geometry, properties, and an optional id
-    std::variant<std::string, int64_t, std::monostate> id;
+    std::variant<std::string, int64_t, std::monostate> id = std::monostate();
     const auto& idMember = obj.FindMember("id");
     if (idMember != obj.MemberEnd()) {
       if (idMember->value.IsNumber()) {
@@ -294,14 +293,18 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
                        .getObject();
     }
 
-    return Result<VectorNode>(Feature{
-        id,
-        geometry,
-        properties,
-        boundingBox,
-        collectForeignMembers(obj, [](const std::string& k) {
-          return k == "id" || k == "geometry" || k == "properties";
-        })});
+    return Result<VectorNode>(
+        Feature{
+            id,
+            geometry,
+            properties,
+            boundingBox,
+            collectForeignMembers(
+                obj,
+                [](const std::string& k) {
+                  return k == "id" || k == "geometry" || k == "properties";
+                })},
+        errorList);
   } else if (type == "FeatureCollection") {
     // Feature collection contains zero or more features
     const auto& featuresMember = obj.FindMember("features");
@@ -343,12 +346,18 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
       features.emplace_back(std::move(*featureResult.value));
     }
 
-    return Result<VectorNode>(FeatureCollection{
-        std::move(features),
-        boundingBox,
-        collectForeignMembers(obj, [](const std::string& k) {
-          return k == "features";
-        })});
+    if (errorList.hasErrors()) {
+      return Result<VectorNode>(errorList);
+    }
+
+    return Result<VectorNode>(
+        FeatureCollection{
+            std::move(features),
+            boundingBox,
+            collectForeignMembers(
+                obj,
+                [](const std::string& k) { return k == "features"; })},
+        errorList);
   } else if (type == "GeometryCollection") {
     // Geometry collection contains zero or more geometry primitives
     const auto geometriesMember = obj.FindMember("geometries");
