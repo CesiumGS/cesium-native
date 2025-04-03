@@ -10,7 +10,7 @@ CreditReferencer::CreditReferencer(
     const std::shared_ptr<CreditSystem>& pCreditSystem) noexcept
     : _pCreditSystem(pCreditSystem) {}
 
-CreditReferencer::~CreditReferencer() { this->releaseAllReferences(); }
+CreditReferencer::~CreditReferencer() noexcept { this->releaseAllReferences(); }
 
 const std::shared_ptr<CreditSystem>&
 CreditReferencer::getCreditSystem() const noexcept {
