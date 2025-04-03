@@ -125,8 +125,8 @@ public:
   CesiumAsync::SharedFuture<void>& getRootTileAvailableEvent();
 
   /**
-   * @brief Gets the {@link Credit} created from {@link TilesetOptions::credit},
-   * if any.
+   * @brief Gets the {@link CesiumUtility::Credit} created from
+   * {@link TilesetOptions::credit}, if any.
    */
   std::optional<CesiumUtility::Credit> getUserCredit() const noexcept;
 

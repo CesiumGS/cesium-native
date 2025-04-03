@@ -87,7 +87,21 @@ public:
    */
   const std::string& getHtml(Credit credit) const noexcept;
 
+  /**
+   * @brief Adds a reference to a credit, incrementing its reference count. The
+   * referenced credit will be shown until its reference count goes back down to
+   * zero.
+   *
+   * @param credit The credit to reference.
+   */
   void addCreditReference(Credit credit);
+
+  /**
+   * @brief Removes a reference from a credit, decrementing its reference count.
+   * When the reference count goes to zero, this credit will no longer be shown.
+   *
+   * @param credit The credit from which to remove a reference.
+   */
   void removeCreditReference(Credit credit);
 
   /**
