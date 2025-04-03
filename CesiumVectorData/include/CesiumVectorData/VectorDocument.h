@@ -4,6 +4,8 @@
 #include <CesiumVectorData/Library.h>
 #include <CesiumVectorData/VectorNode.h>
 
+#include <span>
+
 namespace CesiumVectorData {
 
 /**
@@ -18,8 +20,8 @@ public:
    * @brief Attempts to parse a \ref VectorDocument from the provided GeoJSON.
    *
    * @param bytes The GeoJSON data to parse.
-   * @returns A \ref Result containing the parsed \ref VectorDocument or any
-   * errors and warnings that came up while parsing.
+   * @returns A \ref CesiumUtility::Result containing the parsed
+   * \ref VectorDocument or any errors and warnings that came up while parsing.
    */
   static CesiumUtility::Result<VectorDocument>
   fromGeoJson(const std::span<const std::byte>& bytes);
