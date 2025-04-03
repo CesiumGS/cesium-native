@@ -5,6 +5,7 @@
 #include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -76,6 +77,7 @@ glm::dvec3 directionFromView(const glm::dmat4& viewMatrix) {
       ellipsoid);
 }
 
+// The near and far plane values don't matter for frustum culling.
 ViewState::ViewState(
     const glm::dvec3& position,
     const glm::dvec3& direction,
@@ -85,21 +87,17 @@ ViewState::ViewState(
     double verticalFieldOfView,
     const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
-    : _position(position),
-      _direction(direction),
-      _up(up),
-      _viewportSize(viewportSize),
-      _horizontalFieldOfView(horizontalFieldOfView),
-      _verticalFieldOfView(verticalFieldOfView),
-      _ellipsoid(ellipsoid),
-      _sseDenominator(2.0 * glm::tan(0.5 * verticalFieldOfView)),
-      _positionCartographic(positionCartographic),
-      _cullingVolume(createCullingVolume(
-          position,
-          direction,
-          up,
-          horizontalFieldOfView,
-          verticalFieldOfView)) {}
+    : ViewState(
+        createViewMatrix(position, direction, up),
+        createPerspectiveMatrix(
+            horizontalFieldOfView,
+            verticalFieldOfView,
+            100.0,
+            100000.0),
+        viewportSize,
+        positionCartographic,
+        ellipsoid)
+{}
 
 ViewState::ViewState(
     const glm::dmat4& viewMatrix,
@@ -109,14 +107,11 @@ ViewState::ViewState(
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position(positionFromView(viewMatrix)),
       _direction(directionFromView(viewMatrix)),
-      _up(0.0),
       _viewportSize(viewportSize),
-      _horizontalFieldOfView(0.0),
-      _verticalFieldOfView(0.0),
       _ellipsoid(ellipsoid),
-      _sseDenominator(0.0),
       _positionCartographic(positionCartographic),
       _cullingVolume(createCullingVolume(projectionMatrix * viewMatrix)),
+      _viewMatrix(viewMatrix),
       _projectionMatrix(projectionMatrix) {}
 
 namespace {
@@ -256,28 +251,30 @@ double ViewState::computeScreenSpaceError(
     double distance) const noexcept {
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
-  if (this->_projectionMatrix) {
-    // This is a simplified version of the projection transform and homogeneous
-    // division. We transform the coordinate (0.0, geometric error, -distance,
-    // 1) and use the resulting NDC to find the screen space error.  That's not
-    // quite right: the distance is actually the slant distance, and the real
-    // transform contains a term for an offset due to a skewed projection which
-    // is ignored here.
-    const glm::dmat4& projMat = *this->_projectionMatrix;
-    glm::dvec4 centerNdc = projMat * glm::dvec4(0.0, 0.0, -distance, 1.0);
-    centerNdc /= centerNdc.w;
-    glm::dvec4 errorOffsetNdc =
-        projMat * glm::dvec4(0.0, geometricError, -distance, 1.0);
-    errorOffsetNdc /= errorOffsetNdc.w;
+  // This is a simplified version of the projection transform and homogeneous
+  // division. We transform the coordinate (0.0, geometric error, -distance,
+  // 1) and use the resulting NDC to find the screen space error.  That's not
+  // quite right: the distance is actually the slant distance, and the real
+  // transform contains a term for an offset due to a skewed projection which
+  // is ignored here.
+  const glm::dmat4& projMat = this->_projectionMatrix;
+  glm::dvec4 centerNdc = projMat * glm::dvec4(0.0, 0.0, -distance, 1.0);
+  centerNdc /= centerNdc.w;
+  glm::dvec4 errorOffsetNdc =
+      projMat * glm::dvec4(0.0, geometricError, -distance, 1.0);
+  errorOffsetNdc /= errorOffsetNdc.w;
 
-    double ndcError = (errorOffsetNdc - centerNdc).y;
-    // ndc bounds are [-1.0, 1.0]. Our projection matrix has the top of the
-    // screen at -1.0.
-    return -ndcError * this->_viewportSize.y / 2.0;
-  } else {
-    const double sseDenominator = this->_sseDenominator;
-    return (geometricError * this->_viewportSize.y) /
-           (distance * sseDenominator);
-  }
+  double ndcError = (errorOffsetNdc - centerNdc).y;
+  // ndc bounds are [-1.0, 1.0]. Our projection matrix has the top of the
+  // screen at -1.0.
+  return -ndcError * this->_viewportSize.y / 2.0;
+}
+
+double ViewState::getHorizontalFieldOfView() const noexcept {
+  return std::atan(1.0 / this->_projectionMatrix[0][0]) * 2.0;
+}
+
+double ViewState::getVerticalFieldOfView() const noexcept {
+  return std::atan(-1.0 / this->_projectionMatrix[1][1]) * 2.0;
 }
 } // namespace Cesium3DTilesSelection

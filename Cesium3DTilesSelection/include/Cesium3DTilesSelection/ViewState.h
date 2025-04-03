@@ -87,7 +87,13 @@ public:
    * @brief Gets the up direction of the camera in Earth-centered, Earth-fixed
    * coordinates.
    */
-  const glm::dvec3& getUp() const noexcept { return this->_up; }
+  glm::dvec3 getUp() const noexcept {
+    return {
+      this->viewMatrix[0][1],
+      this->viewMatrix[1][1],
+      this->viewMatrix[2][1]
+    };
+  }
 
   /**
    * @brief Gets the position of the camera as a longitude / latitude / height.
@@ -108,19 +114,32 @@ public:
   }
 
   /**
-   * @brief Gets the horizontal field-of-view angle in radians.
+   * @brief Gets the horizontal field-of-view angle in radians. This is only
+   * valid for a symmetric perspective projection.
    */
-  double getHorizontalFieldOfView() const noexcept {
-    return this->_horizontalFieldOfView;
+  double getHorizontalFieldOfView() const noexcept;
+
+  /**
+   * @brief Gets the vertical field-of-view angle in radians. This is only
+   * valid for a symmetric perspective projection.
+   */
+  double getVerticalFieldOfView() const noexcept;
+
+  /**
+   * @brief Gets the view matrix for the ViewState.
+   */
+  const glm::dmat4& getViewMatrix() const noexcept {
+    return this->_viewMatrix;
   }
 
   /**
-   * @brief Gets the vertical field-of-view angle in radians.
+   * @brief Gets the projection matrix for the ViewState.
    */
-  double getVerticalFieldOfView() const noexcept {
-    return this->_verticalFieldOfView;
+  const glm::dmat4& getProjectionMatrix() const noexcept {
+    return this->_projectionMatrix;
   }
 
+  
   /**
    * @brief Returns whether the given {@link BoundingVolume} is visible for this
    * camera
@@ -188,24 +207,23 @@ private:
 
   ViewState(
       const glm::dmat4& viewMatrix,
-      const glm::dmat4& _projectionMatrix,
+      const glm::dmat4& projectionMatrix,
       const glm::dvec2& viewportSize,
       const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
       const CesiumGeospatial::Ellipsoid& ellipsoid);
 
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
-  const glm::dvec3 _up;
   const glm::dvec2 _viewportSize;
   const double _horizontalFieldOfView;
   const double _verticalFieldOfView;
   const CesiumGeospatial::Ellipsoid _ellipsoid;
 
-  const double _sseDenominator;
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
   const CesiumGeometry::CullingVolume _cullingVolume;
-  std::optional<const glm::dmat4> _projectionMatrix;
+  const glm::dmat4 _viewMatrix;
+  const glm::dmat4 _projectionMatrix;
 };
 
 } // namespace Cesium3DTilesSelection

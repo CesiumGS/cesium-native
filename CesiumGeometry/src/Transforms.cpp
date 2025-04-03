@@ -250,8 +250,8 @@ glm::dmat4 Transforms::createOrthographicMatrix(
     m32 = zFar / (zFar - zNear);
   }
   return glm::dmat4(
-      glm::dvec4(2.0 * zNear / (right - left), 0.0, 0.0, 0.0),
-      glm::dvec4(0.0, 2.0 * zNear / (bottom - top), 0.0, 0.0),
+      glm::dvec4(2.0 / (right - left), 0.0, 0.0, 0.0),
+      glm::dvec4(0.0, 2.0 / (bottom - top), 0.0, 0.0),
       glm::dvec4(0.0, 0.0, m22, 0.0),
       glm::dvec4(
           -(right + left) / (right - left),
