@@ -1,6 +1,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumVectorData/VectorNode.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
