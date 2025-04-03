@@ -1,6 +1,7 @@
-#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
+
+#include <memory>
 
 namespace CesiumUtility {
 
