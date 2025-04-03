@@ -110,4 +110,21 @@ const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
   return this->_snapshot;
 }
 
+void CreditSystem::releaseBulkReferences(
+    const std::vector<int32_t>& references) noexcept {
+  for (size_t i = 0; i < references.size(); ++i) {
+    HtmlAndLastFrameNumber& record = this->_credits[i];
+    int32_t referencesToRemove = references[i];
+
+    CESIUM_ASSERT(record.referenceCount >= referencesToRemove);
+    record.referenceCount -= referencesToRemove;
+
+    // If this was the last reference to this credit, and it was shown last
+    // frame, add this credit to _creditsToNoLongerShowThisFrame.
+    if (record.shownLastFrame && record.referenceCount == 0) {
+      this->_creditsToNoLongerShowThisFrame.emplace_back(Credit(i));
+    }
+  }
+}
+
 } // namespace CesiumUtility

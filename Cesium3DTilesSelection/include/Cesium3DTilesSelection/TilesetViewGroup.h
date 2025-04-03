@@ -4,6 +4,7 @@
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/TreeTraversalState.h>
 
@@ -216,7 +217,8 @@ private:
   float _loadProgressPercentage = 100.0f;
   ViewUpdateResult _updateResult;
   TraversalState _traversalState;
-  std::vector<Tile*> _tilesRenderedLastFrame;
+  CesiumUtility::CreditReferencer _previousFrameCredits;
+  CesiumUtility::CreditReferencer _currentFrameCredits;
 };
 
 } // namespace Cesium3DTilesSelection

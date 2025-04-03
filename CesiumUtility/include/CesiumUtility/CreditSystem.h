@@ -2,6 +2,7 @@
 
 #include <CesiumUtility/Library.h>
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -29,6 +30,7 @@ private:
   Credit(size_t id_) noexcept : id(id_) {}
 
   friend class CreditSystem;
+  friend class CreditReferencer;
 };
 
 /**
@@ -99,18 +101,22 @@ public:
   const CreditsSnapshot& getSnapshot() noexcept;
 
 private:
+  void releaseBulkReferences(const std::vector<int32_t>& references) noexcept;
+
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
   struct HtmlAndLastFrameNumber {
     std::string html;
     bool showOnScreen;
-    int referenceCount;
+    int32_t referenceCount;
     bool shownLastFrame;
   };
 
   std::vector<HtmlAndLastFrameNumber> _credits;
   std::vector<Credit> _creditsToNoLongerShowThisFrame;
   CreditsSnapshot _snapshot;
+
+  friend class CreditReferencer;
 };
 } // namespace CesiumUtility

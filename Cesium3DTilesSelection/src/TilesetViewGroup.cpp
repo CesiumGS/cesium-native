@@ -113,8 +113,6 @@ void TilesetViewGroup::startNewFrame(
   this->_updateResult.tilesKicked = 0;
   this->_updateResult.maxDepthVisited = 0;
 
-  this->_tilesRenderedLastFrame.swap(
-      this->_updateResult.tilesToRenderThisFrame);
   this->_updateResult.tilesToRenderThisFrame.clear();
 
   if (!tileset.getOptions().enableLodTransitionPeriod) {
@@ -170,6 +168,8 @@ void TilesetViewGroup::finishFrame(
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       tileset.getExternals().pCreditSystem;
   if (pCreditSystem) {
+    this->_currentFrameCredits.setCreditSystem(pCreditSystem);
+
     // Add per-tile credits for tiles selected this frame.
     for (Tile* pTile : updateResult.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
@@ -180,7 +180,7 @@ void TilesetViewGroup::finishFrame(
             mappedRasterTile.getReadyTile();
         if (pRasterOverlayTile != nullptr) {
           for (const Credit& credit : pRasterOverlayTile->getCredits()) {
-            pCreditSystem->addCreditReference(credit);
+            this->_currentFrameCredits.addCreditReference(credit);
           }
         }
       }
@@ -190,35 +190,13 @@ void TilesetViewGroup::finishFrame(
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
         for (const Credit& credit : pRenderContent->getCredits()) {
-          pCreditSystem->addCreditReference(credit);
+          this->_currentFrameCredits.addCreditReference(credit);
         }
       }
     }
 
-    // Remove per-tile credits for tiles selected last frame.
-    for (Tile* pTile : this->_tilesRenderedLastFrame) {
-      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
-          pTile->getMappedRasterTiles();
-      // raster overlay tile credits
-      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
-        const RasterOverlayTile* pRasterOverlayTile =
-            mappedRasterTile.getReadyTile();
-        if (pRasterOverlayTile != nullptr) {
-          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
-            pCreditSystem->removeCreditReference(credit);
-          }
-        }
-      }
-
-      // content credits like gltf copyrights
-      const TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
-      if (pRenderContent) {
-        for (const Credit& credit : pRenderContent->getCredits()) {
-          pCreditSystem->removeCreditReference(credit);
-        }
-      }
-    }
+    this->_previousFrameCredits.releaseAllReferences();
+    std::swap(this->_previousFrameCredits, this->_currentFrameCredits);
   }
 }
 
