@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
