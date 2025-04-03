@@ -107,18 +107,20 @@ graph TD
   CesiumIonClient[CesiumIonClient] --> CesiumClientCommon[CesiumClientCommon]
   CesiumIonClient[CesiumIonClient] --> CesiumGeospatial[CesiumGeospatial]
   CesiumIonClient[CesiumIonClient] --> CesiumUtility[CesiumUtility]
+  CesiumVectorData[CesiumVectorData] --> CesiumGeospatial[CesiumGeospatial]
+  CesiumVectorData[CesiumVectorData] --> CesiumUtility[CesiumUtility]
   class ada_ada,glm_glm,spdlog_spdlog,zlib-ng_zlib-ng,libmorton_libmorton,Async_,spdlog_spdlog_header_only,unofficial_sqlite3_sqlite3,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,nonstd_expected-lite,tinyxml2_tinyxml2,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2 dependencyNode
-  class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumClientCommon,CesiumGltfWriter,CesiumITwinClient,CesiumIonClient libraryNode
+  class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumClientCommon,CesiumGltfWriter,CesiumITwinClient,CesiumIonClient,CesiumVectorData libraryNode
   linkStyle 0 stroke:#ff0029,stroke-width:8px
   linkStyle 1 stroke:#377eb8,stroke-width:8px
   linkStyle 2,20,60 stroke:#66a61e,stroke-width:8px
   linkStyle 3 stroke:#984ea3,stroke-width:8px
-  linkStyle 4,13,19,23,24,26,29,35,56,69,70,77,83,94,99 stroke:#00d2d5,stroke-width:8px
+  linkStyle 4,13,19,23,24,26,29,35,56,69,70,77,83,94,99,101 stroke:#00d2d5,stroke-width:8px
   linkStyle 5,15,46,80 stroke:#ff7f00,stroke-width:8px
   linkStyle 6,48 stroke:#af8d00,stroke-width:8px
   linkStyle 7,16,30,36,49,63,71,82,91,96 stroke:#7f80cd,stroke-width:8px
   linkStyle 8,25,31,50,72 stroke:#b3e900,stroke-width:8px
-  linkStyle 9,32,51,64,73,93,98 stroke:#c42e60,stroke-width:8px
+  linkStyle 9,32,51,64,73,93,98,100 stroke:#c42e60,stroke-width:8px
   linkStyle 10,33,37,52,65,74,88 stroke:#a65628,stroke-width:8px
   linkStyle 11,66,75 stroke:#f781bf,stroke-width:8px
   linkStyle 12,34,53,76 stroke:#8dd3c7,stroke-width:8px

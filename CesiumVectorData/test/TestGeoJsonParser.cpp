@@ -315,7 +315,8 @@ TEST_CASE("Parse Polygon primitives") {
               [-75.1428517, 39.9644934, 400],
               [129.6869721, 62.0256947, 100],
               [103.8245805, 1.3043744, 100],
-              [-80.1976364, 25.7708431, 400]
+              [-80.1976364, 25.7708431, 400],
+              [-75.1428517, 39.9644934, 400]
             ]
           ]
         }
@@ -337,6 +338,10 @@ TEST_CASE("Parse Polygon primitives") {
                 Cartographic(
                     Math::degreesToRadians(-80.1976364),
                     Math::degreesToRadians(25.7708431),
+                    400),
+                Cartographic(
+                    Math::degreesToRadians(-75.1428517),
+                    Math::degreesToRadians(39.9644934),
                     400)}}});
   }
 
@@ -378,7 +383,8 @@ TEST_CASE("Parse MultiPolygon primitives") {
                 [-75.1428517, 39.9644934, 400],
                 [129.6869721, 62.0256947, 100],
                 [103.8245805, 1.3043744, 100],
-                [-80.1976364, 25.7708431, 400]
+                [-80.1976364, 25.7708431, 400],
+                [-75.1428517, 39.9644934, 400]
               ]
             ]
           ]
@@ -401,6 +407,10 @@ TEST_CASE("Parse MultiPolygon primitives") {
                 Cartographic(
                     Math::degreesToRadians(-80.1976364),
                     Math::degreesToRadians(25.7708431),
+                    400),
+                Cartographic(
+                    Math::degreesToRadians(-75.1428517),
+                    Math::degreesToRadians(39.9644934),
                     400)}}}});
   }
 

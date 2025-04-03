@@ -93,7 +93,8 @@ parsePositionArray(const rapidjson::Value::Array& arr) {
 Result<std::vector<std::vector<Cartographic>>> parsePolygon(
     const rapidjson::Value::Array& arr,
     const std::string& name,
-    uint32_t minItems) {
+    uint32_t minItems,
+    bool mustBeClosed) {
   std::vector<std::vector<Cartographic>> rings;
   rings.reserve(arr.Size());
   for (auto& value : arr) {
@@ -114,6 +115,18 @@ Result<std::vector<std::vector<Cartographic>>> parsePolygon(
               "arrays of {} or more positions.",
               name,
               minItems)));
+    }
+
+    if (mustBeClosed &&
+        (*pointsResult.value)[0] !=
+            (*pointsResult.value)[pointsResult.value->size() - 1]) {
+      return Result<
+          std::vector<std::vector<Cartographic>>>(ErrorList::error(fmt::format(
+          "{} 'coordinates' member can only contain closed rings, requiring "
+          "the first and last coordinates of each ring to have identical "
+          "values.",
+          name,
+          minItems)));
     }
 
     rings.emplace_back(std::move(*pointsResult.value));
@@ -485,7 +498,7 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
         coordinatesMember->value.GetArray();
 
     Result<std::vector<std::vector<Cartographic>>> linesResult =
-        parsePolygon(coordinatesArr, "MultiLineString", 2);
+        parsePolygon(coordinatesArr, "MultiLineString", 2, false);
     if (!linesResult.value) {
       return Result<VectorNode>(std::move(linesResult.errors));
     }
@@ -509,7 +522,7 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
         coordinatesMember->value.GetArray();
 
     Result<std::vector<std::vector<Cartographic>>> ringsResult =
-        parsePolygon(coordinatesArr, "Polygon", 4);
+        parsePolygon(coordinatesArr, "Polygon", 4, true);
     if (!ringsResult.value) {
       return Result<VectorNode>(std::move(ringsResult.errors));
     }
@@ -539,7 +552,7 @@ Result<VectorNode> parseGeoJsonObject(const rapidjson::Value::Object& obj) {
       }
 
       Result<std::vector<std::vector<Cartographic>>> ringsResult =
-          parsePolygon(value.GetArray(), "MultiPolygon", 4);
+          parsePolygon(value.GetArray(), "MultiPolygon", 4, true);
       if (!ringsResult.value) {
         return Result<VectorNode>(std::move(ringsResult.errors));
       }
