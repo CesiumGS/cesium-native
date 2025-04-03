@@ -76,6 +76,10 @@ jobs:
           export PATH=$PWD/doxygen-1.13.2/bin:$PATH
           echo "PATH=$PATH" >> "$GITHUB_ENV"
           doxygen --version
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
@@ -114,8 +118,10 @@ jobs:
       CACHE_KEY: "${{ matrix.platform }}"
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
       - name: Check out repository code
