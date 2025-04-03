@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 
 using namespace CesiumUtility;
 using namespace CesiumGeospatial;

@@ -2,6 +2,7 @@
 
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/VectorDocument.h>
+#include <CesiumVectorData/VectorNode.h>
 
 #include <cstddef>
 #include <span>
