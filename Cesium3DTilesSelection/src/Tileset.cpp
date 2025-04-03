@@ -153,6 +153,12 @@ CesiumAsync::SharedFuture<void>& Tileset::getRootTileAvailableEvent() {
   return this->_pTilesetContentManager->getRootTileAvailableEvent();
 }
 
+std::optional<CesiumUtility::Credit> Tileset::getUserCredit() const noexcept {
+  const CesiumUtility::Credit* pCredit =
+      this->_pTilesetContentManager->getUserCredit();
+  return pCredit ? std::make_optional(*pCredit) : std::nullopt;
+}
+
 const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
   return this->_pTilesetContentManager->getTilesetCredits();
 }

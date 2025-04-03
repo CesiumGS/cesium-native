@@ -170,6 +170,26 @@ void TilesetViewGroup::finishFrame(
   if (pCreditSystem) {
     this->_currentFrameCredits.setCreditSystem(pCreditSystem);
 
+    // per-tileset user-specified credit
+    std::optional<Credit> userCredit = tileset.getUserCredit();
+    if (userCredit) {
+      this->_currentFrameCredits.addCreditReference(*userCredit);
+    }
+
+    // tileset credit
+    for (const Credit& credit : tileset.getTilesetCredits()) {
+      this->_currentFrameCredits.addCreditReference(credit);
+    }
+
+    // per-raster overlay credit
+    const RasterOverlayCollection& overlayCollection = tileset.getOverlays();
+    for (auto& pTileProvider : overlayCollection.getTileProviders()) {
+      const std::optional<Credit>& overlayCredit = pTileProvider->getCredit();
+      if (overlayCredit) {
+        this->_currentFrameCredits.addCreditReference(overlayCredit.value());
+      }
+    }
+
     // Add per-tile credits for tiles selected this frame.
     for (Tile* pTile : updateResult.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
