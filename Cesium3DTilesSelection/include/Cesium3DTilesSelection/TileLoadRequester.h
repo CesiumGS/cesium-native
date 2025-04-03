@@ -90,6 +90,9 @@ public:
    * until registered again.
    *
    * If this instance is not currently registered, this method does nothing.
+   *
+   * To register an instance with a `Tileset`, call
+   * {@link Tileset::registerLoadRequester} on the tileset.
    */
   void unregister() noexcept;
 

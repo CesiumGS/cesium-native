@@ -16,6 +16,7 @@
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetFrameState.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
@@ -152,6 +153,12 @@ CesiumAsync::SharedFuture<void>& Tileset::getRootTileAvailableEvent() {
   return this->_pTilesetContentManager->getRootTileAvailableEvent();
 }
 
+std::optional<CesiumUtility::Credit> Tileset::getUserCredit() const noexcept {
+  const CesiumUtility::Credit* pCredit =
+      this->_pTilesetContentManager->getUserCredit();
+  return pCredit ? std::make_optional(*pCredit) : std::nullopt;
+}
+
 const std::vector<Credit>& Tileset::getTilesetCredits() const noexcept {
   return this->_pTilesetContentManager->getTilesetCredits();
 }
@@ -246,7 +253,7 @@ double computeFogDensity(
 } // namespace
 
 void Tileset::_updateLodTransitions(
-    const FrameState& /* frameState */,
+    const TilesetFrameState& /* frameState */,
     float deltaTime,
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
@@ -392,23 +399,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
   const int32_t currentFrameNumber = previousFrameNumber + 1;
 
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
-  result.frameNumber = currentFrameNumber;
-  result.tilesToRenderThisFrame.clear();
-  result.tilesVisited = 0;
-  result.culledTilesVisited = 0;
-  result.tilesCulled = 0;
-  result.tilesOccluded = 0;
-  result.tilesWaitingForOcclusionResults = 0;
-  result.tilesKicked = 0;
-  result.maxDepthVisited = 0;
-
-  if (!_options.enableLodTransitionPeriod) {
-    for (Tile* pTile : result.tilesFadingOut) {
-      pTile->decrementDoNotUnloadSubtreeCount(
-          "Tileset::updateView clear tilesFadingOut");
-    }
-    result.tilesFadingOut.clear();
-  }
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
@@ -430,7 +420,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
         return computeFogDensity(fogDensityTable, frustum);
       });
 
-  FrameState frameState{
+  TilesetFrameState frameState{
       viewGroup,
       frustums,
       std::move(fogDensities),
@@ -438,9 +428,9 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       currentFrameNumber};
 
   if (!frustums.empty()) {
-    viewGroup.startNewFrame();
+    viewGroup.startNewFrame(*this, frameState);
     this->_visitTileIfNeeded(frameState, 0, false, *pRootTile, result);
-    viewGroup.finishFrame();
+    viewGroup.finishFrame(*this, frameState);
   } else {
     result = ViewUpdateResult();
   }
@@ -453,6 +443,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   this->_updateLodTransitions(frameState, deltaTime, result);
 
+#if false
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       this->_externals.pCreditSystem;
@@ -503,6 +494,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       }
     }
   }
+#endif
 
   this->_previousFrameNumber = currentFrameNumber;
 
@@ -799,7 +791,7 @@ bool isVisibleInFog(double distance, double fogDensity) noexcept {
 
 void Tileset::_frustumCull(
     const Tile& tile,
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     bool cullWithChildrenBounds,
     CullResult& cullResult) {
 
@@ -863,7 +855,7 @@ void Tileset::_frustumCull(
 }
 
 void Tileset::_fogCull(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     const std::vector<double>& distances,
     CullResult& cullResult) {
 
@@ -980,7 +972,7 @@ bool Tileset::_meetsSse(
 //   * The tile may or may not be renderable.
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -1101,7 +1093,7 @@ bool isLeaf(const Tile& tile) noexcept { return tile.getChildren().empty(); }
 } // namespace
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     Tile& tile,
     double tilePriority,
     ViewUpdateResult& result) {
@@ -1149,7 +1141,7 @@ bool mustContinueRefiningToDeeperTiles(
 } // namespace
 
 Tileset::TraversalDetails Tileset::_renderInnerTile(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result) {
   addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
@@ -1164,7 +1156,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result,
     double tilePriority,
@@ -1188,7 +1180,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
 // TODO This function is obviously too complex. The way how the indices are
 // used, in order to deal with the queue elements, should be reviewed...
 bool Tileset::_kickDescendantsAndRenderTile(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
@@ -1261,8 +1253,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
   return queuedForLoad;
 }
 
-TileOcclusionState
-Tileset::_checkOcclusion(const Tile& tile, const FrameState& frameState) {
+TileOcclusionState Tileset::_checkOcclusion(
+    const Tile& tile,
+    const TilesetFrameState& frameState) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
@@ -1366,7 +1359,7 @@ enum class VisitTileAction { Render, Refine };
 //   * The tile may or may not be renderable.
 //   * The tile has not yet been added to a load queue.
 Tileset::TraversalDetails Tileset::_visitTile(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool meetsSse,
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
@@ -1576,7 +1569,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 }
 
 Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -1604,7 +1597,7 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 }
 
 void Tileset::addTileToLoadQueue(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     Tile& tile,
     TileLoadPriorityGroup priorityGroup,
     double priority) {
@@ -1613,7 +1606,7 @@ void Tileset::addTileToLoadQueue(
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
-    const FrameState& frameState,
+    const TilesetFrameState& frameState,
     const Tile& tile) {
   TileSelectionState::Result lastFrameResult =
       getPreviousState(frameState.viewGroup, tile).getResult();

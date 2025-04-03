@@ -4,6 +4,7 @@
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/TreeTraversalState.h>
 
@@ -16,6 +17,7 @@ namespace Cesium3DTilesSelection {
 class Tile;
 class Tileset;
 class TilesetContentManager;
+class TilesetFrameState;
 
 /**
  * @brief A group of views that select tiles from a particular {@link Tileset}
@@ -150,8 +152,12 @@ public:
   /**
    * @brief Starts a new frame, clearing the set of tiles to be loaded so that a
    * new set can be selected.
+   *
+   * @param tileset The tileset that is starting the new frame.
+   * @param frameState The state of the new frame.
    */
-  void startNewFrame();
+  void
+  startNewFrame(const Tileset& tileset, const TilesetFrameState& frameState);
 
   /**
    * @brief Finishes the current frame by making the current tile selection
@@ -160,8 +166,11 @@ public:
    *
    * This method also updates the load progress percentage returned by
    * {@link getPreviousLoadProgressPercentage}.
+   *
+   * @param tileset The tileset that is starting the new frame.
+   * @param frameState The state of the new frame.
    */
-  void finishFrame();
+  void finishFrame(const Tileset& tileset, const TilesetFrameState& frameState);
 
   /**
    * @brief Gets the previous load progress percentage for this view group as
@@ -208,6 +217,8 @@ private:
   float _loadProgressPercentage = 100.0f;
   ViewUpdateResult _updateResult;
   TraversalState _traversalState;
+  CesiumUtility::CreditReferencer _previousFrameCredits;
+  CesiumUtility::CreditReferencer _currentFrameCredits;
 };
 
 } // namespace Cesium3DTilesSelection
