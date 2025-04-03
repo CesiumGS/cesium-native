@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
@@ -32,6 +33,8 @@ std::string vectorPrimitiveTypeToString(VectorPrimitiveType type) {
   case VectorPrimitiveType::FeatureCollection:
     return "FeatureCollection";
   }
+
+  throw new std::invalid_argument("Unknown VectorPrimitiveType value");
 }
 
 namespace {
