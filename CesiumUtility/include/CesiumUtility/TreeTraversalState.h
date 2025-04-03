@@ -2,6 +2,7 @@
 
 #include <CesiumUtility/Assert.h>
 
+#include <cstddef>
 #include <unordered_map>
 #include <vector>
 
