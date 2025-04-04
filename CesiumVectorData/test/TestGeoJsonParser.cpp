@@ -1,6 +1,9 @@
+#include "CesiumGeospatial/CartographicPolygon.h"
+#include "CesiumGeospatial/CompositeCartographicPolygon.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumNativeTests/readFile.h"
 #include "CesiumUtility/Math.h"
+#include "CesiumVectorData/VectorNode.h"
 
 #include <CesiumVectorData/VectorDocument.h>
 
@@ -23,8 +26,9 @@ static std::span<const std::byte> stringToBytes(const std::string& str) {
       str.size());
 }
 
-template <typename T>
-void expectParserResult(const std::string& json, const T& expectedResult) {
+void expectParserResult(
+    const std::string& json,
+    const VectorNode& expectedResult) {
   Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(json));
   CHECK(!doc.errors.hasErrors());
   REQUIRE(doc.value);
@@ -42,7 +46,7 @@ TEST_CASE("Parse Point primitives") {
             "coordinates": [100.0, 0.0]
         }
         )==",
-        Point{Cartographic{
+        VectorNode{Cartographic{
             Math::degreesToRadians(100.0),
             Math::degreesToRadians(0.0)}});
 
@@ -53,11 +57,22 @@ TEST_CASE("Parse Point primitives") {
             "coordinates": [-100.0, 20.0, 500.0]
         }
         )==",
-        Point{Cartographic{
+        VectorNode{Cartographic{
             Math::degreesToRadians(-100.0),
             Math::degreesToRadians(20.0),
             500.0}});
-
+    VectorNode expected{Cartographic{
+        Math::degreesToRadians(-90.0),
+        Math::degreesToRadians(180.0),
+        -500.0}};
+    expected.boundingBox = BoundingRegion(
+        GlobeRectangle(
+            Math::degreesToRadians(90.0),
+            Math::degreesToRadians(-90.0),
+            Math::degreesToRadians(30.0),
+            Math::degreesToRadians(35.0)),
+        -50,
+        50);
     expectParserResult(
         R"==(
         {
@@ -66,19 +81,7 @@ TEST_CASE("Parse Point primitives") {
             "bbox": [90, -90.0, -50, 30.0, 35.0, 50.0]
         }
         )==",
-        Point{
-            Cartographic{
-                Math::degreesToRadians(-90.0),
-                Math::degreesToRadians(180.0),
-                -500.0},
-            BoundingRegion(
-                GlobeRectangle(
-                    Math::degreesToRadians(90.0),
-                    Math::degreesToRadians(-90.0),
-                    Math::degreesToRadians(30.0),
-                    Math::degreesToRadians(35.0)),
-                -50,
-                50)});
+        expected);
   }
 
   SUBCASE("'coordinates' must exist'") {
@@ -139,8 +142,8 @@ TEST_CASE("Parse MultiPoint primitives") {
           "bbox": [30.0, -30.0, 40.0, -40.0]
         }
         )==",
-        MultiPoint{
-            std::vector<Cartographic>{
+        VectorNode{
+            std::vector<VectorPrimitive>{
                 Cartographic(
                     Math::degreesToRadians(-75.1428517),
                     Math::degreesToRadians(39.9644934),
@@ -169,8 +172,8 @@ TEST_CASE("Parse MultiPoint primitives") {
           "exampleB": "test"
         }
         )==",
-        MultiPoint{
-            std::vector<Cartographic>{
+        VectorNode{
+            std::vector<VectorPrimitive>{
                 Cartographic(
                     Math::degreesToRadians(-75.1428517),
                     Math::degreesToRadians(39.9644934),
@@ -209,8 +212,8 @@ TEST_CASE("Parse LineString primitives") {
           "bbox": [30.0, -30.0, 40.0, -40.0]
         }
         )==",
-        LineString{
-            std::vector<Cartographic>{
+        VectorNode{
+            std::vector<VectorPrimitive>{std::vector<Cartographic>{
                 Cartographic(
                     Math::degreesToRadians(-75.1428517),
                     Math::degreesToRadians(39.9644934),
@@ -219,7 +222,7 @@ TEST_CASE("Parse LineString primitives") {
                     Math::degreesToRadians(129.6869721),
                     Math::degreesToRadians(62.0256947),
                     100),
-            },
+            }},
             BoundingRegion(
                 GlobeRectangle(
                     Math::degreesToRadians(30.0),
@@ -265,8 +268,8 @@ TEST_CASE("Parse MultiLineString primitives") {
           ]
         }
         )==",
-        MultiLineString{
-            std::vector<std::vector<Cartographic>>{std::vector<Cartographic>{
+        VectorNode{
+            std::vector<VectorPrimitive>{std::vector<Cartographic>{
                 Cartographic(
                     Math::degreesToRadians(-75.1428517),
                     Math::degreesToRadians(39.9644934),
@@ -274,7 +277,8 @@ TEST_CASE("Parse MultiLineString primitives") {
                 Cartographic(
                     Math::degreesToRadians(129.6869721),
                     Math::degreesToRadians(62.0256947),
-                    100)}}});
+                    100)}},
+            std::nullopt});
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
@@ -321,28 +325,29 @@ TEST_CASE("Parse Polygon primitives") {
           ]
         }
         )==",
-        Polygon{
-            std::vector<std::vector<Cartographic>>{std::vector<Cartographic>{
-                Cartographic(
-                    Math::degreesToRadians(-75.1428517),
-                    Math::degreesToRadians(39.9644934),
-                    400),
-                Cartographic(
-                    Math::degreesToRadians(129.6869721),
-                    Math::degreesToRadians(62.0256947),
-                    100),
-                Cartographic(
-                    Math::degreesToRadians(103.8245805),
-                    Math::degreesToRadians(1.3043744),
-                    100),
-                Cartographic(
-                    Math::degreesToRadians(-80.1976364),
-                    Math::degreesToRadians(25.7708431),
-                    400),
-                Cartographic(
-                    Math::degreesToRadians(-75.1428517),
-                    Math::degreesToRadians(39.9644934),
-                    400)}}});
+        VectorNode{
+            CompositeCartographicPolygon{std::vector<CartographicPolygon>{
+                CartographicPolygon{std::vector<Cartographic>{
+                    Cartographic(
+                        Math::degreesToRadians(-75.1428517),
+                        Math::degreesToRadians(39.9644934),
+                        400),
+                    Cartographic(
+                        Math::degreesToRadians(129.6869721),
+                        Math::degreesToRadians(62.0256947),
+                        100),
+                    Cartographic(
+                        Math::degreesToRadians(103.8245805),
+                        Math::degreesToRadians(1.3043744),
+                        100),
+                    Cartographic(
+                        Math::degreesToRadians(-80.1976364),
+                        Math::degreesToRadians(25.7708431),
+                        400),
+                    Cartographic(
+                        Math::degreesToRadians(-75.1428517),
+                        Math::degreesToRadians(39.9644934),
+                        400)}}}}});
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
@@ -390,28 +395,31 @@ TEST_CASE("Parse MultiPolygon primitives") {
           ]
         }
         )==",
-        MultiPolygon{std::vector<std::vector<std::vector<Cartographic>>>{
-            std::vector<std::vector<Cartographic>>{std::vector<Cartographic>{
-                Cartographic(
-                    Math::degreesToRadians(-75.1428517),
-                    Math::degreesToRadians(39.9644934),
-                    400),
-                Cartographic(
-                    Math::degreesToRadians(129.6869721),
-                    Math::degreesToRadians(62.0256947),
-                    100),
-                Cartographic(
-                    Math::degreesToRadians(103.8245805),
-                    Math::degreesToRadians(1.3043744),
-                    100),
-                Cartographic(
-                    Math::degreesToRadians(-80.1976364),
-                    Math::degreesToRadians(25.7708431),
-                    400),
-                Cartographic(
-                    Math::degreesToRadians(-75.1428517),
-                    Math::degreesToRadians(39.9644934),
-                    400)}}}});
+        VectorNode{
+            std::vector<VectorPrimitive>{
+                CompositeCartographicPolygon{std::vector<CartographicPolygon>{
+                    CartographicPolygon{std::vector<Cartographic>{
+                        Cartographic(
+                            Math::degreesToRadians(-75.1428517),
+                            Math::degreesToRadians(39.9644934),
+                            400),
+                        Cartographic(
+                            Math::degreesToRadians(129.6869721),
+                            Math::degreesToRadians(62.0256947),
+                            100),
+                        Cartographic(
+                            Math::degreesToRadians(103.8245805),
+                            Math::degreesToRadians(1.3043744),
+                            100),
+                        Cartographic(
+                            Math::degreesToRadians(-80.1976364),
+                            Math::degreesToRadians(25.7708431),
+                            400),
+                        Cartographic(
+                            Math::degreesToRadians(-75.1428517),
+                            Math::degreesToRadians(39.9644934),
+                            400)}}}}},
+            std::nullopt});
   }
 
   SUBCASE("Coordinates must be an array of arrays of arrays") {
@@ -466,9 +474,9 @@ TEST_CASE("Parsing GeometryCollection") {
           ]
         }  
         )==",
-        GeometryCollection{std::vector<GeometryPrimitive>{
-            Point{
-                Cartographic::fromDegrees(1, 2),
+        VectorNode{std::vector<VectorNode>{
+            VectorNode{
+                std::vector<VectorPrimitive>{Cartographic::fromDegrees(1, 2)},
                 BoundingRegion(
                     GlobeRectangle(
                         Math::degreesToRadians(40.0),
@@ -477,10 +485,10 @@ TEST_CASE("Parsing GeometryCollection") {
                         Math::degreesToRadians(-40.0)),
                     0,
                     0)},
-            LineString{
-                std::vector<Cartographic>{
+            VectorNode{
+                std::vector<VectorPrimitive>{std::vector<Cartographic>{
                     Cartographic::fromDegrees(1, 2),
-                    Cartographic::fromDegrees(3, 4)},
+                    Cartographic::fromDegrees(3, 4)}},
                 std::nullopt,
                 JsonValue::Object{
                     {"test", JsonValue(104.0)},
@@ -511,7 +519,8 @@ TEST_CASE("Parsing GeometryCollection") {
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
         doc.errors.errors[0] ==
-        "Expected geometry, found GeoJSON object Feature.");
+        "GeoJSON GeometryCollection 'geometries' member may only contain "
+        "GeoJSON Geometry objects, found Feature.");
     doc = VectorDocument::fromGeoJson(stringToBytes(
         R"==({ "type": "GeometryCollection", "geometries": [1, 2, 3] })=="));
     REQUIRE(doc.errors.hasErrors());
@@ -524,6 +533,16 @@ TEST_CASE("Parsing GeometryCollection") {
 
 TEST_CASE("Parsing Feature") {
   SUBCASE("Valid Feature") {
+    VectorNode expected{
+        std::vector<VectorNode>{VectorNode{std::vector<Cartographic>{
+            Cartographic::fromDegrees(1, 2, 3),
+            Cartographic::fromDegrees(4, 5, 6)}}}};
+    expected.id = 20;
+    expected.properties = JsonValue::Object{
+        {"a", JsonValue(1)},
+        {"b", JsonValue(false)},
+        {"c", JsonValue("3")}};
+    expected.foreignMembers = JsonValue::Object{{"test", JsonValue("test")}};
     expectParserResult(
         R"==(
         {
@@ -541,17 +560,7 @@ TEST_CASE("Parsing Feature") {
           "test": "test"
         }
         )==",
-        Feature{
-            20,
-            LineString{std::vector<Cartographic>{
-                Cartographic::fromDegrees(1, 2, 3),
-                Cartographic::fromDegrees(4, 5, 6)}},
-            JsonValue::Object{
-                {"a", JsonValue(1)},
-                {"b", JsonValue(false)},
-                {"c", JsonValue("3")}},
-            std::nullopt,
-            JsonValue::Object{{"test", JsonValue("test")}}});
+        expected);
   }
 
   SUBCASE("Missing required members") {
@@ -596,10 +605,8 @@ TEST_CASE("Parsing FeatureCollection") {
           ]
         }  
         )==",
-        FeatureCollection{std::vector<Feature>{Feature{
-            std::monostate(),
-            Point{Cartographic::fromDegrees(1, 2, 3)},
-            std::nullopt}}});
+        VectorNode{std::vector<VectorNode>{VectorNode{std::vector<VectorNode>{
+            VectorNode{Cartographic::fromDegrees(1, 2, 3)}}}}});
   }
 
   SUBCASE("'features' member must be an array of features") {
@@ -630,7 +637,8 @@ TEST_CASE("Parsing FeatureCollection") {
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
         doc.errors.errors[0] ==
-        "Expected Feature, found GeoJSON object Point.");
+        "GeoJSON FeatureCollection 'features' member may only contain Feature "
+        "objects, found Point.");
   }
 }
 

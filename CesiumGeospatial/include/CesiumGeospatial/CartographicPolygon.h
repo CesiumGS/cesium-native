@@ -33,6 +33,15 @@ public:
   CartographicPolygon(const std::vector<glm::dvec2>& polygon);
 
   /**
+   * @brief Constructs a 2D polygon that can be rasterized onto {@link Cesium3DTilesSelection::Tileset}
+   * objects.
+   *
+   * @param polygon An array of cartographic points defining the perimeter of
+   * the 2D polygon. The 'height' component of each coordinate will be ignored.
+   */
+  CartographicPolygon(const std::vector<Cartographic>& polygon);
+
+  /**
    * @brief Returns the longitude-latitude vertices that define the
    * perimeter of the selected polygon.
    *
@@ -59,10 +68,16 @@ public:
    *
    * @return The polygon's global bounding rectangle.
    */
-  constexpr const std::optional<CesiumGeospatial::GlobeRectangle>&
+  constexpr const CesiumGeospatial::GlobeRectangle&
   getBoundingRectangle() const {
     return this->_boundingRectangle;
   }
+
+  /**
+   * @brief Returns whether the given longitude-latitude position lies within
+   * this polygon.
+   */
+  bool contains(const CesiumGeospatial::Cartographic& point) const;
 
   /**
    * @brief Determines whether a globe rectangle is completely inside any of the
@@ -92,10 +107,15 @@ public:
       const std::vector<CesiumGeospatial::CartographicPolygon>&
           cartographicPolygons) noexcept;
 
+  /**
+   * @brief Checks if two `CartographicPolygon` objects are equal.
+   */
+  bool operator==(const CartographicPolygon& rhs) const;
+
 private:
   std::vector<glm::dvec2> _vertices;
   std::vector<uint32_t> _indices;
-  std::optional<CesiumGeospatial::GlobeRectangle> _boundingRectangle;
+  CesiumGeospatial::GlobeRectangle _boundingRectangle;
 };
 
 } // namespace CesiumGeospatial

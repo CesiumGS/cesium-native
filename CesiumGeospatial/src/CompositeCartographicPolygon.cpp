@@ -1,0 +1,48 @@
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/CompositeCartographicPolygon.h>
+
+namespace CesiumGeospatial {
+CompositeCartographicPolygon::CompositeCartographicPolygon(
+    std::vector<CartographicPolygon>&& polygons)
+    : _polygons(std::move(polygons)) {}
+
+bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
+  // If there's no polygons, so we're definitely not inside any of them.
+  if (this->_polygons.size() < 1) {
+    return false;
+  }
+
+  // The first polygon specifies the outer bounds, so if we're not in that,
+  // we're not in any of them.
+  if (!this->_polygons[0].contains(point)) {
+    return false;
+  }
+
+  // By this point, we're definitely in the outer ring, so the only way we could
+  // not contain this point is if we're inside any of the inner rings.
+  for (size_t i = 1; i < this->_polygons.size(); i++) {
+    if (this->_polygons[i].contains(point)) {
+      return false;
+    }
+  }
+
+  // In the outer ring, but not in any of the inner rings, so we're inside the
+  // composite polygon.
+  return true;
+}
+
+bool CompositeCartographicPolygon::operator==(
+    const CompositeCartographicPolygon& rhs) const {
+  if (this->_polygons.size() != rhs._polygons.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < this->_polygons.size(); i++) {
+    if (this->_polygons[i] != rhs._polygons[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+} // namespace CesiumGeospatial
