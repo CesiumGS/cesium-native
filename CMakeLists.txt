@@ -287,6 +287,7 @@ add_subdirectory(CesiumClientCommon)
 add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
+add_subdirectory(CesiumVectorData)
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
