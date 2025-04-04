@@ -2,6 +2,7 @@
 #include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
+#include <utility>
 
 namespace CesiumUtility {
 
