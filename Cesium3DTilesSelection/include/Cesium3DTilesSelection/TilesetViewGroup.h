@@ -93,7 +93,7 @@ public:
   void addToLoadQueue(const TileLoadTask& task);
 
   /**
-   * @brief A checkpoint within this view groups load queue.
+   * @brief A checkpoint within this view group's load queue.
    *
    * A checkpoint can be created by calling {@link saveTileLoadQueueCheckpoint}.
    * Later, calling {@link restoreTileLoadQueueCheckpoint} will remove all

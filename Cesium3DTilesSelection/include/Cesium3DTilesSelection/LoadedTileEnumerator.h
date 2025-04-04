@@ -19,7 +19,8 @@ class TilesetContentManager;
  *
  * For the purposes of this enumeration, a loaded tile is one that is in a
  * {@link TileLoadState} other than {@link TileLoadState::Unloaded}, or that
- * has any children (or other descendants) that meet this criteria.
+ * has any children (or other descendants) that meet this criteria. We check the
+ * latter criteria by looking at {@link Tile::getDoNotUnloadSubtreeCount}.
  */
 class LoadedConstTileEnumerator {
 public:
@@ -108,14 +109,7 @@ private:
   friend class LoadedTileEnumerator;
 };
 
-/**
- * @brief A "virtual collection" that allows enumeration through the loaded
- * tiles in a subtree rooted at a given {@link Tile}.
- *
- * For the purposes of this enumeration, a loaded tile is one that is in a
- * {@link TileLoadState} other than {@link TileLoadState::Unloaded}, or that
- * has any children (or other descendants) that meet this criteria.
- */
+/** @copydoc LoadedConstTileEnumerator */
 class LoadedTileEnumerator {
 public:
   /**
@@ -184,16 +178,7 @@ public:
     friend class LoadedConstTileEnumerator;
   };
 
-  /**
-   * @brief Creates a new instance to enumerate loaded tiles in the subtree
-   * rooted at `pRootTile`.
-   *
-   * If `pRootTile` is `nullptr`, then the iteration is empty (`begin==end`).
-   * Otherwise, the iteration will include at least `pRootTile`, even if it is
-   * not loaded.
-   *
-   * @param pRootTile The root tile of the subtree.
-   */
+  /** @copydoc LoadedConstTileEnumerator::LoadedConstTileEnumerator */
   explicit LoadedTileEnumerator(Tile* pRootTile) noexcept;
 
   /** @brief Returns an iterator starting at the first tile. */
