@@ -110,6 +110,28 @@ const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
   return this->_snapshot;
 }
 
+void CreditSystem::addBulkReferences(
+    const std::vector<int32_t>& references) noexcept {
+  for (size_t i = 0; i < references.size(); ++i) {
+    HtmlAndLastFrameNumber& record = this->_credits[i];
+    int32_t referencesToAdd = references[i];
+
+    record.referenceCount += referencesToAdd;
+
+    // If this is the first reference to this credit, and it was shown last
+    // frame, make sure this credit doesn't exist in
+    // _creditsToNoLongerShowThisFrame.
+    if (record.shownLastFrame && record.referenceCount == referencesToAdd) {
+      this->_creditsToNoLongerShowThisFrame.erase(
+          std::remove(
+              this->_creditsToNoLongerShowThisFrame.begin(),
+              this->_creditsToNoLongerShowThisFrame.end(),
+              Credit(i)),
+          this->_creditsToNoLongerShowThisFrame.end());
+    }
+  }
+}
+
 void CreditSystem::releaseBulkReferences(
     const std::vector<int32_t>& references) noexcept {
   for (size_t i = 0; i < references.size(); ++i) {

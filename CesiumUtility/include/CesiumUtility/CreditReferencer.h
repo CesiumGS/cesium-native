@@ -10,8 +10,8 @@ class CreditSystem;
 struct Credit;
 
 /**
- * @brief Provides an easy way to reference a set of credits in a
- * {@link CreditSystem} so that the references can be easily released later.
+ * @brief Provides a way to reference a set of credits in a
+ * {@link CreditSystem} so that the references can easily be released later.
  */
 class CreditReferencer {
 public:
@@ -31,7 +31,48 @@ public:
    * before the credit system is set.
    */
   CreditReferencer(const std::shared_ptr<CreditSystem>& pCreditSystem) noexcept;
+
+  /**
+   * @brief Copies an instance, increasing the credit references on the
+   * {@link CreditSystem} accordingly.
+   *
+   * @param rhs The instance to copy.
+   */
+  CreditReferencer(const CreditReferencer& rhs) noexcept;
+
+  /**
+   * @brief Moves an instance. After the move, the `rhs` will not own any
+   * references, so this operation does not affect the total number of credit
+   * references on the {@link CreditSystem}.
+   *
+   * @param rhs The instance to move.
+   */
+  CreditReferencer(CreditReferencer&& rhs) noexcept;
+
+  /**
+   * @brief Destroys this instance, releasing all of its references.
+   */
   ~CreditReferencer() noexcept;
+
+  /**
+   * @brief Copy-assigns another instance to this one. The `rhs` references are
+   * copied to this instance and then all credit references previously owned by
+   * this instance are released.
+   *
+   * @param rhs The instance to copy.
+   * @returns A reference to this instance.
+   */
+  CreditReferencer& operator=(const CreditReferencer& rhs) noexcept;
+
+  /**
+   * @brief Move-assigns another instance to this one. The `rhs` references are
+   * moved to this instance and then all credit references previously owned by
+   * this instance are released.
+   *
+   * @param rhs The instance to move.
+   * @return A reference to this instance.
+   */
+  CreditReferencer& operator=(CreditReferencer&& rhs) noexcept;
 
   /**
    * @brief Gets the credit system that this instance references.

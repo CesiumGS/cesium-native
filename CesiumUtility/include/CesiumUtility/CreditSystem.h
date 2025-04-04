@@ -115,6 +115,7 @@ public:
   const CreditsSnapshot& getSnapshot() noexcept;
 
 private:
+  void addBulkReferences(const std::vector<int32_t>& references) noexcept;
   void releaseBulkReferences(const std::vector<int32_t>& references) noexcept;
 
   const std::string INVALID_CREDIT_MESSAGE =
