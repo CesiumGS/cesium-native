@@ -97,7 +97,7 @@ bool VectorNode::operator==(const VectorNode& rhs) const {
   }
 
   for (size_t i = 0; i < this->children.size(); i++) {
-    if (this->children[i] != rhs.children[i]) {
+    if (!this->children[i].operator==(rhs.children[i])) {
       return false;
     }
   }
