@@ -11,6 +11,7 @@
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
@@ -48,6 +49,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
+#include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
@@ -55,6 +57,7 @@
 #include <algorithm>
 #include <any>
 #include <cassert>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -130,18 +133,6 @@ void unloadTileRecursively(
   for (Tile& child : tile.getChildren()) {
     unloadTileRecursively(child, tilesetContentManager);
   }
-}
-
-bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
-  for (const RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
-    const RasterOverlayTile* pLoading = mapped.getLoadingTile();
-    if (pLoading &&
-        pLoading->getState() == RasterOverlayTile::LoadState::Unloaded) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 std::optional<RegionAndCenter>
@@ -704,7 +695,6 @@ postProcessContentInWorkerThread(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     std::unique_ptr<TilesetContentLoader>&& pLoader,
     std::unique_ptr<Tile>&& pRootTile)
     : _externals{externals},
@@ -718,7 +708,10 @@ TilesetContentManager::TilesetContentManager(
                     tilesetOptions.showCreditsOnScreen))
               : std::nullopt),
       _tilesetCredits{},
-      _overlayCollection{std::move(overlayCollection)},
+      _overlayCollection(
+          LoadedTileEnumerator(pRootTile.get()),
+          externals,
+          tilesetOptions.ellipsoid),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -728,14 +721,23 @@ TilesetContentManager::TilesetContentManager(
           this->_destructionCompletePromise.getFuture().share()},
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()} {
+          this->_rootTileAvailablePromise.getFuture().share()},
+      _unusedTiles(),
+      _requesters(),
+      _roundRobinValueWorker(0.0),
+      _roundRobinValueMain(0.0),
+      _requesterFractions(),
+      _requestersWithRequests() {
+  this->_upsampler.setOwner(*this);
+
+  CESIUM_ASSERT(this->_pLoader != nullptr);
+  this->_pLoader->setOwner(*this);
   this->_rootTileAvailablePromise.resolve();
 }
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     const std::string& url)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
@@ -748,7 +750,10 @@ TilesetContentManager::TilesetContentManager(
                     tilesetOptions.showCreditsOnScreen))
               : std::nullopt),
       _tilesetCredits{},
-      _overlayCollection{std::move(overlayCollection)},
+      _overlayCollection(
+          LoadedTileEnumerator(nullptr),
+          externals,
+          tilesetOptions.ellipsoid),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -758,7 +763,15 @@ TilesetContentManager::TilesetContentManager(
           this->_destructionCompletePromise.getFuture().share()},
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()} {
+          this->_rootTileAvailablePromise.getFuture().share()},
+      _unusedTiles(),
+      _requesters(),
+      _roundRobinValueWorker(0.0),
+      _roundRobinValueMain(0.0),
+      _requesterFractions(),
+      _requestersWithRequests() {
+  this->_upsampler.setOwner(*this);
+
   if (!url.empty()) {
     this->notifyTileStartLoading(nullptr);
 
@@ -885,7 +898,6 @@ TilesetContentManager::TilesetContentManager(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     TilesetContentLoaderFactory&& loaderFactory)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
@@ -898,7 +910,10 @@ TilesetContentManager::TilesetContentManager(
                     tilesetOptions.showCreditsOnScreen))
               : std::nullopt),
       _tilesetCredits{},
-      _overlayCollection{std::move(overlayCollection)},
+      _overlayCollection(
+          LoadedTileEnumerator(nullptr),
+          externals,
+          tilesetOptions.ellipsoid),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -908,7 +923,15 @@ TilesetContentManager::TilesetContentManager(
           this->_destructionCompletePromise.getFuture().share()},
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()} {
+          this->_rootTileAvailablePromise.getFuture().share()},
+      _unusedTiles(),
+      _requesters(),
+      _roundRobinValueWorker(0.0),
+      _roundRobinValueMain(0.0),
+      _requesterFractions(),
+      _requestersWithRequests() {
+  this->_upsampler.setOwner(*this);
+
   if (loaderFactory.isValid()) {
     auto authorizationChangeListener = [this](
                                            const std::string& header,
@@ -956,14 +979,12 @@ TilesetContentManager::TilesetContentManager(
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    RasterOverlayCollection&& overlayCollection,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl)
     : TilesetContentManager(
           externals,
           tilesetOptions,
-          std::move(overlayCollection),
           CesiumIonTilesetContentLoaderFactory(
               static_cast<uint32_t>(ionAssetID),
               ionAccessToken,
@@ -1358,20 +1379,6 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   return bytes;
 }
 
-bool TilesetContentManager::tileNeedsWorkerThreadLoading(
-    const Tile& tile) const noexcept {
-  auto state = tile.getState();
-  return state == TileLoadState::Unloaded ||
-         state == TileLoadState::FailedTemporarily ||
-         anyRasterOverlaysNeedLoading(tile);
-}
-
-bool TilesetContentManager::tileNeedsMainThreadLoading(
-    const Tile& tile) const noexcept {
-  return tile.getState() == TileLoadState::ContentLoaded &&
-         tile.isRenderContent();
-}
-
 void TilesetContentManager::finishLoading(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
@@ -1413,6 +1420,267 @@ void TilesetContentManager::finishLoading(
   // This allows the raster tile to be updated and children to be created, if
   // necessary.
   updateTileContent(tile, tilesetOptions);
+}
+
+void TilesetContentManager::markTileNowUsed(const Tile& tile) {
+  this->_unusedTiles.remove(const_cast<Tile&>(tile));
+}
+
+void TilesetContentManager::markTileNowUnused(const Tile& tile) {
+  this->_unusedTiles.insertAtTail(const_cast<Tile&>(tile));
+}
+
+void TilesetContentManager::unloadCachedBytes(
+    int64_t maximumCachedBytes,
+    double timeBudgetMilliseconds) {
+  Tile* pTile = this->_unusedTiles.head();
+
+  // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
+  // the end time to the max time_point in that case.
+  auto start = std::chrono::system_clock::now();
+  auto end = (timeBudgetMilliseconds <= 0.0)
+                 ? std::chrono::time_point<std::chrono::system_clock>::max()
+                 : (start + std::chrono::microseconds(static_cast<int64_t>(
+                                1000.0 * timeBudgetMilliseconds)));
+
+  std::vector<Tile*> tilesNeedingChildrenCleared;
+
+  while (this->getTotalDataUsed() > maximumCachedBytes) {
+    if (pTile == nullptr) {
+      // We've removed all unused tiles.
+      break;
+    }
+
+    Tile* pNext = this->_unusedTiles.next(*pTile);
+
+    const UnloadTileContentResult removed = this->unloadTileContent(*pTile);
+    if (removed != UnloadTileContentResult::Keep) {
+      this->_unusedTiles.remove(*pTile);
+    }
+
+    if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
+      tilesNeedingChildrenCleared.emplace_back(pTile);
+    }
+
+    pTile = pNext;
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
+  }
+
+  if (!tilesNeedingChildrenCleared.empty()) {
+    for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
+      CESIUM_ASSERT(pTileToClear->getDoNotUnloadSubtreeCount() == 0);
+      this->clearChildrenRecursively(pTileToClear);
+    }
+  }
+}
+
+void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
+  // Iterate through all children, calling this method recursively to make sure
+  // children are all removed from _unusedTiles.
+  for (Tile& child : pTile->getChildren()) {
+    CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
+    CESIUM_ASSERT(child.getDoNotUnloadSubtreeCount() == 0);
+    CESIUM_ASSERT(child.getContent().isUnknownContent());
+    this->_unusedTiles.remove(child);
+    this->clearChildrenRecursively(&child);
+  }
+
+  pTile->clearChildren();
+}
+
+void TilesetContentManager::registerTileRequester(
+    TileLoadRequester& requester) {
+  CESIUM_ASSERT(
+      std::find(
+          this->_requesters.begin(),
+          this->_requesters.end(),
+          &requester) == this->_requesters.end());
+  this->_requesters.emplace_back(&requester);
+}
+
+void TilesetContentManager::unregisterTileRequester(
+    TileLoadRequester& requester) {
+  auto it =
+      std::find(this->_requesters.begin(), this->_requesters.end(), &requester);
+  CESIUM_ASSERT(it != this->_requesters.end());
+  if (it != this->_requesters.end()) {
+    this->_requesters.erase(it);
+  }
+}
+
+namespace {
+
+template <typename HasMoreTilesToLoadFunc, typename GetNextTileToLoadFunc>
+class WeightedRoundRobin {
+public:
+  WeightedRoundRobin(
+      double& roundRobinValue,
+      const std::vector<TileLoadRequester*>& allRequesters,
+      std::vector<TileLoadRequester*>& requestersWithRequests,
+      std::vector<double>& fractions,
+      const HasMoreTilesToLoadFunc& hasMoreTilesToLoad,
+      const GetNextTileToLoadFunc& getNextTileToLoad)
+      : _roundRobinValue(roundRobinValue),
+        _allRequesters(allRequesters),
+        _requestersWithRequests(requestersWithRequests),
+        _fractions(fractions),
+        _hasMoreTilesToLoad(hasMoreTilesToLoad),
+        _getNextTileToLoad(getNextTileToLoad) {
+    this->recomputeRequesterFractions();
+  }
+
+  Tile* getNextTileToLoad() {
+    if (this->_requestersWithRequests.empty())
+      return nullptr;
+
+    // Use the golden ratio to move to the next requester so that we give each a
+    // chance to load tiles in proportion to its weight.
+    // Inspired by:
+    // https://blog.demofox.org/2020/06/23/weighted-round-robin-using-the-golden-ratio-low-discrepancy-sequence/
+    this->_roundRobinValue =
+        glm::fract(this->_roundRobinValue + Math::GoldenRatio);
+    auto it = std::lower_bound(
+        this->_fractions.begin(),
+        this->_fractions.end(),
+        this->_roundRobinValue);
+
+    size_t index = size_t(it - this->_fractions.begin());
+    CESIUM_ASSERT(index < this->_requestersWithRequests.size());
+    if (index >= this->_requestersWithRequests.size())
+      return nullptr;
+
+    TileLoadRequester& requester = *this->_requestersWithRequests[index];
+
+    Tile* pToLoad = this->_getNextTileToLoad(requester);
+    CESIUM_ASSERT(pToLoad);
+
+    if (!pToLoad || !this->_hasMoreTilesToLoad(requester)) {
+      // If this was the last tile from this requester, we'll need to remove the
+      // requester from the weighting.
+      this->recomputeRequesterFractions();
+    }
+
+    return pToLoad;
+  }
+
+private:
+  void recomputeRequesterFractions() {
+    this->_fractions.reserve(this->_allRequesters.size());
+    this->_requestersWithRequests.reserve(this->_allRequesters.size());
+
+    this->_fractions.clear();
+    this->_requestersWithRequests.clear();
+
+    double sum = 0.0;
+
+    for (size_t i = 0; i < this->_allRequesters.size(); ++i) {
+      TileLoadRequester* pRequester = this->_allRequesters[i];
+      CESIUM_ASSERT(pRequester);
+
+      if (pRequester && _hasMoreTilesToLoad(*pRequester)) {
+        double weight = pRequester->getWeight();
+        CESIUM_ASSERT(weight > 0.0);
+
+        sum += weight;
+        this->_fractions.emplace_back(sum);
+        this->_requestersWithRequests.emplace_back(pRequester);
+      }
+    }
+
+    // Normalize to [0.0, 1.0].
+    for (size_t i = 0; i < this->_fractions.size(); ++i) {
+      this->_fractions[i] /= sum;
+    }
+
+    // The last fraction should always be exactly 1.0.
+    if (!this->_fractions.empty()) {
+      this->_fractions.back() = 1.0;
+    }
+  }
+
+  double& _roundRobinValue;
+  const std::vector<TileLoadRequester*>& _allRequesters;
+  std::vector<TileLoadRequester*>& _requestersWithRequests;
+  std::vector<double>& _fractions;
+  const HasMoreTilesToLoadFunc& _hasMoreTilesToLoad;
+  const GetNextTileToLoadFunc& _getNextTileToLoad;
+};
+
+} // namespace
+
+void TilesetContentManager::processWorkerThreadLoadRequests(
+    const TilesetOptions& options) {
+  // Exit early if there are no loading slots available.
+  if (this->getNumberOfTilesLoading() >=
+      int32_t(options.maximumSimultaneousTileLoads)) {
+    return;
+  }
+
+  WeightedRoundRobin wrr{
+      this->_roundRobinValueWorker,
+      this->_requesters,
+      this->_requestersWithRequests,
+      this->_requesterFractions,
+      [](const TileLoadRequester& requester) {
+        return requester.hasMoreTilesToLoadInWorkerThread();
+      },
+      [](TileLoadRequester& requester) {
+        return requester.getNextTileToLoadInWorkerThread();
+      }};
+
+  while (this->getNumberOfTilesLoading() <
+         int32_t(options.maximumSimultaneousTileLoads)) {
+    Tile* pToLoad = wrr.getNextTileToLoad();
+    if (pToLoad == nullptr)
+      break;
+
+    this->loadTileContent(*pToLoad, options);
+  }
+}
+
+void TilesetContentManager::processMainThreadLoadRequests(
+    const TilesetOptions& options) {
+  WeightedRoundRobin wrr{
+      this->_roundRobinValueMain,
+      this->_requesters,
+      this->_requestersWithRequests,
+      this->_requesterFractions,
+      [](const TileLoadRequester& requester) {
+        return requester.hasMoreTilesToLoadInMainThread();
+      },
+      [](TileLoadRequester& requester) {
+        return requester.getNextTileToLoadInMainThread();
+      }};
+
+  double timeBudget = options.mainThreadLoadingTimeLimit;
+
+  auto start = std::chrono::system_clock::now();
+  auto end = start + std::chrono::microseconds(
+                         static_cast<int64_t>(1000.0 * timeBudget));
+
+  while (true) {
+    Tile* pToLoad = wrr.getNextTileToLoad();
+    if (pToLoad == nullptr)
+      break;
+
+    // We double-check that the tile is still in the ContentLoaded state here,
+    // in case something (such as a child that needs to upsample from this
+    // parent) already pushed the tile into the Done state. Because in that
+    // case, calling finishLoading here would assert or crash.
+    if (pToLoad->getState() == TileLoadState::ContentLoaded &&
+        pToLoad->isRenderContent()) {
+      this->finishLoading(*pToLoad, options);
+    }
+
+    auto time = std::chrono::system_clock::now();
+    if (timeBudget > 0.0 && time >= end) {
+      break;
+    }
+  }
 }
 
 void TilesetContentManager::setTileContent(
@@ -1697,6 +1965,10 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     this->_requestHeaders = std::move(result.requestHeaders);
     this->_pLoader = std::move(result.pLoader);
     this->_pRootTile = std::move(result.pRootTile);
+
+    this->_overlayCollection.setLoadedTileEnumerator(
+        LoadedTileEnumerator(this->_pRootTile.get()));
+    this->_pLoader->setOwner(*this);
   }
 }
 } // namespace Cesium3DTilesSelection

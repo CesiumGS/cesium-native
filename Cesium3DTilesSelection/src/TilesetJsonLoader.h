@@ -52,6 +52,9 @@ public:
       const rapidjson::Document& tilesetJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+protected:
+  void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
+
 private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;

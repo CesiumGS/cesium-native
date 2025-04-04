@@ -1,5 +1,6 @@
 #include "EmptyRasterOverlayTileProvider.h"
 
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -34,12 +35,9 @@ namespace Cesium3DTilesSelection {
 namespace {
 
 template <class Function>
-void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
-  Tile* pCurrent = list.head();
-  while (pCurrent) {
-    Tile* pNext = list.next(pCurrent);
-    callback(*pCurrent);
-    pCurrent = pNext;
+void forEachTile(const LoadedTileEnumerator& list, Function callback) {
+  for (const Tile& tile : list) {
+    callback(const_cast<Tile&>(tile));
   }
 }
 
@@ -52,10 +50,10 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 } // namespace
 
 RasterOverlayCollection::RasterOverlayCollection(
-    Tile::LoadedLinkedList& loadedTiles,
+    const LoadedTileEnumerator& loadedTiles,
     const TilesetExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
-    : _pLoadedTiles(&loadedTiles),
+    : _loadedTiles(loadedTiles),
       _externals{externals},
       _ellipsoid(ellipsoid),
       _pOverlays(nullptr) {}
@@ -70,6 +68,11 @@ RasterOverlayCollection::~RasterOverlayCollection() noexcept {
       }
     }
   }
+}
+
+void RasterOverlayCollection::setLoadedTileEnumerator(
+    const LoadedTileEnumerator& loadedTiles) {
+  this->_loadedTiles = loadedTiles;
 }
 
 void RasterOverlayCollection::add(
@@ -104,7 +107,7 @@ void RasterOverlayCollection::add(
           nullptr);
 
   // Add a placeholder for this overlay to existing geometry tiles.
-  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
+  forEachTile(this->_loadedTiles, [&](Tile& tile) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     // - When a tile is transitioned from Unloaded to Loading, raster overlay
     // tiles will be mapped to the tile automatically by TilesetContentManager,
@@ -188,7 +191,7 @@ void RasterOverlayCollection::remove(
   auto pPrepareRenderResources =
       this->_externals.pPrepareRendererResources.get();
   forEachTile(
-      *this->_pLoadedTiles,
+      this->_loadedTiles,
       [&removeCondition, pPrepareRenderResources](Tile& tile) {
         std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 

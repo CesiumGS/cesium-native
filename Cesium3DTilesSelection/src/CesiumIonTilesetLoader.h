@@ -69,6 +69,9 @@ protected:
       TilesetContentLoaderResult<CesiumIonTilesetLoader>&& result,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+protected:
+  void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
+
 private:
   CesiumAsync::SharedFuture<std::string> refreshTokenInMainThread(
       const CesiumAsync::AsyncSystem& asyncSystem,
