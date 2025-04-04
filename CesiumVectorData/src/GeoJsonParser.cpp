@@ -1,10 +1,10 @@
 #include "GeoJsonParser.h"
 
-#include "CesiumGeospatial/CartographicPolygon.h"
-#include "CesiumGeospatial/CompositeCartographicPolygon.h"
-
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/CompositeCartographicPolygon.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
@@ -252,8 +252,8 @@ Result<VectorNode> parseGeoJsonObject(
 
       Result<VectorNode> childResult = parseGeoJsonObject(
           geometryMember->value.GetObject(),
-          [](const std::string& type) {
-            return type != "Feature" && type != "FeatureCollection";
+          [](const std::string& t) {
+            return t != "Feature" && t != "FeatureCollection";
           },
           "GeoJSON Feature 'geometry' member may only contain GeoJSON Geometry "
           "objects");
@@ -313,7 +313,7 @@ Result<VectorNode> parseGeoJsonObject(
 
       Result<VectorNode> childResult = parseGeoJsonObject(
           feature.GetObject(),
-          [](const std::string& type) { return type == "Feature"; },
+          [](const std::string& t) { return t == "Feature"; },
           "GeoJSON FeatureCollection 'features' member may only contain "
           "Feature objects");
       errorList.merge(childResult.errors);
@@ -355,8 +355,8 @@ Result<VectorNode> parseGeoJsonObject(
 
       Result<VectorNode> child = parseGeoJsonObject(
           value.GetObject(),
-          [](const std::string& type) {
-            return type != "Feature" && type != "FeatureCollection";
+          [](const std::string& t) {
+            return t != "Feature" && t != "FeatureCollection";
           },
           "GeoJSON GeometryCollection 'geometries' member may only contain "
           "GeoJSON Geometry objects");

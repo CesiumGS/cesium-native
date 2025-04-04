@@ -13,6 +13,16 @@
 
 namespace CesiumVectorData {
 
+/**
+ * @brief Representations of vector data geometry primitives.
+ *
+ * - Point primitives are represented as single \ref
+ * CesiumGeospatial::Cartographic values.
+ * - Line primitives are represented as an array of \ref
+ * CesiumGeospatial::Cartographic values.
+ * - Polygon primitives are represented as \ref
+ * CesiumGeospatial::CompositeCartographicPolygon values.
+ */
 using VectorPrimitive = std::variant<
     CesiumGeospatial::Cartographic,
     std::vector<CesiumGeospatial::Cartographic>,
@@ -36,23 +46,45 @@ using VectorPrimitive = std::variant<
  */
 class CESIUMVECTORDATA_API VectorNode {
 public:
+  /**
+   * @brief Constructs an empty VectorNode.
+   */
   VectorNode() = default;
 
+  /**
+   * @brief Constructs a VectorNode containing a single primitive.
+   *
+   * @param primitive The \ref VectorPrimitive this node should contain.
+   */
   VectorNode(VectorPrimitive&& primitive) {
     this->primitives.emplace_back(std::move(primitive));
   }
 
+  /**
+   * @brief Constructs a VectorNode with the given values.
+   *
+   * @param primitives_ The \ref VectorPrimitive values this node contains.
+   * @param boundingBox_ The \ref CesiumGeospatial::BoundingRegion containing
+   * this node, or `std::nullopt`.
+   * @param foreignMembers_ Any foreign members attached to this VectorNode. See
+   * `VectorNode::foreignMembers` for more information.
+   */
   VectorNode(
-      std::vector<VectorPrimitive>&& primitives,
-      std::optional<CesiumGeospatial::BoundingRegion>&& boundingBox,
-      CesiumUtility::JsonValue::Object&& foreignMembers =
+      std::vector<VectorPrimitive>&& primitives_,
+      std::optional<CesiumGeospatial::BoundingRegion>&& boundingBox_,
+      CesiumUtility::JsonValue::Object&& foreignMembers_ =
           CesiumUtility::JsonValue::Object())
-      : primitives(std::move(primitives)),
-        boundingBox(std::move(boundingBox)),
-        foreignMembers(std::move(foreignMembers)) {}
+      : primitives(std::move(primitives_)),
+        boundingBox(std::move(boundingBox_)),
+        foreignMembers(std::move(foreignMembers_)) {}
 
-  VectorNode(std::vector<VectorNode>&& children)
-      : children(std::move(children)) {}
+  /**
+   * @brief Constructs a VectorNode with the given children.
+   *
+   * @param children_ The children of the new VectorNode.
+   */
+  VectorNode(std::vector<VectorNode>&& children_)
+      : children(std::move(children_)) {}
 
   /**
    * @brief Nodes that are children of this node.
@@ -108,6 +140,9 @@ public:
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
 
+  /**
+   * @brief Checks that two VectorNode values are equal.
+   */
   bool operator==(const VectorNode& rhs) const;
 };
 } // namespace CesiumVectorData

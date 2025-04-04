@@ -1,5 +1,10 @@
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
+
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace CesiumGeospatial {
 CompositeCartographicPolygon::CompositeCartographicPolygon(
