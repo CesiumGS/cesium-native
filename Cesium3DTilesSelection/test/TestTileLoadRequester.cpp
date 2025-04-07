@@ -83,8 +83,9 @@ public:
     });
   }
 
-  TileChildrenResult
-  createTileChildren(const Tile& /* tile */, const Ellipsoid& /* ellipsoid */) {
+  TileChildrenResult createTileChildren(
+      const Tile& /* tile */,
+      const Ellipsoid& /* ellipsoid */) override {
     return TileChildrenResult{{}, TileLoadResultState::Success};
   }
 };
