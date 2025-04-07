@@ -41,6 +41,11 @@ public:
   bool contains(const CesiumGeospatial::Cartographic& point) const;
 
   /**
+   * @brief Returns the linear rings that make up this composite polygon.
+   */
+  const std::vector<CartographicPolygon>& getLinearRings() const;
+
+  /**
    * @brief Checks if two `CompositeCartographicPolygon` objects are equal.
    */
   bool operator==(const CompositeCartographicPolygon& rhs) const;

@@ -50,4 +50,9 @@ bool CompositeCartographicPolygon::operator==(
 
   return true;
 }
+
+const std::vector<CartographicPolygon>&
+CompositeCartographicPolygon::getLinearRings() const {
+  return this->_polygons;
+}
 } // namespace CesiumGeospatial
