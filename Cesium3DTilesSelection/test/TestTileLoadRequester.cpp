@@ -202,44 +202,33 @@ TEST_CASE("TileLoadRequester") {
       reqVeryHigh.setWorkerThreadQueue(
           std::vector<Tile*>(pointers.begin() + 80, pointers.end()));
 
-      std::vector<TestTileLoadRequester*> requestersOutOfTiles;
+      std::vector<const TestTileLoadRequester*> requestersOutOfTiles;
+
+      auto checkAndAdd = [&requestersOutOfTiles](
+                             const TestTileLoadRequester& requester) mutable {
+        if (!requester.hasMoreTilesToLoadInWorkerThread() &&
+            std::find(
+                requestersOutOfTiles.begin(),
+                requestersOutOfTiles.end(),
+                &requester) == requestersOutOfTiles.end()) {
+          requestersOutOfTiles.emplace_back(&requester);
+        }
+      };
 
       while (requestersOutOfTiles.size() < 4) {
         pTileset->loadTiles();
         externals.asyncSystem.dispatchMainThreadTasks();
 
-        if (!reqNormal.hasMoreTilesToLoadInWorkerThread() &&
-            std::find(
-                requestersOutOfTiles.begin(),
-                requestersOutOfTiles.end(),
-                &reqNormal) == requestersOutOfTiles.end()) {
-          requestersOutOfTiles.emplace_back(&reqNormal);
-        }
-        if (!reqExtra.hasMoreTilesToLoadInWorkerThread() &&
-            std::find(
-                requestersOutOfTiles.begin(),
-                requestersOutOfTiles.end(),
-                &reqExtra) == requestersOutOfTiles.end()) {
-          requestersOutOfTiles.emplace_back(&reqExtra);
-        }
-        if (!reqVeryLow.hasMoreTilesToLoadInWorkerThread() &&
-            std::find(
-                requestersOutOfTiles.begin(),
-                requestersOutOfTiles.end(),
-                &reqVeryLow) == requestersOutOfTiles.end()) {
-          requestersOutOfTiles.emplace_back(&reqVeryLow);
-        }
-        if (!reqVeryHigh.hasMoreTilesToLoadInWorkerThread() &&
-            std::find(
-                requestersOutOfTiles.begin(),
-                requestersOutOfTiles.end(),
-                &reqVeryHigh) == requestersOutOfTiles.end()) {
-          requestersOutOfTiles.emplace_back(&reqVeryHigh);
-        }
+        checkAndAdd(reqNormal);
+        checkAndAdd(reqExtra);
+        checkAndAdd(reqVeryLow);
+        checkAndAdd(reqVeryHigh);
       }
 
+      // The requesters should finish their items in the order expected based on
+      // their weight.
       CHECK(
-          requestersOutOfTiles == std::vector<TestTileLoadRequester*>{
+          requestersOutOfTiles == std::vector<const TestTileLoadRequester*>{
                                       &reqVeryHigh,
                                       &reqExtra,
                                       &reqNormal,
