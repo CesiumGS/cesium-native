@@ -214,7 +214,7 @@ private:
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
   size_t _tilesAlreadyLoading = 0;
-  float _loadProgressPercentage = 100.0f;
+  float _loadProgressPercentage = 0.0f;
   ViewUpdateResult _updateResult;
   TraversalState _traversalState;
   CesiumUtility::CreditReferencer _previousFrameCredits;
