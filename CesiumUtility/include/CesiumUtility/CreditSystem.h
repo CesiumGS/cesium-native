@@ -121,15 +121,15 @@ private:
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
-  struct HtmlAndLastFrameNumber {
+  struct CreditRecord {
     std::string html;
     bool showOnScreen;
     int32_t referenceCount;
-    bool shownLastFrame;
+    bool shownLastSnapshot;
   };
 
-  std::vector<HtmlAndLastFrameNumber> _credits;
-  std::vector<Credit> _creditsToNoLongerShowThisFrame;
+  std::vector<CreditRecord> _credits;
+  std::vector<Credit> _creditsToNoLongerShowThisSnapshot;
   CreditsSnapshot _snapshot;
 
   friend class CreditReferencer;
