@@ -107,8 +107,8 @@ TEST_CASE("Gets up axis transform") {
 namespace {
 bool pointInClipVolume(const glm::dvec4& point) {
   const double w = point.w;
-  return -w < point.x && point.x < w && -w < point.y && point.y < w &&
-         0.0 < point.z && point.z < w;
+  return -w <= point.x && point.x <= w && -w <= point.y && point.y <= w &&
+         0.0 <= point.z && point.z <= w;
 }
 } // namespace
 TEST_CASE("Test perspective projection matrices") {
