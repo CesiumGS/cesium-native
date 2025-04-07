@@ -57,6 +57,11 @@ public:
    * can and should return `nullptr`. However, when that method returns true,
    * this method _must_ return a valid `Tile` pointer.
    *
+   * The returned tile _must_ have a reference count greater than zero.
+   * Otherwise, the Tile would be immediately eligible for unloading, so it
+   * doesn't make sense to load it. In debug builds, this is enforced with an
+   * assertion. In release builds, unreferenced tiles are silently ignored.
+   *
    * @return The next tile to load in a worker thread.
    */
   virtual Tile* getNextTileToLoadInWorkerThread() = 0;
@@ -79,6 +84,11 @@ public:
    * When {@link hasMoreTilesToLoadInMainThread} returns false, this method
    * can and should return `nullptr`. However, when that method returns true,
    * this method _must_ return a valid `Tile` pointer.
+   *
+   * The returned tile _must_ have a reference count greater than zero.
+   * Otherwise, the Tile would be immediately eligible for unloading, so it
+   * doesn't make sense to load it. In debug builds, this is enforced with an
+   * assertion. In release builds, unreferenced tiles are silently ignored.
    *
    * @return The next tile to load in the main thread.
    */

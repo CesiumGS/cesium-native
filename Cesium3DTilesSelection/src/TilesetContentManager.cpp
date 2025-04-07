@@ -1409,12 +1409,14 @@ void TilesetContentManager::finishLoading(
   }
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
-  void* pMainThreadRenderResources =
-      this->_externals.pPrepareRendererResources->prepareInMainThread(
-          tile,
-          pWorkerRenderResources);
+  if (this->_externals.pPrepareRendererResources) {
+    void* pMainThreadRenderResources =
+        this->_externals.pPrepareRendererResources->prepareInMainThread(
+            tile,
+            pWorkerRenderResources);
+    pRenderContent->setRenderResources(pMainThreadRenderResources);
+  }
 
-  pRenderContent->setRenderResources(pMainThreadRenderResources);
   tile.setState(TileLoadState::Done);
 
   // This allows the raster tile to be updated and children to be created, if
@@ -1638,6 +1640,12 @@ void TilesetContentManager::processWorkerThreadLoadRequests(
     if (pToLoad == nullptr)
       break;
 
+    // It doesn't make sense to load tiles that are not referenced, because such
+    // tiles are immediately eligible for unloading.
+    CESIUM_ASSERT(pToLoad->_referenceCount > 0);
+    if (pToLoad->_referenceCount == 0)
+      continue;
+
     this->loadTileContent(*pToLoad, options);
   }
 }
@@ -1666,6 +1674,12 @@ void TilesetContentManager::processMainThreadLoadRequests(
     Tile* pToLoad = wrr.getNextTileToLoad();
     if (pToLoad == nullptr)
       break;
+
+    // It doesn't make sense to load tiles that are not referenced, because such
+    // tiles are immediately eligible for unloading.
+    CESIUM_ASSERT(pToLoad->_referenceCount > 0);
+    if (pToLoad->_referenceCount == 0)
+      continue;
 
     // We double-check that the tile is still in the ContentLoaded state here,
     // in case something (such as a child that needs to upsample from this
@@ -1895,12 +1909,14 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
   CESIUM_ASSERT(
       pRenderContent && "Tile must have render content to be unloaded");
 
-  void* pMainThreadRenderResources = pRenderContent->getRenderResources();
-  this->_externals.pPrepareRendererResources->free(
-      tile,
-      nullptr,
-      pMainThreadRenderResources);
-  pRenderContent->setRenderResources(nullptr);
+  if (this->_externals.pPrepareRendererResources) {
+    void* pMainThreadRenderResources = pRenderContent->getRenderResources();
+    this->_externals.pPrepareRendererResources->free(
+        tile,
+        nullptr,
+        pMainThreadRenderResources);
+    pRenderContent->setRenderResources(nullptr);
+  }
 }
 
 void TilesetContentManager::notifyTileStartLoading(
