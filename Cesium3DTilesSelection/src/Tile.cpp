@@ -92,10 +92,14 @@ Tile::Tile(
       _geometricError(0.0),
       _refine(TileRefine::Replace),
       _transform(1.0),
+      _unusedTilesLinks(),
       _content{std::forward<TileContentArgs>(args)...},
       _pLoader{pLoader},
       _loadState{loadState},
-      _mightHaveLatentChildren{true} {}
+      _mightHaveLatentChildren{true},
+      _rasterTiles(),
+      _doNotUnloadSubtreeCount(0),
+      _referenceCount(0) {}
 
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
@@ -107,6 +111,7 @@ Tile::Tile(Tile&& rhs) noexcept
       _geometricError(rhs._geometricError),
       _refine(rhs._refine),
       _transform(rhs._transform),
+      _unusedTilesLinks(),
       _content(std::move(rhs._content)),
       _pLoader{rhs._pLoader},
       _loadState{rhs._loadState},
@@ -114,7 +119,8 @@ Tile::Tile(Tile&& rhs) noexcept
       _rasterTiles(std::move(rhs._rasterTiles)),
       // See the move assignment operator for an explanation of why we copy
       // `_doNotUnloadSubtreeCount` here.
-      _doNotUnloadSubtreeCount(rhs._doNotUnloadSubtreeCount) {
+      _doNotUnloadSubtreeCount(rhs._doNotUnloadSubtreeCount),
+      _referenceCount(0) {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {

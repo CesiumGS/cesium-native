@@ -629,7 +629,7 @@ private:
   // external tileset (if any) from being unloaded from the tree. A non-zero
   // count here prevents this Tile instance from being destroyed, but it does
   // not prevent its content from being unloaded.
-  int32_t _doNotUnloadSubtreeCount = 0;
+  int32_t _doNotUnloadSubtreeCount;
 
   // The number of TilesetViewGroups and potentially others that currently
   // reference this tile. While a tile is referenced, its content may not be
@@ -637,7 +637,7 @@ private:
   // Tile instances are not automatically destroyed when their reference count
   // goes to zero, but they become eligible for destruction (e.g., when the
   // external tileset that owns them is unloaded).
-  mutable int32_t _referenceCount = 0;
+  mutable int32_t _referenceCount;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
