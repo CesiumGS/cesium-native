@@ -82,7 +82,7 @@ public:
 
   /**
    * @brief The frame number. This is incremented every time \ref
-   * Tileset::updateView is called.
+   * Tileset::updateViewGroup is called.
    */
   int32_t frameNumber = 0;
 };

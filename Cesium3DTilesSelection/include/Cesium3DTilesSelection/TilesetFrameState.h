@@ -29,16 +29,6 @@ public:
    * @brief The computed fog density for each frustum.
    */
   std::vector<double> fogDensities;
-
-  /**
-   * @brief The previous frame number.
-   */
-  int32_t lastFrameNumber;
-
-  /**
-   * @brief The current frame number.
-   */
-  int32_t currentFrameNumber;
 };
 
 } // namespace Cesium3DTilesSelection

@@ -69,7 +69,6 @@ Tileset::Tileset(
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
       _options(options),
-      _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
@@ -89,7 +88,6 @@ Tileset::Tileset(
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
       _options(options),
-      _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
@@ -107,7 +105,6 @@ Tileset::Tileset(
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
       _options(options),
-      _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{new TilesetContentManager(
@@ -126,7 +123,6 @@ Tileset::Tileset(
     : _externals(externals),
       _asyncSystem(externals.asyncSystem),
       _options(options),
-      _previousFrameNumber(0),
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{new TilesetContentManager(
@@ -395,9 +391,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   this->_asyncSystem.dispatchMainThreadTasks();
 
-  const int32_t previousFrameNumber = this->_previousFrameNumber;
-  const int32_t currentFrameNumber = previousFrameNumber + 1;
-
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
 
   Tile* pRootTile = this->getRootTile();
@@ -420,12 +413,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
         return computeFogDensity(fogDensityTable, frustum);
       });
 
-  TilesetFrameState frameState{
-      viewGroup,
-      frustums,
-      std::move(fogDensities),
-      previousFrameNumber,
-      currentFrameNumber};
+  TilesetFrameState frameState{viewGroup, frustums, std::move(fogDensities)};
 
   if (!frustums.empty()) {
     viewGroup.startNewFrame(*this, frameState);
@@ -495,8 +483,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
     }
   }
 #endif
-
-  this->_previousFrameNumber = currentFrameNumber;
 
   return result;
 }
@@ -1253,18 +1239,14 @@ bool Tileset::_kickDescendantsAndRenderTile(
   return queuedForLoad;
 }
 
-TileOcclusionState Tileset::_checkOcclusion(
-    const Tile& tile,
-    const TilesetFrameState& frameState) {
+TileOcclusionState Tileset::_checkOcclusion(const Tile& tile) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       this->_externals.pTileOcclusionProxyPool;
   if (pOcclusionPool) {
     // First check if this tile's bounding volume has occlusion info and is
     // known to be occluded.
     const TileOcclusionRendererProxy* pOcclusion =
-        pOcclusionPool->fetchOcclusionProxyForTile(
-            tile,
-            frameState.currentFrameNumber);
+        pOcclusionPool->fetchOcclusionProxyForTile(tile);
     if (!pOcclusion) {
       // This indicates we ran out of occlusion proxies. We don't want to wait
       // on occlusion info here since it might not ever arrive, so treat this
@@ -1304,9 +1286,7 @@ TileOcclusionState Tileset::_checkOcclusion(
     this->_childOcclusionProxies.reserve(tile.getChildren().size());
     for (const Tile& child : tile.getChildren()) {
       const TileOcclusionRendererProxy* pChildProxy =
-          pOcclusionPool->fetchOcclusionProxyForTile(
-              child,
-              frameState.currentFrameNumber);
+          pOcclusionPool->fetchOcclusionProxyForTile(child);
 
       if (!pChildProxy) {
         // We ran out of occlusion proxies, treat this as if it is _known_ to
@@ -1423,7 +1403,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
                               (!tileLastRefined || !childLastRefined);
 
   if (shouldCheckOcclusion) {
-    TileOcclusionState occlusion = this->_checkOcclusion(tile, frameState);
+    TileOcclusionState occlusion = this->_checkOcclusion(tile);
     if (occlusion == TileOcclusionState::Occluded) {
       ++result.tilesOccluded;
       action = VisitTileAction::Render;

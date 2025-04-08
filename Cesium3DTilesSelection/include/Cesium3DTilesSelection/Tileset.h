@@ -499,8 +499,7 @@ private:
       const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
       bool queuedForLoad,
       double tilePriority);
-  TileOcclusionState
-  _checkOcclusion(const Tile& tile, const TilesetFrameState& frameState);
+  TileOcclusionState _checkOcclusion(const Tile& tile);
 
   TraversalDetails _visitTile(
       const TilesetFrameState& frameState,
@@ -580,8 +579,6 @@ private:
   CesiumAsync::AsyncSystem _asyncSystem;
 
   TilesetOptions _options;
-
-  int32_t _previousFrameNumber;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.

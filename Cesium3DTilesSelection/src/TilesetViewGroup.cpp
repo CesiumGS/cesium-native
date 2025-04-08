@@ -106,13 +106,13 @@ size_t TilesetViewGroup::getMainThreadLoadQueueLength() const {
 
 void TilesetViewGroup::startNewFrame(
     const Tileset& tileset,
-    const TilesetFrameState& frameState) {
+    const TilesetFrameState& /*frameState*/) {
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
   this->_tilesAlreadyLoading = 0;
   this->_traversalState.beginTraversal();
 
-  this->_updateResult.frameNumber = frameState.currentFrameNumber;
+  ++this->_updateResult.frameNumber;
   this->_updateResult.tilesVisited = 0;
   this->_updateResult.culledTilesVisited = 0;
   this->_updateResult.tilesCulled = 0;
