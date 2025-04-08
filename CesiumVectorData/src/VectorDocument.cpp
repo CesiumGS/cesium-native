@@ -3,6 +3,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
@@ -12,11 +13,14 @@
 #include <fmt/format.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
-#include <rapidjson/rapidjson.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <span>
+#include <string>
 #include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
