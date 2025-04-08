@@ -91,7 +91,7 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(_externals, _options, url),
+          new TilesetContentManager(this->_externals, this->_options, url),
       },
       _heightRequests(),
       _defaultViewGroup() {}
@@ -108,8 +108,8 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{new TilesetContentManager(
-          _externals,
-          _options,
+          this->_externals,
+          this->_options,
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)},
@@ -254,8 +254,8 @@ void Tileset::_updateLodTransitions(
     ViewUpdateResult& result) const noexcept {
   if (_options.enableLodTransitionPeriod) {
     // We always fade tiles from 0.0 --> 1.0. Whether the tile is fading in or
-    // out is determined by whether the tile is in the
-    // tilesToRenderThisFrame or tilesFadingOut list.
+    // out is determined by whether the tile is in the tilesToRenderThisFrame
+    // or tilesFadingOut list.
     float deltaTransitionPercentage =
         deltaTime / this->_options.lodTransitionLength;
 
@@ -307,6 +307,8 @@ void Tileset::_updateLodTransitions(
 
       // Remove a tile from fade-out list if it is back on the render list.
       if (result.tilesFadingOut.erase(pTile) > 0) {
+        if (pRenderContent)
+          pRenderContent->setLodTransitionFadePercentage(0.0f);
         pTile->decrementDoNotUnloadSubtreeCount(
             "Tileset::_updateLodTransitions in render list");
       }
@@ -379,7 +381,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
     TilesetViewGroup& viewGroup,
     const std::vector<ViewState>& frustums,
     float deltaTime) {
-  CESIUM_TRACE("Tileset::updateView");
+  CESIUM_TRACE("Tileset::updateViewGroup");
 
   this->registerLoadRequester(viewGroup);
 
@@ -431,63 +433,12 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   this->_updateLodTransitions(frameState, deltaTime, result);
 
-#if false
-  // aggregate all the credits needed from this tileset for the current frame
-  const std::shared_ptr<CreditSystem>& pCreditSystem =
-      this->_externals.pCreditSystem;
-  if (pCreditSystem && !result.tilesToRenderThisFrame.empty()) {
-    // per-tileset user-specified credit
-    const Credit* pUserCredit = this->_pTilesetContentManager->getUserCredit();
-    if (pUserCredit) {
-      pCreditSystem->addCreditToFrame(*pUserCredit);
-    }
-
-    // tileset credit
-    for (const Credit& credit : this->getTilesetCredits()) {
-      pCreditSystem->addCreditToFrame(credit);
-    }
-
-    // per-raster overlay credit
-    const RasterOverlayCollection& overlayCollection =
-        this->_pTilesetContentManager->getRasterOverlayCollection();
-    for (auto& pTileProvider : overlayCollection.getTileProviders()) {
-      const std::optional<Credit>& overlayCredit = pTileProvider->getCredit();
-      if (overlayCredit) {
-        pCreditSystem->addCreditToFrame(overlayCredit.value());
-      }
-    }
-
-    // per-tile credits
-    for (Tile* pTile : result.tilesToRenderThisFrame) {
-      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
-          pTile->getMappedRasterTiles();
-      // raster overlay tile credits
-      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
-        const RasterOverlayTile* pRasterOverlayTile =
-            mappedRasterTile.getReadyTile();
-        if (pRasterOverlayTile != nullptr) {
-          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
-            pCreditSystem->addCreditToFrame(credit);
-          }
-        }
-      }
-
-      // content credits like gltf copyrights
-      const TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
-      if (pRenderContent) {
-        for (const Credit& credit : pRenderContent->getCredits()) {
-          pCreditSystem->addCreditToFrame(credit);
-        }
-      }
-    }
-  }
-#endif
-
   return result;
 }
 
 void Tileset::loadTiles() {
+  CESIUM_TRACE("Tileset::loadTiles");
+
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
