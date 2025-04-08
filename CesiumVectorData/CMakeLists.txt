@@ -46,4 +46,5 @@ target_link_libraries(CesiumVectorData
     PUBLIC
         CesiumUtility
         CesiumGeospatial
+        CesiumAsync
 )
