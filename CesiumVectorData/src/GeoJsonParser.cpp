@@ -536,8 +536,9 @@ Result<VectorNode> parseGeoJson(const std::span<const std::byte>& bytes) {
   d.Parse(reinterpret_cast<const char*>(bytes.data()), bytes.size());
   if (d.HasParseError()) {
     return Result<VectorNode>(ErrorList::error(fmt::format(
-        "Failed to parse GeoJSON: {}",
-        rapidjson::GetParseError_En(d.GetParseError()))));
+        "Failed to parse GeoJSON: {} at offset {}",
+        rapidjson::GetParseError_En(d.GetParseError()),
+        d.GetErrorOffset())));
   } else if (!d.IsObject()) {
     return Result<VectorNode>(
         ErrorList::error("GeoJSON must contain a JSON object."));
