@@ -34,13 +34,6 @@ namespace Cesium3DTilesSelection {
 
 namespace {
 
-template <class Function>
-void forEachTile(const LoadedTileEnumerator& list, Function callback) {
-  for (const Tile& tile : list) {
-    callback(const_cast<Tile&>(tile));
-  }
-}
-
 // We use these to avoid a heap allocation just to return empty vectors.
 const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>
     emptyOverlays{};
@@ -107,7 +100,7 @@ void RasterOverlayCollection::add(
           nullptr);
 
   // Add a placeholder for this overlay to existing geometry tiles.
-  forEachTile(this->_loadedTiles, [&](Tile& tile) {
+  for (Tile& tile : this->_loadedTiles) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     // - When a tile is transitioned from Unloaded to Loading, raster overlay
     // tiles will be mapped to the tile automatically by TilesetContentManager,
@@ -123,7 +116,7 @@ void RasterOverlayCollection::add(
           pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
           -1);
     }
-  });
+  }
 
   // This continuation, by capturing pList, keeps the OverlayList from being
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
@@ -190,21 +183,20 @@ void RasterOverlayCollection::remove(
 
   auto pPrepareRenderResources =
       this->_externals.pPrepareRendererResources.get();
-  forEachTile(
-      this->_loadedTiles,
-      [&removeCondition, pPrepareRenderResources](Tile& tile) {
-        std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-        for (RasterMappedTo3DTile& rasterTile : mapped) {
-          if (removeCondition(rasterTile)) {
-            rasterTile.detachFromTile(*pPrepareRenderResources, tile);
-          }
-        }
+  for (Tile& tile : this->_loadedTiles) {
+    std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-        auto firstToRemove =
-            std::remove_if(mapped.begin(), mapped.end(), removeCondition);
-        mapped.erase(firstToRemove, mapped.end());
-      });
+    for (RasterMappedTo3DTile& rasterTile : mapped) {
+      if (removeCondition(rasterTile)) {
+        rasterTile.detachFromTile(*pPrepareRenderResources, tile);
+      }
+    }
+
+    auto firstToRemove =
+        std::remove_if(mapped.begin(), mapped.end(), removeCondition);
+    mapped.erase(firstToRemove, mapped.end());
+  }
 
   OverlayList& list = *this->_pOverlays;
 
