@@ -58,7 +58,7 @@ public:
     // If this assertion fails, it indicates a traversal is already in progress.
     CESIUM_ASSERT(this->_parentIndices.empty());
 
-    std::swap(this->_previousTraversal, this->_currentTraversal);
+    this->_previousTraversal.swap(this->_currentTraversal);
     this->_currentTraversal.clear();
     this->_previousTraversalNextNodeIndex = 0;
   }
@@ -97,7 +97,7 @@ public:
   }
 
   /**
-   * @brief Gets the current node in the traversal.beginNode
+   * @brief Gets the current node in the traversal.
    *
    * When {@link beginNode} is called, the node passed to it becomes the
    * current one. When {@link finishNode} is called, the parent node of the
@@ -186,7 +186,7 @@ public:
 
     // Now that this node is done, skip its subtree, if any, in the previous
     // traversal. If this finished node doesn't exist in the previous traversal,
-    // look for the next previous node at the current position.
+    // look for the next node in the previous traversal at the current position.
     const TraversalData* pPreviousData = this->previousData();
     if (pPreviousData) {
       CESIUM_ASSERT(pPreviousData->nextSiblingIndex >= 0);
