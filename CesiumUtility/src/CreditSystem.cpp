@@ -24,9 +24,9 @@ Credit CreditSystem::createCredit(std::string&& html, bool showOnScreen) {
     }
   }
 
-  _credits.push_back({std::move(html), showOnScreen, 0, false});
+  this->_credits.push_back({std::move(html), showOnScreen, 0, false});
 
-  return Credit(_credits.size() - 1);
+  return Credit(this->_credits.size() - 1);
 }
 
 bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
