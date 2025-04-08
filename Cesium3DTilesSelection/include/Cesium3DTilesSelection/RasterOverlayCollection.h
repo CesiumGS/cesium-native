@@ -34,9 +34,10 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param loadedTiles The list of loaded tiles. The collection does not own
-   * this list, so the list needs to be kept alive as long as the collection's
-   * lifetime.
+   * @param loadedTiles An enumerator for the loaded tiles. The raster overlay
+   * collection will copy this enumerator, and the copy must remain valid for
+   * the lifetime of the overlay collection or until \ref
+   * setLoadedTileEnumerator is called with a new enumerator.
    * @param externals A collection of loading system to load a raster overlay
    * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
@@ -49,6 +50,10 @@ public:
   /**
    * @brief Provides a new {@link LoadedTileEnumerator} to use to update
    * loaded tiles when a raster overlay is added or remove.
+   *
+   * The raster overlay collection will copy this enumerator, and the copy must
+   * remain valid for the lifetime of the overlay collection or until \ref
+   * setLoadedTileEnumerator is called with a new enumerator.
    *
    * @param loadedTiles The new loaded tile enumerator.
    */

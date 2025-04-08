@@ -8,7 +8,7 @@ namespace Cesium3DTilesSelection {
 
 /**
  * @brief A description of the selection state of a {@link Tile} during the
- * rendering process
+ * {@link Tileset::updateViewGroup} process.
  *
  * Instances of this class are stored in a {@link TilesetViewGroup} for each
  * visited {@link Tile}, and are used to track the state of the tile during the

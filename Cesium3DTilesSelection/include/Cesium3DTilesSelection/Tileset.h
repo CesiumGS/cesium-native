@@ -383,7 +383,7 @@ public:
    * This method should typically be called once per "render frame", but it may
    * be called at different rates for different view groups.
    *
-   * Users must also periodically called {@link loadTiles}, which will start or
+   * Users must also periodically call {@link loadTiles}, which will start or
    * continue the asynchronous process of loading tiles that are needed across
    * all view groups.
    *
@@ -391,7 +391,8 @@ public:
    * is called, simply create a new `TilesetViewGroup` to pass as this
    * parameter. For successive calls to `updateViewGroup`, pass this same
    * instance.
-   * @param frustums The {@link ViewState} instances that the view should be updated for.
+   * @param frustums The {@link ViewState} instances that are observing the
+   * tileset in this view group.
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
    * @returns The set of tiles to render in the updated view. This value is only

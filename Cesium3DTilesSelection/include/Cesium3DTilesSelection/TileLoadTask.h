@@ -6,7 +6,8 @@ class Tile;
 
 /**
  * @brief A broad category of priority for loading a
- * {@link Cesium3DTilesSelection::Tile}.
+ * {@link Cesium3DTilesSelection::Tile} for a
+ * {@link Cesium3DTilesSelection::TilesetViewGroup}.
  */
 enum class TileLoadPriorityGroup {
   /**

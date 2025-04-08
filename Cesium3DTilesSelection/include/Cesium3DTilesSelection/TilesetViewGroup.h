@@ -22,6 +22,10 @@ class TilesetFrameState;
 /**
  * @brief A group of views that select tiles from a particular {@link Tileset}
  * together.
+ *
+ * Create an instance of this class and pass it repeatedly to
+ * {@link Tileset::updateViewGroup} to select tiles suitable for rendering the
+ * tileset from a given view or set of views.
  */
 class CESIUM3DTILESSELECTION_API TilesetViewGroup final
     : public TileLoadRequester {
@@ -62,7 +66,7 @@ public:
   virtual ~TilesetViewGroup() noexcept;
 
   /**
-   * @brief Gets the result from that last time this view group was updated by
+   * @brief Gets the result from the last time this view group was updated by
    * calling {@link Tileset::updateViewGroup}.
    */
   const ViewUpdateResult& getViewUpdateResult() const;
@@ -165,10 +169,12 @@ public:
    * previous one.
    *
    * This method also updates the load progress percentage returned by
-   * {@link getPreviousLoadProgressPercentage}.
+   * {@link getPreviousLoadProgressPercentage} and makes sure credits used by
+   * this view group have been referenced on the
+   * {@link CesiumUtility::CreditSystem}.
    *
-   * @param tileset The tileset that is starting the new frame.
-   * @param frameState The state of the new frame.
+   * @param tileset The tileset that is finishing the current frame.
+   * @param frameState The state of the frame.
    */
   void finishFrame(const Tileset& tileset, const TilesetFrameState& frameState);
 

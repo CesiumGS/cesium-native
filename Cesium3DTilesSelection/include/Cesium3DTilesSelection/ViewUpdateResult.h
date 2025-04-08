@@ -10,11 +10,11 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 /**
- * @brief Reports the results of {@link Tileset::updateView}.
+ * @brief Reports the results of {@link Tileset::updateViewGroup}.
  *
- * Users of a {@link Tileset} will call {@link Tileset::updateView} and receive
- * this structure so that they can update the state of their rendering system
- * accordingly. The tileset will internally keep track the state of the
+ * Users of a {@link Tileset} will call {@link Tileset::updateViewGroup} and
+ * receive this structure so that they can update the state of their rendering
+ * system accordingly. The tileset will internally keep track the state of the
  * tiles throughout the selection process, and use this structure to provide
  * information about the state changes of tiles to clients.
  */
