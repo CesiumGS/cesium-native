@@ -37,7 +37,6 @@ const ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() const {
   return this->_updateResult;
 }
 
-/** @copydoc getViewUpdateResult */
 ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() {
   return this->_updateResult;
 }
@@ -138,18 +137,7 @@ void TilesetViewGroup::finishFrame(
   std::sort(
       this->_workerThreadLoadQueue.begin(),
       this->_workerThreadLoadQueue.end());
-
-  // TODO: reverse the sort order instead?
-  std::reverse(
-      this->_workerThreadLoadQueue.begin(),
-      this->_workerThreadLoadQueue.end());
-
   std::sort(
-      this->_mainThreadLoadQueue.begin(),
-      this->_mainThreadLoadQueue.end());
-
-  // TODO: reverse the sort order instead?
-  std::reverse(
       this->_mainThreadLoadQueue.begin(),
       this->_mainThreadLoadQueue.end());
 

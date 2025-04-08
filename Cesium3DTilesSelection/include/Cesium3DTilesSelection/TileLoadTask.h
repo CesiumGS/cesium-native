@@ -57,18 +57,21 @@ struct TileLoadTask {
   double priority;
 
   /**
-   * @brief Determines whether this task has a high priority (lower numerical
+   * @brief Determines whether this task has a lower priority (higher numerical
    * value) than another one.
    *
+   * If used with `std::sort`, this operator will put the lowest priority tasks
+   * at the front of the container, and the highest priority tasks at the back.
+   *
    * @param rhs The other task to compare.
-   * @returns true if this task has the higher priority, or false if `rhs` has
-   * the higher priority.
+   * @returns true if this task has the lower priority, or false if `rhs` has
+   * the lower priority.
    */
   bool operator<(const TileLoadTask& rhs) const noexcept {
     if (this->group == rhs.group)
-      return this->priority < rhs.priority;
+      return this->priority > rhs.priority;
     else
-      return this->group > rhs.group;
+      return this->group < rhs.group;
   }
 };
 
