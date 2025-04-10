@@ -20,6 +20,7 @@
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
+#include <limits>
 #include <optional>
 #include <variant>
 
@@ -88,12 +89,12 @@ ViewState::ViewState(
     const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : ViewState(
-        createViewMatrix(position, direction, up),
-        createPerspectiveMatrix(
+        Transforms::createViewMatrix(position, direction, up),
+        Transforms::createPerspectiveMatrix(
             horizontalFieldOfView,
             verticalFieldOfView,
             100.0,
-            100000.0),
+            std::numeric_limits<double>::infinity()),
         viewportSize,
         positionCartographic,
         ellipsoid)
@@ -113,6 +114,29 @@ ViewState::ViewState(
       _cullingVolume(createCullingVolume(projectionMatrix * viewMatrix)),
       _viewMatrix(viewMatrix),
       _projectionMatrix(projectionMatrix) {}
+
+  ViewState::ViewState(
+      const glm::dvec3& position,
+      const glm::dvec3& direction,
+      const glm::dvec3& up,
+      const glm::dvec2& viewportSize,
+      double left,
+      double right,
+      double bottom,
+      double top,
+      const CesiumGeospatial::Ellipsoid& ellipsoid)
+      : ViewState(
+          Transforms::createViewMatrix(position, direction, up),
+          Transforms::createOrthographicMatrix(
+              left,
+              right,
+              bottom,
+              top,
+              100.0,
+              std::numeric_limits<double>::infinity()),
+          viewportSize,
+          ellipsoid.cartesianToCartographic(position),
+          ellipsoid) {}
 
 namespace {
 template <class T>

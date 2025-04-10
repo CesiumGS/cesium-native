@@ -57,8 +57,8 @@ public:
    * including skewed perspective and orthographic projections.
    *
    * @param viewMatrix The view's view matrix i.e., the inverse of its pose
-   * @param projectionMatrix The view's Vulkan style reversed Z projection
-   * matrix
+   * @param projectionMatrix see e.g.
+   * {@link CesiumGeometry::Transforms::createPerspectiveMatrix}
    * @param viewportSize The size of the viewport, in pixels.
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position}
@@ -69,6 +69,17 @@ public:
       const glm::dmat4& viewMatrix,
       const glm::dmat4& projectionMatrix,
       const glm::dvec2& viewportSize,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  ViewState(
+      const glm::dvec3& position,
+      const glm::dvec3& direction,
+      const glm::dvec3& up,
+      const glm::dvec2& viewportSize,
+      double left,
+      double right,
+      double bottom,
+      double top,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -89,9 +100,9 @@ public:
    */
   glm::dvec3 getUp() const noexcept {
     return {
-      this->viewMatrix[0][1],
-      this->viewMatrix[1][1],
-      this->viewMatrix[2][1]
+      this->_viewMatrix[0][1],
+      this->_viewMatrix[1][1],
+      this->_viewMatrix[2][1]
     };
   }
 
@@ -215,8 +226,6 @@ private:
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
   const glm::dvec2 _viewportSize;
-  const double _horizontalFieldOfView;
-  const double _verticalFieldOfView;
   const CesiumGeospatial::Ellipsoid _ellipsoid;
 
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
