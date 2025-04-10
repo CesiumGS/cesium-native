@@ -5,7 +5,7 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 /**
- * @brief A broad category of priority for loading a
+ * @brief Enumerates broad categories of priority for loading a
  * {@link Cesium3DTilesSelection::Tile} for a
  * {@link Cesium3DTilesSelection::TilesetViewGroup}.
  */

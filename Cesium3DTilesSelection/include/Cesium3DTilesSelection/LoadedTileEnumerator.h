@@ -63,17 +63,17 @@ public:
     const Tile* operator->() const noexcept;
 
     /**
-     * @brief Advances the iterator to the next item.
+     * @brief Advances the iterator to the next item (pre-incrementing).
      */
     const_iterator& operator++() noexcept;
     /**
-     * @brief Advances the iterator to the next item.
+     * @brief Advances the iterator to the next item (post-incrementing).
      */
     const_iterator operator++(int) noexcept;
 
     /** @brief Checks if two iterators are at the same item. */
     bool operator==(const const_iterator& rhs) const noexcept;
-    /** @brief Checks if two iterators are at the same item. */
+    /** @brief Checks if two iterators are not at the same item. */
     bool operator!=(const const_iterator& rhs) const noexcept;
 
   private:
@@ -156,17 +156,17 @@ public:
     Tile* operator->() const noexcept;
 
     /**
-     * @brief Advances the iterator to the next item.
+     * @brief Advances the iterator to the next item (pre-incrementing).
      */
     iterator& operator++() noexcept;
     /**
-     * @brief Advances the iterator to the next item.
+     * @brief Advances the iterator to the next item (post-incrementing).
      */
     iterator operator++(int) noexcept;
 
     /** @brief Checks if two iterators are at the same item. */
     bool operator==(const iterator& rhs) const noexcept;
-    /** @brief Checks if two iterators are at the same item. */
+    /** @brief Checks if two iterators are not at the same item. */
     bool operator!=(const iterator& rhs) const noexcept;
 
   private:

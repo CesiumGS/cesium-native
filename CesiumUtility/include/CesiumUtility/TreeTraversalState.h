@@ -22,7 +22,7 @@ namespace CesiumUtility {
  * node instance is created at the same memory address as a previous one, it
  * will be considered the same node.
  * 2. The entire tree is not necessarily traversed each time. However, if any
- * children of a tile are traversed, then _all_ children of the tile must be
+ * children of a node are traversed, then _all_ children of the node must be
  * traversed.
  * 3. The order of traversal of children must be the same every time.
  * 4. A node that previously had no children may gain them. A node that

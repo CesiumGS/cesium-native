@@ -12,7 +12,7 @@ namespace Cesium3DTilesSelection {
  *
  * Instances of this class are stored in a {@link TilesetViewGroup} for each
  * visited {@link Tile}, and are used to track the state of the tile during the
- * proces of selecting tiles for rendering. The {@link Tileset} updates this
+ * process of selecting tiles for rendering. The {@link Tileset} updates this
  * state while traversing the tile hierarchy, tracking whether a tile was
  * rendered, culled, or refined in the last frame.
  */

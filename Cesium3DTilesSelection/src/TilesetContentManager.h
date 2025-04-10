@@ -156,6 +156,17 @@ public:
   void markTileNowUsed(const Tile& tile);
   void markTileNowUnused(const Tile& tile);
 
+  /**
+   * @brief Unloads unused tiles until the total memory usage by all loaded
+   * tiles is less than `maximumCachedBytes`.
+   *
+   * Tiles that are in use will not be unloaded even if the total exceeds the
+   * specified `maximumCachedBytes`.
+   *
+   * @param maximumCachedBytes The maximum bytes to keep cached.
+   * @param timeBudgetMilliseconds The maximum time, in milliseconds, to spend
+   * unloading tiles. If 0.0, there is no limit.
+   */
   void
   unloadCachedBytes(int64_t maximumCachedBytes, double timeBudgetMilliseconds);
   void clearChildrenRecursively(Tile* pTile) noexcept;

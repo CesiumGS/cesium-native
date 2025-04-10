@@ -48,8 +48,8 @@ public:
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
-   * @brief Provides a new {@link LoadedTileEnumerator} to use to update
-   * loaded tiles when a raster overlay is added or remove.
+   * @brief Provides a new \ref LoadedTileEnumerator to use to update
+   * loaded tiles when a raster overlay is added or removed.
    *
    * The raster overlay collection will copy this enumerator, and the copy must
    * remain valid for the lifetime of the overlay collection or until \ref

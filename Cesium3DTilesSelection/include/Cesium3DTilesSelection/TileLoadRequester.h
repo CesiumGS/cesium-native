@@ -115,8 +115,8 @@ protected:
   /**
    * @brief Constructs a new instance as a copy of an existing one.
    *
-   * The copy will not be registed with any
-   * {@link Cesium3DTilesSelection::Tileset}.
+   * The copy will not be registered with any
+   * {@link Cesium3DTilesSelection::Tileset}, even if the existing instance was.
    *
    * @param rhs The existing instance to copy.
    */
@@ -127,7 +127,7 @@ protected:
    *
    * The newly-constructed instance will be registered with the same
    * {@link Cesium3DTilesSelection::Tileset} as the `rhs`. After the
-   * constructor returns, the `rhs` will not longer be registered.
+   * constructor returns, the `rhs` will no longer be registered.
    *
    * @param rhs The existing instance to move into this one.
    */
