@@ -31,6 +31,7 @@
   - `updateViewGroup` - Updates the set of tiles to render for a `TilesetViewGroup`, as well as the set of tiles that the view group would like to load.
   - `loadTiles` - Loads tiles that have been identified as required across all `TilesetViewGroup` and `TilesetHeightRequest` instances, up to limits specified in `TilesetOptions`.
 - `TilesetContentLoader` instances now know the `TilesetContentManager` that owns them. This is managed with new `getOwner` and `setOwner` methods.
+- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
 
 ##### Fixes :wrench:
 
