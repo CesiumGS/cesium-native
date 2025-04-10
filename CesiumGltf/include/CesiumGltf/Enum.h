@@ -26,9 +26,7 @@ struct CESIUMGLTF_API Enum final : public EnumSpec {
         this->values.begin(),
         this->values.end(),
         [value = static_cast<int64_t>(enumValue)](
-            const CesiumGltf::EnumValue& enumValue) {
-          return enumValue.value == value;
-        });
+            const CesiumGltf::EnumValue& e) { return e.value == value; });
 
     if (found == this->values.end()) {
       return std::nullopt;
