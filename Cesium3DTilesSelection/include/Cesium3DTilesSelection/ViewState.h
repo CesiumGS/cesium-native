@@ -71,6 +71,23 @@ public:
       const glm::dvec2& viewportSize,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+  /**
+   * @brief Creates a new instance of a view state with an orthographic
+   * projection.
+   *
+   * @param position The position of the eye point of the camera.
+   * @param direction The view direction vector of the camera.
+   * @param up The up vector of the camera.
+   * @param viewportSize The size of the viewport, in pixels.
+   * @param left left distance of near plane edge from center
+   * @param right right distance of near plane edge
+   * @param bottom bottom distance of near plane edge
+   * @param top top distance of near plane edge
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position}
+   * from the cartesian position.
+   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   */
   ViewState(
       const glm::dvec3& position,
       const glm::dvec3& direction,
@@ -100,10 +117,9 @@ public:
    */
   glm::dvec3 getUp() const noexcept {
     return {
-      this->_viewMatrix[0][1],
-      this->_viewMatrix[1][1],
-      this->_viewMatrix[2][1]
-    };
+        this->_viewMatrix[0][1],
+        this->_viewMatrix[1][1],
+        this->_viewMatrix[2][1]};
   }
 
   /**
@@ -139,9 +155,7 @@ public:
   /**
    * @brief Gets the view matrix for the ViewState.
    */
-  const glm::dmat4& getViewMatrix() const noexcept {
-    return this->_viewMatrix;
-  }
+  const glm::dmat4& getViewMatrix() const noexcept { return this->_viewMatrix; }
 
   /**
    * @brief Gets the projection matrix for the ViewState.
@@ -150,7 +164,6 @@ public:
     return this->_projectionMatrix;
   }
 
-  
   /**
    * @brief Returns whether the given {@link BoundingVolume} is visible for this
    * camera

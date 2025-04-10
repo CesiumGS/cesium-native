@@ -89,16 +89,15 @@ ViewState::ViewState(
     const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : ViewState(
-        Transforms::createViewMatrix(position, direction, up),
-        Transforms::createPerspectiveMatrix(
-            horizontalFieldOfView,
-            verticalFieldOfView,
-            100.0,
-            std::numeric_limits<double>::infinity()),
-        viewportSize,
-        positionCartographic,
-        ellipsoid)
-{}
+          Transforms::createViewMatrix(position, direction, up),
+          Transforms::createPerspectiveMatrix(
+              horizontalFieldOfView,
+              verticalFieldOfView,
+              100.0,
+              std::numeric_limits<double>::infinity()),
+          viewportSize,
+          positionCartographic,
+          ellipsoid) {}
 
 ViewState::ViewState(
     const glm::dmat4& viewMatrix,
@@ -115,17 +114,17 @@ ViewState::ViewState(
       _viewMatrix(viewMatrix),
       _projectionMatrix(projectionMatrix) {}
 
-  ViewState::ViewState(
-      const glm::dvec3& position,
-      const glm::dvec3& direction,
-      const glm::dvec3& up,
-      const glm::dvec2& viewportSize,
-      double left,
-      double right,
-      double bottom,
-      double top,
-      const CesiumGeospatial::Ellipsoid& ellipsoid)
-      : ViewState(
+ViewState::ViewState(
+    const glm::dvec3& position,
+    const glm::dvec3& direction,
+    const glm::dvec3& up,
+    const glm::dvec2& viewportSize,
+    double left,
+    double right,
+    double bottom,
+    double top,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
+    : ViewState(
           Transforms::createViewMatrix(position, direction, up),
           Transforms::createOrthographicMatrix(
               left,
