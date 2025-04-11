@@ -1516,16 +1516,22 @@ void TilesetContentManager::unregisterTileRequester(
 
 namespace {
 
-template <typename HasMoreTilesToLoadFunc, typename GetNextTileToLoadFunc>
+/**
+ * @brief A round-robin mechanism that selects the next requester to load tiles
+ * from, based on the requesters' weights.
+ */
 class WeightedRoundRobin {
 public:
+  typedef bool (TileLoadRequester::*HasMoreTilesToLoad)() const;
+  typedef Tile* (TileLoadRequester::*GetNextTileToLoad)();
+
   WeightedRoundRobin(
       double& roundRobinValue,
       const std::vector<TileLoadRequester*>& allRequesters,
       std::vector<TileLoadRequester*>& requestersWithRequests,
       std::vector<double>& fractions,
-      const HasMoreTilesToLoadFunc& hasMoreTilesToLoad,
-      const GetNextTileToLoadFunc& getNextTileToLoad)
+      HasMoreTilesToLoad hasMoreTilesToLoad,
+      GetNextTileToLoad getNextTileToLoad)
       : _roundRobinValue(roundRobinValue),
         _allRequesters(allRequesters),
         _requestersWithRequests(requestersWithRequests),
@@ -1557,10 +1563,10 @@ public:
 
     TileLoadRequester& requester = *this->_requestersWithRequests[index];
 
-    Tile* pToLoad = this->_getNextTileToLoad(requester);
+    Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
     CESIUM_ASSERT(pToLoad);
 
-    if (!pToLoad || !this->_hasMoreTilesToLoad(requester)) {
+    if (!pToLoad || !std::invoke(this->_hasMoreTilesToLoad, requester)) {
       // If this was the last tile from this requester, we'll need to remove the
       // requester from the weighting.
       this->recomputeRequesterFractions();
@@ -1570,6 +1576,12 @@ public:
   }
 
 private:
+  /**
+   * @brief Recompute the fractions for each requester to affect the frequency
+   * that they are picked by the round robin. Each fraction is the requester's
+   * own value plus the sum of the fractions that came before it, resulting in a
+   * sorted array where values ascend from 0.0 to 1.0.
+   */
   void recomputeRequesterFractions() {
     this->_fractions.reserve(this->_allRequesters.size());
     this->_requestersWithRequests.reserve(this->_allRequesters.size());
@@ -1583,7 +1595,7 @@ private:
       TileLoadRequester* pRequester = this->_allRequesters[i];
       CESIUM_ASSERT(pRequester);
 
-      if (pRequester && _hasMoreTilesToLoad(*pRequester)) {
+      if (pRequester && std::invoke(this->_hasMoreTilesToLoad, *pRequester)) {
         double weight = pRequester->getWeight();
         CESIUM_ASSERT(weight > 0.0);
 
@@ -1608,8 +1620,8 @@ private:
   const std::vector<TileLoadRequester*>& _allRequesters;
   std::vector<TileLoadRequester*>& _requestersWithRequests;
   std::vector<double>& _fractions;
-  const HasMoreTilesToLoadFunc& _hasMoreTilesToLoad;
-  const GetNextTileToLoadFunc& _getNextTileToLoad;
+  HasMoreTilesToLoad _hasMoreTilesToLoad;
+  GetNextTileToLoad _getNextTileToLoad;
 };
 
 } // namespace
@@ -1627,12 +1639,8 @@ void TilesetContentManager::processWorkerThreadLoadRequests(
       this->_requesters,
       this->_requestersWithRequests,
       this->_requesterFractions,
-      [](const TileLoadRequester& requester) {
-        return requester.hasMoreTilesToLoadInWorkerThread();
-      },
-      [](TileLoadRequester& requester) {
-        return requester.getNextTileToLoadInWorkerThread();
-      }};
+      &TileLoadRequester::hasMoreTilesToLoadInWorkerThread,
+      &TileLoadRequester::getNextTileToLoadInWorkerThread};
 
   while (this->getNumberOfTilesLoading() <
          int32_t(options.maximumSimultaneousTileLoads)) {
@@ -1657,12 +1665,8 @@ void TilesetContentManager::processMainThreadLoadRequests(
       this->_requesters,
       this->_requestersWithRequests,
       this->_requesterFractions,
-      [](const TileLoadRequester& requester) {
-        return requester.hasMoreTilesToLoadInMainThread();
-      },
-      [](TileLoadRequester& requester) {
-        return requester.getNextTileToLoadInMainThread();
-      }};
+      &TileLoadRequester::hasMoreTilesToLoadInMainThread,
+      &TileLoadRequester::getNextTileToLoadInMainThread};
 
   double timeBudget = options.mainThreadLoadingTimeLimit;
 
