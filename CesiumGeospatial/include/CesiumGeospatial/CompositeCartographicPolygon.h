@@ -41,6 +41,12 @@ public:
   bool contains(const CesiumGeospatial::Cartographic& point) const;
 
   /**
+   * @brief Triangulates this composite polygon, returning the indices of the
+   * generated triangles.
+   */
+  std::vector<uint32_t> triangulate() const;
+
+  /**
    * @brief Returns the linear rings that make up this composite polygon.
    */
   const std::vector<CartographicPolygon>& getLinearRings() const;

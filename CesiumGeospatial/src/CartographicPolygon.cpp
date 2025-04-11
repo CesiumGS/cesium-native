@@ -1,7 +1,8 @@
-#include "CesiumGeospatial/BoundingRegionBuilder.h"
-#include "CesiumGeospatial/Cartographic.h"
+#include "TriangulatePolygon.h"
 
 #include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
@@ -12,11 +13,9 @@
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <utility>
 #include <vector>
 
 using namespace CesiumGeometry;
@@ -24,46 +23,6 @@ using namespace CesiumGeometry;
 namespace CesiumGeospatial {
 
 namespace {
-std::vector<uint32_t>
-triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
-  std::vector<uint32_t> indices;
-  const size_t vertexCount = polygon.size();
-
-  if (vertexCount < 3) {
-    return indices;
-  }
-
-  const glm::dvec2& point0 = polygon[0];
-
-  using Point = std::array<double, 2>;
-
-  std::vector<std::vector<Point>> localPolygons;
-
-  // normalize the longitude relative to the first point before triangulating
-  std::vector<Point> localPolygon(vertexCount);
-  localPolygon[0] = {0.0, point0.y};
-  for (size_t i = 1; i < vertexCount; ++i) {
-    const glm::dvec2& cartographic = polygon[i];
-    Point& point = localPolygon[i];
-    point[0] = cartographic.x - point0.x;
-    point[1] = cartographic.y;
-
-    // check if the difference crosses the antipole
-    if (glm::abs(point[0]) > CesiumUtility::Math::OnePi) {
-      if (point[0] > 0.0) {
-        point[0] -= CesiumUtility::Math::TwoPi;
-      } else {
-        point[0] += CesiumUtility::Math::TwoPi;
-      }
-    }
-  }
-
-  localPolygons.emplace_back(std::move(localPolygon));
-
-  indices = mapbox::earcut<uint32_t>(localPolygons);
-  return indices;
-}
-
 std::vector<glm::dvec2>
 cartographicToVec(const std::vector<Cartographic>& polygon) {
   std::vector<glm::dvec2> vertices;
@@ -86,13 +45,13 @@ computeBoundingRectangle(const std::vector<glm::dvec2>& polygon) {
 
 CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
     : _vertices(polygon),
-      _indices(triangulatePolygon(polygon)),
+      _indices(triangulatePolygon({polygon})),
       _boundingRectangle(computeBoundingRectangle(polygon)) {}
 
 CartographicPolygon::CartographicPolygon(
     const std::vector<Cartographic>& polygon)
     : _vertices(cartographicToVec(polygon)),
-      _indices(triangulatePolygon(this->_vertices)),
+      _indices(triangulatePolygon({this->_vertices})),
       _boundingRectangle(computeBoundingRectangle(this->_vertices)) {}
 
 bool CartographicPolygon::contains(const Cartographic& point) const {

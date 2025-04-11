@@ -1,8 +1,11 @@
+#include "TriangulatePolygon.h"
+
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -34,6 +37,15 @@ bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
   // In the outer ring, but not in any of the inner rings, so we're inside the
   // composite polygon.
   return true;
+}
+
+std::vector<uint32_t> CompositeCartographicPolygon::triangulate() const {
+  std::vector<std::vector<glm::dvec2>> rings(this->_polygons.size());
+  for (const CartographicPolygon& polygon : this->_polygons) {
+    rings.emplace_back(polygon.getVertices());
+  }
+
+  return triangulatePolygon(rings);
 }
 
 bool CompositeCartographicPolygon::operator==(
