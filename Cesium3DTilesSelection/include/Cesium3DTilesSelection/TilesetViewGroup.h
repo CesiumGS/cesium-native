@@ -223,7 +223,7 @@ private:
   double _weight = 1.0;
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
-  size_t _tilesAlreadyLoading = 0;
+  size_t _tilesAlreadyLoadingOrUnloading = 0;
   float _loadProgressPercentage = 0.0f;
   ViewUpdateResult _updateResult;
   TraversalState _traversalState;

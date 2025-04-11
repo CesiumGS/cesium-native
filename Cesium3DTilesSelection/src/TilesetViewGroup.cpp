@@ -66,7 +66,10 @@ void TilesetViewGroup::addToLoadQueue(const TileLoadTask& task) {
   } else if (
       pTile->getState() == TileLoadState::ContentLoading ||
       pTile->getState() == TileLoadState::Unloading) {
-    ++this->_tilesAlreadyLoading;
+    // These tiles are already transitioning between states so we can't add them
+    // to either load queue. But they still count as tiles that need to be
+    // loaded before this view is 100% loaded.
+    ++this->_tilesAlreadyLoadingOrUnloading;
   }
 }
 
@@ -108,7 +111,7 @@ void TilesetViewGroup::startNewFrame(
     const TilesetFrameState& /*frameState*/) {
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
-  this->_tilesAlreadyLoading = 0;
+  this->_tilesAlreadyLoadingOrUnloading = 0;
   this->_traversalState.beginTraversal();
 
   ++this->_updateResult.frameNumber;
@@ -151,7 +154,8 @@ void TilesetViewGroup::finishFrame(
   size_t totalTiles = this->_traversalState.getNodeCountInCurrentTraversal();
   size_t tilesLoading = size_t(updateResult.workerThreadTileLoadQueueLength) +
                         size_t(updateResult.mainThreadTileLoadQueueLength) +
-                        updateResult.tilesKicked + this->_tilesAlreadyLoading;
+                        updateResult.tilesKicked +
+                        this->_tilesAlreadyLoadingOrUnloading;
 
   if (tilesLoading == 0) {
     this->_loadProgressPercentage = 100.0f;
