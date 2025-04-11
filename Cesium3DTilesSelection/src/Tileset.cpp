@@ -1114,8 +1114,6 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   return false;
 }
 
-// TODO This function is obviously too complex. The way how the indices are
-// used, in order to deal with the queue elements, should be reviewed...
 bool Tileset::_kickDescendantsAndRenderTile(
     const TilesetFrameState& frameState,
     Tile& tile,

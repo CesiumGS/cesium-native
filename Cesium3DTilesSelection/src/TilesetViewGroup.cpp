@@ -128,7 +128,7 @@ void TilesetViewGroup::startNewFrame(
   if (!tileset.getOptions().enableLodTransitionPeriod) {
     for (Tile* pTile : this->_updateResult.tilesFadingOut) {
       pTile->decrementDoNotUnloadSubtreeCount(
-          "Tileset::updateView clear tilesFadingOut");
+          "TilesetViewGroup::startNewFrame clear tilesFadingOut");
     }
     this->_updateResult.tilesFadingOut.clear();
   }

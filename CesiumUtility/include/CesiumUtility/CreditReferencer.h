@@ -12,6 +12,10 @@ struct Credit;
 /**
  * @brief Provides a way to reference a set of credits in a
  * {@link CreditSystem} so that the references can easily be released later.
+ *
+ * Multiple CreditReferencers may be used on the same credit system to track
+ * separate sets of references -- e.g., two sets of credits from different
+ * frames.
  */
 class CreditReferencer {
 public:
