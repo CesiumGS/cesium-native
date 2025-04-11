@@ -5,13 +5,10 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumUtility/Math.h>
 
-#include <glm/common.hpp>
 #include <glm/ext/matrix_double2x2.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/matrix.hpp>
-#include <mapbox/earcut.hpp>
 
 #include <cstddef>
 #include <cstdint>

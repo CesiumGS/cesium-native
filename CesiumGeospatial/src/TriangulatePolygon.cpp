@@ -2,10 +2,12 @@
 
 #include <CesiumUtility/Math.h>
 
-#include <glm/vec2.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
 #include <mapbox/earcut.hpp>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>

@@ -4,6 +4,8 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
 
+#include <glm/ext/vector_double2.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <utility>
