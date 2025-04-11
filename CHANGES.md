@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions
+
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
