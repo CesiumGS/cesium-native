@@ -1783,12 +1783,10 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
