@@ -6,13 +6,28 @@
 
 namespace Cesium3DTilesSelection {
 
+namespace {
+
+bool meetsCriteriaForEnumeration(const Tile* pTile) {
+  if (pTile == nullptr)
+    return false;
+
+  return pTile->getDoNotUnloadSubtreeCount() > 0 ||
+         pTile->getState() != TileLoadState::Unloaded;
+}
+
+} // namespace
+
 LoadedConstTileEnumerator::LoadedConstTileEnumerator(
     const Tile* pRootTile) noexcept
     : _pRootTile(pRootTile) {}
 
 LoadedConstTileEnumerator::const_iterator
 LoadedConstTileEnumerator::begin() const noexcept {
-  return const_iterator(this->_pRootTile);
+  if (meetsCriteriaForEnumeration(this->_pRootTile))
+    return const_iterator(this->_pRootTile);
+  else
+    return const_iterator(nullptr);
 }
 
 LoadedConstTileEnumerator::const_iterator
@@ -71,7 +86,10 @@ LoadedTileEnumerator::LoadedTileEnumerator(Tile* pRootTile) noexcept
 
 LoadedTileEnumerator::const_iterator
 LoadedTileEnumerator::begin() const noexcept {
-  return const_iterator(this->_pRootTile);
+  if (meetsCriteriaForEnumeration(this->_pRootTile))
+    return const_iterator(this->_pRootTile);
+  else
+    return const_iterator(nullptr);
 }
 
 LoadedTileEnumerator::const_iterator
@@ -80,7 +98,10 @@ LoadedTileEnumerator::end() const noexcept {
 }
 
 LoadedTileEnumerator::iterator LoadedTileEnumerator::begin() noexcept {
-  return iterator(this->_pRootTile);
+  if (meetsCriteriaForEnumeration(this->_pRootTile))
+    return iterator(this->_pRootTile);
+  else
+    return iterator(nullptr);
 }
 
 LoadedTileEnumerator::iterator LoadedTileEnumerator::end() noexcept {
@@ -140,8 +161,7 @@ template <typename TIterator>
   // See if we can traverse down into a child tile.
   std::span<typename TIterator::value_type> children = pCurrent->getChildren();
   for (typename TIterator::reference child : children) {
-    if (child.getDoNotUnloadSubtreeCount() > 0 ||
-        child.getState() != TileLoadState::Unloaded) {
+    if (meetsCriteriaForEnumeration(&child)) {
       it._traversalStack.push_back(&child);
       return it;
     }
@@ -161,8 +181,7 @@ template <typename TIterator>
       CESIUM_ASSERT(pCurrent >= &childrenOfParent.front());
 
       for (++pCurrent; pCurrent <= &childrenOfParent.back(); ++pCurrent) {
-        if (pCurrent->getDoNotUnloadSubtreeCount() > 0 ||
-            pCurrent->getState() != TileLoadState::Unloaded) {
+        if (meetsCriteriaForEnumeration(pCurrent)) {
           it._traversalStack.push_back(pCurrent);
           return it;
         }

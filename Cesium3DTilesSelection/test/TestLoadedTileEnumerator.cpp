@@ -38,8 +38,8 @@ TEST_CASE("LoadedTileEnumerator") {
 
   LoadedTileEnumerator enumerator(&root);
 
-  SUBCASE("with no loaded tiles it enumerates the root tile only") {
-    CHECK(enumerate(enumerator) == std::vector<const Tile*>{&root});
+  SUBCASE("with no loaded tiles it enumerates nothing") {
+    CHECK(enumerate(enumerator) == std::vector<const Tile*>{});
   }
 
   SUBCASE("enumerates path to single tile") {
