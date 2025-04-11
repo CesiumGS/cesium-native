@@ -18,8 +18,8 @@
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_double4.hpp>
 #include <glm/geometric.hpp>
-#include <glm/trigonometric.hpp>
 
+#include <cmath>
 #include <limits>
 #include <optional>
 #include <variant>
