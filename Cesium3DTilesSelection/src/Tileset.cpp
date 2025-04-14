@@ -1027,7 +1027,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     ViewUpdateResult& result) {
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  result.tilesToRenderThisFrame.push_back(&tile);
+  result.tilesToRenderThisFrame.emplace_back(&tile);
 
   addTileToLoadQueue(
       frameState,
@@ -1078,7 +1078,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  result.tilesToRenderThisFrame.push_back(&tile);
+  result.tilesToRenderThisFrame.emplace_back(&tile);
 
   return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
@@ -1092,7 +1092,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    result.tilesToRenderThisFrame.push_back(&tile);
+    result.tilesToRenderThisFrame.emplace_back(&tile);
     if (!queuedForLoad)
       addTileToLoadQueue(
           frameState,
@@ -1131,7 +1131,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
       renderList.end());
 
   if (tile.getRefine() != Cesium3DTilesSelection::TileRefine::Add) {
-    renderList.push_back(&tile);
+    renderList.emplace_back(&tile);
   }
 
   traversalState.currentState() =
