@@ -49,7 +49,7 @@ public:
    * @brief Attempts to parse a \ref VectorDocument from the provided JSON
    * document.
    *
-   * @param bytes The GeoJSON JSON document.
+   * @param document The GeoJSON JSON document.
    * @param attributions Any attributions to attach to the document.
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref VectorDocument or any errors and warnings that came up while parsing.
