@@ -16,6 +16,7 @@
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumVectorData/VectorNode.h>
 
 #include <memory>
 #include <optional>
@@ -177,6 +178,20 @@ public:
   cesiumCuratedContent();
 
   /**
+   * @brief Returns one or more pages of GeoJSON features in this iTwin.
+   *
+   * @param iTwinId The ID of the iTwin to load data from.
+   * @param collectionId The ID of the data collection to load.
+   * @param limit The maximum number of items per page, between 1 and 10,000.
+   */
+  CesiumAsync::Future<
+      CesiumUtility::Result<PagedList<CesiumVectorData::VectorNode>>>
+  geospatialFeatures(
+      const std::string& iTwinId,
+      const std::string& collectionId,
+      uint32_t limit = 10000);
+
+  /**
    * @brief Creates a new `Connection` with the provided tokens.
    *
    * It's recommended to use the \ref Connection::authorize method to create a
@@ -186,8 +201,8 @@ public:
    * @param asyncSystem The \ref CesiumAsync::AsyncSystem to use.
    * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor to use for
    * making requests to the iTwin API.
-   * @param accessToken An \ref AuthenticationToken object created from parsing
-   * the obtained iTwin access token.
+   * @param authToken An \ref AuthenticationToken object created from parsing
+   * the obtained iTwin access or share token.
    * @param refreshToken A refresh token to use to fetch new access tokens as
    * needed, if any.
    * @param clientOptions The set of options to use when interacting with the
@@ -196,27 +211,27 @@ public:
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const AuthenticationToken& accessToken,
+      const AuthenticationToken& authToken,
       const std::optional<std::string>& refreshToken,
       const CesiumClientCommon::OAuth2ClientOptions& clientOptions)
       : _asyncSystem(asyncSystem),
         _pAssetAccessor(pAssetAccessor),
-        _accessToken(accessToken),
+        _authToken(authToken),
         _refreshToken(refreshToken),
         _clientOptions(clientOptions) {}
 
   /**
    * @brief Returns the \ref AuthenticationToken object representing the parsed
-   * JWT access token.
+   * JWT access or share token.
    */
-  const AuthenticationToken& getAccessToken() const { return _accessToken; }
+  const AuthenticationToken& getAuthToken() const { return _authToken; }
   /**
-   * @brief Sets the access token that will be used for API calls.
+   * @brief Sets the access or share token that will be used for API calls.
    *
    * @param authToken The new auth token.
    */
-  void setAccessToken(const AuthenticationToken& authToken) {
-    _accessToken = authToken;
+  void setAuthToken(const AuthenticationToken& authToken) {
+    _authToken = authToken;
   }
 
   /**
@@ -241,13 +256,15 @@ private:
   listIModelMeshExports(const std::string& url);
   CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
   listITwinRealityData(const std::string& url);
+  CesiumAsync::Future<
+      CesiumUtility::Result<PagedList<CesiumVectorData::VectorNode>>>
+  listGeospatialFeatures(const std::string& url);
 
-  CesiumAsync::Future<CesiumUtility::Result<std::string_view>>
-  ensureValidToken();
+  CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken();
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  AuthenticationToken _accessToken;
+  AuthenticationToken _authToken;
   std::optional<std::string> _refreshToken;
   CesiumClientCommon::OAuth2ClientOptions _clientOptions;
 };

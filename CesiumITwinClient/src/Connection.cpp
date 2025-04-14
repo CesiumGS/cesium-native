@@ -20,21 +20,24 @@
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumVectorData/VectorDocument.h>
+#include <CesiumVectorData/VectorNode.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
+using namespace CesiumVectorData;
 
 namespace CesiumITwinClient {
 namespace {
@@ -183,14 +186,14 @@ CesiumAsync::Future<CesiumUtility::Result<UserProfile>> Connection::me() {
   return this->ensureValidToken().thenInWorkerThread(
       [asyncSystem = this->_asyncSystem,
        pAssetAccessor =
-           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem.createResolvedFuture<Result<UserProfile>>(
               tokenResult.errors);
         }
 
         const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Authorization", *tokenResult.value},
             {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
             {"Prefer", "return=representation"}};
 
@@ -248,14 +251,14 @@ Connection::listITwins(const std::string& url) {
       [url,
        asyncSystem = this->_asyncSystem,
        pAssetAccessor =
-           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem.createResolvedFuture<Result<PagedList<ITwin>>>(
               tokenResult.errors);
         }
 
         const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Authorization", *tokenResult.value},
             {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
             {"Prefer", "return=representation"}};
 
@@ -319,14 +322,14 @@ Connection::listIModels(const std::string& url) {
       [url,
        asyncSystem = this->_asyncSystem,
        pAssetAccessor =
-           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem.createResolvedFuture<Result<PagedList<IModel>>>(
               tokenResult.errors);
         }
 
         const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Authorization", *tokenResult.value},
             {"Accept", "application/vnd.bentley.itwin-platform.v2+json"},
             {"Prefer", "return=representation"}};
 
@@ -419,7 +422,7 @@ Connection::listIModelMeshExports(const std::string& url) {
       [url,
        asyncSystem = this->_asyncSystem,
        pAssetAccessor =
-           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem
               .createResolvedFuture<Result<PagedList<IModelMeshExport>>>(
@@ -427,7 +430,7 @@ Connection::listIModelMeshExports(const std::string& url) {
         }
 
         const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Authorization", *tokenResult.value},
             {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
             {"Prefer", "return=representation"}};
 
@@ -504,7 +507,7 @@ Connection::listITwinRealityData(const std::string& url) {
       [url,
        asyncSystem = this->_asyncSystem,
        pAssetAccessor =
-           this->_pAssetAccessor](const Result<std::string_view>& tokenResult) {
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem
               .createResolvedFuture<Result<PagedList<ITwinRealityData>>>(
@@ -512,7 +515,7 @@ Connection::listITwinRealityData(const std::string& url) {
         }
 
         const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-            {"Authorization", fmt::format("Bearer {}", *tokenResult.value)},
+            {"Authorization", *tokenResult.value},
             {"Accept", "application/vnd.bentley.itwin-platform.v1+json"},
             {"Prefer", "return=representation"}};
 
@@ -598,7 +601,7 @@ using ITwinCCCListResponse = std::vector<CesiumCuratedContentAsset>;
 CesiumAsync::Future<Result<ITwinCCCListResponse>>
 Connection::cesiumCuratedContent() {
   const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-      {"Authorization", "Bearer " + this->_accessToken.getToken()},
+      {"Authorization", "Bearer " + this->_authToken.getToken()},
       {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
   return this->_pAssetAccessor
       ->get(this->_asyncSystem, LIST_CCC_ENDPOINT_URL, headers)
@@ -639,15 +642,74 @@ Connection::cesiumCuratedContent() {
           });
 }
 
-CesiumAsync::Future<CesiumUtility::Result<std::string_view>>
+CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
+Connection::geospatialFeatures(
+    const std::string& iTwinId,
+    const std::string& collectionId,
+    uint32_t limit) {
+  const uint32_t limitClamped = std::clamp<uint32_t>(limit, 1, 10000);
+  const std::string url = fmt::format(
+      "https://api.bentley.com/geospatial-features/itwins/{}/ogc/collections/"
+      "{}/items?limit={}",
+      iTwinId,
+      collectionId,
+      limitClamped);
+  return this->listGeospatialFeatures(url);
+}
+
+CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
+Connection::listGeospatialFeatures(const std::string& url) {
+  return this->ensureValidToken().thenInWorkerThread(
+      [url,
+       asyncSystem = this->_asyncSystem,
+       pAssetAccessor =
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
+        if (!tokenResult.value) {
+          return asyncSystem
+              .createResolvedFuture<Result<PagedList<VectorNode>>>(
+                  tokenResult.errors);
+        }
+
+        const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+            {"Authorization", *tokenResult.value},
+            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
+
+        return pAssetAccessor->get(asyncSystem, url, headers)
+            .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+              Result<rapidjson::Document> docResult =
+                  handleJsonResponse(request, "listing geospatial features");
+              if (!docResult.value) {
+                return Result<PagedList<VectorNode>>(docResult.errors);
+              }
+
+              Result<VectorDocument> geoJsonDocResult =
+                  VectorDocument::fromGeoJson(*docResult.value, {});
+              if (!geoJsonDocResult.value) {
+                return Result<PagedList<VectorNode>>(geoJsonDocResult.errors);
+              }
+
+              std::vector<VectorNode> nodes =
+                  std::move(geoJsonDocResult.value->getRootNode().children);
+
+              return Result<PagedList<VectorNode>>(PagedList<VectorNode>(
+                  *docResult.value,
+                  std::move(nodes),
+                  [](Connection& connection, const std::string& url) {
+                    return connection.listGeospatialFeatures(url);
+                  }));
+            });
+      });
+}
+
+CesiumAsync::Future<CesiumUtility::Result<std::string>>
 Connection::ensureValidToken() {
-  if (this->_accessToken.isValid()) {
+  if (this->_authToken.isValid()) {
     return _asyncSystem.createResolvedFuture(
-        Result<std::string_view>(this->_accessToken.getToken()));
+        Result<std::string>(this->_authToken.getTokenHeader()));
   }
 
   if (!this->_refreshToken) {
-    return _asyncSystem.createResolvedFuture(Result<std::string_view>(
+    return _asyncSystem.createResolvedFuture(Result<std::string>(
         ErrorList::error("No valid auth token or refresh token.")));
   }
 
@@ -660,19 +722,19 @@ Connection::ensureValidToken() {
       .thenInMainThread(
           [this](Result<CesiumClientCommon::OAuth2TokenResponse>&& response) {
             if (!response.value) {
-              return Result<std::string_view>(response.errors);
+              return Result<std::string>(response.errors);
             }
 
             Result<AuthenticationToken> tokenResult =
                 AuthenticationToken::parse(response.value->accessToken);
             if (!tokenResult.value) {
-              return Result<std::string_view>(tokenResult.errors);
+              return Result<std::string>(tokenResult.errors);
             }
 
-            this->_accessToken = std::move(*tokenResult.value);
+            this->_authToken = std::move(*tokenResult.value);
             this->_refreshToken = std::move(response.value->refreshToken);
 
-            return Result<std::string_view>(this->_accessToken.getToken());
+            return Result<std::string>(this->_authToken.getTokenHeader());
           });
 }
 
