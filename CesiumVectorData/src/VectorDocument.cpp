@@ -40,6 +40,19 @@ Result<VectorDocument> VectorDocument::fromGeoJson(
       std::move(parseResult.errors));
 }
 
+Result<VectorDocument> VectorDocument::fromGeoJson(
+    const rapidjson::Document& doc,
+    std::vector<VectorDocumentAttribution>&& attributions) {
+  Result<VectorNode> parseResult = parseGeoJson(doc);
+  if (!parseResult.value) {
+    return Result<VectorDocument>(std::move(parseResult.errors));
+  }
+
+  return Result<VectorDocument>(
+      VectorDocument(std::move(*parseResult.value), std::move(attributions)),
+      std::move(parseResult.errors));
+}
+
 Future<Result<VectorDocument>> VectorDocument::fromCesiumIonAsset(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
@@ -140,4 +153,5 @@ VectorDocument::VectorDocument(
     : _rootNode(std::move(rootNode)), _attributions(std::move(attributions)) {}
 
 const VectorNode& VectorDocument::getRootNode() const { return _rootNode; }
+VectorNode& VectorDocument::getRootNode() { return _rootNode; }
 } // namespace CesiumVectorData
