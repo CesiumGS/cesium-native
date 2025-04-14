@@ -119,24 +119,7 @@ TilesetHeightQuery::TilesetHeightQuery(
       candidateTiles(),
       previousCandidateTiles() {}
 
-Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() {
-  for (const IntrusivePointer<Tile>& pTile : candidateTiles) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightQuery::~TilesetHeightQuery destructing candidateTiles");
-  }
-
-  for (const IntrusivePointer<Tile>& pTile : additiveCandidateTiles) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightQuery::~TilesetHeightQuery "
-        "destructing additiveCandidateTiles");
-  }
-
-  for (const IntrusivePointer<Tile>& pTile : previousCandidateTiles) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightQuery::~TilesetHeightQuery "
-        "destructing previousCandidateTiles");
-  }
-}
+Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() = default;
 
 void TilesetHeightQuery::intersectVisibleTile(
     Tile* pTile,
@@ -192,13 +175,9 @@ void TilesetHeightQuery::findCandidateTiles(
               this->ray,
               this->inputPosition,
               this->ellipsoid)) {
-        pTile->incrementDoNotUnloadSubtreeCount(
-            "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
         this->candidateTiles.emplace_back(pTile);
       }
     } else {
-      pTile->incrementDoNotUnloadSubtreeCount(
-          "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
       this->candidateTiles.emplace_back(pTile);
     }
   } else {
@@ -213,15 +192,9 @@ void TilesetHeightQuery::findCandidateTiles(
                 this->ray,
                 this->inputPosition,
                 this->ellipsoid)) {
-          pTile->incrementDoNotUnloadSubtreeCount(
-              "TilesetHeightQuery::findCandidateTiles add to "
-              "additiveCandidateTiles");
           this->additiveCandidateTiles.emplace_back(pTile);
         }
       } else {
-        pTile->incrementDoNotUnloadSubtreeCount(
-            "TilesetHeightQuery::findCandidateTiles add to "
-            "additiveCandidateTiles");
         this->additiveCandidateTiles.emplace_back(pTile);
       }
     }
@@ -362,12 +335,6 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       // frame.
       std::swap(query.candidateTiles, query.previousCandidateTiles);
 
-      for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
-        pTile->decrementDoNotUnloadSubtreeCount(
-            "TilesetHeightRequest::tryCompleteHeightRequest clear "
-            "candidateTiles");
-      }
-
       query.candidateTiles.clear();
 
       for (const IntrusivePointer<Tile>& pCandidate :
@@ -378,9 +345,6 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
           query.findCandidateTiles(pCandidate.get(), warnings);
         } else {
           // Check again next frame to see if this tile has children.
-          pCandidate->incrementDoNotUnloadSubtreeCount(
-              "TilesetHeightRequest::tryCompleteHeightRequest add to "
-              "candidateTiles");
           query.candidateTiles.emplace_back(pCandidate);
         }
       }

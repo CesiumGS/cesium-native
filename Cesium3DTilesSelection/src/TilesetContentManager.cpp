@@ -722,7 +722,7 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _unusedTiles(),
+      _tilesEligibleForContentUnloading(),
       _requesters(),
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
@@ -764,7 +764,7 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _unusedTiles(),
+      _tilesEligibleForContentUnloading(),
       _requesters(),
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
@@ -924,7 +924,7 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _unusedTiles(),
+      _tilesEligibleForContentUnloading(),
       _requesters(),
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
@@ -1065,8 +1065,8 @@ void TilesetContentManager::loadTileContent(
     }
   }
 
-  tile.incrementDoNotUnloadSubtreeCount(
-      "TilesetContentManager::loadTileContent begin");
+  // Reference this Tile while its content is loading.
+  tile.addReference();
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
@@ -1139,18 +1139,14 @@ void TilesetContentManager::loadTileContent(
       })
       .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(tile, std::move(pair.result), pair.pRenderResources);
-        tile.decrementDoNotUnloadSubtreeCount(
-            "TilesetContentManager::loadTileContent done loading");
-
+        tile.releaseReference();
         thiz->notifyTileDoneLoading(&tile);
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
                              std::exception&& e) {
         tile.getMappedRasterTiles().clear();
         tile.setState(TileLoadState::Failed);
-
-        tile.decrementDoNotUnloadSubtreeCount(
-            "TilesetContentManager::loadTileContent error while loading");
+        tile.releaseReference();
         thiz->notifyTileDoneLoading(&tile);
         SPDLOG_LOGGER_ERROR(
             pLogger,
@@ -1217,24 +1213,23 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.decrementDoNotUnloadSubtreeCountOnParent(
-        "TilesetContentManager::unloadTileContent unload empty content");
+    tile.releaseReference();
     return UnloadTileContentResult::Remove;
   }
 
   if (content.isExternalContent()) {
-    // Tile with external content that still has references to its pointer or to
-    // its children's pointers - we can't unload.
-    // We also, of course, don't want to unload the root tile.
-    if (tile.getParent() == nullptr || tile.getDoNotUnloadSubtreeCount() > 0) {
+    // We can unload an external content tile with one reference, because this
+    // represents the external content itself. Any more than that indicates
+    // references to the tile or a descendant tile (or their content), all of
+    // which prevent this external content from being unloaded.
+    if (tile.getParent() == nullptr || tile.getReferenceCount() > 1) {
       return UnloadTileContentResult::Keep;
     }
 
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.decrementDoNotUnloadSubtreeCountOnParent(
-        "TilesetContentManager::unloadTileContent unload external content");
+    tile.releaseReference();
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
@@ -1276,10 +1271,9 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
   if (!content.isUnknownContent()) {
-    tile.decrementDoNotUnloadSubtreeCountOnParent(
-        "TilesetContentManager::unloadTileContent unload render content");
+    content.setContentKind(TileUnknownContent{});
+    tile.releaseReference();
   }
-  content.setContentKind(TileUnknownContent{});
   tile.setState(TileLoadState::Unloaded);
   return UnloadTileContentResult::Remove;
 }
@@ -1424,18 +1418,24 @@ void TilesetContentManager::finishLoading(
   updateTileContent(tile, tilesetOptions);
 }
 
-void TilesetContentManager::markTileNowUsed(const Tile& tile) {
-  this->_unusedTiles.remove(const_cast<Tile&>(tile));
+void TilesetContentManager::markTileNowIneligibleForContentUnloading(
+    const Tile& tile) {
+  this->_tilesEligibleForContentUnloading.remove(const_cast<Tile&>(tile));
 }
 
-void TilesetContentManager::markTileNowUnused(const Tile& tile) {
-  this->_unusedTiles.insertAtTail(const_cast<Tile&>(tile));
+void TilesetContentManager::markTileNowEligibleForContentUnloading(
+    const Tile& tile) {
+  // If the tile is not yet in the list, add it to the end (most recently used).
+  if (!this->_tilesEligibleForContentUnloading.contains(tile)) {
+    this->_tilesEligibleForContentUnloading.insertAtTail(
+        const_cast<Tile&>(tile));
+  }
 }
 
 void TilesetContentManager::unloadCachedBytes(
     int64_t maximumCachedBytes,
     double timeBudgetMilliseconds) {
-  Tile* pTile = this->_unusedTiles.head();
+  Tile* pTile = this->_tilesEligibleForContentUnloading.head();
 
   // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
   // the end time to the max time_point in that case.
@@ -1453,11 +1453,11 @@ void TilesetContentManager::unloadCachedBytes(
       break;
     }
 
-    Tile* pNext = this->_unusedTiles.next(*pTile);
+    Tile* pNext = this->_tilesEligibleForContentUnloading.next(*pTile);
 
     const UnloadTileContentResult removed = this->unloadTileContent(*pTile);
     if (removed != UnloadTileContentResult::Keep) {
-      this->_unusedTiles.remove(*pTile);
+      this->_tilesEligibleForContentUnloading.remove(*pTile);
     }
 
     if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
@@ -1474,7 +1474,7 @@ void TilesetContentManager::unloadCachedBytes(
 
   if (!tilesNeedingChildrenCleared.empty()) {
     for (Tile* pTileToClear : tilesNeedingChildrenCleared) {
-      CESIUM_ASSERT(pTileToClear->getDoNotUnloadSubtreeCount() == 0);
+      CESIUM_ASSERT(pTileToClear->getReferenceCount() == 0);
       this->clearChildrenRecursively(pTileToClear);
     }
   }
@@ -1482,12 +1482,12 @@ void TilesetContentManager::unloadCachedBytes(
 
 void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
   // Iterate through all children, calling this method recursively to make sure
-  // children are all removed from _unusedTiles.
+  // children are all removed from _tilesEligibleForContentUnloading.
   for (Tile& child : pTile->getChildren()) {
     CESIUM_ASSERT(child.getState() == TileLoadState::Unloaded);
-    CESIUM_ASSERT(child.getDoNotUnloadSubtreeCount() == 0);
+    CESIUM_ASSERT(child.getReferenceCount() == 0);
     CESIUM_ASSERT(child.getContent().isUnknownContent());
-    this->_unusedTiles.remove(child);
+    this->_tilesEligibleForContentUnloading.remove(child);
     this->clearChildrenRecursively(&child);
   }
 
@@ -1730,8 +1730,7 @@ void TilesetContentManager::setTileContent(
         std::move(result.contentKind));
 
     if (!tile.getContent().isUnknownContent()) {
-      tile.incrementDoNotUnloadSubtreeCountOnParent(
-          "TilesetContentManager::setTileContent");
+      tile.addReference();
     }
 
     if (result.tileInitializer) {

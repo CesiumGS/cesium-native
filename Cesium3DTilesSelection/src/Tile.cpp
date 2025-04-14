@@ -66,7 +66,10 @@ Tile::Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
-          TileContent(std::move(externalContent))) {}
+          TileContent(std::move(externalContent))) {
+  // Add a reference for the loaded content.
+  this->addReference();
+}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
@@ -75,7 +78,10 @@ Tile::Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
-          emptyContent) {}
+          emptyContent) {
+  // Add a reference for the loaded content.
+  this->addReference();
+}
 
 template <typename... TileContentArgs, typename TileContentEnable>
 Tile::Tile(
@@ -98,7 +104,6 @@ Tile::Tile(
       _loadState{loadState},
       _mightHaveLatentChildren{true},
       _rasterTiles(),
-      _doNotUnloadSubtreeCount(0),
       _referenceCount(0) {}
 
 Tile::Tile(Tile&& rhs) noexcept
@@ -118,9 +123,8 @@ Tile::Tile(Tile&& rhs) noexcept
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
       _rasterTiles(std::move(rhs._rasterTiles)),
       // See the move assignment operator for an explanation of why we copy
-      // `_doNotUnloadSubtreeCount` here.
-      _doNotUnloadSubtreeCount(rhs._doNotUnloadSubtreeCount),
-      _referenceCount(0) {
+      // `_referenceCount` here.
+      _referenceCount(rhs._referenceCount) {
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
@@ -166,7 +170,7 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     // as a practical matter, we take pains to avoid having pointers to Tiles
     // that we're moving out of, and so we can safely assume that all "counts"
     // refer to loaded subtree content instead of pointers.
-    this->_doNotUnloadSubtreeCount = rhs._doNotUnloadSubtreeCount;
+    this->_referenceCount = rhs._referenceCount;
   }
 
   return *this;
@@ -177,32 +181,15 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
     throw std::runtime_error("Children already created.");
   }
 
-  const int32_t prevDoNotUnloadSubtreeCount = this->_doNotUnloadSubtreeCount;
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
     tile.setParent(this);
-    // If a tile is created with children that are already ContentLoaded, we
-    // bypassed the normal route that _doNotUnloadSubtreeCount would be
-    // incremented by. We have to manually increment it or else we will see a
-    // mismatch when trying to unload the tile and fail the assertion.
-    if (tile.getState() == TileLoadState::ContentLoaded) {
-      ++this->_doNotUnloadSubtreeCount;
-    }
-
-    // Add the child's count to our count, as it might represent a tile lower
-    // down on the tree that's loaded that we can't see from here. None of the
-    // children should have other references to their tile pointer at this
-    // moment so this count should just represent loaded children.
-    this->_doNotUnloadSubtreeCount += tile._doNotUnloadSubtreeCount;
-  }
-
-  const int32_t addedDoNotUnloadSubtreeCount =
-      this->_doNotUnloadSubtreeCount - prevDoNotUnloadSubtreeCount;
-  if (addedDoNotUnloadSubtreeCount > 0) {
-    Tile* pParent = this->getParent();
-    while (pParent != nullptr) {
-      pParent->_doNotUnloadSubtreeCount += addedDoNotUnloadSubtreeCount;
-      pParent = pParent->getParent();
+    // If a tile is created with children that are already referenced, we
+    // bypassed the normal mechanism by which the parent's reference count would
+    // be incremented. We have to manually increment it here or else we will see
+    // a mismatch when trying to unload the tile and fail the assertion.
+    if (tile.getReferenceCount() > 0) {
+      this->addReference();
     }
   }
 }
@@ -353,98 +340,78 @@ void Tile::setMightHaveLatentChildren(bool mightHaveLatentChildren) noexcept {
 }
 
 void Tile::clearChildren() noexcept {
-  CESIUM_ASSERT(this->_doNotUnloadSubtreeCount == 0);
+  CESIUM_ASSERT(!std::any_of(
+      this->_children.begin(),
+      this->_children.end(),
+      [](const Tile& child) { return child.getReferenceCount() > 0; }));
   this->_children.clear();
 }
 
-void Tile::incrementDoNotUnloadSubtreeCount(
-    [[maybe_unused]] const char* reason) noexcept {
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-  const std::string reasonStr = fmt::format(
-      "Initiator ID: {:x}, {}",
-      reinterpret_cast<uint64_t>(this),
-      reason);
-  this->incrementDoNotUnloadSubtreeCount(reasonStr);
-#else
-  this->incrementDoNotUnloadSubtreeCount(std::string());
-#endif
-}
+namespace {
 
-void Tile::decrementDoNotUnloadSubtreeCount(
-    [[maybe_unused]] const char* reason) noexcept {
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-  const std::string reasonStr = fmt::format(
-      "Initiator ID: {:x}, {}",
-      reinterpret_cast<uint64_t>(this),
-      reason);
-  this->decrementDoNotUnloadSubtreeCount(reasonStr);
-#else
-  this->decrementDoNotUnloadSubtreeCount(std::string());
-#endif
-}
+// Is this tile's content referenced? We can tell by careful inspection of the
+// reference count.
+bool isContentReferenced(const Tile& tile) {
+  int32_t referencesNotToThisTilesContent = 0;
 
-void Tile::incrementDoNotUnloadSubtreeCountOnParent(
-    const char* reason) noexcept {
-  if (this->getParent() != nullptr) {
-    this->getParent()->incrementDoNotUnloadSubtreeCount(reason);
+  // A reference to the current tile as a result of its content being loaded.
+  if (!tile.getContent().isUnknownContent())
+    ++referencesNotToThisTilesContent;
+
+  // References from a (referenced) child to the parent.
+  for (const Tile& child : tile.getChildren()) {
+    if (child.getReferenceCount() > 0)
+      ++referencesNotToThisTilesContent;
   }
+
+  // If there are any further references, other than the ones counted above, it
+  // means there's some other reference to this Tile, and it should prevent the
+  // tile's content from unloading. An assertion failure here means that somehow
+  // the child and content references haven't be counted correctly.
+  CESIUM_ASSERT(tile.getReferenceCount() >= referencesNotToThisTilesContent);
+  return tile.getReferenceCount() > referencesNotToThisTilesContent;
 }
 
-void Tile::decrementDoNotUnloadSubtreeCountOnParent(
-    const char* reason) noexcept {
-  if (this->getParent() != nullptr) {
-    this->getParent()->decrementDoNotUnloadSubtreeCount(reason);
-  }
-}
-
-void Tile::incrementDoNotUnloadSubtreeCount(
-    [[maybe_unused]] const std::string& reason) noexcept {
-  Tile* pTile = this;
-  while (pTile != nullptr) {
-    ++pTile->_doNotUnloadSubtreeCount;
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-    TileDoNotUnloadSubtreeCountTracker::addEntry(
-        reinterpret_cast<uint64_t>(pTile),
-        true,
-        std::string(reason),
-        pTile->_doNotUnloadSubtreeCount);
-#endif
-    pTile = pTile->getParent();
-  }
-}
-
-void Tile::decrementDoNotUnloadSubtreeCount(
-    [[maybe_unused]] const std::string& reason) noexcept {
-  CESIUM_ASSERT(this->_doNotUnloadSubtreeCount > 0);
-  Tile* pTile = this;
-  while (pTile != nullptr) {
-    --pTile->_doNotUnloadSubtreeCount;
-#ifdef CESIUM_DEBUG_TILE_UNLOADING
-    TileDoNotUnloadSubtreeCountTracker::addEntry(
-        reinterpret_cast<uint64_t>(pTile),
-        false,
-        std::string(reason),
-        pTile->_doNotUnloadSubtreeCount);
-#endif
-    pTile = pTile->getParent();
-  }
-}
+} // namespace
 
 void Tile::addReference() const noexcept {
   ++this->_referenceCount;
-  if (this->_referenceCount == 1 && this->_pLoader &&
+
+  // When the reference count goes from 0 to 1, prevent this Tile from being
+  // destroyed inadvertently by incrementing its parent's reference count as
+  // well.
+  if (this->_referenceCount == 1 && this->_pParent) {
+    this->_pParent->addReference();
+  }
+
+  // If this reference indicates use of the content, mark this tile "ineligible
+  // for content unloading" with the TilesetContentManager.
+  if (isContentReferenced(*this) && this->_pLoader &&
       this->_pLoader->getOwner()) {
-    this->_pLoader->getOwner()->markTileNowUsed(*this);
+    this->_pLoader->getOwner()->markTileNowIneligibleForContentUnloading(*this);
   }
 }
 
 void Tile::releaseReference() const noexcept {
   CESIUM_ASSERT(this->_referenceCount > 0);
   --this->_referenceCount;
-  if (this->_referenceCount == 0 && this->_pLoader &&
-      this->_pLoader->getOwner()) {
-    this->_pLoader->getOwner()->markTileNowUnused(*this);
+
+  // When the reference count goes from 1 to 0, this Tile is once again
+  // eligible for destruction, so release the reference on the parent.
+  if (this->_referenceCount == 0 && this->_pParent != nullptr) {
+    this->_pParent->releaseReference();
   }
+
+  // If there are no more references that indicate use of the content, mark this
+  // tile as "eligible for content unloading" with the TilesetContentManager.
+  if (!isContentReferenced(*this) && this->_pLoader &&
+      this->_pLoader->getOwner()) {
+    this->_pLoader->getOwner()->markTileNowEligibleForContentUnloading(*this);
+  }
+}
+
+int32_t Tile::getReferenceCount() const noexcept {
+  return this->_referenceCount;
 }
 
 } // namespace Cesium3DTilesSelection

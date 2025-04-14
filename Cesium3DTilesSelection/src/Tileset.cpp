@@ -268,8 +268,6 @@ void Tileset::_updateLodTransitions(
       if (!pRenderContent) {
         // This tile is done fading out and was immediately kicked from the
         // cache.
-        (*tileIt)->decrementDoNotUnloadSubtreeCount(
-            "Tileset::_updateLodTransitions done fading out");
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
@@ -281,8 +279,6 @@ void Tileset::_updateLodTransitions(
         // The client will already have had a chance to stop rendering the tile
         // last frame.
         pRenderContent->setLodTransitionFadePercentage(0.0f);
-        (*tileIt)->decrementDoNotUnloadSubtreeCount(
-            "Tileset::_updateLodTransitions done fading out");
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
@@ -294,7 +290,7 @@ void Tileset::_updateLodTransitions(
     }
 
     // Update fade in
-    for (Tile* pTile : result.tilesToRenderThisFrame) {
+    for (const IntrusivePointer<Tile>& pTile : result.tilesToRenderThisFrame) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
@@ -309,14 +305,12 @@ void Tileset::_updateLodTransitions(
       if (result.tilesFadingOut.erase(pTile) > 0) {
         if (pRenderContent)
           pRenderContent->setLodTransitionFadePercentage(0.0f);
-        pTile->decrementDoNotUnloadSubtreeCount(
-            "Tileset::_updateLodTransitions in render list");
       }
     }
   } else {
     // If there are any tiles still fading in, set them to fully visible right
     // away.
-    for (Tile* pTile : result.tilesToRenderThisFrame) {
+    for (const IntrusivePointer<Tile>& pTile : result.tilesToRenderThisFrame) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
@@ -330,7 +324,7 @@ const ViewUpdateResult&
 Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   ViewUpdateResult& updateResult =
       this->_defaultViewGroup.getViewUpdateResult();
-  std::vector<Tile*> tilesSelectedPrevFrame =
+  std::vector<IntrusivePointer<Tile>> tilesSelectedPrevFrame =
       updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
@@ -343,25 +337,24 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
     this->updateView(frustums, 0.0f);
   }
 
-  for (Tile* pTile : updateResult.tilesFadingOut) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "Tileset::updateViewOffline clear tilesFadingOut");
-  }
-
   updateResult.tilesFadingOut.clear();
 
-  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame(
-      updateResult.tilesToRenderThisFrame.begin(),
-      updateResult.tilesToRenderThisFrame.end());
-  for (Tile* tile : tilesSelectedPrevFrame) {
-    if (uniqueTilesToRenderThisFrame.find(tile) ==
+  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame;
+  uniqueTilesToRenderThisFrame.reserve(
+      updateResult.tilesToRenderThisFrame.size());
+  for (const IntrusivePointer<Tile>& pTile :
+       updateResult.tilesToRenderThisFrame) {
+    uniqueTilesToRenderThisFrame.insert(pTile.get());
+  }
+
+  for (const IntrusivePointer<Tile>& pTile : tilesSelectedPrevFrame) {
+    if (uniqueTilesToRenderThisFrame.find(pTile.get()) ==
         uniqueTilesToRenderThisFrame.end()) {
-      TileRenderContent* pRenderContent = tile->getContent().getRenderContent();
+      TileRenderContent* pRenderContent =
+          pTile->getContent().getRenderContent();
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
-        updateResult.tilesFadingOut.insert(tile);
-        tile->incrementDoNotUnloadSubtreeCount(
-            "Tileset::updateViewOffline start fading out");
+        updateResult.tilesFadingOut.insert(pTile);
       }
     }
   }
@@ -625,8 +618,6 @@ void addToTilesFadingOutIfPreviouslyRendered(
       (lastResult == TileSelectionState::Result::Refined &&
        tile.getRefine() == TileRefine::Add)) {
     result.tilesFadingOut.insert(&tile);
-    tile.incrementDoNotUnloadSubtreeCount(
-        "addToTilesFadingOutIfPreviouslyRendered fading out");
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       pRenderContent->setLodTransitionFadePercentage(0.0f);
@@ -1131,7 +1122,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
          TileSelectionState& selectionState) { selectionState.kick(); });
 
   // Remove all descendants from the render list and add this tile.
-  std::vector<Tile*>& renderList = result.tilesToRenderThisFrame;
+  std::vector<IntrusivePointer<Tile>>& renderList =
+      result.tilesToRenderThisFrame;
   renderList.erase(
       renderList.begin() +
           static_cast<std::vector<Tile*>::iterator::difference_type>(

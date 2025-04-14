@@ -19,10 +19,10 @@ using namespace CesiumUtility;
 namespace {
 
 // Get the maximum level of any of the tiles in the list
-uint32_t getMaxLevel(const std::vector<Tile*>& tiles) {
+uint32_t getMaxLevel(const std::vector<IntrusivePointer<Tile>>& tiles) {
   uint32_t result = 0;
 
-  for (Tile* pTile : tiles) {
+  for (const IntrusivePointer<Tile>& pTile : tiles) {
     const QuadtreeTileID* pID =
         std::get_if<QuadtreeTileID>(&pTile->getTileID());
     if (pID != nullptr) {
@@ -76,7 +76,7 @@ TEST_CASE("TilesetViewGroup") {
         externals.asyncSystem.dispatchMainThreadTasks();
       }
 
-      std::vector<Tile*> farViewTiles;
+      std::vector<IntrusivePointer<Tile>> farViewTiles;
 
       {
         const ViewUpdateResult& farResult = farGroup.getViewUpdateResult();

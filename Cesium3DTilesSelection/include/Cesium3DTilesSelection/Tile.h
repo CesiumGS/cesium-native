@@ -507,48 +507,6 @@ public:
   bool needsMainThreadLoading() const noexcept;
 
   /**
-   * @brief Returns the internal count denoting that the tile and its ancestors
-   * should not be unloaded.
-   *
-   * This function is not supposed to be called by clients.
-   */
-  int32_t getDoNotUnloadSubtreeCount() const noexcept {
-    return this->_doNotUnloadSubtreeCount;
-  }
-
-  /**
-   * @brief Increments the internal count denoting that the tile and its
-   * ancestors should not be unloaded.
-   *
-   * This function is not supposed to be called by clients.
-   */
-  void incrementDoNotUnloadSubtreeCount(const char* reason) noexcept;
-
-  /**
-   * @brief Decrements the internal count denoting that the tile and its
-   * ancestors should not be unloaded.
-   *
-   * This function is not supposed to be called by clients.
-   */
-  void decrementDoNotUnloadSubtreeCount(const char* reason) noexcept;
-
-  /**
-   * @brief Increments the internal count denoting that the tile and its
-   * ancestors should not be unloaded starting with this tile's parent.
-   *
-   * This function is not supposed to be called by clients.
-   */
-  void incrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
-
-  /**
-   * @brief Decrements the internal count denoting that the tile and its
-   * ancestors should not be unloaded starting with this tile's parent.
-   *
-   * This function is not supposed to be called by clients.
-   */
-  void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
-
-  /**
    * @brief Adds a reference to this tile. While the reference count is greater
    * than zero, the tile and its content will not be unloaded.
    */
@@ -561,11 +519,17 @@ public:
    */
   void releaseReference() const noexcept;
 
+  /**
+   * @brief Gets the current number of references to this tile.
+   *
+   * A reference will be added:
+   * * For each IntrusivePointer to this Tile.
+   * * When the tile's content is loaded.
+   * * For each child tile that has a non-zero reference count.
+   */
+  int32_t getReferenceCount() const noexcept;
+
 private:
-  void incrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
-
-  void decrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
-
   struct TileConstructorImpl {};
   template <
       typename... TileContentArgs,
@@ -625,18 +589,46 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  // Number of existing claims on this tile preventing it and its parent
-  // external tileset (if any) from being unloaded from the tree. A non-zero
-  // count here prevents this Tile instance from being destroyed, but it does
-  // not prevent its content from being unloaded.
-  int32_t _doNotUnloadSubtreeCount;
-
-  // The number of TilesetViewGroups and potentially others that currently
-  // reference this tile. While a tile is referenced, its content may not be
-  // unloaded, nor can the external tileset that contains this tile be unloaded.
-  // Tile instances are not automatically destroyed when their reference count
-  // goes to zero, but they become eligible for destruction (e.g., when the
-  // external tileset that owns them is unloaded).
+  /**
+   * @brief The number of references to this tile.
+   *
+   * References may come from different places:
+   *
+   * 1. A reference effectively held by the user, such as an
+   * `IntrusivePointer<Tile>` in `TilesetViewGroup`. Such a reference is
+   * intended to ensure that the `Tile` instance is not destroyed _and_ its
+   * content remains loaded.
+   * 2. A reference held by the TilesetContentManager while an async load of the
+   * tile's content is in progress. Destroying the `Tile` instance during this
+   * process would be bad, for obvious reasons.
+   * 3. A reference representing the loaded content itself. A `Tile` instance,
+   * such as one that is part of an external tileset, must not be destroyed
+   * while it has loaded content.
+   * 4. A reference that a child tile holds on its parent in order to keep
+   * itself from being destroyed. When a Tile's reference count goes from zero
+   * to one, the reference count of the Tile's parent is also incremented. When
+   * a Tile's reference count goes from one to zero, the reference count of the
+   * Tile's parent is also decremented. This ensures that a single referenced
+   * tile deep in a subtree will prevent the external tileset containing that
+   * subtree from unloading.
+   *
+   * The effect of the reference count is as follows:
+   *
+   * 1. A Tile with a reference count greater than zero cannot be destroyed.
+   * Pointers to it must remain valid.
+   * 2. If a Tile's reference count is greater than the number of its children
+   * with non-zero reference counts, plus one for the content itself, then its
+   * renderable content cannot be unloaded. Why? Because this arrangement of
+   * reference count indicates that there are external references to the Tile
+   * that presumably needs the content.
+   * 3. A Tile with "external tileset" content can only be unloaded - and its
+   * Tile subtree destroyed - when its reference count is one (loaded external
+   * tileset content only, no children are loaded or referenced).
+   *
+   * To state it more explicitly, a reference count greater than 0 will prevent
+   * the `Tile` from being destroyed. But a larger reference count is required
+   * to prevent its content from unloading.
+   */
   mutable int32_t _referenceCount;
 
   friend class TilesetContentManager;
