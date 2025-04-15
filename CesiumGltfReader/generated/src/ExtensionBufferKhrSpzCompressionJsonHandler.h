@@ -5,6 +5,7 @@
 #include <CesiumGltf/ExtensionBufferKhrSpzCompression.h>
 #include <CesiumJsonReader/BoolJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
   class JsonReaderOptions;
@@ -33,5 +34,10 @@ namespace CesiumGltfReader {
 
     CesiumGltf::ExtensionBufferKhrSpzCompression* _pObject = nullptr;
     CesiumJsonReader::BoolJsonHandler _fallback;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _numPoints;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _shDegree;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _fractionalBits;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _flags;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _version;
   };
 }
