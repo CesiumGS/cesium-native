@@ -1720,6 +1720,8 @@ void TilesetContentManager::setTileContent(
     }
 
     auto& content = tile.getContent();
+    CESIUM_ASSERT(content.isUnknownContent());
+
     std::visit(
         ContentKindSetter{
             content,
