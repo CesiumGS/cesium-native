@@ -1,12 +1,11 @@
 #pragma once
 
-#include "CesiumUtility/Uri.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumUtility/Uri.h>
 
 #include <doctest/doctest.h>
 

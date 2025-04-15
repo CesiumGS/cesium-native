@@ -1,5 +1,3 @@
-#include "CesiumITwinClient/GeospatialFeatureCollection.h"
-
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
@@ -12,6 +10,7 @@
 #include <CesiumITwinClient/AuthenticationToken.h>
 #include <CesiumITwinClient/CesiumCuratedContent.h>
 #include <CesiumITwinClient/Connection.h>
+#include <CesiumITwinClient/GeospatialFeatureCollection.h>
 #include <CesiumITwinClient/IModel.h>
 #include <CesiumITwinClient/IModelMeshExport.h>
 #include <CesiumITwinClient/ITwin.h>

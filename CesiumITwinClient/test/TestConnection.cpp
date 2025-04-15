@@ -1,12 +1,12 @@
-#include "CesiumGeospatial/BoundingRegion.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumITwinClient/GeospatialFeatureCollection.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumITwinClient/AuthenticationToken.h>
 #include <CesiumITwinClient/Connection.h>
+#include <CesiumITwinClient/GeospatialFeatureCollection.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/VectorNode.h>

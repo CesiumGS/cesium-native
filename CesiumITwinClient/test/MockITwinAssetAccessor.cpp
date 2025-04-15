@@ -1,10 +1,9 @@
 #include "MockITwinAssetAccessor.h"
 
-#include "CesiumNativeTests/SimpleAssetRequest.h"
-#include "CesiumNativeTests/readFile.h"
-#include "CesiumUtility/Uri.h"
-
 #include <CesiumClientCommon/fillWithRandomBytes.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/Uri.h>
 
 #include <modp_b64.h>
 #include <rapidjson/document.h>
