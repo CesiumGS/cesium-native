@@ -1416,12 +1416,12 @@ void TilesetContentManager::finishLoading(
   updateTileContent(tile, tilesetOptions);
 }
 
-void TilesetContentManager::markTileNowIneligibleForContentUnloading(
+void TilesetContentManager::markTileIneligibleForContentUnloading(
     const Tile& tile) {
   this->_tilesEligibleForContentUnloading.remove(const_cast<Tile&>(tile));
 }
 
-void TilesetContentManager::markTileNowEligibleForContentUnloading(
+void TilesetContentManager::markTileEligibleForContentUnloading(
     const Tile& tile) {
   // If the tile is not yet in the list, add it to the end (most recently used).
   if (!this->_tilesEligibleForContentUnloading.contains(tile)) {

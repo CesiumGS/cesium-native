@@ -378,7 +378,7 @@ void Tile::addReference() const noexcept {
   // for content unloading" with the TilesetContentManager.
   if (isContentReferenced(*this) && this->_pLoader &&
       this->_pLoader->getOwner()) {
-    this->_pLoader->getOwner()->markTileNowIneligibleForContentUnloading(*this);
+    this->_pLoader->getOwner()->markTileIneligibleForContentUnloading(*this);
   }
 }
 
@@ -396,7 +396,7 @@ void Tile::releaseReference() const noexcept {
   // tile as "eligible for content unloading" with the TilesetContentManager.
   if (!isContentReferenced(*this) && this->_pLoader &&
       this->_pLoader->getOwner()) {
-    this->_pLoader->getOwner()->markTileNowEligibleForContentUnloading(*this);
+    this->_pLoader->getOwner()->markTileEligibleForContentUnloading(*this);
   }
 }
 
