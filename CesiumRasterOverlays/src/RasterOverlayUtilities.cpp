@@ -1,6 +1,3 @@
-#include "CesiumGeometry/AxisAlignedBox.h"
-#include "CesiumGeometry/OrientedBoundingBox.h"
-
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
