@@ -13,6 +13,7 @@
 - `TileSelectionState` no longer uses or requires a frame number. This parameter has been removed from its various methods.
 - Derived `TilesetContentLoader` classes that aggregate other loaders must now implement `setOwnerOfNestedLoaders` to pass the owner through.
 - `DebugTileStateDatabase::recordAllTileStates` and `recordTileState` now must be given a `TilesetViewGroup` indicating which view group to record states for.
+- `ViewUpdateResult` now holds `IntrusivePointer`s to `Tile` instances rather than raw pointers.
 
 ##### Additions :tada:
 

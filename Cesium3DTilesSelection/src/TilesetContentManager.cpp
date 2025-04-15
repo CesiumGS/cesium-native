@@ -1066,7 +1066,7 @@ void TilesetContentManager::loadTileContent(
   }
 
   // Reference this Tile while its content is loading.
-  tile.addReference();
+  Tile::Pointer pTile = &tile;
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
@@ -1137,17 +1137,15 @@ void TilesetContentManager::loadTileContent(
             .createResolvedFuture<TileLoadResultAndRenderResources>(
                 {std::move(result), nullptr});
       })
-      .thenInMainThread([&tile, thiz](TileLoadResultAndRenderResources&& pair) {
-        setTileContent(tile, std::move(pair.result), pair.pRenderResources);
-        tile.releaseReference();
-        thiz->notifyTileDoneLoading(&tile);
+      .thenInMainThread([pTile, thiz](TileLoadResultAndRenderResources&& pair) {
+        setTileContent(*pTile, std::move(pair.result), pair.pRenderResources);
+        thiz->notifyTileDoneLoading(pTile.get());
       })
-      .catchInMainThread([pLogger = this->_externals.pLogger, &tile, thiz](
+      .catchInMainThread([pLogger = this->_externals.pLogger, pTile, thiz](
                              std::exception&& e) {
-        tile.getMappedRasterTiles().clear();
-        tile.setState(TileLoadState::Failed);
-        tile.releaseReference();
-        thiz->notifyTileDoneLoading(&tile);
+        pTile->getMappedRasterTiles().clear();
+        pTile->setState(TileLoadState::Failed);
+        thiz->notifyTileDoneLoading(pTile.get());
         SPDLOG_LOGGER_ERROR(
             pLogger,
             "An unexpected error occurred when loading tile: {}",
