@@ -610,46 +610,6 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  /**
-   * @brief The number of references to this tile.
-   *
-   * References may come from different places:
-   *
-   * 1. A reference effectively held by the user, such as an
-   * `IntrusivePointer<Tile>` in `TilesetViewGroup`. Such a reference is
-   * intended to ensure that the `Tile` instance is not destroyed _and_ its
-   * content remains loaded.
-   * 2. A reference held by the TilesetContentManager while an async load of the
-   * tile's content is in progress. Destroying the `Tile` instance during this
-   * process would be bad, for obvious reasons.
-   * 3. A reference representing the loaded content itself. A `Tile` instance,
-   * such as one that is part of an external tileset, must not be destroyed
-   * while it has loaded content.
-   * 4. A reference that a child tile holds on its parent in order to keep
-   * itself from being destroyed. When a Tile's reference count goes from zero
-   * to one, the reference count of the Tile's parent is also incremented. When
-   * a Tile's reference count goes from one to zero, the reference count of the
-   * Tile's parent is also decremented. This ensures that a single referenced
-   * tile deep in a subtree will prevent the external tileset containing that
-   * subtree from unloading.
-   *
-   * The effect of the reference count is as follows:
-   *
-   * 1. A Tile with a reference count greater than zero cannot be destroyed.
-   * Pointers to it must remain valid.
-   * 2. If a Tile's reference count is greater than the number of its children
-   * with non-zero reference counts, plus one for the content itself, then its
-   * renderable content cannot be unloaded. Why? Because this arrangement of
-   * reference count indicates that there are external references to the Tile
-   * that presumably needs the content.
-   * 3. A Tile with "external tileset" content can only be unloaded - and its
-   * Tile subtree destroyed - when its reference count is one (loaded external
-   * tileset content only, no children are loaded or referenced).
-   *
-   * To state it more explicitly, a reference count greater than 0 will prevent
-   * the `Tile` from being destroyed. But a larger reference count is required
-   * to prevent its content from unloading.
-   */
   mutable int32_t _referenceCount;
 
   friend class TilesetContentManager;
