@@ -19,6 +19,7 @@
 #include <CesiumITwinClient/Profile.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumVectorData/VectorDocument.h>
