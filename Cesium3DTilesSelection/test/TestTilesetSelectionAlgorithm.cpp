@@ -1586,23 +1586,22 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       pRawLoader->createRootTile(),
       options);
 
+  TilesetViewGroup& viewGroup = tileset.getDefaultViewGroup();
+
   // On the first update, we should refine down to the grandchild tile, even
   // though no tiles are loaded yet.
   initializeTileset(tileset);
   const Tile& child = tileset.getRootTile()->getChildren()[0];
   const Tile& grandchild = child.getChildren()[0];
+
+  auto states = viewGroup.getTraversalState().slowlyGetCurrentStates();
+
   CHECK(
-      tileset.getRootTile()->getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      states[tileset.getRootTile()].getResult() ==
       TileSelectionState::Result::Refined);
+  CHECK(states[&child].getResult() == TileSelectionState::Result::Refined);
   CHECK(
-      child.getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
-      TileSelectionState::Result::Refined);
-  CHECK(
-      grandchild.getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
-      TileSelectionState::Result::Rendered);
+      states[&grandchild].getResult() == TileSelectionState::Result::Rendered);
 
   // After the third update, the root and child tiles have been loaded, while
   // the grandchild has not. But the child is unconditionally refined, so we
@@ -1610,18 +1609,15 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   // the child and grandchild are kicked.
   initializeTileset(tileset);
   initializeTileset(tileset);
+
+  states = viewGroup.getTraversalState().slowlyGetCurrentStates();
+
   CHECK(
-      tileset.getRootTile()->getLastSelectionState().getResult(
-          tileset.getRootTile()->getLastSelectionState().getFrameNumber()) ==
+      states[tileset.getRootTile()].getResult() ==
       TileSelectionState::Result::Rendered);
+  CHECK(states[&child].getResult() != TileSelectionState::Result::Rendered);
   CHECK(
-      child.getLastSelectionState().getResult(
-          child.getLastSelectionState().getFrameNumber()) !=
-      TileSelectionState::Result::Rendered);
-  CHECK(
-      grandchild.getLastSelectionState().getResult(
-          grandchild.getLastSelectionState().getFrameNumber()) !=
-      TileSelectionState::Result::Rendered);
+      states[&grandchild].getResult() != TileSelectionState::Result::Rendered);
 
   REQUIRE(pRawLoader->_grandchildPromise);
 
@@ -1632,10 +1628,10 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
 
   initializeTileset(tileset);
 
+  states = viewGroup.getTraversalState().slowlyGetCurrentStates();
+
   CHECK(
-      grandchild.getLastSelectionState().getResult(
-          grandchild.getLastSelectionState().getFrameNumber()) ==
-      TileSelectionState::Result::Rendered);
+      states[&grandchild].getResult() == TileSelectionState::Result::Rendered);
 }
 
 } // namespace

@@ -1,12 +1,12 @@
 # 3D Tiles Selection Algorithm {#selection-algorithm-details}
 
-In [Rendering 3D Tiles](#rendering-3d-tiles), we described how Cesium Native's support for 3D Tiles rendering can be integrated into an application. Here we go deeper, describing how [Tileset::updateView](@ref Cesium3DTilesSelection::Tileset::updateView) decides which tiles to load and render. This will primarily be of interest to developers improving Cesium Native itself, or perhaps to users who want a deep understanding in order to best optimize the available [TilesetOptions](@ref Cesium3DTilesSelection::TilesetOptions) for their use-case. It is assumed that the reader has familiarity with the [3D Tiles Specification](https://github.com/CesiumGS/3d-tiles/blob/main/specification/README.adoc).
+In [Rendering 3D Tiles](#rendering-3d-tiles), we described how Cesium Native's support for 3D Tiles rendering can be integrated into an application. Here we go deeper, describing how [Tileset::updateViewGroup](@ref Cesium3DTilesSelection::Tileset::updateViewGroup) decides which tiles to load and render. This will primarily be of interest to developers improving Cesium Native itself, or perhaps to users who want a deep understanding in order to best optimize the available [TilesetOptions](@ref Cesium3DTilesSelection::TilesetOptions) for their use-case. It is assumed that the reader has familiarity with the [3D Tiles Specification](https://github.com/CesiumGS/3d-tiles/blob/main/specification/README.adoc).
 
 ## High-Level Overview {#high-level-overview}
 
 @mermaid{tileset-traversal-flowchart}
 
-At a high level, `updateView` works by traversing the 3D Tiles tileset's bounding-volume hierarchy (BVH) in depth-first order. This is done using recursion, starting with a call to the private `_visitTileIfNeeded` method and passing it the root tile in the BVH. `_visitTileIfNeeded` checks to see if the tile needs to be [visited](#culling). The most important reason a tile would not need to be visited is if it's outside the view frustum of _all_ of the [ViewStates](@ref Cesium3DTilesSelection::ViewState) given to `updateView`. Such a tile is not visible, so we do not need to consider it further and traversal of this branch of the BVH stops here.
+At a high level, `updateViewGroup` works by traversing the 3D Tiles tileset's bounding-volume hierarchy (BVH) in depth-first order. This is done using recursion, starting with a call to the private `_visitTileIfNeeded` method and passing it the root tile in the BVH. `_visitTileIfNeeded` checks to see if the tile needs to be [visited](#culling). The most important reason a tile would not need to be visited is if it's outside the view frustum of _all_ of the [ViewStates](@ref Cesium3DTilesSelection::ViewState) given to `updateViewGroup`. Such a tile is not visible, so we do not need to consider it further and traversal of this branch of the BVH stops here.
 
 For tiles that _do_ need to be visited, `_visitTileIfNeeded` calls `_visitTile`.
 
@@ -147,7 +147,7 @@ Because _content_ is by far the largest part of a tile, and the most time-consum
 
 @mermaid{tile-load-states}
 
-A `Tile` starts in the `Unloaded` state. A `Tile` in this state is added to the `_workerThreadLoadQueue` the first time it is visited during the selection algorithm. Any tiles that remain in this queue at the end of the selection (that is, that are not [kicked](#kicking)) are prioritized for loading as described in the [next section](#load-prioritization).
+A `Tile` starts in the `Unloaded` state. A `Tile` in this state is added to the `TilesetViewGroup`'s `_workerThreadLoadQueue` the first time it is visited during the selection algorithm. Any tiles that remain in this queue at the end of the selection (that is, that are not [kicked](#kicking)) are prioritized for loading as described in the [next section](#load-prioritization).
 
 The number of tiles that may load simultaneously is controlled by the [TilesetOptions::maximumSimultaneousTileLoads](\ref Cesium3DTilesSelection::TilesetOptions::maximumSimultaneousTileLoads) property. We can picture tile loading as a swimming pool with `maximumSimultaneousTileLoads` swim lanes. The highest priority tiles jump in the pool, each in their own lane, and race for the other end. When a tile reaches the other side (finishes asynchronous loading), the next highest priority tile can jump in the pool in that now-unoccupied lane and start swimming. Multiple tiles can never share a swim lane.
 
@@ -185,6 +185,10 @@ Within the group, a tile with a lower priority value will be loaded before a til
 ```
 
 Where `distance` is the distance from the camera to the closest point on the tile, `tileDirection` is the unit vector from the camera to the center of the tile's bounding volume, and `cameraDirection` is the look direction of of the camera. The idea is that tiles that are near the center of the screen and closer to the camera are loaded first.
+
+This prioritization metric only makes sense within the context of a single `TilesetViewGroup`. We can't reliably judge the relative priority of two tiles selected in different view groups using this metric, because it is a function of distance. A simple ranking would cause all tiles for a close-up view to load before any tiles for a view from farther away. This is probably not what users expect.
+
+Instead, each `TilesetViewGroup` ranks its loadable tiles independently. Then, which tile to actually load next is determined with a weighted round-robin algorithm across all view groups (and `TilesetHeightRequest` instances as well). A `TilesetViewGroup` with a [weight](\ref Cesium3DTilesSelection::TilesetViewGroup::setWeight) of 2.0 will be given roughly twice as many opportunities to load tiles as one with a weight of 1.0.
 
 ## Forbid Holes {#forbid-holes}
 
@@ -229,6 +233,7 @@ The following `TilesetContentLoader` types are currently provided:
 * `ImplicitQuadtreeLoader` - Loads a 3D Tiles 1.1 implicit quadtree.
 * `ImplicitOctreeLoader` - Loads a 3D Tiles 1.1 implicit octree.
 * `EllipsoidTilesetLoader` - Generates tiles on-the-fly by tessellating an ellipsoid, such as the WGS84 ellipsoid. Does not load any data from the disk or network.
+* `ITwinRealityDataContentLoader` and `ITwinCesiumCuratedContentLoader` - Load 3D Tiles from the Bentley iTwin Reality Data or Cesium Curated Content services, by delegating to one of the other loaders as appropriate. Automatically handles refreshing the token when it expires.
 
 Other loaders can be added by users of the library.
 
@@ -243,7 +248,7 @@ Cesium Native supports implicit tiling by lazily transforming the implicit repre
 
 Implicit [loaders](#tileset-content-loader), such as `ImplicitQuadtreeLoader`, `ImplicitOctreeLoader`, and `LayerJsonTerrainLoader`, implement this method by determining in their own way whether this tile has any children, and creating them if it does. In some cases, extra asynchronous work, like downloading subtree availability files, may be necessary to determine if children exist. In that case, the `createTileChildren` will return [TileLoadResultState::RetryLater](\ref Cesium3DTilesSelection::TileLoadResultState::RetryLater) to signal that children may exist, but they can't be created yet. The selection algorithm will try again next frame if the tile's children are still needed.
 
-These `Tile` instances may be destroyed in the future, so it is important not to hold onto pointers to them. However, a `Tile` instance will not be destroyed if it was returned in `ViewUpdateResult` in the last call to `updateView`, nor if it is currently being used for any height queries. Before a `Tile` is destroyed, its [renderer resources](#rendering-3d-tiles) will be freed.
+These `Tile` instances may be destroyed in the future, so it is important not to hold onto pointers to them. However, a `Tile` instance will not be destroyed if it was returned in `ViewUpdateResult` in the last call to `updateViewGroup`, nor if it is currently being used for any height queries. Before a `Tile` is destroyed, its [renderer resources](#rendering-3d-tiles) will be freed.
 
 ## Additional Topics Not Yet Covered {#additional-topics}
 

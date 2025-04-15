@@ -434,33 +434,6 @@ public:
   }
 
   /**
-   * @brief Returns the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @return The last selection state
-   */
-  TileSelectionState& getLastSelectionState() noexcept {
-    return this->_lastSelectionState;
-  }
-
-  /** @copydoc Tile::getLastSelectionState() */
-  const TileSelectionState& getLastSelectionState() const noexcept {
-    return this->_lastSelectionState;
-  }
-
-  /**
-   * @brief Set the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param newState The new stace
-   */
-  void setLastSelectionState(const TileSelectionState& newState) noexcept {
-    this->_lastSelectionState = newState;
-  }
-
-  /**
    * @brief Determines the number of bytes in this tile's geometry and texture
    * data.
    */
@@ -518,6 +491,22 @@ public:
   TileLoadState getState() const noexcept;
 
   /**
+   * @brief Determines if this tile requires worker-thread loading.
+   *
+   * @return true if this Tile needs further work done in a worker thread to
+   * load it; otherwise, false.
+   */
+  bool needsWorkerThreadLoading() const noexcept;
+
+  /**
+   * @brief Determines if this tile requires main-thread loading.
+   *
+   * @return true if this Tile needs further work done in the main thread to
+   * load it; otherwise, false.
+   */
+  bool needsMainThreadLoading() const noexcept;
+
+  /**
    * @brief Returns the internal count denoting that the tile and its ancestors
    * should not be unloaded.
    *
@@ -558,6 +547,19 @@ public:
    * This function is not supposed to be called by clients.
    */
   void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
+
+  /**
+   * @brief Adds a reference to this tile. While the reference count is greater
+   * than zero, the tile and its content will not be unloaded.
+   */
+  void addReference() const noexcept;
+
+  /**
+   * @brief Removes a reference from this tile. When the tile's reference count
+   * goes to zero, its content is eligible for unloading, and in some cases the
+   * `Tile` instance itself may eventually be deleted.
+   */
+  void releaseReference() const noexcept;
 
 private:
   void incrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
@@ -613,11 +615,8 @@ private:
   TileRefine _refine;
   glm::dmat4x4 _transform;
 
-  // Selection state
-  TileSelectionState _lastSelectionState;
-
   // tile content
-  CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+  CesiumUtility::DoublyLinkedListPointers<Tile> _unusedTilesLinks;
   TileContent _content;
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
@@ -627,8 +626,18 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   // Number of existing claims on this tile preventing it and its parent
-  // external tileset (if any) from being unloaded from the tree.
-  int32_t _doNotUnloadSubtreeCount = 0;
+  // external tileset (if any) from being unloaded from the tree. A non-zero
+  // count here prevents this Tile instance from being destroyed, but it does
+  // not prevent its content from being unloaded.
+  int32_t _doNotUnloadSubtreeCount;
+
+  // The number of TilesetViewGroups and potentially others that currently
+  // reference this tile. While a tile is referenced, its content may not be
+  // unloaded, nor can the external tileset that contains this tile be unloaded.
+  // Tile instances are not automatically destroyed when their reference count
+  // goes to zero, but they become eligible for destruction (e.g., when the
+  // external tileset that owns them is unloaded).
+  mutable int32_t _referenceCount;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
@@ -637,8 +646,8 @@ public:
   /**
    * @brief A {@link CesiumUtility::DoublyLinkedList} for tile objects.
    */
-  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks>
-      LoadedLinkedList;
+  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_unusedTilesLinks>
+      UnusedLinkedList;
 };
 
 } // namespace Cesium3DTilesSelection

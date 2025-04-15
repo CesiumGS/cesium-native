@@ -1,5 +1,39 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Removed `addCreditToFrame`, `startNextFrame`, `getCreditsToShowThisFrame`, and `getCreditsToNoLongerShowThisFrame` from `CreditSystem`. `CreditSystem` no longer has a notion of a "frame". Instead, credits are included and excluded by calling `addCreditReference` and `removeCreditReference`. A snaphot of the current state can be obtained by calling `getSnapshot`, and it includes both the current set of active credits as well as the credits that were removed since the last snapshot.
+- Removed the following from `Cesium3DTilesSelection::Tile`:
+  - `getLastSelectionState` and `setLastSelectionState`. Use `TilesetViewGroup::getTraversalState` instead.
+  - `Tile::LoadedLinkedList`. Use `LoadedTileEnumerator` instead.
+- The `RasterOverlayCollection` constructor now takes a `LoadedTileEnumerator` instead of a `Tile::LoadedLinkedList`.
+- `TileSelectionState` no longer uses or requires a frame number. This parameter has been removed from its various methods.
+- Derived `TilesetContentLoader` classes that aggregate other loaders must now implement `setOwnerOfNestedLoaders` to pass the owner through.
+- `DebugTileStateDatabase::recordAllTileStates` and `recordTileState` now must be given a `TilesetViewGroup` indicating which view group to record states for.
+
+##### Additions :tada:
+
+- Added `TilesetViewGroup`. View groups select tiles independently from other any other view group. This is useful for applications with multiple viewports to allow them to show different levels-of-detail for the same area.
+- Added `CreditReferencer` which makes it easy to track credits in a frame-oriented fashion similar to how `CreditSystem::addCreditToFrame` worked in previous releases.
+- Added a `std::hash` implementation for `IntrusivePointer` that simply hashes the underlying pointer.
+- Added `Math::GoldenRatio`.
+- Added `TreeTraversalState` to `CesiumUtility`. It can be used to associate arbitrary data with individual nodes during a depth-first tree traversal and access that data in a later traversal.
+- Added `LoadedTileEnumerator` to enumerate the loaded tiles in a `Tile` subtree.
+- Added `RasterOverlayCollection::setLoadedTileEnumerator`.
+- Added `TileLoadRequester`, which allows influence over which tiles in a `Cesium3DTilesSelection::Tileset` are loaded. This is the base class for `TilesetViewGroup` and `TilesetHeightRequest`.
+- Added `TileLoadTask`, `TileLoadPriorityGroup`, and `TilesetFrameState`. Previously these types were private.
+- Added the following to `Cesium3DTilesSelection::Tileset`:
+  - `getUserCredit` - Reflects the `Credit` passed as a string into `TilesetOptions::credit`.
+  - `loadedTiles`- Allows enumeration of the tileset's loaded tiles.
+  - `getDefaultViewGroup` - Gets the default view group that is used when `updateView` is called.
+  - `updateViewGroup` - Updates the set of tiles to render for a `TilesetViewGroup`, as well as the set of tiles that the view group would like to load.
+  - `loadTiles` - Loads tiles that have been identified as required across all `TilesetViewGroup` and `TilesetHeightRequest` instances, up to limits specified in `TilesetOptions`.
+- `TilesetContentLoader` instances now know the `TilesetContentManager` that owns them. This is managed with new `getOwner` and `setOwner` methods.
+
+##### Fixes :wrench:
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
