@@ -84,11 +84,9 @@ public:
    * been parsed. If not, you should call \ref parse instead.
    *
    * @param token The full token string.
-   * @param name The name of the token.
-   * @param userName The name of the user this token belongs to.
-   * @param scopes The set of scopes this token is valid for.
-   * @param notValidBefore A UNIX timestamp representing the point in time that
-   * this token starts to be valid.
+   * @param contents The contents of the authentication token. For an access
+   * token, this an \ref AccessTokenContents value. For a share token, this is
+   * just a `string` containing the iTwin ID the token is for.
    * @param expires A UNIX timestamp representing the point in time that this
    * token stops being valid.
    */
