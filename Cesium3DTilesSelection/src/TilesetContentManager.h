@@ -228,7 +228,7 @@ private:
 
   // These tiles are not currently used, so their content may be unloaded. The
   // tiles at the head of the list are the least recently used, and the ones at
-  // the end are the most recently used.
+  // the tail are the most recently used.
   Tile::UnusedLinkedList _tilesEligibleForContentUnloading;
 
   std::vector<TileLoadRequester*> _requesters;
