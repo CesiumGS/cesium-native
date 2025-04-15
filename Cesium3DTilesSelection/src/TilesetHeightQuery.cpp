@@ -337,8 +337,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
       query.candidateTiles.clear();
 
-      for (const IntrusivePointer<Tile>& pCandidate :
-           query.previousCandidateTiles) {
+      for (const Tile::Pointer& pCandidate : query.previousCandidateTiles) {
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
@@ -367,10 +366,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         };
 
     // If any candidates need loading, add to return set
-    for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {
+    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
       checkTile(pTile.get());
     }
-    for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
+    for (const Tile::Pointer& pTile : query.candidateTiles) {
       checkTile(pTile.get());
     }
   }
@@ -381,10 +380,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
   // Do the intersect tests
   for (TilesetHeightQuery& query : this->queries) {
-    for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {
+    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
       query.intersectVisibleTile(pTile.get(), warnings);
     }
-    for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
+    for (const Tile::Pointer& pTile : query.candidateTiles) {
       query.intersectVisibleTile(pTile.get(), warnings);
     }
   }

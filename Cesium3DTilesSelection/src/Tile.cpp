@@ -122,13 +122,23 @@ Tile::Tile(Tile&& rhs) noexcept
       _loadState{rhs._loadState},
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
       _rasterTiles(std::move(rhs._rasterTiles)),
-      // See the move assignment operator for an explanation of why we copy
+      // See the move assignment operator for an explanation of how we copy
       // `_referenceCount` here.
-      _referenceCount(rhs._referenceCount) {
+      _referenceCount(0) {
+  if (!this->_content.isUnknownContent()) {
+    ++this->_referenceCount;
+    --rhs._referenceCount;
+  }
+
   // since children of rhs will have the parent pointed to rhs,
   // we will reparent them to this tile as rhs will be destroyed after this
   for (Tile& tile : this->_children) {
     tile.setParent(this);
+
+    if (tile.getReferenceCount() > 0) {
+      ++this->_referenceCount;
+      --rhs._referenceCount;
+    }
   }
 }
 
@@ -140,9 +150,6 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     // we will reparent them to this tile as rhs will be destroyed after this
     this->_pParent = rhs._pParent;
     this->_children = std::move(rhs._children);
-    for (Tile& tile : this->_children) {
-      tile.setParent(this);
-    }
 
     this->_id = std::move(rhs._id);
     this->_boundingVolume = rhs._boundingVolume;
@@ -157,20 +164,31 @@ Tile& Tile::operator=(Tile&& rhs) noexcept {
     this->_rasterTiles = std::move(rhs._rasterTiles);
     this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
 
-    // A "count" in the `rhs` could, in theory, represent an external
-    // pointer that references that Tile. In that case, we wouldn't want to copy
-    // that "count" to this tile because the target of that pointer is not going
-    // to change over to this Tile.
+    // A "count" in the `rhs` may represent an external pointer that references
+    // that Tile. In that case, we wouldn't want to copy that "count" to this
+    // tile because the target of that pointer is not going to change over to
+    // this Tile.
 
-    // However, when a "count" represents loaded content in this tile's subtree,
-    // that _will_ move over, and so it's essential we copy that count over to
-    // the target.
+    // However, when a "count" represents loaded content that is moving to this
+    // tile, or a reference from a child tile that is moving to this tile, those
+    // counts do need to move to over to this tile during the move operation.
 
-    // There's no way to tell the difference between these two cases. However,
-    // as a practical matter, we take pains to avoid having pointers to Tiles
-    // that we're moving out of, and so we can safely assume that all "counts"
-    // refer to loaded subtree content instead of pointers.
-    this->_referenceCount = rhs._referenceCount;
+    // We take pains to avoid having pointers to Tiles that we're moving out of,
+    // so generally this operation should end up moving all of the counts.
+    this->_referenceCount = 0;
+
+    if (!this->_content.isUnknownContent()) {
+      ++this->_referenceCount;
+      --rhs._referenceCount;
+    }
+
+    for (Tile& tile : this->_children) {
+      tile.setParent(this);
+      if (tile.getReferenceCount() > 0) {
+        ++this->_referenceCount;
+        --rhs._referenceCount;
+      }
+    }
   }
 
   return *this;

@@ -290,7 +290,7 @@ void Tileset::_updateLodTransitions(
     }
 
     // Update fade in
-    for (const IntrusivePointer<Tile>& pTile : result.tilesToRenderThisFrame) {
+    for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
@@ -310,7 +310,7 @@ void Tileset::_updateLodTransitions(
   } else {
     // If there are any tiles still fading in, set them to fully visible right
     // away.
-    for (const IntrusivePointer<Tile>& pTile : result.tilesToRenderThisFrame) {
+    for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
       TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
@@ -324,7 +324,7 @@ const ViewUpdateResult&
 Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   ViewUpdateResult& updateResult =
       this->_defaultViewGroup.getViewUpdateResult();
-  std::vector<IntrusivePointer<Tile>> tilesSelectedPrevFrame =
+  std::vector<Tile::Pointer> tilesSelectedPrevFrame =
       updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
@@ -342,12 +342,11 @@ Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
   std::unordered_set<Tile*> uniqueTilesToRenderThisFrame;
   uniqueTilesToRenderThisFrame.reserve(
       updateResult.tilesToRenderThisFrame.size());
-  for (const IntrusivePointer<Tile>& pTile :
-       updateResult.tilesToRenderThisFrame) {
+  for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
     uniqueTilesToRenderThisFrame.insert(pTile.get());
   }
 
-  for (const IntrusivePointer<Tile>& pTile : tilesSelectedPrevFrame) {
+  for (const Tile::Pointer& pTile : tilesSelectedPrevFrame) {
     if (uniqueTilesToRenderThisFrame.find(pTile.get()) ==
         uniqueTilesToRenderThisFrame.end()) {
       TileRenderContent* pRenderContent =
@@ -1122,8 +1121,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
          TileSelectionState& selectionState) { selectionState.kick(); });
 
   // Remove all descendants from the render list and add this tile.
-  std::vector<IntrusivePointer<Tile>>& renderList =
-      result.tilesToRenderThisFrame;
+  std::vector<Tile::Pointer>& renderList = result.tilesToRenderThisFrame;
   renderList.erase(
       renderList.begin() +
           static_cast<std::vector<Tile*>::iterator::difference_type>(

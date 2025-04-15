@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/DoublyLinkedList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/common.hpp>
 
@@ -120,6 +121,15 @@ enum class TileLoadState {
  */
 class CESIUM3DTILESSELECTION_API Tile final {
 public:
+  /**
+   * @brief A reference counting pointer to a `Tile`.
+   *
+   * An instance of this pointer type will keep the `Tile` from being destroyed,
+   * and it may also keep its content from unloading. See {@link addReference}
+   * for details.
+   */
+  using Pointer = CesiumUtility::IntrusivePointer<Tile>;
+
   /**
    * @brief Construct a tile with unknown content and a loader that is used to
    * load the content of this tile. Tile has Unloaded status when initializing

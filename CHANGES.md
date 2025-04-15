@@ -8,6 +8,7 @@
 - Removed the following from `Cesium3DTilesSelection::Tile`:
   - `getLastSelectionState` and `setLastSelectionState`. Use `TilesetViewGroup::getTraversalState` instead.
   - `Tile::LoadedLinkedList`. Use `LoadedTileEnumerator` instead.
+  - `getDoNotUnloadSubtreeCount`, `incrementDoNotUnloadSubtreeCount`, `decrementDoNotUnloadSubtreeCount`, `incrementDoNotUnloadSubtreeCountOnParent`, and `decrementDoNotUnloadSubtreeCountOnParent`. Use `addReference`, `releaseReference`, and `getReferenceCount` instead.
 - The `RasterOverlayCollection` constructor now takes a `LoadedTileEnumerator` instead of a `Tile::LoadedLinkedList`.
 - `TileSelectionState` no longer uses or requires a frame number. This parameter has been removed from its various methods.
 - Derived `TilesetContentLoader` classes that aggregate other loaders must now implement `setOwnerOfNestedLoaders` to pass the owner through.
