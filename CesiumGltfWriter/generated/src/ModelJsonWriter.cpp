@@ -47,8 +47,7 @@
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
-#include <CesiumGltf/ExtensionBufferKhrSpzCompression.h>
-#include <CesiumGltf/ExtensionBufferViewKhrSpzCompression.h>
+#include <CesiumGltf/ExtensionKhrSpzCompression.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
@@ -185,12 +184,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionBufferKhrSpzCompression& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context);
-
-void writeJson(
-    const CesiumGltf::ExtensionBufferViewKhrSpzCompression& obj,
+    const CesiumGltf::ExtensionKhrSpzCompression& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -994,59 +988,44 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionBufferKhrSpzCompression& obj,
+    const CesiumGltf::ExtensionKhrSpzCompression& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.fallback != false) {
-  jsonWriter.Key("fallback");
-  writeJson(obj.fallback, jsonWriter, context);
+  if (obj.bufferView > -1) {
+  jsonWriter.Key("bufferView");
+  writeJson(obj.bufferView, jsonWriter, context);
   }
 
-  writeExtensibleObject(obj, jsonWriter, context);
-
-  jsonWriter.EndObject();
-}
-
-void writeJson(
-    const CesiumGltf::ExtensionBufferViewKhrSpzCompression& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  jsonWriter.StartObject();
-
-  if (obj.buffer > -1) {
-  jsonWriter.Key("buffer");
-  writeJson(obj.buffer, jsonWriter, context);
-  }
-
-  if (obj.byteOffset != 0) {
-  jsonWriter.Key("byteOffset");
-  writeJson(obj.byteOffset, jsonWriter, context);
-  }
-
-  jsonWriter.Key("byteLength");
-  writeJson(obj.byteLength, jsonWriter, context);
-
-  jsonWriter.Key("byteStride");
-  writeJson(obj.byteStride, jsonWriter, context);
-
+  if (obj.numPoints.has_value()) {
   jsonWriter.Key("numPoints");
   writeJson(obj.numPoints, jsonWriter, context);
+  }
 
-  if (obj.shDegree != 0) {
+  if (obj.shDegree.has_value()) {
   jsonWriter.Key("shDegree");
   writeJson(obj.shDegree, jsonWriter, context);
   }
 
-  if (obj.fractionalBits != 12) {
+  if (obj.fractionalBits.has_value()) {
   jsonWriter.Key("fractionalBits");
   writeJson(obj.fractionalBits, jsonWriter, context);
   }
 
-  if (obj.flags != 0) {
+  if (obj.flags.has_value()) {
   jsonWriter.Key("flags");
   writeJson(obj.flags, jsonWriter, context);
+  }
+
+  if (obj.version.has_value()) {
+  jsonWriter.Key("version");
+  writeJson(obj.version, jsonWriter, context);
+  }
+
+  if (!obj.attributes.empty()) {
+  jsonWriter.Key("attributes");
+  writeJson(obj.attributes, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2599,15 +2578,8 @@ void ExtensionKhrGaussianSplattingJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionBufferKhrSpzCompressionJsonWriter::write(
-    const CesiumGltf::ExtensionBufferKhrSpzCompression& obj,
-    CesiumJsonWriter::JsonWriter& jsonWriter,
-    const CesiumJsonWriter::ExtensionWriterContext& context) {
-  writeJson(obj, jsonWriter, context);
-}
-
-void ExtensionBufferViewKhrSpzCompressionJsonWriter::write(
-    const CesiumGltf::ExtensionBufferViewKhrSpzCompression& obj,
+void ExtensionKhrSpzCompressionJsonWriter::write(
+    const CesiumGltf::ExtensionKhrSpzCompression& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

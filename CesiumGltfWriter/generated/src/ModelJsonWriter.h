@@ -30,8 +30,7 @@ struct ExtensionKhrTextureTransform;
 struct ExtensionTextureWebp;
 struct ExtensionCesiumPrimitiveOutline;
 struct ExtensionKhrGaussianSplatting;
-struct ExtensionBufferKhrSpzCompression;
-struct ExtensionBufferViewKhrSpzCompression;
+struct ExtensionKhrSpzCompression;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
@@ -302,24 +301,13 @@ struct ExtensionKhrGaussianSplattingJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionBufferKhrSpzCompressionJsonWriter {
-  using ValueType = CesiumGltf::ExtensionBufferKhrSpzCompression;
+struct ExtensionKhrSpzCompressionJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrSpzCompression;
 
   static inline constexpr const char* ExtensionName = "KHR_spz_compression";
 
   static void write(
-      const CesiumGltf::ExtensionBufferKhrSpzCompression& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct ExtensionBufferViewKhrSpzCompressionJsonWriter {
-  using ValueType = CesiumGltf::ExtensionBufferViewKhrSpzCompression;
-
-  static inline constexpr const char* ExtensionName = "KHR_spz_compression";
-
-  static void write(
-      const CesiumGltf::ExtensionBufferViewKhrSpzCompression& obj,
+      const CesiumGltf::ExtensionKhrSpzCompression& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

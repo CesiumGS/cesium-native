@@ -4,6 +4,8 @@
 
 #include "CesiumGltf/Library.h"
 #include <CesiumUtility/ExtensibleObject.h>
+#include <cstdint>
+#include <optional>
 
 namespace CesiumGltf {
     /**
@@ -17,6 +19,31 @@ namespace CesiumGltf {
          * @brief Set to true to indicate that the buffer is only referenced by bufferViews that have KHR_spz_compression extension and as such doesn't need to be loaded.
          */
         bool fallback = false;
+
+        /**
+         * @brief The number of gaussians.
+         */
+        std::optional<int64_t> numPoints;
+
+        /**
+         * @brief The degree of the spherical harmonics.
+         */
+        int64_t shDegree = 0;
+
+        /**
+         * @brief The number of fractional bits.
+         */
+        int64_t fractionalBits = 12;
+
+        /**
+         * @brief The flags for the compressed data.
+         */
+        int64_t flags = 0;
+
+        /**
+         * @brief The version of the SPZ algorithm.
+         */
+        int64_t version = 2;
 
     };
 }
