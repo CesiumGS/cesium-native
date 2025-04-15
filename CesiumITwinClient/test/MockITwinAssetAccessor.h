@@ -11,7 +11,6 @@
 #include <doctest/doctest.h>
 
 #include <cstddef>
-#include <map>
 #include <memory>
 
 std::string randomStringOfLen(size_t len);

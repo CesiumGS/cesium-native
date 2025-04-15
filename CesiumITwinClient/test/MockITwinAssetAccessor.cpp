@@ -213,6 +213,23 @@ MockITwinAssetAccessor::handleApiServer(
   // handle JSON loaded from test data
   if (uri.getPath() ==
       "/geospatial-features/itwins/00000000-0000-0000-0000-000000000000/ogc/"
+      "collections") {
+    return asyncSystem
+        .createResolvedFuture<std::shared_ptr<CesiumAsync::IAssetRequest>>(
+            std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
+                verb,
+                std::string(uri.toString()),
+                CesiumAsync::HttpHeaders{},
+                std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
+                    200,
+                    "application/json",
+                    CesiumAsync::HttpHeaders{},
+                    readFile(
+                        std::filesystem::path(CesiumITwinClient_TEST_DATA_DIR) /
+                        "FeatureCollections.json"))));
+  } else if (
+      uri.getPath() ==
+      "/geospatial-features/itwins/00000000-0000-0000-0000-000000000000/ogc/"
       "collections/00000000-0000-0000-0000-000000000000/items") {
     return asyncSystem
         .createResolvedFuture<std::shared_ptr<CesiumAsync::IAssetRequest>>(

@@ -13,6 +13,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumClientCommon/OAuth2PKCE.h>
+#include <CesiumITwinClient/GeospatialFeatureCollection.h>
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
@@ -176,6 +177,18 @@ public:
   CesiumAsync::Future<
       CesiumUtility::Result<std::vector<CesiumCuratedContentAsset>>>
   cesiumCuratedContent();
+
+  /**
+   * @brief Retrieve all Collections (Feature Classes) that contain features
+   * within an iTwin.
+   *
+   * @param iTwinId The ID of the iTwin to retrieve all collections from.
+   * @see
+   * https://developer.bentley.com/apis/geospatial-features/operations/get-collections/
+   */
+  CesiumAsync::Future<
+      CesiumUtility::Result<std::vector<GeospatialFeatureCollection>>>
+  geospatialFeatureCollections(const std::string& iTwinId);
 
   /**
    * @brief Returns one or more pages of GeoJSON features in this iTwin.

@@ -1,3 +1,6 @@
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumITwinClient/GeospatialFeatureCollection.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -118,5 +121,68 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
                               103.839238468,
                               1.348559984,
                               7.813700195));
+  }
+}
+
+TEST_CASE("CesiumITwinClient::Connection::geospatialFeatureCollections") {
+  AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
+  std::shared_ptr<Connection> pConn = createConnection(asyncSystem, false);
+
+  SUBCASE("Returns correct results") {
+    CesiumAsync::Future<Result<std::vector<GeospatialFeatureCollection>>>
+        future = pConn->geospatialFeatureCollections(
+            "00000000-0000-0000-0000-000000000000");
+    Result<std::vector<GeospatialFeatureCollection>> collectionsResult =
+        future.waitInMainThread();
+
+    REQUIRE(collectionsResult.value);
+    CHECK(!collectionsResult.errors.hasErrors());
+
+    const std::vector<GeospatialFeatureCollection>& collections =
+        *collectionsResult.value;
+    REQUIRE(!collections.empty());
+
+    const GeospatialFeatureCollection& collection = collections[0];
+    CHECK(collection.id == "90442b2b-a7e6-4471-b093-cb002a37762a");
+    CHECK(collection.title == "Title");
+    CHECK(collection.description == "Description");
+
+    REQUIRE(!collection.extents.spatial.empty());
+    const CesiumGeospatial::BoundingRegion region{
+        CesiumGeospatial::GlobeRectangle{
+            Math::degreesToRadians(-50.08876885548398),
+            Math::degreesToRadians(50.94487570541774),
+            Math::degreesToRadians(-50.08830149142197),
+            Math::degreesToRadians(50.94521538951092)},
+        0.0003396840931770839,
+        0.0004673640620040942};
+    CHECK(
+        collection.extents.spatial[0].getRectangle().getNortheast() ==
+        region.getRectangle().getNortheast());
+    CHECK(
+        collection.extents.spatial[0].getRectangle().getSouthwest() ==
+        region.getRectangle().getSouthwest());
+    CHECK(
+        collection.extents.spatial[0].getMinimumHeight() ==
+        region.getMinimumHeight());
+    CHECK(
+        collection.extents.spatial[0].getMaximumHeight() ==
+        region.getMaximumHeight());
+    CHECK(
+        collection.extents.coordinateReferenceSystem ==
+        "https://www.opengis.net/def/crs/OGC/1.3/CRS84");
+
+    REQUIRE(!collection.extents.temporal.empty());
+    CHECK(collection.extents.temporal[0].first == "2011-11-11T12:22:11Z");
+    CHECK(collection.extents.temporal[0].second == "");
+    CHECK(
+        collection.extents.temporalReferenceSystem ==
+        "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian");
+
+    REQUIRE(!collection.crs.empty());
+    CHECK(collection.crs[0] == "https://www.opengis.net/def/crs/EPSG/0/32615");
+    CHECK(
+        collection.storageCrs ==
+        "https://www.opengis.net/def/crs/EPSG/0/32615");
   }
 }

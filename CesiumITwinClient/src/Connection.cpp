@@ -1,3 +1,5 @@
+#include "CesiumITwinClient/GeospatialFeatureCollection.h"
+
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
@@ -641,6 +643,209 @@ Connection::cesiumCuratedContent() {
 
             return Result<ITwinCCCListResponse>(std::move(items));
           });
+}
+
+CesiumAsync::Future<
+    CesiumUtility::Result<std::vector<GeospatialFeatureCollection>>>
+Connection::geospatialFeatureCollections(const std::string& iTwinId) {
+  const std::string url = fmt::format(
+      "https://api.bentley.com/geospatial-features/itwins/{}/ogc/collections",
+      iTwinId);
+  return this->ensureValidToken().thenInWorkerThread(
+      [url,
+       asyncSystem = this->_asyncSystem,
+       pAssetAccessor =
+           this->_pAssetAccessor](const Result<std::string>& tokenResult) {
+        if (!tokenResult.value) {
+          return asyncSystem.createResolvedFuture<
+              Result<std::vector<GeospatialFeatureCollection>>>(
+              tokenResult.errors);
+        }
+
+        const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
+            {"Authorization", *tokenResult.value},
+            {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
+
+        return pAssetAccessor->get(asyncSystem, url, headers)
+            .thenImmediately([](std::shared_ptr<IAssetRequest>&& request) {
+              Result<rapidjson::Document> docResult = handleJsonResponse(
+                  request,
+                  "listing geospatial feature collections");
+              if (!docResult.value) {
+                return Result<std::vector<GeospatialFeatureCollection>>(
+                    docResult.errors);
+              }
+
+              const rapidjson::Document& doc = *docResult.value;
+
+              const auto& collectionsMember = doc.FindMember("collections");
+              if (collectionsMember == doc.MemberEnd() ||
+                  !collectionsMember->value.IsArray()) {
+                return Result<std::vector<GeospatialFeatureCollection>>(
+                    ErrorList::error(
+                        "Collections result missing `collections` property."));
+              }
+
+              std::vector<GeospatialFeatureCollection> collections;
+              collections.reserve(collectionsMember->value.Size());
+
+              for (const auto& collection :
+                   collectionsMember->value.GetArray()) {
+                if (!collection.IsObject()) {
+                  return Result<std::vector<GeospatialFeatureCollection>>(
+                      ErrorList::error("All items in `collections` must be "
+                                       "JSON objects - skipping "));
+                }
+
+                GeospatialFeatureCollection& collectionResult =
+                    collections.emplace_back(GeospatialFeatureCollection{});
+
+                // Parse extents first.
+                const auto& extentMember = collection.FindMember("extent");
+                if (extentMember == collection.MemberEnd() ||
+                    !extentMember->value.IsObject()) {
+                  return Result<std::vector<GeospatialFeatureCollection>>(
+                      ErrorList::error(
+                          "Collections result missing `extent` property."));
+                }
+
+                // Handle spatial extents
+                const auto& spatialMember =
+                    extentMember->value.FindMember("spatial");
+                if (spatialMember == extentMember->value.MemberEnd() ||
+                    !spatialMember->value.IsObject()) {
+                  return Result<std::vector<GeospatialFeatureCollection>>(
+                      ErrorList::error("Collections result missing "
+                                       "`extent.spatial` property."));
+                }
+
+                const auto& bboxMember =
+                    spatialMember->value.FindMember("bbox");
+                if (bboxMember == spatialMember->value.MemberEnd() ||
+                    !bboxMember->value.IsArray()) {
+                  return Result<std::vector<GeospatialFeatureCollection>>(
+                      ErrorList::error("Collections result missing "
+                                       "`extent.spatial.bbox` property."));
+                }
+
+                collectionResult.extents.spatial.reserve(
+                    bboxMember->value.Size());
+
+                for (const auto& bboxCoords : bboxMember->value.GetArray()) {
+                  std::optional<std::vector<double>> coords =
+                      JsonHelpers::getDoubles(bboxCoords, -1);
+                  if (!coords || (coords->size() != 4 && coords->size() != 6)) {
+                    return Result<std::vector<GeospatialFeatureCollection>>(
+                        ErrorList::error(
+                            "Collections result `extent.spatial.bbox` member "
+                            "must have either four or six components."));
+                  }
+
+                  collectionResult.extents.spatial.emplace_back(
+                      CesiumGeospatial::GlobeRectangle{
+                          Math::degreesToRadians((*coords)[0]),
+                          Math::degreesToRadians((*coords)[1]),
+                          Math::degreesToRadians(
+                              coords->size() == 4 ? (*coords)[2]
+                                                  : (*coords)[3]),
+                          Math::degreesToRadians(
+                              coords->size() == 4 ? (*coords)[3]
+                                                  : (*coords)[4])},
+                      coords->size() == 4 ? 0 : (*coords)[2],
+                      coords->size() == 4 ? 0 : (*coords)[5]);
+                }
+
+                collectionResult.extents.coordinateReferenceSystem =
+                    JsonHelpers::getStringOrDefault(
+                        spatialMember->value,
+                        "crs",
+                        "");
+
+                // Handle temporal extents
+                const auto& temporalMember =
+                    extentMember->value.FindMember("temporal");
+                if (temporalMember != extentMember->value.MemberEnd() &&
+                    temporalMember->value.IsObject()) {
+                  const auto& intervalMember =
+                      temporalMember->value.FindMember("interval");
+                  if (intervalMember == temporalMember->value.MemberEnd() ||
+                      !intervalMember->value.IsArray()) {
+                    return Result<std::vector<GeospatialFeatureCollection>>(
+                        ErrorList::error("Collections result missing "
+                                         "`extent.temporal.interval` member."));
+                  }
+
+                  for (const auto& interval :
+                       intervalMember->value.GetArray()) {
+                    if (!interval.IsArray() || interval.Size() != 2) {
+                      return Result<std::vector<GeospatialFeatureCollection>>(
+                          ErrorList::error(
+                              "Collections result `extent.temporal.interval` "
+                              "member must be an array of two components."));
+                    }
+
+                    std::pair<std::string, std::string>& intervalPair =
+                        collectionResult.extents.temporal.emplace_back();
+                    if (interval[0].IsString()) {
+                      intervalPair.first = interval[0].GetString();
+                    } else if (interval[0].IsNull()) {
+                      intervalPair.first = "";
+                    } else {
+                      return Result<std::vector<GeospatialFeatureCollection>>(
+                          ErrorList::error(
+                              "Collections result `extent.temporal.interval` "
+                              "member arrays must contain only strings or null "
+                              "values."));
+                    }
+
+                    if (interval[1].IsString()) {
+                      intervalPair.second = interval[1].GetString();
+                    } else if (interval[1].IsNull()) {
+                      intervalPair.second = "";
+                    } else {
+                      return Result<std::vector<GeospatialFeatureCollection>>(
+                          ErrorList::error(
+                              "Collections result `extent.temporal.interval` "
+                              "member arrays must contain only strings or null "
+                              "values."));
+                    }
+                  }
+
+                  collectionResult.extents.temporalReferenceSystem =
+                      JsonHelpers::getStringOrDefault(
+                          temporalMember->value,
+                          "trs",
+                          "");
+                }
+
+                collectionResult.id =
+                    JsonHelpers::getStringOrDefault(collection, "id", "");
+                collectionResult.title =
+                    JsonHelpers::getStringOrDefault(collection, "title", "");
+                collectionResult.description = JsonHelpers::getStringOrDefault(
+                    collection,
+                    "description",
+                    "");
+                collectionResult.crs =
+                    JsonHelpers::getStrings(collection, "crs");
+                collectionResult.storageCrs = JsonHelpers::getStringOrDefault(
+                    collection,
+                    "storageCrs",
+                    "");
+                std::string coordinateEpoch = JsonHelpers::getStringOrDefault(
+                    collection,
+                    "storageCrsCoordinateEpoch",
+                    "");
+                if (!coordinateEpoch.empty()) {
+                  collectionResult.storageCrsCoordinateEpoch =
+                      std::move(coordinateEpoch);
+                }
+              }
+
+              return Result<std::vector<GeospatialFeatureCollection>>(
+                  std::move(collections));
+            });
+      });
 }
 
 CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
