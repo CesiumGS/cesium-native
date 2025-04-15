@@ -507,25 +507,61 @@ public:
   bool needsMainThreadLoading() const noexcept;
 
   /**
-   * @brief Adds a reference to this tile. While the reference count is greater
-   * than zero, the tile and its content will not be unloaded.
+   * @brief Adds a reference to this tile. A live reference will keep this tile
+   * from being destroyed, and it _may_ also keep the tile's content from
+   * unloading.
+   *
+   * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
+   * whenever possible, rather than calling this method directly.
+   *
+   * When the first reference is added to this tile, this method will
+   * automatically add a reference to this tile's parent tile as well. This is
+   * to prevent the parent tile from being destroyed, which would implicitly
+   * destroy all of its children as well. Parent tiles should never hold
+   * references to child tiles.
+   *
+   * A reference is also added to a tile when its content is loading or loaded.
+   * Content must finish loading, and be unloaded, before a Tile is eligible
+   * for destruction.
+   *
+   * Any additional added references, beyond one per referenced child and one
+   * representing this tile's content if it exists, indicate interest not just
+   * in the Tile itself but also in the Tile's _content_.
+   *
+   * For example: if a Tile has loaded content (1), plus it has four children
+   * and two (2) of them have a reference count greater than zero, it will have
+   * a total reference count of at least 1+2=3. If its reference count is
+   * exactly three, this means that the tile's _content_ is not currently
+   * needed and may be unloaded when the unused tile cache is full. However, if
+   * the reference count is greater than 3, this means that the content is also
+   * referenced and will not be unloaded.
    */
   void addReference() const noexcept;
 
   /**
-   * @brief Removes a reference from this tile. When the tile's reference count
-   * goes to zero, its content is eligible for unloading, and in some cases the
-   * `Tile` instance itself may eventually be deleted.
+   * @brief Removes a reference from this tile. A live reference will keep this
+   * tile from being destroyed, and it _may_ also keep the tile's content from
+   * unloading.
+   *
+   * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
+   * whenever possible, rather than calling this method directly.
+   *
+   * When the last reference is removed from this tile, this method will
+   * automatically remove a reference from this tile's parent tile as well. This
+   * parent reference was originally added by {@link addReference} when the
+   * tile's first reference was added. Removing it indicates that it is ok to
+   * destroy this tile, such as by unloading an external tileset.
+   *
+   * See {@link addReference} for details of how references can affect a tile's
+   * eligibility to have its content unloaded.
    */
   void releaseReference() const noexcept;
 
   /**
    * @brief Gets the current number of references to this tile.
    *
-   * A reference will be added:
-   * * For each IntrusivePointer to this Tile.
-   * * When the tile's content is loaded.
-   * * For each child tile that has a non-zero reference count.
+   * See {@link addReference} for details of when and why references are added,
+   * and how they impact a tile's eligibility to have its content unloaded.
    */
   int32_t getReferenceCount() const noexcept;
 
