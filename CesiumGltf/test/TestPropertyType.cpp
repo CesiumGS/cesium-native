@@ -141,6 +141,60 @@ TEST_CASE("Test convertPropertyTypeToString") {
   REQUIRE(
       convertPropertyTypeToString(PropertyType::Enum) ==
       ClassProperty::Type::ENUM);
+
+  REQUIRE(convertPropertyTypeToString(PropertyType::Invalid) == "INVALID");
+}
+
+TEST_CASE("Test convertAccessorTypeToPropertyType") {
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::SCALAR) ==
+      PropertyType::Scalar);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::VEC2) ==
+      PropertyType::Vec2);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::VEC3) ==
+      PropertyType::Vec3);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::VEC4) ==
+      PropertyType::Vec4);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::MAT2) ==
+      PropertyType::Mat2);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::MAT3) ==
+      PropertyType::Mat3);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::MAT4) ==
+      PropertyType::Mat4);
+  REQUIRE(
+      convertAccessorTypeToPropertyType("invalid") == PropertyType::Invalid);
+}
+
+TEST_CASE("Test convertPropertyTypeToAccessorType") {
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Scalar) ==
+      AccessorSpec::Type::SCALAR);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Vec2) ==
+      AccessorSpec::Type::VEC2);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Vec3) ==
+      AccessorSpec::Type::VEC3);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Vec4) ==
+      AccessorSpec::Type::VEC4);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Mat2) ==
+      AccessorSpec::Type::MAT2);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Mat3) ==
+      AccessorSpec::Type::MAT3);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Mat4) ==
+      AccessorSpec::Type::MAT4);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Invalid) == "INVALID");
 }
 
 TEST_CASE("Test convertPropertyComponentTypeToString") {
@@ -183,6 +237,10 @@ TEST_CASE("Test convertPropertyComponentTypeToString") {
   REQUIRE(
       convertPropertyComponentTypeToString(PropertyComponentType::Float64) ==
       ClassProperty::ComponentType::FLOAT64);
+
+  REQUIRE(
+      convertPropertyComponentTypeToString(PropertyComponentType::None) ==
+      "NONE");
 }
 
 TEST_CASE("Test convertArrayOffsetTypeStringToPropertyComponentType") {
