@@ -38,10 +38,7 @@ Tile::Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
-          TileContent(std::move(externalContent))) {
-  // Add a reference for the loaded content.
-  this->addReference();
-}
+          TileContent(std::move(externalContent))) {}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
@@ -50,10 +47,7 @@ Tile::Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
-          emptyContent) {
-  // Add a reference for the loaded content.
-  this->addReference();
-}
+          emptyContent) {}
 
 template <typename... TileContentArgs, typename TileContentEnable>
 Tile::Tile(
@@ -76,7 +70,12 @@ Tile::Tile(
       _loadState{loadState},
       _mightHaveLatentChildren{true},
       _rasterTiles(),
-      _referenceCount(0) {}
+      _referenceCount(0) {
+  if (!this->_content.isUnknownContent()) {
+    // Add a reference for the loaded content.
+    this->addReference();
+  }
+}
 
 Tile::Tile(Tile&& rhs) noexcept
     : _pParent(rhs._pParent),
@@ -98,8 +97,8 @@ Tile::Tile(Tile&& rhs) noexcept
       // `_referenceCount` here.
       _referenceCount(0) {
   if (!this->_content.isUnknownContent()) {
-    ++this->_referenceCount;
-    --rhs._referenceCount;
+    this->addReference();
+    rhs.releaseReference();
   }
 
   // since children of rhs will have the parent pointed to rhs,
@@ -108,62 +107,19 @@ Tile::Tile(Tile&& rhs) noexcept
     tile.setParent(this);
 
     if (tile.getReferenceCount() > 0) {
-      ++this->_referenceCount;
-      --rhs._referenceCount;
+      this->addReference();
+      rhs.releaseReference();
     }
   }
 }
 
-Tile& Tile::operator=(Tile&& rhs) noexcept {
-  if (this != &rhs) {
-    this->_unusedTilesLinks = rhs._unusedTilesLinks;
-
-    // since children of rhs will have the parent pointed to rhs,
-    // we will reparent them to this tile as rhs will be destroyed after this
-    this->_pParent = rhs._pParent;
-    this->_children = std::move(rhs._children);
-
-    this->_id = std::move(rhs._id);
-    this->_boundingVolume = rhs._boundingVolume;
-    this->_viewerRequestVolume = rhs._viewerRequestVolume;
-    this->_contentBoundingVolume = rhs._contentBoundingVolume;
-    this->_geometricError = rhs._geometricError;
-    this->_refine = rhs._refine;
-    this->_transform = rhs._transform;
-    this->_content = std::move(rhs._content);
-    this->_pLoader = rhs._pLoader;
-    this->_loadState = rhs._loadState;
-    this->_rasterTiles = std::move(rhs._rasterTiles);
-    this->_mightHaveLatentChildren = rhs._mightHaveLatentChildren;
-
-    // A "count" in the `rhs` may represent an external pointer that references
-    // that Tile. In that case, we wouldn't want to copy that "count" to this
-    // tile because the target of that pointer is not going to change over to
-    // this Tile.
-
-    // However, when a "count" represents loaded content that is moving to this
-    // tile, or a reference from a child tile that is moving to this tile, those
-    // counts do need to move to over to this tile during the move operation.
-
-    // We take pains to avoid having pointers to Tiles that we're moving out of,
-    // so generally this operation should end up moving all of the counts.
-    this->_referenceCount = 0;
-
-    if (!this->_content.isUnknownContent()) {
-      ++this->_referenceCount;
-      --rhs._referenceCount;
-    }
-
-    for (Tile& tile : this->_children) {
-      tile.setParent(this);
-      if (tile.getReferenceCount() > 0) {
-        ++this->_referenceCount;
-        --rhs._referenceCount;
-      }
-    }
-  }
-
-  return *this;
+Tile::~Tile() noexcept {
+  // // A tile being destroyed should not have any references. Except that the root
+  // // tile's content will never be unloaded, so its reference count may be 1.
+  // this->clearChildren();
+  // CESIUM_ASSERT(
+  //     this->_referenceCount == 0 ||
+  //     (this->_pParent == nullptr && this->_referenceCount == 1));
 }
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {
@@ -173,6 +129,7 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
 
   this->_children = std::move(children);
   for (Tile& tile : this->_children) {
+    CESIUM_ASSERT(tile.getParent() == nullptr);
     tile.setParent(this);
     // If a tile is created with children that are already referenced, we
     // bypassed the normal mechanism by which the parent's reference count would
@@ -371,6 +328,12 @@ void Tile::addReference() const noexcept {
   // destroyed inadvertently by incrementing its parent's reference count as
   // well.
   if (this->_referenceCount == 1 && this->_pParent) {
+    // An assertion failure here indicates this tile is not in its parent's list
+    // of children.
+    CESIUM_ASSERT(
+        !this->_pParent->_children.empty() &&
+        this >= &this->_pParent->_children.front() &&
+        this <= &this->_pParent->_children.back());
     this->_pParent->addReference();
   }
 
@@ -389,6 +352,12 @@ void Tile::releaseReference() const noexcept {
   // When the reference count goes from 1 to 0, this Tile is once again
   // eligible for destruction, so release the reference on the parent.
   if (this->_referenceCount == 0 && this->_pParent != nullptr) {
+    // An assertion failure here indicates this tile is not in its parent's list
+    // of children.
+    CESIUM_ASSERT(
+        !this->_pParent->_children.empty() &&
+        this >= &this->_pParent->_children.front() &&
+        this <= &this->_pParent->_children.back());
     this->_pParent->releaseReference();
   }
 

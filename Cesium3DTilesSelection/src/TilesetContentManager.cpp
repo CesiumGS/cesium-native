@@ -129,10 +129,11 @@ struct ContentKindSetter {
 void unloadTileRecursively(
     Tile& tile,
     TilesetContentManager& tilesetContentManager) {
-  tilesetContentManager.unloadTileContent(tile);
   for (Tile& child : tile.getChildren()) {
     unloadTileRecursively(child, tilesetContentManager);
   }
+
+  tilesetContentManager.unloadTileContent(tile);
 }
 
 std::optional<RegionAndCenter>
@@ -1487,6 +1488,7 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
     CESIUM_ASSERT(child.getContent().isUnknownContent());
     this->_tilesEligibleForContentUnloading.remove(child);
     this->clearChildrenRecursively(&child);
+    child.setParent(nullptr);
   }
 
   pTile->clearChildren();

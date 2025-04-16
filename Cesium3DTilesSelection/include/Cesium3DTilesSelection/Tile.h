@@ -140,7 +140,7 @@ public:
    * @brief Default destructor, which clears all resources associated with this
    * tile.
    */
-  ~Tile() noexcept = default;
+  ~Tile() noexcept;
 
   /**
    * @brief Copy constructor.
@@ -168,7 +168,7 @@ public:
    *
    * @param rhs The other instance.
    */
-  Tile& operator=(Tile&& rhs) noexcept;
+  Tile& operator=(Tile&& rhs) noexcept = delete;
 
   /**
    * @brief Returns the parent of this tile in the tile hierarchy.
