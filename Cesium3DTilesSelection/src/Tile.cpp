@@ -21,12 +21,40 @@
 #include <utility>
 #include <vector>
 
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+#include <unordered_map>
+#endif
+
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+std::unordered_map<
+    std::string,
+    std::vector<TileDoNotUnloadSubtreeCountTracker::Entry>>
+    TileDoNotUnloadSubtreeCountTracker::_entries;
+
+void TileDoNotUnloadSubtreeCountTracker::addEntry(
+    uint64_t id,
+    bool increment,
+    const std::string& reason,
+    int32_t newCount) {
+  const std::string idString = fmt::format("{:x}", id);
+  const auto foundIt =
+      TileDoNotUnloadSubtreeCountTracker::_entries.find(idString);
+  if (foundIt != TileDoNotUnloadSubtreeCountTracker::_entries.end()) {
+    foundIt->second.push_back(Entry{reason, increment, newCount});
+  } else {
+    std::vector<Entry> entries{Entry{reason, increment, newCount}};
+
+    TileDoNotUnloadSubtreeCountTracker::_entries.insert(
+        {idString, std::move(entries)});
+  }
+}
+#endif
 
 Tile::Tile(TilesetContentLoader* pLoader) noexcept
     : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader) {}

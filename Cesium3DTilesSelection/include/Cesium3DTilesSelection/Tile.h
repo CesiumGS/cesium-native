@@ -20,8 +20,33 @@
 #include <string>
 #include <vector>
 
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+#include <unordered_map>
+#endif
+
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
+
+#ifdef CESIUM_DEBUG_TILE_UNLOADING
+class TileDoNotUnloadSubtreeCountTracker {
+private:
+  struct Entry {
+    std::string reason;
+    bool increment;
+    int32_t newCount;
+  };
+
+public:
+  static void addEntry(
+      const uint64_t id,
+      bool increment,
+      const std::string& reason,
+      int32_t newCount);
+
+private:
+  static std::unordered_map<std::string, std::vector<Entry>> _entries;
+};
+#endif
 
 /**
  * The current state of this tile in the loading process.
