@@ -38,9 +38,8 @@ public:
    * @brief The type of the {@link CesiumUtility::TreeTraversalState}
    * used to track tile selection states for this view group.
    */
-  using TraversalState = CesiumUtility::TreeTraversalState<
-      CesiumUtility::IntrusivePointer<const Tile>,
-      TileSelectionState>;
+  using TraversalState =
+      CesiumUtility::TreeTraversalState<Tile::Pointer, TileSelectionState>;
 
   /**
    * @brief Constructs a new instance.

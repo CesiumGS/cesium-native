@@ -1591,8 +1591,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   // On the first update, we should refine down to the grandchild tile, even
   // though no tiles are loaded yet.
   initializeTileset(tileset);
-  const Tile& child = tileset.getRootTile()->getChildren()[0];
-  const Tile& grandchild = child.getChildren()[0];
+  Tile& child = tileset.getRootTile()->getChildren()[0];
+  Tile& grandchild = child.getChildren()[0];
 
   auto states = viewGroup.getTraversalState().slowlyGetCurrentStates();
 

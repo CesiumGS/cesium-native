@@ -548,7 +548,7 @@ public:
    * the reference count is greater than 3, this means that the content is also
    * referenced and will not be unloaded.
    */
-  void addReference(const char* reason = nullptr) const noexcept;
+  void addReference(const char* reason = nullptr) noexcept;
 
   /**
    * @brief Removes a reference from this tile. A live reference will keep this
@@ -567,7 +567,7 @@ public:
    * See {@link addReference} for details of how references can affect a tile's
    * eligibility to have its content unloaded.
    */
-  void releaseReference(const char* reason = nullptr) const noexcept;
+  void releaseReference(const char* reason = nullptr) noexcept;
 
   /**
    * @brief Gets the current number of references to this tile.
@@ -637,7 +637,7 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  mutable int32_t _referenceCount;
+  int32_t _referenceCount;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;

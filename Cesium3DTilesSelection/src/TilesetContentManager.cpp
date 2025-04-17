@@ -1203,6 +1203,11 @@ void TilesetContentManager::createLatentChildrenIfNecessary(
 }
 
 UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
+  // Don't unload tiles that can't be reloaded.
+  if (!TileIdUtilities::isLoadable(tile.getTileID())) {
+    return UnloadTileContentResult::Keep;
+  }
+
   TileLoadState state = tile.getState();
   if (state == TileLoadState::Unloaded) {
     return UnloadTileContentResult::Remove;
@@ -1228,7 +1233,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     // represents the external content itself. Any more than that indicates
     // references to the tile or a descendant tile (or their content), all of
     // which prevent this external content from being unloaded.
-    if (tile.getParent() == nullptr || tile.getReferenceCount() > 1) {
+    if (tile.getReferenceCount() > 1) {
       return UnloadTileContentResult::Keep;
     }
 
@@ -1276,11 +1281,11 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
 
   // If we make it this far, the tile's content will be fully unloaded.
   notifyTileUnloading(&tile);
+  tile.setState(TileLoadState::Unloaded);
   if (!content.isUnknownContent()) {
     content.setContentKind(TileUnknownContent{});
     tile.releaseReference("UnloadTileContent: Other");
   }
-  tile.setState(TileLoadState::Unloaded);
   return UnloadTileContentResult::Remove;
 }
 
@@ -1424,21 +1429,21 @@ void TilesetContentManager::finishLoading(
   updateTileContent(tile, tilesetOptions);
 }
 
-void TilesetContentManager::markTileIneligibleForContentUnloading(
-    const Tile& tile) {
-  this->_tilesEligibleForContentUnloading.remove(const_cast<Tile&>(tile));
+void TilesetContentManager::markTileIneligibleForContentUnloading(Tile& tile) {
+  this->_tilesEligibleForContentUnloading.remove(tile);
 }
 
-void TilesetContentManager::markTileEligibleForContentUnloading(
-    const Tile& tile) {
+void TilesetContentManager::markTileEligibleForContentUnloading(Tile& tile) {
   // If the tile is not yet in the list, add it to the end (most recently used).
   if (!this->_tilesEligibleForContentUnloading.contains(tile)) {
-    this->_tilesEligibleForContentUnloading.insertAtTail(
-        const_cast<Tile&>(tile));
+    this->_tilesEligibleForContentUnloading.insertAtTail(tile);
   }
 
+  // If the Tileset has already been destroyed, unload this unused Tile
+  // immediately to allow the TilesetContentManager destruction process to
+  // proceed.
   if (this->_tilesetDestroyed) {
-    this->unloadTileContent(const_cast<Tile&>(tile));
+    this->unloadTileContent(tile);
   }
 }
 
@@ -1765,7 +1770,14 @@ void TilesetContentManager::setTileContent(
             pWorkerRenderResources},
         std::move(result.contentKind));
 
-    if (!tile.getContent().isUnknownContent()) {
+    // "Unknown" content is not loaded, and does not get a reference.
+    // Also, if a tile ID is not loadable, it can never be unloaded (because how
+    // would we reload it?) and so that doesn't get a reference, either.
+    // An example of non-loadable content is the "external content" at the root
+    // of a regular tileset.json tileset. We can't unload it without destroying
+    // the entire tileset.
+    if (!tile.getContent().isUnknownContent() &&
+        TileIdUtilities::isLoadable(tile.getTileID())) {
       tile.addReference("setTileContent");
     }
 

@@ -641,11 +641,10 @@ void addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
   if (getPreviousState(viewGroup, tile).getResult() ==
       TileSelectionState::Result::Refined) {
     viewGroup.getTraversalState().forEachPreviousDescendant(
-        [&](const IntrusivePointer<const Tile>& pTile,
-            const TileSelectionState& state) {
+        [&](const Tile::Pointer& pTile, const TileSelectionState& state) {
           addToTilesFadingOutIfPreviouslyRendered(
               state.getResult(),
-              const_cast<Tile&>(*pTile),
+              *pTile,
               result);
         });
   }
@@ -1118,8 +1117,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
   TilesetViewGroup::TraversalState& traversalState =
       frameState.viewGroup.getTraversalState();
   traversalState.forEachCurrentDescendant(
-      [](const IntrusivePointer<const Tile>& /*pTile*/,
-         TileSelectionState& selectionState) { selectionState.kick(); });
+      [](const Tile::Pointer& /*pTile*/, TileSelectionState& selectionState) {
+        selectionState.kick();
+      });
 
   // Remove all descendants from the render list and add this tile.
   std::vector<Tile::Pointer>& renderList = result.tilesToRenderThisFrame;
@@ -1328,8 +1328,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
 
   bool childLastRefined = false;
   traversalState.forEachPreviousChild(
-      [&](const IntrusivePointer<const Tile>& /*pTile*/,
-          const TileSelectionState& state) {
+      [&](const Tile::Pointer& /*pTile*/, const TileSelectionState& state) {
         if (state.getResult() == TileSelectionState::Result::Refined) {
           childLastRefined = true;
         }
@@ -1548,7 +1547,7 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
       // kicked just because _it_ wasn't rendered last frame (which could cause
       // a new hole to appear).
       frameState.viewGroup.getTraversalState().forEachPreviousDescendant(
-          [&](const IntrusivePointer<const Tile>& /* pTile */,
+          [&](const Tile::Pointer& /* pTile */,
               const TileSelectionState& state) {
             if (state.getResult() == TileSelectionState::Result::Rendered) {
               wasRenderedLastFrame = true;

@@ -101,7 +101,8 @@ Tile::Tile(
       _mightHaveLatentChildren{true},
       _rasterTiles(),
       _referenceCount(0) {
-  if (!this->_content.isUnknownContent()) {
+  if (!this->_content.isUnknownContent() &&
+      TileIdUtilities::isLoadable(this->getTileID())) {
     // Add a reference for the loaded content.
     this->addReference("Constructor with content");
   }
@@ -126,7 +127,8 @@ Tile::Tile(Tile&& rhs) noexcept
       // See the move assignment operator for an explanation of how we copy
       // `_referenceCount` here.
       _referenceCount(0) {
-  if (!this->_content.isUnknownContent()) {
+  if (!this->_content.isUnknownContent() &&
+      TileIdUtilities::isLoadable(this->getTileID())) {
     this->addReference("Move constructor with content");
     rhs.releaseReference("RHS passed to move constructor");
   }
@@ -136,18 +138,13 @@ Tile::Tile(Tile&& rhs) noexcept
   for (Tile& tile : this->_children) {
     tile.setParent(this);
   }
-
-  this->setParent(rhs._pParent);
-  rhs.setParent(nullptr);
 }
 
 Tile::~Tile() noexcept {
   // A tile being destroyed should not have any references. Except that the root
   // tile's content will never be unloaded, so its reference count may be 1.
   this->clearChildren();
-  CESIUM_ASSERT(
-      this->_referenceCount == 0 ||
-      (this->_pParent == nullptr && this->_referenceCount == 1));
+  CESIUM_ASSERT(this->_referenceCount == 0);
 }
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {
@@ -345,7 +342,9 @@ bool isContentReferenced(const Tile& tile) {
   int32_t referencesNotToThisTilesContent = 0;
 
   // A reference to the current tile as a result of its content being loaded.
-  if (!tile.getContent().isUnknownContent())
+  // Content that is not (re-)loadable does not get a reference.
+  if (!tile.getContent().isUnknownContent() &&
+      TileIdUtilities::isLoadable(tile.getTileID()))
     ++referencesNotToThisTilesContent;
 
   // References from a (referenced) child to the parent.
@@ -356,15 +355,13 @@ bool isContentReferenced(const Tile& tile) {
 
   // If there are any further references, other than the ones counted above,
   // it means there's some other reference to this Tile, and it should prevent
-  // the tile's content from unloading. An assertion failure here means that
-  // somehow the child and content references haven't be counted correctly.
-  CESIUM_ASSERT(tile.getReferenceCount() >= referencesNotToThisTilesContent);
+  // the tile's content from unloading.
   return tile.getReferenceCount() > referencesNotToThisTilesContent;
 }
 
 } // namespace
 
-void Tile::addReference(const char* reason) const noexcept {
+void Tile::addReference(const char* reason) noexcept {
   ++this->_referenceCount;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
@@ -402,9 +399,14 @@ void Tile::addReference(const char* reason) const noexcept {
   }
 }
 
-void Tile::releaseReference(const char* reason) const noexcept {
+void Tile::releaseReference(const char* reason) noexcept {
   CESIUM_ASSERT(this->_referenceCount > 0);
   --this->_referenceCount;
+
+  // Save the current reference count because
+  // `markTileEligibleForContentUnloading` below may end up modifying it and we
+  // need to make decisions based on the value now, not the value after those
+  // modifications.
   int32_t referenceCount = this->_referenceCount;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
@@ -417,7 +419,8 @@ void Tile::releaseReference(const char* reason) const noexcept {
 
   // If there are no more references that indicate use of the content, mark
   // this tile as "eligible for content unloading" with the
-  // TilesetContentManager.
+  // TilesetContentManager. If the `Tileset` is already destroyed, this `Tile`'s
+  // content will be unloaded immediately.
   if (!isContentReferenced(*this) && this->_pLoader &&
       this->_pLoader->getOwner()) {
     this->_pLoader->getOwner()->markTileEligibleForContentUnloading(*this);
@@ -435,16 +438,11 @@ void Tile::releaseReference(const char* reason) const noexcept {
           this <= &this->_pParent->_children.back());
       this->_pParent->releaseReference("Parent of unreferenced tile");
     }
-  } else {
+  } else if (this->_pLoader && this->_pLoader->getOwner()) {
     // This is the root tile, or perhaps hasn't been added to the main tree yet.
     // When its reference count goes to zero, we need to remove the reference to
     // the TilesetContentManager that was previously added.
-    //
-    // However, note that root tiles with external content will never be
-    // unloaded (see TilesetContentManager::unloadTileContent), so such a tile's
-    // reference count will never go below 1.
-    if (referenceCount == 0 ||
-        (referenceCount == 1 && this->isExternalContent())) {
+    if (referenceCount == 0) {
       this->_pLoader->getOwner()->releaseReference();
     }
   }

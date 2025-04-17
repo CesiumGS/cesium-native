@@ -153,8 +153,8 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void markTileIneligibleForContentUnloading(const Tile& tile);
-  void markTileEligibleForContentUnloading(const Tile& tile);
+  void markTileIneligibleForContentUnloading(Tile& tile);
+  void markTileEligibleForContentUnloading(Tile& tile);
 
   /**
    * @brief Unloads unused tiles until the total memory usage by all loaded

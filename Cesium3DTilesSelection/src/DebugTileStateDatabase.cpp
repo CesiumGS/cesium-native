@@ -220,8 +220,7 @@ void DebugTileStateDatabase::recordTileState(
 void DebugTileStateDatabase::recordTileState(
     int32_t frameNumber,
     const Tile& tile,
-    const std::unordered_map<IntrusivePointer<const Tile>, TileSelectionState>&
-        states) {
+    const std::unordered_map<Tile::Pointer, TileSelectionState>& states) {
   int status = CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->writeTileState.get());
   if (status != SQLITE_OK) {
     return;
@@ -260,7 +259,7 @@ void DebugTileStateDatabase::recordTileState(
     return;
   }
 
-  auto it = states.find(&tile);
+  auto it = states.find(const_cast<Tile*>(&tile));
   TileSelectionState::Result selectionState =
       it == states.end() ? TileSelectionState::Result::None
                          : it->second.getResult();

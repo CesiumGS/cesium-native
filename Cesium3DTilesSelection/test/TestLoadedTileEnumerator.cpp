@@ -43,7 +43,7 @@ TEST_CASE("LoadedTileEnumerator") {
   }
 
   SUBCASE("enumerates path to single tile") {
-    root.getChildren()[1].getChildren()[2].addReference();
+    Tile::Pointer pTile2 = &root.getChildren()[1].getChildren()[2];
     CHECK(
         enumerate(enumerator) == std::vector<const Tile*>{
                                      &root,
@@ -52,11 +52,11 @@ TEST_CASE("LoadedTileEnumerator") {
   }
 
   SUBCASE("enumerates complete tree") {
-    root.getChildren()[0].addReference();
-    root.getChildren()[1].getChildren()[0].addReference();
-    root.getChildren()[1].getChildren()[1].addReference();
-    root.getChildren()[1].getChildren()[2].addReference();
-    root.getChildren()[2].addReference();
+    Tile::Pointer pTile0 = &root.getChildren()[0];
+    Tile::Pointer pTile10 = &root.getChildren()[1].getChildren()[0];
+    Tile::Pointer pTile11 = &root.getChildren()[1].getChildren()[1];
+    Tile::Pointer pTile12 = &root.getChildren()[1].getChildren()[2];
+    Tile::Pointer pTile2 = &root.getChildren()[2];
     CHECK(
         enumerate(enumerator) == std::vector<const Tile*>{
                                      &root,
