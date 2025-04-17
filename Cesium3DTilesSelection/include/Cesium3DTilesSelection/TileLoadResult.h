@@ -136,6 +136,16 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
       CesiumGeospatial::Ellipsoid::UNIT_SPHERE;
 
   /**
+   * @brief The bounding volume initially loaded with the tile.
+   */
+  std::optional<BoundingVolume> initialBoundingVolume = std::nullopt;
+
+  /**
+   * @brief The content bounding volume initially loaded with the tile, if any.
+   */
+  std::optional<BoundingVolume> initialContentBoundingVolume = std::nullopt;
+
+  /**
    * @brief Create a result with Failed state
    *
    * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor "IAssetAccessor"
