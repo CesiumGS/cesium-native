@@ -350,7 +350,7 @@ bool isContentReferenced(const Tile& tile) {
 
 } // namespace
 
-void Tile::addReference(const char* reason) noexcept {
+void Tile::addReference([[maybe_unused]] const char* reason) noexcept {
   ++this->_referenceCount;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
@@ -388,7 +388,7 @@ void Tile::addReference(const char* reason) noexcept {
   }
 }
 
-void Tile::releaseReference(const char* reason) noexcept {
+void Tile::releaseReference([[maybe_unused]] const char* reason) noexcept {
   CESIUM_ASSERT(this->_referenceCount > 0);
   --this->_referenceCount;
 
