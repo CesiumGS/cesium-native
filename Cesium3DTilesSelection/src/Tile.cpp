@@ -32,9 +32,7 @@ using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-std::unordered_map<
-    std::string,
-    std::vector<TileReferenceCountTracker::Entry>>
+std::unordered_map<std::string, std::vector<TileReferenceCountTracker::Entry>>
     TileReferenceCountTracker::_entries;
 
 void TileReferenceCountTracker::addEntry(
@@ -43,15 +41,13 @@ void TileReferenceCountTracker::addEntry(
     const char* reason,
     int32_t newCount) {
   const std::string idString = fmt::format("{:x}", id);
-  const auto foundIt =
-      TileReferenceCountTracker::_entries.find(idString);
+  const auto foundIt = TileReferenceCountTracker::_entries.find(idString);
   if (foundIt != TileReferenceCountTracker::_entries.end()) {
     foundIt->second.push_back(Entry{reason, increment, newCount});
   } else {
     std::vector<Entry> entries{Entry{reason, increment, newCount}};
 
-    TileReferenceCountTracker::_entries.insert(
-        {idString, std::move(entries)});
+    TileReferenceCountTracker::_entries.insert({idString, std::move(entries)});
   }
 }
 #endif
@@ -138,9 +134,7 @@ Tile::Tile(Tile&& rhs) noexcept
   }
 }
 
-Tile::~Tile() noexcept {
-  CESIUM_ASSERT(this->_referenceCount == 0);
-}
+Tile::~Tile() noexcept { CESIUM_ASSERT(this->_referenceCount == 0); }
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {
   if (!this->_children.empty()) {
@@ -423,8 +417,8 @@ void Tile::releaseReference(const char* reason) noexcept {
 
   // When the reference count goes from 1 to 0, this Tile is once again
   // eligible for destruction, so release the reference on the parent.
-  if (this->_pParent) {
-    if (referenceCount == 0) {
+  if (referenceCount == 0) {
+    if (this->_pParent) {
       // An assertion failure here indicates this tile is not in its parent's
       // list of children.
       CESIUM_ASSERT(
@@ -432,12 +426,10 @@ void Tile::releaseReference(const char* reason) noexcept {
           this >= &this->_pParent->_children.front() &&
           this <= &this->_pParent->_children.back());
       this->_pParent->releaseReference("Parent of unreferenced tile");
-    }
-  } else if (this->_pLoader && this->_pLoader->getOwner()) {
-    // This is the root tile, or perhaps hasn't been added to the main tree yet.
-    // When its reference count goes to zero, we need to remove the reference to
-    // the TilesetContentManager that was previously added.
-    if (referenceCount == 0) {
+    } else if (this->_pLoader && this->_pLoader->getOwner()) {
+      // This is the root tile, or perhaps hasn't been added to the main tree
+      // yet. When its reference count goes to zero, we need to remove the
+      // reference to the TilesetContentManager that was previously added.
       this->_pLoader->getOwner()->releaseReference();
     }
   }

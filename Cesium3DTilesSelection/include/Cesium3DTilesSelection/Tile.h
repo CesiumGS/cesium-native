@@ -545,6 +545,10 @@ public:
    * needed and may be unloaded when the unused tile cache is full. However, if
    * the reference count is greater than 3, this means that the content is also
    * referenced and will not be unloaded.
+   *
+   * @param reason An optional explanation for why this reference is being
+   * added. This can help debug reference counts when compiled with
+   * `CESIUM_DEBUG_TILE_UNLOADING`.
    */
   void addReference(const char* reason = nullptr) noexcept;
 
@@ -564,6 +568,10 @@ public:
    *
    * See {@link addReference} for details of how references can affect a tile's
    * eligibility to have its content unloaded.
+   *
+   * @param reason An optional explanation for why this reference is being
+   * removed. This can help debug reference counts when compiled with
+   * `CESIUM_DEBUG_TILE_UNLOADING`.
    */
   void releaseReference(const char* reason = nullptr) noexcept;
 
