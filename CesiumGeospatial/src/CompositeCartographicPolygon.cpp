@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/BoundingRegionBuilder.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "TriangulatePolygon.h"
 
 #include <CesiumGeospatial/Cartographic.h>
@@ -12,9 +14,24 @@
 #include <vector>
 
 namespace CesiumGeospatial {
+namespace {
+CesiumGeospatial::GlobeRectangle
+calculateBoundingRectangle(const std::vector<CartographicPolygon>& polygons) {
+  CesiumGeospatial::BoundingRegionBuilder builder;
+  for (const CartographicPolygon& polygon : polygons) {
+    const GlobeRectangle& rect = polygon.getBoundingRectangle();
+    builder.expandToIncludePosition(rect.getSouthwest());
+    builder.expandToIncludePosition(rect.getNortheast());
+  }
+
+  return builder.toGlobeRectangle();
+}
+} // namespace
+
 CompositeCartographicPolygon::CompositeCartographicPolygon(
     std::vector<CartographicPolygon>&& polygons)
-    : _polygons(std::move(polygons)) {}
+    : _polygons(std::move(polygons)),
+      _boundingRectangle(calculateBoundingRectangle(this->_polygons)) {}
 
 bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
   // If there's no polygons, so we're definitely not inside any of them.

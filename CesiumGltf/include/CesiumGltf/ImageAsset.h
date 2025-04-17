@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace CesiumGltf {
@@ -117,6 +118,14 @@ struct CESIUMGLTF_API ImageAsset final
    * @brief Constructs an empty image asset.
    */
   ImageAsset() = default;
+
+  /**
+   * @brief Writes this image to a TGA file.
+   *
+   * This method is only meant to be used for debugging. It does not support any
+   * compressed pixel formats.
+   */
+  void writeTga(const std::string& outputPath);
 
   /**
    * @brief Gets the size of this asset, in bytes.

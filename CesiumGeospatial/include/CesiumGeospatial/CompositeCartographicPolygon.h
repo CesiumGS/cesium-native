@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 
 namespace CesiumGeospatial {
 /**
@@ -52,11 +53,17 @@ public:
   const std::vector<CartographicPolygon>& getLinearRings() const;
 
   /**
+   * @brief Returns the bounding rectangle enclosing this polygon.
+   */
+  const CesiumGeospatial::GlobeRectangle& getBoundingRectangle() const;
+
+  /**
    * @brief Checks if two `CompositeCartographicPolygon` objects are equal.
    */
   bool operator==(const CompositeCartographicPolygon& rhs) const;
 
 private:
   std::vector<CartographicPolygon> _polygons;
+  CesiumGeospatial::GlobeRectangle _boundingRectangle;
 };
 } // namespace CesiumGeospatial
