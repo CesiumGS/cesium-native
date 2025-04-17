@@ -1005,7 +1005,6 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
-  SPDLOG_WARN("~TilesetContentManager");
   CESIUM_ASSERT(this->_tileLoadsInProgress == 0);
   this->unloadAll();
 
@@ -1072,7 +1071,6 @@ void TilesetContentManager::loadTileContent(
 
   // Reference this Tile while its content is loading.
   Tile::Pointer pTile = &tile;
-  tile.addReference("Content loading!");
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
@@ -1146,14 +1144,12 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([pTile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(*pTile, std::move(pair.result), pair.pRenderResources);
         thiz->notifyTileDoneLoading(pTile.get());
-        pTile->releaseReference("Content loaded successfully");
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, pTile, thiz](
                              std::exception&& e) {
         pTile->getMappedRasterTiles().clear();
         pTile->setState(TileLoadState::Failed);
         thiz->notifyTileDoneLoading(pTile.get());
-        pTile->releaseReference("Content failed to load");
         SPDLOG_LOGGER_ERROR(
             pLogger,
             "An unexpected error occurred when loading tile: {}",
@@ -1730,17 +1726,13 @@ void TilesetContentManager::releaseReference() const {
 
   ReferenceCountedNonThreadSafe<TilesetContentManager>::releaseReference();
 
-  // If the Tileset is already destroyed, try again to unload all the tiles.
+  // If the Tileset is already destroyed, but the TilesetContentManager isn't
+  // yet, try again to unload all the tiles.
   if (willStillBeAliveAfter && this->_tilesetDestroyed) {
+    // We can justify this const_cast on the basis that only unreferenced tiles
+    // will be unloaded, so clients will not be able to perceive that
+    // modification. And the `Tileset` is already destroyed, anyway.
     const_cast<TilesetContentManager*>(this)->unloadAll();
-
-    // A root tile with external content will never be unloaded. If that's the
-    // last reference, we can destroy it.
-    // if (this->_pRootTile && this->_pRootTile->getReferenceCount() == 1 &&
-    //     this->_pRootTile->isExternalContent()) {
-    //   const_cast<std::unique_ptr<Tile>&>(this->_pRootTile).reset();
-    //   this->releaseReference();
-    // }
   }
 }
 

@@ -262,6 +262,7 @@ find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(ada CONFIG REQUIRED)
 
+
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
