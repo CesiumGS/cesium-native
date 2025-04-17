@@ -264,7 +264,7 @@ public:
    * etc.) of the current node that has been traversed so far in the current
    * traversal.
    *
-   * If the current node's children were not traversed in the previous
+   * If the current node's children were not traversed in the current
    * traversal, this method returns without invoking the callback at all.
    *
    * @tparam Func The type of the function to invoke.

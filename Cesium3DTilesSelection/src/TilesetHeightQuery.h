@@ -62,20 +62,20 @@ public:
    * @brief Non-leaf tiles with additive refinement whose bounding volumes are
    * intersected by the query ray.
    */
-  std::vector<CesiumUtility::IntrusivePointer<Tile>> additiveCandidateTiles;
+  std::vector<Tile::Pointer> additiveCandidateTiles;
 
   /**
    * @brief The current set of leaf tiles whose bounding volumes are intersected
    * by the query ray.
    */
-  std::vector<CesiumUtility::IntrusivePointer<Tile>> candidateTiles;
+  std::vector<Tile::Pointer> candidateTiles;
 
   /**
    * @brief The previous set of leaf tiles. Swapping `candidateTiles` and
    * `previousCandidateTiles` each frame allows us to avoid a heap allocation
    * for a new vector each frame.
    */
-  std::vector<CesiumUtility::IntrusivePointer<Tile>> previousCandidateTiles;
+  std::vector<Tile::Pointer> previousCandidateTiles;
 
   /**
    * @brief Find the intersection of the ray with the given tile. If there is
@@ -127,6 +127,10 @@ struct TilesetHeightRequest : public TileLoadRequester {
    */
   CesiumAsync::Promise<SampleHeightResult> promise;
 
+  /**
+   * @brief The set of tiles that need to be loaded in order for this height
+   * request to be completed.
+   */
   std::set<Tile*> tilesToLoad;
 
   /**
@@ -136,13 +140,8 @@ struct TilesetHeightRequest : public TileLoadRequester {
    * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
-   * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded just long enough to complete
-   * the query, and no longer.
    * @param heightRequests The list of all height requests. Completed requests
    * will be removed from this list.
-   * @param heightQueryLoadQueue Tiles that still need to be loaded before all
-   * height requests can complete are added to this vector.
    */
   static void processHeightRequests(
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -152,10 +151,14 @@ struct TilesetHeightRequest : public TileLoadRequester {
 
   double getWeight() const override;
 
+  /** @inheritdoc */
   bool hasMoreTilesToLoadInWorkerThread() const override;
+  /** @inheritdoc */
   Tile* getNextTileToLoadInWorkerThread() override;
 
+  /** @inheritdoc */
   bool hasMoreTilesToLoadInMainThread() const override;
+  /** @inheritdoc */
   Tile* getNextTileToLoadInMainThread() override;
 
   /**

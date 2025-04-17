@@ -11,6 +11,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -66,7 +67,10 @@ void TilesetViewGroup::addToLoadQueue(const TileLoadTask& task) {
   } else if (
       pTile->getState() == TileLoadState::ContentLoading ||
       pTile->getState() == TileLoadState::Unloading) {
-    ++this->_tilesAlreadyLoading;
+    // These tiles are already transitioning between states so we can't add them
+    // to either load queue. But they still count as tiles that need to be
+    // loaded before this view is 100% loaded.
+    ++this->_tilesAlreadyLoadingOrUnloading;
   }
 }
 
@@ -108,7 +112,7 @@ void TilesetViewGroup::startNewFrame(
     const TilesetFrameState& /*frameState*/) {
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
-  this->_tilesAlreadyLoading = 0;
+  this->_tilesAlreadyLoadingOrUnloading = 0;
   this->_traversalState.beginTraversal();
 
   ++this->_updateResult.frameNumber;
@@ -123,10 +127,6 @@ void TilesetViewGroup::startNewFrame(
   this->_updateResult.tilesToRenderThisFrame.clear();
 
   if (!tileset.getOptions().enableLodTransitionPeriod) {
-    for (Tile* pTile : this->_updateResult.tilesFadingOut) {
-      pTile->decrementDoNotUnloadSubtreeCount(
-          "Tileset::updateView clear tilesFadingOut");
-    }
     this->_updateResult.tilesFadingOut.clear();
   }
 }
@@ -151,7 +151,8 @@ void TilesetViewGroup::finishFrame(
   size_t totalTiles = this->_traversalState.getNodeCountInCurrentTraversal();
   size_t tilesLoading = size_t(updateResult.workerThreadTileLoadQueueLength) +
                         size_t(updateResult.mainThreadTileLoadQueueLength) +
-                        updateResult.tilesKicked + this->_tilesAlreadyLoading;
+                        updateResult.tilesKicked +
+                        this->_tilesAlreadyLoadingOrUnloading;
 
   if (tilesLoading == 0) {
     this->_loadProgressPercentage = 100.0f;
@@ -187,7 +188,7 @@ void TilesetViewGroup::finishFrame(
     }
 
     // Add per-tile credits for tiles selected this frame.
-    for (Tile* pTile : updateResult.tilesToRenderThisFrame) {
+    for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           pTile->getMappedRasterTiles();
       // raster overlay tile credits

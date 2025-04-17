@@ -20,12 +20,16 @@ class TilesetContentManager;
 class TilesetFrameState;
 
 /**
- * @brief A group of views that select tiles from a particular {@link Tileset}
- * together.
+ * @brief Represents a group of views that collectively select tiles from a
+ * particular {@link Tileset}.
  *
  * Create an instance of this class and pass it repeatedly to
  * {@link Tileset::updateViewGroup} to select tiles suitable for rendering the
  * tileset from a given view or set of views.
+ *
+ * This class is intentionally decoupled from {@link ViewState}, such that
+ * clients are responsible for managing which views are represented by
+ * any particular group.
  */
 class CESIUM3DTILESSELECTION_API TilesetViewGroup final
     : public TileLoadRequester {
@@ -34,9 +38,8 @@ public:
    * @brief The type of the {@link CesiumUtility::TreeTraversalState}
    * used to track tile selection states for this view group.
    */
-  using TraversalState = CesiumUtility::TreeTraversalState<
-      CesiumUtility::IntrusivePointer<const Tile>,
-      TileSelectionState>;
+  using TraversalState =
+      CesiumUtility::TreeTraversalState<Tile::Pointer, TileSelectionState>;
 
   /**
    * @brief Constructs a new instance.
@@ -219,7 +222,7 @@ private:
   double _weight = 1.0;
   std::vector<TileLoadTask> _mainThreadLoadQueue;
   std::vector<TileLoadTask> _workerThreadLoadQueue;
-  size_t _tilesAlreadyLoading = 0;
+  size_t _tilesAlreadyLoadingOrUnloading = 0;
   float _loadProgressPercentage = 0.0f;
   ViewUpdateResult _updateResult;
   TraversalState _traversalState;

@@ -481,6 +481,9 @@ TEST_CASE("Test tile state machine") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
@@ -584,6 +587,9 @@ TEST_CASE("Test tile state machine") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
@@ -657,6 +663,9 @@ TEST_CASE("Test tile state machine") {
 
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
 
     // create manager
     TilesetOptions options{};
@@ -915,6 +924,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
@@ -978,6 +990,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
 
     // create manager
     TilesetOptions options;
@@ -1045,6 +1060,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
@@ -1086,6 +1104,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
@@ -1377,6 +1398,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
@@ -1594,6 +1618,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =

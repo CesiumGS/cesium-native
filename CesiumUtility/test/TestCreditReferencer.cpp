@@ -99,12 +99,9 @@ TEST_CASE("CreditReferencer") {
       const CreditsSnapshot& snapshot3 = pCreditSystem->getSnapshot();
       REQUIRE(snapshot3.currentCredits.size() == 2);
 
-      const CreditsSnapshot& snapshot4 = pCreditSystem->getSnapshot();
-      REQUIRE(snapshot4.currentCredits.size() == 2);
-
       referencer2 = CreditReferencer();
-      const CreditsSnapshot& snapshot5 = pCreditSystem->getSnapshot();
-      REQUIRE(snapshot5.currentCredits.size() == 0);
+      const CreditsSnapshot& snapshot4 = pCreditSystem->getSnapshot();
+      REQUIRE(snapshot4.currentCredits.size() == 0);
     }
 
     SUBCASE("and clears them when the credit system is set to nullptr") {

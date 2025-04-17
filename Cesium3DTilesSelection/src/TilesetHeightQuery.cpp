@@ -18,7 +18,6 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/exponential.hpp>
 
@@ -119,24 +118,7 @@ TilesetHeightQuery::TilesetHeightQuery(
       candidateTiles(),
       previousCandidateTiles() {}
 
-Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() {
-  for (const IntrusivePointer<Tile>& pTile : candidateTiles) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightQuery::~TilesetHeightQuery destructing candidateTiles");
-  }
-
-  for (const IntrusivePointer<Tile>& pTile : additiveCandidateTiles) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightQuery::~TilesetHeightQuery "
-        "destructing additiveCandidateTiles");
-  }
-
-  for (const IntrusivePointer<Tile>& pTile : previousCandidateTiles) {
-    pTile->decrementDoNotUnloadSubtreeCount(
-        "TilesetHeightQuery::~TilesetHeightQuery "
-        "destructing previousCandidateTiles");
-  }
-}
+Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() = default;
 
 void TilesetHeightQuery::intersectVisibleTile(
     Tile* pTile,
@@ -192,13 +174,9 @@ void TilesetHeightQuery::findCandidateTiles(
               this->ray,
               this->inputPosition,
               this->ellipsoid)) {
-        pTile->incrementDoNotUnloadSubtreeCount(
-            "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
         this->candidateTiles.emplace_back(pTile);
       }
     } else {
-      pTile->incrementDoNotUnloadSubtreeCount(
-          "TilesetHeightQuery::findCandidateTiles add to candidateTiles");
       this->candidateTiles.emplace_back(pTile);
     }
   } else {
@@ -213,15 +191,9 @@ void TilesetHeightQuery::findCandidateTiles(
                 this->ray,
                 this->inputPosition,
                 this->ellipsoid)) {
-          pTile->incrementDoNotUnloadSubtreeCount(
-              "TilesetHeightQuery::findCandidateTiles add to "
-              "additiveCandidateTiles");
           this->additiveCandidateTiles.emplace_back(pTile);
         }
       } else {
-        pTile->incrementDoNotUnloadSubtreeCount(
-            "TilesetHeightQuery::findCandidateTiles add to "
-            "additiveCandidateTiles");
         this->additiveCandidateTiles.emplace_back(pTile);
       }
     }
@@ -362,25 +334,15 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       // frame.
       std::swap(query.candidateTiles, query.previousCandidateTiles);
 
-      for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
-        pTile->decrementDoNotUnloadSubtreeCount(
-            "TilesetHeightRequest::tryCompleteHeightRequest clear "
-            "candidateTiles");
-      }
-
       query.candidateTiles.clear();
 
-      for (const IntrusivePointer<Tile>& pCandidate :
-           query.previousCandidateTiles) {
+      for (const Tile::Pointer& pCandidate : query.previousCandidateTiles) {
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
           query.findCandidateTiles(pCandidate.get(), warnings);
         } else {
           // Check again next frame to see if this tile has children.
-          pCandidate->incrementDoNotUnloadSubtreeCount(
-              "TilesetHeightRequest::tryCompleteHeightRequest add to "
-              "candidateTiles");
           query.candidateTiles.emplace_back(pCandidate);
         }
       }
@@ -403,10 +365,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
         };
 
     // If any candidates need loading, add to return set
-    for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {
+    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
       checkTile(pTile.get());
     }
-    for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
+    for (const Tile::Pointer& pTile : query.candidateTiles) {
       checkTile(pTile.get());
     }
   }
@@ -417,10 +379,10 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
   // Do the intersect tests
   for (TilesetHeightQuery& query : this->queries) {
-    for (const IntrusivePointer<Tile>& pTile : query.additiveCandidateTiles) {
+    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
       query.intersectVisibleTile(pTile.get(), warnings);
     }
-    for (const IntrusivePointer<Tile>& pTile : query.candidateTiles) {
+    for (const Tile::Pointer& pTile : query.candidateTiles) {
       query.intersectVisibleTile(pTile.get(), warnings);
     }
   }
