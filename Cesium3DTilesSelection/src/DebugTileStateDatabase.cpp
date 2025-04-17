@@ -1,4 +1,5 @@
 #include <Cesium3DTilesSelection/DebugTileStateDatabase.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
