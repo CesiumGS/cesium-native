@@ -177,6 +177,9 @@ public:
   void processWorkerThreadLoadRequests(const TilesetOptions& options);
   void processMainThreadLoadRequests(const TilesetOptions& options);
 
+  void markTilesetDestroyed() noexcept;
+  void releaseReference() const;
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -216,6 +219,7 @@ private:
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+  bool _tilesetDestroyed;
 
   // Stores assets that might be shared between tiles.
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;

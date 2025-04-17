@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+option(CESIUM_DEBUG_TILE_UNLOADING "Whether to enable tracking of tile _doNotUnloadSubtreeCount modifications for tile unloading debugging." OFF)
+
 if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
@@ -56,6 +58,10 @@ set(PACKAGES_PRIVATE
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
+
+if(CESIUM_DEBUG_TILE_UNLOADING)
+  list(APPEND PACKAGES_PRIVATE "cpptrace")
+endif()
 
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
@@ -185,7 +191,6 @@ option(CESIUM_TESTS_ENABLED "Whether to enable tests" ON)
 option(CESIUM_GLM_STRICT_ENABLED "Whether to force strict GLM compile definitions." ON)
 option(CESIUM_DISABLE_DEFAULT_ELLIPSOID "Whether to disable the WGS84 default value for ellipsoid parameters across cesium-native." OFF)
 option(CESIUM_MSVC_STATIC_RUNTIME_ENABLED "Whether to enable static linking for MSVC runtimes" OFF)
-option(CESIUM_DEBUG_TILE_UNLOADING "Whether to enable tracking of tile _doNotUnloadSubtreeCount modifications for tile unloading debugging." OFF)
 option(CESIUM_CLANG_TIME_TRACE "Whether to enable the -ftime-trace compilation option when building with Clang." OFF)
 
 if (CESIUM_MSVC_STATIC_RUNTIME_ENABLED)
@@ -262,6 +267,9 @@ find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(ada CONFIG REQUIRED)
 
+if(CESIUM_DEBUG_TILE_UNLOADING)
+  find_package(cpptrace CONFIG REQUIRED)
+endif()
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)

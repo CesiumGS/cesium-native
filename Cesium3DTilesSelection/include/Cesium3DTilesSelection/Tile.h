@@ -21,6 +21,8 @@
 #include <vector>
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
+#include <cpptrace/cpptrace.hpp>
+
 #include <unordered_map>
 #endif
 
@@ -40,7 +42,7 @@ public:
   static void addEntry(
       const uint64_t id,
       bool increment,
-      const std::string& reason,
+      const char* reason,
       int32_t newCount);
 
 private:
@@ -546,7 +548,7 @@ public:
    * the reference count is greater than 3, this means that the content is also
    * referenced and will not be unloaded.
    */
-  void addReference() const noexcept;
+  void addReference(const char* reason = nullptr) const noexcept;
 
   /**
    * @brief Removes a reference from this tile. A live reference will keep this
@@ -565,7 +567,7 @@ public:
    * See {@link addReference} for details of how references can affect a tile's
    * eligibility to have its content unloaded.
    */
-  void releaseReference() const noexcept;
+  void releaseReference(const char* reason = nullptr) const noexcept;
 
   /**
    * @brief Gets the current number of references to this tile.

@@ -30,7 +30,7 @@ target_sources(
 )
 
 cesium_target_include_directories(
-    TARGET 
+    TARGET
         Cesium3DTilesSelection
     PUBLIC
         ${CMAKE_BINARY_DIR}
@@ -60,3 +60,11 @@ target_link_libraries(Cesium3DTilesSelection
 PRIVATE
         tinyxml2::tinyxml2
 )
+
+if(CESIUM_DEBUG_TILE_UNLOADING)
+  target_link_libraries(
+    Cesium3DTilesSelection
+    PRIVATE
+      cpptrace::cpptrace
+  )
+endif()

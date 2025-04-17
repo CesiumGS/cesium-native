@@ -135,6 +135,7 @@ Tileset::~Tileset() noexcept {
       this->_heightRequests,
       "Tileset is being destroyed.");
 
+  this->_pTilesetContentManager->markTilesetDestroyed();
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
     this->_externals.pTileOcclusionProxyPool->destroyPool();

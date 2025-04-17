@@ -716,6 +716,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _tilesetDestroyed(false),
       _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -758,6 +759,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _tilesetDestroyed(false),
       _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -918,6 +920,7 @@ TilesetContentManager::TilesetContentManager(
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
+      _tilesetDestroyed(false),
       _pSharedAssetSystem(externals.pSharedAssetSystem),
       _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
       _destructionCompleteFuture{
@@ -1002,6 +1005,7 @@ TilesetContentManager::getRootTileAvailableEvent() {
 }
 
 TilesetContentManager::~TilesetContentManager() noexcept {
+  SPDLOG_WARN("~TilesetContentManager");
   CESIUM_ASSERT(this->_tileLoadsInProgress == 0);
   this->unloadAll();
 
@@ -1068,6 +1072,7 @@ void TilesetContentManager::loadTileContent(
 
   // Reference this Tile while its content is loading.
   Tile::Pointer pTile = &tile;
+  tile.addReference("Content loading!");
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
@@ -1141,12 +1146,14 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([pTile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(*pTile, std::move(pair.result), pair.pRenderResources);
         thiz->notifyTileDoneLoading(pTile.get());
+        pTile->releaseReference("Content loaded successfully");
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, pTile, thiz](
                              std::exception&& e) {
         pTile->getMappedRasterTiles().clear();
         pTile->setState(TileLoadState::Failed);
         thiz->notifyTileDoneLoading(pTile.get());
+        pTile->releaseReference("Content failed to load");
         SPDLOG_LOGGER_ERROR(
             pLogger,
             "An unexpected error occurred when loading tile: {}",
@@ -1212,7 +1219,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.releaseReference();
+    tile.releaseReference("unloadTileContent: Empty");
     return UnloadTileContentResult::Remove;
   }
 
@@ -1228,7 +1235,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     notifyTileUnloading(&tile);
     content.setContentKind(TileUnknownContent{});
     tile.setState(TileLoadState::Unloaded);
-    tile.releaseReference();
+    tile.releaseReference("UnloadTileContent: External");
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
 
@@ -1271,7 +1278,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   notifyTileUnloading(&tile);
   if (!content.isUnknownContent()) {
     content.setContentKind(TileUnknownContent{});
-    tile.releaseReference();
+    tile.releaseReference("UnloadTileContent: Other");
   }
   tile.setState(TileLoadState::Unloaded);
   return UnloadTileContentResult::Remove;
@@ -1428,6 +1435,10 @@ void TilesetContentManager::markTileEligibleForContentUnloading(
   if (!this->_tilesEligibleForContentUnloading.contains(tile)) {
     this->_tilesEligibleForContentUnloading.insertAtTail(
         const_cast<Tile&>(tile));
+  }
+
+  if (this->_tilesetDestroyed) {
+    this->unloadTileContent(const_cast<Tile&>(tile));
   }
 }
 
@@ -1701,6 +1712,29 @@ void TilesetContentManager::processMainThreadLoadRequests(
   }
 }
 
+void TilesetContentManager::markTilesetDestroyed() noexcept {
+  this->_tilesetDestroyed = true;
+}
+
+void TilesetContentManager::releaseReference() const {
+  bool willStillBeAliveAfter = this->getReferenceCount() > 1;
+
+  ReferenceCountedNonThreadSafe<TilesetContentManager>::releaseReference();
+
+  // If the Tileset is already destroyed, try again to unload all the tiles.
+  if (willStillBeAliveAfter && this->_tilesetDestroyed) {
+    const_cast<TilesetContentManager*>(this)->unloadAll();
+
+    // A root tile with external content will never be unloaded. If that's the
+    // last reference, we can destroy it.
+    // if (this->_pRootTile && this->_pRootTile->getReferenceCount() == 1 &&
+    //     this->_pRootTile->isExternalContent()) {
+    //   const_cast<std::unique_ptr<Tile>&>(this->_pRootTile).reset();
+    //   this->releaseReference();
+    // }
+  }
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
@@ -1732,7 +1766,7 @@ void TilesetContentManager::setTileContent(
         std::move(result.contentKind));
 
     if (!tile.getContent().isUnknownContent()) {
-      tile.addReference();
+      tile.addReference("setTileContent");
     }
 
     if (result.tileInitializer) {
