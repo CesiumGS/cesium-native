@@ -4,7 +4,6 @@
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumAsync/SqliteHelper.h>
 #include <CesiumAsync/cesium-sqlite3.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <fmt/format.h>
 #include <sqlite3.h>
