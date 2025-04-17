@@ -20,7 +20,7 @@ class TilesetContentManager;
  * For the purposes of this enumeration, a loaded tile is one that is in a
  * {@link TileLoadState} other than {@link TileLoadState::Unloaded}, or that
  * has any children (or other descendants) that meet this criteria. We check the
- * latter criteria by looking at {@link Tile::getDoNotUnloadSubtreeCount}.
+ * latter criteria by looking at {@link Tile::getReferenceCount}.
  */
 class LoadedConstTileEnumerator {
 public:

@@ -62,7 +62,7 @@ private:
   double _weight = 1.0;
   std::vector<Tile*> _workerThread;
   std::vector<Tile*> _mainThread;
-  std::vector<IntrusivePointer<Tile>> _keepAlive;
+  std::vector<Tile::Pointer> _keepAlive;
 };
 
 class TestCustomLoader : public TilesetContentLoader {

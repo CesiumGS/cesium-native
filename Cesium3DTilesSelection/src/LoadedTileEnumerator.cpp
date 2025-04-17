@@ -12,7 +12,7 @@ bool meetsCriteriaForEnumeration(const Tile* pTile) {
   if (pTile == nullptr)
     return false;
 
-  return pTile->getDoNotUnloadSubtreeCount() > 0 ||
+  return pTile->getReferenceCount() > 0 ||
          pTile->getState() != TileLoadState::Unloaded;
 }
 

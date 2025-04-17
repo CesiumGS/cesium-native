@@ -153,8 +153,8 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void markTileNowUsed(const Tile& tile);
-  void markTileNowUnused(const Tile& tile);
+  void markTileIneligibleForContentUnloading(Tile& tile);
+  void markTileEligibleForContentUnloading(Tile& tile);
 
   /**
    * @brief Unloads unused tiles until the total memory usage by all loaded
@@ -176,6 +176,9 @@ public:
 
   void processWorkerThreadLoadRequests(const TilesetOptions& options);
   void processMainThreadLoadRequests(const TilesetOptions& options);
+
+  void markTilesetDestroyed() noexcept;
+  void releaseReference() const;
 
 private:
   static void setTileContent(
@@ -216,6 +219,7 @@ private:
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
+  bool _tilesetDestroyed;
 
   // Stores assets that might be shared between tiles.
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
@@ -226,7 +230,10 @@ private:
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
 
-  Tile::UnusedLinkedList _unusedTiles;
+  // These tiles are not currently used, so their content may be unloaded. The
+  // tiles at the head of the list are the least recently used, and the ones at
+  // the tail are the most recently used.
+  Tile::UnusedLinkedList _tilesEligibleForContentUnloading;
 
   std::vector<TileLoadRequester*> _requesters;
   double _roundRobinValueWorker;

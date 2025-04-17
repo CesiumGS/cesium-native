@@ -1,3 +1,5 @@
+#include "TilesetContentManager.h"
+
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
@@ -73,7 +75,22 @@ TilesetContentManager* TilesetContentLoader::getOwner() noexcept {
 }
 
 void TilesetContentLoader::setOwner(TilesetContentManager& owner) noexcept {
+  // Remove a reference from the root tile to the previous owner, if any.
+  if (this->_pOwner && this->_pOwner->getRootTile() &&
+      this->_pOwner->getRootTile()->getLoader() == this &&
+      this->_pOwner->getRootTile()->getReferenceCount() > 0) {
+    this->_pOwner->releaseReference();
+  }
+
   this->_pOwner = &owner;
+
+  // Add a reference from the root tile to the new owner, if any.
+  if (this->_pOwner && this->_pOwner->getRootTile() &&
+      this->_pOwner->getRootTile()->getLoader() == this &&
+      this->_pOwner->getRootTile()->getReferenceCount() > 0) {
+    this->_pOwner->addReference();
+  }
+
   this->setOwnerOfNestedLoaders(owner);
 }
 

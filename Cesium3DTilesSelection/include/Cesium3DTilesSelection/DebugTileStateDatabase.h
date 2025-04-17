@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
 #include <string>
@@ -9,7 +9,6 @@
 
 namespace Cesium3DTilesSelection {
 
-class Tile;
 class Tileset;
 class TilesetViewGroup;
 
@@ -73,9 +72,7 @@ public:
   void recordTileState(
       int32_t frameNumber,
       const Tile& tile,
-      const std::unordered_map<
-          CesiumUtility::IntrusivePointer<const Tile>,
-          TileSelectionState>& states);
+      const std::unordered_map<Tile::Pointer, TileSelectionState>& states);
 
 private:
   struct Impl;

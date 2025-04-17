@@ -30,7 +30,7 @@ target_sources(
 )
 
 cesium_target_include_directories(
-    TARGET 
+    TARGET
         Cesium3DTilesSelection
     PUBLIC
         ${CMAKE_BINARY_DIR}
