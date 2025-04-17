@@ -60,11 +60,3 @@ target_link_libraries(Cesium3DTilesSelection
 PRIVATE
         tinyxml2::tinyxml2
 )
-
-if(CESIUM_DEBUG_TILE_UNLOADING)
-  target_link_libraries(
-    Cesium3DTilesSelection
-    PRIVATE
-      cpptrace::cpptrace
-  )
-endif()

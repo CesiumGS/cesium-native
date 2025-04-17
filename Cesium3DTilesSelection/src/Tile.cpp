@@ -22,8 +22,6 @@
 #include <vector>
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-#include <cpptrace/cpptrace.hpp>
-
 #include <unordered_map>
 #endif
 
@@ -36,23 +34,23 @@ namespace Cesium3DTilesSelection {
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 std::unordered_map<
     std::string,
-    std::vector<TileDoNotUnloadSubtreeCountTracker::Entry>>
-    TileDoNotUnloadSubtreeCountTracker::_entries;
+    std::vector<TileReferenceCountTracker::Entry>>
+    TileReferenceCountTracker::_entries;
 
-void TileDoNotUnloadSubtreeCountTracker::addEntry(
+void TileReferenceCountTracker::addEntry(
     uint64_t id,
     bool increment,
     const char* reason,
     int32_t newCount) {
   const std::string idString = fmt::format("{:x}", id);
   const auto foundIt =
-      TileDoNotUnloadSubtreeCountTracker::_entries.find(idString);
-  if (foundIt != TileDoNotUnloadSubtreeCountTracker::_entries.end()) {
+      TileReferenceCountTracker::_entries.find(idString);
+  if (foundIt != TileReferenceCountTracker::_entries.end()) {
     foundIt->second.push_back(Entry{reason, increment, newCount});
   } else {
     std::vector<Entry> entries{Entry{reason, increment, newCount}};
 
-    TileDoNotUnloadSubtreeCountTracker::_entries.insert(
+    TileReferenceCountTracker::_entries.insert(
         {idString, std::move(entries)});
   }
 }
@@ -141,9 +139,6 @@ Tile::Tile(Tile&& rhs) noexcept
 }
 
 Tile::~Tile() noexcept {
-  // A tile being destroyed should not have any references. Except that the root
-  // tile's content will never be unloaded, so its reference count may be 1.
-  this->clearChildren();
   CESIUM_ASSERT(this->_referenceCount == 0);
 }
 
@@ -365,7 +360,7 @@ void Tile::addReference(const char* reason) noexcept {
   ++this->_referenceCount;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-  TileDoNotUnloadSubtreeCountTracker::addEntry(
+  TileReferenceCountTracker::addEntry(
       reinterpret_cast<uint64_t>(this),
       true,
       reason ? reason : "Unknown",
@@ -410,7 +405,7 @@ void Tile::releaseReference(const char* reason) noexcept {
   int32_t referenceCount = this->_referenceCount;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-  TileDoNotUnloadSubtreeCountTracker::addEntry(
+  TileReferenceCountTracker::addEntry(
       reinterpret_cast<uint64_t>(this),
       false,
       reason ? reason : "Unknown",

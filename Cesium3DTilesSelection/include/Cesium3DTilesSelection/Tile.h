@@ -21,8 +21,6 @@
 #include <vector>
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-#include <cpptrace/cpptrace.hpp>
-
 #include <unordered_map>
 #endif
 
@@ -30,7 +28,7 @@ namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-class TileDoNotUnloadSubtreeCountTracker {
+class TileReferenceCountTracker {
 private:
   struct Entry {
     std::string reason;
