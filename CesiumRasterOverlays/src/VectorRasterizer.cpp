@@ -91,28 +91,46 @@ inline void renderPixel(
   CESIUM_ASSERT(normalizedX >= 0.0 && normalizedX <= 1.0);
   CESIUM_ASSERT(normalizedY >= 0.0 && normalizedY <= 1.0);
 
-  size_t imageX = (size_t)((image.width - 1) * normalizedX);
-  size_t imageY = (size_t)((image.width - 1) * normalizedY);
+  const size_t imageX = (size_t)((image.width - 1) * normalizedX);
+  const size_t imageY = (size_t)((image.width - 1) * normalizedY);
+  const size_t baseIndex =
+      (imageY * (size_t)image.height + imageX) * (size_t)image.channels;
   if (image.channels == 1) {
-    image.pixelData[imageY * (size_t)image.height + imageX] = color[0];
+    image.pixelData[baseIndex] = color[0];
   } else if (image.channels == 2) {
-    image.pixelData[imageY * 2 * (size_t)image.height + imageX * 2] = color[0];
-    image.pixelData[imageY * 2 * (size_t)image.height + imageX * 2 + 1] =
-        color[1];
+    image.pixelData[baseIndex] = color[0];
+    image.pixelData[baseIndex + 1] = color[1];
   } else if (image.channels == 3) {
-    image.pixelData[imageY * 3 * (size_t)image.height + imageX * 3] = color[0];
-    image.pixelData[imageY * 3 * (size_t)image.height + imageX * 3 + 1] =
-        color[1];
-    image.pixelData[imageY * 3 * (size_t)image.height + imageX * 3 + 2] =
-        color[2];
+    image.pixelData[baseIndex] = color[0];
+    image.pixelData[baseIndex + 1] = color[1];
+    image.pixelData[baseIndex + 2] = color[2];
   } else if (image.channels == 4) {
-    image.pixelData[imageY * 4 * (size_t)image.height + imageX * 4] = color[0];
-    image.pixelData[imageY * 4 * (size_t)image.height + imageX * 4 + 1] =
-        color[1];
-    image.pixelData[imageY * 4 * (size_t)image.height + imageX * 4 + 2] =
-        color[2];
-    image.pixelData[imageY * 4 * (size_t)image.height + imageX * 4 + 3] =
-        color[3];
+    if (color[3] == std::byte{255}) {
+      // New color is opaque, no need to blend
+      image.pixelData[baseIndex] = color[0];
+      image.pixelData[baseIndex + 1] = color[1];
+      image.pixelData[baseIndex + 2] = color[2];
+      image.pixelData[baseIndex + 3] = color[3];
+    } else {
+      // Alpha blending time!
+      const float r1 = (float)image.pixelData[baseIndex] / 255.0f;
+      const float g1 = (float)image.pixelData[baseIndex + 1] / 255.0f;
+      const float b1 = (float)image.pixelData[baseIndex + 2] / 255.0f;
+      const float a1 = (float)image.pixelData[baseIndex + 3] / 255.0f;
+      const float r0 = (float)color[0] / 255.0f;
+      const float g0 = (float)color[1] / 255.0f;
+      const float b0 = (float)color[2] / 255.0f;
+      const float a0 = (float)color[3] / 255.0f;
+
+      image.pixelData[baseIndex] =
+          (std::byte)((r0 * a0 + r1 * a1 * (1.0f - a0)) * 255.0f);
+      image.pixelData[baseIndex + 1] =
+          (std::byte)((g0 * a0 + g1 * a1 * (1.0f - a0)) * 255.0f);
+      image.pixelData[baseIndex + 2] =
+          (std::byte)((b0 * a0 + b1 * a1 * (1.0f - a0)) * 255.0f);
+      image.pixelData[baseIndex + 3] =
+          (std::byte)((a0 + a1 * (1.0f - a0)) * 255.0f);
+    }
   }
 }
 } // namespace
