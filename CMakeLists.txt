@@ -54,7 +54,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd
+    earcut-hpp cpp-httplib[core] libmorton zstd xsimd
 )
 
 # Packages only used for testing
@@ -261,6 +261,7 @@ find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(ada CONFIG REQUIRED)
+find_package(xsimd CONFIG REQUIRED)
 
 
 # Private Library (s2geometry)

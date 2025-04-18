@@ -5,7 +5,8 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
-#include <experimental/simd>
+#include <glm/vec2.hpp>
+#include <xsimd/xsimd.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -76,14 +77,39 @@ namespace {
  * it is in the triangle. The triangles earcut produces are CW, so we need to
  * swap the vertices to make this work, but otherwise the principle is the same.
  */
-inline double edgeOrientation(
-    const glm::dvec2& v0,
-    const glm::dvec2& v1,
-    const glm::dvec2& p) {
+/*inline float
+edgeOrientation(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& p) {
   return (v1.x - v0.x) * (p.y - v0.y) - (v1.y - v0.y) * (p.x - v0.x);
-}
+}*/
 
-inline void renderPixel(
+struct Edge {
+  static const int stepXSize = 4;
+  static const int stepYSize = 1;
+
+  xsimd::batch<float> oneStepX;
+  xsimd::batch<float> oneStepY;
+
+  xsimd::batch<float> init(
+      const glm::vec2& v0,
+      const glm::vec2& v1,
+      const glm::vec2& p,
+      const glm::vec2& step) {
+    float a = v0.y - v1.y;
+    float b = v1.x - v0.x;
+    float c = v0.x * v1.y - v0.y * v1.x;
+
+    oneStepX = a * (float)stepXSize * step.x;
+    oneStepY = b * (float)stepYSize * step.y;
+
+    xsimd::batch<float> x =
+        p.x + xsimd::batch<float>{0, step.x, 2 * step.x, 3 * step.x};
+    xsimd::batch<float> y = p.y;
+
+    return x * a + y * b + c;
+  }
+};
+
+void renderPixel(
     size_t imageX,
     size_t imageY,
     const std::array<std::byte, 4>& color,
@@ -133,9 +159,11 @@ inline void renderPixel(
 void VectorRasterizer::rasterize(
     const GlobeRectangle& rectangle,
     ImageAsset& image) {
-  glm::dvec2 step{
+  const glm::vec2 step{
       rectangle.computeWidth() / (double)image.width,
       rectangle.computeHeight() / (double)image.height};
+  const glm::vec2 vectorizedStep = step * glm::vec2(Edge::stepXSize, Edge::stepYSize);
+  bool arr[4] { false, false, false, false };
 
   for (const PolygonData& polygon : this->_polygons) {
     if (!rectangle.computeIntersection(polygon.boundingRectangle)) {
@@ -153,39 +181,16 @@ void VectorRasterizer::rasterize(
         continue;
       }
 
-      // Lookup the vertices for this triangle. Since this is a CW-wound
-      // triangle, we need to swap v1 and v2 to maintain our "left of the line =
-      // inside" rule.
-      const glm::dvec2& v0 = polygon.vertices[polygon.indices[i * 3]];
-      const glm::dvec2& v1 = polygon.vertices[polygon.indices[i * 3 + 1]];
-      const glm::dvec2& v2 = polygon.vertices[polygon.indices[i * 3 + 2]];
-
-      glm::dvec2 p{intersection->getWest(), intersection->getSouth()};
-
-      // We can calculate these ahead of time and use them to avoid recomputing
-      // the orientation every pixel, on account of knowing that we are always
-      // moving one pixel to the right every iteration of the inner loop, and
-      // one pixel down every iteration of the outer loop.
-      const double x01 = (v1.x - v0.x) * step.x;
-      const double x12 = (v2.x - v1.x) * step.x;
-      const double x20 = (v0.x - v2.x) * step.x;
-      const double y01 = (v0.y - v1.y) * step.y;
-      const double y12 = (v1.y - v2.y) * step.y;
-      const double y20 = (v2.y - v0.y) * step.y;
-
-      // Calculate orientation at the starting corner.
-      double w0Row = edgeOrientation(v1, v2, p);
-      double w1Row = edgeOrientation(v2, v0, p);
-      double w2Row = edgeOrientation(v0, v1, p);
-
       // Though we're stepping through by spatial coordinates, calculating the
       // pixel position of minX and minY lets us avoid doing the normalization
       // step every time we draw a pixel, instead doing it only once per
       // triangle.
       const double normalizedX =
-          (p.x - rectangle.getWest()) / rectangle.computeWidth();
+          (intersection->getWest() - rectangle.getWest()) /
+          rectangle.computeWidth();
       const double normalizedY =
-          (p.y - rectangle.getSouth()) / rectangle.computeHeight();
+          (intersection->getSouth() - rectangle.getSouth()) /
+          rectangle.computeHeight();
       CESIUM_ASSERT(normalizedX >= 0.0 && normalizedX <= 1.0);
       CESIUM_ASSERT(normalizedY >= 0.0 && normalizedY <= 1.0);
 
@@ -193,28 +198,61 @@ void VectorRasterizer::rasterize(
       const size_t baseImageX = imageX;
       size_t imageY = (size_t)((image.width - 1) * normalizedY);
 
-      for (p.y = intersection->getSouth(); p.y <= intersection->getNorth();
-           p.y += step.y) {
-        double w0 = w0Row;
-        double w1 = w1Row;
-        double w2 = w2Row;
-        for (p.x = intersection->getWest(); p.x <= intersection->getEast();
-             p.x += step.x) {
-          if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-            renderPixel(imageX, imageY, polygon.color, image);
+      // Lookup the vertices for this triangle. Since this is a CW-wound
+      // triangle, we need to swap v1 and v2 to maintain our "left of the line =
+      // inside" rule.
+      const glm::dvec2 base =
+          glm::dvec2(intersection->getWest(), intersection->getSouth());
+      const float width = (float)intersection->computeWidth();
+      const float height = (float)intersection->computeHeight();
+      const glm::vec2 v0 =
+          (glm::vec2)(polygon.vertices[polygon.indices[i * 3]] - base);
+      const glm::vec2 v1 =
+          (glm::vec2)(polygon.vertices[polygon.indices[i * 3 + 1]] - base);
+      const glm::vec2 v2 =
+          (glm::vec2)(polygon.vertices[polygon.indices[i * 3 + 2]] - base);
+
+      glm::vec2 p{0, 0};
+
+      Edge e01, e12, e20;
+
+      xsimd::batch<float> w0Row = e12.init(v1, v2, p, step);
+      xsimd::batch<float> w1Row = e20.init(v2, v0, p, step);
+      xsimd::batch<float> w2Row = e01.init(v0, v1, p, step);
+
+      for (p.y = 0; p.y <= height; p.y += vectorizedStep.y) {
+        xsimd::batch<float> w0 = w0Row;
+        xsimd::batch<float> w1 = w1Row;
+        xsimd::batch<float> w2 = w2Row;
+        for (p.x = 0; p.x <= width; p.x += vectorizedStep.x) {
+          xsimd::batch_bool<float> mask = w0 >= 0 && w1 >= 0 && w2 >= 0;
+          if (xsimd::any(mask)) {
+            mask.store_unaligned(arr);
+            if(arr[0]) {
+              renderPixel(imageX, imageY, polygon.color, image);
+            }
+            if(arr[1]) {
+              renderPixel(imageX + 1, imageY, polygon.color, image);
+            }
+            if(arr[2]) {
+              renderPixel(imageX + 2, imageY, polygon.color, image);
+            }
+            if(arr[3]) {
+              renderPixel(imageX + 3, imageY, polygon.color, image);
+            }
           }
 
-          w0 += y12;
-          w1 += y20;
-          w2 += y01;
-          imageX++;
+          w0 += e12.oneStepX;
+          w1 += e20.oneStepX;
+          w2 += e01.oneStepX;
+          imageX += Edge::stepXSize;
         }
 
-        w0Row += x12;
-        w1Row += x20;
-        w2Row += x01;
+        w0Row += e12.oneStepY;
+        w1Row += e20.oneStepY;
+        w2Row += e01.oneStepY;
         imageX = baseImageX;
-        imageY++;
+        imageY += Edge::stepYSize;
       }
     }
   }
