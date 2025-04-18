@@ -83,6 +83,33 @@ inline double edgeOrientation(
   return (v1.x - v0.x) * (p.y - v0.y) - (v1.y - v0.y) * (p.x - v0.x);
 }
 
+/**
+ * These two methods for alpha blending were sourced from the paper "Alpha
+ * Blending with No Division Operations" by Jerry R. Van Aken, and are used for
+ * performing alpha blending directly on the color bytes without divisions and
+ * without converting them to normalized floats beforehand.
+ * 
+ * See https://arxiv.org/pdf/2202.02864
+ */
+#define FbByteMul(x, a)                                                        \
+  {                                                                            \
+    uint32_t t = (((x) & 0xff00ff) * (a)) + 0x800080;                          \
+    t = (t + ((t >> 8) & 0xff00ff)) >> 8;                                      \
+    t &= 0xff00ff;                                                             \
+                                                                               \
+    (x) = ((((x) >> 8) & 0xff00ff) * (a)) + 0x800080;                          \
+    (x) = ((x) + (((x) >> 8) & 0xff00ff));                                     \
+    (x) &= 0xff00ff00;                                                         \
+    (x) += t;                                                                  \
+  }
+
+inline int FastAlphaMult2(int alpha, int red) {
+  red *= alpha;
+  red += 0x80U;
+  red += red >> 8;
+  return red >> 8;
+}
+
 inline void renderPixel(
     size_t imageX,
     size_t imageY,
@@ -108,23 +135,16 @@ inline void renderPixel(
       image.pixelData[baseIndex + 3] = color[3];
     } else {
       // Alpha blending time!
-      const float r1 = (float)image.pixelData[baseIndex] / 255.0f;
-      const float g1 = (float)image.pixelData[baseIndex + 1] / 255.0f;
-      const float b1 = (float)image.pixelData[baseIndex + 2] / 255.0f;
-      const float a1 = (float)image.pixelData[baseIndex + 3] / 255.0f;
-      const float r0 = (float)color[0] / 255.0f;
-      const float g0 = (float)color[1] / 255.0f;
-      const float b0 = (float)color[2] / 255.0f;
-      const float a0 = (float)color[3] / 255.0f;
-
-      image.pixelData[baseIndex] =
-          (std::byte)((r0 * a0 + r1 * a1 * (1.0f - a0)) * 255.0f);
-      image.pixelData[baseIndex + 1] =
-          (std::byte)((g0 * a0 + g1 * a1 * (1.0f - a0)) * 255.0f);
-      image.pixelData[baseIndex + 2] =
-          (std::byte)((b0 * a0 + b1 * a1 * (1.0f - a0)) * 255.0f);
+      const uint8_t a1 = (uint8_t)image.pixelData[baseIndex + 3];
+      const uint8_t a0 = (uint8_t)color[3];
+      uint32_t* dest =
+          reinterpret_cast<uint32_t*>(image.pixelData.data() + baseIndex);
+      uint32_t src = *reinterpret_cast<const uint32_t*>(color.data());
+      FbByteMul(*dest, 0xff - (uint8_t)color[3]);
+      FbByteMul(src, (uint8_t)color[3]);
+      *dest += src;
       image.pixelData[baseIndex + 3] =
-          (std::byte)((a0 + a1 * (1.0f - a0)) * 255.0f);
+          std::byte{(uint8_t)(a0 + FastAlphaMult2(0xff - a0, a1))};
     }
   }
 }
