@@ -15,7 +15,7 @@
 #include <variant>
 #include <vector>
 
-namespace CesiumRasterOverlays {
+namespace CesiumVectorData {
 
 struct PolygonData {
   CesiumGeospatial::GlobeRectangle boundingRectangle;
@@ -36,6 +36,15 @@ public:
       const std::vector<CesiumGeospatial::CartographicPolygon>& primitives,
       const std::vector<std::array<std::byte, 4>>& colors);
 
+  /**
+   * @brief Rasterizes the primitives provided to this rasterizer over the top
+   * of the given image.
+   *
+   * @param rectangle The \ref CesiumGeospatial::GlobeRectangle that this image
+   * covers.
+   * @param destinationImage The image that the vector primitives will be
+   * rasterized to.
+   */
   void rasterize(
       const CesiumGeospatial::GlobeRectangle& rectangle,
       CesiumGltf::ImageAsset& destinationImage);
@@ -43,4 +52,4 @@ public:
 private:
   std::vector<PolygonData> _polygons;
 };
-} // namespace CesiumRasterOverlays
+} // namespace CesiumVectorData

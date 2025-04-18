@@ -2,8 +2,8 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumRasterOverlays/VectorRasterizer.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumVectorData/VectorRasterizer.h>
 
 #include <experimental/simd>
 
@@ -14,7 +14,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
 using namespace CesiumGltf;
 
-namespace CesiumRasterOverlays {
+namespace CesiumVectorData {
 VectorRasterizer::VectorRasterizer(
     const std::vector<CartographicPolygon>& primitives,
     const std::vector<std::array<std::byte, 4>>& colors) {
@@ -65,10 +65,12 @@ VectorRasterizer::VectorRasterizer(
 
 namespace {
 /**
- * @brief Computes the edge determinant of the edge v0v1 and the point p.
+ * @brief Computes the orientation of point p relative to the edge v0v1.
  *
- * If this determinant is positive, the point is to the left of the line (from
- * the perspective of standing on point v0 looking at point v1).
+ * If this value is positive, the point is to the left of the line (from
+ * the perspective of standing on point v0 looking at point v1). If it's
+ * negative, the point is to the right from the same perspective. If it's zero,
+ * the point is on the edge.
  *
  * If a point is to the left of all three edges of a triangle with CCW winding,
  * it is in the triangle. The triangles earcut produces are CW, so we need to
@@ -165,20 +167,45 @@ void VectorRasterizer::rasterize(
       const glm::dvec2& v1 = polygon.vertices[polygon.indices[i * 3 + 1]];
       const glm::dvec2& v2 = polygon.vertices[polygon.indices[i * 3 + 2]];
 
-      glm::dvec2 p;
+      glm::dvec2 p{intersection->getWest(), intersection->getSouth()};
+
+      // We can calculate these ahead of time and use them to avoid recomputing
+      // the orientation every pixel, on account of knowing that we are always
+      // moving one pixel to the right every iteration of the inner loop, and
+      // one pixel down every iteration of the outer loop.
+      const double x01 = (v1.x - v0.x) * step.x;
+      const double x12 = (v2.x - v1.x) * step.x;
+      const double x20 = (v0.x - v2.x) * step.x;
+      const double y01 = (v0.y - v1.y) * step.y;
+      const double y12 = (v1.y - v2.y) * step.y;
+      const double y20 = (v2.y - v0.y) * step.y;
+
+      // Calculate orientation at the starting corner.
+      double w0Row = edgeOrientation(v1, v2, p);
+      double w1Row = edgeOrientation(v2, v0, p);
+      double w2Row = edgeOrientation(v0, v1, p);
+
       for (p.y = intersection->getSouth(); p.y <= intersection->getNorth();
            p.y += step.y) {
+        double w0 = w0Row;
+        double w1 = w1Row;
+        double w2 = w2Row;
         for (p.x = intersection->getWest(); p.x <= intersection->getEast();
              p.x += step.x) {
-          double w0 = edgeOrientation(v1, v2, p);
-          double w1 = edgeOrientation(v2, v0, p);
-          double w2 = edgeOrientation(v0, v1, p);
           if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
             renderPixel(p, polygon.color, rectangle, image);
           }
+
+          w0 += y12;
+          w1 += y20;
+          w2 += y01;
         }
+
+        w0Row += x12;
+        w1Row += x20;
+        w2Row += x01;
       }
     }
   }
 }
-} // namespace CesiumRasterOverlays
+} // namespace CesiumVectorData
