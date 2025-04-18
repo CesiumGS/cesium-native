@@ -84,17 +84,10 @@ inline double edgeOrientation(
 }
 
 inline void renderPixel(
-    const glm::dvec2& point,
+    size_t imageX,
+    size_t imageY,
     const std::array<std::byte, 4>& color,
-    const GlobeRectangle& rect,
     ImageAsset& image) {
-  double normalizedX = (point.x - rect.getWest()) / rect.computeWidth();
-  double normalizedY = (point.y - rect.getSouth()) / rect.computeHeight();
-  CESIUM_ASSERT(normalizedX >= 0.0 && normalizedX <= 1.0);
-  CESIUM_ASSERT(normalizedY >= 0.0 && normalizedY <= 1.0);
-
-  const size_t imageX = (size_t)((image.width - 1) * normalizedX);
-  const size_t imageY = (size_t)((image.width - 1) * normalizedY);
   const size_t baseIndex =
       (imageY * (size_t)image.height + imageX) * (size_t)image.channels;
   if (image.channels == 1) {
@@ -185,6 +178,21 @@ void VectorRasterizer::rasterize(
       double w1Row = edgeOrientation(v2, v0, p);
       double w2Row = edgeOrientation(v0, v1, p);
 
+      // Though we're stepping through by spatial coordinates, calculating the
+      // pixel position of minX and minY lets us avoid doing the normalization
+      // step every time we draw a pixel, instead doing it only once per
+      // triangle.
+      const double normalizedX =
+          (p.x - rectangle.getWest()) / rectangle.computeWidth();
+      const double normalizedY =
+          (p.y - rectangle.getSouth()) / rectangle.computeHeight();
+      CESIUM_ASSERT(normalizedX >= 0.0 && normalizedX <= 1.0);
+      CESIUM_ASSERT(normalizedY >= 0.0 && normalizedY <= 1.0);
+
+      size_t imageX = (size_t)((image.width - 1) * normalizedX);
+      const size_t baseImageX = imageX;
+      size_t imageY = (size_t)((image.width - 1) * normalizedY);
+
       for (p.y = intersection->getSouth(); p.y <= intersection->getNorth();
            p.y += step.y) {
         double w0 = w0Row;
@@ -193,17 +201,20 @@ void VectorRasterizer::rasterize(
         for (p.x = intersection->getWest(); p.x <= intersection->getEast();
              p.x += step.x) {
           if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-            renderPixel(p, polygon.color, rectangle, image);
+            renderPixel(imageX, imageY, polygon.color, image);
           }
 
           w0 += y12;
           w1 += y20;
           w2 += y01;
+          imageX++;
         }
 
         w0Row += x12;
         w1Row += x20;
         w2Row += x01;
+        imageX = baseImageX;
+        imageY++;
       }
     }
   }
