@@ -6,50 +6,40 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
-#include <glm/ext/vector_double2.hpp>
+#include <blend2d/context.h>
+#include <blend2d/image.h>
 
-#include <array>
 #include <cstddef>
-#include <cstdint>
-#include <variant>
-#include <vector>
 
 namespace CesiumVectorData {
 
-struct PolygonData {
-  CesiumGeospatial::GlobeRectangle boundingRectangle;
-  CesiumGeospatial::Cartographic origin;
-  std::vector<CesiumGeospatial::GlobeRectangle> triangleBoundingRectangles;
-  std::vector<glm::dvec2> vertices;
-  std::vector<uint32_t> indices;
-  std::array<std::byte, 4> color;
-};
+struct Color {
+  std::byte r;
+  std::byte g;
+  std::byte b;
+  std::byte a;
 
-using RasterizationPrimitive = std::variant<
-    CesiumGeospatial::CartographicPolygon,
-    CesiumGeospatial::CompositeCartographicPolygon>;
+  uint32_t toRgba32() const;
+};
 
 class VectorRasterizer {
 public:
   VectorRasterizer(
-      const std::vector<CesiumGeospatial::CartographicPolygon>& primitives,
-      const std::vector<std::array<std::byte, 4>>& colors);
+      const CesiumGeospatial::GlobeRectangle& bounds,
+      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset);
 
-  /**
-   * @brief Rasterizes the primitives provided to this rasterizer over the top
-   * of the given image.
-   *
-   * @param rectangle The \ref CesiumGeospatial::GlobeRectangle that this image
-   * covers.
-   * @param destinationImage The image that the vector primitives will be
-   * rasterized to.
-   */
-  void rasterize(
-      const CesiumGeospatial::GlobeRectangle& rectangle,
-      CesiumGltf::ImageAsset& destinationImage);
+  void drawPolygon(
+      const CesiumGeospatial::CartographicPolygon& polygon,
+      const Color& drawColor);
+
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> finalize();
 
 private:
-  std::vector<PolygonData> _polygons;
+  CesiumGeospatial::GlobeRectangle _bounds;
+  BLImage _image;
+  BLContext _context;
+  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _imageAsset;
 };
 } // namespace CesiumVectorData
