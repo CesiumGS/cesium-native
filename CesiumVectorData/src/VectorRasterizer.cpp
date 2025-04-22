@@ -30,12 +30,12 @@ VectorRasterizer::VectorRasterizer(
     const GlobeRectangle& bounds,
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset)
     : _bounds(bounds), _image(), _context(), _imageAsset(imageAsset) {
-  CESIUM_ASSERT(imageAsset->channels == 1 || imageAsset->channels == 4);
+  CESIUM_ASSERT(imageAsset->channels == 4);
   CESIUM_ASSERT(imageAsset->bytesPerChannel == 1);
   _image.createFromData(
       this->_imageAsset->width,
       this->_imageAsset->height,
-      this->_imageAsset->channels == 1 ? BL_FORMAT_A8 : BL_FORMAT_PRGB32,
+      BL_FORMAT_PRGB32,
       reinterpret_cast<void*>(this->_imageAsset->pixelData.data()),
       (int64_t)this->_imageAsset->width * (int64_t)this->_imageAsset->channels);
 
@@ -116,6 +116,14 @@ void VectorRasterizer::drawPolyline(
   this->_context.strokePolyline(vertices.data(), vertices.size(), style);
 }
 
+void VectorRasterizer::clear(const Color& clearColor) {
+  if (_finalized) {
+    return;
+  }
+
+  this->_context.fillAll(clearColor);
+}
+
 CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
 VectorRasterizer::finalize() {
   if (_finalized) {
@@ -124,21 +132,19 @@ VectorRasterizer::finalize() {
 
   this->_context.end();
 
-  if (this->_imageAsset->channels == 4) {
-    // Blend2D writes in BGRA whereas ImageAsset is RGBA.
-    // We need to swap the channels to fix the values.
-    // TODO: use BLPixelConverter which has SIMD support
-    std::vector<std::byte>& pixelData = this->_imageAsset->pixelData;
-    for (size_t i = 0; i < pixelData.size(); i += 4) {
-      // We need to turn BGRA to RGBA, but this is little endian so it's really
-      // ARGB to ABGR.
-      uint32_t* pPixel = reinterpret_cast<uint32_t*>(pixelData.data() + i);
-      const uint32_t pixel = *pPixel;
-      const uint32_t newPixel =
-          (pixel & 0xff000000) | ((pixel & 0x00ff0000) >> 16) |
-          (pixel & 0x0000ff00) | ((pixel & 0x000000ff) << 16);
-      *pPixel = newPixel;
-    }
+  // Blend2D writes in BGRA whereas ImageAsset is RGBA.
+  // We need to swap the channels to fix the values.
+  // TODO: use BLPixelConverter which has SIMD support
+  std::vector<std::byte>& pixelData = this->_imageAsset->pixelData;
+  for (size_t i = 0; i < pixelData.size(); i += 4) {
+    // We need to turn BGRA to RGBA, but this is little endian so it's really
+    // ARGB to ABGR.
+    uint32_t* pPixel = reinterpret_cast<uint32_t*>(pixelData.data() + i);
+    const uint32_t pixel = *pPixel;
+    const uint32_t newPixel =
+        (pixel & 0xff000000) | ((pixel & 0x00ff0000) >> 16) |
+        (pixel & 0x0000ff00) | ((pixel & 0x000000ff) << 16);
+    *pPixel = newPixel;
   }
 
   _finalized = true;

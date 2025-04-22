@@ -125,7 +125,25 @@ struct CESIUMGLTF_API ImageAsset final
    * This method is only meant to be used for debugging. It does not support any
    * compressed pixel formats.
    */
-  void writeTga(const std::string& outputPath);
+  void writeTga(const std::string& outputPath) const;
+
+  /**
+   * @brief Converts this image to the given number of channels.
+   *
+   * If the new channel count is lower than the current channel count (for
+   * example, RGBA -> RG), the conversion happens in-place and the extra
+   * channels' values are dropped. If the new channel count is greater than the
+   * current channel count (for example, RG -> RGBA), a new `pixelData` buffer
+   * is allocated and the missing channels are filled with `defaultValue`.
+   *
+   * @param newChannels The new number of channels for this image.
+   * @param defaultValue The default value for missing channels when increasing
+   * the channel count.
+   *
+   * @warning Currently only works with one-byte-per-channel images.
+   */
+  void
+  convertToChannels(int32_t newChannels, std::byte defaultValue = std::byte{0});
 
   /**
    * @brief Gets the size of this asset, in bytes.

@@ -48,8 +48,8 @@ public:
    * @param bounds The bounds on the globe that this rasterizer's canvas will
    * cover.
    * @param imageAsset The destination image asset. This \ref
-   * CesiumGltf::ImageAsset must be either one channel or four channels, with
-   * only one byte per channel (R8 or RGBA32).
+   * CesiumGltf::ImageAsset must be four channels, with
+   * only one byte per channel (RGBA32).
    */
   VectorRasterizer(
       const CesiumGeospatial::GlobeRectangle& bounds,
@@ -88,6 +88,13 @@ public:
   void drawPolyline(
       const std::span<CesiumGeospatial::Cartographic>& points,
       const Color& drawColor);
+
+  /**
+   * @brief Fills the entire canvas with the given color.
+   *
+   * @param clearColor The color to use to clear the canvas.
+   */
+  void clear(const Color& clearColor);
 
   /**
    * @brief Finalizes the rasterization operations, flushing all draw calls to

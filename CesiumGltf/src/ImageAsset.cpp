@@ -4,7 +4,7 @@
 #include <fstream>
 
 namespace CesiumGltf {
-void ImageAsset::writeTga(const std::string& outputPath) {
+void ImageAsset::writeTga(const std::string& outputPath) const {
   std::ofstream stream(outputPath, std::ios::binary | std::ios::out);
   CESIUM_ASSERT(stream.good());
 
@@ -80,6 +80,48 @@ void ImageAsset::writeTga(const std::string& outputPath) {
         stream.write(reinterpret_cast<const char*>(&one), 1);
       }
     }
+  }
+}
+
+void ImageAsset::convertToChannels(
+    int32_t newChannels,
+    std::byte defaultValue) {
+  if (newChannels == this->channels) {
+    // Nothing to do.
+    return;
+  } else if (newChannels < this->channels) {
+    // We're using fewer channels than previous, so we can perform the
+    // conversion in-place.
+    size_t writePos = 0;
+    for (size_t i = 0; i < this->pixelData.size();
+         i += (size_t)this->channels) {
+      for (size_t j = 0; j < (size_t)newChannels; j++) {
+        this->pixelData[writePos + j] = this->pixelData[i + j];
+      }
+
+      writePos += (size_t)newChannels;
+    }
+
+    this->pixelData.resize(writePos);
+  } else {
+    // We're using more channels than previous, so we need to make a new buffer.
+    std::vector<std::byte> newPixelData(
+        (size_t)(newChannels * this->width * this->height));
+    size_t writePos = 0;
+    for (size_t i = 0; i < this->pixelData.size();
+         i += (size_t)this->channels) {
+      for (size_t j = 0; j < (size_t)this->channels; j++) {
+        newPixelData[writePos + j] = this->pixelData[i + j];
+      }
+
+      for (size_t j = 0; j < (size_t)(newChannels - this->channels); j++) {
+        newPixelData[writePos + (size_t)this->channels + j] = defaultValue;
+      }
+
+      writePos += (size_t)newChannels;
+    }
+
+    this->pixelData = std::move(newPixelData);
   }
 }
 } // namespace CesiumGltf
