@@ -128,6 +128,26 @@ std::string convertPropertyTypeToString(PropertyType type);
 PropertyType convertStringToPropertyType(const std::string& str);
 
 /**
+ * @brief Converts a string type listed in \ref AccessorSpec::Type to its
+ * corresponding \ref PropertyType.
+ *
+ * @param type The string to convert to a \ref PropertyType.
+ * @returns The corresponding \ref PropertyType, or \ref PropertyType::Invalid
+ * if no conversion is possible.
+ */
+PropertyType convertAccessorTypeToPropertyType(const std::string& type);
+
+/**
+ * @brief Converts a \ref PropertyType to a string type listed in \ref
+ * AccessorSpec::Type.
+ *
+ * @param type The \ref PropertyType to convert to a string.
+ * @returns The string listed in AccessorSpec::Type, or `"INVALID"` if no
+ * conversion is possible.
+ */
+std::string convertPropertyTypeToAccessorType(PropertyType type);
+
+/**
  * @brief Converts a \ref PropertyComponentType value to a string.
  *
  * For example, \ref PropertyComponentType::Uint8 will become `"UINT8"`.

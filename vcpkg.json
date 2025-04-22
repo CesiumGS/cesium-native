@@ -1,0 +1,30 @@
+{
+  "dependencies": [
+    "asyncplusplus",
+    "doctest",
+    "expected-lite",
+    "glm",
+    "ms-gsl",
+    "rapidjson",
+    "spdlog",
+    "stb",
+    "ada-url",
+    "draco",
+    "ktx",
+    "modp-base64",
+    "meshoptimizer",
+    "openssl",
+    "s2geometry",
+    "libjpeg-turbo",
+    "sqlite3",
+    "tinyxml2",
+    "libwebp",
+    "zlib-ng",
+    "picosha2",
+    "earcut-hpp",
+    "cpp-httplib",
+    "libmorton",
+    "zstd"
+  ]
+}
+

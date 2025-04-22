@@ -81,6 +81,59 @@ PropertyType convertStringToPropertyType(const std::string& str) {
   return PropertyType::Invalid;
 }
 
+PropertyType convertAccessorTypeToPropertyType(const std::string& type) {
+  if (type == AccessorSpec::Type::SCALAR) {
+    return PropertyType::Scalar;
+  }
+
+  if (type == AccessorSpec::Type::VEC2) {
+    return PropertyType::Vec2;
+  }
+
+  if (type == AccessorSpec::Type::VEC3) {
+    return PropertyType::Vec3;
+  }
+
+  if (type == AccessorSpec::Type::VEC4) {
+    return PropertyType::Vec4;
+  }
+
+  if (type == AccessorSpec::Type::MAT2) {
+    return PropertyType::Mat2;
+  }
+
+  if (type == AccessorSpec::Type::MAT3) {
+    return PropertyType::Mat3;
+  }
+
+  if (type == AccessorSpec::Type::MAT4) {
+    return PropertyType::Mat4;
+  }
+
+  return PropertyType::Invalid;
+}
+
+std::string convertPropertyTypeToAccessorType(PropertyType type) {
+  switch (type) {
+  case PropertyType::Scalar:
+    return AccessorSpec::Type::SCALAR;
+  case PropertyType::Vec2:
+    return AccessorSpec::Type::VEC2;
+  case PropertyType::Vec3:
+    return AccessorSpec::Type::VEC3;
+  case PropertyType::Vec4:
+    return AccessorSpec::Type::VEC4;
+  case PropertyType::Mat2:
+    return AccessorSpec::Type::MAT2;
+  case PropertyType::Mat3:
+    return AccessorSpec::Type::MAT3;
+  case PropertyType::Mat4:
+    return AccessorSpec::Type::MAT4;
+  default:
+    return "INVALID";
+  }
+}
+
 std::string convertPropertyComponentTypeToString(PropertyComponentType type) {
   switch (type) {
   case PropertyComponentType::None:

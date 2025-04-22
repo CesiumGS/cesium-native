@@ -8,6 +8,8 @@
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+- Added support for building in `vcpkg` manifest mode.
 
 ### v0.46.0 - 2025-04-01
 
