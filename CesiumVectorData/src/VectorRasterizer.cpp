@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/CompositeCartographicPolygon.h"
+
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
@@ -59,6 +61,19 @@ void VectorRasterizer::drawPolygon(
 
   // Since glm::dvec2 and BLPoint are both structs containing two doubles in the
   // same order, we can treat one as the other to avoid copying.
+  CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
+  this->_context.fillPolygon(
+      reinterpret_cast<const BLPoint*>(vertices.data()),
+      vertices.size(),
+      style);
+}
+
+void VectorRasterizer::drawPolygon(
+    const CompositeCartographicPolygon& polygon,
+    const Color& color) {
+  BLRgba32 style(color.toRgba32());
+
+  const std::vector<glm::dvec2>& vertices = polygon.getUnindexedVertices();
   CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
   this->_context.fillPolygon(
       reinterpret_cast<const BLPoint*>(vertices.data()),

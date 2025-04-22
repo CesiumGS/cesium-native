@@ -26,12 +26,32 @@ calculateBoundingRectangle(const std::vector<CartographicPolygon>& polygons) {
 
   return builder.toGlobeRectangle();
 }
+
+glm::dvec2
+fetchIndex(const std::vector<CartographicPolygon>& polygons, uint32_t index) {
+  for (size_t i = 0; i < polygons.size(); i++) {
+    if (index >= polygons[i].getVertices().size()) {
+      index -= polygons[i].getVertices().size();
+      continue;
+    }
+
+    return polygons[i].getVertices()[index];
+  }
+
+  return glm::dvec2(0, 0);
+}
 } // namespace
 
 CompositeCartographicPolygon::CompositeCartographicPolygon(
     std::vector<CartographicPolygon>&& polygons)
     : _polygons(std::move(polygons)),
-      _boundingRectangle(calculateBoundingRectangle(this->_polygons)) {}
+      _boundingRectangle(calculateBoundingRectangle(this->_polygons)) {
+  const std::vector<uint32_t> indices = this->triangulate();
+  this->_unindexedVertices.reserve(indices.size());
+  for (uint32_t index : indices) {
+    this->_unindexedVertices.emplace_back(fetchIndex(this->_polygons, index));
+  }
+}
 
 bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
   // If there's no polygons, so we're definitely not inside any of them.
@@ -59,7 +79,8 @@ bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
 }
 
 std::vector<uint32_t> CompositeCartographicPolygon::triangulate() const {
-  std::vector<std::vector<glm::dvec2>> rings(this->_polygons.size());
+  std::vector<std::vector<glm::dvec2>> rings;
+  rings.reserve(this->_polygons.size());
   for (const CartographicPolygon& polygon : this->_polygons) {
     rings.emplace_back(polygon.getVertices());
   }
@@ -80,6 +101,11 @@ bool CompositeCartographicPolygon::operator==(
   }
 
   return true;
+}
+
+const std::vector<glm::dvec2>&
+CompositeCartographicPolygon::getUnindexedVertices() const {
+  return this->_unindexedVertices;
 }
 
 const std::vector<CartographicPolygon>&

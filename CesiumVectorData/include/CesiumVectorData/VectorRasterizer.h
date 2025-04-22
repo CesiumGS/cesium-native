@@ -35,6 +35,11 @@ public:
       const CesiumGeospatial::CartographicPolygon& polygon,
       const Color& drawColor);
 
+  void drawPolygon(
+    const CesiumGeospatial::CompositeCartographicPolygon& polygon,
+    const Color& drawColor
+  );
+
   void drawPolyline(
     const std::span<CesiumGeospatial::Cartographic>& points,
     const Color& drawColor

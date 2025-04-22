@@ -58,12 +58,19 @@ public:
   const CesiumGeospatial::GlobeRectangle& getBoundingRectangle() const;
 
   /**
+   * @brief Returns the vertices of this polygon, in order of the triangulated
+   * indices. Vertices may be doubled in this representation.
+   */
+  const std::vector<glm::dvec2>& getUnindexedVertices() const;
+
+  /**
    * @brief Checks if two `CompositeCartographicPolygon` objects are equal.
    */
   bool operator==(const CompositeCartographicPolygon& rhs) const;
 
 private:
   std::vector<CartographicPolygon> _polygons;
+  std::vector<glm::dvec2> _unindexedVertices;
   CesiumGeospatial::GlobeRectangle _boundingRectangle;
 };
 } // namespace CesiumGeospatial

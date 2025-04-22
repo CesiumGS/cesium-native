@@ -44,6 +44,41 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->writeTga("triangle.tga");
   }
 
+  SUBCASE("Renders a polygon with holes") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
+        std::byte{255});
+
+    VectorRasterizer rasterizer(rect, asset);
+
+    CompositeCartographicPolygon polygon(std::vector<CartographicPolygon>{
+        CartographicPolygon{std::vector<glm::dvec2>{
+            glm::dvec2(0.1, 0.1),
+            glm::dvec2(0.1, 0.9),
+            glm::dvec2(0.9, 0.9),
+            glm::dvec2(0.9, 0.1),
+            glm::dvec2(0.1, 0.1)}},
+        CartographicPolygon{std::vector<glm::dvec2>{
+            glm::dvec2(0.3, 0.3),
+            glm::dvec2(0.3, 0.7),
+            glm::dvec2(0.7, 0.7),
+            glm::dvec2(0.7, 0.3),
+            glm::dvec2(0.3, 0.3)}}});
+
+    rasterizer.drawPolygon(
+        polygon,
+        Color{std::byte{255}, std::byte{127}, std::byte{65}, std::byte{255}});
+    rasterizer.finalize();
+    asset->writeTga("composite.tga");
+  }
+
   SUBCASE("Renders a polyline") {
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
     asset.emplace();
@@ -58,19 +93,18 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     VectorRasterizer rasterizer(rect, asset);
 
-    std::vector<Cartographic> polyline {
+    std::vector<Cartographic> polyline{
         Cartographic(0.25, 0.25),
         Cartographic(0.25, 0.5),
         Cartographic(0.3, 0.7),
         Cartographic(0.25, 0.8),
         Cartographic(0.8, 1.0),
         Cartographic(0.8, 0.9),
-        Cartographic(0.9, 0.9)
-    };
+        Cartographic(0.9, 0.9)};
 
     rasterizer.drawPolyline(
         polyline,
-        Color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}});
+        Color{std::byte{81}, std::byte{33}, std::byte{255}, std::byte{255}});
     rasterizer.finalize();
     asset->writeTga("polyline.tga");
   }
