@@ -4,11 +4,42 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-if(NOT VCPKG_MANIFEST_MODE)
+# By default, Use ezvcpkg to install dependencies. But don't use
+# ezvcpkg if it appears that this configuration is using vcpkg
+# manifest mode already, either by building cesium-native directly,
+# or via a higher level project that has added cesium-native as a
+# subdirectory and is using vcpkg to statisfy its dependencies.
+
+#In a fresh build, before CMakeCache.txt exists, determine whether to
+#use ezvcpkg. After this, CESIUM_USE_EZVCPG will be in the cache.
+set(CESIUM_USE_EZVCPKG_DEFAULT ON)
+if (VCPKG_MANIFEST_MODE)
+    set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
+elseif (CMAKE_TOOLCHAIN_FILE)
+    get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
+    if(toolchainFile STREQUAL "vcpkg.cmake")
+        set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
+    endif()
+endif()
+
+option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
+
+if(CESIUM_USE_EZVCPKG)
+  # Keep vcpkg from running in manifset mode. It will try to because
+  # this directory contains a vcpkg.json manifest.
+  set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "vcpkg manifest mode should not be enabled with ezvcpg!")
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
+
+# Note: VCPKG_TRIPLET is not used by vcpkg! The relevant variables are
+# VCPKG_TARGET_TRIPLET and VCPKG_HOST_TRIPLET. ezvcpkg and our custom
+# installation code use VCPKG_TRIPLET, so initialize it here.
+
+if (VCPKG_TARGET_TRIPLET)
+    set(VCPKG_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+endif()
 
 if (NOT VCPKG_TRIPLET)
     if (DEFINED ENV{VCPKG_TRIPLET})
@@ -21,9 +52,13 @@ if (NOT VCPKG_TRIPLET)
     else()
         set(VCPKG_TRIPLET "${DETECTED_VCPKG_TRIPLET}")
     endif()
+    if (NOT CESIUM_USE_EZVCPKG)
+        set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
+    endif()
 endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
+message(STATUS "VCPKG_TARGET_TRIPLET ${VCPKG_TARGET_TRIPLET}")
 
 if (NOT VCPKG_OVERLAY_PORTS)
     if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
@@ -60,7 +95,7 @@ set(PACKAGES_PRIVATE
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
 
-if(NOT VCPKG_MANIFEST_MODE)
+if(CESIUM_USE_EZVCPKG)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
     list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
@@ -97,7 +132,7 @@ include(CMakeDependentOption)
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
 set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
 
-if(VCPKG_MANIFEST_MODE)
+if(NOT EZVCPKG_PACKAGES_DIR)
     set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
     set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
 endif()
@@ -120,7 +155,7 @@ cmake_dependent_option(
 
 set(CESIUM_CLANG_TIDY_USE_THREADS 14 CACHE STRING "Sets the number of threads for run-clang-tidy to use.")
 
-if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
+if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS AND EZVCPKG_PACKAGES_DIR)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
@@ -142,7 +177,7 @@ if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     endforeach()
 endif()
 
-if(CESIUM_INSTALL_STATIC_LIBS)
+if(CESIUM_INSTALL_STATIC_LIBS AND NOT VCPKG_MANIFEST_MODE)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
@@ -211,6 +246,7 @@ if(CESIUM_ENABLE_CLANG_TIDY)
 endif()
 
 # Add Modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
@@ -244,6 +280,14 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # However, for some of the vcpkg built libraries where they don't provide a prope cmake config file, we have to declare
 # and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
 # these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
+#
+# XXX Above comment should be obsoleted by these first calls to
+# find_package, which resolve to our own modules that provide
+# targets. If needed, they can be installed with CMake config files
+# etc.
+find_package(zlib-ng REQUIRED)
+find_package(modp_b64 REQUIRED)
+
 find_package(Async++ CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
@@ -300,3 +344,21 @@ endif()
 
 
 add_subdirectory(doc)
+
+include(CMakePackageConfigHelpers)
+
+install(EXPORT CesiumExports
+  FILE cesium-nativeTargets.cmake
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+
+install(FILES
+  "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
+  "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake" 
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
