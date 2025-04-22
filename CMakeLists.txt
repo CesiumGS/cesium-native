@@ -66,7 +66,7 @@ if(NOT VCPKG_MANIFEST_MODE)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2024.11.16
+        COMMIT 7cd46ec6873c1325b541a068c8e4cdf54633dabe
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
