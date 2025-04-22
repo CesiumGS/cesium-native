@@ -50,6 +50,20 @@ public:
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
+   * @brief Attempts to parse a \ref VectorDocument from the provided JSON
+   * document.
+   *
+   * @param document The GeoJSON JSON document.
+   * @param attributions Any attributions to attach to the document.
+   * @returns A \ref CesiumUtility::Result containing the parsed
+   * \ref VectorDocument or any errors and warnings that came up while parsing.
+   */
+  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<VectorDocument>>
+  fromGeoJson(
+      const rapidjson::Document& document,
+      std::vector<VectorDocumentAttribution>&& attributions = {});
+
+  /**
    * @brief Attempts to load a \ref VectorDocument from a Cesium ion asset.
    *
    * Currently only the GeoJSON format is supported.
@@ -85,6 +99,10 @@ public:
    * @brief Obtains the root node of this \ref VectorDocument.
    */
   const VectorNode& getRootNode() const;
+  /**
+   * @brief Obtains the root node of this \ref VectorDocument.
+   */
+  VectorNode& getRootNode();
 
   /**
    * @brief Obtains attribution information for this document.
