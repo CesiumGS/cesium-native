@@ -24,7 +24,8 @@
     "earcut-hpp",
     "cpp-httplib",
     "libmorton",
-    "zstd"
+    "zstd",
+    "blend2d"
   ]
 }
 

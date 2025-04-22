@@ -25,25 +25,9 @@ triangulatePolygon(const std::vector<std::vector<glm::dvec2>>& rings) {
       return indices;
     }
 
-    const glm::dvec2& point0 = ring[0];
-
-    // normalize the longitude relative to the first point before triangulating
     std::vector<Point> localPolyline(vertexCount);
-    localPolyline[0] = {0.0, point0.y};
     for (size_t i = 1; i < vertexCount; ++i) {
-      const glm::dvec2& cartographic = ring[i];
-      Point& point = localPolyline[i];
-      point[0] = cartographic.x - point0.x;
-      point[1] = cartographic.y;
-
-      // check if the difference crosses the antipole
-      if (glm::abs(point[0]) > CesiumUtility::Math::OnePi) {
-        if (point[0] > 0.0) {
-          point[0] -= CesiumUtility::Math::TwoPi;
-        } else {
-          point[0] += CesiumUtility::Math::TwoPi;
-        }
-      }
+      localPolyline[i] = Point{ring[i].x, ring[i].y};
     }
 
     localPolylines.emplace_back(std::move(localPolyline));

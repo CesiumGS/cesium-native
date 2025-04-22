@@ -45,6 +45,10 @@ VectorRasterizer::VectorRasterizer(
   _context.scale(
       (double)this->_imageAsset->width / bounds.computeWidth(),
       (double)this->_imageAsset->height / bounds.computeHeight());
+  // Sets the meta transform to the user transform and resets the user
+  // transform. This lets individual render operations perform transformations
+  // without affecting the transform from LLH to pixel coordinates.
+  _context.userToMeta();
   // We don't want the stroke to be scaled, so set it to perform the scale
   // before we stroke.
   _context.setStrokeTransformOrder(BL_STROKE_TRANSFORM_ORDER_BEFORE);
@@ -55,6 +59,10 @@ VectorRasterizer::VectorRasterizer(
 void VectorRasterizer::drawPolygon(
     const CartographicPolygon& polygon,
     const Color& color) {
+  if (_finalized) {
+    return;
+  }
+
   BLRgba32 style(color.toRgba32());
 
   const std::vector<glm::dvec2>& vertices = polygon.getVertices();
@@ -71,8 +79,14 @@ void VectorRasterizer::drawPolygon(
 void VectorRasterizer::drawPolygon(
     const CompositeCartographicPolygon& polygon,
     const Color& color) {
+  if (_finalized) {
+    return;
+  }
+
   BLRgba32 style(color.toRgba32());
 
+  // TODO: This won't necessarily render correctly with holes at the moment, as
+  // Blend2D currently just turns the polygon into a path and fills it in.
   const std::vector<glm::dvec2>& vertices = polygon.getUnindexedVertices();
   CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
   this->_context.fillPolygon(
@@ -84,6 +98,10 @@ void VectorRasterizer::drawPolygon(
 void VectorRasterizer::drawPolyline(
     const std::span<Cartographic>& points,
     const Color& color) {
+  if (_finalized) {
+    return;
+  }
+
   BLRgba32 style(color.toRgba32());
 
   // Unfortunately Cartographic has an extra component that BLPoint does not, so
@@ -100,6 +118,10 @@ void VectorRasterizer::drawPolyline(
 
 CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
 VectorRasterizer::finalize() {
+  if (_finalized) {
+    return this->_imageAsset;
+  }
+
   this->_context.end();
 
   if (this->_imageAsset->channels == 4) {
@@ -119,6 +141,7 @@ VectorRasterizer::finalize() {
     }
   }
 
+  _finalized = true;
   return this->_imageAsset;
 }
 

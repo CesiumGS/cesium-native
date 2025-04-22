@@ -26,8 +26,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -52,8 +51,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -87,8 +85,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -125,8 +122,7 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
   asset->channels = 4;
   asset->bytesPerChannel = 1;
   asset->pixelData.resize(
-      (size_t)(asset->width * asset->height * asset->channels *
-               asset->bytesPerChannel),
+      (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
       std::byte{255});
 
   for (int i = 0; i < 100; i++) {
