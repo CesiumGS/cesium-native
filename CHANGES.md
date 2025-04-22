@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for building in `vcpkg` manifest mode.
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
