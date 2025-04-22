@@ -42,7 +42,7 @@ namespace {
  * member is known. Returning false adds the object to the foreign member set.
  */
 JsonValue::Object collectForeignMembers(
-    const rapidjson::Value::Object& obj,
+    const rapidjson::Value::ConstObject& obj,
     const std::function<bool(const std::string& key)>& predicate) {
   JsonValue::Object newObj;
 
@@ -85,7 +85,7 @@ Result<Cartographic> parsePosition(const rapidjson::Value& pos) {
 }
 
 Result<std::vector<Cartographic>>
-parsePositionArray(const rapidjson::Value::Array& arr) {
+parsePositionArray(const rapidjson::Value::ConstArray& arr) {
   std::vector<Cartographic> points;
   points.reserve(arr.Size());
   for (auto& value : arr) {
@@ -101,7 +101,7 @@ parsePositionArray(const rapidjson::Value::Array& arr) {
 }
 
 Result<std::vector<std::vector<Cartographic>>> parsePolygon(
-    const rapidjson::Value::Array& arr,
+    const rapidjson::Value::ConstArray& arr,
     const std::string& name,
     uint32_t minItems,
     bool mustBeClosed) {
@@ -194,7 +194,7 @@ parseBoundingBox(const rapidjson::Value& value) {
 }
 
 Result<VectorNode> parseGeoJsonObject(
-    const rapidjson::Value::Object& obj,
+    const rapidjson::Value::ConstObject& obj,
     const std::function<bool(const std::string& type)>& expectedPredicate,
     const std::string& expectedStr) {
   const std::string& type = JsonHelpers::getStringOrDefault(obj, "type", "");
@@ -300,7 +300,7 @@ Result<VectorNode> parseGeoJsonObject(
           "FeatureCollection 'features' member must be an array of features."));
     }
 
-    const rapidjson::Value::Array& featuresArr =
+    const rapidjson::Value::ConstArray& featuresArr =
         featuresMember->value.GetArray();
 
     node.children.reserve(featuresArr.Size());
@@ -342,7 +342,8 @@ Result<VectorNode> parseGeoJsonObject(
           "GeometryCollection requires array 'geometries' member."));
     }
 
-    rapidjson::Value::Array childrenArr = geometriesMember->value.GetArray();
+    rapidjson::Value::ConstArray childrenArr =
+        geometriesMember->value.GetArray();
 
     node.children.reserve(childrenArr.Size());
     for (auto& value : childrenArr) {
@@ -447,7 +448,7 @@ Result<VectorNode> parseGeoJsonObject(
                            "array of position arrays."));
     }
 
-    const rapidjson::Value::Array coordinatesArr =
+    const rapidjson::Value::ConstArray coordinatesArr =
         coordinatesMember->value.GetArray();
 
     Result<std::vector<std::vector<Cartographic>>> linesResult =
@@ -470,7 +471,7 @@ Result<VectorNode> parseGeoJsonObject(
           "Polygon 'coordinates' member must be an array of position arrays."));
     }
 
-    const rapidjson::Value::Array coordinatesArr =
+    const rapidjson::Value::ConstArray coordinatesArr =
         coordinatesMember->value.GetArray();
 
     Result<std::vector<std::vector<Cartographic>>> ringsResult =
@@ -496,7 +497,7 @@ Result<VectorNode> parseGeoJsonObject(
                            "of arrays of position arrays."));
     }
 
-    const rapidjson::Value::Array coordinatesArr =
+    const rapidjson::Value::ConstArray coordinatesArr =
         coordinatesMember->value.GetArray();
 
     node.primitives.reserve(coordinatesArr.Size());
@@ -531,6 +532,18 @@ Result<VectorNode> parseGeoJsonObject(
 }
 } // namespace
 
+Result<VectorNode> parseGeoJson(const rapidjson::Document& doc) {
+  if (!doc.IsObject()) {
+    return Result<VectorNode>(
+        ErrorList::error("GeoJSON must contain a JSON object."));
+  }
+
+  return parseGeoJsonObject(
+      doc.GetObject(),
+      [](const std::string&) { return true; },
+      "");
+}
+
 Result<VectorNode> parseGeoJson(const std::span<const std::byte>& bytes) {
   rapidjson::Document d;
   d.Parse(reinterpret_cast<const char*>(bytes.data()), bytes.size());
@@ -539,15 +552,9 @@ Result<VectorNode> parseGeoJson(const std::span<const std::byte>& bytes) {
         "Failed to parse GeoJSON: {} at offset {}",
         rapidjson::GetParseError_En(d.GetParseError()),
         d.GetErrorOffset())));
-  } else if (!d.IsObject()) {
-    return Result<VectorNode>(
-        ErrorList::error("GeoJSON must contain a JSON object."));
   }
 
-  return parseGeoJsonObject(
-      d.GetObject(),
-      [](const std::string&) { return true; },
-      "");
+  return parseGeoJson(d);
 }
 
 } // namespace CesiumVectorData

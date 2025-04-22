@@ -3,6 +3,8 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/Library.h>
 #include <CesiumVectorData/VectorNode.h>
@@ -31,7 +33,8 @@ struct VectorDocumentAttribution {
  * The document is represented as a hierarchy of \ref VectorNode values starting
  * with the root node.
  */
-class CESIUMVECTORDATA_API VectorDocument {
+class CESIUMVECTORDATA_API VectorDocument
+    : public CesiumUtility::ReferenceCountedThreadSafe<VectorDocument> {
 public:
   /**
    * @brief Attempts to parse a \ref VectorDocument from the provided GeoJSON.
@@ -41,8 +44,23 @@ public:
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref VectorDocument or any errors and warnings that came up while parsing.
    */
-  static CesiumUtility::Result<VectorDocument> fromGeoJson(
+  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<VectorDocument>>
+  fromGeoJson(
       const std::span<const std::byte>& bytes,
+      std::vector<VectorDocumentAttribution>&& attributions = {});
+
+  /**
+   * @brief Attempts to parse a \ref VectorDocument from the provided JSON
+   * document.
+   *
+   * @param document The GeoJSON JSON document.
+   * @param attributions Any attributions to attach to the document.
+   * @returns A \ref CesiumUtility::Result containing the parsed
+   * \ref VectorDocument or any errors and warnings that came up while parsing.
+   */
+  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<VectorDocument>>
+  fromGeoJson(
+      const rapidjson::Document& document,
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
@@ -61,7 +79,8 @@ public:
    * containing the parsed \ref VectorDocument or any errors and warnings that
    * came up while loading or parsing the data.
    */
-  static CesiumAsync::Future<CesiumUtility::Result<VectorDocument>>
+  static CesiumAsync::Future<
+      CesiumUtility::Result<CesiumUtility::IntrusivePointer<VectorDocument>>>
   fromCesiumIonAsset(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -80,6 +99,10 @@ public:
    * @brief Obtains the root node of this \ref VectorDocument.
    */
   const VectorNode& getRootNode() const;
+  /**
+   * @brief Obtains the root node of this \ref VectorDocument.
+   */
+  VectorNode& getRootNode();
 
   /**
    * @brief Obtains attribution information for this document.
