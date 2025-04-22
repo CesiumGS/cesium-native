@@ -12,6 +12,7 @@
 #include <blend2d/image.h>
 
 #include <cstddef>
+#include <span>
 
 namespace CesiumVectorData {
 
@@ -33,6 +34,11 @@ public:
   void drawPolygon(
       const CesiumGeospatial::CartographicPolygon& polygon,
       const Color& drawColor);
+
+  void drawPolyline(
+    const std::span<CesiumGeospatial::Cartographic>& points,
+    const Color& drawColor
+  );
 
   CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> finalize();
 

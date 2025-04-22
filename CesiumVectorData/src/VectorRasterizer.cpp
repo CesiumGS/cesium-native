@@ -25,7 +25,7 @@ uint32_t Color::toRgba32() const {
 }
 
 VectorRasterizer::VectorRasterizer(
-    const CesiumGeospatial::GlobeRectangle& bounds,
+    const GlobeRectangle& bounds,
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset)
     : _bounds(bounds), _image(), _context(), _imageAsset(imageAsset) {
   CESIUM_ASSERT(imageAsset->channels == 1 || imageAsset->channels == 4);
@@ -36,38 +36,56 @@ VectorRasterizer::VectorRasterizer(
       this->_imageAsset->channels == 1 ? BL_FORMAT_A8 : BL_FORMAT_PRGB32,
       reinterpret_cast<void*>(this->_imageAsset->pixelData.data()),
       (int64_t)this->_imageAsset->width * (int64_t)this->_imageAsset->channels);
+
   _context.begin(this->_image);
+  // Set up transformation matrix to transform from LLH to pixel coordinates.
+  _context.translate(-bounds.getWest(), -bounds.getSouth());
+  _context.scale(
+      (double)this->_imageAsset->width / bounds.computeWidth(),
+      (double)this->_imageAsset->height / bounds.computeHeight());
+  // We don't want the stroke to be scaled, so set it to perform the scale
+  // before we stroke.
+  _context.setStrokeTransformOrder(BL_STROKE_TRANSFORM_ORDER_BEFORE);
   // Initialize the image as all transparent.
   _context.clearAll();
 }
 
 void VectorRasterizer::drawPolygon(
-    const CesiumGeospatial::CartographicPolygon& polygon,
+    const CartographicPolygon& polygon,
     const Color& color) {
   BLRgba32 style(color.toRgba32());
 
-  const double boundsWidth = this->_bounds.computeWidth();
-  const double boundsHeight = this->_bounds.computeHeight();
-
-  std::vector<BLPoint> points;
   const std::vector<glm::dvec2>& vertices = polygon.getVertices();
-  for (const uint32_t& idx : polygon.getIndices()) {
-    const glm::dvec2& vertex = vertices[idx];
-    points.emplace_back(
-        (vertex.x - this->_bounds.getWest()) / boundsWidth *
-            this->_image.width(),
-        (vertex.y - this->_bounds.getSouth()) / boundsHeight *
-            this->_image.height());
+
+  // Since glm::dvec2 and BLPoint are both structs containing two doubles in the
+  // same order, we can treat one as the other to avoid copying.
+  CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
+  this->_context.fillPolygon(
+      reinterpret_cast<const BLPoint*>(vertices.data()),
+      vertices.size(),
+      style);
+}
+
+void VectorRasterizer::drawPolyline(
+    const std::span<Cartographic>& points,
+    const Color& color) {
+  BLRgba32 style(color.toRgba32());
+
+  // Unfortunately Cartographic has an extra component that BLPoint does not, so
+  // we can't use it directly.
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  for (Cartographic& vertex : points) {
+    vertices.emplace_back(vertex.longitude, vertex.latitude);
   }
 
-  this->_context.fillPolygon(points.data(), points.size(), style);
+  this->_context.strokePolyline(vertices.data(), vertices.size(), style);
 }
 
 CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
 VectorRasterizer::finalize() {
   this->_context.end();
-
-  this->_image.writeToFile("triangle.png");
 
   if (this->_imageAsset->channels == 4) {
     // Blend2D writes in BGRA whereas ImageAsset is RGBA.
