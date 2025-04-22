@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added support for building in `vcpkg` manifest mode.
+
 ##### Fixes :wrench:
 
 - Point cloud tiles will now be upsampled for raster overlays, fixing an issue where applying a raster overlay to a point cloud tileset would cause holes to appear.
@@ -24,6 +28,7 @@
 - Fixed bugs that could prevent valid metadata in Instanced 3D Model (i3dm) files from being parsed correctly.
 - Fixed a memory leak in `CesiumGltfReader`.
 - Fixed a bug in `ImplicitTilingUtilities::computeBoundingVolume` that incorrectly subdivided a `BoundingCylinderRegion` across the discontinuity line.
+- Fixed a broken link in the `ktx` vcpkg portfile that would cause this library to fail to build.
 
 ### v0.45.0 - 2025-03-03
 
