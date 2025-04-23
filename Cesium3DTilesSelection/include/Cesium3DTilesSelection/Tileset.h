@@ -413,7 +413,7 @@ public:
    * view. Unlike {@link updateViewGroup}, this method blocks the calling thread
    * until all tiles suitable for the views have been loaded.
    *
-   * This method is significantly slower than {@link Tileset::updateView} and
+   * This method is significantly slower than {@link updateViewGroup} and
    * should only be used for capturing a movie or for other non-realtime
    * situations.
    *
