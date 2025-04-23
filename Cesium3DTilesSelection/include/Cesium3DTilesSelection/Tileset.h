@@ -410,7 +410,7 @@ public:
 
   /**
    * @brief Updates a view group, returning the set of tiles to render in this
-   * view. Unlike {@link updateViewgroup}, this method blocks the calling thread
+   * view. Unlike {@link updateViewGroup}, this method blocks the calling thread
    * until all tiles suitable for the views have been loaded.
    *
    * This method is significantly slower than {@link Tileset::updateView} and
