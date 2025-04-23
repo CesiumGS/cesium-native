@@ -405,6 +405,29 @@ public:
       float deltaTime = 0.0f);
 
   /**
+   * @brief Updates a view group, returning the set of tiles to render in this
+   * view. Unlike {@link updateViewgroup}, this method blocks the calling thread
+   * until all tiles suitable for the views have been loaded.
+   *
+   * This method is significantly slower than {@link Tileset::updateView} and
+   * should only be used for capturing a movie or for other non-realtime
+   * situations.
+   *
+   * @param viewGroup The view group to update. The first time `updateViewGroup`
+   * is called, simply create a new `TilesetViewGroup` to pass as this
+   * parameter. For successive calls to `updateViewGroup`, pass this same
+   * instance.
+   * @param frustums The {@link ViewState} instances that are observing the
+   * tileset in this view group.
+   * @returns The set of tiles to render in the updated view. This value is only
+   * valid until the next call to `updateViewGroup` or until the view group is
+   * destroyed, whichever comes first.
+   */
+  const ViewUpdateResult& updateViewGroupOffline(
+      TilesetViewGroup& viewGroup,
+      const std::vector<ViewState>& frustums);
+
+  /**
    * @brief Loads the tiles that are currently deemed the most important,
    * across all height queries and {@link TilesetViewGroup} instances.
    *
