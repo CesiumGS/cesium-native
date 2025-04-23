@@ -3,7 +3,9 @@
 #pragma warning(disable : 4100 4127 4309 4996)
 
 #define _CHAR_UNSIGNED
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #define _USE_MATH_DEFINES
 #endif
 
