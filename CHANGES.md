@@ -17,6 +17,8 @@
 
 ##### Additions :tada:
 
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+- Added support for building in `vcpkg` manifest mode.
 - Added `TilesetViewGroup`. View groups select tiles independently from other any other view group. This is useful for applications with multiple viewports to allow them to show different levels-of-detail for the same area.
 - Added `CreditReferencer` which makes it easy to track credits in a frame-oriented fashion similar to how `CreditSystem::addCreditToFrame` worked in previous releases.
 - Added a `std::hash` implementation for `IntrusivePointer` that simply hashes the underlying pointer.

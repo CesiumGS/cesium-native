@@ -2,7 +2,6 @@
 
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <memory>
 #include <string>
