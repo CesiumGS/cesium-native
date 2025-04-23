@@ -224,7 +224,9 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult&
+  [[deprecated("Instead of `tileset.updateViewOffline(...)`, call "
+               "`tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), "
+               "...)`.")]] const ViewUpdateResult&
   updateViewOffline(const std::vector<ViewState>& frustums);
 
   /**
@@ -242,7 +244,9 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult&
+  [[deprecated("Instead of `tileset.updateView(...)`, call "
+               "`tileset.updateViewGroup(tileset.getDefaultViewGroup(), ...)` "
+               "followed by `tileset.loadTiles()`.")]] const ViewUpdateResult&
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
@@ -434,6 +438,10 @@ public:
    * In order to minimize tile load latency, this method should be called
    * frequently, such as once per render frame. It will return quickly when
    * there is no work to do.
+   *
+   * This method also calls
+   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} on the tileset's
+   * {@link getAsyncSystem}.
    */
   void loadTiles();
 

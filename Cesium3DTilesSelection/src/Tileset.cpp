@@ -436,6 +436,8 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 void Tileset::loadTiles() {
   CESIUM_TRACE("Tileset::loadTiles");
 
+  this->_asyncSystem.dispatchMainThreadTasks();
+
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
