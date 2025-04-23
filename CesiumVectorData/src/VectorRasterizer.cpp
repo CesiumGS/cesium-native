@@ -1,4 +1,5 @@
 #include "CesiumGeospatial/CompositeCartographicPolygon.h"
+#include "CesiumVectorData/VectorNode.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -96,7 +97,7 @@ void VectorRasterizer::drawPolygon(
 }
 
 void VectorRasterizer::drawPolyline(
-    const std::span<Cartographic>& points,
+    const std::span<const Cartographic>& points,
     const Color& color) {
   if (_finalized) {
     return;
@@ -109,11 +110,29 @@ void VectorRasterizer::drawPolyline(
   std::vector<BLPoint> vertices;
   vertices.reserve(points.size());
 
-  for (Cartographic& vertex : points) {
+  for (const Cartographic& vertex : points) {
     vertices.emplace_back(vertex.longitude, vertex.latitude);
   }
 
   this->_context.strokePolyline(vertices.data(), vertices.size(), style);
+}
+
+void VectorRasterizer::drawPrimitive(
+    const VectorPrimitive& primitive,
+    const Color& drawColor) {
+  struct PrimitiveDrawVisitor {
+    VectorRasterizer& rasterizer;
+    const Color& drawColor;
+    void operator()(const Cartographic& /*point*/) {}
+    void operator()(const std::vector<Cartographic>& points) {
+      rasterizer.drawPolyline(points, drawColor);
+    }
+    void operator()(const CompositeCartographicPolygon& polygon) {
+      rasterizer.drawPolygon(polygon, drawColor);
+    }
+  };
+
+  std::visit(PrimitiveDrawVisitor{*this, drawColor}, primitive);
 }
 
 void VectorRasterizer::clear(const Color& clearColor) {

@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/VectorNode.h>
 
 #include <blend2d/context.h>
 #include <blend2d/image.h>
@@ -86,8 +87,16 @@ public:
    * @param drawColor The \ref Color to use to draw the polyline.
    */
   void drawPolyline(
-      const std::span<CesiumGeospatial::Cartographic>& points,
+      const std::span<const CesiumGeospatial::Cartographic>& points,
       const Color& drawColor);
+
+  /**
+   * @brief Rasterizes the provided `VectorPrimitive` to the canvas.
+   *
+   * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
+   * to calls to `drawPolyline`. Points are currently not drawn.
+   */
+  void drawPrimitive(const VectorPrimitive& primitive, const Color& drawColor);
 
   /**
    * @brief Fills the entire canvas with the given color.
