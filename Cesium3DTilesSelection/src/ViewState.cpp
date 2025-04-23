@@ -44,7 +44,6 @@ namespace Cesium3DTilesSelection {
       viewportSize,
       horizontalFieldOfView,
       verticalFieldOfView,
-      ellipsoid.cartesianToCartographic(position),
       ellipsoid);
 }
 
@@ -65,19 +64,6 @@ glm::dvec3 directionFromView(const glm::dmat4& viewMatrix) {
 }
 } // namespace
 
-/* static */ ViewState ViewState::create(
-    const glm::dmat4& viewMatrix,
-    const glm::dmat4& projectionMatrix,
-    const glm::dvec2& viewportSize,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  return ViewState(
-      viewMatrix,
-      projectionMatrix,
-      viewportSize,
-      ellipsoid.cartesianToCartographic(positionFromView(viewMatrix)),
-      ellipsoid);
-}
-
 // The near and far plane values don't matter for frustum culling.
 ViewState::ViewState(
     const glm::dvec3& position,
@@ -86,7 +72,6 @@ ViewState::ViewState(
     const glm::dvec2& viewportSize,
     double horizontalFieldOfView,
     double verticalFieldOfView,
-    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : ViewState(
           Transforms::createViewMatrix(position, direction, up),
@@ -96,20 +81,18 @@ ViewState::ViewState(
               100.0,
               std::numeric_limits<double>::infinity()),
           viewportSize,
-          positionCartographic,
           ellipsoid) {}
 
 ViewState::ViewState(
     const glm::dmat4& viewMatrix,
     const glm::dmat4& projectionMatrix,
     const glm::dvec2& viewportSize,
-    const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position(positionFromView(viewMatrix)),
       _direction(directionFromView(viewMatrix)),
       _viewportSize(viewportSize),
       _ellipsoid(ellipsoid),
-      _positionCartographic(positionCartographic),
+      _positionCartographic(ellipsoid.cartesianToCartographic(positionFromView(viewMatrix))),
       _cullingVolume(createCullingVolume(projectionMatrix * viewMatrix)),
       _viewMatrix(viewMatrix),
       _projectionMatrix(projectionMatrix) {}
@@ -134,7 +117,6 @@ ViewState::ViewState(
               100.0,
               std::numeric_limits<double>::infinity()),
           viewportSize,
-          ellipsoid.cartesianToCartographic(position),
           ellipsoid) {}
 
 namespace {

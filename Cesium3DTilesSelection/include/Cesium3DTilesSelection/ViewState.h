@@ -24,11 +24,24 @@ namespace Cesium3DTilesSelection {
  */
 class CESIUM3DTILESSELECTION_API ViewState final {
 
-  // TODO: Add support for orthographic and off-center perspective frustums
 public:
   /**
    * @brief Creates a new instance of a view state with a symmetric perspective
    * projection.
+   * @deprecated Use {@link ViewState::ViewState} instead.
+   */
+  [[deprecated(
+          "Use ViewState::ViewState instead.")]] static ViewState create(
+      const glm::dvec3& position,
+      const glm::dvec3& direction,
+      const glm::dvec3& up,
+      const glm::dvec2& viewportSize,
+      double horizontalFieldOfView,
+      double verticalFieldOfView,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance.
    *
    * @param position The position of the eye point of the camera.
    * @param direction The view direction vector of the camera.
@@ -43,7 +56,7 @@ public:
    * from the cartesian position.
    * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
    */
-  static ViewState create(
+  ViewState(
       const glm::dvec3& position,
       const glm::dvec3& direction,
       const glm::dvec3& up,
@@ -65,7 +78,7 @@ public:
    * from the cartesian position.
    * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
    */
-  static ViewState create(
+  ViewState(
       const glm::dmat4& viewMatrix,
       const glm::dmat4& projectionMatrix,
       const glm::dvec2& viewportSize,
@@ -207,35 +220,6 @@ public:
       const noexcept;
 
 private:
-  /**
-   * @brief Creates a new instance.
-   *
-   * @param position The position of the eye point of the camera.
-   * @param direction The view direction vector of the camera.
-   * @param up The up vector of the camera.
-   * @param viewportSize The size of the viewport, in pixels.
-   * @param horizontalFieldOfView The horizontal field-of-view (opening)
-   * angle of the camera, in radians.
-   * @param verticalFieldOfView The vertical field-of-view (opening)
-   * angle of the camera, in radians.
-   */
-  ViewState(
-      const glm::dvec3& position,
-      const glm::dvec3& direction,
-      const glm::dvec3& up,
-      const glm::dvec2& viewportSize,
-      double horizontalFieldOfView,
-      double verticalFieldOfView,
-      const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
-
-  ViewState(
-      const glm::dmat4& viewMatrix,
-      const glm::dmat4& projectionMatrix,
-      const glm::dvec2& viewportSize,
-      const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
-
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
   const glm::dvec2 _viewportSize;
