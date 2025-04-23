@@ -13,6 +13,7 @@
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
 #include <blend2d/path.h>
+#include <blend2d/rgba.h>
 #include <spdlog/spdlog.h>
 
 #include <cstddef>
@@ -140,7 +141,7 @@ void VectorRasterizer::clear(const Color& clearColor) {
     return;
   }
 
-  this->_context.fillAll(clearColor);
+  this->_context.fillAll(BLRgba32(clearColor.toRgba32()));
 }
 
 CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
