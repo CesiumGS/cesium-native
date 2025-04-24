@@ -1774,8 +1774,7 @@ void TilesetContentManager::setTileContent(
     // An example of non-loadable content is the "external content" at the root
     // of a regular tileset.json tileset. We can't unload it without destroying
     // the entire tileset.
-    if (!tile.getContent().isUnknownContent() &&
-        TileIdUtilities::isLoadable(tile.getTileID())) {
+    if (tile.hasReferencingContent()) {
       tile.addReference("setTileContent");
     }
 
