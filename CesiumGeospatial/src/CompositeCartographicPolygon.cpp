@@ -31,7 +31,7 @@ glm::dvec2
 fetchIndex(const std::vector<CartographicPolygon>& polygons, uint32_t index) {
   for (size_t i = 0; i < polygons.size(); i++) {
     if (index >= polygons[i].getVertices().size()) {
-      index -= polygons[i].getVertices().size();
+      index -= (uint32_t)polygons[i].getVertices().size();
       continue;
     }
 
@@ -111,5 +111,10 @@ CompositeCartographicPolygon::getUnindexedVertices() const {
 const std::vector<CartographicPolygon>&
 CompositeCartographicPolygon::getLinearRings() const {
   return this->_polygons;
+}
+
+const GlobeRectangle&
+CompositeCartographicPolygon::getBoundingRectangle() const {
+  return this->_boundingRectangle;
 }
 } // namespace CesiumGeospatial

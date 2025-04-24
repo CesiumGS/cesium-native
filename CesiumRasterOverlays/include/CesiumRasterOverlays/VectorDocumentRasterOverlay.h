@@ -1,10 +1,5 @@
 #pragma once
 
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumVectorData/VectorDocument.h"
-#include "CesiumVectorData/VectorNode.h"
-#include "CesiumVectorData/VectorRasterizer.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -12,6 +7,9 @@
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/Color.h>
+#include <CesiumVectorData/VectorDocument.h>
 
 #include <spdlog/fwd.h>
 
@@ -42,9 +40,9 @@ public:
    */
   VectorDocumentRasterOverlay(
       const std::string& name,
-      const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>& document,
+      const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
+          document,
       const CesiumVectorData::Color& color,
-      const CesiumGeospatial::Ellipsoid& ellipsoid,
       const CesiumGeospatial::Projection& projection,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~VectorDocumentRasterOverlay() override;
@@ -62,7 +60,6 @@ public:
 private:
   CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument> _document;
   CesiumVectorData::Color _color;
-  CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };
 } // namespace CesiumRasterOverlays

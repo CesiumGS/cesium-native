@@ -25,7 +25,8 @@
     "cpp-httplib",
     "libmorton",
     "zstd",
-    "blend2d"
+    "blend2d",
+    "asmjit"
   ]
 }
 

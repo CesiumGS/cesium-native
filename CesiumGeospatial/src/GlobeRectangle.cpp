@@ -178,10 +178,8 @@ bool GlobeRectangle::equalsEpsilon(
 CesiumGeospatial::GlobeRectangle GlobeRectangle::subdivideRectangle(
     const CesiumGeometry::QuadtreeTileID& tileID,
     double denominator) const {
-  double latSize =
-      (this->getNorth() - this->getSouth()) / denominator;
-  double longSize =
-      (this->getEast() - this->getWest()) / denominator;
+  double latSize = (this->getNorth() - this->getSouth()) / denominator;
+  double longSize = (this->getEast() - this->getWest()) / denominator;
 
   double childWest = this->getWest() + longSize * tileID.x;
   double childEast = this->getWest() + longSize * (tileID.x + 1);

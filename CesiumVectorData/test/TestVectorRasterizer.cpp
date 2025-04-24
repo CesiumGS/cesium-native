@@ -5,6 +5,7 @@
 #include <CesiumVectorData/VectorRasterizer.h>
 
 #include <doctest/doctest.h>
+#include <fmt/format.h>
 #include <glm/fwd.hpp>
 
 #include <chrono>
@@ -43,6 +44,63 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->writeTga("triangle.tga");
   }
 
+  SUBCASE("Triangle as tiles lines up") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    CartographicPolygon triangle(std::vector<glm::dvec2>{
+        glm::dvec2(0.25, 0.25),
+        glm::dvec2(0.5, 0.75),
+        glm::dvec2(0.75, 0.25)});
+    Color color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}};
+    {
+      VectorRasterizer rasterizer(rect, asset);
+
+      rasterizer.drawPolygon(triangle, color);
+      rasterizer.finalize();
+    }
+
+    for (size_t i = 0; i < 2; i++) {
+      for (size_t j = 0; j < 2; j++) {
+        CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> tile;
+        tile.emplace();
+        tile->width = 128;
+        tile->height = 128;
+        tile->channels = 4;
+        tile->bytesPerChannel = 1;
+        tile->pixelData.resize(
+            (size_t)(tile->width * tile->height * tile->channels * tile->bytesPerChannel),
+            std::byte{255});
+        VectorRasterizer rasterizer(
+            GlobeRectangle(
+                (double)i * 0.5,
+                (double)j * 0.5,
+                0.5 + (double)i * 0.5,
+                0.5 + (double)j * 0.5),
+            tile);
+        rasterizer.drawPolygon(triangle, color);
+        rasterizer.finalize();
+
+        tile->writeTga(fmt::format("tile-{}-{}.tga", i, j));
+
+        for (size_t x = 0; x < (size_t)128; x++) {
+          for (size_t y = 0; y < (size_t)128; y++) {
+            CHECK(
+                tile->pixelData[(x * 128 + y) * 4] ==
+                asset->pixelData[((x + i * 128) * 256 + (y + j * 128)) * 4]);
+          }
+        }
+      }
+    }
+  }
+
   SUBCASE("Renders a polyline") {
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
     asset.emplace();
@@ -70,6 +128,32 @@ TEST_CASE("VectorRasterizer::rasterize") {
         Color{std::byte{81}, std::byte{33}, std::byte{255}, std::byte{255}});
     rasterizer.finalize();
     asset->writeTga("polyline.tga");
+  }
+
+  SUBCASE("Transforms bounds properly") {
+    GlobeRectangle rect2(0.25, 0.25, 0.75, 0.5);
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    VectorRasterizer rasterizer(rect2, asset);
+
+    CartographicPolygon triangle(std::vector<glm::dvec2>{
+        glm::dvec2(0.375, 0.3125),
+        glm::dvec2(0.5, 0.4375),
+        glm::dvec2(0.625, 0.3125)});
+
+    rasterizer.drawPolygon(
+        triangle,
+        Color{std::byte{255}, std::byte{127}, std::byte{100}, std::byte{255}});
+    rasterizer.finalize();
+    asset->writeTga("triangle-scaled.tga");
   }
 }
 

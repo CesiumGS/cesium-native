@@ -1,15 +1,16 @@
-#include "CesiumGeospatial/CompositeCartographicPolygon.h"
-#include "CesiumVectorData/VectorNode.h"
-
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/CompositeCartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/Color.h>
+#include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
+#include <blend2d.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
 #include <blend2d/path.h>
@@ -23,10 +24,19 @@ using namespace CesiumGeometry;
 using namespace CesiumGltf;
 
 namespace CesiumVectorData {
-uint32_t Color::toRgba32() const {
-  return (uint32_t)this->a << 24 | (uint32_t)this->r << 16 |
-         (uint32_t)this->g << 8 | (uint32_t)this->b;
+namespace {
+BLPoint radiansToPoint(
+    double longitude,
+    double latitude,
+    const GlobeRectangle& rect,
+    const BLContext& context) {
+  return BLPoint(
+      (longitude - rect.getWest()) / rect.computeWidth() *
+          context.targetWidth(),
+      (1.0 - (latitude - rect.getSouth()) / rect.computeHeight()) *
+          context.targetHeight());
 }
+} // namespace
 
 VectorRasterizer::VectorRasterizer(
     const GlobeRectangle& bounds,
@@ -42,18 +52,6 @@ VectorRasterizer::VectorRasterizer(
       (int64_t)this->_imageAsset->width * (int64_t)this->_imageAsset->channels);
 
   _context.begin(this->_image);
-  // Set up transformation matrix to transform from LLH to pixel coordinates.
-  _context.translate(-bounds.getWest(), -bounds.getSouth());
-  _context.scale(
-      (double)this->_imageAsset->width / bounds.computeWidth(),
-      (double)this->_imageAsset->height / bounds.computeHeight());
-  // Sets the meta transform to the user transform and resets the user
-  // transform. This lets individual render operations perform transformations
-  // without affecting the transform from LLH to pixel coordinates.
-  _context.userToMeta();
-  // We don't want the stroke to be scaled, so set it to perform the scale
-  // before we stroke.
-  _context.setStrokeTransformOrder(BL_STROKE_TRANSFORM_ORDER_BEFORE);
   // Initialize the image as all transparent.
   _context.clearAll();
 }
@@ -66,16 +64,16 @@ void VectorRasterizer::drawPolygon(
   }
 
   BLRgba32 style(color.toRgba32());
+  std::vector<BLPoint> vertices;
+  vertices.reserve(polygon.getVertices().size());
 
-  const std::vector<glm::dvec2>& vertices = polygon.getVertices();
+  for (const glm::dvec2& vertex : polygon.getVertices()) {
+    vertices.emplace_back(
+        radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
+  }
 
-  // Since glm::dvec2 and BLPoint are both structs containing two doubles in the
-  // same order, we can treat one as the other to avoid copying.
   CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
-  this->_context.fillPolygon(
-      reinterpret_cast<const BLPoint*>(vertices.data()),
-      vertices.size(),
-      style);
+  this->_context.fillPolygon(vertices.data(), vertices.size(), style);
 }
 
 void VectorRasterizer::drawPolygon(
@@ -87,14 +85,17 @@ void VectorRasterizer::drawPolygon(
 
   BLRgba32 style(color.toRgba32());
 
+  std::vector<BLPoint> vertices;
+  vertices.reserve(polygon.getUnindexedVertices().size());
+
+  for (const glm::dvec2& vertex : polygon.getUnindexedVertices()) {
+    vertices.emplace_back(
+        radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
+  }
+
   // TODO: This won't necessarily render correctly with holes at the moment, as
   // Blend2D currently just turns the polygon into a path and fills it in.
-  const std::vector<glm::dvec2>& vertices = polygon.getUnindexedVertices();
-  CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
-  this->_context.fillPolygon(
-      reinterpret_cast<const BLPoint*>(vertices.data()),
-      vertices.size(),
-      style);
+  this->_context.fillPolygon(vertices.data(), vertices.size(), style);
 }
 
 void VectorRasterizer::drawPolyline(
@@ -106,15 +107,18 @@ void VectorRasterizer::drawPolyline(
 
   BLRgba32 style(color.toRgba32());
 
-  // Unfortunately Cartographic has an extra component that BLPoint does not, so
-  // we can't use it directly.
   std::vector<BLPoint> vertices;
   vertices.reserve(points.size());
 
   for (const Cartographic& vertex : points) {
-    vertices.emplace_back(vertex.longitude, vertex.latitude);
+    vertices.emplace_back(radiansToPoint(
+        vertex.longitude,
+        vertex.latitude,
+        this->_bounds,
+        this->_context));
   }
 
+  // this->_context.setStrokeWidth(1.0 / this->_context.targetWidth());
   this->_context.strokePolyline(vertices.data(), vertices.size(), style);
 }
 
