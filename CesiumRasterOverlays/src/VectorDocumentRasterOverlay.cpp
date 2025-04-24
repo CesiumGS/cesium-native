@@ -50,6 +50,7 @@ struct QuadtreeNode {
   GlobeRectangle rectangle;
   uint32_t children[2][2] = {{0, 0}, {0, 0}};
 
+  QuadtreeNode(const GlobeRectangle& rectangle_) : rectangle(rectangle_) {}
   bool anyChildren() const {
     return children[0][0] != 0 && children[0][1] != 0 && children[1][0] != 0 &&
            children[1][1] != 0;
@@ -305,7 +306,7 @@ public:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& /*projection*/,
+      const CesiumGeospatial::Projection& projection,
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
           document,
       const CesiumVectorData::Color& color)
@@ -316,10 +317,9 @@ public:
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            CesiumGeospatial::GeographicProjection(Ellipsoid::WGS84),
-            // computeCoverageRectangle(projection, polygons)),
+            projection,
             projectRectangleSimple(
-                CesiumGeospatial::GeographicProjection(Ellipsoid::WGS84),
+                projection,
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _document(document),
         _tree(buildQuadtree(this->_document)),

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CesiumGeometry/QuadtreeTileID.h"
-
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Library.h>
@@ -254,10 +252,6 @@ public:
    */
   std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
   splitAtAntiMeridian() const noexcept;
-
-  CesiumGeospatial::GlobeRectangle subdivideRectangle(
-      const CesiumGeometry::QuadtreeTileID& tileID,
-      double denominator) const;
 
   /**
    * @brief Checks whether two globe rectangles are exactly equal.

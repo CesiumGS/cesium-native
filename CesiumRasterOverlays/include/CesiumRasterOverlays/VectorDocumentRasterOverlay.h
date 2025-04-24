@@ -32,8 +32,6 @@ public:
    * @param name The user-given name of this polygon layer.
    * @param document The \ref CesiumVectorData::VectorDocument to rasterize.
    * @param color The color of the vector data in this raster overlay.
-   * @param ellipsoid The ellipsoid that this RasterOverlay is being generated
-   * for.
    * @param projection The projection that this RasterOverlay is being generated
    * for.
    * @param overlayOptions Options to use for this RasterOverlay.
