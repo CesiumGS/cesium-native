@@ -1501,9 +1501,7 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
         !TileIdUtilities::isLoadable(child.getTileID()) ||
         child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getReferenceCount() == 0);
-    CESIUM_ASSERT(
-        !TileIdUtilities::isLoadable(child.getTileID()) ||
-        child.getContent().isUnknownContent());
+    CESIUM_ASSERT(!child.hasReferencingContent());
     this->_tilesEligibleForContentUnloading.remove(child);
     this->clearChildrenRecursively(&child);
     child.setParent(nullptr);
