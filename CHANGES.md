@@ -14,6 +14,7 @@
 - Derived `TilesetContentLoader` classes that aggregate other loaders must now implement `setOwnerOfNestedLoaders` to pass the owner through.
 - `DebugTileStateDatabase::recordAllTileStates` and `recordTileState` now must be given a `TilesetViewGroup` indicating which view group to record states for.
 - `ViewUpdateResult` now holds `IntrusivePointer`s to `Tile` instances rather than raw pointers.
+- Deprecated `Tileset::updateView` and `updateViewOffline`. Use `updateViewGroup` and `updateViewGroupOffline` instead.
 
 ##### Additions :tada:
 
@@ -33,6 +34,7 @@
   - `loadedTiles`- Allows enumeration of the tileset's loaded tiles.
   - `getDefaultViewGroup` - Gets the default view group that is used when `updateView` is called.
   - `updateViewGroup` - Updates the set of tiles to render for a `TilesetViewGroup`, as well as the set of tiles that the view group would like to load.
+  - `updateViewGroupOffline` - Similar to `updateViewGroup`, except that it waits until all of the view group's tiles are fully loaded.
   - `loadTiles` - Loads tiles that have been identified as required across all `TilesetViewGroup` and `TilesetHeightRequest` instances, up to limits specified in `TilesetOptions`.
 - `TilesetContentLoader` instances now know the `TilesetContentManager` that owns them. This is managed with new `getOwner` and `setOwner` methods.
 
