@@ -7,6 +7,10 @@
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 
+##### Fixes :wrench:
+
+- Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:
