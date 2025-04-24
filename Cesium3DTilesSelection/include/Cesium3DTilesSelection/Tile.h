@@ -525,26 +525,26 @@ public:
    * whenever possible, rather than calling this method directly.
    *
    * When the first reference is added to this tile, this method will
-   * automatically add a reference to this tile's parent tile as well. This is
+   * automatically add a reference to the tile's parent tile as well. This is
    * to prevent the parent tile from being destroyed, which would implicitly
    * destroy all of its children as well. Parent tiles should never hold
    * references to child tiles.
    *
    * A reference is also added to a tile when its content is loading or loaded.
-   * Content must finish loading, and be unloaded, before a Tile is eligible
-   * for destruction.
+   * Content must finish loading, and then be unloaded, before a Tile is
+   * eligible for destruction.
    *
    * Any additional added references, beyond one per referenced child and one
    * representing this tile's content if it exists, indicate interest not just
    * in the Tile itself but also in the Tile's _content_.
    *
-   * For example: if a Tile has loaded content (1), plus it has four children
-   * and two (2) of them have a reference count greater than zero, it will have
-   * a total reference count of at least 1+2=3. If its reference count is
-   * exactly three, this means that the tile's _content_ is not currently
-   * needed and may be unloaded when the unused tile cache is full. However, if
-   * the reference count is greater than 3, this means that the content is also
-   * referenced and will not be unloaded.
+   * For example: if a Tile has loaded content (1) as well as four children, and
+   * two (2) of its children have a reference count greater than zero, it will
+   * have a total reference count of at least 1+2=3. If its reference count is
+   * exactly three, this means that the tile's _content_ is not currently needed
+   * and may be unloaded when the unused tile cache is full. However, if the
+   * reference count is greater than 3, this means that the content is also
+   * referenced. Therefore, neither the content nor the tile will be unloaded.
    *
    * @param reason An optional explanation for why this reference is being
    * added. This can help debug reference counts when compiled with
@@ -560,13 +560,14 @@ public:
    * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
    * whenever possible, rather than calling this method directly.
    *
-   * When the last reference is removed from this tile, this method will
-   * automatically remove a reference from this tile's parent tile as well. This
-   * parent reference was originally added by {@link addReference} when the
-   * tile's first reference was added. Removing it indicates that it is ok to
-   * destroy this tile, such as by unloading an external tileset.
+   * When the last reference is removed from this tile (its count goes from 1 to
+   * 0), this method will automatically remove a reference from the tile's
+   * parent tile as well. This is the inverse of the {@link addReference} that
+   * the child previously invoked on its parent when the child reference count
+   * went from 0 to 1. Removing it indicates that it is ok to destroy the child
+   * tile, such as by unloading an external tileset.
    *
-   * See {@link addReference} for details of how references can affect a tile's
+   * See {@link addReference} for details of how references affect a tile's
    * eligibility to have its content unloaded.
    *
    * @param reason An optional explanation for why this reference is being
@@ -582,6 +583,26 @@ public:
    * and how they impact a tile's eligibility to have its content unloaded.
    */
   int32_t getReferenceCount() const noexcept;
+
+  /**
+   * @brief Determines if this tile's {@link getContent} counts as a reference
+   * to this tile.
+   *
+   * Content only counts as a reference to the tile when that content may
+   * be unloaded. This ensures that the `Tile` will not be destroyed before the
+   * content is unloaded.
+   *
+   * Content that {@link TileContent::isUnknownContent} cannot be unloaded, so
+   * it is non-referencing. In addition, if the tile's {@link getTileID} is a
+   * blank string, then content of any type will be non-referencing. This is
+   * because the content for a tile without an ID cannot be reloaded, and so it
+   * will never been unloaded except when the entire {@link Tileset} is
+   * destroyed.
+   *
+   * @returns true if this tile's content counts as a reference to this tile;
+   * otherwise, false.
+   */
+  bool hasReferencingContent() const noexcept;
 
 private:
   struct TileConstructorImpl {};
