@@ -594,7 +594,7 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
-      const std::vector<Tile*>& ttr = result.tilesToRenderThisFrame;
+      const std::vector<Tile::Pointer>& ttr = result.tilesToRenderThisFrame;
       REQUIRE(ttr.size() == 7);
 
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -627,7 +627,7 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result = tileset.updateView({viewState});
 
-      const std::vector<Tile*>& ttr = result.tilesToRenderThisFrame;
+      const std::vector<Tile::Pointer>& ttr = result.tilesToRenderThisFrame;
       REQUIRE(ttr.size() == 8);
 
       // root is done loading and rendered.
@@ -1591,8 +1591,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   // On the first update, we should refine down to the grandchild tile, even
   // though no tiles are loaded yet.
   initializeTileset(tileset);
-  const Tile& child = tileset.getRootTile()->getChildren()[0];
-  const Tile& grandchild = child.getChildren()[0];
+  Tile& child = tileset.getRootTile()->getChildren()[0];
+  Tile& grandchild = child.getChildren()[0];
 
   auto states = viewGroup.getTraversalState().slowlyGetCurrentStates();
 

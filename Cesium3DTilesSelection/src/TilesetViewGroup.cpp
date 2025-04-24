@@ -11,6 +11,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -126,10 +127,6 @@ void TilesetViewGroup::startNewFrame(
   this->_updateResult.tilesToRenderThisFrame.clear();
 
   if (!tileset.getOptions().enableLodTransitionPeriod) {
-    for (Tile* pTile : this->_updateResult.tilesFadingOut) {
-      pTile->decrementDoNotUnloadSubtreeCount(
-          "TilesetViewGroup::startNewFrame clear tilesFadingOut");
-    }
     this->_updateResult.tilesFadingOut.clear();
   }
 }
@@ -191,7 +188,7 @@ void TilesetViewGroup::finishFrame(
     }
 
     // Add per-tile credits for tiles selected this frame.
-    for (Tile* pTile : updateResult.tilesToRenderThisFrame) {
+    for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           pTile->getMappedRasterTiles();
       // raster overlay tile credits

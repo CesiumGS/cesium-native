@@ -1,10 +1,10 @@
 #include <Cesium3DTilesSelection/DebugTileStateDatabase.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <CesiumAsync/SqliteHelper.h>
 #include <CesiumAsync/cesium-sqlite3.h>
-#include <CesiumUtility/IntrusivePointer.h>
 
 #include <fmt/format.h>
 #include <sqlite3.h>
@@ -220,8 +220,7 @@ void DebugTileStateDatabase::recordTileState(
 void DebugTileStateDatabase::recordTileState(
     int32_t frameNumber,
     const Tile& tile,
-    const std::unordered_map<IntrusivePointer<const Tile>, TileSelectionState>&
-        states) {
+    const std::unordered_map<Tile::Pointer, TileSelectionState>& states) {
   int status = CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->writeTileState.get());
   if (status != SQLITE_OK) {
     return;
@@ -260,7 +259,7 @@ void DebugTileStateDatabase::recordTileState(
     return;
   }
 
-  auto it = states.find(&tile);
+  auto it = states.find(const_cast<Tile*>(&tile));
   TileSelectionState::Result selectionState =
       it == states.end() ? TileSelectionState::Result::None
                          : it->second.getResult();
