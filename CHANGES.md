@@ -7,6 +7,10 @@
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 
+##### Fixes :wrench:
+
+- Fixed a crash caused by invalid I3dm headers.
+
 ### v0.46.0 - 2025-04-01
 
 ##### Additions :tada:

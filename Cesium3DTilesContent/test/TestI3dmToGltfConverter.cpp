@@ -124,7 +124,7 @@ TEST_CASE("I3dmToGltfConverter") {
     REQUIRE(heightIt != propertyTable.properties.end());
   }
 
-  SUBCASE("load an i3dm with invalid feature data") {
+  SUBCASE("reports an error for an i3dm with invalid feature data") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InvalidFeatureTable" /
                    "cesiumNativeIssue1127.i3dm";
