@@ -1071,11 +1071,11 @@ bool upsamplePointsPrimitiveForRasterOverlays(
       for (const FloatVertexAttribute& attribute : attributes) {
         newVertexFloats.reserve((size_t)attribute.numberOfFloatsPerVertex);
         const float* pFloats = reinterpret_cast<const float*>(
-            attribute.buffer.data() + attribute.offset);
+            attribute.buffer.data() + attribute.offset + i * attribute.stride);
         newVertexFloats.insert(
             newVertexFloats.end(),
             pFloats,
-            pFloats + attribute.stride);
+            pFloats + attribute.numberOfFloatsPerVertex);
       }
     }
   }
