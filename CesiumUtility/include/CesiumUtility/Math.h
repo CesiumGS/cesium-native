@@ -244,7 +244,6 @@ public:
    * performed. Use this test if you are unsure of the magnitudes of left and
    * right.
    *
-   * @tparam L The length type.
    * @tparam T value value type.
    * @tparam Q The GLM qualifier type.
    *

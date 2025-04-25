@@ -125,6 +125,13 @@ struct CESIUMGEOMETRY_API Transforms final {
    * @brief Compute a Vulkan-style perspective projection matrix with reversed
    * Z.
    *
+   * "Vulkan-style", as return by this function and others, uses the following
+   * conventions:
+   *   X maps from -1 to 1 left to right
+   *   Y maps from 1 to -1 bottom to top
+   *   Z maps from 1 to 0 near to far (known as "reverse Z")
+
+   *
    * @param fovx horizontal field of view in radians
    * @param fovy horizontal field of view in radians
    * @param zNear distance to near plane

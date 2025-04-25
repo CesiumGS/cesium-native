@@ -107,7 +107,7 @@ CullingVolume createCullingVolume(
  * @return The {@link CullingVolume}
  */
 
-CullingVolume createOrthoCullingVolume(
+CullingVolume createOrthographicCullingVolume(
     const glm::dvec3& position,
     const glm::dvec3& direction,
     const glm::dvec3& up,
