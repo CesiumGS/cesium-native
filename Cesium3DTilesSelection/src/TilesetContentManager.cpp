@@ -1448,6 +1448,11 @@ void TilesetContentManager::setTileContent(
           "TilesetContentManager::setTileContent");
     }
 
+    // Only render content should have raster overlays.
+    if (!tile.getContent().isRenderContent()) {
+      tile.getMappedRasterTiles().clear();
+    }
+
     if (result.tileInitializer) {
       result.tileInitializer(tile);
     }
