@@ -10,6 +10,7 @@
 ##### Fixes :wrench:
 
 - Point cloud tiles will now be upsampled for raster overlays, fixing an issue where applying a raster overlay to a point cloud tileset would cause holes to appear.
+- Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
 
 ### v0.46.0 - 2025-04-01
 
