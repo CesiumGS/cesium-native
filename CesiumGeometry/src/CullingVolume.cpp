@@ -83,6 +83,18 @@ CullingVolume createCullingVolume(const glm::dmat4& clipMatrix) {
   // Gribb / Hartmann method.
   // See
   // https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
+  // Here's a sketch of the method for the left clipping plane. Given:
+  // v incoming eye-space vertex
+  // x', w' coordinate values after matrix multiplication
+  //
+  // The clipping test is -w' < x'
+  // or -(row3 dot v) < (row0 dot v)
+  //  0 < (row3 dot v) + (row0 dot v)
+  //  0 < (row3 + row0) dot v
+  // This is a test against the plane a*x + b*y + c*z + d*w = 0, but the
+  // incoming w = 1, so we have a standard plane a*x + b*y + c*z + d = 0 where
+  // the factors are the sums of the elements of the matrix rows.
+  //
   auto normalizePlane = [](double a, double b, double c, double d) {
     double len = sqrt(a * a + b * b + c * c);
     return Plane(glm::dvec3(a / len, b / len, c / len), d / len);
