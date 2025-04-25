@@ -1,3 +1,5 @@
+#include "CesiumVectorData/VectorRasterizerStyle.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
@@ -248,7 +250,7 @@ void rasterizeQuadtreeNode(
     const Quadtree& tree,
     uint32_t nodeId,
     const GlobeRectangle& rectangle,
-    const Color& color,
+    const VectorRasterizerStyle& style,
     VectorRasterizer& rasterizer) {
   const QuadtreeNode& node = tree.nodes[nodeId];
   // If this node has no children, or if it is entirely within the target
@@ -260,7 +262,7 @@ void rasterizeQuadtreeNode(
          i < tree.dataNodeIndicesBegin[nodeId + 1];
          i++) {
       const QuadtreePrimitiveData& data = tree.data[tree.dataIndices[i]];
-      rasterizer.drawPrimitive(*data.pPrimitive, color);
+      rasterizer.drawPrimitive(*data.pPrimitive, style);
     }
   } else {
     for (size_t i = 0; i < 2; i++) {
@@ -271,7 +273,7 @@ void rasterizeQuadtreeNode(
               tree,
               node.children[i][j],
               rectangle,
-              color,
+              style,
               rasterizer);
         }
       }
@@ -283,9 +285,10 @@ void rasterizeVectorData(
     LoadedRasterOverlayImage& result,
     const GlobeRectangle& rectangle,
     const Quadtree& tree,
-    const Color& color) {
-  VectorRasterizer rasterizer(rectangle, result.pImage);
-  rasterizeQuadtreeNode(tree, tree.rootId, rectangle, color, rasterizer);
+    const VectorRasterizerStyle& style,
+    const Ellipsoid& ellipsoid) {
+  VectorRasterizer rasterizer(rectangle, result.pImage, ellipsoid);
+  rasterizeQuadtreeNode(tree, tree.rootId, rectangle, style, rasterizer);
   rasterizer.finalize();
 }
 } // namespace
@@ -296,7 +299,8 @@ class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlayTileProvider final
 private:
   IntrusivePointer<VectorDocument> _document;
   Quadtree _tree;
-  Color _color;
+  VectorRasterizerStyle _style;
+  Ellipsoid _ellipsoid;
 
 public:
   VectorDocumentRasterOverlayTileProvider(
@@ -309,7 +313,8 @@ public:
       const CesiumGeospatial::Projection& projection,
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
           document,
-      const CesiumVectorData::Color& color)
+      const CesiumVectorData::VectorRasterizerStyle& style,
+      const CesiumGeospatial::Ellipsoid& ellipsoid)
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -323,7 +328,8 @@ public:
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _document(document),
         _tree(buildQuadtree(this->_document)),
-        _color(color) {}
+        _style(style),
+        _ellipsoid(ellipsoid) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
@@ -339,7 +345,8 @@ public:
     return this->getAsyncSystem().runInWorkerThread(
         [document = this->_document,
          &tree = this->_tree,
-         _color = this->_color,
+         _style = this->_style,
+         _ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
          textureSize]() -> LoadedRasterOverlayImage {
@@ -375,7 +382,12 @@ public:
                          result.pImage->channels *
                          result.pImage->bytesPerChannel),
                 std::byte{0});
-            rasterizeVectorData(result, tileRectangle, tree, _color);
+            rasterizeVectorData(
+                result,
+                tileRectangle,
+                tree,
+                _style,
+                _ellipsoid);
           }
 
           return result;
@@ -387,12 +399,14 @@ VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
     const std::string& name,
     const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
         document,
-    const CesiumVectorData::Color& color,
+    const CesiumVectorData::VectorRasterizerStyle& style,
     const CesiumGeospatial::Projection& projection,
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _document(document),
-      _color(color),
+      _style(style),
+      _ellipsoid(ellipsoid),
       _projection(projection) {}
 
 VectorDocumentRasterOverlay::~VectorDocumentRasterOverlay() = default;
@@ -419,7 +433,8 @@ VectorDocumentRasterOverlay::createTileProvider(
               pLogger,
               this->_projection,
               this->_document,
-              this->_color)));
+              this->_style,
+              this->_ellipsoid)));
 }
 
 } // namespace CesiumRasterOverlays

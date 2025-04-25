@@ -8,6 +8,7 @@
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
+#include <CesiumVectorData/VectorRasterizerStyle.h>
 
 // blend2d.h not used directly, but if we don't include it the other blend2d
 // headers will emit a warning NOLINTNEXTLINE(misc-include-cleaner)
@@ -45,8 +46,13 @@ BLPoint radiansToPoint(
 
 VectorRasterizer::VectorRasterizer(
     const GlobeRectangle& bounds,
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset)
-    : _bounds(bounds), _image(), _context(), _imageAsset(imageAsset) {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
+    : _bounds(bounds),
+      _image(),
+      _context(),
+      _imageAsset(imageAsset),
+      _ellipsoid(ellipsoid) {
   CESIUM_ASSERT(imageAsset->channels == 4);
   CESIUM_ASSERT(imageAsset->bytesPerChannel == 1);
   _image.createFromData(
@@ -63,12 +69,11 @@ VectorRasterizer::VectorRasterizer(
 
 void VectorRasterizer::drawPolygon(
     const CartographicPolygon& polygon,
-    const Color& color) {
+    const VectorRasterizerStyle& style) {
   if (_finalized) {
     return;
   }
 
-  BLRgba32 style(color.toRgba32());
   std::vector<BLPoint> vertices;
   vertices.reserve(polygon.getVertices().size());
 
@@ -78,17 +83,18 @@ void VectorRasterizer::drawPolygon(
   }
 
   CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
-  this->_context.fillPolygon(vertices.data(), vertices.size(), style);
+  this->_context.fillPolygon(
+      vertices.data(),
+      vertices.size(),
+      BLRgba32(style.color.toRgba32()));
 }
 
 void VectorRasterizer::drawPolygon(
     const CompositeCartographicPolygon& polygon,
-    const Color& color) {
+    const VectorRasterizerStyle& style) {
   if (_finalized) {
     return;
   }
-
-  BLRgba32 style(color.toRgba32());
 
   std::vector<BLPoint> vertices;
   vertices.reserve(polygon.getWoundVertices().size());
@@ -98,17 +104,18 @@ void VectorRasterizer::drawPolygon(
         radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
   }
 
-  this->_context.fillPolygon(vertices.data(), vertices.size(), style);
+  this->_context.fillPolygon(
+      vertices.data(),
+      vertices.size(),
+      BLRgba32(style.color.toRgba32()));
 }
 
 void VectorRasterizer::drawPolyline(
     const std::span<const Cartographic>& points,
-    const Color& color) {
+    const VectorRasterizerStyle& style) {
   if (_finalized) {
     return;
   }
-
-  BLRgba32 style(color.toRgba32());
 
   std::vector<BLPoint> vertices;
   vertices.reserve(points.size());
@@ -121,26 +128,36 @@ void VectorRasterizer::drawPolyline(
         this->_context));
   }
 
-  // this->_context.setStrokeWidth(1.0 / this->_context.targetWidth());
-  this->_context.strokePolyline(vertices.data(), vertices.size(), style);
+  if (style.lineWidthMode == VectorLineWidthMode::Pixels) {
+    this->_context.setStrokeWidth(style.lineWidth);
+  } else if (style.lineWidthMode == VectorLineWidthMode::Meters) {
+    // Approximating the ellipsoid as a sphere makes this much easier
+    const double radians = style.lineWidth / this->_ellipsoid.getRadii().x;
+    this->_context.setStrokeWidth(radians * this->_bounds.computeWidth());
+  }
+
+  this->_context.strokePolyline(
+      vertices.data(),
+      vertices.size(),
+      BLRgba32(style.color.toRgba32()));
 }
 
 void VectorRasterizer::drawPrimitive(
     const VectorPrimitive& primitive,
-    const Color& drawColor) {
+    const VectorRasterizerStyle& style) {
   struct PrimitiveDrawVisitor {
     VectorRasterizer& rasterizer;
-    const Color& drawColor;
+    const VectorRasterizerStyle& style;
     void operator()(const Cartographic& /*point*/) {}
     void operator()(const std::vector<Cartographic>& points) {
-      rasterizer.drawPolyline(points, drawColor);
+      rasterizer.drawPolyline(points, style);
     }
     void operator()(const CompositeCartographicPolygon& polygon) {
-      rasterizer.drawPolygon(polygon, drawColor);
+      rasterizer.drawPolygon(polygon, style);
     }
   };
 
-  std::visit(PrimitiveDrawVisitor{*this, drawColor}, primitive);
+  std::visit(PrimitiveDrawVisitor{*this, style}, primitive);
 }
 
 void VectorRasterizer::clear(const Color& clearColor) {

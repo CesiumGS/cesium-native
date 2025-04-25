@@ -10,6 +10,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorDocument.h>
+#include <CesiumVectordata/VectorRasterizerStyle.h>
 
 #include <spdlog/fwd.h>
 
@@ -31,7 +32,7 @@ public:
    *
    * @param name The user-given name of this polygon layer.
    * @param document The \ref CesiumVectorData::VectorDocument to rasterize.
-   * @param color The color of the vector data in this raster overlay.
+   * @param style The style to use for rasterizing vector data.
    * @param projection The projection that this RasterOverlay is being generated
    * for.
    * @param overlayOptions Options to use for this RasterOverlay.
@@ -40,8 +41,9 @@ public:
       const std::string& name,
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
           document,
-      const CesiumVectorData::Color& color,
+      const CesiumVectorData::VectorRasterizerStyle& style,
       const CesiumGeospatial::Projection& projection,
+      const CesiumGeospatial::Ellipsoid& ellipsoid,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~VectorDocumentRasterOverlay() override;
 
@@ -57,7 +59,8 @@ public:
 
 private:
   CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument> _document;
-  CesiumVectorData::Color _color;
+  CesiumVectorData::VectorRasterizerStyle _style;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
 };
 } // namespace CesiumRasterOverlays

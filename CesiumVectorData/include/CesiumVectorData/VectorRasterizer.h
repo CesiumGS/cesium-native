@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Color.h"
+#include "VectorRasterizerStyle.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
@@ -33,10 +34,12 @@ public:
    * @param imageAsset The destination image asset. This \ref
    * CesiumGltf::ImageAsset must be four channels, with
    * only one byte per channel (RGBA32).
+   * @param ellipsoid The ellipsoid to use.
    */
   VectorRasterizer(
       const CesiumGeospatial::GlobeRectangle& bounds,
-      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset);
+      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+      const CesiumGeospatial::Ellipsoid& ellipsoid);
 
   /**
    * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.
@@ -46,7 +49,7 @@ public:
    */
   void drawPolygon(
       const CesiumGeospatial::CartographicPolygon& polygon,
-      const Color& drawColor);
+      const VectorRasterizerStyle& style);
 
   /**
    * @brief Draws a \ref CesiumGeospatial::CompositeCartographicPolygon to the
@@ -60,7 +63,7 @@ public:
    */
   void drawPolygon(
       const CesiumGeospatial::CompositeCartographicPolygon& polygon,
-      const Color& drawColor);
+      const VectorRasterizerStyle& style);
 
   /**
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
@@ -70,7 +73,7 @@ public:
    */
   void drawPolyline(
       const std::span<const CesiumGeospatial::Cartographic>& points,
-      const Color& drawColor);
+      const VectorRasterizerStyle& style);
 
   /**
    * @brief Rasterizes the provided `VectorPrimitive` to the canvas.
@@ -78,7 +81,9 @@ public:
    * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
    * to calls to `drawPolyline`. Points are currently not drawn.
    */
-  void drawPrimitive(const VectorPrimitive& primitive, const Color& drawColor);
+  void drawPrimitive(
+      const VectorPrimitive& primitive,
+      const VectorRasterizerStyle& style);
 
   /**
    * @brief Fills the entire canvas with the given color.
@@ -101,6 +106,7 @@ private:
   BLImage _image;
   BLContext _context;
   CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _imageAsset;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
   bool _finalized = false;
 };
 } // namespace CesiumVectorData
