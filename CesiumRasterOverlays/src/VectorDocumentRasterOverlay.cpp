@@ -1,3 +1,4 @@
+#include "CesiumAsync/Future.h"
 #include "CesiumVectorData/VectorRasterizerStyle.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -23,6 +24,7 @@
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
+#include <nonstd/expected.hpp>
 #include <spdlog/logger.h>
 
 #include <algorithm>
@@ -397,14 +399,13 @@ public:
 
 VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
     const std::string& name,
-    const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
-        document,
+    const VectorDocumentRasterOverlaySource& source,
     const CesiumVectorData::VectorRasterizerStyle& style,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _document(document),
+      _source(source),
       _style(style),
       _ellipsoid(ellipsoid),
       _projection(projection) {}
@@ -423,18 +424,63 @@ VectorDocumentRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-      IntrusivePointer<RasterOverlayTileProvider>(
-          new VectorDocumentRasterOverlayTileProvider(
-              pOwner,
-              asyncSystem,
-              pAssetAccessor,
-              pPrepareRendererResources,
-              pLogger,
-              this->_projection,
-              this->_document,
-              this->_style,
-              this->_ellipsoid)));
+  struct DocumentSourceVisitor {
+    CesiumAsync::AsyncSystem asyncSystem;
+    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+    CesiumAsync::Future<Result<IntrusivePointer<VectorDocument>>>
+    operator()(const IntrusivePointer<VectorDocument>& document) {
+      return asyncSystem
+          .createResolvedFuture<Result<IntrusivePointer<VectorDocument>>>(
+              Result(document));
+    }
+    CesiumAsync::Future<Result<IntrusivePointer<VectorDocument>>>
+    operator()(const IonVectorDocumentRasterOverlaySource& ion) {
+      return VectorDocument::fromCesiumIonAsset(
+          asyncSystem,
+          pAssetAccessor,
+          ion.ionAssetID,
+          ion.ionAccessToken,
+          ion.ionAssetEndpointUrl);
+    }
+  };
+
+  return std::visit(
+             DocumentSourceVisitor{asyncSystem, pAssetAccessor},
+             this->_source)
+      .thenImmediately(
+          [pOwner,
+           asyncSystem,
+           pAssetAccessor,
+           pPrepareRendererResources,
+           pLogger,
+           projection = this->_projection,
+           style = this->_style,
+           ellipsoid = this->_ellipsoid](
+              Result<IntrusivePointer<VectorDocument>>&& result)
+              -> CreateTileProviderResult {
+            if (!result.pValue) {
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::CesiumIon,
+                  nullptr,
+                  fmt::format(
+                      "Errors while loading GeoJSON from Cesium ion: {}",
+                      CesiumUtility::joinToString(
+                          result.errors.errors,
+                          ", "))});
+            }
+
+            return IntrusivePointer<RasterOverlayTileProvider>(
+                new VectorDocumentRasterOverlayTileProvider(
+                    pOwner,
+                    asyncSystem,
+                    pAssetAccessor,
+                    pPrepareRendererResources,
+                    pLogger,
+                    projection,
+                    result.pValue,
+                    style,
+                    ellipsoid));
+          });
 }
 
 } // namespace CesiumRasterOverlays

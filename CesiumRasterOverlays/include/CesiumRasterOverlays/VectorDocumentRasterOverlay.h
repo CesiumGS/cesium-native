@@ -10,14 +10,34 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorDocument.h>
-#include <CesiumVectordata/VectorRasterizerStyle.h>
+#include <CesiumVectorData/VectorRasterizerStyle.h>
 
 #include <spdlog/fwd.h>
 
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace CesiumRasterOverlays {
+
+/**
+ * @brief Information required to load a vector document from Cesium ion.
+ */
+struct IonVectorDocumentRasterOverlaySource {
+  /** @brief The ion Asset ID to load. */
+  int64_t ionAssetID;
+  /** @brief The ion access token to use to access the asset. */
+  std::string ionAccessToken;
+  /** @brief The URL of the Cesium ion endpoint. */
+  std::string ionAssetEndpointUrl = "https://api.cesium.com";
+};
+
+/**
+ * @brief Possible sources for a VectorDocumentRasterOverlay's vector data.
+ */
+using VectorDocumentRasterOverlaySource = std::variant<
+    CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>,
+    IonVectorDocumentRasterOverlaySource>;
 
 /**
  * @brief A raster overlay made from rasterizing a \ref
@@ -31,7 +51,7 @@ public:
    * @brief Creates a new RasterizedPolygonsOverlay.
    *
    * @param name The user-given name of this polygon layer.
-   * @param document The \ref CesiumVectorData::VectorDocument to rasterize.
+   * @param document The source of the vector data to use for the overlay.
    * @param style The style to use for rasterizing vector data.
    * @param projection The projection that this RasterOverlay is being generated
    * for.
@@ -39,8 +59,7 @@ public:
    */
   VectorDocumentRasterOverlay(
       const std::string& name,
-      const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
-          document,
+      const VectorDocumentRasterOverlaySource& source,
       const CesiumVectorData::VectorRasterizerStyle& style,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
@@ -58,7 +77,7 @@ public:
       const override;
 
 private:
-  CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument> _document;
+  VectorDocumentRasterOverlaySource _source;
   CesiumVectorData::VectorRasterizerStyle _style;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;

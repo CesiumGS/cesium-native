@@ -39,7 +39,8 @@ public:
   VectorRasterizer(
       const CesiumGeospatial::GlobeRectangle& bounds,
       CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
+      const CesiumGeospatial::Ellipsoid& ellipsoid =
+          CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
    * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.

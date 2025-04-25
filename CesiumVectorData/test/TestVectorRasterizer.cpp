@@ -39,7 +39,11 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(
         triangle,
-        Color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}});
+        VectorRasterizerStyle{Color{
+            std::byte{0},
+            std::byte{255},
+            std::byte{255},
+            std::byte{255}}});
     rasterizer.finalize();
     asset->writeTga("triangle.tga");
   }
@@ -59,11 +63,12 @@ TEST_CASE("VectorRasterizer::rasterize") {
         glm::dvec2(0.25, 0.25),
         glm::dvec2(0.5, 0.75),
         glm::dvec2(0.75, 0.25)});
-    Color color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}};
+    VectorRasterizerStyle style{
+        Color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}}};
     {
       VectorRasterizer rasterizer(rect, asset);
 
-      rasterizer.drawPolygon(triangle, color);
+      rasterizer.drawPolygon(triangle, style);
       rasterizer.finalize();
     }
 
@@ -85,7 +90,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
                 0.5 + (double)i * 0.5,
                 0.5 + (double)j * 0.5),
             tile);
-        rasterizer.drawPolygon(triangle, color);
+        rasterizer.drawPolygon(triangle, style);
         rasterizer.finalize();
 
         tile->writeTga(fmt::format("tile-{}-{}.tga", i, j));
@@ -125,7 +130,11 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolyline(
         polyline,
-        Color{std::byte{81}, std::byte{33}, std::byte{255}, std::byte{255}});
+        VectorRasterizerStyle{Color{
+            std::byte{81},
+            std::byte{33},
+            std::byte{255},
+            std::byte{255}}});
     rasterizer.finalize();
     asset->writeTga("polyline.tga");
   }
@@ -151,7 +160,11 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(
         triangle,
-        Color{std::byte{255}, std::byte{127}, std::byte{100}, std::byte{255}});
+        VectorRasterizerStyle{Color{
+            std::byte{255},
+            std::byte{127},
+            std::byte{100},
+            std::byte{255}}});
     rasterizer.finalize();
     asset->writeTga("triangle-scaled.tga");
   }
@@ -185,7 +198,11 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(
         composite,
-        Color{std::byte{255}, std::byte{50}, std::byte{12}, std::byte{255}});
+        VectorRasterizerStyle{Color{
+            std::byte{255},
+            std::byte{50},
+            std::byte{12},
+            std::byte{255}}});
     rasterizer.finalize();
     asset->writeTga("polygon-holes.tga");
   }
@@ -211,7 +228,7 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
 
   for (int i = 0; i < 100; i++) {
     std::vector<CartographicPolygon> polygons;
-    std::vector<Color> colors;
+    std::vector<VectorRasterizerStyle> styles;
     std::uniform_real_distribution<double> uniformDist;
     for (int j = 0; j < 1000; j++) {
       polygons.emplace_back(std::vector<glm::dvec2>{
@@ -219,18 +236,18 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
           glm::dvec2(uniformDist(rand), uniformDist(rand)),
           glm::dvec2(uniformDist(rand), uniformDist(rand)),
       });
-      colors.emplace_back(Color{
+      styles.emplace_back(VectorRasterizerStyle{Color{
           (std::byte)(uniformDist(rand) * 255.0),
           (std::byte)(uniformDist(rand) * 255.0),
           (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0)});
+          (std::byte)(uniformDist(rand) * 255.0)}});
     }
 
     std::chrono::steady_clock::time_point start = clock.now();
 
     VectorRasterizer rasterizer(rect, asset);
     for (size_t j = 0; j < polygons.size(); j++) {
-      rasterizer.drawPolygon(polygons[j], colors[j]);
+      rasterizer.drawPolygon(polygons[j], styles[j]);
     }
     rasterizer.finalize();
 
