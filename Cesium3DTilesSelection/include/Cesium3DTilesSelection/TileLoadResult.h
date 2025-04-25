@@ -137,11 +137,21 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
 
   /**
    * @brief The bounding volume initially loaded with the tile.
+   *
+   * If there was an "original" bounding volume for this tile (for example, in
+   * the case of 3D Tiles, the "boundingVolume" property), this will be that
+   * original value before any modifications are performed. This is in contrast
+   * to `updatedBoundingVolume`, which contains the modified bounding volume for
+   * the tile.
    */
   std::optional<BoundingVolume> initialBoundingVolume = std::nullopt;
 
   /**
    * @brief The content bounding volume initially loaded with the tile, if any.
+   *
+   * This is the equivalent to `initialBoundingVolume` for the content bounding
+   * volume. See `updatedContentBoundingVolume` for the modified content
+   * bounding volume.
    */
   std::optional<BoundingVolume> initialContentBoundingVolume = std::nullopt;
 
