@@ -86,15 +86,13 @@ void VectorRasterizer::drawPolygon(
   BLRgba32 style(color.toRgba32());
 
   std::vector<BLPoint> vertices;
-  vertices.reserve(polygon.getUnindexedVertices().size());
+  vertices.reserve(polygon.getWoundVertices().size());
 
-  for (const glm::dvec2& vertex : polygon.getUnindexedVertices()) {
+  for (const glm::dvec2& vertex : polygon.getWoundVertices()) {
     vertices.emplace_back(
         radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
   }
 
-  // TODO: This won't necessarily render correctly with holes at the moment, as
-  // Blend2D currently just turns the polygon into a path and fills it in.
   this->_context.fillPolygon(vertices.data(), vertices.size(), style);
 }
 

@@ -155,6 +155,40 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.finalize();
     asset->writeTga("triangle-scaled.tga");
   }
+
+  SUBCASE("Polygon with holes") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    VectorRasterizer rasterizer(rect, asset);
+
+    CompositeCartographicPolygon composite(std::vector<CartographicPolygon>{
+        std::vector<glm::dvec2>{
+            glm::dvec2(0.25, 0.25),
+            glm::dvec2(0.25, 0.75),
+            glm::dvec2(0.75, 0.75),
+            glm::dvec2(0.75, 0.25),
+            glm::dvec2(0.25, 0.25)},
+        std::vector<glm::dvec2>{
+            glm::dvec2(0.4, 0.4),
+            glm::dvec2(0.4, 0.6),
+            glm::dvec2(0.6, 0.6),
+            glm::dvec2(0.6, 0.4),
+            glm::dvec2(0.4, 0.4)}});
+
+    rasterizer.drawPolygon(
+        composite,
+        Color{std::byte{255}, std::byte{50}, std::byte{12}, std::byte{255}});
+    rasterizer.finalize();
+    asset->writeTga("polygon-holes.tga");
+  }
 }
 
 TEST_CASE("VectorRasterizer::rasterize benchmark") {
