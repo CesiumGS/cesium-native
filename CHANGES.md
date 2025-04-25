@@ -6,6 +6,7 @@
 
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
+- Added support for orthographic and skewed perspective views.
 
 ### v0.46.0 - 2025-04-01
 

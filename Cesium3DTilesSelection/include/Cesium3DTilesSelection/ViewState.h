@@ -30,8 +30,7 @@ public:
    * projection.
    * @deprecated Use {@link ViewState::ViewState} instead.
    */
-  [[deprecated(
-          "Use ViewState::ViewState instead.")]] static ViewState create(
+  [[deprecated("Use ViewState::ViewState instead.")]] static ViewState create(
       const glm::dvec3& position,
       const glm::dvec3& direction,
       const glm::dvec3& up,

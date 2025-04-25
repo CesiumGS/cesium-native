@@ -92,7 +92,8 @@ ViewState::ViewState(
       _direction(directionFromView(viewMatrix)),
       _viewportSize(viewportSize),
       _ellipsoid(ellipsoid),
-      _positionCartographic(ellipsoid.cartesianToCartographic(positionFromView(viewMatrix))),
+      _positionCartographic(
+          ellipsoid.cartesianToCartographic(positionFromView(viewMatrix))),
       _cullingVolume(createCullingVolume(projectionMatrix * viewMatrix)),
       _viewMatrix(viewMatrix),
       _projectionMatrix(projectionMatrix) {}
