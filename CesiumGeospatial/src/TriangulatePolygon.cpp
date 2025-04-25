@@ -1,8 +1,5 @@
 #include "TriangulatePolygon.h"
 
-#include <CesiumUtility/Math.h>
-
-#include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <mapbox/earcut.hpp>
 

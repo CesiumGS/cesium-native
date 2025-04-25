@@ -2,9 +2,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
-#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
@@ -16,14 +14,13 @@
 #include <CesiumRasterOverlays/VectorDocumentRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/Color.h>
+#include <CesiumVectorData/VectorDocument.h>
 #include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
-#include <fmt/format.h>
 #include <glm/common.hpp>
-#include <glm/ext/vector_double2.hpp>
-#include <glm/geometric.hpp>
-#include <spdlog/fwd.h>
+#include <glm/ext/vector_int2.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -31,6 +28,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumGeometry;

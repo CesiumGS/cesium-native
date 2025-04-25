@@ -1,4 +1,3 @@
-#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
@@ -10,14 +9,19 @@
 #include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
+// blend2d.h not used directly, but if we don't include it the other blend2d
+// headers will emit a warning NOLINTNEXTLINE(misc-include-cleaner)
 #include <blend2d.h>
+#include <blend2d/context.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
-#include <blend2d/path.h>
 #include <blend2d/rgba.h>
-#include <spdlog/spdlog.h>
+#include <glm/ext/vector_double2.hpp>
 
 #include <cstddef>
+#include <cstdint>
+#include <span>
+#include <variant>
 
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;

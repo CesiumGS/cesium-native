@@ -1,7 +1,13 @@
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumUtility/Assert.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumGltf {
 void ImageAsset::writeTga(const std::string& outputPath) const {
