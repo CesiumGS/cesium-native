@@ -2,8 +2,9 @@
 
 ### ? - ?
 
-##### Additions :tada:
+##### Additions
 
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 
 ##### Fixes :wrench:
