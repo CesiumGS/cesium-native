@@ -1,4 +1,4 @@
-#include <CesiumGltf/Accessor.h>
+﻿#include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Animation.h>
 #include <CesiumGltf/AnimationChannel.h>
@@ -45,6 +45,8 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <algorithm>
 #include <array>
