@@ -34,11 +34,14 @@ public:
    * @param imageAsset The destination image asset. This \ref
    * CesiumGltf::ImageAsset must be four channels, with
    * only one byte per channel (RGBA32).
+   * @param mipLevel The rasterizer will rasterize the given mip level for the
+   * image.
    * @param ellipsoid The ellipsoid to use.
    */
   VectorRasterizer(
       const CesiumGeospatial::GlobeRectangle& bounds,
       CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+      uint32_t mipLevel = 0,
       const CesiumGeospatial::Ellipsoid& ellipsoid =
           CesiumGeospatial::Ellipsoid::WGS84);
 
@@ -107,6 +110,7 @@ private:
   BLImage _image;
   BLContext _context;
   CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _imageAsset;
+  uint32_t _mipLevel;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   bool _finalized = false;
 };

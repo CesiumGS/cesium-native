@@ -253,7 +253,8 @@ void rasterizeQuadtreeNode(
     uint32_t nodeId,
     const GlobeRectangle& rectangle,
     const VectorRasterizerStyle& style,
-    VectorRasterizer& rasterizer) {
+    VectorRasterizer& rasterizer,
+    std::vector<bool>& primitivesRendered) {
   const QuadtreeNode& node = tree.nodes[nodeId];
   // If this node has no children, or if it is entirely within the target
   // rectangle, let's rasterize this node's contents and not any children.
@@ -263,7 +264,12 @@ void rasterizeQuadtreeNode(
     for (uint32_t i = tree.dataNodeIndicesBegin[nodeId];
          i < tree.dataNodeIndicesBegin[nodeId + 1];
          i++) {
-      const QuadtreePrimitiveData& data = tree.data[tree.dataIndices[i]];
+      const uint32_t dataIdx = tree.dataIndices[i];
+      if (primitivesRendered[dataIdx]) {
+        continue;
+      }
+      primitivesRendered[dataIdx] = true;
+      const QuadtreePrimitiveData& data = tree.data[dataIdx];
       rasterizer.drawPrimitive(*data.pPrimitive, style);
     }
   } else {
@@ -276,7 +282,8 @@ void rasterizeQuadtreeNode(
               node.children[i][j],
               rectangle,
               style,
-              rasterizer);
+              rasterizer,
+              primitivesRendered);
         }
       }
     }
@@ -289,9 +296,26 @@ void rasterizeVectorData(
     const Quadtree& tree,
     const VectorRasterizerStyle& style,
     const Ellipsoid& ellipsoid) {
-  VectorRasterizer rasterizer(rectangle, result.pImage, ellipsoid);
-  rasterizeQuadtreeNode(tree, tree.rootId, rectangle, style, rasterizer);
-  rasterizer.finalize();
+  for (size_t i = 0;
+       i < std::max(result.pImage->mipPositions.size(), (size_t)1);
+       i++) {
+    VectorRasterizer rasterizer(
+        rectangle,
+        result.pImage,
+        (uint32_t)i,
+        ellipsoid);
+    // Keeps track of primitives that have already been rendered to avoid
+    // re-drawing the same primitives that appear in multiple quadtree nodes.
+    std::vector<bool> primitivesRendered(tree.data.size(), false);
+    rasterizeQuadtreeNode(
+        tree,
+        tree.rootId,
+        rectangle,
+        style,
+        rasterizer,
+        primitivesRendered);
+    rasterizer.finalize();
+  }
 }
 } // namespace
 
@@ -303,6 +327,7 @@ private:
   Quadtree _tree;
   VectorRasterizerStyle _style;
   Ellipsoid _ellipsoid;
+  uint32_t _mipLevels;
 
 public:
   VectorDocumentRasterOverlayTileProvider(
@@ -316,7 +341,8 @@ public:
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
           document,
       const CesiumVectorData::VectorRasterizerStyle& style,
-      const CesiumGeospatial::Ellipsoid& ellipsoid)
+      const CesiumGeospatial::Ellipsoid& ellipsoid,
+      uint32_t mipLevels)
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -331,7 +357,8 @@ public:
         _document(document),
         _tree(buildQuadtree(this->_document)),
         _style(style),
-        _ellipsoid(ellipsoid) {}
+        _ellipsoid(ellipsoid),
+        _mipLevels(mipLevels) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
@@ -351,7 +378,8 @@ public:
          _ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
-         textureSize]() -> LoadedRasterOverlayImage {
+         textureSize,
+         mipLevels = this->_mipLevels]() -> LoadedRasterOverlayImage {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
@@ -379,11 +407,27 @@ public:
             result.pImage->height = textureSize.y;
             result.pImage->channels = 4;
             result.pImage->bytesPerChannel = 1;
-            result.pImage->pixelData.resize(
-                (size_t)(result.pImage->width * result.pImage->height *
-                         result.pImage->channels *
-                         result.pImage->bytesPerChannel),
-                std::byte{0});
+            if (mipLevels == 0) {
+              result.pImage->pixelData.resize(
+                  (size_t)(result.pImage->width * result.pImage->height *
+                           result.pImage->channels *
+                           result.pImage->bytesPerChannel),
+                  std::byte{0});
+            } else {
+              size_t totalSize = 0;
+              result.pImage->mipPositions.reserve((size_t)mipLevels);
+              for (uint32_t i = 0; i < mipLevels; i++) {
+                const int32_t width = std::max(textureSize.x >> i, 1);
+                const int32_t height = std::max(textureSize.y >> i, 1);
+                result.pImage->mipPositions.emplace_back(
+                    CesiumGltf::ImageAssetMipPosition{
+                        totalSize,
+                        (size_t)(width * height * result.pImage->channels *
+                                 result.pImage->bytesPerChannel)});
+                totalSize += result.pImage->mipPositions[i].byteSize;
+              }
+              result.pImage->pixelData.resize(totalSize, std::byte{0});
+            }
             rasterizeVectorData(
                 result,
                 tileRectangle,
@@ -403,12 +447,14 @@ VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
     const CesiumVectorData::VectorRasterizerStyle& style,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
+    uint32_t mipLevels,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _source(source),
       _style(style),
       _ellipsoid(ellipsoid),
-      _projection(projection) {}
+      _projection(projection),
+      _mipLevels(mipLevels) {}
 
 VectorDocumentRasterOverlay::~VectorDocumentRasterOverlay() = default;
 
@@ -455,7 +501,8 @@ VectorDocumentRasterOverlay::createTileProvider(
            pLogger,
            projection = this->_projection,
            style = this->_style,
-           ellipsoid = this->_ellipsoid](
+           ellipsoid = this->_ellipsoid,
+           mipLevels = this->_mipLevels](
               Result<IntrusivePointer<VectorDocument>>&& result)
               -> CreateTileProviderResult {
             if (!result.pValue) {
@@ -479,7 +526,8 @@ VectorDocumentRasterOverlay::createTileProvider(
                     projection,
                     result.pValue,
                     style,
-                    ellipsoid));
+                    ellipsoid,
+                    mipLevels));
           });
 }
 

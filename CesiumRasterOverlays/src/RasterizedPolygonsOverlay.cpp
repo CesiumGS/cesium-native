@@ -100,6 +100,7 @@ void rasterizePolygons(
   CesiumVectorData::VectorRasterizer rasterizer(
       rectangle,
       loaded.pImage,
+      0,
       ellipsoid);
   rasterizer.clear(CesiumVectorData::Color{
       outsideColor,

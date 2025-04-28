@@ -19,6 +19,7 @@
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -47,20 +48,34 @@ BLPoint radiansToPoint(
 VectorRasterizer::VectorRasterizer(
     const GlobeRectangle& bounds,
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+    uint32_t mipLevel,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _bounds(bounds),
       _image(),
       _context(),
       _imageAsset(imageAsset),
+      _mipLevel(mipLevel),
       _ellipsoid(ellipsoid) {
-  CESIUM_ASSERT(imageAsset->channels == 4);
-  CESIUM_ASSERT(imageAsset->bytesPerChannel == 1);
+  CESIUM_ASSERT(this->_imageAsset->channels == 4);
+  CESIUM_ASSERT(this->_imageAsset->bytesPerChannel == 1);
+  CESIUM_ASSERT(
+      _mipLevel == 0 ||
+      this->_imageAsset->mipPositions.size() > this->_mipLevel);
+  const int32_t imageWidth =
+      std::max(this->_imageAsset->width >> this->_mipLevel, 1);
+  const int32_t imageHeight =
+      std::max(this->_imageAsset->height >> this->_mipLevel, 1);
+  std::byte* pData =
+      this->_mipLevel == 0
+          ? this->_imageAsset->pixelData.data()
+          : this->_imageAsset->pixelData.data() +
+                this->_imageAsset->mipPositions[this->_mipLevel].byteOffset;
   _image.createFromData(
-      this->_imageAsset->width,
-      this->_imageAsset->height,
+      imageWidth,
+      imageHeight,
       BL_FORMAT_PRGB32,
-      reinterpret_cast<void*>(this->_imageAsset->pixelData.data()),
-      (int64_t)this->_imageAsset->width * (int64_t)this->_imageAsset->channels);
+      reinterpret_cast<void*>(pData),
+      (int64_t)imageWidth * (int64_t)this->_imageAsset->channels);
 
   _context.begin(this->_image);
   // Initialize the image as all transparent.
@@ -133,7 +148,8 @@ void VectorRasterizer::drawPolyline(
   } else if (style.lineWidthMode == VectorLineWidthMode::Meters) {
     // Approximating the ellipsoid as a sphere makes this much easier
     const double radians = style.lineWidth / this->_ellipsoid.getRadii().x;
-    this->_context.setStrokeWidth(radians * this->_bounds.computeWidth());
+    this->_context.setStrokeWidth(
+        std::max(radians / this->_bounds.computeWidth(), 1.0));
   }
 
   this->_context.strokePolyline(
@@ -179,11 +195,19 @@ VectorRasterizer::finalize() {
   // Blend2D writes in BGRA whereas ImageAsset is RGBA.
   // We need to swap the channels to fix the values.
   // TODO: use BLPixelConverter which has SIMD support
-  std::vector<std::byte>& pixelData = this->_imageAsset->pixelData;
-  for (size_t i = 0; i < pixelData.size(); i += 4) {
+  std::byte* pData =
+      this->_mipLevel == 0
+          ? this->_imageAsset->pixelData.data()
+          : this->_imageAsset->pixelData.data() +
+                this->_imageAsset->mipPositions[this->_mipLevel].byteOffset;
+  const size_t size =
+      this->_mipLevel == 0
+          ? this->_imageAsset->pixelData.size()
+          : this->_imageAsset->mipPositions[this->_mipLevel].byteSize;
+  for (size_t i = 0; i < size; i += 4) {
     // We need to turn BGRA to RGBA, but this is little endian so it's really
     // ARGB to ABGR.
-    uint32_t* pPixel = reinterpret_cast<uint32_t*>(pixelData.data() + i);
+    uint32_t* pPixel = reinterpret_cast<uint32_t*>(pData + i);
     const uint32_t pixel = *pPixel;
     const uint32_t newPixel =
         (pixel & 0xff000000) | ((pixel & 0x00ff0000) >> 16) |

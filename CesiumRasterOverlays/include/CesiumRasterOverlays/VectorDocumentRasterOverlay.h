@@ -55,6 +55,7 @@ public:
    * @param style The style to use for rasterizing vector data.
    * @param projection The projection that this RasterOverlay is being generated
    * for.
+   * @param mipLevels The number of mip levels to generate.
    * @param overlayOptions Options to use for this RasterOverlay.
    */
   VectorDocumentRasterOverlay(
@@ -63,6 +64,7 @@ public:
       const CesiumVectorData::VectorRasterizerStyle& style,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
+      uint32_t mipLevels = 0,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~VectorDocumentRasterOverlay() override;
 
@@ -81,5 +83,6 @@ private:
   CesiumVectorData::VectorRasterizerStyle _style;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
+  uint32_t _mipLevels;
 };
 } // namespace CesiumRasterOverlays

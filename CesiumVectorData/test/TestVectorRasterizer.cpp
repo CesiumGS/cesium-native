@@ -206,6 +206,44 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.finalize();
     asset->writeTga("polygon-holes.tga");
   }
+
+  SUBCASE("Mip levels") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->mipPositions.resize(4);
+    size_t totalSize = 0;
+    for (size_t i = 0; i < 4; i++) {
+      int32_t width = 256 >> i;
+      int32_t height = 256 >> i;
+      asset->mipPositions[i] = {totalSize, (size_t)(width * height * 4)};
+      totalSize += asset->mipPositions[i].byteSize;
+    }
+
+    asset->pixelData.resize(totalSize, std::byte{255});
+
+    std::vector<Cartographic> polyline{
+        Cartographic(0.25, 0.25),
+        Cartographic(0.25, 0.5),
+        Cartographic(0.3, 0.7),
+        Cartographic(0.25, 0.8),
+        Cartographic(0.8, 1.0),
+        Cartographic(0.8, 0.9),
+        Cartographic(0.9, 0.9)};
+    VectorRasterizerStyle style{
+        Color{std::byte{255}, std::byte{50}, std::byte{12}, std::byte{255}}};
+
+    for (uint32_t i = 0; i < 4; i++) {
+      VectorRasterizer rasterizer(rect, asset, i);
+      rasterizer.drawPolyline(polyline, style);
+      rasterizer.finalize();
+    }
+
+    asset->writeTga("mipmap.tga");
+  }
 }
 
 TEST_CASE("VectorRasterizer::rasterize benchmark") {
