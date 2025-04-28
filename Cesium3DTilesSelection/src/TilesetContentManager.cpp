@@ -673,6 +673,9 @@ postProcessContentInWorkerThread(
         }
 
         result.contentKind = std::move(*gltfResult.model);
+        result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
+        result.initialContentBoundingVolume =
+            tileLoadInfo.tileContentBoundingVolume;
 
         postProcessGltfInWorkerThread(
             result,

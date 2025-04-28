@@ -1739,3 +1739,88 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() == 1);
   }
 }
+
+TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
+  // create mock tileset externals
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+  auto pMockedPrepareRendererResources =
+      std::make_shared<SimplePrepareRendererResource>();
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  auto pMockedCreditSystem = std::make_shared<CreditSystem>();
+
+  TilesetExternals externals{
+      pMockedAssetAccessor,
+      pMockedPrepareRendererResources,
+      asyncSystem,
+      pMockedCreditSystem};
+
+  SUBCASE("Passes bounding volumes correctly") {
+    const BoundingVolume boundingVolume =
+        BoundingSphere(glm::dvec3(1, 2, 3), 4);
+    const BoundingVolume contentBoundingVolume =
+        BoundingSphere(glm::dvec3(5, 6, 7), 8);
+
+    pMockedPrepareRendererResources->prepareInLoadThreadTestCallback =
+        [](const TileLoadResult& result) {
+          REQUIRE(result.initialBoundingVolume);
+          REQUIRE(result.initialContentBoundingVolume);
+
+          const BoundingSphere* boundingSphere =
+              std::get_if<BoundingSphere>(&*result.initialBoundingVolume);
+          const BoundingSphere* contentBoundingSphere =
+              std::get_if<BoundingSphere>(
+                  &*result.initialContentBoundingVolume);
+
+          REQUIRE(boundingSphere);
+          REQUIRE(contentBoundingSphere);
+
+          CHECK(boundingSphere->getCenter() == glm::dvec3(1, 2, 3));
+          CHECK(boundingSphere->getRadius() == 4);
+          CHECK(contentBoundingSphere->getCenter() == glm::dvec3(5, 6, 7));
+          CHECK(contentBoundingSphere->getRadius() == 8);
+        };
+
+    // create mock loader
+    auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+    pMockedLoader->mockLoadTileContent = TileLoadResult{
+        CesiumGltf::Model(),
+        CesiumGeometry::Axis::Y,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        nullptr,
+        [&](Tile&) {},
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84,
+        boundingVolume,
+        contentBoundingVolume};
+    pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
+    pMockedLoader->mockCreateTileChildren.children.emplace_back(
+        pMockedLoader.get(),
+        TileEmptyContent());
+
+    // create tile
+    auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+    pRootTile->setBoundingVolume(boundingVolume);
+    pRootTile->setContentBoundingVolume(contentBoundingVolume);
+
+    // create manager
+    TilesetOptions options{};
+    options.contentOptions.generateMissingNormalsSmooth = true;
+
+    Tile::LoadedLinkedList loadedTiles;
+    IntrusivePointer<TilesetContentManager> pManager =
+        new TilesetContentManager{
+            externals,
+            options,
+            RasterOverlayCollection{loadedTiles, externals},
+            std::move(pMockedLoader),
+            std::move(pRootTile)};
+
+    Tile& tile = *pManager->getRootTile();
+    pManager->loadTileContent(tile, options);
+    pManager->waitUntilIdle();
+  }
+}
