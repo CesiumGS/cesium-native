@@ -679,6 +679,9 @@ postProcessContentInWorkerThread(
         }
 
         result.contentKind = std::move(*gltfResult.model);
+        result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
+        result.initialContentBoundingVolume =
+            tileLoadInfo.tileContentBoundingVolume;
 
         postProcessGltfInWorkerThread(
             result,
@@ -1446,6 +1449,11 @@ void TilesetContentManager::setTileContent(
     if (!tile.getContent().isUnknownContent()) {
       tile.incrementDoNotUnloadSubtreeCountOnParent(
           "TilesetContentManager::setTileContent");
+    }
+
+    // Only render content should have raster overlays.
+    if (!tile.getContent().isRenderContent()) {
+      tile.getMappedRasterTiles().clear();
     }
 
     if (result.tileInitializer) {

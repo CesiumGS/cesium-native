@@ -2,14 +2,16 @@
 
 ### ? - ?
 
-##### Additions
+##### Additions :tada:
 
+- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 
 ##### Fixes :wrench:
 
 - Fixed a crash caused by invalid I3dm headers.
+- Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
 
 ### v0.46.0 - 2025-04-01
 
