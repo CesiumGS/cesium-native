@@ -62,7 +62,7 @@ CullingVolume createCullingVolume(
     double fovy) noexcept;
 
 /**
- * @brief Create a {@link CullingVolume} from a projection matrix
+ * @brief Create a {@link CullingVolume} from a projection matrix.
  *
  * The matrix can be a composite view - projection matrix; the volume will then
  * cull world coordinates. It can also be a model - view - projection matrix,
