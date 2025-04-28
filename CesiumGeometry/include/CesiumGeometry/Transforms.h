@@ -99,8 +99,8 @@ struct CESIUMGEOMETRY_API Transforms final {
   /**
    * @brief Create a view matrix.
    *
-   * This is similar to glm::lookAt(), but uses the pose of viewer to create the
-   * view matrix. The view matrix is the inverse of the pose matrix.
+   * This is similar to glm::lookAt(), but uses the pose of the viewer to create
+   * the view matrix. The view matrix is the inverse of the pose matrix.
    *
    * @param position position of the eye
    * @param direction view vector i.e., -z axis of the viewer's pose.
@@ -114,26 +114,17 @@ struct CESIUMGEOMETRY_API Transforms final {
       const glm::dvec3& up);
 
   /**
-   * The projection matrix returned by the following functions uses the Vulkan
-   * conventions:
-   *   X maps from -1 to 1 left to right
-   *   Y maps from 1 to -1 bottom to top
-   *   Z maps from 1 to 0 near to far (known as "reverse Z")
-   */
-
-  /**
    * @brief Compute a Vulkan-style perspective projection matrix with reversed
    * Z.
    *
    * "Vulkan-style", as return by this function and others, uses the following
    * conventions:
-   *   X maps from -1 to 1 left to right
-   *   Y maps from 1 to -1 bottom to top
-   *   Z maps from 1 to 0 near to far (known as "reverse Z")
-
+   *   * X maps from -1 to 1 left to right
+   *   * Y maps from 1 to -1 bottom to top
+   *   * Z maps from 1 to 0 near to far (known as "reverse Z")
    *
    * @param fovx horizontal field of view in radians
-   * @param fovy horizontal field of view in radians
+   * @param fovy vertical field of view in radians
    * @param zNear distance to near plane
    * @param zFar distance to far plane
    */
@@ -143,6 +134,12 @@ struct CESIUMGEOMETRY_API Transforms final {
   /**
    * @brief Compute a Vulkan-style perspective projection matrix with reversed
    * Z.
+   *
+   * "Vulkan-style", as return by this function and others, uses the following
+   * conventions:
+   *   * X maps from -1 to 1 left to right
+   *   * Y maps from 1 to -1 bottom to top
+   *   * Z maps from 1 to 0 near to far (known as "reverse Z")
    *
    * @param left left distance of near plane edge from center
    * @param right right distance of near plane edge
@@ -163,7 +160,11 @@ struct CESIUMGEOMETRY_API Transforms final {
    * @brief Compute a Vulkan-style orthographic projection matrix with reversed
    * Z.
    *
-   * X maps from -1 to 1, Y maps from 1 to -1, Z maps from 1 to 0.
+   * "Vulkan-style", as return by this function and others, uses the following
+   * conventions:
+   *   * X maps from -1 to 1 left to right
+   *   * Y maps from 1 to -1 bottom to top
+   *   * Z maps from 1 to 0 near to far (known as "reverse Z")
    *
    * @param left left distance of near plane edge from center
    * @param right right distance of near plane edge
