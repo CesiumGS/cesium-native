@@ -10,6 +10,7 @@
 
 ##### Fixes :wrench:
 
+- Fixed a crash caused by invalid I3dm headers.
 - Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
 
 ### v0.46.0 - 2025-04-01
