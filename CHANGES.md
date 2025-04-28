@@ -7,6 +7,7 @@
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 - Added support for orthographic and skewed perspective views.
+- Added an overload of `Math::equalsEpsilon` for glm matrices.
 
 ##### Fixes :wrench:
 
