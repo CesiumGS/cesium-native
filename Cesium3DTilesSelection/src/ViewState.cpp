@@ -259,9 +259,8 @@ double ViewState::computeScreenSpaceError(
   // This is a simplified version of the projection transform and homogeneous
   // division. We transform the coordinate (0.0, geometric error, -distance,
   // 1) and use the resulting NDC to find the screen space error.  That's not
-  // quite right: the distance is actually the slant distance, and the real
-  // transform contains a term for an offset due to a skewed projection which
-  // is ignored here.
+  // quite right: the distance argument is actually the slant distance to the
+  // tile, whereas view-space Z is perpendicular to the near plane.
   const glm::dmat4& projMat = this->_projectionMatrix;
   glm::dvec4 centerNdc = projMat * glm::dvec4(0.0, 0.0, -distance, 1.0);
   centerNdc /= centerNdc.w;
@@ -271,7 +270,7 @@ double ViewState::computeScreenSpaceError(
 
   double ndcError = (errorOffsetNdc - centerNdc).y;
   // ndc bounds are [-1.0, 1.0]. Our projection matrix has the top of the
-  // screen at -1.0.
+  // screen at -1.0, so ndcError is negative.
   return -ndcError * this->_viewportSize.y / 2.0;
 }
 
