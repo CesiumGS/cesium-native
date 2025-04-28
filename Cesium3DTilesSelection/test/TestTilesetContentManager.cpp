@@ -1755,7 +1755,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
       asyncSystem,
       pMockedCreditSystem};
 
-  SUBCASE("Passes bounding volumes correctly") {
+  SUBCASE("Passes initial bounding volumes correctly") {
     const BoundingVolume boundingVolume =
         BoundingSphere(glm::dvec3(1, 2, 3), 4);
     const BoundingVolume contentBoundingVolume =
@@ -1806,21 +1806,23 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
     pRootTile->setBoundingVolume(boundingVolume);
     pRootTile->setContentBoundingVolume(contentBoundingVolume);
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
     pManager->waitUntilIdle();
+    pManager->unloadTileContent(tile);
   }
 }
