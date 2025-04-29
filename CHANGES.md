@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Deprecated the `ViewState::create` methods. Use a constructor overload instead.
+
 ##### Additions :tada:
 
 - A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
