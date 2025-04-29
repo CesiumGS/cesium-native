@@ -367,13 +367,8 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
          createMockRequest(testDataPath / "Tileset" / "tileset.json")});
 
     // construct manager with tileset.json format
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager(
-            externals,
-            {},
-            RasterOverlayCollection{loadedTiles, externals},
-            "tileset.json");
+        new TilesetContentManager(externals, {}, "tileset.json");
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
@@ -400,13 +395,8 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
              "QuantizedMesh.tile.json")});
 
     // construct manager with tileset.json format
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager(
-            externals,
-            {},
-            RasterOverlayCollection{loadedTiles, externals},
-            "layer.json");
+        new TilesetContentManager(externals, {}, "layer.json");
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
@@ -436,13 +426,8 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
              "WithAttribution.tile.json")});
 
     // construct manager with tileset.json format
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager(
-            externals,
-            {},
-            RasterOverlayCollection{loadedTiles, externals},
-            "layer.json");
+        new TilesetContentManager(externals, {}, "layer.json");
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
@@ -496,16 +481,17 @@ TEST_CASE("Test tile state machine") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -601,16 +587,17 @@ TEST_CASE("Test tile state machine") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -677,16 +664,17 @@ TEST_CASE("Test tile state machine") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -783,12 +771,10 @@ TEST_CASE("Test tile state machine") {
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -938,13 +924,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             {},
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1004,16 +991,17 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options;
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1072,13 +1060,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             {},
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
@@ -1097,13 +1086,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   }
 
   SUBCASE("Generate raster overlay projections") {
-    // add raster overlay
-    Tile::LoadedLinkedList loadedTiles;
-    RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
-    rasterOverlayCollection.add(
-        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
-    asyncSystem.dispatchMainThreadTasks();
-
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     Cartographic beginCarto{glm::radians(32.0), glm::radians(48.0), 100.0};
@@ -1123,14 +1105,21 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             {},
-            std::move(rasterOverlayCollection),
             std::move(pMockedLoader),
             std::move(pRootTile)};
+
+    // add raster overlay
+    pManager->getRasterOverlayCollection().add(
+        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
+    asyncSystem.dispatchMainThreadTasks();
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
@@ -1317,10 +1306,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   }
 
   SUBCASE("Upsamples sparse tile for raster overlays") {
-    // add raster overlay
-    Tile::LoadedLinkedList loadedTiles;
-    RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
-
     class AlwaysMoreDetailProvider : public RasterOverlayTileProvider {
     public:
       AlwaysMoreDetailProvider(
@@ -1393,9 +1378,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       }
     };
 
-    rasterOverlayCollection.add(new AlwaysMoreDetailRasterOverlay());
-    asyncSystem.dispatchMainThreadTasks();
-
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     GlobeRectangle tileRectangle =
@@ -1416,14 +1398,20 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             {},
-            std::move(rasterOverlayCollection),
             std::move(pMockedLoader),
             std::move(pRootTile)};
+
+    pManager->getRasterOverlayCollection().add(
+        new AlwaysMoreDetailRasterOverlay());
+    asyncSystem.dispatchMainThreadTasks();
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
@@ -1613,13 +1601,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         9000.0,
         Ellipsoid::WGS84};
 
-    // add raster overlay
-    Tile::LoadedLinkedList loadedTiles;
-    RasterOverlayCollection rasterOverlayCollection{loadedTiles, externals};
-    rasterOverlayCollection.add(
-        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
-    asyncSystem.dispatchMainThreadTasks();
-
     // create mock loader
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
@@ -1638,14 +1619,21 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             {},
-            std::move(rasterOverlayCollection),
             std::move(pMockedLoader),
             std::move(pRootTile)};
+
+    // add raster overlay
+    pManager->getRasterOverlayCollection().add(
+        new DebugColorizeTilesRasterOverlay("DebugOverlay"));
+    asyncSystem.dispatchMainThreadTasks();
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
@@ -1706,12 +1694,10 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     REQUIRE(containerTile.getChildren().size() == 100);
 
     // create manager
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             {},
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(loaderResult.pLoader),
             std::move(loaderResult.pRootTile)};
 
@@ -1769,7 +1755,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
       asyncSystem,
       pMockedCreditSystem};
 
-  SUBCASE("Passes bounding volumes correctly") {
+  SUBCASE("Passes initial bounding volumes correctly") {
     const BoundingVolume boundingVolume =
         BoundingSphere(glm::dvec3(1, 2, 3), 4);
     const BoundingVolume contentBoundingVolume =
@@ -1820,21 +1806,23 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
     pRootTile->setBoundingVolume(boundingVolume);
     pRootTile->setContentBoundingVolume(contentBoundingVolume);
 
+    // Give the tile an ID so it is eligible for unloading.
+    pRootTile->setTileID("foo");
+
     // create manager
     TilesetOptions options{};
     options.contentOptions.generateMissingNormalsSmooth = true;
 
-    Tile::LoadedLinkedList loadedTiles;
     IntrusivePointer<TilesetContentManager> pManager =
         new TilesetContentManager{
             externals,
             options,
-            RasterOverlayCollection{loadedTiles, externals},
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
     pManager->waitUntilIdle();
+    pManager->unloadTileContent(tile);
   }
 }
