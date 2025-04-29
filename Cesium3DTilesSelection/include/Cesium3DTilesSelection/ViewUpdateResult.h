@@ -1,13 +1,13 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/Tile.h>
 
 #include <cstdint>
 #include <unordered_set>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class Tile;
 
 /**
  * @brief Reports the results of {@link Tileset::updateViewGroup}.
