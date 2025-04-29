@@ -85,7 +85,7 @@ static void initializeTileset(Tileset& tileset) {
   double horizontalFieldOfView = Math::degreesToRadians(60.0);
   double verticalFieldOfView =
       std::atan(std::tan(horizontalFieldOfView * 0.5) / aspectRatio) * 2.0;
-  ViewState viewState = ViewState::create(
+  ViewState viewState = ViewState(
       viewPosition,
       glm::normalize(viewFocus - viewPosition),
       viewUp,
@@ -118,7 +118,7 @@ static ViewState zoomToTile(const Tile& tile) {
   double horizontalFieldOfView = Math::degreesToRadians(60.0);
   double verticalFieldOfView =
       std::atan(std::tan(horizontalFieldOfView * 0.5) / aspectRatio) * 2.0;
-  return ViewState::create(
+  return ViewState(
       viewPosition,
       glm::normalize(viewFocus - viewPosition),
       viewUp,
@@ -207,7 +207,7 @@ TEST_CASE("Test replace refinement for render") {
     // Zoom out from the tileset a little bit to make sure the root meet sse
     glm::dvec3 zoomOutPosition =
         viewState.getPosition() - viewState.getDirection() * 2500.0;
-    ViewState zoomOutViewState = ViewState::create(
+    ViewState zoomOutViewState = ViewState(
         zoomOutPosition,
         viewState.getDirection(),
         viewState.getUp(),
@@ -338,7 +338,7 @@ TEST_CASE("Test replace refinement for render") {
     ViewState viewState = zoomToTileset(tileset);
     glm::dvec3 zoomInPosition =
         viewState.getPosition() + viewState.getDirection() * 200.0;
-    ViewState zoomInViewState = ViewState::create(
+    ViewState zoomInViewState = ViewState(
         zoomInPosition,
         viewState.getDirection(),
         viewState.getUp(),
@@ -436,7 +436,7 @@ TEST_CASE("Test replace refinement for render") {
     {
       glm::dvec3 zoomOutPosition =
           viewState.getPosition() - viewState.getDirection() * 100.0;
-      ViewState zoomOutViewState = ViewState::create(
+      ViewState zoomOutViewState = ViewState(
           zoomOutPosition,
           viewState.getDirection(),
           viewState.getUp(),
@@ -881,7 +881,7 @@ TEST_CASE("Test multiple frustums") {
   // Zoom out from the tileset a little bit to make sure the root meets sse
   glm::dvec3 zoomOutPosition =
       viewState.getPosition() - viewState.getDirection() * 2500.0;
-  ViewState zoomOutViewState = ViewState::create(
+  ViewState zoomOutViewState = ViewState(
       zoomOutPosition,
       viewState.getDirection(),
       viewState.getUp(),
@@ -957,7 +957,7 @@ TEST_CASE("Test multiple frustums") {
     // (child of the first child of the root).
     glm::dvec3 zoomInPosition = zoomToTileViewState.getPosition() +
                                 zoomToTileViewState.getDirection() * 250.0;
-    ViewState zoomInViewState1 = ViewState::create(
+    ViewState zoomInViewState1 = ViewState(
         zoomInPosition,
         zoomToTileViewState.getDirection(),
         zoomToTileViewState.getUp(),
@@ -969,7 +969,7 @@ TEST_CASE("Test multiple frustums") {
     zoomInPosition = zoomToTileViewState.getPosition() +
                      glm::dvec3(15.0, 0, 0) +
                      zoomToTileViewState.getDirection() * 243.0;
-    ViewState zoomInViewState2 = ViewState::create(
+    ViewState zoomInViewState2 = ViewState(
         zoomInPosition,
         zoomToTileViewState.getDirection(),
         zoomToTileViewState.getUp(),
@@ -1746,7 +1746,7 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   REQUIRE(position);
   position->height += 100000;
 
-  ViewState zoomedOut = ViewState::create(
+  ViewState zoomedOut = ViewState(
       Ellipsoid::WGS84.cartographicToCartesian(*position),
       viewState.getDirection(),
       viewState.getUp(),

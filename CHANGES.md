@@ -18,8 +18,6 @@
 
 ##### Additions :tada:
 
-- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
-- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 - Added `TilesetViewGroup`. View groups select tiles independently from other any other view group. This is useful for applications with multiple viewports to allow them to show different levels-of-detail for the same area.
 - Added `CreditReferencer` which makes it easy to track credits in a frame-oriented fashion similar to how `CreditSystem::addCreditToFrame` worked in previous releases.
@@ -38,9 +36,14 @@
   - `updateViewGroupOffline` - Similar to `updateViewGroup`, except that it waits until all of the view group's tiles are fully loaded.
   - `loadTiles` - Loads tiles that have been identified as required across all `TilesetViewGroup` and `TilesetHeightRequest` instances, up to limits specified in `TilesetOptions`.
 - `TilesetContentLoader` instances now know the `TilesetContentManager` that owns them. This is managed with new `getOwner` and `setOwner` methods.
+- Added support for orthographic and skewed perspective views.
+- Added an overload of `Math::equalsEpsilon` for glm matrices.
+- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 
 ##### Fixes :wrench:
 
+- Fixed a crash caused by invalid I3dm headers.
 - Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
 
 ### v0.46.0 - 2025-04-01
