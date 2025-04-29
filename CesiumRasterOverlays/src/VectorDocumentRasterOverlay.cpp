@@ -1,5 +1,5 @@
 #include "CesiumAsync/Future.h"
-#include "CesiumVectorData/VectorRasterizerStyle.h"
+#include "CesiumVectorData/VectorStyle.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -252,7 +252,7 @@ void rasterizeQuadtreeNode(
     const Quadtree& tree,
     uint32_t nodeId,
     const GlobeRectangle& rectangle,
-    const VectorRasterizerStyle& style,
+    const VectorStyle& style,
     VectorRasterizer& rasterizer,
     std::vector<bool>& primitivesRendered) {
   const QuadtreeNode& node = tree.nodes[nodeId];
@@ -294,7 +294,7 @@ void rasterizeVectorData(
     LoadedRasterOverlayImage& result,
     const GlobeRectangle& rectangle,
     const Quadtree& tree,
-    const VectorRasterizerStyle& style,
+    const VectorStyle& style,
     const Ellipsoid& ellipsoid) {
   for (size_t i = 0;
        i < std::max(result.pImage->mipPositions.size(), (size_t)1);
@@ -325,7 +325,7 @@ class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlayTileProvider final
 private:
   IntrusivePointer<VectorDocument> _document;
   Quadtree _tree;
-  VectorRasterizerStyle _style;
+  VectorStyle _style;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
 
@@ -340,7 +340,7 @@ public:
       const CesiumGeospatial::Projection& projection,
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
           document,
-      const CesiumVectorData::VectorRasterizerStyle& style,
+      const CesiumVectorData::VectorStyle& style,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
       uint32_t mipLevels)
       : RasterOverlayTileProvider(
@@ -444,7 +444,7 @@ public:
 VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
     const std::string& name,
     const VectorDocumentRasterOverlaySource& source,
-    const CesiumVectorData::VectorRasterizerStyle& style,
+    const CesiumVectorData::VectorStyle& style,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     uint32_t mipLevels,

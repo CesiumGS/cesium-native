@@ -10,7 +10,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorDocument.h>
-#include <CesiumVectorData/VectorRasterizerStyle.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <spdlog/fwd.h>
 
@@ -61,7 +61,7 @@ public:
   VectorDocumentRasterOverlay(
       const std::string& name,
       const VectorDocumentRasterOverlaySource& source,
-      const CesiumVectorData::VectorRasterizerStyle& style,
+      const CesiumVectorData::VectorStyle& style,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
       uint32_t mipLevels = 0,
@@ -80,7 +80,7 @@ public:
 
 private:
   VectorDocumentRasterOverlaySource _source;
-  CesiumVectorData::VectorRasterizerStyle _style;
+  CesiumVectorData::VectorStyle _style;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumGeospatial::Projection _projection;
   uint32_t _mipLevels;

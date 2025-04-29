@@ -39,7 +39,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(
         triangle,
-        VectorRasterizerStyle{Color{
+        VectorStyle{Color{
             std::byte{0},
             std::byte{255},
             std::byte{255},
@@ -63,7 +63,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         glm::dvec2(0.25, 0.25),
         glm::dvec2(0.5, 0.75),
         glm::dvec2(0.75, 0.25)});
-    VectorRasterizerStyle style{
+    VectorStyle style{
         Color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}}};
     {
       VectorRasterizer rasterizer(rect, asset);
@@ -130,7 +130,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolyline(
         polyline,
-        VectorRasterizerStyle{Color{
+        VectorStyle{Color{
             std::byte{81},
             std::byte{33},
             std::byte{255},
@@ -160,7 +160,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(
         triangle,
-        VectorRasterizerStyle{Color{
+        VectorStyle{Color{
             std::byte{255},
             std::byte{127},
             std::byte{100},
@@ -198,7 +198,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(
         composite,
-        VectorRasterizerStyle{Color{
+        VectorStyle{Color{
             std::byte{255},
             std::byte{50},
             std::byte{12},
@@ -233,7 +233,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         Cartographic(0.8, 1.0),
         Cartographic(0.8, 0.9),
         Cartographic(0.9, 0.9)};
-    VectorRasterizerStyle style{
+    VectorStyle style{
         Color{std::byte{255}, std::byte{50}, std::byte{12}, std::byte{255}}};
 
     for (uint32_t i = 0; i < 4; i++) {
@@ -243,6 +243,49 @@ TEST_CASE("VectorRasterizer::rasterize") {
     }
 
     asset->writeTga("mipmap.tga");
+  }
+
+  SUBCASE("Styling") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    CartographicPolygon square(std::vector<glm::dvec2>{
+        glm::dvec2(0.25, 0.25),
+        glm::dvec2(0.25, 0.75),
+        glm::dvec2(0.75, 0.75),
+        glm::dvec2(0.75, 0.25)});
+
+    CartographicPolygon triangle(std::vector<glm::dvec2>{
+        glm::dvec2(0.25, 0.25),
+        glm::dvec2(0.5, 0.75),
+        glm::dvec2(0.75, 0.25)});
+
+    std::vector<Cartographic> polyline{
+        Cartographic(0.1, 0.1),
+        Cartographic(0.9, 0.1),
+        Cartographic(0.9, 0.9)};
+
+    VectorStyle style{
+        LineStyle{ColorStyle{Color{0xff, 0xaa, 0x33}, ColorMode::Normal}, 2.0},
+        PolygonStyle{
+            ColorStyle{Color{0x33, 0xaa, 0xff}, ColorMode::Random},
+            true,
+            true}};
+
+    VectorRasterizer rasterizer(rect, asset);
+    rasterizer.drawPolygon(square, style);
+    rasterizer.drawPolygon(triangle, style);
+    rasterizer.drawPolyline(polyline, style);
+    rasterizer.finalize();
+
+    asset->writeTga("styling.tga");
   }
 }
 
@@ -266,7 +309,7 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
 
   for (int i = 0; i < 100; i++) {
     std::vector<CartographicPolygon> polygons;
-    std::vector<VectorRasterizerStyle> styles;
+    std::vector<VectorStyle> styles;
     std::uniform_real_distribution<double> uniformDist;
     for (int j = 0; j < 1000; j++) {
       polygons.emplace_back(std::vector<glm::dvec2>{
@@ -274,11 +317,11 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
           glm::dvec2(uniformDist(rand), uniformDist(rand)),
           glm::dvec2(uniformDist(rand), uniformDist(rand)),
       });
-      styles.emplace_back(VectorRasterizerStyle{Color{
+      styles.emplace_back(Color{
           (std::byte)(uniformDist(rand) * 255.0),
           (std::byte)(uniformDist(rand) * 255.0),
           (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0)}});
+          (std::byte)(uniformDist(rand) * 255.0)});
     }
 
     std::chrono::steady_clock::time_point start = clock.now();

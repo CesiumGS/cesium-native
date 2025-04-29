@@ -108,7 +108,7 @@ void rasterizePolygons(
       std::byte{0x00},
       std::byte{0xff}});
 
-  CesiumVectorData::VectorRasterizerStyle insideStyle{CesiumVectorData::Color{
+  CesiumVectorData::VectorStyle insideStyle{CesiumVectorData::Color{
       insideColor,
       std::byte{0x00},
       std::byte{0x00},

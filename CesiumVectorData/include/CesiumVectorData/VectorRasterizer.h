@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Color.h"
-#include "VectorRasterizerStyle.h"
+#include "VectorStyle.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
@@ -49,11 +49,11 @@ public:
    * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.
    *
    * @param polygon The polygon to draw.
-   * @param drawColor The \ref Color to use to draw the polygon.
+   * @param style The \ref VectorStyle to use when drawing the polygon.
    */
   void drawPolygon(
       const CesiumGeospatial::CartographicPolygon& polygon,
-      const VectorRasterizerStyle& style);
+      const VectorStyle& style);
 
   /**
    * @brief Draws a \ref CesiumGeospatial::CompositeCartographicPolygon to the
@@ -63,31 +63,34 @@ public:
    * Polygons with holes will rasterize incorrectly.
    *
    * @param polygon The composite polygon to draw.
-   * @param drawColor The \ref Color to use to draw the composite polygon.
+   * @param style The \ref VectorStyle to use when drawing the composite
+   * polygon.
    */
   void drawPolygon(
       const CesiumGeospatial::CompositeCartographicPolygon& polygon,
-      const VectorRasterizerStyle& style);
+      const VectorStyle& style);
 
   /**
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
    *
    * @param points The set of points making up the polyline.
-   * @param drawColor The \ref Color to use to draw the polyline.
+   * @param style The \ref VectorStyle to use when drawing the polyline.
    */
   void drawPolyline(
       const std::span<const CesiumGeospatial::Cartographic>& points,
-      const VectorRasterizerStyle& style);
+      const VectorStyle& style);
 
   /**
    * @brief Rasterizes the provided `VectorPrimitive` to the canvas.
    *
    * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
    * to calls to `drawPolyline`. Points are currently not drawn.
+   *
+   * @param primitive The primitive to draw.
+   * @param style The \ref VectorStyle to use when drawing the primitive.
    */
-  void drawPrimitive(
-      const VectorPrimitive& primitive,
-      const VectorRasterizerStyle& style);
+  void
+  drawPrimitive(const VectorPrimitive& primitive, const VectorStyle& style);
 
   /**
    * @brief Fills the entire canvas with the given color.

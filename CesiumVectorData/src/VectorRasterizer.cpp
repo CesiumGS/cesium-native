@@ -8,7 +8,7 @@
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
-#include <CesiumVectorData/VectorRasterizerStyle.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 // blend2d.h not used directly, but if we don't include it the other blend2d
 // headers will emit a warning NOLINTNEXTLINE(misc-include-cleaner)
@@ -16,12 +16,15 @@
 #include <blend2d/context.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
+#include <blend2d/gradient.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <span>
 #include <variant>
 #include <vector>
@@ -42,6 +45,19 @@ BLPoint radiansToPoint(
           context.targetWidth(),
       (1.0 - (latitude - rect.getSouth()) / rect.computeHeight()) *
           context.targetHeight());
+}
+
+void setStrokeWidth(
+    BLContext& context,
+    const LineStyle& style,
+    const Ellipsoid& ellipsoid,
+    const GlobeRectangle& bounds) {
+  if (style.widthMode == LineWidthMode::Pixels) {
+    context.setStrokeWidth(style.width);
+  } else if (style.widthMode == LineWidthMode::Meters) {
+    const double radians = style.width / ellipsoid.getRadii().x;
+    context.setStrokeWidth(radians / bounds.computeWidth());
+  }
 }
 } // namespace
 
@@ -84,7 +100,7 @@ VectorRasterizer::VectorRasterizer(
 
 void VectorRasterizer::drawPolygon(
     const CartographicPolygon& polygon,
-    const VectorRasterizerStyle& style) {
+    const VectorStyle& style) {
   if (_finalized) {
     return;
   }
@@ -97,17 +113,26 @@ void VectorRasterizer::drawPolygon(
         radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
   }
 
-  CESIUM_ASSERT(sizeof(BLPoint) == sizeof(glm::dvec2));
-  this->_context.fillPolygon(
-      vertices.data(),
-      vertices.size(),
-      BLRgba32(style.color.toRgba32()));
+  if (style.polygon.fill) {
+    this->_context.fillPolygon(
+        vertices.data(),
+        vertices.size(),
+        BLRgba32(style.polygon.getColor().toRgba32()));
+  }
+
+  if (style.polygon.outline) {
+    setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
+    this->_context.strokePolygon(
+        vertices.data(),
+        vertices.size(),
+        BLRgba32(style.line.getColor().toRgba32()));
+  }
 }
 
 void VectorRasterizer::drawPolygon(
     const CompositeCartographicPolygon& polygon,
-    const VectorRasterizerStyle& style) {
-  if (_finalized) {
+    const VectorStyle& style) {
+  if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
     return;
   }
 
@@ -119,15 +144,25 @@ void VectorRasterizer::drawPolygon(
         radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
   }
 
-  this->_context.fillPolygon(
-      vertices.data(),
-      vertices.size(),
-      BLRgba32(style.color.toRgba32()));
+  if (style.polygon.fill) {
+    this->_context.fillPolygon(
+        vertices.data(),
+        vertices.size(),
+        BLRgba32(style.polygon.getColor().toRgba32()));
+  }
+
+  if (style.polygon.outline) {
+    setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
+    this->_context.strokePolygon(
+        vertices.data(),
+        vertices.size(),
+        BLRgba32(style.line.getColor().toRgba32()));
+  }
 }
 
 void VectorRasterizer::drawPolyline(
     const std::span<const Cartographic>& points,
-    const VectorRasterizerStyle& style) {
+    const VectorStyle& style) {
   if (_finalized) {
     return;
   }
@@ -135,35 +170,40 @@ void VectorRasterizer::drawPolyline(
   std::vector<BLPoint> vertices;
   vertices.reserve(points.size());
 
+  glm::dvec2 min(
+      std::numeric_limits<double>::max(),
+      std::numeric_limits<double>::max());
+  glm::dvec2 max(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<double>::min());
+
   for (const Cartographic& vertex : points) {
-    vertices.emplace_back(radiansToPoint(
+    BLPoint point = radiansToPoint(
         vertex.longitude,
         vertex.latitude,
         this->_bounds,
-        this->_context));
+        this->_context);
+    vertices.emplace_back(point);
+    min.x = std::min(min.x, point.x);
+    min.y = std::min(min.y, point.y);
+    max.x = std::max(max.x, point.x);
+    max.y = std::max(max.y, point.y);
   }
 
-  if (style.lineWidthMode == VectorLineWidthMode::Pixels) {
-    this->_context.setStrokeWidth(style.lineWidth);
-  } else if (style.lineWidthMode == VectorLineWidthMode::Meters) {
-    // Approximating the ellipsoid as a sphere makes this much easier
-    const double radians = style.lineWidth / this->_ellipsoid.getRadii().x;
-    this->_context.setStrokeWidth(
-        std::max(radians / this->_bounds.computeWidth(), 1.0));
-  }
+  setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
 
   this->_context.strokePolyline(
       vertices.data(),
       vertices.size(),
-      BLRgba32(style.color.toRgba32()));
+      BLRgba32(style.line.getColor().toRgba32()));
 }
 
 void VectorRasterizer::drawPrimitive(
     const VectorPrimitive& primitive,
-    const VectorRasterizerStyle& style) {
+    const VectorStyle& style) {
   struct PrimitiveDrawVisitor {
     VectorRasterizer& rasterizer;
-    const VectorRasterizerStyle& style;
+    const VectorStyle& style;
     void operator()(const Cartographic& /*point*/) {}
     void operator()(const std::vector<Cartographic>& points) {
       rasterizer.drawPolyline(points, style);
