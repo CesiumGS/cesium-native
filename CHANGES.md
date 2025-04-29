@@ -43,6 +43,7 @@
 
 ##### Fixes :wrench:
 
+- Point cloud tiles will now be upsampled for raster overlays, fixing an issue where applying a raster overlay to a point cloud tileset would cause holes to appear.
 - Fixed a crash caused by invalid I3dm headers.
 - Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
 
