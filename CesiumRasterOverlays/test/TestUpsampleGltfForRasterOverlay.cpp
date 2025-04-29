@@ -2150,7 +2150,7 @@ TEST_CASE("upsampleGltfForRasterOverlay with random points") {
   std::uniform_real_distribution<float> dist(0.0, 0.5);
   std::vector<std::vector<size_t>> pointsPerQuadrant;
   for (size_t i = 0; i < 4; i++) {
-    const float x = (i % 2) / 2.0f;
+    const float x = (float)(i % 2) / 2.0f;
     const float y = std::floor((float)i / 2) / 2.0f;
     std::vector<size_t> pointIndices;
     pointIndices.reserve(POINT_COUNT / 4);
