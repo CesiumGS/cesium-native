@@ -141,6 +141,13 @@ public:
       CesiumUtility::JsonValue::Object();
 
   /**
+   * @brief The format-specific type name associated with this node. For
+   * example, if this is a `<Placemark>` element in a KML file, this value will
+   * be "Placemark".
+   */
+  std::string typeName = {};
+
+  /**
    * @brief Checks that two VectorNode values are equal.
    */
   bool operator==(const VectorNode& rhs) const;

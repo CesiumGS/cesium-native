@@ -53,4 +53,5 @@ target_link_libraries(CesiumVectorData
     PRIVATE
         blend2d::blend2d
         asmjit::asmjit
+        tinyxml2::tinyxml2
 )
