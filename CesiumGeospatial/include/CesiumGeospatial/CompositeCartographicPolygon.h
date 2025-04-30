@@ -1,6 +1,9 @@
 #pragma once
 
 #include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+
+#include <iterator>
 
 namespace CesiumGeospatial {
 /**
@@ -52,11 +55,26 @@ public:
   const std::vector<CartographicPolygon>& getLinearRings() const;
 
   /**
+   * @brief Returns the bounding rectangle enclosing this polygon.
+   */
+  const CesiumGeospatial::GlobeRectangle& getBoundingRectangle() const;
+
+  /**
+   * @brief Returns the vertices of this polygon with a winding order depending
+   * on the linear ring: outer rings are clockwise, inner rings are
+   * counter-clockwise.
+   */
+  const std::vector<glm::dvec2>& getWoundVertices() const;
+
+  /**
    * @brief Checks if two `CompositeCartographicPolygon` objects are equal.
    */
   bool operator==(const CompositeCartographicPolygon& rhs) const;
 
 private:
   std::vector<CartographicPolygon> _polygons;
+  size_t _numVertices;
+  std::vector<glm::dvec2> _woundVertices;
+  CesiumGeospatial::GlobeRectangle _boundingRectangle;
 };
 } // namespace CesiumGeospatial

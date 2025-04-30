@@ -49,4 +49,8 @@ target_link_libraries(CesiumVectorData
         CesiumUtility
         CesiumGeospatial
         CesiumAsync
+        CesiumGltf
+    PRIVATE
+        blend2d::blend2d
+        asmjit::asmjit
 )

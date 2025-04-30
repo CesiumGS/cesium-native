@@ -8,6 +8,7 @@
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- Added `VectorDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
 

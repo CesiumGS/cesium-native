@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/BoundingRegionBuilder.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "TriangulatePolygon.h"
 
 #include <CesiumGeospatial/Cartographic.h>
@@ -8,13 +10,60 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <numeric>
 #include <utility>
 #include <vector>
 
 namespace CesiumGeospatial {
+namespace {
+CesiumGeospatial::GlobeRectangle
+calculateBoundingRectangle(const std::vector<CartographicPolygon>& polygons) {
+  CesiumGeospatial::BoundingRegionBuilder builder;
+  for (const CartographicPolygon& polygon : polygons) {
+    const GlobeRectangle& rect = polygon.getBoundingRectangle();
+    builder.expandToIncludePosition(rect.getSouthwest());
+    builder.expandToIncludePosition(rect.getNortheast());
+  }
+
+  return builder.toGlobeRectangle();
+}
+} // namespace
+
 CompositeCartographicPolygon::CompositeCartographicPolygon(
     std::vector<CartographicPolygon>&& polygons)
-    : _polygons(std::move(polygons)) {}
+    : _polygons(std::move(polygons)),
+      _numVertices(std::accumulate(
+          this->_polygons.begin(),
+          this->_polygons.end(),
+          (size_t)0,
+          [](size_t count, const CartographicPolygon& polygon) {
+            return count + polygon.getVertices().size();
+          })),
+      _woundVertices(),
+      _boundingRectangle(calculateBoundingRectangle(this->_polygons)) {
+  _woundVertices.reserve(this->_numVertices);
+  for (size_t i = 0; i < this->_polygons.size(); i++) {
+    // We work with the assumption that clockwise winding order delineates the
+    // outside of the shape, and counter-clockwise delineates holes within the
+    // shape. This is the case in many OGC standards, including vector tiles, as
+    // well as our vector rendering library - but it is not the case in GeoJSON,
+    // which uses the opposite rule. Therefore, we need to reverse the winding
+    // order if they aren't what we expect.
+    const bool forward = i == 0 ? this->_polygons[i].isClockwiseWindingOrder()
+                                : !this->_polygons[i].isClockwiseWindingOrder();
+    if (forward) {
+      _woundVertices.insert(
+          _woundVertices.end(),
+          this->_polygons[i].getVertices().begin(),
+          this->_polygons[i].getVertices().end());
+    } else {
+      _woundVertices.insert(
+          _woundVertices.end(),
+          this->_polygons[i].getVertices().rbegin(),
+          this->_polygons[i].getVertices().rend());
+    }
+  }
+}
 
 bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
   // If there's no polygons, so we're definitely not inside any of them.
@@ -42,7 +91,8 @@ bool CompositeCartographicPolygon::contains(const Cartographic& point) const {
 }
 
 std::vector<uint32_t> CompositeCartographicPolygon::triangulate() const {
-  std::vector<std::vector<glm::dvec2>> rings(this->_polygons.size());
+  std::vector<std::vector<glm::dvec2>> rings;
+  rings.reserve(this->_polygons.size());
   for (const CartographicPolygon& polygon : this->_polygons) {
     rings.emplace_back(polygon.getVertices());
   }
@@ -65,8 +115,18 @@ bool CompositeCartographicPolygon::operator==(
   return true;
 }
 
+const std::vector<glm::dvec2>&
+CompositeCartographicPolygon::getWoundVertices() const {
+  return this->_woundVertices;
+}
+
 const std::vector<CartographicPolygon>&
 CompositeCartographicPolygon::getLinearRings() const {
   return this->_polygons;
+}
+
+const GlobeRectangle&
+CompositeCartographicPolygon::getBoundingRectangle() const {
+  return this->_boundingRectangle;
 }
 } // namespace CesiumGeospatial

@@ -43,6 +43,7 @@ target_link_libraries(CesiumITwinClient
         CesiumUtility
         CesiumClientCommon
         CesiumGeospatial
+        CesiumRasterOverlays
         CesiumVectorData
     PRIVATE
         modp_b64::modp_b64
