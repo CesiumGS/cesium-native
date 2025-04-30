@@ -1,3 +1,4 @@
+#include "CesiumUtility/IntrusivePointer.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -25,7 +26,7 @@ namespace {
 const std::string& REDIRECT_PATH = "/dummy/auth/path";
 const int REDIRECT_PORT = 49013;
 
-std::shared_ptr<Connection>
+CesiumUtility::IntrusivePointer<Connection>
 createConnection(const AsyncSystem& asyncSystem, bool isAccessToken = true) {
   std::shared_ptr<MockITwinAssetAccessor> pAccessor =
       std::make_shared<MockITwinAssetAccessor>(isAccessToken);
@@ -34,7 +35,8 @@ createConnection(const AsyncSystem& asyncSystem, bool isAccessToken = true) {
       AuthenticationToken::parse(pAccessor->authToken);
   REQUIRE(tokenResult.value);
 
-  return std::make_shared<Connection>(
+  IntrusivePointer<Connection> pConnection;
+  pConnection.emplace(
       asyncSystem,
       pAccessor,
       *tokenResult.value,
@@ -44,12 +46,13 @@ createConnection(const AsyncSystem& asyncSystem, bool isAccessToken = true) {
           REDIRECT_PATH,
           REDIRECT_PORT,
           false});
+  return pConnection;
 }
 } // namespace
 
 TEST_CASE("CesiumITwinClient::Connection::me") {
   AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
-  std::shared_ptr<Connection> pConn = createConnection(asyncSystem);
+  IntrusivePointer<Connection> pConn = createConnection(asyncSystem);
 
   SUBCASE("Returns correct results") {
     CesiumAsync::Future<Result<UserProfile>> future = pConn->me();
@@ -86,7 +89,7 @@ TEST_CASE("CesiumITwinClient::Connection::me") {
 
 TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
   AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
-  std::shared_ptr<Connection> pConn = createConnection(asyncSystem, false);
+  IntrusivePointer<Connection> pConn = createConnection(asyncSystem, false);
 
   SUBCASE("Returns correct results") {
     CesiumAsync::Future<Result<PagedList<CesiumVectorData::VectorNode>>>
@@ -127,7 +130,7 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
 
 TEST_CASE("CesiumITwinClient::Connection::geospatialFeatureCollections") {
   AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
-  std::shared_ptr<Connection> pConn = createConnection(asyncSystem, false);
+  IntrusivePointer<Connection> pConn = createConnection(asyncSystem, false);
 
   SUBCASE("Returns correct results") {
     CesiumAsync::Future<Result<std::vector<GeospatialFeatureCollection>>>

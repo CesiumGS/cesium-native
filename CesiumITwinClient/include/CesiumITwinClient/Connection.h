@@ -3,6 +3,8 @@
 #include "AuthenticationToken.h"
 #include "CesiumCuratedContent.h"
 #include "CesiumGeospatial/GlobeRectangle.h"
+#include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumUtility/ReferenceCounted.h"
 #include "IModel.h"
 #include "IModelMeshExport.h"
 #include "ITwin.h"
@@ -75,7 +77,8 @@ public:
 /**
  * @brief Represents a connection to the Bentley iTwin API.
  */
-class CESIUMITWINCLIENT_API Connection {
+class CESIUMITWINCLIENT_API Connection
+    : public CesiumUtility::ReferenceCountedThreadSafe<Connection> {
 public:
   /**
    * @brief Authorizes access to iTwin on behalf of a user, and returns a
@@ -109,7 +112,9 @@ public:
    * @return A future that resolves to an iTwin {@link Connection} once the
    * user authorizes the application and the token handshake completes.
    */
-  static CesiumAsync::Future<CesiumUtility::Result<Connection>> authorize(
+  static CesiumAsync::Future<
+      CesiumUtility::Result<CesiumUtility::IntrusivePointer<Connection>>>
+  authorize(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& friendlyApplicationName,

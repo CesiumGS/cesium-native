@@ -133,7 +133,8 @@ void QueryParameters::addToUri(CesiumUtility::Uri& uri) const {
   uri.setQuery(query.toQueryString());
 }
 
-CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
+CesiumAsync::Future<CesiumUtility::Result<IntrusivePointer<Connection>>>
+Connection::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& friendlyApplicationName,
@@ -160,7 +161,7 @@ CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
       .thenImmediately(
           [asyncSystem, pAssetAccessor, clientOptions](
               const Result<CesiumClientCommon::OAuth2TokenResponse>& result)
-              -> Result<Connection> {
+              -> Result<IntrusivePointer<Connection>> {
             if (!result.value.has_value()) {
               return {result.errors};
             } else {
@@ -170,12 +171,14 @@ CesiumAsync::Future<CesiumUtility::Result<Connection>> Connection::authorize(
                   !authTokenResult.value->isValid()) {
                 return {authTokenResult.errors};
               } else {
-                return Connection(
+                IntrusivePointer<Connection> pConnection;
+                pConnection.emplace(
                     asyncSystem,
                     pAssetAccessor,
                     *authTokenResult.value,
                     result.value->refreshToken,
                     clientOptions);
+                return pConnection;
               }
             }
           });
@@ -298,8 +301,9 @@ Connection::listITwins(const std::string& url) {
               return Result<PagedList<ITwin>>(PagedList<ITwin>(
                   *docResult.value,
                   std::move(items),
-                  [](Connection& connection, const std::string& url) {
-                    return connection.listITwins(url);
+                  [](CesiumUtility::IntrusivePointer<Connection>& pConnection,
+                     const std::string& url) {
+                    return pConnection->listITwins(url);
                   }));
             });
       });
@@ -395,8 +399,9 @@ Connection::listIModels(const std::string& url) {
               return Result<PagedList<IModel>>(PagedList<IModel>(
                   *docResult.value,
                   std::move(items),
-                  [](Connection& connection, const std::string& url) {
-                    return connection.listIModels(url);
+                  [](CesiumUtility::IntrusivePointer<Connection>& pConnection,
+                     const std::string& url) {
+                    return pConnection->listIModels(url);
                   }));
             });
       });
@@ -480,8 +485,10 @@ Connection::listIModelMeshExports(const std::string& url) {
                   PagedList<IModelMeshExport>(
                       *docResult.value,
                       std::move(items),
-                      [](Connection& connection, const std::string& url) {
-                        return connection.listIModelMeshExports(url);
+                      [](CesiumUtility::IntrusivePointer<Connection>&
+                             pConnection,
+                         const std::string& url) {
+                        return pConnection->listIModelMeshExports(url);
                       }));
             });
       });
@@ -587,8 +594,10 @@ Connection::listITwinRealityData(const std::string& url) {
                   PagedList<ITwinRealityData>(
                       *docResult.value,
                       std::move(items),
-                      [](Connection& connection, const std::string& url) {
-                        return connection.listITwinRealityData(url);
+                      [](CesiumUtility::IntrusivePointer<Connection>&
+                             pConnection,
+                         const std::string& url) {
+                        return pConnection->listITwinRealityData(url);
                       }));
             });
       });
@@ -906,8 +915,9 @@ Connection::listGeospatialFeatures(const std::string& url) {
               return Result<PagedList<VectorNode>>(PagedList<VectorNode>(
                   *docResult.value,
                   std::move(nodes),
-                  [](Connection& connection, const std::string& url) {
-                    return connection.listGeospatialFeatures(url);
+                  [](CesiumUtility::IntrusivePointer<Connection>& pConnection,
+                     const std::string& url) {
+                    return pConnection->listGeospatialFeatures(url);
                   }));
             });
       });
