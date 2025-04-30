@@ -4,6 +4,7 @@
 
 ##### Breaking Changes :mega:
 
+- Deprecated the `ViewState::create` methods. Use a constructor overload instead.
 - Removed `addCreditToFrame`, `startNextFrame`, `getCreditsToShowThisFrame`, and `getCreditsToNoLongerShowThisFrame` from `CreditSystem`. `CreditSystem` no longer has a notion of a "frame". Instead, credits are included and excluded by calling `addCreditReference` and `removeCreditReference`. A snaphot of the current state can be obtained by calling `getSnapshot`, and it includes both the current set of active credits as well as the credits that were removed since the last snapshot.
 - Removed the following from `Cesium3DTilesSelection::Tile`:
   - `getLastSelectionState` and `setLastSelectionState`. Use `TilesetViewGroup::getTraversalState` instead.
