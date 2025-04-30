@@ -18,6 +18,7 @@
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Profile.h>
 #include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
