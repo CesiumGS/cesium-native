@@ -29,10 +29,11 @@ static std::span<const std::byte> stringToBytes(const std::string& str) {
 void expectParserResult(
     const std::string& json,
     const VectorNode& expectedResult) {
-  Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(json));
+  Result<IntrusivePointer<VectorDocument>> doc =
+      VectorDocument::fromGeoJson(stringToBytes(json));
   CHECK(!doc.errors.hasErrors());
-  REQUIRE(doc.value);
-  const VectorNode& root = doc.value->getRootNode();
+  REQUIRE(doc.pValue);
+  const VectorNode& root = doc.pValue->getRootNode();
   REQUIRE(expectedResult == root);
 }
 } // namespace
@@ -85,7 +86,7 @@ TEST_CASE("Parse Point primitives") {
   }
 
   SUBCASE("'coordinates' must exist'") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "Point" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -93,7 +94,7 @@ TEST_CASE("Parse Point primitives") {
   }
 
   SUBCASE("Position must be an array") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "Point", "coordinates": 2 })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -101,7 +102,7 @@ TEST_CASE("Parse Point primitives") {
   }
 
   SUBCASE("Position value must be 2D or 3D") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "Point", "coordinates": [2.0] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -119,8 +120,9 @@ TEST_CASE("Parse Point primitives") {
   }
 
   SUBCASE("Position value must only contain numbers") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "Point", "coordinates": [2.0, false] })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "Point", "coordinates": [2.0, false] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -189,7 +191,7 @@ TEST_CASE("Parse MultiPoint primitives") {
   }
 
   SUBCASE("Coordinates must be an array") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "MultiPoint", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -234,7 +236,7 @@ TEST_CASE("Parse LineString primitives") {
   }
 
   SUBCASE("Coordinates must be an array") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "LineString", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -244,8 +246,9 @@ TEST_CASE("Parse LineString primitives") {
   }
 
   SUBCASE("Coordinates must contain two or more positions") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "LineString", "coordinates": [[0, 1, 2]] })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "LineString", "coordinates": [[0, 1, 2]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -282,8 +285,9 @@ TEST_CASE("Parse MultiLineString primitives") {
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "MultiLineString", "coordinates": false })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "MultiLineString", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -297,8 +301,9 @@ TEST_CASE("Parse MultiLineString primitives") {
   }
 
   SUBCASE("Lines must contain two or more positions") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "MultiLineString", "coordinates": [[[0, 1, 2]]] })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "MultiLineString", "coordinates": [[[0, 1, 2]]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -351,7 +356,7 @@ TEST_CASE("Parse Polygon primitives") {
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "Polygon", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -366,8 +371,9 @@ TEST_CASE("Parse Polygon primitives") {
   }
 
   SUBCASE("Lines must contain two or more positions") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "Polygon", "coordinates": [[[0, 1, 2], [1, 2, 3], [4, 3, 5]]] })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "Polygon", "coordinates": [[[0, 1, 2], [1, 2, 3], [4, 3, 5]]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -423,8 +429,9 @@ TEST_CASE("Parse MultiPolygon primitives") {
   }
 
   SUBCASE("Coordinates must be an array of arrays of arrays") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "MultiPolygon", "coordinates": false })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "MultiPolygon", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -452,8 +459,9 @@ TEST_CASE("Parse MultiPolygon primitives") {
   }
 
   SUBCASE("Lines must contain two or more positions") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "MultiPolygon", "coordinates": [[[[0, 1, 2], [1, 2, 3], [4, 3, 5]] ]] })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "MultiPolygon", "coordinates": [[[[0, 1, 2], [1, 2, 3], [4, 3, 5]] ]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -496,7 +504,7 @@ TEST_CASE("Parsing GeometryCollection") {
   }
 
   SUBCASE("Requires 'geometries'") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "GeometryCollection" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -513,8 +521,9 @@ TEST_CASE("Parsing GeometryCollection") {
   }
 
   SUBCASE("'geometries' must only include geometry primitives") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(stringToBytes(
-        R"==({ "type": "GeometryCollection", "geometries": [{"type": "Feature", "geometry": null, "properties": null}] })=="));
+    Result<IntrusivePointer<VectorDocument>> doc =
+        VectorDocument::fromGeoJson(stringToBytes(
+            R"==({ "type": "GeometryCollection", "geometries": [{"type": "Feature", "geometry": null, "properties": null}] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -564,7 +573,7 @@ TEST_CASE("Parsing Feature") {
   }
 
   SUBCASE("Missing required members") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "Feature" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -577,7 +586,7 @@ TEST_CASE("Parsing Feature") {
   }
 
   SUBCASE("'id' must be string or number") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "Feature", "id": null })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -610,7 +619,7 @@ TEST_CASE("Parsing FeatureCollection") {
   }
 
   SUBCASE("'features' member must be an array of features") {
-    Result<VectorDocument> doc = VectorDocument::fromGeoJson(
+    Result<IntrusivePointer<VectorDocument>> doc = VectorDocument::fromGeoJson(
         stringToBytes(R"==({ "type": "FeatureCollection" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
@@ -649,9 +658,9 @@ TEST_CASE("Load test GeoJSON without errors") {
     if (!file.path().extension().string().ends_with("json")) {
       continue;
     }
-    Result<VectorDocument> doc =
+    Result<IntrusivePointer<VectorDocument>> doc =
         VectorDocument::fromGeoJson(readFile(file.path()));
-    CHECK(doc.value);
+    CHECK(doc.pValue);
     CHECK(!doc.errors.hasErrors());
     CHECK(doc.errors.warnings.empty());
   }

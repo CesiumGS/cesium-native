@@ -5,6 +5,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/VectorDocument.h>
@@ -27,33 +28,42 @@ using namespace CesiumUtility;
 
 namespace CesiumVectorData {
 
-Result<VectorDocument> VectorDocument::fromGeoJson(
+Result<IntrusivePointer<VectorDocument>> VectorDocument::fromGeoJson(
     const std::span<const std::byte>& bytes,
     std::vector<VectorDocumentAttribution>&& attributions) {
   Result<VectorNode> parseResult = parseGeoJson(bytes);
   if (!parseResult.value) {
-    return Result<VectorDocument>(std::move(parseResult.errors));
+    return Result<IntrusivePointer<VectorDocument>>(
+        std::move(parseResult.errors));
   }
 
-  return Result<VectorDocument>(
-      VectorDocument(std::move(*parseResult.value), std::move(attributions)),
+  IntrusivePointer<VectorDocument> pDocument;
+  pDocument.emplace(std::move(*parseResult.value), std::move(attributions));
+
+  return Result<IntrusivePointer<VectorDocument>>(
+      pDocument,
       std::move(parseResult.errors));
 }
 
-Result<VectorDocument> VectorDocument::fromGeoJson(
-    const rapidjson::Document& doc,
+Result<IntrusivePointer<VectorDocument>> VectorDocument::fromGeoJson(
+    const rapidjson::Document& document,
     std::vector<VectorDocumentAttribution>&& attributions) {
-  Result<VectorNode> parseResult = parseGeoJson(doc);
+  Result<VectorNode> parseResult = parseGeoJson(document);
   if (!parseResult.value) {
-    return Result<VectorDocument>(std::move(parseResult.errors));
+    return Result<IntrusivePointer<VectorDocument>>(
+        std::move(parseResult.errors));
   }
 
-  return Result<VectorDocument>(
-      VectorDocument(std::move(*parseResult.value), std::move(attributions)),
+  IntrusivePointer<VectorDocument> pDocument;
+  pDocument.emplace(std::move(*parseResult.value), std::move(attributions));
+
+  return Result<IntrusivePointer<VectorDocument>>(
+      pDocument,
       std::move(parseResult.errors));
 }
 
-Future<Result<VectorDocument>> VectorDocument::fromCesiumIonAsset(
+Future<Result<IntrusivePointer<VectorDocument>>>
+VectorDocument::fromCesiumIonAsset(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t ionAssetID,
@@ -70,8 +80,10 @@ Future<Result<VectorDocument>> VectorDocument::fromCesiumIonAsset(
         const IAssetResponse* pResponse = pRequest->response();
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          return asyncSystem.createResolvedFuture<Result<VectorDocument>>(
-              Result<VectorDocument>(ErrorList::error(fmt::format(
+          return asyncSystem.createResolvedFuture<
+              Result<IntrusivePointer<VectorDocument>>>(Result<IntrusivePointer<
+                                                            VectorDocument>>(
+              ErrorList::error(fmt::format(
                   "Status code {} while requesting Cesium ion vector asset.",
                   pResponse->statusCode()))));
         }
@@ -82,19 +94,23 @@ Future<Result<VectorDocument>> VectorDocument::fromCesiumIonAsset(
             pResponse->data().size());
 
         if (response.HasParseError()) {
-          return asyncSystem.createResolvedFuture<Result<VectorDocument>>(
-              Result<VectorDocument>(ErrorList::error(fmt::format(
-                  "Error while parsing Cesium ion asset response: "
-                  "error {} at byte offset {}.",
-                  rapidjson::GetParseError_En(response.GetParseError()),
-                  response.GetErrorOffset()))));
+          return asyncSystem
+              .createResolvedFuture<Result<IntrusivePointer<VectorDocument>>>(
+                  Result<IntrusivePointer<VectorDocument>>(
+                      ErrorList::error(fmt::format(
+                          "Error while parsing Cesium ion asset response: "
+                          "error {} at byte offset {}.",
+                          rapidjson::GetParseError_En(response.GetParseError()),
+                          response.GetErrorOffset()))));
         }
 
         const std::string type =
             JsonHelpers::getStringOrDefault(response, "type", "UNKNOWN");
         if (type != "GEOJSON") {
-          return asyncSystem.createResolvedFuture<Result<VectorDocument>>(
-              Result<VectorDocument>(ErrorList::error(fmt::format(
+          return asyncSystem.createResolvedFuture<
+              Result<IntrusivePointer<VectorDocument>>>(Result<IntrusivePointer<
+                                                            VectorDocument>>(
+              ErrorList::error(fmt::format(
                   "Found asset type '{}'. Only GEOJSON is currently supported.",
                   type))));
         }
@@ -128,16 +144,17 @@ Future<Result<VectorDocument>> VectorDocument::fromCesiumIonAsset(
             .thenImmediately(
                 [attributions = std::move(attributions)](
                     std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
-                -> Result<VectorDocument> {
+                -> Result<IntrusivePointer<VectorDocument>> {
                   const IAssetResponse* pAssetResponse =
                       pAssetRequest->response();
 
                   if (pAssetResponse->statusCode() < 200 ||
                       pAssetResponse->statusCode() >= 300) {
-                    return Result<VectorDocument>(ErrorList::error(fmt::format(
-                        "Status code {} while requesting Cesium ion "
-                        "vector asset data.",
-                        pAssetResponse->statusCode())));
+                    return Result<IntrusivePointer<VectorDocument>>(
+                        ErrorList::error(fmt::format(
+                            "Status code {} while requesting Cesium ion "
+                            "vector asset data.",
+                            pAssetResponse->statusCode())));
                   }
 
                   return VectorDocument::fromGeoJson(

@@ -31,7 +31,6 @@ target_sources(
     PRIVATE
         ${CESIUM_VECTOR_DATA_SOURCES}
         ${CESIUM_VECTOR_DATA_HEADERS}
-    PUBLIC
         ${CESIUM_VECTOR_DATA_PUBLIC_HEADERS}
 )
 
@@ -39,7 +38,10 @@ cesium_target_include_directories(
     TARGET
         CesiumVectorData
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 target_link_libraries(CesiumVectorData
