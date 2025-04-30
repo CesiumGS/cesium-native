@@ -743,14 +743,15 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
 
                   collectionResult.extents.spatial.emplace_back(
                       CesiumGeospatial::GlobeRectangle{
-                          Math::degreesToRadians((*coords)[0]),
                           Math::degreesToRadians((*coords)[1]),
+                          Math::degreesToRadians((*coords)[0]),
+                          Math::degreesToRadians(
+                              coords->size() == 4 ? (*coords)[3]
+                                                  : (*coords)[4]),
                           Math::degreesToRadians(
                               coords->size() == 4 ? (*coords)[2]
                                                   : (*coords)[3]),
-                          Math::degreesToRadians(
-                              coords->size() == 4 ? (*coords)[3]
-                                                  : (*coords)[4])},
+                      },
                       coords->size() == 4 ? 0 : (*coords)[2],
                       coords->size() == 4 ? 0 : (*coords)[5]);
                 }
@@ -852,14 +853,19 @@ CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
 Connection::geospatialFeatures(
     const std::string& iTwinId,
     const std::string& collectionId,
+    const CesiumGeospatial::GlobeRectangle& bounds,
     uint32_t limit) {
   const uint32_t limitClamped = std::clamp<uint32_t>(limit, 1, 10000);
   const std::string url = fmt::format(
       "https://api.bentley.com/geospatial-features/itwins/{}/ogc/collections/"
-      "{}/items?limit={}",
+      "{}/items?limit={}&bbox={},{},{},{}",
       iTwinId,
       collectionId,
-      limitClamped);
+      limitClamped,
+      Math::radiansToDegrees(bounds.getWest()),
+      Math::radiansToDegrees(bounds.getSouth()),
+      Math::radiansToDegrees(bounds.getEast()),
+      Math::radiansToDegrees(bounds.getNorth()));
   return this->listGeospatialFeatures(url);
 }
 

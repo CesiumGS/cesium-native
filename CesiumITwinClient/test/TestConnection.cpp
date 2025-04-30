@@ -93,6 +93,7 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
         future = pConn->geospatialFeatures(
             "00000000-0000-0000-0000-000000000000",
             "00000000-0000-0000-0000-000000000000",
+            CesiumGeospatial::GlobeRectangle::MAXIMUM,
             10);
     Result<PagedList<CesiumVectorData::VectorNode>> featuresResult =
         future.waitInMainThread();
@@ -150,10 +151,10 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatureCollections") {
     REQUIRE(!collection.extents.spatial.empty());
     const CesiumGeospatial::BoundingRegion region{
         CesiumGeospatial::GlobeRectangle{
-            Math::degreesToRadians(-50.08876885548398),
             Math::degreesToRadians(50.94487570541774),
-            Math::degreesToRadians(-50.08830149142197),
-            Math::degreesToRadians(50.94521538951092)},
+            Math::degreesToRadians(-50.08876885548398),
+            Math::degreesToRadians(50.94521538951092),
+            Math::degreesToRadians(-50.08830149142197)},
         0.0003396840931770839,
         0.0004673640620040942};
     CHECK(
