@@ -176,7 +176,7 @@ private:
     return this->_operation(pConnection, *this->_nextUrl)
         .thenImmediately(
             [asyncSystem, pConnection, results = std::move(results)](
-                CesiumUtility::Result<PagedList<T>>&& result) {
+                CesiumUtility::Result<PagedList<T>>&& result) mutable {
               if (!result.value) {
                 return asyncSystem.createResolvedFuture(
                     CesiumUtility::Result<std::vector<T>>(result.errors));

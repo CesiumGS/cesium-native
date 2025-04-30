@@ -118,7 +118,7 @@ ITwinGeospatialFeaturesRasterOverlay::createTileProvider(
             }
 
             IntrusivePointer<VectorDocument> pDocument;
-            pDocument.emplace();
+            pDocument.emplace(VectorNode{}, std::vector<VectorDocumentAttribution>{});
             pDocument->getRootNode().children = std::move(*result.value);
             VectorDocumentRasterOverlay vectorOverlay(
                 name,
