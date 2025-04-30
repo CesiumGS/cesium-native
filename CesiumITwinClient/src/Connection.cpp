@@ -894,14 +894,14 @@ Connection::listGeospatialFeatures(const std::string& url) {
                 return Result<PagedList<VectorNode>>(docResult.errors);
               }
 
-              Result<VectorDocument> geoJsonDocResult =
+              Result<IntrusivePointer<VectorDocument>> geoJsonDocResult =
                   VectorDocument::fromGeoJson(*docResult.value, {});
-              if (!geoJsonDocResult.value) {
+              if (!geoJsonDocResult.pValue) {
                 return Result<PagedList<VectorNode>>(geoJsonDocResult.errors);
               }
 
               std::vector<VectorNode> nodes =
-                  std::move(geoJsonDocResult.value->getRootNode().children);
+                  std::move(geoJsonDocResult.pValue->getRootNode().children);
 
               return Result<PagedList<VectorNode>>(PagedList<VectorNode>(
                   *docResult.value,
