@@ -196,7 +196,6 @@ public:
    *
    * @param iTwinId The ID of the iTwin to load data from.
    * @param collectionId The ID of the data collection to load.
-   * @param bounds The bounding box denoting
    * @param limit The maximum number of items per page, between 1 and 10,000.
    */
   CesiumAsync::Future<
@@ -204,8 +203,6 @@ public:
   geospatialFeatures(
       const std::string& iTwinId,
       const std::string& collectionId,
-      const CesiumGeospatial::GlobeRectangle& bounds =
-          CesiumGeospatial::GlobeRectangle::MAXIMUM,
       uint32_t limit = 10000);
 
   /**
