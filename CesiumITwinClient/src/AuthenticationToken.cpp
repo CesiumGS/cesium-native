@@ -14,6 +14,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumUtility;
@@ -64,19 +65,30 @@ AuthenticationToken::parse(const std::string& tokenStr) {
         ErrorList::error("Missing payload contents."));
   }
 
+  int64_t expired = JsonHelpers::getInt64OrDefault(json, "exp", 0);
+
+  const auto& iTwinIdValue = json.FindMember("iTwinId");
+  if (iTwinIdValue != json.MemberEnd()) {
+    return Result<AuthenticationToken>(AuthenticationToken(
+        tokenStr,
+        iTwinIdValue->value.GetString(),
+        expired));
+  }
+
   std::string name = JsonHelpers::getStringOrDefault(json, "name", "");
   std::string userName =
       JsonHelpers::getStringOrDefault(json, "preferred_username", "");
   std::vector<std::string> scopes = JsonHelpers::getStrings(json, "scope");
   int64_t notValidBefore = JsonHelpers::getInt64OrDefault(json, "nbf", 0);
-  int64_t expired = JsonHelpers::getInt64OrDefault(json, "exp", 0);
 
   return Result<AuthenticationToken>(AuthenticationToken(
       tokenStr,
-      std::move(name),
-      std::move(userName),
-      std::move(scopes),
-      notValidBefore,
+      AccessTokenContents{
+          std::move(name),
+          std::move(userName),
+          std::move(scopes),
+          notValidBefore,
+      },
       expired));
 }
 
@@ -86,7 +98,27 @@ bool AuthenticationToken::isValid() const {
           std::chrono::system_clock::now().time_since_epoch())
           .count();
 
-  return currentTimeSinceEpoch >= _notValidBefore &&
-         currentTimeSinceEpoch < _expires;
+  const AccessTokenContents* pAccessTokenContents =
+      std::get_if<AccessTokenContents>(&this->_contents);
+  if (pAccessTokenContents) {
+    return currentTimeSinceEpoch >= pAccessTokenContents->notValidBefore &&
+           currentTimeSinceEpoch < _expires;
+  }
+
+  return currentTimeSinceEpoch < _expires;
+}
+
+std::string AuthenticationToken::getTokenHeader() const {
+  struct TokenHeaderVisitor {
+    const std::string& tokenStr;
+    std::string operator()(const AccessTokenContents&) {
+      return fmt::format("Bearer {}", tokenStr);
+    }
+    std::string operator()(const std::string&) {
+      return fmt::format("Basic {}", tokenStr);
+    }
+  };
+
+  return std::visit(TokenHeaderVisitor{this->_token}, this->_contents);
 }
 } // namespace CesiumITwinClient
