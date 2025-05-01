@@ -93,7 +93,6 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
         future = pConn->geospatialFeatures(
             "00000000-0000-0000-0000-000000000000",
             "00000000-0000-0000-0000-000000000000",
-            CesiumGeospatial::GlobeRectangle::MAXIMUM,
             10);
     Result<PagedList<CesiumVectorData::VectorNode>> featuresResult =
         future.waitInMainThread();
