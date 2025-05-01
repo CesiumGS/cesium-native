@@ -863,19 +863,14 @@ CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
 Connection::geospatialFeatures(
     const std::string& iTwinId,
     const std::string& collectionId,
-    const CesiumGeospatial::GlobeRectangle& bounds,
     uint32_t limit) {
   const uint32_t limitClamped = std::clamp<uint32_t>(limit, 1, 10000);
   const std::string url = fmt::format(
       "https://api.bentley.com/geospatial-features/itwins/{}/ogc/collections/"
-      "{}/items?limit={}&bbox={},{},{},{}",
+      "{}/items?limit={}",
       iTwinId,
       collectionId,
-      limitClamped,
-      Math::radiansToDegrees(bounds.getWest()),
-      Math::radiansToDegrees(bounds.getSouth()),
-      Math::radiansToDegrees(bounds.getEast()),
-      Math::radiansToDegrees(bounds.getNorth()));
+      limitClamped);
   return this->listGeospatialFeatures(url);
 }
 
