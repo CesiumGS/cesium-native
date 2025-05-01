@@ -42,4 +42,9 @@ TileIdUtilities::createTileIdString(const TileID& tileId) {
   return std::visit(Operation{}, tileId);
 }
 
+/*static*/ bool TileIdUtilities::isLoadable(const TileID& tileID) {
+  const std::string* pString = std::get_if<std::string>(&tileID);
+  return pString ? !pString->empty() : true;
+}
+
 } // namespace Cesium3DTilesSelection
