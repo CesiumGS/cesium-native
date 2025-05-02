@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumVectorData/VectorNode.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -14,11 +16,52 @@
 
 #include <spdlog/fwd.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <variant>
 
 namespace CesiumRasterOverlays {
+
+/**
+ * @brief A callback used to set new styles on vector documents.
+ */
+using VectorDocumentRasterOverlayStyleCallback = std::function<std::optional<
+    CesiumVectorData::VectorStyle>(
+    const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&,
+    const CesiumVectorData::VectorNode*)>;
+
+/**
+ * @brief A set of options for configuring a VectorDocumentRasterOverlay.
+ */
+struct VectorDocumentRasterOverlayOptions {
+  /**
+   * @brief The default style to use when no style is otherwise specified on a
+   * \ref VectorNode.
+   */
+  CesiumVectorData::VectorStyle defaultStyle;
+
+  /**
+   * @brief If specified, this callback will be run for every node in the
+   * document and can be used to set new styles for the nodes.
+   */
+  std::optional<VectorDocumentRasterOverlayStyleCallback> styleCallback;
+
+  /**
+   * @brief The projection to use for this overlay.
+   */
+  CesiumGeospatial::Projection projection;
+
+  /**
+   * @brief The ellipsoid to use for this overlay.
+   */
+  CesiumGeospatial::Ellipsoid ellipsoid;
+
+  /**
+   * @brief The number of mip levels to generate.
+   */
+  uint32_t mipLevels = 0;
+};
 
 /**
  * @brief Information required to load a vector document from Cesium ion.
@@ -51,20 +94,15 @@ public:
    * @brief Creates a new RasterizedPolygonsOverlay.
    *
    * @param name The user-given name of this polygon layer.
-   * @param document The source of the vector data to use for the overlay.
-   * @param style The style to use for rasterizing vector data.
-   * @param projection The projection that this RasterOverlay is being generated
-   * for.
-   * @param mipLevels The number of mip levels to generate.
+   * @param source The source of the vector data to use for the overlay.
+   * @param vectorOverlayOptions Options to configure this
+   * VectorDocumentRasterOverlay.
    * @param overlayOptions Options to use for this RasterOverlay.
    */
   VectorDocumentRasterOverlay(
       const std::string& name,
       const VectorDocumentRasterOverlaySource& source,
-      const CesiumVectorData::VectorStyle& style,
-      const CesiumGeospatial::Projection& projection,
-      const CesiumGeospatial::Ellipsoid& ellipsoid,
-      uint32_t mipLevels = 0,
+      const VectorDocumentRasterOverlayOptions& vectorOverlayOptions,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~VectorDocumentRasterOverlay() override;
 
@@ -80,9 +118,6 @@ public:
 
 private:
   VectorDocumentRasterOverlaySource _source;
-  CesiumVectorData::VectorStyle _style;
-  CesiumGeospatial::Ellipsoid _ellipsoid;
-  CesiumGeospatial::Projection _projection;
-  uint32_t _mipLevels;
+  VectorDocumentRasterOverlayOptions _options;
 };
 } // namespace CesiumRasterOverlays
