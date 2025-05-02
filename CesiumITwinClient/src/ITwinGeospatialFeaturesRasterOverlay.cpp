@@ -1,8 +1,5 @@
-#include "CesiumAsync/Future.h"
-#include "CesiumRasterOverlays/VectorDocumentRasterOverlay.h"
-#include "CesiumVectorData/VectorStyle.h"
-
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
@@ -17,24 +14,24 @@
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/VectorDocumentRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorDocument.h>
 #include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
 #include <spdlog/logger.h>
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 using namespace CesiumGeometry;
@@ -50,19 +47,14 @@ ITwinGeospatialFeaturesRasterOverlay::ITwinGeospatialFeaturesRasterOverlay(
     const std::string& iTwinId,
     const std::string& collectionId,
     const CesiumUtility::IntrusivePointer<Connection>& pConnection,
-    const CesiumVectorData::VectorStyle& style,
-    const CesiumGeospatial::Projection& projection,
-    const CesiumGeospatial::Ellipsoid& ellipsoid,
-    uint32_t mipLevels,
+    const CesiumRasterOverlays::VectorDocumentRasterOverlayOptions&
+        vectorOptions,
     const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _iTwinId(iTwinId),
       _collectionId(collectionId),
       _pConnection(pConnection),
-      _style(style),
-      _ellipsoid(ellipsoid),
-      _projection(projection),
-      _mipLevels(mipLevels) {}
+      _options(vectorOptions) {}
 
 ITwinGeospatialFeaturesRasterOverlay::~ITwinGeospatialFeaturesRasterOverlay() =
     default;
@@ -93,10 +85,7 @@ ITwinGeospatialFeaturesRasterOverlay::createTileProvider(
       .thenInWorkerThread(
           [asyncSystem,
            name = this->getName(),
-           style = this->_style,
-           projection = this->_projection,
-           ellipsoid = this->_ellipsoid,
-           mipLevels = this->_mipLevels,
+           vectorOptions = this->_options,
            options = this->getOptions(),
            pAssetAccessor,
            pCreditSystem,
@@ -118,15 +107,14 @@ ITwinGeospatialFeaturesRasterOverlay::createTileProvider(
             }
 
             IntrusivePointer<VectorDocument> pDocument;
-            pDocument.emplace(VectorNode{}, std::vector<VectorDocumentAttribution>{});
+            pDocument.emplace(
+                VectorNode{},
+                std::vector<VectorDocumentAttribution>{});
             pDocument->getRootNode().children = std::move(*result.value);
             VectorDocumentRasterOverlay vectorOverlay(
                 name,
                 pDocument,
-                style,
-                projection,
-                ellipsoid,
-                mipLevels,
+                vectorOptions,
                 options);
 
             return vectorOverlay.createTileProvider(
