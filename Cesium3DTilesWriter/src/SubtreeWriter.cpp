@@ -7,6 +7,8 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <span>
