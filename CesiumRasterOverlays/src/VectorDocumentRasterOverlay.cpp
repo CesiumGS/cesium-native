@@ -119,7 +119,7 @@ void addPrimitivesToData(
         child,
         data,
         documentRegionBuilder,
-        child.style.value_or(style));
+        child.style ? *child.style : style);
   }
 }
 
