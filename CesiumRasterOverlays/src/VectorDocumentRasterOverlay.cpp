@@ -47,6 +47,8 @@ namespace CesiumRasterOverlays {
 namespace {
 struct QuadtreePrimitiveData {
   const VectorPrimitive* pPrimitive;
+  const VectorNode* pNode;
+  const VectorStyle* pStyle;
   GlobeRectangle rectangle;
 };
 
@@ -62,8 +64,8 @@ struct QuadtreeNode {
 };
 
 struct Quadtree {
-  GlobeRectangle rectangle;
-  uint32_t rootId;
+  GlobeRectangle rectangle = GlobeRectangle::EMPTY;
+  uint32_t rootId = 0;
   std::vector<QuadtreeNode> nodes;
   std::vector<QuadtreePrimitiveData> data;
   std::vector<uint32_t> dataIndices;
@@ -98,17 +100,26 @@ struct GlobeRectangleFromPrimitiveVisitor {
 void addPrimitivesToData(
     const VectorNode& vectorNode,
     std::vector<QuadtreePrimitiveData>& data,
-    BoundingRegionBuilder& documentRegionBuilder) {
+    BoundingRegionBuilder& documentRegionBuilder,
+    const VectorStyle& style) {
   for (const VectorPrimitive& primitive : vectorNode.primitives) {
     GlobeRectangle rect =
         std::visit(GlobeRectangleFromPrimitiveVisitor{}, primitive);
     documentRegionBuilder.expandToIncludePosition(rect.getSouthwest());
     documentRegionBuilder.expandToIncludePosition(rect.getNortheast());
-    data.emplace_back(QuadtreePrimitiveData{&primitive, std::move(rect)});
+    data.emplace_back(QuadtreePrimitiveData{
+        &primitive,
+        &vectorNode,
+        &style,
+        std::move(rect)});
   }
 
   for (const VectorNode& child : vectorNode.children) {
-    addPrimitivesToData(child, data, documentRegionBuilder);
+    addPrimitivesToData(
+        child,
+        data,
+        documentRegionBuilder,
+        child.style.value_or(style));
   }
 }
 
@@ -217,10 +228,12 @@ uint32_t buildQuadtreeNode(
   return resultId;
 }
 
-Quadtree buildQuadtree(const IntrusivePointer<VectorDocument>& document) {
+Quadtree buildQuadtree(
+    const IntrusivePointer<VectorDocument>& document,
+    const VectorStyle& defaultStyle) {
   BoundingRegionBuilder builder;
   std::vector<QuadtreePrimitiveData> data;
-  addPrimitivesToData(document->getRootNode(), data, builder);
+  addPrimitivesToData(document->getRootNode(), data, builder, defaultStyle);
 
   Quadtree tree{
       builder.toGlobeRectangle(),
@@ -252,7 +265,6 @@ void rasterizeQuadtreeNode(
     const Quadtree& tree,
     uint32_t nodeId,
     const GlobeRectangle& rectangle,
-    const VectorStyle& style,
     VectorRasterizer& rasterizer,
     std::vector<bool>& primitivesRendered) {
   const QuadtreeNode& node = tree.nodes[nodeId];
@@ -270,7 +282,7 @@ void rasterizeQuadtreeNode(
       }
       primitivesRendered[dataIdx] = true;
       const QuadtreePrimitiveData& data = tree.data[dataIdx];
-      rasterizer.drawPrimitive(*data.pPrimitive, style);
+      rasterizer.drawPrimitive(*data.pPrimitive, *data.pStyle);
     }
   } else {
     for (size_t i = 0; i < 2; i++) {
@@ -281,7 +293,6 @@ void rasterizeQuadtreeNode(
               tree,
               node.children[i][j],
               rectangle,
-              style,
               rasterizer,
               primitivesRendered);
         }
@@ -294,7 +305,6 @@ void rasterizeVectorData(
     LoadedRasterOverlayImage& result,
     const GlobeRectangle& rectangle,
     const Quadtree& tree,
-    const VectorStyle& style,
     const Ellipsoid& ellipsoid) {
   for (size_t i = 0;
        i < std::max(result.pImage->mipPositions.size(), (size_t)1);
@@ -311,7 +321,6 @@ void rasterizeVectorData(
         tree,
         tree.rootId,
         rectangle,
-        style,
         rasterizer,
         primitivesRendered);
     rasterizer.finalize();
@@ -324,10 +333,11 @@ class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlayTileProvider final
 
 private:
   IntrusivePointer<VectorDocument> _document;
+  VectorStyle _defaultStyle;
   Quadtree _tree;
-  VectorStyle _style;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
+  std::optional<VectorDocumentRasterOverlayStyleCallback> _styleCallback;
 
 public:
   VectorDocumentRasterOverlayTileProvider(
@@ -337,12 +347,9 @@ public:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection,
+      const VectorDocumentRasterOverlayOptions& options,
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
-          document,
-      const CesiumVectorData::VectorStyle& style,
-      const CesiumGeospatial::Ellipsoid& ellipsoid,
-      uint32_t mipLevels)
+          document)
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -350,15 +357,21 @@ public:
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            projection,
+            options.projection,
             projectRectangleSimple(
-                projection,
+                options.projection,
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _document(document),
-        _tree(buildQuadtree(this->_document)),
-        _style(style),
-        _ellipsoid(ellipsoid),
-        _mipLevels(mipLevels) {}
+        _defaultStyle(options.defaultStyle),
+        _tree(),
+        _ellipsoid(options.ellipsoid),
+        _mipLevels(options.mipLevels),
+        _styleCallback(options.styleCallback) {
+    // Compute styles before building the quadtree so we can cache the computed
+    // styles in QuadtreePrimitiveData
+    this->recomputeStyles();
+    this->_tree = buildQuadtree(this->_document, this->_defaultStyle);
+  }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
@@ -374,7 +387,6 @@ public:
     return this->getAsyncSystem().runInWorkerThread(
         [document = this->_document,
          &tree = this->_tree,
-         _style = this->_style,
          _ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
@@ -428,33 +440,43 @@ public:
               }
               result.pImage->pixelData.resize(totalSize, std::byte{0});
             }
-            rasterizeVectorData(
-                result,
-                tileRectangle,
-                tree,
-                _style,
-                _ellipsoid);
+            rasterizeVectorData(result, tileRectangle, tree, _ellipsoid);
           }
 
           return result;
         });
+  }
+
+  void
+  setStyleCallback(VectorDocumentRasterOverlayStyleCallback&& newCallback) {
+    this->_styleCallback = std::move(newCallback);
+  }
+
+  void recomputeStyles() {
+    if (!this->_styleCallback) {
+      return;
+    }
+
+    this->recomputeStyles(this->_document->getRootNode());
+  }
+
+private:
+  void recomputeStyles(VectorNode& node) {
+    node.style = (*this->_styleCallback)(this->_document, &node);
+    for (VectorNode& child : node.children) {
+      this->recomputeStyles(child);
+    }
   }
 };
 
 VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
     const std::string& name,
     const VectorDocumentRasterOverlaySource& source,
-    const CesiumVectorData::VectorStyle& style,
-    const CesiumGeospatial::Projection& projection,
-    const CesiumGeospatial::Ellipsoid& ellipsoid,
-    uint32_t mipLevels,
+    const VectorDocumentRasterOverlayOptions& vectorOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _source(source),
-      _style(style),
-      _ellipsoid(ellipsoid),
-      _projection(projection),
-      _mipLevels(mipLevels) {}
+      _options(vectorOptions) {}
 
 VectorDocumentRasterOverlay::~VectorDocumentRasterOverlay() = default;
 
@@ -499,10 +521,7 @@ VectorDocumentRasterOverlay::createTileProvider(
            pAssetAccessor,
            pPrepareRendererResources,
            pLogger,
-           projection = this->_projection,
-           style = this->_style,
-           ellipsoid = this->_ellipsoid,
-           mipLevels = this->_mipLevels](
+           options = this->_options](
               Result<IntrusivePointer<VectorDocument>>&& result)
               -> CreateTileProviderResult {
             if (!result.pValue) {
@@ -523,11 +542,8 @@ VectorDocumentRasterOverlay::createTileProvider(
                     pAssetAccessor,
                     pPrepareRendererResources,
                     pLogger,
-                    projection,
-                    result.pValue,
-                    style,
-                    ellipsoid,
-                    mipLevels));
+                    options,
+                    result.pValue));
           });
 }
 
