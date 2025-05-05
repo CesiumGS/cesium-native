@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumVectorData/VectorStyle.h"
+
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
@@ -139,6 +141,13 @@ public:
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief If specified, this \ref VectorStyle will be used when rendering all
+   * contained primitives. If not specified, the style on this node's parent or
+   * the default style will be used instead.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 
   /**
    * @brief Checks that two VectorNode values are equal.

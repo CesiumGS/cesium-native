@@ -12,11 +12,11 @@
 #include <CesiumRasterOverlays/RasterizedPolygonsOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
-#include <glm/geometric.hpp>
 #include <spdlog/fwd.h>
 
 #include <cstddef>
@@ -35,6 +35,7 @@ namespace {
 void rasterizePolygons(
     LoadedRasterOverlayImage& loaded,
     const CesiumGeospatial::GlobeRectangle& rectangle,
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
     const glm::dvec2& textureSize,
     const std::vector<CartographicPolygon>& cartographicPolygons,
     bool invertSelection) {
@@ -96,20 +97,24 @@ void rasterizePolygons(
   image.bytesPerChannel = 1;
   image.pixelData.resize(size_t(image.width * image.height * 4), outsideColor);
 
-  CesiumVectorData::VectorRasterizer rasterizer(rectangle, loaded.pImage);
+  CesiumVectorData::VectorRasterizer rasterizer(
+      rectangle,
+      loaded.pImage,
+      0,
+      ellipsoid);
   rasterizer.clear(CesiumVectorData::Color{
       outsideColor,
       std::byte{0x00},
       std::byte{0x00},
       std::byte{0xff}});
 
-  CesiumVectorData::Color insideColorRgba{
+  CesiumVectorData::VectorStyle insideStyle{CesiumVectorData::Color{
       insideColor,
       std::byte{0x00},
       std::byte{0x00},
-      std::byte{0xff}};
+      std::byte{0xff}}};
   for (const CartographicPolygon& selection : cartographicPolygons) {
-    rasterizer.drawPolygon(selection, insideColorRgba);
+    rasterizer.drawPolygon(selection, insideStyle);
   }
 
   rasterizer.finalize();
@@ -175,6 +180,7 @@ public:
           rasterizePolygons(
               result,
               tileRectangle,
+              getProjectionEllipsoid(projection),
               textureSize,
               polygons,
               invertSelection);

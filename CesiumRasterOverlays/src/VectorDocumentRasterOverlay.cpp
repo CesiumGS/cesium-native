@@ -1,13 +1,12 @@
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeospatial/BoundingRegionBuilder.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/CompositeCartographicPolygon.h"
-#include "CesiumVectorData/VectorNode.h"
+#include "CesiumAsync/Future.h"
+#include "CesiumVectorData/VectorStyle.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/CompositeCartographicPolygon.h>
+#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
@@ -18,18 +17,24 @@
 #include <CesiumRasterOverlays/VectorDocumentRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/Color.h>
+#include <CesiumVectorData/VectorDocument.h>
+#include <CesiumVectorData/VectorNode.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
 #include <glm/common.hpp>
-#include <glm/ext/vector_double2.hpp>
-#include <glm/geometric.hpp>
-#include <spdlog/fwd.h>
+#include <glm/ext/vector_int2.hpp>
+#include <nonstd/expected.hpp>
+#include <spdlog/logger.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumGeometry;
@@ -40,23 +45,31 @@ using namespace CesiumVectorData;
 namespace CesiumRasterOverlays {
 
 namespace {
-double computeLevelDenominator(uint32_t level) noexcept {
-  return static_cast<double>(1 << level);
-}
+struct QuadtreePrimitiveData {
+  const VectorPrimitive* pPrimitive;
+  const VectorNode* pNode;
+  const VectorStyle* pStyle;
+  GlobeRectangle rectangle;
+};
 
-struct VectorQuadtreeNode {
-  VectorQuadtreeNode(GlobeRectangle rootGlobeRectangle, QuadtreeTileID id)
-      : nodeId(id),
-        primitives(),
-        children(),
-        rectangle(rootGlobeRectangle.subdivideRectangle(
-            id,
-            computeLevelDenominator(id.level))) {}
+struct QuadtreeNode {
+  GlobeRectangle rectangle;
+  uint32_t children[2][2] = {{0, 0}, {0, 0}};
 
-  QuadtreeTileID nodeId;
-  std::vector<const VectorPrimitive*> primitives;
-  std::vector<std::unique_ptr<VectorQuadtreeNode>> children;
-  CesiumGeospatial::GlobeRectangle rectangle;
+  QuadtreeNode(const GlobeRectangle& rectangle_) : rectangle(rectangle_) {}
+  bool anyChildren() const {
+    return children[0][0] != 0 && children[0][1] != 0 && children[1][0] != 0 &&
+           children[1][1] != 0;
+  }
+};
+
+struct Quadtree {
+  GlobeRectangle rectangle = GlobeRectangle::EMPTY;
+  uint32_t rootId = 0;
+  std::vector<QuadtreeNode> nodes;
+  std::vector<QuadtreePrimitiveData> data;
+  std::vector<uint32_t> dataIndices;
+  std::vector<uint32_t> dataNodeIndicesBegin;
 };
 
 struct GlobeRectangleFromPrimitiveVisitor {
@@ -84,152 +97,205 @@ struct GlobeRectangleFromPrimitiveVisitor {
   }
 };
 
-// TODO: not a very optimized algorithm for generating a quadtree
-void addPrimitiveToQuadtree(
-    const VectorPrimitive& primitive,
-    const GlobeRectangle& primitiveRectangle,
-    const GlobeRectangle& rootGlobeRectangle,
-    VectorQuadtreeNode& node) {
-  if (!node.rectangle.computeIntersection(primitiveRectangle)) {
-    // They don't touch, nothing to do.
-    return;
-  }
-
-  const QuadtreeTileID& nodeId = node.nodeId;
-
-  node.primitives.emplace_back(&primitive);
-
-  if (node.children.empty() && node.primitives.size() < 2) {
-    // Not enough primitives here to make a new child.
-    return;
-  } else if (node.children.empty() && node.primitives.size() >= 2) {
-    // Enough room to create children.
-    node.children.emplace_back(std::make_unique<VectorQuadtreeNode>(
-        rootGlobeRectangle,
-        QuadtreeTileID{nodeId.level + 1, nodeId.x * 2, nodeId.y * 2}));
-    node.children.emplace_back(std::make_unique<VectorQuadtreeNode>(
-        rootGlobeRectangle,
-        QuadtreeTileID{nodeId.level + 1, nodeId.x * 2 + 1, nodeId.y * 2}));
-    node.children.emplace_back(std::make_unique<VectorQuadtreeNode>(
-        rootGlobeRectangle,
-        QuadtreeTileID{nodeId.level + 1, nodeId.x * 2, nodeId.y * 2 + 1}));
-    node.children.emplace_back(std::make_unique<VectorQuadtreeNode>(
-        rootGlobeRectangle,
-        QuadtreeTileID{nodeId.level + 1, nodeId.x * 2 + 1, nodeId.y * 2 + 1}));
-    for (const VectorPrimitive* pPrimitive : node.primitives) {
-      addPrimitiveToQuadtree(
-          *pPrimitive,
-          std::visit(GlobeRectangleFromPrimitiveVisitor{}, *pPrimitive),
-          rootGlobeRectangle,
-          *node.children[0]);
-      addPrimitiveToQuadtree(
-          *pPrimitive,
-          std::visit(GlobeRectangleFromPrimitiveVisitor{}, *pPrimitive),
-          rootGlobeRectangle,
-          *node.children[1]);
-      addPrimitiveToQuadtree(
-          *pPrimitive,
-          std::visit(GlobeRectangleFromPrimitiveVisitor{}, *pPrimitive),
-          rootGlobeRectangle,
-          *node.children[2]);
-      addPrimitiveToQuadtree(
-          *pPrimitive,
-          std::visit(GlobeRectangleFromPrimitiveVisitor{}, *pPrimitive),
-          rootGlobeRectangle,
-          *node.children[3]);
-    }
-  } else {
-    addPrimitiveToQuadtree(
-        primitive,
-        primitiveRectangle,
-        rootGlobeRectangle,
-        *node.children[0]);
-    addPrimitiveToQuadtree(
-        primitive,
-        primitiveRectangle,
-        rootGlobeRectangle,
-        *node.children[1]);
-    addPrimitiveToQuadtree(
-        primitive,
-        primitiveRectangle,
-        rootGlobeRectangle,
-        *node.children[2]);
-    addPrimitiveToQuadtree(
-        primitive,
-        primitiveRectangle,
-        rootGlobeRectangle,
-        *node.children[3]);
-  }
-}
-
-void addNodeToQuadtree(
+void addPrimitivesToData(
     const VectorNode& vectorNode,
-    const GlobeRectangle& rootGlobeRectangle,
-    VectorQuadtreeNode& rootQuadtreeNode) {
+    std::vector<QuadtreePrimitiveData>& data,
+    BoundingRegionBuilder& documentRegionBuilder,
+    const VectorStyle& style) {
   for (const VectorPrimitive& primitive : vectorNode.primitives) {
-    addPrimitiveToQuadtree(
-        primitive,
-        std::visit(GlobeRectangleFromPrimitiveVisitor{}, primitive),
-        rootGlobeRectangle,
-        rootQuadtreeNode);
+    GlobeRectangle rect =
+        std::visit(GlobeRectangleFromPrimitiveVisitor{}, primitive);
+    documentRegionBuilder.expandToIncludePosition(rect.getSouthwest());
+    documentRegionBuilder.expandToIncludePosition(rect.getNortheast());
+    data.emplace_back(QuadtreePrimitiveData{
+        &primitive,
+        &vectorNode,
+        &style,
+        std::move(rect)});
   }
 
   for (const VectorNode& child : vectorNode.children) {
-    addNodeToQuadtree(child, rootGlobeRectangle, rootQuadtreeNode);
+    addPrimitivesToData(
+        child,
+        data,
+        documentRegionBuilder,
+        child.style ? *child.style : style);
   }
 }
 
-void addVectorNodeToRegionBuilder(
-    BoundingRegionBuilder& builder,
-    const VectorNode& node) {
-  for (const VectorPrimitive& primitive : node.primitives) {
-    GlobeRectangle rect =
-        std::visit(GlobeRectangleFromPrimitiveVisitor{}, primitive);
-    builder.expandToIncludePosition(rect.getSouthwest());
-    builder.expandToIncludePosition(rect.getNortheast());
+const uint32_t DEPTH_LIMIT = 8;
+uint32_t buildQuadtreeNode(
+    Quadtree& tree,
+    const GlobeRectangle& rectangle,
+    std::vector<uint32_t>::iterator begin,
+    std::vector<uint32_t>::iterator end,
+    uint32_t depth) {
+  if (begin == end) {
+    return 0;
   }
 
-  for (const VectorNode& child : node.children) {
-    addVectorNodeToRegionBuilder(builder, child);
+  uint32_t resultId = (uint32_t)tree.nodes.size();
+  tree.nodes.emplace_back(rectangle);
+
+  uint32_t indicesBegin = (uint32_t)tree.dataIndices.size();
+  tree.dataIndices.insert(tree.dataIndices.end(), begin, end);
+
+  tree.dataNodeIndicesBegin.emplace_back(indicesBegin);
+
+  if (begin + 1 == end || depth >= DEPTH_LIMIT ||
+      std::equal(begin + 1, end, begin)) {
+    return resultId;
   }
+
+  Cartographic southWest = rectangle.getSouthwest();
+  Cartographic northEast = rectangle.getNortheast();
+  Cartographic center = rectangle.computeCenter();
+
+  const GlobeRectangle southWestRect = GlobeRectangle(
+      southWest.longitude,
+      southWest.latitude,
+      center.longitude,
+      center.latitude);
+  const GlobeRectangle southEastRect = GlobeRectangle(
+      center.longitude,
+      southWest.latitude,
+      northEast.longitude,
+      center.latitude);
+  const GlobeRectangle northWestRect = GlobeRectangle(
+      southWest.longitude,
+      center.latitude,
+      center.longitude,
+      northEast.latitude);
+  const GlobeRectangle northEastRect = GlobeRectangle(
+      center.longitude,
+      center.latitude,
+      northEast.longitude,
+      northEast.latitude);
+
+  tree.nodes[resultId].children[0][0] = buildQuadtreeNode(
+      tree,
+      southWestRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&southWestRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(southWestRect)
+                .has_value();
+          }),
+      depth + 1);
+  tree.nodes[resultId].children[0][1] = buildQuadtreeNode(
+      tree,
+      southEastRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&southEastRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(southEastRect)
+                .has_value();
+          }),
+      depth + 1);
+  tree.nodes[resultId].children[1][0] = buildQuadtreeNode(
+      tree,
+      northWestRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&northWestRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(northWestRect)
+                .has_value();
+          }),
+      depth + 1);
+  tree.nodes[resultId].children[1][1] = buildQuadtreeNode(
+      tree,
+      northEastRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&northEastRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(northEastRect)
+                .has_value();
+          }),
+      depth + 1);
+
+  return resultId;
 }
 
-GlobeRectangle
-globeRectangleForDocument(const IntrusivePointer<VectorDocument>& document) {
-  BoundingRegionBuilder builder;
-  addVectorNodeToRegionBuilder(builder, document->getRootNode());
-  return builder.toGlobeRectangle();
-}
-
-VectorQuadtreeNode buildQuadtree(
+Quadtree buildQuadtree(
     const IntrusivePointer<VectorDocument>& document,
-    const GlobeRectangle& globeRectangle) {
-  VectorQuadtreeNode root{globeRectangle, QuadtreeTileID{0, 0, 0}};
-  addNodeToQuadtree(document->getRootNode(), globeRectangle, root);
-  return root;
+    const VectorStyle& defaultStyle) {
+  BoundingRegionBuilder builder;
+  std::vector<QuadtreePrimitiveData> data;
+  addPrimitivesToData(document->getRootNode(), data, builder, defaultStyle);
+
+  Quadtree tree{
+      builder.toGlobeRectangle(),
+      0,
+      std::vector<QuadtreeNode>(),
+      std::move(data),
+      std::vector<uint32_t>(),
+      std::vector<uint32_t>()};
+
+  std::vector<uint32_t> dataIndices;
+  dataIndices.reserve(tree.data.size());
+  for (size_t i = 0; i < tree.data.size(); i++) {
+    dataIndices.emplace_back((uint32_t)i);
+  }
+
+  tree.rootId = buildQuadtreeNode(
+      tree,
+      tree.rectangle,
+      dataIndices.begin(),
+      dataIndices.end(),
+      0);
+  // Add last entry so [i + 1] is always valid
+  tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size() - 1);
+
+  return tree;
 }
 
 void rasterizeQuadtreeNode(
-    const VectorQuadtreeNode& quadtreeNode,
+    const Quadtree& tree,
+    uint32_t nodeId,
     const GlobeRectangle& rectangle,
-    const Color& color,
-    VectorRasterizer& rasterizer) {
+    VectorRasterizer& rasterizer,
+    std::vector<bool>& primitivesRendered) {
+  const QuadtreeNode& node = tree.nodes[nodeId];
   // If this node has no children, or if it is entirely within the target
   // rectangle, let's rasterize this node's contents and not any children.
-  if (quadtreeNode.children.empty() ||
-      (rectangle.contains(quadtreeNode.rectangle.getSouthwest()) &&
-       rectangle.contains(quadtreeNode.rectangle.getNortheast()))) {
-    for (const VectorPrimitive* pPrimitive : quadtreeNode.primitives) {
-      rasterizer.drawPrimitive(*pPrimitive, color);
+  if (!node.anyChildren() ||
+      (rectangle.contains(node.rectangle.getSouthwest()) &&
+       rectangle.contains(node.rectangle.getNortheast()))) {
+    for (uint32_t i = tree.dataNodeIndicesBegin[nodeId];
+         i < tree.dataNodeIndicesBegin[nodeId + 1];
+         i++) {
+      const uint32_t dataIdx = tree.dataIndices[i];
+      if (primitivesRendered[dataIdx]) {
+        continue;
+      }
+      primitivesRendered[dataIdx] = true;
+      const QuadtreePrimitiveData& data = tree.data[dataIdx];
+      rasterizer.drawPrimitive(*data.pPrimitive, *data.pStyle);
     }
   } else {
-    for (size_t i = 0; i < quadtreeNode.children.size(); i++) {
-      if (rectangle.computeIntersection(quadtreeNode.children[i]->rectangle)) {
-        rasterizeQuadtreeNode(
-            *quadtreeNode.children[i],
-            rectangle,
-            color,
-            rasterizer);
+    for (size_t i = 0; i < 2; i++) {
+      for (size_t j = 0; j < 2; j++) {
+        if (rectangle.computeIntersection(
+                tree.nodes[node.children[i][j]].rectangle)) {
+          rasterizeQuadtreeNode(
+              tree,
+              node.children[i][j],
+              rectangle,
+              rasterizer,
+              primitivesRendered);
+        }
       }
     }
   }
@@ -238,11 +304,27 @@ void rasterizeQuadtreeNode(
 void rasterizeVectorData(
     LoadedRasterOverlayImage& result,
     const GlobeRectangle& rectangle,
-    const VectorQuadtreeNode& rootQuadtreeNode,
-    const Color& color) {
-  VectorRasterizer rasterizer(rectangle, result.pImage);
-  rasterizeQuadtreeNode(rootQuadtreeNode, rectangle, color, rasterizer);
-  result.pImage = rasterizer.finalize();
+    const Quadtree& tree,
+    const Ellipsoid& ellipsoid) {
+  for (size_t i = 0;
+       i < std::max(result.pImage->mipPositions.size(), (size_t)1);
+       i++) {
+    VectorRasterizer rasterizer(
+        rectangle,
+        result.pImage,
+        (uint32_t)i,
+        ellipsoid);
+    // Keeps track of primitives that have already been rendered to avoid
+    // re-drawing the same primitives that appear in multiple quadtree nodes.
+    std::vector<bool> primitivesRendered(tree.data.size(), false);
+    rasterizeQuadtreeNode(
+        tree,
+        tree.rootId,
+        rectangle,
+        rasterizer,
+        primitivesRendered);
+    rasterizer.finalize();
+  }
 }
 } // namespace
 
@@ -251,9 +333,11 @@ class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlayTileProvider final
 
 private:
   IntrusivePointer<VectorDocument> _document;
-  GlobeRectangle _contentsRectangle;
-  VectorQuadtreeNode _rootQuadtreeNode;
-  Color _color;
+  VectorStyle _defaultStyle;
+  Quadtree _tree;
+  Ellipsoid _ellipsoid;
+  uint32_t _mipLevels;
+  std::optional<VectorDocumentRasterOverlayStyleCallback> _styleCallback;
 
 public:
   VectorDocumentRasterOverlayTileProvider(
@@ -263,10 +347,9 @@ public:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumGeospatial::Projection& projection,
+      const VectorDocumentRasterOverlayOptions& options,
       const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
-          document,
-      const CesiumVectorData::Color& color)
+          document)
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -274,16 +357,21 @@ public:
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            projection,
-            // computeCoverageRectangle(projection, polygons)),
+            options.projection,
             projectRectangleSimple(
-                projection,
+                options.projection,
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _document(document),
-        _contentsRectangle(globeRectangleForDocument(this->_document)),
-        _rootQuadtreeNode(
-            buildQuadtree(this->_document, this->_contentsRectangle)),
-        _color(color) {}
+        _defaultStyle(options.defaultStyle),
+        _tree(),
+        _ellipsoid(options.ellipsoid),
+        _mipLevels(options.mipLevels),
+        _styleCallback(options.styleCallback) {
+    // Compute styles before building the quadtree so we can cache the computed
+    // styles in QuadtreePrimitiveData
+    this->recomputeStyles();
+    this->_tree = buildQuadtree(this->_document, this->_defaultStyle);
+  }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(RasterOverlayTile& overlayTile) override {
@@ -298,19 +386,19 @@ public:
 
     return this->getAsyncSystem().runInWorkerThread(
         [document = this->_document,
-         &rootQuadtreeNode = this->_rootQuadtreeNode,
-         contentsRectangle = this->_contentsRectangle,
-         _color = this->_color,
+         &tree = this->_tree,
+         _ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
-         textureSize]() -> LoadedRasterOverlayImage {
+         textureSize,
+         mipLevels = this->_mipLevels]() -> LoadedRasterOverlayImage {
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 
           LoadedRasterOverlayImage result;
           result.rectangle = rectangle;
 
-          if (!tileRectangle.computeIntersection(contentsRectangle)) {
+          if (!tileRectangle.computeIntersection(tree.rectangle)) {
             // Transparent square if this is outside of the contents of this
             // vector document.
             result.moreDetailAvailable = false;
@@ -331,31 +419,64 @@ public:
             result.pImage->height = textureSize.y;
             result.pImage->channels = 4;
             result.pImage->bytesPerChannel = 1;
-            rasterizeVectorData(
-                result,
-                tileRectangle,
-                rootQuadtreeNode,
-                _color);
+            if (mipLevels == 0) {
+              result.pImage->pixelData.resize(
+                  (size_t)(result.pImage->width * result.pImage->height *
+                           result.pImage->channels *
+                           result.pImage->bytesPerChannel),
+                  std::byte{0});
+            } else {
+              size_t totalSize = 0;
+              result.pImage->mipPositions.reserve((size_t)mipLevels);
+              for (uint32_t i = 0; i < mipLevels; i++) {
+                const int32_t width = std::max(textureSize.x >> i, 1);
+                const int32_t height = std::max(textureSize.y >> i, 1);
+                result.pImage->mipPositions.emplace_back(
+                    CesiumGltf::ImageAssetMipPosition{
+                        totalSize,
+                        (size_t)(width * height * result.pImage->channels *
+                                 result.pImage->bytesPerChannel)});
+                totalSize += result.pImage->mipPositions[i].byteSize;
+              }
+              result.pImage->pixelData.resize(totalSize, std::byte{0});
+            }
+            rasterizeVectorData(result, tileRectangle, tree, _ellipsoid);
           }
 
           return result;
         });
   }
+
+  void
+  setStyleCallback(VectorDocumentRasterOverlayStyleCallback&& newCallback) {
+    this->_styleCallback = std::move(newCallback);
+  }
+
+  void recomputeStyles() {
+    if (!this->_styleCallback) {
+      return;
+    }
+
+    this->recomputeStyles(this->_document->getRootNode());
+  }
+
+private:
+  void recomputeStyles(VectorNode& node) {
+    node.style = (*this->_styleCallback)(this->_document, &node);
+    for (VectorNode& child : node.children) {
+      this->recomputeStyles(child);
+    }
+  }
 };
 
 VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
     const std::string& name,
-    const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&
-        document,
-    const CesiumVectorData::Color& color,
-    const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const CesiumGeospatial::Projection& projection,
+    const VectorDocumentRasterOverlaySource& source,
+    const VectorDocumentRasterOverlayOptions& vectorOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _document(document),
-      _color(color),
-      _ellipsoid(ellipsoid),
-      _projection(projection) {}
+      _source(source),
+      _options(vectorOptions) {}
 
 VectorDocumentRasterOverlay::~VectorDocumentRasterOverlay() = default;
 
@@ -371,17 +492,59 @@ VectorDocumentRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-      IntrusivePointer<RasterOverlayTileProvider>(
-          new VectorDocumentRasterOverlayTileProvider(
-              pOwner,
-              asyncSystem,
-              pAssetAccessor,
-              pPrepareRendererResources,
-              pLogger,
-              this->_projection,
-              this->_document,
-              this->_color)));
+  struct DocumentSourceVisitor {
+    CesiumAsync::AsyncSystem asyncSystem;
+    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+    CesiumAsync::Future<Result<IntrusivePointer<VectorDocument>>>
+    operator()(const IntrusivePointer<VectorDocument>& document) {
+      return asyncSystem
+          .createResolvedFuture<Result<IntrusivePointer<VectorDocument>>>(
+              Result(document));
+    }
+    CesiumAsync::Future<Result<IntrusivePointer<VectorDocument>>>
+    operator()(const IonVectorDocumentRasterOverlaySource& ion) {
+      return VectorDocument::fromCesiumIonAsset(
+          asyncSystem,
+          pAssetAccessor,
+          ion.ionAssetID,
+          ion.ionAccessToken,
+          ion.ionAssetEndpointUrl);
+    }
+  };
+
+  return std::visit(
+             DocumentSourceVisitor{asyncSystem, pAssetAccessor},
+             this->_source)
+      .thenImmediately(
+          [pOwner,
+           asyncSystem,
+           pAssetAccessor,
+           pPrepareRendererResources,
+           pLogger,
+           options = this->_options](
+              Result<IntrusivePointer<VectorDocument>>&& result)
+              -> CreateTileProviderResult {
+            if (!result.pValue) {
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::CesiumIon,
+                  nullptr,
+                  fmt::format(
+                      "Errors while loading GeoJSON from Cesium ion: {}",
+                      CesiumUtility::joinToString(
+                          result.errors.errors,
+                          ", "))});
+            }
+
+            return IntrusivePointer<RasterOverlayTileProvider>(
+                new VectorDocumentRasterOverlayTileProvider(
+                    pOwner,
+                    asyncSystem,
+                    pAssetAccessor,
+                    pPrepareRendererResources,
+                    pLogger,
+                    options,
+                    result.pValue));
+          });
 }
 
 } // namespace CesiumRasterOverlays

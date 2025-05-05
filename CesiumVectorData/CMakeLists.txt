@@ -52,4 +52,5 @@ target_link_libraries(CesiumVectorData
         CesiumGltf
     PRIVATE
         blend2d::blend2d
+        asmjit::asmjit
 )

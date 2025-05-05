@@ -1,10 +1,25 @@
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumUtility/Assert.h>
 
+#include <fmt/format.h>
+
+#include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumGltf {
-void ImageAsset::writeTga(const std::string& outputPath) const {
+namespace {
+void writeTgaImpl(
+    const std::filesystem::path& outputPath,
+    const std::byte* pData,
+    int32_t channels,
+    int32_t width,
+    int32_t height) {
   std::ofstream stream(outputPath, std::ios::binary | std::ios::out);
   CESIUM_ASSERT(stream.good());
 
@@ -25,10 +40,10 @@ void ImageAsset::writeTga(const std::string& outputPath) const {
   // Y origin
   stream.write(reinterpret_cast<const char*>(&zeroes), 2);
   // Width
-  const uint16_t width16 = (uint16_t)this->width;
+  const uint16_t width16 = (uint16_t)width;
   stream.write(reinterpret_cast<const char*>(&width16), 2);
   // Height
-  const uint16_t height16 = (uint16_t)this->height;
+  const uint16_t height16 = (uint16_t)height;
   stream.write(reinterpret_cast<const char*>(&height16), 2);
   // Bits per pixel
   const uint8_t bpp = 32;
@@ -42,43 +57,68 @@ void ImageAsset::writeTga(const std::string& outputPath) const {
   // No color map data
 
   // Image Data Field
-  for (int i = 0; i < this->width; i++) {
-    for (int j = 0; j < this->height; j++) {
+  for (int i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
       // All images written as RGBA no matter the actual channel count
       // Blue
       stream.write(
-          (this->channels > 2
-               ? reinterpret_cast<const char*>(&this->pixelData[(
-                     size_t)((i * this->width + j) * this->channels + 2)])
-               : reinterpret_cast<const char*>(&zeroes)),
+          (channels > 2 ? reinterpret_cast<const char*>(
+                              &pData[(size_t)((i * width + j) * channels + 2)])
+                        : reinterpret_cast<const char*>(&zeroes)),
           1);
       // Green
       stream.write(
-          (this->channels > 2
-               ? reinterpret_cast<const char*>(&this->pixelData[(
-                     size_t)((i * this->width + j) * this->channels + 1)])
-               : reinterpret_cast<const char*>(&zeroes)),
+          (channels > 2 ? reinterpret_cast<const char*>(
+                              &pData[(size_t)((i * width + j) * channels + 1)])
+                        : reinterpret_cast<const char*>(&zeroes)),
           1);
       // Red
       stream.write(
-          reinterpret_cast<const char*>(&this->pixelData[(
-              size_t)((i * this->width + j) * this->channels)]),
+          reinterpret_cast<const char*>(
+              &pData[(size_t)((i * width + j) * channels)]),
           1);
       // Alpha
-      if (this->channels == 2) {
+      if (channels == 2) {
         stream.write(
-            reinterpret_cast<const char*>(&this->pixelData[(
-                size_t)((i * this->width + j) * this->channels + 1)]),
+            reinterpret_cast<const char*>(
+                &pData[(size_t)((i * width + j) * channels + 1)]),
             1);
-      } else if (this->channels == 4) {
+      } else if (channels == 4) {
         stream.write(
-            reinterpret_cast<const char*>(&this->pixelData[(
-                size_t)((i * this->width + j) * this->channels + 3)]),
+            reinterpret_cast<const char*>(
+                &pData[(size_t)((i * width + j) * channels + 3)]),
             1);
       } else {
         const uint8_t one = 1;
         stream.write(reinterpret_cast<const char*>(&one), 1);
       }
+    }
+  }
+}
+} // namespace
+
+void ImageAsset::writeTga(const std::string& outputPath) const {
+  if (this->mipPositions.size() == 0) {
+    writeTgaImpl(
+        outputPath,
+        this->pixelData.data(),
+        this->channels,
+        this->width,
+        this->height);
+  } else {
+    std::filesystem::path outputPathParsed(outputPath);
+    for (size_t i = 0; i < this->mipPositions.size(); i++) {
+      std::filesystem::path thisPath(fmt::format(
+          "{}-mip{}{}",
+          outputPathParsed.stem().string(),
+          i,
+          outputPathParsed.extension().string()));
+      writeTgaImpl(
+          thisPath,
+          this->pixelData.data() + this->mipPositions[i].byteOffset,
+          this->channels,
+          this->width >> i,
+          this->height >> i);
     }
   }
 }

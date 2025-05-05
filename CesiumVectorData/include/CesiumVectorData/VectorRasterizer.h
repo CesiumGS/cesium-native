@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Color.h"
+#include "VectorStyle.h"
+
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/CompositeCartographicPolygon.h>
@@ -9,33 +12,13 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/VectorNode.h>
 
+#include <blend2d.h>
 #include <blend2d/context.h>
 #include <blend2d/image.h>
 
-#include <cstddef>
 #include <span>
 
 namespace CesiumVectorData {
-
-/**
- * @brief Represents an RGBA color value.
- */
-struct Color {
-  /** @brief The red component. */
-  std::byte r;
-  /** @brief The green component. */
-  std::byte g;
-  /** @brief The blue component. */
-  std::byte b;
-  /** @brief The alpha component. */
-  std::byte a;
-
-  /**
-   * @brief Converts this color to a packed 32-bit number in the form
-   * 0xAARRGGBB.
-   */
-  uint32_t toRgba32() const;
-};
 
 /**
  * @brief Rasterizes vector primitives into a \ref CesiumGltf::ImageAsset.
@@ -51,20 +34,26 @@ public:
    * @param imageAsset The destination image asset. This \ref
    * CesiumGltf::ImageAsset must be four channels, with
    * only one byte per channel (RGBA32).
+   * @param mipLevel The rasterizer will rasterize the given mip level for the
+   * image.
+   * @param ellipsoid The ellipsoid to use.
    */
   VectorRasterizer(
       const CesiumGeospatial::GlobeRectangle& bounds,
-      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset);
+      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+      uint32_t mipLevel = 0,
+      const CesiumGeospatial::Ellipsoid& ellipsoid =
+          CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
    * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.
    *
    * @param polygon The polygon to draw.
-   * @param drawColor The \ref Color to use to draw the polygon.
+   * @param style The \ref VectorStyle to use when drawing the polygon.
    */
   void drawPolygon(
       const CesiumGeospatial::CartographicPolygon& polygon,
-      const Color& drawColor);
+      const VectorStyle& style);
 
   /**
    * @brief Draws a \ref CesiumGeospatial::CompositeCartographicPolygon to the
@@ -74,29 +63,34 @@ public:
    * Polygons with holes will rasterize incorrectly.
    *
    * @param polygon The composite polygon to draw.
-   * @param drawColor The \ref Color to use to draw the composite polygon.
+   * @param style The \ref VectorStyle to use when drawing the composite
+   * polygon.
    */
   void drawPolygon(
       const CesiumGeospatial::CompositeCartographicPolygon& polygon,
-      const Color& drawColor);
+      const VectorStyle& style);
 
   /**
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
    *
    * @param points The set of points making up the polyline.
-   * @param drawColor The \ref Color to use to draw the polyline.
+   * @param style The \ref VectorStyle to use when drawing the polyline.
    */
   void drawPolyline(
       const std::span<const CesiumGeospatial::Cartographic>& points,
-      const Color& drawColor);
+      const VectorStyle& style);
 
   /**
    * @brief Rasterizes the provided `VectorPrimitive` to the canvas.
    *
    * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
    * to calls to `drawPolyline`. Points are currently not drawn.
+   *
+   * @param primitive The primitive to draw.
+   * @param style The \ref VectorStyle to use when drawing the primitive.
    */
-  void drawPrimitive(const VectorPrimitive& primitive, const Color& drawColor);
+  void
+  drawPrimitive(const VectorPrimitive& primitive, const VectorStyle& style);
 
   /**
    * @brief Fills the entire canvas with the given color.
@@ -119,6 +113,8 @@ private:
   BLImage _image;
   BLContext _context;
   CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _imageAsset;
+  uint32_t _mipLevel;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
   bool _finalized = false;
 };
 } // namespace CesiumVectorData

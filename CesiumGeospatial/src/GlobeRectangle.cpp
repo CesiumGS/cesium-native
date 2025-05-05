@@ -175,24 +175,4 @@ bool GlobeRectangle::equalsEpsilon(
          Math::equalsEpsilon(left._east, right._east, relativeEpsilon);
 }
 
-CesiumGeospatial::GlobeRectangle GlobeRectangle::subdivideRectangle(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    double denominator) const {
-  double latSize =
-      (this->getNorth() - this->getSouth()) / denominator;
-  double longSize =
-      (this->getEast() - this->getWest()) / denominator;
-
-  double childWest = this->getWest() + longSize * tileID.x;
-  double childEast = this->getWest() + longSize * (tileID.x + 1);
-
-  double childSouth = this->getSouth() + latSize * tileID.y;
-  double childNorth = this->getSouth() + latSize * (tileID.y + 1);
-
-  return CesiumGeospatial::GlobeRectangle(
-      childWest,
-      childSouth,
-      childEast,
-      childNorth);
-}
 } // namespace CesiumGeospatial

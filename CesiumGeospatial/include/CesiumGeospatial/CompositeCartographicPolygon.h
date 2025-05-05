@@ -3,6 +3,8 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 
+#include <iterator>
+
 namespace CesiumGeospatial {
 /**
  * @brief A composite cartographic polygon made up of multiple
@@ -58,10 +60,11 @@ public:
   const CesiumGeospatial::GlobeRectangle& getBoundingRectangle() const;
 
   /**
-   * @brief Returns the vertices of this polygon, in order of the triangulated
-   * indices. Vertices may be doubled in this representation.
+   * @brief Returns the vertices of this polygon with a winding order depending
+   * on the linear ring: outer rings are clockwise, inner rings are
+   * counter-clockwise.
    */
-  const std::vector<glm::dvec2>& getUnindexedVertices() const;
+  const std::vector<glm::dvec2>& getWoundVertices() const;
 
   /**
    * @brief Checks if two `CompositeCartographicPolygon` objects are equal.
@@ -70,7 +73,8 @@ public:
 
 private:
   std::vector<CartographicPolygon> _polygons;
-  std::vector<glm::dvec2> _unindexedVertices;
+  size_t _numVertices;
+  std::vector<glm::dvec2> _woundVertices;
   CesiumGeospatial::GlobeRectangle _boundingRectangle;
 };
 } // namespace CesiumGeospatial
