@@ -48,8 +48,8 @@ public:
 
   /**
    * @brief An external {@link CesiumUtility::CreditSystem} that can be used to manage credit
-   * strings and track which which credits to show and remove from the screen
-   * each frame.
+   * strings and periodically query which credits to show and and which to
+   * remove from the screen.
    */
   std::shared_ptr<CesiumUtility::CreditSystem> pCreditSystem;
 

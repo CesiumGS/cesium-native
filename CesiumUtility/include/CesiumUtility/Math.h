@@ -3,6 +3,7 @@
 #include <CesiumUtility/Library.h>
 
 #include <glm/gtc/epsilon.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace CesiumUtility {
 
@@ -93,6 +94,11 @@ public:
    * @brief Pi divided by four
    */
   static constexpr double PiOverFour = OnePi / 4.0;
+
+  /**
+   * @brief The golden ratio, (1.0 + sqrt(5.0)) / 2.0.
+   */
+  static constexpr double GoldenRatio = 1.61803398874989484;
 
   /**
    * @brief Converts a relative to an absolute epsilon, for the epsilon-equality
@@ -231,6 +237,42 @@ public:
                diff,
                relativeEpsilonToAbsolute(left, right, relativeEpsilon)) ==
                glm::vec<L, bool, Q>(true);
+  }
+
+  /**
+   * @brief Determines if two values are equal using an absolute or relative
+   * tolerance test.
+   *
+   * This is useful to avoid problems due to roundoff error when comparing
+   * floating-point values directly. The values are first compared using an
+   * absolute tolerance test. If that fails, a relative tolerance test is
+   * performed. Use this test if you are unsure of the magnitudes of left and
+   * right.
+   *
+   * @tparam T value value type.
+   * @tparam Q The GLM qualifier type.
+   *
+   * @param left The first value to compare.
+   * @param right The other value to compare.
+   * @param relativeEpsilon The maximum inclusive delta between `left` and
+   * `right` for the relative tolerance test.
+   * @param absoluteEpsilon The maximum inclusive delta between `left` and
+   * `right` for the absolute tolerance test.
+   * @returns `true` if the values are equal within the epsilon; otherwise,
+   * `false`.
+   */
+  template <typename T, glm::qualifier Q>
+  static constexpr bool equalsEpsilon(
+      const glm::mat<4, 4, T, Q>& left,
+      const glm::mat<4, 4, T, Q>& right,
+      double relativeEpsilon,
+      double absoluteEpsilon) noexcept {
+    for (glm::length_t i = 0; i < 4; ++i) {
+      if (!equalsEpsilon(left[i], right[i], relativeEpsilon, absoluteEpsilon)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
