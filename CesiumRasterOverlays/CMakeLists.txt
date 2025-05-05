@@ -47,6 +47,7 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
+        CesiumVectorData
         nonstd::expected-lite
     PRIVATE
         tinyxml2::tinyxml2

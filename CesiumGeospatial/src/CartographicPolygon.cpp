@@ -81,6 +81,26 @@ bool CartographicPolygon::contains(const Cartographic& point) const {
   return false;
 }
 
+bool CartographicPolygon::isClockwiseWindingOrder() const {
+  const size_t numVertices = this->_vertices.size();
+  if (numVertices < 2) {
+    // With zero or one vertex, there is no winding order, so our answer really
+    // doesn't matter.
+    return true;
+  }
+
+  // Use the method described in https://stackoverflow.com/a/1165943 to compute
+  // the winding order.
+  double sum = 0;
+  for (size_t i = 0; i < numVertices; i++) {
+    const glm::dvec2& a = this->_vertices[i];
+    const glm::dvec2& b = this->_vertices[(i + 1) % numVertices];
+    sum += (b.x - a.x) * (b.y + a.y);
+  }
+
+  return sum >= 0;
+}
+
 bool CartographicPolygon::operator==(const CartographicPolygon& rhs) const {
   // The other two fields are derived from the vertices, so if the vertices are
   // equal the polygons are equal.

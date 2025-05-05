@@ -70,7 +70,7 @@ VectorDocument::fromCesiumIonAsset(
     const std::string& ionAccessToken,
     const std::string& ionAssetEndpointUrl) {
   const std::string url = fmt::format(
-      "{}v1/assets/{}/endpoint?access_token={}",
+      "{}/v1/assets/{}/endpoint?access_token={}",
       ionAssetEndpointUrl,
       ionAssetID,
       ionAccessToken);

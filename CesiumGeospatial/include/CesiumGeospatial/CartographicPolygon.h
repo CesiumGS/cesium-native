@@ -80,6 +80,13 @@ public:
   bool contains(const CesiumGeospatial::Cartographic& point) const;
 
   /**
+   * @brief Computes the winding order of this polygon. If true, the polygon's
+   * vertices are in clockwise order. If false, the polygon's vertices are in
+   * counter-clockwise order.
+   */
+  bool isClockwiseWindingOrder() const;
+
+  /**
    * @brief Determines whether a globe rectangle is completely inside any of the
    * polygons in a list.
    *
