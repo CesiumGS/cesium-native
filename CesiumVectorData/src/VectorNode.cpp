@@ -1,7 +1,6 @@
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/CompositeCartographicPolygon.h"
-
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumVectorData/VectorNode.h>
 
 #include <cstddef>
@@ -46,9 +45,8 @@ struct GeometryEqualVisitor {
     return true;
   }
 
-  bool operator()(const CompositeCartographicPolygon& lhs) {
-    const CompositeCartographicPolygon* pRhs =
-        std::get_if<CompositeCartographicPolygon>(&rhs);
+  bool operator()(const CartographicPolygon& lhs) {
+    const CartographicPolygon* pRhs = std::get_if<CartographicPolygon>(&rhs);
     if (!pRhs) {
       return false;
     }

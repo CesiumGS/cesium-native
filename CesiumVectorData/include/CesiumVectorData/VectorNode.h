@@ -2,7 +2,7 @@
 
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/Library.h>
 
@@ -21,12 +21,12 @@ namespace CesiumVectorData {
  * - Line primitives are represented as an array of \ref
  * CesiumGeospatial::Cartographic values.
  * - Polygon primitives are represented as \ref
- * CesiumGeospatial::CompositeCartographicPolygon values.
+ * CesiumGeospatial::CartographicPolygon values.
  */
 using VectorPrimitive = std::variant<
     CesiumGeospatial::Cartographic,
     std::vector<CesiumGeospatial::Cartographic>,
-    CesiumGeospatial::CompositeCartographicPolygon>;
+    CesiumGeospatial::CartographicPolygon>;
 
 /**
  * @brief A VectorNode is a single logical object in a VectorDocument's tree.

@@ -3,7 +3,6 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/ErrorList.h>
@@ -480,14 +479,24 @@ Result<VectorNode> parseGeoJsonObject(
       return Result<VectorNode>(std::move(ringsResult.errors));
     }
 
-    std::vector<CartographicPolygon> rings;
-    rings.reserve(ringsResult.value->size());
-    for (const std::vector<Cartographic>& ring : *ringsResult.value) {
-      rings.emplace_back(ring);
+    std::vector<CartographicPolygon> holes;
+    if (ringsResult.value->size() > 1) {
+      holes.reserve(ringsResult.value->size() - 1);
+      auto it = ringsResult.value->begin();
+      // Skip outer ring
+      ++it;
+      for (; it != ringsResult.value->end(); ++it) {
+        holes.emplace_back(*it);
+      }
     }
 
-    node.primitives.emplace_back(
-        CompositeCartographicPolygon(std::move(rings)));
+    if (ringsResult.value->size() > 0) {
+      node.primitives.emplace_back(
+          CartographicPolygon((*ringsResult.value)[0], std::move(holes)));
+    } else {
+      node.primitives.emplace_back(
+          CartographicPolygon{std::vector<glm::dvec2>{}});
+    }
   } else if (type == "MultiPolygon") {
     // MultiPolygon has a "coordinates" member that consists of an array of
     // arrays of arrays of four or more positions.
@@ -514,14 +523,24 @@ Result<VectorNode> parseGeoJsonObject(
         return Result<VectorNode>(std::move(ringsResult.errors));
       }
 
-      std::vector<CartographicPolygon> rings;
-      rings.reserve(ringsResult.value->size());
-      for (const std::vector<Cartographic>& ring : *ringsResult.value) {
-        rings.emplace_back(ring);
+      std::vector<CartographicPolygon> holes;
+      if (ringsResult.value->size() > 1) {
+        holes.reserve(ringsResult.value->size() - 1);
+        auto it = ringsResult.value->begin();
+        // Skip outer ring
+        ++it;
+        for (; it != ringsResult.value->end(); ++it) {
+          holes.emplace_back(*it);
+        }
       }
 
-      node.primitives.emplace_back(
-          CompositeCartographicPolygon(std::move(rings)));
+      if (ringsResult.value->size() > 0) {
+        node.primitives.emplace_back(
+            CartographicPolygon((*ringsResult.value)[0], std::move(holes)));
+      } else {
+        node.primitives.emplace_back(
+            CartographicPolygon{std::vector<glm::dvec2>{}});
+      }
     }
   } else {
     return Result<VectorNode>(ErrorList::error(

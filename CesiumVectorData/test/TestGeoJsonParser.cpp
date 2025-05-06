@@ -1,11 +1,9 @@
-#include "CesiumGeospatial/CartographicPolygon.h"
-#include "CesiumGeospatial/CompositeCartographicPolygon.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumNativeTests/readFile.h"
-#include "CesiumUtility/Math.h"
-#include "CesiumVectorData/VectorNode.h"
-
+#include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumVectorData/VectorDocument.h>
+#include <CesiumVectorData/VectorNode.h>
 
 #include <doctest/doctest.h>
 
@@ -330,29 +328,27 @@ TEST_CASE("Parse Polygon primitives") {
           ]
         }
         )==",
-        VectorNode{
-            CompositeCartographicPolygon{std::vector<CartographicPolygon>{
-                CartographicPolygon{std::vector<Cartographic>{
-                    Cartographic(
-                        Math::degreesToRadians(-75.1428517),
-                        Math::degreesToRadians(39.9644934),
-                        400),
-                    Cartographic(
-                        Math::degreesToRadians(129.6869721),
-                        Math::degreesToRadians(62.0256947),
-                        100),
-                    Cartographic(
-                        Math::degreesToRadians(103.8245805),
-                        Math::degreesToRadians(1.3043744),
-                        100),
-                    Cartographic(
-                        Math::degreesToRadians(-80.1976364),
-                        Math::degreesToRadians(25.7708431),
-                        400),
-                    Cartographic(
-                        Math::degreesToRadians(-75.1428517),
-                        Math::degreesToRadians(39.9644934),
-                        400)}}}}});
+        VectorNode{CartographicPolygon{std::vector<Cartographic>{
+            Cartographic(
+                Math::degreesToRadians(-75.1428517),
+                Math::degreesToRadians(39.9644934),
+                400),
+            Cartographic(
+                Math::degreesToRadians(129.6869721),
+                Math::degreesToRadians(62.0256947),
+                100),
+            Cartographic(
+                Math::degreesToRadians(103.8245805),
+                Math::degreesToRadians(1.3043744),
+                100),
+            Cartographic(
+                Math::degreesToRadians(-80.1976364),
+                Math::degreesToRadians(25.7708431),
+                400),
+            Cartographic(
+                Math::degreesToRadians(-75.1428517),
+                Math::degreesToRadians(39.9644934),
+                400)}}});
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
@@ -403,28 +399,27 @@ TEST_CASE("Parse MultiPolygon primitives") {
         )==",
         VectorNode{
             std::vector<VectorPrimitive>{
-                CompositeCartographicPolygon{std::vector<CartographicPolygon>{
-                    CartographicPolygon{std::vector<Cartographic>{
-                        Cartographic(
-                            Math::degreesToRadians(-75.1428517),
-                            Math::degreesToRadians(39.9644934),
-                            400),
-                        Cartographic(
-                            Math::degreesToRadians(129.6869721),
-                            Math::degreesToRadians(62.0256947),
-                            100),
-                        Cartographic(
-                            Math::degreesToRadians(103.8245805),
-                            Math::degreesToRadians(1.3043744),
-                            100),
-                        Cartographic(
-                            Math::degreesToRadians(-80.1976364),
-                            Math::degreesToRadians(25.7708431),
-                            400),
-                        Cartographic(
-                            Math::degreesToRadians(-75.1428517),
-                            Math::degreesToRadians(39.9644934),
-                            400)}}}}},
+                CartographicPolygon{std::vector<Cartographic>{
+                    Cartographic(
+                        Math::degreesToRadians(-75.1428517),
+                        Math::degreesToRadians(39.9644934),
+                        400),
+                    Cartographic(
+                        Math::degreesToRadians(129.6869721),
+                        Math::degreesToRadians(62.0256947),
+                        100),
+                    Cartographic(
+                        Math::degreesToRadians(103.8245805),
+                        Math::degreesToRadians(1.3043744),
+                        100),
+                    Cartographic(
+                        Math::degreesToRadians(-80.1976364),
+                        Math::degreesToRadians(25.7708431),
+                        400),
+                    Cartographic(
+                        Math::degreesToRadians(-75.1428517),
+                        Math::degreesToRadians(39.9644934),
+                        400)}}},
             std::nullopt});
   }
 
