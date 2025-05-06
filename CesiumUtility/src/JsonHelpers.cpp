@@ -305,6 +305,6 @@ JsonValue JsonHelpers::toJsonValue(const rapidjson::Value& json) {
     return obj;
   }
 
-  throw new std::runtime_error("JSON value of an unknown type.");
+  return JsonValue::Null();
 }
 } // namespace CesiumUtility
