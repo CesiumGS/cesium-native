@@ -220,6 +220,8 @@ bool Tile::isRenderable() const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
+    if (!_renderEngineReadiness)
+      return false;
     // An unconditionally-refined tile is never renderable... UNLESS it has no
     // children, in which case waiting longer will be futile.
     if (!getUnconditionallyRefine() || this->_children.empty()) {
@@ -233,6 +235,10 @@ bool Tile::isRenderable() const noexcept {
   }
 
   return false;
+}
+
+void Tile::setRenderEngineReadiness(bool const renderEngineReady) noexcept {
+  _renderEngineReadiness = renderEngineReady;
 }
 
 bool Tile::isRenderContent() const noexcept {

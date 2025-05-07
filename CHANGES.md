@@ -58,6 +58,7 @@
 - Added an overload of `Math::equalsEpsilon` for glm matrices.
 - A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+- Added `Cesium3DTilesSelection::Tile::setRenderEngineReadiness(bool)`: pass false to delay the point at which the tile can be shown, while waiting for some asynchronous post-processing to finish for example.
 
 ##### Fixes :wrench:
 

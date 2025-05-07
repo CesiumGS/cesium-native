@@ -502,6 +502,17 @@ public:
   bool isRenderable() const noexcept;
 
   /**
+   * @brief Set by the render engine to notify when a tile needs post-load
+   *  processing before being actually renderable, that will have to happen
+   *  over one or more several main thread loop cycles.
+   *  By default, tiles are assumed immediately renderable when they reach
+   *  TileLoadState::Done status. Render engine can toggle readiness off to
+   *  signify that the tile should not be considered renderable until the flag
+   *  is turned on again.
+   */
+  void setRenderEngineReadiness(bool const renderEngineReady) noexcept;
+
+  /**
    * @brief Determines if this tile has mesh content.
    */
   bool isRenderContent() const noexcept;
@@ -687,6 +698,7 @@ private:
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
   bool _mightHaveLatentChildren;
+  bool _renderEngineReadiness = true; ///< Relevant only when _loadState is Done
 
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
