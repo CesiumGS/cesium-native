@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Cesium3DTilesSelection/TileRefine.h"
+#include "Cesium3DTilesSelection/TileRefinementMonitor.h"
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
@@ -8,6 +10,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/TreeTraversalState.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <unordered_map>
 #include <vector>
@@ -218,6 +221,22 @@ public:
   /** @inheritdoc */
   Tile* getNextTileToLoadInMainThread() override;
 
+  void registerTileRefinementMonitor(std::shared_ptr<TileRefinementMonitor>& pMonitor) {
+    this->_refinementMonitors.emplace_back(pMonitor);
+  }
+
+  constexpr std::vector<std::shared_ptr<TileRefinementMonitor>>& getTileRefinementMonitors() {
+    return this->_refinementMonitors;
+  }
+
+  void unregisterTileRefinementMonitor(std::shared_ptr<TileRefinementMonitor>& pMonitor) {
+    const auto it = std::find_if(this->_refinementMonitors.begin(), this->_refinementMonitors.end(), [pMonitor](std::shared_ptr<TileRefinementMonitor>& pOtherMonitor) {
+      return pMonitor.get() == pOtherMonitor.get();
+    });
+    CESIUM_ASSERT(it != this->_refinementMonitors.end());
+    this->_refinementMonitors.erase(it);
+  }
+
 private:
   double _weight = 1.0;
   std::vector<TileLoadTask> _mainThreadLoadQueue;
@@ -228,6 +247,7 @@ private:
   TraversalState _traversalState;
   CesiumUtility::CreditReferencer _previousFrameCredits;
   CesiumUtility::CreditReferencer _currentFrameCredits;
+  std::vector<std::shared_ptr<TileRefinementMonitor>> _refinementMonitors;
 };
 
 } // namespace Cesium3DTilesSelection

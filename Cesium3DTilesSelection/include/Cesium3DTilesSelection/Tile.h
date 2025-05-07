@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGltfContent/GltfUtilities.h"
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
@@ -26,6 +27,7 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
+class TileRefinementMonitor;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 class TileReferenceCountTracker {
@@ -604,6 +606,9 @@ public:
    */
   bool hasReferencingContent() const noexcept;
 
+  constexpr std::vector<std::shared_ptr<TileRefinementMonitor>>& getAttachedMonitors() {
+    return this->_attachedRefinementMonitors;
+  }
 private:
   struct TileConstructorImpl {};
   template <
@@ -664,10 +669,13 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
+  std::vector<std::shared_ptr<TileRefinementMonitor>> _attachedRefinementMonitors;
+
   int32_t _referenceCount;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
+  friend class TileRefinementMonitor;
 
 public:
   /**

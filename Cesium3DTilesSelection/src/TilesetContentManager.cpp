@@ -1163,7 +1163,7 @@ void TilesetContentManager::loadTileContent(
 }
 
 void TilesetContentManager::updateTileContent(
-    Tile& tile,
+    Tile& tile, 
     const TilesetOptions& tilesetOptions) {
   if (tile.getState() == TileLoadState::Unloading) {
     unloadTileContent(tile);

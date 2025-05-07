@@ -6,6 +6,7 @@
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TileRefinementMonitor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Image.h>
@@ -131,7 +132,12 @@ Tile::Tile(Tile&& rhs) noexcept
   }
 }
 
-Tile::~Tile() noexcept { CESIUM_ASSERT(this->_referenceCount == 0); }
+Tile::~Tile() noexcept { 
+  CESIUM_ASSERT(this->_referenceCount == 0); 
+  for(const std::shared_ptr<TileRefinementMonitor>& monitor : this->_attachedRefinementMonitors) {
+    monitor->onTileDestroy(this);
+  }
+}
 
 void Tile::createChildTiles(std::vector<Tile>&& children) {
   if (!this->_children.empty()) {

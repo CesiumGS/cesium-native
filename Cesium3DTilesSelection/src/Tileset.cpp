@@ -1040,6 +1040,13 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileLoadPriorityGroup::Normal,
       tilePriority);
 
+  if (getPreviousState(frameState.viewGroup, tile).getResult() != TileSelectionState::Result::Rendered) {
+    for (std::shared_ptr<TileRefinementMonitor>& monitor :
+          tile.getAttachedMonitors()) {
+      monitor->onTileRefinementChanged(tile);
+    }
+  }
+
   return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
 
@@ -1154,6 +1161,13 @@ bool Tileset::_kickDescendantsAndRenderTile(
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
   const bool wasReallyRenderedLastFrame =
       wasRenderedLastFrame && tile.isRenderable();
+
+  if (!wasReallyRenderedLastFrame) {
+    for (std::shared_ptr<TileRefinementMonitor>& monitor :
+         tile.getAttachedMonitors()) {
+      monitor->onTileRefinementChanged(tile);
+    }
+  }
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1405,6 +1419,13 @@ Tileset::TraversalDetails Tileset::_visitTile(
             tilePriority);
       }
 
+      if (lastFrameSelectionResult != TileSelectionState::Result::Rendered) {
+        for (std::shared_ptr<TileRefinementMonitor>& monitor :
+             tile.getAttachedMonitors()) {
+          monitor->onTileRefinementChanged(tile);
+        }
+      }
+
       return this->_renderInnerTile(frameState, tile, result);
     }
   }
@@ -1528,6 +1549,17 @@ void Tileset::addTileToLoadQueue(
     double priority) {
   frameState.viewGroup.addToLoadQueue(
       TileLoadTask{&tile, priorityGroup, priority});
+  
+  for(std::shared_ptr<TileRefinementMonitor>& pMonitor : frameState.viewGroup.getTileRefinementMonitors()) {
+    const bool monitorAlreadyAttached = std::any_of(tile.getAttachedMonitors().begin(), tile.getAttachedMonitors().end(), [pMonitor](const std::shared_ptr<TileRefinementMonitor>& pExistingMonitor){
+      return pExistingMonitor.get() == pMonitor.get();
+    });
+    //CESIUM_ASSERT(!monitorAlreadyAttached);
+    if(!monitorAlreadyAttached && pMonitor->isTileRelevant(tile)) {
+      tile.getAttachedMonitors().emplace_back(pMonitor);
+      pMonitor->_attachedTiles.emplace_back(&tile);
+    }
+  }
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
