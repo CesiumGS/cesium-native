@@ -9,48 +9,34 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionKhrTextureTransformJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionKhrTextureTransform;
+  class ExtensionKhrTextureTransformJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionKhrTextureTransform;
 
-  static constexpr const char* ExtensionName = "KHR_texture_transform";
+    static constexpr const char* ExtensionName = "KHR_texture_transform";
 
-  explicit ExtensionKhrTextureTransformJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionKhrTextureTransform* pObject);
+    explicit ExtensionKhrTextureTransformJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrTextureTransform* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionKhrTextureTransform(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionKhrTextureTransform& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionKhrTextureTransform(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrTextureTransform& o);
 
-private:
-  CesiumGltf::ExtensionKhrTextureTransform* _pObject = nullptr;
-  CesiumJsonReader::
-      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
-          _offset;
-  CesiumJsonReader::DoubleJsonHandler _rotation;
-  CesiumJsonReader::
-      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
-          _scale;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _texCoord;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionKhrTextureTransform* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _offset;
+    CesiumJsonReader::DoubleJsonHandler _rotation;
+    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _scale;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _texCoord;
+  };
+}  // namespace CesiumGltfReader

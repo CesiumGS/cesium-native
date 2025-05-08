@@ -9,41 +9,29 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class MeshPrimitiveJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::MeshPrimitive;
+  class MeshPrimitiveJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::MeshPrimitive;
 
-  explicit MeshPrimitiveJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::MeshPrimitive* pObject);
+    explicit MeshPrimitiveJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::MeshPrimitive* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyMeshPrimitive(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::MeshPrimitive& o);
+  protected:
+    IJsonHandler* readObjectKeyMeshPrimitive(const std::string& objectType, const std::string_view& str, CesiumGltf::MeshPrimitive& o);
 
-private:
-  CesiumGltf::MeshPrimitive* _pObject = nullptr;
-  CesiumJsonReader::DictionaryJsonHandler<
-      int32_t,
-      CesiumJsonReader::IntegerJsonHandler<int32_t>>
-      _attributes;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _mode;
-  CesiumJsonReader::ArrayJsonHandler<
-      std::unordered_map<std::string, int32_t>,
-      CesiumJsonReader::DictionaryJsonHandler<
-          int32_t,
-          CesiumJsonReader::IntegerJsonHandler<int32_t>>>
-      _targets;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::MeshPrimitive* _pObject = nullptr;
+    CesiumJsonReader::DictionaryJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _attributes;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _indices;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _mode;
+    CesiumJsonReader::ArrayJsonHandler<std::unordered_map<std::string, int32_t>, CesiumJsonReader::DictionaryJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>> _targets;
+  };
+}  // namespace CesiumGltfReader

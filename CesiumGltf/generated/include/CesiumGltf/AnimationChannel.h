@@ -5,46 +5,39 @@
 #include <CesiumGltf/AnimationChannelTarget.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief An animation channel combines an animation sampler with a target
- * property being animated.
- */
-struct CESIUMGLTF_API AnimationChannel final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "AnimationChannel";
+    /**
+     * @brief An animation channel combines an animation sampler with a target property being animated.
+     */
+    struct CESIUMGLTF_API AnimationChannel final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "AnimationChannel";
 
-  /**
-   * @brief The index of a sampler in this animation used to compute the value
-   * for the target.
-   *
-   * The index of a sampler in this animation used to compute the value for the
-   * target, e.g., a node's translation, rotation, or scale (TRS).
-   */
-  int32_t sampler = -1;
+        /**
+         * @brief The index of a sampler in this animation used to compute the value for the target.
+         *
+         * The index of a sampler in this animation used to compute the value for the target, e.g., a node's translation, rotation, or scale (TRS).
+         */
+        int32_t sampler = -1;
 
-  /**
-   * @brief The descriptor of the animated property.
-   */
-  CesiumGltf::AnimationChannelTarget target;
+        /**
+         * @brief The descriptor of the animated property.
+         */
+        CesiumGltf::AnimationChannelTarget target;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(AnimationChannel));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += this->target.getSizeBytes() -
-             int64_t(sizeof(CesiumGltf::AnimationChannelTarget));
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(AnimationChannel));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += this->target.getSizeBytes() - int64_t(sizeof(CesiumGltf::AnimationChannelTarget));
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

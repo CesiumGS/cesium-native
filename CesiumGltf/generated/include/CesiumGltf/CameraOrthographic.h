@@ -6,50 +6,44 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 namespace CesiumGltf {
-/**
- * @brief An orthographic camera containing properties to create an orthographic
- * projection matrix.
- */
-struct CESIUMGLTF_API CameraOrthographic final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "CameraOrthographic";
+    /**
+     * @brief An orthographic camera containing properties to create an orthographic projection matrix.
+     */
+    struct CESIUMGLTF_API CameraOrthographic final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "CameraOrthographic";
 
-  /**
-   * @brief The floating-point horizontal magnification of the view. This value
-   * **MUST NOT** be equal to zero. This value **SHOULD NOT** be negative.
-   */
-  double xmag = double();
+        /**
+         * @brief The floating-point horizontal magnification of the view. This value **MUST NOT** be equal to zero. This value **SHOULD NOT** be negative.
+         */
+        double xmag = double();
 
-  /**
-   * @brief The floating-point vertical magnification of the view. This value
-   * **MUST NOT** be equal to zero. This value **SHOULD NOT** be negative.
-   */
-  double ymag = double();
+        /**
+         * @brief The floating-point vertical magnification of the view. This value **MUST NOT** be equal to zero. This value **SHOULD NOT** be negative.
+         */
+        double ymag = double();
 
-  /**
-   * @brief The floating-point distance to the far clipping plane. This value
-   * **MUST NOT** be equal to zero. `zfar` **MUST** be greater than `znear`.
-   */
-  double zfar = double();
+        /**
+         * @brief The floating-point distance to the far clipping plane. This value **MUST NOT** be equal to zero. `zfar` **MUST** be greater than `znear`.
+         */
+        double zfar = double();
 
-  /**
-   * @brief The floating-point distance to the near clipping plane.
-   */
-  double znear = double();
+        /**
+         * @brief The floating-point distance to the near clipping plane.
+         */
+        double znear = double();
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(CameraOrthographic));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(CameraOrthographic));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

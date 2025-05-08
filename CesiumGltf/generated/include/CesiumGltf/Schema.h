@@ -6,89 +6,78 @@
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/SharedAsset.h>
-
 #include <optional>
 #include <string>
 #include <unordered_map>
 
 namespace CesiumGltf {
-/**
- * @brief An object defining classes and enums.
- */
-struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
-  static constexpr const char* TypeName = "Schema";
+    /**
+     * @brief An object defining classes and enums.
+     */
+    struct CESIUMGLTF_API Schema final : public CesiumUtility::SharedAsset<Schema> {
+        static constexpr const char* TypeName = "Schema";
 
-  /**
-   * @brief Unique identifier for the schema. Schema IDs must be alphanumeric
-   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
-   */
-  std::string id;
+        /**
+         * @brief Unique identifier for the schema. Schema IDs must be alphanumeric identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+         */
+        std::string id;
 
-  /**
-   * @brief The name of the schema, e.g. for display purposes.
-   */
-  std::optional<std::string> name;
+        /**
+         * @brief The name of the schema, e.g. for display purposes.
+         */
+        std::optional<std::string> name;
 
-  /**
-   * @brief The description of the schema.
-   */
-  std::optional<std::string> description;
+        /**
+         * @brief The description of the schema.
+         */
+        std::optional<std::string> description;
 
-  /**
-   * @brief Application-specific version of the schema.
-   */
-  std::optional<std::string> version;
+        /**
+         * @brief Application-specific version of the schema.
+         */
+        std::optional<std::string> version;
 
-  /**
-   * @brief A dictionary, where each key is a class ID and each value is an
-   * object defining the class. Class IDs must be alphanumeric identifiers
-   * matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
-   */
-  std::unordered_map<std::string, CesiumGltf::Class> classes;
+        /**
+         * @brief A dictionary, where each key is a class ID and each value is an object defining the class. Class IDs must be alphanumeric identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+         */
+        std::unordered_map<std::string, CesiumGltf::Class> classes;
 
-  /**
-   * @brief A dictionary, where each key is an enum ID and each value is an
-   * object defining the values for the enum. Enum IDs must be alphanumeric
-   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
-   */
-  std::unordered_map<std::string, CesiumGltf::Enum> enums;
+        /**
+         * @brief A dictionary, where each key is an enum ID and each value is an object defining the values for the enum. Enum IDs must be alphanumeric identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+         */
+        std::unordered_map<std::string, CesiumGltf::Enum> enums;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(Schema));
-    accum += CesiumUtility::SharedAsset<Schema>::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::SharedAsset<Schema>));
-    accum += int64_t(this->id.capacity() * sizeof(char));
-    if (this->name) {
-      accum += int64_t(this->name->capacity() * sizeof(char));
-    }
-    if (this->description) {
-      accum += int64_t(this->description->capacity() * sizeof(char));
-    }
-    if (this->version) {
-      accum += int64_t(this->version->capacity() * sizeof(char));
-    }
-    accum += int64_t(
-        this->classes.bucket_count() *
-        (sizeof(std::string) + sizeof(CesiumGltf::Class)));
-    for (const auto& [k, v] : this->classes) {
-      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
-      accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::Class));
-    }
-    accum += int64_t(
-        this->enums.bucket_count() *
-        (sizeof(std::string) + sizeof(CesiumGltf::Enum)));
-    for (const auto& [k, v] : this->enums) {
-      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
-      accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::Enum));
-    }
-    return accum;
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(Schema));
+          accum += CesiumUtility::SharedAsset<Schema>::getSizeBytes() - int64_t(sizeof(CesiumUtility::SharedAsset<Schema>));
+          accum += int64_t(this->id.capacity() * sizeof(char));
+if(this->name) {
+    accum += int64_t(this->name->capacity() * sizeof(char));
   }
-};
+if(this->description) {
+    accum += int64_t(this->description->capacity() * sizeof(char));
+  }
+if(this->version) {
+    accum += int64_t(this->version->capacity() * sizeof(char));
+  }
+accum += int64_t(this->classes.bucket_count() * (sizeof(std::string) + sizeof(CesiumGltf::Class)));
+      for(const auto& [k, v] : this->classes) {
+accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::Class));
+      }
+accum += int64_t(this->enums.bucket_count() * (sizeof(std::string) + sizeof(CesiumGltf::Enum)));
+      for(const auto& [k, v] : this->enums) {
+accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::Enum));
+      }
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

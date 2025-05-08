@@ -3,50 +3,36 @@
 #pragma once
 
 #include "ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler.h"
-
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionNodeMaxarMeshVariantsJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionNodeMaxarMeshVariants;
+  class ExtensionNodeMaxarMeshVariantsJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionNodeMaxarMeshVariants;
 
-  static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
+    static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 
-  explicit ExtensionNodeMaxarMeshVariantsJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionNodeMaxarMeshVariants* pObject);
+    explicit ExtensionNodeMaxarMeshVariantsJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionNodeMaxarMeshVariants* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionNodeMaxarMeshVariants(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionNodeMaxarMeshVariants& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionNodeMaxarMeshVariants(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionNodeMaxarMeshVariants& o);
 
-private:
-  CesiumGltf::ExtensionNodeMaxarMeshVariants* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<
-      CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue,
-      ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler>
-      _mappings;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionNodeMaxarMeshVariants* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue, ExtensionNodeMaxarMeshVariantsMappingsValueJsonHandler> _mappings;
+  };
+}  // namespace CesiumGltfReader

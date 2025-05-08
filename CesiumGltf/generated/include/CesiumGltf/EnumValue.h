@@ -4,49 +4,47 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <optional>
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief An enum value.
- */
-struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "EnumValue";
+    /**
+     * @brief An enum value.
+     */
+    struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "EnumValue";
 
-  /**
-   * @brief The name of the enum value.
-   */
-  std::string name;
+        /**
+         * @brief The name of the enum value.
+         */
+        std::string name;
 
-  /**
-   * @brief The description of the enum value.
-   */
-  std::optional<std::string> description;
+        /**
+         * @brief The description of the enum value.
+         */
+        std::optional<std::string> description;
 
-  /**
-   * @brief The integer enum value.
-   */
-  int64_t value = int64_t();
+        /**
+         * @brief The integer enum value.
+         */
+        int64_t value = int64_t();
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(EnumValue));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(this->name.capacity() * sizeof(char));
-    if (this->description) {
-      accum += int64_t(this->description->capacity() * sizeof(char));
-    }
-    return accum;
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(EnumValue));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += int64_t(this->name.capacity() * sizeof(char));
+if(this->description) {
+    accum += int64_t(this->description->capacity() * sizeof(char));
   }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

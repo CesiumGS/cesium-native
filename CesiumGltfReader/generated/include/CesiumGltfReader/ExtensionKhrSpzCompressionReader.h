@@ -6,13 +6,13 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumGltf/ExtensionKhrSpzCompression.h>
-#include <gsl/span>
+#include <span>
 #include <rapidjson/fwd.h>
 #include <vector>
 
 namespace CesiumGltf {
   struct ExtensionKhrSpzCompression;
-}
+} // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
@@ -42,7 +42,7 @@ public:
    * @param data The buffer from which to read the instance.
    * @return The result of reading the instance.
    */
-  CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrSpzCompression> readFromJson(const gsl::span<const std::byte>& data) const;
+  CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrSpzCompression> readFromJson(const std::span<const std::byte>& data) const;
 
   /**
    * @brief Reads an instance of ExtensionKhrSpzCompression from a rapidJson::Value.

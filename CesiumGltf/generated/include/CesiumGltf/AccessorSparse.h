@@ -6,52 +6,43 @@
 #include <CesiumGltf/AccessorSparseValues.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief Sparse storage of accessor values that deviate from their
- * initialization value.
- */
-struct CESIUMGLTF_API AccessorSparse final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "AccessorSparse";
+    /**
+     * @brief Sparse storage of accessor values that deviate from their initialization value.
+     */
+    struct CESIUMGLTF_API AccessorSparse final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "AccessorSparse";
 
-  /**
-   * @brief Number of deviating accessor values stored in the sparse array.
-   */
-  int64_t count = int64_t();
+        /**
+         * @brief Number of deviating accessor values stored in the sparse array.
+         */
+        int64_t count = int64_t();
 
-  /**
-   * @brief An object pointing to a buffer view containing the indices of
-   * deviating accessor values. The number of indices is equal to `count`.
-   * Indices **MUST** strictly increase.
-   */
-  CesiumGltf::AccessorSparseIndices indices;
+        /**
+         * @brief An object pointing to a buffer view containing the indices of deviating accessor values. The number of indices is equal to `count`. Indices **MUST** strictly increase.
+         */
+        CesiumGltf::AccessorSparseIndices indices;
 
-  /**
-   * @brief An object pointing to a buffer view containing the deviating
-   * accessor values.
-   */
-  CesiumGltf::AccessorSparseValues values;
+        /**
+         * @brief An object pointing to a buffer view containing the deviating accessor values.
+         */
+        CesiumGltf::AccessorSparseValues values;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(AccessorSparse));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += this->indices.getSizeBytes() -
-             int64_t(sizeof(CesiumGltf::AccessorSparseIndices));
-    accum += this->values.getSizeBytes() -
-             int64_t(sizeof(CesiumGltf::AccessorSparseValues));
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(AccessorSparse));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += this->indices.getSizeBytes() - int64_t(sizeof(CesiumGltf::AccessorSparseIndices));
+accum += this->values.getSizeBytes() - int64_t(sizeof(CesiumGltf::AccessorSparseValues));
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

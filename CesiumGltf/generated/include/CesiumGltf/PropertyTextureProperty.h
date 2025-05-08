@@ -5,68 +5,54 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumUtility/JsonValue.h>
-
 #include <cstdint>
 #include <optional>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief A texture containing property values.
- */
-struct CESIUMGLTF_API PropertyTextureProperty final : public TextureInfo {
-  static constexpr const char* TypeName = "PropertyTextureProperty";
+    /**
+     * @brief A texture containing property values.
+     */
+    struct CESIUMGLTF_API PropertyTextureProperty final : public TextureInfo {
+        static constexpr const char* TypeName = "PropertyTextureProperty";
 
-  /**
-   * @brief Texture channels containing property values, identified by index.
-   * The values may be packed into multiple channels if a single channel does
-   * not have sufficient bit depth. The values are packed in little-endian
-   * order.
-   */
-  std::vector<int64_t> channels = {0};
+        /**
+         * @brief Texture channels containing property values, identified by index. The values may be packed into multiple channels if a single channel does not have sufficient bit depth. The values are packed in little-endian order.
+         */
+        std::vector<int64_t> channels = { 0 };
 
-  /**
-   * @brief An offset to apply to property values. Only applicable when the
-   * component type is `FLOAT32` or `FLOAT64`, or when the property is
-   * `normalized`. Overrides the class property's `offset` if both are defined.
-   */
-  std::optional<CesiumUtility::JsonValue> offset;
+        /**
+         * @brief An offset to apply to property values. Only applicable when the component type is `FLOAT32` or `FLOAT64`, or when the property is `normalized`. Overrides the class property's `offset` if both are defined.
+         */
+        std::optional<CesiumUtility::JsonValue> offset;
 
-  /**
-   * @brief A scale to apply to property values. Only applicable when the
-   * component type is `FLOAT32` or `FLOAT64`, or when the property is
-   * `normalized`. Overrides the class property's `scale` if both are defined.
-   */
-  std::optional<CesiumUtility::JsonValue> scale;
+        /**
+         * @brief A scale to apply to property values. Only applicable when the component type is `FLOAT32` or `FLOAT64`, or when the property is `normalized`. Overrides the class property's `scale` if both are defined.
+         */
+        std::optional<CesiumUtility::JsonValue> scale;
 
-  /**
-   * @brief Maximum value present in the property values. Only applicable to
-   * `SCALAR`, `VECN`, and `MATN` types. This is the maximum of all property
-   * values, after the transforms based on the `normalized`, `offset`, and
-   * `scale` properties have been applied.
-   */
-  std::optional<CesiumUtility::JsonValue> max;
+        /**
+         * @brief Maximum value present in the property values. Only applicable to `SCALAR`, `VECN`, and `MATN` types. This is the maximum of all property values, after the transforms based on the `normalized`, `offset`, and `scale` properties have been applied.
+         */
+        std::optional<CesiumUtility::JsonValue> max;
 
-  /**
-   * @brief Minimum value present in the property values. Only applicable to
-   * `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property
-   * values, after the transforms based on the `normalized`, `offset`, and
-   * `scale` properties have been applied.
-   */
-  std::optional<CesiumUtility::JsonValue> min;
+        /**
+         * @brief Minimum value present in the property values. Only applicable to `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property values, after the transforms based on the `normalized`, `offset`, and `scale` properties have been applied.
+         */
+        std::optional<CesiumUtility::JsonValue> min;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(PropertyTextureProperty));
-    accum += TextureInfo::getSizeBytes() - int64_t(sizeof(TextureInfo));
-    accum += int64_t(sizeof(int64_t) * this->channels.capacity());
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(PropertyTextureProperty));
+          accum += TextureInfo::getSizeBytes() - int64_t(sizeof(TextureInfo));
+          accum += int64_t(sizeof(int64_t) * this->channels.capacity());
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

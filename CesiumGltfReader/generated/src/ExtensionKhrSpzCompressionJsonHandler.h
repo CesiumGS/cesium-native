@@ -9,23 +9,23 @@
 
 namespace CesiumJsonReader {
   class JsonReaderOptions;
-}
+} // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
   class ExtensionKhrSpzCompressionJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
   public:
     using ValueType = CesiumGltf::ExtensionKhrSpzCompression;
 
-    static inline constexpr const char* ExtensionName = "KHR_spz_compression";
+    static constexpr const char* ExtensionName = "KHR_spz_compression";
 
-    ExtensionKhrSpzCompressionJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    explicit ExtensionKhrSpzCompressionJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
     void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrSpzCompression* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-    virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-    virtual IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
   protected:
     IJsonHandler* readObjectKeyExtensionKhrSpzCompression(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrSpzCompression& o);
@@ -41,4 +41,4 @@ namespace CesiumGltfReader {
     CesiumJsonReader::IntegerJsonHandler<int64_t> _version;
     CesiumJsonReader::DictionaryJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _attributes;
   };
-}
+}  // namespace CesiumGltfReader

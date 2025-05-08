@@ -6,74 +6,62 @@
 #include <CesiumGltf/CameraPerspective.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumGltf/NamedObject.h>
-
 #include <optional>
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief A camera's projection.  A node **MAY** reference a camera to apply a
- * transform to place the camera in the scene.
- */
-struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
-  static constexpr const char* TypeName = "Camera";
+    /**
+     * @brief A camera's projection.  A node **MAY** reference a camera to apply a transform to place the camera in the scene.
+     */
+    struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
+        static constexpr const char* TypeName = "Camera";
 
-  /**
-   * @brief Known values for Specifies if the camera uses a perspective or
-   * orthographic projection.
-   */
-  struct Type {
-    inline static const std::string perspective = "perspective";
+        /**
+         * @brief Known values for Specifies if the camera uses a perspective or orthographic projection.
+         */
+        struct Type {
+            inline static const std::string perspective = "perspective";
 
-    inline static const std::string orthographic = "orthographic";
-  };
+            inline static const std::string orthographic = "orthographic";
+        };
 
-  /**
-   * @brief An orthographic camera containing properties to create an
-   * orthographic projection matrix. This property **MUST NOT** be defined when
-   * `perspective` is defined.
-   */
-  std::optional<CesiumGltf::CameraOrthographic> orthographic;
+        /**
+         * @brief An orthographic camera containing properties to create an orthographic projection matrix. This property **MUST NOT** be defined when `perspective` is defined.
+         */
+        std::optional<CesiumGltf::CameraOrthographic> orthographic;
 
-  /**
-   * @brief A perspective camera containing properties to create a perspective
-   * projection matrix. This property **MUST NOT** be defined when
-   * `orthographic` is defined.
-   */
-  std::optional<CesiumGltf::CameraPerspective> perspective;
+        /**
+         * @brief A perspective camera containing properties to create a perspective projection matrix. This property **MUST NOT** be defined when `orthographic` is defined.
+         */
+        std::optional<CesiumGltf::CameraPerspective> perspective;
 
-  /**
-   * @brief Specifies if the camera uses a perspective or orthographic
-   * projection.
-   *
-   * Known values are defined in {@link Type}.
-   *
-   *
-   * Based on this, either the camera's `perspective` or `orthographic` property
-   * **MUST** be defined.
-   */
-  std::string type = Type::perspective;
+        /**
+         * @brief Specifies if the camera uses a perspective or orthographic projection.
+         * 
+         * Known values are defined in {@link Type}.
+         *
+         *
+         * Based on this, either the camera's `perspective` or `orthographic` property **MUST** be defined.
+         */
+        std::string type = Type::perspective;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(Camera));
-    accum += CesiumGltf::NamedObject::getSizeBytes() -
-             int64_t(sizeof(CesiumGltf::NamedObject));
-    if (this->orthographic) {
-      accum += this->orthographic->getSizeBytes() -
-               int64_t(sizeof(CesiumGltf::CameraOrthographic));
-    }
-    if (this->perspective) {
-      accum += this->perspective->getSizeBytes() -
-               int64_t(sizeof(CesiumGltf::CameraPerspective));
-    }
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(Camera));
+          accum += CesiumGltf::NamedObject::getSizeBytes() - int64_t(sizeof(CesiumGltf::NamedObject));
+          if(this->orthographic) {
+accum += this->orthographic->getSizeBytes() - int64_t(sizeof(CesiumGltf::CameraOrthographic));
+      }
+if(this->perspective) {
+accum += this->perspective->getSizeBytes() - int64_t(sizeof(CesiumGltf::CameraPerspective));
+      }
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

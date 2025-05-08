@@ -4,50 +4,44 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 
 namespace CesiumGltf {
-/**
- * @brief KHR_draco_mesh_compression glTF Mesh Primitive Extension
- */
-struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "ExtensionKhrDracoMeshCompression";
-  static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
+    /**
+     * @brief KHR_draco_mesh_compression glTF Mesh Primitive Extension
+     */
+    struct CESIUMGLTF_API ExtensionKhrDracoMeshCompression final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "ExtensionKhrDracoMeshCompression";
+        static constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
 
-  /**
-   * @brief The index of the bufferView.
-   */
-  int32_t bufferView = -1;
+        /**
+         * @brief The index of the bufferView.
+         */
+        int32_t bufferView = -1;
 
-  /**
-   * @brief A dictionary object, where each key corresponds to an attribute and
-   * its unique attribute id stored in the compressed geometry.
-   */
-  std::unordered_map<std::string, int32_t> attributes;
+        /**
+         * @brief A dictionary object, where each key corresponds to an attribute and its unique attribute id stored in the compressed geometry.
+         */
+        std::unordered_map<std::string, int32_t> attributes;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionKhrDracoMeshCompression));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(
-        this->attributes.bucket_count() *
-        (sizeof(std::string) + sizeof(int32_t)));
-    for (const auto& [k, v] : this->attributes) {
-      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
-      accum += int64_t(sizeof(int32_t));
-    }
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionKhrDracoMeshCompression));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += int64_t(this->attributes.bucket_count() * (sizeof(std::string) + sizeof(int32_t)));
+      for(const auto& [k, v] : this->attributes) {
+accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+accum += int64_t(sizeof(int32_t));
+      }
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

@@ -5,44 +5,36 @@
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief MAXAR_mesh_variants node extension
- */
-struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "ExtensionNodeMaxarMeshVariants";
-  static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
+    /**
+     * @brief MAXAR_mesh_variants node extension
+     */
+    struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "ExtensionNodeMaxarMeshVariants";
+        static constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 
-  /**
-   * @brief A list of mesh to variant mappings
-   */
-  std::vector<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue> mappings;
+        /**
+         * @brief A list of mesh to variant mappings
+         */
+        std::vector<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue> mappings;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionNodeMaxarMeshVariants));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(
-        sizeof(CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue) *
-        this->mappings.capacity());
-    for (const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& value :
-         this->mappings) {
-      accum += value.getSizeBytes() -
-               int64_t(sizeof(
-                   CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue));
-    }
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionNodeMaxarMeshVariants));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += int64_t(sizeof(CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue) * this->mappings.capacity());
+      for(const CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue& value : this->mappings) {
+accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue));
+      }
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

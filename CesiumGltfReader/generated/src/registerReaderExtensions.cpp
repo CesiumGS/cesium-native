@@ -3,22 +3,31 @@
 
 #include "registerReaderExtensions.h"
 
-#include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
-#include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
-#include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
+#include <CesiumJsonReader/JsonReaderOptions.h>
+
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltf/TextureInfo.h>
+#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
+#include <CesiumGltf/MaterialNormalTextureInfo.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/FeatureIdTexture.h>
+
 #include "ExtensionCesiumRTCJsonHandler.h"
+#include "ExtensionModelExtStructuralMetadataJsonHandler.h"
+#include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
+#include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
-#include "ExtensionExtInstanceFeaturesJsonHandler.h"
 #include "ExtensionExtMeshFeaturesJsonHandler.h"
-#include "ExtensionExtMeshGpuInstancingJsonHandler.h"
-#include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
-#include "ExtensionKhrMaterialsUnlitJsonHandler.h"
-#include "ExtensionKhrTextureBasisuJsonHandler.h"
-#include "ExtensionKhrTextureTransformJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
+#include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
-#include "ExtensionKhrGaussianSplattingJsonHandler.h"
 #include "ExtensionKhrSpzCompressionJsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
@@ -28,20 +37,11 @@
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionTextureWebpJsonHandler.h"
-
-#include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/FeatureIdTexture.h>
-#include <CesiumGltf/Material.h>
-#include <CesiumGltf/MaterialNormalTextureInfo.h>
-#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
-#include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Model.h>
-#include <CesiumGltf/Node.h>
-#include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureInfo.h>
-#include <CesiumJsonReader/JsonReaderOptions.h>
+#include "ExtensionKhrTextureTransformJsonHandler.h"
+#include "ExtensionKhrTextureTransformJsonHandler.h"
+#include "ExtensionKhrTextureTransformJsonHandler.h"
+#include "ExtensionKhrTextureTransformJsonHandler.h"
+#include "ExtensionKhrTextureTransformJsonHandler.h"
 
 namespace CesiumGltfReader {
 
@@ -57,7 +57,6 @@ options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveExtSt
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonHandler>();
-options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrSpzCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonHandler>();

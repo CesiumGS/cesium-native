@@ -5,37 +5,32 @@
 
 #include "ModelJsonWriter.h"
 
-#include <CesiumGltf/Buffer.h>
-#include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/FeatureIdTexture.h>
-#include <CesiumGltf/Material.h>
-#include <CesiumGltf/MaterialNormalTextureInfo.h>
-#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
-#include <CesiumGltf/MeshPrimitive.h>
-#include <CesiumGltf/Model.h>
-#include <CesiumGltf/Node.h>
-#include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/Texture.h>
-#include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumGltf/TextureInfo.h>
+#include <CesiumGltf/MaterialOcclusionTextureInfo.h>
+#include <CesiumGltf/MaterialNormalTextureInfo.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/FeatureIdTexture.h>
+
 // NOLINTBEGIN(misc-include-cleaner)
-#include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
-#include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
-#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
+#include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
-#include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
-#include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
-#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
-#include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
-#include <CesiumGltf/ExtensionKhrTextureBasisu.h>
-#include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
-#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrSpzCompression.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
@@ -45,12 +40,16 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionKhrTextureTransform.h>
 // NOLINTEND(misc-include-cleaner)
 
 namespace CesiumGltfWriter {
 
-void registerWriterExtensions(
-    CesiumJsonWriter::ExtensionWriterContext& context) {
+void registerWriterExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
   context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
 context.registerExtension<CesiumGltf::Model, ExtensionModelExtStructuralMetadataJsonWriter>();
@@ -62,7 +61,6 @@ context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveExtSt
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompressionJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonWriter>();
-context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrSpzCompressionJsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonWriter>();

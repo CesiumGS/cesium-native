@@ -4,53 +4,50 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumGltf/NamedObject.h>
-
 #include <cstdint>
 #include <optional>
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief A buffer points to binary geometry, animation, or skins.
- */
-struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
-  static constexpr const char* TypeName = "Buffer";
+    /**
+     * @brief A buffer points to binary geometry, animation, or skins.
+     */
+    struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
+        static constexpr const char* TypeName = "Buffer";
 
-  /**
-   * @brief The URI (or IRI) of the buffer.
-   *
-   * Relative paths are relative to the current glTF asset.  Instead of
-   * referencing an external file, this field **MAY** contain a `data:`-URI.
-   */
-  std::optional<std::string> uri;
+        /**
+         * @brief The URI (or IRI) of the buffer.
+         *
+         * Relative paths are relative to the current glTF asset.  Instead of referencing an external file, this field **MAY** contain a `data:`-URI.
+         */
+        std::optional<std::string> uri;
 
-  /**
-   * @brief The length of the buffer in bytes.
-   */
-  int64_t byteLength = int64_t();
+        /**
+         * @brief The length of the buffer in bytes.
+         */
+        int64_t byteLength = int64_t();
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(BufferSpec));
-    accum += CesiumGltf::NamedObject::getSizeBytes() -
-             int64_t(sizeof(CesiumGltf::NamedObject));
-    if (this->uri) {
-      accum += int64_t(this->uri->capacity() * sizeof(char));
-    }
-    return accum;
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(BufferSpec));
+          accum += CesiumGltf::NamedObject::getSizeBytes() - int64_t(sizeof(CesiumGltf::NamedObject));
+          if(this->uri) {
+    accum += int64_t(this->uri->capacity() * sizeof(char));
   }
+          return accum;
+        }
 
-protected:
-  /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
-   */
-  BufferSpec() = default;
-  friend struct Buffer;
-};
+    protected:
+      /**
+       * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
+       */
+      BufferSpec() = default;
+      friend struct Buffer;
+
+    };
 } // namespace CesiumGltf

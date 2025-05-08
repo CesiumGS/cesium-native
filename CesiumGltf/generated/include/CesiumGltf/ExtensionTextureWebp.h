@@ -4,36 +4,33 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief glTF extension to specify textures using the WebP image format.
- */
-struct CESIUMGLTF_API ExtensionTextureWebp final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "ExtensionTextureWebp";
-  static constexpr const char* ExtensionName = "EXT_texture_webp";
+    /**
+     * @brief glTF extension to specify textures using the WebP image format.
+     */
+    struct CESIUMGLTF_API ExtensionTextureWebp final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "ExtensionTextureWebp";
+        static constexpr const char* ExtensionName = "EXT_texture_webp";
 
-  /**
-   * @brief The index of the images node which points to a WebP image.
-   */
-  int32_t source = -1;
+        /**
+         * @brief The index of the images node which points to a WebP image.
+         */
+        int32_t source = -1;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionTextureWebp));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionTextureWebp));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

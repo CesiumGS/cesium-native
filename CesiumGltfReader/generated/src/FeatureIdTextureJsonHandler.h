@@ -3,37 +3,30 @@
 #pragma once
 
 #include "TextureInfoJsonHandler.h"
-
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class FeatureIdTextureJsonHandler : public TextureInfoJsonHandler {
-public:
-  using ValueType = CesiumGltf::FeatureIdTexture;
+  class FeatureIdTextureJsonHandler : public TextureInfoJsonHandler {
+  public:
+    using ValueType = CesiumGltf::FeatureIdTexture;
 
-  explicit FeatureIdTextureJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void
-  reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureIdTexture* pObject);
+    explicit FeatureIdTextureJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureIdTexture* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyFeatureIdTexture(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::FeatureIdTexture& o);
+  protected:
+    IJsonHandler* readObjectKeyFeatureIdTexture(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureIdTexture& o);
 
-private:
-  CesiumGltf::FeatureIdTexture* _pObject = nullptr;
-  CesiumJsonReader::
-      ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>>
-          _channels;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::FeatureIdTexture* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<int64_t, CesiumJsonReader::IntegerJsonHandler<int64_t>> _channels;
+  };
+}  // namespace CesiumGltfReader

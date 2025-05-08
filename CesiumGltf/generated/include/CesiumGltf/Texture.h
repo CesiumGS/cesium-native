@@ -4,42 +4,37 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumGltf/NamedObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief A texture and its sampler.
- */
-struct CESIUMGLTF_API Texture final : public CesiumGltf::NamedObject {
-  static constexpr const char* TypeName = "Texture";
+    /**
+     * @brief A texture and its sampler.
+     */
+    struct CESIUMGLTF_API Texture final : public CesiumGltf::NamedObject {
+        static constexpr const char* TypeName = "Texture";
 
-  /**
-   * @brief The index of the sampler used by this texture. When undefined, a
-   * sampler with repeat wrapping and auto filtering **SHOULD** be used.
-   */
-  int32_t sampler = -1;
+        /**
+         * @brief The index of the sampler used by this texture. When undefined, a sampler with repeat wrapping and auto filtering **SHOULD** be used.
+         */
+        int32_t sampler = -1;
 
-  /**
-   * @brief The index of the image used by this texture. When undefined, an
-   * extension or other mechanism **SHOULD** supply an alternate texture source,
-   * otherwise behavior is undefined.
-   */
-  int32_t source = -1;
+        /**
+         * @brief The index of the image used by this texture. When undefined, an extension or other mechanism **SHOULD** supply an alternate texture source, otherwise behavior is undefined.
+         */
+        int32_t source = -1;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(Texture));
-    accum += CesiumGltf::NamedObject::getSizeBytes() -
-             int64_t(sizeof(CesiumGltf::NamedObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(Texture));
+          accum += CesiumGltf::NamedObject::getSizeBytes() - int64_t(sizeof(CesiumGltf::NamedObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

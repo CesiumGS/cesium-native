@@ -5,66 +5,53 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 #include <CesiumUtility/JsonValue.h>
-
 #include <optional>
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief An attribute containing property values.
- */
-struct CESIUMGLTF_API PropertyAttributeProperty final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "PropertyAttributeProperty";
+    /**
+     * @brief An attribute containing property values.
+     */
+    struct CESIUMGLTF_API PropertyAttributeProperty final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "PropertyAttributeProperty";
 
-  /**
-   * @brief The name of the attribute containing property values.
-   */
-  std::string attribute;
+        /**
+         * @brief The name of the attribute containing property values.
+         */
+        std::string attribute;
 
-  /**
-   * @brief An offset to apply to property values. Only applicable when the
-   * component type is `FLOAT32` or `FLOAT64`, or when the property is
-   * `normalized`. Overrides the class property's `offset` if both are defined.
-   */
-  std::optional<CesiumUtility::JsonValue> offset;
+        /**
+         * @brief An offset to apply to property values. Only applicable when the component type is `FLOAT32` or `FLOAT64`, or when the property is `normalized`. Overrides the class property's `offset` if both are defined.
+         */
+        std::optional<CesiumUtility::JsonValue> offset;
 
-  /**
-   * @brief A scale to apply to property values. Only applicable when the
-   * component type is `FLOAT32` or `FLOAT64`, or when the property is
-   * `normalized`. Overrides the class property's `scale` if both are defined.
-   */
-  std::optional<CesiumUtility::JsonValue> scale;
+        /**
+         * @brief A scale to apply to property values. Only applicable when the component type is `FLOAT32` or `FLOAT64`, or when the property is `normalized`. Overrides the class property's `scale` if both are defined.
+         */
+        std::optional<CesiumUtility::JsonValue> scale;
 
-  /**
-   * @brief Maximum value present in the property values. Only applicable to
-   * `SCALAR`, `VECN`, and `MATN` types. This is the maximum of all property
-   * values, after the transforms based on the `normalized`, `offset`, and
-   * `scale` properties have been applied.
-   */
-  std::optional<CesiumUtility::JsonValue> max;
+        /**
+         * @brief Maximum value present in the property values. Only applicable to `SCALAR`, `VECN`, and `MATN` types. This is the maximum of all property values, after the transforms based on the `normalized`, `offset`, and `scale` properties have been applied.
+         */
+        std::optional<CesiumUtility::JsonValue> max;
 
-  /**
-   * @brief Minimum value present in the property values. Only applicable to
-   * `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property
-   * values, after the transforms based on the `normalized`, `offset`, and
-   * `scale` properties have been applied.
-   */
-  std::optional<CesiumUtility::JsonValue> min;
+        /**
+         * @brief Minimum value present in the property values. Only applicable to `SCALAR`, `VECN`, and `MATN` types. This is the minimum of all property values, after the transforms based on the `normalized`, `offset`, and `scale` properties have been applied.
+         */
+        std::optional<CesiumUtility::JsonValue> min;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(PropertyAttributeProperty));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(this->attribute.capacity() * sizeof(char));
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(PropertyAttributeProperty));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += int64_t(this->attribute.capacity() * sizeof(char));
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

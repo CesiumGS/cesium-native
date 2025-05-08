@@ -9,39 +9,27 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType =
-      CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
+  class ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
 
-  explicit ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue*
-          pObject);
+    explicit ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler*
-  readObjectKeyExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue& o);
 
-private:
-  CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue*
-      _pObject = nullptr;
-  CesiumJsonReader::
-      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
-          _variants;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
-  CesiumJsonReader::StringJsonHandler _name;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _variants;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _material;
+    CesiumJsonReader::StringJsonHandler _name;
+  };
+}  // namespace CesiumGltfReader

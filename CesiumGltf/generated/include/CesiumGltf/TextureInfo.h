@@ -4,46 +4,39 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief Reference to a texture.
- */
-struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "TextureInfo";
+    /**
+     * @brief Reference to a texture.
+     */
+    struct CESIUMGLTF_API TextureInfo : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "TextureInfo";
 
-  /**
-   * @brief The index of the texture.
-   */
-  int32_t index = -1;
+        /**
+         * @brief The index of the texture.
+         */
+        int32_t index = -1;
 
-  /**
-   * @brief The set index of texture's TEXCOORD attribute used for texture
-   * coordinate mapping.
-   *
-   * This integer value is used to construct a string in the format
-   * `TEXCOORD_<set index>` which is a reference to a key in
-   * `mesh.primitives.attributes` (e.g. a value of `0` corresponds to
-   * `TEXCOORD_0`). A mesh primitive **MUST** have the corresponding texture
-   * coordinate attributes for the material to be applicable to it.
-   */
-  int64_t texCoord = 0;
+        /**
+         * @brief The set index of texture's TEXCOORD attribute used for texture coordinate mapping.
+         *
+         * This integer value is used to construct a string in the format `TEXCOORD_<set index>` which is a reference to a key in `mesh.primitives.attributes` (e.g. a value of `0` corresponds to `TEXCOORD_0`). A mesh primitive **MUST** have the corresponding texture coordinate attributes for the material to be applicable to it.
+         */
+        int64_t texCoord = 0;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(TextureInfo));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(TextureInfo));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

@@ -7,7 +7,6 @@
 #include "MaterialPBRMetallicRoughnessJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
 #include "TextureInfoJsonHandler.h"
-
 #include <CesiumGltf/Material.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/BoolJsonHandler.h>
@@ -15,37 +14,32 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class MaterialJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Material;
+  class MaterialJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Material;
 
-  explicit MaterialJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Material* pObject);
+    explicit MaterialJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Material* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyMaterial(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Material& o);
+  protected:
+    IJsonHandler* readObjectKeyMaterial(const std::string& objectType, const std::string_view& str, CesiumGltf::Material& o);
 
-private:
-  CesiumGltf::Material* _pObject = nullptr;
-  MaterialPBRMetallicRoughnessJsonHandler _pbrMetallicRoughness;
-  MaterialNormalTextureInfoJsonHandler _normalTexture;
-  MaterialOcclusionTextureInfoJsonHandler _occlusionTexture;
-  TextureInfoJsonHandler _emissiveTexture;
-  CesiumJsonReader::
-      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
-          _emissiveFactor;
-  CesiumJsonReader::StringJsonHandler _alphaMode;
-  CesiumJsonReader::DoubleJsonHandler _alphaCutoff;
-  CesiumJsonReader::BoolJsonHandler _doubleSided;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Material* _pObject = nullptr;
+    MaterialPBRMetallicRoughnessJsonHandler _pbrMetallicRoughness;
+    MaterialNormalTextureInfoJsonHandler _normalTexture;
+    MaterialOcclusionTextureInfoJsonHandler _occlusionTexture;
+    TextureInfoJsonHandler _emissiveTexture;
+    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _emissiveFactor;
+    CesiumJsonReader::StringJsonHandler _alphaMode;
+    CesiumJsonReader::DoubleJsonHandler _alphaCutoff;
+    CesiumJsonReader::BoolJsonHandler _doubleSided;
+  };
+}  // namespace CesiumGltfReader

@@ -6,35 +6,30 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 namespace CesiumGltf {
-/**
- * @brief Compressed data for bufferView.
- */
-struct CESIUMGLTF_API ExtensionBufferExtMeshoptCompression final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName =
-      "ExtensionBufferExtMeshoptCompression";
-  static constexpr const char* ExtensionName = "EXT_meshopt_compression";
+    /**
+     * @brief Compressed data for bufferView.
+     */
+    struct CESIUMGLTF_API ExtensionBufferExtMeshoptCompression final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "ExtensionBufferExtMeshoptCompression";
+        static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
-  /**
-   * @brief Set to true to indicate that the buffer is only referenced by
-   * bufferViews that have EXT_meshopt_compression extension and as such doesn't
-   * need to be loaded.
-   */
-  bool fallback = false;
+        /**
+         * @brief Set to true to indicate that the buffer is only referenced by bufferViews that have EXT_meshopt_compression extension and as such doesn't need to be loaded.
+         */
+        bool fallback = false;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionBufferExtMeshoptCompression));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionBufferExtMeshoptCompression));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

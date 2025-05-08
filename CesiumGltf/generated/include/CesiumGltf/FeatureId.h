@@ -5,73 +5,64 @@
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <optional>
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief Feature IDs stored in an attribute or texture.
- */
-struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "FeatureId";
+    /**
+     * @brief Feature IDs stored in an attribute or texture.
+     */
+    struct CESIUMGLTF_API FeatureId final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "FeatureId";
 
-  /**
-   * @brief The number of unique features in the attribute or texture.
-   */
-  int64_t featureCount = int64_t();
+        /**
+         * @brief The number of unique features in the attribute or texture.
+         */
+        int64_t featureCount = int64_t();
 
-  /**
-   * @brief A value that indicates that no feature is associated with this
-   * vertex or texel.
-   */
-  std::optional<int64_t> nullFeatureId;
+        /**
+         * @brief A value that indicates that no feature is associated with this vertex or texel.
+         */
+        std::optional<int64_t> nullFeatureId;
 
-  /**
-   * @brief A label assigned to this feature ID set. Labels must be alphanumeric
-   * identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
-   */
-  std::optional<std::string> label;
+        /**
+         * @brief A label assigned to this feature ID set. Labels must be alphanumeric identifiers matching the regular expression `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+         */
+        std::optional<std::string> label;
 
-  /**
-   * @brief An integer value used to construct a string in the format
-   * `_FEATURE_ID_<set index>` which is a reference to a key in
-   * `mesh.primitives.attributes` (e.g. a value of `0` corresponds to
-   * `_FEATURE_ID_0`).
-   */
-  std::optional<int64_t> attribute;
+        /**
+         * @brief An integer value used to construct a string in the format `_FEATURE_ID_<set index>` which is a reference to a key in `mesh.primitives.attributes` (e.g. a value of `0` corresponds to `_FEATURE_ID_0`).
+         */
+        std::optional<int64_t> attribute;
 
-  /**
-   * @brief A texture containing feature IDs.
-   */
-  std::optional<CesiumGltf::FeatureIdTexture> texture;
+        /**
+         * @brief A texture containing feature IDs.
+         */
+        std::optional<CesiumGltf::FeatureIdTexture> texture;
 
-  /**
-   * @brief The index of the property table containing per-feature property
-   * values. Only applicable when using the `EXT_structural_metadata` extension.
-   */
-  int32_t propertyTable = -1;
+        /**
+         * @brief The index of the property table containing per-feature property values. Only applicable when using the `EXT_structural_metadata` extension.
+         */
+        int32_t propertyTable = -1;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(FeatureId));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    if (this->label) {
-      accum += int64_t(this->label->capacity() * sizeof(char));
-    }
-    if (this->texture) {
-      accum += this->texture->getSizeBytes() -
-               int64_t(sizeof(CesiumGltf::FeatureIdTexture));
-    }
-    return accum;
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(FeatureId));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          if(this->label) {
+    accum += int64_t(this->label->capacity() * sizeof(char));
   }
-};
+if(this->texture) {
+accum += this->texture->getSizeBytes() - int64_t(sizeof(CesiumGltf::FeatureIdTexture));
+      }
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

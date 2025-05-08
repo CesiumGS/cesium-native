@@ -4,46 +4,40 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief Structural metadata about a glTF primitive.
- */
-struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName =
-      "ExtensionMeshPrimitiveExtStructuralMetadata";
-  static constexpr const char* ExtensionName = "EXT_structural_metadata";
+    /**
+     * @brief Structural metadata about a glTF primitive.
+     */
+    struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "ExtensionMeshPrimitiveExtStructuralMetadata";
+        static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
-  /**
-   * @brief An array of indexes of property textures in the root
-   * `EXT_structural_metadata` object.
-   */
-  std::vector<int32_t> propertyTextures;
+        /**
+         * @brief An array of indexes of property textures in the root `EXT_structural_metadata` object.
+         */
+        std::vector<int32_t> propertyTextures;
 
-  /**
-   * @brief An array of indexes of property attributes in the root
-   * `EXT_structural_metadata` object.
-   */
-  std::vector<int32_t> propertyAttributes;
+        /**
+         * @brief An array of indexes of property attributes in the root `EXT_structural_metadata` object.
+         */
+        std::vector<int32_t> propertyAttributes;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionMeshPrimitiveExtStructuralMetadata));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(sizeof(int32_t) * this->propertyTextures.capacity());
-    accum += int64_t(sizeof(int32_t) * this->propertyAttributes.capacity());
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionMeshPrimitiveExtStructuralMetadata));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += int64_t(sizeof(int32_t) * this->propertyTextures.capacity());
+accum += int64_t(sizeof(int32_t) * this->propertyAttributes.capacity());
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

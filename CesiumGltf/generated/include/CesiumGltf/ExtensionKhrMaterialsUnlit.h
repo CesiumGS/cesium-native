@@ -6,27 +6,25 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 namespace CesiumGltf {
-/**
- * @brief glTF extension that defines the unlit material model.
- */
-struct CESIUMGLTF_API ExtensionKhrMaterialsUnlit final
-    : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "ExtensionKhrMaterialsUnlit";
-  static constexpr const char* ExtensionName = "KHR_materials_unlit";
+    /**
+     * @brief glTF extension that defines the unlit material model.
+     */
+    struct CESIUMGLTF_API ExtensionKhrMaterialsUnlit final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "ExtensionKhrMaterialsUnlit";
+        static constexpr const char* ExtensionName = "KHR_materials_unlit";
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionKhrMaterialsUnlit));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionKhrMaterialsUnlit));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

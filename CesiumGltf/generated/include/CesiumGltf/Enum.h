@@ -5,85 +5,82 @@
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief An object defining the values of an enum.
- */
-struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
-  static constexpr const char* TypeName = "Enum";
+    /**
+     * @brief An object defining the values of an enum.
+     */
+    struct CESIUMGLTF_API Enum final : public CesiumUtility::ExtensibleObject {
+        static constexpr const char* TypeName = "Enum";
 
-  /**
-   * @brief Known values for The type of the integer enum value.
-   */
-  struct ValueType {
-    inline static const std::string INT8 = "INT8";
+        /**
+         * @brief Known values for The type of the integer enum value.
+         */
+        struct ValueType {
+            inline static const std::string INT8 = "INT8";
 
-    inline static const std::string UINT8 = "UINT8";
+            inline static const std::string UINT8 = "UINT8";
 
-    inline static const std::string INT16 = "INT16";
+            inline static const std::string INT16 = "INT16";
 
-    inline static const std::string UINT16 = "UINT16";
+            inline static const std::string UINT16 = "UINT16";
 
-    inline static const std::string INT32 = "INT32";
+            inline static const std::string INT32 = "INT32";
 
-    inline static const std::string UINT32 = "UINT32";
+            inline static const std::string UINT32 = "UINT32";
 
-    inline static const std::string INT64 = "INT64";
+            inline static const std::string INT64 = "INT64";
 
-    inline static const std::string UINT64 = "UINT64";
-  };
+            inline static const std::string UINT64 = "UINT64";
+        };
 
-  /**
-   * @brief The name of the enum, e.g. for display purposes.
-   */
-  std::optional<std::string> name;
+        /**
+         * @brief The name of the enum, e.g. for display purposes.
+         */
+        std::optional<std::string> name;
 
-  /**
-   * @brief The description of the enum.
-   */
-  std::optional<std::string> description;
+        /**
+         * @brief The description of the enum.
+         */
+        std::optional<std::string> description;
 
-  /**
-   * @brief The type of the integer enum value.
-   *
-   * Known values are defined in {@link ValueType}.
-   *
-   */
-  std::string valueType = ValueType::UINT16;
+        /**
+         * @brief The type of the integer enum value.
+         * 
+         * Known values are defined in {@link ValueType}.
+         *
+         */
+        std::string valueType = ValueType::UINT16;
 
-  /**
-   * @brief An array of enum values. Duplicate names or duplicate integer values
-   * are not allowed.
-   */
-  std::vector<CesiumGltf::EnumValue> values;
+        /**
+         * @brief An array of enum values. Duplicate names or duplicate integer values are not allowed.
+         */
+        std::vector<CesiumGltf::EnumValue> values;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(Enum));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    if (this->name) {
-      accum += int64_t(this->name->capacity() * sizeof(char));
-    }
-    if (this->description) {
-      accum += int64_t(this->description->capacity() * sizeof(char));
-    }
-    accum += int64_t(sizeof(CesiumGltf::EnumValue) * this->values.capacity());
-    for (const CesiumGltf::EnumValue& value : this->values) {
-      accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::EnumValue));
-    }
-    return accum;
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(Enum));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          if(this->name) {
+    accum += int64_t(this->name->capacity() * sizeof(char));
   }
-};
+if(this->description) {
+    accum += int64_t(this->description->capacity() * sizeof(char));
+  }
+accum += int64_t(sizeof(CesiumGltf::EnumValue) * this->values.capacity());
+      for(const CesiumGltf::EnumValue& value : this->values) {
+accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::EnumValue));
+      }
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

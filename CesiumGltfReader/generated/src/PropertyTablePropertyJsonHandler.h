@@ -9,39 +9,33 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class PropertyTablePropertyJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::PropertyTableProperty;
+  class PropertyTablePropertyJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::PropertyTableProperty;
 
-  explicit PropertyTablePropertyJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::PropertyTableProperty* pObject);
+    explicit PropertyTablePropertyJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::PropertyTableProperty* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyPropertyTableProperty(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::PropertyTableProperty& o);
+  protected:
+    IJsonHandler* readObjectKeyPropertyTableProperty(const std::string& objectType, const std::string_view& str, CesiumGltf::PropertyTableProperty& o);
 
-private:
-  CesiumGltf::PropertyTableProperty* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _values;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _arrayOffsets;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _stringOffsets;
-  CesiumJsonReader::StringJsonHandler _arrayOffsetType;
-  CesiumJsonReader::StringJsonHandler _stringOffsetType;
-  CesiumJsonReader::JsonObjectJsonHandler _offset;
-  CesiumJsonReader::JsonObjectJsonHandler _scale;
-  CesiumJsonReader::JsonObjectJsonHandler _max;
-  CesiumJsonReader::JsonObjectJsonHandler _min;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::PropertyTableProperty* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _values;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _arrayOffsets;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _stringOffsets;
+    CesiumJsonReader::StringJsonHandler _arrayOffsetType;
+    CesiumJsonReader::StringJsonHandler _stringOffsetType;
+    CesiumJsonReader::JsonObjectJsonHandler _offset;
+    CesiumJsonReader::JsonObjectJsonHandler _scale;
+    CesiumJsonReader::JsonObjectJsonHandler _max;
+    CesiumJsonReader::JsonObjectJsonHandler _min;
+  };
+}  // namespace CesiumGltfReader
