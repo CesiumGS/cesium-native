@@ -10,6 +10,10 @@
 
 - Added `SubtreeWriter::writeSubtreeBinary`.
 
+##### Fixes :wrench:
+
+- Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
+
 ### v0.47.0 - 2025-05-01
 
 ##### Breaking Changes :mega:
