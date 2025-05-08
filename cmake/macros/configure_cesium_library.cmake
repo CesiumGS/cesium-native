@@ -22,9 +22,16 @@ function(configure_cesium_library targetName)
             PUBLIC
                 GLM_FORCE_XYZW_ONLY # Disable .rgba and .stpq to make it easier to view values from debugger
                 GLM_FORCE_EXPLICIT_CTOR # Disallow implicit conversions between dvec3 <-> dvec4, dvec3 <-> fvec3, etc
-                GLM_ENABLE_EXPERIMENTAL # Allow use of experimental extensions
         )
     endif()
+
+    # GLM defines that should be enabled regardless of strict mode
+    target_compile_definitions(
+        ${targetName} 
+        PUBLIC 
+            GLM_FORCE_INTRINSICS # Force SIMD code paths
+            GLM_ENABLE_EXPERIMENTAL # Allow use of experimental extensions
+    )
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CESIUM_CLANG_TIME_TRACE)
         target_compile_options(${targetName} PRIVATE -ftime-trace)
