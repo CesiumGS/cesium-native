@@ -60,14 +60,14 @@ public:
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
    * @param levelsInSubtree The number of levels in this subtree.
-   * @param allTilesAvailable Whether to make all tiles initially available.
+   * @param setTilesAvailable Whether to make all tiles initially available.
    * @return The subtree availability, or std::nullopt if the subtree definition
    * is invalid.
    */
   static std::optional<SubtreeAvailability> createEmpty(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
-      bool allTilesAvailable) noexcept;
+      bool allTilesetTilesAvailablesAvailable) noexcept;
 
   /**
    * @brief Asynchronously loads a subtree from a URL. The resource downloaded
