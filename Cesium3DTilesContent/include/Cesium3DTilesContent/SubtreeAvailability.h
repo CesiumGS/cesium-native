@@ -67,7 +67,7 @@ public:
   static std::optional<SubtreeAvailability> createEmpty(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
-      bool allTilesetTilesAvailablesAvailable) noexcept;
+      bool setTilesAvailable) noexcept;
 
   /**
    * @brief Asynchronously loads a subtree from a URL. The resource downloaded
