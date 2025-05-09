@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/BoundingRegion.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumVectorData/GeoJsonObjectDescriptor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -198,36 +200,34 @@ parseBoundingBox(const rapidjson::Value& value) {
             "'bbox' member must be of length 4 (2D) or 6 (3D)."));
   }
 
-  const std::optional<std::vector<double>> doubles =
-      JsonHelpers::getDoubles(value, size);
-  if (!doubles) {
-    return Result<std::optional<BoundingRegion>>(
-        std::nullopt,
-        ErrorList::warning("'bbox' member contain only doubles."));
+  std::array<const rapidjson::Value*, 6> coordinates{
+      &value.GetArray()[0],
+      &value.GetArray()[1],
+      size == 4 ? &value.GetArray()[2] : &value.GetArray()[3],
+      size == 4 ? &value.GetArray()[3] : &value.GetArray()[4],
+      // We only read these two if size == 6, so it's ok that they're nullptr
+      size == 4 ? nullptr : &value.GetArray()[2],
+      size == 4 ? nullptr : &value.GetArray()[5]};
+
+  Result<std::optional<BoundingRegion>> notNumberResult(
+      std::nullopt,
+      ErrorList::warning("'bbox' member contain only doubles."));
+
+  for (size_t i = 0; i < (size_t)size; i++) {
+    if (!coordinates[i]->IsNumber()) {
+      return notNumberResult;
+    }
   }
 
-  if (size == 4) {
-    return Result<std::optional<BoundingRegion>>(BoundingRegion(
-        GlobeRectangle(
-            Math::degreesToRadians((*doubles)[0]),
-            Math::degreesToRadians((*doubles)[1]),
-            Math::degreesToRadians((*doubles)[2]),
-            Math::degreesToRadians((*doubles)[3])),
-        0,
-        0,
-        // GeoJSON explicitly only supports the WGS84 ellipsoid.
-        Ellipsoid::WGS84));
-  }
-
-  return Result<std::optional<BoundingRegion>>(BoundingRegion(
-      GlobeRectangle(
-          Math::degreesToRadians((*doubles)[0]),
-          Math::degreesToRadians((*doubles)[1]),
-          Math::degreesToRadians((*doubles)[3]),
-          Math::degreesToRadians((*doubles)[4])),
-      (*doubles)[2],
-      (*doubles)[5],
-      Ellipsoid::WGS84));
+  return Result<std::optional<BoundingRegion>>(
+      std::optional<BoundingRegion>{BoundingRegion(
+          GlobeRectangle(
+              Math::degreesToRadians(coordinates[0]->GetDouble()),
+              Math::degreesToRadians(coordinates[1]->GetDouble()),
+              Math::degreesToRadians(coordinates[2]->GetDouble()),
+              Math::degreesToRadians(coordinates[3]->GetDouble())),
+          size == 4 ? 0.0 : coordinates[4]->GetDouble(),
+          size == 4 ? 0.0 : coordinates[5]->GetDouble())});
 }
 } // namespace
 
