@@ -56,91 +56,130 @@ JsonValue::Object collectForeignMembers(
 
 // GeoJSON position is an array of two or three components, representing
 // [longitude, latitude, (height)]
-Result<Cartographic> parsePosition(const rapidjson::Value& pos) {
+std::optional<ErrorList>
+parsePosition(const rapidjson::Value& pos, Cartographic& outCartographic) {
   if (!pos.IsArray()) {
-    return Result<Cartographic>(
-        ErrorList::error("Position value must be an array."));
+    return ErrorList::error("Position value must be an array.");
   }
 
-  const int32_t size = static_cast<int32_t>(pos.GetArray().Size());
-  if (!pos.IsArray() || size < 2 || size > 3) {
-    return Result<Cartographic>(ErrorList::error(
-        "Position value must be an array with two or three members."));
+  rapidjson::Value::ConstArray arr = pos.GetArray();
+
+  const int32_t size = static_cast<int32_t>(arr.Size());
+  if (size < 2 || size > 3) {
+    return ErrorList::error(
+        "Position value must be an array with two or three members.");
   }
 
-  std::optional<std::vector<double>> components =
-      JsonHelpers::getDoubles(pos, size);
+  ErrorList notNumberError =
+      ErrorList::error("Position value must be an array of only numbers.");
 
-  if (!components) {
-    return Result<Cartographic>(
-        ErrorList::error("Position value must be an array of only numbers."));
+  // Parsing manually without an intermediate vector to avoid unnecessary
+  // allocations.
+  outCartographic = Cartographic(0.0, 0.0);
+
+  if (!arr[0].IsNumber()) {
+    return notNumberError;
   }
 
-  return Cartographic(
-      Math::degreesToRadians((*components)[0]),
-      Math::degreesToRadians((*components)[1]),
-      size == 3 ? (*components)[2] : 0);
-}
+  outCartographic.longitude = Math::degreesToRadians(arr[0].GetDouble());
 
-Result<std::vector<Cartographic>>
-parsePositionArray(const rapidjson::Value::ConstArray& arr) {
-  std::vector<Cartographic> points;
-  points.reserve(arr.Size());
-  for (auto& value : arr) {
-    Result<Cartographic> coordinateResult = parsePosition(value);
-    if (!coordinateResult.value) {
-      return Result<std::vector<Cartographic>>(
-          std::move(coordinateResult.errors));
+  if (!arr[1].IsNumber()) {
+    return notNumberError;
+  }
+
+  outCartographic.latitude = Math::degreesToRadians(arr[1].GetDouble());
+
+  if (size > 2) {
+    if (!arr[2].IsNumber()) {
+      return notNumberError;
     }
-    points.emplace_back(std::move(*coordinateResult.value));
+
+    outCartographic.height = arr[2].GetDouble();
   }
 
-  return Result<std::vector<Cartographic>>(std::move(points));
+  return std::nullopt;
 }
 
-Result<std::vector<std::vector<Cartographic>>> parsePolygon(
+std::optional<ErrorList> parsePositionArray(
     const rapidjson::Value::ConstArray& arr,
+    std::vector<Cartographic>& pointData,
+    int32_t& outStartIndex,
+    int32_t& outEndIndex) {
+  outStartIndex = static_cast<int32_t>(pointData.size());
+  pointData.reserve(pointData.size() + arr.Size());
+  for (auto& value : arr) {
+    Cartographic result = Cartographic(0.0, 0.0, 0.0);
+    std::optional<ErrorList> coordinateParseError =
+        parsePosition(value, result);
+    if (coordinateParseError) {
+      return coordinateParseError;
+    }
+    pointData.emplace_back(std::move(result));
+  }
+  outEndIndex = static_cast<int32_t>(pointData.size() - 1);
+
+  if (outStartIndex > outEndIndex) {
+    // Empty position array
+    outStartIndex = outEndIndex = -1;
+  }
+
+  return std::nullopt;
+}
+
+std::optional<ErrorList> parsePolygon(
+    const rapidjson::Value::ConstArray& arr,
+    std::vector<GeoJsonLineString>& lineStringData,
+    std::vector<Cartographic>& pointData,
+    int32_t& outStartIndex,
+    int32_t& outEndIndex,
     const std::string& name,
-    uint32_t minItems,
+    int32_t minItems,
     bool mustBeClosed) {
-  std::vector<std::vector<Cartographic>> rings;
-  rings.reserve(arr.Size());
+  outStartIndex = static_cast<int32_t>(lineStringData.size());
+  lineStringData.reserve(lineStringData.size() + arr.Size());
   for (auto& value : arr) {
     if (!value.IsArray()) {
-      return Result<std::vector<std::vector<Cartographic>>>(ErrorList::error(
-          name + " 'coordinates' member must be an array of position arrays."));
+      return ErrorList::error(
+          name + " 'coordinates' member must be an array of position arrays.");
     }
 
-    Result<std::vector<Cartographic>> pointsResult =
-        parsePositionArray(value.GetArray());
-    if (!pointsResult.value) {
-      return Result<std::vector<std::vector<Cartographic>>>(
-          std::move(pointsResult.errors));
-    } else if (pointsResult.value->size() < minItems) {
-      return Result<std::vector<std::vector<Cartographic>>>(
-          ErrorList::error(fmt::format(
-              "{} 'coordinates' member must be an array of "
-              "arrays of {} or more positions.",
-              name,
-              minItems)));
+    GeoJsonLineString& lineString = lineStringData.emplace_back();
+    std::optional<ErrorList> pointsParseError = parsePositionArray(
+        value.GetArray(),
+        pointData,
+        lineString.pointStartIndex,
+        lineString.pointEndIndex);
+    if (pointsParseError) {
+      return pointsParseError;
+    } else if (
+        lineString.pointStartIndex == -1 || lineString.pointEndIndex == -1 ||
+        (lineString.pointEndIndex - lineString.pointStartIndex + 1) <
+            minItems) {
+      return ErrorList::error(fmt::format(
+          "{} 'coordinates' member must be an array of "
+          "arrays of {} or more positions.",
+          name,
+          minItems));
     }
 
     if (mustBeClosed &&
-        (*pointsResult.value)[0] !=
-            (*pointsResult.value)[pointsResult.value->size() - 1]) {
-      return Result<
-          std::vector<std::vector<Cartographic>>>(ErrorList::error(fmt::format(
+        pointData[static_cast<size_t>(lineString.pointStartIndex)] !=
+            pointData[static_cast<size_t>(lineString.pointEndIndex)]) {
+      return ErrorList::error(fmt::format(
           "{} 'coordinates' member can only contain closed rings, requiring "
           "the first and last coordinates of each ring to have identical "
           "values.",
           name,
-          minItems)));
+          minItems));
     }
-
-    rings.emplace_back(std::move(*pointsResult.value));
   }
 
-  return Result<std::vector<std::vector<Cartographic>>>(std::move(rings));
+  outEndIndex = static_cast<int32_t>(lineStringData.size() - 1);
+  if (outStartIndex > outEndIndex) {
+    outStartIndex = outEndIndex = -1;
+  }
+
+  return std::nullopt;
 }
 
 Result<std::optional<BoundingRegion>>
@@ -189,41 +228,6 @@ parseBoundingBox(const rapidjson::Value& value) {
       (*doubles)[2],
       (*doubles)[5],
       Ellipsoid::WGS84));
-}
-
-void emplaceLine(
-    std::vector<GeoJsonLineString>& lineStringData,
-    std::vector<Cartographic>& pointData,
-    std::vector<Cartographic>& linePoints) {
-  GeoJsonLineString& lineString = lineStringData.emplace_back();
-  lineString.pointStartIndex = static_cast<int32_t>(pointData.size());
-  pointData.insert(
-      pointData.end(),
-      std::make_move_iterator(linePoints.begin()),
-      std::make_move_iterator(linePoints.end()));
-  lineString.pointEndIndex = static_cast<int32_t>(pointData.size() - 1);
-
-  if (lineString.pointStartIndex > lineString.pointEndIndex) {
-    // Empty LineString
-    lineString.pointStartIndex = lineString.pointEndIndex = -1;
-  }
-}
-
-void emplacePolygon(
-    std::vector<GeoJsonPolygon>& polygonData,
-    std::vector<GeoJsonLineString>& lineStringData,
-    std::vector<Cartographic>& pointData,
-    std::vector<std::vector<Cartographic>>& linePoints) {
-  GeoJsonPolygon polygon = polygonData.emplace_back();
-  polygon.lineStringStartIndex = static_cast<int32_t>(lineStringData.size());
-  for (std::vector<Cartographic>& line : linePoints) {
-    emplaceLine(lineStringData, pointData, line);
-  }
-  polygon.lineStringEndIndex = static_cast<int32_t>(lineStringData.size() - 1);
-
-  if (polygon.lineStringStartIndex > polygon.lineStringEndIndex) {
-    polygon.lineStringStartIndex = polygon.lineStringEndIndex = -1;
-  }
 }
 } // namespace
 
@@ -492,12 +496,14 @@ Result<GeoJsonObjectDescriptor> GeoJsonDocument::parseGeoJsonObject(
     node.type = GeoJsonObjectType::Point;
     // Point primitive has a "coordinates" member that consists of a single
     // position.
-    Result<Cartographic> posResult = parsePosition(coordinatesMember->value);
-    if (!posResult.value) {
-      return Result<GeoJsonObjectDescriptor>(std::move(posResult.errors));
+    Cartographic position(0.0, 0.0, 0.0);
+    std::optional<ErrorList> posParseError =
+        parsePosition(coordinatesMember->value, position);
+    if (posParseError) {
+      return Result<GeoJsonObjectDescriptor>(std::move(*posParseError));
     }
 
-    this->_pointData.emplace_back(std::move(*posResult.value));
+    this->_pointData.emplace_back(std::move(position));
     node.dataStartIndex = node.dataEndIndex =
         static_cast<int32_t>(this->_pointData.size() - 1);
   } else if (type == "MultiPoint") {
@@ -509,22 +515,13 @@ Result<GeoJsonObjectDescriptor> GeoJsonDocument::parseGeoJsonObject(
           "MultiPoint 'coordinates' member must be an array of positions."));
     }
 
-    Result<std::vector<Cartographic>> pointsResult =
-        parsePositionArray(coordinatesMember->value.GetArray());
-    if (!pointsResult.value) {
-      return Result<GeoJsonObjectDescriptor>(std::move(pointsResult.errors));
-    }
-
-    node.dataStartIndex = static_cast<int32_t>(this->_pointData.size());
-    this->_pointData.insert(
-        this->_pointData.end(),
-        std::make_move_iterator(pointsResult.value->begin()),
-        std::make_move_iterator(pointsResult.value->end()));
-    node.dataEndIndex = static_cast<int32_t>(this->_pointData.size() - 1);
-
-    if (node.dataStartIndex > node.dataEndIndex) {
-      // Empty MultiPoint
-      node.dataStartIndex = node.dataEndIndex = -1;
+    std::optional<ErrorList> pointsParseError = parsePositionArray(
+        coordinatesMember->value.GetArray(),
+        this->_pointData,
+        node.dataStartIndex,
+        node.dataEndIndex);
+    if (pointsParseError) {
+      return Result<GeoJsonObjectDescriptor>(std::move(*pointsParseError));
     }
   } else if (type == "LineString") {
     node.type = GeoJsonObjectType::LineString;
@@ -535,17 +532,21 @@ Result<GeoJsonObjectDescriptor> GeoJsonDocument::parseGeoJsonObject(
           "LineString 'coordinates' member must be an array of positions."));
     }
 
-    Result<std::vector<Cartographic>> pointsResult =
-        parsePositionArray(coordinatesMember->value.GetArray());
-    if (!pointsResult.value) {
-      return Result<GeoJsonObjectDescriptor>(std::move(pointsResult.errors));
-    } else if (pointsResult.value->size() < 2) {
+    GeoJsonLineString& lineString = this->_lineStringData.emplace_back();
+    std::optional<ErrorList> pointsParseError = parsePositionArray(
+        coordinatesMember->value.GetArray(),
+        this->_pointData,
+        lineString.pointStartIndex,
+        lineString.pointEndIndex);
+    if (pointsParseError) {
+      return Result<GeoJsonObjectDescriptor>(std::move(*pointsParseError));
+    } else if (
+        lineString.pointStartIndex == -1 || lineString.pointEndIndex == -1 ||
+        (lineString.pointEndIndex - lineString.pointStartIndex + 1) < 2) {
       return Result<GeoJsonObjectDescriptor>(
           ErrorList::error("LineString 'coordinates' member must contain two "
                            "or more positions."));
     }
-
-    emplaceLine(this->_lineStringData, this->_pointData, *pointsResult.value);
 
     node.dataStartIndex = node.dataEndIndex =
         static_cast<int32_t>(this->_lineStringData.size() - 1);
@@ -562,23 +563,17 @@ Result<GeoJsonObjectDescriptor> GeoJsonDocument::parseGeoJsonObject(
     const rapidjson::Value::ConstArray coordinatesArr =
         coordinatesMember->value.GetArray();
 
-    Result<std::vector<std::vector<Cartographic>>> linesResult =
-        parsePolygon(coordinatesArr, "MultiLineString", 2, false);
-    if (!linesResult.value) {
-      return Result<GeoJsonObjectDescriptor>(std::move(linesResult.errors));
-    }
-
-    this->_lineStringData.reserve(
-        this->_lineStringData.size() + linesResult.value->size());
-    node.dataStartIndex = static_cast<int32_t>(this->_lineStringData.size());
-    for (std::vector<CesiumGeospatial::Cartographic>& line :
-         *linesResult.value) {
-      emplaceLine(this->_lineStringData, this->_pointData, line);
-    }
-    node.dataEndIndex = static_cast<int32_t>(this->_lineStringData.size() - 1);
-
-    if (node.dataStartIndex > node.dataEndIndex) {
-      node.dataStartIndex = node.dataEndIndex = -1;
+    std::optional<ErrorList> linesParseError = parsePolygon(
+        coordinatesArr,
+        this->_lineStringData,
+        this->_pointData,
+        node.dataStartIndex,
+        node.dataEndIndex,
+        "MultiLineString",
+        2,
+        false);
+    if (linesParseError) {
+      return Result<GeoJsonObjectDescriptor>(std::move(*linesParseError));
     }
   } else if (type == "Polygon") {
     node.type = GeoJsonObjectType::Polygon;
@@ -593,17 +588,19 @@ Result<GeoJsonObjectDescriptor> GeoJsonDocument::parseGeoJsonObject(
     const rapidjson::Value::ConstArray coordinatesArr =
         coordinatesMember->value.GetArray();
 
-    Result<std::vector<std::vector<Cartographic>>> ringsResult =
-        parsePolygon(coordinatesArr, "Polygon", 4, true);
-    if (!ringsResult.value) {
-      return Result<GeoJsonObjectDescriptor>(std::move(ringsResult.errors));
-    }
-
-    emplacePolygon(
-        this->_polygonData,
+    GeoJsonPolygon& polygon = this->_polygonData.emplace_back();
+    std::optional<ErrorList> ringsParseError = parsePolygon(
+        coordinatesArr,
         this->_lineStringData,
         this->_pointData,
-        *ringsResult.value);
+        polygon.lineStringStartIndex,
+        polygon.lineStringEndIndex,
+        "Polygon",
+        4,
+        true);
+    if (ringsParseError) {
+      return Result<GeoJsonObjectDescriptor>(std::move(*ringsParseError));
+    }
     node.dataStartIndex = node.dataEndIndex =
         static_cast<int32_t>(this->_polygonData.size() - 1);
   } else if (type == "MultiPolygon") {
@@ -629,19 +626,25 @@ Result<GeoJsonObjectDescriptor> GeoJsonDocument::parseGeoJsonObject(
                              "array of arrays of position arrays."));
       }
 
-      Result<std::vector<std::vector<Cartographic>>> ringsResult =
-          parsePolygon(value.GetArray(), "MultiPolygon", 4, true);
-      if (!ringsResult.value) {
-        return Result<GeoJsonObjectDescriptor>(std::move(ringsResult.errors));
-      }
-
-      emplacePolygon(
-          this->_polygonData,
+      GeoJsonPolygon& polygon = this->_polygonData.emplace_back();
+      std::optional<ErrorList> ringsParseError = parsePolygon(
+          value.GetArray(),
           this->_lineStringData,
           this->_pointData,
-          *ringsResult.value);
+          polygon.lineStringStartIndex,
+          polygon.lineStringEndIndex,
+          "MultiPolygon",
+          4,
+          true);
+      if (ringsParseError) {
+        return Result<GeoJsonObjectDescriptor>(std::move(*ringsParseError));
+      }
     }
     node.dataEndIndex = static_cast<int32_t>(this->_polygonData.size() - 1);
+
+    if (node.dataStartIndex > node.dataEndIndex) {
+      node.dataStartIndex = node.dataEndIndex = -1;
+    }
   } else {
     return Result<GeoJsonObjectDescriptor>(ErrorList::error(
         fmt::format("Unknown GeoJSON object type: '{}'", type)));
