@@ -4,13 +4,13 @@
 
 // forward declarations
 namespace CesiumJsonWriter {
-  class JsonWriter;
-  class ExtensionWriterContext;
+class JsonWriter;
+class ExtensionWriterContext;
 } // namespace CesiumJsonWriter
 
 // forward declarations
 namespace CesiumGltf {
-  struct ExtensionCesiumRTC;
+struct ExtensionCesiumRTC;
 struct ExtensionCesiumTileEdges;
 struct ExtensionExtInstanceFeatures;
 struct ExtensionExtMeshFeatures;
@@ -331,10 +331,12 @@ struct ExtensionModelMaxarMeshVariantsValueJsonWriter {
 };
 
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonWriter {
-  using ValueType = CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
+  using ValueType =
+      CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
 
   static void write(
-      const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue& obj,
+      const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
+          obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

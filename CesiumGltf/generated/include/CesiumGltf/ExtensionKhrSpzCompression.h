@@ -4,70 +4,76 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>
 
 namespace CesiumGltf {
-    /**
-     * @brief Compressed data for SPZ primitive.
-     */
-    struct CESIUMGLTF_API ExtensionKhrSpzCompression final : public CesiumUtility::ExtensibleObject {
-        static constexpr const char* TypeName = "ExtensionKhrSpzCompression";
-        static constexpr const char* ExtensionName = "KHR_spz_compression";
+/**
+ * @brief Compressed data for SPZ primitive.
+ */
+struct CESIUMGLTF_API ExtensionKhrSpzCompression final
+    : public CesiumUtility::ExtensibleObject {
+  static constexpr const char* TypeName = "ExtensionKhrSpzCompression";
+  static constexpr const char* ExtensionName = "KHR_spz_compression";
 
-        /**
-         * @brief The index of the bufferView.
-         */
-        int32_t bufferView = -1;
+  /**
+   * @brief The index of the bufferView.
+   */
+  int32_t bufferView = -1;
 
-        /**
-         * @brief The number of gaussians.
-         */
-        std::optional<int64_t> numPoints;
+  /**
+   * @brief The number of gaussians.
+   */
+  std::optional<int64_t> numPoints;
 
-        /**
-         * @brief The degree of the spherical harmonics.
-         */
-        std::optional<int64_t> shDegree;
+  /**
+   * @brief The degree of the spherical harmonics.
+   */
+  std::optional<int64_t> shDegree;
 
-        /**
-         * @brief The number of fractional bits.
-         */
-        std::optional<int64_t> fractionalBits;
+  /**
+   * @brief The number of fractional bits.
+   */
+  std::optional<int64_t> fractionalBits;
 
-        /**
-         * @brief The flags for the compressed data.
-         */
-        std::optional<int64_t> flags;
+  /**
+   * @brief The flags for the compressed data.
+   */
+  std::optional<int64_t> flags;
 
-        /**
-         * @brief The version of the SPZ algorithm
-         */
-        std::optional<int64_t> version;
+  /**
+   * @brief The version of the SPZ algorithm
+   */
+  std::optional<int64_t> version;
 
-        /**
-         * @brief A dictionary object, where each key corresponds to an attribute and its unique attribute id stored in the compressed geometry.
-         */
-        std::unordered_map<std::string, int32_t> attributes;
+  /**
+   * @brief A dictionary object, where each key corresponds to an attribute and
+   * its unique attribute id stored in the compressed geometry.
+   */
+  std::unordered_map<std::string, int32_t> attributes;
 
-        /**
-         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
-         * This will NOT include the size of any extensions attached to the object.
-         * Calling this method may be slow as it requires traversing the object's entire structure.
-         */
-        int64_t getSizeBytes() const {
-          int64_t accum = 0;
-          accum += int64_t(sizeof(ExtensionKhrSpzCompression));
-          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
-          accum += int64_t(this->attributes.bucket_count() * (sizeof(std::string) + sizeof(int32_t)));
-      for(const auto& [k, v] : this->attributes) {
-accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
-accum += int64_t(sizeof(int32_t));
-      }
-          return accum;
-        }
-
-    };
+  /**
+   * @brief Calculates the size in bytes of this object, including the contents
+   * of all collections, pointers, and strings. This will NOT include the size
+   * of any extensions attached to the object. Calling this method may be slow
+   * as it requires traversing the object's entire structure.
+   */
+  int64_t getSizeBytes() const {
+    int64_t accum = 0;
+    accum += int64_t(sizeof(ExtensionKhrSpzCompression));
+    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
+             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+    accum += int64_t(
+        this->attributes.bucket_count() *
+        (sizeof(std::string) + sizeof(int32_t)));
+    for (const auto& [k, v] : this->attributes) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += int64_t(sizeof(int32_t));
+    }
+    return accum;
+  }
+};
 } // namespace CesiumGltf

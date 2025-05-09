@@ -7,31 +7,41 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class JsonReaderOptions;
+class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-  class ExtensionKhrGaussianSplattingJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
-  public:
-    using ValueType = CesiumGltf::ExtensionKhrGaussianSplatting;
+class ExtensionKhrGaussianSplattingJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
+      public CesiumJsonReader::IExtensionJsonHandler {
+public:
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplatting;
 
-    static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
+  static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
 
-    explicit ExtensionKhrGaussianSplattingJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrGaussianSplatting* pObject);
+  explicit ExtensionKhrGaussianSplattingJsonHandler(
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::ExtensionKhrGaussianSplatting* pObject);
 
-    IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumUtility::ExtensibleObject& o,
+      const std::string_view& extensionName) override;
 
-    IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
-  protected:
-    IJsonHandler* readObjectKeyExtensionKhrGaussianSplatting(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrGaussianSplatting& o);
+protected:
+  IJsonHandler* readObjectKeyExtensionKhrGaussianSplatting(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::ExtensionKhrGaussianSplatting& o);
 
-  private:
-
-    CesiumGltf::ExtensionKhrGaussianSplatting* _pObject = nullptr;
-    CesiumJsonReader::DoubleJsonHandler _quantizedPositionScale;
-  };
-}  // namespace CesiumGltfReader
+private:
+  CesiumGltf::ExtensionKhrGaussianSplatting* _pObject = nullptr;
+  CesiumJsonReader::DoubleJsonHandler _quantizedPositionScale;
+};
+} // namespace CesiumGltfReader

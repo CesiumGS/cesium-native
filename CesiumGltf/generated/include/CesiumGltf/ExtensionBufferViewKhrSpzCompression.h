@@ -3,56 +3,59 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
+
 #include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
 
 namespace CesiumGltf {
-    /**
-     * @brief Compressed data for bufferView.
-     */
-    struct CESIUMGLTF_API ExtensionBufferViewKhrSpzCompression final : public CesiumUtility::ExtensibleObject {
-        static inline constexpr const char* TypeName = "ExtensionBufferViewKhrSpzCompression";
-        static inline constexpr const char* ExtensionName = "KHR_spz_compression";
+/**
+ * @brief Compressed data for bufferView.
+ */
+struct CESIUMGLTF_API ExtensionBufferViewKhrSpzCompression final
+    : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* TypeName =
+      "ExtensionBufferViewKhrSpzCompression";
+  static inline constexpr const char* ExtensionName = "KHR_spz_compression";
 
-        /**
-         * @brief The index of the buffer with compressed data.
-         */
-        int32_t buffer = -1;
+  /**
+   * @brief The index of the buffer with compressed data.
+   */
+  int32_t buffer = -1;
 
-        /**
-         * @brief The offset into the buffer in bytes.
-         */
-        int64_t byteOffset = 0;
+  /**
+   * @brief The offset into the buffer in bytes.
+   */
+  int64_t byteOffset = 0;
 
-        /**
-         * @brief The length of the compressed data in bytes.
-         */
-        int64_t byteLength = int64_t();
+  /**
+   * @brief The length of the compressed data in bytes.
+   */
+  int64_t byteLength = int64_t();
 
-        /**
-         * @brief The stride, in bytes.
-         */
-        int64_t byteStride = int64_t();
+  /**
+   * @brief The stride, in bytes.
+   */
+  int64_t byteStride = int64_t();
 
-        /**
-         * @brief The number of gaussians.
-         */
-        int64_t numPoints = int64_t();
+  /**
+   * @brief The number of gaussians.
+   */
+  int64_t numPoints = int64_t();
 
-        /**
-         * @brief The degree of the spherical harmonics.
-         */
-        int64_t shDegree = 0;
+  /**
+   * @brief The degree of the spherical harmonics.
+   */
+  int64_t shDegree = 0;
 
-        /**
-         * @brief The number of fractional bits.
-         */
-        int64_t fractionalBits = 12;
+  /**
+   * @brief The number of fractional bits.
+   */
+  int64_t fractionalBits = 12;
 
-        /**
-         * @brief The flags for the compressed data.
-         */
-        int64_t flags = 0;
-
-    };
-}
+  /**
+   * @brief The flags for the compressed data.
+   */
+  int64_t flags = 0;
+};
+} // namespace CesiumGltf
