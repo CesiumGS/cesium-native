@@ -432,6 +432,14 @@ private:
       AvailabilityView& availabilityView,
       bool isAvailable) noexcept;
 
+  void updateAvailabilityViews();
+
+  void convertConstantAvailabilityToBitstream(
+      Cesium3DTiles::Subtree& subtree,
+      uint64_t numberOfTiles,
+      SubtreeAvailability::AvailabilityView& availabilityView,
+      Cesium3DTiles::Availability& availability);
+
   uint32_t _powerOf2;
   uint32_t _levelsInSubtree;
   Cesium3DTiles::Subtree _subtree;

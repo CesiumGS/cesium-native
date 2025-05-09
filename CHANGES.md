@@ -13,6 +13,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
+- Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
 
 ### v0.47.0 - 2025-05-01
 
