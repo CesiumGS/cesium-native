@@ -134,10 +134,12 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
 
 /*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::createEmpty(
     ImplicitTileSubdivisionScheme subdivisionScheme,
-    uint32_t levelsInSubtree) noexcept {
+    uint32_t levelsInSubtree,
+    bool setTilesAvailable) noexcept {
   Subtree subtree;
   subtree.tileAvailability.constant =
-      Cesium3DTiles::Availability::Constant::AVAILABLE;
+      setTilesAvailable ? Cesium3DTiles::Availability::Constant::AVAILABLE
+                        : Cesium3DTiles::Availability::Constant::UNAVAILABLE;
   subtree.contentAvailability.emplace_back().constant =
       Cesium3DTiles::Availability::Constant::UNAVAILABLE;
   subtree.childSubtreeAvailability.constant =

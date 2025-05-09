@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
+- `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
 
 ##### Additions :tada:
 

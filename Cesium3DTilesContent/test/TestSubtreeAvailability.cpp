@@ -1015,11 +1015,50 @@ TEST_CASE("Test parsing subtree format") {
   }
 }
 
+TEST_CASE("Test SubtreeAvailability::createEmpty") {
+  SUBCASE("With no tiles available") {
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            false);
+    REQUIRE(maybeAvailability);
+
+    SubtreeAvailability& availability = *maybeAvailability;
+
+    CHECK_FALSE(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK_FALSE(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
+  }
+
+  SUBCASE("With all tiles available") {
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            true);
+    REQUIRE(maybeAvailability);
+
+    SubtreeAvailability& availability = *maybeAvailability;
+
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
+  }
+}
+
 TEST_CASE("SubtreeAvailability modifications") {
   std::optional<SubtreeAvailability> maybeAvailability =
       SubtreeAvailability::createEmpty(
           ImplicitTileSubdivisionScheme::Quadtree,
-          5);
+          5,
+          true);
   REQUIRE(maybeAvailability);
 
   SubtreeAvailability& availability = *maybeAvailability;
