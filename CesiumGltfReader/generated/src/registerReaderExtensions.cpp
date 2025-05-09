@@ -3,7 +3,6 @@
 
 #include "registerReaderExtensions.h"
 
-#include "EXT_structural_metadataGlTFDocumentExtensionJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
@@ -44,9 +43,6 @@ namespace CesiumGltfReader {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   (void)options;
   options.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
-  options.registerExtension<
-      CesiumGltf::Model,
-      EXT_structural_metadataGlTFDocumentExtensionJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
       ExtensionModelKhrMaterialsVariantsJsonHandler>();

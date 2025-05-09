@@ -20,7 +20,6 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
-#include <CesiumGltf/EXT_structural_metadataGlTFDocumentExtension.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
@@ -49,9 +48,6 @@ void registerWriterExtensions(
     CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
   context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
-  context.registerExtension<
-      CesiumGltf::Model,
-      EXT_structural_metadataGlTFDocumentExtensionJsonWriter>();
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModelKhrMaterialsVariantsJsonWriter>();
