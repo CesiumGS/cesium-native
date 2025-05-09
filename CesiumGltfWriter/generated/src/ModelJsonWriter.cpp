@@ -39,6 +39,7 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariantsValue.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
@@ -120,6 +121,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionBufferViewExtMeshoptCompression& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -727,6 +733,40 @@ void writeJson(
       CesiumGltf::ExtensionBufferViewExtMeshoptCompression::Filter::NONE) {
     jsonWriter.Key("filter");
     writeJson(obj.filter, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("schema");
+  writeJson(obj.schema, jsonWriter, context);
+
+  if (obj.schemaUri) {
+    jsonWriter.Key("schemaUri");
+    writeJson(obj.schemaUri, jsonWriter, context);
+  }
+
+  if (!obj.propertyTables.empty()) {
+    jsonWriter.Key("propertyTables");
+    writeJson(obj.propertyTables, jsonWriter, context);
+  }
+
+  if (!obj.propertyTextures.empty()) {
+    jsonWriter.Key("propertyTextures");
+    writeJson(obj.propertyTextures, jsonWriter, context);
+  }
+
+  if (!obj.propertyAttributes.empty()) {
+    jsonWriter.Key("propertyAttributes");
+    writeJson(obj.propertyAttributes, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2448,6 +2488,13 @@ void ExtensionBufferExtMeshoptCompressionJsonWriter::write(
 
 void ExtensionBufferViewExtMeshoptCompressionJsonWriter::write(
     const CesiumGltf::ExtensionBufferViewExtMeshoptCompression& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionModelExtStructuralMetadataJsonWriter::write(
+    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

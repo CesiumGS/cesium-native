@@ -17,6 +17,7 @@ struct ExtensionExtMeshFeatures;
 struct ExtensionExtMeshGpuInstancing;
 struct ExtensionBufferExtMeshoptCompression;
 struct ExtensionBufferViewExtMeshoptCompression;
+struct ExtensionModelExtStructuralMetadata;
 struct ExtensionMeshPrimitiveExtStructuralMetadata;
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
@@ -153,6 +154,17 @@ struct ExtensionBufferViewExtMeshoptCompressionJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionBufferViewExtMeshoptCompression& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModelExtStructuralMetadataJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
+
+  static constexpr const char* ExtensionName = "EXT_structural_metadata";
+
+  static void write(
+      const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

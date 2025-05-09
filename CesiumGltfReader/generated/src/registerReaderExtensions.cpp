@@ -19,6 +19,7 @@
 #include "ExtensionKhrTextureTransformJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
+#include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
@@ -43,6 +44,9 @@ namespace CesiumGltfReader {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   (void)options;
   options.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelExtStructuralMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Model,
       ExtensionModelKhrMaterialsVariantsJsonHandler>();
