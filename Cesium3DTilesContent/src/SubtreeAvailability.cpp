@@ -274,6 +274,7 @@ void SubtreeAvailability::setTileAvailable(
       relativeTileLevel,
       relativeTileMortonId,
       this->_tileAvailability,
+      this->_subtree.tileAvailability,
       isAvailable);
 }
 
@@ -351,6 +352,7 @@ void SubtreeAvailability::setContentAvailable(
         relativeTileLevel,
         relativeTileMortonId,
         this->_contentAvailability[contentId],
+        this->_subtree.contentAvailability[contentId],
         isAvailable);
   }
 }
@@ -390,7 +392,8 @@ namespace {
 void convertConstantAvailabilityToBitstream(
     Subtree& subtree,
     uint64_t numberOfTiles,
-    SubtreeAvailability::AvailabilityView& availabilityView) {
+    SubtreeAvailability::AvailabilityView& availabilityView,
+    Availability& availability) {
   const SubtreeAvailability::SubtreeConstantAvailability*
       pConstantAvailability =
           std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
@@ -432,6 +435,9 @@ void convertConstantAvailabilityToBitstream(
       buffer.cesium.data.data() + start,
       buffer.cesium.data.data() + end);
   availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};
+
+  availability.bitstream = int32_t(subtree.bufferViews.size() - 1);
+  availability.constant.reset();
 }
 
 } // namespace
@@ -452,7 +458,8 @@ void SubtreeAvailability::setSubtreeAvailable(
       convertConstantAvailabilityToBitstream(
           this->_subtree,
           numberOfTilesInNextLevel,
-          this->_subtreeAvailability);
+          this->_subtreeAvailability,
+          this->_subtree.childSubtreeAvailability);
     }
   }
 
@@ -514,6 +521,7 @@ void SubtreeAvailability::setAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     AvailabilityView& availabilityView,
+    Availability& availability,
     bool isAvailable) noexcept {
   const SubtreeConstantAvailability* pConstantAvailability =
       std::get_if<SubtreeConstantAvailability>(&availabilityView);
@@ -530,7 +538,8 @@ void SubtreeAvailability::setAvailable(
       convertConstantAvailabilityToBitstream(
           this->_subtree,
           numberOfTilesInSubtree,
-          availabilityView);
+          availabilityView,
+          availability);
     }
   }
 

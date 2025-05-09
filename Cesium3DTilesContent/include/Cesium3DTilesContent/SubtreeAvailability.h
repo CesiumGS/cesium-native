@@ -421,6 +421,7 @@ private:
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
       AvailabilityView& availabilityView,
+      Cesium3DTiles::Availability& availability,
       bool isAvailable) noexcept;
 
   bool isAvailableUsingBufferView(
