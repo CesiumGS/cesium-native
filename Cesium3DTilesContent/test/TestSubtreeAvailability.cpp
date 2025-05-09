@@ -1138,5 +1138,14 @@ TEST_CASE("SubtreeAvailability modifications") {
 
     CHECK_UNARY(subtree.childSubtreeAvailability.bitstream);
     CHECK_UNARY_FALSE(subtree.childSubtreeAvailability.constant);
+
+    // Check that tile availability is still correct - e.g. spans are updated
+    // after the buffer grows
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK(!availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
   }
 }
