@@ -17,7 +17,7 @@ struct ExtensionExtMeshFeatures;
 struct ExtensionExtMeshGpuInstancing;
 struct ExtensionBufferExtMeshoptCompression;
 struct ExtensionBufferViewExtMeshoptCompression;
-struct ExtensionModelExtStructuralMetadata;
+struct EXT_structural_metadataGlTFDocumentExtension;
 struct ExtensionMeshPrimitiveExtStructuralMetadata;
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
@@ -29,6 +29,7 @@ struct ExtensionNodeMaxarMeshVariants;
 struct ExtensionKhrTextureTransform;
 struct ExtensionTextureWebp;
 struct ExtensionCesiumPrimitiveOutline;
+struct ExtensionKhrGaussianSplatting;
 struct ExtensionKhrSpzCompression;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
@@ -157,13 +158,13 @@ struct ExtensionBufferViewExtMeshoptCompressionJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionModelExtStructuralMetadataJsonWriter {
-  using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
+struct EXT_structural_metadataGlTFDocumentExtensionJsonWriter {
+  using ValueType = CesiumGltf::EXT_structural_metadataGlTFDocumentExtension;
 
   static constexpr const char* ExtensionName = "EXT_structural_metadata";
 
   static void write(
-      const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+      const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -285,6 +286,17 @@ struct ExtensionCesiumPrimitiveOutlineJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrGaussianSplattingJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplatting;
+
+  static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

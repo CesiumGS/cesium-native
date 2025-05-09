@@ -19,7 +19,7 @@
 #include <CesiumGltf/FeatureIdTexture.h>
 
 #include "ExtensionCesiumRTCJsonHandler.h"
-#include "ExtensionModelExtStructuralMetadataJsonHandler.h"
+#include "EXT_structural_metadataGlTFDocumentExtensionJsonHandler.h"
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
@@ -28,6 +28,7 @@
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
+#include "ExtensionKhrGaussianSplattingJsonHandler.h"
 #include "ExtensionKhrSpzCompressionJsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
@@ -48,7 +49,7 @@ namespace CesiumGltfReader {
 void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   (void)options;
   options.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonHandler>();
-options.registerExtension<CesiumGltf::Model, ExtensionModelExtStructuralMetadataJsonHandler>();
+options.registerExtension<CesiumGltf::Model, EXT_structural_metadataGlTFDocumentExtensionJsonHandler>();
 options.registerExtension<CesiumGltf::Model, ExtensionModelKhrMaterialsVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::Model, ExtensionModelMaxarMeshVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumTileEdgesJsonHandler>();
@@ -57,6 +58,7 @@ options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveExtSt
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonHandler>();
+options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrSpzCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonHandler>();

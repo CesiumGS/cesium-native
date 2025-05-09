@@ -237,6 +237,13 @@
       ]
     },
     {
+      "extensionName": "KHR_gaussian_splatting",
+      "schema": "Khronos/KHR_gaussian_splatting/schema/primitive.KHR_gaussian_splatting.schema.json",
+      "attachTo": [
+        "mesh.primitive"
+      ]
+    },
+    {
       "extensionName": "KHR_spz_compression",
       "schema": "Khronos/KHR_spz_compression/schema/mesh.primitive.KHR_spz_compression.schema.json",
       "attachTo": [

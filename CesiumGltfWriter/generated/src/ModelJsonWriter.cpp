@@ -16,7 +16,7 @@
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
-#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/EXT_structural_metadataGlTFDocumentExtension.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
@@ -28,6 +28,7 @@
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrSpzCompression.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
@@ -125,7 +126,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+    const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -181,6 +182,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -734,7 +740,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+    const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -963,6 +969,22 @@ void writeJson(
   if (obj.indices > -1) {
   jsonWriter.Key("indices");
   writeJson(obj.indices, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.quantizedPositionScale != 1) {
+  jsonWriter.Key("quantizedPositionScale");
+  writeJson(obj.quantizedPositionScale, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2465,8 +2487,8 @@ void ExtensionBufferViewExtMeshoptCompressionJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionModelExtStructuralMetadataJsonWriter::write(
-    const CesiumGltf::ExtensionModelExtStructuralMetadata& obj,
+void EXT_structural_metadataGlTFDocumentExtensionJsonWriter::write(
+    const CesiumGltf::EXT_structural_metadataGlTFDocumentExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
@@ -2544,6 +2566,13 @@ void ExtensionTextureWebpJsonWriter::write(
 
 void ExtensionCesiumPrimitiveOutlineJsonWriter::write(
     const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionKhrGaussianSplattingJsonWriter::write(
+    const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

@@ -22,7 +22,7 @@
 
 // NOLINTBEGIN(misc-include-cleaner)
 #include <CesiumGltf/ExtensionCesiumRTC.h>
-#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/EXT_structural_metadataGlTFDocumentExtension.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
@@ -31,6 +31,7 @@
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrSpzCompression.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
@@ -52,7 +53,7 @@ namespace CesiumGltfWriter {
 void registerWriterExtensions(CesiumJsonWriter::ExtensionWriterContext& context) {
   (void)context;
   context.registerExtension<CesiumGltf::Model, ExtensionCesiumRTCJsonWriter>();
-context.registerExtension<CesiumGltf::Model, ExtensionModelExtStructuralMetadataJsonWriter>();
+context.registerExtension<CesiumGltf::Model, EXT_structural_metadataGlTFDocumentExtensionJsonWriter>();
 context.registerExtension<CesiumGltf::Model, ExtensionModelKhrMaterialsVariantsJsonWriter>();
 context.registerExtension<CesiumGltf::Model, ExtensionModelMaxarMeshVariantsJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumTileEdgesJsonWriter>();
@@ -61,6 +62,7 @@ context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveExtSt
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompressionJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonWriter>();
+context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrSpzCompressionJsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonWriter>();
