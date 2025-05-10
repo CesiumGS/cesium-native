@@ -66,7 +66,9 @@ if (NOT VCPKG_OVERLAY_PORTS)
     endif()
 endif()
 
-list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+    list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+endif()
 
 message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
 
