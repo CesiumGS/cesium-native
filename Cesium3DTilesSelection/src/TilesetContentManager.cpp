@@ -673,6 +673,9 @@ postProcessContentInWorkerThread(
         }
 
         result.contentKind = std::move(*gltfResult.model);
+        result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
+        result.initialContentBoundingVolume =
+            tileLoadInfo.tileContentBoundingVolume;
 
         postProcessGltfInWorkerThread(
             result,
@@ -1501,9 +1504,7 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
         !TileIdUtilities::isLoadable(child.getTileID()) ||
         child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getReferenceCount() == 0);
-    CESIUM_ASSERT(
-        !TileIdUtilities::isLoadable(child.getTileID()) ||
-        child.getContent().isUnknownContent());
+    CESIUM_ASSERT(!child.hasReferencingContent());
     this->_tilesEligibleForContentUnloading.remove(child);
     this->clearChildrenRecursively(&child);
     child.setParent(nullptr);
@@ -1774,9 +1775,13 @@ void TilesetContentManager::setTileContent(
     // An example of non-loadable content is the "external content" at the root
     // of a regular tileset.json tileset. We can't unload it without destroying
     // the entire tileset.
-    if (!tile.getContent().isUnknownContent() &&
-        TileIdUtilities::isLoadable(tile.getTileID())) {
+    if (tile.hasReferencingContent()) {
       tile.addReference("setTileContent");
+    }
+
+    // Only render content should have raster overlays.
+    if (!tile.getContent().isRenderContent()) {
+      tile.getMappedRasterTiles().clear();
     }
 
     if (result.tileInitializer) {

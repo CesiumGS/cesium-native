@@ -50,7 +50,7 @@ TEST_CASE("TilesetViewGroup") {
     auto pTileset = EllipsoidTilesetLoader::createTileset(externals, options);
 
     SUBCASE("can view the globe at different LODs") {
-      std::vector<ViewState> farFrustums{ViewState::create(
+      std::vector<ViewState> farFrustums{ViewState(
           glm::dvec3(Ellipsoid::WGS84.getMaximumRadius() * 1.2, 0.0, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(0.0, 0.0, 1.0),
@@ -58,7 +58,7 @@ TEST_CASE("TilesetViewGroup") {
           Math::degreesToRadians(60.0),
           Math::degreesToRadians(60.0))};
 
-      std::vector<ViewState> nearFrustums{ViewState::create(
+      std::vector<ViewState> nearFrustums{ViewState(
           glm::dvec3(Ellipsoid::WGS84.getMaximumRadius() * 1.1, 0.0, 0.0),
           glm::dvec3(-1.0, 0.0, 0.0),
           glm::dvec3(0.0, 0.0, 1.0),
@@ -105,7 +105,7 @@ TEST_CASE("TilesetViewGroup") {
       {
         // Move the near view in closer.
         nearFrustums.clear();
-        nearFrustums.emplace_back(ViewState::create(
+        nearFrustums.emplace_back(ViewState(
             glm::dvec3(Ellipsoid::WGS84.getMaximumRadius() * 1.08, 0.0, 0.0),
             glm::dvec3(-1.0, 0.0, 0.0),
             glm::dvec3(0.0, 0.0, 1.0),

@@ -321,21 +321,20 @@ void Tileset::_updateLodTransitions(
   }
 }
 
-const ViewUpdateResult&
-Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
-  ViewUpdateResult& updateResult =
-      this->_defaultViewGroup.getViewUpdateResult();
+const ViewUpdateResult& Tileset::updateViewGroupOffline(
+    TilesetViewGroup& viewGroup,
+    const std::vector<ViewState>& frustums) {
+  ViewUpdateResult& updateResult = viewGroup.getViewUpdateResult();
   std::vector<Tile::Pointer> tilesSelectedPrevFrame =
       updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
-  this->updateView(frustums, 0.0f);
-  while (this->_pTilesetContentManager->getNumberOfTilesLoading() > 0 ||
-         updateResult.mainThreadTileLoadQueueLength > 0 ||
-         updateResult.workerThreadTileLoadQueueLength > 0) {
+  this->updateViewGroup(viewGroup, frustums, 0.0f);
+  while (viewGroup.getPreviousLoadProgressPercentage() < 100.0f) {
     this->_externals.pAssetAccessor->tick();
-    this->updateView(frustums, 0.0f);
+    this->loadTiles();
+    this->updateViewGroup(viewGroup, frustums, 0.0f);
   }
 
   updateResult.tilesFadingOut.clear();
@@ -368,6 +367,11 @@ Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
       this->updateViewGroup(this->_defaultViewGroup, frustums, deltaTime);
   this->loadTiles();
   return result;
+}
+
+const ViewUpdateResult&
+Tileset::updateViewOffline(const std::vector<ViewState>& frustums) {
+  return this->updateViewGroupOffline(this->_defaultViewGroup, frustums);
 }
 
 const ViewUpdateResult& Tileset::updateViewGroup(
@@ -431,6 +435,8 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
 void Tileset::loadTiles() {
   CESIUM_TRACE("Tileset::loadTiles");
+
+  this->_asyncSystem.dispatchMainThreadTasks();
 
   Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {

@@ -96,8 +96,7 @@ Tile::Tile(
       _mightHaveLatentChildren{true},
       _rasterTiles(),
       _referenceCount(0) {
-  if (!this->_content.isUnknownContent() &&
-      TileIdUtilities::isLoadable(this->getTileID())) {
+  if (this->hasReferencingContent()) {
     // Add a reference for the loaded content.
     this->addReference("Constructor with content");
   }
@@ -119,11 +118,8 @@ Tile::Tile(Tile&& rhs) noexcept
       _loadState{rhs._loadState},
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
       _rasterTiles(std::move(rhs._rasterTiles)),
-      // See the move assignment operator for an explanation of how we copy
-      // `_referenceCount` here.
       _referenceCount(0) {
-  if (!this->_content.isUnknownContent() &&
-      TileIdUtilities::isLoadable(this->getTileID())) {
+  if (this->hasReferencingContent()) {
     this->addReference("Move constructor with content");
     rhs.releaseReference("RHS passed to move constructor");
   }
@@ -326,15 +322,25 @@ void Tile::clearChildren() noexcept {
 
 namespace {
 
-// Is this tile's content referenced? We can tell by careful inspection of the
-// reference count.
+// Checks if this tile's content referenced by other sources. We can tell by
+// careful inspection of the tile's reference count.
+//
+// References come from:
+// 1. When a Tile has content, the content has a reference to the Tile so that
+// the Tile cannot be unloaded before the content.
+// 2. When a child tile has a reference count greater than zero, it adds a
+// reference to its parent.
+// 3. `TilesetViewGroup` and other external objects can hold explicit references
+// to a `Tile` and its content, usually using an `IntrusivePointer`.
+//
+// This method subtracts out the references from (1) and (2), and returns true
+// if there are any references remaining from (3).
 bool isContentReferenced(const Tile& tile) {
   int32_t referencesNotToThisTilesContent = 0;
 
   // A reference to the current tile as a result of its content being loaded.
   // Content that is not (re-)loadable does not get a reference.
-  if (!tile.getContent().isUnknownContent() &&
-      TileIdUtilities::isLoadable(tile.getTileID()))
+  if (tile.hasReferencingContent())
     ++referencesNotToThisTilesContent;
 
   // References from a (referenced) child to the parent.
@@ -438,6 +444,11 @@ void Tile::releaseReference([[maybe_unused]] const char* reason) noexcept {
 
 int32_t Tile::getReferenceCount() const noexcept {
   return this->_referenceCount;
+}
+
+bool Tile::hasReferencingContent() const noexcept {
+  return !this->_content.isUnknownContent() &&
+         TileIdUtilities::isLoadable(this->_id);
 }
 
 } // namespace Cesium3DTilesSelection

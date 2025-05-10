@@ -224,7 +224,9 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult&
+  [[deprecated("Instead of `tileset.updateViewOffline(...)`, call "
+               "`tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), "
+               "...)`.")]] const ViewUpdateResult&
   updateViewOffline(const std::vector<ViewState>& frustums);
 
   /**
@@ -242,7 +244,9 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult&
+  [[deprecated("Instead of `tileset.updateView(...)`, call "
+               "`tileset.updateViewGroup(tileset.getDefaultViewGroup(), ...)` "
+               "followed by `tileset.loadTiles()`.")]] const ViewUpdateResult&
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
@@ -405,12 +409,39 @@ public:
       float deltaTime = 0.0f);
 
   /**
+   * @brief Updates a view group, returning the set of tiles to render in this
+   * view. Unlike {@link updateViewGroup}, this method blocks the calling thread
+   * until all tiles suitable for the views have been loaded.
+   *
+   * This method is significantly slower than {@link updateViewGroup} and
+   * should only be used for capturing a movie or for other non-realtime
+   * situations.
+   *
+   * @param viewGroup The view group to update. The first time `updateViewGroup`
+   * is called, simply create a new `TilesetViewGroup` to pass as this
+   * parameter. For successive calls to `updateViewGroup`, pass this same
+   * instance.
+   * @param frustums The {@link ViewState} instances that are observing the
+   * tileset in this view group.
+   * @returns The set of tiles to render in the updated view. This value is only
+   * valid until the next call to `updateViewGroup` or until the view group is
+   * destroyed, whichever comes first.
+   */
+  const ViewUpdateResult& updateViewGroupOffline(
+      TilesetViewGroup& viewGroup,
+      const std::vector<ViewState>& frustums);
+
+  /**
    * @brief Loads the tiles that are currently deemed the most important,
    * across all height queries and {@link TilesetViewGroup} instances.
    *
    * In order to minimize tile load latency, this method should be called
    * frequently, such as once per render frame. It will return quickly when
    * there is no work to do.
+   *
+   * This method also calls
+   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} on the tileset's
+   * {@link getAsyncSystem}.
    */
   void loadTiles();
 

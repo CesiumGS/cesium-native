@@ -8,9 +8,11 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 
 #include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include <optional>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
@@ -22,10 +24,23 @@ namespace Cesium3DTilesSelection {
  */
 class CESIUM3DTILESSELECTION_API ViewState final {
 
-  // TODO: Add support for orthographic and off-center perspective frustums
 public:
   /**
-   * @brief Creates a new instance of a view state.
+   * @brief Creates a new instance of a view state with a symmetric perspective
+   * projection.
+   * @deprecated Use {@link ViewState::ViewState} instead.
+   */
+  [[deprecated("Use ViewState::ViewState instead.")]] static ViewState create(
+      const glm::dvec3& position,
+      const glm::dvec3& direction,
+      const glm::dvec3& up,
+      const glm::dvec2& viewportSize,
+      double horizontalFieldOfView,
+      double verticalFieldOfView,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance.
    *
    * @param position The position of the eye point of the camera.
    * @param direction The view direction vector of the camera.
@@ -40,13 +55,60 @@ public:
    * from the cartesian position.
    * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
    */
-  static ViewState create(
+  ViewState(
       const glm::dvec3& position,
       const glm::dvec3& direction,
       const glm::dvec3& up,
       const glm::dvec2& viewportSize,
       double horizontalFieldOfView,
       double verticalFieldOfView,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance of a view state with a general projection,
+   * including skewed perspective and orthographic projections.
+   *
+   * @param viewMatrix The view's view matrix i.e., the inverse of its pose
+   * @param projectionMatrix see e.g.
+   * {@link CesiumGeometry::Transforms::createPerspectiveMatrix}
+   * @param viewportSize The size of the viewport, in pixels.
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position}
+   * from the cartesian position.
+   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   */
+  ViewState(
+      const glm::dmat4& viewMatrix,
+      const glm::dmat4& projectionMatrix,
+      const glm::dvec2& viewportSize,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance of a view state with an orthographic
+   * projection.
+   *
+   * @param position The position of the eye point of the camera.
+   * @param direction The view direction vector of the camera.
+   * @param up The up vector of the camera.
+   * @param viewportSize The size of the viewport, in pixels.
+   * @param left left distance of near plane edge from center
+   * @param right right distance of near plane edge
+   * @param bottom bottom distance of near plane edge
+   * @param top top distance of near plane edge
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position}
+   * from the cartesian position.
+   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   */
+  ViewState(
+      const glm::dvec3& position,
+      const glm::dvec3& direction,
+      const glm::dvec3& up,
+      const glm::dvec2& viewportSize,
+      double left,
+      double right,
+      double bottom,
+      double top,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -65,7 +127,12 @@ public:
    * @brief Gets the up direction of the camera in Earth-centered, Earth-fixed
    * coordinates.
    */
-  const glm::dvec3& getUp() const noexcept { return this->_up; }
+  glm::dvec3 getUp() const noexcept {
+    return {
+        this->_viewMatrix[0][1],
+        this->_viewMatrix[1][1],
+        this->_viewMatrix[2][1]};
+  }
 
   /**
    * @brief Gets the position of the camera as a longitude / latitude / height.
@@ -86,17 +153,27 @@ public:
   }
 
   /**
-   * @brief Gets the horizontal field-of-view angle in radians.
+   * @brief Gets the horizontal field-of-view angle in radians. This is only
+   * valid for a symmetric perspective projection.
    */
-  double getHorizontalFieldOfView() const noexcept {
-    return this->_horizontalFieldOfView;
-  }
+  double getHorizontalFieldOfView() const noexcept;
 
   /**
-   * @brief Gets the vertical field-of-view angle in radians.
+   * @brief Gets the vertical field-of-view angle in radians. This is only
+   * valid for a symmetric perspective projection.
    */
-  double getVerticalFieldOfView() const noexcept {
-    return this->_verticalFieldOfView;
+  double getVerticalFieldOfView() const noexcept;
+
+  /**
+   * @brief Gets the view matrix for the ViewState.
+   */
+  const glm::dmat4& getViewMatrix() const noexcept { return this->_viewMatrix; }
+
+  /**
+   * @brief Gets the projection matrix for the ViewState.
+   */
+  const glm::dmat4& getProjectionMatrix() const noexcept {
+    return this->_projectionMatrix;
   }
 
   /**
@@ -142,40 +219,16 @@ public:
       const noexcept;
 
 private:
-  /**
-   * @brief Creates a new instance.
-   *
-   * @param position The position of the eye point of the camera.
-   * @param direction The view direction vector of the camera.
-   * @param up The up vector of the camera.
-   * @param viewportSize The size of the viewport, in pixels.
-   * @param horizontalFieldOfView The horizontal field-of-view (opening)
-   * angle of the camera, in radians.
-   * @param verticalFieldOfView The vertical field-of-view (opening)
-   * angle of the camera, in radians.
-   */
-  ViewState(
-      const glm::dvec3& position,
-      const glm::dvec3& direction,
-      const glm::dvec3& up,
-      const glm::dvec2& viewportSize,
-      double horizontalFieldOfView,
-      double verticalFieldOfView,
-      const std::optional<CesiumGeospatial::Cartographic>& positionCartographic,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
-
   const glm::dvec3 _position;
   const glm::dvec3 _direction;
-  const glm::dvec3 _up;
   const glm::dvec2 _viewportSize;
-  const double _horizontalFieldOfView;
-  const double _verticalFieldOfView;
   const CesiumGeospatial::Ellipsoid _ellipsoid;
 
-  const double _sseDenominator;
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
   const CesiumGeometry::CullingVolume _cullingVolume;
+  const glm::dmat4 _viewMatrix;
+  const glm::dmat4 _projectionMatrix;
 };
 
 } // namespace Cesium3DTilesSelection
