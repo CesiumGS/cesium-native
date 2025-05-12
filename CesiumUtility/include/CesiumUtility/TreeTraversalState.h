@@ -313,6 +313,69 @@ public:
     return this->slowlyGetStates(this->_previousTraversal);
   }
 
+  /**
+   * @brief Compares the current traversal against the previous one, invoking a
+   * callback for each case where a node had a different state in the two
+   * traversals.
+   *
+   * @tparam TCallback The type of the callback.
+   * @param callback The callback to be invoked for each difference. The
+   * function is given the node pointer, the old state, and the new state, in
+   * that order.
+   */
+  template <typename TCallback> void diff(TCallback&& callback) {
+    size_t previousIndex = 0;
+    size_t currentIndex = 0;
+
+    while (previousIndex < this->_previousTraversal.size() &&
+           currentIndex > this->_currentTraversal.size()) {
+      const TraversalData& previousData =
+          this->_previousTraversal[previousIndex];
+      const TraversalData& currentData = this->_currentTraversal[currentIndex];
+
+      CESIUM_ASSERT(previousData.pNode == currentData.pNode);
+      if (previousData.pNode != currentData.pNode) {
+        // This shouldn't happen.
+        break;
+      }
+
+      if (previousData.state != currentData.state) {
+        // Different state - report it
+        callback(previousData.pNode, previousData.state, currentData.state);
+      }
+
+      bool previousTraversalVisitedChildren =
+          previousData.nextSiblingIndex > previousIndex + 1;
+      bool currentTraversalVisitedChildren =
+          currentData.nextSiblingIndex > currentIndex + 1;
+
+      if (previousTraversalVisitedChildren == currentTraversalVisitedChildren) {
+        ++previousIndex;
+        ++currentIndex;
+      } else if (previousTraversalVisitedChildren) {
+        while (previousIndex < previousData.nextSiblingIndex) {
+          const TraversalData& skipped =
+              this->_previousTraversal[previousIndex];
+          callback(skipped.pNode, skipped.state, TState());
+          ++previousIndex;
+        }
+
+        ++currentIndex;
+      } else {
+        while (currentIndex < currentData.nextSiblingIndex) {
+          const TraversalData& skipped = this->_currentTraversal[currentIndex];
+          callback(skipped.pNode, TState(), skipped.state);
+          ++currentIndex;
+        }
+
+        ++previousIndex;
+      }
+    }
+
+    CESIUM_ASSERT(previousIndex == this->_previousTraversal.size());
+    CESIUM_ASSERT(currentIndex == this->_currentTraversal.size());
+  }
+
 private:
   struct TraversalData {
     TNodePointer pNode;
