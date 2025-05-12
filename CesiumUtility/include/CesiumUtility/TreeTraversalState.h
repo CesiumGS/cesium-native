@@ -318,12 +318,27 @@ public:
    * callback for each case where a node had a different state in the two
    * traversals.
    *
+   * The callback is also invoked:
+   *
+   *   * For each node that was visited previously but was not visited in the
+   * current traversal. In this case, the current state provided to the callback
+   * is a default-constructed `TState` instance.
+   *   * For each node that was not visited previously but was visited in the
+   * current traversal. In this case, the previous state provided to the
+   * callback is a default-constructed `TState` instance.
+   *
+   * This method should only be called after the {@link finishNode} for the
+   * root node, and before {@link beginTraversal}. In other words, it should
+   * not be called while a traversal is in progress.
+   *
    * @tparam TCallback The type of the callback.
    * @param callback The callback to be invoked for each difference. The
    * function is given the node pointer, the old state, and the new state, in
    * that order.
    */
   template <typename TCallback> void diff(TCallback&& callback) const {
+    CESIUM_ASSERT(this->_parentIndices.empty());
+
     int64_t previousIndex = 0;
     int64_t currentIndex = 0;
 
