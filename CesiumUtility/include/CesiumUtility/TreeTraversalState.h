@@ -323,12 +323,12 @@ public:
    * function is given the node pointer, the old state, and the new state, in
    * that order.
    */
-  template <typename TCallback> void diff(TCallback&& callback) {
-    size_t previousIndex = 0;
-    size_t currentIndex = 0;
+  template <typename TCallback> void diff(TCallback&& callback) const {
+    int64_t previousIndex = 0;
+    int64_t currentIndex = 0;
 
-    while (previousIndex < this->_previousTraversal.size() &&
-           currentIndex > this->_currentTraversal.size()) {
+    while (previousIndex < int64_t(this->_previousTraversal.size()) &&
+           currentIndex < int64_t(this->_currentTraversal.size())) {
       const TraversalData& previousData =
           this->_previousTraversal[previousIndex];
       const TraversalData& currentData = this->_currentTraversal[currentIndex];
@@ -349,31 +349,30 @@ public:
       bool currentTraversalVisitedChildren =
           currentData.nextSiblingIndex > currentIndex + 1;
 
-      if (previousTraversalVisitedChildren == currentTraversalVisitedChildren) {
-        ++previousIndex;
-        ++currentIndex;
-      } else if (previousTraversalVisitedChildren) {
+      ++previousIndex;
+      ++currentIndex;
+
+      if (previousTraversalVisitedChildren &&
+          !currentTraversalVisitedChildren) {
         while (previousIndex < previousData.nextSiblingIndex) {
           const TraversalData& skipped =
               this->_previousTraversal[previousIndex];
           callback(skipped.pNode, skipped.state, TState());
           ++previousIndex;
         }
-
-        ++currentIndex;
-      } else {
+      } else if (
+          currentTraversalVisitedChildren &&
+          !previousTraversalVisitedChildren) {
         while (currentIndex < currentData.nextSiblingIndex) {
           const TraversalData& skipped = this->_currentTraversal[currentIndex];
           callback(skipped.pNode, TState(), skipped.state);
           ++currentIndex;
         }
-
-        ++previousIndex;
       }
     }
 
-    CESIUM_ASSERT(previousIndex == this->_previousTraversal.size());
-    CESIUM_ASSERT(currentIndex == this->_currentTraversal.size());
+    CESIUM_ASSERT(previousIndex == int64_t(this->_previousTraversal.size()));
+    CESIUM_ASSERT(currentIndex == int64_t(this->_currentTraversal.size()));
   }
 
 private:

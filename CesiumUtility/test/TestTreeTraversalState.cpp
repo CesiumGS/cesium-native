@@ -12,6 +12,16 @@ struct Node {
   std::string name;
 };
 
+std::vector<std::tuple<Node*, int, int>>
+getDifferences(const TreeTraversalState<Node*, int>& traversalState) {
+  std::vector<std::tuple<Node*, int, int>> differences;
+  traversalState.diff(
+      [&differences](Node* pNode, int previousState, int currentState) {
+        differences.emplace_back(pNode, previousState, currentState);
+      });
+  return differences;
+}
+
 } // namespace
 
 TEST_CASE("TreeTraversalState") {
@@ -81,24 +91,29 @@ TEST_CASE("TreeTraversalState") {
       traversalState.beginNode(&a);
         REQUIRE(traversalState.previousState() != nullptr);
         CHECK(*traversalState.previousState() == 1);
+        traversalState.currentState() = 1;
 
         traversalState.beginNode(&b);
           REQUIRE(traversalState.previousState() != nullptr);
           CHECK(*traversalState.previousState() == 2);
+          traversalState.currentState() = 2;
         traversalState.finishNode(&b);
 
         traversalState.beginNode(&c);
           REQUIRE(traversalState.previousState() != nullptr);
           CHECK(*traversalState.previousState() == 3);
+          traversalState.currentState() = 3;
 
           traversalState.beginNode(&e);
             REQUIRE(traversalState.previousState() != nullptr);
             CHECK(*traversalState.previousState() == 5);
+            traversalState.currentState() = 5;
           traversalState.finishNode(&e);
 
           traversalState.beginNode(&f);
             REQUIRE(traversalState.previousState() != nullptr);
             CHECK(*traversalState.previousState() == 6);
+            traversalState.currentState() = 6;
           traversalState.finishNode(&f);
 
         traversalState.finishNode(&c);
@@ -106,10 +121,15 @@ TEST_CASE("TreeTraversalState") {
         traversalState.beginNode(&d);
           REQUIRE(traversalState.previousState() != nullptr);
           CHECK(*traversalState.previousState() == 4);
+          traversalState.currentState() = 4;
         traversalState.finishNode(&d);
 
       traversalState.finishNode(&a);
       // clang-format on
+
+      SUBCASE("and diff reports no differences") {
+        CHECK(getDifferences(traversalState).empty());
+      }
     }
 
     SUBCASE("Second traversal can skip children") {
@@ -119,24 +139,40 @@ TEST_CASE("TreeTraversalState") {
       traversalState.beginNode(&a);
         REQUIRE(traversalState.previousState() != nullptr);
         CHECK(*traversalState.previousState() == 1);
+        traversalState.currentState() = 1;
 
         traversalState.beginNode(&b);
           REQUIRE(traversalState.previousState() != nullptr);
           CHECK(*traversalState.previousState() == 2);
+          traversalState.currentState() = 2;
         traversalState.finishNode(&b);
 
         traversalState.beginNode(&c);
           REQUIRE(traversalState.previousState() != nullptr);
           CHECK(*traversalState.previousState() == 3);
+          traversalState.currentState() = 3;
         traversalState.finishNode(&c);
 
         traversalState.beginNode(&d);
           REQUIRE(traversalState.previousState() != nullptr);
           CHECK(*traversalState.previousState() == 4);
+          traversalState.currentState() = 4;
         traversalState.finishNode(&d);
 
       traversalState.finishNode(&a);
       // clang-format on
+
+      SUBCASE("and diff reports the differences") {
+        std::vector<std::tuple<Node*, int, int>> differences =
+            getDifferences(traversalState);
+        REQUIRE(differences.size() == 2);
+        CHECK(std::get<0>(differences[0]) == &e);
+        CHECK(std::get<1>(differences[0]) == 5);
+        CHECK(std::get<2>(differences[0]) == int());
+        CHECK(std::get<0>(differences[1]) == &f);
+        CHECK(std::get<1>(differences[1]) == 6);
+        CHECK(std::get<2>(differences[1]) == int());
+      }
     }
 
     SUBCASE("Second traversal can visit new children") {
