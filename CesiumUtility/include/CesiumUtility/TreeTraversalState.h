@@ -330,8 +330,9 @@ public:
     while (previousIndex < int64_t(this->_previousTraversal.size()) &&
            currentIndex < int64_t(this->_currentTraversal.size())) {
       const TraversalData& previousData =
-          this->_previousTraversal[previousIndex];
-      const TraversalData& currentData = this->_currentTraversal[currentIndex];
+          this->_previousTraversal[size_t(previousIndex)];
+      const TraversalData& currentData =
+          this->_currentTraversal[size_t(currentIndex)];
 
       CESIUM_ASSERT(previousData.pNode == currentData.pNode);
       if (previousData.pNode != currentData.pNode) {
@@ -356,7 +357,7 @@ public:
           !currentTraversalVisitedChildren) {
         while (previousIndex < previousData.nextSiblingIndex) {
           const TraversalData& skipped =
-              this->_previousTraversal[previousIndex];
+              this->_previousTraversal[size_t(previousIndex)];
           callback(skipped.pNode, skipped.state, TState());
           ++previousIndex;
         }
@@ -364,7 +365,8 @@ public:
           currentTraversalVisitedChildren &&
           !previousTraversalVisitedChildren) {
         while (currentIndex < currentData.nextSiblingIndex) {
-          const TraversalData& skipped = this->_currentTraversal[currentIndex];
+          const TraversalData& skipped =
+              this->_currentTraversal[size_t(currentIndex)];
           callback(skipped.pNode, TState(), skipped.state);
           ++currentIndex;
         }
