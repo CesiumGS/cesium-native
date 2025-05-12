@@ -10,7 +10,6 @@
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonObject.h>
-#include <CesiumVectorData/GeoJsonObjectDescriptor.h>
 #include <CesiumVectorData/Library.h>
 
 #include <memory>
@@ -93,18 +92,20 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
-   * @brief Creates a new \ref VectorDocument directly from a \ref
-   * GeoJsonObjectDescriptor.
+   * @brief Creates a new \ref GeoJsonDocument directly from a \ref
+   * GeoJsonObject.
    */
   GeoJsonDocument(
-      GeoJsonObjectDescriptor&& rootObject,
+      GeoJsonObject&& rootObject,
       std::vector<VectorDocumentAttribution>&& attributions);
 
   GeoJsonDocument() = default;
 
-  constexpr const GeoJsonObjectDescriptor& getRootObject() const {
+  constexpr const GeoJsonObject& getRootObject() const {
     return this->_rootObject;
   }
+
+  constexpr GeoJsonObject& getRootObject() { return this->_rootObject; }
 
   /**
    * @brief Obtains attribution information for this document.
@@ -112,29 +113,13 @@ public:
   const std::vector<VectorDocumentAttribution>& getAttributions() const;
 
 private:
-  CesiumUtility::Result<GeoJsonObjectDescriptor> parseGeoJsonObject(
-      const rapidjson::Value::ConstObject& obj,
-      const std::function<bool(const std::string& type)>& expectedPredicate,
-      const std::string& expectedStr);
-  CesiumUtility::Result<GeoJsonObjectDescriptor>
+  CesiumUtility::Result<GeoJsonObject>
   parseGeoJson(const rapidjson::Document& doc);
-  CesiumUtility::Result<GeoJsonObjectDescriptor>
+  CesiumUtility::Result<GeoJsonObject>
   parseGeoJson(const std::span<const std::byte>& bytes);
 
-  GeoJsonObjectDescriptor _rootObject;
-  std::vector<GeoJsonObjectDescriptor> _geometryData;
-  std::vector<CesiumGeospatial::Cartographic> _pointData;
-  std::vector<GeoJsonLineString> _lineStringData;
-  std::vector<GeoJsonPolygon> _polygonData;
-  std::vector<GeoJsonFeature> _featureData;
-
-  std::vector<CesiumUtility::JsonValue::Object> _foreignMemberData;
-  std::vector<CesiumGeospatial::BoundingRegion> _boundingBoxData;
-
   std::vector<VectorDocumentAttribution> _attributions;
-
-  friend GeoJsonObjectDescriptor;
-  friend GeoJsonLineString;
-  friend GeoJsonPolygon;
+  GeoJsonObject _rootObject =
+      GeoJsonPoint{CesiumGeospatial::Cartographic(0, 0, 0)};
 };
 } // namespace CesiumVectorData

@@ -1,9 +1,7 @@
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumVectorData/GeoJsonObjectDescriptor.h"
-
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
@@ -49,11 +47,13 @@ TEST_CASE("Parse Point primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(pDocument->getRootObject().type == GeoJsonObjectType::Point);
-          const std::span<Cartographic>& points =
-              pDocument->getRootObject().getPoints(pDocument);
-          REQUIRE(points.size() == 1);
-          CHECK(points[0] == Cartographic::fromDegrees(100.0, 0.0, 0.0));
+          const GeoJsonPoint* pPoint =
+              std::get_if<GeoJsonPoint>(&pDocument->getRootObject());
+          REQUIRE(pPoint);
+          REQUIRE(pPoint->type == GeoJsonObjectType::Point);
+          CHECK(
+              pPoint->coordinates ==
+              Cartographic::fromDegrees(100.0, 0.0, 0.0));
         });
 
     expectParserResult(
@@ -64,11 +64,13 @@ TEST_CASE("Parse Point primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(pDocument->getRootObject().type == GeoJsonObjectType::Point);
-          const std::span<Cartographic>& points =
-              pDocument->getRootObject().getPoints(pDocument);
-          REQUIRE(points.size() == 1);
-          CHECK(points[0] == Cartographic::fromDegrees(-100.0, 20.0, 500.0));
+          const GeoJsonPoint* pPoint =
+              std::get_if<GeoJsonPoint>(&pDocument->getRootObject());
+          REQUIRE(pPoint);
+          REQUIRE(pPoint->type == GeoJsonObjectType::Point);
+          CHECK(
+              pPoint->coordinates ==
+              Cartographic::fromDegrees(-100.0, 20.0, 500.0));
         });
 
     expectParserResult(
@@ -80,13 +82,14 @@ TEST_CASE("Parse Point primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(pDocument->getRootObject().type == GeoJsonObjectType::Point);
-          const std::span<Cartographic>& points =
-              pDocument->getRootObject().getPoints(pDocument);
-          REQUIRE(points.size() == 1);
-          CHECK(points[0] == Cartographic::fromDegrees(-90.0, 180.0, -500.0));
-          const std::optional<BoundingRegion> bbox =
-              pDocument->getRootObject().getBoundingBox(pDocument);
+          const GeoJsonPoint* pPoint =
+              std::get_if<GeoJsonPoint>(&pDocument->getRootObject());
+          REQUIRE(pPoint);
+          REQUIRE(pPoint->type == GeoJsonObjectType::Point);
+          CHECK(
+              pPoint->coordinates ==
+              Cartographic::fromDegrees(-90.0, 180.0, -500.0));
+          const std::optional<BoundingRegion>& bbox = pPoint->boundingBox;
           CHECK(
               bbox->getRectangle().getSouthwest() ==
               Cartographic(
@@ -165,19 +168,18 @@ TEST_CASE("Parse MultiPoint primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type == GeoJsonObjectType::MultiPoint);
-          const std::span<Cartographic>& points =
-              pDocument->getRootObject().getPoints(pDocument);
-          REQUIRE(points.size() == 2);
+          const GeoJsonMultiPoint* pPoint =
+              std::get_if<GeoJsonMultiPoint>(&pDocument->getRootObject());
+          REQUIRE(pPoint);
+          REQUIRE(pPoint->type == GeoJsonObjectType::MultiPoint);
+          REQUIRE(pPoint->coordinates.size() == 2);
           CHECK(
-              points[0] ==
+              pPoint->coordinates[0] ==
               Cartographic::fromDegrees(-75.1428517, 39.9644934, 400.0));
           CHECK(
-              points[1] ==
+              pPoint->coordinates[1] ==
               Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
-          const std::optional<BoundingRegion> bbox =
-              pDocument->getRootObject().getBoundingBox(pDocument);
+          const std::optional<BoundingRegion>& bbox = pPoint->boundingBox;
           CHECK(
               bbox->getRectangle().getSouthwest() ==
               Cartographic(
@@ -204,19 +206,18 @@ TEST_CASE("Parse MultiPoint primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type == GeoJsonObjectType::MultiPoint);
-          const std::span<Cartographic>& points =
-              pDocument->getRootObject().getPoints(pDocument);
-          REQUIRE(points.size() == 2);
+          const GeoJsonMultiPoint* pPoint =
+              std::get_if<GeoJsonMultiPoint>(&pDocument->getRootObject());
+          REQUIRE(pPoint);
+          REQUIRE(pPoint->type == GeoJsonObjectType::MultiPoint);
+          REQUIRE(pPoint->coordinates.size() == 2);
           CHECK(
-              points[0] ==
+              pPoint->coordinates[0] ==
               Cartographic::fromDegrees(-75.1428517, 39.9644934, 400.0));
           CHECK(
-              points[1] ==
+              pPoint->coordinates[1] ==
               Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
-          JsonValue::Object foreignMembers =
-              pDocument->getRootObject().getForeignMembers(pDocument);
+          JsonValue::Object foreignMembers = pPoint->foreignMembers;
           REQUIRE(!foreignMembers.empty());
           CHECK(foreignMembers["exampleA"] == JsonValue(40));
           CHECK(foreignMembers["exampleB"] == JsonValue("test"));
@@ -249,12 +250,11 @@ TEST_CASE("Parse LineString primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type == GeoJsonObjectType::LineString);
-          const std::span<GeoJsonLineString>& lines =
-              pDocument->getRootObject().getLineStrings(pDocument);
-          REQUIRE(lines.size() == 1);
-          const std::span<Cartographic>& points = lines[0].getPoints(pDocument);
+          const GeoJsonLineString* pLine =
+              std::get_if<GeoJsonLineString>(&pDocument->getRootObject());
+          REQUIRE(pLine);
+          REQUIRE(pLine->type == GeoJsonObjectType::LineString);
+          const std::vector<Cartographic>& points = pLine->coordinates;
           REQUIRE(points.size() == 2);
           CHECK(
               points[0] ==
@@ -262,8 +262,7 @@ TEST_CASE("Parse LineString primitives") {
           CHECK(
               points[1] ==
               Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
-          const std::optional<BoundingRegion> bbox =
-              pDocument->getRootObject().getBoundingBox(pDocument);
+          const std::optional<BoundingRegion>& bbox = pLine->boundingBox;
           CHECK(
               bbox->getRectangle().getSouthwest() ==
               Cartographic(
@@ -317,13 +316,12 @@ TEST_CASE("Parse MultiLineString primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type ==
-              GeoJsonObjectType::MultiLineString);
-          const std::span<GeoJsonLineString>& lines =
-              pDocument->getRootObject().getLineStrings(pDocument);
-          REQUIRE(lines.size() == 1);
-          const std::span<Cartographic>& points = lines[0].getPoints(pDocument);
+          const GeoJsonMultiLineString* pLine =
+              std::get_if<GeoJsonMultiLineString>(&pDocument->getRootObject());
+          REQUIRE(pLine);
+          REQUIRE(pLine->type == GeoJsonObjectType::MultiLineString);
+          REQUIRE(pLine->coordinates.size() == 1);
+          const std::vector<Cartographic>& points = pLine->coordinates[0];
           REQUIRE(points.size() == 2);
           CHECK(
               points[0] ==
@@ -381,15 +379,12 @@ TEST_CASE("Parse Polygon primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type == GeoJsonObjectType::Polygon);
-          const std::span<GeoJsonPolygon>& polygons =
-              pDocument->getRootObject().getPolygons(pDocument);
-          REQUIRE(polygons.size() == 1);
-          const std::span<GeoJsonLineString>& lines =
-              polygons[0].getLineStrings(pDocument);
-          REQUIRE(lines.size() == 1);
-          const std::span<Cartographic>& points = lines[0].getPoints(pDocument);
+          const GeoJsonPolygon* pPolygon =
+              std::get_if<GeoJsonPolygon>(&pDocument->getRootObject());
+          REQUIRE(pPolygon);
+          REQUIRE(pPolygon->type == GeoJsonObjectType::Polygon);
+          REQUIRE(pPolygon->coordinates.size() == 1);
+          const std::vector<Cartographic>& points = pPolygon->coordinates[0];
           REQUIRE(points.size() == 5);
           CHECK(points[0].longitude == Math::degreesToRadians(-75.1428517));
           CHECK(points[0].latitude == Math::degreesToRadians(39.9644934));
@@ -457,16 +452,13 @@ TEST_CASE("Parse MultiPolygon primitives") {
         }
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type ==
-              GeoJsonObjectType::MultiPolygon);
-          const std::span<GeoJsonPolygon>& polygons =
-              pDocument->getRootObject().getPolygons(pDocument);
-          REQUIRE(polygons.size() == 1);
-          const std::span<GeoJsonLineString>& lines =
-              polygons[0].getLineStrings(pDocument);
-          REQUIRE(lines.size() == 1);
-          const std::span<Cartographic>& points = lines[0].getPoints(pDocument);
+          const GeoJsonMultiPolygon* pPolygon =
+              std::get_if<GeoJsonMultiPolygon>(&pDocument->getRootObject());
+          REQUIRE(pPolygon);
+          REQUIRE(pPolygon->type == GeoJsonObjectType::MultiPolygon);
+          REQUIRE(pPolygon->coordinates.size() == 1);
+          REQUIRE(pPolygon->coordinates[0].size() == 1);
+          const std::vector<Cartographic>& points = pPolygon->coordinates[0][0];
           REQUIRE(points.size() == 5);
           CHECK(points[0].longitude == Math::degreesToRadians(-75.1428517));
           CHECK(points[0].latitude == Math::degreesToRadians(39.9644934));
@@ -541,28 +533,28 @@ TEST_CASE("Parsing GeometryCollection") {
         }  
         )==",
         [](const CesiumUtility::IntrusivePointer<GeoJsonDocument>& pDocument) {
+          const GeoJsonGeometryCollection* pGeomCollection =
+              std::get_if<GeoJsonGeometryCollection>(
+                  &pDocument->getRootObject());
+          REQUIRE(pGeomCollection);
           REQUIRE(
-              pDocument->getRootObject().type ==
-              GeoJsonObjectType::GeometryCollection);
-          const std::span<GeoJsonObjectDescriptor> geometries =
-              pDocument->getRootObject().getGeometries(pDocument);
-          REQUIRE(geometries.size() == 2);
-          CHECK(geometries[0].type == GeoJsonObjectType::Point);
-          const std::span<Cartographic> pointPoints =
-              geometries[0].getPoints(pDocument);
-          REQUIRE(pointPoints.size() == 1);
-          CHECK(pointPoints[0] == Cartographic::fromDegrees(1, 2));
-          CHECK(geometries[1].type == GeoJsonObjectType::LineString);
-          const std::span<GeoJsonLineString> lineLines =
-              geometries[1].getLineStrings(pDocument);
-          REQUIRE(lineLines.size() == 1);
-          const std::span<Cartographic> linePoints =
-              lineLines[0].getPoints(pDocument);
+              pGeomCollection->type == GeoJsonObjectType::GeometryCollection);
+          REQUIRE(pGeomCollection->geometries.size() == 2);
+          const GeoJsonPoint* pPoint =
+              std::get_if<GeoJsonPoint>(&pGeomCollection->geometries[0]);
+          REQUIRE(pPoint);
+          CHECK(pPoint->type == GeoJsonObjectType::Point);
+          CHECK(pPoint->coordinates == Cartographic::fromDegrees(1, 2));
+          const GeoJsonLineString* pLineString =
+              std::get_if<GeoJsonLineString>(&pGeomCollection->geometries[1]);
+          REQUIRE(pLineString);
+          CHECK(pLineString->type == GeoJsonObjectType::LineString);
+          const std::vector<Cartographic>& linePoints =
+              pLineString->coordinates;
           REQUIRE(linePoints.size() == 2);
           CHECK(linePoints[0] == Cartographic::fromDegrees(1, 2));
           CHECK(linePoints[1] == Cartographic::fromDegrees(3, 4));
-          JsonValue::Object foreignMembersObj =
-              geometries[1].getForeignMembers(pDocument);
+          JsonValue::Object foreignMembersObj = pLineString->foreignMembers;
           REQUIRE(!foreignMembersObj.empty());
           CHECK(foreignMembersObj["test"] == JsonValue(104.0));
           CHECK(foreignMembersObj["test2"] == JsonValue(false));
@@ -627,29 +619,28 @@ TEST_CASE("Parsing Feature") {
         }
         )==",
         [](const CesiumUtility::IntrusivePointer<GeoJsonDocument>& pDocument) {
-          REQUIRE(
-              pDocument->getRootObject().type == GeoJsonObjectType::Feature);
-          const std::span<GeoJsonFeature> features =
-              pDocument->getRootObject().getFeatures(pDocument);
-          REQUIRE(features.size() == 1);
-          const int64_t* pId = std::get_if<int64_t>(&features[0].id);
-          REQUIRE(pId != nullptr);
+          const GeoJsonFeature* pFeature =
+              std::get_if<GeoJsonFeature>(&pDocument->getRootObject());
+          REQUIRE(pFeature);
+          REQUIRE(pFeature->type == GeoJsonObjectType::Feature);
+          REQUIRE(pFeature->geometry);
+          const int64_t* pId = std::get_if<int64_t>(&pFeature->id);
+          REQUIRE(pId);
           CHECK(*pId == 20);
           CHECK(
-              features[0].properties == JsonValue::Object{
-                                            {"a", JsonValue(1)},
-                                            {"b", JsonValue(false)},
-                                            {"c", JsonValue("3")}});
-          REQUIRE(features[0].geometry.type == GeoJsonObjectType::LineString);
-          const std::span<GeoJsonLineString> lines =
-              features[0].geometry.getLineStrings(pDocument);
-          REQUIRE(lines.size() == 1);
-          const std::span<Cartographic> points = lines[0].getPoints(pDocument);
+              pFeature->properties == JsonValue::Object{
+                                          {"a", JsonValue(1)},
+                                          {"b", JsonValue(false)},
+                                          {"c", JsonValue("3")}});
+          const GeoJsonLineString* pLineString =
+              std::get_if<GeoJsonLineString>(&pFeature->geometry.value());
+          REQUIRE(pLineString);
+          REQUIRE(pLineString->type == GeoJsonObjectType::LineString);
+          const std::vector<Cartographic>& points = pLineString->coordinates;
           REQUIRE(points.size() == 2);
           CHECK(points[0] == Cartographic::fromDegrees(1, 2, 3));
           CHECK(points[1] == Cartographic::fromDegrees(4, 5, 6));
-          JsonValue::Object foreignMembers =
-              pDocument->getRootObject().getForeignMembers(pDocument);
+          JsonValue::Object foreignMembers = pFeature->foreignMembers;
           REQUIRE(!foreignMembers.empty());
           CHECK(foreignMembers["test"] == JsonValue("test"));
         });
@@ -700,18 +691,19 @@ TEST_CASE("Parsing FeatureCollection") {
         }  
         )==",
         [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+          const GeoJsonFeatureCollection* pFeatureCollection =
+              std::get_if<GeoJsonFeatureCollection>(
+                  &pDocument->getRootObject());
+          REQUIRE(pFeatureCollection);
           REQUIRE(
-              pDocument->getRootObject().type ==
-              GeoJsonObjectType::FeatureCollection);
-          const std::span<GeoJsonFeature> features =
-              pDocument->getRootObject().getFeatures(pDocument);
-          REQUIRE(features.size() == 1);
-          CHECK(features[0].properties == std::nullopt);
-          REQUIRE(features[0].geometry.type == GeoJsonObjectType::Point);
-          const std::span<Cartographic> points =
-              features[0].geometry.getPoints(pDocument);
-          REQUIRE(points.size() == 1);
-          CHECK(points[0] == Cartographic::fromDegrees(1, 2, 3));
+              pFeatureCollection->type == GeoJsonObjectType::FeatureCollection);
+          REQUIRE(pFeatureCollection->features.size() == 1);
+          CHECK(pFeatureCollection->features[0].properties == std::nullopt);
+          const GeoJsonPoint* pPoint = std::get_if<GeoJsonPoint>(
+              &pFeatureCollection->features[0].geometry.value());
+          REQUIRE(pPoint);
+          REQUIRE(pPoint->type == GeoJsonObjectType::Point);
+          CHECK(pPoint->coordinates == Cartographic::fromDegrees(1, 2, 3));
         });
   }
 

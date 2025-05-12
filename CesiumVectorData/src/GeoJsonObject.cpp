@@ -1,43 +1,53 @@
-#include "CesiumGeospatial/Cartographic.h"
-
-#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 
-#include <span>
+#include <stdexcept>
+#include <string>
+#include <variant>
 
 using namespace CesiumGeospatial;
+using namespace CesiumUtility;
 
 namespace CesiumVectorData {
-
-const std::span<Cartographic> GeoJsonLineString::getPoints(
-    const CesiumUtility::IntrusivePointer<GeoJsonDocument>& pDocument) const {
-  if (this->pointStartIndex < 0 ||
-      this->pointStartIndex >=
-          static_cast<int32_t>(pDocument->_pointData.size()) ||
-      this->pointEndIndex < 0 ||
-      this->pointEndIndex >=
-          static_cast<int32_t>(pDocument->_pointData.size())) {
-    return std::span<Cartographic>();
+std::string geoJsonObjectTypeToString(GeoJsonObjectType type) {
+  switch (type) {
+  case GeoJsonObjectType::Point:
+    return "Point";
+  case GeoJsonObjectType::MultiPoint:
+    return "MultiPoint";
+  case GeoJsonObjectType::LineString:
+    return "LineString";
+  case GeoJsonObjectType::MultiLineString:
+    return "MultiLineString";
+  case GeoJsonObjectType::Polygon:
+    return "Polygon";
+  case GeoJsonObjectType::MultiPolygon:
+    return "MultiPolygon";
+  case GeoJsonObjectType::GeometryCollection:
+    return "GeometryCollection";
+  case GeoJsonObjectType::Feature:
+    return "Feature";
+  case GeoJsonObjectType::FeatureCollection:
+    return "FeatureCollection";
   }
 
-  return std::span<Cartographic>(
-      pDocument->_pointData.begin() + this->pointStartIndex,
-      pDocument->_pointData.begin() + this->pointEndIndex + 1);
+  throw new std::invalid_argument("Unknown VectorPrimitiveType value");
 }
 
-const std::span<GeoJsonLineString> GeoJsonPolygon::getLineStrings(
-    const CesiumUtility::IntrusivePointer<GeoJsonDocument>& pDocument) const {
-  if (this->lineStringStartIndex < 0 ||
-      this->lineStringStartIndex >=
-          static_cast<int32_t>(pDocument->_pointData.size()) ||
-      this->lineStringEndIndex < 0 ||
-      this->lineStringEndIndex >=
-          static_cast<int32_t>(pDocument->_pointData.size())) {
-    return std::span<GeoJsonLineString>();
-  }
+GeoJsonObject
+geoJsonGeometryObjectToObject(const GeoJsonGeometryObject& geometry) {
+  struct GeometryPrimitiveToVectorNodeVisitor {
+    GeoJsonObject operator()(const GeoJsonPoint& lhs) { return lhs; }
+    GeoJsonObject operator()(const GeoJsonMultiPoint& lhs) { return lhs; }
+    GeoJsonObject operator()(const GeoJsonLineString& lhs) { return lhs; }
+    GeoJsonObject operator()(const GeoJsonMultiLineString& lhs) { return lhs; }
+    GeoJsonObject operator()(const GeoJsonPolygon& lhs) { return lhs; }
+    GeoJsonObject operator()(const GeoJsonMultiPolygon& lhs) { return lhs; }
+    GeoJsonObject operator()(const GeoJsonGeometryCollection& lhs) {
+      return lhs;
+    }
+  };
 
-  return std::span<GeoJsonLineString>(
-      pDocument->_lineStringData.begin() + this->lineStringStartIndex,
-      pDocument->_lineStringData.begin() + this->lineStringEndIndex + 1);
+  return std::visit(GeometryPrimitiveToVectorNodeVisitor{}, geometry);
 }
 } // namespace CesiumVectorData
