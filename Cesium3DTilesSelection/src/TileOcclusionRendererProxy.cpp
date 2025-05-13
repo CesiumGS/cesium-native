@@ -34,9 +34,7 @@ void TileOcclusionRendererProxyPool::destroyPool() {
 }
 
 const TileOcclusionRendererProxy*
-TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(
-    const Tile& tile,
-    int32_t /*currentFrame*/) {
+TileOcclusionRendererProxyPool::fetchOcclusionProxyForTile(const Tile& tile) {
   auto mappingIt = this->_tileToOcclusionProxyMappings.find(&tile);
   if (mappingIt != this->_tileToOcclusionProxyMappings.end()) {
     TileOcclusionRendererProxy* pProxy = mappingIt->second;

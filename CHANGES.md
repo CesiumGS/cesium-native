@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.48.0 - 2025-06-02
 
 ##### Additions :tada:
 
@@ -10,9 +10,64 @@
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
 - Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
 - Added support for building in `vcpkg` manifest mode.
+- Added `SubtreeWriter::writeSubtreeBinary`.
+- 
+##### Breaking Changes :mega:
+
+- Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
+- `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
 
 ##### Fixes :wrench:
 
+- Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
+- Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
+
+### v0.47.0 - 2025-05-01
+
+##### Breaking Changes :mega:
+
+- Deprecated the `ViewState::create` methods. Use a constructor overload instead.
+- Removed `addCreditToFrame`, `startNextFrame`, `getCreditsToShowThisFrame`, and `getCreditsToNoLongerShowThisFrame` from `CreditSystem`. `CreditSystem` no longer has a notion of a "frame". Instead, credits are included and excluded by calling `addCreditReference` and `removeCreditReference`. A snaphot of the current state can be obtained by calling `getSnapshot`, and it includes both the current set of active credits as well as the credits that were removed since the last snapshot.
+- Removed the following from `Cesium3DTilesSelection::Tile`:
+  - `getLastSelectionState` and `setLastSelectionState`. Use `TilesetViewGroup::getTraversalState` instead.
+  - `Tile::LoadedLinkedList`. Use `LoadedTileEnumerator` instead.
+  - `getDoNotUnloadSubtreeCount`, `incrementDoNotUnloadSubtreeCount`, `decrementDoNotUnloadSubtreeCount`, `incrementDoNotUnloadSubtreeCountOnParent`, and `decrementDoNotUnloadSubtreeCountOnParent`. Use `addReference`, `releaseReference`, and `getReferenceCount` instead.
+- The `RasterOverlayCollection` constructor now takes a `LoadedTileEnumerator` instead of a `Tile::LoadedLinkedList`.
+- `TileSelectionState` no longer uses or requires a frame number. This parameter has been removed from its various methods.
+- Derived `TilesetContentLoader` classes that aggregate other loaders must now implement `setOwnerOfNestedLoaders` to pass the owner through.
+- `DebugTileStateDatabase::recordAllTileStates` and `recordTileState` now must be given a `TilesetViewGroup` indicating which view group to record states for.
+- `ViewUpdateResult` now holds `IntrusivePointer`s to `Tile` instances rather than raw pointers.
+- Deprecated `Tileset::updateView` and `updateViewOffline`. Use `updateViewGroup` and `updateViewGroupOffline` instead.
+
+##### Additions :tada:
+
+- Added support for building in `vcpkg` manifest mode.
+- Added `TilesetViewGroup`. View groups select tiles independently from other any other view group. This is useful for applications with multiple viewports to allow them to show different levels-of-detail for the same area.
+- Added `CreditReferencer` which makes it easy to track credits in a frame-oriented fashion similar to how `CreditSystem::addCreditToFrame` worked in previous releases.
+- Added a `std::hash` implementation for `IntrusivePointer` that simply hashes the underlying pointer.
+- Added `Math::GoldenRatio`.
+- Added `TreeTraversalState` to `CesiumUtility`. It can be used to associate arbitrary data with individual nodes during a depth-first tree traversal and access that data in a later traversal.
+- Added `LoadedTileEnumerator` to enumerate the loaded tiles in a `Tile` subtree.
+- Added `RasterOverlayCollection::setLoadedTileEnumerator`.
+- Added `TileLoadRequester`, which allows influence over which tiles in a `Cesium3DTilesSelection::Tileset` are loaded. This is the base class for `TilesetViewGroup` and `TilesetHeightRequest`.
+- Added `TileLoadTask`, `TileLoadPriorityGroup`, and `TilesetFrameState`. Previously these types were private.
+- Added the following to `Cesium3DTilesSelection::Tileset`:
+  - `getUserCredit` - Reflects the `Credit` passed as a string into `TilesetOptions::credit`.
+  - `loadedTiles`- Allows enumeration of the tileset's loaded tiles.
+  - `getDefaultViewGroup` - Gets the default view group that is used when `updateView` is called.
+  - `updateViewGroup` - Updates the set of tiles to render for a `TilesetViewGroup`, as well as the set of tiles that the view group would like to load.
+  - `updateViewGroupOffline` - Similar to `updateViewGroup`, except that it waits until all of the view group's tiles are fully loaded.
+  - `loadTiles` - Loads tiles that have been identified as required across all `TilesetViewGroup` and `TilesetHeightRequest` instances, up to limits specified in `TilesetOptions`.
+- `TilesetContentLoader` instances now know the `TilesetContentManager` that owns them. This is managed with new `getOwner` and `setOwner` methods.
+- Added support for orthographic and skewed perspective views.
+- Added an overload of `Math::equalsEpsilon` for glm matrices.
+- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+
+##### Fixes :wrench:
+
+- Point cloud tiles will now be upsampled for raster overlays, fixing an issue where applying a raster overlay to a point cloud tileset would cause holes to appear.
+- Fixed a crash caused by invalid I3dm headers.
 - Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
 
 ### v0.46.0 - 2025-04-01
