@@ -703,7 +703,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::vector<LoaderCreditResult>{},
       std::move(requestHeaders),
       std::move(errorList),
-      std::make_optional(*pVoxelExtension),
+      pVoxelExtension ? std::make_optional(*pVoxelExtension) : std::nullopt,
   };
 }
 
