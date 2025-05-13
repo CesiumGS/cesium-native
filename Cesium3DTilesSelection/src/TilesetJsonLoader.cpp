@@ -6,9 +6,12 @@
 
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
+#include <Cesium3DTilesReader/ContentReader.h>
+#include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
@@ -65,8 +68,10 @@
 #include <variant>
 #include <vector>
 
-using namespace CesiumUtility;
+using namespace Cesium3DTiles;
+using namespace Cesium3DTilesReader;
 using namespace Cesium3DTilesContent;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -660,6 +665,9 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader =
       std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis, ellipsoid);
+  ErrorList errorList{};
+  const ExtensionContent3dTilesContentVoxels* pVoxelExtension = nullptr;
+
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -675,6 +683,20 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     if (maybeRootTile) {
       pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
     }
+
+    // Check for the 3DTILES_content_voxels extension.
+    const auto contentIt = rootIt->value.FindMember("content");
+    if (contentIt != tilesetJson.MemberEnd()) {
+      ContentReader contentReader;
+      const auto result = contentReader.readFromJson(contentIt->value);
+      if (!result.errors.empty()) {
+        errorList.emplaceError("Failed to parse root tile content.");
+      } else if (result.value) {
+        const Cesium3DTiles::Content& content = *result.value;
+        pVoxelExtension =
+            content.getExtension<ExtensionContent3dTilesContentVoxels>();
+      }
+    }
   }
 
   return {
@@ -682,7 +704,9 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::move(pRootTile),
       std::vector<LoaderCreditResult>{},
       std::move(requestHeaders),
-      ErrorList{}};
+      std::move(errorList),
+      std::make_optional(*pVoxelExtension),
+  };
 }
 
 void parseTilesetMetadata(
@@ -876,7 +900,7 @@ TilesetJsonLoader::createLoader(
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
     const CesiumAsync::HttpHeaders& requestHeaders,
@@ -918,7 +942,33 @@ TilesetJsonLoader::createLoader(
     parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
   }
 
-  return asyncSystem.createResolvedFuture(std::move(result));
+  return asyncSystem.createResolvedFuture(std::move(result))
+      .thenInWorkerThread(
+          [asyncSystem, pAssetAccessor](
+              TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
+            if (!result.voxelExtension) {
+              return asyncSystem.createResolvedFuture(std::move(result));
+            }
+
+            // Voxels require the metadata schema on the tileset to be loaded.
+            TileExternalContent* pExternal =
+                result.pRootTile->getContent().getExternalContent();
+            if (!pExternal) {
+              return asyncSystem.createResolvedFuture(std::move(result));
+            }
+
+            TilesetMetadata& metadata = pExternal->metadata;
+            if (!metadata.schemaUri) {
+              // No schema URI, so the metadata is ready to go.
+              return asyncSystem.createResolvedFuture(std::move(result));
+            }
+
+            // Otherwise, prompt the schema to load from URI.
+            return metadata.loadSchemaUri(asyncSystem, pAssetAccessor)
+                .thenImmediately([result = std::move(result)]() mutable {
+                  return std::move(result);
+                });
+          });
 }
 
 CesiumAsync::Future<TileLoadResult>
