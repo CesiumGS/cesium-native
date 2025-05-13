@@ -18,6 +18,7 @@ class Tile;
 class Tileset;
 class TilesetContentManager;
 class TilesetFrameState;
+class ITileSelectionEventReceiver;
 
 /**
  * @brief Represents a group of views that collectively select tiles from a
@@ -67,6 +68,10 @@ public:
    */
   TilesetViewGroup(TilesetViewGroup&& rhs) noexcept;
   virtual ~TilesetViewGroup() noexcept;
+
+  const std::shared_ptr<ITileSelectionEventReceiver>& getEventReceiver() const;
+  void setEventReceiver(
+      const std::shared_ptr<ITileSelectionEventReceiver>& pEventReceiver);
 
   /**
    * @brief Gets the result from the last time this view group was updated by
@@ -228,6 +233,7 @@ private:
   TraversalState _traversalState;
   CesiumUtility::CreditReferencer _previousFrameCredits;
   CesiumUtility::CreditReferencer _currentFrameCredits;
+  std::shared_ptr<ITileSelectionEventReceiver> _pEventReceiver;
 };
 
 } // namespace Cesium3DTilesSelection

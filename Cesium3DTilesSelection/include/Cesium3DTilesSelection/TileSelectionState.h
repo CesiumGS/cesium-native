@@ -137,6 +137,14 @@ public:
     }
   }
 
+  bool operator==(const TileSelectionState& rhs) const noexcept {
+    return this->_result == rhs._result;
+  }
+
+  bool operator!=(const TileSelectionState& rhs) const noexcept {
+    return this->_result != rhs._result;
+  }
+
 private:
   Result _result;
 };

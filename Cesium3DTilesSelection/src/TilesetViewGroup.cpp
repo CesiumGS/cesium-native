@@ -1,3 +1,4 @@
+#include <Cesium3DTilesSelection/ITileSelectionEventReceiver.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -214,6 +215,16 @@ void TilesetViewGroup::finishFrame(
 
     this->_previousFrameCredits.releaseAllReferences();
     std::swap(this->_previousFrameCredits, this->_currentFrameCredits);
+  }
+
+  if (this->_pEventReceiver) {
+    this->_traversalState.diff(
+        [this](
+            const Tile::Pointer& /* pTile */,
+            const TileSelectionState& /* previousState */,
+            const TileSelectionState& /* currentState */) {
+
+        });
   }
 }
 
