@@ -24,17 +24,25 @@ public:
    * @brief The tiles that were selected by the tileset traversal this frame.
    * These tiles should be rendered by the client.
    *
-   * Tiles in this list may be fading in if
-   * {@link TilesetOptions::enableLodTransitionPeriod} is true.
+   * Tiles in this list may be fading in if \ref
+   * TilesetOptions::enableLodTransitionPeriod is true.
    */
   std::vector<Tile::Pointer> tilesToRenderThisFrame;
 
   /**
+   * @brief The computed screen space error of the tiles selected by the
+   * tileset traversal this frame. The values correspond to the tiles linked in
+   * \ref tilesToRenderThisFrame, and may be used by the client to influence
+   * rendering behavior.
+   */
+  std::vector<double> tileScreenSpaceErrorThisFrame;
+
+  /**
    * @brief Tiles on this list are no longer selected for rendering.
    *
-   * If {@link TilesetOptions::enableLodTransitionPeriod} is true they may be
-   * fading out. If a tile's {TileRenderContent::lodTransitionPercentage} is 0
-   * or lod transitions are disabled, the tile should be hidden right away.
+   * If \ref TilesetOptions::enableLodTransitionPeriod is true they may be
+   * fading out. If a tile's \ref TileRenderContent::lodTransitionPercentage is
+   * 0 or LOD transitions are disabled, the tile should be hidden right away.
    */
   std::unordered_set<Tile::Pointer> tilesFadingOut;
 
