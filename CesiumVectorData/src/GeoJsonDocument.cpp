@@ -18,6 +18,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -67,24 +68,23 @@ Result<Cartographic> parsePosition(const rapidjson::Value& pos) {
         ErrorList::error("Position value must be an array."));
   }
 
+  const rapidjson::Value::ConstArray& arr = pos.GetArray();
+
   const int32_t size = static_cast<int32_t>(pos.GetArray().Size());
-  if (!pos.IsArray() || size < 2 || size > 3) {
+  if (size < 2 || size > 3) {
     return Result<Cartographic>(ErrorList::error(
         "Position value must be an array with two or three members."));
   }
 
-  std::optional<std::vector<double>> components =
-      JsonHelpers::getDoubles(pos, size);
-
-  if (!components) {
-    return Result<Cartographic>(
-        ErrorList::error("Position value must be an array of only numbers."));
+  if (!arr[0].IsNumber() || !arr[1].IsNumber() ||
+      (size > 2 && !arr[2].IsNumber())) {
+    return ErrorList::error("Position value must be an array of only numbers.");
   }
 
   return Cartographic(
-      Math::degreesToRadians((*components)[0]),
-      Math::degreesToRadians((*components)[1]),
-      size == 3 ? (*components)[2] : 0);
+      Math::degreesToRadians(arr[0].GetDouble()),
+      Math::degreesToRadians(arr[1].GetDouble()),
+      size == 3 ? arr[2].GetDouble() : 0);
 }
 
 Result<std::vector<Cartographic>>
@@ -164,33 +164,30 @@ parseBoundingBox(const rapidjson::Value& value) {
             "'bbox' member must be of length 4 (2D) or 6 (3D)."));
   }
 
-  const std::optional<std::vector<double>> doubles =
-      JsonHelpers::getDoubles(value, size);
-  if (!doubles) {
-    return Result<std::optional<BoundingRegion>>(
-        std::nullopt,
-        ErrorList::warning("'bbox' member contain only doubles."));
+  std::array<const rapidjson::Value*, 6> coordinates{
+      &value.GetArray()[0],
+      &value.GetArray()[1],
+      size == 4 ? &value.GetArray()[2] : &value.GetArray()[3],
+      size == 4 ? &value.GetArray()[3] : &value.GetArray()[4],
+      // We only read these two if size == 6, so it's ok that they're nullptr
+      size == 4 ? nullptr : &value.GetArray()[2],
+      size == 4 ? nullptr : &value.GetArray()[5]};
+
+  for (size_t i = 0; i < (size_t)size; i++) {
+    if (!coordinates[i]->IsNumber()) {
+      return ErrorList::warning("'bbox' member contain only doubles.");
+    }
   }
 
-  if (size == 4) {
-    return Result<std::optional<BoundingRegion>>(BoundingRegion(
-        GlobeRectangle(
-            Math::degreesToRadians((*doubles)[0]),
-            Math::degreesToRadians((*doubles)[1]),
-            Math::degreesToRadians((*doubles)[2]),
-            Math::degreesToRadians((*doubles)[3])),
-        0,
-        0));
-  }
-
-  return Result<std::optional<BoundingRegion>>(BoundingRegion(
-      GlobeRectangle(
-          Math::degreesToRadians((*doubles)[0]),
-          Math::degreesToRadians((*doubles)[1]),
-          Math::degreesToRadians((*doubles)[3]),
-          Math::degreesToRadians((*doubles)[4])),
-      (*doubles)[2],
-      (*doubles)[5]));
+  return Result<std::optional<BoundingRegion>>(
+      std::optional<BoundingRegion>{BoundingRegion(
+          GlobeRectangle(
+              Math::degreesToRadians(coordinates[0]->GetDouble()),
+              Math::degreesToRadians(coordinates[1]->GetDouble()),
+              Math::degreesToRadians(coordinates[2]->GetDouble()),
+              Math::degreesToRadians(coordinates[3]->GetDouble())),
+          size == 4 ? 0.0 : coordinates[4]->GetDouble(),
+          size == 4 ? 0.0 : coordinates[5]->GetDouble())});
 }
 
 struct GeoJsonObjectToGeoJsonGeometryObjectVisitor {
