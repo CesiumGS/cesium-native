@@ -2,7 +2,6 @@
 
 #include "AuthenticationToken.h"
 #include "CesiumCuratedContent.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
 #include "IModel.h"
 #include "IModelMeshExport.h"
 #include "ITwin.h"
@@ -18,7 +17,7 @@
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 
 #include <memory>
 #include <optional>
@@ -199,7 +198,7 @@ public:
    * @param limit The maximum number of items per page, between 1 and 10,000.
    */
   CesiumAsync::Future<
-      CesiumUtility::Result<PagedList<CesiumVectorData::VectorNode>>>
+      CesiumUtility::Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
   geospatialFeatures(
       const std::string& iTwinId,
       const std::string& collectionId,
@@ -255,7 +254,7 @@ public:
   const std::optional<std::string>& getRefreshToken() const {
     return _refreshToken;
   }
-  
+
   /**
    * @brief Sets the refresh token used to obtain new access tokens, if any.
    */
@@ -273,7 +272,7 @@ private:
   CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
   listITwinRealityData(const std::string& url);
   CesiumAsync::Future<
-      CesiumUtility::Result<PagedList<CesiumVectorData::VectorNode>>>
+      CesiumUtility::Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
   listGeospatialFeatures(const std::string& url);
 
   CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken();

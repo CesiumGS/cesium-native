@@ -23,8 +23,8 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumVectorData/VectorDocument.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
@@ -850,7 +850,7 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
       });
 }
 
-CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
+CesiumAsync::Future<CesiumUtility::Result<PagedList<GeoJsonFeature>>>
 Connection::geospatialFeatures(
     const std::string& iTwinId,
     const std::string& collectionId,
@@ -865,7 +865,7 @@ Connection::geospatialFeatures(
   return this->listGeospatialFeatures(url);
 }
 
-CesiumAsync::Future<CesiumUtility::Result<PagedList<VectorNode>>>
+CesiumAsync::Future<CesiumUtility::Result<PagedList<GeoJsonFeature>>>
 Connection::listGeospatialFeatures(const std::string& url) {
   return this->ensureValidToken().thenInWorkerThread(
       [url,
@@ -874,7 +874,7 @@ Connection::listGeospatialFeatures(const std::string& url) {
            this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem
-              .createResolvedFuture<Result<PagedList<VectorNode>>>(
+              .createResolvedFuture<Result<PagedList<GeoJsonFeature>>>(
                   tokenResult.errors);
         }
 
@@ -887,24 +887,32 @@ Connection::listGeospatialFeatures(const std::string& url) {
               Result<rapidjson::Document> docResult =
                   handleJsonResponse(request, "listing geospatial features");
               if (!docResult.value) {
-                return Result<PagedList<VectorNode>>(docResult.errors);
+                return Result<PagedList<GeoJsonFeature>>(docResult.errors);
               }
 
-              Result<IntrusivePointer<VectorDocument>> geoJsonDocResult =
-                  VectorDocument::fromGeoJson(*docResult.value, {});
+              Result<IntrusivePointer<GeoJsonDocument>> geoJsonDocResult =
+                  GeoJsonDocument::fromGeoJson(*docResult.value, {});
               if (!geoJsonDocResult.pValue) {
-                return Result<PagedList<VectorNode>>(geoJsonDocResult.errors);
+                return Result<PagedList<GeoJsonFeature>>(
+                    geoJsonDocResult.errors);
               }
 
-              std::vector<VectorNode> nodes =
-                  std::move(geoJsonDocResult.pValue->getRootNode().children);
+              GeoJsonFeatureCollection* pFeatureCollection =
+                  std::get_if<GeoJsonFeatureCollection>(
+                      &geoJsonDocResult.pValue->getRootObject());
+              if (!pFeatureCollection) {
+                return Result<PagedList<GeoJsonFeature>>(
+                    ErrorList::error("Unable to obtain FeatureCollection from "
+                                     "geospatial features response"));
+              }
 
-              return Result<PagedList<VectorNode>>(PagedList<VectorNode>(
-                  *docResult.value,
-                  std::move(nodes),
-                  [](Connection& connection, const std::string& url) {
-                    return connection.listGeospatialFeatures(url);
-                  }));
+              return Result<PagedList<GeoJsonFeature>>(
+                  PagedList<GeoJsonFeature>(
+                      *docResult.value,
+                      std::move(pFeatureCollection->features),
+                      [](Connection& connection, const std::string& url) {
+                        return connection.listGeospatialFeatures(url);
+                      }));
             });
       });
 }
