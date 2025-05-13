@@ -25,7 +25,6 @@ target_sources(
     PRIVATE
         ${CESIUM_ION_CLIENT_SOURCES}
         ${CESIUM_ION_CLIENT_HEADERS}
-    PUBLIC
         ${CESIUM_ION_CLIENT_PUBLIC_HEADERS}
 )
 
@@ -33,7 +32,8 @@ cesium_target_include_directories(
     TARGET
         CesiumIonClient
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(CesiumIonClient
@@ -41,9 +41,5 @@ target_link_libraries(CesiumIonClient
         CesiumAsync
         CesiumUtility
         CesiumGeospatial
-    PRIVATE
-        picosha2::picosha2
-        modp_b64::modp_b64
-        httplib::httplib
-        OpenSSL::Crypto
+        CesiumClientCommon
 )

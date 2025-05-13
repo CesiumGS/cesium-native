@@ -123,4 +123,14 @@ TEST_CASE("I3dmToGltfConverter") {
     auto heightIt = propertyTable.properties.find("Height");
     REQUIRE(heightIt != propertyTable.properties.end());
   }
+
+  SUBCASE("reports an error for an i3dm with invalid feature data") {
+    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+    testFilePath = testFilePath / "i3dm" / "InvalidFeatureTable" /
+                   "cesiumNativeIssue1127.i3dm";
+
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    REQUIRE(result.errors.hasErrors());
+    REQUIRE(!result.model.has_value());
+  }
 }

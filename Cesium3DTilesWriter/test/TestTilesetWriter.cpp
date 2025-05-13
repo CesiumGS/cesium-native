@@ -49,6 +49,11 @@ bool hasSpaces(const std::string& input) {
     return std::isspace(c);
   });
 }
+
+struct ExtensionTilesetTest final : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* ExtensionName = "PRIVATE_tileset_test";
+};
+
 } // namespace
 
 TEST_CASE("Writes tileset JSON") {
@@ -203,6 +208,28 @@ TEST_CASE("Writes tileset JSON with custom extension") {
   )";
 
   check(string, string);
+}
+
+TEST_CASE("Writes tileset JSON with unregistered extension") {
+  Cesium3DTiles::Tileset tileset;
+  tileset.addExtension<ExtensionTilesetTest>();
+
+  SUBCASE("Reports a warning if the extension is enabled") {
+    Cesium3DTilesWriter::TilesetWriter writer;
+    Cesium3DTilesWriter::TilesetWriterResult result =
+        writer.writeTileset(tileset);
+    REQUIRE(!result.warnings.empty());
+  }
+
+  SUBCASE("Does not report a warning if the extension is disabled") {
+    Cesium3DTilesWriter::TilesetWriter writer;
+    writer.getExtensions().setExtensionState(
+        ExtensionTilesetTest::ExtensionName,
+        CesiumJsonWriter::ExtensionState::Disabled);
+    Cesium3DTilesWriter::TilesetWriterResult result =
+        writer.writeTileset(tileset);
+    REQUIRE(result.warnings.empty());
+  }
 }
 
 TEST_CASE("Writes tileset JSON with default values removed") {

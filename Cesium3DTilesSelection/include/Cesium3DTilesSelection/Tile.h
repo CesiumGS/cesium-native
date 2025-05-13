@@ -8,6 +8,7 @@
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/DoublyLinkedList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/common.hpp>
 
@@ -27,7 +28,7 @@ namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
-class TileDoNotUnloadSubtreeCountTracker {
+class TileReferenceCountTracker {
 private:
   struct Entry {
     std::string reason;
@@ -39,7 +40,7 @@ public:
   static void addEntry(
       const uint64_t id,
       bool increment,
-      const std::string& reason,
+      const char* reason,
       int32_t newCount);
 
 private:
@@ -121,6 +122,15 @@ enum class TileLoadState {
 class CESIUM3DTILESSELECTION_API Tile final {
 public:
   /**
+   * @brief A reference counting pointer to a `Tile`.
+   *
+   * An instance of this pointer type will keep the `Tile` from being destroyed,
+   * and it may also keep its content from unloading. See {@link addReference}
+   * for details.
+   */
+  using Pointer = CesiumUtility::IntrusivePointer<Tile>;
+
+  /**
    * @brief Construct a tile with unknown content and a loader that is used to
    * load the content of this tile. Tile has Unloaded status when initializing
    * with this constructor.
@@ -155,7 +165,7 @@ public:
    * @brief Default destructor, which clears all resources associated with this
    * tile.
    */
-  ~Tile() noexcept = default;
+  ~Tile() noexcept;
 
   /**
    * @brief Copy constructor.
@@ -183,7 +193,7 @@ public:
    *
    * @param rhs The other instance.
    */
-  Tile& operator=(Tile&& rhs) noexcept;
+  Tile& operator=(Tile&& rhs) noexcept = delete;
 
   /**
    * @brief Returns the parent of this tile in the tile hierarchy.
@@ -434,33 +444,6 @@ public:
   }
 
   /**
-   * @brief Returns the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @return The last selection state
-   */
-  TileSelectionState& getLastSelectionState() noexcept {
-    return this->_lastSelectionState;
-  }
-
-  /** @copydoc Tile::getLastSelectionState() */
-  const TileSelectionState& getLastSelectionState() const noexcept {
-    return this->_lastSelectionState;
-  }
-
-  /**
-   * @brief Set the {@link TileSelectionState} of this tile.
-   *
-   * This function is not supposed to be called by clients.
-   *
-   * @param newState The new stace
-   */
-  void setLastSelectionState(const TileSelectionState& newState) noexcept {
-    this->_lastSelectionState = newState;
-  }
-
-  /**
    * @brief Determines the number of bytes in this tile's geometry and texture
    * data.
    */
@@ -518,52 +501,110 @@ public:
   TileLoadState getState() const noexcept;
 
   /**
-   * @brief Returns the internal count denoting that the tile and its ancestors
-   * should not be unloaded.
+   * @brief Determines if this tile requires worker-thread loading.
    *
-   * This function is not supposed to be called by clients.
+   * @return true if this Tile needs further work done in a worker thread to
+   * load it; otherwise, false.
    */
-  int32_t getDoNotUnloadSubtreeCount() const noexcept {
-    return this->_doNotUnloadSubtreeCount;
-  }
+  bool needsWorkerThreadLoading() const noexcept;
 
   /**
-   * @brief Increments the internal count denoting that the tile and its
-   * ancestors should not be unloaded.
+   * @brief Determines if this tile requires main-thread loading.
    *
-   * This function is not supposed to be called by clients.
+   * @return true if this Tile needs further work done in the main thread to
+   * load it; otherwise, false.
    */
-  void incrementDoNotUnloadSubtreeCount(const char* reason) noexcept;
+  bool needsMainThreadLoading() const noexcept;
 
   /**
-   * @brief Decrements the internal count denoting that the tile and its
-   * ancestors should not be unloaded.
+   * @brief Adds a reference to this tile. A live reference will keep this tile
+   * from being destroyed, and it _may_ also keep the tile's content from
+   * unloading.
    *
-   * This function is not supposed to be called by clients.
+   * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
+   * whenever possible, rather than calling this method directly.
+   *
+   * When the first reference is added to this tile, this method will
+   * automatically add a reference to the tile's parent tile as well. This is
+   * to prevent the parent tile from being destroyed, which would implicitly
+   * destroy all of its children as well. Parent tiles should never hold
+   * references to child tiles.
+   *
+   * A reference is also added to a tile when its content is loading or loaded.
+   * Content must finish loading, and then be unloaded, before a Tile is
+   * eligible for destruction.
+   *
+   * Any additional added references, beyond one per referenced child and one
+   * representing this tile's content if it exists, indicate interest not just
+   * in the Tile itself but also in the Tile's _content_.
+   *
+   * For example: if a Tile has loaded content (1) as well as four children, and
+   * two (2) of its children have a reference count greater than zero, it will
+   * have a total reference count of at least 1+2=3. If its reference count is
+   * exactly three, this means that the tile's _content_ is not currently needed
+   * and may be unloaded when the unused tile cache is full. However, if the
+   * reference count is greater than 3, this means that the content is also
+   * referenced. Therefore, neither the content nor the tile will be unloaded.
+   *
+   * @param reason An optional explanation for why this reference is being
+   * added. This can help debug reference counts when compiled with
+   * `CESIUM_DEBUG_TILE_UNLOADING`.
    */
-  void decrementDoNotUnloadSubtreeCount(const char* reason) noexcept;
+  void addReference(const char* reason = nullptr) noexcept;
 
   /**
-   * @brief Increments the internal count denoting that the tile and its
-   * ancestors should not be unloaded starting with this tile's parent.
+   * @brief Removes a reference from this tile. A live reference will keep this
+   * tile from being destroyed, and it _may_ also keep the tile's content from
+   * unloading.
    *
-   * This function is not supposed to be called by clients.
+   * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
+   * whenever possible, rather than calling this method directly.
+   *
+   * When the last reference is removed from this tile (its count goes from 1 to
+   * 0), this method will automatically remove a reference from the tile's
+   * parent tile as well. This is the inverse of the {@link addReference} that
+   * the child previously invoked on its parent when the child reference count
+   * went from 0 to 1. Removing it indicates that it is ok to destroy the child
+   * tile, such as by unloading an external tileset.
+   *
+   * See {@link addReference} for details of how references affect a tile's
+   * eligibility to have its content unloaded.
+   *
+   * @param reason An optional explanation for why this reference is being
+   * removed. This can help debug reference counts when compiled with
+   * `CESIUM_DEBUG_TILE_UNLOADING`.
    */
-  void incrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
+  void releaseReference(const char* reason = nullptr) noexcept;
 
   /**
-   * @brief Decrements the internal count denoting that the tile and its
-   * ancestors should not be unloaded starting with this tile's parent.
+   * @brief Gets the current number of references to this tile.
    *
-   * This function is not supposed to be called by clients.
+   * See {@link addReference} for details of when and why references are added,
+   * and how they impact a tile's eligibility to have its content unloaded.
    */
-  void decrementDoNotUnloadSubtreeCountOnParent(const char* reason) noexcept;
+  int32_t getReferenceCount() const noexcept;
+
+  /**
+   * @brief Determines if this tile's {@link getContent} counts as a reference
+   * to this tile.
+   *
+   * Content only counts as a reference to the tile when that content may
+   * be unloaded. This ensures that the `Tile` will not be destroyed before the
+   * content is unloaded.
+   *
+   * Content that {@link TileContent::isUnknownContent} cannot be unloaded, so
+   * it is non-referencing. In addition, if the tile's {@link getTileID} is a
+   * blank string, then content of any type will be non-referencing. This is
+   * because the content for a tile without an ID cannot be reloaded, and so it
+   * will never been unloaded except when the entire {@link Tileset} is
+   * destroyed.
+   *
+   * @returns true if this tile's content counts as a reference to this tile;
+   * otherwise, false.
+   */
+  bool hasReferencingContent() const noexcept;
 
 private:
-  void incrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
-
-  void decrementDoNotUnloadSubtreeCount(const std::string& reason) noexcept;
-
   struct TileConstructorImpl {};
   template <
       typename... TileContentArgs,
@@ -613,11 +654,8 @@ private:
   TileRefine _refine;
   glm::dmat4x4 _transform;
 
-  // Selection state
-  TileSelectionState _lastSelectionState;
-
   // tile content
-  CesiumUtility::DoublyLinkedListPointers<Tile> _loadedTilesLinks;
+  CesiumUtility::DoublyLinkedListPointers<Tile> _unusedTilesLinks;
   TileContent _content;
   TilesetContentLoader* _pLoader;
   TileLoadState _loadState;
@@ -626,9 +664,7 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  // Number of existing claims on this tile preventing it and its parent
-  // external tileset (if any) from being unloaded from the tree.
-  int32_t _doNotUnloadSubtreeCount = 0;
+  int32_t _referenceCount;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
@@ -637,8 +673,8 @@ public:
   /**
    * @brief A {@link CesiumUtility::DoublyLinkedList} for tile objects.
    */
-  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_loadedTilesLinks>
-      LoadedLinkedList;
+  typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_unusedTilesLinks>
+      UnusedLinkedList;
 };
 
 } // namespace Cesium3DTilesSelection

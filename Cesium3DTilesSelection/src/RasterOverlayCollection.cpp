@@ -1,5 +1,6 @@
 #include "EmptyRasterOverlayTileProvider.h"
 
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -33,16 +34,6 @@ namespace Cesium3DTilesSelection {
 
 namespace {
 
-template <class Function>
-void forEachTile(Tile::LoadedLinkedList& list, Function callback) {
-  Tile* pCurrent = list.head();
-  while (pCurrent) {
-    Tile* pNext = list.next(pCurrent);
-    callback(*pCurrent);
-    pCurrent = pNext;
-  }
-}
-
 // We use these to avoid a heap allocation just to return empty vectors.
 const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>
     emptyOverlays{};
@@ -52,10 +43,10 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 } // namespace
 
 RasterOverlayCollection::RasterOverlayCollection(
-    Tile::LoadedLinkedList& loadedTiles,
+    const LoadedTileEnumerator& loadedTiles,
     const TilesetExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
-    : _pLoadedTiles(&loadedTiles),
+    : _loadedTiles(loadedTiles),
       _externals{externals},
       _ellipsoid(ellipsoid),
       _pOverlays(nullptr) {}
@@ -70,6 +61,11 @@ RasterOverlayCollection::~RasterOverlayCollection() noexcept {
       }
     }
   }
+}
+
+void RasterOverlayCollection::setLoadedTileEnumerator(
+    const LoadedTileEnumerator& loadedTiles) {
+  this->_loadedTiles = loadedTiles;
 }
 
 void RasterOverlayCollection::add(
@@ -104,7 +100,7 @@ void RasterOverlayCollection::add(
           nullptr);
 
   // Add a placeholder for this overlay to existing geometry tiles.
-  forEachTile(*this->_pLoadedTiles, [&](Tile& tile) {
+  for (Tile& tile : this->_loadedTiles) {
     // The tile rectangle and geometric error don't matter for a placeholder.
     // - When a tile is transitioned from Unloaded to Loading, raster overlay
     // tiles will be mapped to the tile automatically by TilesetContentManager,
@@ -120,7 +116,7 @@ void RasterOverlayCollection::add(
           pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
           -1);
     }
-  });
+  }
 
   // This continuation, by capturing pList, keeps the OverlayList from being
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
@@ -187,21 +183,20 @@ void RasterOverlayCollection::remove(
 
   auto pPrepareRenderResources =
       this->_externals.pPrepareRendererResources.get();
-  forEachTile(
-      *this->_pLoadedTiles,
-      [&removeCondition, pPrepareRenderResources](Tile& tile) {
-        std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-        for (RasterMappedTo3DTile& rasterTile : mapped) {
-          if (removeCondition(rasterTile)) {
-            rasterTile.detachFromTile(*pPrepareRenderResources, tile);
-          }
-        }
+  for (Tile& tile : this->_loadedTiles) {
+    std::vector<RasterMappedTo3DTile>& mapped = tile.getMappedRasterTiles();
 
-        auto firstToRemove =
-            std::remove_if(mapped.begin(), mapped.end(), removeCondition);
-        mapped.erase(firstToRemove, mapped.end());
-      });
+    for (RasterMappedTo3DTile& rasterTile : mapped) {
+      if (removeCondition(rasterTile)) {
+        rasterTile.detachFromTile(*pPrepareRenderResources, tile);
+      }
+    }
+
+    auto firstToRemove =
+        std::remove_if(mapped.begin(), mapped.end(), removeCondition);
+    mapped.erase(firstToRemove, mapped.end());
+  }
 
   OverlayList& list = *this->_pOverlays;
 

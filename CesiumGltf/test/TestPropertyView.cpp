@@ -23,7 +23,12 @@
 #include <glm/fwd.hpp>
 
 #include <cstdint>
-#include <ostream>
+// We're not using anything from <sstream> directly in this file, but doctest
+// will call functions from sstream when comparing our string values in tests,
+// and MSVC removed <sstream> from the <string> header, so we include it
+// manually.
+// https://developercommunity.visualstudio.com/t/visual-studio-2019-compilation-issue/525532#T-N549764.
+#include <sstream>
 #include <string_view>
 
 using namespace CesiumGltf;

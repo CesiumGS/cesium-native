@@ -1,13 +1,16 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -17,7 +20,6 @@
 
 #include <list>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -28,6 +30,8 @@ class TilesetMetadata;
 class TilesetHeightQuery;
 struct TilesetHeightRequest;
 class TilesetSharedAssetSystem;
+class TilesetViewGroup;
+class TilesetFrameState;
 
 /**
  * @brief A <a
@@ -81,6 +85,20 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
+   * @brief Constructs a new instance with the given @ref
+   * TilesetContentLoaderFactory.
+   *
+   * @param externals The external interfaces to use.
+   * @param loaderFactory The factory to use to create the @ref
+   * TilesetContentLoader.
+   * @param options Additional options for the tileset.
+   */
+  Tileset(
+      const TilesetExternals& externals,
+      TilesetContentLoaderFactory&& loaderFactory,
+      const TilesetOptions& options = TilesetOptions());
+
+  /**
    * @brief Destroys this tileset.
    *
    * Destroying the tileset will immediately (before the destructor returns)
@@ -105,6 +123,12 @@ public:
    * will not necessarily be loaded yet.
    */
   CesiumAsync::SharedFuture<void>& getRootTileAvailableEvent();
+
+  /**
+   * @brief Gets the {@link CesiumUtility::Credit} created from
+   * {@link TilesetOptions::credit}, if any.
+   */
+  std::optional<CesiumUtility::Credit> getUserCredit() const noexcept;
 
   /**
    * @brief Get tileset credits.
@@ -200,12 +224,19 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult&
+  [[deprecated("Instead of `tileset.updateViewOffline(...)`, call "
+               "`tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), "
+               "...)`.")]] const ViewUpdateResult&
   updateViewOffline(const std::vector<ViewState>& frustums);
 
   /**
    * @brief Updates this view, returning the set of tiles to render in this
    * view.
+   *
+   * Calling this method is equivalent to calling {@link updateViewGroup} with
+   * the default view group ({@link getDefaultViewGroup}) and then calling
+   * {@link loadTiles}.
+   *
    * @param frustums The {@link ViewState}s that the view should be updated for
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
@@ -213,7 +244,9 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  const ViewUpdateResult&
+  [[deprecated("Instead of `tileset.updateView(...)`, call "
+               "`tileset.updateViewGroup(tileset.getDefaultViewGroup(), ...)` "
+               "followed by `tileset.loadTiles()`.")]] const ViewUpdateResult&
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**
@@ -222,10 +255,34 @@ public:
   int32_t getNumberOfTilesLoaded() const;
 
   /**
-   * @brief Estimate the percentage of the tiles for the current view that have
-   * been loaded.
+   * @brief Gets the percentage of tiles that had been loaded for the default
+   * view group as of the last time it was updated.
+   *
+   * To get the load progress of a view group other than the default, call
+   * {@link TilesetViewGroup::getPreviousLoadProgressPercentage}.
    */
   float computeLoadProgress() noexcept;
+
+  /**
+   * @brief Gets an object that can be used to enumerate the loaded tiles of
+   * this tileset.
+   *
+   * Before the root tile is available, this method will return an enumerator
+   * that is empty, and that instance will remain empty even after the root tile
+   * is available.
+
+   * Once the root tile is available (see {@link getRootTile} and
+   * {@link getRootTileAvailableEvent}), the returned instance will remain
+   * valid until the tileset is destroyed.
+   *
+   * While the returned enumerator itself will remain valid as long as the
+   * `Tileset` does, a given iteration may be invalidated by any operation that
+   * modifies the {@link Tile} hierarchy.
+   */
+  LoadedConstTileEnumerator loadedTiles() const;
+
+  /** @copydoc loadedTiles */
+  LoadedTileEnumerator loadedTiles();
 
   /**
    * @brief Invokes a function for each tile that is currently loaded.
@@ -312,6 +369,96 @@ public:
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
 
+  /**
+   * @brief Gets the default view group that is used when calling
+   * {@link updateView}.
+   *
+   * @return The view group.
+   */
+  TilesetViewGroup& getDefaultViewGroup();
+
+  /** @copydoc getDefaultViewGroup */
+  const TilesetViewGroup& getDefaultViewGroup() const;
+
+  /**
+   * @brief Updates a view group, returning the set of tiles to render in this
+   * view.
+   *
+   * This method should typically be called once per "render frame", but it may
+   * be called at different rates for different view groups.
+   *
+   * Users must also periodically call {@link loadTiles}, which will start or
+   * continue the asynchronous process of loading tiles that are needed across
+   * all view groups.
+   *
+   * @param viewGroup The view group to update. The first time `updateViewGroup`
+   * is called, simply create a new `TilesetViewGroup` to pass as this
+   * parameter. For successive calls to `updateViewGroup`, pass this same
+   * instance.
+   * @param frustums The {@link ViewState} instances that are observing the
+   * tileset in this view group.
+   * @param deltaTime The amount of time that has passed since the last call to
+   * updateView, in seconds.
+   * @returns The set of tiles to render in the updated view. This value is only
+   * valid until the next call to `updateViewGroup` or until the view group is
+   * destroyed, whichever comes first.
+   */
+  const ViewUpdateResult& updateViewGroup(
+      TilesetViewGroup& viewGroup,
+      const std::vector<ViewState>& frustums,
+      float deltaTime = 0.0f);
+
+  /**
+   * @brief Updates a view group, returning the set of tiles to render in this
+   * view. Unlike {@link updateViewGroup}, this method blocks the calling thread
+   * until all tiles suitable for the views have been loaded.
+   *
+   * This method is significantly slower than {@link updateViewGroup} and
+   * should only be used for capturing a movie or for other non-realtime
+   * situations.
+   *
+   * @param viewGroup The view group to update. The first time `updateViewGroup`
+   * is called, simply create a new `TilesetViewGroup` to pass as this
+   * parameter. For successive calls to `updateViewGroup`, pass this same
+   * instance.
+   * @param frustums The {@link ViewState} instances that are observing the
+   * tileset in this view group.
+   * @returns The set of tiles to render in the updated view. This value is only
+   * valid until the next call to `updateViewGroup` or until the view group is
+   * destroyed, whichever comes first.
+   */
+  const ViewUpdateResult& updateViewGroupOffline(
+      TilesetViewGroup& viewGroup,
+      const std::vector<ViewState>& frustums);
+
+  /**
+   * @brief Loads the tiles that are currently deemed the most important,
+   * across all height queries and {@link TilesetViewGroup} instances.
+   *
+   * In order to minimize tile load latency, this method should be called
+   * frequently, such as once per render frame. It will return quickly when
+   * there is no work to do.
+   *
+   * This method also calls
+   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} on the tileset's
+   * {@link getAsyncSystem}.
+   */
+  void loadTiles();
+
+  /**
+   * @brief Registers a tile load requester with this Tileset. Registered tile
+   * load requesters get to influence which tiles are loaded when
+   * {@link loadTiles} is called.
+   *
+   * If the given requester is already registered with this Tileset, this method
+   * does nothing.
+   *
+   * To unregister a load requester, call {@link TileLoadRequester::unregister}.
+   *
+   * @param requester The requester to register.
+   */
+  void registerLoadRequester(TileLoadRequester& requester);
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 
@@ -366,44 +513,28 @@ private:
     uint32_t notYetRenderableCount = 0;
   };
 
-  /**
-   * @brief Input information that is constant throughout the traversal.
-   *
-   * An instance of this structure is created upon entry of the top-level
-   * `_visitTile` function, for the traversal for a certain frame, and
-   * passed on through the traversal.
-   */
-  struct FrameState {
-    const std::vector<ViewState>& frustums;
-    std::vector<double> fogDensities;
-    int32_t lastFrameNumber;
-    int32_t currentFrameNumber;
-  };
-
   TraversalDetails _renderLeaf(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       double tilePriority,
       ViewUpdateResult& result);
   TraversalDetails _renderInnerTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result);
   bool _kickDescendantsAndRenderTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
-      size_t workerThreadLoadQueueIndex,
-      size_t mainThreadLoadQueueIndex,
+      const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
       bool queuedForLoad,
       double tilePriority);
-  TileOcclusionState
-  _checkOcclusion(const Tile& tile, const FrameState& frameState);
+  TileOcclusionState _checkOcclusion(const Tile& tile);
 
   TraversalDetails _visitTile(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       uint32_t depth,
       bool meetsSse,
       bool ancestorMeetsSse,
@@ -421,11 +552,11 @@ private:
   // TODO: abstract these into a composable culling interface.
   void _frustumCull(
       const Tile& tile,
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       bool cullWithChildrenBounds,
       CullResult& cullResult);
   void _fogCull(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       const std::vector<double>& distances,
       CullResult& cullResult);
   bool _meetsSse(
@@ -435,13 +566,13 @@ private:
       bool culled) const noexcept;
 
   TraversalDetails _visitTileIfNeeded(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
       Tile& tile,
@@ -463,20 +594,16 @@ private:
    * @return false The non-additive-refined tile was ignored.
    */
   bool _loadAndRenderAdditiveRefinedTile(
+      const TilesetFrameState& frameState,
       Tile& tile,
       ViewUpdateResult& result,
       double tilePriority,
       bool queuedForLoad);
 
-  void _processWorkerThreadLoadQueue();
-  void _processMainThreadLoadQueue();
-
-  void _clearChildrenRecursively(Tile* pTile) noexcept;
   void _unloadCachedTiles(double timeBudget) noexcept;
-  void _markTileVisited(Tile& tile) noexcept;
 
   void _updateLodTransitions(
-      const FrameState& frameState,
+      const TilesetFrameState& frameState,
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
 
@@ -484,66 +611,6 @@ private:
   CesiumAsync::AsyncSystem _asyncSystem;
 
   TilesetOptions _options;
-
-  int32_t _previousFrameNumber;
-  ViewUpdateResult _updateResult;
-
-  enum class TileLoadPriorityGroup {
-    /**
-     * @brief Low priority tiles that aren't needed right now, but
-     * are being preloaded for the future.
-     */
-    Preload = 0,
-
-    /**
-     * @brief Medium priority tiles that are needed to render the current view
-     * at the appropriate level-of-detail.
-     */
-    Normal = 1,
-
-    /**
-     * @brief High priority tiles whose absence is causing extra detail to be
-     * rendered in the scene, potentially creating a performance problem and
-     * aliasing artifacts.
-     */
-    Urgent = 2
-  };
-
-  struct TileLoadTask {
-    /**
-     * @brief The tile to be loaded.
-     */
-    Tile* pTile;
-
-    /**
-     * @brief The priority group (low / medium / high) in which to load this
-     * tile.
-     *
-     * All tiles in a higher priority group are given a chance to load before
-     * any tiles in a lower priority group.
-     */
-    TileLoadPriorityGroup group;
-
-    /**
-     * @brief The priority of this tile within its priority group.
-     *
-     * Tiles with a _lower_ value for this property load sooner!
-     */
-    double priority;
-
-    bool operator<(const TileLoadTask& rhs) const noexcept {
-      if (this->group == rhs.group)
-        return this->priority < rhs.priority;
-      else
-        return this->group > rhs.group;
-    }
-  };
-
-  std::vector<TileLoadTask> _mainThreadLoadQueue;
-  std::vector<TileLoadTask> _workerThreadLoadQueue;
-  std::vector<Tile*> _heightQueryLoadQueue;
-
-  Tile::LoadedLinkedList _loadedTiles;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
   // selection.
@@ -558,15 +625,17 @@ private:
 
   std::list<TilesetHeightRequest> _heightRequests;
 
+  TilesetViewGroup _defaultViewGroup;
+
   void addTileToLoadQueue(
+      const TilesetFrameState& frameState,
       Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
 
   static TraversalDetails createTraversalDetailsForSingleTile(
-      const FrameState& frameState,
-      const Tile& tile,
-      const TileSelectionState& lastFrameSelectionState);
+      const TilesetFrameState& frameState,
+      const Tile& tile);
 };
 
 } // namespace Cesium3DTilesSelection

@@ -11,7 +11,6 @@
 #include <cstdint>
 #include <span>
 #include <string_view>
-#include <type_traits>
 
 namespace CesiumGltf {
 /**
@@ -451,15 +450,19 @@ private:
   bool getBooleanValue(int64_t index) const noexcept {
     const int64_t byteIndex = index / 8;
     const int64_t bitIndex = index % 8;
-    const int bitValue = static_cast<int>(_values[byteIndex] >> bitIndex) & 1;
+    const int bitValue =
+        static_cast<int>(_values[static_cast<size_t>(byteIndex)] >> bitIndex) &
+        1;
     return bitValue == 1;
   }
 
   std::string_view getStringValue(int64_t index) const noexcept {
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _stringOffsets, _stringOffsetType);
+    const size_t currentOffset = getOffsetFromOffsetsBuffer(
+        static_cast<size_t>(index),
+        _stringOffsets,
+        _stringOffsetType);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
-        index + 1,
+        static_cast<size_t>(index + 1),
         _stringOffsets,
         _stringOffsetType);
     return std::string_view(
@@ -474,19 +477,23 @@ private:
     if (count > 0) {
       size_t arraySize = count * sizeof(T);
       const std::span<const std::byte> values(
-          _values.data() + index * arraySize,
+          _values.data() + static_cast<size_t>(index) * arraySize,
           arraySize);
       return PropertyArrayView<T>{values};
     }
 
     // Handle variable-length arrays. The offsets are interpreted as array
     // indices, not byte offsets, so they must be multiplied by sizeof(T)
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
-        sizeof(T);
-    const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
-        sizeof(T);
+    const size_t currentOffset = getOffsetFromOffsetsBuffer(
+                                     static_cast<size_t>(index),
+                                     _arrayOffsets,
+                                     _arrayOffsetType) *
+                                 sizeof(T);
+    const size_t nextOffset = getOffsetFromOffsetsBuffer(
+                                  static_cast<size_t>(index + 1),
+                                  _arrayOffsets,
+                                  _arrayOffsetType) *
+                              sizeof(T);
     const std::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);
@@ -499,57 +506,73 @@ private:
     // Handle fixed-length arrays
     if (count > 0) {
       // Copy the corresponding string offsets to pass to the PropertyArrayView.
-      const size_t arraySize = count * _stringOffsetTypeSize;
+      const size_t arraySize =
+          count * static_cast<size_t>(_stringOffsetTypeSize);
       const std::span<const std::byte> stringOffsetValues(
-          _stringOffsets.data() + index * arraySize,
-          arraySize + _stringOffsetTypeSize);
+          _stringOffsets.data() + static_cast<size_t>(index) * arraySize,
+          arraySize + static_cast<size_t>(_stringOffsetTypeSize));
       return PropertyArrayView<std::string_view>(
           _values,
           stringOffsetValues,
           _stringOffsetType,
-          count);
+          static_cast<int64_t>(count));
     }
 
     // Handle variable-length arrays
     const size_t currentArrayOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
-        _stringOffsetTypeSize;
-    const size_t nextArrayOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
-        _stringOffsetTypeSize;
+        getOffsetFromOffsetsBuffer(
+            static_cast<size_t>(index),
+            _arrayOffsets,
+            _arrayOffsetType) *
+        static_cast<size_t>(_stringOffsetTypeSize);
+    const size_t nextArrayOffset = getOffsetFromOffsetsBuffer(
+                                       static_cast<size_t>(index + 1),
+                                       _arrayOffsets,
+                                       _arrayOffsetType) *
+                                   static_cast<size_t>(_stringOffsetTypeSize);
     const size_t arraySize = nextArrayOffset - currentArrayOffset;
     const std::span<const std::byte> stringOffsetValues(
         _stringOffsets.data() + currentArrayOffset,
-        arraySize + _stringOffsetTypeSize);
+        arraySize + static_cast<size_t>(_stringOffsetTypeSize));
     return PropertyArrayView<std::string_view>(
         _values,
         stringOffsetValues,
         _stringOffsetType,
-        arraySize / _stringOffsetTypeSize);
+        static_cast<int64_t>(arraySize) / _stringOffsetTypeSize);
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
     size_t count = static_cast<size_t>(this->arrayCount());
     // Handle fixed-length arrays
     if (count > 0) {
-      const size_t offsetBits = count * index;
-      const size_t nextOffsetBits = count * (index + 1);
+      const size_t offsetBits = count * static_cast<size_t>(index);
+      const size_t nextOffsetBits = count * static_cast<size_t>(index + 1);
       const std::span<const std::byte> buffer(
           _values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
-      return PropertyArrayView<bool>(buffer, offsetBits % 8, count);
+      return PropertyArrayView<bool>(
+          buffer,
+          offsetBits % 8,
+          static_cast<int64_t>(count));
     }
 
     // Handle variable-length arrays
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType);
-    const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType);
+    const size_t currentOffset = getOffsetFromOffsetsBuffer(
+        static_cast<size_t>(index),
+        _arrayOffsets,
+        _arrayOffsetType);
+    const size_t nextOffset = getOffsetFromOffsetsBuffer(
+        static_cast<size_t>(index + 1),
+        _arrayOffsets,
+        _arrayOffsetType);
     const size_t totalBits = nextOffset - currentOffset;
     const std::span<const std::byte> buffer(
         _values.data() + currentOffset / 8,
         (nextOffset / 8 - currentOffset / 8 + 1));
-    return PropertyArrayView<bool>(buffer, currentOffset % 8, totalBits);
+    return PropertyArrayView<bool>(
+        buffer,
+        currentOffset % 8,
+        static_cast<int64_t>(totalBits));
   }
 
   std::span<const std::byte> _values;
@@ -822,19 +845,23 @@ private:
     if (count > 0) {
       size_t arraySize = count * sizeof(T);
       const std::span<const std::byte> values(
-          _values.data() + index * arraySize,
+          _values.data() + static_cast<size_t>(index) * arraySize,
           arraySize);
       return PropertyArrayView<T>{values};
     }
 
     // Handle variable-length arrays. The offsets are interpreted as array
     // indices, not byte offsets, so they must be multiplied by sizeof(T)
-    const size_t currentOffset =
-        getOffsetFromOffsetsBuffer(index, _arrayOffsets, _arrayOffsetType) *
-        sizeof(T);
-    const size_t nextOffset =
-        getOffsetFromOffsetsBuffer(index + 1, _arrayOffsets, _arrayOffsetType) *
-        sizeof(T);
+    const size_t currentOffset = getOffsetFromOffsetsBuffer(
+                                     static_cast<size_t>(index),
+                                     _arrayOffsets,
+                                     _arrayOffsetType) *
+                                 sizeof(T);
+    const size_t nextOffset = getOffsetFromOffsetsBuffer(
+                                  static_cast<size_t>(index + 1),
+                                  _arrayOffsets,
+                                  _arrayOffsetType) *
+                              sizeof(T);
     const std::span<const std::byte> values(
         _values.data() + currentOffset,
         nextOffset - currentOffset);

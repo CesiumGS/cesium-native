@@ -1,0 +1,4 @@
+{
+  "version": 4,
+  "include": ["doc/cmake-presets/CMakePresets.json"]
+}

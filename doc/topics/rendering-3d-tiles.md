@@ -19,6 +19,9 @@ In order to understand the pieces that you will need to implement in order to co
 
 In Frame 1, your application calls [updateView](@ref Cesium3DTilesSelection::Tileset::updateView) on the `Tileset`. It passes in all of the [ViewStates](@ref Cesium3DTilesSelection::ViewState) from which the tileset is currently being viewed. A `ViewState` includes a position, a look direction, a camera "up" direction, a viewport width and height in pixels, and horizontal and vertical field-of-view angles. This is all the information that Cesium Native needs in order to decide which subset of the model is visible, and what level-of-detail is needed for each part. You'll likely create a `ViewState` from each camera in your scene.
 
+> [!note]
+> All of the `ViewState` instances together represent one view, and one set of tiles will be selected that satisfies all of them. It is also possible to select a different set of tiles in each view by using the [updateViewGroup](@ref Cesium3DTilesSelection::Tileset::updateViewGroup) method instead of `updateView`. `updateView` simply calls `updateViewGroup` with the [default view group](@ref Cesium3DTilesSelection::Tileset::getDefaultViewGroup). It also calls [loadTiles](@ref Cesium3DTilesSelection::Tileset::loadTiles) in order to save the user the trouble of doing this themselves when only using a single view group.
+
 In our example, based on the `ViewStates`, Cesium Native selects tiles A and B as being needed for rendering. The details of this process are described in the [3D Tiles Selection Algorithm](@ref selection-algorithm-details), but aren't important for now. In Frame 1, no tiles are loaded yet, so `Tileset` calls [IAssetAccessor::get](@ref CesiumAsync::IAssetAccessor::get) to initiate the download of these two tiles. These downloads happen asynchronously via the [AsyncSystem](#async-system); Cesium Native doesn't wait for them to complete before continuing.
 
 @mermaid{tileset-sequence-diagram-frame2}

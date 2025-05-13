@@ -30,29 +30,86 @@ This guide contains the basic setup information for developers looking to work w
 Check out the repo with:
 
 ```bash
-git clone git@github.com:CesiumGS/cesium-native.git --recurse-submodules
+git clone git@github.com:CesiumGS/cesium-native.git
 ```
 
-If you forget the `--recurse-submodules`, nothing will work because the git submodules will be missing. You should be able to fix it with:
+## Dependencies
+
+Cesium Native manages its many dependencies using
+[vcpkg](https://github.com/microsoft/vcpkg). We use vcpkg's manifest
+mode, in which vcpkg reads the list of Cesium Native's dependencies
+and installs them. This requires a local installation of `vcpkg` and
+some extra arguments to CMake.
+
+## vcpkg
+
+After installing `vcpkg` -- usually by cloning it from
+https://github.com/microsoft/vcpkg -- run the proper bootstrap script
+and set the `VCPKG_ROOT` environment variable so that Cesium Native's
+build can find it:
 
 ```bash
-git submodule update --init --recursive
+cd vcpkg
+./bootstrap-vcpkg.sh
+export VCPKG_ROOT=$PWD
 ```
+
+## vcpkg and CMake
+
+`vcpkg` hooks into CMake by loading a toolchain file, which is usually
+used in cross-compilation scenarios. You can specify this on the
+command line, but this can become a bit verbose as additional `vcpkg` options
+get added, so specifying them all in a CMake presets file is an
+interesting option. There are example preset files in the
+[cmake-presets](../cmake-presets) directory. We haven't included them
+in their normal spot in the source tree because they can cause some
+issues with VS Code, but you can copy
+[CMakeUserPresets.cmake](../cmake-presets/CMakeUserPresets.cmake) to
+the root of the Cesium Native source tree to use these predefined
+presets.
 
 ## Compiling Cesium Native
 
 ### Compile from command line
 
-```bash
-## Windows compilation using Visual Studio
-cmake -B build -S . -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Debug
-cmake --build build --config Release
+Using presets (on Linux):
 
-## Linux compilation
-cmake -B build -S .
+```bash
+cp doc/cmake-presets/CMakeUserPresets.json .
+cmake --preset=vcpkg-linux -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ```
+
+By hand:
+```bash
+cmake -B build -S . \
+    -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+    -DCESIUM_USE_EZVCPG=OFF
+```
+
+On Windows:
+```bash
+cp doc/cmake-presets/CMakeUserPresets.json .
+cmake --preset=vcpkg-windows-vs
+cmake --build build --config Debug
+cmake --build build --config Release
+```
+
+`vcpkg` specifies all information about the compilation target in a
+"triplet". For compiling Cesium Native as a stand-alone, the system
+defaults will usually work, but consumers of Cesium Native might need
+something more exotic. For example, one could configure a Windows
+build with:
+
+```bash
+cmake -B build -S . \
+    -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+    -DCESIUM_USE_EZVCPG=OFF \
+    -DVCPKG_TARGET_TRIPLET=x64-windows-static-md
+cmake --build build --config Debug
+cmake --build build --config Release
+```
+
 
 ### Compile from Visual Studio Code
 

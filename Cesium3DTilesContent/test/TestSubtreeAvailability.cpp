@@ -1015,14 +1015,54 @@ TEST_CASE("Test parsing subtree format") {
   }
 }
 
+TEST_CASE("Test SubtreeAvailability::createEmpty") {
+  SUBCASE("With no tiles available") {
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            false);
+    REQUIRE(maybeAvailability);
+
+    SubtreeAvailability& availability = *maybeAvailability;
+
+    CHECK_FALSE(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK_FALSE(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
+  }
+
+  SUBCASE("With all tiles available") {
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            true);
+    REQUIRE(maybeAvailability);
+
+    SubtreeAvailability& availability = *maybeAvailability;
+
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
+  }
+}
+
 TEST_CASE("SubtreeAvailability modifications") {
   std::optional<SubtreeAvailability> maybeAvailability =
       SubtreeAvailability::createEmpty(
           ImplicitTileSubdivisionScheme::Quadtree,
-          5);
+          5,
+          true);
   REQUIRE(maybeAvailability);
 
   SubtreeAvailability& availability = *maybeAvailability;
+  const Subtree& subtree = availability.getSubtree();
 
   SUBCASE("initially has all tiles available, and no content or subtrees "
           "available") {
@@ -1063,6 +1103,9 @@ TEST_CASE("SubtreeAvailability modifications") {
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(4, 15, 15)));
 
+    CHECK_UNARY(subtree.tileAvailability.bitstream);
+    CHECK_UNARY_FALSE(subtree.tileAvailability.constant);
+
     availability.setContentAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(4, 15, 15),
@@ -1078,6 +1121,9 @@ TEST_CASE("SubtreeAvailability modifications") {
         QuadtreeTileID(4, 15, 15),
         0));
 
+    CHECK_UNARY(subtree.contentAvailability[0].bitstream);
+    CHECK_UNARY_FALSE(subtree.contentAvailability[0].constant);
+
     availability.setSubtreeAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(5, 31, 31),
@@ -1089,5 +1135,17 @@ TEST_CASE("SubtreeAvailability modifications") {
     CHECK(availability.isSubtreeAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(5, 31, 31)));
+
+    CHECK_UNARY(subtree.childSubtreeAvailability.bitstream);
+    CHECK_UNARY_FALSE(subtree.childSubtreeAvailability.constant);
+
+    // Check that tile availability is still correct - e.g. spans are updated
+    // after the buffer grows
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK(!availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
   }
 }

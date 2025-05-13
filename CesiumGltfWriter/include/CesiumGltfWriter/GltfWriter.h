@@ -73,7 +73,7 @@ public:
   /**
    * @brief Serializes the provided model into a glTF JSON byte vector.
    *
-   * @details Ignores internal data such as {@link CesiumGltf::BufferCesium}
+   * Ignores internal data such as {@link CesiumGltf::BufferCesium}
    * and {@link CesiumGltf::ImageAsset} when serializing the glTF. Internal
    * data must either be converted to data uris or saved as external files. The
    * buffer.uri and image.uri fields must be set accordingly prior to calling
@@ -90,7 +90,7 @@ public:
   /**
    * @brief Serializes the provided model into a glb byte vector.
    *
-   * @details The first buffer object implicitly refers to the GLB binary chunk
+   * The first buffer object implicitly refers to the GLB binary chunk
    * and should not have a uri. Ignores internal data such as
    * {@link CesiumGltf::BufferCesium} and {@link CesiumGltf::ImageAsset}.
    *

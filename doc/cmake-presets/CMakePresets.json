@@ -1,0 +1,48 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "vcpkg",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CESIUM_USE_EZVCPKG": "OFF"
+      },
+      "environment": {
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+        "VCPKG_KEEP_ENV_VARS": "CMAKE_POLICY_VERSION_MINIMUM"
+      }
+    },
+    {
+      "name": "vcpkg-ninja",
+      "generator": "Ninja",
+      "inherits": ["vcpkg"]
+    },
+    {
+      "name": "vcpkg-ninja-multi",
+      "generator": "Ninja Multi-Config",
+      "inherits": ["vcpkg"]
+    },
+    {
+      "name": "vcpkg-linux",
+      "inherits": ["vcpkg"],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "vcpkg-windows",
+      "inherits": ["vcpkg"],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "VCPKG_HOST_TRIPLET": "x64-windows-static-md"
+      }
+    },
+    {
+      "name": "vcpkg-windows-vs",
+      "inherits": ["vcpkg-windows"],
+      "generator": "Visual Studio 17 2022"
+    }
+  ]
+}

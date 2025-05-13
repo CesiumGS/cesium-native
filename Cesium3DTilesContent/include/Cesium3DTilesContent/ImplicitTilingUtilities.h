@@ -115,7 +115,7 @@ public:
 
   /** @brief Returns an iterator starting at the first child. */
   iterator begin() const noexcept;
-  /** @brief Returns an iterator starting at the last child. */
+  /** @brief Returns an iterator starting after the last child. */
   iterator end() const noexcept;
   /**
    * @brief Returns the total number of \ref CesiumGeometry::QuadtreeTileID
@@ -217,7 +217,7 @@ public:
       : _tileID(tileID) {}
   /** @brief Returns an iterator starting at the first child. */
   iterator begin() const noexcept;
-  /** @brief Returns an iterator starting at the last child. */
+  /** @brief Returns an iterator starting after the last child. */
   iterator end() const noexcept;
   /**
    * @brief Returns the total number of \ref CesiumGeometry::OctreeTileID

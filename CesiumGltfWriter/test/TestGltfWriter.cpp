@@ -267,6 +267,26 @@ TEST_CASE("Writes glTF with custom extension") {
   check(string, string);
 }
 
+TEST_CASE("Writes glTF with unregistered extension") {
+  CesiumGltf::Model model;
+  model.addExtension<ExtensionModelTest>();
+
+  SUBCASE("Reports a warning if the extension is enabled") {
+    CesiumGltfWriter::GltfWriter writer;
+    CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
+    REQUIRE(!result.warnings.empty());
+  }
+
+  SUBCASE("Does not report a warning if the extension is disabled") {
+    CesiumGltfWriter::GltfWriter writer;
+    writer.getExtensions().setExtensionState(
+        ExtensionModelTest::ExtensionName,
+        CesiumJsonWriter::ExtensionState::Disabled);
+    CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
+    REQUIRE(result.warnings.empty());
+  }
+}
+
 TEST_CASE("Writes glTF with default values removed") {
   std::string string = R"(
     {
@@ -607,24 +627,4 @@ TEST_CASE("Reports an error if asked to write a GLB larger than 4GB") {
       writer.writeGlb(model, buffer.cesium.data);
   REQUIRE(!result.errors.empty());
   CHECK(result.gltfBytes.empty());
-}
-
-TEST_CASE("Handles models with unregistered extension") {
-  CesiumGltf::Model model;
-  model.addExtension<ExtensionModelTest>();
-
-  SUBCASE("Reports a warning if the extension is enabled") {
-    CesiumGltfWriter::GltfWriter writer;
-    CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
-    REQUIRE(!result.warnings.empty());
-  }
-
-  SUBCASE("Does not report a warning if the extension is disabled") {
-    CesiumGltfWriter::GltfWriter writer;
-    writer.getExtensions().setExtensionState(
-        ExtensionModelTest::ExtensionName,
-        CesiumJsonWriter::ExtensionState::Disabled);
-    CesiumGltfWriter::GltfWriterResult result = writer.writeGltf(model);
-    REQUIRE(result.warnings.empty());
-  }
 }

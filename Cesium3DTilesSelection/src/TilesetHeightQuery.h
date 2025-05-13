@@ -1,11 +1,13 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumGeometry/Ray.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <list>
 #include <set>
@@ -60,20 +62,20 @@ public:
    * @brief Non-leaf tiles with additive refinement whose bounding volumes are
    * intersected by the query ray.
    */
-  std::vector<Tile*> additiveCandidateTiles;
+  std::vector<Tile::Pointer> additiveCandidateTiles;
 
   /**
    * @brief The current set of leaf tiles whose bounding volumes are intersected
    * by the query ray.
    */
-  std::vector<Tile*> candidateTiles;
+  std::vector<Tile::Pointer> candidateTiles;
 
   /**
    * @brief The previous set of leaf tiles. Swapping `candidateTiles` and
    * `previousCandidateTiles` each frame allows us to avoid a heap allocation
    * for a new vector each frame.
    */
-  std::vector<Tile*> previousCandidateTiles;
+  std::vector<Tile::Pointer> previousCandidateTiles;
 
   /**
    * @brief Find the intersection of the ray with the given tile. If there is
@@ -97,23 +99,24 @@ public:
    * {@link TilesetHeightQuery::additiveCandidateTiles}.
    *
    * @param pTile The tile at which to start traversal.
-   * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded just long enough to complete
-   * the query, and no longer.
    * @param outWarnings On return, reports any warnings that occurred during
    * candidate search.
    */
-  void findCandidateTiles(
-      Tile* pTile,
-      Tile::LoadedLinkedList& loadedTiles,
-      std::vector<std::string>& outWarnings);
+  void findCandidateTiles(Tile* pTile, std::vector<std::string>& outWarnings);
 };
 
 /**
  * @brief A request for a batch of height queries. When all of the queries are
  * complete, they will be delivered to the requestor via resolving a promise.
  */
-struct TilesetHeightRequest {
+struct TilesetHeightRequest : public TileLoadRequester {
+  TilesetHeightRequest(
+      std::vector<TilesetHeightQuery>&& queries,
+      const CesiumAsync::Promise<SampleHeightResult>& promise) noexcept;
+  TilesetHeightRequest(const TilesetHeightRequest& rhs) noexcept = delete;
+  TilesetHeightRequest(TilesetHeightRequest&& rhs) noexcept;
+  virtual ~TilesetHeightRequest() noexcept;
+
   /**
    * @brief The individual height queries in this request.
    */
@@ -125,27 +128,38 @@ struct TilesetHeightRequest {
   CesiumAsync::Promise<SampleHeightResult> promise;
 
   /**
+   * @brief The set of tiles that need to be loaded in order for this height
+   * request to be completed.
+   */
+  std::set<Tile*> tilesToLoad;
+
+  /**
    * @brief Process a given list of height requests. This is called by the {@link Tileset}
    * in every call to {@link Tileset::updateView}.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
-   * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded just long enough to complete
-   * the query, and no longer.
    * @param heightRequests The list of all height requests. Completed requests
    * will be removed from this list.
-   * @param heightQueryLoadQueue Tiles that still need to be loaded before all
-   * height requests can complete are added to this vector.
    */
   static void processHeightRequests(
       const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
       const TilesetOptions& options,
-      Tile::LoadedLinkedList& loadedTiles,
-      std::list<TilesetHeightRequest>& heightRequests,
-      std::vector<Tile*>& heightQueryLoadQueue);
+      std::list<TilesetHeightRequest>& heightRequests);
+
+  double getWeight() const override;
+
+  /** @inheritdoc */
+  bool hasMoreTilesToLoadInWorkerThread() const override;
+  /** @inheritdoc */
+  Tile* getNextTileToLoadInWorkerThread() override;
+
+  /** @inheritdoc */
+  bool hasMoreTilesToLoadInMainThread() const override;
+  /** @inheritdoc */
+  Tile* getNextTileToLoadInMainThread() override;
 
   /**
    * @brief Cancels all outstanding height requests and rejects the associated
@@ -167,18 +181,11 @@ struct TilesetHeightRequest {
    * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.
    * @param options Options associated with the tileset.
-   * @param loadedTiles The linked list of loaded tiles, used to ensure that
-   * tiles loaded for height queries stay loaded just long enough to complete
-   * the query, and no longer.
-   * @param tileLoadSet Tiles that needs to be loaded before this height request
-   * can complete.
    */
   bool tryCompleteHeightRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,
       TilesetContentManager& contentManager,
-      const TilesetOptions& options,
-      Tile::LoadedLinkedList& loadedTiles,
-      std::set<Tile*>& tileLoadSet);
+      const TilesetOptions& options);
 };
 
 } // namespace Cesium3DTilesSelection

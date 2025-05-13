@@ -751,7 +751,7 @@ private:
     // exceed two bytes.
     if constexpr (IsMetadataScalar<T>::value && sizeof(T) <= 4) {
       // Only up to four elements are supported.
-      int64_t count = classProperty.count.value_or(0);
+      size_t count = static_cast<size_t>(classProperty.count.value_or(0));
       if (count <= 0 || count > 4) {
         return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
             PropertyTexturePropertyViewStatus::ErrorUnsupportedProperty);
@@ -802,7 +802,7 @@ private:
     }
 
     const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
-        _pModel->images[imageIndex].pAsset;
+        _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
     status = checkChannels(channels, *pImage);
@@ -810,7 +810,8 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    if (channels.size() * pImage->bytesPerChannel != elementSize) {
+    if (channels.size() * static_cast<size_t>(pImage->bytesPerChannel) !=
+        elementSize) {
       return PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
     }
 
@@ -820,7 +821,7 @@ private:
             propertyTextureProperty,
             classProperty,
             pEnumDefinition,
-            _pModel->samplers[samplerIndex],
+            _pModel->samplers[static_cast<size_t>(samplerIndex)],
             *pImage,
             propertyOptions);
       }
@@ -829,7 +830,7 @@ private:
     return PropertyTexturePropertyView<T, Normalized>(
         propertyTextureProperty,
         classProperty,
-        _pModel->samplers[samplerIndex],
+        _pModel->samplers[static_cast<size_t>(samplerIndex)],
         *pImage,
         propertyOptions);
   }
