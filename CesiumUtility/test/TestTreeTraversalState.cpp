@@ -15,10 +15,14 @@ struct Node {
 std::vector<std::tuple<Node*, int, int>>
 getDifferences(const TreeTraversalState<Node*, int>& traversalState) {
   std::vector<std::tuple<Node*, int, int>> differences;
-  traversalState.diff(
-      [&differences](Node* pNode, int previousState, int currentState) {
-        differences.emplace_back(pNode, previousState, currentState);
-      });
+  for (auto it = traversalState.beginDiff(); it != traversalState.endDiff();
+       ++it) {
+    differences.emplace_back(it->pNode, it->previousState, it->currentState);
+  }
+  // traversalState.diff(
+  //     [&differences](Node* pNode, int previousState, int currentState) {
+  //       differences.emplace_back(pNode, previousState, currentState);
+  //     });
   return differences;
 }
 
