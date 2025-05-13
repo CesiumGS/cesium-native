@@ -204,8 +204,8 @@ struct GeoJsonMultiPolygon {
 
   /**
    * @brief The list of Polygons making up this MultiPolygon. Each entry has
-   * equivalent rules to the \ref Polygon::coordinates "coordinates" property of
-   * a \ref Polygon.
+   * equivalent rules to the \ref GeoJsonPolygon::coordinates "coordinates"
+   * property of a \ref GeoJsonPolygon.
    */
   std::vector<std::vector<std::vector<CesiumGeospatial::Cartographic>>>
       coordinates;
@@ -250,7 +250,7 @@ struct GeoJsonGeometryCollection {
       GeoJsonObjectType::GeometryCollection;
 
   /**
-   * @brief The \ref GeometryObject values contained in this
+   * @brief The \ref GeoJsonGeometryObject values contained in this
    * GeometryCollection.
    */
   std::vector<GeoJsonGeometryObject> geometries;
@@ -273,8 +273,8 @@ struct GeoJsonGeometryCollection {
 };
 
 /**
- * @brief A `Feature` object represents a spatially bounded "thing." It is a
- * collection of information that is possibly linked to a geometry object.
+ * @brief A `GeoJsonFeature` object represents a spatially bounded "thing." It
+ * is a collection of information that is possibly linked to a geometry object.
  */
 struct GeoJsonFeature {
   /** @brief The `GeoJsonObjectType` for a Feature. */
@@ -315,7 +315,8 @@ struct GeoJsonFeature {
 };
 
 /**
- * @brief A `FeatureCollection` represents any number of \ref Feature objects.
+ * @brief A `FeatureCollection` represents any number of \ref GeoJsonFeature
+ * objects.
  */
 struct GeoJsonFeatureCollection {
   /** @brief The `GeoJsonObjectType` for a FeatureCollection. */
@@ -323,13 +324,13 @@ struct GeoJsonFeatureCollection {
       GeoJsonObjectType::FeatureCollection;
 
   /**
-   * @brief The \ref Feature objects contained in this FeatureCollection.
+   * @brief The \ref GeoJsonFeature objects contained in this FeatureCollection.
    */
   std::vector<GeoJsonFeature> features;
 
   /**
-   * @brief The bounding box associated with this FeatureCollection value, if
-   * any.
+   * @brief The bounding box associated with this GeoJsonFeatureCollection
+   * value, if any.
    */
   std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
 

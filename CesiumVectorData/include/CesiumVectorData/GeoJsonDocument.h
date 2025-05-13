@@ -31,21 +31,21 @@ struct VectorDocumentAttribution {
 };
 
 /**
- * @brief A vector document parsed from a format like GeoJSON.
+ * @brief A vector document parsed from GeoJSON.
  *
- * The document is represented as a hierarchy of \ref VectorNode values starting
- * with the root node.
+ * The document is represented as a hierarchy of \ref GeoJsonObject values
+ * starting with the root object.
  */
 class CESIUMVECTORDATA_API GeoJsonDocument
     : public CesiumUtility::ReferenceCountedThreadSafe<GeoJsonDocument> {
 public:
   /**
-   * @brief Attempts to parse a \ref VectorDocument from the provided GeoJSON.
+   * @brief Attempts to parse a \ref GeoJsonDocument from the provided GeoJSON.
    *
    * @param bytes The GeoJSON data to parse.
    * @param attributions Any attributions to attach to the document.
    * @returns A \ref CesiumUtility::Result containing the parsed
-   * \ref VectorDocument or any errors and warnings that came up while parsing.
+   * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
   static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
   fromGeoJson(
@@ -53,13 +53,13 @@ public:
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
-   * @brief Attempts to parse a \ref VectorDocument from the provided JSON
+   * @brief Attempts to parse a \ref GeoJsonDocument from the provided JSON
    * document.
    *
    * @param document The GeoJSON JSON document.
    * @param attributions Any attributions to attach to the document.
    * @returns A \ref CesiumUtility::Result containing the parsed
-   * \ref VectorDocument or any errors and warnings that came up while parsing.
+   * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
   static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
   fromGeoJson(
@@ -67,7 +67,7 @@ public:
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
-   * @brief Attempts to load a \ref VectorDocument from a Cesium ion asset.
+   * @brief Attempts to load a \ref GeoJsonDocument from a Cesium ion asset.
    *
    * Currently only the GeoJSON format is supported.
    *
@@ -79,7 +79,7 @@ public:
    * @param ionAssetEndpointUrl The base URL of the ion REST API server, if
    * different from `https://api.cesium.com/`.
    * @returns A future that resolves into a \ref CesiumUtility::Result
-   * containing the parsed \ref VectorDocument or any errors and warnings that
+   * containing the parsed \ref GeoJsonDocument or any errors and warnings that
    * came up while loading or parsing the data.
    */
   static CesiumAsync::Future<
@@ -101,10 +101,16 @@ public:
 
   GeoJsonDocument() = default;
 
+  /**
+   * @brief Obtains a const reference to the root object of the parsed GeoJSON.
+   */
   constexpr const GeoJsonObject& getRootObject() const {
     return this->_rootObject;
   }
 
+  /**
+   * @brief Obtains a reference to the root object of the parsed GeoJSON.
+   */
   constexpr GeoJsonObject& getRootObject() { return this->_rootObject; }
 
   /**

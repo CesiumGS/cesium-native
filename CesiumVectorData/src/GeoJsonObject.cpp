@@ -1,4 +1,3 @@
-#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 
 #include <stdexcept>
