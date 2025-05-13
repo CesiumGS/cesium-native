@@ -193,9 +193,61 @@ public:
    */
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
+  /** The state of the tuning process of the glTF model of a given tile content. */
+  enum class TunerState
+  {
+    /** No tuning is in progress. */
+    Idle,
+    /** Worker-thread phase is in progress. */
+    WorkerRunning,
+    /** Worker-thread phase is complete, main-thread phase is not done yet. */
+    WorkerDone,
+  };
+
+  /** Tuning process state of the glTF model of this tile content. */
+  TunerState getTunerState() const noexcept;
+
+  /** Update the tuning process state of the glTF model of this tile content. */
+  void setTunerState(TunerState tunerState) noexcept;
+
+  /** Get the temporary tuned model of this tile content. Its validity can be
+   * tested by comparing its _tuningVersion to -1, as the lowest version for a
+   * tuned glTF model is 0. */
+  const CesiumGltf::Model& getTunedModel() const noexcept;
+
+  /** Get the temporary tuned model's render resources of this tile content, if
+   * any, or nullptr. */
+  void* getTunedRenderResources() const noexcept;
+
+  /** Store temporary model and render resources computed in a worker thread,
+   * until they can be used instead of the current outdated versions */
+  void setTunedModelAndRenderResources(
+      CesiumGltf::Model&& tunedModel,
+      void* pTunedRenderResources) noexcept;
+
+  /** Reset the temporary tuned model's render resources of this tile content to
+   * nullptr after it has been freed with
+   * Cesium3DTilesSelection::IPrepareRendererResources::free. */
+  void resetTunedRenderResources() noexcept;
+
+  /** Overwrite this instance's model and render resources with the tuning
+   * stage's temporary variables, which are reset to their initial state. */
+  void replaceWithTunedModel() noexcept;
+
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
+
+  /** Current state of the glTF tuning for this tile content */
+  TunerState _tunerState = TunerState::Idle;
+  /** Temporary model used during tuning when the tile content already has a
+   * model. */
+  CesiumGltf::Model _tunedModel;
+  /** Temporary render resources used during tuning when the tile content
+   * already has render resources. When tuning is done, it will replace
+   * _pRenderResources and be reset to nullptr. */
+  void* _pTunedRenderResources = nullptr;
+
   CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;

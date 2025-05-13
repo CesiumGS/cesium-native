@@ -498,8 +498,11 @@ public:
 
   /**
    * @brief Determines if this tile is currently renderable.
+   * @param minTuningVersionNeeded Minimum tuning version needed to allow this
+   * tile to render, or -1 to ignore the Gltf tuning version of the tile. See
+   * CesiumGltf::Model::_tuningVersion.
    */
-  bool isRenderable() const noexcept;
+  bool isRenderable(int minTuningVersionNeeded) const noexcept;
 
   /**
    * @brief Determines if this tile has mesh content.
@@ -529,18 +532,25 @@ public:
   /**
    * @brief Determines if this tile requires worker-thread loading.
    *
+   * @param tunerVersion Current version of glTF tuning that this tile should
+   *    check to determine whether it is up to date, or -1 if no glTF tuning
+   *    is set up for its {@link Tileset}.
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool needsWorkerThreadLoading() const noexcept;
+  bool
+  needsWorkerThreadLoading(int tunerVersion) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.
    *
+   * @param tunerVersion Current version of glTF tuning that this tile should
+   *    check to determine whether it is up to date, or -1 if no glTF tuning
+   *    is set up for its {@link Tileset}.
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
-  bool needsMainThreadLoading() const noexcept;
+  bool needsMainThreadLoading(int tunerVersion) const noexcept;
 
   /**
    * @brief Adds a reference to this tile. A live reference will keep this tile

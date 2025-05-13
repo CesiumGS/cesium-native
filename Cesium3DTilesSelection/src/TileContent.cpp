@@ -32,6 +32,42 @@ void TileRenderContent::setModel(CesiumGltf::Model&& model) {
   _model = std::move(model);
 }
 
+TileRenderContent::TunerState TileRenderContent::getTunerState() const noexcept {
+  return _tunerState;
+}
+
+void TileRenderContent::setTunerState(
+    TileRenderContent::TunerState tunerState) noexcept {
+  _tunerState = tunerState;
+}
+
+const CesiumGltf::Model& TileRenderContent::getTunedModel() const noexcept {
+  return _tunedModel;
+}
+
+void TileRenderContent::setTunedModelAndRenderResources(
+    CesiumGltf::Model&& tunedModel,
+    void* pTunedRenderResources) noexcept {
+  _tunedModel = std::move(tunedModel);
+  _pTunedRenderResources = pTunedRenderResources;
+}
+
+void* TileRenderContent::getTunedRenderResources() const noexcept {
+  return _pTunedRenderResources;
+}
+
+void TileRenderContent::resetTunedRenderResources() noexcept {
+  _pTunedRenderResources = nullptr;
+}
+
+void TileRenderContent::replaceWithTunedModel() noexcept {
+  _model = std::move(_tunedModel);
+  // reset after move because tested in tileNeedsWorkerThreadLoading:
+  _tunedModel._tuningVersion = -1;
+  _pRenderResources = _pTunedRenderResources;
+  _pTunedRenderResources = nullptr;
+}
+
 const RasterOverlayDetails&
 TileRenderContent::getRasterOverlayDetails() const noexcept {
   return this->_rasterOverlayDetails;

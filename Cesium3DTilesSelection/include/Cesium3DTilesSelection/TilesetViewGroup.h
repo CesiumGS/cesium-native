@@ -96,8 +96,11 @@ public:
    * undefined behavior in release builds.
    *
    * @param task The tile load task to add to the queue.
+   * @param tunerVersion When the {@link Tileset} uses a {@link GltfTuner}, this
+   *    is the version of glTF tuning to compare to that of already loaded tiles
+   *    to determine whether they are up to date. Otherwise, -1 is passed.
    */
-  void addToLoadQueue(const TileLoadTask& task);
+  void addToLoadQueue(const TileLoadTask& task, int tunerVersion);
 
   /**
    * @brief A checkpoint within this view group's load queue.
