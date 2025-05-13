@@ -18,6 +18,7 @@
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Profile.h>
 #include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
@@ -743,14 +744,15 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
 
                   collectionResult.extents.spatial.emplace_back(
                       CesiumGeospatial::GlobeRectangle{
-                          Math::degreesToRadians((*coords)[0]),
                           Math::degreesToRadians((*coords)[1]),
+                          Math::degreesToRadians((*coords)[0]),
+                          Math::degreesToRadians(
+                              coords->size() == 4 ? (*coords)[3]
+                                                  : (*coords)[4]),
                           Math::degreesToRadians(
                               coords->size() == 4 ? (*coords)[2]
                                                   : (*coords)[3]),
-                          Math::degreesToRadians(
-                              coords->size() == 4 ? (*coords)[3]
-                                                  : (*coords)[4])},
+                      },
                       coords->size() == 4 ? 0 : (*coords)[2],
                       coords->size() == 4 ? 0 : (*coords)[5]);
                 }
@@ -888,14 +890,14 @@ Connection::listGeospatialFeatures(const std::string& url) {
                 return Result<PagedList<VectorNode>>(docResult.errors);
               }
 
-              Result<VectorDocument> geoJsonDocResult =
+              Result<IntrusivePointer<VectorDocument>> geoJsonDocResult =
                   VectorDocument::fromGeoJson(*docResult.value, {});
-              if (!geoJsonDocResult.value) {
+              if (!geoJsonDocResult.pValue) {
                 return Result<PagedList<VectorNode>>(geoJsonDocResult.errors);
               }
 
               std::vector<VectorNode> nodes =
-                  std::move(geoJsonDocResult.value->getRootNode().children);
+                  std::move(geoJsonDocResult.pValue->getRootNode().children);
 
               return Result<PagedList<VectorNode>>(PagedList<VectorNode>(
                   *docResult.value,

@@ -2,6 +2,7 @@
 
 #include "AuthenticationToken.h"
 #include "CesiumCuratedContent.h"
+#include "CesiumGeospatial/GlobeRectangle.h"
 #include "IModel.h"
 #include "IModelMeshExport.h"
 #include "ITwin.h"
