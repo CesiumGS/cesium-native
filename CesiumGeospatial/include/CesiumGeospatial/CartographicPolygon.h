@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumGeospatial/Cartographic.h"
+
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Library.h>
 
@@ -42,6 +44,18 @@ public:
   CartographicPolygon(const std::vector<Cartographic>& polygon);
 
   /**
+   * @brief Constructs a 2D polygon with the linear ring defining its boundary
+   * and the set of linear rings defining its holes.
+   *
+   * @param vertices The vertices defining the outer boundary of the polygon.
+   * @param holes The polygons defining holes within this polygon. Any holes in
+   * those polygons are then inner polygons, and so on.
+   */
+  CartographicPolygon(
+      const std::vector<Cartographic>& vertices,
+      std::vector<CartographicPolygon>&& holes);
+
+  /**
    * @brief Returns the longitude-latitude vertices that define the
    * perimeter of the selected polygon.
    *
@@ -54,7 +68,14 @@ public:
   /**
    * @brief Returns the triangulated indices representing a triangle
    * decomposition of the polygon. The indices are in reference to the
-   * polygon's perimeter vertices.
+   * polygon's vertices, including holes.
+   *
+   * For example, for a polygon made up of `( v0, v1, v2 )` with holes made up
+   * of `( v4, v5, v6 )` and `( v7, v8, v9 )`, index 1 would correspond to v1,
+   * index 5 to v5, and so on.
+   *
+   * @remarks Due to limitations of the triangulation algorithm, any inner
+   * polygons contained in the holes of this polygon will be ignored.
    *
    * @return The indices for the polygon's triangle decomposition.
    */
@@ -74,6 +95,14 @@ public:
   }
 
   /**
+   * @brief Returns the \ref CartographicPolygon instances that define holes in
+   * this polygon.
+   */
+  constexpr const std::vector<CartographicPolygon>& getHoles() const {
+    return this->_holes;
+  }
+
+  /**
    * @brief Returns whether the given longitude-latitude position lies within
    * this polygon.
    */
@@ -82,6 +111,8 @@ public:
   /**
    * @brief Determines whether a globe rectangle is completely inside any of the
    * polygons in a list.
+   *
+   * @warning Does not take into account any holes in this polygon.
    *
    * @param rectangle The {@link CesiumGeospatial::GlobeRectangle} of the tile.
    * @param cartographicPolygons The list of polygons to check.
@@ -96,6 +127,8 @@ public:
   /**
    * @brief Determines whether a globe rectangle is completely outside all the
    * polygons in a list.
+   *
+   * @warning Does not take into account any holes in this polygon.
    *
    * @param rectangle The {@link CesiumGeospatial::GlobeRectangle} of the tile.
    * @param cartographicPolygons The list of polygons to check.
@@ -115,6 +148,7 @@ public:
 private:
   std::vector<glm::dvec2> _vertices;
   std::vector<uint32_t> _indices;
+  std::vector<CartographicPolygon> _holes;
   CesiumGeospatial::GlobeRectangle _boundingRectangle;
 };
 
