@@ -1,0 +1,1 @@
+Sample data obtained from the [OpenLayers](https://github.com/openlayers/openlayers/tree/main/examples/data/geojson) project. Used under a [BSD 2-clause license](https://github.com/openlayers/openlayers/blob/main/LICENSE.md).
