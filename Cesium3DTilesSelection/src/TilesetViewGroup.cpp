@@ -35,6 +35,16 @@ TilesetViewGroup::TilesetViewGroup(TilesetViewGroup&& rhs) noexcept = default;
 
 TilesetViewGroup::~TilesetViewGroup() noexcept = default;
 
+const std::shared_ptr<ITileSelectionEventReceiver>&
+TilesetViewGroup::getEventReceiver() const {
+  return this->_pEventReceiver;
+}
+
+void TilesetViewGroup::setEventReceiver(
+    const std::shared_ptr<ITileSelectionEventReceiver>& pEventReceiver) {
+  this->_pEventReceiver = pEventReceiver;
+}
+
 const ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() const {
   return this->_updateResult;
 }
@@ -217,14 +227,74 @@ void TilesetViewGroup::finishFrame(
     std::swap(this->_previousFrameCredits, this->_currentFrameCredits);
   }
 
-  if (this->_pEventReceiver) {
-    this->_traversalState.diff(
-        [this](
-            const Tile::Pointer& /* pTile */,
-            const TileSelectionState& /* previousState */,
-            const TileSelectionState& /* currentState */) {
+  auto lookup = [](TileSelectionState::Result state) {
+    switch (state) {
+    case TileSelectionState::Result::None:
+      return "None";
+    case TileSelectionState::Result::Culled:
+      return "Culled";
+    case TileSelectionState::Result::Rendered:
+      return "Rendered";
+    case TileSelectionState::Result::Refined:
+      return "Refined";
+    case TileSelectionState::Result::RenderedAndKicked:
+      return "RenderedAndKicked";
+    case TileSelectionState::Result::RefinedAndKicked:
+      return "RefinedAndKicked";
+    default:
+      return "Unknown";
+    }
+  };
 
-        });
+  if (this->_pEventReceiver) {
+    auto differences = this->_traversalState.differences();
+    auto it = differences.begin();
+    while (it != differences.end()) {
+      const auto& difference = *it;
+      TileSelectionState::Result previous =
+          difference.previousState.getResult();
+      TileSelectionState::Result current = difference.currentState.getResult();
+
+      if ((current == TileSelectionState::Result::Refined ||
+           current == TileSelectionState::Result::Rendered) &&
+          previous != TileSelectionState::Result::Refined &&
+          previous != TileSelectionState::Result::Rendered) {
+        // A newly-visible tile
+        this->_pEventReceiver->tileVisible(
+            *difference.pNode,
+            difference.previousState,
+            difference.currentState);
+      } else if (
+          (previous == TileSelectionState::Result::Refined ||
+           previous == TileSelectionState::Result::Rendered) &&
+          current != TileSelectionState::Result::Refined &&
+          current != TileSelectionState::Result::Rendered) {
+        // A newly-hidden tile
+        this->_pEventReceiver->tileCulled(
+            *difference.pNode,
+            difference.previousState,
+            difference.currentState);
+      }
+
+      // When a tile goes from Refined -> Rendered, it means all
+      // previously-rendered tiles in its subtree have been coarsened.
+      if (previous == TileSelectionState::Result::Refined &&
+          current == TileSelectionState::Result::Rendered) {
+        // Check this first, then skip the subtree so we don't raise visible
+        // event for it. But how can we tell when we reach the end of the
+        // subtree? The TreeTraversalState knows, but doesn't communicate it
+        // well.
+      }
+
+      // if (it->currentState == TileSelectionState::Result::Rendered)
+      // SPDLOG_LOGGER_WARN(
+      //     tileset.getExternals().pLogger,
+      //     "Tile {}: {} -> {}",
+      //     TileIdUtilities::createTileIdString(it->pNode->getTileID()),
+      //     lookup(it->previousState.getResult()),
+      //     lookup(it->currentState.getResult()));
+      ++it;
+    }
   }
 }
 
