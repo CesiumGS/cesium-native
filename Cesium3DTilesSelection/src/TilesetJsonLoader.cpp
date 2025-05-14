@@ -664,7 +664,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   auto pLoader =
       std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis, ellipsoid);
   ErrorList errorList{};
-  const ExtensionContent3dTilesContentVoxels* pVoxelExtension = nullptr;
+  std::optional<ExtensionContent3dTilesContentVoxels> voxelExtension;
 
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
@@ -691,8 +691,8 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
         errorList.emplaceError("Failed to parse root tile content.");
       } else if (result.value) {
         const Cesium3DTiles::Content& content = *result.value;
-        pVoxelExtension =
-            content.getExtension<ExtensionContent3dTilesContentVoxels>();
+        voxelExtension =
+            *content.getExtension<ExtensionContent3dTilesContentVoxels>();
       }
     }
   }
@@ -703,8 +703,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::vector<LoaderCreditResult>{},
       std::move(requestHeaders),
       std::move(errorList),
-      pVoxelExtension ? std::make_optional(*pVoxelExtension) : std::nullopt,
-  };
+      std::move(voxelExtension)};
 }
 
 void parseTilesetMetadata(
