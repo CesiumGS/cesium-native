@@ -9,93 +9,6 @@
 
 namespace CesiumUtility {
 
-template <typename TNodePointer, typename TState>
-struct TreeTraversalStateDifference {
-  const TNodePointer& pNode;
-  const TState& previousState;
-  const TState& currentState;
-
-  TreeTraversalStateDifference* operator->() { return this; }
-  const TreeTraversalStateDifference* operator->() const { return this; }
-};
-
-template <typename TNodePointer, typename TState> class TreeTraversalState;
-
-template <typename TNodePointer, typename TState>
-class TreeTraversalStateDiffIterator {
-public:
-  /**
-   * @brief The iterator category tag denoting this is a forward iterator.
-   */
-  using iterator_category = std::forward_iterator_tag;
-  /**
-   * @brief The type of value that is being iterated over.
-   */
-  using value_type = TreeTraversalStateDifference<TNodePointer, TState>;
-  /**
-   * @brief The type used to identify distance between iterators.
-   *
-   * This is `void` because there is no meaningful measure of distance between
-   * tiles.
-   */
-  using difference_type = void;
-  /**
-   * @brief A pointer to the type being iterated over.
-   */
-  using pointer = const value_type*;
-  /**
-   * @brief A reference to the type being iterated over.
-   */
-  using reference = const value_type&;
-
-  /**
-   * @brief Returns a reference to the current difference being iterated.
-   */
-  value_type operator*() const noexcept;
-  /**
-   * @brief Returns a pointer to the current difference being iterated.
-   */
-  value_type operator->() const noexcept;
-
-  /**
-   * @brief Advances the iterator to the next difference (pre-incrementing).
-   */
-  TreeTraversalStateDiffIterator& operator++() noexcept;
-  /**
-   * @brief Advances the iterator to the next difference (post-incrementing).
-   */
-  TreeTraversalStateDiffIterator operator++(int) noexcept;
-
-  /** @brief Checks if two iterators are at the same difference. */
-  bool operator==(const TreeTraversalStateDiffIterator& rhs) const noexcept;
-  /** @brief Checks if two iterators are not at the same difference. */
-  bool operator!=(const TreeTraversalStateDiffIterator& rhs) const noexcept;
-
-private:
-  explicit TreeTraversalStateDiffIterator(
-      const TreeTraversalState<TNodePointer, TState>* pState,
-      int64_t previousIndex,
-      int64_t currentIndex) noexcept;
-  void advanceToNextDifference() noexcept;
-
-  const TreeTraversalState<TNodePointer, TState>* _pState;
-  // The index of the current difference in _previousTraversal.
-  int64_t _previousIndex;
-  // The index of the current difference in _currentTraversal.
-  int64_t _currentIndex;
-  // The next sibling index if we're currently skipping siblings. -1 if we're
-  // not currently skipping siblings.
-  int64_t _nextSiblingIndex;
-  // If we're skipping siblings, this value is true when the skipped siblings
-  // are from the previous traversal, or false if the skipped siblings are from
-  // the current traversal.
-  bool _skippingPrevious;
-
-  static const inline TState DEFAULT_STATE{};
-
-  friend class TreeTraversalState<TNodePointer, TState>;
-};
-
 /**
  * @brief Associates state (arbitrary data) with each node during partial,
  * depth-first traversal of a tree. Then, during a later traversal of a
@@ -401,98 +314,184 @@ public:
     return this->slowlyGetStates(this->_previousTraversal);
   }
 
-  using difference_iterator =
-      TreeTraversalStateDiffIterator<TNodePointer, TState>;
-
-  difference_iterator beginDiff() const noexcept {
-    return difference_iterator(this, 0, 0);
-  }
-
-  difference_iterator endDiff() const noexcept {
-    return difference_iterator(
-        this,
-        int64_t(this->_previousTraversal.size()),
-        int64_t(this->_currentTraversal.size()));
-  }
+#pragma region Differences
 
   /**
-   * @brief Compares the current traversal against the previous one, invoking a
-   * callback for each case where a node had a different state in the two
+   * @brief Represents a single difference reported by {@link differences}.
+   */
+  struct Difference {
+    /**
+     * @brief The node with a different state.
+     */
+    const TNodePointer& pNode;
+
+    /**
+     * @brief The state of the node in the previous traversal, or a
+     * default-constructed instance if the node was not visited at all in the
+     * previous traversal.
+     */
+    const TState& previousState;
+
+    /**
+     * @brief The state of the node in the current traversal, or a
+     * default-constructed instance if the node was not visited at all in the
+     * current traversal.
+     */
+    const TState& currentState;
+
+    // These operators allow a `Difference` instance to be returned by value
+    // from the difference_iterator's `operator->` method.
+
+    /** @private */
+    Difference* operator->() { return this; }
+
+    /** @private */
+    const Difference* operator->() const { return this; }
+  };
+
+  /**
+   * @brief The type of the iterator created by {@link Differences}.
+   */
+  class difference_iterator {
+  public:
+    /**
+     * @brief The iterator category tag denoting this is a forward iterator.
+     */
+    using iterator_category = std::forward_iterator_tag;
+    /**
+     * @brief The type of value that is being iterated over.
+     */
+    using value_type = Difference;
+    /**
+     * @brief The type used to identify distance between iterators.
+     *
+     * This is `void` because there is no meaningful measure of distance between
+     * tiles.
+     */
+    using difference_type = void;
+    /**
+     * @brief A pointer to the type being iterated over.
+     */
+    using pointer = const value_type*;
+    /**
+     * @brief A reference to the type being iterated over.
+     */
+    using reference = const value_type&;
+
+    /**
+     * @brief Returns a reference to the current difference being iterated.
+     */
+    value_type operator*() const noexcept;
+    /**
+     * @brief Returns a pointer to the current difference being iterated.
+     */
+    value_type operator->() const noexcept;
+
+    /**
+     * @brief Advances the iterator to the next difference (pre-incrementing).
+     */
+    difference_iterator& operator++() noexcept;
+    /**
+     * @brief Advances the iterator to the next difference (post-incrementing).
+     */
+    difference_iterator operator++(int) noexcept;
+
+    /** @brief Checks if two iterators are at the same difference. */
+    bool operator==(const difference_iterator& rhs) const noexcept;
+    /** @brief Checks if two iterators are not at the same difference. */
+    bool operator!=(const difference_iterator& rhs) const noexcept;
+
+  private:
+    explicit difference_iterator(
+        const TreeTraversalState<TNodePointer, TState>* pState,
+        int64_t previousIndex,
+        int64_t currentIndex) noexcept;
+    void advanceToNextDifference() noexcept;
+
+    const TreeTraversalState<TNodePointer, TState>* _pState;
+    // The index of the current difference in _previousTraversal.
+    int64_t _previousIndex;
+    // The index of the current difference in _currentTraversal.
+    int64_t _currentIndex;
+    // The next sibling index if we're currently skipping siblings. -1 if we're
+    // not currently skipping siblings.
+    int64_t _nextSiblingIndex;
+    // If we're skipping siblings, this value is true when the skipped siblings
+    // are from the previous traversal, or false if the skipped siblings are
+    // from the current traversal.
+    bool _skippingPrevious;
+
+    static const inline TState DEFAULT_STATE{};
+
+    friend class TreeTraversalState<TNodePointer, TState>;
+  };
+
+  /**
+   * @brief Returned by the {@link differences} method to allow iteration over
+   * the differences between two traversals of the same tree.
+   */
+  class Differences {
+  public:
+    /**
+     * @brief Gets an iterator pointing to the first difference.
+     */
+    difference_iterator begin() const noexcept {
+      return difference_iterator(this->_pState, 0, 0);
+    }
+
+    /**
+     * @brief Gets an iterator pointing to one past the last difference.
+     */
+    difference_iterator end() const noexcept {
+      return difference_iterator(
+          this->_pState,
+          int64_t(this->_previousTraversalSize),
+          int64_t(this->_currentTraversalSize));
+    }
+
+  private:
+    Differences(
+        const TreeTraversalState& traversalState,
+        size_t previousTraversalSize,
+        size_t currentTraversalSize) noexcept
+        : _pState(&traversalState),
+          _previousTraversalSize(previousTraversalSize),
+          _currentTraversalSize(currentTraversalSize) {}
+
+    const TreeTraversalState* _pState;
+    size_t _previousTraversalSize;
+    size_t _currentTraversalSize;
+
+    friend class TreeTraversalState;
+  };
+
+  /**
+   * @brief Compares the current traversal against the previous one. Provides an
+   * iterator over all of the nodes that had a different state in the two
    * traversals.
    *
-   * The callback is also invoked:
+   * The iteration also includes:
    *
-   *   * For each node that was visited previously but was not visited in the
-   * current traversal. In this case, the current state provided to the callback
-   * is a default-constructed `TState` instance.
-   *   * For each node that was not visited previously but was visited in the
-   * current traversal. In this case, the previous state provided to the
-   * callback is a default-constructed `TState` instance.
+   *   * Each node that was visited previously but was not visited in the
+   * current traversal.
+   *   * Each node that was not visited previously but was visited in the
+   * current traversal.
    *
    * This method should only be called after the {@link finishNode} for the
    * root node, and before {@link beginTraversal}. In other words, it should
    * not be called while a traversal is in progress.
-   *
-   * @tparam TCallback The type of the callback.
-   * @param callback The callback to be invoked for each difference. The
-   * function is given the node pointer, the old state, and the new state, in
-   * that order.
    */
-  template <typename TCallback> void diff(TCallback&& callback) const {
+  Differences differences() const noexcept {
+    // Assert that a traversal is not currently in progress.
     CESIUM_ASSERT(this->_parentIndices.empty());
 
-    int64_t previousIndex = 0;
-    int64_t currentIndex = 0;
-
-    while (previousIndex < int64_t(this->_previousTraversal.size()) &&
-           currentIndex < int64_t(this->_currentTraversal.size())) {
-      const TraversalData& previousData =
-          this->_previousTraversal[size_t(previousIndex)];
-      const TraversalData& currentData =
-          this->_currentTraversal[size_t(currentIndex)];
-
-      CESIUM_ASSERT(previousData.pNode == currentData.pNode);
-      if (previousData.pNode != currentData.pNode) {
-        // This shouldn't happen.
-        break;
-      }
-
-      if (previousData.state != currentData.state) {
-        // Different state - report it
-        callback(previousData.pNode, previousData.state, currentData.state);
-      }
-
-      bool previousTraversalVisitedChildren =
-          previousData.nextSiblingIndex > previousIndex + 1;
-      bool currentTraversalVisitedChildren =
-          currentData.nextSiblingIndex > currentIndex + 1;
-
-      ++previousIndex;
-      ++currentIndex;
-
-      if (previousTraversalVisitedChildren &&
-          !currentTraversalVisitedChildren) {
-        while (previousIndex < previousData.nextSiblingIndex) {
-          const TraversalData& skipped =
-              this->_previousTraversal[size_t(previousIndex)];
-          callback(skipped.pNode, skipped.state, TState());
-          ++previousIndex;
-        }
-      } else if (
-          currentTraversalVisitedChildren &&
-          !previousTraversalVisitedChildren) {
-        while (currentIndex < currentData.nextSiblingIndex) {
-          const TraversalData& skipped =
-              this->_currentTraversal[size_t(currentIndex)];
-          callback(skipped.pNode, TState(), skipped.state);
-          ++currentIndex;
-        }
-      }
-    }
-
-    CESIUM_ASSERT(previousIndex == int64_t(this->_previousTraversal.size()));
-    CESIUM_ASSERT(currentIndex == int64_t(this->_currentTraversal.size()));
+    return Differences{
+        *this,
+        this->_previousTraversal.size(),
+        this->_currentTraversal.size()};
   }
+
+#pragma endregion
 
 private:
   struct TraversalData {
@@ -588,8 +587,8 @@ private:
 };
 
 template <typename TNodePointer, typename TState>
-TreeTraversalStateDiffIterator<TNodePointer, TState>::value_type
-TreeTraversalStateDiffIterator<TNodePointer, TState>::operator*()
+TreeTraversalState<TNodePointer, TState>::Difference
+TreeTraversalState<TNodePointer, TState>::difference_iterator::operator*()
     const noexcept {
   if (this->_nextSiblingIndex >= 0) {
     if (this->_skippingPrevious) {
@@ -642,43 +641,45 @@ TreeTraversalStateDiffIterator<TNodePointer, TState>::operator*()
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalStateDiffIterator<TNodePointer, TState>::value_type
-TreeTraversalStateDiffIterator<TNodePointer, TState>::operator->()
+TreeTraversalState<TNodePointer, TState>::Difference
+TreeTraversalState<TNodePointer, TState>::difference_iterator::operator->()
     const noexcept {
   return this->operator*();
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalStateDiffIterator<TNodePointer, TState>&
-TreeTraversalStateDiffIterator<TNodePointer, TState>::operator++() noexcept {
+TreeTraversalState<TNodePointer, TState>::difference_iterator&
+TreeTraversalState<TNodePointer, TState>::difference_iterator::
+operator++() noexcept {
   this->advanceToNextDifference();
   return *this;
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalStateDiffIterator<TNodePointer, TState>
-TreeTraversalStateDiffIterator<TNodePointer, TState>::operator++(int) noexcept {
+TreeTraversalState<TNodePointer, TState>::difference_iterator
+TreeTraversalState<TNodePointer, TState>::difference_iterator::operator++(
+    int) noexcept {
   TreeTraversalStateDiffIterator<TNodePointer, TState> result = *this;
   return ++result;
 }
 
 template <typename TNodePointer, typename TState>
-bool TreeTraversalStateDiffIterator<TNodePointer, TState>::operator==(
-    const TreeTraversalStateDiffIterator& rhs) const noexcept {
+bool TreeTraversalState<TNodePointer, TState>::difference_iterator::operator==(
+    const TreeTraversalState::difference_iterator& rhs) const noexcept {
   return this->_previousIndex == rhs._previousIndex &&
          this->_currentIndex == rhs._currentIndex &&
          this->_pState == rhs._pState;
 }
 
 template <typename TNodePointer, typename TState>
-bool TreeTraversalStateDiffIterator<TNodePointer, TState>::operator!=(
-    const TreeTraversalStateDiffIterator& rhs) const noexcept {
+bool TreeTraversalState<TNodePointer, TState>::difference_iterator::operator!=(
+    const TreeTraversalState::difference_iterator& rhs) const noexcept {
   return !(*this == rhs);
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalStateDiffIterator<TNodePointer, TState>::
-    TreeTraversalStateDiffIterator(
+TreeTraversalState<TNodePointer, TState>::difference_iterator::
+    difference_iterator(
         const TreeTraversalState<TNodePointer, TState>* pState,
         int64_t previousIndex,
         int64_t currentIndex) noexcept
@@ -723,7 +724,7 @@ TreeTraversalStateDiffIterator<TNodePointer, TState>::
 }
 
 template <typename TNodePointer, typename TState>
-void TreeTraversalStateDiffIterator<TNodePointer, TState>::
+void TreeTraversalState<TNodePointer, TState>::difference_iterator::
     advanceToNextDifference() noexcept {
   bool first = true;
 
