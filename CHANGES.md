@@ -2,15 +2,20 @@
 
 ### v0.48.0 - 2025-06-02
 
+##### Additions :tada:
+
+- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
+  - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
+  - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+- Added support for building in `vcpkg` manifest mode.
+- Added `SubtreeWriter::writeSubtreeBinary`.
+- 
 ##### Breaking Changes :mega:
 
 - Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
 - `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
-
-##### Additions :tada:
-
-- Added `SubtreeWriter::writeSubtreeBinary`.
-- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 
 ##### Fixes :wrench:
 

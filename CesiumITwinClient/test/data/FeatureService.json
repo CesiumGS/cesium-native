@@ -1,0 +1,189 @@
+{
+  "type": "FeatureCollection",
+  "links": [
+      {
+          "href": "https://api.bentley.com/geospatial-features/itwins/04ba725f-f3c0-4f30-8014-a4488cbd612d/ogc/collections/2380dc1b-1dac-4709-aa5c-f6cb38c4e9f5/items?limit=10&continuationToken=eyJMYXN0SWQiOiIxMzciLCJOZXh0Ijp0cnVlfQ==",
+          "rel": "next",
+          "type": "application/geo+json"
+      },
+      {
+          "href": "https://api.bentley.com/geospatial-features/itwins/04ba725f-f3c0-4f30-8014-a4488cbd612d/ogc/collections/2380dc1b-1dac-4709-aa5c-f6cb38c4e9f5/items",
+          "rel": "self",
+          "type": "application/geo+json"
+      }
+  ],
+  "features": [
+      {
+          "type": "Feature",
+          "id": 128,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839123551,
+                  1.348607718,
+                  7.977700195
+              ]
+          },
+          "properties": {
+              "type": "Tree",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 129,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839158263,
+                  1.348784194,
+                  7.825700195
+              ]
+          },
+          "properties": {
+              "type": "Lamp_post",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 130,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839203155,
+                  1.348827378,
+                  7.960700195
+              ]
+          },
+          "properties": {
+              "type": "Tree",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 131,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839215734,
+                  1.348667034,
+                  8.009700195
+              ]
+          },
+          "properties": {
+              "type": "Tree",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 132,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839215986,
+                  1.348538062,
+                  7.753700195
+              ]
+          },
+          "properties": {
+              "type": "Traffic_light",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 133,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839238468,
+                  1.348559984,
+                  7.813700195
+              ]
+          },
+          "properties": {
+              "type": "Lamp_post",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 134,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839245045,
+                  1.348598781,
+                  7.812700195
+              ]
+          },
+          "properties": {
+              "type": "Lamp_post",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 135,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839261696,
+                  1.348918864,
+                  8.119700195
+              ]
+          },
+          "properties": {
+              "type": "Tree",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 136,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839271859,
+                  1.348774038,
+                  7.848700195
+              ]
+          },
+          "properties": {
+              "type": "Road_Sign",
+              "comment": "",
+              "height": 0
+          }
+      },
+      {
+          "type": "Feature",
+          "id": 137,
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  103.839293002,
+                  1.348967671,
+                  7.963700195
+              ]
+          },
+          "properties": {
+              "type": "Lamp_post",
+              "comment": "",
+              "height": 0
+          }
+      }
+  ],
+  "numberMatched": 247,
+  "numberReturned": 10
+}
