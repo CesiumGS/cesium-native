@@ -575,6 +575,15 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
       });
 }
 
+const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
+Tileset::getVoxelContentExtension() const {
+  if (!this->_pTilesetContentManager) {
+    return nullptr;
+  }
+
+  return this->_pTilesetContentManager->getVoxelExtension();
+}
+
 CesiumAsync::Future<SampleHeightResult>
 Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   if (positions.empty()) {
