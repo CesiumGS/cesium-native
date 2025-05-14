@@ -462,18 +462,30 @@ public:
         int64_t currentIndex) noexcept;
     void advanceToNextDifference() noexcept;
 
+    // The instance for which we're comparing traversals.
     const TreeTraversalState<TNodePointer, TState>* _pState;
+
     // The index of the current difference in _previousTraversal.
     int64_t _previousIndex;
+
     // The index of the current difference in _currentTraversal.
     int64_t _currentIndex;
-    // The next sibling index if we're currently skipping siblings. -1 if we're
-    // not currently skipping siblings.
+
+    // The type of difference we're currently enumerating.
+    enum class DifferenceType {
+      // A node that was visited in both traversals, but with a different state
+      // in each.
+      StateChange,
+      // A node that was only visited in the previous traversal.
+      NodeOnlyInPrevious,
+      // A node that was only visited in the current traversal.
+      NodeOnlyInCurrent
+    } _differenceType;
+
+    // If the _differenceType is NodeOnlyInPrevious or NodeOnlyInCurrent, this
+    // field is set to the index of the next node that is expected to be in both
+    // traversals again.
     int64_t _nextSiblingIndex;
-    // If we're skipping siblings, this value is true when the skipped siblings
-    // are from the previous traversal, or false if the skipped siblings are
-    // from the current traversal.
-    bool _skippingPrevious;
 
     static const inline TState DEFAULT_STATE{};
 
@@ -620,33 +632,7 @@ template <typename TNodePointer, typename TState>
 TreeTraversalState<TNodePointer, TState>::Difference
 TreeTraversalState<TNodePointer, TState>::difference_iterator::operator*()
     const noexcept {
-  if (this->_nextSiblingIndex >= 0) {
-    if (this->_skippingPrevious) {
-      CESIUM_ASSERT(
-          this->_previousIndex >= 0 &&
-          size_t(this->_previousIndex) <
-              this->_pState->_previousTraversal.size());
-
-      const TreeTraversalState<TNodePointer, TState>::TraversalData& data =
-          this->_pState->_previousTraversal[size_t(this->_previousIndex)];
-      return value_type{
-          .pNode = data.pNode,
-          .previousState = data.state,
-          .currentState = DEFAULT_STATE};
-    } else {
-      CESIUM_ASSERT(
-          this->_currentIndex >= 0 &&
-          size_t(this->_currentIndex) <
-              this->_pState->_currentTraversal.size());
-
-      const TreeTraversalState<TNodePointer, TState>::TraversalData& data =
-          this->_pState->_currentTraversal[size_t(this->_currentIndex)];
-      return value_type{
-          .pNode = data.pNode,
-          .previousState = DEFAULT_STATE,
-          .currentState = data.state};
-    }
-  } else {
+  if (this->_differenceType == DifferenceType::StateChange) {
     CESIUM_ASSERT(
         this->_previousIndex >= 0 &&
         size_t(this->_previousIndex) <
@@ -667,6 +653,29 @@ TreeTraversalState<TNodePointer, TState>::difference_iterator::operator*()
         .pNode = previousData.pNode,
         .previousState = previousData.state,
         .currentState = currentData.state};
+  } else if (this->_differenceType == DifferenceType::NodeOnlyInPrevious) {
+    CESIUM_ASSERT(
+        this->_previousIndex >= 0 &&
+        size_t(this->_previousIndex) <
+            this->_pState->_previousTraversal.size());
+
+    const TreeTraversalState<TNodePointer, TState>::TraversalData& data =
+        this->_pState->_previousTraversal[size_t(this->_previousIndex)];
+    return value_type{
+        .pNode = data.pNode,
+        .previousState = data.state,
+        .currentState = DEFAULT_STATE};
+  } else {
+    CESIUM_ASSERT(
+        this->_currentIndex >= 0 &&
+        size_t(this->_currentIndex) < this->_pState->_currentTraversal.size());
+
+    const TreeTraversalState<TNodePointer, TState>::TraversalData& data =
+        this->_pState->_currentTraversal[size_t(this->_currentIndex)];
+    return value_type{
+        .pNode = data.pNode,
+        .previousState = DEFAULT_STATE,
+        .currentState = data.state};
   }
 }
 
@@ -716,8 +725,8 @@ TreeTraversalState<TNodePointer, TState>::difference_iterator::
     : _pState(pState),
       _previousIndex(previousIndex),
       _currentIndex(currentIndex),
-      _nextSiblingIndex(-1),
-      _skippingPrevious(false) {
+      _differenceType(DifferenceType::StateChange),
+      _nextSiblingIndex(-1) {
   bool validPreviousIndex =
       previousIndex < int64_t(pState->_previousTraversal.size());
   bool validCurrentIndex =
@@ -740,12 +749,12 @@ TreeTraversalState<TNodePointer, TState>::difference_iterator::
   } else if (validPreviousIndex) {
     // There are no nodes at all in the current traversal, so all previous
     // states are differences.
-    this->_skippingPrevious = true;
+    this->_differenceType = DifferenceType::NodeOnlyInPrevious;
     this->_nextSiblingIndex = int64_t(pState->_previousTraversal.size());
   } else if (validCurrentIndex) {
     // There were no nodes at all in the previous traversal, so all current
     // states are differences.
-    this->_skippingPrevious = false;
+    this->_differenceType = DifferenceType::NodeOnlyInCurrent;
     this->_nextSiblingIndex = int64_t(pState->_currentTraversal.size());
   }
 
@@ -758,25 +767,30 @@ void TreeTraversalState<TNodePointer, TState>::difference_iterator::
     advanceToNextDifference() noexcept {
   bool first = true;
 
-  if (this->_nextSiblingIndex >= 0) {
-    // Currently enumerating descendants that were not visited at all in the
-    // other traversal.
-    if (this->_skippingPrevious) {
-      ++this->_previousIndex;
-      if (this->_previousIndex < this->_nextSiblingIndex) {
-        return;
-      }
+  if (this->_differenceType == DifferenceType::NodeOnlyInPrevious) {
+    ++this->_previousIndex;
+    if (this->_previousIndex < this->_nextSiblingIndex) {
+      // Enumerating another previous node that doesn't exist in the current
+      // traversal.
+      return;
     } else {
-      ++this->_currentIndex;
-      if (this->_currentIndex < this->_nextSiblingIndex) {
-        return;
-      }
+      // We reached the end of the previous nodes that don't exist in the
+      // current traversal.
+      this->_differenceType = DifferenceType::StateChange;
+      first = false;
     }
-
-    // If we don't return above, then the unmatched descendant enumeration is
-    // now complete.
-    this->_nextSiblingIndex = -1;
-    first = false;
+  } else if (this->_differenceType == DifferenceType::NodeOnlyInCurrent) {
+    ++this->_currentIndex;
+    if (this->_currentIndex < this->_nextSiblingIndex) {
+      // Enumerating another current node that doesn't exist in the previous
+      // traversal.
+      return;
+    } else {
+      // We reached the end of the current nodes that don't exist in the
+      // previous traversal.
+      this->_differenceType = DifferenceType::StateChange;
+      first = false;
+    }
   }
 
   while (this->_previousIndex <
@@ -816,14 +830,14 @@ void TreeTraversalState<TNodePointer, TState>::difference_iterator::
     if (previousTraversalVisitedChildren && !currentTraversalVisitedChildren) {
       // No descendants in current traversal, so every previous traversal
       // descendant is a difference.
-      this->_skippingPrevious = true;
+      this->_differenceType = DifferenceType::NodeOnlyInPrevious;
       this->_nextSiblingIndex = previousData.nextSiblingIndex;
       return;
     } else if (
         currentTraversalVisitedChildren && !previousTraversalVisitedChildren) {
       // No descendants in previous traversal, so every current traversal
       // descendant is a difference.
-      this->_skippingPrevious = false;
+      this->_differenceType = DifferenceType::NodeOnlyInCurrent;
       this->_nextSiblingIndex = currentData.nextSiblingIndex;
       return;
     }
