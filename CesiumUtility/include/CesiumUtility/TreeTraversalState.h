@@ -314,7 +314,38 @@ public:
     return this->slowlyGetStates(this->_previousTraversal);
   }
 
-#pragma region Differences
+  class Differences;
+
+  /**
+   * @brief Compares the current traversal against the previous one. Provides an
+   * iterator over all of the nodes that had a different state in the two
+   * traversals.
+   *
+   * The iteration also includes:
+   *
+   *   * Each node that was visited previously but was not visited in the
+   * current traversal.
+   *   * Each node that was not visited previously but was visited in the
+   * current traversal.
+   *
+   * This method should only be called after the {@link finishNode} for the
+   * root node, and before {@link beginTraversal}. In other words, it should
+   * not be called while a traversal is in progress.
+   *
+   * Starting a traversal after calling this method invalidates the returned
+   * instance.
+   */
+  Differences differences() const noexcept {
+    // Assert that a traversal is not currently in progress.
+    CESIUM_ASSERT(this->_parentIndices.empty());
+
+    return Differences{
+        *this,
+        this->_previousTraversal.size(),
+        this->_currentTraversal.size()};
+  }
+
+#pragma region Differences Implementation
 
   /**
    * @brief Represents a single difference reported by {@link differences}.
@@ -465,32 +496,6 @@ public:
     friend class TreeTraversalState;
   };
 
-  /**
-   * @brief Compares the current traversal against the previous one. Provides an
-   * iterator over all of the nodes that had a different state in the two
-   * traversals.
-   *
-   * The iteration also includes:
-   *
-   *   * Each node that was visited previously but was not visited in the
-   * current traversal.
-   *   * Each node that was not visited previously but was visited in the
-   * current traversal.
-   *
-   * This method should only be called after the {@link finishNode} for the
-   * root node, and before {@link beginTraversal}. In other words, it should
-   * not be called while a traversal is in progress.
-   */
-  Differences differences() const noexcept {
-    // Assert that a traversal is not currently in progress.
-    CESIUM_ASSERT(this->_parentIndices.empty());
-
-    return Differences{
-        *this,
-        this->_previousTraversal.size(),
-        this->_currentTraversal.size()};
-  }
-
 #pragma endregion
 
 private:
@@ -585,6 +590,8 @@ private:
   template <typename TNodePointer, typename TState>
   friend class TreeTraversalStateDiffIterator;
 };
+
+#pragma region Differences Implementation
 
 template <typename TNodePointer, typename TState>
 TreeTraversalState<TNodePointer, TState>::Difference
@@ -807,5 +814,7 @@ void TreeTraversalState<TNodePointer, TState>::difference_iterator::
   CESIUM_ASSERT(
       this->_currentIndex == int64_t(this->_pState->_currentTraversal.size()));
 }
+
+#pragma endregion
 
 } // namespace CesiumUtility
