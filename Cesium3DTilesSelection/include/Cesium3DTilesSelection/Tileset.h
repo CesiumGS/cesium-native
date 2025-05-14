@@ -23,6 +23,10 @@
 #include <string>
 #include <vector>
 
+namespace Cesium3DTiles {
+struct ExtensionContent3dTilesContentVoxels;
+}
+
 namespace Cesium3DTilesSelection {
 
 class TilesetContentManager;
@@ -347,6 +351,17 @@ public:
    * the same metadata instance.
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
+
+  /**
+   * @brief Retrieves the 3DTILES_content_voxels extension on the root tile's
+   * content, if present.
+   *
+   * @returns A pointer to the root tile's \ref
+   * Cesium3DTiles::ExtensionContent3dTilesContentVoxels, or nullptr if it does
+   * not exist.
+   */
+  const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
+  getVoxelContentExtension() const;
 
   /**
    * @brief Initiates an asynchronous query for the height of this tileset at a
