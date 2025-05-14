@@ -103,7 +103,7 @@ if(CESIUM_USE_EZVCPKG)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 7cd46ec6873c1325b541a068c8e4cdf54633dabe
+        COMMIT dbe35ceb30c688bf72e952ab23778e009a578f18
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
