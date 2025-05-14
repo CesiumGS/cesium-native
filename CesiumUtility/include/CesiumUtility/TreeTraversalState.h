@@ -687,7 +687,7 @@ TreeTraversalState<TNodePointer, TState>::difference_iterator::operator->()
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalState<TNodePointer, TState>::difference_iterator&
+typename TreeTraversalState<TNodePointer, TState>::difference_iterator&
 TreeTraversalState<TNodePointer, TState>::difference_iterator::
 operator++() noexcept {
   this->advanceToNextDifference();
