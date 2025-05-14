@@ -13,5 +13,8 @@
     ],
     "overlay-ports": [
         "./extern/vcpkg/ports"
+    ],
+    "overlay-triplets": [
+        "./extern/vcpkg/triplets"
     ]
 }
