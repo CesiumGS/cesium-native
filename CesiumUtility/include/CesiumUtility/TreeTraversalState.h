@@ -352,23 +352,46 @@ public:
    */
   struct Difference {
     /**
+     * @brief The type used to report the node with a difference.
+     *
+     * This will be a simple pointer if `TNodePointer` is a simple pointer.
+     * Otherwise, it will be a const reference to `TNodePointer`.
+     */
+    using PointerStorageType = std::conditional_t<
+        std::is_pointer_v<TNodePointer>,
+        TNodePointer,
+        const TNodePointer&>;
+
+    /**
+     * @brief The type used to report the previous and current states of the
+     * node.
+     *
+     * This will be a `TState` instance of `TState` is trivially copy
+     * constructible. Otherwise, it will be a const reference to the `TState`.
+     */
+    using StateStorageType = std::conditional_t<
+        std::is_trivially_copy_constructible_v<TState>,
+        TState,
+        const TState&>;
+
+    /**
      * @brief The node with a different state.
      */
-    const TNodePointer& pNode;
+    PointerStorageType pNode;
 
     /**
      * @brief The state of the node in the previous traversal, or a
      * default-constructed instance if the node was not visited at all in the
      * previous traversal.
      */
-    const TState& previousState;
+    StateStorageType previousState;
 
     /**
      * @brief The state of the node in the current traversal, or a
      * default-constructed instance if the node was not visited at all in the
      * current traversal.
      */
-    const TState& currentState;
+    StateStorageType currentState;
 
     // These operators allow a `Difference` instance to be returned by value
     // from the difference_iterator's `operator->` method.
