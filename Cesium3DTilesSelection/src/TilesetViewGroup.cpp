@@ -255,12 +255,12 @@ void TilesetViewGroup::finishFrame(
           difference.previousState.getResult();
       TileSelectionState::Result current = difference.currentState.getResult();
 
-      // When a tile goes from Refined -> Rendered, it means all
-      // previously-rendered tiles in its subtree have been coarsened.
-      // Check this first, then skip the subtree so we don't raise visible
-      // event for it.
       if (previous == TileSelectionState::Result::Refined &&
           current == TileSelectionState::Result::Rendered) {
+        // When a tile goes from Refined -> Rendered, it means all
+        // previously-rendered tiles in its subtree have been coarsened.
+        // Check this first, then skip the subtree so we don't raise visible
+        // event for it.
         auto descendantsEnd = it.descendantsEnd();
 
         for (++it; it != descendantsEnd; ++it) {
@@ -274,6 +274,29 @@ void TilesetViewGroup::finishFrame(
                 *difference.pNode);
           }
         }
+
+        continue;
+      } else if (
+          previous == TileSelectionState::Result::Rendered &&
+          current == TileSelectionState::Result::Refined) {
+        // This tile was refined, and all rendered tiles in the subtree are the
+        // new rendered tiles.
+        auto descendantsEnd = it.descendantsEnd();
+
+        std::vector<Tile*> newRenderedTiles;
+        for (++it; it != descendantsEnd; ++it) {
+          const auto& descendantDifference = *it;
+          if (descendantDifference.currentState.getResult() ==
+              TileSelectionState::Result::Rendered) {
+            newRenderedTiles.emplace_back(descendantDifference.pNode.get());
+          }
+        }
+
+        this->_pEventReceiver->tileRefined(
+            *difference.pNode,
+            difference.previousState,
+            difference.currentState,
+            newRenderedTiles);
 
         continue;
       } else if (
