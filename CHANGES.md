@@ -1,11 +1,22 @@
 # Change Log
 
-### ? - ?
+### v0.48.0 - 2025-06-02
+
+##### Breaking Changes :mega:
+
+- Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
+- `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
 
 ##### Additions :tada:
 
+- Added `SubtreeWriter::writeSubtreeBinary`.
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 - Added `VectorDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
+
+##### Fixes :wrench:
+
+- Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
+- Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
 
 ### v0.47.0 - 2025-05-01
 

@@ -134,10 +134,12 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
 
 /*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::createEmpty(
     ImplicitTileSubdivisionScheme subdivisionScheme,
-    uint32_t levelsInSubtree) noexcept {
+    uint32_t levelsInSubtree,
+    bool setTilesAvailable) noexcept {
   Subtree subtree;
   subtree.tileAvailability.constant =
-      Cesium3DTiles::Availability::Constant::AVAILABLE;
+      setTilesAvailable ? Cesium3DTiles::Availability::Constant::AVAILABLE
+                        : Cesium3DTiles::Availability::Constant::UNAVAILABLE;
   subtree.contentAvailability.emplace_back().constant =
       Cesium3DTiles::Availability::Constant::UNAVAILABLE;
   subtree.childSubtreeAvailability.constant =
@@ -272,6 +274,7 @@ void SubtreeAvailability::setTileAvailable(
       relativeTileLevel,
       relativeTileMortonId,
       this->_tileAvailability,
+      this->_subtree.tileAvailability,
       isAvailable);
 }
 
@@ -349,6 +352,7 @@ void SubtreeAvailability::setContentAvailable(
         relativeTileLevel,
         relativeTileMortonId,
         this->_contentAvailability[contentId],
+        this->_subtree.contentAvailability[contentId],
         isAvailable);
   }
 }
@@ -383,57 +387,6 @@ bool SubtreeAvailability::isSubtreeAvailable(
       checkSubtreeID));
 }
 
-namespace {
-
-void convertConstantAvailabilityToBitstream(
-    Subtree& subtree,
-    uint64_t numberOfTiles,
-    SubtreeAvailability::AvailabilityView& availabilityView) {
-  const SubtreeAvailability::SubtreeConstantAvailability*
-      pConstantAvailability =
-          std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
-              &availabilityView);
-  if (!pConstantAvailability)
-    return;
-
-  bool oldValue = pConstantAvailability->constant;
-
-  uint64_t numberOfBytes = numberOfTiles / 8;
-  if (numberOfBytes * 8 < numberOfTiles)
-    ++numberOfBytes;
-
-  BufferView& bufferView = subtree.bufferViews.emplace_back();
-  bufferView.buffer = 0;
-  bufferView.byteLength = int64_t(numberOfBytes);
-
-  Buffer& buffer = !subtree.buffers.empty() ? subtree.buffers[0]
-                                            : subtree.buffers.emplace_back();
-
-  int64_t start = buffer.byteLength;
-
-  // Align the new bufferView to a multiple of 8 bytes, as required by the spec.
-  int64_t paddingRemainder = start % 8;
-  if (paddingRemainder > 0) {
-    start += 8 - paddingRemainder;
-  }
-
-  int64_t end = start + int64_t(numberOfBytes);
-
-  bufferView.byteOffset = start;
-  buffer.byteLength = end;
-
-  buffer.cesium.data.resize(
-      size_t(buffer.byteLength),
-      oldValue ? std::byte(0xFF) : std::byte(0x00));
-
-  std::span<std::byte> view(
-      buffer.cesium.data.data() + start,
-      buffer.cesium.data.data() + end);
-  availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};
-}
-
-} // namespace
-
 void SubtreeAvailability::setSubtreeAvailable(
     uint64_t relativeSubtreeMortonId,
     bool isAvailable) noexcept {
@@ -450,7 +403,8 @@ void SubtreeAvailability::setSubtreeAvailable(
       convertConstantAvailabilityToBitstream(
           this->_subtree,
           numberOfTilesInNextLevel,
-          this->_subtreeAvailability);
+          this->_subtreeAvailability,
+          this->_subtree.childSubtreeAvailability);
     }
   }
 
@@ -512,6 +466,7 @@ void SubtreeAvailability::setAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     AvailabilityView& availabilityView,
+    Availability& availability,
     bool isAvailable) noexcept {
   const SubtreeConstantAvailability* pConstantAvailability =
       std::get_if<SubtreeConstantAvailability>(&availabilityView);
@@ -528,7 +483,8 @@ void SubtreeAvailability::setAvailable(
       convertConstantAvailabilityToBitstream(
           this->_subtree,
           numberOfTilesInSubtree,
-          availabilityView);
+          availabilityView,
+          availability);
     }
   }
 
@@ -599,6 +555,118 @@ void SubtreeAvailability::setAvailableUsingBufferView(
   } else {
     pBufferViewAvailability->view[byteIndex] &= ~(std::byte(1) << bitIndex);
   }
+}
+
+namespace {
+
+void updateAvailabilityView(
+    Subtree& subtree,
+    SubtreeAvailability::AvailabilityView& availabilityView,
+    Availability& availability) {
+  if (!std::holds_alternative<
+          SubtreeAvailability::SubtreeBufferViewAvailability>(
+          availabilityView)) {
+    return;
+  }
+
+  CESIUM_ASSERT(
+      availability.bitstream && *availability.bitstream >= 0 &&
+      size_t(*availability.bitstream) < subtree.bufferViews.size());
+
+  const BufferView& bufferView =
+      subtree.bufferViews[size_t(*availability.bitstream)];
+
+  CESIUM_ASSERT(
+      bufferView.buffer >= 0 &&
+      size_t(bufferView.buffer) < subtree.buffers.size());
+
+  Buffer& buffer = subtree.buffers[size_t(bufferView.buffer)];
+
+  std::span<std::byte> view(
+      buffer.cesium.data.data() + bufferView.byteOffset,
+      buffer.cesium.data.data() + bufferView.byteOffset +
+          bufferView.byteLength);
+
+  availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};
+}
+
+} // namespace
+
+void SubtreeAvailability::updateAvailabilityViews() {
+  updateAvailabilityView(
+      this->_subtree,
+      this->_tileAvailability,
+      this->_subtree.tileAvailability);
+
+  updateAvailabilityView(
+      this->_subtree,
+      this->_subtreeAvailability,
+      this->_subtree.childSubtreeAvailability);
+
+  CESIUM_ASSERT(
+      this->_contentAvailability.size() ==
+      this->_subtree.contentAvailability.size());
+
+  for (size_t i = 0; i < this->_contentAvailability.size(); ++i) {
+    updateAvailabilityView(
+        this->_subtree,
+        this->_contentAvailability[i],
+        this->_subtree.contentAvailability[i]);
+  }
+}
+
+void SubtreeAvailability::convertConstantAvailabilityToBitstream(
+    Subtree& subtree,
+    uint64_t numberOfTiles,
+    SubtreeAvailability::AvailabilityView& availabilityView,
+    Availability& availability) {
+  const SubtreeAvailability::SubtreeConstantAvailability*
+      pConstantAvailability =
+          std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
+              &availabilityView);
+  if (!pConstantAvailability)
+    return;
+
+  bool oldValue = pConstantAvailability->constant;
+
+  uint64_t numberOfBytes = numberOfTiles / 8;
+  if (numberOfBytes * 8 < numberOfTiles)
+    ++numberOfBytes;
+
+  BufferView& bufferView = subtree.bufferViews.emplace_back();
+  bufferView.buffer = 0;
+  bufferView.byteLength = int64_t(numberOfBytes);
+
+  Buffer& buffer = !subtree.buffers.empty() ? subtree.buffers[0]
+                                            : subtree.buffers.emplace_back();
+
+  int64_t start = buffer.byteLength;
+
+  // Align the new bufferView to a multiple of 8 bytes, as required by the spec.
+  int64_t paddingRemainder = start % 8;
+  if (paddingRemainder > 0) {
+    start += 8 - paddingRemainder;
+  }
+
+  int64_t end = start + int64_t(numberOfBytes);
+
+  bufferView.byteOffset = start;
+  buffer.byteLength = end;
+
+  buffer.cesium.data.resize(
+      size_t(buffer.byteLength),
+      oldValue ? std::byte(0xFF) : std::byte(0x00));
+
+  std::span<std::byte> view(
+      buffer.cesium.data.data() + start,
+      buffer.cesium.data.data() + end);
+  availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};
+
+  availability.bitstream = int32_t(subtree.bufferViews.size() - 1);
+  availability.constant.reset();
+
+  // Fix spans that may have been invalidated when the buffer grew
+  this->updateAvailabilityViews();
 }
 
 } // namespace Cesium3DTilesContent
