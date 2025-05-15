@@ -255,7 +255,29 @@ void TilesetViewGroup::finishFrame(
           difference.previousState.getResult();
       TileSelectionState::Result current = difference.currentState.getResult();
 
-      if ((current == TileSelectionState::Result::Refined ||
+      // When a tile goes from Refined -> Rendered, it means all
+      // previously-rendered tiles in its subtree have been coarsened.
+      // Check this first, then skip the subtree so we don't raise visible
+      // event for it.
+      if (previous == TileSelectionState::Result::Refined &&
+          current == TileSelectionState::Result::Rendered) {
+        auto descendantsEnd = it.descendantsEnd();
+
+        for (++it; it != descendantsEnd; ++it) {
+          const auto& descendantDifference = *it;
+          if (descendantDifference.previousState.getResult() ==
+              TileSelectionState::Result::Rendered) {
+            this->_pEventReceiver->tileCoarsened(
+                *descendantDifference.pNode,
+                descendantDifference.previousState,
+                descendantDifference.currentState,
+                *difference.pNode);
+          }
+        }
+
+        continue;
+      } else if (
+          (current == TileSelectionState::Result::Refined ||
            current == TileSelectionState::Result::Rendered) &&
           previous != TileSelectionState::Result::Refined &&
           previous != TileSelectionState::Result::Rendered) {
@@ -274,16 +296,6 @@ void TilesetViewGroup::finishFrame(
             *difference.pNode,
             difference.previousState,
             difference.currentState);
-      }
-
-      // When a tile goes from Refined -> Rendered, it means all
-      // previously-rendered tiles in its subtree have been coarsened.
-      if (previous == TileSelectionState::Result::Refined &&
-          current == TileSelectionState::Result::Rendered) {
-        // Check this first, then skip the subtree so we don't raise visible
-        // event for it. But how can we tell when we reach the end of the
-        // subtree? The TreeTraversalState knows, but doesn't communicate it
-        // well.
       }
 
       // if (it->currentState == TileSelectionState::Result::Rendered)
