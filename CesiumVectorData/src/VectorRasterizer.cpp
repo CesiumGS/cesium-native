@@ -1,14 +1,11 @@
-#include "CesiumVectorData/GeoJsonObject.h"
-
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
 
@@ -101,7 +98,38 @@ VectorRasterizer::VectorRasterizer(
 }
 
 void VectorRasterizer::drawPolygon(
-      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
+    const CesiumGeospatial::CartographicPolygon& polygon,
+    const VectorStyle& style) {
+  if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(polygon.getVertices().size());
+
+  for (const glm::dvec2& pos : polygon.getVertices()) {
+    vertices.emplace_back(
+        radiansToPoint(pos.x, pos.y, this->_bounds, this->_context));
+  }
+
+  if (style.polygon.fill) {
+    this->_context.fillPolygon(
+        vertices.data(),
+        vertices.size(),
+        BLRgba32(style.polygon.getColor().toRgba32()));
+  }
+
+  if (style.polygon.outline) {
+    setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
+    this->_context.strokePolygon(
+        vertices.data(),
+        vertices.size(),
+        BLRgba32(style.line.getColor().toRgba32()));
+  }
+}
+
+void VectorRasterizer::drawPolygon(
+    const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
     const VectorStyle& style) {
   if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
     return;
@@ -176,32 +204,33 @@ void VectorRasterizer::drawPolyline(
 }
 
 void VectorRasterizer::drawGeoJsonObject(
-    const GeoJsonObject& geoJsonObject,
+    GeoJsonObjectConstPtr geoJsonObject,
     const VectorStyle& style) {
   struct PrimitiveDrawVisitor {
     VectorRasterizer& rasterizer;
     const VectorStyle& style;
-    void operator()(const GeoJsonLineString& line) {
-      rasterizer.drawPolyline(line.coordinates, style);
+    void operator()(const GeoJsonLineString* line) {
+      rasterizer.drawPolyline(line->coordinates, style);
     }
-    void operator()(const GeoJsonMultiLineString& lines) {
-      for (const std::vector<Cartographic>& line : lines.coordinates) {
+    void operator()(const GeoJsonMultiLineString* lines) {
+      for (const std::vector<Cartographic>& line : lines->coordinates) {
         rasterizer.drawPolyline(line, style);
       }
     }
-    void operator()(const GeoJsonPolygon& polygon) {
-      rasterizer.drawPolygon(polygon.coordinates, style);
+    void operator()(const GeoJsonPolygon* polygon) {
+      rasterizer.drawPolygon(polygon->coordinates, style);
     }
-    void operator()(const GeoJsonMultiPolygon& polygons) {
-      for(const std::vector<std::vector<Cartographic>>& polygon : polygons.coordinates) {
+    void operator()(const GeoJsonMultiPolygon* polygons) {
+      for (const std::vector<std::vector<Cartographic>>& polygon :
+           polygons->coordinates) {
         rasterizer.drawPolygon(polygon, style);
       }
     }
-    void operator()(const GeoJsonPoint& /*catchAll*/) {}
-    void operator()(const GeoJsonMultiPoint& /*catchAll*/) {}
-    void operator()(const GeoJsonFeature& /*catchAll*/) {}
-    void operator()(const GeoJsonFeatureCollection& /*catchAll*/) {}
-    void operator()(const GeoJsonGeometryCollection& /*catchAll*/) {}
+    void operator()(const GeoJsonPoint* /*catchAll*/) {}
+    void operator()(const GeoJsonMultiPoint* /*catchAll*/) {}
+    void operator()(const GeoJsonFeature* /*catchAll*/) {}
+    void operator()(const GeoJsonFeatureCollection* /*catchAll*/) {}
+    void operator()(const GeoJsonGeometryCollection* /*catchAll*/) {}
   };
 
   std::visit(PrimitiveDrawVisitor{*this, style}, geoJsonObject);

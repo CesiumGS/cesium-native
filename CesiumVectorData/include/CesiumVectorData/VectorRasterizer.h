@@ -47,7 +47,18 @@ public:
           CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
-   * @brief Draws a \ref GeoJsonPolygon to the canvas.
+   * @brief Draws a \ref CartographicPolygon to the canvas.
+   *
+   * @param polygon The polygon to draw.
+   * @param style The \ref VectorStyle to use when drawing the polygon.
+   */
+  void drawPolygon(
+      const CesiumGeospatial::CartographicPolygon& polygon,
+      const VectorStyle& style);
+
+  /**
+   * @brief Draws a set of linear rings representing a polygon and its holes to
+   * the canvas.
    *
    * @param polygon The polygon to draw. It is assumed to have right-hand
    * winding order (exterior rings are counterclockwise, holes are clockwise) as
@@ -78,7 +89,7 @@ public:
    * @param style The \ref VectorStyle to use when drawing the object.
    */
   void drawGeoJsonObject(
-      const GeoJsonObject& geoJsonObject,
+      GeoJsonObjectConstPtr geoJsonObject,
       const VectorStyle& style);
 
   /**

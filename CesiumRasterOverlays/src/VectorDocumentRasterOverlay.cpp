@@ -45,7 +45,7 @@ namespace CesiumRasterOverlays {
 
 namespace {
 struct QuadtreePrimitiveData {
-  const GeoJsonObject* pObject;
+  GeoJsonObjectConstPtr pObject;
   const VectorStyle* pStyle;
   GlobeRectangle rectangle;
 };
@@ -119,7 +119,7 @@ struct GeoJsonObjectStyleVisitor {
 };
 
 void addPrimitivesToData(
-    const GeoJsonObject& geoJsonObject,
+    GeoJsonObjectConstPtr geoJsonObject,
     std::vector<QuadtreePrimitiveData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
     const VectorStyle& style);
@@ -136,7 +136,7 @@ struct GeoJsonChildVisitor {
       const std::optional<VectorStyle>& featureStyle =
           geometryStyle ? geometryStyle : feature.style;
       addPrimitivesToData(
-          geoJsonGeometryObjectToObject(*feature.geometry),
+          geoJsonGeometryObjectConstRefToObjectConstPtr(*feature.geometry),
           data,
           documentRegionBuilder,
           featureStyle ? *featureStyle : style);
@@ -153,7 +153,7 @@ struct GeoJsonChildVisitor {
         const std::optional<VectorStyle>& collectionStyle =
             featureStyle ? featureStyle : collection.style;
         addPrimitivesToData(
-            geoJsonGeometryObjectToObject(*feature.geometry),
+            geoJsonGeometryObjectConstRefToObjectConstPtr(*feature.geometry),
             data,
             documentRegionBuilder,
             collectionStyle ? *collectionStyle : style);
@@ -168,7 +168,7 @@ struct GeoJsonChildVisitor {
       const std::optional<VectorStyle>& useStyle =
           childStyle ? childStyle : collection.style;
       addPrimitivesToData(
-          geoJsonGeometryObjectToObject(geometry),
+          geoJsonGeometryObjectConstRefToObjectConstPtr(geometry),
           data,
           documentRegionBuilder,
           useStyle ? *useStyle : style);
@@ -179,14 +179,14 @@ struct GeoJsonChildVisitor {
 };
 
 void addPrimitivesToData(
-    const GeoJsonObject& geoJsonObject,
+    GeoJsonObjectConstPtr geoJsonObject,
     std::vector<QuadtreePrimitiveData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
     const VectorStyle& style) {
   BoundingRegionBuilder thisBuilder;
   std::visit(GlobeRectangleFromObjectVisitor{thisBuilder}, geoJsonObject);
   GlobeRectangle rect = thisBuilder.toGlobeRectangle();
-  data.emplace_back(&geoJsonObject, &style, std::move(rect));
+  data.emplace_back(geoJsonObject, &style, std::move(rect));
   documentRegionBuilder.expandToIncludePosition(rect.getSouthwest());
   documentRegionBuilder.expandToIncludePosition(rect.getNortheast());
 
@@ -308,7 +308,7 @@ Quadtree buildQuadtree(
   const std::optional<VectorStyle>& rootObjectStyle =
       std::visit(GeoJsonObjectStyleVisitor{}, document->getRootObject());
   addPrimitivesToData(
-      document->getRootObject(),
+      geoJsonObjectConstRefToObjectConstPtr(document->getRootObject()),
       data,
       builder,
       rootObjectStyle ? *rootObjectStyle : defaultStyle);
@@ -360,7 +360,7 @@ void rasterizeQuadtreeNode(
       }
       primitivesRendered[dataIdx] = true;
       const QuadtreePrimitiveData& data = tree.data[dataIdx];
-      rasterizer.drawGeoJsonObject(*data.pObject, *data.pStyle);
+      rasterizer.drawGeoJsonObject(data.pObject, *data.pStyle);
     }
   } else {
     for (size_t i = 0; i < 2; i++) {
@@ -535,37 +535,58 @@ public:
       return;
     }
 
-    this->recomputeStyles(this->_document->getRootObject());
+    this->recomputeStyles(
+        geoJsonObjectRefToObjectPtr(this->_document->getRootObject()));
   }
 
 private:
-  void recomputeStyles(GeoJsonObject& object) {
+  void recomputeStyles(GeoJsonObjectPtr pObject) {
     struct SetStyleVisitor {
       const std::optional<VectorStyle>& style;
-      void operator()(GeoJsonPoint& o) { o.style = style; }
-      void operator()(GeoJsonMultiPoint& o) { o.style = style; }
-      void operator()(GeoJsonLineString& o) { o.style = style; }
-      void operator()(GeoJsonMultiLineString& o) { o.style = style; }
-      void operator()(GeoJsonPolygon& o) { o.style = style; }
-      void operator()(GeoJsonMultiPolygon& o) { o.style = style; }
-      void operator()(GeoJsonFeature& o) { o.style = style; }
-      void operator()(GeoJsonFeatureCollection& o) { o.style = style; }
-      void operator()(GeoJsonGeometryCollection& o) { o.style = style; }
+      void operator()(GeoJsonPoint* o) { o->style = style; }
+      void operator()(GeoJsonMultiPoint* o) { o->style = style; }
+      void operator()(GeoJsonLineString* o) { o->style = style; }
+      void operator()(GeoJsonMultiLineString* o) { o->style = style; }
+      void operator()(GeoJsonPolygon* o) { o->style = style; }
+      void operator()(GeoJsonMultiPolygon* o) { o->style = style; }
+      void operator()(GeoJsonFeature* o) { o->style = style; }
+      void operator()(GeoJsonFeatureCollection* o) { o->style = style; }
+      void operator()(GeoJsonGeometryCollection* o) { o->style = style; }
     };
-    const std::optional<VectorStyle>& style = (*this->_styleCallback)(this->_document, &object);
-    std::visit(SetStyleVisitor{style}, object);
+    const std::optional<VectorStyle>& style =
+        (*this->_styleCallback)(this->_document, pObject);
+    std::visit(SetStyleVisitor{style}, pObject);
 
     struct RecomputeChildStylesVisitor {
       VectorDocumentRasterOverlayTileProvider* pThis;
-      void operator()(GeoJsonFeature& f) { 
-        if(f.geometry) {
-          pThis->recomputeStyles();
+      void operator()(GeoJsonFeature* pFeature) {
+        if (pFeature->geometry) {
+          pThis->recomputeStyles(
+              geoJsonGeometryObjectRefToObjectPtr(*pFeature->geometry));
         }
       }
+      void operator()(GeoJsonFeatureCollection* pFeatures) {
+        for (GeoJsonFeature& feature : pFeatures->features) {
+          if (feature.geometry) {
+            pThis->recomputeStyles(
+                geoJsonGeometryObjectRefToObjectPtr(*feature.geometry));
+          }
+        }
+      }
+      void operator()(GeoJsonGeometryCollection* pCollection) {
+        for (GeoJsonGeometryObject& geometry : pCollection->geometries) {
+          pThis->recomputeStyles(geoJsonGeometryObjectRefToObjectPtr(geometry));
+        }
+      }
+      void operator()(GeoJsonPoint* /*lhs*/) {}
+      void operator()(GeoJsonMultiPoint* /*lhs*/) {}
+      void operator()(GeoJsonLineString* /*lhs*/) {}
+      void operator()(GeoJsonMultiLineString* /*lhs*/) {}
+      void operator()(GeoJsonPolygon* /*lhs*/) {}
+      void operator()(GeoJsonMultiPolygon* /*lhs*/) {}
     };
-    for (GeoJsonObject& child : node.children) {
-      this->recomputeStyles(child);
-    }
+
+    std::visit(RecomputeChildStylesVisitor{this}, pObject);
   }
 };
 

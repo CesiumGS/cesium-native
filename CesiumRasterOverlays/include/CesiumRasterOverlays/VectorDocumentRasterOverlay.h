@@ -1,7 +1,5 @@
 #pragma once
 
-#include <CesiumVectorData/GeoJsonDocument.h>
-#include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -11,6 +9,8 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorStyle.h>
 
 #include <spdlog/fwd.h>
@@ -28,7 +28,7 @@ namespace CesiumRasterOverlays {
 using VectorDocumentRasterOverlayStyleCallback = std::function<std::optional<
     CesiumVectorData::VectorStyle>(
     const CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>&,
-    const CesiumVectorData::GeoJsonObject*)>;
+    CesiumVectorData::GeoJsonObjectPtr)>;
 
 /**
  * @brief A set of options for configuring a VectorDocumentRasterOverlay.

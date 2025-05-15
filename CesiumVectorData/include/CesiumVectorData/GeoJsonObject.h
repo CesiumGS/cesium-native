@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CesiumVectorData/VectorStyle.h"
+
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/Library.h>
@@ -407,6 +408,34 @@ using GeoJsonObject = std::variant<
     GeoJsonFeatureCollection>;
 
 /**
+ * @brief The pass-by-pointer equivalent to \ref GeoJsonObject.
+ */
+using GeoJsonObjectPtr = std::variant<
+    GeoJsonPoint*,
+    GeoJsonMultiPoint*,
+    GeoJsonLineString*,
+    GeoJsonMultiLineString*,
+    GeoJsonPolygon*,
+    GeoJsonMultiPolygon*,
+    GeoJsonGeometryCollection*,
+    GeoJsonFeature*,
+    GeoJsonFeatureCollection*>;
+
+/**
+ * @brief The pass-by-const-pointer equivalent to \ref GeoJsonObject.
+ */
+using GeoJsonObjectConstPtr = std::variant<
+    const GeoJsonPoint*,
+    const GeoJsonMultiPoint*,
+    const GeoJsonLineString*,
+    const GeoJsonMultiLineString*,
+    const GeoJsonPolygon*,
+    const GeoJsonMultiPolygon*,
+    const GeoJsonGeometryCollection*,
+    const GeoJsonFeature*,
+    const GeoJsonFeatureCollection*>;
+
+/**
  * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
  *
  * All geometry objects are also valid objects, but not all objects are valid
@@ -414,4 +443,31 @@ using GeoJsonObject = std::variant<
  */
 GeoJsonObject
 geoJsonGeometryObjectToObject(const GeoJsonGeometryObject& geometry);
+
+/**
+ * @brief Converts a reference to a \ref GeoJsonGeometryObject to a \ref
+ * GeoJsonObjectPtr.
+ */
+GeoJsonObjectPtr
+geoJsonGeometryObjectRefToObjectPtr(GeoJsonGeometryObject& geometry);
+
+/**
+ * @brief Converts a const reference to a \ref GeoJsonGeometryObject to a \ref
+ * GeoJsonObjectConstPtr.
+ */
+GeoJsonObjectConstPtr geoJsonGeometryObjectConstRefToObjectConstPtr(
+    const GeoJsonGeometryObject& geometry);
+
+/**
+ * @brief Converts a reference toa  \ref GeoJsonObject to a \ref
+ * GeoJsonObjectPtr.
+ */
+GeoJsonObjectPtr geoJsonObjectRefToObjectPtr(GeoJsonObject& object);
+
+/**
+ * @brief Converts a reference toa  \ref GeoJsonObject to a \ref
+ * GeoJsonObjectConstPtr.
+ */
+GeoJsonObjectConstPtr
+geoJsonObjectConstRefToObjectConstPtr(const GeoJsonObject& object);
 } // namespace CesiumVectorData
