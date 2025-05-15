@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumVectorData/VectorStyle.h"
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/Library.h>
@@ -59,6 +60,11 @@ struct GeoJsonPoint {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -89,6 +95,11 @@ struct GeoJsonMultiPoint {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -120,6 +131,11 @@ struct GeoJsonLineString {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -152,6 +168,11 @@ struct GeoJsonMultiLineString {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -191,6 +212,11 @@ struct GeoJsonPolygon {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -224,6 +250,11 @@ struct GeoJsonMultiPolygon {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 struct GeoJsonGeometryCollection;
@@ -270,6 +301,11 @@ struct GeoJsonGeometryCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -312,6 +348,11 @@ struct GeoJsonFeature {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -343,6 +384,11 @@ struct GeoJsonFeatureCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**

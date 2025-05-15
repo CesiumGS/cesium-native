@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumGeospatial/Cartographic.h"
 #include "Color.h"
 #include "VectorStyle.h"
 
@@ -9,6 +10,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 
 #include <blend2d.h>
@@ -45,13 +47,15 @@ public:
           CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
-   * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.
+   * @brief Draws a \ref GeoJsonPolygon to the canvas.
    *
-   * @param polygon The polygon to draw.
+   * @param polygon The polygon to draw. It is assumed to have right-hand
+   * winding order (exterior rings are counterclockwise, holes are clockwise) as
+   * is the case in GeoJSON.
    * @param style The \ref VectorStyle to use when drawing the polygon.
    */
   void drawPolygon(
-      const CesiumGeospatial::CartographicPolygon& polygon,
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
       const VectorStyle& style);
 
   /**
@@ -65,16 +69,17 @@ public:
       const VectorStyle& style);
 
   /**
-   * @brief Rasterizes the provided `VectorPrimitive` to the canvas.
+   * @brief Rasterizes the provided `GeoJsonObject` to the canvas.
    *
    * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
    * to calls to `drawPolyline`. Points are currently not drawn.
    *
-   * @param primitive The primitive to draw.
-   * @param style The \ref VectorStyle to use when drawing the primitive.
+   * @param geoJsonObject The GeoJSON object to draw.
+   * @param style The \ref VectorStyle to use when drawing the object.
    */
-  void
-  drawGeoJsonObject(const GeoJsonObject& primitive, const VectorStyle& style);
+  void drawGeoJsonObject(
+      const GeoJsonObject& geoJsonObject,
+      const VectorStyle& style);
 
   /**
    * @brief Fills the entire canvas with the given color.

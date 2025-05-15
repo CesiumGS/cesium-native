@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumVectorData/VectorNode.h"
-
+#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -11,7 +11,6 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
-#include <CesiumVectorData/VectorDocument.h>
 #include <CesiumVectorData/VectorStyle.h>
 
 #include <spdlog/fwd.h>
@@ -28,8 +27,8 @@ namespace CesiumRasterOverlays {
  */
 using VectorDocumentRasterOverlayStyleCallback = std::function<std::optional<
     CesiumVectorData::VectorStyle>(
-    const CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>&,
-    const CesiumVectorData::VectorNode*)>;
+    const CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>&,
+    const CesiumVectorData::GeoJsonObject*)>;
 
 /**
  * @brief A set of options for configuring a VectorDocumentRasterOverlay.
@@ -79,7 +78,7 @@ struct IonVectorDocumentRasterOverlaySource {
  * @brief Possible sources for a VectorDocumentRasterOverlay's vector data.
  */
 using VectorDocumentRasterOverlaySource = std::variant<
-    CesiumUtility::IntrusivePointer<CesiumVectorData::VectorDocument>,
+    CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>,
     IonVectorDocumentRasterOverlaySource>;
 
 /**
