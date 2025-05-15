@@ -61,6 +61,9 @@
       "overrideName": "ExtensionBufferViewExtMeshoptCompression"
     },
     "EXT_structural_metadata glTF extension": {
+      "overrideName": "ExtensionExtStructuralMetadata"
+    },
+    "EXT_structural_metadata glTF Document extension": {
       "overrideName": "ExtensionModelExtStructuralMetadata"
     },
     "EXT_structural_metadata glTF Mesh Primitive extension": {
@@ -73,7 +76,8 @@
       "overrideName": "Class"
     },
     "Enum in EXT_structural_metadata": {
-      "overrideName": "Enum"
+      "overrideName": "Enum",
+      "toBeInherited": true
     },
     "Enum Value in EXT_structural_metadata": {
       "overrideName": "EnumValue"
@@ -97,7 +101,8 @@
       "overrideName": "PropertyTexture"
     },
     "Schema in EXT_structural_metadata": {
-      "overrideName": "Schema"
+      "overrideName": "Schema",
+      "isAsset": true
     },
     "Any Value": {
       "overrideName": "CesiumUtility::JsonValue"
@@ -131,6 +136,9 @@
     },
     "CESIUM_primitive_outline glTF primitive extension": {
       "overrideName": "ExtensionCesiumPrimitiveOutline"
+    },
+    "KHR_spz_gaussian_splats_compression glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionKhrSpzGaussianSplatsCompression"
     }
   },
   "extensions": [
@@ -167,6 +175,14 @@
     {
       "extensionName": "EXT_meshopt_compression",
       "schema": "Vendor/EXT_meshopt_compression/schema/bufferView.EXT_meshopt_compression.schema.json"
+    },
+    {
+      "extensionName": "EXT_structural_metadata",
+      "schema": "Vendor/EXT_structural_metadata/schema/EXT_structural_metadata.schema.json",
+      "attachTo": [
+        "node",
+        "material"
+      ]
     },
     {
       "extensionName": "EXT_structural_metadata",
@@ -227,6 +243,13 @@
       "schema": "Vendor/CESIUM_primitive_outline/schema/primitive.CESIUM_primitive_outline.schema.json",
       "attachTo": [
         "mesh.primitive"
+      ]
+    },
+    {
+      "extensionName": "KHR_spz_gaussian_splats_compression",
+      "schema": "Khronos/KHR_spz_gaussian_splats_compression/schema/mesh.primitive.KHR_spz_gaussian_splats_compression.schema.json",
+      "attachTo": [
+          "mesh.primitive"
       ]
     }
   ]

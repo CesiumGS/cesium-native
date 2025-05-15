@@ -3,44 +3,39 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief ExtensionMeshPrimitiveKhrMaterialsVariants Mappings Value
- */
-struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue
-    final : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue";
+    /**
+     * @brief ExtensionMeshPrimitiveKhrMaterialsVariants Mappings Value
+     */
+    struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue";
 
-  /**
-   * @brief An array of variant index values.
-   *
-   * An array of index values that reference variants defined in the glTF root's
-   * extension object.
-   */
-  std::vector<int32_t> variants;
+        /**
+         * @brief An array of variant index values.
+         *
+         * An array of index values that reference variants defined in the glTF root's extension object.
+         */
+        std::vector<int32_t> variants;
 
-  /**
-   * @brief The material associated with the set of variants.
-   *
-   * A reference to the material associated with the given array of variants.
-   */
-  int32_t material = -1;
+        /**
+         * @brief The material associated with the set of variants.
+         *
+         * A reference to the material associated with the given array of variants.
+         */
+        int32_t material = -1;
 
-  /**
-   * @brief The user-defined name of this variant material mapping.
-   *
-   * The optional user-defined name of this variant material mapping.  This is
-   * not necessarily unique.
-   */
-  std::optional<std::string> name;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The user-defined name of this variant material mapping.
+         *
+         * The optional user-defined name of this variant material mapping.  This is not necessarily unique.
+         */
+        std::optional<std::string> name;
+
+    };
+}

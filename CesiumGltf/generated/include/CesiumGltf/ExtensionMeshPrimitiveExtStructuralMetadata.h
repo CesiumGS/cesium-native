@@ -3,32 +3,27 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief Structural metadata about a glTF primitive.
- */
-struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionMeshPrimitiveExtStructuralMetadata";
-  static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
+    /**
+     * @brief Structural metadata about a glTF primitive.
+     */
+    struct CESIUMGLTF_API ExtensionMeshPrimitiveExtStructuralMetadata final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionMeshPrimitiveExtStructuralMetadata";
+        static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
 
-  /**
-   * @brief An array of indexes of property textures in the root
-   * `EXT_structural_metadata` object.
-   */
-  std::vector<int32_t> propertyTextures;
+        /**
+         * @brief An array of indexes of property textures in the root `EXT_structural_metadata` object.
+         */
+        std::vector<int32_t> propertyTextures;
 
-  /**
-   * @brief An array of indexes of property attributes in the root
-   * `EXT_structural_metadata` object.
-   */
-  std::vector<int32_t> propertyAttributes;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief An array of indexes of property attributes in the root `EXT_structural_metadata` object.
+         */
+        std::vector<int32_t> propertyAttributes;
+
+    };
+}

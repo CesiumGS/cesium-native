@@ -4,24 +4,21 @@
 
 #include "CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h"
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief MAXAR_mesh_variants node extension
- */
-struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionNodeMaxarMeshVariants";
-  static inline constexpr const char* ExtensionName = "MAXAR_mesh_variants";
+    /**
+     * @brief MAXAR_mesh_variants node extension
+     */
+    struct CESIUMGLTF_API ExtensionNodeMaxarMeshVariants final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionNodeMaxarMeshVariants";
+        static inline constexpr const char* ExtensionName = "MAXAR_mesh_variants";
 
-  /**
-   * @brief A list of mesh to variant mappings
-   */
-  std::vector<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue> mappings;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief A list of mesh to variant mappings
+         */
+        std::vector<CesiumGltf::ExtensionNodeMaxarMeshVariantsMappingsValue> mappings;
+
+    };
+}

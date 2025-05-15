@@ -3,23 +3,21 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief glTF extension to specify textures using the WebP image format.
- */
-struct CESIUMGLTF_API ExtensionTextureWebp final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ExtensionTextureWebp";
-  static inline constexpr const char* ExtensionName = "EXT_texture_webp";
+    /**
+     * @brief glTF extension to specify textures using the WebP image format.
+     */
+    struct CESIUMGLTF_API ExtensionTextureWebp final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionTextureWebp";
+        static inline constexpr const char* ExtensionName = "EXT_texture_webp";
 
-  /**
-   * @brief The index of the images node which points to a WebP image.
-   */
-  int32_t source = -1;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The index of the WebP image.
+         */
+        int32_t source = -1;
+
+    };
+}

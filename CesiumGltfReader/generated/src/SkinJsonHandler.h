@@ -3,37 +3,32 @@
 #pragma once
 
 #include "NamedObjectJsonHandler.h"
-
 #include <CesiumGltf/Skin.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class SkinJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Skin;
+  class SkinJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Skin;
 
-  SkinJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Skin* pObject);
+    SkinJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Skin* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeySkin(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Skin& o);
+  protected:
+    IJsonHandler* readObjectKeySkin(const std::string& objectType, const std::string_view& str, CesiumGltf::Skin& o);
 
-private:
-  CesiumGltf::Skin* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _inverseBindMatrices;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _skeleton;
-  CesiumJsonReader::
-      ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>>
-          _joints;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Skin* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _inverseBindMatrices;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _skeleton;
+    CesiumJsonReader::ArrayJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _joints;
+  };
+}

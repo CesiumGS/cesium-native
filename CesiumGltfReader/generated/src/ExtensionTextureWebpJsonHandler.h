@@ -7,41 +7,31 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class ExtensionTextureWebpJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionTextureWebp;
+  class ExtensionTextureWebpJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionTextureWebp;
 
-  static inline constexpr const char* ExtensionName = "EXT_texture_webp";
+    static inline constexpr const char* ExtensionName = "EXT_texture_webp";
 
-  ExtensionTextureWebpJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionTextureWebp* pObject);
+    ExtensionTextureWebpJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionTextureWebp* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  virtual void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  virtual IJsonHandler& getHandler() override { return *this; }
+    virtual IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionTextureWebp(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionTextureWebp& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionTextureWebp(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionTextureWebp& o);
 
-private:
-  CesiumGltf::ExtensionTextureWebp* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _source;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionTextureWebp* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _source;
+  };
+}

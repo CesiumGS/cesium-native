@@ -4,23 +4,21 @@
 
 #include "CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h"
 #include "CesiumGltf/Library.h"
-
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief An object describing per-instance feature IDs.
- */
-struct CESIUMGLTF_API ExtensionExtInstanceFeatures final
-    : public CesiumUtility::ExtensibleObject {
-  static inline constexpr const char* TypeName = "ExtensionExtInstanceFeatures";
-  static inline constexpr const char* ExtensionName = "EXT_instance_features";
+    /**
+     * @brief An object describing per-instance feature IDs.
+     */
+    struct CESIUMGLTF_API ExtensionExtInstanceFeatures final : public CesiumUtility::ExtensibleObject {
+        static inline constexpr const char* TypeName = "ExtensionExtInstanceFeatures";
+        static inline constexpr const char* ExtensionName = "EXT_instance_features";
 
-  /**
-   * @brief An array of feature ID sets.
-   */
-  std::vector<CesiumGltf::ExtensionExtInstanceFeaturesFeatureId> featureIds;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief An array of feature ID sets.
+         */
+        std::vector<CesiumGltf::ExtensionExtInstanceFeaturesFeatureId> featureIds;
+
+    };
+}

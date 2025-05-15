@@ -4,42 +4,36 @@
 
 #include "ClassJsonHandler.h"
 #include "EnumJsonHandler.h"
-
 #include <CesiumGltf/Schema.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class SchemaJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Schema;
+  class SchemaJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Schema;
 
-  SchemaJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Schema* pObject);
+    SchemaJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Schema* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeySchema(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Schema& o);
+  protected:
+    IJsonHandler* readObjectKeySchema(const std::string& objectType, const std::string_view& str, CesiumGltf::Schema& o);
 
-private:
-  CesiumGltf::Schema* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _id;
-  CesiumJsonReader::StringJsonHandler _name;
-  CesiumJsonReader::StringJsonHandler _description;
-  CesiumJsonReader::StringJsonHandler _version;
-  CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::Class, ClassJsonHandler>
-      _classes;
-  CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::Enum, EnumJsonHandler>
-      _enums;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Schema* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _id;
+    CesiumJsonReader::StringJsonHandler _name;
+    CesiumJsonReader::StringJsonHandler _description;
+    CesiumJsonReader::StringJsonHandler _version;
+    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::Class, ClassJsonHandler> _classes;
+    CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::Enum, EnumJsonHandler> _enums;
+  };
+}

@@ -4,23 +4,21 @@
 
 #include "CesiumGltf/Library.h"
 #include "CesiumGltf/NamedObject.h"
-
 #include <string>
 
 namespace CesiumGltf {
-/**
- * @brief An object defining a valid material variant
- */
-struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final
-    : public CesiumGltf::NamedObject {
-  static inline constexpr const char* TypeName =
-      "ExtensionModelKhrMaterialsVariantsValue";
+    /**
+     * @brief An object defining a valid material variant
+     */
+    struct CESIUMGLTF_API ExtensionModelKhrMaterialsVariantsValue final : public CesiumGltf::NamedObject {
+        static inline constexpr const char* TypeName = "ExtensionModelKhrMaterialsVariantsValue";
 
-  /**
-   * @brief The name of the material variant
-   *
-   * .
-   */
-  std::string name;
-};
-} // namespace CesiumGltf
+        /**
+         * @brief The name of the material variant
+         *
+         * .
+         */
+        std::string name;
+
+    };
+}

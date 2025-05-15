@@ -4,19 +4,20 @@
 
 // forward declarations
 namespace CesiumJsonWriter {
-class JsonWriter;
-class ExtensionWriterContext;
+  class JsonWriter;
+  class ExtensionWriterContext;
 } // namespace CesiumJsonWriter
 
 // forward declarations
 namespace CesiumGltf {
-struct ExtensionCesiumRTC;
+  struct ExtensionCesiumRTC;
 struct ExtensionCesiumTileEdges;
 struct ExtensionExtInstanceFeatures;
 struct ExtensionExtMeshFeatures;
 struct ExtensionExtMeshGpuInstancing;
 struct ExtensionBufferExtMeshoptCompression;
 struct ExtensionBufferViewExtMeshoptCompression;
+struct ExtensionExtStructuralMetadata;
 struct ExtensionModelExtStructuralMetadata;
 struct ExtensionMeshPrimitiveExtStructuralMetadata;
 struct ExtensionKhrDracoMeshCompression;
@@ -29,6 +30,7 @@ struct ExtensionNodeMaxarMeshVariants;
 struct ExtensionKhrTextureTransform;
 struct ExtensionTextureWebp;
 struct ExtensionCesiumPrimitiveOutline;
+struct ExtensionKhrSpzGaussianSplatsCompression;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
@@ -77,7 +79,7 @@ struct AccessorSparseValues;
 struct AccessorSparseIndices;
 } // namespace CesiumGltf
 
-namespace CesiumGltfWriter {
+namespace CesiumGltfWriter {          
 
 struct ExtensionCesiumRTCJsonWriter {
   using ValueType = CesiumGltf::ExtensionCesiumRTC;
@@ -156,6 +158,17 @@ struct ExtensionBufferViewExtMeshoptCompressionJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct ExtensionExtStructuralMetadataJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtStructuralMetadata;
+
+  static inline constexpr const char* ExtensionName = "EXT_structural_metadata";
+
+  static void write(
+      const CesiumGltf::ExtensionExtStructuralMetadata& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct ExtensionModelExtStructuralMetadataJsonWriter {
   using ValueType = CesiumGltf::ExtensionModelExtStructuralMetadata;
 
@@ -181,8 +194,7 @@ struct ExtensionMeshPrimitiveExtStructuralMetadataJsonWriter {
 struct ExtensionKhrDracoMeshCompressionJsonWriter {
   using ValueType = CesiumGltf::ExtensionKhrDracoMeshCompression;
 
-  static inline constexpr const char* ExtensionName =
-      "KHR_draco_mesh_compression";
+  static inline constexpr const char* ExtensionName = "KHR_draco_mesh_compression";
 
   static void write(
       const CesiumGltf::ExtensionKhrDracoMeshCompression& obj,
@@ -281,11 +293,21 @@ struct ExtensionTextureWebpJsonWriter {
 struct ExtensionCesiumPrimitiveOutlineJsonWriter {
   using ValueType = CesiumGltf::ExtensionCesiumPrimitiveOutline;
 
-  static inline constexpr const char* ExtensionName =
-      "CESIUM_primitive_outline";
+  static inline constexpr const char* ExtensionName = "CESIUM_primitive_outline";
 
   static void write(
       const CesiumGltf::ExtensionCesiumPrimitiveOutline& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrSpzGaussianSplatsCompressionJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression;
+
+  static inline constexpr const char* ExtensionName = "KHR_spz_gaussian_splats_compression";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -309,12 +331,10 @@ struct ExtensionModelMaxarMeshVariantsValueJsonWriter {
 };
 
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValueJsonWriter {
-  using ValueType =
-      CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
+  using ValueType = CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
 
   static void write(
-      const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue&
-          obj,
+      const CesiumGltf::ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

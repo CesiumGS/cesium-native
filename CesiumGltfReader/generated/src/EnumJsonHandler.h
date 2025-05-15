@@ -3,39 +3,34 @@
 #pragma once
 
 #include "EnumValueJsonHandler.h"
-
 #include <CesiumGltf/Enum.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class EnumJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Enum;
+  class EnumJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Enum;
 
-  EnumJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Enum* pObject);
+    EnumJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Enum* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyEnum(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Enum& o);
+  protected:
+    IJsonHandler* readObjectKeyEnum(const std::string& objectType, const std::string_view& str, CesiumGltf::Enum& o);
 
-private:
-  CesiumGltf::Enum* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _name;
-  CesiumJsonReader::StringJsonHandler _description;
-  CesiumJsonReader::StringJsonHandler _valueType;
-  CesiumJsonReader::
-      ArrayJsonHandler<CesiumGltf::EnumValue, EnumValueJsonHandler>
-          _values;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Enum* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _name;
+    CesiumJsonReader::StringJsonHandler _description;
+    CesiumJsonReader::StringJsonHandler _valueType;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::EnumValue, EnumValueJsonHandler> _values;
+  };
+}

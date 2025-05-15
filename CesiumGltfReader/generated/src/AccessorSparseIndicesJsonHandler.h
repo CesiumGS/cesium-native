@@ -7,33 +7,27 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-class AccessorSparseIndicesJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::AccessorSparseIndices;
+  class AccessorSparseIndicesJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::AccessorSparseIndices;
 
-  AccessorSparseIndicesJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::AccessorSparseIndices* pObject);
+    AccessorSparseIndicesJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::AccessorSparseIndices* pObject);
 
-  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAccessorSparseIndices(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::AccessorSparseIndices& o);
+  protected:
+    IJsonHandler* readObjectKeyAccessorSparseIndices(const std::string& objectType, const std::string_view& str, CesiumGltf::AccessorSparseIndices& o);
 
-private:
-  CesiumGltf::AccessorSparseIndices* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _componentType;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::AccessorSparseIndices* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _byteOffset;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _componentType;
+  };
+}
