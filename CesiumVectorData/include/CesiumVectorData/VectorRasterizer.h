@@ -5,12 +5,11 @@
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 
 #include <blend2d.h>
 #include <blend2d/context.h>
@@ -56,21 +55,6 @@ public:
       const VectorStyle& style);
 
   /**
-   * @brief Draws a \ref CesiumGeospatial::CompositeCartographicPolygon to the
-   * canvas.
-   *
-   * Support for the CompositeCartographicPolygon is limited at the moment.
-   * Polygons with holes will rasterize incorrectly.
-   *
-   * @param polygon The composite polygon to draw.
-   * @param style The \ref VectorStyle to use when drawing the composite
-   * polygon.
-   */
-  void drawPolygon(
-      const CesiumGeospatial::CompositeCartographicPolygon& polygon,
-      const VectorStyle& style);
-
-  /**
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
    *
    * @param points The set of points making up the polyline.
@@ -90,7 +74,7 @@ public:
    * @param style The \ref VectorStyle to use when drawing the primitive.
    */
   void
-  drawPrimitive(const VectorPrimitive& primitive, const VectorStyle& style);
+  drawGeoJsonObject(const GeoJsonObject& primitive, const VectorStyle& style);
 
   /**
    * @brief Fills the entire canvas with the given color.
