@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumVectorData/VectorStyle.h"
+
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/Library.h>
@@ -59,6 +61,11 @@ struct GeoJsonPoint {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -89,6 +96,11 @@ struct GeoJsonMultiPoint {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -120,6 +132,11 @@ struct GeoJsonLineString {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -152,6 +169,11 @@ struct GeoJsonMultiLineString {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -191,6 +213,11 @@ struct GeoJsonPolygon {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -224,6 +251,11 @@ struct GeoJsonMultiPolygon {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 struct GeoJsonGeometryCollection;
@@ -270,6 +302,11 @@ struct GeoJsonGeometryCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -312,6 +349,11 @@ struct GeoJsonFeature {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -343,6 +385,11 @@ struct GeoJsonFeatureCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style for this specific GeoJSON object, if any.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -361,6 +408,34 @@ using GeoJsonObject = std::variant<
     GeoJsonFeatureCollection>;
 
 /**
+ * @brief The pass-by-pointer equivalent to \ref GeoJsonObject.
+ */
+using GeoJsonObjectPtr = std::variant<
+    GeoJsonPoint*,
+    GeoJsonMultiPoint*,
+    GeoJsonLineString*,
+    GeoJsonMultiLineString*,
+    GeoJsonPolygon*,
+    GeoJsonMultiPolygon*,
+    GeoJsonGeometryCollection*,
+    GeoJsonFeature*,
+    GeoJsonFeatureCollection*>;
+
+/**
+ * @brief The pass-by-const-pointer equivalent to \ref GeoJsonObject.
+ */
+using GeoJsonObjectConstPtr = std::variant<
+    const GeoJsonPoint*,
+    const GeoJsonMultiPoint*,
+    const GeoJsonLineString*,
+    const GeoJsonMultiLineString*,
+    const GeoJsonPolygon*,
+    const GeoJsonMultiPolygon*,
+    const GeoJsonGeometryCollection*,
+    const GeoJsonFeature*,
+    const GeoJsonFeatureCollection*>;
+
+/**
  * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
  *
  * All geometry objects are also valid objects, but not all objects are valid
@@ -368,4 +443,31 @@ using GeoJsonObject = std::variant<
  */
 GeoJsonObject
 geoJsonGeometryObjectToObject(const GeoJsonGeometryObject& geometry);
+
+/**
+ * @brief Converts a reference to a \ref GeoJsonGeometryObject to a \ref
+ * GeoJsonObjectPtr.
+ */
+GeoJsonObjectPtr
+geoJsonGeometryObjectRefToObjectPtr(GeoJsonGeometryObject& geometry);
+
+/**
+ * @brief Converts a const reference to a \ref GeoJsonGeometryObject to a \ref
+ * GeoJsonObjectConstPtr.
+ */
+GeoJsonObjectConstPtr geoJsonGeometryObjectConstRefToObjectConstPtr(
+    const GeoJsonGeometryObject& geometry);
+
+/**
+ * @brief Converts a reference toa  \ref GeoJsonObject to a \ref
+ * GeoJsonObjectPtr.
+ */
+GeoJsonObjectPtr geoJsonObjectRefToObjectPtr(GeoJsonObject& object);
+
+/**
+ * @brief Converts a reference toa  \ref GeoJsonObject to a \ref
+ * GeoJsonObjectConstPtr.
+ */
+GeoJsonObjectConstPtr
+geoJsonObjectConstRefToObjectConstPtr(const GeoJsonObject& object);
 } // namespace CesiumVectorData
