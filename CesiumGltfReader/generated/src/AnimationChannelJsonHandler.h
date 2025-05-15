@@ -3,37 +3,31 @@
 #pragma once
 
 #include "AnimationChannelTargetJsonHandler.h"
-
 #include <CesiumGltf/AnimationChannel.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class AnimationChannelJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::AnimationChannel;
+  class AnimationChannelJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::AnimationChannel;
 
-  explicit AnimationChannelJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void
-  reset(IJsonHandler* pParentHandler, CesiumGltf::AnimationChannel* pObject);
+    explicit AnimationChannelJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::AnimationChannel* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAnimationChannel(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::AnimationChannel& o);
+  protected:
+    IJsonHandler* readObjectKeyAnimationChannel(const std::string& objectType, const std::string_view& str, CesiumGltf::AnimationChannel& o);
 
-private:
-  CesiumGltf::AnimationChannel* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _sampler;
-  AnimationChannelTargetJsonHandler _target;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::AnimationChannel* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _sampler;
+    AnimationChannelTargetJsonHandler _target;
+  };
+}  // namespace CesiumGltfReader

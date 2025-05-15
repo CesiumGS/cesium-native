@@ -5,40 +5,30 @@
 #include "AnimationChannelJsonHandler.h"
 #include "AnimationSamplerJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
-
 #include <CesiumGltf/Animation.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class AnimationJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Animation;
+  class AnimationJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Animation;
 
-  explicit AnimationJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Animation* pObject);
+    explicit AnimationJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Animation* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAnimation(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Animation& o);
+  protected:
+    IJsonHandler* readObjectKeyAnimation(const std::string& objectType, const std::string_view& str, CesiumGltf::Animation& o);
 
-private:
-  CesiumGltf::Animation* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<
-      CesiumGltf::AnimationChannel,
-      AnimationChannelJsonHandler>
-      _channels;
-  CesiumJsonReader::ArrayJsonHandler<
-      CesiumGltf::AnimationSampler,
-      AnimationSamplerJsonHandler>
-      _samplers;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Animation* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::AnimationChannel, AnimationChannelJsonHandler> _channels;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::AnimationSampler, AnimationSamplerJsonHandler> _samplers;
+  };
+}  // namespace CesiumGltfReader

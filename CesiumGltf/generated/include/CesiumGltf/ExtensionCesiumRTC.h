@@ -4,41 +4,37 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <vector>
 
 namespace CesiumGltf {
-/**
- * @brief glTF CESIUM_RTC extension.
- */
-struct CESIUMGLTF_API ExtensionCesiumRTC final
-    : public CesiumUtility::ExtensibleObject {
-  /**
-   * @brief The original name of this type.
-   */
-  static constexpr const char* TypeName = "ExtensionCesiumRTC";
-  /** @brief The official name of the extension. This should be the same as its
-   * key in the `extensions` object. */
-  static constexpr const char* ExtensionName = "CESIUM_RTC";
+    /**
+     * @brief glTF CESIUM_RTC extension.
+     */
+    struct CESIUMGLTF_API ExtensionCesiumRTC final : public CesiumUtility::ExtensibleObject {
+        /**
+         * @brief The original name of this type.
+         */
+        static constexpr const char* TypeName = "ExtensionCesiumRTC";
+        /** @brief The official name of the extension. This should be the same as its key in the `extensions` object. */
+        static constexpr const char* ExtensionName = "CESIUM_RTC";
 
-  /**
-   * @brief Center that vertex positions are relative to.
-   */
-  std::vector<double> center;
+        /**
+         * @brief Center that vertex positions are relative to.
+         */
+        std::vector<double> center;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionCesiumRTC));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(sizeof(double) * this->center.capacity());
-    return accum;
-  }
-};
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionCesiumRTC));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
+          accum += int64_t(sizeof(double) * this->center.capacity());
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

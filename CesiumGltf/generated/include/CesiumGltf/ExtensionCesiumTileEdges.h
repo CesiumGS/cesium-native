@@ -4,60 +4,52 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief `CESIUM_tile_edges` extension for a primitive in a glTF model.
- */
-struct CESIUMGLTF_API ExtensionCesiumTileEdges final
-    : public CesiumUtility::ExtensibleObject {
-  /**
-   * @brief The original name of this type.
-   */
-  static constexpr const char* TypeName = "ExtensionCesiumTileEdges";
-  /** @brief The official name of the extension. This should be the same as its
-   * key in the `extensions` object. */
-  static constexpr const char* ExtensionName = "CESIUM_tile_edges";
+    /**
+     * @brief `CESIUM_tile_edges` extension for a primitive in a glTF model.
+     */
+    struct CESIUMGLTF_API ExtensionCesiumTileEdges final : public CesiumUtility::ExtensibleObject {
+        /**
+         * @brief The original name of this type.
+         */
+        static constexpr const char* TypeName = "ExtensionCesiumTileEdges";
+        /** @brief The official name of the extension. This should be the same as its key in the `extensions` object. */
+        static constexpr const char* ExtensionName = "CESIUM_tile_edges";
 
-  /**
-   * @brief The index of the accessor containing indices that make up the left
-   * edge.
-   */
-  int32_t left = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the left edge.
+         */
+        int32_t left = -1;
 
-  /**
-   * @brief The index of the accessor containing indices that make up the bottom
-   * edge.
-   */
-  int32_t bottom = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the bottom edge.
+         */
+        int32_t bottom = -1;
 
-  /**
-   * @brief The index of the accessor containing indices that make up the right
-   * edge.
-   */
-  int32_t right = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the right edge.
+         */
+        int32_t right = -1;
 
-  /**
-   * @brief The index of the accessor containing indices that make up the top
-   * edge.
-   */
-  int32_t top = -1;
+        /**
+         * @brief The index of the accessor containing indices that make up the top edge.
+         */
+        int32_t top = -1;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionCesiumTileEdges));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionCesiumTileEdges));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

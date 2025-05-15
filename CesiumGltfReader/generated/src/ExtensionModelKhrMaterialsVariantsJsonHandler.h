@@ -3,50 +3,36 @@
 #pragma once
 
 #include "ExtensionModelKhrMaterialsVariantsValueJsonHandler.h"
-
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionModelKhrMaterialsVariantsJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionModelKhrMaterialsVariants;
+  class ExtensionModelKhrMaterialsVariantsJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionModelKhrMaterialsVariants;
 
-  static constexpr const char* ExtensionName = "KHR_materials_variants";
+    static constexpr const char* ExtensionName = "KHR_materials_variants";
 
-  explicit ExtensionModelKhrMaterialsVariantsJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionModelKhrMaterialsVariants* pObject);
+    explicit ExtensionModelKhrMaterialsVariantsJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionModelKhrMaterialsVariants* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionModelKhrMaterialsVariants(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionModelKhrMaterialsVariants& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionModelKhrMaterialsVariants(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionModelKhrMaterialsVariants& o);
 
-private:
-  CesiumGltf::ExtensionModelKhrMaterialsVariants* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<
-      CesiumGltf::ExtensionModelKhrMaterialsVariantsValue,
-      ExtensionModelKhrMaterialsVariantsValueJsonHandler>
-      _variants;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionModelKhrMaterialsVariants* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::ExtensionModelKhrMaterialsVariantsValue, ExtensionModelKhrMaterialsVariantsValueJsonHandler> _variants;
+  };
+}  // namespace CesiumGltfReader

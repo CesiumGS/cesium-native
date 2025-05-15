@@ -16,7 +16,6 @@
 #include "SceneJsonHandler.h"
 #include "SkinJsonHandler.h"
 #include "TextureJsonHandler.h"
-
 #include <CesiumGltf/Model.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
@@ -24,60 +23,41 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ModelJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Model;
+  class ModelJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Model;
 
-  explicit ModelJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Model* pObject);
+    explicit ModelJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Model* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyModel(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Model& o);
+  protected:
+    IJsonHandler* readObjectKeyModel(const std::string& objectType, const std::string_view& str, CesiumGltf::Model& o);
 
-private:
-  CesiumGltf::Model* _pObject = nullptr;
-  CesiumJsonReader::
-      ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
-          _extensionsUsed;
-  CesiumJsonReader::
-      ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
-          _extensionsRequired;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Accessor, AccessorJsonHandler>
-      _accessors;
-  CesiumJsonReader::
-      ArrayJsonHandler<CesiumGltf::Animation, AnimationJsonHandler>
-          _animations;
-  AssetJsonHandler _asset;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Buffer, BufferJsonHandler>
-      _buffers;
-  CesiumJsonReader::
-      ArrayJsonHandler<CesiumGltf::BufferView, BufferViewJsonHandler>
-          _bufferViews;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Camera, CameraJsonHandler>
-      _cameras;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Image, ImageJsonHandler>
-      _images;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Material, MaterialJsonHandler>
-      _materials;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Mesh, MeshJsonHandler> _meshes;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Node, NodeJsonHandler> _nodes;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Sampler, SamplerJsonHandler>
-      _samplers;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _scene;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Scene, SceneJsonHandler>
-      _scenes;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Skin, SkinJsonHandler> _skins;
-  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Texture, TextureJsonHandler>
-      _textures;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Model* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler> _extensionsUsed;
+    CesiumJsonReader::ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler> _extensionsRequired;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Accessor, AccessorJsonHandler> _accessors;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Animation, AnimationJsonHandler> _animations;
+    AssetJsonHandler _asset;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Buffer, BufferJsonHandler> _buffers;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::BufferView, BufferViewJsonHandler> _bufferViews;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Camera, CameraJsonHandler> _cameras;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Image, ImageJsonHandler> _images;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Material, MaterialJsonHandler> _materials;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Mesh, MeshJsonHandler> _meshes;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Node, NodeJsonHandler> _nodes;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Sampler, SamplerJsonHandler> _samplers;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _scene;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Scene, SceneJsonHandler> _scenes;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Skin, SkinJsonHandler> _skins;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Texture, TextureJsonHandler> _textures;
+  };
+}  // namespace CesiumGltfReader

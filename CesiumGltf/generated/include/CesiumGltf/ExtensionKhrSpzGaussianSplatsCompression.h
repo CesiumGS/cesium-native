@@ -5,33 +5,23 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 #include <cstdint>
-#include <optional>
-#include <string>
 
 namespace CesiumGltf {
     /**
-     * @brief An enum value.
+     * @brief Compressed data for SPZ primitive.
      */
-    struct CESIUMGLTF_API EnumValue final : public CesiumUtility::ExtensibleObject {
+    struct CESIUMGLTF_API ExtensionKhrSpzGaussianSplatsCompression final : public CesiumUtility::ExtensibleObject {
         /**
          * @brief The original name of this type.
          */
-        static constexpr const char* TypeName = "EnumValue";
+        static constexpr const char* TypeName = "ExtensionKhrSpzGaussianSplatsCompression";
+        /** @brief The official name of the extension. This should be the same as its key in the `extensions` object. */
+        static constexpr const char* ExtensionName = "KHR_spz_gaussian_splats_compression";
 
         /**
-         * @brief The name of the enum value.
+         * @brief The index of the bufferView.
          */
-        std::string name;
-
-        /**
-         * @brief The description of the enum value.
-         */
-        std::optional<std::string> description;
-
-        /**
-         * @brief The integer enum value.
-         */
-        int64_t value = int64_t();
+        int32_t bufferView = -1;
 
         /**
          * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
@@ -40,12 +30,9 @@ namespace CesiumGltf {
          */
         int64_t getSizeBytes() const {
           int64_t accum = 0;
-          accum += int64_t(sizeof(EnumValue));
+          accum += int64_t(sizeof(ExtensionKhrSpzGaussianSplatsCompression));
           accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
-          accum += int64_t(this->name.capacity() * sizeof(char));
-if(this->description) {
-    accum += int64_t(this->description->capacity() * sizeof(char));
-  }
+
           return accum;
         }
 

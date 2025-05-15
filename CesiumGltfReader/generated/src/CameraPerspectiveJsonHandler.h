@@ -7,33 +7,28 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class CameraPerspectiveJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::CameraPerspective;
+  class CameraPerspectiveJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::CameraPerspective;
 
-  explicit CameraPerspectiveJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void
-  reset(IJsonHandler* pParentHandler, CesiumGltf::CameraPerspective* pObject);
+    explicit CameraPerspectiveJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::CameraPerspective* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyCameraPerspective(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::CameraPerspective& o);
+  protected:
+    IJsonHandler* readObjectKeyCameraPerspective(const std::string& objectType, const std::string_view& str, CesiumGltf::CameraPerspective& o);
 
-private:
-  CesiumGltf::CameraPerspective* _pObject = nullptr;
-  CesiumJsonReader::DoubleJsonHandler _aspectRatio;
-  CesiumJsonReader::DoubleJsonHandler _yfov;
-  CesiumJsonReader::DoubleJsonHandler _zfar;
-  CesiumJsonReader::DoubleJsonHandler _znear;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::CameraPerspective* _pObject = nullptr;
+    CesiumJsonReader::DoubleJsonHandler _aspectRatio;
+    CesiumJsonReader::DoubleJsonHandler _yfov;
+    CesiumJsonReader::DoubleJsonHandler _zfar;
+    CesiumJsonReader::DoubleJsonHandler _znear;
+  };
+}  // namespace CesiumGltfReader

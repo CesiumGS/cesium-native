@@ -4,37 +4,32 @@
 
 #include "AccessorSparseIndicesJsonHandler.h"
 #include "AccessorSparseValuesJsonHandler.h"
-
 #include <CesiumGltf/AccessorSparse.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class AccessorSparseJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::AccessorSparse;
+  class AccessorSparseJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::AccessorSparse;
 
-  explicit AccessorSparseJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::AccessorSparse* pObject);
+    explicit AccessorSparseJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::AccessorSparse* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyAccessorSparse(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::AccessorSparse& o);
+  protected:
+    IJsonHandler* readObjectKeyAccessorSparse(const std::string& objectType, const std::string_view& str, CesiumGltf::AccessorSparse& o);
 
-private:
-  CesiumGltf::AccessorSparse* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
-  AccessorSparseIndicesJsonHandler _indices;
-  AccessorSparseValuesJsonHandler _values;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::AccessorSparse* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _count;
+    AccessorSparseIndicesJsonHandler _indices;
+    AccessorSparseValuesJsonHandler _values;
+  };
+}  // namespace CesiumGltfReader

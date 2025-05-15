@@ -8,35 +8,29 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class PropertyAttributePropertyJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::PropertyAttributeProperty;
+  class PropertyAttributePropertyJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::PropertyAttributeProperty;
 
-  explicit PropertyAttributePropertyJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::PropertyAttributeProperty* pObject);
+    explicit PropertyAttributePropertyJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::PropertyAttributeProperty* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyPropertyAttributeProperty(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::PropertyAttributeProperty& o);
+  protected:
+    IJsonHandler* readObjectKeyPropertyAttributeProperty(const std::string& objectType, const std::string_view& str, CesiumGltf::PropertyAttributeProperty& o);
 
-private:
-  CesiumGltf::PropertyAttributeProperty* _pObject = nullptr;
-  CesiumJsonReader::StringJsonHandler _attribute;
-  CesiumJsonReader::JsonObjectJsonHandler _offset;
-  CesiumJsonReader::JsonObjectJsonHandler _scale;
-  CesiumJsonReader::JsonObjectJsonHandler _max;
-  CesiumJsonReader::JsonObjectJsonHandler _min;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::PropertyAttributeProperty* _pObject = nullptr;
+    CesiumJsonReader::StringJsonHandler _attribute;
+    CesiumJsonReader::JsonObjectJsonHandler _offset;
+    CesiumJsonReader::JsonObjectJsonHandler _scale;
+    CesiumJsonReader::JsonObjectJsonHandler _max;
+    CesiumJsonReader::JsonObjectJsonHandler _min;
+  };
+}  // namespace CesiumGltfReader

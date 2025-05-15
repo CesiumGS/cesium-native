@@ -4,70 +4,62 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief An object pointing to a buffer view containing the indices of
- * deviating accessor values. The number of indices is equal to
- * `accessor.sparse.count`. Indices **MUST** strictly increase.
- */
-struct CESIUMGLTF_API AccessorSparseIndices final
-    : public CesiumUtility::ExtensibleObject {
-  /**
-   * @brief The original name of this type.
-   */
-  static constexpr const char* TypeName = "AccessorSparseIndices";
+    /**
+     * @brief An object pointing to a buffer view containing the indices of deviating accessor values. The number of indices is equal to `accessor.sparse.count`. Indices **MUST** strictly increase.
+     */
+    struct CESIUMGLTF_API AccessorSparseIndices final : public CesiumUtility::ExtensibleObject {
+        /**
+         * @brief The original name of this type.
+         */
+        static constexpr const char* TypeName = "AccessorSparseIndices";
 
-  /**
-   * @brief Known values for The indices data type.
-   */
-  struct ComponentType {
-    /** @brief UNSIGNED_BYTE (`5121`) */
-    static constexpr int32_t UNSIGNED_BYTE = 5121;
+        /**
+         * @brief Known values for The indices data type.
+         */
+        struct ComponentType {
+            /** @brief UNSIGNED_BYTE (`5121`) */
+            static constexpr int32_t UNSIGNED_BYTE = 5121;
 
-    /** @brief UNSIGNED_SHORT (`5123`) */
-    static constexpr int32_t UNSIGNED_SHORT = 5123;
+            /** @brief UNSIGNED_SHORT (`5123`) */
+            static constexpr int32_t UNSIGNED_SHORT = 5123;
 
-    /** @brief UNSIGNED_INT (`5125`) */
-    static constexpr int32_t UNSIGNED_INT = 5125;
-  };
+            /** @brief UNSIGNED_INT (`5125`) */
+            static constexpr int32_t UNSIGNED_INT = 5125;
+        };
 
-  /**
-   * @brief The index of the buffer view with sparse indices. The referenced
-   * buffer view **MUST NOT** have its `target` or `byteStride` properties
-   * defined. The buffer view and the optional `byteOffset` **MUST** be aligned
-   * to the `componentType` byte length.
-   */
-  int32_t bufferView = -1;
+        /**
+         * @brief The index of the buffer view with sparse indices. The referenced buffer view **MUST NOT** have its `target` or `byteStride` properties defined. The buffer view and the optional `byteOffset` **MUST** be aligned to the `componentType` byte length.
+         */
+        int32_t bufferView = -1;
 
-  /**
-   * @brief The offset relative to the start of the buffer view in bytes.
-   */
-  int64_t byteOffset = 0;
+        /**
+         * @brief The offset relative to the start of the buffer view in bytes.
+         */
+        int64_t byteOffset = 0;
 
-  /**
-   * @brief The indices data type.
-   *
-   * Known values are defined in {@link ComponentType}.
-   *
-   */
-  int32_t componentType = ComponentType::UNSIGNED_BYTE;
+        /**
+         * @brief The indices data type.
+         * 
+         * Known values are defined in {@link ComponentType}.
+         *
+         */
+        int32_t componentType = ComponentType::UNSIGNED_BYTE;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(AccessorSparseIndices));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(AccessorSparseIndices));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf

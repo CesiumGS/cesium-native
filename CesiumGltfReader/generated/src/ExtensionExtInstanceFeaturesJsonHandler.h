@@ -3,50 +3,36 @@
 #pragma once
 
 #include "ExtensionExtInstanceFeaturesFeatureIdJsonHandler.h"
-
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionExtInstanceFeaturesJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionExtInstanceFeatures;
+  class ExtensionExtInstanceFeaturesJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionExtInstanceFeatures;
 
-  static constexpr const char* ExtensionName = "EXT_instance_features";
+    static constexpr const char* ExtensionName = "EXT_instance_features";
 
-  explicit ExtensionExtInstanceFeaturesJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionExtInstanceFeatures* pObject);
+    explicit ExtensionExtInstanceFeaturesJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionExtInstanceFeatures* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionExtInstanceFeatures(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionExtInstanceFeatures& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionExtInstanceFeatures(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionExtInstanceFeatures& o);
 
-private:
-  CesiumGltf::ExtensionExtInstanceFeatures* _pObject = nullptr;
-  CesiumJsonReader::ArrayJsonHandler<
-      CesiumGltf::ExtensionExtInstanceFeaturesFeatureId,
-      ExtensionExtInstanceFeaturesFeatureIdJsonHandler>
-      _featureIds;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionExtInstanceFeatures* _pObject = nullptr;
+    CesiumJsonReader::ArrayJsonHandler<CesiumGltf::ExtensionExtInstanceFeaturesFeatureId, ExtensionExtInstanceFeaturesFeatureIdJsonHandler> _featureIds;
+  };
+}  // namespace CesiumGltfReader

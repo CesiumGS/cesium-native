@@ -7,41 +7,31 @@
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionBufferExtMeshoptCompressionJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionBufferExtMeshoptCompression;
+  class ExtensionBufferExtMeshoptCompressionJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionBufferExtMeshoptCompression;
 
-  static constexpr const char* ExtensionName = "EXT_meshopt_compression";
+    static constexpr const char* ExtensionName = "EXT_meshopt_compression";
 
-  explicit ExtensionBufferExtMeshoptCompressionJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionBufferExtMeshoptCompression* pObject);
+    explicit ExtensionBufferExtMeshoptCompressionJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionBufferExtMeshoptCompression* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionBufferExtMeshoptCompression(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionBufferExtMeshoptCompression& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionBufferExtMeshoptCompression(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionBufferExtMeshoptCompression& o);
 
-private:
-  CesiumGltf::ExtensionBufferExtMeshoptCompression* _pObject = nullptr;
-  CesiumJsonReader::BoolJsonHandler _fallback;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionBufferExtMeshoptCompression* _pObject = nullptr;
+    CesiumJsonReader::BoolJsonHandler _fallback;
+  };
+}  // namespace CesiumGltfReader

@@ -76,7 +76,8 @@
       "overrideName": "Class"
     },
     "Enum in EXT_structural_metadata": {
-      "overrideName": "Enum"
+      "overrideName": "Enum",
+      "toBeInherited": true
     },
     "Enum Value in EXT_structural_metadata": {
       "overrideName": "EnumValue"
@@ -135,6 +136,9 @@
     },
     "CESIUM_primitive_outline glTF primitive extension": {
       "overrideName": "ExtensionCesiumPrimitiveOutline"
+    },
+    "KHR_spz_gaussian_splats_compression glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionKhrSpzGaussianSplatsCompression"
     }
   },
   "extensions": [
@@ -239,6 +243,13 @@
       "schema": "Vendor/CESIUM_primitive_outline/schema/primitive.CESIUM_primitive_outline.schema.json",
       "attachTo": [
         "mesh.primitive"
+      ]
+    },
+    {
+      "extensionName": "KHR_spz_gaussian_splats_compression",
+      "schema": "Khronos/KHR_spz_gaussian_splats_compression/schema/mesh.primitive.KHR_spz_gaussian_splats_compression.schema.json",
+      "attachTo": [
+          "mesh.primitive"
       ]
     }
   ]

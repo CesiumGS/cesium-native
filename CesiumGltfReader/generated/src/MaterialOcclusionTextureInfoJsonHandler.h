@@ -3,35 +3,29 @@
 #pragma once
 
 #include "TextureInfoJsonHandler.h"
-
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
-public:
-  using ValueType = CesiumGltf::MaterialOcclusionTextureInfo;
+  class MaterialOcclusionTextureInfoJsonHandler : public TextureInfoJsonHandler {
+  public:
+    using ValueType = CesiumGltf::MaterialOcclusionTextureInfo;
 
-  explicit MaterialOcclusionTextureInfoJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::MaterialOcclusionTextureInfo* pObject);
+    explicit MaterialOcclusionTextureInfoJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::MaterialOcclusionTextureInfo* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::MaterialOcclusionTextureInfo& o);
+  protected:
+    IJsonHandler* readObjectKeyMaterialOcclusionTextureInfo(const std::string& objectType, const std::string_view& str, CesiumGltf::MaterialOcclusionTextureInfo& o);
 
-private:
-  CesiumGltf::MaterialOcclusionTextureInfo* _pObject = nullptr;
-  CesiumJsonReader::DoubleJsonHandler _strength;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::MaterialOcclusionTextureInfo* _pObject = nullptr;
+    CesiumJsonReader::DoubleJsonHandler _strength;
+  };
+}  // namespace CesiumGltfReader

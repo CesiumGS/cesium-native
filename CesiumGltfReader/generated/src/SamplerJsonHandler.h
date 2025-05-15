@@ -3,36 +3,32 @@
 #pragma once
 
 #include "NamedObjectJsonHandler.h"
-
 #include <CesiumGltf/Sampler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class SamplerJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::Sampler;
+  class SamplerJsonHandler : public CesiumGltfReader::NamedObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::Sampler;
 
-  explicit SamplerJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::Sampler* pObject);
+    explicit SamplerJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::Sampler* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeySampler(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::Sampler& o);
+  protected:
+    IJsonHandler* readObjectKeySampler(const std::string& objectType, const std::string_view& str, CesiumGltf::Sampler& o);
 
-private:
-  CesiumGltf::Sampler* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::Sampler* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _magFilter;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _minFilter;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapS;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _wrapT;
+  };
+}  // namespace CesiumGltfReader

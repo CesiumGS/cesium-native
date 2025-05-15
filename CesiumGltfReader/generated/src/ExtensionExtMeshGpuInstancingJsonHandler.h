@@ -8,44 +8,31 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionExtMeshGpuInstancingJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionExtMeshGpuInstancing;
+  class ExtensionExtMeshGpuInstancingJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionExtMeshGpuInstancing;
 
-  static constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
+    static constexpr const char* ExtensionName = "EXT_mesh_gpu_instancing";
 
-  explicit ExtensionExtMeshGpuInstancingJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionExtMeshGpuInstancing* pObject);
+    explicit ExtensionExtMeshGpuInstancingJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionExtMeshGpuInstancing* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionExtMeshGpuInstancing(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionExtMeshGpuInstancing& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionExtMeshGpuInstancing(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionExtMeshGpuInstancing& o);
 
-private:
-  CesiumGltf::ExtensionExtMeshGpuInstancing* _pObject = nullptr;
-  CesiumJsonReader::DictionaryJsonHandler<
-      int32_t,
-      CesiumJsonReader::IntegerJsonHandler<int32_t>>
-      _attributes;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionExtMeshGpuInstancing* _pObject = nullptr;
+    CesiumJsonReader::DictionaryJsonHandler<int32_t, CesiumJsonReader::IntegerJsonHandler<int32_t>> _attributes;
+  };
+}  // namespace CesiumGltfReader

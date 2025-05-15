@@ -3,41 +3,36 @@
 #pragma once
 
 #include "FeatureIdTextureJsonHandler.h"
-
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class FeatureIdJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-public:
-  using ValueType = CesiumGltf::FeatureId;
+  class FeatureIdJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+  public:
+    using ValueType = CesiumGltf::FeatureId;
 
-  explicit FeatureIdJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureId* pObject);
+    explicit FeatureIdJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::FeatureId* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-protected:
-  IJsonHandler* readObjectKeyFeatureId(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::FeatureId& o);
+  protected:
+    IJsonHandler* readObjectKeyFeatureId(const std::string& objectType, const std::string_view& str, CesiumGltf::FeatureId& o);
 
-private:
-  CesiumGltf::FeatureId* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _featureCount;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _nullFeatureId;
-  CesiumJsonReader::StringJsonHandler _label;
-  CesiumJsonReader::IntegerJsonHandler<int64_t> _attribute;
-  FeatureIdTextureJsonHandler _texture;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _propertyTable;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::FeatureId* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _featureCount;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _nullFeatureId;
+    CesiumJsonReader::StringJsonHandler _label;
+    CesiumJsonReader::IntegerJsonHandler<int64_t> _attribute;
+    FeatureIdTextureJsonHandler _texture;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _propertyTable;
+  };
+}  // namespace CesiumGltfReader

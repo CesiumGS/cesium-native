@@ -7,41 +7,31 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-class JsonReaderOptions;
+  class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-class ExtensionKhrTextureBasisuJsonHandler
-    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
-      public CesiumJsonReader::IExtensionJsonHandler {
-public:
-  using ValueType = CesiumGltf::ExtensionKhrTextureBasisu;
+  class ExtensionKhrTextureBasisuJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
+  public:
+    using ValueType = CesiumGltf::ExtensionKhrTextureBasisu;
 
-  static constexpr const char* ExtensionName = "KHR_texture_basisu";
+    static constexpr const char* ExtensionName = "KHR_texture_basisu";
 
-  explicit ExtensionKhrTextureBasisuJsonHandler(
-      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumGltf::ExtensionKhrTextureBasisu* pObject);
+    explicit ExtensionKhrTextureBasisuJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrTextureBasisu* pObject);
 
-  IJsonHandler* readObjectKey(const std::string_view& str) override;
+    IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  void reset(
-      IJsonHandler* pParentHandler,
-      CesiumUtility::ExtensibleObject& o,
-      const std::string_view& extensionName) override;
+    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
 
-  IJsonHandler& getHandler() override { return *this; }
+    IJsonHandler& getHandler() override { return *this; }
 
-protected:
-  IJsonHandler* readObjectKeyExtensionKhrTextureBasisu(
-      const std::string& objectType,
-      const std::string_view& str,
-      CesiumGltf::ExtensionKhrTextureBasisu& o);
+  protected:
+    IJsonHandler* readObjectKeyExtensionKhrTextureBasisu(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrTextureBasisu& o);
 
-private:
-  CesiumGltf::ExtensionKhrTextureBasisu* _pObject = nullptr;
-  CesiumJsonReader::IntegerJsonHandler<int32_t> _source;
-};
-} // namespace CesiumGltfReader
+  private:
+
+    CesiumGltf::ExtensionKhrTextureBasisu* _pObject = nullptr;
+    CesiumJsonReader::IntegerJsonHandler<int32_t> _source;
+  };
+}  // namespace CesiumGltfReader

@@ -4,43 +4,37 @@
 
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
-
 #include <cstdint>
 
 namespace CesiumGltf {
-/**
- * @brief glTF extension for indicating that some edges of a primitive's
- * triangles should be outlined.
- */
-struct CESIUMGLTF_API ExtensionCesiumPrimitiveOutline final
-    : public CesiumUtility::ExtensibleObject {
-  /**
-   * @brief The original name of this type.
-   */
-  static constexpr const char* TypeName = "ExtensionCesiumPrimitiveOutline";
-  /** @brief The official name of the extension. This should be the same as its
-   * key in the `extensions` object. */
-  static constexpr const char* ExtensionName = "CESIUM_primitive_outline";
+    /**
+     * @brief glTF extension for indicating that some edges of a primitive's triangles should be outlined.
+     */
+    struct CESIUMGLTF_API ExtensionCesiumPrimitiveOutline final : public CesiumUtility::ExtensibleObject {
+        /**
+         * @brief The original name of this type.
+         */
+        static constexpr const char* TypeName = "ExtensionCesiumPrimitiveOutline";
+        /** @brief The official name of the extension. This should be the same as its key in the `extensions` object. */
+        static constexpr const char* ExtensionName = "CESIUM_primitive_outline";
 
-  /**
-   * @brief The index of the accessor providing the list of highlighted lines at
-   * the edge of this primitive's triangles.
-   */
-  int32_t indices = -1;
+        /**
+         * @brief The index of the accessor providing the list of highlighted lines at the edge of this primitive's triangles.
+         */
+        int32_t indices = -1;
 
-  /**
-   * @brief Calculates the size in bytes of this object, including the contents
-   * of all collections, pointers, and strings. This will NOT include the size
-   * of any extensions attached to the object. Calling this method may be slow
-   * as it requires traversing the object's entire structure.
-   */
-  int64_t getSizeBytes() const {
-    int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionCesiumPrimitiveOutline));
-    accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
-             int64_t(sizeof(CesiumUtility::ExtensibleObject));
+        /**
+         * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
+         * This will NOT include the size of any extensions attached to the object.
+         * Calling this method may be slow as it requires traversing the object's entire structure.
+         */
+        int64_t getSizeBytes() const {
+          int64_t accum = 0;
+          accum += int64_t(sizeof(ExtensionCesiumPrimitiveOutline));
+          accum += CesiumUtility::ExtensibleObject::getSizeBytes() - int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
-    return accum;
-  }
-};
+          return accum;
+        }
+
+    };
 } // namespace CesiumGltf
