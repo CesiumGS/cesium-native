@@ -1072,18 +1072,18 @@ void TreeTraversalState<TNodePointer, TState>::difference_iterator::
   if (this->_differenceType == DifferenceType::StateChange) {
     // We're on a matched node, advanced to the next difference.
     this->advanceFromMatchedNode();
-  }
-
-  // We're on a node that only exists in one of the traversals.
-  int64_t index = this->_differenceType == DifferenceType::NodeOnlyInPrevious
-                      ? ++this->_previousIndex
-                      : ++this->_currentIndex;
-  if (index >= this->_nextSiblingIndex) {
-    // We reached the end of the nodes that don't exist in the other traversal.
-    // The next node is guaranteed to exist in both traversals, but may or may
-    // not have a different state.
-    this->_differenceType = DifferenceType::StateChange;
-    this->advanceFromMatchedNodeUnlessDifferent();
+  } else {
+    // We're on a node that only exists in one of the traversals.
+    int64_t index = this->_differenceType == DifferenceType::NodeOnlyInPrevious
+                        ? ++this->_previousIndex
+                        : ++this->_currentIndex;
+    if (index >= this->_nextSiblingIndex) {
+      // We reached the end of the nodes that don't exist in the other
+      // traversal. The next node is guaranteed to exist in both traversals, but
+      // may or may not have a different state.
+      this->_differenceType = DifferenceType::StateChange;
+      this->advanceFromMatchedNodeUnlessDifferent();
+    }
   }
 }
 
