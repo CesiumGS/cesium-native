@@ -583,8 +583,10 @@ std::optional<Tile> parseTileJsonRecursively(
 
   if (implicitTilingJson) {
     // mark this tile as external
-    Tile tile{&currentLoader, std::make_unique<TileExternalContent>()};
-    tile.setTileID("");
+    Tile tile{
+        &currentLoader,
+        TileID(),
+        std::make_unique<TileExternalContent>()};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
     tile.setViewerRequestVolume(tileViewerRequestVolume);
@@ -899,9 +901,9 @@ TilesetJsonLoader::createLoader(
 
   result.pRootTile = std::make_unique<Tile>(
       children[0].getLoader(),
+      TileID(),
       std::make_unique<TileExternalContent>());
 
-  result.pRootTile->setTileID("");
   result.pRootTile->setTransform(children[0].getTransform());
   result.pRootTile->setBoundingVolume(children[0].getBoundingVolume());
   result.pRootTile->setUnconditionallyRefine();

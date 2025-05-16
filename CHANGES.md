@@ -6,6 +6,7 @@
 
 - Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
 - `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
+- `Cesium3DTilesSelection::Tile` constructors taking initial empty or external content now also require that a `TileID` be supplied.
 
 ##### Additions :tada:
 

@@ -59,7 +59,7 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
   std::unique_ptr<EllipsoidTilesetLoader> pCustomLoader =
       std::make_unique<EllipsoidTilesetLoader>(options.ellipsoid);
   std::unique_ptr<Tile> pRootTile =
-      std::make_unique<Tile>(pCustomLoader.get(), TileEmptyContent{});
+      std::make_unique<Tile>(pCustomLoader.get(), TileID(), TileEmptyContent{});
 
   pRootTile->setRefine(TileRefine::Replace);
   pRootTile->setUnconditionallyRefine();
