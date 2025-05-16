@@ -476,6 +476,7 @@ TEST_CASE("Test tile state machine") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
+        TileID(),
         TileEmptyContent());
 
     // create tile
@@ -582,6 +583,7 @@ TEST_CASE("Test tile state machine") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
+        TileID(),
         TileEmptyContent());
 
     // create tile
@@ -659,6 +661,7 @@ TEST_CASE("Test tile state machine") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
+        TileID(),
         TileEmptyContent());
 
     // create tile
@@ -1799,6 +1802,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
         pMockedLoader.get(),
+        TileID(),
         TileEmptyContent());
 
     // create tile
