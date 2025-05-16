@@ -730,7 +730,7 @@ private:
   // `_previousTraversal`, if it exists at all, it will be found at this index.
   int64_t _previousTraversalNextNodeIndex = 0;
 
-  template <typename TNodePointer, typename TState>
+  template <typename TNodePointer2, typename TState2>
   friend class TreeTraversalStateDiffIterator;
 };
 
@@ -808,7 +808,7 @@ template <typename TNodePointer, typename TState>
 TreeTraversalState<TNodePointer, TState>::difference_iterator
 TreeTraversalState<TNodePointer, TState>::difference_iterator::operator++(
     int) noexcept {
-  TreeTraversalStateDiffIterator<TNodePointer, TState> result = *this;
+  difference_iterator result = *this;
   return ++result;
 }
 

@@ -19,7 +19,7 @@ getDifferences(const TreeTraversalState<Node*, int>& traversalState) {
   auto differences = traversalState.differences();
   for (auto it = differences.begin(); it != differences.end(); ++it) {
     const auto& difference = *it;
-    auto descendantsEnd = it.descendantsEnd();
+    [[maybe_unused]] auto descendantsEnd = it.descendantsEnd();
     result.emplace_back(
         difference.pNode,
         difference.previousState,
