@@ -53,25 +53,29 @@ void TileReferenceCountTracker::addEntry(
 }
 #endif
 
-Tile::Tile(TilesetContentLoader* pLoader) noexcept
-    : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader) {}
+Tile::Tile(TilesetContentLoader* pLoader, const TileID& tileID) noexcept
+    : Tile(TileConstructorImpl{}, TileLoadState::Unloaded, pLoader, tileID) {}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
+    const TileID& tileID,
     std::unique_ptr<TileExternalContent>&& externalContent) noexcept
     : Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
+          tileID,
           TileContent(std::move(externalContent))) {}
 
 Tile::Tile(
     TilesetContentLoader* pLoader,
+    const TileID& tileID,
     TileEmptyContent emptyContent) noexcept
     : Tile(
           TileConstructorImpl{},
           TileLoadState::ContentLoaded,
           pLoader,
+          tileID,
           emptyContent) {}
 
 template <typename... TileContentArgs, typename TileContentEnable>
@@ -79,10 +83,11 @@ Tile::Tile(
     TileConstructorImpl,
     TileLoadState loadState,
     TilesetContentLoader* pLoader,
+    const TileID& tileID,
     TileContentArgs&&... args)
     : _pParent(nullptr),
       _children(),
-      _id(""s),
+      _id(tileID),
       _boundingVolume(OrientedBoundingBox(glm::dvec3(), glm::dmat3())),
       _viewerRequestVolume(),
       _contentBoundingVolume(),
