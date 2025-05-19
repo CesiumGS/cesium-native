@@ -192,28 +192,35 @@ parseBoundingBox(const rapidjson::Value& value) {
 
 struct GeoJsonObjectToGeoJsonGeometryObjectVisitor {
   Result<GeoJsonGeometryObject> operator()(GeoJsonPoint&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonMultiPoint&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonLineString&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonMultiLineString&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonPolygon&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonMultiPolygon&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonGeometryCollection&& node) {
     // The specification says that implementations should avoid nesting a
     // GeometryCollection inside a GeometryCollection. However, I don't think it
     // costs us anything to handle it even if the data is ill-advised.
-    return Result<GeoJsonGeometryObject>(std::move(node));
+    return Result<GeoJsonGeometryObject>(
+        GeoJsonGeometryObject{std::move(node)});
   }
   Result<GeoJsonGeometryObject> operator()(GeoJsonFeature&& /*node*/) {
     return Result<GeoJsonGeometryObject>(
@@ -309,7 +316,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
       Result<GeoJsonGeometryObject> geometryResult = std::visit(
           GeoJsonObjectToGeoJsonGeometryObjectVisitor{},
-          std::move(*childResult.value));
+          std::move(childResult.value->value));
       if (!geometryResult.value) {
         return Result<GeoJsonObject>(std::move(geometryResult.errors));
       }
@@ -335,7 +342,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonFeature{
+        GeoJsonObject{GeoJsonFeature{
             id,
             geometry,
             properties,
@@ -344,7 +351,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
                 obj,
                 [](const std::string& k) {
                   return k == "id" || k == "geometry" || k == "properties";
-                })},
+                })}},
         errorList);
   } else if (type == "FeatureCollection") {
     // Feature collection contains zero or more features
@@ -383,7 +390,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
       Result<GeoJsonFeature> featureResult = std::visit(
           GeoJsonObjectToFeatureVisitor{},
-          std::move(*childResult.value));
+          std::move(childResult.value->value));
       errorList.merge(featureResult.errors);
       if (!featureResult.value) {
         continue;
@@ -397,12 +404,12 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonFeatureCollection{
+        GeoJsonObject{GeoJsonFeatureCollection{
             std::move(features),
             boundingBox,
             collectForeignMembers(
                 obj,
-                [](const std::string& k) { return k == "features"; })},
+                [](const std::string& k) { return k == "features"; })}},
         errorList);
   } else if (type == "GeometryCollection") {
     // Geometry collection contains zero or more geometry primitives
@@ -440,7 +447,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
       Result<GeoJsonGeometryObject> geometryResult = std::visit(
           GeoJsonObjectToGeoJsonGeometryObjectVisitor{},
-          std::move(*child.value));
+          std::move(child.value->value));
       errorList.merge(geometryResult.errors);
       if (!geometryResult.value) {
         continue;
@@ -454,12 +461,12 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonGeometryCollection{
+        GeoJsonObject{GeoJsonGeometryCollection{
             std::move(children),
             boundingBox,
             collectForeignMembers(
                 obj,
-                [](const std::string& k) { return k == "geometries"; })},
+                [](const std::string& k) { return k == "geometries"; })}},
         errorList);
   }
 
@@ -486,7 +493,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonPoint{std::move(*posResult.value), boundingBox, foreignMembers},
+        GeoJsonObject{GeoJsonPoint{
+            std::move(*posResult.value),
+            boundingBox,
+            foreignMembers}},
         errorList);
   } else if (type == "MultiPoint") {
     // MultiPoint primitive has a "coordinates" member that consists of an array
@@ -503,10 +513,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonMultiPoint{
+        GeoJsonObject{GeoJsonMultiPoint{
             std::move(*pointsResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "LineString") {
     // LineString primitive has a "coordinates" member that consists of an array
@@ -527,10 +537,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonLineString{
+        GeoJsonObject{GeoJsonLineString{
             std::move(*pointsResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "MultiLineString") {
     // MultiLineString has a "coordinates" member that consists of an array of
@@ -551,10 +561,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonMultiLineString{
+        GeoJsonObject{GeoJsonMultiLineString{
             std::move(*linesResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "Polygon") {
     // Polygon has a "coordinates" member that consists of an array of arrays of
@@ -575,10 +585,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonPolygon{
+        GeoJsonObject{GeoJsonPolygon{
             std::move(*ringsResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "MultiPolygon") {
     // MultiPolygon has a "coordinates" member that consists of an array of
@@ -611,7 +621,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonMultiPolygon{std::move(polygons), boundingBox, foreignMembers},
+        GeoJsonObject{GeoJsonMultiPolygon{
+            std::move(polygons),
+            boundingBox,
+            foreignMembers}},
         errorList);
   }
 

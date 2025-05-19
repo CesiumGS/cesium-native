@@ -126,6 +126,6 @@ private:
 
   std::vector<VectorDocumentAttribution> _attributions;
   GeoJsonObject _rootObject =
-      GeoJsonPoint{CesiumGeospatial::Cartographic(0, 0, 0)};
+      GeoJsonObject{GeoJsonPoint{CesiumGeospatial::Cartographic(0, 0, 0)}};
 };
 } // namespace CesiumVectorData

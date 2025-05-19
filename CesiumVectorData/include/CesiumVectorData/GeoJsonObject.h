@@ -229,9 +229,9 @@ struct GeoJsonMultiPolygon {
 struct GeoJsonGeometryCollection;
 
 /**
- * @brief GeoJson objects that represent geometry.
+ * @brief A variant of GeoJson objects that represent geometry.
  */
-using GeoJsonGeometryObject = std::variant<
+using GeoJsonGeometryObjectVariant = std::variant<
     GeoJsonPoint,
     GeoJsonMultiPoint,
     GeoJsonLineString,
@@ -239,6 +239,8 @@ using GeoJsonGeometryObject = std::variant<
     GeoJsonPolygon,
     GeoJsonMultiPolygon,
     GeoJsonGeometryCollection>;
+
+struct GeoJsonGeometryObject;
 
 /**
  * @brief A `GeometryCollection` represents any number of \ref
@@ -270,6 +272,21 @@ struct GeoJsonGeometryCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+};
+
+/**
+ * @brief A wrapper around a GeoJSON object that represents geometry.
+ */
+struct GeoJsonGeometryObject {
+  /**
+   * @brief The \ref GeoJsonObjectType of the underlying geometry object.
+   */
+  GeoJsonObjectType getType() const;
+
+  /**
+   * @brief The GeoJSON geometry object.
+   */
+  GeoJsonGeometryObjectVariant value;
 };
 
 /**
@@ -349,7 +366,7 @@ struct GeoJsonFeatureCollection {
  * @brief Every possible object that can be specified in a GeoJSON
  * document.
  */
-using GeoJsonObject = std::variant<
+using GeoJsonObjectVariant = std::variant<
     GeoJsonPoint,
     GeoJsonMultiPoint,
     GeoJsonLineString,
@@ -361,19 +378,35 @@ using GeoJsonObject = std::variant<
     GeoJsonFeatureCollection>;
 
 /**
- * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
- *
- * All geometry objects are also valid objects, but not all objects are valid
- * geometry objects.
+ * @brief A wrapper around an object in a GeoJSON document.
  */
-GeoJsonObject
-geoJsonGeometryObjectToObject(const GeoJsonGeometryObject& geometry);
+struct GeoJsonObject {
+  /**
+   * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
+   *
+   * All geometry objects are also valid objects, but not all objects are valid
+   * geometry objects.
+   */
+  static GeoJsonObject
+  fromGeometryObject(const GeoJsonGeometryObject& geometry);
 
-/**
- * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
- *
- * All geometry objects are also valid objects, but not all objects are valid
- * geometry objects.
- */
-GeoJsonObject geoJsonGeometryObjectToObject(GeoJsonGeometryObject&& geometry);
+  /**
+   * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
+   *
+   * All geometry objects are also valid objects, but not all objects are valid
+   * geometry objects.
+   */
+  static GeoJsonObject fromGeometryObject(GeoJsonGeometryObject&& geometry);
+
+  /**
+   * @brief Returns the \ref GeoJsonObjectType that this \ref GeoJsonObject is
+   * wrapping.
+   */
+  GeoJsonObjectType getType() const;
+
+  /**
+   * @brief A variant containing the GeoJSON object.
+   */
+  GeoJsonObjectVariant value;
+};
 } // namespace CesiumVectorData
