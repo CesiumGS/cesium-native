@@ -566,4 +566,68 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         std::get<S2CellBoundingVolume>(tile_1_1_1.getBoundingVolume());
     CHECK(box_1_1_1.getCellID().toToken() == "14");
   }
+
+  SUBCASE("Child tiles without content initially have empty content") {
+    OrientedBoundingBox loaderBoundingVolume{glm::dvec3(0.0), glm::dmat3(20.0)};
+    ImplicitQuadtreeLoader loader{
+        "tileset.json",
+        "content/{level}.{x}.{y}.b3dm",
+        "subtrees/{level}.{x}.{y}.json",
+        5,
+        5,
+        loaderBoundingVolume};
+
+    // add subtree with all tiles, but no content available.
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            true);
+    REQUIRE(maybeAvailability);
+    SubtreeAvailability availability = std::move(*maybeAvailability);
+
+    // Mark content for a tile available
+    availability.setContentAvailable(
+        QuadtreeTileID{0, 0, 0},
+        QuadtreeTileID{1, 1, 1},
+        0,
+        true);
+    loader.addSubtreeAvailability(
+        QuadtreeTileID{0, 0, 0},
+        std::move(availability));
+
+    // check subdivide root tile first
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(loaderBoundingVolume);
+
+    auto tileChildrenResult = loader.createTileChildren(tile);
+    CHECK(tileChildrenResult.state == TileLoadResultState::Success);
+
+    REQUIRE(tileChildrenResult.children.size() == 4);
+
+    size_t childrenWithReferencingContent = 0;
+
+    for (Tile& child : tileChildrenResult.children) {
+      if (child.hasReferencingContent()) {
+        ++childrenWithReferencingContent;
+
+        REQUIRE(child.getReferenceCount() == 1);
+        child.getContent().setContentKind(TileUnknownContent());
+
+        // In a perfect world the above might release the reference, but it
+        // won't. Release it manually so we won't assert when the Tile goes out
+        // of scope.
+        REQUIRE(child.getReferenceCount() == 1);
+        child.releaseReference();
+      } else {
+        REQUIRE(child.getReferenceCount() == 0);
+      }
+    }
+
+    // The three tiles without content should have referencing EmptyContent.
+    // The fourth should not yet have any referencing content because it has not
+    // been loaded.
+    CHECK(childrenWithReferencingContent == 3);
+  }
 }

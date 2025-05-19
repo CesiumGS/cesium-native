@@ -118,9 +118,9 @@ std::vector<Tile> populateSubtree(
                 relativeChildLevel,
                 relativeChildMortonID,
                 0)) {
-          children.emplace_back(&loader);
+          children.emplace_back(&loader, childID);
         } else {
-          children.emplace_back(&loader, TileEmptyContent{});
+          children.emplace_back(&loader, childID, TileEmptyContent{});
         }
 
         Tile& child = children.back();
@@ -131,7 +131,6 @@ std::vector<Tile> populateSubtree(
             ellipsoid));
         child.setGeometricError(tile.getGeometricError() * 0.5);
         child.setRefine(tile.getRefine());
-        child.setTileID(childID);
       }
     }
   }
