@@ -768,7 +768,7 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     }
 
     // The seven tiles without content should have referencing EmptyContent.
-    // The fourth should not yet have any referencing content because it has not
+    // The eighth should not yet have any referencing content because it has not
     // been loaded.
     CHECK(childrenWithReferencingContent == 7);
   }
