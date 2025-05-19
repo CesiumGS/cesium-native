@@ -149,7 +149,7 @@ public:
    * with this constructor.
    *
    * If the supplied `TileID` is not an empty string, the tile's reference count
-   * will be incremented on account of the the loaded, referencable content.
+   * will be incremented on account of the loaded, referencable content.
    * Otherwise, if it is an empty string, the reference count will not be
    * incremented. It is essential that this be accounted for later if the tile
    * ID is changed in order to avoid reference count assertion failures at
@@ -157,7 +157,7 @@ public:
    *
    * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
    * @param tileID The ID of this tile. If it is an empty string, then the
-   * external content will not be unloable.
+   * external content will not be unloadable.
    * @param externalContent External content that is associated with this tile.
    */
   Tile(
@@ -171,7 +171,7 @@ public:
    * with this constructor.
    *
    * If the supplied `TileID` is not an empty string, the tile's reference count
-   * will be incremented on account of the the loaded, referencable content.
+   * will be incremented on account of the loaded, referencable content.
    * Otherwise, if it is an empty string, the reference count will not be
    * incremented. It is essential that this be accounted for later if the tile
    * ID is changed in order to avoid reference count assertion failures at
@@ -179,7 +179,7 @@ public:
    *
    * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
    * @param tileID The ID of this tile. If it is an empty string, then the
-   * empty content will not be unloable.
+   * empty content will not be unloadable.
    * @param emptyContent A content tag indicating that the tile has no content.
    */
   Tile(
