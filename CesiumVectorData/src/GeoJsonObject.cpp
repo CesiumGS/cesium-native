@@ -30,7 +30,7 @@ std::string geoJsonObjectTypeToString(GeoJsonObjectType type) {
     return "FeatureCollection";
   }
 
-  throw new std::invalid_argument("Unknown VectorPrimitiveType value");
+  return "Unknown";
 }
 
 GeoJsonObject
@@ -48,5 +48,21 @@ geoJsonGeometryObjectToObject(const GeoJsonGeometryObject& geometry) {
   };
 
   return std::visit(GeometryPrimitiveToVectorNodeVisitor{}, geometry);
+}
+
+GeoJsonObject geoJsonGeometryObjectToObject(GeoJsonGeometryObject&& geometry) {
+  struct GeometryPrimitiveToVectorNodeVisitor {
+    GeoJsonObject operator()(GeoJsonPoint&& lhs) { return lhs; }
+    GeoJsonObject operator()(GeoJsonMultiPoint&& lhs) { return lhs; }
+    GeoJsonObject operator()(GeoJsonLineString&& lhs) { return lhs; }
+    GeoJsonObject operator()(GeoJsonMultiLineString&& lhs) { return lhs; }
+    GeoJsonObject operator()(GeoJsonPolygon&& lhs) { return lhs; }
+    GeoJsonObject operator()(GeoJsonMultiPolygon&& lhs) { return lhs; }
+    GeoJsonObject operator()(GeoJsonGeometryCollection&& lhs) { return lhs; }
+  };
+
+  return std::visit(
+      GeometryPrimitiveToVectorNodeVisitor{},
+      std::move(geometry));
 }
 } // namespace CesiumVectorData

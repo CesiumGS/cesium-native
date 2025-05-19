@@ -234,7 +234,7 @@ struct GeoJsonObjectToFeatureVisitor {
   Result<GeoJsonFeature> operator()(auto&& node) {
     return Result<GeoJsonFeature>(ErrorList::error(fmt::format(
         "Expected Feature, found GeoJSON object {}.",
-        geoJsonObjectTypeToString(node.type))));
+        geoJsonObjectTypeToString(node.TYPE))));
   }
 };
 
@@ -270,7 +270,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
   if (type == "Feature") {
     // Feature has a geometry, properties, and an optional id
-    std::variant<std::string, int64_t, std::monostate> id = std::monostate();
+    std::variant<std::monostate, std::string, int64_t> id = std::monostate();
     const auto& idMember = obj.FindMember("id");
     if (idMember != obj.MemberEnd()) {
       if (idMember->value.IsNumber()) {
