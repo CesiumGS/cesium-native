@@ -613,7 +613,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         ++childrenWithReferencingContent;
 
         REQUIRE(child.getReferenceCount() == 1);
-        child.getContent().setContentKind(TileEmptyContent());
+        child.getContent().setContentKind(TileUnknownContent());
 
         // In a perfect world the above might release the reference, but it
         // won't. Release it manually so we won't assert when the Tile goes out
