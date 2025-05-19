@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -148,8 +150,9 @@ Result<std::vector<std::vector<Cartographic>>> parsePolygon(
   return Result<std::vector<std::vector<Cartographic>>>(std::move(rings));
 }
 
-Result<std::optional<BoundingRegion>>
-parseBoundingBox(const rapidjson::Value& value) {
+Result<std::optional<BoundingRegion>> parseBoundingBox(
+    const rapidjson::Value& value,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (!value.IsArray()) {
     return Result<std::optional<BoundingRegion>>(
         std::nullopt,
@@ -187,7 +190,8 @@ parseBoundingBox(const rapidjson::Value& value) {
               Math::degreesToRadians(coordinates[2]->GetDouble()),
               Math::degreesToRadians(coordinates[3]->GetDouble())),
           size == 4 ? 0.0 : coordinates[4]->GetDouble(),
-          size == 4 ? 0.0 : coordinates[5]->GetDouble())});
+          size == 4 ? 0.0 : coordinates[5]->GetDouble(),
+          ellipsoid)});
 }
 
 struct GeoJsonObjectToGeoJsonGeometryObjectVisitor {
@@ -248,7 +252,8 @@ struct GeoJsonObjectToFeatureVisitor {
 Result<GeoJsonObject> parseGeoJsonObject(
     const rapidjson::Value::ConstObject& obj,
     const std::function<bool(const std::string& type)>& expectedPredicate,
-    const std::string& expectedStr) {
+    const std::string& expectedStr,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const std::string& type = JsonHelpers::getStringOrDefault(obj, "type", "");
   if (type.empty()) {
     return Result<GeoJsonObject>(
@@ -268,7 +273,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
   const auto bboxMember = obj.FindMember("bbox");
   if (bboxMember != obj.MemberEnd()) {
     Result<std::optional<BoundingRegion>> regionResult =
-        parseBoundingBox(bboxMember->value);
+        parseBoundingBox(bboxMember->value, ellipsoid);
     errorList.merge(regionResult.errors);
     if (regionResult.value) {
       boundingBox = std::move(*regionResult.value);
@@ -309,7 +314,8 @@ Result<GeoJsonObject> parseGeoJsonObject(
             return t != "Feature" && t != "FeatureCollection";
           },
           "GeoJSON Feature 'geometry' member may only contain GeoJSON Geometry "
-          "objects");
+          "objects",
+          ellipsoid);
       if (!childResult.value) {
         return childResult;
       }
@@ -382,7 +388,8 @@ Result<GeoJsonObject> parseGeoJsonObject(
           feature.GetObject(),
           [](const std::string& t) { return t == "Feature"; },
           "GeoJSON FeatureCollection 'features' member may only contain "
-          "Feature objects");
+          "Feature objects",
+          ellipsoid);
       errorList.merge(childResult.errors);
       if (!childResult.value) {
         continue;
@@ -439,7 +446,8 @@ Result<GeoJsonObject> parseGeoJsonObject(
             return t != "Feature" && t != "FeatureCollection";
           },
           "GeoJSON GeometryCollection 'geometries' member may only contain "
-          "GeoJSON Geometry objects");
+          "GeoJSON Geometry objects",
+          ellipsoid);
       errorList.merge(child.errors);
       if (!child.value) {
         continue;
@@ -633,8 +641,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
 }
 } // namespace
 
-Result<GeoJsonObject>
-GeoJsonDocument::parseGeoJson(const rapidjson::Document& doc) {
+Result<GeoJsonObject> GeoJsonDocument::parseGeoJson(
+    const rapidjson::Document& doc,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (!doc.IsObject()) {
     return Result<GeoJsonObject>(
         ErrorList::error("GeoJSON must contain a JSON object."));
@@ -643,11 +652,13 @@ GeoJsonDocument::parseGeoJson(const rapidjson::Document& doc) {
   return parseGeoJsonObject(
       doc.GetObject(),
       [](const std::string&) { return true; },
-      "");
+      "",
+      ellipsoid);
 }
 
-Result<GeoJsonObject>
-GeoJsonDocument::parseGeoJson(const std::span<const std::byte>& bytes) {
+Result<GeoJsonObject> GeoJsonDocument::parseGeoJson(
+    const std::span<const std::byte>& bytes,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   rapidjson::Document d;
   d.Parse(reinterpret_cast<const char*>(bytes.data()), bytes.size());
   if (d.HasParseError()) {
@@ -657,16 +668,17 @@ GeoJsonDocument::parseGeoJson(const std::span<const std::byte>& bytes) {
         d.GetErrorOffset())));
   }
 
-  return parseGeoJson(d);
+  return parseGeoJson(d, ellipsoid);
 }
 
 Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
     const std::span<const std::byte>& bytes,
-    std::vector<VectorDocumentAttribution>&& attributions) {
+    std::vector<VectorDocumentAttribution>&& attributions,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   IntrusivePointer<GeoJsonDocument> pDocument;
   GeoJsonDocument& document = pDocument.emplace();
   document._attributions = std::move(attributions);
-  Result<GeoJsonObject> parseResult = document.parseGeoJson(bytes);
+  Result<GeoJsonObject> parseResult = document.parseGeoJson(bytes, ellipsoid);
   if (!parseResult.value) {
     return Result<IntrusivePointer<GeoJsonDocument>>(
         std::move(parseResult.errors));
@@ -681,11 +693,13 @@ Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
 
 Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
     const rapidjson::Document& document,
-    std::vector<VectorDocumentAttribution>&& attributions) {
+    std::vector<VectorDocumentAttribution>&& attributions,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   IntrusivePointer<GeoJsonDocument> pDocument;
   GeoJsonDocument& geoJsonDocument = pDocument.emplace();
   geoJsonDocument._attributions = std::move(attributions);
-  Result<GeoJsonObject> parseResult = geoJsonDocument.parseGeoJson(document);
+  Result<GeoJsonObject> parseResult =
+      geoJsonDocument.parseGeoJson(document, ellipsoid);
   if (!parseResult.value) {
     return Result<IntrusivePointer<GeoJsonDocument>>(
         std::move(parseResult.errors));
@@ -704,14 +718,15 @@ GeoJsonDocument::fromCesiumIonAsset(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl) {
+    const std::string& ionAssetEndpointUrl,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const std::string url = fmt::format(
       "{}v1/assets/{}/endpoint?access_token={}",
       ionAssetEndpointUrl,
       ionAssetID,
       ionAccessToken);
   return pAssetAccessor->get(asyncSystem, url)
-      .thenImmediately([asyncSystem, pAssetAccessor](
+      .thenImmediately([asyncSystem, pAssetAccessor, ellipsoid](
                            std::shared_ptr<IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
 
@@ -780,7 +795,7 @@ GeoJsonDocument::fromCesiumIonAsset(
             {"Authorization", "Bearer " + accessToken}};
         return pAssetAccessor->get(asyncSystem, assetUrl, headers)
             .thenImmediately(
-                [attributions = std::move(attributions)](
+                [ellipsoid, attributions = std::move(attributions)](
                     std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
                 -> Result<IntrusivePointer<GeoJsonDocument>> {
                   const IAssetResponse* pAssetResponse =
@@ -797,7 +812,8 @@ GeoJsonDocument::fromCesiumIonAsset(
 
                   return GeoJsonDocument::fromGeoJson(
                       pAssetResponse->data(),
-                      std::move(attributions));
+                      std::move(attributions),
+                      ellipsoid);
                 });
       });
 }
