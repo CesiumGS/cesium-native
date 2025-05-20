@@ -730,14 +730,14 @@ private:
   // `_previousTraversal`, if it exists at all, it will be found at this index.
   int64_t _previousTraversalNextNodeIndex = 0;
 
-  template <typename TNodePointer, typename TState>
+  template <typename TNodePointer2, typename TState2>
   friend class TreeTraversalStateDiffIterator;
 };
 
 #pragma region Differences Implementation
 
 template <typename TNodePointer, typename TState>
-TreeTraversalState<TNodePointer, TState>::Difference
+typename TreeTraversalState<TNodePointer, TState>::Difference
 TreeTraversalState<TNodePointer, TState>::difference_iterator::operator*()
     const noexcept {
   if (this->_differenceType == DifferenceType::StateChange) {
@@ -790,7 +790,7 @@ TreeTraversalState<TNodePointer, TState>::difference_iterator::operator*()
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalState<TNodePointer, TState>::Difference
+typename TreeTraversalState<TNodePointer, TState>::Difference
 TreeTraversalState<TNodePointer, TState>::difference_iterator::operator->()
     const noexcept {
   return this->operator*();
@@ -805,15 +805,15 @@ operator++() noexcept {
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalState<TNodePointer, TState>::difference_iterator
+typename TreeTraversalState<TNodePointer, TState>::difference_iterator
 TreeTraversalState<TNodePointer, TState>::difference_iterator::operator++(
     int) noexcept {
-  TreeTraversalStateDiffIterator<TNodePointer, TState> result = *this;
+  difference_iterator result = *this;
   return ++result;
 }
 
 template <typename TNodePointer, typename TState>
-TreeTraversalState<TNodePointer, TState>::difference_iterator
+typename TreeTraversalState<TNodePointer, TState>::difference_iterator
 TreeTraversalState<TNodePointer, TState>::difference_iterator::
     descendantsEnd() {
   if (this->_differenceType == DifferenceType::StateChange) {
@@ -923,7 +923,9 @@ TreeTraversalState<TNodePointer, TState>::difference_iterator::
       _nextSiblingIndex(-1) {}
 
 template <typename TNodePointer, typename TState>
-/*static*/ TreeTraversalState<TNodePointer, TState>::difference_iterator
+/*static*/ typename TreeTraversalState<
+    TNodePointer,
+    TState>::difference_iterator
 TreeTraversalState<TNodePointer, TState>::difference_iterator::createOnOrAfter(
     const TreeTraversalState<TNodePointer, TState>* pState,
     int64_t previousIndex,
