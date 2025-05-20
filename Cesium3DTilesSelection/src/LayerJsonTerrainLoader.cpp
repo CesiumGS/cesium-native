@@ -137,7 +137,7 @@ convertToTilesetContentLoaderResult(
       std::move(loadLayersResult.layers));
 
   std::unique_ptr<Tile> pRootTile =
-      std::make_unique<Tile>(pLoader.get(), TileEmptyContent());
+      std::make_unique<Tile>(pLoader.get(), TileID(), TileEmptyContent());
   pRootTile->setUnconditionallyRefine();
   pRootTile->setBoundingVolume(*loadLayersResult.boundingVolume);
 

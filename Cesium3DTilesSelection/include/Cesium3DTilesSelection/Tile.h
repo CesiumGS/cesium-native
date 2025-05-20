@@ -136,19 +136,33 @@ public:
    * with this constructor.
    *
    * @param pLoader The {@link TilesetContentLoader} that is used to load the tile.
+   * @param tileID The ID of this tile. If not specified, the ID will initially
+   * be an empty string.
    */
-  explicit Tile(TilesetContentLoader* pLoader) noexcept;
+  explicit Tile(
+      TilesetContentLoader* pLoader,
+      const TileID& tileID = {}) noexcept;
 
   /**
    * @brief Construct a tile with an external content and a loader that is
    * associated with this tile. Tile has ContentLoaded status when initializing
    * with this constructor.
    *
+   * If the supplied `TileID` is not an empty string, the tile's reference count
+   * will be incremented on account of the loaded, referencable content.
+   * Otherwise, if it is an empty string, the reference count will not be
+   * incremented. It is essential that this be accounted for later if the tile
+   * ID is changed in order to avoid reference count assertion failures at
+   * tileset destruction.
+   *
    * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   * @param tileID The ID of this tile. If it is an empty string, then the
+   * external content will not be unloadable.
    * @param externalContent External content that is associated with this tile.
    */
   Tile(
       TilesetContentLoader* pLoader,
+      const TileID& tileID,
       std::unique_ptr<TileExternalContent>&& externalContent) noexcept;
 
   /**
@@ -156,10 +170,22 @@ public:
    * associated with this tile. Tile has ContentLoaded status when initializing
    * with this constructor.
    *
+   * If the supplied `TileID` is not an empty string, the tile's reference count
+   * will be incremented on account of the loaded, referencable content.
+   * Otherwise, if it is an empty string, the reference count will not be
+   * incremented. It is essential that this be accounted for later if the tile
+   * ID is changed in order to avoid reference count assertion failures at
+   * tileset destruction.
+   *
    * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   * @param tileID The ID of this tile. If it is an empty string, then the
+   * empty content will not be unloadable.
    * @param emptyContent A content tag indicating that the tile has no content.
    */
-  Tile(TilesetContentLoader* pLoader, TileEmptyContent emptyContent) noexcept;
+  Tile(
+      TilesetContentLoader* pLoader,
+      const TileID& tileID,
+      TileEmptyContent emptyContent) noexcept;
 
   /**
    * @brief Default destructor, which clears all resources associated with this
@@ -615,6 +641,7 @@ private:
       TileConstructorImpl tag,
       TileLoadState loadState,
       TilesetContentLoader* pLoader,
+      const TileID& tileID,
       TileContentArgs&&... args);
 
   void setParent(Tile* pParent) noexcept;
