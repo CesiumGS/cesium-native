@@ -1466,7 +1466,10 @@ bool upsampleTrianglesPrimitiveForRasterOverlays(
 
   // add skirts to extras to be upsampled later if needed
   if (hasSkirt) {
-    primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
+    CesiumUtility::JsonValue::Object extras =
+        SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
+    extras.merge(std::move(primitive.extras));
+    primitive.extras = std::move(extras);
   }
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
