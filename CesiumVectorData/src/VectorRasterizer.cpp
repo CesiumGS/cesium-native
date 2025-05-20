@@ -204,36 +204,36 @@ void VectorRasterizer::drawPolyline(
 }
 
 void VectorRasterizer::drawGeoJsonObject(
-    GeoJsonObjectConstPtr geoJsonObject,
+    const GeoJsonObject* geoJsonObject,
     const VectorStyle& style) {
   struct PrimitiveDrawVisitor {
     VectorRasterizer& rasterizer;
     const VectorStyle& style;
-    void operator()(const GeoJsonLineString* line) {
-      rasterizer.drawPolyline(line->coordinates, style);
+    void operator()(const GeoJsonLineString& line) {
+      rasterizer.drawPolyline(line.coordinates, style);
     }
-    void operator()(const GeoJsonMultiLineString* lines) {
-      for (const std::vector<Cartographic>& line : lines->coordinates) {
+    void operator()(const GeoJsonMultiLineString& lines) {
+      for (const std::vector<Cartographic>& line : lines.coordinates) {
         rasterizer.drawPolyline(line, style);
       }
     }
-    void operator()(const GeoJsonPolygon* polygon) {
-      rasterizer.drawPolygon(polygon->coordinates, style);
+    void operator()(const GeoJsonPolygon& polygon) {
+      rasterizer.drawPolygon(polygon.coordinates, style);
     }
-    void operator()(const GeoJsonMultiPolygon* polygons) {
+    void operator()(const GeoJsonMultiPolygon& polygons) {
       for (const std::vector<std::vector<Cartographic>>& polygon :
-           polygons->coordinates) {
+           polygons.coordinates) {
         rasterizer.drawPolygon(polygon, style);
       }
     }
-    void operator()(const GeoJsonPoint* /*catchAll*/) {}
-    void operator()(const GeoJsonMultiPoint* /*catchAll*/) {}
-    void operator()(const GeoJsonFeature* /*catchAll*/) {}
-    void operator()(const GeoJsonFeatureCollection* /*catchAll*/) {}
-    void operator()(const GeoJsonGeometryCollection* /*catchAll*/) {}
+    void operator()(const GeoJsonPoint& /*catchAll*/) {}
+    void operator()(const GeoJsonMultiPoint& /*catchAll*/) {}
+    void operator()(const GeoJsonFeature& /*catchAll*/) {}
+    void operator()(const GeoJsonFeatureCollection& /*catchAll*/) {}
+    void operator()(const GeoJsonGeometryCollection& /*catchAll*/) {}
   };
 
-  std::visit(PrimitiveDrawVisitor{*this, style}, geoJsonObject);
+  std::visit(PrimitiveDrawVisitor{*this, style}, geoJsonObject->value);
 }
 
 void VectorRasterizer::clear(const Color& clearColor) {

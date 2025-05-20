@@ -8,6 +8,7 @@
 
 #include <glm/vec3.hpp>
 
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -17,15 +18,15 @@ namespace CesiumVectorData {
  * @brief A type of object in GeoJson data.
  */
 enum class GeoJsonObjectType : uint8_t {
-  Point = 1,
-  MultiPoint = 2,
-  LineString = 3,
-  MultiLineString = 4,
-  Polygon = 5,
-  MultiPolygon = 6,
-  GeometryCollection = 7,
-  Feature = 8,
-  FeatureCollection = 9
+  Point = 0,
+  MultiPoint = 1,
+  LineString = 2,
+  MultiLineString = 3,
+  Polygon = 4,
+  MultiPolygon = 5,
+  GeometryCollection = 6,
+  Feature = 7,
+  FeatureCollection = 8
 };
 
 /**
@@ -40,7 +41,7 @@ std::string geoJsonObjectTypeToString(GeoJsonObjectType type);
  */
 struct GeoJsonPoint {
   /** @brief The `GeoJsonObjectType` for a Point. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::Point;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Point;
 
   /**
    * @brief The `Cartographic` coordinates for this Point.
@@ -75,7 +76,7 @@ struct GeoJsonPoint {
  */
 struct GeoJsonMultiPoint {
   /** @brief The `GeoJsonObjectType` for a MultiPoint. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::MultiPoint;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::MultiPoint;
 
   /**
    * @brief The list of `Cartographic` coordinates for this MultiPoint.
@@ -111,7 +112,7 @@ struct GeoJsonMultiPoint {
  */
 struct GeoJsonLineString {
   /** @brief The `GeoJsonObjectType` for a LineString. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::LineString;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::LineString;
 
   /**
    * @brief The list of `Cartographic` coordinates making up this LineString.
@@ -147,7 +148,7 @@ struct GeoJsonLineString {
  */
 struct GeoJsonMultiLineString {
   /** @brief The `GeoJsonObjectType` for a MultiLineString. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::MultiLineString;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::MultiLineString;
 
   /**
    * @brief The list of `Cartographic` coordinates making up this
@@ -185,7 +186,7 @@ struct GeoJsonMultiLineString {
  */
 struct GeoJsonPolygon {
   /** @brief The `GeoJsonObjectType` for a Polygon. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::Polygon;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Polygon;
 
   /**
    * @brief The list of linear rings making up this Polygon, each one defined by
@@ -227,7 +228,7 @@ struct GeoJsonPolygon {
  */
 struct GeoJsonMultiPolygon {
   /** @brief The `GeoJsonObjectType` for a MultiPolygon. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::MultiPolygon;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::MultiPolygon;
 
   /**
    * @brief The list of Polygons making up this MultiPolygon. Each entry has
@@ -258,34 +259,22 @@ struct GeoJsonMultiPolygon {
   std::optional<VectorStyle> style = std::nullopt;
 };
 
-struct GeoJsonGeometryCollection;
-
-/**
- * @brief GeoJson objects that represent geometry.
- */
-using GeoJsonGeometryObject = std::variant<
-    GeoJsonPoint,
-    GeoJsonMultiPoint,
-    GeoJsonLineString,
-    GeoJsonMultiLineString,
-    GeoJsonPolygon,
-    GeoJsonMultiPolygon,
-    GeoJsonGeometryCollection>;
+struct GeoJsonObject;
 
 /**
  * @brief A `GeometryCollection` represents any number of \ref
- * GeoJsonGeometryObject objects.
+ * GeoJsonObject objects.
  */
 struct GeoJsonGeometryCollection {
   /** @brief The `GeoJsonObjectType` for a GeometryCollection. */
-  static constexpr GeoJsonObjectType type =
+  static constexpr GeoJsonObjectType TYPE =
       GeoJsonObjectType::GeometryCollection;
 
   /**
-   * @brief The \ref GeoJsonGeometryObject values contained in this
+   * @brief The \ref GeoJsonObject values contained in this
    * GeometryCollection.
    */
-  std::vector<GeoJsonGeometryObject> geometries;
+  std::vector<GeoJsonObject> geometries;
 
   /**
    * @brief The bounding box associated with this GeometryCollection value, if
@@ -315,18 +304,18 @@ struct GeoJsonGeometryCollection {
  */
 struct GeoJsonFeature {
   /** @brief The `GeoJsonObjectType` for a Feature. */
-  static constexpr GeoJsonObjectType type = GeoJsonObjectType::Feature;
+  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Feature;
 
   /**
    * @brief The "id" of this object. A Feature's ID is optional, but if
    * specified it will be either a string or a number.
    */
-  std::variant<std::string, int64_t, std::monostate> id = std::monostate();
+  std::variant<std::monostate, std::string, int64_t> id = std::monostate();
 
   /**
    * @brief The `GeoJsonGeometryObject` associated with this Feature, if any.
    */
-  std::optional<GeoJsonGeometryObject> geometry;
+  std::unique_ptr<GeoJsonObject> geometry;
 
   /**
    * @brief The set of additional properties specified on this Feature, if any.
@@ -362,7 +351,7 @@ struct GeoJsonFeature {
  */
 struct GeoJsonFeatureCollection {
   /** @brief The `GeoJsonObjectType` for a FeatureCollection. */
-  static constexpr GeoJsonObjectType type =
+  static constexpr GeoJsonObjectType TYPE =
       GeoJsonObjectType::FeatureCollection;
 
   /**
@@ -396,7 +385,7 @@ struct GeoJsonFeatureCollection {
  * @brief Every possible object that can be specified in a GeoJSON
  * document.
  */
-using GeoJsonObject = std::variant<
+using GeoJsonObjectVariant = std::variant<
     GeoJsonPoint,
     GeoJsonMultiPoint,
     GeoJsonLineString,
@@ -408,66 +397,18 @@ using GeoJsonObject = std::variant<
     GeoJsonFeatureCollection>;
 
 /**
- * @brief The pass-by-pointer equivalent to \ref GeoJsonObject.
+ * @brief A wrapper around an object in a GeoJSON document.
  */
-using GeoJsonObjectPtr = std::variant<
-    GeoJsonPoint*,
-    GeoJsonMultiPoint*,
-    GeoJsonLineString*,
-    GeoJsonMultiLineString*,
-    GeoJsonPolygon*,
-    GeoJsonMultiPolygon*,
-    GeoJsonGeometryCollection*,
-    GeoJsonFeature*,
-    GeoJsonFeatureCollection*>;
+struct GeoJsonObject {
+  /**
+   * @brief Returns the \ref GeoJsonObjectType that this \ref GeoJsonObject is
+   * wrapping.
+   */
+  GeoJsonObjectType getType() const;
 
-/**
- * @brief The pass-by-const-pointer equivalent to \ref GeoJsonObject.
- */
-using GeoJsonObjectConstPtr = std::variant<
-    const GeoJsonPoint*,
-    const GeoJsonMultiPoint*,
-    const GeoJsonLineString*,
-    const GeoJsonMultiLineString*,
-    const GeoJsonPolygon*,
-    const GeoJsonMultiPolygon*,
-    const GeoJsonGeometryCollection*,
-    const GeoJsonFeature*,
-    const GeoJsonFeatureCollection*>;
-
-/**
- * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
- *
- * All geometry objects are also valid objects, but not all objects are valid
- * geometry objects.
- */
-GeoJsonObject
-geoJsonGeometryObjectToObject(const GeoJsonGeometryObject& geometry);
-
-/**
- * @brief Converts a reference to a \ref GeoJsonGeometryObject to a \ref
- * GeoJsonObjectPtr.
- */
-GeoJsonObjectPtr
-geoJsonGeometryObjectRefToObjectPtr(GeoJsonGeometryObject& geometry);
-
-/**
- * @brief Converts a const reference to a \ref GeoJsonGeometryObject to a \ref
- * GeoJsonObjectConstPtr.
- */
-GeoJsonObjectConstPtr geoJsonGeometryObjectConstRefToObjectConstPtr(
-    const GeoJsonGeometryObject& geometry);
-
-/**
- * @brief Converts a reference toa  \ref GeoJsonObject to a \ref
- * GeoJsonObjectPtr.
- */
-GeoJsonObjectPtr geoJsonObjectRefToObjectPtr(GeoJsonObject& object);
-
-/**
- * @brief Converts a reference toa  \ref GeoJsonObject to a \ref
- * GeoJsonObjectConstPtr.
- */
-GeoJsonObjectConstPtr
-geoJsonObjectConstRefToObjectConstPtr(const GeoJsonObject& object);
+  /**
+   * @brief A variant containing the GeoJSON object.
+   */
+  GeoJsonObjectVariant value;
+};
 } // namespace CesiumVectorData

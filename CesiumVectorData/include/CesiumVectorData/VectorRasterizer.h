@@ -89,7 +89,7 @@ public:
    * @param style The \ref VectorStyle to use when drawing the object.
    */
   void drawGeoJsonObject(
-      GeoJsonObjectConstPtr geoJsonObject,
+      const GeoJsonObject* geoJsonObject,
       const VectorStyle& style);
 
   /**

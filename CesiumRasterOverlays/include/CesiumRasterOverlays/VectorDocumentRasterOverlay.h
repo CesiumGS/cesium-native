@@ -28,7 +28,7 @@ namespace CesiumRasterOverlays {
 using VectorDocumentRasterOverlayStyleCallback = std::function<std::optional<
     CesiumVectorData::VectorStyle>(
     const CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>&,
-    CesiumVectorData::GeoJsonObjectPtr)>;
+    CesiumVectorData::GeoJsonObject*)>;
 
 /**
  * @brief A set of options for configuring a VectorDocumentRasterOverlay.

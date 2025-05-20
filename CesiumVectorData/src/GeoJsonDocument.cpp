@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/Ellipsoid.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -148,8 +150,9 @@ Result<std::vector<std::vector<Cartographic>>> parsePolygon(
   return Result<std::vector<std::vector<Cartographic>>>(std::move(rings));
 }
 
-Result<std::optional<BoundingRegion>>
-parseBoundingBox(const rapidjson::Value& value) {
+Result<std::optional<BoundingRegion>> parseBoundingBox(
+    const rapidjson::Value& value,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (!value.IsArray()) {
     return Result<std::optional<BoundingRegion>>(
         std::nullopt,
@@ -187,44 +190,9 @@ parseBoundingBox(const rapidjson::Value& value) {
               Math::degreesToRadians(coordinates[2]->GetDouble()),
               Math::degreesToRadians(coordinates[3]->GetDouble())),
           size == 4 ? 0.0 : coordinates[4]->GetDouble(),
-          size == 4 ? 0.0 : coordinates[5]->GetDouble())});
+          size == 4 ? 0.0 : coordinates[5]->GetDouble(),
+          ellipsoid)});
 }
-
-struct GeoJsonObjectToGeoJsonGeometryObjectVisitor {
-  Result<GeoJsonGeometryObject> operator()(GeoJsonPoint&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonMultiPoint&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonLineString&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonMultiLineString&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonPolygon&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonMultiPolygon&& node) {
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonGeometryCollection&& node) {
-    // The specification says that implementations should avoid nesting a
-    // GeometryCollection inside a GeometryCollection. However, I don't think it
-    // costs us anything to handle it even if the data is ill-advised.
-    return Result<GeoJsonGeometryObject>(std::move(node));
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonFeature&& /*node*/) {
-    return Result<GeoJsonGeometryObject>(
-        ErrorList::error("Expected geometry, found GeoJSON object Feature."));
-  }
-  Result<GeoJsonGeometryObject>
-  operator()(GeoJsonFeatureCollection&& /*node*/) {
-    return Result<GeoJsonGeometryObject>(ErrorList::error(
-        "Expected geometry, found GeoJSON object FeatureCollection."));
-  }
-};
 
 struct GeoJsonObjectToFeatureVisitor {
   Result<GeoJsonFeature> operator()(GeoJsonFeature&& node) {
@@ -234,14 +202,15 @@ struct GeoJsonObjectToFeatureVisitor {
   Result<GeoJsonFeature> operator()(auto&& node) {
     return Result<GeoJsonFeature>(ErrorList::error(fmt::format(
         "Expected Feature, found GeoJSON object {}.",
-        geoJsonObjectTypeToString(node.type))));
+        geoJsonObjectTypeToString(node.TYPE))));
   }
 };
 
 Result<GeoJsonObject> parseGeoJsonObject(
     const rapidjson::Value::ConstObject& obj,
     const std::function<bool(const std::string& type)>& expectedPredicate,
-    const std::string& expectedStr) {
+    const std::string& expectedStr,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const std::string& type = JsonHelpers::getStringOrDefault(obj, "type", "");
   if (type.empty()) {
     return Result<GeoJsonObject>(
@@ -261,7 +230,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
   const auto bboxMember = obj.FindMember("bbox");
   if (bboxMember != obj.MemberEnd()) {
     Result<std::optional<BoundingRegion>> regionResult =
-        parseBoundingBox(bboxMember->value);
+        parseBoundingBox(bboxMember->value, ellipsoid);
     errorList.merge(regionResult.errors);
     if (regionResult.value) {
       boundingBox = std::move(*regionResult.value);
@@ -270,7 +239,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
   if (type == "Feature") {
     // Feature has a geometry, properties, and an optional id
-    std::variant<std::string, int64_t, std::monostate> id = std::monostate();
+    std::variant<std::monostate, std::string, int64_t> id = std::monostate();
     const auto& idMember = obj.FindMember("id");
     if (idMember != obj.MemberEnd()) {
       if (idMember->value.IsNumber()) {
@@ -289,7 +258,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
           ErrorList::error("Feature must have 'geometry' member."));
     }
 
-    std::optional<GeoJsonGeometryObject> geometry = std::nullopt;
+    std::unique_ptr<GeoJsonObject> geometry = nullptr;
     if (!geometryMember->value.IsNull()) {
       if (!geometryMember->value.IsObject()) {
         return Result<GeoJsonObject>(ErrorList::error(
@@ -302,19 +271,13 @@ Result<GeoJsonObject> parseGeoJsonObject(
             return t != "Feature" && t != "FeatureCollection";
           },
           "GeoJSON Feature 'geometry' member may only contain GeoJSON Geometry "
-          "objects");
+          "objects",
+          ellipsoid);
       if (!childResult.value) {
         return childResult;
       }
 
-      Result<GeoJsonGeometryObject> geometryResult = std::visit(
-          GeoJsonObjectToGeoJsonGeometryObjectVisitor{},
-          std::move(*childResult.value));
-      if (!geometryResult.value) {
-        return Result<GeoJsonObject>(std::move(geometryResult.errors));
-      }
-
-      geometry = std::move(*geometryResult.value);
+      geometry = std::make_unique<GeoJsonObject>(std::move(*childResult.value));
     }
 
     const auto& propertiesMember = obj.FindMember("properties");
@@ -335,16 +298,16 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonFeature{
+        GeoJsonObject{GeoJsonFeature{
             id,
-            geometry,
+            std::move(geometry),
             properties,
             boundingBox,
             collectForeignMembers(
                 obj,
                 [](const std::string& k) {
                   return k == "id" || k == "geometry" || k == "properties";
-                })},
+                })}},
         errorList);
   } else if (type == "FeatureCollection") {
     // Feature collection contains zero or more features
@@ -375,7 +338,8 @@ Result<GeoJsonObject> parseGeoJsonObject(
           feature.GetObject(),
           [](const std::string& t) { return t == "Feature"; },
           "GeoJSON FeatureCollection 'features' member may only contain "
-          "Feature objects");
+          "Feature objects",
+          ellipsoid);
       errorList.merge(childResult.errors);
       if (!childResult.value) {
         continue;
@@ -383,7 +347,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
       Result<GeoJsonFeature> featureResult = std::visit(
           GeoJsonObjectToFeatureVisitor{},
-          std::move(*childResult.value));
+          std::move(childResult.value->value));
       errorList.merge(featureResult.errors);
       if (!featureResult.value) {
         continue;
@@ -397,12 +361,12 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonFeatureCollection{
+        GeoJsonObject{GeoJsonFeatureCollection{
             std::move(features),
             boundingBox,
             collectForeignMembers(
                 obj,
-                [](const std::string& k) { return k == "features"; })},
+                [](const std::string& k) { return k == "features"; })}},
         errorList);
   } else if (type == "GeometryCollection") {
     // Geometry collection contains zero or more geometry primitives
@@ -416,7 +380,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
     const rapidjson::Value::ConstArray& childrenArr =
         geometriesMember->value.GetArray();
 
-    std::vector<GeoJsonGeometryObject> children;
+    std::vector<GeoJsonObject> children;
     children.reserve(childrenArr.Size());
     for (auto& value : childrenArr) {
       if (!value.IsObject()) {
@@ -432,21 +396,14 @@ Result<GeoJsonObject> parseGeoJsonObject(
             return t != "Feature" && t != "FeatureCollection";
           },
           "GeoJSON GeometryCollection 'geometries' member may only contain "
-          "GeoJSON Geometry objects");
+          "GeoJSON Geometry objects",
+          ellipsoid);
       errorList.merge(child.errors);
       if (!child.value) {
         continue;
       }
 
-      Result<GeoJsonGeometryObject> geometryResult = std::visit(
-          GeoJsonObjectToGeoJsonGeometryObjectVisitor{},
-          std::move(*child.value));
-      errorList.merge(geometryResult.errors);
-      if (!geometryResult.value) {
-        continue;
-      }
-
-      children.emplace_back(std::move(*geometryResult.value));
+      children.emplace_back(std::move(*child.value));
     }
 
     if (errorList.hasErrors()) {
@@ -454,12 +411,12 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonGeometryCollection{
+        GeoJsonObject{GeoJsonGeometryCollection{
             std::move(children),
             boundingBox,
             collectForeignMembers(
                 obj,
-                [](const std::string& k) { return k == "geometries"; })},
+                [](const std::string& k) { return k == "geometries"; })}},
         errorList);
   }
 
@@ -486,7 +443,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonPoint{std::move(*posResult.value), boundingBox, foreignMembers},
+        GeoJsonObject{GeoJsonPoint{
+            std::move(*posResult.value),
+            boundingBox,
+            foreignMembers}},
         errorList);
   } else if (type == "MultiPoint") {
     // MultiPoint primitive has a "coordinates" member that consists of an array
@@ -503,10 +463,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonMultiPoint{
+        GeoJsonObject{GeoJsonMultiPoint{
             std::move(*pointsResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "LineString") {
     // LineString primitive has a "coordinates" member that consists of an array
@@ -527,10 +487,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonLineString{
+        GeoJsonObject{GeoJsonLineString{
             std::move(*pointsResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "MultiLineString") {
     // MultiLineString has a "coordinates" member that consists of an array of
@@ -551,10 +511,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonMultiLineString{
+        GeoJsonObject{GeoJsonMultiLineString{
             std::move(*linesResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "Polygon") {
     // Polygon has a "coordinates" member that consists of an array of arrays of
@@ -575,10 +535,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonPolygon{
+        GeoJsonObject{GeoJsonPolygon{
             std::move(*ringsResult.value),
             boundingBox,
-            foreignMembers},
+            foreignMembers}},
         errorList);
   } else if (type == "MultiPolygon") {
     // MultiPolygon has a "coordinates" member that consists of an array of
@@ -611,7 +571,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
     }
 
     return Result<GeoJsonObject>(
-        GeoJsonMultiPolygon{std::move(polygons), boundingBox, foreignMembers},
+        GeoJsonObject{GeoJsonMultiPolygon{
+            std::move(polygons),
+            boundingBox,
+            foreignMembers}},
         errorList);
   }
 
@@ -620,8 +583,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
 }
 } // namespace
 
-Result<GeoJsonObject>
-GeoJsonDocument::parseGeoJson(const rapidjson::Document& doc) {
+Result<GeoJsonObject> GeoJsonDocument::parseGeoJson(
+    const rapidjson::Document& doc,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   if (!doc.IsObject()) {
     return Result<GeoJsonObject>(
         ErrorList::error("GeoJSON must contain a JSON object."));
@@ -630,11 +594,13 @@ GeoJsonDocument::parseGeoJson(const rapidjson::Document& doc) {
   return parseGeoJsonObject(
       doc.GetObject(),
       [](const std::string&) { return true; },
-      "");
+      "",
+      ellipsoid);
 }
 
-Result<GeoJsonObject>
-GeoJsonDocument::parseGeoJson(const std::span<const std::byte>& bytes) {
+Result<GeoJsonObject> GeoJsonDocument::parseGeoJson(
+    const std::span<const std::byte>& bytes,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   rapidjson::Document d;
   d.Parse(reinterpret_cast<const char*>(bytes.data()), bytes.size());
   if (d.HasParseError()) {
@@ -644,16 +610,17 @@ GeoJsonDocument::parseGeoJson(const std::span<const std::byte>& bytes) {
         d.GetErrorOffset())));
   }
 
-  return parseGeoJson(d);
+  return parseGeoJson(d, ellipsoid);
 }
 
 Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
     const std::span<const std::byte>& bytes,
-    std::vector<VectorDocumentAttribution>&& attributions) {
+    std::vector<VectorDocumentAttribution>&& attributions,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   IntrusivePointer<GeoJsonDocument> pDocument;
   GeoJsonDocument& document = pDocument.emplace();
   document._attributions = std::move(attributions);
-  Result<GeoJsonObject> parseResult = document.parseGeoJson(bytes);
+  Result<GeoJsonObject> parseResult = document.parseGeoJson(bytes, ellipsoid);
   if (!parseResult.value) {
     return Result<IntrusivePointer<GeoJsonDocument>>(
         std::move(parseResult.errors));
@@ -668,11 +635,13 @@ Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
 
 Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
     const rapidjson::Document& document,
-    std::vector<VectorDocumentAttribution>&& attributions) {
+    std::vector<VectorDocumentAttribution>&& attributions,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   IntrusivePointer<GeoJsonDocument> pDocument;
   GeoJsonDocument& geoJsonDocument = pDocument.emplace();
   geoJsonDocument._attributions = std::move(attributions);
-  Result<GeoJsonObject> parseResult = geoJsonDocument.parseGeoJson(document);
+  Result<GeoJsonObject> parseResult =
+      geoJsonDocument.parseGeoJson(document, ellipsoid);
   if (!parseResult.value) {
     return Result<IntrusivePointer<GeoJsonDocument>>(
         std::move(parseResult.errors));
@@ -691,14 +660,15 @@ GeoJsonDocument::fromCesiumIonAsset(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl) {
+    const std::string& ionAssetEndpointUrl,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const std::string url = fmt::format(
       "{}v1/assets/{}/endpoint?access_token={}",
       ionAssetEndpointUrl,
       ionAssetID,
       ionAccessToken);
   return pAssetAccessor->get(asyncSystem, url)
-      .thenImmediately([asyncSystem, pAssetAccessor](
+      .thenImmediately([asyncSystem, pAssetAccessor, ellipsoid](
                            std::shared_ptr<IAssetRequest>&& pRequest) {
         const IAssetResponse* pResponse = pRequest->response();
 
@@ -767,7 +737,7 @@ GeoJsonDocument::fromCesiumIonAsset(
             {"Authorization", "Bearer " + accessToken}};
         return pAssetAccessor->get(asyncSystem, assetUrl, headers)
             .thenImmediately(
-                [attributions = std::move(attributions)](
+                [ellipsoid, attributions = std::move(attributions)](
                     std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
                 -> Result<IntrusivePointer<GeoJsonDocument>> {
                   const IAssetResponse* pAssetResponse =
@@ -784,7 +754,8 @@ GeoJsonDocument::fromCesiumIonAsset(
 
                   return GeoJsonDocument::fromGeoJson(
                       pAssetResponse->data(),
-                      std::move(attributions));
+                      std::move(attributions),
+                      ellipsoid);
                 });
       });
 }
