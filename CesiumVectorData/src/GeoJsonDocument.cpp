@@ -194,49 +194,6 @@ Result<std::optional<BoundingRegion>> parseBoundingBox(
           ellipsoid)});
 }
 
-struct GeoJsonObjectToGeoJsonGeometryObjectVisitor {
-  Result<GeoJsonGeometryObject> operator()(GeoJsonPoint&& node) {
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonMultiPoint&& node) {
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonLineString&& node) {
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonMultiLineString&& node) {
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonPolygon&& node) {
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonMultiPolygon&& node) {
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonGeometryCollection&& node) {
-    // The specification says that implementations should avoid nesting a
-    // GeometryCollection inside a GeometryCollection. However, I don't think it
-    // costs us anything to handle it even if the data is ill-advised.
-    return Result<GeoJsonGeometryObject>(
-        GeoJsonGeometryObject{std::move(node)});
-  }
-  Result<GeoJsonGeometryObject> operator()(GeoJsonFeature&& /*node*/) {
-    return Result<GeoJsonGeometryObject>(
-        ErrorList::error("Expected geometry, found GeoJSON object Feature."));
-  }
-  Result<GeoJsonGeometryObject>
-  operator()(GeoJsonFeatureCollection&& /*node*/) {
-    return Result<GeoJsonGeometryObject>(ErrorList::error(
-        "Expected geometry, found GeoJSON object FeatureCollection."));
-  }
-};
-
 struct GeoJsonObjectToFeatureVisitor {
   Result<GeoJsonFeature> operator()(GeoJsonFeature&& node) {
     return Result<GeoJsonFeature>(std::move(node));
@@ -301,7 +258,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
           ErrorList::error("Feature must have 'geometry' member."));
     }
 
-    std::optional<GeoJsonGeometryObject> geometry = std::nullopt;
+    std::unique_ptr<GeoJsonObject> geometry = nullptr;
     if (!geometryMember->value.IsNull()) {
       if (!geometryMember->value.IsObject()) {
         return Result<GeoJsonObject>(ErrorList::error(
@@ -320,14 +277,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
         return childResult;
       }
 
-      Result<GeoJsonGeometryObject> geometryResult = std::visit(
-          GeoJsonObjectToGeoJsonGeometryObjectVisitor{},
-          std::move(childResult.value->value));
-      if (!geometryResult.value) {
-        return Result<GeoJsonObject>(std::move(geometryResult.errors));
-      }
-
-      geometry = std::move(*geometryResult.value);
+      geometry = std::make_unique<GeoJsonObject>(std::move(*childResult.value));
     }
 
     const auto& propertiesMember = obj.FindMember("properties");
@@ -350,7 +300,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
     return Result<GeoJsonObject>(
         GeoJsonObject{GeoJsonFeature{
             id,
-            geometry,
+            std::move(geometry),
             properties,
             boundingBox,
             collectForeignMembers(
@@ -430,7 +380,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
     const rapidjson::Value::ConstArray& childrenArr =
         geometriesMember->value.GetArray();
 
-    std::vector<GeoJsonGeometryObject> children;
+    std::vector<GeoJsonObject> children;
     children.reserve(childrenArr.Size());
     for (auto& value : childrenArr) {
       if (!value.IsObject()) {
@@ -453,15 +403,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
         continue;
       }
 
-      Result<GeoJsonGeometryObject> geometryResult = std::visit(
-          GeoJsonObjectToGeoJsonGeometryObjectVisitor{},
-          std::move(child.value->value));
-      errorList.merge(geometryResult.errors);
-      if (!geometryResult.value) {
-        continue;
-      }
-
-      children.emplace_back(std::move(*geometryResult.value));
+      children.emplace_back(std::move(*child.value));
     }
 
     if (errorList.hasErrors()) {

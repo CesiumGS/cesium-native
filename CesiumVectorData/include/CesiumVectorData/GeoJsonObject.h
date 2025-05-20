@@ -6,6 +6,7 @@
 
 #include <glm/vec3.hpp>
 
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -226,25 +227,11 @@ struct GeoJsonMultiPolygon {
       CesiumUtility::JsonValue::Object();
 };
 
-struct GeoJsonGeometryCollection;
-
-/**
- * @brief A variant of GeoJson objects that represent geometry.
- */
-using GeoJsonGeometryObjectVariant = std::variant<
-    GeoJsonPoint,
-    GeoJsonMultiPoint,
-    GeoJsonLineString,
-    GeoJsonMultiLineString,
-    GeoJsonPolygon,
-    GeoJsonMultiPolygon,
-    GeoJsonGeometryCollection>;
-
-struct GeoJsonGeometryObject;
+struct GeoJsonObject;
 
 /**
  * @brief A `GeometryCollection` represents any number of \ref
- * GeoJsonGeometryObject objects.
+ * GeoJsonObject objects.
  */
 struct GeoJsonGeometryCollection {
   /** @brief The `GeoJsonObjectType` for a GeometryCollection. */
@@ -252,10 +239,10 @@ struct GeoJsonGeometryCollection {
       GeoJsonObjectType::GeometryCollection;
 
   /**
-   * @brief The \ref GeoJsonGeometryObject values contained in this
+   * @brief The \ref GeoJsonObject values contained in this
    * GeometryCollection.
    */
-  std::vector<GeoJsonGeometryObject> geometries;
+  std::vector<GeoJsonObject> geometries;
 
   /**
    * @brief The bounding box associated with this GeometryCollection value, if
@@ -275,21 +262,6 @@ struct GeoJsonGeometryCollection {
 };
 
 /**
- * @brief A wrapper around a GeoJSON object that represents geometry.
- */
-struct GeoJsonGeometryObject {
-  /**
-   * @brief The \ref GeoJsonObjectType of the underlying geometry object.
-   */
-  GeoJsonObjectType getType() const;
-
-  /**
-   * @brief The GeoJSON geometry object.
-   */
-  GeoJsonGeometryObjectVariant value;
-};
-
-/**
  * @brief A `GeoJsonFeature` object represents a spatially bounded "thing." It
  * is a collection of information that is possibly linked to a geometry object.
  */
@@ -306,7 +278,7 @@ struct GeoJsonFeature {
   /**
    * @brief The `GeoJsonGeometryObject` associated with this Feature, if any.
    */
-  std::optional<GeoJsonGeometryObject> geometry;
+  std::unique_ptr<GeoJsonObject> geometry;
 
   /**
    * @brief The set of additional properties specified on this Feature, if any.
@@ -381,23 +353,6 @@ using GeoJsonObjectVariant = std::variant<
  * @brief A wrapper around an object in a GeoJSON document.
  */
 struct GeoJsonObject {
-  /**
-   * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
-   *
-   * All geometry objects are also valid objects, but not all objects are valid
-   * geometry objects.
-   */
-  static GeoJsonObject
-  fromGeometryObject(const GeoJsonGeometryObject& geometry);
-
-  /**
-   * @brief Converts a \ref GeoJsonGeometryObject to a \ref GeoJsonObject.
-   *
-   * All geometry objects are also valid objects, but not all objects are valid
-   * geometry objects.
-   */
-  static GeoJsonObject fromGeometryObject(GeoJsonGeometryObject&& geometry);
-
   /**
    * @brief Returns the \ref GeoJsonObjectType that this \ref GeoJsonObject is
    * wrapping.

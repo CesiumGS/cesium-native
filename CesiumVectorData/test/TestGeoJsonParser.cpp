@@ -635,7 +635,7 @@ TEST_CASE("Parsing Feature") {
                                           {"b", JsonValue(false)},
                                           {"c", JsonValue("3")}});
           const GeoJsonLineString* pLineString =
-              std::get_if<GeoJsonLineString>(&pFeature->geometry.value().value);
+              std::get_if<GeoJsonLineString>(&pFeature->geometry->value);
           REQUIRE(pLineString);
           REQUIRE(pLineString->TYPE == GeoJsonObjectType::LineString);
           const std::vector<Cartographic>& points = pLineString->coordinates;
@@ -702,7 +702,7 @@ TEST_CASE("Parsing FeatureCollection") {
           REQUIRE(pFeatureCollection->features.size() == 1);
           CHECK(pFeatureCollection->features[0].properties == std::nullopt);
           const GeoJsonPoint* pPoint = std::get_if<GeoJsonPoint>(
-              &pFeatureCollection->features[0].geometry.value().value);
+              &pFeatureCollection->features[0].geometry->value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::Point);
           CHECK(pPoint->coordinates == Cartographic::fromDegrees(1, 2, 3));
