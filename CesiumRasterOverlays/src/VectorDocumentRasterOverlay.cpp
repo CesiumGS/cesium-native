@@ -5,22 +5,26 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/VectorDocumentRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumVectorData/Color.h>
+#include <CesiumUtility/Result.h>
+#include <CesiumUtility/joinToString.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
+#include <fmt/format.h>
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
@@ -31,7 +35,6 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -44,7 +47,7 @@ using namespace CesiumVectorData;
 namespace CesiumRasterOverlays {
 
 namespace {
-struct QuadtreePrimitiveData {
+struct QuadtreeGeometryData {
   const GeoJsonObject* pObject;
   const VectorStyle* pStyle;
   GlobeRectangle rectangle;
@@ -65,7 +68,7 @@ struct Quadtree {
   GlobeRectangle rectangle = GlobeRectangle::EMPTY;
   uint32_t rootId = 0;
   std::vector<QuadtreeNode> nodes;
-  std::vector<QuadtreePrimitiveData> data;
+  std::vector<QuadtreeGeometryData> data;
   std::vector<uint32_t> dataIndices;
   std::vector<uint32_t> dataNodeIndicesBegin;
 };
@@ -120,12 +123,12 @@ struct GeoJsonObjectStyleVisitor {
 
 void addPrimitivesToData(
     const GeoJsonObject* geoJsonObject,
-    std::vector<QuadtreePrimitiveData>& data,
+    std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
     const VectorStyle& style);
 
 struct GeoJsonChildVisitor {
-  std::vector<QuadtreePrimitiveData>& data;
+  std::vector<QuadtreeGeometryData>& data;
   BoundingRegionBuilder& documentRegionBuilder;
   const VectorStyle& style;
 
@@ -180,7 +183,7 @@ struct GeoJsonChildVisitor {
 
 void addPrimitivesToData(
     const GeoJsonObject* geoJsonObject,
-    std::vector<QuadtreePrimitiveData>& data,
+    std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
     const VectorStyle& style) {
   BoundingRegionBuilder thisBuilder;
@@ -188,9 +191,10 @@ void addPrimitivesToData(
       GlobeRectangleFromObjectVisitor{thisBuilder},
       geoJsonObject->value);
   GlobeRectangle rect = thisBuilder.toGlobeRectangle();
-  data.emplace_back(geoJsonObject, &style, std::move(rect));
   documentRegionBuilder.expandToIncludePosition(rect.getSouthwest());
   documentRegionBuilder.expandToIncludePosition(rect.getNortheast());
+  data.emplace_back(
+      QuadtreeGeometryData{geoJsonObject, &style, std::move(rect)});
 
   std::visit(
       GeoJsonChildVisitor{data, documentRegionBuilder, style},
@@ -306,7 +310,7 @@ Quadtree buildQuadtree(
     const IntrusivePointer<GeoJsonDocument>& document,
     const VectorStyle& defaultStyle) {
   BoundingRegionBuilder builder;
-  std::vector<QuadtreePrimitiveData> data;
+  std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
       std::visit(GeoJsonObjectStyleVisitor{}, document->getRootObject().value);
   addPrimitivesToData(
@@ -361,7 +365,7 @@ void rasterizeQuadtreeNode(
         continue;
       }
       primitivesRendered[dataIdx] = true;
-      const QuadtreePrimitiveData& data = tree.data[dataIdx];
+      const QuadtreeGeometryData& data = tree.data[dataIdx];
       rasterizer.drawGeoJsonObject(data.pObject, *data.pStyle);
     }
   } else {
@@ -554,9 +558,12 @@ private:
       void operator()(GeoJsonFeatureCollection& o) { o.style = style; }
       void operator()(GeoJsonGeometryCollection& o) { o.style = style; }
     };
-    const std::optional<VectorStyle>& style =
-        (*this->_styleCallback)(this->_document, pObject);
-    std::visit(SetStyleVisitor{style}, pObject->value);
+
+    if (this->_styleCallback) {
+      const std::optional<VectorStyle>& style =
+          (*this->_styleCallback)(this->_document, pObject);
+      std::visit(SetStyleVisitor{style}, pObject->value);
+    }
 
     struct RecomputeChildStylesVisitor {
       VectorDocumentRasterOverlayTileProvider* pThis;

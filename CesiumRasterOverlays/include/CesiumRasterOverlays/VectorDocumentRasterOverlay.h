@@ -36,7 +36,7 @@ using VectorDocumentRasterOverlayStyleCallback = std::function<std::optional<
 struct VectorDocumentRasterOverlayOptions {
   /**
    * @brief The default style to use when no style is otherwise specified on a
-   * \ref VectorNode.
+   * \ref GeoJsonObject.
    */
   CesiumVectorData::VectorStyle defaultStyle;
 
@@ -83,7 +83,7 @@ using VectorDocumentRasterOverlaySource = std::variant<
 
 /**
  * @brief A raster overlay made from rasterizing a \ref
- * CesiumVectorData::VectorDocument.
+ * CesiumVectorData::GeoJsonDocument.
  */
 class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlay final
     : public RasterOverlay {

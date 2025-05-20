@@ -1,6 +1,8 @@
 #include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorStyle.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <random>
 
 namespace CesiumVectorData {

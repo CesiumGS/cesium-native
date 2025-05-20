@@ -1,5 +1,6 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
@@ -15,7 +16,6 @@
 #include <blend2d/context.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
-#include <blend2d/gradient.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
 

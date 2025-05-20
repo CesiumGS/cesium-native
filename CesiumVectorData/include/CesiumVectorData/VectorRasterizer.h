@@ -47,7 +47,7 @@ public:
           CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
-   * @brief Draws a \ref CartographicPolygon to the canvas.
+   * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.
    *
    * @param polygon The polygon to draw.
    * @param style The \ref VectorStyle to use when drawing the polygon.
