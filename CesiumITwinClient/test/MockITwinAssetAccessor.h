@@ -13,12 +13,13 @@
 #include <memory>
 
 std::string randomStringOfLen(size_t len);
-std::string generateAuthToken();
+std::string generateAuthToken(bool isAccessToken);
 
 class MockITwinAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
-  MockITwinAssetAccessor()
-      : authToken(generateAuthToken()), refreshToken(randomStringOfLen(42)) {}
+  MockITwinAssetAccessor(bool isAccessToken)
+      : authToken(generateAuthToken(isAccessToken)),
+        refreshToken(randomStringOfLen(42)) {}
 
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   get(const CesiumAsync::AsyncSystem& asyncSystem,
