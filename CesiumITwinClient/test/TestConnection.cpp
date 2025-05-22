@@ -1,4 +1,5 @@
 #include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumVectorData/GeoJsonObject.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -10,7 +11,7 @@
 #include <CesiumITwinClient/GeospatialFeatureCollection.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumUtility/Result.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 
 #include <doctest/doctest.h>
 
@@ -92,18 +93,18 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
   IntrusivePointer<Connection> pConn = createConnection(asyncSystem, false);
 
   SUBCASE("Returns correct results") {
-    CesiumAsync::Future<Result<PagedList<CesiumVectorData::VectorNode>>>
+    CesiumAsync::Future<Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
         future = pConn->geospatialFeatures(
             "00000000-0000-0000-0000-000000000000",
             "00000000-0000-0000-0000-000000000000",
             10);
-    Result<PagedList<CesiumVectorData::VectorNode>> featuresResult =
+    Result<PagedList<CesiumVectorData::GeoJsonFeature>> featuresResult =
         future.waitInMainThread();
 
     REQUIRE(featuresResult.value);
     CHECK(!featuresResult.errors.hasErrors());
 
-    PagedList<CesiumVectorData::VectorNode>& list = *featuresResult.value;
+    PagedList<CesiumVectorData::GeoJsonFeature>& list = *featuresResult.value;
     CHECK(list.size() == 10);
     const int64_t* pId = std::get_if<int64_t>(&list[5].id);
     REQUIRE(pId);
@@ -113,17 +114,15 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
     CHECK((*list[5].properties)["type"].isString());
     CHECK((*list[5].properties)["type"].getString() == "Lamp_post");
 
-    REQUIRE(!list[5].children.empty());
-    CHECK(!list[5].children[0].primitives.empty());
-    const CesiumGeospatial::Cartographic* pCartographic =
-        std::get_if<CesiumGeospatial::Cartographic>(
-            &list[5].children[0].primitives[0]);
-    REQUIRE(pCartographic);
+    REQUIRE(list[5].geometry);
+    CesiumVectorData::GeoJsonPoint* pPoint =
+        std::get_if<CesiumVectorData::GeoJsonPoint>(&list[5].geometry->value);
+    REQUIRE(pPoint);
     CHECK(
-        *pCartographic == CesiumGeospatial::Cartographic::fromDegrees(
-                              103.839238468,
-                              1.348559984,
-                              7.813700195));
+        pPoint->coordinates == CesiumGeospatial::Cartographic::fromDegrees(
+                                   103.839238468,
+                                   1.348559984,
+                                   7.813700195));
   }
 }
 
