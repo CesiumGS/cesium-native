@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `diff` method to `TreeTraversalState`.
+
 ### v0.48.0 - 2025-06-02
 
 ##### Breaking Changes :mega:
