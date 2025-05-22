@@ -924,14 +924,18 @@ void scaleWaterMask(
         waterMaskScale * (childID.tileID.y % 2);
   }
 
-  primitive.extras.emplace("OnlyWater", onlyWater);
-  primitive.extras.emplace("OnlyLand", onlyLand);
+  primitive.extras.insert_or_assign("OnlyWater", onlyWater);
+  primitive.extras.insert_or_assign("OnlyLand", onlyLand);
 
-  primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
+  primitive.extras.insert_or_assign("WaterMaskTex", waterMaskTextureId);
 
-  primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
-  primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
-  primitive.extras.emplace("WaterMaskScale", waterMaskScale);
+  primitive.extras.insert_or_assign(
+      "WaterMaskTranslationX",
+      waterMaskTranslationX);
+  primitive.extras.insert_or_assign(
+      "WaterMaskTranslationY",
+      waterMaskTranslationY);
+  primitive.extras.insert_or_assign("WaterMaskScale", waterMaskScale);
 }
 
 bool upsamplePointsPrimitiveForRasterOverlays(
@@ -1026,19 +1030,20 @@ bool upsamplePointsPrimitiveForRasterOverlays(
 
     vertexSizeFloats += accessorComponentElements;
 
-    attributes.push_back(FloatVertexAttribute{
-        buffer.cesium.data,
-        bufferView.byteOffset + accessor.byteOffset,
-        accessorByteStride,
-        accessorComponentElements,
-        attribute.second,
-        std::vector<double>(
-            static_cast<size_t>(accessorComponentElements),
-            std::numeric_limits<double>::max()),
-        std::vector<double>(
-            static_cast<size_t>(accessorComponentElements),
-            std::numeric_limits<double>::lowest()),
-    });
+    attributes.push_back(
+        FloatVertexAttribute{
+            buffer.cesium.data,
+            bufferView.byteOffset + accessor.byteOffset,
+            accessorByteStride,
+            accessorComponentElements,
+            attribute.second,
+            std::vector<double>(
+                static_cast<size_t>(accessorComponentElements),
+                std::numeric_limits<double>::max()),
+            std::vector<double>(
+                static_cast<size_t>(accessorComponentElements),
+                std::numeric_limits<double>::lowest()),
+        });
   }
 
   if (uvAccessorIndex == -1) {
@@ -1216,19 +1221,20 @@ bool upsampleTrianglesPrimitiveForRasterOverlays(
 
     vertexSizeFloats += accessorComponentElements;
 
-    attributes.push_back(FloatVertexAttribute{
-        buffer.cesium.data,
-        bufferView.byteOffset + accessor.byteOffset,
-        accessorByteStride,
-        accessorComponentElements,
-        attribute.second,
-        std::vector<double>(
-            static_cast<size_t>(accessorComponentElements),
-            std::numeric_limits<double>::max()),
-        std::vector<double>(
-            static_cast<size_t>(accessorComponentElements),
-            std::numeric_limits<double>::lowest()),
-    });
+    attributes.push_back(
+        FloatVertexAttribute{
+            buffer.cesium.data,
+            bufferView.byteOffset + accessor.byteOffset,
+            accessorByteStride,
+            accessorComponentElements,
+            attribute.second,
+            std::vector<double>(
+                static_cast<size_t>(accessorComponentElements),
+                std::numeric_limits<double>::max()),
+            std::vector<double>(
+                static_cast<size_t>(accessorComponentElements),
+                std::numeric_limits<double>::lowest()),
+        });
 
     // get position to be used to create skirts later
     if (attribute.first == "POSITION") {
