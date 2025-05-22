@@ -1103,9 +1103,8 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
     CHECK(it->second.getDouble() == 0.5);
   }
 
-  SUBCASE(
-      "Check water mask properties come through when there is also skirt "
-      "metadata") {
+  SUBCASE("Check water mask properties come through when there is also skirt "
+          "metadata") {
     double skirtHeight = 12.0;
     SkirtMeshMetadata skirtMeshMetadata;
     skirtMeshMetadata.noSkirtIndicesBegin = 0;
