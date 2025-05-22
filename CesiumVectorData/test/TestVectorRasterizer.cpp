@@ -182,19 +182,19 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     VectorRasterizer rasterizer(rect, asset);
 
-    CompositeCartographicPolygon composite(std::vector<CartographicPolygon>{
-        std::vector<glm::dvec2>{
-            glm::dvec2(0.25, 0.25),
-            glm::dvec2(0.25, 0.75),
-            glm::dvec2(0.75, 0.75),
-            glm::dvec2(0.75, 0.25),
-            glm::dvec2(0.25, 0.25)},
-        std::vector<glm::dvec2>{
-            glm::dvec2(0.4, 0.4),
-            glm::dvec2(0.4, 0.6),
-            glm::dvec2(0.6, 0.6),
-            glm::dvec2(0.6, 0.4),
-            glm::dvec2(0.4, 0.4)}});
+    std::vector<std::vector<Cartographic>> composite{
+        std::vector<Cartographic>{
+            Cartographic(0.25, 0.25),
+            Cartographic(0.75, 0.25),
+            Cartographic(0.75, 0.75),
+            Cartographic(0.25, 0.75),
+            Cartographic(0.25, 0.25)},
+        std::vector<Cartographic>{
+            Cartographic(0.4, 0.4),
+            Cartographic(0.4, 0.6),
+            Cartographic(0.6, 0.6),
+            Cartographic(0.6, 0.4),
+            Cartographic(0.4, 0.4)}};
 
     rasterizer.drawPolygon(
         composite,

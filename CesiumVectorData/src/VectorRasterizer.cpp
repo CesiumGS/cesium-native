@@ -1,12 +1,12 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
 
@@ -16,7 +16,6 @@
 #include <blend2d/context.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
-#include <blend2d/gradient.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
 
@@ -99,18 +98,18 @@ VectorRasterizer::VectorRasterizer(
 }
 
 void VectorRasterizer::drawPolygon(
-    const CartographicPolygon& polygon,
+    const CesiumGeospatial::CartographicPolygon& polygon,
     const VectorStyle& style) {
-  if (_finalized) {
+  if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
     return;
   }
 
   std::vector<BLPoint> vertices;
   vertices.reserve(polygon.getVertices().size());
 
-  for (const glm::dvec2& vertex : polygon.getVertices()) {
+  for (const glm::dvec2& pos : polygon.getVertices()) {
     vertices.emplace_back(
-        radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
+        radiansToPoint(pos.x, pos.y, this->_bounds, this->_context));
   }
 
   if (style.polygon.fill) {
@@ -130,18 +129,24 @@ void VectorRasterizer::drawPolygon(
 }
 
 void VectorRasterizer::drawPolygon(
-    const CompositeCartographicPolygon& polygon,
+    const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
     const VectorStyle& style) {
   if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
     return;
   }
 
   std::vector<BLPoint> vertices;
-  vertices.reserve(polygon.getWoundVertices().size());
+  vertices.reserve(polygon.size());
 
-  for (const glm::dvec2& vertex : polygon.getWoundVertices()) {
-    vertices.emplace_back(
-        radiansToPoint(vertex.x, vertex.y, this->_bounds, this->_context));
+  for (const std::vector<Cartographic>& ring : polygon) {
+    // GeoJSON polygons have the reverse winding order from blend2D
+    for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
+      vertices.emplace_back(radiansToPoint(
+          it->longitude,
+          it->latitude,
+          this->_bounds,
+          this->_context));
+    }
   }
 
   if (style.polygon.fill) {
@@ -198,22 +203,37 @@ void VectorRasterizer::drawPolyline(
       BLRgba32(style.line.getColor().toRgba32()));
 }
 
-void VectorRasterizer::drawPrimitive(
-    const VectorPrimitive& primitive,
+void VectorRasterizer::drawGeoJsonObject(
+    const GeoJsonObject* geoJsonObject,
     const VectorStyle& style) {
   struct PrimitiveDrawVisitor {
     VectorRasterizer& rasterizer;
     const VectorStyle& style;
-    void operator()(const Cartographic& /*point*/) {}
-    void operator()(const std::vector<Cartographic>& points) {
-      rasterizer.drawPolyline(points, style);
+    void operator()(const GeoJsonLineString& line) {
+      rasterizer.drawPolyline(line.coordinates, style);
     }
-    void operator()(const CompositeCartographicPolygon& polygon) {
-      rasterizer.drawPolygon(polygon, style);
+    void operator()(const GeoJsonMultiLineString& lines) {
+      for (const std::vector<Cartographic>& line : lines.coordinates) {
+        rasterizer.drawPolyline(line, style);
+      }
     }
+    void operator()(const GeoJsonPolygon& polygon) {
+      rasterizer.drawPolygon(polygon.coordinates, style);
+    }
+    void operator()(const GeoJsonMultiPolygon& polygons) {
+      for (const std::vector<std::vector<Cartographic>>& polygon :
+           polygons.coordinates) {
+        rasterizer.drawPolygon(polygon, style);
+      }
+    }
+    void operator()(const GeoJsonPoint& /*catchAll*/) {}
+    void operator()(const GeoJsonMultiPoint& /*catchAll*/) {}
+    void operator()(const GeoJsonFeature& /*catchAll*/) {}
+    void operator()(const GeoJsonFeatureCollection& /*catchAll*/) {}
+    void operator()(const GeoJsonGeometryCollection& /*catchAll*/) {}
   };
 
-  std::visit(PrimitiveDrawVisitor{*this, style}, primitive);
+  std::visit(PrimitiveDrawVisitor{*this, style}, geoJsonObject->value);
 }
 
 void VectorRasterizer::clear(const Color& clearColor) {

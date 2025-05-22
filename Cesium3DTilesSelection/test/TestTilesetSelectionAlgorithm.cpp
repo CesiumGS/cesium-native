@@ -1742,12 +1742,11 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CHECK(updateResult.tilesToRenderThisFrame.size() == 4);
 
   // Zoom way out
-  std::optional<Cartographic> position = viewState.getPositionCartographic();
-  REQUIRE(position);
-  position->height += 100000;
+  glm::dvec3 position =
+      viewState.getPosition() - 100000.0 * viewState.getDirection();
 
   ViewState zoomedOut = ViewState(
-      Ellipsoid::WGS84.cartographicToCartesian(*position),
+      position,
       viewState.getDirection(),
       viewState.getUp(),
       viewState.getViewportSize(),

@@ -31,6 +31,13 @@ struct ColorStyle {
   /** @brief The color mode to be used. */
   ColorMode colorMode = ColorMode::Normal;
 
+  /**
+   * @brief Obtains the color specified on this `ColorStyle`.
+   *
+   * For `ColorMode::Normal`, this just returns the value of `color`. For
+   * `ColorMode::Random`, this returns a randomized value obtained based on
+   * the rules described in \ref ColorMode.
+   */
   Color getColor() const;
 };
 

@@ -1,16 +1,17 @@
 #pragma once
 
+#include "CesiumGeospatial/Cartographic.h"
 #include "Color.h"
 #include "VectorStyle.h"
 
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumUtility/ReferenceCounted.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 
 #include <blend2d.h>
 #include <blend2d/context.h>
@@ -56,18 +57,16 @@ public:
       const VectorStyle& style);
 
   /**
-   * @brief Draws a \ref CesiumGeospatial::CompositeCartographicPolygon to the
-   * canvas.
+   * @brief Draws a set of linear rings representing a polygon and its holes to
+   * the canvas.
    *
-   * Support for the CompositeCartographicPolygon is limited at the moment.
-   * Polygons with holes will rasterize incorrectly.
-   *
-   * @param polygon The composite polygon to draw.
-   * @param style The \ref VectorStyle to use when drawing the composite
-   * polygon.
+   * @param polygon The polygon to draw. It is assumed to have right-hand
+   * winding order (exterior rings are counterclockwise, holes are clockwise) as
+   * is the case in GeoJSON.
+   * @param style The \ref VectorStyle to use when drawing the polygon.
    */
   void drawPolygon(
-      const CesiumGeospatial::CompositeCartographicPolygon& polygon,
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
       const VectorStyle& style);
 
   /**
@@ -81,16 +80,17 @@ public:
       const VectorStyle& style);
 
   /**
-   * @brief Rasterizes the provided `VectorPrimitive` to the canvas.
+   * @brief Rasterizes the provided `GeoJsonObject` to the canvas.
    *
    * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
    * to calls to `drawPolyline`. Points are currently not drawn.
    *
-   * @param primitive The primitive to draw.
-   * @param style The \ref VectorStyle to use when drawing the primitive.
+   * @param geoJsonObject The GeoJSON object to draw.
+   * @param style The \ref VectorStyle to use when drawing the object.
    */
-  void
-  drawPrimitive(const VectorPrimitive& primitive, const VectorStyle& style);
+  void drawGeoJsonObject(
+      const GeoJsonObject* geoJsonObject,
+      const VectorStyle& style);
 
   /**
    * @brief Fills the entire canvas with the given color.
