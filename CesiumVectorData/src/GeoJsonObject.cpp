@@ -59,6 +59,7 @@ GeoJsonObjectType GeoJsonObject::getType() const {
 
   return std::visit(GeoJsonObjectTypeVisitor{}, this->value);
 }
+
 GeoJsonFeature::GeoJsonFeature(GeoJsonFeature&& rhs) noexcept
     : id(std::move(rhs.id)),
       geometry(std::move(rhs.geometry)),
@@ -66,54 +67,7 @@ GeoJsonFeature::GeoJsonFeature(GeoJsonFeature&& rhs) noexcept
       boundingBox(std::move(rhs.boundingBox)),
       foreignMembers(std::move(rhs.foreignMembers)),
       style(std::move(rhs.style)) {}
-
-namespace {
-struct CopyConstructorVisitor {
-  GeoJsonObjectVariant operator()(const GeoJsonPoint& rhs) { return rhs; }
-  GeoJsonObjectVariant operator()(const GeoJsonMultiPoint& rhs) { return rhs; }
-  GeoJsonObjectVariant operator()(const GeoJsonLineString& rhs) { return rhs; }
-  GeoJsonObjectVariant operator()(const GeoJsonMultiLineString& rhs) {
-    return rhs;
-  }
-  GeoJsonObjectVariant operator()(const GeoJsonPolygon& rhs) { return rhs; }
-  GeoJsonObjectVariant operator()(const GeoJsonMultiPolygon& rhs) {
-    return rhs;
-  }
-  GeoJsonObjectVariant operator()(const GeoJsonGeometryCollection& rhs) {
-    return rhs;
-  }
-  GeoJsonObjectVariant operator()(const GeoJsonFeature& rhs) { return rhs; }
-  GeoJsonObjectVariant operator()(const GeoJsonFeatureCollection& rhs) {
-    return rhs;
-  }
-};
-struct MoveConstructorVisitor {
-  GeoJsonObjectVariant operator()(GeoJsonPoint&& rhs) { return std::move(rhs); }
-  GeoJsonObjectVariant operator()(GeoJsonMultiPoint&& rhs) {
-    return std::move(rhs);
-  }
-  GeoJsonObjectVariant operator()(GeoJsonLineString&& rhs) {
-    return std::move(rhs);
-  }
-  GeoJsonObjectVariant operator()(GeoJsonMultiLineString&& rhs) {
-    return std::move(rhs);
-  }
-  GeoJsonObjectVariant operator()(GeoJsonPolygon&& rhs) { return rhs; }
-  GeoJsonObjectVariant operator()(GeoJsonMultiPolygon&& rhs) {
-    return std::move(rhs);
-  }
-  GeoJsonObjectVariant operator()(GeoJsonGeometryCollection&& rhs) {
-    return std::move(rhs);
-  }
-  GeoJsonObjectVariant operator()(GeoJsonFeature&& rhs) {
-    return std::move(rhs);
-  }
-  GeoJsonObjectVariant operator()(GeoJsonFeatureCollection&& rhs) {
-    return std::move(rhs);
-  }
-};
-} // namespace
-
+    
 GeoJsonFeature::GeoJsonFeature(const GeoJsonFeature& rhs)
     : id(rhs.id),
       geometry(std::make_unique<GeoJsonObject>(*rhs.geometry)),
