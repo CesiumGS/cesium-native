@@ -1,5 +1,7 @@
 #pragma once
 
+#include <CesiumUtility/JsonValue.h>
+
 #include <glm/fwd.hpp>
 #include <rapidjson/fwd.h>
 
@@ -53,6 +55,22 @@ public:
       const rapidjson::Value& json,
       int32_t expectedSize,
       const std::string& key);
+
+  /**
+   * @brief Obtains an array of numbers from the given JSON.
+   *
+   * If the property is not an array, or contains
+   * elements that are not numbers, then `std::nullopt` is returned.
+   *
+   * If the given expected size is not negative, and the actual size of the
+   * array does not match the expected size, then `nullopt` is returned.
+   *
+   * @param json The JSON array.
+   * @param expectedSize The expected size of the array.
+   * @return The array, or `nullopt`.
+   */
+  static std::optional<std::vector<double>>
+  getDoubles(const rapidjson::Value& json, int32_t expectedSize);
 
   /**
    * @brief Attempts to obtain a string from the given key on the JSON object,
@@ -241,6 +259,13 @@ public:
    */
   static std::vector<int64_t>
   getInt64s(const rapidjson::Value& json, const std::string& key);
+
+  /**
+   * @brief Converts a `rapidjson::Value` to a `CesiumUtility::JsonValue` type.
+   *
+   * @param json The RapidJSON value to convert.
+   */
+  static JsonValue toJsonValue(const rapidjson::Value& json);
 };
 
 } // namespace CesiumUtility

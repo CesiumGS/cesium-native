@@ -11,6 +11,7 @@
 ##### Additions :tada:
 
 - Added `SubtreeWriter::writeSubtreeBinary`.
+- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 
 ##### Fixes :wrench:
 
