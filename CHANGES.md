@@ -16,6 +16,7 @@
 
 - Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
 - Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
+- Fixed a bug where `TilesetContentLoaderResult` would drop its `statusCode` between `std::move`s due to its omission in the move constructor.
 
 ### v0.47.0 - 2025-05-01
 
