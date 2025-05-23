@@ -75,34 +75,34 @@ struct Quadtree {
 
 struct GlobeRectangleFromObjectVisitor {
   BoundingRegionBuilder& builder;
-  void operator()(GeoJsonPoint& point) {
+  void operator()(const GeoJsonPoint& point) {
     builder.expandToIncludePosition(point.coordinates);
   }
-  void operator()(GeoJsonMultiPoint& points) {
+  void operator()(const GeoJsonMultiPoint& points) {
     for (const Cartographic& point : points.coordinates) {
       builder.expandToIncludePosition(point);
     }
   }
-  void operator()(GeoJsonLineString& line) {
+  void operator()(const GeoJsonLineString& line) {
     for (const Cartographic& point : line.coordinates) {
       builder.expandToIncludePosition(point);
     }
   }
-  void operator()(GeoJsonMultiLineString& lines) {
+  void operator()(const GeoJsonMultiLineString& lines) {
     for (const std::vector<Cartographic>& line : lines.coordinates) {
       for (const Cartographic& point : line) {
         builder.expandToIncludePosition(point);
       }
     }
   }
-  void operator()(GeoJsonPolygon& polygon) {
+  void operator()(const GeoJsonPolygon& polygon) {
     for (const std::vector<Cartographic>& ring : polygon.coordinates) {
       for (const Cartographic& point : ring) {
         builder.expandToIncludePosition(point);
       }
     }
   }
-  void operator()(GeoJsonMultiPolygon& polygons) {
+  void operator()(const GeoJsonMultiPolygon& polygons) {
     for (const std::vector<std::vector<Cartographic>>& polygon :
          polygons.coordinates) {
       for (const std::vector<Cartographic>& ring : polygon) {
@@ -112,7 +112,9 @@ struct GlobeRectangleFromObjectVisitor {
       }
     }
   }
-  void operator()(auto& /*catchAll*/) {}
+  void operator()(const GeoJsonFeature&) {}
+  void operator()(const GeoJsonFeatureCollection&) {}
+  void operator()(const GeoJsonGeometryCollection&) {}
 };
 
 struct GeoJsonObjectStyleVisitor {
