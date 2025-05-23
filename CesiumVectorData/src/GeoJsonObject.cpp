@@ -67,7 +67,7 @@ GeoJsonFeature::GeoJsonFeature(GeoJsonFeature&& rhs) noexcept
       boundingBox(std::move(rhs.boundingBox)),
       foreignMembers(std::move(rhs.foreignMembers)),
       style(std::move(rhs.style)) {}
-    
+
 GeoJsonFeature::GeoJsonFeature(const GeoJsonFeature& rhs)
     : id(rhs.id),
       geometry(std::make_unique<GeoJsonObject>(*rhs.geometry)),

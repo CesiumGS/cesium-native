@@ -81,7 +81,7 @@ struct ITwinRealityData {
    * @brief Contains the rectangular area on the Earth which encloses the
    * reality data.
    */
-  CesiumGeospatial::GlobeRectangle extent;
+  CesiumGeospatial::GlobeRectangle extent = {0, 0, 0, 0};
   /**
    * @brief A boolean value that is true if the data is being created. It is
    * false if the data has been completely uploaded.

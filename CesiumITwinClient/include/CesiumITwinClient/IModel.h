@@ -49,6 +49,6 @@ struct IModel {
   /**
    * @brief The maximum rectangular area on the Earth which encloses the iModel.
    */
-  CesiumGeospatial::GlobeRectangle extent;
+  CesiumGeospatial::GlobeRectangle extent = {0, 0, 0, 0};
 };
 }; // namespace CesiumITwinClient
