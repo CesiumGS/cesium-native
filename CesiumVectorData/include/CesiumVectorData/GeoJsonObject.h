@@ -303,6 +303,19 @@ struct GeoJsonGeometryCollection {
  * is a collection of information that is possibly linked to a geometry object.
  */
 struct GeoJsonFeature {
+  GeoJsonFeature() = default;
+  GeoJsonFeature(GeoJsonFeature&& rhs) noexcept;
+  GeoJsonFeature(const GeoJsonFeature& rhs);
+  GeoJsonFeature(
+      std::variant<std::monostate, std::string, int64_t> id_,
+      std::unique_ptr<GeoJsonObject>&& geometry_,
+      std::optional<CesiumUtility::JsonValue::Object>&& properties_,
+      std::optional<CesiumGeospatial::BoundingRegion>&& boundingBox_,
+      CesiumUtility::JsonValue::Object&& foreignMembers_,
+      std::optional<CesiumVectorData::VectorStyle>&& style_);
+  GeoJsonFeature& operator=(const GeoJsonFeature& rhs);
+  GeoJsonFeature& operator=(GeoJsonFeature&& rhs) noexcept;
+
   /** @brief The `GeoJsonObjectType` for a Feature. */
   static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Feature;
 

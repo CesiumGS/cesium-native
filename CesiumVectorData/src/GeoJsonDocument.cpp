@@ -299,15 +299,16 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
     return Result<GeoJsonObject>(
         GeoJsonObject{GeoJsonFeature{
-            id,
+            std::move(id),
             std::move(geometry),
-            properties,
-            boundingBox,
+            std::move(properties),
+            std::move(boundingBox),
             collectForeignMembers(
                 obj,
                 [](const std::string& k) {
                   return k == "id" || k == "geometry" || k == "properties";
-                })}},
+                }),
+            std::nullopt}},
         errorList);
   } else if (type == "FeatureCollection") {
     // Feature collection contains zero or more features

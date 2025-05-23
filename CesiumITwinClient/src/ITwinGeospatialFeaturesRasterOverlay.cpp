@@ -1,10 +1,11 @@
+#include "CesiumVectorData/GeoJsonObject.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/CompositeCartographicPolygon.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
@@ -18,8 +19,8 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
-#include <CesiumVectorData/VectorDocument.h>
-#include <CesiumVectorData/VectorNode.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
 
@@ -73,15 +74,16 @@ ITwinGeospatialFeaturesRasterOverlay::createTileProvider(
 
   return this->_pConnection
       ->geospatialFeatures(this->_iTwinId, this->_collectionId)
-      .thenInWorkerThread([asyncSystem, pConnection = this->_pConnection](
-                              Result<PagedList<VectorNode>>&& result) mutable {
-        if (!result.value) {
-          return asyncSystem.createResolvedFuture(
-              Result<std::vector<VectorNode>>(result.errors));
-        }
+      .thenInWorkerThread(
+          [asyncSystem, pConnection = this->_pConnection](
+              Result<PagedList<GeoJsonFeature>>&& result) mutable {
+            if (!result.value) {
+              return asyncSystem.createResolvedFuture(
+                  Result<std::vector<GeoJsonFeature>>(result.errors));
+            }
 
-        return result.value->allAfter(asyncSystem, pConnection);
-      })
+            return result.value->allAfter(asyncSystem, pConnection);
+          })
       .thenInWorkerThread(
           [asyncSystem,
            name = this->getName(),
@@ -91,7 +93,7 @@ ITwinGeospatialFeaturesRasterOverlay::createTileProvider(
            pCreditSystem,
            pPrepareRendererResources,
            pLogger,
-           pOwner](Result<std::vector<VectorNode>>&& result)
+           pOwner](Result<std::vector<GeoJsonFeature>>&& result)
               -> CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> {
             if (!result.value) {
               return asyncSystem.createResolvedFuture<
@@ -106,11 +108,14 @@ ITwinGeospatialFeaturesRasterOverlay::createTileProvider(
                               ", "))}));
             }
 
-            IntrusivePointer<VectorDocument> pDocument;
+            IntrusivePointer<GeoJsonDocument> pDocument;
             pDocument.emplace(
-                VectorNode{},
+                GeoJsonObject{GeoJsonFeatureCollection{
+                    std::move(*result.value),
+                    std::nullopt,
+                    {},
+                    std::nullopt}},
                 std::vector<VectorDocumentAttribution>{});
-            pDocument->getRootNode().children = std::move(*result.value);
             VectorDocumentRasterOverlay vectorOverlay(
                 name,
                 pDocument,

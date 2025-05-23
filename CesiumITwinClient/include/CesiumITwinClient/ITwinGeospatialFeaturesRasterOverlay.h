@@ -11,7 +11,7 @@
 #include <CesiumRasterOverlays/VectorDocumentRasterOverlay.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/Color.h>
-#include <CesiumVectorData/VectorDocument.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/VectorStyle.h>
 
 #include <spdlog/fwd.h>
