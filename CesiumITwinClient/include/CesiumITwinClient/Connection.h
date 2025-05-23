@@ -2,7 +2,6 @@
 
 #include "AuthenticationToken.h"
 #include "CesiumCuratedContent.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumUtility/IntrusivePointer.h"
 #include "CesiumUtility/ReferenceCounted.h"
 #include "CesiumVectorData/GeoJsonObject.h"
@@ -245,6 +244,7 @@ public:
    * JWT access or share token.
    */
   const AuthenticationToken& getAuthToken() const { return _authToken; }
+
   /**
    * @brief Sets the access or share token that will be used for API calls.
    *
@@ -260,6 +260,7 @@ public:
   const std::optional<std::string>& getRefreshToken() const {
     return _refreshToken;
   }
+
   /**
    * @brief Sets the refresh token used to obtain new access tokens, if any.
    */

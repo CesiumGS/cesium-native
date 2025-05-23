@@ -2,20 +2,33 @@
 
 ### v0.48.0 - 2025-06-02
 
+<<<<<<< HEAD
 ##### Breaking Changes :mega:
 
 - Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
 - `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
 - `Cesium3DTilesSelection::Tile` constructors that take initially empty or external content now also require a `TileID` to be supplied.
 
+=======
+>>>>>>> bb13b045973545ee2f1181d9703f88025e98f79b
 ##### Additions :tada:
 
-- Added `SubtreeWriter::writeSubtreeBinary`.
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+<<<<<<< HEAD
 - Added `VectorDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
+=======
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+- Added support for building in `vcpkg` manifest mode.
+- Added `SubtreeWriter::writeSubtreeBinary`.
+- 
+##### Breaking Changes :mega:
+
+- Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
+- `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
+>>>>>>> bb13b045973545ee2f1181d9703f88025e98f79b
 
 ##### Fixes :wrench:
 

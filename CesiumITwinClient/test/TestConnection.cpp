@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 #include "CesiumUtility/IntrusivePointer.h"
+=======
+>>>>>>> bb13b045973545ee2f1181d9703f88025e98f79b
 #include "CesiumVectorData/GeoJsonObject.h"
 #include "MockITwinAssetAccessor.h"
 
