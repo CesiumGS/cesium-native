@@ -146,6 +146,72 @@ std::string_view Uri::getPath() const {
   return this->_url->get_pathname();
 }
 
+std::string_view Uri::getFileName() const {
+  if (!this->isValid()) {
+    return {};
+  }
+
+  uint32_t pathLength = this->_url->get_pathname_length();
+  // If the pathname is empty or just "/", there's no filename.
+  if (pathLength <= 1) {
+    return {};
+  }
+
+  const std::string_view path = this->_url->get_pathname();
+  const uint32_t end = pathLength - 1;
+  for (uint32_t i = end; i >= 0; i--) {
+    if (path[i] != '/') {
+      continue;
+    }
+
+    // Last char of pathname is '/', so no filename
+    if (i == end) {
+      return {};
+    }
+
+    return path.substr(i + 1, end - i);
+  }
+
+  // If we've gotten this far, the whole pathname is the filename
+  return path;
+}
+
+std::string_view Uri::getStem() const {
+  const std::string_view filename = this->getFileName();
+  if (filename.empty()) {
+    return {};
+  }
+
+  const size_t end = filename.size() - 1;
+  for (size_t i = end; i >= 0; i--) {
+    if (filename[i] == '.') {
+      return filename.substr(0, i);
+    }
+  }
+
+  // No extension found, the whole filename is the stem.
+  return filename;
+}
+
+std::string_view Uri::getExtension() const {
+  const std::string_view filename = this->getFileName();
+  if (filename.empty()) {
+    return {};
+  }
+
+  const size_t end = filename.size() - 1;
+  for (size_t i = end; i > 0; i--) {
+    if (filename[i] != '.') {
+      continue;
+    }
+
+    return filename.substr(i, end - i + 1);
+  }
+
+  // No extension found.
+  return {};
+}
+
 void Uri::setPath(const std::string_view& path) {
   this->_url->set_pathname(path);
 }

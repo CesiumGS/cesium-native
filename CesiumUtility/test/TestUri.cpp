@@ -256,3 +256,42 @@ TEST_CASE("UriQuery") {
     CHECK(query.toQueryString() == "query=foo&%7Bthis%7D=%7Banother%7D");
   }
 }
+
+TEST_CASE("Uri::getFileName") {
+  CHECK(Uri("test.txt").getFileName() == "test.txt");
+  CHECK(Uri("http://example.com/test.txt").getFileName() == "test.txt");
+  CHECK(Uri("http://example.com/a/b/c/test.txt").getFileName() == "test.txt");
+  CHECK(
+      Uri("file:///C:\\Example\\Directory\\test.txt").getFileName() ==
+      "test.txt");
+  CHECK(Uri("http://example.com/").getFileName() == "");
+  CHECK(Uri("http://example.com/a/b/c/").getFileName() == "");
+}
+
+TEST_CASE("Uri::getStem") {
+  CHECK(Uri("test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/a/b/c/test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/a/b/c/test.").getStem() == "test");
+  CHECK(Uri("http://example.com/a/b/c/test").getStem() == "test");
+  CHECK(Uri("file:///C:\\Example\\Directory\\test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/").getStem() == "");
+  CHECK(Uri("http://example.com/a/b/c/").getStem() == "");
+  CHECK(Uri("http://example.com/a/b/c").getStem() == "c");
+  CHECK(Uri("http://example.com/a/b/c/.txt").getStem() == "");
+}
+
+TEST_CASE("Uri::getExtension") {
+  CHECK(Uri("test.txt").getExtension() == ".txt");
+  CHECK(Uri("http://example.com/test.txt").getExtension() == ".txt");
+  CHECK(Uri("http://example.com/a/b/c/test.txt").getExtension() == ".txt");
+  CHECK(Uri("http://example.com/a/b/c/test.").getExtension() == ".");
+  CHECK(Uri("http://example.com/a/b/c/test").getExtension() == "");
+  CHECK(
+      Uri("file:///C:\\Example\\Directory\\test.txt").getExtension() == ".txt");
+  CHECK(Uri("http://example.com/").getExtension() == "");
+  CHECK(Uri("http://example.com/a/b/c").getExtension() == "");
+  CHECK(Uri("http://example.com/a/b/c/.hidden").getExtension() == "");
+  CHECK(Uri("http://example.com/a/b/c/.").getExtension() == "");
+  CHECK(Uri("http://example.com/a/b/c/..").getExtension() == "");
+}
