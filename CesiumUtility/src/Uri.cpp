@@ -5,6 +5,7 @@
 #include <ada/unicode.h>
 #include <ada/url_aggregator.h>
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -158,9 +159,9 @@ std::string_view Uri::getFileName() const {
   }
 
   const std::string_view path = this->_url->get_pathname();
-  const uint32_t end = pathLength - 1;
-  for (uint32_t i = end; i >= 0; i--) {
-    if (path[i] != '/') {
+  const int32_t end = (int32_t)(pathLength - 1);
+  for (int32_t i = end; i >= 0; i--) {
+    if (path[(size_t)i] != '/') {
       continue;
     }
 
@@ -169,7 +170,7 @@ std::string_view Uri::getFileName() const {
       return {};
     }
 
-    return path.substr(i + 1, end - i);
+    return path.substr((size_t)(i + 1), (size_t)(end - i));
   }
 
   // If we've gotten this far, the whole pathname is the filename
@@ -182,10 +183,10 @@ std::string_view Uri::getStem() const {
     return {};
   }
 
-  const size_t end = filename.size() - 1;
-  for (size_t i = end; i >= 0; i--) {
-    if (filename[i] == '.') {
-      return filename.substr(0, i);
+  const int32_t end = int32_t(filename.size() - 1);
+  for (int32_t i = end; i >= 0; i--) {
+    if (filename[(size_t)i] == '.') {
+      return filename.substr(0, (size_t)i);
     }
   }
 
