@@ -47,6 +47,6 @@ cesium_target_include_directories(
 target_link_libraries(CesiumVectorData
     PUBLIC
         CesiumUtility
-        CesiumGeospatial
+        CesiumGeometry
         CesiumAsync
 )

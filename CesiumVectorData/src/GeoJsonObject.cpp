@@ -3,60 +3,29 @@
 #include <string>
 #include <variant>
 
-using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 namespace CesiumVectorData {
-std::string geoJsonObjectTypeToString(GeoJsonObjectType type) {
-  switch (type) {
-  case GeoJsonObjectType::Point:
-    return "Point";
-  case GeoJsonObjectType::MultiPoint:
-    return "MultiPoint";
-  case GeoJsonObjectType::LineString:
-    return "LineString";
-  case GeoJsonObjectType::MultiLineString:
-    return "MultiLineString";
-  case GeoJsonObjectType::Polygon:
-    return "Polygon";
-  case GeoJsonObjectType::MultiPolygon:
-    return "MultiPolygon";
-  case GeoJsonObjectType::GeometryCollection:
-    return "GeometryCollection";
-  case GeoJsonObjectType::Feature:
-    return "Feature";
-  case GeoJsonObjectType::FeatureCollection:
-    return "FeatureCollection";
+std::string_view geoJsonObjectTypeToString(GeoJsonObjectType type) {
+  constexpr std::string_view values[] = {
+      "Point",
+      "MultiPoint",
+      "LineString",
+      "MultiLineString",
+      "Polygon",
+      "MultiPolygon",
+      "GeometryCollection",
+      "Feature",
+      "FeatureCollection"};
+  if (size_t(type) >= 0 && size_t(type) < sizeof(values)) {
+    return values[size_t(type)];
+  } else {
+    constexpr std::string_view unknown = "Unknown";
+    return unknown;
   }
-
-  return "Unknown";
 }
 
 GeoJsonObjectType GeoJsonObject::getType() const {
-  struct GeoJsonObjectTypeVisitor {
-    GeoJsonObjectType operator()(const GeoJsonPoint& lhs) { return lhs.TYPE; }
-    GeoJsonObjectType operator()(const GeoJsonMultiPoint& lhs) {
-      return lhs.TYPE;
-    }
-    GeoJsonObjectType operator()(const GeoJsonLineString& lhs) {
-      return lhs.TYPE;
-    }
-    GeoJsonObjectType operator()(const GeoJsonMultiLineString& lhs) {
-      return lhs.TYPE;
-    }
-    GeoJsonObjectType operator()(const GeoJsonPolygon& lhs) { return lhs.TYPE; }
-    GeoJsonObjectType operator()(const GeoJsonMultiPolygon& lhs) {
-      return lhs.TYPE;
-    }
-    GeoJsonObjectType operator()(const GeoJsonGeometryCollection& lhs) {
-      return lhs.TYPE;
-    }
-    GeoJsonObjectType operator()(const GeoJsonFeature& lhs) { return lhs.TYPE; }
-    GeoJsonObjectType operator()(const GeoJsonFeatureCollection& lhs) {
-      return lhs.TYPE;
-    }
-  };
-
-  return std::visit(GeoJsonObjectTypeVisitor{}, this->value);
+  return std::visit([](const auto& value) { return value.TYPE; }, this->value);
 }
 } // namespace CesiumVectorData

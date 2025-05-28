@@ -38,7 +38,8 @@ public:
       const std::string& key);
 
   /**
-   * @brief Obtains an array of numbers from the given JSON.
+   * @brief Obtains an array of numbers from the property that corresponds to
+   * the given key in the JSON.
    *
    * If the property is not found, or is not an array, or does contain
    * elements that are not numbers, then `std::nullopt` is returned.

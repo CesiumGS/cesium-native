@@ -1,8 +1,5 @@
 #pragma once
 
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/Ellipsoid.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -12,6 +9,8 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/Library.h>
+
+#include <glm/ext/vector_double3.hpp>
 
 #include <memory>
 #include <span>
@@ -52,8 +51,7 @@ public:
   static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
   fromGeoJson(
       const std::span<const std::byte>& bytes,
-      std::vector<VectorDocumentAttribution>&& attributions = {},
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+      std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
    * @brief Attempts to parse a \ref GeoJsonDocument from the provided JSON
@@ -68,18 +66,15 @@ public:
   static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
   fromGeoJson(
       const rapidjson::Document& document,
-      std::vector<VectorDocumentAttribution>&& attributions = {},
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+      std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
    * @brief Attempts to load a \ref GeoJsonDocument from a Cesium ion asset.
    *
-   * Currently only the GeoJSON format is supported.
-   *
    * @param asyncSystem The \ref CesiumAsync::AsyncSystem.
    * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor.
    * @param ionAssetID The ID of the Cesium ion asset to load. This asset must
-   * be a supported vector format.
+   * be a GeoJSON document.
    * @param ionAccessToken The access token that has access to the given asset.
    * @param ionAssetEndpointUrl The base URL of the ion REST API server, if
    * different from `https://api.cesium.com/`.
@@ -95,8 +90,7 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
-      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/",
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
    * @brief Creates a new \ref GeoJsonDocument directly from a \ref
@@ -108,33 +102,22 @@ public:
 
   GeoJsonDocument() = default;
 
-  /**
-   * @brief Obtains a const reference to the root object of the parsed GeoJSON.
-   */
-  constexpr const GeoJsonObject& getRootObject() const {
-    return this->_rootObject;
-  }
-
-  /**
-   * @brief Obtains a reference to the root object of the parsed GeoJSON.
-   */
-  constexpr GeoJsonObject& getRootObject() { return this->_rootObject; }
-
-  /**
-   * @brief Obtains attribution information for this document.
-   */
   const std::vector<VectorDocumentAttribution>& getAttributions() const;
 
-private:
-  CesiumUtility::Result<GeoJsonObject> parseGeoJson(
-      const rapidjson::Document& doc,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
-  CesiumUtility::Result<GeoJsonObject> parseGeoJson(
-      const std::span<const std::byte>& bytes,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
+  /**
+   * @brief The root object of the parsed GeoJSON.
+   */
+  GeoJsonObject rootObject = GeoJsonObject{GeoJsonPoint{glm::dvec3(0, 0, 0)}};
 
-  std::vector<VectorDocumentAttribution> _attributions;
-  GeoJsonObject _rootObject =
-      GeoJsonObject{GeoJsonPoint{CesiumGeospatial::Cartographic(0, 0, 0)}};
+  /**
+   * @brief Attribution information for this document.
+   */
+  std::vector<VectorDocumentAttribution> attributions;
+
+private:
+  CesiumUtility::Result<GeoJsonObject>
+  parseGeoJson(const rapidjson::Document& doc);
+  CesiumUtility::Result<GeoJsonObject>
+  parseGeoJson(const std::span<const std::byte>& bytes);
 };
 } // namespace CesiumVectorData

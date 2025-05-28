@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/Library.h>
 
@@ -30,7 +30,7 @@ enum class GeoJsonObjectType : uint8_t {
 /**
  * @brief Returns the name of a `GeoJsonObjectType` value.
  */
-std::string geoJsonObjectTypeToString(GeoJsonObjectType type);
+std::string_view geoJsonObjectTypeToString(GeoJsonObjectType type);
 
 /**
  * @brief A `Point` geometry object.
@@ -44,12 +44,12 @@ struct GeoJsonPoint {
   /**
    * @brief The `Cartographic` coordinates for this Point.
    */
-  CesiumGeospatial::Cartographic coordinates;
+  glm::dvec3 coordinates;
 
   /**
    * @brief The bounding box associated with this Point value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -74,12 +74,12 @@ struct GeoJsonMultiPoint {
   /**
    * @brief The list of `Cartographic` coordinates for this MultiPoint.
    */
-  std::vector<CesiumGeospatial::Cartographic> coordinates;
+  std::vector<glm::dvec3> coordinates;
 
   /**
    * @brief The bounding box associated with this MultiPoint value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -105,12 +105,12 @@ struct GeoJsonLineString {
   /**
    * @brief The list of `Cartographic` coordinates making up this LineString.
    */
-  std::vector<CesiumGeospatial::Cartographic> coordinates;
+  std::vector<glm::dvec3> coordinates;
 
   /**
    * @brief The bounding box associated with this LineString value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -137,12 +137,12 @@ struct GeoJsonMultiLineString {
    * @brief The list of `Cartographic` coordinates making up this
    * MultiLineString.
    */
-  std::vector<std::vector<CesiumGeospatial::Cartographic>> coordinates;
+  std::vector<std::vector<glm::dvec3>> coordinates;
 
   /**
    * @brief The bounding box associated with this MultiLineString value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -170,18 +170,18 @@ struct GeoJsonPolygon {
    * @brief The list of linear rings making up this Polygon, each one defined by
    * a set of four or more `Cartographic` coordinates.
    *
-   * Each linear ring can be thought of as a as closed `LineString` - the first
+   * Each linear ring can be thought of as a closed `LineString` - the first
    * and last positions must be equivalent and contain identical values. If more
-   * than one of these rings is present, the first ring represents the exterior
+   * than one of these rings is present, the first ring is the exterior
    * ring bounding the surface, and each additional ring represents the bounds
    * of holes within that surface.
    */
-  std::vector<std::vector<CesiumGeospatial::Cartographic>> coordinates;
+  std::vector<std::vector<glm::dvec3>> coordinates;
 
   /**
    * @brief The bounding box associated with this Polygon value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -208,13 +208,12 @@ struct GeoJsonMultiPolygon {
    * equivalent rules to the \ref GeoJsonPolygon::coordinates "coordinates"
    * property of a \ref GeoJsonPolygon.
    */
-  std::vector<std::vector<std::vector<CesiumGeospatial::Cartographic>>>
-      coordinates;
+  std::vector<std::vector<std::vector<glm::dvec3>>> coordinates;
 
   /**
    * @brief The bounding box associated with this MultiPolygon value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -248,7 +247,7 @@ struct GeoJsonGeometryCollection {
    * @brief The bounding box associated with this GeometryCollection value, if
    * any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -290,7 +289,7 @@ struct GeoJsonFeature {
   /**
    * @brief The bounding box associated with this Feature value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
@@ -321,7 +320,7 @@ struct GeoJsonFeatureCollection {
    * @brief The bounding box associated with this GeoJsonFeatureCollection
    * value, if any.
    */
-  std::optional<CesiumGeospatial::BoundingRegion> boundingBox = std::nullopt;
+  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
 
   /**
    * @brief Any members specified on this object that are not part of the
