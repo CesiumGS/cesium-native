@@ -1,0 +1,50 @@
+{
+  "links": [{
+      "href": "https//example.com/9169a6b2-9680-40d8-9669-b5c0a6d96014/ogc/collections",
+      "rel": "self",
+      "type": "application/json"
+  }],
+  "collections": [{
+      "id": "90442b2b-a7e6-4471-b093-cb002a37762a",
+      "title": "Title",
+      "description": "Description",
+      "links": [{
+              "href": "https//example.com/9169a6b2-9680-40d8-9669-b5c0a6d96014/ogc/collections/90442b2b-a7e6-4471-b093-cb002a37762a",
+              "rel": "self",
+              "type": "application/json",
+              "title": "Title"
+          },
+          {
+              "href": "https//example.com/9169a6b2-9680-40d8-9669-b5c0a6d96014/ogc/collections/90442b2b-a7e6-4471-b093-cb002a37762a/items",
+              "rel": "items",
+              "type": "application/geo+json",
+              "title": "title"
+          }
+      ],
+      "extent": {
+          "spatial": {
+              "bbox": [
+                  [
+                      -50.08876885548398,
+                      50.94487570541774,
+                      0.0003396840931770839,
+                      -50.08830149142197,
+                      50.94521538951092,
+                      0.0004673640620040942
+                  ]
+              ],
+              "crs": "https://www.opengis.net/def/crs/OGC/1.3/CRS84"
+          },
+          "temporal": {
+            "interval": [
+              [ "2011-11-11T12:22:11Z", null ]
+            ],
+            "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+          }
+      },
+      "crs": [
+          "https://www.opengis.net/def/crs/EPSG/0/32615"
+      ],
+      "storageCrs": "https://www.opengis.net/def/crs/EPSG/0/32615"
+  }]
+}
