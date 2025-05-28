@@ -4,6 +4,7 @@
 #include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
 
 #include <doctest/doctest.h>
 
@@ -644,9 +645,14 @@ TEST_CASE("Parsing FeatureCollection") {
           REQUIRE(
               pFeatureCollection->TYPE == GeoJsonObjectType::FeatureCollection);
           REQUIRE(pFeatureCollection->features.size() == 1);
-          CHECK(pFeatureCollection->features[0].properties == std::nullopt);
-          const GeoJsonPoint* pPoint = std::get_if<GeoJsonPoint>(
-              &pFeatureCollection->features[0].geometry->value);
+          CHECK(
+              pFeatureCollection->features[0]
+                  .get<GeoJsonFeature>()
+                  .properties == std::nullopt);
+          const GeoJsonPoint* pPoint =
+              std::get_if<GeoJsonPoint>(&pFeatureCollection->features[0]
+                                             .get<GeoJsonFeature>()
+                                             .geometry->value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::Point);
           CHECK(pPoint->coordinates == glm::dvec3(1, 2, 3));

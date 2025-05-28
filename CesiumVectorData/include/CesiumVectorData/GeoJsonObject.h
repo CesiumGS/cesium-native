@@ -1,366 +1,438 @@
 #pragma once
 
-#include <CesiumGeometry/AxisAlignedBox.h>
-#include <CesiumUtility/JsonValue.h>
-#include <CesiumVectorData/Library.h>
+#include "GeoJsonObjectTypes.h"
 
-#include <glm/vec3.hpp>
-
-#include <memory>
-#include <variant>
+#include <stack>
 #include <vector>
 
 namespace CesiumVectorData {
 
-/**
- * @brief A type of object in GeoJson data.
- */
-enum class GeoJsonObjectType : uint8_t {
-  Point = 0,
-  MultiPoint = 1,
-  LineString = 2,
-  MultiLineString = 3,
-  Polygon = 4,
-  MultiPolygon = 5,
-  GeometryCollection = 6,
-  Feature = 7,
-  FeatureCollection = 8
-};
+struct GeoJsonObjectIterator;
+struct ConstGeoJsonObjectIterator;
+template <typename SingleT, typename MultiT, typename ValueT>
+struct ConstGeoJsonPrimitiveIterator;
+template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator;
 
-/**
- * @brief Returns the name of a `GeoJsonObjectType` value.
- */
-std::string_view geoJsonObjectTypeToString(GeoJsonObjectType type);
-
-/**
- * @brief A `Point` geometry object.
- *
- * A Point value is a single cartographic position.
- */
-struct GeoJsonPoint {
-  /** @brief The `GeoJsonObjectType` for a Point. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Point;
-
-  /**
-   * @brief The `Cartographic` coordinates for this Point.
-   */
-  glm::dvec3 coordinates;
-
-  /**
-   * @brief The bounding box associated with this Point value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A `MultiPoint` geometry object.
- *
- * A MultiPoint value is a list of multiple cartographic positions.
- */
-struct GeoJsonMultiPoint {
-  /** @brief The `GeoJsonObjectType` for a MultiPoint. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::MultiPoint;
-
-  /**
-   * @brief The list of `Cartographic` coordinates for this MultiPoint.
-   */
-  std::vector<glm::dvec3> coordinates;
-
-  /**
-   * @brief The bounding box associated with this MultiPoint value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A `LineString` geometry object.
- *
- * A LineString value is a list of two or more cartographic positions that form
- * a set of line segments.
- */
-struct GeoJsonLineString {
-  /** @brief The `GeoJsonObjectType` for a LineString. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::LineString;
-
-  /**
-   * @brief The list of `Cartographic` coordinates making up this LineString.
-   */
-  std::vector<glm::dvec3> coordinates;
-
-  /**
-   * @brief The bounding box associated with this LineString value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A `MultiLineString` geometry object.
- *
- * A MultiLineString value contains multiple lists of two or more points that
- * each make up a set of line segments.
- */
-struct GeoJsonMultiLineString {
-  /** @brief The `GeoJsonObjectType` for a MultiLineString. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::MultiLineString;
-
-  /**
-   * @brief The list of `Cartographic` coordinates making up this
-   * MultiLineString.
-   */
-  std::vector<std::vector<glm::dvec3>> coordinates;
-
-  /**
-   * @brief The bounding box associated with this MultiLineString value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A `Polygon` geometry object.
- *
- * A Polygon value contains multiple lists of four or more points that
- * each make up a "linear ring." Each linear ring is the boundary of the surface
- * or the boundary of a hole in that surface.
- */
-struct GeoJsonPolygon {
-  /** @brief The `GeoJsonObjectType` for a Polygon. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Polygon;
-
-  /**
-   * @brief The list of linear rings making up this Polygon, each one defined by
-   * a set of four or more `Cartographic` coordinates.
-   *
-   * Each linear ring can be thought of as a closed `LineString` - the first
-   * and last positions must be equivalent and contain identical values. If more
-   * than one of these rings is present, the first ring is the exterior
-   * ring bounding the surface, and each additional ring represents the bounds
-   * of holes within that surface.
-   */
-  std::vector<std::vector<glm::dvec3>> coordinates;
-
-  /**
-   * @brief The bounding box associated with this Polygon value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A 'MultiPolygon' geometry object.
- *
- * A MultiPolygon value contains multiple Polygon coordinate sets.
- */
-struct GeoJsonMultiPolygon {
-  /** @brief The `GeoJsonObjectType` for a MultiPolygon. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::MultiPolygon;
-
-  /**
-   * @brief The list of Polygons making up this MultiPolygon. Each entry has
-   * equivalent rules to the \ref GeoJsonPolygon::coordinates "coordinates"
-   * property of a \ref GeoJsonPolygon.
-   */
-  std::vector<std::vector<std::vector<glm::dvec3>>> coordinates;
-
-  /**
-   * @brief The bounding box associated with this MultiPolygon value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-struct GeoJsonObject;
-
-/**
- * @brief A `GeometryCollection` represents any number of \ref
- * GeoJsonObject objects.
- */
-struct GeoJsonGeometryCollection {
-  /** @brief The `GeoJsonObjectType` for a GeometryCollection. */
-  static constexpr GeoJsonObjectType TYPE =
-      GeoJsonObjectType::GeometryCollection;
-
-  /**
-   * @brief The \ref GeoJsonObject values contained in this
-   * GeometryCollection.
-   */
-  std::vector<GeoJsonObject> geometries;
-
-  /**
-   * @brief The bounding box associated with this GeometryCollection value, if
-   * any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A `GeoJsonFeature` object represents a spatially bounded "thing." It
- * is a collection of information that is possibly linked to a geometry object.
- */
-struct GeoJsonFeature {
-  /** @brief The `GeoJsonObjectType` for a Feature. */
-  static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Feature;
-
-  /**
-   * @brief The "id" of this object. A Feature's ID is optional, but if
-   * specified it will be either a string or a number.
-   */
-  std::variant<std::monostate, std::string, int64_t> id = std::monostate();
-
-  /**
-   * @brief The `GeoJsonGeometryObject` associated with this Feature, if any.
-   */
-  std::unique_ptr<GeoJsonObject> geometry;
-
-  /**
-   * @brief The set of additional properties specified on this Feature, if any.
-   *
-   * The properties field may contain any valid JSON object.
-   */
-  std::optional<CesiumUtility::JsonValue::Object> properties;
-
-  /**
-   * @brief The bounding box associated with this Feature value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief A `FeatureCollection` represents any number of \ref GeoJsonFeature
- * objects.
- */
-struct GeoJsonFeatureCollection {
-  /** @brief The `GeoJsonObjectType` for a FeatureCollection. */
-  static constexpr GeoJsonObjectType TYPE =
-      GeoJsonObjectType::FeatureCollection;
-
-  /**
-   * @brief The \ref GeoJsonFeature objects contained in this FeatureCollection.
-   */
-  std::vector<GeoJsonFeature> features;
-
-  /**
-   * @brief The bounding box associated with this GeoJsonFeatureCollection
-   * value, if any.
-   */
-  std::optional<CesiumGeometry::AxisAlignedBox> boundingBox = std::nullopt;
-
-  /**
-   * @brief Any members specified on this object that are not part of the
-   * specification for this object.
-   *
-   * See https://datatracker.ietf.org/doc/html/rfc7946#section-6.1 for more
-   * information.
-   */
-  CesiumUtility::JsonValue::Object foreignMembers =
-      CesiumUtility::JsonValue::Object();
-};
-
-/**
- * @brief Every possible object that can be specified in a GeoJSON
- * document.
- */
-using GeoJsonObjectVariant = std::variant<
-    GeoJsonPoint,
-    GeoJsonMultiPoint,
+using ConstGeoJsonPointIterator =
+    ConstGeoJsonPrimitiveIterator<GeoJsonPoint, GeoJsonMultiPoint, glm::dvec3>;
+using ConstGeoJsonLineStringIterator = ConstGeoJsonPrimitiveIterator<
     GeoJsonLineString,
     GeoJsonMultiLineString,
+    std::vector<glm::dvec3>>;
+using ConstGeoJsonPolygonIterator = ConstGeoJsonPrimitiveIterator<
     GeoJsonPolygon,
     GeoJsonMultiPolygon,
-    GeoJsonGeometryCollection,
-    GeoJsonFeature,
-    GeoJsonFeatureCollection>;
+    std::vector<std::vector<glm::dvec3>>>;
 
 /**
  * @brief A wrapper around an object in a GeoJSON document.
  */
 struct GeoJsonObject {
+  template <typename IteratorType> struct IteratorProvider {
+    IteratorProvider(const GeoJsonObject* pObject) : _pObject(pObject) {}
+
+    IteratorType begin() { return IteratorType(*_pObject); }
+
+    IteratorType end() { return IteratorType(); }
+
+  private:
+    const GeoJsonObject* _pObject;
+  };
+
+  GeoJsonObjectIterator begin();
+  GeoJsonObjectIterator end();
+  ConstGeoJsonObjectIterator begin() const;
+  ConstGeoJsonObjectIterator end() const;
+
+  IteratorProvider<ConstGeoJsonPointIterator> points() const {
+    return IteratorProvider<ConstGeoJsonPointIterator>(this);
+  }
+
+  IteratorProvider<ConstGeoJsonLineStringIterator> lines() const {
+    return IteratorProvider<ConstGeoJsonLineStringIterator>(this);
+  }
+
+  IteratorProvider<ConstGeoJsonPolygonIterator> polygons() const {
+    return IteratorProvider<ConstGeoJsonPolygonIterator>(this);
+  }
+
+  template <typename ObjectType>
+  IteratorProvider<ConstGeoJsonObjectTypeIterator<ObjectType>>
+  allOfType() const {
+    return IteratorProvider<ConstGeoJsonObjectTypeIterator<ObjectType>>(this);
+  }
+
   /**
-   * @brief Returns the \ref GeoJsonObjectType that this \ref GeoJsonObject is
-   * wrapping.
+   * @brief Returns the \ref GeoJsonObjectType that this \ref GeoJsonObject
+   * is wrapping.
    */
   GeoJsonObjectType getType() const;
+
+  /**
+   * @brief Returns whether the `value` of this \ref GeoJsonObject is of the
+   * given type.
+   */
+  template <typename T> bool containsType() const {
+    return std::holds_alternative<T>(this->value);
+  }
+
+  /**
+   * @brief Obtains a reference to the value of this \ref GeoJsonObject if the
+   * value is of the given type.
+   *
+   * @exception std::bad_variant_access if the value is not of type `T`
+   */
+  template <typename T> const T& get() const {
+    return std::get<T>(this->value);
+  }
+
+  /**
+   * @brief Obtains a reference to the value of this \ref GeoJsonObject if the
+   * value is of the given type.
+   *
+   * @exception std::bad_variant_access if the value is not of type `T`
+   */
+  template <typename T> T& get() { return std::get<T>(this->value); }
+
+  /**
+   * @brief Obtains a pointer to the value of this \ref GeoJsonObject if the
+   * value is of the given type. Otherwise `nullptr` is returned.
+   */
+  template <typename T> const T* getIf() const {
+    return std::get_if<T>(&this->value);
+  }
+
+  /**
+   * @brief Obtains a pointer to the value of this \ref GeoJsonObject if the
+   * value is of the given type. Otherwise `nullptr` is returned.
+   */
+  template <typename T> T* getIf() { return std::get_if<T>(&this->value); }
+
+  /**
+   * @brief Applies the visitor `visitor` to the value variant.
+   */
+  template <typename Visitor, typename RetVal> RetVal visit(Visitor&& visitor) {
+    return std::visit(visitor, this->value);
+  }
 
   /**
    * @brief A variant containing the GeoJSON object.
    */
   GeoJsonObjectVariant value;
+};
+
+/**
+ * @brief Iterates over a \ref GeoJsonObject and all of its children.
+ */
+struct GeoJsonObjectIterator {
+  using iterator_category = std::forward_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = GeoJsonObject;
+  using pointer = GeoJsonObject*;
+  using reference = GeoJsonObject&;
+
+  reference operator*() const { return *_pCurrentObject; }
+  pointer operator->() { return _pCurrentObject; }
+
+  /**
+   * @brief Attempts to find the Feature that contains the current item the
+   * iterator is pointing to.
+   *
+   * If the iterator is pointing to a Feature, that Feature will be returned.
+   */
+  GeoJsonObject* getFeature() const {
+    for (auto it = this->_objectStack.rbegin(); it != this->_objectStack.rend();
+         ++it) {
+      if ((*it)->containsType<GeoJsonFeature>()) {
+        return *it;
+      }
+    }
+
+    return nullptr;
+  }
+
+  bool isEnded() const {
+    return this->_nextPosStack.empty() && this->_objectStack.empty() &&
+           this->_pCurrentObject == nullptr;
+  }
+
+  GeoJsonObjectIterator& operator++() {
+    this->iterate();
+    return *this;
+  }
+  GeoJsonObjectIterator operator++(int) {
+    GeoJsonObjectIterator tmp = *this;
+    this->iterate();
+    return tmp;
+  }
+  friend bool
+  operator==(const GeoJsonObjectIterator& a, const GeoJsonObjectIterator& b) {
+    if (a._pCurrentObject != b._pCurrentObject) {
+      return false;
+    }
+
+    if (!a._objectStack.empty() && !b._objectStack.empty()) {
+      if (a._objectStack.back() != b._objectStack.back()) {
+        return false;
+      }
+    }
+
+    if (!a._nextPosStack.empty() && !b._nextPosStack.empty()) {
+      if (a._nextPosStack.top() != b._nextPosStack.top()) {
+        return false;
+      }
+    }
+
+    return a._objectStack.empty() == b._objectStack.empty() &&
+           a._nextPosStack.empty() == b._nextPosStack.empty();
+  }
+  friend bool
+  operator!=(const GeoJsonObjectIterator& a, const GeoJsonObjectIterator& b) {
+    return !(a == b);
+  }
+
+  GeoJsonObjectIterator(GeoJsonObject& rootObject)
+      : _objectStack(), _nextPosStack(), _pCurrentObject(nullptr) {
+    this->_objectStack.emplace_back(&rootObject);
+    this->_nextPosStack.emplace(-1);
+    this->iterate();
+  }
+
+  GeoJsonObjectIterator()
+      : _objectStack(), _nextPosStack(), _pCurrentObject(nullptr) {}
+
+private:
+  void handleChild(GeoJsonObject& child) {
+    this->_pCurrentObject = &child;
+
+    if (child.containsType<GeoJsonGeometryCollection>() ||
+        child.containsType<GeoJsonFeatureCollection>() ||
+        child.containsType<GeoJsonFeature>()) {
+      this->_nextPosStack.emplace(-1);
+      this->_objectStack.emplace_back(&child);
+    }
+  }
+
+  void iterate() {
+    _pCurrentObject = nullptr;
+    while (!this->_objectStack.empty() && !this->_nextPosStack.empty() &&
+           this->_pCurrentObject == nullptr) {
+      GeoJsonObject* pNext = _objectStack.back();
+      if (this->_nextPosStack.top() == -1) {
+        this->_pCurrentObject = pNext;
+        this->_nextPosStack.top()++;
+        continue;
+      } else if (std::holds_alternative<GeoJsonGeometryCollection>(
+                     pNext->value)) {
+        GeoJsonGeometryCollection& collection =
+            std::get<GeoJsonGeometryCollection>(pNext->value);
+        if ((size_t)this->_nextPosStack.top() >= collection.geometries.size()) {
+          // No children left
+          this->_objectStack.pop_back();
+          this->_nextPosStack.pop();
+          continue;
+        }
+
+        GeoJsonObject& child =
+            collection.geometries[(size_t)this->_nextPosStack.top()];
+        this->_nextPosStack.top()++;
+        this->handleChild(child);
+        continue;
+      } else if (std::holds_alternative<GeoJsonFeatureCollection>(
+                     pNext->value)) {
+        GeoJsonFeatureCollection& collection =
+            std::get<GeoJsonFeatureCollection>(pNext->value);
+        if ((size_t)this->_nextPosStack.top() >= collection.features.size()) {
+          // No children left
+          this->_objectStack.pop_back();
+          this->_nextPosStack.pop();
+          continue;
+        }
+
+        GeoJsonObject& child =
+            collection.features[(size_t)this->_nextPosStack.top()];
+        this->_nextPosStack.top()++;
+        this->handleChild(child);
+        continue;
+      } else if (std::holds_alternative<GeoJsonFeature>(pNext->value)) {
+        GeoJsonFeature& feature = std::get<GeoJsonFeature>(pNext->value);
+        if ((size_t)this->_nextPosStack.top() >= 1) {
+          // Feature only has one child
+          this->_objectStack.pop_back();
+          this->_nextPosStack.pop();
+          continue;
+        }
+
+        this->_nextPosStack.top()++;
+        this->handleChild(*feature.geometry);
+        continue;
+      } else {
+        // This object was a dud, try another
+        this->_nextPosStack.pop();
+        this->_objectStack.pop_back();
+      }
+    }
+  }
+
+  std::vector<GeoJsonObject*> _objectStack;
+  std::stack<int64_t> _nextPosStack;
+  GeoJsonObject* _pCurrentObject;
+
+  friend struct ConstGeoJsonObjectIterator;
+};
+
+struct ConstGeoJsonObjectIterator {
+  using iterator_category = std::forward_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = GeoJsonObject;
+  using pointer = const GeoJsonObject*;
+  using reference = const GeoJsonObject&;
+
+  reference operator*() const { return *this->_it; }
+  pointer operator->() { return this->_it._pCurrentObject; }
+
+  const GeoJsonObject* getFeature() { return this->_it.getFeature(); }
+
+  ConstGeoJsonObjectIterator& operator++() {
+    ++this->_it;
+    return *this;
+  }
+  ConstGeoJsonObjectIterator operator++(int) {
+    ConstGeoJsonObjectIterator tmp = *this;
+    this->_it++;
+    return tmp;
+  }
+  friend bool operator==(
+      const ConstGeoJsonObjectIterator& a,
+      const ConstGeoJsonObjectIterator& b) {
+    return a._it == b._it;
+  }
+  friend bool operator!=(
+      const ConstGeoJsonObjectIterator& a,
+      const ConstGeoJsonObjectIterator& b) {
+    return a._it != b._it;
+  }
+
+  ConstGeoJsonObjectIterator(const GeoJsonObject& rootObject)
+      : _it(const_cast<GeoJsonObject&>(rootObject)) {}
+  ConstGeoJsonObjectIterator() = default;
+
+private:
+  GeoJsonObjectIterator _it;
+};
+
+template <typename SingleT, typename MultiT, typename ValueT>
+struct ConstGeoJsonPrimitiveIterator {
+  using iterator_category = std::forward_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = ValueT;
+  using pointer = const ValueT*;
+  using reference = const ValueT&;
+
+  reference operator*() const {
+    const GeoJsonMultiPoint* pMultiPoint =
+        (*this->_it).getIf<GeoJsonMultiPoint>();
+    if (pMultiPoint) {
+      return pMultiPoint->coordinates[this->_currentMultiIdx];
+    }
+
+    return (*this->_it).get<GeoJsonPoint>().coordinates;
+  }
+  pointer operator->() { return &**this; }
+
+  ConstGeoJsonPrimitiveIterator& operator++() {
+    this->iterate();
+    return *this;
+  }
+  ConstGeoJsonPrimitiveIterator operator++(int) {
+    ConstGeoJsonPrimitiveIterator tmp = *this;
+    this->_it++;
+    return tmp;
+  }
+  friend bool operator==(
+      const ConstGeoJsonPrimitiveIterator& a,
+      const ConstGeoJsonPrimitiveIterator& b) {
+    return a._it == b._it;
+  }
+  friend bool operator!=(
+      const ConstGeoJsonPrimitiveIterator& a,
+      const ConstGeoJsonPrimitiveIterator& b) {
+    return a._it != b._it;
+  }
+
+  ConstGeoJsonPrimitiveIterator(const GeoJsonObject& rootObject)
+      : _it(const_cast<GeoJsonObject&>(rootObject)) {
+    if (!_it.isEnded() &&
+        !(_it->containsType<SingleT>() || _it->containsType<MultiT>())) {
+      this->iterate();
+    }
+  }
+  ConstGeoJsonPrimitiveIterator() = default;
+
+private:
+  void iterate() {
+    if (!this->_it.isEnded() && this->_it->containsType<MultiT>()) {
+      const MultiT& multi = this->_it->get<MultiT>();
+      if ((int64_t)this->_currentMultiIdx <
+          (int64_t)(multi.coordinates.size() - 1)) {
+        this->_currentMultiIdx++;
+        return;
+      }
+    }
+
+    this->_currentMultiIdx = 0;
+    do {
+      ++this->_it;
+    } while (!this->_it.isEnded() &&
+             !(this->_it->containsType<SingleT>() ||
+               (this->_it->containsType<MultiT>() &&
+                !this->_it->get<MultiT>().coordinates.empty())));
+  }
+
+  GeoJsonObjectIterator _it;
+  size_t _currentMultiIdx = 0;
+};
+
+template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
+  using iterator_category = std::forward_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = ObjectType;
+  using pointer = const ObjectType*;
+  using reference = const ObjectType&;
+
+  reference operator*() const {
+    return (*this->_it).get<ObjectType>().coordinates;
+  }
+  pointer operator->() { return &**this; }
+
+  ConstGeoJsonObjectTypeIterator& operator++() {
+    do {
+      ++this->_it;
+    } while (!this->_it.isEnded() && this->_it->containsType<ObjectType>());
+    return *this;
+  }
+  ConstGeoJsonObjectTypeIterator operator++(int) {
+    ConstGeoJsonObjectTypeIterator tmp = *this;
+    this->_it++;
+    return tmp;
+  }
+  friend bool operator==(
+      const ConstGeoJsonObjectTypeIterator& a,
+      const ConstGeoJsonObjectTypeIterator& b) {
+    return a._it == b._it;
+  }
+  friend bool operator!=(
+      const ConstGeoJsonObjectTypeIterator& a,
+      const ConstGeoJsonObjectTypeIterator& b) {
+    return a._it != b._it;
+  }
+
+  ConstGeoJsonObjectTypeIterator(const GeoJsonObject& rootObject)
+      : _it(const_cast<GeoJsonObject&>(rootObject)) {}
+  ConstGeoJsonObjectTypeIterator() = default;
+
+private:
+  GeoJsonObjectIterator _it;
+  size_t _currentMultiPointIdx = 0;
 };
 } // namespace CesiumVectorData

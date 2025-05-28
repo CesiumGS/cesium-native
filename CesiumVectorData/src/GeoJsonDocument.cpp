@@ -12,6 +12,7 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
@@ -201,18 +202,6 @@ parseBoundingBox(const rapidjson::Value& value) {
                           coordinates[5]->GetDouble()))});
 }
 
-struct GeoJsonObjectToFeatureVisitor {
-  Result<GeoJsonFeature> operator()(GeoJsonFeature&& node) {
-    return Result<GeoJsonFeature>(std::move(node));
-  }
-
-  Result<GeoJsonFeature> operator()(auto&& node) {
-    return Result<GeoJsonFeature>(ErrorList::error(fmt::format(
-        "Expected Feature, found GeoJSON object {}.",
-        geoJsonObjectTypeToString(node.TYPE))));
-  }
-};
-
 Result<GeoJsonObject> parseGeoJsonObject(
     const rapidjson::Value::ConstObject& obj,
     const std::function<bool(const std::string& type)>& expectedPredicate,
@@ -302,10 +291,10 @@ Result<GeoJsonObject> parseGeoJsonObject(
 
     return Result<GeoJsonObject>(
         GeoJsonObject{GeoJsonFeature{
-            id,
+            std::move(id),
             std::move(geometry),
-            properties,
-            boundingBox,
+            std::move(properties),
+            std::move(boundingBox),
             collectForeignMembers(
                 obj,
                 [](const std::string& k) {
@@ -328,7 +317,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
     const rapidjson::Value::ConstArray& featuresArr =
         featuresMember->value.GetArray();
 
-    std::vector<GeoJsonFeature> features;
+    std::vector<GeoJsonObject> features;
     features.reserve(featuresArr.Size());
     for (const rapidjson::Value& feature : featuresArr) {
       if (!feature.IsObject()) {
@@ -347,15 +336,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
         continue;
       }
 
-      Result<GeoJsonFeature> featureResult = std::visit(
-          GeoJsonObjectToFeatureVisitor{},
-          std::move(childResult.value->value));
-      errorList.merge(std::move(featureResult.errors));
-      if (!featureResult.value) {
-        continue;
-      }
-
-      features.emplace_back(std::move(*featureResult.value));
+      features.emplace_back(std::move(*childResult.value));
     }
 
     if (errorList.hasErrors()) {
