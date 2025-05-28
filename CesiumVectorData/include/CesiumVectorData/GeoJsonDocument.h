@@ -44,7 +44,6 @@ public:
    *
    * @param bytes The GeoJSON data to parse.
    * @param attributions Any attributions to attach to the document.
-   * @param ellipsoid The ellipsoid to use for this data.
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
@@ -59,7 +58,6 @@ public:
    *
    * @param document The GeoJSON JSON document.
    * @param attributions Any attributions to attach to the document.
-   * @param ellipsoid The ellipsoid to use for this data.
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
@@ -78,7 +76,6 @@ public:
    * @param ionAccessToken The access token that has access to the given asset.
    * @param ionAssetEndpointUrl The base URL of the ion REST API server, if
    * different from `https://api.cesium.com/`.
-   * @param ellipsoid The ellipsoid to use for this data.
    * @returns A future that resolves into a \ref CesiumUtility::Result
    * containing the parsed \ref GeoJsonDocument or any errors and warnings that
    * came up while loading or parsing the data.
@@ -101,8 +98,6 @@ public:
       std::vector<VectorDocumentAttribution>&& attributions);
 
   GeoJsonDocument() = default;
-
-  const std::vector<VectorDocumentAttribution>& getAttributions() const;
 
   /**
    * @brief The root object of the parsed GeoJSON.
