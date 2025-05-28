@@ -36,8 +36,7 @@ struct VectorDocumentAttribution {
  * The document is represented as a hierarchy of \ref GeoJsonObject values
  * starting with the root object.
  */
-class CESIUMVECTORDATA_API GeoJsonDocument
-    : public CesiumUtility::ReferenceCountedThreadSafe<GeoJsonDocument> {
+class CESIUMVECTORDATA_API GeoJsonDocument {
 public:
   /**
    * @brief Attempts to parse a \ref GeoJsonDocument from the provided GeoJSON.
@@ -47,8 +46,7 @@ public:
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
-  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
-  fromGeoJson(
+  static CesiumUtility::Result<GeoJsonDocument> fromGeoJson(
       const std::span<const std::byte>& bytes,
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
@@ -61,8 +59,7 @@ public:
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
-  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
-  fromGeoJson(
+  static CesiumUtility::Result<GeoJsonDocument> fromGeoJson(
       const rapidjson::Document& document,
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
@@ -80,8 +77,7 @@ public:
    * containing the parsed \ref GeoJsonDocument or any errors and warnings that
    * came up while loading or parsing the data.
    */
-  static CesiumAsync::Future<
-      CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>>
+  static CesiumAsync::Future<CesiumUtility::Result<GeoJsonDocument>>
   fromCesiumIonAsset(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -110,9 +106,9 @@ public:
   std::vector<VectorDocumentAttribution> attributions;
 
 private:
-  CesiumUtility::Result<GeoJsonObject>
+  static CesiumUtility::Result<GeoJsonObject>
   parseGeoJson(const rapidjson::Document& doc);
-  CesiumUtility::Result<GeoJsonObject>
+  static CesiumUtility::Result<GeoJsonObject>
   parseGeoJson(const std::span<const std::byte>& bytes);
 };
 } // namespace CesiumVectorData

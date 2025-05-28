@@ -187,12 +187,18 @@ parseBoundingBox(const rapidjson::Value& value) {
 
   return Result<std::optional<AxisAlignedBox>>(
       std::optional<AxisAlignedBox>{AxisAlignedBox(
-          coordinates[0]->GetDouble(),
-          coordinates[1]->GetDouble(),
-          coordinates[2]->GetDouble(),
-          coordinates[3]->GetDouble(),
-          size == 4 ? 0.0 : coordinates[4]->GetDouble(),
-          size == 4 ? 0.0 : coordinates[5]->GetDouble())});
+          std::min(coordinates[0]->GetDouble(), coordinates[2]->GetDouble()),
+          std::min(coordinates[1]->GetDouble(), coordinates[3]->GetDouble()),
+          size == 4 ? 0.0
+                    : std::min(
+                          coordinates[4]->GetDouble(),
+                          coordinates[5]->GetDouble()),
+          std::max(coordinates[0]->GetDouble(), coordinates[2]->GetDouble()),
+          std::max(coordinates[1]->GetDouble(), coordinates[3]->GetDouble()),
+          size == 4 ? 0.0
+                    : std::max(
+                          coordinates[4]->GetDouble(),
+                          coordinates[5]->GetDouble()))});
 }
 
 struct GeoJsonObjectToFeatureVisitor {
@@ -283,7 +289,7 @@ Result<GeoJsonObject> parseGeoJsonObject(
     std::optional<JsonValue::Object> properties = std::nullopt;
     const auto& propertiesMember = obj.FindMember("properties");
     if (propertiesMember == obj.MemberEnd()) {
-      errorList.emplaceWarning("Feature must have 'properties' member.");
+      errorList.emplaceWarning("Feature must have a 'properties' member.");
     } else if (!propertiesMember->value.IsNull()) {
       if (!propertiesMember->value.IsObject()) {
         return Result<GeoJsonObject>(ErrorList::error(
@@ -605,46 +611,33 @@ GeoJsonDocument::parseGeoJson(const std::span<const std::byte>& bytes) {
   return parseGeoJson(d);
 }
 
-Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
+Result<GeoJsonDocument> GeoJsonDocument::fromGeoJson(
     const std::span<const std::byte>& bytes,
     std::vector<VectorDocumentAttribution>&& attributions) {
-  IntrusivePointer<GeoJsonDocument> pDocument;
-  GeoJsonDocument& document = pDocument.emplace();
-  document.attributions = std::move(attributions);
-  Result<GeoJsonObject> parseResult = document.parseGeoJson(bytes);
+  Result<GeoJsonObject> parseResult = GeoJsonDocument::parseGeoJson(bytes);
   if (!parseResult.value) {
-    return Result<IntrusivePointer<GeoJsonDocument>>(
-        std::move(parseResult.errors));
+    return Result<GeoJsonDocument>(std::move(parseResult.errors));
   }
 
-  document.rootObject = std::move(*parseResult.value);
-
-  return Result<IntrusivePointer<GeoJsonDocument>>(
-      pDocument,
+  return Result<GeoJsonDocument>(
+      GeoJsonDocument(std::move(*parseResult.value), std::move(attributions)),
       std::move(parseResult.errors));
 }
 
-Result<IntrusivePointer<GeoJsonDocument>> GeoJsonDocument::fromGeoJson(
+Result<GeoJsonDocument> GeoJsonDocument::fromGeoJson(
     const rapidjson::Document& document,
     std::vector<VectorDocumentAttribution>&& attributions) {
-  IntrusivePointer<GeoJsonDocument> pDocument;
-  GeoJsonDocument& geoJsonDocument = pDocument.emplace();
-  geoJsonDocument.attributions = std::move(attributions);
-  Result<GeoJsonObject> parseResult = geoJsonDocument.parseGeoJson(document);
+  Result<GeoJsonObject> parseResult = GeoJsonDocument::parseGeoJson(document);
   if (!parseResult.value) {
-    return Result<IntrusivePointer<GeoJsonDocument>>(
-        std::move(parseResult.errors));
+    return Result<GeoJsonDocument>(std::move(parseResult.errors));
   }
 
-  geoJsonDocument.rootObject = std::move(*parseResult.value);
-
-  return Result<IntrusivePointer<GeoJsonDocument>>(
-      pDocument,
+  return Result<GeoJsonDocument>(
+      GeoJsonDocument(std::move(*parseResult.value), std::move(attributions)),
       std::move(parseResult.errors));
 }
 
-Future<Result<IntrusivePointer<GeoJsonDocument>>>
-GeoJsonDocument::fromCesiumIonAsset(
+Future<Result<GeoJsonDocument>> GeoJsonDocument::fromCesiumIonAsset(
     const AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     int64_t ionAssetID,
@@ -661,13 +654,11 @@ GeoJsonDocument::fromCesiumIonAsset(
         const IAssetResponse* pResponse = pRequest->response();
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          return asyncSystem
-              .createResolvedFuture<Result<IntrusivePointer<GeoJsonDocument>>>(
-                  Result<IntrusivePointer<GeoJsonDocument>>(
-                      ErrorList::error(fmt::format(
-                          "Status code {} while requesting Cesium ion vector "
-                          "asset.",
-                          pResponse->statusCode()))));
+          return asyncSystem.createResolvedFuture<Result<GeoJsonDocument>>(
+              Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Status code {} while requesting Cesium ion vector "
+                  "asset.",
+                  pResponse->statusCode()))));
         }
 
         rapidjson::Document response;
@@ -676,26 +667,22 @@ GeoJsonDocument::fromCesiumIonAsset(
             pResponse->data().size());
 
         if (response.HasParseError()) {
-          return asyncSystem
-              .createResolvedFuture<Result<IntrusivePointer<GeoJsonDocument>>>(
-                  Result<IntrusivePointer<GeoJsonDocument>>(
-                      ErrorList::error(fmt::format(
-                          "Error while parsing Cesium ion asset response: "
-                          "error {} at byte offset {}.",
-                          rapidjson::GetParseError_En(response.GetParseError()),
-                          response.GetErrorOffset()))));
+          return asyncSystem.createResolvedFuture<Result<GeoJsonDocument>>(
+              Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Error while parsing Cesium ion asset response: "
+                  "error {} at byte offset {}.",
+                  rapidjson::GetParseError_En(response.GetParseError()),
+                  response.GetErrorOffset()))));
         }
 
         const std::string type =
             JsonHelpers::getStringOrDefault(response, "type", "UNKNOWN");
         if (type != "GEOJSON") {
-          return asyncSystem
-              .createResolvedFuture<Result<IntrusivePointer<GeoJsonDocument>>>(
-                  Result<IntrusivePointer<GeoJsonDocument>>(
-                      ErrorList::error(fmt::format(
-                          "Found asset type '{}'. Only GEOJSON is currently "
-                          "supported.",
-                          type))));
+          return asyncSystem.createResolvedFuture<Result<GeoJsonDocument>>(
+              Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Found asset type '{}'. Only GEOJSON is currently "
+                  "supported.",
+                  type))));
         }
 
         std::vector<VectorDocumentAttribution> attributions;
@@ -727,17 +714,16 @@ GeoJsonDocument::fromCesiumIonAsset(
             .thenImmediately(
                 [attributions = std::move(attributions)](
                     std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
-                -> Result<IntrusivePointer<GeoJsonDocument>> {
+                -> Result<GeoJsonDocument> {
                   const IAssetResponse* pAssetResponse =
                       pAssetRequest->response();
 
                   if (pAssetResponse->statusCode() < 200 ||
                       pAssetResponse->statusCode() >= 300) {
-                    return Result<IntrusivePointer<GeoJsonDocument>>(
-                        ErrorList::error(fmt::format(
-                            "Status code {} while requesting Cesium ion "
-                            "vector asset data.",
-                            pAssetResponse->statusCode())));
+                    return Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                        "Status code {} while requesting Cesium ion "
+                        "vector asset data.",
+                        pAssetResponse->statusCode())));
                   }
 
                   return GeoJsonDocument::fromGeoJson(

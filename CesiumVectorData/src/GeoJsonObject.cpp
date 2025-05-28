@@ -1,6 +1,6 @@
 #include <CesiumVectorData/GeoJsonObject.h>
 
-#include <string>
+#include <string_view>
 #include <variant>
 
 using namespace CesiumUtility;
