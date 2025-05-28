@@ -335,8 +335,7 @@ using VectorStyleExpressionValue = std::variant<
     glm::dvec2,
     glm::dvec3,
     glm::dvec4,
-    std::regex,
-    rapidjson::Pointer>;
+    std::regex>;
 
 struct ArrayPlaceholder {
   std::vector<VectorStyleExpressionValue> values;
@@ -347,35 +346,47 @@ struct VectorStyleExpressionContext {
 };
 
 namespace {
-std::string rapidJsonValueToString(const rapidjson::Value* pValue) {
+VectorStyleExpressionValue
+expressionValueFromRapidjsonValue(const rapidjson::Value* pValue) {
   if (!pValue) {
-    return "undefined";
-  } else if (pValue->IsBool()) {
-    return pValue->GetBool() ? "true" : "false";
-  } else if (pValue->IsDouble()) {
-    return std::isnan(pValue->GetDouble())
-               ? "NaN"
-               : std::to_string(pValue->GetDouble());
+    return UndefinedPlaceholder{};
+  }
+
+  if (pValue->IsDouble()) {
+    return pValue->GetDouble();
   } else if (pValue->IsString()) {
     return pValue->GetString();
-  } else if (pValue->IsObject()) {
-    return "[object Object]";
-  } else if (pValue->IsNull()) {
-    return "null";
+  } else if (pValue->IsBool()) {
+    return pValue->GetBool();
   } else if (pValue->IsArray()) {
-    std::string str;
-    for (auto& value : pValue->GetArray()) {
-      if (!str.empty()) {
-        str += ",";
-      }
+    ArrayPlaceholder array;
+    array.values.reserve(pValue->GetArray().Size());
 
-      str += rapidJsonValueToString(&value);
+    for (const rapidjson::Value& value : pValue->GetArray()) {
+      array.values.emplace_back(expressionValueFromRapidjsonValue(&value));
     }
 
-    return str;
+    return array;
   } else {
-    return "";
+    return nullptr;
   }
+}
+
+std::string getValueTypeName(const VectorStyleExpressionValue& value) {
+  struct Visitor {
+    std::string operator()(const bool&) { return "Boolean"; }
+    std::string operator()(const std::nullptr_t&) { return "null"; }
+    std::string operator()(const UndefinedPlaceholder&) { return "undefined"; }
+    std::string operator()(const double&) { return "Number"; }
+    std::string operator()(const std::string&) { return "String"; }
+    std::string operator()(const ArrayPlaceholder&) { return "Array"; }
+    std::string operator()(const glm::dvec2&) { return "vec2"; }
+    std::string operator()(const glm::dvec3&) { return "vec3"; }
+    std::string operator()(const glm::dvec4&) { return "vec4"; }
+    std::string operator()(const std::regex&) { return "RegExp"; }
+  };
+
+  return std::visit(Visitor{}, value);
 }
 } // namespace
 
@@ -384,35 +395,13 @@ std::string rapidJsonValueToString(const rapidjson::Value* pValue) {
  */
 class TypeConverter {
 public:
-  static bool toBoolean(
-      const VectorStyleExpressionContext& context,
-      const VectorStyleExpressionValue& value) {
+  static bool toBoolean(const VectorStyleExpressionValue& value) {
     struct Visitor {
-      const VectorStyleExpressionContext& context;
       bool operator()(const bool& v) { return v; }
       bool operator()(const std::nullptr_t&) { return false; }
       bool operator()(const UndefinedPlaceholder&) { return false; }
       bool operator()(const double& v) { return !std::isnan(v) && v != 0; }
       bool operator()(const std::string& v) { return !v.empty() && v != "0"; }
-      bool operator()(const rapidjson::Pointer& p) {
-        const rapidjson::Value* pValue = p.Get(context.feature);
-        if (!pValue || pValue->IsFalse() || pValue->IsNull()) {
-          return false;
-        }
-
-        if (pValue->IsDouble()) {
-          const double val = pValue->GetDouble();
-          return !std::isnan(val) && val != 0;
-        }
-
-        if (pValue->IsString()) {
-          return pValue->GetStringLength() != 0 &&
-                 !(pValue->GetStringLength() == 1 &&
-                   pValue->GetString()[0] == '0');
-        }
-
-        return true;
-      }
       bool operator()(const ArrayPlaceholder&) { return true; }
       bool operator()(const glm::dvec2&) { return true; }
       bool operator()(const glm::dvec3&) { return true; }
@@ -420,15 +409,12 @@ public:
       bool operator()(const std::regex&) { return true; }
     };
 
-    return std::visit(Visitor{context}, value);
+    return std::visit(Visitor{}, value);
   }
 
-  static double toNumber(
-      const VectorStyleExpressionContext& context,
-      const VectorStyleExpressionValue& value) {
+  static double toNumber(const VectorStyleExpressionValue& value) {
 
     struct Visitor {
-      const VectorStyleExpressionContext& context;
       double operator()(const bool& v) { return v ? 1.0 : 0.0; }
       double operator()(const std::nullptr_t&) { return 0.0; }
       double operator()(const UndefinedPlaceholder&) {
@@ -443,38 +429,6 @@ public:
         }
 
         return d;
-      }
-      double operator()(const rapidjson::Pointer& p) {
-        const rapidjson::Value* pValue = p.Get(context.feature);
-        if (!pValue) {
-          return std::numeric_limits<double>::quiet_NaN();
-        }
-
-        if (pValue->IsBool()) {
-          return pValue->GetBool() ? 1.0 : 0.0;
-        }
-
-        if (pValue->IsDouble()) {
-          return pValue->GetDouble();
-        }
-
-        if (pValue->IsString()) {
-          return TypeConverter::toNumber(context, pValue->GetString());
-        }
-
-        if (pValue->IsArray()) {
-          if (pValue->GetArray().Size() == 0) {
-            return 0.0;
-          }
-
-          if (pValue->GetArray().Size() == 1) {
-            if (pValue->GetArray()[0].IsNumber()) {
-              return pValue->GetArray()[0].GetDouble();
-            }
-          }
-        }
-
-        return std::numeric_limits<double>::quiet_NaN();
       }
       double operator()(const ArrayPlaceholder& arr) {
         if (arr.values.size() == 0) {
@@ -504,26 +458,26 @@ public:
       }
     };
 
-    return std::visit(Visitor{context}, value);
+    return std::visit(Visitor{}, value);
   }
 
-  static std::string toString(
-      const VectorStyleExpressionContext& context,
-      const VectorStyleExpressionValue& value) {
+  static std::string toString(const VectorStyleExpressionValue& value) {
     struct Visitor {
-      const VectorStyleExpressionContext& context;
       std::string operator()(const bool& v) { return v ? "true" : "false"; }
       std::string operator()(const std::nullptr_t&) { return "null"; }
       std::string operator()(const UndefinedPlaceholder&) {
         return "undefined";
       }
       std::string operator()(const double& v) {
-        return std::isnan(v) ? "NaN" : std::to_string(v);
+        if (std::isinf(v)) {
+          return "Infinity";
+        } else if (std::isnan(v)) {
+          return "NaN";
+        }
+
+        return std::to_string(v);
       }
       std::string operator()(const std::string& v) { return v; }
-      std::string operator()(const rapidjson::Pointer& p) {
-        return rapidJsonValueToString(p.Get(context.feature));
-      }
       std::string operator()(const ArrayPlaceholder& arr) {
         std::string str;
         for (const VectorStyleExpressionValue& v : arr.values) {
@@ -531,7 +485,7 @@ public:
             str += ",";
           }
 
-          str += TypeConverter::toString(context, v);
+          str += TypeConverter::toString(v);
         }
         return str;
       }
@@ -547,20 +501,66 @@ public:
       std::string operator()(const std::regex&) { return "RegExp"; }
     };
 
-    return std::visit(Visitor{context}, value);
+    return std::visit(Visitor{}, value);
+  }
+
+  static bool areExactlyEqual(
+      const VectorStyleExpressionValue& value1,
+      const VectorStyleExpressionValue& value2) {
+    if (value1.index() != value2.index()) {
+      // Different types, they can't be exactly equal
+      return false;
+    }
+
+    struct Visitor {
+      const VectorStyleExpressionValue& value2;
+      bool operator()(const bool& v) { return v == std::get<bool>(value2); }
+      bool operator()(const std::nullptr_t&) { return true; }
+      bool operator()(const UndefinedPlaceholder&) { return true; }
+      bool operator()(const double& v) { return v == std::get<double>(value2); }
+      bool operator()(const std::string& v) {
+        return v == std::get<std::string>(value2);
+      }
+      bool operator()(const ArrayPlaceholder&) { return false; }
+      bool operator()(const glm::dvec2& v) {
+        const glm::dvec2 v2 = std::get<glm::dvec2>(value2);
+        return v.x == v2.x && v.y == v2.y;
+      }
+      bool operator()(const glm::dvec3& v) {
+        const glm::dvec3 v2 = std::get<glm::dvec3>(value2);
+        return v.x == v2.x && v.y == v2.y && v.z == v2.z;
+      }
+      bool operator()(const glm::dvec4& v) {
+        const glm::dvec4 v2 = std::get<glm::dvec4>(value2);
+        return v.x == v2.x && v.y == v2.y && v.z == v2.z && v.w == v2.w;
+      }
+      bool operator()(const std::regex&) { return false; }
+    };
+
+    return std::visit(Visitor{value2}, value1);
   }
 };
 
 struct VectorStyleExpressionASTNode {
   virtual Result<VectorStyleExpressionValue>
-  execute(VectorStyleExpressionContext& context) = 0;
+  execute(VectorStyleExpressionContext& context) const = 0;
 };
 
 struct ConstantNode : public VectorStyleExpressionASTNode {
   VectorStyleExpressionValue value;
   virtual Result<VectorStyleExpressionValue>
-  execute(VectorStyleExpressionContext& /*context*/) {
+  execute(VectorStyleExpressionContext& /*context*/) const {
     return Result<VectorStyleExpressionValue>{this->value};
+  }
+};
+
+struct VariableNode : public VectorStyleExpressionASTNode {
+  rapidjson::Pointer variablePointer;
+  virtual Result<VectorStyleExpressionValue>
+  execute(VectorStyleExpressionContext& context) const {
+    const rapidjson::Value* pValue = variablePointer.Get(context.feature);
+    return Result<VectorStyleExpressionValue>(
+        expressionValueFromRapidjsonValue(pValue));
   }
 };
 
@@ -571,7 +571,7 @@ struct UnaryNode : public VectorStyleExpressionASTNode {
   UnaryOperatorType type;
 
   virtual Result<VectorStyleExpressionValue>
-  execute(VectorStyleExpressionContext& context) {
+  execute(VectorStyleExpressionContext& context) const {
     Result<VectorStyleExpressionValue> operandResult =
         operand->execute(context);
     if (!operandResult.value) {
@@ -581,13 +581,13 @@ struct UnaryNode : public VectorStyleExpressionASTNode {
     switch (type) {
     case UnaryOperatorType::Plus:
       return Result<VectorStyleExpressionValue>(
-          TypeConverter::toNumber(context, *operandResult.value));
+          TypeConverter::toNumber(*operandResult.value));
     case UnaryOperatorType::Minus:
       return Result<VectorStyleExpressionValue>(
-          -TypeConverter::toNumber(context, *operandResult.value));
+          -TypeConverter::toNumber(*operandResult.value));
     case UnaryOperatorType::Not:
       return Result<VectorStyleExpressionValue>(
-          !TypeConverter::toBoolean(context, *operandResult.value));
+          !TypeConverter::toBoolean(*operandResult.value));
     }
 
     return Result<VectorStyleExpressionValue>(
@@ -602,15 +602,14 @@ struct BinaryBooleanOperatorNode : public VectorStyleExpressionASTNode {
   BinaryBooleanOperatorType type;
 
   virtual Result<VectorStyleExpressionValue>
-  execute(VectorStyleExpressionContext& context) {
+  execute(VectorStyleExpressionContext& context) const {
     Result<VectorStyleExpressionValue> operand1Result =
         operand1->execute(context);
     if (!operand1Result.value) {
       return Result<VectorStyleExpressionValue>(operand1Result.errors);
     }
 
-    bool operand1Bool =
-        TypeConverter::toBoolean(context, *operand1Result.value);
+    bool operand1Bool = TypeConverter::toBoolean(*operand1Result.value);
 
     // Short circuiting
     if ((type == BinaryBooleanOperatorType::Or && operand1Bool) ||
@@ -624,8 +623,7 @@ struct BinaryBooleanOperatorNode : public VectorStyleExpressionASTNode {
       return Result<VectorStyleExpressionValue>(operand2Result.errors);
     }
 
-    bool operand2Bool =
-        TypeConverter::toBoolean(context, *operand2Result.value);
+    bool operand2Bool = TypeConverter::toBoolean(*operand2Result.value);
 
     return Result<VectorStyleExpressionValue>(
         type == BinaryBooleanOperatorType::Or ? (operand1Bool || operand2Bool)
@@ -633,16 +631,16 @@ struct BinaryBooleanOperatorNode : public VectorStyleExpressionASTNode {
   }
 };
 
-enum class BinaryBooleanComparisonOperatorType : uint8_t { Equals, NotEquals };
-
-struct BinaryBooleanComparisonOperatorNode
-    : public VectorStyleExpressionASTNode {
+struct BinaryOperatorNode : public VectorStyleExpressionASTNode {
   std::unique_ptr<VectorStyleExpressionASTNode> operand1;
   std::unique_ptr<VectorStyleExpressionASTNode> operand2;
-  BinaryBooleanComparisonOperatorType type;
+
+  virtual Result<VectorStyleExpressionValue> executeWithOperands(
+      VectorStyleExpressionValue& value1,
+      VectorStyleExpressionValue& value2) const = 0;
 
   virtual Result<VectorStyleExpressionValue>
-  execute(VectorStyleExpressionContext& context) {
+  execute(VectorStyleExpressionContext& context) const {
     Result<VectorStyleExpressionValue> operand1Result =
         operand1->execute(context);
     if (!operand1Result.value) {
@@ -655,10 +653,134 @@ struct BinaryBooleanComparisonOperatorNode
       return Result<VectorStyleExpressionValue>(operand2Result.errors);
     }
 
-    if (operand1Result.value->index() != operand2Result.value->index()) {
-      // Different types, they can't be equal since these are === and !==
-      return Result<VectorStyleExpressionValue>(
-          type == BinaryBooleanComparisonOperatorType::Equals ? false : true);
+    return this->executeWithOperands(
+        *operand1Result.value,
+        *operand2Result.value);
+  }
+};
+
+enum class BinaryBooleanComparisonOperatorType : uint8_t { Equals, NotEquals };
+
+struct BinaryBooleanComparisonOperatorNode : public BinaryOperatorNode {
+  BinaryBooleanComparisonOperatorType type;
+
+  virtual Result<VectorStyleExpressionValue> executeWithOperands(
+      VectorStyleExpressionValue& value1,
+      VectorStyleExpressionValue& value2) const {
+    return Result<VectorStyleExpressionValue>(
+        type == BinaryBooleanComparisonOperatorType::Equals
+            ? TypeConverter::areExactlyEqual(value1, value2)
+            : !TypeConverter::areExactlyEqual(value1, value2));
+  }
+};
+
+enum class BinaryNumberComparisonOperatorType {
+  LessThan,
+  LessThanEqual,
+  GreaterThan,
+  GreaterThanEqual
+};
+
+struct BinaryNumberComparisonOperatorNode : public BinaryOperatorNode {
+  BinaryNumberComparisonOperatorType type;
+
+  virtual Result<VectorStyleExpressionValue> executeWithOperands(
+      VectorStyleExpressionValue& value1,
+      VectorStyleExpressionValue& value2) const {
+    const double* n1 = std::get_if<double>(&value1);
+    const double* n2 = std::get_if<double>(&value2);
+
+    if (!n1 || !n2) {
+      return Result<VectorStyleExpressionValue>(ErrorList::error(fmt::format(
+          "Binary number comparison operator expects types to be numbers, used "
+          "on types {} and {}",
+          getValueTypeName(value1),
+          getValueTypeName(value2))));
     }
+
+    switch (type) {
+    case BinaryNumberComparisonOperatorType::LessThan:
+      return Result<VectorStyleExpressionValue>(*n1 < *n2);
+    case BinaryNumberComparisonOperatorType::LessThanEqual:
+      return Result<VectorStyleExpressionValue>(*n1 <= *n2);
+    case BinaryNumberComparisonOperatorType::GreaterThan:
+      return Result<VectorStyleExpressionValue>(*n1 > *n2);
+    case BinaryNumberComparisonOperatorType::GreaterThanEqual:
+      return Result<VectorStyleExpressionValue>(*n1 >= *n2);
+    }
+
+    return Result<VectorStyleExpressionValue>(false);
+  }
+};
+
+struct BinaryAdditionOperatorNode : public BinaryOperatorNode {
+  virtual Result<VectorStyleExpressionValue> executeWithOperands(
+      VectorStyleExpressionValue& value1,
+      VectorStyleExpressionValue& value2) const {
+    const std::string* pStrValue = std::get_if<std::string>(&value1);
+    if (pStrValue) {
+      return Result<VectorStyleExpressionValue>(
+          *pStrValue + TypeConverter::toString(value2));
+    }
+
+    if (value1.index() != value2.index()) {
+      return Result<VectorStyleExpressionValue>(ErrorList::error(fmt::format(
+          "Binary `+` operator expects operands of matching types, got {} and "
+          "{}.",
+          getValueTypeName(value1),
+          getValueTypeName(value2))));
+    }
+
+    if (std::holds_alternative<double>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<double>(value1) + std::get<double>(value2));
+    } else if (std::holds_alternative<glm::dvec2>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<glm::dvec2>(value1) + std::get<glm::dvec2>(value2));
+    } else if (std::holds_alternative<glm::dvec3>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<glm::dvec3>(value1) + std::get<glm::dvec3>(value2));
+    } else if (std::holds_alternative<glm::dvec4>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<glm::dvec4>(value1) + std::get<glm::dvec4>(value2));
+    }
+
+    return Result<VectorStyleExpressionValue>(ErrorList::error(fmt::format(
+        "Binary `+` operator can't operator on types {} and {}.",
+        getValueTypeName(value1),
+        getValueTypeName(value2))));
+  }
+};
+
+struct BinarySubtractionOperatorNode : public BinaryOperatorNode {
+  virtual Result<VectorStyleExpressionValue> executeWithOperands(
+      VectorStyleExpressionValue& value1,
+      VectorStyleExpressionValue& value2) const {
+    if (value1.index() != value2.index()) {
+      return Result<VectorStyleExpressionValue>(ErrorList::error(fmt::format(
+          "Binary `-` operator expects operands of matching types, got {} and "
+          "{}.",
+          getValueTypeName(value1),
+          getValueTypeName(value2))));
+    }
+
+    if (std::holds_alternative<double>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<double>(value1) - std::get<double>(value2));
+    } else if (std::holds_alternative<glm::dvec2>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<glm::dvec2>(value1) - std::get<glm::dvec2>(value2));
+    } else if (std::holds_alternative<glm::dvec3>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<glm::dvec3>(value1) - std::get<glm::dvec3>(value2));
+    } else if (std::holds_alternative<glm::dvec4>(value1)) {
+      return Result<VectorStyleExpressionValue>(
+          std::get<glm::dvec4>(value1) - std::get<glm::dvec4>(value2));
+    }
+
+    return Result<VectorStyleExpressionValue>(ErrorList::error(fmt::format(
+        "Binary `-` operator can't operator on types {} and {}.",
+        getValueTypeName(value1),
+        getValueTypeName(value2))));
   }
 };
