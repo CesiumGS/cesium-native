@@ -1071,6 +1071,77 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
           skirtHeight * 0.5);
     }
   }
+
+  SUBCASE("Check water mask properties come through on their own") {
+    primitive.extras["OnlyWater"] = false;
+    primitive.extras["OnlyLand"] = false;
+    primitive.extras["WaterMaskTex"] = 1;
+    primitive.extras["WaterMaskTranslationX"] = 0.0;
+    primitive.extras["WaterMaskTranslationY"] = 0.0;
+    primitive.extras["WaterMaskScale"] = 1.0;
+
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            false);
+
+    REQUIRE(upsampledModel.meshes.size() == 1);
+    const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+    REQUIRE(upsampledMesh.primitives.size() == 1);
+    const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+    auto it = upsampledPrimitive.extras.find("OnlyWater");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    REQUIRE(it->second.isBool());
+    CHECK(it->second.getBool() == false);
+
+    it = upsampledPrimitive.extras.find("WaterMaskScale");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    REQUIRE(it->second.isDouble());
+    CHECK(it->second.getDouble() == 0.5);
+  }
+
+  SUBCASE("Check water mask properties come through when there is also skirt "
+          "metadata") {
+    double skirtHeight = 12.0;
+    SkirtMeshMetadata skirtMeshMetadata;
+    skirtMeshMetadata.noSkirtIndicesBegin = 0;
+    skirtMeshMetadata.noSkirtIndicesCount =
+        static_cast<uint32_t>(indices.size());
+    skirtMeshMetadata.meshCenter = center;
+    skirtMeshMetadata.skirtWestHeight = skirtHeight;
+    skirtMeshMetadata.skirtSouthHeight = skirtHeight;
+    skirtMeshMetadata.skirtEastHeight = skirtHeight;
+    skirtMeshMetadata.skirtNorthHeight = skirtHeight;
+
+    primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+
+    primitive.extras["OnlyWater"] = true;
+    primitive.extras["OnlyLand"] = false;
+
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            false);
+
+    REQUIRE(upsampledModel.meshes.size() == 1);
+    const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+    REQUIRE(upsampledMesh.primitives.size() == 1);
+    const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+    auto it = upsampledPrimitive.extras.find("OnlyWater");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    REQUIRE(it->second.isBool());
+    CHECK(it->second.getBool() == true);
+
+    it = upsampledPrimitive.extras.find("skirtMeshMetadata");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    CHECK(it->second.isObject());
+  }
 }
 
 TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_BYTE indices") {
