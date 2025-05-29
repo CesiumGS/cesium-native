@@ -203,11 +203,14 @@ struct GeoJsonObject {
  * @brief Iterates over a \ref GeoJsonObject and all of its children.
  */
 struct GeoJsonObjectIterator {
+  // Ignore Doxygen warnings for iterator tags.
+  //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = GeoJsonObject;
   using pointer = GeoJsonObject*;
   using reference = GeoJsonObject&;
+  //! @endcond
 
   /** @brief Returns a reference to the current object. */
   reference operator*() const { return *_pCurrentObject; }
@@ -396,11 +399,14 @@ private:
  * @brief The `const` equivalent of \ref GeoJsonObjectIterator.
  */
 struct ConstGeoJsonObjectIterator {
+  // Ignore Doxygen warnings for iterator tags.
+  //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = GeoJsonObject;
   using pointer = const GeoJsonObject*;
   using reference = const GeoJsonObject&;
+  //! @endcond
 
   /** @brief Returns a reference to the current object. */
   reference operator*() const { return *this->_it; }
@@ -482,11 +488,14 @@ private:
  */
 template <typename SingleT, typename MultiT, typename ValueT>
 struct ConstGeoJsonPrimitiveIterator {
+  // Ignore Doxygen warnings for iterator tags.
+  //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = ValueT;
   using pointer = const ValueT*;
   using reference = const ValueT&;
+  //! @endcond
 
   /**
    * @brief Returns a reference to the current value.
@@ -585,11 +594,14 @@ private:
  * of type `ObjectType`.
  */
 template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
+  // Ignore Doxygen warnings for iterator tags.
+  //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = ObjectType;
   using pointer = const ObjectType*;
   using reference = const ObjectType&;
+  //! @endcond
 
   /** @brief Returns a reference to the current object. */
   reference operator*() const {
@@ -599,7 +611,7 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
   pointer operator->() { return &**this; }
 
   /**
-   * @brief Iterates to the next \ref ObjectType, returning this modified
+   * @brief Iterates to the next `ObjectType`, returning this modified
    * iterator.
    */
   ConstGeoJsonObjectTypeIterator& operator++() {
@@ -609,7 +621,7 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
     return *this;
   }
   /**
-   * @brief Iterates to the next \ref ObjectType, returning the previous
+   * @brief Iterates to the next `ObjectType`, returning the previous
    * state of the iterator.
    */
   ConstGeoJsonObjectTypeIterator operator++(int) {

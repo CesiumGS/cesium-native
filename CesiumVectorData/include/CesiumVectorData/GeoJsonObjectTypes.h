@@ -6,9 +6,7 @@
 
 #include <glm/vec3.hpp>
 
-#include <iterator>
 #include <memory>
-#include <stack>
 #include <variant>
 #include <vector>
 
@@ -267,16 +265,32 @@ struct GeoJsonGeometryCollection {
  * is a collection of information that is possibly linked to a geometry object.
  */
 struct GeoJsonFeature {
+  /** @brief Default constructor. */
   GeoJsonFeature() = default;
+  /** @brief Move constructor. */
   GeoJsonFeature(GeoJsonFeature&& rhs) noexcept;
+  /** @brief Copy constructor. */
   GeoJsonFeature(const GeoJsonFeature& rhs);
+  /**
+   * @brief Creates a new \ref GeoJsonFeature with the given values.
+   *
+   * @param id_ The ID of the new feature.
+   * @param geometry_ The GeoJSON geometry object contained in this \ref
+   * GeoJsonFeature, if any.
+   * @param properties_ Properties attached to this feature, if any.
+   * @param boundingBox_ The bounding box defined for this feature, if any.
+   * @param foreignMembers_ Any foreign members defined on this object in the
+   * source GeoJSON.
+   */
   GeoJsonFeature(
       std::variant<std::monostate, std::string, int64_t> id_,
       std::unique_ptr<GeoJsonObject>&& geometry_,
       std::optional<CesiumUtility::JsonValue::Object>&& properties_,
       std::optional<CesiumGeometry::AxisAlignedBox>&& boundingBox_,
       CesiumUtility::JsonValue::Object&& foreignMembers_);
+  /** @brief Copy assignment operator. */
   GeoJsonFeature& operator=(const GeoJsonFeature& rhs);
+  /** @brief Move assignment operator. */
   GeoJsonFeature& operator=(GeoJsonFeature&& rhs) noexcept;
 
   /** @brief The `GeoJsonObjectType` for a Feature. */

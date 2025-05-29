@@ -1,8 +1,15 @@
 #include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 using namespace CesiumUtility;
@@ -19,7 +26,7 @@ std::string_view geoJsonObjectTypeToString(GeoJsonObjectType type) {
       "GeometryCollection",
       "Feature",
       "FeatureCollection"};
-  if (size_t(type) >= 0 && size_t(type) < sizeof(values)) {
+  if (size_t(type) < sizeof(values)) {
     return values[size_t(type)];
   } else {
     constexpr std::string_view unknown = "Unknown";

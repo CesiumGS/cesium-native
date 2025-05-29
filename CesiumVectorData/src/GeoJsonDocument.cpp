@@ -5,19 +5,19 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/JsonValue.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 
 #include <fmt/format.h>
+#include <glm/ext/vector_double3.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>

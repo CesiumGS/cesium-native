@@ -1,8 +1,13 @@
+#include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
+
+#include <optional>
+#include <variant>
 
 namespace CesiumVectorData {
 GeoJsonObjectType GeoJsonObject::getType() const {
-  return std::visit([](const auto& value) { return value.TYPE; }, this->value);
+  return std::visit([](const auto& v) { return v.TYPE; }, this->value);
 }
 
 GeoJsonObjectIterator GeoJsonObject::begin() {
