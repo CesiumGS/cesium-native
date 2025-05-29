@@ -606,7 +606,7 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
 
   /** @brief Returns a reference to the current object. */
   reference operator*() const {
-    return (*this->_it).get<ObjectType>().coordinates;
+    return (*this->_it).template get<ObjectType>().coordinates;
   }
   /** @brief Returns a pointer to the current object. */
   pointer operator->() { return &**this; }
@@ -618,7 +618,8 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
   ConstGeoJsonObjectTypeIterator& operator++() {
     do {
       ++this->_it;
-    } while (!this->_it.isEnded() && this->_it->containsType<ObjectType>());
+    } while (!this->_it.isEnded() &&
+             this->_it->template containsType<ObjectType>());
     return *this;
   }
   /**
