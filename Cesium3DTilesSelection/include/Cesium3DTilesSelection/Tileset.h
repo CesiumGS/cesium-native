@@ -219,6 +219,17 @@ public:
   const TilesetSharedAssetSystem& getSharedAssetSystem() const noexcept;
 
   /**
+   * @brief Retrieves the `3DTILES_content_voxels` extension on the root tile's
+   * content, if present.
+   *
+   * @returns A pointer to the root tile's \ref
+   * Cesium3DTiles::ExtensionContent3dTilesContentVoxels, or nullptr if it does
+   * not exist.
+   */
+  const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
+  getVoxelContentExtension() const;
+
+  /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
    * loading and ready to be rendered before returning the function. This method
    * is significantly slower than {@link Tileset::updateView} and should only be
@@ -351,17 +362,6 @@ public:
    * the same metadata instance.
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
-
-  /**
-   * @brief Retrieves the 3DTILES_content_voxels extension on the root tile's
-   * content, if present.
-   *
-   * @returns A pointer to the root tile's \ref
-   * Cesium3DTiles::ExtensionContent3dTilesContentVoxels, or nullptr if it does
-   * not exist.
-   */
-  const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
-  getVoxelContentExtension() const;
 
   /**
    * @brief Initiates an asynchronous query for the height of this tileset at a

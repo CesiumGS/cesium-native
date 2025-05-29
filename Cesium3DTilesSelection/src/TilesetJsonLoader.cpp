@@ -684,17 +684,19 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
     }
 
-    // Check for the 3DTILES_content_voxels extension.
+    // If the root tile has content, check for the `3DTILES_content_voxels`
+    // extension.
     const auto contentIt = rootIt->value.FindMember("content");
     if (contentIt != tilesetJson.MemberEnd()) {
       ContentReader contentReader;
       const auto result = contentReader.readFromJson(contentIt->value);
       if (!result.errors.empty()) {
         errorList.emplaceError("Failed to parse root tile content.");
-      } else if (result.value) {
-        const Cesium3DTiles::Content& content = *result.value;
+      } else if (
+          result.value &&
+          result.value->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
         voxelExtension =
-            *content.getExtension<ExtensionContent3dTilesContentVoxels>();
+            *result.value->getExtension<ExtensionContent3dTilesContentVoxels>();
       }
     }
   }
@@ -949,7 +951,7 @@ TilesetJsonLoader::createLoader(
               return asyncSystem.createResolvedFuture(std::move(result));
             }
 
-            // Voxels require the metadata schema on the tileset to be loaded.
+            // 3DTILES_content_voxels requires the tileset's metadata schema to be loaded.
             TileExternalContent* pExternal =
                 result.pRootTile->getContent().getExternalContent();
             if (!pExternal) {
@@ -958,7 +960,7 @@ TilesetJsonLoader::createLoader(
 
             TilesetMetadata& metadata = pExternal->metadata;
             if (!metadata.schemaUri) {
-              // No schema URI, so the metadata is ready to go.
+              // No schema URI, so this is ready to go.
               return asyncSystem.createResolvedFuture(std::move(result));
             }
 

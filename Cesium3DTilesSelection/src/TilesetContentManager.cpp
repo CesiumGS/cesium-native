@@ -2044,6 +2044,6 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
 
 const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
 TilesetContentManager::getVoxelExtension() const noexcept {
-  return this->_voxelExtension ? &this->_voxelExtension.value() : nullptr;
+  return this->_voxelExtension ? &(*this->_voxelExtension) : nullptr;
 }
 } // namespace Cesium3DTilesSelection
