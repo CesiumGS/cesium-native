@@ -951,7 +951,8 @@ TilesetJsonLoader::createLoader(
               return asyncSystem.createResolvedFuture(std::move(result));
             }
 
-            // 3DTILES_content_voxels requires the tileset's metadata schema to be loaded.
+            // 3DTILES_content_voxels requires the tileset's metadata schema to
+            // be loaded.
             TileExternalContent* pExternal =
                 result.pRootTile->getContent().getExternalContent();
             if (!pExternal) {
