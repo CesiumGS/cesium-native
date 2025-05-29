@@ -1,4 +1,5 @@
 #include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 
