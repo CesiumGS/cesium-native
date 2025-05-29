@@ -501,12 +501,13 @@ struct ConstGeoJsonPrimitiveIterator {
    * @brief Returns a reference to the current value.
    */
   reference operator*() const {
-    const GeoJsonMultiPoint* pMultiPoint = (*this->_it).getIf<MultiT>();
+    const GeoJsonMultiPoint* pMultiPoint =
+        (*this->_it).template getIf<MultiT>();
     if (pMultiPoint) {
       return pMultiPoint->coordinates[this->_currentMultiIdx];
     }
 
-    return (*this->_it).get<SingleT>().coordinates;
+    return (*this->_it).template get<SingleT>().coordinates;
   }
   /**
    * @brief Returns a pointer to the current value.
@@ -554,8 +555,8 @@ struct ConstGeoJsonPrimitiveIterator {
    */
   ConstGeoJsonPrimitiveIterator(const GeoJsonObject& rootObject)
       : _it(const_cast<GeoJsonObject&>(rootObject)) {
-    if (!_it.isEnded() &&
-        !(_it->containsType<SingleT>() || _it->containsType<MultiT>())) {
+    if (!_it.isEnded() && !(_it->template containsType<SingleT>() ||
+                            _it->template containsType<MultiT>())) {
       this->iterate();
     }
   }
@@ -567,8 +568,8 @@ struct ConstGeoJsonPrimitiveIterator {
 
 private:
   void iterate() {
-    if (!this->_it.isEnded() && this->_it->containsType<MultiT>()) {
-      const MultiT& multi = this->_it->get<MultiT>();
+    if (!this->_it.isEnded() && this->_it->template containsType<MultiT>()) {
+      const MultiT& multi = this->_it->template get<MultiT>();
       if ((int64_t)this->_currentMultiIdx <
           (int64_t)(multi.coordinates.size() - 1)) {
         this->_currentMultiIdx++;
@@ -580,9 +581,9 @@ private:
     do {
       ++this->_it;
     } while (!this->_it.isEnded() &&
-             !(this->_it->containsType<SingleT>() ||
-               (this->_it->containsType<MultiT>() &&
-                !this->_it->get<MultiT>().coordinates.empty())));
+             !(this->_it->template containsType<SingleT>() ||
+               (this->_it->template containsType<MultiT>() &&
+                !this->_it->template get<MultiT>().coordinates.empty())));
   }
 
   GeoJsonObjectIterator _it;
