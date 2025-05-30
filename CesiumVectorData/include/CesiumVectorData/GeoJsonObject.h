@@ -46,16 +46,16 @@ struct GeoJsonObject {
    * @brief An object providing `begin` and `end` methods for creating iterators
    * of the given type for a \ref GeoJsonObject.
    */
-  template <typename IteratorType> struct IteratorProvider {
+  template <typename TIterator> struct IteratorProvider {
     /**
      * @brief Returns an iterator pointing to the first element.
      */
-    IteratorType begin() { return IteratorType(*this->_pObject); }
+    TIterator begin() { return TIterator(*this->_pObject); }
 
     /**
      * @brief Returns an iterator pointing "past the end" of all the elements.
      */
-    IteratorType end() { return IteratorType(); }
+    TIterator end() { return TIterator(); }
 
   private:
     IteratorProvider(const GeoJsonObject* pObject) : _pObject(pObject) {}
@@ -328,7 +328,7 @@ private:
 
       ++this->_stackPos;
       this->_stack[(size_t)this->_stackPos].pObject = &child;
-      this->_stack[(size_t)this->_stackPos].nextPos = -1;
+      this->_stack[(size_t)this->_stackPos].nextPos = 0;
     }
   }
 
@@ -373,8 +373,9 @@ private:
       } else if (
           GeoJsonFeature* pFeature =
               std::get_if<GeoJsonFeature>(&pNext->value)) {
-        if ((size_t)stackState.nextPos >= 1) {
-          // Feature only has one child
+        const size_t expectedSize = pFeature->geometry == nullptr ? 0 : 1;
+        if ((size_t)stackState.nextPos >= expectedSize) {
+          // Feature only has zero or one child
           --this->_stackPos;
           continue;
         }
@@ -611,9 +612,7 @@ template <typename TObject> struct ConstGeoJsonObjectTypeIterator {
   //! @endcond
 
   /** @brief Returns a reference to the current object. */
-  reference operator*() const {
-    return (*this->_it).template get<TObject>().coordinates;
-  }
+  reference operator*() const { return (*this->_it).template get<TObject>(); }
   /** @brief Returns a pointer to the current object. */
   pointer operator->() { return &**this; }
 
@@ -622,9 +621,7 @@ template <typename TObject> struct ConstGeoJsonObjectTypeIterator {
    * iterator.
    */
   ConstGeoJsonObjectTypeIterator& operator++() {
-    do {
-      ++this->_it;
-    } while (!this->_it.isEnded() && this->_it->template isType<TObject>());
+    this->iterate();
     return *this;
   }
   /**
@@ -633,7 +630,7 @@ template <typename TObject> struct ConstGeoJsonObjectTypeIterator {
    */
   ConstGeoJsonObjectTypeIterator operator++(int) {
     ConstGeoJsonObjectTypeIterator tmp = *this;
-    ++this->_it;
+    this->iterate();
     return tmp;
   }
   /**
@@ -663,7 +660,11 @@ template <typename TObject> struct ConstGeoJsonObjectTypeIterator {
    * first object returned.
    */
   ConstGeoJsonObjectTypeIterator(const GeoJsonObject& rootObject)
-      : _it(const_cast<GeoJsonObject&>(rootObject)) {}
+      : _it(const_cast<GeoJsonObject&>(rootObject)) {
+    if (!this->_it.isEnded() && !this->_it->template isType<TObject>()) {
+      this->iterate();
+    }
+  }
   /**
    * @brief Creates a new \ref ConstGeoJsonObjectTypeIterator without any \ref
    * GeoJsonObject. This is equivalent to an "end" iterator.
@@ -671,6 +672,12 @@ template <typename TObject> struct ConstGeoJsonObjectTypeIterator {
   ConstGeoJsonObjectTypeIterator() = default;
 
 private:
+  void iterate() {
+    do {
+      ++this->_it;
+    } while (!this->_it.isEnded() && !this->_it->template isType<TObject>());
+  }
+
   ConstGeoJsonObjectIterator _it;
   size_t _currentMultiPointIdx = 0;
 };
