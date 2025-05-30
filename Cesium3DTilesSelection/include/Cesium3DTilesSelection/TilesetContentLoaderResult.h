@@ -86,7 +86,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
         credits{std::move(rhs.credits)},
         requestHeaders{std::move(rhs.requestHeaders)},
         errors{std::move(rhs.errors)},
-        statusCode(std::move(rhs.statusCode)) {}
+        statusCode{std::move(rhs.statusCode)} {}
 
   /**
    * @brief Move assignment operator for creating a
