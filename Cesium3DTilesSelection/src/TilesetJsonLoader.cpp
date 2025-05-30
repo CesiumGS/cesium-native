@@ -917,7 +917,7 @@ TilesetJsonLoader::createLoader(
         result.pRootTile->getContent().getExternalContent();
     CESIUM_ASSERT(pExternalContent);
 
-    const auto* pVoxelExtension =
+    auto* pVoxelExtension =
         pExternalContent->getExtension<ExtensionContent3dTilesContentVoxels>();
     if (pVoxelExtension) {
       maybeVoxelExtension = std::move(*pVoxelExtension);
