@@ -67,28 +67,43 @@ struct GeoJsonObject {
   /**
    * @brief Returns an iterator pointing to this object. Iterating this will
    * provide all children of this object.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   GeoJsonObjectIterator begin();
   /**
    * @brief Returns an iterator pointing "past the end" of the list of children
    * of this object.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   GeoJsonObjectIterator end();
 
   /**
    * @brief Returns an iterator pointing to this object. Iterating this will
    * provide all children of this object.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   ConstGeoJsonObjectIterator begin() const;
   /**
    * @brief Returns an iterator pointing "past the end" of the list of children
    * of this object.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   ConstGeoJsonObjectIterator end() const;
 
   /**
    * @brief Allows iterating over all points defined in this object or any child
    * objects. This will include both `Point` objects and `MultiPoint` objects.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   IteratorProvider<ConstGeoJsonPointIterator> points() const;
 
@@ -96,6 +111,9 @@ struct GeoJsonObject {
    * @brief Allows iterating over all lines defined in this object or any child
    * objects. This will include both `LineString` objects and `MultiLineString`
    * objects.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   IteratorProvider<ConstGeoJsonLineStringIterator> lines() const;
 
@@ -103,12 +121,18 @@ struct GeoJsonObject {
    * @brief Allows iterating over all polygons defined in this object or any
    * child objects. This will include both `Polygon` objects and `MultiPolygon`
    * objects.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   IteratorProvider<ConstGeoJsonPolygonIterator> polygons() const;
 
   /**
    * @brief Returns all \ref GeoJsonObject values matching the given type in
    * this object or in any children.
+   *
+   * @note The iterator will only descend up to a depth of eight, which should
+   * cover almost all GeoJSON documents.
    */
   template <typename TObject>
   IteratorProvider<ConstGeoJsonObjectTypeIterator<TObject>> allOfType() const {
