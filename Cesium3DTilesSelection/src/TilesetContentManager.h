@@ -18,10 +18,6 @@
 
 #include <vector>
 
-namespace Cesium3DTiles {
-struct ExtensionContent3dTilesContentVoxels;
-}
-
 namespace Cesium3DTilesSelection {
 
 /**

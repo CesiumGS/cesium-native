@@ -194,13 +194,6 @@ const TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() const noexcept {
   return *this->_pTilesetContentManager->getSharedAssetSystem();
 }
 
-const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
-Tileset::getVoxelContentExtension() const {
-  return this->_pTilesetContentManager
-             ? this->_pTilesetContentManager->getVoxelExtension()
-             : nullptr;
-}
-
 // NOLINTBEGIN(misc-use-anonymous-namespace)
 static bool
 operator<(const FogDensityAtHeight& fogDensity, double height) noexcept {

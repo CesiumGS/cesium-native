@@ -23,10 +23,6 @@
 #include <string>
 #include <vector>
 
-namespace Cesium3DTiles {
-struct ExtensionContent3dTilesContentVoxels;
-}
-
 namespace Cesium3DTilesSelection {
 
 class TilesetContentManager;
@@ -217,17 +213,6 @@ public:
 
   /** @copydoc Tileset::getSharedAssetSystem() */
   const TilesetSharedAssetSystem& getSharedAssetSystem() const noexcept;
-
-  /**
-   * @brief Retrieves the `3DTILES_content_voxels` extension on the root tile's
-   * content, if present.
-   *
-   * @returns A pointer to the root tile's \ref
-   * Cesium3DTiles::ExtensionContent3dTilesContentVoxels, or nullptr if it does
-   * not exist.
-   */
-  const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
-  getVoxelContentExtension() const;
 
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
