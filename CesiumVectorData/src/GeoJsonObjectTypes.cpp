@@ -34,13 +34,6 @@ std::string_view geoJsonObjectTypeToString(GeoJsonObjectType type) {
   }
 }
 
-GeoJsonFeature::GeoJsonFeature(GeoJsonFeature&& rhs) noexcept
-    : id(std::move(rhs.id)),
-      geometry(std::move(rhs.geometry)),
-      properties(std::move(rhs.properties)),
-      boundingBox(std::move(rhs.boundingBox)),
-      foreignMembers(std::move(rhs.foreignMembers)) {}
-
 GeoJsonFeature::GeoJsonFeature(const GeoJsonFeature& rhs)
     : id(rhs.id),
       geometry(std::make_unique<GeoJsonObject>(*rhs.geometry)),
@@ -49,7 +42,7 @@ GeoJsonFeature::GeoJsonFeature(const GeoJsonFeature& rhs)
       foreignMembers(rhs.foreignMembers) {}
 
 GeoJsonFeature::GeoJsonFeature(
-    std::variant<std::monostate, std::string, int64_t> id_,
+    std::variant<std::monostate, std::string, int64_t>&& id_,
     std::unique_ptr<GeoJsonObject>&& geometry_,
     std::optional<CesiumUtility::JsonValue::Object>&& properties_,
     std::optional<CesiumGeometry::AxisAlignedBox>&& boundingBox_,
@@ -66,15 +59,6 @@ GeoJsonFeature& GeoJsonFeature::operator=(const GeoJsonFeature& rhs) {
   this->properties = rhs.properties;
   this->boundingBox = rhs.boundingBox;
   this->foreignMembers = rhs.foreignMembers;
-  return *this;
-}
-
-GeoJsonFeature& GeoJsonFeature::operator=(GeoJsonFeature&& rhs) noexcept {
-  std::swap(this->id, rhs.id);
-  std::swap(this->geometry, rhs.geometry);
-  std::swap(this->properties, rhs.properties);
-  std::swap(this->boundingBox, rhs.boundingBox);
-  std::swap(this->foreignMembers, rhs.foreignMembers);
   return *this;
 }
 } // namespace CesiumVectorData

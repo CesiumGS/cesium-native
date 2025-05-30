@@ -268,7 +268,7 @@ struct GeoJsonFeature {
   /** @brief Default constructor. */
   GeoJsonFeature() = default;
   /** @brief Move constructor. */
-  GeoJsonFeature(GeoJsonFeature&& rhs) noexcept;
+  GeoJsonFeature(GeoJsonFeature&& rhs) noexcept = default;
   /** @brief Copy constructor. */
   GeoJsonFeature(const GeoJsonFeature& rhs);
   /**
@@ -283,7 +283,7 @@ struct GeoJsonFeature {
    * source GeoJSON.
    */
   GeoJsonFeature(
-      std::variant<std::monostate, std::string, int64_t> id_,
+      std::variant<std::monostate, std::string, int64_t>&& id_,
       std::unique_ptr<GeoJsonObject>&& geometry_,
       std::optional<CesiumUtility::JsonValue::Object>&& properties_,
       std::optional<CesiumGeometry::AxisAlignedBox>&& boundingBox_,
@@ -291,7 +291,7 @@ struct GeoJsonFeature {
   /** @brief Copy assignment operator. */
   GeoJsonFeature& operator=(const GeoJsonFeature& rhs);
   /** @brief Move assignment operator. */
-  GeoJsonFeature& operator=(GeoJsonFeature&& rhs) noexcept;
+  GeoJsonFeature& operator=(GeoJsonFeature&& rhs) noexcept = default;
 
   /** @brief The `GeoJsonObjectType` for a Feature. */
   static constexpr GeoJsonObjectType TYPE = GeoJsonObjectType::Feature;

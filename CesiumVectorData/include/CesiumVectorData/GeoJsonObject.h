@@ -4,16 +4,16 @@
 
 #include <CesiumGeometry/AxisAlignedBox.h>
 
-#include <stack>
+#include <array>
 #include <vector>
 
 namespace CesiumVectorData {
 
 struct GeoJsonObjectIterator;
 struct ConstGeoJsonObjectIterator;
-template <typename SingleT, typename MultiT, typename ValueT>
+template <typename TSingle, typename TMulti, typename TValue>
 struct ConstGeoJsonPrimitiveIterator;
-template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator;
+template <typename TObject> struct ConstGeoJsonObjectTypeIterator;
 
 /**
  * @brief An iterator over all `Point` and `MultiPoint` objects in and including
@@ -39,7 +39,7 @@ using ConstGeoJsonPolygonIterator = ConstGeoJsonPrimitiveIterator<
     std::vector<std::vector<glm::dvec3>>>;
 
 /**
- * @brief A wrapper around an object in a GeoJSON document.
+ * @brief An object in a GeoJSON document.
  */
 struct GeoJsonObject {
   /**
@@ -50,7 +50,7 @@ struct GeoJsonObject {
     /**
      * @brief Returns an iterator pointing to the first element.
      */
-    IteratorType begin() { return IteratorType(*_pObject); }
+    IteratorType begin() { return IteratorType(*this->_pObject); }
 
     /**
      * @brief Returns an iterator pointing "past the end" of all the elements.
@@ -110,10 +110,9 @@ struct GeoJsonObject {
    * @brief Returns all \ref GeoJsonObject values matching the given type in
    * this object or in any children.
    */
-  template <typename ObjectType>
-  IteratorProvider<ConstGeoJsonObjectTypeIterator<ObjectType>>
-  allOfType() const {
-    return IteratorProvider<ConstGeoJsonObjectTypeIterator<ObjectType>>(this);
+  template <typename TObject>
+  IteratorProvider<ConstGeoJsonObjectTypeIterator<TObject>> allOfType() const {
+    return IteratorProvider<ConstGeoJsonObjectTypeIterator<TObject>>(this);
   }
 
   /**
@@ -150,7 +149,7 @@ struct GeoJsonObject {
    * @brief Returns whether the `value` of this \ref GeoJsonObject is of the
    * given type.
    */
-  template <typename T> bool containsType() const {
+  template <typename T> bool isType() const {
     return std::holds_alternative<T>(this->value);
   }
 
@@ -203,6 +202,14 @@ struct GeoJsonObject {
  * @brief Iterates over a \ref GeoJsonObject and all of its children.
  */
 struct GeoJsonObjectIterator {
+private:
+  static constexpr size_t StackSize = 8;
+  struct IteratorStackState {
+    GeoJsonObject* pObject;
+    int64_t nextPos;
+  };
+
+public:
   // Ignore Doxygen warnings for iterator tags.
   //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
@@ -224,10 +231,9 @@ struct GeoJsonObjectIterator {
    * If the iterator is pointing to a Feature, that Feature will be returned.
    */
   GeoJsonObject* getFeature() const {
-    for (auto it = this->_objectStack.rbegin(); it != this->_objectStack.rend();
-         ++it) {
-      if ((*it)->containsType<GeoJsonFeature>()) {
-        return *it;
+    for (int64_t i = this->_stackPos; i >= 0; i--) {
+      if (this->_stack[(size_t)i].pObject->isType<GeoJsonFeature>()) {
+        return this->_stack[(size_t)i].pObject;
       }
     }
 
@@ -239,8 +245,7 @@ struct GeoJsonObjectIterator {
    * all objects).
    */
   bool isEnded() const {
-    return this->_nextPosStack.empty() && this->_objectStack.empty() &&
-           this->_pCurrentObject == nullptr;
+    return this->_stackPos == -1 && this->_pCurrentObject == nullptr;
   }
 
   /**
@@ -266,24 +271,22 @@ struct GeoJsonObjectIterator {
    */
   friend bool
   operator==(const GeoJsonObjectIterator& a, const GeoJsonObjectIterator& b) {
-    if (a._pCurrentObject != b._pCurrentObject) {
+    if (a._pCurrentObject != b._pCurrentObject || a._stackPos != b._stackPos) {
       return false;
     }
 
-    if (!a._objectStack.empty() && !b._objectStack.empty()) {
-      if (a._objectStack.back() != b._objectStack.back()) {
+    if (a._stackPos >= 0 && b._stackPos >= 0) {
+      if (a._stack[(size_t)a._stackPos].nextPos !=
+          b._stack[(size_t)b._stackPos].nextPos) {
+        return false;
+      }
+      if (a._stack[(size_t)a._stackPos].pObject !=
+          b._stack[(size_t)b._stackPos].pObject) {
         return false;
       }
     }
 
-    if (!a._nextPosStack.empty() && !b._nextPosStack.empty()) {
-      if (a._nextPosStack.top() != b._nextPosStack.top()) {
-        return false;
-      }
-    }
-
-    return a._objectStack.empty() == b._objectStack.empty() &&
-           a._nextPosStack.empty() == b._nextPosStack.empty();
+    return true;
   }
 
   /**
@@ -302,9 +305,9 @@ struct GeoJsonObjectIterator {
    * first object returned.
    */
   GeoJsonObjectIterator(GeoJsonObject& rootObject)
-      : _objectStack(), _nextPosStack(), _pCurrentObject(nullptr) {
-    this->_objectStack.emplace_back(&rootObject);
-    this->_nextPosStack.emplace(-1);
+      : _stackPos(0), _pCurrentObject(nullptr) {
+    this->_stack[0].pObject = &rootObject;
+    this->_stack[0].nextPos = -1;
     this->iterate();
   }
 
@@ -312,84 +315,82 @@ struct GeoJsonObjectIterator {
    * @brief Creates a new \ref GeoJsonObjectIterator without any \ref
    * GeoJsonObject. This is equivalent to an "end" iterator.
    */
-  GeoJsonObjectIterator()
-      : _objectStack(), _nextPosStack(), _pCurrentObject(nullptr) {}
+  GeoJsonObjectIterator() : _stackPos(-1), _pCurrentObject(nullptr) {}
 
 private:
   void handleChild(GeoJsonObject& child) {
     this->_pCurrentObject = &child;
 
-    if (child.containsType<GeoJsonGeometryCollection>() ||
-        child.containsType<GeoJsonFeatureCollection>() ||
-        child.containsType<GeoJsonFeature>()) {
-      this->_nextPosStack.emplace(-1);
-      this->_objectStack.emplace_back(&child);
+    if ((this->_stackPos - 1) <= (int64_t)StackSize &&
+        (child.isType<GeoJsonGeometryCollection>() ||
+         child.isType<GeoJsonFeatureCollection>() ||
+         child.isType<GeoJsonFeature>())) {
+
+      ++this->_stackPos;
+      this->_stack[(size_t)this->_stackPos].pObject = &child;
+      this->_stack[(size_t)this->_stackPos].nextPos = -1;
     }
   }
 
   void iterate() {
-    _pCurrentObject = nullptr;
-    while (!this->_objectStack.empty() && !this->_nextPosStack.empty() &&
+    this->_pCurrentObject = nullptr;
+    while (this->_stackPos >= 0 && this->_stackPos < (int64_t)StackSize &&
            this->_pCurrentObject == nullptr) {
-      GeoJsonObject* pNext = _objectStack.back();
-      if (this->_nextPosStack.top() == -1) {
+      IteratorStackState& stackState = this->_stack[(size_t)this->_stackPos];
+      GeoJsonObject* pNext = stackState.pObject;
+      if (stackState.nextPos == -1) {
         this->_pCurrentObject = pNext;
-        this->_nextPosStack.top()++;
+        ++stackState.nextPos;
         continue;
-      } else if (std::holds_alternative<GeoJsonGeometryCollection>(
-                     pNext->value)) {
-        GeoJsonGeometryCollection& collection =
-            std::get<GeoJsonGeometryCollection>(pNext->value);
-        if ((size_t)this->_nextPosStack.top() >= collection.geometries.size()) {
+      } else if (
+          GeoJsonGeometryCollection* pCollection =
+              std::get_if<GeoJsonGeometryCollection>(&pNext->value)) {
+        if ((size_t)stackState.nextPos >= pCollection->geometries.size()) {
           // No children left
-          this->_objectStack.pop_back();
-          this->_nextPosStack.pop();
+          --this->_stackPos;
           continue;
         }
 
         GeoJsonObject& child =
-            collection.geometries[(size_t)this->_nextPosStack.top()];
-        this->_nextPosStack.top()++;
+            pCollection->geometries[(size_t)stackState.nextPos];
+        ++stackState.nextPos;
         this->handleChild(child);
         continue;
-      } else if (std::holds_alternative<GeoJsonFeatureCollection>(
-                     pNext->value)) {
-        GeoJsonFeatureCollection& collection =
-            std::get<GeoJsonFeatureCollection>(pNext->value);
-        if ((size_t)this->_nextPosStack.top() >= collection.features.size()) {
+      } else if (
+          GeoJsonFeatureCollection* pFeatureCollection =
+              std::get_if<GeoJsonFeatureCollection>(&pNext->value)) {
+        if ((size_t)stackState.nextPos >= pFeatureCollection->features.size()) {
           // No children left
-          this->_objectStack.pop_back();
-          this->_nextPosStack.pop();
+          --this->_stackPos;
           continue;
         }
 
         GeoJsonObject& child =
-            collection.features[(size_t)this->_nextPosStack.top()];
-        this->_nextPosStack.top()++;
+            pFeatureCollection->features[(size_t)stackState.nextPos];
+        ++stackState.nextPos;
         this->handleChild(child);
         continue;
-      } else if (std::holds_alternative<GeoJsonFeature>(pNext->value)) {
-        GeoJsonFeature& feature = std::get<GeoJsonFeature>(pNext->value);
-        if ((size_t)this->_nextPosStack.top() >= 1) {
+      } else if (
+          GeoJsonFeature* pFeature =
+              std::get_if<GeoJsonFeature>(&pNext->value)) {
+        if ((size_t)stackState.nextPos >= 1) {
           // Feature only has one child
-          this->_objectStack.pop_back();
-          this->_nextPosStack.pop();
+          --this->_stackPos;
           continue;
         }
 
-        this->_nextPosStack.top()++;
-        this->handleChild(*feature.geometry);
+        ++stackState.nextPos;
+        this->handleChild(*pFeature->geometry);
         continue;
       } else {
         // This object was a dud, try another
-        this->_nextPosStack.pop();
-        this->_objectStack.pop_back();
+        this->_stackPos--;
       }
     }
   }
 
-  std::vector<GeoJsonObject*> _objectStack;
-  std::stack<int64_t> _nextPosStack;
+  std::array<IteratorStackState, StackSize> _stack;
+  int64_t _stackPos = -1;
   GeoJsonObject* _pCurrentObject;
 
   friend struct ConstGeoJsonObjectIterator;
@@ -422,6 +423,12 @@ struct ConstGeoJsonObjectIterator {
   const GeoJsonObject* getFeature() { return this->_it.getFeature(); }
 
   /**
+   * @brief Returns `true` if this is an "end" iterator (points past the end of
+   * all objects).
+   */
+  bool isEnded() const { return this->_it.isEnded(); }
+
+  /**
    * @brief Iterates to the next \ref GeoJsonObject, returning this modified
    * iterator.
    */
@@ -435,7 +442,7 @@ struct ConstGeoJsonObjectIterator {
    */
   ConstGeoJsonObjectIterator operator++(int) {
     ConstGeoJsonObjectIterator tmp = *this;
-    this->_it++;
+    ++this->_it;
     return tmp;
   }
   /**
@@ -479,35 +486,34 @@ private:
 /**
  * @brief Returns all geometry data of a given type from a \ref GeoJsonObject.
  *
- * @tparam SingleT The type of the "single" version of this geometry object. For
+ * @tparam TSingle The type of the "single" version of this geometry object. For
  * example, `Point`.
- * @tparam MultiT The type of the "multi" version of this geometry object. For
+ * @tparam TMulti The type of the "multi" version of this geometry object. For
  * example, `MultiPoint`.
- * @tparam ValueT The type of the geometry data included in both
- * `SingleT::coordinates` and `MultiT::coordinates[i]`.
+ * @tparam TValue The type of the geometry data included in both
+ * `TSingle::coordinates` and `TMulti::coordinates[i]`.
  */
-template <typename SingleT, typename MultiT, typename ValueT>
+template <typename TSingle, typename TMulti, typename TValue>
 struct ConstGeoJsonPrimitiveIterator {
   // Ignore Doxygen warnings for iterator tags.
   //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
-  using value_type = ValueT;
-  using pointer = const ValueT*;
-  using reference = const ValueT&;
+  using value_type = TValue;
+  using pointer = const TValue*;
+  using reference = const TValue&;
   //! @endcond
 
   /**
    * @brief Returns a reference to the current value.
    */
   reference operator*() const {
-    const GeoJsonMultiPoint* pMultiPoint =
-        (*this->_it).template getIf<MultiT>();
+    const TMulti* pMultiPoint = (*this->_it).template getIf<TMulti>();
     if (pMultiPoint) {
       return pMultiPoint->coordinates[this->_currentMultiIdx];
     }
 
-    return (*this->_it).template get<SingleT>().coordinates;
+    return (*this->_it).template get<TSingle>().coordinates;
   }
   /**
    * @brief Returns a pointer to the current value.
@@ -527,7 +533,7 @@ struct ConstGeoJsonPrimitiveIterator {
    */
   ConstGeoJsonPrimitiveIterator operator++(int) {
     ConstGeoJsonPrimitiveIterator tmp = *this;
-    this->_it++;
+    this->iterate();
     return tmp;
   }
   /**
@@ -555,8 +561,8 @@ struct ConstGeoJsonPrimitiveIterator {
    */
   ConstGeoJsonPrimitiveIterator(const GeoJsonObject& rootObject)
       : _it(const_cast<GeoJsonObject&>(rootObject)) {
-    if (!_it.isEnded() && !(_it->template containsType<SingleT>() ||
-                            _it->template containsType<MultiT>())) {
+    if (!_it.isEnded() &&
+        !(_it->template isType<TSingle>() || _it->template isType<TMulti>())) {
       this->iterate();
     }
   }
@@ -568,11 +574,11 @@ struct ConstGeoJsonPrimitiveIterator {
 
 private:
   void iterate() {
-    if (!this->_it.isEnded() && this->_it->template containsType<MultiT>()) {
-      const MultiT& multi = this->_it->template get<MultiT>();
+    if (!this->_it.isEnded() && this->_it->template isType<TMulti>()) {
+      const TMulti& multi = this->_it->template get<TMulti>();
       if ((int64_t)this->_currentMultiIdx <
-          (int64_t)(multi.coordinates.size() - 1)) {
-        this->_currentMultiIdx++;
+          ((int64_t)multi.coordinates.size() - 1)) {
+        ++this->_currentMultiIdx;
         return;
       }
     }
@@ -581,9 +587,9 @@ private:
     do {
       ++this->_it;
     } while (!this->_it.isEnded() &&
-             !(this->_it->template containsType<SingleT>() ||
-               (this->_it->template containsType<MultiT>() &&
-                !this->_it->template get<MultiT>().coordinates.empty())));
+             !(this->_it->template isType<TSingle>() ||
+               (this->_it->template isType<TMulti>() &&
+                !this->_it->template get<TMulti>().coordinates.empty())));
   }
 
   GeoJsonObjectIterator _it;
@@ -594,19 +600,19 @@ private:
  * @brief An iterator over all \ref GeoJsonObject objects that contain a value
  * of type `ObjectType`.
  */
-template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
+template <typename TObject> struct ConstGeoJsonObjectTypeIterator {
   // Ignore Doxygen warnings for iterator tags.
   //! @cond Doxygen_Suppress
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
-  using value_type = ObjectType;
-  using pointer = const ObjectType*;
-  using reference = const ObjectType&;
+  using value_type = TObject;
+  using pointer = const TObject*;
+  using reference = const TObject&;
   //! @endcond
 
   /** @brief Returns a reference to the current object. */
   reference operator*() const {
-    return (*this->_it).template get<ObjectType>().coordinates;
+    return (*this->_it).template get<TObject>().coordinates;
   }
   /** @brief Returns a pointer to the current object. */
   pointer operator->() { return &**this; }
@@ -618,8 +624,7 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
   ConstGeoJsonObjectTypeIterator& operator++() {
     do {
       ++this->_it;
-    } while (!this->_it.isEnded() &&
-             this->_it->template containsType<ObjectType>());
+    } while (!this->_it.isEnded() && this->_it->template isType<TObject>());
     return *this;
   }
   /**
@@ -628,7 +633,7 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
    */
   ConstGeoJsonObjectTypeIterator operator++(int) {
     ConstGeoJsonObjectTypeIterator tmp = *this;
-    this->_it++;
+    ++this->_it;
     return tmp;
   }
   /**
@@ -666,7 +671,7 @@ template <typename ObjectType> struct ConstGeoJsonObjectTypeIterator {
   ConstGeoJsonObjectTypeIterator() = default;
 
 private:
-  GeoJsonObjectIterator _it;
+  ConstGeoJsonObjectIterator _it;
   size_t _currentMultiPointIdx = 0;
 };
 } // namespace CesiumVectorData
