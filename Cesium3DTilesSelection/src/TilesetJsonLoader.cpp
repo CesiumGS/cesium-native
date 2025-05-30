@@ -553,17 +553,14 @@ std::optional<Tile> parseTileJsonRecursively(
   const auto contentIt = tileJson.FindMember("content");
   bool hasContentMember =
       (contentIt != tileJson.MemberEnd()) && (contentIt->value.IsObject());
-  const char* contentUri = nullptr;
-  if (hasContentMember) {
-    auto uriIt = contentIt->value.FindMember("uri");
-    if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
-      uriIt = contentIt->value.FindMember("url");
-    }
 
-    if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      contentUri = uriIt->value.GetString();
-    }
+  std::optional<Content> maybeContent;
+  if (hasContentMember) {
+    ContentReader contentReader;
+    auto contentResult = contentReader.readFromJson(contentIt->value);
+    maybeContent = std::move(contentResult.value);
   }
+  const char* contentUri = maybeContent ? maybeContent->uri.c_str() : nullptr;
 
   // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;
@@ -587,11 +584,20 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   if (implicitTilingJson) {
-    // mark this tile as external
-    Tile tile{
-        &currentLoader,
-        TileID(),
-        std::make_unique<TileExternalContent>()};
+    // Mark this tile as external.
+    auto pExternalContent = std::make_unique<TileExternalContent>();
+
+    // Check for 3DTILES_content_voxels, which is currently only supported for
+    // implicitly tiled tilesets.
+    if (maybeContent &&
+        maybeContent->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
+      pExternalContent->extensions.emplace(
+          ExtensionContent3dTilesContentVoxels::ExtensionName,
+          std::move(maybeContent->extensions
+                        [ExtensionContent3dTilesContentVoxels::ExtensionName]));
+    }
+
+    Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
     tile.setViewerRequestVolume(tileViewerRequestVolume);
@@ -665,7 +671,6 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader =
       std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis, ellipsoid);
-  ErrorList errorList{};
   std::optional<ExtensionContent3dTilesContentVoxels> voxelExtension;
 
   const auto rootIt = tilesetJson.FindMember("root");
@@ -683,22 +688,6 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     if (maybeRootTile) {
       pRootTile = std::make_unique<Tile>(std::move(*maybeRootTile));
     }
-
-    // If the root tile has content, check for the `3DTILES_content_voxels`
-    // extension.
-    const auto contentIt = rootIt->value.FindMember("content");
-    if (contentIt != tilesetJson.MemberEnd()) {
-      ContentReader contentReader;
-      const auto result = contentReader.readFromJson(contentIt->value);
-      if (!result.errors.empty()) {
-        errorList.emplaceError("Failed to parse root tile content.");
-      } else if (
-          result.value &&
-          result.value->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
-        voxelExtension =
-            *result.value->getExtension<ExtensionContent3dTilesContentVoxels>();
-      }
-    }
   }
 
   return {
@@ -706,8 +695,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::move(pRootTile),
       std::vector<LoaderCreditResult>{},
       std::move(requestHeaders),
-      std::move(errorList),
-      std::move(voxelExtension)};
+      ErrorList{}};
 }
 
 void parseTilesetMetadata(
@@ -920,14 +908,37 @@ TilesetJsonLoader::createLoader(
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  // Create a root tile to represent the tileset.json itself.
+  // A new root tile will be created to represent the tileset.json itself.
+  // If the original root tile had 3DTILES_content_voxels, extract it here
+  // so it can be transferred to the new root tile.
+  std::optional<ExtensionContent3dTilesContentVoxels> maybeVoxelExtension;
+  if (result.pRootTile->isExternalContent()) {
+    Cesium3DTilesSelection::TileExternalContent* pExternalContent =
+        result.pRootTile->getContent().getExternalContent();
+    CESIUM_ASSERT(pExternalContent);
+
+    const auto* pVoxelExtension =
+        pExternalContent->getExtension<ExtensionContent3dTilesContentVoxels>();
+    if (pVoxelExtension) {
+      maybeVoxelExtension = std::move(*pVoxelExtension);
+      pExternalContent->removeExtension<ExtensionContent3dTilesContentVoxels>();
+    }
+  }
+
   std::vector<Tile> children;
   children.emplace_back(std::move(*result.pRootTile));
+
+  auto pContent = std::make_unique<TileExternalContent>();
+  if (maybeVoxelExtension) {
+    pContent->extensions.emplace(
+        Cesium3DTiles::ExtensionContent3dTilesContentVoxels::ExtensionName,
+        std::move(*maybeVoxelExtension));
+  }
 
   result.pRootTile = std::make_unique<Tile>(
       children[0].getLoader(),
       TileID(),
-      std::make_unique<TileExternalContent>());
+      std::move(pContent));
 
   result.pRootTile->setTransform(children[0].getTransform());
   result.pRootTile->setBoundingVolume(children[0].getBoundingVolume());
@@ -944,33 +955,30 @@ TilesetJsonLoader::createLoader(
   }
 
   return asyncSystem.createResolvedFuture(std::move(result))
-      .thenInWorkerThread(
-          [asyncSystem, pAssetAccessor](
-              TilesetContentLoaderResult<TilesetJsonLoader>&& result) {
-            if (!result.voxelExtension) {
-              return asyncSystem.createResolvedFuture(std::move(result));
-            }
+      .thenInWorkerThread([asyncSystem, pAssetAccessor](
+                              TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                  result) {
+        TileExternalContent* pExternal =
+            result.pRootTile->getContent().getExternalContent();
+        CESIUM_ASSERT(pExternal);
 
-            // 3DTILES_content_voxels requires the tileset's metadata schema to
-            // be loaded.
-            TileExternalContent* pExternal =
-                result.pRootTile->getContent().getExternalContent();
-            if (!pExternal) {
-              return asyncSystem.createResolvedFuture(std::move(result));
-            }
+        if (!pExternal->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
 
-            TilesetMetadata& metadata = pExternal->metadata;
-            if (!metadata.schemaUri) {
-              // No schema URI, so this is ready to go.
-              return asyncSystem.createResolvedFuture(std::move(result));
-            }
+        // 3DTILES_content_voxels requires the tileset's schema to be loaded.
+        TilesetMetadata& metadata = pExternal->metadata;
+        if (!metadata.schemaUri) {
+          // No schema URI, so this is ready to go.
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
 
-            // Otherwise, prompt the schema to load from URI.
-            return metadata.loadSchemaUri(asyncSystem, pAssetAccessor)
-                .thenImmediately([result = std::move(result)]() mutable {
-                  return std::move(result);
-                });
-          });
+        // Otherwise, prompt the schema to load from URI.
+        return metadata.loadSchemaUri(asyncSystem, pAssetAccessor)
+            .thenImmediately([result = std::move(result)]() mutable {
+              return std::move(result);
+            });
+      });
 }
 
 CesiumAsync::Future<TileLoadResult>

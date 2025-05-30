@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
@@ -46,24 +45,18 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
    * @param requestHeaders_ The headers used for this tileset request.
    * @param errors_ Any warnings or errors that arose while creating this @ref
    * TilesetContentLoader.
-   * @param voxelExtension_ The \ref
-   * Cesium3DTiles::ExtensionContent3dTilesContentVoxels extension on the root
-   * tile's content, if it exists.
    */
   TilesetContentLoaderResult(
       std::unique_ptr<TilesetContentLoaderType>&& pLoader_,
       std::unique_ptr<Tile>&& pRootTile_,
       std::vector<LoaderCreditResult>&& credits_,
       std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders_,
-      CesiumUtility::ErrorList&& errors_,
-      std::optional<Cesium3DTiles::ExtensionContent3dTilesContentVoxels>&&
-          voxelExtension_ = std::nullopt)
+      CesiumUtility::ErrorList&& errors_)
       : pLoader{std::move(pLoader_)},
         pRootTile{std::move(pRootTile_)},
         credits{std::move(credits_)},
         requestHeaders{std::move(requestHeaders_)},
-        errors{std::move(errors_)},
-        voxelExtension{std::move(voxelExtension_)} {}
+        errors{std::move(errors_)} {}
 
   TilesetContentLoaderResult(const TilesetContentLoaderResult&) = delete;
   /** @brief Move constructor for @ref TilesetContentLoaderResult */
@@ -93,8 +86,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
         credits{std::move(rhs.credits)},
         requestHeaders{std::move(rhs.requestHeaders)},
         errors{std::move(rhs.errors)},
-        statusCode(std::move(rhs.statusCode)),
-        voxelExtension{std::move(rhs.voxelExtension)} {}
+        statusCode{std::move(rhs.statusCode)} {}
 
   /**
    * @brief Move assignment operator for creating a
@@ -118,7 +110,6 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
     swap(this->requestHeaders, rhs.requestHeaders);
     swap(this->errors, rhs.errors);
     swap(this->statusCode, rhs.statusCode);
-    swap(this->voxelExtension, rhs.voxelExtension);
 
     return *this;
   }
@@ -137,9 +128,5 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
   /** @brief The HTTP status code returned when attempting to create this @ref
    * TilesetContentLoader. */
   uint16_t statusCode{200};
-  /* @brief The 3DTILES_content_voxels extension on the root tile content, if
-   * present.*/
-  std::optional<Cesium3DTiles::ExtensionContent3dTilesContentVoxels>
-      voxelExtension;
 };
 } // namespace Cesium3DTilesSelection

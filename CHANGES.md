@@ -4,7 +4,7 @@
 
 ##### Additions :tada:
 
-- Added `getVoxelContentExtension` to `Cesium3DTilesSelection::Tileset` to retrieve the`3DTILES_content_voxels` extension on the root tile's content.
+- `Cesium3DTilesSelection::TileExternalContent` now inherits from `CesiumUtility::ExtensibleObject` to store and manage extensions from its content, such as `Extension3dTilesContentVoxels`.
 
 ### v0.48.0 - 2025-06-02
 

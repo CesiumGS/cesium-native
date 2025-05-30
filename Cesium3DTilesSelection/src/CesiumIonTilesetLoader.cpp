@@ -249,7 +249,6 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
           result.pRootTile = std::move(tilesetJsonResult.pRootTile);
           result.credits = std::move(tilesetJsonResult.credits);
           result.requestHeaders = std::move(requestHeaders);
-          result.voxelExtension = std::move(tilesetJsonResult.voxelExtension);
         }
         result.errors = std::move(tilesetJsonResult.errors);
         result.statusCode = tilesetJsonResult.statusCode;
