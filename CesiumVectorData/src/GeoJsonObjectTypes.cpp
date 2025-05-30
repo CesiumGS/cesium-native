@@ -42,16 +42,16 @@ GeoJsonFeature::GeoJsonFeature(const GeoJsonFeature& rhs)
       foreignMembers(rhs.foreignMembers) {}
 
 GeoJsonFeature::GeoJsonFeature(
-    std::variant<std::monostate, std::string, int64_t>&& id_,
-    std::unique_ptr<GeoJsonObject>&& geometry_,
-    std::optional<CesiumUtility::JsonValue::Object>&& properties_,
-    std::optional<CesiumGeometry::AxisAlignedBox>&& boundingBox_,
-    CesiumUtility::JsonValue::Object&& foreignMembers_)
-    : id(std::move(id_)),
-      geometry(std::move(geometry_)),
-      properties(std::move(properties_)),
-      boundingBox(std::move(boundingBox_)),
-      foreignMembers(std::move(foreignMembers_)) {}
+    std::variant<std::monostate, std::string, int64_t>&& id,
+    std::unique_ptr<GeoJsonObject>&& geometry,
+    std::optional<CesiumUtility::JsonValue::Object>&& properties,
+    std::optional<CesiumGeometry::AxisAlignedBox>&& boundingBox,
+    CesiumUtility::JsonValue::Object&& foreignMembers)
+    : id(std::move(id)),
+      geometry(std::move(geometry)),
+      properties(std::move(properties)),
+      boundingBox(std::move(boundingBox)),
+      foreignMembers(std::move(foreignMembers)) {}
 
 GeoJsonFeature& GeoJsonFeature::operator=(const GeoJsonFeature& rhs) {
   this->id = rhs.id;
