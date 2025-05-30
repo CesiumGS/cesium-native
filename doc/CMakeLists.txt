@@ -22,6 +22,7 @@ if(DOXYGEN_FOUND)
         ../CesiumClientCommon/include
         ../CesiumIonClient/include
         ../CesiumITwinClient/include
+        ../CesiumVectorData/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include

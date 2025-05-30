@@ -130,6 +130,30 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
+  /**
+   * @brief Checks whether two bounding regions are exactly equal.
+   *
+   * @param left The first region.
+   * @param right The second region.
+   * @return Whether the regions are equal
+   */
+  static bool
+  equals(const BoundingRegion& left, const BoundingRegion& right) noexcept;
+
+  /**
+   * @brief Checks whether two bounding regions are equal up to a given relative
+   * epsilon.
+   *
+   * @param left The first region.
+   * @param right The second region.
+   * @param relativeEpsilon The relative epsilon.
+   * @return Whether the regions are epsilon-equal
+   */
+  static bool equalsEpsilon(
+      const BoundingRegion& left,
+      const BoundingRegion& right,
+      double relativeEpsilon) noexcept;
+
 private:
   static CesiumGeometry::OrientedBoundingBox _computeBoundingBox(
       const GlobeRectangle& rectangle,
