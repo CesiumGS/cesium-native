@@ -671,7 +671,6 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader =
       std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis, ellipsoid);
-  ErrorList errorList{};
   std::optional<ExtensionContent3dTilesContentVoxels> voxelExtension;
 
   const auto rootIt = tilesetJson.FindMember("root");
@@ -696,7 +695,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       std::move(pRootTile),
       std::vector<LoaderCreditResult>{},
       std::move(requestHeaders),
-      std::move(errorList)};
+      ErrorList{}};
 }
 
 void parseTilesetMetadata(
@@ -967,8 +966,7 @@ TilesetJsonLoader::createLoader(
           return asyncSystem.createResolvedFuture(std::move(result));
         }
 
-        // 3DTILES_content_voxels requires the tileset's metadata schema to
-        // be loaded.
+        // 3DTILES_content_voxels requires the tileset's schema to be loaded.
         TilesetMetadata& metadata = pExternal->metadata;
         if (!metadata.schemaUri) {
           // No schema URI, so this is ready to go.

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
@@ -46,9 +45,6 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
    * @param requestHeaders_ The headers used for this tileset request.
    * @param errors_ Any warnings or errors that arose while creating this @ref
    * TilesetContentLoader.
-   * @param voxelExtension_ The \ref
-   * Cesium3DTiles::ExtensionContent3dTilesContentVoxels extension on the root
-   * tile's content, if it exists.
    */
   TilesetContentLoaderResult(
       std::unique_ptr<TilesetContentLoaderType>&& pLoader_,

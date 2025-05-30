@@ -150,9 +150,6 @@ public:
 
   int64_t getTotalDataUsed() const noexcept;
 
-  const Cesium3DTiles::ExtensionContent3dTilesContentVoxels*
-  getVoxelExtension() const noexcept;
-
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
@@ -223,9 +220,6 @@ private:
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
   bool _tilesetDestroyed;
-
-  std::optional<Cesium3DTiles::ExtensionContent3dTilesContentVoxels>
-      _voxelExtension;
 
   // Stores assets that might be shared between tiles.
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
