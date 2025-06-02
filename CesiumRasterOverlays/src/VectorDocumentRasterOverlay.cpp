@@ -76,49 +76,49 @@ struct Quadtree {
 struct GlobeRectangleFromObjectVisitor {
   BoundingRegionBuilder& builder;
   void operator()(GeoJsonPoint& point) {
-    builder.expandToIncludePosition(point.coordinates);
+    builder.expandToIncludePosition(
+        Cartographic::fromDegrees(point.coordinates.x, point.coordinates.y));
   }
   void operator()(GeoJsonMultiPoint& points) {
-    for (const Cartographic& point : points.coordinates) {
-      builder.expandToIncludePosition(point);
+    for (const glm::dvec3& point : points.coordinates) {
+      builder.expandToIncludePosition(
+          Cartographic::fromDegrees(point.x, point.y));
     }
   }
   void operator()(GeoJsonLineString& line) {
-    for (const Cartographic& point : line.coordinates) {
-      builder.expandToIncludePosition(point);
+    for (const glm::dvec3& point : line.coordinates) {
+      builder.expandToIncludePosition(
+          Cartographic::fromDegrees(point.x, point.y));
     }
   }
   void operator()(GeoJsonMultiLineString& lines) {
-    for (const std::vector<Cartographic>& line : lines.coordinates) {
-      for (const Cartographic& point : line) {
-        builder.expandToIncludePosition(point);
+    for (const std::vector<glm::dvec3>& line : lines.coordinates) {
+      for (const glm::dvec3& point : line) {
+        builder.expandToIncludePosition(
+            Cartographic::fromDegrees(point.x, point.y));
       }
     }
   }
   void operator()(GeoJsonPolygon& polygon) {
-    for (const std::vector<Cartographic>& ring : polygon.coordinates) {
-      for (const Cartographic& point : ring) {
-        builder.expandToIncludePosition(point);
+    for (const std::vector<glm::dvec3>& ring : polygon.coordinates) {
+      for (const glm::dvec3& point : ring) {
+        builder.expandToIncludePosition(
+            Cartographic::fromDegrees(point.x, point.y));
       }
     }
   }
   void operator()(GeoJsonMultiPolygon& polygons) {
-    for (const std::vector<std::vector<Cartographic>>& polygon :
+    for (const std::vector<std::vector<glm::dvec3>>& polygon :
          polygons.coordinates) {
-      for (const std::vector<Cartographic>& ring : polygon) {
-        for (const Cartographic& point : ring) {
-          builder.expandToIncludePosition(point);
+      for (const std::vector<glm::dvec3>& ring : polygon) {
+        for (const glm::dvec3& point : ring) {
+          builder.expandToIncludePosition(
+              Cartographic::fromDegrees(point.x, point.y));
         }
       }
     }
   }
   void operator()(auto& /*catchAll*/) {}
-};
-
-struct GeoJsonObjectStyleVisitor {
-  const std::optional<VectorStyle>& operator()(const auto& object) {
-    return object.style;
-  }
 };
 
 void addPrimitivesToData(
@@ -135,7 +135,7 @@ struct GeoJsonChildVisitor {
   void operator()(const GeoJsonFeature& feature) {
     if (feature.geometry) {
       const std::optional<VectorStyle>& geometryStyle =
-          std::visit(GeoJsonObjectStyleVisitor{}, feature.geometry->value);
+          feature.geometry->getStyle();
       const std::optional<VectorStyle>& featureStyle =
           geometryStyle ? geometryStyle : feature.style;
       addPrimitivesToData(
@@ -147,16 +147,16 @@ struct GeoJsonChildVisitor {
   }
 
   void operator()(const GeoJsonFeatureCollection& collection) {
-    for (const GeoJsonFeature& feature : collection.features) {
-      if (feature.geometry) {
-        const std::optional<VectorStyle>& geometryStyle =
-            std::visit(GeoJsonObjectStyleVisitor{}, feature.geometry->value);
+    for (const GeoJsonObject& feature : collection.features) {
+      const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
+      if (pFeature && pFeature->geometry) {
+        const std::optional<VectorStyle>& geometryStyle = feature.getStyle();
         const std::optional<VectorStyle>& featureStyle =
-            geometryStyle ? geometryStyle : feature.style;
+            geometryStyle ? geometryStyle : pFeature->style;
         const std::optional<VectorStyle>& collectionStyle =
-            featureStyle ? featureStyle : collection.style;
+            featureStyle ? featureStyle : pFeature->style;
         addPrimitivesToData(
-            feature.geometry.get(),
+            pFeature->geometry.get(),
             data,
             documentRegionBuilder,
             collectionStyle ? *collectionStyle : style);
@@ -166,8 +166,7 @@ struct GeoJsonChildVisitor {
 
   void operator()(const GeoJsonGeometryCollection& collection) {
     for (const GeoJsonObject& geometry : collection.geometries) {
-      const std::optional<VectorStyle>& childStyle =
-          std::visit(GeoJsonObjectStyleVisitor{}, geometry.value);
+      const std::optional<VectorStyle>& childStyle = geometry.getStyle();
       const std::optional<VectorStyle>& useStyle =
           childStyle ? childStyle : collection.style;
       addPrimitivesToData(
@@ -307,14 +306,14 @@ uint32_t buildQuadtreeNode(
 }
 
 Quadtree buildQuadtree(
-    const IntrusivePointer<GeoJsonDocument>& document,
+    const std::shared_ptr<GeoJsonDocument>& document,
     const VectorStyle& defaultStyle) {
   BoundingRegionBuilder builder;
   std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
-      std::visit(GeoJsonObjectStyleVisitor{}, document->getRootObject().value);
+      document->rootObject.getStyle();
   addPrimitivesToData(
-      &document->getRootObject(),
+      &document->rootObject,
       data,
       builder,
       rootObjectStyle ? *rootObjectStyle : defaultStyle);
@@ -416,7 +415,7 @@ class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
-  IntrusivePointer<GeoJsonDocument> _document;
+  std::shared_ptr<GeoJsonDocument> _document;
   VectorStyle _defaultStyle;
   Quadtree _tree;
   Ellipsoid _ellipsoid;
@@ -432,8 +431,7 @@ public:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const VectorDocumentRasterOverlayOptions& options,
-      const CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>&
-          document)
+      const std::shared_ptr<CesiumVectorData::GeoJsonDocument>& document)
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -541,7 +539,7 @@ public:
       return;
     }
 
-    this->recomputeStyles(&this->_document->getRootObject());
+    this->recomputeStyles(&this->_document->rootObject);
   }
 
 private:
@@ -573,9 +571,10 @@ private:
         }
       }
       void operator()(GeoJsonFeatureCollection& features) {
-        for (GeoJsonFeature& feature : features.features) {
-          if (feature.geometry) {
-            pThis->recomputeStyles(feature.geometry.get());
+        for (GeoJsonObject& feature : features.features) {
+          const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
+          if (pFeature && pFeature->geometry) {
+            pThis->recomputeStyles(pFeature->geometry.get());
           }
         }
       }
@@ -622,20 +621,28 @@ VectorDocumentRasterOverlay::createTileProvider(
   struct DocumentSourceVisitor {
     CesiumAsync::AsyncSystem asyncSystem;
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
-    CesiumAsync::Future<Result<IntrusivePointer<GeoJsonDocument>>>
-    operator()(const IntrusivePointer<GeoJsonDocument>& document) {
+    CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
+    operator()(const std::shared_ptr<GeoJsonDocument>& document) {
       return asyncSystem
-          .createResolvedFuture<Result<IntrusivePointer<GeoJsonDocument>>>(
+          .createResolvedFuture<Result<std::shared_ptr<GeoJsonDocument>>>(
               Result(document));
     }
-    CesiumAsync::Future<Result<IntrusivePointer<GeoJsonDocument>>>
+    CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
     operator()(const IonVectorDocumentRasterOverlaySource& ion) {
       return GeoJsonDocument::fromCesiumIonAsset(
-          asyncSystem,
-          pAssetAccessor,
-          ion.ionAssetID,
-          ion.ionAccessToken,
-          ion.ionAssetEndpointUrl);
+                 asyncSystem,
+                 pAssetAccessor,
+                 ion.ionAssetID,
+                 ion.ionAccessToken,
+                 ion.ionAssetEndpointUrl)
+          .thenImmediately([](Result<GeoJsonDocument>&& result) {
+            if (!result.value) {
+              return Result<std::shared_ptr<GeoJsonDocument>>(result.errors);
+            }
+
+            return Result<std::shared_ptr<GeoJsonDocument>>(
+                std::make_shared<GeoJsonDocument>(std::move(*result.value)));
+          });
     }
   };
 
@@ -649,9 +656,9 @@ VectorDocumentRasterOverlay::createTileProvider(
            pPrepareRendererResources,
            pLogger,
            options = this->_options](
-              Result<IntrusivePointer<GeoJsonDocument>>&& result)
+              Result<std::shared_ptr<GeoJsonDocument>>&& result)
               -> CreateTileProviderResult {
-            if (!result.pValue) {
+            if (!result.value) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::CesiumIon,
                   nullptr,
@@ -670,7 +677,7 @@ VectorDocumentRasterOverlay::createTileProvider(
                     pPrepareRendererResources,
                     pLogger,
                     options,
-                    result.pValue));
+                    *result.value));
           });
 }
 

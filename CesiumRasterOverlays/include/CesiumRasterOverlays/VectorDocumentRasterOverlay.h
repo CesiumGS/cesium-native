@@ -25,10 +25,10 @@ namespace CesiumRasterOverlays {
 /**
  * @brief A callback used to set new styles on vector documents.
  */
-using VectorDocumentRasterOverlayStyleCallback = std::function<std::optional<
-    CesiumVectorData::VectorStyle>(
-    const CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>&,
-    CesiumVectorData::GeoJsonObject*)>;
+using VectorDocumentRasterOverlayStyleCallback =
+    std::function<std::optional<CesiumVectorData::VectorStyle>(
+        const std::shared_ptr<CesiumVectorData::GeoJsonDocument>&,
+        CesiumVectorData::GeoJsonObject*)>;
 
 /**
  * @brief A set of options for configuring a VectorDocumentRasterOverlay.
@@ -78,7 +78,7 @@ struct IonVectorDocumentRasterOverlaySource {
  * @brief Possible sources for a VectorDocumentRasterOverlay's vector data.
  */
 using VectorDocumentRasterOverlaySource = std::variant<
-    CesiumUtility::IntrusivePointer<CesiumVectorData::GeoJsonDocument>,
+    std::shared_ptr<CesiumVectorData::GeoJsonDocument>,
     IonVectorDocumentRasterOverlaySource>;
 
 /**

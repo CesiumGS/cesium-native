@@ -62,21 +62,22 @@ public:
    *
    * @param polygon The polygon to draw. It is assumed to have right-hand
    * winding order (exterior rings are counterclockwise, holes are clockwise) as
-   * is the case in GeoJSON.
+   * is the case in GeoJSON. The coordinates should be specified in degrees.
    * @param style The \ref VectorStyle to use when drawing the polygon.
    */
   void drawPolygon(
-      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
+      const std::vector<std::vector<glm::dvec3>>& polygon,
       const VectorStyle& style);
 
   /**
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
    *
-   * @param points The set of points making up the polyline.
+   * @param points The set of points making up the polyline. The coordinates
+   * should be specified in degrees.
    * @param style The \ref VectorStyle to use when drawing the polyline.
    */
   void drawPolyline(
-      const std::span<const CesiumGeospatial::Cartographic>& points,
+      const std::span<const glm::dvec3>& points,
       const VectorStyle& style);
 
   /**

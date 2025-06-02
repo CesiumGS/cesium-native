@@ -58,6 +58,18 @@ std::optional<CesiumGeometry::AxisAlignedBox>& GeoJsonObject::getBoundingBox() {
       this->value);
 }
 
+const std::optional<VectorStyle>& GeoJsonObject::getStyle() const {
+  return std::visit(
+      [](auto& v) -> const std::optional<VectorStyle>& { return v.style; },
+      this->value);
+}
+
+std::optional<VectorStyle>& GeoJsonObject::getStyle() {
+  return std::visit(
+      [](auto& v) -> std::optional<VectorStyle>& { return v.style; },
+      this->value);
+}
+
 const CesiumUtility::JsonValue::Object&
 GeoJsonObject::getForeignMembers() const {
   return std::visit(

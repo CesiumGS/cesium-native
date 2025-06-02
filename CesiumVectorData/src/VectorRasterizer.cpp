@@ -129,7 +129,7 @@ void VectorRasterizer::drawPolygon(
 }
 
 void VectorRasterizer::drawPolygon(
-    const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
+    const std::vector<std::vector<glm::dvec3>>& polygon,
     const VectorStyle& style) {
   if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
     return;
@@ -138,12 +138,12 @@ void VectorRasterizer::drawPolygon(
   std::vector<BLPoint> vertices;
   vertices.reserve(polygon.size());
 
-  for (const std::vector<Cartographic>& ring : polygon) {
+  for (const std::vector<glm::dvec3>& ring : polygon) {
     // GeoJSON polygons have the reverse winding order from blend2D
     for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
       vertices.emplace_back(radiansToPoint(
-          it->longitude,
-          it->latitude,
+          CesiumUtility::Math::degreesToRadians(it->x),
+          CesiumUtility::Math::degreesToRadians(it->y),
           this->_bounds,
           this->_context));
     }
@@ -166,7 +166,7 @@ void VectorRasterizer::drawPolygon(
 }
 
 void VectorRasterizer::drawPolyline(
-    const std::span<const Cartographic>& points,
+    const std::span<const glm::dvec3>& points,
     const VectorStyle& style) {
   if (_finalized) {
     return;
@@ -175,24 +175,13 @@ void VectorRasterizer::drawPolyline(
   std::vector<BLPoint> vertices;
   vertices.reserve(points.size());
 
-  glm::dvec2 min(
-      std::numeric_limits<double>::max(),
-      std::numeric_limits<double>::max());
-  glm::dvec2 max(
-      std::numeric_limits<double>::min(),
-      std::numeric_limits<double>::min());
-
-  for (const Cartographic& vertex : points) {
+  for (const glm::dvec3& vertex : points) {
     BLPoint point = radiansToPoint(
-        vertex.longitude,
-        vertex.latitude,
+        CesiumUtility::Math::degreesToRadians(vertex.x),
+        CesiumUtility::Math::degreesToRadians(vertex.y),
         this->_bounds,
         this->_context);
     vertices.emplace_back(point);
-    min.x = std::min(min.x, point.x);
-    min.y = std::min(min.y, point.y);
-    max.x = std::max(max.x, point.x);
-    max.y = std::max(max.y, point.y);
   }
 
   setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
@@ -213,7 +202,7 @@ void VectorRasterizer::drawGeoJsonObject(
       rasterizer.drawPolyline(line.coordinates, style);
     }
     void operator()(const GeoJsonMultiLineString& lines) {
-      for (const std::vector<Cartographic>& line : lines.coordinates) {
+      for (const std::vector<glm::dvec3>& line : lines.coordinates) {
         rasterizer.drawPolyline(line, style);
       }
     }
@@ -221,7 +210,7 @@ void VectorRasterizer::drawGeoJsonObject(
       rasterizer.drawPolygon(polygon.coordinates, style);
     }
     void operator()(const GeoJsonMultiPolygon& polygons) {
-      for (const std::vector<std::vector<Cartographic>>& polygon :
+      for (const std::vector<std::vector<glm::dvec3>>& polygon :
            polygons.coordinates) {
         rasterizer.drawPolygon(polygon, style);
       }

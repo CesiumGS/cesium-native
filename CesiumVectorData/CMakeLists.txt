@@ -48,6 +48,7 @@ target_link_libraries(CesiumVectorData
     PUBLIC
         CesiumUtility
         CesiumGeometry
+        CesiumGeospatial
         CesiumAsync
         CesiumGltf
     PRIVATE

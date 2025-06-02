@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CesiumVectorData/VectorStyle.h"
 #include "GeoJsonObjectTypes.h"
 
 #include <CesiumGeometry/AxisAlignedBox.h>
@@ -162,6 +163,16 @@ struct GeoJsonObject {
    * foreign members on this GeoJSON object.
    */
   CesiumUtility::JsonValue::Object& getForeignMembers();
+
+  /**
+   * @brief Returns the style set on this GeoJSON object, if any.
+   */
+  const std::optional<VectorStyle>& getStyle() const;
+
+  /**
+   * @brief Returns the style set on this GeoJSON object, if any.
+   */
+  std::optional<VectorStyle>& getStyle();
 
   /**
    * @brief Returns the \ref GeoJsonObjectType that this \ref GeoJsonObject
