@@ -538,8 +538,7 @@ public:
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool
-  needsWorkerThreadLoading(int tunerVersion) const noexcept;
+  bool needsWorkerThreadLoading(int tunerVersion) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.

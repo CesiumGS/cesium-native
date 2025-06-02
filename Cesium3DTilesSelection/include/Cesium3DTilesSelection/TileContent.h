@@ -193,9 +193,9 @@ public:
    */
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
-  /** The state of the tuning process of the glTF model of a given tile content. */
-  enum class TunerState
-  {
+  /** The state of the tuning process of the glTF model of a given tile content.
+   */
+  enum class TunerState {
     /** No tuning is in progress. */
     Idle,
     /** Worker-thread phase is in progress. */

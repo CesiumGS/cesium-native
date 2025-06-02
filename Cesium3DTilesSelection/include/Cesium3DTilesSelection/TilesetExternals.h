@@ -4,10 +4,10 @@
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
-#include <rapidjson/fwd.h>
 #include <CesiumAsync/AsyncSystem.h>
 
 #include <glm/fwd.hpp>
+#include <rapidjson/fwd.h>
 
 #include <atomic>
 #include <memory>
@@ -36,9 +36,9 @@ class IPrepareRendererResources;
  * A just constructed tuner is considered nilpotent, ie. tuning
  * will not happen until retune() has been called at least once
  */
-class GltfTuner
-{
+class GltfTuner {
 public:
+  /** Version of a just constructed, nilpotent glTF tuner. */
   static constexpr int initialVersion = -1;
 
 private:
@@ -147,7 +147,7 @@ public:
    *
    * @see Cesium3DTilesSelection::GltfTuner
    */
-  std::shared_ptr<GltfTuner> gltfTuner;
+  std::shared_ptr<GltfTuner> gltfTuner = {};
 };
 
 } // namespace Cesium3DTilesSelection
