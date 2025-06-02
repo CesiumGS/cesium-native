@@ -73,7 +73,7 @@ public:
   /**
    * @brief Constructs a new instance and assigns it to this IntrusivePointer.
    * If this IntrusivePointer already points to another instance,
-   * {@link releaseReference} is called on it.
+   * `releaseReference` is called on it.
    *
    * @param constructorArguments The arguments to the constructor to create the
    * new instance.
