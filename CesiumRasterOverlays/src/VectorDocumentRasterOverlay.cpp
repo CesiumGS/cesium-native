@@ -75,23 +75,23 @@ struct Quadtree {
 
 struct GlobeRectangleFromObjectVisitor {
   BoundingRegionBuilder& builder;
-  void operator()(GeoJsonPoint& point) {
+  void operator()(const GeoJsonPoint& point) {
     builder.expandToIncludePosition(
         Cartographic::fromDegrees(point.coordinates.x, point.coordinates.y));
   }
-  void operator()(GeoJsonMultiPoint& points) {
+  void operator()(const GeoJsonMultiPoint& points) {
     for (const glm::dvec3& point : points.coordinates) {
       builder.expandToIncludePosition(
           Cartographic::fromDegrees(point.x, point.y));
     }
   }
-  void operator()(GeoJsonLineString& line) {
+  void operator()(const GeoJsonLineString& line) {
     for (const glm::dvec3& point : line.coordinates) {
       builder.expandToIncludePosition(
           Cartographic::fromDegrees(point.x, point.y));
     }
   }
-  void operator()(GeoJsonMultiLineString& lines) {
+  void operator()(const GeoJsonMultiLineString& lines) {
     for (const std::vector<glm::dvec3>& line : lines.coordinates) {
       for (const glm::dvec3& point : line) {
         builder.expandToIncludePosition(
@@ -99,7 +99,7 @@ struct GlobeRectangleFromObjectVisitor {
       }
     }
   }
-  void operator()(GeoJsonPolygon& polygon) {
+  void operator()(const GeoJsonPolygon& polygon) {
     for (const std::vector<glm::dvec3>& ring : polygon.coordinates) {
       for (const glm::dvec3& point : ring) {
         builder.expandToIncludePosition(
@@ -107,7 +107,7 @@ struct GlobeRectangleFromObjectVisitor {
       }
     }
   }
-  void operator()(GeoJsonMultiPolygon& polygons) {
+  void operator()(const GeoJsonMultiPolygon& polygons) {
     for (const std::vector<std::vector<glm::dvec3>>& polygon :
          polygons.coordinates) {
       for (const std::vector<glm::dvec3>& ring : polygon) {
@@ -118,7 +118,9 @@ struct GlobeRectangleFromObjectVisitor {
       }
     }
   }
-  void operator()(auto& /*catchAll*/) {}
+  void operator()(const GeoJsonFeature&) {}
+  void operator()(const GeoJsonFeatureCollection&) {}
+  void operator()(const GeoJsonGeometryCollection&) {}
 };
 
 void addPrimitivesToData(
