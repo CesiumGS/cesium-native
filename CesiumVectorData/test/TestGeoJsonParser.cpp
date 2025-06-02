@@ -1,10 +1,10 @@
-#include <CesiumGeospatial/CartographicPolygon.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
 
 #include <doctest/doctest.h>
 
@@ -16,7 +16,7 @@
 
 using namespace CesiumVectorData;
 using namespace CesiumUtility;
-using namespace CesiumGeospatial;
+using namespace CesiumGeometry;
 
 namespace {
 static std::span<const std::byte> stringToBytes(const std::string& str) {
@@ -27,13 +27,12 @@ static std::span<const std::byte> stringToBytes(const std::string& str) {
 
 void expectParserResult(
     const std::string& json,
-    const std::function<void(const IntrusivePointer<GeoJsonDocument>&)>&
-        checkFunc) {
-  Result<IntrusivePointer<GeoJsonDocument>> doc =
+    const std::function<void(const GeoJsonDocument&)>& checkFunc) {
+  Result<GeoJsonDocument> doc =
       GeoJsonDocument::fromGeoJson(stringToBytes(json));
   CHECK(!doc.errors.hasErrors());
-  REQUIRE(doc.pValue);
-  checkFunc(doc.pValue);
+  REQUIRE(doc.value);
+  checkFunc(*doc.value);
 }
 } // namespace
 
@@ -46,14 +45,12 @@ TEST_CASE("Parse Point primitives") {
             "coordinates": [100.0, 0.0]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonPoint* pPoint =
-              std::get_if<GeoJsonPoint>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonPoint>(&document.rootObject.value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::Point);
-          CHECK(
-              pPoint->coordinates ==
-              Cartographic::fromDegrees(100.0, 0.0, 0.0));
+          CHECK(pPoint->coordinates == glm::dvec3(100.0, 0.0, 0.0));
         });
 
     expectParserResult(
@@ -63,14 +60,12 @@ TEST_CASE("Parse Point primitives") {
             "coordinates": [-100.0, 20.0, 500.0]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonPoint* pPoint =
-              std::get_if<GeoJsonPoint>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonPoint>(&document.rootObject.value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::Point);
-          CHECK(
-              pPoint->coordinates ==
-              Cartographic::fromDegrees(-100.0, 20.0, 500.0));
+          CHECK(pPoint->coordinates == glm::dvec3(-100.0, 20.0, 500.0));
         });
 
     expectParserResult(
@@ -78,55 +73,45 @@ TEST_CASE("Parse Point primitives") {
         {
             "type": "Point",
             "coordinates": [-90, 180.0, -500.0],
-            "bbox": [90, -90.0, -50, 30.0, 35.0, 50.0]
+            "bbox": [30.0, 35.0, 50.0, 90, -90.0, -50]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonPoint* pPoint =
-              std::get_if<GeoJsonPoint>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonPoint>(&document.rootObject.value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::Point);
-          CHECK(
-              pPoint->coordinates ==
-              Cartographic::fromDegrees(-90.0, 180.0, -500.0));
-          const std::optional<BoundingRegion>& bbox = pPoint->boundingBox;
-          CHECK(
-              bbox->getRectangle().getSouthwest() ==
-              Cartographic(
-                  Math::degreesToRadians(90.0),
-                  Math::degreesToRadians(-90.0)));
-          CHECK(
-              bbox->getRectangle().getNortheast() ==
-              Cartographic(
-                  Math::degreesToRadians(30.0),
-                  Math::degreesToRadians(35.0)));
-          CHECK(bbox->getMinimumHeight() == -50.0);
-          CHECK(bbox->getMaximumHeight() == 50.0);
+          CHECK(pPoint->coordinates == glm::dvec3(-90.0, 180.0, -500.0));
+          const std::optional<AxisAlignedBox>& bbox = pPoint->boundingBox;
+          REQUIRE(bbox);
+          CHECK(bbox->minimumX == 30.0);
+          CHECK(bbox->minimumY == -90.0);
+          CHECK(bbox->maximumX == 90.0);
+          CHECK(bbox->maximumY == 35.0);
+          CHECK(bbox->minimumZ == -50.0);
+          CHECK(bbox->maximumZ == 50.0);
         });
   }
 
   SUBCASE("'coordinates' must exist'") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "Point" })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "Point" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(doc.errors.errors[0] == "'coordinates' member required.");
   }
 
   SUBCASE("Position must be an array") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "Point", "coordinates": 2 })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "Point", "coordinates": 2 })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(doc.errors.errors[0] == "Position value must be an array.");
   }
 
   SUBCASE("Position value must be 2D or 3D") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "Point", "coordinates": [2.0] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "Point", "coordinates": [2.0] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -143,9 +128,8 @@ TEST_CASE("Parse Point primitives") {
   }
 
   SUBCASE("Position value must only contain numbers") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "Point", "coordinates": [2.0, false] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "Point", "coordinates": [2.0, false] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -167,31 +151,26 @@ TEST_CASE("Parse MultiPoint primitives") {
           "bbox": [30.0, -30.0, 40.0, -40.0]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonMultiPoint* pPoint =
-              std::get_if<GeoJsonMultiPoint>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonMultiPoint>(&document.rootObject.value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::MultiPoint);
           REQUIRE(pPoint->coordinates.size() == 2);
           CHECK(
               pPoint->coordinates[0] ==
-              Cartographic::fromDegrees(-75.1428517, 39.9644934, 400.0));
+              glm::dvec3(-75.1428517, 39.9644934, 400.0));
           CHECK(
               pPoint->coordinates[1] ==
-              Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
-          const std::optional<BoundingRegion>& bbox = pPoint->boundingBox;
-          CHECK(
-              bbox->getRectangle().getSouthwest() ==
-              Cartographic(
-                  Math::degreesToRadians(30.0),
-                  Math::degreesToRadians(-30.0)));
-          CHECK(
-              bbox->getRectangle().getNortheast() ==
-              Cartographic(
-                  Math::degreesToRadians(40.0),
-                  Math::degreesToRadians(-40.0)));
-          CHECK(bbox->getMinimumHeight() == 0.0);
-          CHECK(bbox->getMaximumHeight() == 0.0);
+              glm::dvec3(129.6869721, 62.0256947, 100.0));
+          const std::optional<AxisAlignedBox>& bbox = pPoint->boundingBox;
+          REQUIRE(bbox);
+          CHECK(bbox->minimumX == 30.0);
+          CHECK(bbox->minimumY == -40.0);
+          CHECK(bbox->maximumX == 40.0);
+          CHECK(bbox->maximumY == -30.0);
+          CHECK(bbox->minimumZ == 0.0);
+          CHECK(bbox->maximumZ == 0.0);
         });
     expectParserResult(
         R"==(
@@ -205,18 +184,18 @@ TEST_CASE("Parse MultiPoint primitives") {
           "exampleB": "test"
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonMultiPoint* pPoint =
-              std::get_if<GeoJsonMultiPoint>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonMultiPoint>(&document.rootObject.value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::MultiPoint);
           REQUIRE(pPoint->coordinates.size() == 2);
           CHECK(
               pPoint->coordinates[0] ==
-              Cartographic::fromDegrees(-75.1428517, 39.9644934, 400.0));
+              glm::dvec3(-75.1428517, 39.9644934, 400.0));
           CHECK(
               pPoint->coordinates[1] ==
-              Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
+              glm::dvec3(129.6869721, 62.0256947, 100.0));
           JsonValue::Object foreignMembers = pPoint->foreignMembers;
           REQUIRE(!foreignMembers.empty());
           CHECK(foreignMembers["exampleA"] == JsonValue(40));
@@ -225,9 +204,8 @@ TEST_CASE("Parse MultiPoint primitives") {
   }
 
   SUBCASE("Coordinates must be an array") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "MultiPoint", "coordinates": false })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "MultiPoint", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -249,39 +227,29 @@ TEST_CASE("Parse LineString primitives") {
           "bbox": [30.0, -30.0, 40.0, -40.0]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonLineString* pLine =
-              std::get_if<GeoJsonLineString>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonLineString>(&document.rootObject.value);
           REQUIRE(pLine);
           REQUIRE(pLine->TYPE == GeoJsonObjectType::LineString);
-          const std::vector<Cartographic>& points = pLine->coordinates;
+          const std::vector<glm::dvec3>& points = pLine->coordinates;
           REQUIRE(points.size() == 2);
-          CHECK(
-              points[0] ==
-              Cartographic::fromDegrees(-75.1428517, 39.9644934, 400.0));
-          CHECK(
-              points[1] ==
-              Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
-          const std::optional<BoundingRegion>& bbox = pLine->boundingBox;
-          CHECK(
-              bbox->getRectangle().getSouthwest() ==
-              Cartographic(
-                  Math::degreesToRadians(30.0),
-                  Math::degreesToRadians(-30.0)));
-          CHECK(
-              bbox->getRectangle().getNortheast() ==
-              Cartographic(
-                  Math::degreesToRadians(40.0),
-                  Math::degreesToRadians(-40.0)));
-          CHECK(bbox->getMinimumHeight() == 0.0);
-          CHECK(bbox->getMaximumHeight() == 0.0);
+          CHECK(points[0] == glm::dvec3(-75.1428517, 39.9644934, 400.0));
+          CHECK(points[1] == glm::dvec3(129.6869721, 62.0256947, 100.0));
+          const std::optional<AxisAlignedBox>& bbox = pLine->boundingBox;
+          REQUIRE(bbox);
+          CHECK(bbox->minimumX == 30.0);
+          CHECK(bbox->minimumY == -40.0);
+          CHECK(bbox->maximumX == 40.0);
+          CHECK(bbox->maximumY == -30.0);
+          CHECK(bbox->minimumZ == 0.0);
+          CHECK(bbox->maximumZ == 0.0);
         });
   }
 
   SUBCASE("Coordinates must be an array") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "LineString", "coordinates": false })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "LineString", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -290,9 +258,8 @@ TEST_CASE("Parse LineString primitives") {
   }
 
   SUBCASE("Coordinates must contain two or more positions") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "LineString", "coordinates": [[0, 1, 2]] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "LineString", "coordinates": [[0, 1, 2]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -315,28 +282,22 @@ TEST_CASE("Parse MultiLineString primitives") {
           ]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonMultiLineString* pLine =
-              std::get_if<GeoJsonMultiLineString>(
-                  &pDocument->getRootObject().value);
+              std::get_if<GeoJsonMultiLineString>(&document.rootObject.value);
           REQUIRE(pLine);
           REQUIRE(pLine->TYPE == GeoJsonObjectType::MultiLineString);
           REQUIRE(pLine->coordinates.size() == 1);
-          const std::vector<Cartographic>& points = pLine->coordinates[0];
+          const std::vector<glm::dvec3>& points = pLine->coordinates[0];
           REQUIRE(points.size() == 2);
-          CHECK(
-              points[0] ==
-              Cartographic::fromDegrees(-75.1428517, 39.9644934, 400.0));
-          CHECK(
-              points[1] ==
-              Cartographic::fromDegrees(129.6869721, 62.0256947, 100.0));
+          CHECK(points[0] == glm::dvec3(-75.1428517, 39.9644934, 400.0));
+          CHECK(points[1] == glm::dvec3(129.6869721, 62.0256947, 100.0));
         });
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "MultiLineString", "coordinates": false })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "MultiLineString", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -350,9 +311,8 @@ TEST_CASE("Parse MultiLineString primitives") {
   }
 
   SUBCASE("Lines must contain two or more positions") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "MultiLineString", "coordinates": [[[0, 1, 2]]] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "MultiLineString", "coordinates": [[[0, 1, 2]]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -379,36 +339,35 @@ TEST_CASE("Parse Polygon primitives") {
           ]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonPolygon* pPolygon =
-              std::get_if<GeoJsonPolygon>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonPolygon>(&document.rootObject.value);
           REQUIRE(pPolygon);
           REQUIRE(pPolygon->TYPE == GeoJsonObjectType::Polygon);
           REQUIRE(pPolygon->coordinates.size() == 1);
-          const std::vector<Cartographic>& points = pPolygon->coordinates[0];
+          const std::vector<glm::dvec3>& points = pPolygon->coordinates[0];
           REQUIRE(points.size() == 5);
-          CHECK(points[0].longitude == Math::degreesToRadians(-75.1428517));
-          CHECK(points[0].latitude == Math::degreesToRadians(39.9644934));
-          CHECK(points[0].height == 400.0);
-          CHECK(points[1].longitude == Math::degreesToRadians(129.6869721));
-          CHECK(points[1].latitude == Math::degreesToRadians(62.0256947));
-          CHECK(points[1].height == 100.0);
-          CHECK(points[2].longitude == Math::degreesToRadians(103.8245805));
-          CHECK(points[2].latitude == Math::degreesToRadians(1.3043744));
-          CHECK(points[2].height == 100.0);
-          CHECK(points[3].longitude == Math::degreesToRadians(-80.1976364));
-          CHECK(points[3].latitude == Math::degreesToRadians(25.7708431));
-          CHECK(points[3].height == 400.0);
-          CHECK(points[4].longitude == Math::degreesToRadians(-75.1428517));
-          CHECK(points[4].latitude == Math::degreesToRadians(39.9644934));
-          CHECK(points[4].height == 400.0);
+          CHECK(points[0].x == -75.1428517);
+          CHECK(points[0].y == 39.9644934);
+          CHECK(points[0].z == 400.0);
+          CHECK(points[1].x == 129.6869721);
+          CHECK(points[1].y == 62.0256947);
+          CHECK(points[1].z == 100.0);
+          CHECK(points[2].x == 103.8245805);
+          CHECK(points[2].y == 1.3043744);
+          CHECK(points[2].z == 100.0);
+          CHECK(points[3].x == -80.1976364);
+          CHECK(points[3].y == 25.7708431);
+          CHECK(points[3].z == 400.0);
+          CHECK(points[4].x == -75.1428517);
+          CHECK(points[4].y == 39.9644934);
+          CHECK(points[4].z == 400.0);
         });
   }
 
   SUBCASE("Coordinates must be an array of arrays") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "Polygon", "coordinates": false })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "Polygon", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -422,9 +381,8 @@ TEST_CASE("Parse Polygon primitives") {
   }
 
   SUBCASE("Lines must contain two or more positions") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "Polygon", "coordinates": [[[0, 1, 2], [1, 2, 3], [4, 3, 5]]] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "Polygon", "coordinates": [[[0, 1, 2], [1, 2, 3], [4, 3, 5]]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -452,38 +410,36 @@ TEST_CASE("Parse MultiPolygon primitives") {
           ]
         }
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonMultiPolygon* pPolygon =
-              std::get_if<GeoJsonMultiPolygon>(
-                  &pDocument->getRootObject().value);
+              std::get_if<GeoJsonMultiPolygon>(&document.rootObject.value);
           REQUIRE(pPolygon);
           REQUIRE(pPolygon->TYPE == GeoJsonObjectType::MultiPolygon);
           REQUIRE(pPolygon->coordinates.size() == 1);
           REQUIRE(pPolygon->coordinates[0].size() == 1);
-          const std::vector<Cartographic>& points = pPolygon->coordinates[0][0];
+          const std::vector<glm::dvec3>& points = pPolygon->coordinates[0][0];
           REQUIRE(points.size() == 5);
-          CHECK(points[0].longitude == Math::degreesToRadians(-75.1428517));
-          CHECK(points[0].latitude == Math::degreesToRadians(39.9644934));
-          CHECK(points[0].height == 400.0);
-          CHECK(points[1].longitude == Math::degreesToRadians(129.6869721));
-          CHECK(points[1].latitude == Math::degreesToRadians(62.0256947));
-          CHECK(points[1].height == 100.0);
-          CHECK(points[2].longitude == Math::degreesToRadians(103.8245805));
-          CHECK(points[2].latitude == Math::degreesToRadians(1.3043744));
-          CHECK(points[2].height == 100.0);
-          CHECK(points[3].longitude == Math::degreesToRadians(-80.1976364));
-          CHECK(points[3].latitude == Math::degreesToRadians(25.7708431));
-          CHECK(points[3].height == 400.0);
-          CHECK(points[4].longitude == Math::degreesToRadians(-75.1428517));
-          CHECK(points[4].latitude == Math::degreesToRadians(39.9644934));
-          CHECK(points[4].height == 400.0);
+          CHECK(points[0].x == -75.1428517);
+          CHECK(points[0].y == 39.9644934);
+          CHECK(points[0].z == 400.0);
+          CHECK(points[1].x == 129.6869721);
+          CHECK(points[1].y == 62.0256947);
+          CHECK(points[1].z == 100.0);
+          CHECK(points[2].x == 103.8245805);
+          CHECK(points[2].y == 1.3043744);
+          CHECK(points[2].z == 100.0);
+          CHECK(points[3].x == -80.1976364);
+          CHECK(points[3].y == 25.7708431);
+          CHECK(points[3].z == 400.0);
+          CHECK(points[4].x == -75.1428517);
+          CHECK(points[4].y == 39.9644934);
+          CHECK(points[4].z == 400.0);
         });
   }
 
   SUBCASE("Coordinates must be an array of arrays of arrays") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "MultiPolygon", "coordinates": false })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "MultiPolygon", "coordinates": false })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -511,9 +467,8 @@ TEST_CASE("Parse MultiPolygon primitives") {
   }
 
   SUBCASE("Lines must contain two or more positions") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "MultiPolygon", "coordinates": [[[[0, 1, 2], [1, 2, 3], [4, 3, 5]] ]] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "MultiPolygon", "coordinates": [[[[0, 1, 2], [1, 2, 3], [4, 3, 5]] ]] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -534,10 +489,10 @@ TEST_CASE("Parsing GeometryCollection") {
           ]
         }  
         )==",
-        [](const CesiumUtility::IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonGeometryCollection* pGeomCollection =
               std::get_if<GeoJsonGeometryCollection>(
-                  &pDocument->getRootObject().value);
+                  &document.rootObject.value);
           REQUIRE(pGeomCollection);
           REQUIRE(
               pGeomCollection->TYPE == GeoJsonObjectType::GeometryCollection);
@@ -546,16 +501,15 @@ TEST_CASE("Parsing GeometryCollection") {
               std::get_if<GeoJsonPoint>(&pGeomCollection->geometries[0].value);
           REQUIRE(pPoint);
           CHECK(pPoint->TYPE == GeoJsonObjectType::Point);
-          CHECK(pPoint->coordinates == Cartographic::fromDegrees(1, 2));
+          CHECK(pPoint->coordinates == glm::dvec3(1.0, 2.0, 0.0));
           const GeoJsonLineString* pLineString = std::get_if<GeoJsonLineString>(
               &pGeomCollection->geometries[1].value);
           REQUIRE(pLineString);
           CHECK(pLineString->TYPE == GeoJsonObjectType::LineString);
-          const std::vector<Cartographic>& linePoints =
-              pLineString->coordinates;
+          const std::vector<glm::dvec3>& linePoints = pLineString->coordinates;
           REQUIRE(linePoints.size() == 2);
-          CHECK(linePoints[0] == Cartographic::fromDegrees(1, 2));
-          CHECK(linePoints[1] == Cartographic::fromDegrees(3, 4));
+          CHECK(linePoints[0] == glm::dvec3(1.0, 2.0, 0.0));
+          CHECK(linePoints[1] == glm::dvec3(3.0, 4.0, 0.0));
           JsonValue::Object foreignMembersObj = pLineString->foreignMembers;
           REQUIRE(!foreignMembersObj.empty());
           CHECK(foreignMembersObj["test"] == JsonValue(104.0));
@@ -564,9 +518,8 @@ TEST_CASE("Parsing GeometryCollection") {
   }
 
   SUBCASE("Requires 'geometries'") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "GeometryCollection" })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "GeometryCollection" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -582,9 +535,8 @@ TEST_CASE("Parsing GeometryCollection") {
   }
 
   SUBCASE("'geometries' must only include geometry primitives") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(stringToBytes(
-            R"==({ "type": "GeometryCollection", "geometries": [{"type": "Feature", "geometry": null, "properties": null}] })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(stringToBytes(
+        R"==({ "type": "GeometryCollection", "geometries": [{"type": "Feature", "geometry": null, "properties": null}] })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -620,9 +572,9 @@ TEST_CASE("Parsing Feature") {
           "test": "test"
         }
         )==",
-        [](const CesiumUtility::IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonFeature* pFeature =
-              std::get_if<GeoJsonFeature>(&pDocument->getRootObject().value);
+              std::get_if<GeoJsonFeature>(&document.rootObject.value);
           REQUIRE(pFeature);
           REQUIRE(pFeature->TYPE == GeoJsonObjectType::Feature);
           REQUIRE(pFeature->geometry);
@@ -638,10 +590,10 @@ TEST_CASE("Parsing Feature") {
               std::get_if<GeoJsonLineString>(&pFeature->geometry->value);
           REQUIRE(pLineString);
           REQUIRE(pLineString->TYPE == GeoJsonObjectType::LineString);
-          const std::vector<Cartographic>& points = pLineString->coordinates;
+          const std::vector<glm::dvec3>& points = pLineString->coordinates;
           REQUIRE(points.size() == 2);
-          CHECK(points[0] == Cartographic::fromDegrees(1, 2, 3));
-          CHECK(points[1] == Cartographic::fromDegrees(4, 5, 6));
+          CHECK(points[0] == glm::dvec3(1.0, 2.0, 3.0));
+          CHECK(points[1] == glm::dvec3(4.0, 5.0, 6.0));
           JsonValue::Object foreignMembers = pFeature->foreignMembers;
           REQUIRE(!foreignMembers.empty());
           CHECK(foreignMembers["test"] == JsonValue("test"));
@@ -649,23 +601,17 @@ TEST_CASE("Parsing Feature") {
   }
 
   SUBCASE("Missing required members") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "Feature" })=="));
-    REQUIRE(doc.errors.hasErrors());
-    CHECK(doc.errors.errors.size() == 1);
-    CHECK(doc.errors.errors[0] == "Feature must have 'geometry' member.");
-    doc = GeoJsonDocument::fromGeoJson(
-        stringToBytes(R"==({ "type": "Feature", "geometry": null })=="));
-    REQUIRE(doc.errors.hasErrors());
-    CHECK(doc.errors.errors.size() == 1);
-    CHECK(doc.errors.errors[0] == "Feature must have 'properties' member.");
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "Feature" })=="));
+    REQUIRE(!doc.errors.warnings.empty());
+    CHECK(doc.errors.warnings.size() == 2);
+    CHECK(doc.errors.warnings[0] == "Feature must have a 'geometry' member.");
+    CHECK(doc.errors.warnings[1] == "Feature must have a 'properties' member.");
   }
 
   SUBCASE("'id' must be string or number") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "Feature", "id": null })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "Feature", "id": null })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -692,27 +638,30 @@ TEST_CASE("Parsing FeatureCollection") {
           ]
         }  
         )==",
-        [](const IntrusivePointer<GeoJsonDocument>& pDocument) {
+        [](const GeoJsonDocument& document) {
           const GeoJsonFeatureCollection* pFeatureCollection =
-              std::get_if<GeoJsonFeatureCollection>(
-                  &pDocument->getRootObject().value);
+              std::get_if<GeoJsonFeatureCollection>(&document.rootObject.value);
           REQUIRE(pFeatureCollection);
           REQUIRE(
               pFeatureCollection->TYPE == GeoJsonObjectType::FeatureCollection);
           REQUIRE(pFeatureCollection->features.size() == 1);
-          CHECK(pFeatureCollection->features[0].properties == std::nullopt);
-          const GeoJsonPoint* pPoint = std::get_if<GeoJsonPoint>(
-              &pFeatureCollection->features[0].geometry->value);
+          CHECK(
+              pFeatureCollection->features[0]
+                  .get<GeoJsonFeature>()
+                  .properties == std::nullopt);
+          const GeoJsonPoint* pPoint =
+              std::get_if<GeoJsonPoint>(&pFeatureCollection->features[0]
+                                             .get<GeoJsonFeature>()
+                                             .geometry->value);
           REQUIRE(pPoint);
           REQUIRE(pPoint->TYPE == GeoJsonObjectType::Point);
-          CHECK(pPoint->coordinates == Cartographic::fromDegrees(1, 2, 3));
+          CHECK(pPoint->coordinates == glm::dvec3(1, 2, 3));
         });
   }
 
   SUBCASE("'features' member must be an array of features") {
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
-        GeoJsonDocument::fromGeoJson(
-            stringToBytes(R"==({ "type": "FeatureCollection" })=="));
+    Result<GeoJsonDocument> doc = GeoJsonDocument::fromGeoJson(
+        stringToBytes(R"==({ "type": "FeatureCollection" })=="));
     REQUIRE(doc.errors.hasErrors());
     CHECK(doc.errors.errors.size() == 1);
     CHECK(
@@ -750,9 +699,9 @@ TEST_CASE("Load test GeoJSON without errors") {
     if (!file.path().extension().string().ends_with("json")) {
       continue;
     }
-    Result<IntrusivePointer<GeoJsonDocument>> doc =
+    Result<GeoJsonDocument> doc =
         GeoJsonDocument::fromGeoJson(readFile(file.path()));
-    CHECK(doc.pValue);
+    CHECK(doc.value);
     CHECK(!doc.errors.hasErrors());
     CHECK(doc.errors.warnings.empty());
   }
