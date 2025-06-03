@@ -1,9 +1,9 @@
-#include "CesiumUtility/Result.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumITwinClient/Connection.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumUtility/Result.h>
 
 #include <doctest/doctest.h>
 
