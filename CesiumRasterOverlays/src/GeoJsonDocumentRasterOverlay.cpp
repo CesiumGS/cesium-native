@@ -8,12 +8,12 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumRasterOverlays/GeoJsonDocumentRasterOverlay.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumRasterOverlays/VectorDocumentRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
@@ -421,7 +421,7 @@ private:
   Quadtree _tree;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
-  std::optional<VectorDocumentRasterOverlayStyleCallback> _styleCallback;
+  std::optional<GeoJsonDocumentRasterOverlayStyleCallback> _styleCallback;
 
 public:
   VectorDocumentRasterOverlayTileProvider(
@@ -431,7 +431,7 @@ public:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const VectorDocumentRasterOverlayOptions& options,
+      const GeoJsonDocumentRasterOverlayOptions& options,
       const std::shared_ptr<CesiumVectorData::GeoJsonDocument>& document)
       : RasterOverlayTileProvider(
             pOwner,
@@ -531,7 +531,7 @@ public:
   }
 
   void
-  setStyleCallback(VectorDocumentRasterOverlayStyleCallback&& newCallback) {
+  setStyleCallback(GeoJsonDocumentRasterOverlayStyleCallback&& newCallback) {
     this->_styleCallback = std::move(newCallback);
   }
 
@@ -540,62 +540,27 @@ public:
       return;
     }
 
-    this->recomputeStyles(&this->_document->rootObject);
-  }
-
-private:
-  void recomputeStyles(GeoJsonObject* pObject) {
-    if (this->_styleCallback) {
+    for (GeoJsonObject& object : this->_document->rootObject) {
       const std::optional<VectorStyle>& style =
-          (*this->_styleCallback)(this->_document, pObject);
-      pObject->getStyle() = style;
+          (*this->_styleCallback)(this->_document, &object);
+      object.getStyle() = style;
     }
-
-    struct RecomputeChildStylesVisitor {
-      VectorDocumentRasterOverlayTileProvider* pThis;
-      void operator()(GeoJsonFeature& feature) {
-        if (feature.geometry) {
-          pThis->recomputeStyles(feature.geometry.get());
-        }
-      }
-      void operator()(GeoJsonFeatureCollection& features) {
-        for (GeoJsonObject& feature : features.features) {
-          const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
-          if (pFeature && pFeature->geometry) {
-            pThis->recomputeStyles(pFeature->geometry.get());
-          }
-        }
-      }
-      void operator()(GeoJsonGeometryCollection& collection) {
-        for (GeoJsonObject& geometry : collection.geometries) {
-          pThis->recomputeStyles(&geometry);
-        }
-      }
-      void operator()(GeoJsonPoint& /*lhs*/) {}
-      void operator()(GeoJsonMultiPoint& /*lhs*/) {}
-      void operator()(GeoJsonLineString& /*lhs*/) {}
-      void operator()(GeoJsonMultiLineString& /*lhs*/) {}
-      void operator()(GeoJsonPolygon& /*lhs*/) {}
-      void operator()(GeoJsonMultiPolygon& /*lhs*/) {}
-    };
-
-    std::visit(RecomputeChildStylesVisitor{this}, pObject->value);
   }
 };
 
-VectorDocumentRasterOverlay::VectorDocumentRasterOverlay(
+GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
     const std::string& name,
-    const VectorDocumentRasterOverlaySource& source,
-    const VectorDocumentRasterOverlayOptions& vectorOptions,
+    const GeoJsonDocumentRasterOverlaySource& source,
+    const GeoJsonDocumentRasterOverlayOptions& vectorOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
       _source(source),
       _options(vectorOptions) {}
 
-VectorDocumentRasterOverlay::~VectorDocumentRasterOverlay() = default;
+GeoJsonDocumentRasterOverlay::~GeoJsonDocumentRasterOverlay() = default;
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
-VectorDocumentRasterOverlay::createTileProvider(
+GeoJsonDocumentRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
@@ -616,7 +581,7 @@ VectorDocumentRasterOverlay::createTileProvider(
               Result(document));
     }
     CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
-    operator()(const IonVectorDocumentRasterOverlaySource& ion) {
+    operator()(const IonGeoJsonDocumentRasterOverlaySource& ion) {
       return GeoJsonDocument::fromCesiumIonAsset(
                  asyncSystem,
                  pAssetAccessor,

@@ -15,9 +15,10 @@ enum class ColorMode : uint8_t {
    *
    * The color randomization will be applied to each component, with the
    * resulting value between 0 and the specified color component value. Alpha is
-   * always ignored. For example, if the color was 0xff000077 (only 0x77 in the
-   * green component), the resulting randomized value could be 0xff000041, or
-   * 0xff000076, but never 0xff0000aa.
+   * always ignored. For example, if the color was `(R: 0x00, G: 0x77, B: 0x00,
+   * A: 0xFF)`, the resulting randomized value could be `(R: 0x00, G: 0x41, B:
+   * 0x00, A: 0xFF)`, or `(R: 0x00, G: 0x76, B: 0x00, A: 0xFF)`, but never `(R:
+   * 0x00, G: 0xAA, B: 0x00, A: 0xFF)`.
    */
   Random = 1
 };
@@ -49,13 +50,14 @@ struct PolygonStyle : public ColorStyle {
    */
   bool fill = true;
   /**
-   * @brief Whether the polygon should be outlined. The `LineStyle` specified on
-   * the same `VectorStyle` as this will be used for the stroke color.
+   * @brief Whether the polygon should be outlined. If true, then the
+   * `PolygonStyle` should be paired with a `LineStyle` that specifies the
+   * stroke color.
    */
   bool outline = false;
 };
 
-/** @brief Whether the line width is specified in meters or in pixels. */
+/** @brief The mode to use when interpreting a given line width. */
 enum class LineWidthMode : uint8_t {
   /**
    * @brief The line will always be this number of pixels in width, no matter
@@ -89,11 +91,11 @@ struct LineStyle : public ColorStyle {
  */
 struct VectorStyle {
   /**
-   * @brief Styles to use when drawing polylines and stroking shapes.
+   * @brief The style to use when drawing polylines and stroking shapes.
    */
   LineStyle line;
   /**
-   * @brief Styles to use when drawing polygons.
+   * @brief The style to use when drawing polygons.
    */
   PolygonStyle polygon;
 

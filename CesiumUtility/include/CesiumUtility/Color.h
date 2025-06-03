@@ -8,13 +8,13 @@ namespace CesiumUtility {
  */
 struct Color {
   /** @brief The red component. */
-  uint32_t r;
+  uint8_t r;
   /** @brief The green component. */
-  uint32_t g;
+  uint8_t g;
   /** @brief The blue component. */
-  uint32_t b;
+  uint8_t b;
   /** @brief The alpha component. */
-  uint32_t a;
+  uint8_t a;
 
   /**
    * @brief Creates a new Color from the given components.

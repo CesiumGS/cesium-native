@@ -25,15 +25,15 @@ namespace CesiumRasterOverlays {
 /**
  * @brief A callback used to set new styles on vector documents.
  */
-using VectorDocumentRasterOverlayStyleCallback =
+using GeoJsonDocumentRasterOverlayStyleCallback =
     std::function<std::optional<CesiumVectorData::VectorStyle>(
         const std::shared_ptr<CesiumVectorData::GeoJsonDocument>&,
         CesiumVectorData::GeoJsonObject*)>;
 
 /**
- * @brief A set of options for configuring a VectorDocumentRasterOverlay.
+ * @brief A set of options for configuring a GeoJsonDocumentRasterOverlay.
  */
-struct VectorDocumentRasterOverlayOptions {
+struct GeoJsonDocumentRasterOverlayOptions {
   /**
    * @brief The default style to use when no style is otherwise specified on a
    * \ref GeoJsonObject.
@@ -41,10 +41,10 @@ struct VectorDocumentRasterOverlayOptions {
   CesiumVectorData::VectorStyle defaultStyle;
 
   /**
-   * @brief If specified, this callback will be run for every node in the
-   * document and can be used to set new styles for the nodes.
+   * @brief If specified, this callback will be run for every object in the
+   * document and can be used to set new styles for the objects.
    */
-  std::optional<VectorDocumentRasterOverlayStyleCallback> styleCallback;
+  std::optional<GeoJsonDocumentRasterOverlayStyleCallback> styleCallback;
 
   /**
    * @brief The projection to use for this overlay.
@@ -63,9 +63,9 @@ struct VectorDocumentRasterOverlayOptions {
 };
 
 /**
- * @brief Information required to load a vector document from Cesium ion.
+ * @brief Information required to load a GeoJSON document from Cesium ion.
  */
-struct IonVectorDocumentRasterOverlaySource {
+struct IonGeoJsonDocumentRasterOverlaySource {
   /** @brief The ion Asset ID to load. */
   int64_t ionAssetID;
   /** @brief The ion access token to use to access the asset. */
@@ -75,35 +75,35 @@ struct IonVectorDocumentRasterOverlaySource {
 };
 
 /**
- * @brief Possible sources for a VectorDocumentRasterOverlay's vector data.
+ * @brief Possible sources for a GeoJsonDocumentRasterOverlay's vector data.
  */
-using VectorDocumentRasterOverlaySource = std::variant<
+using GeoJsonDocumentRasterOverlaySource = std::variant<
     std::shared_ptr<CesiumVectorData::GeoJsonDocument>,
-    IonVectorDocumentRasterOverlaySource>;
+    IonGeoJsonDocumentRasterOverlaySource>;
 
 /**
  * @brief A raster overlay made from rasterizing a \ref
  * CesiumVectorData::GeoJsonDocument.
  */
-class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlay final
+class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlay final
     : public RasterOverlay {
 
 public:
   /**
-   * @brief Creates a new RasterizedPolygonsOverlay.
+   * @brief Creates a new GeoJsonDocumentRasterOverlay.
    *
    * @param name The user-given name of this polygon layer.
    * @param source The source of the vector data to use for the overlay.
    * @param vectorOverlayOptions Options to configure this
-   * VectorDocumentRasterOverlay.
+   * GeoJsonDocumentRasterOverlay.
    * @param overlayOptions Options to use for this RasterOverlay.
    */
-  VectorDocumentRasterOverlay(
+  GeoJsonDocumentRasterOverlay(
       const std::string& name,
-      const VectorDocumentRasterOverlaySource& source,
-      const VectorDocumentRasterOverlayOptions& vectorOverlayOptions,
+      const GeoJsonDocumentRasterOverlaySource& source,
+      const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
       const RasterOverlayOptions& overlayOptions = {});
-  virtual ~VectorDocumentRasterOverlay() override;
+  virtual ~GeoJsonDocumentRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -116,7 +116,7 @@ public:
       const override;
 
 private:
-  VectorDocumentRasterOverlaySource _source;
-  VectorDocumentRasterOverlayOptions _options;
+  GeoJsonDocumentRasterOverlaySource _source;
+  GeoJsonDocumentRasterOverlayOptions _options;
 };
 } // namespace CesiumRasterOverlays
