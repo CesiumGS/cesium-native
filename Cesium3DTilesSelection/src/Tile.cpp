@@ -212,7 +212,7 @@ int64_t Tile::computeByteSize() const noexcept {
   return bytes;
 }
 
-bool Tile::isRenderable(int minTuningVersionNeeded) const noexcept {
+bool Tile::isRenderable(std::optional<int> minVersionNeeded) const noexcept {
   if (getState() == TileLoadState::Failed) {
     // Explicitly treat failed tiles as "renderable" - we just treat them like
     // empty tiles.
@@ -221,8 +221,8 @@ bool Tile::isRenderable(int minTuningVersionNeeded) const noexcept {
 
   if (getState() == TileLoadState::Done) {
     auto* renderContent = getContent().getRenderContent();
-    if (renderContent && -1 != minTuningVersionNeeded &&
-        minTuningVersionNeeded > renderContent->getModel()._tuningVersion)
+    if (renderContent && minVersionNeeded &&
+        minVersionNeeded > renderContent->getModel().version)
       return false;
     // An unconditionally-refined tile is never renderable... UNLESS it has no
     // children, in which case waiting longer will be futile.
@@ -235,7 +235,6 @@ bool Tile::isRenderable(int minTuningVersionNeeded) const noexcept {
           });
     }
   }
-
   return false;
 }
 
@@ -275,19 +274,23 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 
 } // namespace
 
-bool Tile::needsWorkerThreadLoading(int tunerVersion) const noexcept {
+bool Tile::needsWorkerThreadLoading(
+    std::optional<int> modelVersion) const noexcept {
   TileLoadState state = this->getState();
-  // Test if worker-thread phase of glTF tuning should be started.
-  if (-1 != tunerVersion && state == TileLoadState::Done) {
+  // Test if worker-thread phase of glTF modifier should be started.
+  if (modelVersion && state == TileLoadState::Done) {
     const auto* renderContent = getContent().getRenderContent();
     if (renderContent &&
-        renderContent->getTunerState() == TileRenderContent::TunerState::Idle) {
-      // Need to account for tuneModel's version too in case finishLoading
-      // hasn't yet been called
-      int latestVersion = renderContent->getTunedModel()._tuningVersion;
-      if (-1 == latestVersion)
-        latestVersion = renderContent->getModel()._tuningVersion;
-      if (latestVersion < tunerVersion)
+        renderContent->getGltfModifierState() == GltfModifier::State::Idle) {
+      // Need to account for the modified model's version too in case
+      // finishLoading hasn't yet been called
+      std::optional<int> latestVersion =
+          renderContent->getModifiedModel()
+              ? renderContent->getModifiedModel()->version
+              : std::nullopt;
+      if (!latestVersion)
+        latestVersion = renderContent->getModel().version;
+      if (!latestVersion || latestVersion < modelVersion)
         return true;
     }
   }
@@ -296,13 +299,14 @@ bool Tile::needsWorkerThreadLoading(int tunerVersion) const noexcept {
          anyRasterOverlaysNeedLoading(*this);
 }
 
-bool Tile::needsMainThreadLoading(int tunerVersion) const noexcept {
+bool Tile::needsMainThreadLoading(
+    std::optional<int> modelVersion) const noexcept {
   TileLoadState state = this->getState();
-  // Test if main-thread phase of glTF tuning should be performed.
-  if (-1 != tunerVersion && state == TileLoadState::Done) {
+  // Test if main-thread phase of glTF modifier should be performed.
+  if (-1 != modelVersion && state == TileLoadState::Done) {
     const auto* renderContent = getContent().getRenderContent();
-    if (renderContent && renderContent->getTunerState() ==
-                             TileRenderContent::TunerState::WorkerDone)
+    if (renderContent && renderContent->getGltfModifierState() ==
+                             GltfModifier::State::WorkerDone)
       return true;
   }
   return state == TileLoadState::ContentLoaded && this->isRenderContent();

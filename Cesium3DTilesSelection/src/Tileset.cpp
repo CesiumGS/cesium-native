@@ -987,7 +987,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
       traversalDetails = Tileset::createTraversalDetailsForSingleTile(
           frameState,
           tile,
-          getCurrentGltfTuningVersion());
+          getGltfModifierVersion());
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(
@@ -1045,7 +1045,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
   return Tileset::createTraversalDetailsForSingleTile(
       frameState,
       tile,
-      getCurrentGltfTuningVersion());
+      getGltfModifierVersion());
 }
 
 namespace {
@@ -1069,12 +1069,12 @@ namespace {
 bool mustContinueRefiningToDeeperTiles(
     const Tile& tile,
     const TileSelectionState& lastFrameSelectionState,
-    int minTuningVersionNeeded) noexcept {
+    std::optional<int> modelVersion) noexcept {
   const TileSelectionState::Result originalResult =
       lastFrameSelectionState.getOriginalResult();
 
   return originalResult == TileSelectionState::Result::Refined &&
-         !tile.isRenderable(minTuningVersionNeeded);
+         !tile.isRenderable(modelVersion);
 }
 
 } // namespace
@@ -1094,11 +1094,14 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
   return Tileset::createTraversalDetailsForSingleTile(
       frameState,
       tile,
-      getCurrentGltfTuningVersion());
+      getGltfModifierVersion());
 }
 
-int Tileset::getCurrentGltfTuningVersion() const {
-  return _externals.gltfTuner ? _externals.gltfTuner->getCurrentVersion() : -1;
+std::optional<int> Tileset::getGltfModifierVersion() const {
+  if (_externals.gltfModifier)
+    return _externals.gltfModifier->getCurrentVersion();
+  else
+    return std::nullopt;
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1165,9 +1168,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
-  int const currentTuningVer = getCurrentGltfTuningVersion();
+  auto const modifierVersion = getGltfModifierVersion();
   const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable(currentTuningVer);
+      wasRenderedLastFrame && tile.isRenderable(modifierVersion);
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1188,11 +1191,11 @@ bool Tileset::_kickDescendantsAndRenderTile(
     }
 
     traversalDetails.notYetRenderableCount =
-        tile.isRenderable(currentTuningVer) ? 0 : 1;
+        tile.isRenderable(modifierVersion) ? 0 : 1;
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable(currentTuningVer);
+  bool isRenderable = tile.isRenderable(modifierVersion);
   traversalDetails.allAreRenderable = isRenderable;
   traversalDetails.anyWereRenderedLastFrame =
       isRenderable && wasRenderedLastFrame;
@@ -1387,7 +1390,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     bool mustRefine = mustContinueRefiningToDeeperTiles(
         tile,
         lastFrameSelectionState,
-        getCurrentGltfTuningVersion());
+        getGltfModifierVersion());
     if (mustRefine) {
       // // We must refine even though this tile meets the SSE.
       action = VisitTileAction::Refine;
@@ -1471,10 +1474,9 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // of a tile that is not yet loaded, because it means we will still have a
   // hole, and quite possibly a bigger one.
   bool wantToKick = kickDueToNonReadyDescendant || kickDueToTileFadingIn;
-  bool willKick =
-      wantToKick && (traversalDetails.notYetRenderableCount >
-                         this->_options.loadingDescendantLimit ||
-                     tile.isRenderable(getCurrentGltfTuningVersion()));
+  bool willKick = wantToKick && (traversalDetails.notYetRenderableCount >
+                                     this->_options.loadingDescendantLimit ||
+                                 tile.isRenderable(getGltfModifierVersion()));
 
   if (willKick) {
     // Kick all descendants out of the render list and render this tile instead
@@ -1546,17 +1548,18 @@ void Tileset::addTileToLoadQueue(
     double priority) {
   frameState.viewGroup.addToLoadQueue(
       TileLoadTask{&tile, priorityGroup, priority},
-      _externals.gltfTuner ? _externals.gltfTuner->getCurrentVersion() : -1);
+      _externals.gltfModifier ? _externals.gltfModifier->getCurrentVersion()
+                              : std::nullopt);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const TilesetFrameState& frameState,
     const Tile& tile,
-    int minGltfTuningVersion) {
+    std::optional<int> modelVersion) {
   TileSelectionState::Result lastFrameResult =
       getPreviousState(frameState.viewGroup, tile).getResult();
 
-  bool isRenderable = tile.isRenderable(minGltfTuningVersion);
+  bool isRenderable = tile.isRenderable(modelVersion);
 
   bool wasRenderedLastFrame =
       lastFrameResult == TileSelectionState::Result::Rendered;

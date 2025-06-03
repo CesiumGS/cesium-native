@@ -795,7 +795,7 @@ TilesetContentManager::TilesetContentManager(
              pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
-             gltfTuner = externals.gltfTuner,
+             gltfModifier = externals.gltfModifier,
              contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
@@ -837,10 +837,10 @@ TilesetContentManager::TilesetContentManager(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
-              // Let the optional tuner parse any extra information from
+              // Let the optional glTF modifier parse any extra information from
               // tileset.json
-              if (gltfTuner) {
-                gltfTuner->parseTilesetJson(tilesetJson);
+              if (gltfModifier) {
+                gltfModifier->parseTilesetJson(tilesetJson);
               }
 
               // Check if the json is a tileset.json format or layer.json format
@@ -1029,23 +1029,23 @@ void TilesetContentManager::loadTileContent(
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::loadTileContent");
 
-  // Case of a tile previously loaded, but now outdated with respect to the tune
-  // version (see matching condition in Tile::needsWorkerThreadLoading)
-  // => worker-thread phase of glTF tuning should be started.
-  if (_externals.gltfTuner && -1 != _externals.gltfTuner->getCurrentVersion() &&
+  // Case of a tile previously loaded, but now outdated with respect to the
+  // modifier version (see matching condition in Tile::needsWorkerThreadLoading)
+  // => worker-thread phase of glTF modifier should be started.
+  if (_externals.gltfModifier &&
+      _externals.gltfModifier->getCurrentVersion().has_value() &&
       tile.getState() == TileLoadState::Done) {
     auto* renderContent = tile.getContent().getRenderContent();
     if (renderContent &&
-        renderContent->getTunerState() == TileRenderContent::TunerState::Idle &&
-        renderContent->getModel()._tuningVersion <
-            _externals.gltfTuner->getCurrentVersion()) {
-      renderContent->setTunerState(
-          TileRenderContent::TunerState::WorkerRunning);
+        renderContent->getGltfModifierState() == GltfModifier::State::Idle &&
+        renderContent->getModel().version !=
+            _externals.gltfModifier->getCurrentVersion()) {
+      renderContent->setGltfModifierState(GltfModifier::State::WorkerRunning);
       glm::dvec4 rootTranslation = glm::dvec4(0., 0., 0., 1.);
       if (this->_pRootTile)
         rootTranslation = glm::column(this->_pRootTile->getTransform(), 3);
       _externals.asyncSystem
-          .runInWorkerThread([gltfTuner = _externals.gltfTuner,
+          .runInWorkerThread([gltfModifier = _externals.gltfModifier,
                               pPrepareRendererResources =
                                   _externals.pPrepareRendererResources,
                               asyncSystem = _externals.asyncSystem,
@@ -1055,12 +1055,12 @@ void TilesetContentManager::loadTileContent(
             // already known as being non-null
             auto* renderContent = tile.getContent().getRenderContent();
             auto& initialModel = renderContent->getModel();
-            CesiumGltf::Model tunedModel;
-            bool const wasTuned = gltfTuner->apply(
+            CesiumGltf::Model modifiedModel;
+            bool const wasModified = gltfModifier->apply(
                 initialModel,
                 tile.getTransform(),
                 rootTranslation,
-                tunedModel);
+                modifiedModel);
             TileLoadResult tileLoadResult;
             tileLoadResult.glTFUpAxis = [&](CesiumGltf::Model const& model) {
               const auto it = model.extras.find("gltfUpAxis");
@@ -1070,9 +1070,9 @@ void TilesetContentManager::loadTileContent(
               }
               return static_cast<CesiumGeometry::Axis>(
                   it->second.getSafeNumberOrDefault(1));
-            }(wasTuned ? tunedModel : initialModel);
+            }(wasModified ? modifiedModel : initialModel);
             tileLoadResult.contentKind =
-                std::move(wasTuned ? tunedModel : initialModel);
+                std::move(wasModified ? modifiedModel : initialModel);
             tileLoadResult.state = TileLoadResultState::Success;
             return pPrepareRendererResources->prepareInLoadThread(
                 asyncSystem,
@@ -1082,14 +1082,15 @@ void TilesetContentManager::loadTileContent(
           })
           .thenInMainThread(
               [&tile,
-               // Keep the manager alive while the tuning is in progress.
+               // Keep the manager alive while the glTF modification is in
+               // progress.
                thiz = CesiumUtility::IntrusivePointer<TilesetContentManager>(
                    this)](TileLoadResultAndRenderResources&& pair) {
-                tile.getContent().getRenderContent()->setTunerState(
-                    TileRenderContent::TunerState::WorkerDone);
+                tile.getContent().getRenderContent()->setGltfModifierState(
+                    GltfModifier::State::WorkerDone);
                 tile.getContent()
                     .getRenderContent()
-                    ->setTunedModelAndRenderResources(
+                    ->setModifiedModelAndRenderResources(
                         std::move(std::get<CesiumGltf::Model>(
                             pair.result.contentKind)),
                         pair.pRenderResources);
@@ -1190,7 +1191,8 @@ void TilesetContentManager::loadTileContent(
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
-  // Compute root translation (used in tuning, eg. for materials).
+  // Compute root translation (useful for glTF modifiers, eg. to handle
+  // materials).
   glm::dvec4 rootTranslation = glm::dvec4(0., 0., 0., 1.);
   bool const isLoadingRootTile = (tile.getParent() == nullptr);
   if (this->_pRootTile && !isLoadingRootTile) {
@@ -1200,7 +1202,7 @@ void TilesetContentManager::loadTileContent(
       .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections),
                         rendererOptions = tilesetOptions.rendererOptions,
-                        gltfTuner = _externals.gltfTuner,
+                        gltfModifier = _externals.gltfModifier,
                         rootTranslation = std::move(rootTranslation),
                         isLoadingRootTile](TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
@@ -1221,17 +1223,18 @@ void TilesetContentManager::loadTileContent(
                  projections = std::move(projections),
                  tileLoadInfo = std::move(tileLoadInfo),
                  rendererOptions,
-                 gltfTuner,
+                 gltfModifier,
                  rootTranslation = std::move(rootTranslation)]() mutable {
-                  if (gltfTuner && -1 != gltfTuner->getCurrentVersion()) {
-                    // Tune the model right away, otherwise a tuning will be
+                  if (gltfModifier &&
+                      gltfModifier->getCurrentVersion().has_value()) {
+                    // Apply the glTF modifier right away, otherwise it will be
                     // triggered immediately after the renderer-side resources
                     // have been created, which is both inefficient and a cause
                     // of visual glitches (the model will appear briefly in its
-                    // untuned state before stabilizing)
+                    // unmodified state before stabilizing)
                     auto& model =
                         std::get<CesiumGltf::Model>(result.contentKind);
-                    gltfTuner->apply(
+                    gltfModifier->apply(
                         model,
                         tileLoadInfo.tileTransform,
                         rootTranslation,
@@ -1314,22 +1317,22 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   TileLoadState state = tile.getState();
-  // Test if a glTF tuning is in progress.
-  if (_externals.gltfTuner && state == TileLoadState::Done) {
+  // Test if a glTF modifier is in progress.
+  if (_externals.gltfModifier && state == TileLoadState::Done) {
     auto* renderContent = tile.getContent().getRenderContent();
     if (renderContent) {
-      switch (renderContent->getTunerState()) {
-      case TileRenderContent::TunerState::WorkerRunning:
+      switch (renderContent->getGltfModifierState()) {
+      case GltfModifier::State::WorkerRunning:
         // Worker thread is running, we cannot unload yet.
         return UnloadTileContentResult::Keep;
-      case TileRenderContent::TunerState::WorkerDone:
+      case GltfModifier::State::WorkerDone:
         // Free temporary render resources.
-        CESIUM_ASSERT(renderContent->getTunedRenderResources());
+        CESIUM_ASSERT(renderContent->getModifiedRenderResources());
         _externals.pPrepareRendererResources->free(
             tile,
-            renderContent->getTunedRenderResources(),
+            renderContent->getModifiedRenderResources(),
             nullptr);
-        renderContent->resetTunedRenderResources();
+        renderContent->resetModifiedRenderResources();
         break;
       default:
         break;
@@ -1513,23 +1516,24 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
 
 bool TilesetContentManager::discardOutdatedRenderResources(
     Tile& tile,
-    TileRenderContent& renderContent,
-    bool bTunedModel) {
-  if (!_externals.gltfTuner)
+    TileRenderContent& renderContent) {
+  if (!_externals.gltfModifier)
     return false;
-  const CesiumGltf::Model& model =
-      bTunedModel ? renderContent.getTunedModel() : renderContent.getModel();
-  if (model._tuningVersion < _externals.gltfTuner->getCurrentVersion()) {
+  bool bModifiedModel = renderContent.getModifiedModel().has_value();
+  const CesiumGltf::Model& model = bModifiedModel
+                                       ? (*renderContent.getModifiedModel())
+                                       : renderContent.getModel();
+  if (model.version != _externals.gltfModifier->getCurrentVersion()) {
     _externals.pPrepareRendererResources->free(
         tile,
-        bTunedModel ? renderContent.getTunedRenderResources()
-                    : renderContent.getRenderResources(),
+        bModifiedModel ? renderContent.getModifiedRenderResources()
+                       : renderContent.getRenderResources(),
         nullptr);
-    if (bTunedModel)
-      renderContent.resetTunedRenderResources();
+    if (bModifiedModel)
+      renderContent.resetModifiedRenderResources();
     else
       renderContent.setRenderResources(nullptr);
-    renderContent.setTunerState(TileRenderContent::TunerState::Idle);
+    renderContent.setGltfModifierState(GltfModifier::State::Idle);
     tile.setState(TileLoadState::Done);
     return true;
   }
@@ -1544,24 +1548,24 @@ void TilesetContentManager::finishLoading(
   CESIUM_ASSERT(pRenderContent != nullptr);
 
   // Case of a tile previously loaded that went outdated with respect to the
-  // tuner version => main-thread phase of glTF tuning should be performed.
+  // glTF modifier version => main-thread phase should be performed.
   if (tile.getState() == TileLoadState::Done) {
     CESIUM_ASSERT( // see matching condition in Tile::needsMainThreadLoading
-        _externals.gltfTuner && pRenderContent->getTunerState() ==
-                                    TileRenderContent::TunerState::WorkerDone);
-    CESIUM_ASSERT(pRenderContent->getTunedRenderResources());
-    if (discardOutdatedRenderResources(tile, *pRenderContent, true)) {
+        _externals.gltfModifier && pRenderContent->getGltfModifierState() ==
+                                       GltfModifier::State::WorkerDone);
+    CESIUM_ASSERT(pRenderContent->getModifiedRenderResources());
+    if (discardOutdatedRenderResources(tile, *pRenderContent)) {
       return;
     }
-    pRenderContent->setTunerState(TileRenderContent::TunerState::Idle);
+    pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
     // free outdated render resources before replacing them
     _externals.pPrepareRendererResources->free(
         tile,
         nullptr,
         pRenderContent->getRenderResources());
-    // Replace model and render resources with the newly tuned versions,
+    // Replace model and render resources with the newly modified versions,
     // discarding the old ones
-    pRenderContent->replaceWithTunedModel();
+    pRenderContent->replaceWithModifiedModel();
     // Run the main thread part of loading
     pRenderContent->setRenderResources(
         _externals.pPrepareRendererResources->prepareInMainThread(
@@ -1571,17 +1575,18 @@ void TilesetContentManager::finishLoading(
   }
   CESIUM_ASSERT(tile.getState() == TileLoadState::ContentLoaded);
 
-  // The tile was just loaded and may even have immediately been tuned (_second_
-  // occurrence of 'gltfTuner->apply(...)' in loadTileContent): but this
-  // happened in a concurrent thread, so it might already be outdated
+  // The tile was just loaded and may even have immediately been processed by
+  // the glTF modifier (_second_ occurrence of 'gltfModifier->apply(...)' in
+  // loadTileContent): but this happened in a concurrent thread, so it might
+  // already be outdated
   // => discard the half constructed renderer resources, and skip the main
-  // thread preparation since the tile will be retuned immediately afterwards.
-  // The members tested below are not used in this case: model is tuned "in
+  // thread preparation since the tile will be modified immediately afterwards.
+  // The members tested below are not used in this case: model is modified "in
   // place", since the tile isn't displayed yet:
   CESIUM_ASSERT(
-      pRenderContent->getTunedModel()._tuningVersion == -1 &&
-      !pRenderContent->getTunedRenderResources());
-  if (discardOutdatedRenderResources(tile, *pRenderContent, false)) {
+      !pRenderContent->getModifiedModel() &&
+      !pRenderContent->getModifiedRenderResources());
+  if (discardOutdatedRenderResources(tile, *pRenderContent)) {
     return;
   }
 
@@ -1902,10 +1907,10 @@ void TilesetContentManager::processMainThreadLoadRequests(
         pToLoad->isRenderContent()) {
       this->finishLoading(*pToLoad, options);
     } else {
-      // Test if main-thread phase of glTF tuning should be performed.
+      // Test if main-thread phase of glTF modifier should be performed.
       const auto* renderContent = pToLoad->getContent().getRenderContent();
-      if (renderContent && renderContent->getTunerState() ==
-                               TileRenderContent::TunerState::WorkerDone)
+      if (renderContent && renderContent->getGltfModifierState() ==
+                               GltfModifier::State::WorkerDone)
         this->finishLoading(*pToLoad, options);
     }
 

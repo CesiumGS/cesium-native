@@ -44,7 +44,7 @@ ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() {
 
 void TilesetViewGroup::addToLoadQueue(
     const TileLoadTask& task,
-    int tunerVersion) {
+    std::optional<int> modelVersion) {
   Tile* pTile = task.pTile;
   CESIUM_ASSERT(pTile != nullptr);
 
@@ -62,9 +62,9 @@ void TilesetViewGroup::addToLoadQueue(
           [&](const TileLoadTask& task) { return task.pTile == pTile; }) ==
       this->_mainThreadLoadQueue.end());
 
-  if (pTile->needsWorkerThreadLoading(tunerVersion)) {
+  if (pTile->needsWorkerThreadLoading(modelVersion)) {
     this->_workerThreadLoadQueue.emplace_back(task);
-  } else if (pTile->needsMainThreadLoading(tunerVersion)) {
+  } else if (pTile->needsMainThreadLoading(modelVersion)) {
     this->_mainThreadLoadQueue.emplace_back(task);
   } else if (
       pTile->getState() == TileLoadState::ContentLoading ||

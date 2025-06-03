@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumGeospatial/Projection.h>
@@ -18,7 +19,7 @@ namespace Cesium3DTilesSelection {
  * tileset. The content of the tile is only known when the loader loads the tile
  * to inspect the content.
  */
-struct CESIUM3DTILESSELECTION_API TileUnknownContent {};
+struct CESIUM3DTILESSELECTION_API TileUnknownContent{};
 
 /**
  * @brief A content tag that indicates a tile has no content.
@@ -41,7 +42,7 @@ struct CESIUM3DTILESSELECTION_API TileUnknownContent {};
  * For a tile with no parent there's no difference between the
  * behaviors.
  */
-struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
+struct CESIUM3DTILESSELECTION_API TileEmptyContent{};
 
 /**
  * @brief A content tag that indicates a tile content points to an
@@ -193,60 +194,48 @@ public:
    */
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
-  /** The state of the tuning process of the glTF model of a given tile content.
+  /** Modifier process state of the glTF model of this tile content. */
+  GltfModifier::State getGltfModifierState() const noexcept;
+
+  /** Update the modifier process state of the glTF model of this tile content.
    */
-  enum class TunerState {
-    /** No tuning is in progress. */
-    Idle,
-    /** Worker-thread phase is in progress. */
-    WorkerRunning,
-    /** Worker-thread phase is complete, main-thread phase is not done yet. */
-    WorkerDone,
-  };
+  void setGltfModifierState(GltfModifier::State modifierState) noexcept;
 
-  /** Tuning process state of the glTF model of this tile content. */
-  TunerState getTunerState() const noexcept;
+  /** Get the optional temporary modified model of this tile content. */
+  const std::optional<CesiumGltf::Model>& getModifiedModel() const noexcept;
 
-  /** Update the tuning process state of the glTF model of this tile content. */
-  void setTunerState(TunerState tunerState) noexcept;
-
-  /** Get the temporary tuned model of this tile content. Its validity can be
-   * tested by comparing its _tuningVersion to -1, as the lowest version for a
-   * tuned glTF model is 0. */
-  const CesiumGltf::Model& getTunedModel() const noexcept;
-
-  /** Get the temporary tuned model's render resources of this tile content, if
-   * any, or nullptr. */
-  void* getTunedRenderResources() const noexcept;
+  /** Get the temporary modified model's render resources of this tile content,
+   * if any, or nullptr. */
+  void* getModifiedRenderResources() const noexcept;
 
   /** Store temporary model and render resources computed in a worker thread,
    * until they can be used instead of the current outdated versions */
-  void setTunedModelAndRenderResources(
-      CesiumGltf::Model&& tunedModel,
-      void* pTunedRenderResources) noexcept;
+  void setModifiedModelAndRenderResources(
+      CesiumGltf::Model&& modifiedModel,
+      void* pModifiedRenderResources) noexcept;
 
-  /** Reset the temporary tuned model's render resources of this tile content to
-   * nullptr after it has been freed with
+  /** Reset the temporary modified model's render resources of this tile content
+   * to nullptr after it has been freed with
    * Cesium3DTilesSelection::IPrepareRendererResources::free. */
-  void resetTunedRenderResources() noexcept;
+  void resetModifiedRenderResources() noexcept;
 
-  /** Overwrite this instance's model and render resources with the tuning
+  /** Overwrite this instance's model and render resources with the modifier
    * stage's temporary variables, which are reset to their initial state. */
-  void replaceWithTunedModel() noexcept;
+  void replaceWithModifiedModel() noexcept;
 
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
 
-  /** Current state of the glTF tuning for this tile content */
-  TunerState _tunerState = TunerState::Idle;
-  /** Temporary model used during tuning when the tile content already has a
-   * model. */
-  CesiumGltf::Model _tunedModel;
-  /** Temporary render resources used during tuning when the tile content
-   * already has render resources. When tuning is done, it will replace
-   * _pRenderResources and be reset to nullptr. */
-  void* _pTunedRenderResources = nullptr;
+  /** Current state of the glTF modifier for this tile content */
+  GltfModifier::State _modifierState = GltfModifier::State::Idle;
+  /** Temporary model used during the modifier process when the tile content
+   * already has a model. */
+  std::optional<CesiumGltf::Model> _modifiedModel = {};
+  /** Temporary render resources used during the modifier process when the tile
+   * content already has render resources. When modifier is done, it will
+   * replace _pRenderResources and be reset to nullptr. */
+  void* _pModifiedRenderResources = nullptr;
 
   CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;

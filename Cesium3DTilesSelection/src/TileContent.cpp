@@ -32,41 +32,41 @@ void TileRenderContent::setModel(CesiumGltf::Model&& model) {
   _model = std::move(model);
 }
 
-TileRenderContent::TunerState
-TileRenderContent::getTunerState() const noexcept {
-  return _tunerState;
+GltfModifier::State TileRenderContent::getGltfModifierState() const noexcept {
+  return _modifierState;
 }
 
-void TileRenderContent::setTunerState(
-    TileRenderContent::TunerState tunerState) noexcept {
-  _tunerState = tunerState;
+void TileRenderContent::setGltfModifierState(
+    GltfModifier::State modifierState) noexcept {
+  _modifierState = modifierState;
 }
 
-const CesiumGltf::Model& TileRenderContent::getTunedModel() const noexcept {
-  return _tunedModel;
+const std::optional<CesiumGltf::Model>&
+TileRenderContent::getModifiedModel() const noexcept {
+  return _modifiedModel;
 }
 
-void TileRenderContent::setTunedModelAndRenderResources(
-    CesiumGltf::Model&& tunedModel,
-    void* pTunedRenderResources) noexcept {
-  _tunedModel = std::move(tunedModel);
-  _pTunedRenderResources = pTunedRenderResources;
+void TileRenderContent::setModifiedModelAndRenderResources(
+    CesiumGltf::Model&& modifiedModel,
+    void* pModifiedRenderResources) noexcept {
+  _modifiedModel = std::move(modifiedModel);
+  _pModifiedRenderResources = pModifiedRenderResources;
 }
 
-void* TileRenderContent::getTunedRenderResources() const noexcept {
-  return _pTunedRenderResources;
+void* TileRenderContent::getModifiedRenderResources() const noexcept {
+  return _pModifiedRenderResources;
 }
 
-void TileRenderContent::resetTunedRenderResources() noexcept {
-  _pTunedRenderResources = nullptr;
+void TileRenderContent::resetModifiedRenderResources() noexcept {
+  _pModifiedRenderResources = nullptr;
 }
 
-void TileRenderContent::replaceWithTunedModel() noexcept {
-  _model = std::move(_tunedModel);
+void TileRenderContent::replaceWithModifiedModel() noexcept {
+  _model = std::move(*_modifiedModel);
   // reset after move because tested in tileNeedsWorkerThreadLoading:
-  _tunedModel._tuningVersion = -1;
-  _pRenderResources = _pTunedRenderResources;
-  _pTunedRenderResources = nullptr;
+  _modifiedModel.reset();
+  _pRenderResources = _pModifiedRenderResources;
+  _pModifiedRenderResources = nullptr;
 }
 
 const RasterOverlayDetails&
