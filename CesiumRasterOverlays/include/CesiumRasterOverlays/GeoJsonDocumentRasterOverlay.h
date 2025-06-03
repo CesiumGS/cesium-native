@@ -36,7 +36,7 @@ using GeoJsonDocumentRasterOverlayStyleCallback =
 struct GeoJsonDocumentRasterOverlayOptions {
   /**
    * @brief The default style to use when no style is otherwise specified on a
-   * \ref GeoJsonObject.
+   * \ref CesiumVectorData::GeoJsonObject.
    */
   CesiumVectorData::VectorStyle defaultStyle;
 
