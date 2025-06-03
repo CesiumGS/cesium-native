@@ -391,12 +391,11 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::get(
           pRequest->setResponse(std::move(pResponse));
           return pRequest;
         } else {
-          throw std::runtime_error(
-              fmt::format(
-                  "{} `{}` failed: {}",
-                  pRequest->method(),
-                  pRequest->url(),
-                  curl_easy_strerror(responseCode)));
+          throw std::runtime_error(fmt::format(
+              "{} `{}` failed: {}",
+              pRequest->method(),
+              pRequest->url(),
+              curl_easy_strerror(responseCode)));
         }
       });
 }
@@ -453,7 +452,7 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
        verb,
        payloadCopy = std::move(payloadCopy),
        pThis = this->shared_from_this()]() mutable
-          -> std::shared_ptr<IAssetRequest> {
+      -> std::shared_ptr<IAssetRequest> {
         CESIUM_TRACE("UrlAssetAccessor::request");
 
         CURLoption verbOption;
@@ -462,10 +461,9 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
         } else if (verb == "PUT") {
           verbOption = CURLOPT_UPLOAD;
         } else {
-          throw std::runtime_error(
-              fmt::format(
-                  "UrlAssetAccessor does not support verb `{}`.",
-                  verb));
+          throw std::runtime_error(fmt::format(
+              "UrlAssetAccessor does not support verb `{}`.",
+              verb));
         }
 
         auto pRequest = std::make_shared<UrlAssetRequest>(
@@ -526,12 +524,11 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
           pRequest->setResponse(std::move(pResponse));
           return pRequest;
         } else {
-          throw std::runtime_error(
-              fmt::format(
-                  "{} `{}` failed: {}",
-                  pRequest->method(),
-                  pRequest->url(),
-                  curl_easy_strerror(responseCode)));
+          throw std::runtime_error(fmt::format(
+              "{} `{}` failed: {}",
+              pRequest->method(),
+              pRequest->url(),
+              curl_easy_strerror(responseCode)));
         }
       });
 }
