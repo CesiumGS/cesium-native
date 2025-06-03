@@ -90,36 +90,36 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
   std::shared_ptr<Connection> pConn = createConnection(asyncSystem, false);
 
   SUBCASE("Returns correct results") {
-    CesiumAsync::Future<Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
+    CesiumAsync::Future<Result<PagedList<CesiumVectorData::GeoJsonObject>>>
         future = pConn->geospatialFeatures(
             "00000000-0000-0000-0000-000000000000",
             "00000000-0000-0000-0000-000000000000",
             10);
-    Result<PagedList<CesiumVectorData::GeoJsonFeature>> featuresResult =
+    Result<PagedList<CesiumVectorData::GeoJsonObject>> featuresResult =
         future.waitInMainThread();
 
     REQUIRE(featuresResult.value);
     CHECK(!featuresResult.errors.hasErrors());
 
-    PagedList<CesiumVectorData::GeoJsonFeature>& list = *featuresResult.value;
+    PagedList<CesiumVectorData::GeoJsonObject>& list = *featuresResult.value;
     CHECK(list.size() == 10);
-    const int64_t* pId = std::get_if<int64_t>(&list[5].id);
+    CesiumVectorData::GeoJsonFeature* pFeatureFive =
+        list[5].getIf<CesiumVectorData::GeoJsonFeature>();
+    const int64_t* pId = std::get_if<int64_t>(&pFeatureFive->id);
     REQUIRE(pId);
     CHECK(*pId == 133);
 
-    REQUIRE(list[5].properties);
-    CHECK((*list[5].properties)["type"].isString());
-    CHECK((*list[5].properties)["type"].getString() == "Lamp_post");
+    REQUIRE(pFeatureFive->properties);
+    CHECK((*pFeatureFive->properties)["type"].isString());
+    CHECK((*pFeatureFive->properties)["type"].getString() == "Lamp_post");
 
-    REQUIRE(list[5].geometry);
+    REQUIRE(pFeatureFive->geometry);
     const CesiumVectorData::GeoJsonPoint* pPoint =
-        std::get_if<CesiumVectorData::GeoJsonPoint>(&list[5].geometry.value());
+        pFeatureFive->geometry->getIf<CesiumVectorData::GeoJsonPoint>();
     REQUIRE(pPoint);
     CHECK(
-        pPoint->coordinates == CesiumGeospatial::Cartographic::fromDegrees(
-                                   103.839238468,
-                                   1.348559984,
-                                   7.813700195));
+        pPoint->coordinates ==
+        glm::dvec3(103.839238468, 1.348559984, 7.813700195));
   }
 }
 

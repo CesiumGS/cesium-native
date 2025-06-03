@@ -198,7 +198,7 @@ public:
    * @param limit The maximum number of items per page, between 1 and 10,000.
    */
   CesiumAsync::Future<
-      CesiumUtility::Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
+      CesiumUtility::Result<PagedList<CesiumVectorData::GeoJsonObject>>>
   geospatialFeatures(
       const std::string& iTwinId,
       const std::string& collectionId,
@@ -272,7 +272,7 @@ private:
   CesiumAsync::Future<CesiumUtility::Result<PagedList<ITwinRealityData>>>
   listITwinRealityData(const std::string& url);
   CesiumAsync::Future<
-      CesiumUtility::Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
+      CesiumUtility::Result<PagedList<CesiumVectorData::GeoJsonObject>>>
   listGeospatialFeatures(const std::string& url);
 
   CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken();
