@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added `VectorDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
 
 ### v0.48.0 - 2025-06-02
 
