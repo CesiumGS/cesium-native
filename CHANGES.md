@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+
 ### v0.48.0 - 2025-06-02
 
 ##### Breaking Changes :mega:
@@ -12,7 +18,6 @@
 
 - Switched to vcpkg registry version `dbe35ceb30c688bf72e952ab23778e009a578f18`, from `2024.11.16`. We expect to upgrade again to an official tagged version in the next release.
 - Added `SubtreeWriter::writeSubtreeBinary`.
-- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 
 ##### Fixes :wrench:
 
