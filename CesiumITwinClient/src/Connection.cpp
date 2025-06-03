@@ -18,13 +18,13 @@
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Profile.h>
 #include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
@@ -37,7 +37,6 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 using namespace CesiumAsync;
