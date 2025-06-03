@@ -32,7 +32,8 @@ void TileRenderContent::setModel(CesiumGltf::Model&& model) {
   _model = std::move(model);
 }
 
-TileRenderContent::TunerState TileRenderContent::getTunerState() const noexcept {
+TileRenderContent::TunerState
+TileRenderContent::getTunerState() const noexcept {
   return _tunerState;
 }
 

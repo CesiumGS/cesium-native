@@ -984,11 +984,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
           TileLoadPriorityGroup::Normal,
           tilePriority);
 
-      traversalDetails =
-          Tileset::createTraversalDetailsForSingleTile(
-              frameState,
-              tile,
-              getCurrentGltfTuningVersion());
+      traversalDetails = Tileset::createTraversalDetailsForSingleTile(
+          frameState,
+          tile,
+          getCurrentGltfTuningVersion());
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(
@@ -1098,7 +1097,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       getCurrentGltfTuningVersion());
 }
 
- int Tileset::getCurrentGltfTuningVersion() const {
+int Tileset::getCurrentGltfTuningVersion() const {
   return _externals.gltfTuner ? _externals.gltfTuner->getCurrentVersion() : -1;
 }
 
@@ -1188,7 +1187,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
           tilePriority);
     }
 
-    traversalDetails.notYetRenderableCount = tile.isRenderable(currentTuningVer) ? 0 : 1;
+    traversalDetails.notYetRenderableCount =
+        tile.isRenderable(currentTuningVer) ? 0 : 1;
     queuedForLoad = true;
   }
 
@@ -1471,9 +1471,10 @@ Tileset::TraversalDetails Tileset::_visitTile(
   // of a tile that is not yet loaded, because it means we will still have a
   // hole, and quite possibly a bigger one.
   bool wantToKick = kickDueToNonReadyDescendant || kickDueToTileFadingIn;
-  bool willKick = wantToKick && (traversalDetails.notYetRenderableCount >
-                                     this->_options.loadingDescendantLimit ||
-                                 tile.isRenderable(getCurrentGltfTuningVersion()));
+  bool willKick =
+      wantToKick && (traversalDetails.notYetRenderableCount >
+                         this->_options.loadingDescendantLimit ||
+                     tile.isRenderable(getCurrentGltfTuningVersion()));
 
   if (willKick) {
     // Kick all descendants out of the render list and render this tile instead

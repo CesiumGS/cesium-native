@@ -1032,8 +1032,8 @@ void TilesetContentManager::loadTileContent(
   // Case of a tile previously loaded, but now outdated with respect to the tune
   // version (see matching condition in Tile::needsWorkerThreadLoading)
   // => worker-thread phase of glTF tuning should be started.
-  if (_externals.gltfTuner && -1 != _externals.gltfTuner->getCurrentVersion()
-    && tile.getState() == TileLoadState::Done) {
+  if (_externals.gltfTuner && -1 != _externals.gltfTuner->getCurrentVersion() &&
+      tile.getState() == TileLoadState::Done) {
     auto* renderContent = tile.getContent().getRenderContent();
     if (renderContent &&
         renderContent->getTunerState() == TileRenderContent::TunerState::Idle &&
@@ -1083,14 +1083,17 @@ void TilesetContentManager::loadTileContent(
           .thenInMainThread(
               [&tile,
                // Keep the manager alive while the tuning is in progress.
-            thiz = CesiumUtility::IntrusivePointer<TilesetContentManager>(
-                this)](TileLoadResultAndRenderResources&& pair) {
-            tile.getContent().getRenderContent()->setTunerState(
-                TileRenderContent::TunerState::WorkerDone);
-            tile.getContent().getRenderContent()->setTunedModelAndRenderResources(
-                std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
-                pair.pRenderResources);
-          });
+               thiz = CesiumUtility::IntrusivePointer<TilesetContentManager>(
+                   this)](TileLoadResultAndRenderResources&& pair) {
+                tile.getContent().getRenderContent()->setTunerState(
+                    TileRenderContent::TunerState::WorkerDone);
+                tile.getContent()
+                    .getRenderContent()
+                    ->setTunedModelAndRenderResources(
+                        std::move(std::get<CesiumGltf::Model>(
+                            pair.result.contentKind)),
+                        pair.pRenderResources);
+              });
       return;
     }
     // else: we may be in the case related to raster tiles, see just below
@@ -1226,7 +1229,8 @@ void TilesetContentManager::loadTileContent(
                     // have been created, which is both inefficient and a cause
                     // of visual glitches (the model will appear briefly in its
                     // untuned state before stabilizing)
-                    auto& model = std::get<CesiumGltf::Model>(result.contentKind);
+                    auto& model =
+                        std::get<CesiumGltf::Model>(result.contentKind);
                     gltfTuner->apply(
                         model,
                         tileLoadInfo.tileTransform,
@@ -1543,8 +1547,8 @@ void TilesetContentManager::finishLoading(
   // tuner version => main-thread phase of glTF tuning should be performed.
   if (tile.getState() == TileLoadState::Done) {
     CESIUM_ASSERT( // see matching condition in Tile::needsMainThreadLoading
-        _externals.gltfTuner &&
-        pRenderContent->getTunerState() == TileRenderContent::TunerState::WorkerDone);
+        _externals.gltfTuner && pRenderContent->getTunerState() ==
+                                    TileRenderContent::TunerState::WorkerDone);
     CESIUM_ASSERT(pRenderContent->getTunedRenderResources());
     if (discardOutdatedRenderResources(tile, *pRenderContent, true)) {
       return;
@@ -1568,8 +1572,8 @@ void TilesetContentManager::finishLoading(
   CESIUM_ASSERT(tile.getState() == TileLoadState::ContentLoaded);
 
   // The tile was just loaded and may even have immediately been tuned (_second_
-  // occurrence of 'gltfTuner->apply(...)' in loadTileContent): but this happened
-  // in a concurrent thread, so it might already be outdated
+  // occurrence of 'gltfTuner->apply(...)' in loadTileContent): but this
+  // happened in a concurrent thread, so it might already be outdated
   // => discard the half constructed renderer resources, and skip the main
   // thread preparation since the tile will be retuned immediately afterwards.
   // The members tested below are not used in this case: model is tuned "in
