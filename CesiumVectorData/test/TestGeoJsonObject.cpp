@@ -531,3 +531,30 @@ TEST_CASE("GeoJsonObject:allOfType") {
     }
   }
 }
+
+TEST_CASE("GeoJsonObject:visit") {
+  GeoJsonObject pointsObj = parseGeoJsonObject(R"==(
+    {
+      "type": "Point",
+      "coordinates": [1, 2, 3] 
+    })==");
+
+  SUBCASE("visitor returns void") {
+    bool visited = false;
+    pointsObj.visit([&visited](const auto&) { visited = true; });
+    CHECK(visited);
+  }
+
+  SUBCASE("visitor returns value") {
+    CHECK(pointsObj.visit([](const auto&) {
+      return std::string("test");
+    }) == "test");
+  }
+
+  SUBCASE("visitor returns reference") {
+    std::string s = "test";
+    const std::string& result =
+        pointsObj.visit([&s](const auto&) -> const std::string& { return s; });
+    CHECK(&s == &result);
+  }
+}
