@@ -1,3 +1,5 @@
+#include "CesiumNativeTests/readFile.h"
+
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
@@ -11,6 +13,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <filesystem>
 #include <iostream>
 #include <random>
 
@@ -18,7 +21,25 @@ using namespace CesiumGeospatial;
 using namespace CesiumVectorData;
 using namespace CesiumUtility;
 
+namespace {
+void checkFilesEqual(
+    const std::filesystem::path& fileA,
+    const std::filesystem::path& fileB) {
+  const std::vector<std::byte>& bytes = readFile(fileA);
+  const std::vector<std::byte>& bytes2 = readFile(fileB);
+
+  REQUIRE(bytes.size() == bytes2.size());
+  for (size_t i = 0; i < bytes.size(); i++) {
+    CHECK(bytes[i] == bytes2[i]);
+  }
+}
+} // namespace
+
 TEST_CASE("VectorRasterizer::rasterize") {
+  const std::filesystem::path dir(
+      std::filesystem::path(CesiumVectorData_TEST_DATA_DIR) / "rasterized");
+  const std::filesystem::path thisDir = std::filesystem::current_path();
+
   GlobeRectangle rect{
       0.0,
       0.0,
@@ -48,6 +69,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolygon(triangle, VectorStyle{Color{0, 255, 255, 255}});
     rasterizer.finalize();
     asset->writeTga("triangle.tga");
+    checkFilesEqual(dir / "triangle.tga", thisDir / "triangle.tga");
   }
 
   SUBCASE("Triangle as tiles lines up") {
@@ -96,7 +118,9 @@ TEST_CASE("VectorRasterizer::rasterize") {
         rasterizer.drawPolygon(triangle, style);
         rasterizer.finalize();
 
-        tile->writeTga(fmt::format("tile-{}-{}.tga", i, j));
+        const std::string fileName = fmt::format("tile-{}-{}.tga", i, j);
+        tile->writeTga(fileName);
+        checkFilesEqual(dir / fileName, thisDir / fileName);
 
         for (size_t x = 0; x < (size_t)128; x++) {
           for (size_t y = 0; y < (size_t)128; y++) {
@@ -134,6 +158,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolyline(polyline, VectorStyle{Color{81, 33, 255, 255}});
     rasterizer.finalize();
     asset->writeTga("polyline.tga");
+    checkFilesEqual(dir / "polyline.tga", thisDir / "polyline.tga");
   }
 
   SUBCASE("Transforms bounds properly") {
@@ -166,6 +191,9 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolygon(triangle, VectorStyle{Color{255, 127, 100, 255}});
     rasterizer.finalize();
     asset->writeTga("triangle-scaled.tga");
+    checkFilesEqual(
+        dir / "triangle-scaled.tga",
+        thisDir / "triangle-scaled.tga");
   }
 
   SUBCASE("Polygon with holes") {
@@ -198,6 +226,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolygon(composite, VectorStyle{Color{255, 50, 12, 255}});
     rasterizer.finalize();
     asset->writeTga("polygon-holes.tga");
+    checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
   }
 
   SUBCASE("Mip levels") {
@@ -235,6 +264,10 @@ TEST_CASE("VectorRasterizer::rasterize") {
     }
 
     asset->writeTga("mipmap.tga");
+    checkFilesEqual(dir / "mipmap-mip0.tga", thisDir / "mipmap-mip0.tga");
+    checkFilesEqual(dir / "mipmap-mip1.tga", thisDir / "mipmap-mip1.tga");
+    checkFilesEqual(dir / "mipmap-mip2.tga", thisDir / "mipmap-mip2.tga");
+    checkFilesEqual(dir / "mipmap-mip3.tga", thisDir / "mipmap-mip3.tga");
   }
 
   SUBCASE("Styling") {
@@ -271,7 +304,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     VectorStyle style{
         LineStyle{ColorStyle{Color{0xff, 0xaa, 0x33}, ColorMode::Normal}, 2.0},
         PolygonStyle{
-            ColorStyle{Color{0x33, 0xaa, 0xff}, ColorMode::Random},
+            ColorStyle{Color{0x33, 0xaa, 0xff}, ColorMode::Normal},
             true,
             true}};
 
@@ -282,11 +315,16 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.finalize();
 
     asset->writeTga("styling.tga");
+    checkFilesEqual(dir / "styling.tga", thisDir / "styling.tga");
   }
 }
 
 TEST_CASE("VectorRasterizer::rasterize benchmark") {
-  GlobeRectangle rect{0.0, 0.0, 1.0, 1.0};
+  GlobeRectangle rect{
+      0.0,
+      0.0,
+      Math::degreesToRadians(1.0),
+      Math::degreesToRadians(1.0)};
   std::chrono::steady_clock clock;
   std::random_device r;
   std::default_random_engine rand(r());
