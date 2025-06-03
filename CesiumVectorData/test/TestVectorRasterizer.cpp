@@ -1,6 +1,7 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
@@ -44,13 +45,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
             Math::degreesToRadians(0.75),
             Math::degreesToRadians(0.25))});
 
-    rasterizer.drawPolygon(
-        triangle,
-        VectorStyle{Color{
-            std::byte{0},
-            std::byte{255},
-            std::byte{255},
-            std::byte{255}}});
+    rasterizer.drawPolygon(triangle, VectorStyle{Color{0, 255, 255, 255}});
     rasterizer.finalize();
     asset->writeTga("triangle.tga");
   }
@@ -72,8 +67,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         glm::dvec2(
             Math::degreesToRadians(0.75),
             Math::degreesToRadians(0.25))});
-    VectorStyle style{
-        Color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}}};
+    VectorStyle style{Color{0, 255, 255, 255}};
     {
       VectorRasterizer rasterizer(rect, asset);
 
@@ -137,13 +131,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         glm::dvec3(0.8, 0.9, 0.0),
         glm::dvec3(0.9, 0.9, 0.0)};
 
-    rasterizer.drawPolyline(
-        polyline,
-        VectorStyle{Color{
-            std::byte{81},
-            std::byte{33},
-            std::byte{255},
-            std::byte{255}}});
+    rasterizer.drawPolyline(polyline, VectorStyle{Color{81, 33, 255, 255}});
     rasterizer.finalize();
     asset->writeTga("polyline.tga");
   }
@@ -175,13 +163,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
             Math::degreesToRadians(0.625),
             Math::degreesToRadians(0.3125))});
 
-    rasterizer.drawPolygon(
-        triangle,
-        VectorStyle{Color{
-            std::byte{255},
-            std::byte{127},
-            std::byte{100},
-            std::byte{255}}});
+    rasterizer.drawPolygon(triangle, VectorStyle{Color{255, 127, 100, 255}});
     rasterizer.finalize();
     asset->writeTga("triangle-scaled.tga");
   }
@@ -213,13 +195,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
             glm::dvec3(0.6, 0.4, 0.0),
             glm::dvec3(0.4, 0.4, 0.0)}};
 
-    rasterizer.drawPolygon(
-        composite,
-        VectorStyle{Color{
-            std::byte{255},
-            std::byte{50},
-            std::byte{12},
-            std::byte{255}}});
+    rasterizer.drawPolygon(composite, VectorStyle{Color{255, 50, 12, 255}});
     rasterizer.finalize();
     asset->writeTga("polygon-holes.tga");
   }
@@ -250,8 +226,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         glm::dvec3(0.8, 1.0, 0.0),
         glm::dvec3(0.8, 0.9, 0.0),
         glm::dvec3(0.9, 0.9, 0.0)};
-    VectorStyle style{
-        Color{std::byte{255}, std::byte{50}, std::byte{12}, std::byte{255}}};
+    VectorStyle style{Color{255, 50, 12, 255}};
 
     for (uint32_t i = 0; i < 4; i++) {
       VectorRasterizer rasterizer(rect, asset, i);
@@ -345,10 +320,10 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
               Math::degreesToRadians(uniformDist(rand))),
       });
       styles.emplace_back(Color{
-          (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0)});
+          (uint8_t)(uniformDist(rand) * 255.0),
+          (uint8_t)(uniformDist(rand) * 255.0),
+          (uint8_t)(uniformDist(rand) * 255.0),
+          (uint8_t)(uniformDist(rand) * 255.0)});
     }
 
     std::chrono::steady_clock::time_point start = clock.now();

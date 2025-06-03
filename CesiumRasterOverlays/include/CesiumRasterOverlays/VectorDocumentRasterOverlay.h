@@ -7,8 +7,8 @@
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorStyle.h>

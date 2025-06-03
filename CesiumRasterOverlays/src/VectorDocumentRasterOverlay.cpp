@@ -1,7 +1,5 @@
-#include "CesiumAsync/Future.h"
-#include "CesiumVectorData/VectorStyle.h"
-
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -23,6 +21,7 @@
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorRasterizer.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
@@ -546,23 +545,10 @@ public:
 
 private:
   void recomputeStyles(GeoJsonObject* pObject) {
-    struct SetStyleVisitor {
-      const std::optional<VectorStyle>& style;
-      void operator()(GeoJsonPoint& o) { o.style = style; }
-      void operator()(GeoJsonMultiPoint& o) { o.style = style; }
-      void operator()(GeoJsonLineString& o) { o.style = style; }
-      void operator()(GeoJsonMultiLineString& o) { o.style = style; }
-      void operator()(GeoJsonPolygon& o) { o.style = style; }
-      void operator()(GeoJsonMultiPolygon& o) { o.style = style; }
-      void operator()(GeoJsonFeature& o) { o.style = style; }
-      void operator()(GeoJsonFeatureCollection& o) { o.style = style; }
-      void operator()(GeoJsonGeometryCollection& o) { o.style = style; }
-    };
-
     if (this->_styleCallback) {
       const std::optional<VectorStyle>& style =
           (*this->_styleCallback)(this->_document, pObject);
-      std::visit(SetStyleVisitor{style}, pObject->value);
+      pObject->getStyle() = style;
     }
 
     struct RecomputeChildStylesVisitor {

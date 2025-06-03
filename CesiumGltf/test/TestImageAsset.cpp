@@ -36,6 +36,8 @@ TEST_CASE("ImageAsset::convertToChannels") {
     CHECK(asset.pixelData[5] == std::byte{0x11});
     CHECK(asset.pixelData[6] == std::byte{0x9a});
     CHECK(asset.pixelData[7] == std::byte{0x9b});
+    CHECK(asset.channels == 2);
+    CHECK(asset.pixelData.size() == 8);
   }
 
   SUBCASE("Converts to more channels") {
@@ -56,5 +58,7 @@ TEST_CASE("ImageAsset::convertToChannels") {
     CHECK(asset.pixelData[5] == std::byte{0x99});
     CHECK(asset.pixelData[6] == std::byte{0xde});
     CHECK(asset.pixelData[7] == std::byte{0x99});
+    CHECK(asset.channels == 2);
+    CHECK(asset.pixelData.size() == 8);
   }
 }

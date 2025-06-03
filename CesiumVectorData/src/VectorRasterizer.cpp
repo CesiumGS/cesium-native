@@ -4,8 +4,8 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
@@ -23,7 +23,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <span>
 #include <variant>
 #include <vector>
@@ -225,7 +224,7 @@ void VectorRasterizer::drawGeoJsonObject(
   std::visit(PrimitiveDrawVisitor{*this, style}, geoJsonObject->value);
 }
 
-void VectorRasterizer::clear(const Color& clearColor) {
+void VectorRasterizer::clear(const CesiumUtility::Color& clearColor) {
   if (_finalized) {
     return;
   }

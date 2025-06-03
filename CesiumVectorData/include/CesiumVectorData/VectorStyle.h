@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Color.h"
+#include <CesiumUtility/Color.h>
 
 namespace CesiumVectorData {
 
@@ -27,7 +27,7 @@ enum class ColorMode : uint8_t {
  */
 struct ColorStyle {
   /** @brief The color to be used. */
-  Color color = Color(0xff, 0xff, 0xff, 0xff);
+  CesiumUtility::Color color = CesiumUtility::Color(0xff, 0xff, 0xff, 0xff);
   /** @brief The color mode to be used. */
   ColorMode colorMode = ColorMode::Normal;
 
@@ -38,7 +38,7 @@ struct ColorStyle {
    * `ColorMode::Random`, this returns a randomized value obtained based on
    * the rules described in \ref ColorMode.
    */
-  Color getColor() const;
+  CesiumUtility::Color getColor() const;
 };
 
 /** @brief The style used to draw a Polygon. */
@@ -106,6 +106,7 @@ struct VectorStyle {
   /**
    * @brief Initializes all styles to the given color.
    */
-  VectorStyle(const Color& color) : line{{color}}, polygon{{color}} {}
+  VectorStyle(const CesiumUtility::Color& color)
+      : line{{color}}, polygon{{color}} {}
 };
 } // namespace CesiumVectorData

@@ -10,9 +10,9 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterizedPolygonsOverlay.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumVectorData/Color.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
 
@@ -43,15 +43,15 @@ void rasterizePolygons(
 
   CesiumGltf::ImageAsset& image = loaded.pImage.emplace();
 
-  std::byte insideColor;
-  std::byte outsideColor;
+  uint8_t insideColor;
+  uint8_t outsideColor;
 
   if (invertSelection) {
-    insideColor = static_cast<std::byte>(0);
-    outsideColor = static_cast<std::byte>(0xff);
+    insideColor = 0;
+    outsideColor = 0xff;
   } else {
-    insideColor = static_cast<std::byte>(0xff);
-    outsideColor = static_cast<std::byte>(0);
+    insideColor = 0xff;
+    outsideColor = 0;
   }
 
   // create a 1x1 mask if the rectangle is completely inside a polygon
@@ -63,7 +63,7 @@ void rasterizePolygons(
     image.height = 1;
     image.channels = 1;
     image.bytesPerChannel = 1;
-    image.pixelData.resize(1, insideColor);
+    image.pixelData.resize(1, std::byte{insideColor});
     return;
   }
 
@@ -86,7 +86,7 @@ void rasterizePolygons(
     image.height = 1;
     image.channels = 1;
     image.bytesPerChannel = 1;
-    image.pixelData.resize(1, outsideColor);
+    image.pixelData.resize(1, std::byte{outsideColor});
     return;
   }
 
@@ -96,24 +96,19 @@ void rasterizePolygons(
   image.height = int32_t(glm::round(textureSize.y));
   image.channels = 4;
   image.bytesPerChannel = 1;
-  image.pixelData.resize(size_t(image.width * image.height * 4), outsideColor);
+  image.pixelData.resize(
+      size_t(image.width * image.height * 4),
+      std::byte{outsideColor});
 
   CesiumVectorData::VectorRasterizer rasterizer(
       rectangle,
       loaded.pImage,
       0,
       ellipsoid);
-  rasterizer.clear(CesiumVectorData::Color{
-      outsideColor,
-      std::byte{0x00},
-      std::byte{0x00},
-      std::byte{0xff}});
+  rasterizer.clear(CesiumUtility::Color{outsideColor, 0x00, 0x00, 0xff});
 
-  CesiumVectorData::VectorStyle insideStyle{CesiumVectorData::Color{
-      insideColor,
-      std::byte{0x00},
-      std::byte{0x00},
-      std::byte{0xff}}};
+  CesiumVectorData::VectorStyle insideStyle{
+      CesiumUtility::Color{insideColor, 0x00, 0x00, 0xff}};
   for (const CartographicPolygon& selection : cartographicPolygons) {
     rasterizer.drawPolygon(selection, insideStyle);
   }

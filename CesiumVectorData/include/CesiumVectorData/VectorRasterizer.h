@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CesiumGeospatial/Cartographic.h"
-#include "Color.h"
 #include "VectorStyle.h"
 
 #include <CesiumGeometry/Rectangle.h>
@@ -9,6 +7,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumVectorData/GeoJsonObject.h>
@@ -35,7 +34,7 @@ public:
    * @param imageAsset The destination image asset. This \ref
    * CesiumGltf::ImageAsset must be four channels, with
    * only one byte per channel (RGBA32).
-   * @param mipLevel The rasterizer will rasterize the given mip level for the
+   * @param mipLevel The mip level that the rasterizer should rasterize for the
    * image.
    * @param ellipsoid The ellipsoid to use.
    */
@@ -98,7 +97,7 @@ public:
    *
    * @param clearColor The color to use to clear the canvas.
    */
-  void clear(const Color& clearColor);
+  void clear(const CesiumUtility::Color& clearColor);
 
   /**
    * @brief Finalizes the rasterization operations, flushing all draw calls to
