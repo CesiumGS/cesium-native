@@ -2,6 +2,7 @@
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <optional>
 #include <variant>
