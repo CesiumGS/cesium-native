@@ -78,23 +78,44 @@ public:
   std::string getTokenHeader() const;
 
   /**
-   * @brief Creates a new `AuthenticationToken`.
+   * @brief Creates a new `AuthenticationToken` for an access token.
    *
    * This constructor assumes all the data in the provided token has already
    * been parsed. If not, you should call \ref parse instead.
    *
    * @param token The full token string.
-   * @param contents The contents of the authentication token. For an access
-   * token, this an \ref AccessTokenContents value. For a share token, this is
-   * just a `string` containing the iTwin ID the token is for.
+   * @param name The name of the token.
+   * @param userName The name of the user this token belongs to.
+   * @param scopes The set of scopes this token is valid for.
+   * @param notValidBefore A UNIX timestamp representing the point in time that
+   * this token starts to be valid.
    * @param expires A UNIX timestamp representing the point in time that this
    * token stops being valid.
    */
   AuthenticationToken(
       const std::string& token,
-      AuthenticationTokenContents&& contents,
+      std::string&& name,
+      std::string&& userName,
+      std::vector<std::string>&& scopes,
+      int64_t notValidBefore,
+      int64_t expires);
+
+  /**
+   * @brief Creates a new `AuthenticationToken` for a share token.
+   *
+   * This constructor assumes all the data in the provided token has already
+   * been parsed. If not, you should call \ref parse instead.
+   *
+   * @param token The full token string.
+   * @param iTwinId The ID of the iTwin this share token provides access to.
+   * @param expires A UNIX timestamp representing the point in time that this
+   * token stops being valid.
+   */
+  AuthenticationToken(
+      const std::string& token,
+      std::string&& iTwinId,
       int64_t expires)
-      : _token(token), _contents(std::move(contents)), _expires(expires) {}
+      : _token(token), _contents(std::move(iTwinId)), _expires(expires) {}
 
 private:
   std::string _token;

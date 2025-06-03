@@ -82,7 +82,7 @@ struct ITwinRealityData {
    * reality data.
    */
   CesiumGeospatial::GlobeRectangle extent =
-      CesiumGeospatial::GlobeRectangle(0.0, 0.0, 0.0, 0.0);
+      CesiumGeospatial::GlobeRectangle::EMPTY;
   /**
    * @brief A boolean value that is true if the data is being created. It is
    * false if the data has been completely uploaded.

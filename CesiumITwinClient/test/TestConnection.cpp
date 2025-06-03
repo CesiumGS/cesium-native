@@ -65,21 +65,21 @@ TEST_CASE("CesiumITwinClient::Connection::me") {
   }
 
   SUBCASE("Handles refreshing token") {
-    const AuthenticationToken prevToken = pConn->getAuthToken();
+    const AuthenticationToken prevToken = pConn->getAuthenticationToken();
     const std::optional<std::string> prevRefreshToken =
         pConn->getRefreshToken();
     REQUIRE(prevRefreshToken);
 
     // Set an invalid access token.
-    pConn->setAuthToken(
+    pConn->setAuthenticationToken(
         AuthenticationToken("", AccessTokenContents{"", "", {}, 0}, 0));
 
     CesiumAsync::Future<Result<UserProfile>> future = pConn->me();
     Result<UserProfile> profileResult = future.waitInMainThread();
 
     CHECK(profileResult.value);
-    CHECK(pConn->getAuthToken().getToken() != prevToken.getToken());
-    CHECK(pConn->getAuthToken().isValid());
+    CHECK(pConn->getAuthenticationToken().getToken() != prevToken.getToken());
+    CHECK(pConn->getAuthenticationToken().isValid());
     CHECK(pConn->getRefreshToken());
     CHECK(pConn->getRefreshToken() != prevRefreshToken);
   }

@@ -1,3 +1,5 @@
+#include "CesiumGeometry/AxisAlignedBox.h"
+
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
@@ -605,7 +607,7 @@ using ITwinCCCListResponse = std::vector<CesiumCuratedContentAsset>;
 CesiumAsync::Future<Result<ITwinCCCListResponse>>
 Connection::cesiumCuratedContent() {
   const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-      {"Authorization", "Bearer " + this->_authToken.getToken()},
+      {"Authorization", "Bearer " + this->_authenticationToken.getToken()},
       {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
   return this->_pAssetAccessor
       ->get(this->_asyncSystem, LIST_CCC_ENDPOINT_URL, headers)
@@ -743,17 +745,11 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
                   }
 
                   collectionResult.extents.spatial.emplace_back(
-                      CesiumGeospatial::GlobeRectangle{
-                          Math::degreesToRadians((*coords)[1]),
-                          Math::degreesToRadians((*coords)[0]),
-                          Math::degreesToRadians(
-                              coords->size() == 4 ? (*coords)[3]
-                                                  : (*coords)[4]),
-                          Math::degreesToRadians(
-                              coords->size() == 4 ? (*coords)[2]
-                                                  : (*coords)[3]),
-                      },
+                      (*coords)[0],
+                      (*coords)[1],
                       coords->size() == 4 ? 0 : (*coords)[2],
+                      coords->size() == 4 ? (*coords)[2] : (*coords)[3],
+                      coords->size() == 4 ? (*coords)[3] : (*coords)[4],
                       coords->size() == 4 ? 0 : (*coords)[5]);
                 }
 
@@ -850,7 +846,7 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
       });
 }
 
-CesiumAsync::Future<CesiumUtility::Result<PagedList<GeoJsonObject>>>
+CesiumAsync::Future<CesiumUtility::Result<PagedList<GeoJsonFeature>>>
 Connection::geospatialFeatures(
     const std::string& iTwinId,
     const std::string& collectionId,
@@ -865,7 +861,7 @@ Connection::geospatialFeatures(
   return this->listGeospatialFeatures(url);
 }
 
-CesiumAsync::Future<CesiumUtility::Result<PagedList<GeoJsonObject>>>
+CesiumAsync::Future<CesiumUtility::Result<PagedList<GeoJsonFeature>>>
 Connection::listGeospatialFeatures(const std::string& url) {
   return this->ensureValidToken().thenInWorkerThread(
       [url,
@@ -874,7 +870,7 @@ Connection::listGeospatialFeatures(const std::string& url) {
            this->_pAssetAccessor](const Result<std::string>& tokenResult) {
         if (!tokenResult.value) {
           return asyncSystem
-              .createResolvedFuture<Result<PagedList<GeoJsonObject>>>(
+              .createResolvedFuture<Result<PagedList<GeoJsonFeature>>>(
                   tokenResult.errors);
         }
 
@@ -887,13 +883,13 @@ Connection::listGeospatialFeatures(const std::string& url) {
               Result<rapidjson::Document> docResult =
                   handleJsonResponse(request, "listing geospatial features");
               if (!docResult.value) {
-                return Result<PagedList<GeoJsonObject>>(docResult.errors);
+                return Result<PagedList<GeoJsonFeature>>(docResult.errors);
               }
 
               Result<GeoJsonDocument> geoJsonDocResult =
                   GeoJsonDocument::fromGeoJson(*docResult.value, {});
               if (!geoJsonDocResult.value) {
-                return Result<PagedList<GeoJsonObject>>(
+                return Result<PagedList<GeoJsonFeature>>(
                     geoJsonDocResult.errors);
               }
 
@@ -901,26 +897,41 @@ Connection::listGeospatialFeatures(const std::string& url) {
                   geoJsonDocResult.value->rootObject
                       .getIf<GeoJsonFeatureCollection>();
               if (!pFeatureCollection) {
-                return Result<PagedList<GeoJsonObject>>(
+                return Result<PagedList<GeoJsonFeature>>(
                     ErrorList::error("Unable to obtain FeatureCollection from "
                                      "geospatial features response"));
               }
 
-              return Result<PagedList<GeoJsonObject>>(PagedList<GeoJsonObject>(
-                  *docResult.value,
-                  std::move(pFeatureCollection->features),
-                  [](Connection& connection, const std::string& url) {
-                    return connection.listGeospatialFeatures(url);
-                  }));
+              std::vector<GeoJsonFeature> features;
+              features.reserve(pFeatureCollection->features.size());
+              for (GeoJsonObject& object : pFeatureCollection->features) {
+                GeoJsonFeature* pFeature = object.getIf<GeoJsonFeature>();
+                if (!pFeature) {
+                  return Result<PagedList<GeoJsonFeature>>(
+                      ErrorList::error(fmt::format(
+                          "Expected only Feature objects to be in "
+                          "FeatureCollection, found {}",
+                          geoJsonObjectTypeToString(object.getType()))));
+                }
+                features.emplace_back(std::move(*pFeature));
+              }
+
+              return Result<PagedList<GeoJsonFeature>>(
+                  PagedList<GeoJsonFeature>(
+                      *docResult.value,
+                      std::move(features),
+                      [](Connection& connection, const std::string& url) {
+                        return connection.listGeospatialFeatures(url);
+                      }));
             });
       });
 }
 
 CesiumAsync::Future<CesiumUtility::Result<std::string>>
 Connection::ensureValidToken() {
-  if (this->_authToken.isValid()) {
+  if (this->_authenticationToken.isValid()) {
     return _asyncSystem.createResolvedFuture(
-        Result<std::string>(this->_authToken.getTokenHeader()));
+        Result<std::string>(this->_authenticationToken.getTokenHeader()));
   }
 
   if (!this->_refreshToken) {
@@ -946,10 +957,11 @@ Connection::ensureValidToken() {
               return Result<std::string>(tokenResult.errors);
             }
 
-            this->_authToken = std::move(*tokenResult.value);
+            this->_authenticationToken = std::move(*tokenResult.value);
             this->_refreshToken = std::move(response.value->refreshToken);
 
-            return Result<std::string>(this->_authToken.getTokenHeader());
+            return Result<std::string>(
+                this->_authenticationToken.getTokenHeader());
           });
 }
 
