@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added `CesiumCurl` library containing `UrlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
 
 ### v0.48.0 - 2025-06-02
 
