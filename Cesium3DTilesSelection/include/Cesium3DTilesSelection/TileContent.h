@@ -19,7 +19,7 @@ namespace Cesium3DTilesSelection {
  * tileset. The content of the tile is only known when the loader loads the tile
  * to inspect the content.
  */
-struct CESIUM3DTILESSELECTION_API TileUnknownContent{};
+struct CESIUM3DTILESSELECTION_API TileUnknownContent {};
 
 /**
  * @brief A content tag that indicates a tile has no content.
@@ -42,7 +42,7 @@ struct CESIUM3DTILESSELECTION_API TileUnknownContent{};
  * For a tile with no parent there's no difference between the
  * behaviors.
  */
-struct CESIUM3DTILESSELECTION_API TileEmptyContent{};
+struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
 
 /**
  * @brief A content tag that indicates a tile content points to an
