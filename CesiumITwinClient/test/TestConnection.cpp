@@ -1,3 +1,4 @@
+#include "CesiumGeometry/Axis.h"
 #include "CesiumVectorData/GeoJsonObject.h"
 #include "MockITwinAssetAccessor.h"
 
@@ -71,8 +72,7 @@ TEST_CASE("CesiumITwinClient::Connection::me") {
     REQUIRE(prevRefreshToken);
 
     // Set an invalid access token.
-    pConn->setAuthenticationToken(
-        AuthenticationToken("", AccessTokenContents{"", "", {}, 0}, 0));
+    pConn->setAuthenticationToken(AuthenticationToken("", "", "", {}, 0, 0));
 
     CesiumAsync::Future<Result<UserProfile>> future = pConn->me();
     Result<UserProfile> profileResult = future.waitInMainThread();
@@ -90,32 +90,30 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
   std::shared_ptr<Connection> pConn = createConnection(asyncSystem, false);
 
   SUBCASE("Returns correct results") {
-    CesiumAsync::Future<Result<PagedList<CesiumVectorData::GeoJsonObject>>>
+    CesiumAsync::Future<Result<PagedList<CesiumVectorData::GeoJsonFeature>>>
         future = pConn->geospatialFeatures(
             "00000000-0000-0000-0000-000000000000",
             "00000000-0000-0000-0000-000000000000",
             10);
-    Result<PagedList<CesiumVectorData::GeoJsonObject>> featuresResult =
+    Result<PagedList<CesiumVectorData::GeoJsonFeature>> featuresResult =
         future.waitInMainThread();
 
     REQUIRE(featuresResult.value);
     CHECK(!featuresResult.errors.hasErrors());
 
-    PagedList<CesiumVectorData::GeoJsonObject>& list = *featuresResult.value;
+    PagedList<CesiumVectorData::GeoJsonFeature>& list = *featuresResult.value;
     CHECK(list.size() == 10);
-    CesiumVectorData::GeoJsonFeature* pFeatureFive =
-        list[5].getIf<CesiumVectorData::GeoJsonFeature>();
-    const int64_t* pId = std::get_if<int64_t>(&pFeatureFive->id);
+    const int64_t* pId = std::get_if<int64_t>(&list[5].id);
     REQUIRE(pId);
     CHECK(*pId == 133);
 
-    REQUIRE(pFeatureFive->properties);
-    CHECK((*pFeatureFive->properties)["type"].isString());
-    CHECK((*pFeatureFive->properties)["type"].getString() == "Lamp_post");
+    REQUIRE(list[5].properties);
+    CHECK((*list[5].properties)["type"].isString());
+    CHECK((*list[5].properties)["type"].getString() == "Lamp_post");
 
-    REQUIRE(pFeatureFive->geometry);
+    REQUIRE(list[5].geometry);
     const CesiumVectorData::GeoJsonPoint* pPoint =
-        pFeatureFive->geometry->getIf<CesiumVectorData::GeoJsonPoint>();
+        list[5].geometry->getIf<CesiumVectorData::GeoJsonPoint>();
     REQUIRE(pPoint);
     CHECK(
         pPoint->coordinates ==
@@ -147,26 +145,14 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatureCollections") {
     CHECK(collection.description == "Description");
 
     REQUIRE(!collection.extents.spatial.empty());
-    const CesiumGeospatial::BoundingRegion region{
-        CesiumGeospatial::GlobeRectangle{
-            Math::degreesToRadians(50.94487570541774),
-            Math::degreesToRadians(-50.08876885548398),
-            Math::degreesToRadians(50.94521538951092),
-            Math::degreesToRadians(-50.08830149142197)},
-        0.0003396840931770839,
-        0.0004673640620040942};
-    CHECK(
-        collection.extents.spatial[0].getRectangle().getNortheast() ==
-        region.getRectangle().getNortheast());
-    CHECK(
-        collection.extents.spatial[0].getRectangle().getSouthwest() ==
-        region.getRectangle().getSouthwest());
-    CHECK(
-        collection.extents.spatial[0].getMinimumHeight() ==
-        region.getMinimumHeight());
-    CHECK(
-        collection.extents.spatial[0].getMaximumHeight() ==
-        region.getMaximumHeight());
+    const CesiumGeometry::AxisAlignedBox& spatialExtents =
+        collection.extents.spatial[0];
+    CHECK(spatialExtents.minimumX == -50.08876885548398);
+    CHECK(spatialExtents.minimumY == 50.94487570541774);
+    CHECK(spatialExtents.maximumX == -50.08830149142197);
+    CHECK(spatialExtents.maximumY == 50.94521538951092);
+    CHECK(spatialExtents.minimumZ == 0.0003396840931770839);
+    CHECK(spatialExtents.maximumZ == 0.0004673640620040942);
     CHECK(
         collection.extents.coordinateReferenceSystem ==
         "https://www.opengis.net/def/crs/OGC/1.3/CRS84");
