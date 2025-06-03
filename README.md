@@ -24,40 +24,38 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 ## 📷Screenshots
 
 <table>
-  <tbody>
-    <tr>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex" />
-        <!--! \endif -->
-        <!--! \image html screenshot-googleplex.jpg -->
-        <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Google Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
-      </td>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York" />
-        <!--! \endif -->
-        <!--! \image html screenshot-ny-metadata.jpg -->
-        <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater" />
-        <!--! \endif -->
-        <!--! \image html screenshot-copernicus-crater.jpg -->
-        <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.<br/>&nbsp;<!-- fake third line to align the two images and captions --></sub></p>
-      </td>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco" />
-        <!--! \endif -->
-        <!--! \image html screenshot-san-francisco.jpg -->
-        <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA. Data courtesy Aerometrex.</sub></p>
-      </td>
-    </tr>
-  </tbody>
+  <tr>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex" />
+      <!--! \endif -->
+      <!--! \image html screenshot-googleplex.jpg -->
+      <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Google Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
+    </td>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York" />
+      <!--! \endif -->
+      <!--! \image html screenshot-ny-metadata.jpg -->
+      <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater" />
+      <!--! \endif -->
+      <!--! \image html screenshot-copernicus-crater.jpg -->
+      <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.<br/>&nbsp;<!-- fake third line to align the two images and captions --></sub></p>
+    </td>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco" />
+      <!--! \endif -->
+      <!--! \image html screenshot-san-francisco.jpg -->
+      <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA. Data courtesy Aerometrex.</sub></p>
+    </td>
+  </tr>
 </table>
 
 ## 🗃️Libraries Overview

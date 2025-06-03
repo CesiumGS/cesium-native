@@ -85,7 +85,8 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
         pRootTile{std::move(rhs.pRootTile)},
         credits{std::move(rhs.credits)},
         requestHeaders{std::move(rhs.requestHeaders)},
-        errors{std::move(rhs.errors)} {}
+        errors{std::move(rhs.errors)},
+        statusCode(std::move(rhs.statusCode)) {}
 
   /**
    * @brief Move assignment operator for creating a
@@ -108,6 +109,7 @@ template <class TilesetContentLoaderType> struct TilesetContentLoaderResult {
     swap(this->credits, rhs.credits);
     swap(this->requestHeaders, rhs.requestHeaders);
     swap(this->errors, rhs.errors);
+    swap(this->statusCode, rhs.statusCode);
 
     return *this;
   }

@@ -924,14 +924,18 @@ void scaleWaterMask(
         waterMaskScale * (childID.tileID.y % 2);
   }
 
-  primitive.extras.emplace("OnlyWater", onlyWater);
-  primitive.extras.emplace("OnlyLand", onlyLand);
+  primitive.extras.insert_or_assign("OnlyWater", onlyWater);
+  primitive.extras.insert_or_assign("OnlyLand", onlyLand);
 
-  primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
+  primitive.extras.insert_or_assign("WaterMaskTex", waterMaskTextureId);
 
-  primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
-  primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
-  primitive.extras.emplace("WaterMaskScale", waterMaskScale);
+  primitive.extras.insert_or_assign(
+      "WaterMaskTranslationX",
+      waterMaskTranslationX);
+  primitive.extras.insert_or_assign(
+      "WaterMaskTranslationY",
+      waterMaskTranslationY);
+  primitive.extras.insert_or_assign("WaterMaskScale", waterMaskScale);
 }
 
 bool upsamplePointsPrimitiveForRasterOverlays(
@@ -1466,7 +1470,10 @@ bool upsampleTrianglesPrimitiveForRasterOverlays(
 
   // add skirts to extras to be upsampled later if needed
   if (hasSkirt) {
-    primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
+    CesiumUtility::JsonValue::Object extras =
+        SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
+    extras.merge(std::move(primitive.extras));
+    primitive.extras = std::move(extras);
   }
 
   primitive.indices = static_cast<int>(indexAccessorIndex);

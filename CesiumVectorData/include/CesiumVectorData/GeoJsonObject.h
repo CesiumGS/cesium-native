@@ -223,8 +223,15 @@ struct GeoJsonObject {
   /**
    * @brief Applies the visitor `visitor` to the value variant.
    */
-  template <typename Visitor, typename RetVal> RetVal visit(Visitor&& visitor) {
-    return std::visit(visitor, this->value);
+  template <typename Visitor> decltype(auto) visit(Visitor&& visitor) {
+    return std::visit(std::forward<Visitor>(visitor), this->value);
+  }
+
+  /**
+   * @brief Applies the visitor `visitor` to the value variant.
+   */
+  template <typename Visitor> decltype(auto) visit(Visitor&& visitor) const {
+    return std::visit(std::forward<Visitor>(visitor), this->value);
   }
 
   /**
@@ -420,7 +427,7 @@ private:
         continue;
       } else {
         // This object was a dud, try another
-        this->_stackPos--;
+        --this->_stackPos;
       }
     }
   }
