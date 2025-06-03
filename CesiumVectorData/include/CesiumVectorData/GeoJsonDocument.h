@@ -1,7 +1,5 @@
 #pragma once
 
-#include "CesiumGeospatial/Cartographic.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -11,6 +9,8 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/Library.h>
+
+#include <glm/ext/vector_double3.hpp>
 
 #include <memory>
 #include <span>
@@ -36,8 +36,7 @@ struct VectorDocumentAttribution {
  * The document is represented as a hierarchy of \ref GeoJsonObject values
  * starting with the root object.
  */
-class CESIUMVECTORDATA_API GeoJsonDocument
-    : public CesiumUtility::ReferenceCountedThreadSafe<GeoJsonDocument> {
+class CESIUMVECTORDATA_API GeoJsonDocument {
 public:
   /**
    * @brief Attempts to parse a \ref GeoJsonDocument from the provided GeoJSON.
@@ -47,8 +46,7 @@ public:
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
-  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
-  fromGeoJson(
+  static CesiumUtility::Result<GeoJsonDocument> fromGeoJson(
       const std::span<const std::byte>& bytes,
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
@@ -61,20 +59,17 @@ public:
    * @returns A \ref CesiumUtility::Result containing the parsed
    * \ref GeoJsonDocument or any errors and warnings that came up while parsing.
    */
-  static CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>
-  fromGeoJson(
+  static CesiumUtility::Result<GeoJsonDocument> fromGeoJson(
       const rapidjson::Document& document,
       std::vector<VectorDocumentAttribution>&& attributions = {});
 
   /**
    * @brief Attempts to load a \ref GeoJsonDocument from a Cesium ion asset.
    *
-   * Currently only the GeoJSON format is supported.
-   *
    * @param asyncSystem The \ref CesiumAsync::AsyncSystem.
    * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor.
    * @param ionAssetID The ID of the Cesium ion asset to load. This asset must
-   * be a supported vector format.
+   * be a GeoJSON document.
    * @param ionAccessToken The access token that has access to the given asset.
    * @param ionAssetEndpointUrl The base URL of the ion REST API server, if
    * different from `https://api.cesium.com/`.
@@ -82,8 +77,7 @@ public:
    * containing the parsed \ref GeoJsonDocument or any errors and warnings that
    * came up while loading or parsing the data.
    */
-  static CesiumAsync::Future<
-      CesiumUtility::Result<CesiumUtility::IntrusivePointer<GeoJsonDocument>>>
+  static CesiumAsync::Future<CesiumUtility::Result<GeoJsonDocument>>
   fromCesiumIonAsset(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -102,30 +96,19 @@ public:
   GeoJsonDocument() = default;
 
   /**
-   * @brief Obtains a const reference to the root object of the parsed GeoJSON.
+   * @brief The root object of the parsed GeoJSON.
    */
-  constexpr const GeoJsonObject& getRootObject() const {
-    return this->_rootObject;
-  }
+  GeoJsonObject rootObject = GeoJsonObject{GeoJsonPoint{glm::dvec3(0, 0, 0)}};
 
   /**
-   * @brief Obtains a reference to the root object of the parsed GeoJSON.
+   * @brief Attribution information for this document.
    */
-  constexpr GeoJsonObject& getRootObject() { return this->_rootObject; }
-
-  /**
-   * @brief Obtains attribution information for this document.
-   */
-  const std::vector<VectorDocumentAttribution>& getAttributions() const;
+  std::vector<VectorDocumentAttribution> attributions;
 
 private:
-  CesiumUtility::Result<GeoJsonObject>
+  static CesiumUtility::Result<GeoJsonObject>
   parseGeoJson(const rapidjson::Document& doc);
-  CesiumUtility::Result<GeoJsonObject>
+  static CesiumUtility::Result<GeoJsonObject>
   parseGeoJson(const std::span<const std::byte>& bytes);
-
-  std::vector<VectorDocumentAttribution> _attributions;
-  GeoJsonObject _rootObject =
-      GeoJsonPoint{CesiumGeospatial::Cartographic(0, 0, 0)};
 };
 } // namespace CesiumVectorData

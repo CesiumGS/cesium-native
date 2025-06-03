@@ -66,7 +66,9 @@ if (NOT VCPKG_OVERLAY_PORTS)
     endif()
 endif()
 
-list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+    list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+endif()
 
 message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
 
@@ -101,7 +103,7 @@ if(CESIUM_USE_EZVCPKG)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2024.11.16
+        COMMIT dbe35ceb30c688bf72e952ab23778e009a578f18
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -122,7 +124,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.47.0
+    VERSION 0.48.0
     LANGUAGES CXX C
 )
 
