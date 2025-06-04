@@ -335,6 +335,7 @@ add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 add_subdirectory(CesiumVectorData)
 add_subdirectory(CesiumCurl)
+add_subdirectory(SampleTerrainToHeightmap)
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
