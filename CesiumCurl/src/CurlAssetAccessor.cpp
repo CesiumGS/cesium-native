@@ -410,10 +410,10 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
 
 namespace {
 
-constexpr std::string_view fileProtocol("file:");
+constexpr std::string_view fileScheme("file:");
 
 bool isFile(const std::string& url) {
-  return Uri(url).getScheme() == fileProtocol;
+  return Uri(url).getScheme() == fileScheme;
 }
 
 std::string convertFileUriToFilename(const std::string& url) {

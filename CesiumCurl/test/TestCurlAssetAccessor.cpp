@@ -47,7 +47,7 @@ TEST_CASE("CurlAssetAccessor") {
           pAssetAccessor
               ->get(
                   asyncSystem,
-                  std::format("http://127.0.01:{}/test/some/file.txt", port),
+                  fmt::format("http://127.0.01:{}/test/some/file.txt", port),
                   {})
               .waitInMainThread();
 
