@@ -138,7 +138,7 @@ private:
 
 namespace {
 
-class UrlAssetResponse final : public IAssetResponse {
+class CurlAssetResponse final : public IAssetResponse {
 public:
   [[nodiscard]] uint16_t statusCode() const override { return _statusCode; }
 
@@ -163,9 +163,9 @@ public:
   std::vector<std::byte> _result;
 };
 
-class UrlAssetRequest final : public IAssetRequest {
+class CurlAssetRequest final : public IAssetRequest {
 public:
-  UrlAssetRequest(
+  CurlAssetRequest(
       const std::string& method,
       const std::string& url,
       const HttpHeaders& headers,
@@ -176,7 +176,7 @@ public:
         _contentPayload(std::move(contentPayload)),
         _bytesSent(0) {}
 
-  UrlAssetRequest(
+  CurlAssetRequest(
       const std::string& method,
       const std::string& url,
       const std::vector<IAssetAccessor::THeader>& headers,
@@ -206,7 +206,7 @@ public:
     return this->_response.get();
   }
 
-  void setResponse(std::unique_ptr<UrlAssetResponse> response) {
+  void setResponse(std::unique_ptr<CurlAssetResponse> response) {
     this->_response = std::move(response);
   }
 
@@ -214,22 +214,22 @@ public:
       void* buffer,
       size_t size,
       size_t count,
-      UrlAssetRequest* pRequest);
+      CurlAssetRequest* pRequest);
 
 private:
   std::string _method;
   std::string _url;
   HttpHeaders _headers;
-  std::unique_ptr<UrlAssetResponse> _response;
+  std::unique_ptr<CurlAssetResponse> _response;
   std::vector<std::byte> _contentPayload;
   size_t _bytesSent;
 };
 
-/* static */ size_t UrlAssetRequest::uploadDataCallback(
+/* static */ size_t CurlAssetRequest::uploadDataCallback(
     void* buffer,
     size_t size,
     size_t count,
-    UrlAssetRequest* pRequest) {
+    CurlAssetRequest* pRequest) {
   assert(pRequest);
   assert(buffer);
   size_t bytesRemaining =
@@ -244,14 +244,14 @@ private:
   return bytesToSend;
 }
 
-size_t UrlAssetResponse::headerCallback(
+size_t CurlAssetResponse::headerCallback(
     char* buffer,
     size_t size,
     size_t nitems,
     void* userData) {
   // size is supposed to always be 1, but who knows
   const size_t cnt = size * nitems;
-  auto* response = static_cast<UrlAssetResponse*>(userData);
+  auto* response = static_cast<CurlAssetResponse*>(userData);
   if (!response) {
     return cnt;
   }
@@ -272,13 +272,13 @@ size_t UrlAssetResponse::headerCallback(
   return cnt;
 }
 
-size_t UrlAssetResponse::dataCallback(
+size_t CurlAssetResponse::dataCallback(
     char* buffer,
     size_t size,
     size_t nitems,
     void* userData) {
   const size_t cnt = size * nitems;
-  auto* response = static_cast<UrlAssetResponse*>(userData);
+  auto* response = static_cast<CurlAssetResponse*>(userData);
   if (!response) {
     return cnt;
   }
@@ -290,13 +290,16 @@ size_t UrlAssetResponse::dataCallback(
   return cnt;
 }
 
-void UrlAssetResponse::setCallbacks(CURL* curl) {
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, UrlAssetResponse::dataCallback);
+void CurlAssetResponse::setCallbacks(CURL* curl) {
+  curl_easy_setopt(
+      curl,
+      CURLOPT_WRITEFUNCTION,
+      CurlAssetResponse::dataCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
   curl_easy_setopt(
       curl,
       CURLOPT_HEADERFUNCTION,
-      UrlAssetResponse::headerCallback);
+      CurlAssetResponse::headerCallback);
   curl_easy_setopt(curl, CURLOPT_HEADERDATA, this);
 }
 
@@ -357,8 +360,8 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
        headers,
        pThis = this->shared_from_this()]() -> std::shared_ptr<IAssetRequest> {
         CESIUM_TRACE("CurlAssetAccessor::get");
-        std::shared_ptr<UrlAssetRequest> pRequest =
-            std::make_shared<UrlAssetRequest>(
+        std::shared_ptr<CurlAssetRequest> pRequest =
+            std::make_shared<CurlAssetRequest>(
                 "GET",
                 url,
                 headers,
@@ -372,8 +375,8 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
             pThis->_userAgent,
             pThis->_certificatePath,
             pThis->_certificateFile);
-        std::unique_ptr<UrlAssetResponse> pResponse =
-            std::make_unique<UrlAssetResponse>();
+        std::unique_ptr<CurlAssetResponse> pResponse =
+            std::make_unique<CurlAssetResponse>();
         pResponse->setCallbacks(curl());
         CURLcode responseCode = curl_easy_perform(curl());
         curl_slist_free_all(list);
@@ -466,7 +469,7 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
               verb));
         }
 
-        auto pRequest = std::make_shared<UrlAssetRequest>(
+        auto pRequest = std::make_shared<CurlAssetRequest>(
             verb,
             url,
             headers,
@@ -496,7 +499,7 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
         curl_easy_setopt(
             curl(),
             CURLOPT_READFUNCTION,
-            UrlAssetRequest::uploadDataCallback);
+            CurlAssetRequest::uploadDataCallback);
         curl_easy_setopt(curl(), CURLOPT_READDATA, pRequest.get());
         curl_easy_setopt(
             curl(),
@@ -507,8 +510,8 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
             CURLOPT_FTP_CREATE_MISSING_DIRS,
             CURLFTP_CREATE_DIR);
 
-        std::unique_ptr<UrlAssetResponse> pResponse =
-            std::make_unique<UrlAssetResponse>();
+        std::unique_ptr<CurlAssetResponse> pResponse =
+            std::make_unique<CurlAssetResponse>();
         pResponse->setCallbacks(curl());
         CURLcode responseCode = curl_easy_perform(curl());
         curl_slist_free_all(list);
