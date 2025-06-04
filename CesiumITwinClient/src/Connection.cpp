@@ -5,7 +5,6 @@
 #include <CesiumAsync/Promise.h>
 #include <CesiumClientCommon/ErrorResponse.h>
 #include <CesiumClientCommon/OAuth2PKCE.h>
-#include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumITwinClient/AuthenticationToken.h>
