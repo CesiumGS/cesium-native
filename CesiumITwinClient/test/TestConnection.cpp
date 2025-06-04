@@ -1,8 +1,7 @@
-#include "CesiumGeometry/Axis.h"
-#include "CesiumVectorData/GeoJsonObject.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
