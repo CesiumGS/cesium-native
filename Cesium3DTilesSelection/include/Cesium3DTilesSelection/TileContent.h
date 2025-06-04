@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumGeospatial/Projection.h>
@@ -193,9 +194,49 @@ public:
    */
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
+  /** Modifier process state of the glTF model of this tile content. */
+  GltfModifier::State getGltfModifierState() const noexcept;
+
+  /** Update the modifier process state of the glTF model of this tile content.
+   */
+  void setGltfModifierState(GltfModifier::State modifierState) noexcept;
+
+  /** Get the optional temporary modified model of this tile content. */
+  const std::optional<CesiumGltf::Model>& getModifiedModel() const noexcept;
+
+  /** Get the temporary modified model's render resources of this tile content,
+   * if any, or nullptr. */
+  void* getModifiedRenderResources() const noexcept;
+
+  /** Store temporary model and render resources computed in a worker thread,
+   * until they can be used instead of the current outdated versions */
+  void setModifiedModelAndRenderResources(
+      CesiumGltf::Model&& modifiedModel,
+      void* pModifiedRenderResources) noexcept;
+
+  /** Reset the temporary modified model's render resources of this tile content
+   * to nullptr after it has been freed with
+   * Cesium3DTilesSelection::IPrepareRendererResources::free. */
+  void resetModifiedRenderResources() noexcept;
+
+  /** Overwrite this instance's model and render resources with the modifier
+   * stage's temporary variables, which are reset to their initial state. */
+  void replaceWithModifiedModel() noexcept;
+
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
+
+  /** Current state of the glTF modifier for this tile content */
+  GltfModifier::State _modifierState = GltfModifier::State::Idle;
+  /** Temporary model used during the modifier process when the tile content
+   * already has a model. */
+  std::optional<CesiumGltf::Model> _modifiedModel = {};
+  /** Temporary render resources used during the modifier process when the tile
+   * content already has render resources. When modifier is done, it will
+   * replace _pRenderResources and be reset to nullptr. */
+  void* _pModifiedRenderResources = nullptr;
+
   CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;
